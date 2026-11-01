@@ -1,17 +1,10 @@
 <!-- 
     @file: dashboard.component.html
     @path: /src/app/admin/shop-pages/dashboard/dashboard.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026 
-    @refactor-note (2026-09-07) KOMPLETNÍ PŘEPIS - viz dashboard.component.ts stejné
-        datum pro plné odůvodnění. Hlavička (`cd-header-bar`/`cd-refresh-btn`/atd.) je
-        1:1 STEJNÁ jako u Core/Web dashboardu - stejné CSS třídy, stejný vzor
-        "Aktualizováno v HH:mm:ss" + tlačítko Aktualizovat. Zbytek (KPI karty, graf,
-        stavy objednávek, tabulka, sklad, údržba) používá vlastní `kpi-`/`chart-`/
-        `status-`/`orders-`/`stock-`/`sd-` třídy, ale retokenizované do STEJNÉ černobílé
-        palety (`var(--accent)`/`var(--success)`/`var(--error)`/`var(--warning)`).
-        Všechny uživatelsky viditelné texty nahrazeny `t('shop-dashboard.xxx')` voláními.
+    @description: Template of the dashboard component.
 -->
 
 <div class="shop-dashboard">
@@ -53,8 +46,8 @@
 
   @if (!loading || kpiCards.length) {
 
-    <!-- @component: KPI grid — `kpiCards` už obsahuje jen karty, na které má uživatel
-         právo. Trend badge (šipka + %) se vykresluje jen pokud `card.trend` existuje. -->
+    <!-- @component: KPI grid — `kpiCards` contains only the cards the user may see. The trend
+         badge (arrow + %) is rendered only when `card.trend` exists. -->
     <div class="cd-section">
       <div class="kpi-grid">
         @for (card of kpiCards; track card.key) {

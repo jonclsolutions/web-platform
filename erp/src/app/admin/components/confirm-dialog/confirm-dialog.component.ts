@@ -1,30 +1,13 @@
 /**
  * @file confirm-dialog.component.ts
  * @path src/app/admin/components/confirm-dialog/confirm-dialog.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description A reusable modal dialog component for capturing user confirmation before executing critical or destructive actions.
  * @dependencies
  * - Angular core: Component, EventEmitter, Input, Output decorators.
- * - ScrollLockService: Sdílený zámek scrollu na pozadí (viz refactor-note 2026-08-31).
- *
- * @refactor-note (2026-08-31) SCROLL LOCK SJEDNOCEN - dřív vlastní `no-scroll` CSS
- * třída přidávaná/odebíraná na `<body>` v `blockBackgroundScroll()`/
- * `unblockBackgroundScroll()`. Na rozdíl od ostatních overlay komponent (které vznikají
- * a zanikají 1:1 s viditelností přes `@if` v rodičovské šabloně, takže zámek šel do
- * `ngOnInit`/`ngOnDestroy`) je tahle komponenta typicky DLOUHOŽIJÍCÍ SINGLETON řízený
- * `ConfirmDialogService` - `show()`/`hide()` se volají IMPERATIVNĚ na stále existující
- * instanci, ne přes vznik/zánik komponenty. Zámek proto žije přímo v `show()`/`hide()`,
- * ne v lifecycle hoocích, a deleguje na sdílený `ScrollLockService` (stejné referenční
- * počítadlo jako u všech ostatních modalů v aplikaci - viz scroll-lock.service.ts),
- * takže se správně chová i když je confirm dialog otevřený NAD jiným už zamčeným
- * overlayem (např. potvrzení mazání nad export popupem) - zavření confirm dialogu pak
- * neodemkne scroll předčasně, dokud je pořád otevřený ten vnější overlay.
- * @bugfix-note (2026-10-23) The button labels were hardcoded Czech ('Zrušit' / 'Potvrdit') - also on
- *   the public cart and in the English admin (open finding #20). They are inputs now
- *   (`confirmLabel` / `cancelLabel`), set by ConfirmDialogService from the caller's labels or the
- *   defaults of the current surface (admin layout); neutral English only as the last fallback.
+ * - ScrollLockService: Shared background scroll lock.
  */
 
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
@@ -71,10 +54,6 @@ export class ConfirmDialogComponent {
 
   /**
    * @description Hides the dialog and restores background scroll.
-   * @bugfix-note (2026-10-23) confirm() / cancel() call hide() and ConfirmDialogService closes the
-   *   dialog with hide() as well - the scroll lock was released TWICE, which also released the
-   *   lock of another still open overlay (body started to scroll under it). hide() of an already
-   *   hidden dialog is now a no-op.
    */
   public hide(): void {
     if (!this.isVisible) return;

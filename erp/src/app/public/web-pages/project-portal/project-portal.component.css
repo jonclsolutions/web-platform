@@ -1,14 +1,10 @@
 /*
     @file: project-portal.component.css
     @path: src/app/public/web-pages/project-portal/project-portal.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @redesign-note (2026-08-29) BACKLOG "kompletní UI refactor - bílá/černá místo
-        tmavé/fialové, SVG ikonky, levý info panel + pravý obsah": stejná paleta
-        jako admin panel (--accent #18181b, --border #ececea, --text-muted #71717a).
-        Layout: `.pp-shell` (flex row) - `.pp-sidebar` (trvalý, fixní šířka, info +
-        akce) + `.pp-main` (scrollovatelný obsah: popis / checkpointy / konverzace).
+    @description: Styles of the project portal component.
 */
 
 :host {
@@ -76,7 +72,7 @@
 .pp-btn-small:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ══════════════════════════════════════════════════════════════════════
-   SHELL - levý sidebar + pravý obsah
+   SHELL - left sidebar + right content
    ══════════════════════════════════════════════════════════════════════ */
 
 .pp-shell { display: flex; min-height: 100vh; }
@@ -131,11 +127,11 @@
 
 .pp-checkpoint-badge { font-size: 0.68rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; flex-shrink: 0; }
 
-/* ── Nové vlákno formulář ──────────────────────────────────────────────── */
+/* ── New thread form ──────────────────────────────────────────────── */
 .pp-new-thread-form { background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
 .pp-form-actions { display: flex; justify-content: flex-end; gap: 8px; }
 
-/* ── Seznam vláken ─────────────────────────────────────────────────────── */
+/* ── Thread list ─────────────────────────────────────────────────────── */
 .pp-thread-list { display: flex; flex-direction: column; gap: 6px; }
 .pp-thread-item {
   display: flex; align-items: center; gap: 10px;
@@ -152,7 +148,7 @@
 
 .pp-priority-chip { font-size: 0.64rem; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; }
 
-/* ── Detail vlákna ─────────────────────────────────────────────────────── */
+/* ── Thread detail ─────────────────────────────────────────────────────── */
 .pp-thread-detail { display: flex; flex-direction: column; }
 .pp-back-btn {
   display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
@@ -189,7 +185,7 @@
 @keyframes pp-fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* -------------------- */
-/* ── Language dropdown - minimalistický, jen vlaječka ───────────────────── */
+/* ── Language dropdown - minimalist, flag only ───────────────────── */
 .pp-lang-flag-dropdown { position: relative; padding-bottom: 12px; display: flex; }
 .pp-lang-flag-dropdown-login { justify-content: center; padding-bottom: 18px; }
 

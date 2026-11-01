@@ -2,11 +2,11 @@
 /**
  * @file UpdateCoreSecurityEventRequest.php
  * @path app/Http/Requests/Core/CoreSecurityEvent/UpdateCoreSecurityEventRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Validace triage akce nad bezpečnostním eventem - jen stav a poznámka,
- * nikdy samotná diagnostická data (ta zapisuje výhradně CoreSecurityEvent::record()).
+ * @description Validates the triage of a security event - only the state and a note, never the
+ * diagnostic data (written only by CoreSecurityEvent::record()).
  */
 
 namespace App\Http\Requests\Core\CoreSecurityEvent;
@@ -17,7 +17,7 @@ class UpdateCoreSecurityEventRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // Autorizace řešena middlewarem 'permission:core-security-update' na route úrovni.
+        // Authorization: middleware 'permission:core-security-update' of the route.
         return true;
     }
 

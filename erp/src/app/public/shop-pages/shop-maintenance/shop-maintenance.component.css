@@ -1,11 +1,10 @@
 /*  
     @file: shop-maintenance.component.css
     @path: /src/app/public/shop-pages/shop-maintenance/shop-maintenance.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @refactor-note (2026-08): Vylepšený vzhled - jemný bodový grid v pozadí (stejný vzor
-        jako order-form/FAQ), animovaná ikona, sociální ikony, kontaktní pruh dole.
+    @description: Styles of the shop maintenance component.
 */
 
 :host {

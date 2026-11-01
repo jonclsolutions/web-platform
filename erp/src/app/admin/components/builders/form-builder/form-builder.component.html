@@ -1,49 +1,16 @@
 <!-- 
     @file: form-builder.component.html
     @path: /src/app/admin/components/builders/form-builder/form-builder.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    (Earlier refactor-notes for the 'files' case are unchanged - see version history.)
+    @description: Template of the form builder component.
 
-    @refactor-note (2026-09-02): Added @case ('multiselect') - a checkbox group bound
-        via FormBuilderComponent.isMultiselectChecked()/onMultiselectToggle(), see
-        form-builder.component.ts. Each checkbox is intentionally NOT wired through
-        ngModel/name into the Angular form's own control tree (unlike every other
-        case here) - a checkbox-per-option group doesn't map onto a single
-        FormControl the way a single input does, so it's driven as plain DOM state
-        via [checked]/(change) instead. This field is never `required`, so it does
-        not need to participate in `genericForm`'s validity for submission to work.
 
-    @refactor-note (2026-09-05): Added `isOptionDisabled()` binding + a "(z role)"
-        badge on each disabled option, so an admin can see WHY a permission appears
-        checked - it's granted by the account's role, not an explicit extra grant.
 
-    @refactor-note (2026-09-06): The `'select'` case now also emits
-        `(ngModelChange)="onFieldChange(input.column_name, $event)"` alongside its
-        existing `[(ngModel)]` binding, so a consumer page can react to a live
-        change (see FormBuilderComponent's new `(fieldChanged)` output and
-        AdministratorsComponent.handleFieldChanged()).
 
-    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
-        všechny natvrdo psané české texty (i angliský "(z role)" badge popisek, který
-        byl ve skutečnosti česky) nahrazeny `strings.*` bindingy
-        (AdminLocalizationService, sekce 'form-builder') - viz
-        form-builder.component.ts stejné datum. `input.label`/`input.placeholder`/
-        `input.errorMessage` beze změny - jsou to per-pole texty z konzumentova
-        *.config.ts, mimo scope této migrace.
 
-    @refactor-note (2026-09v2) BUGFIX "český fallback v multi-file-upload i v EN":
-        `[label]` na `<app-multi-file-upload>` bylo natvrdo `''`, což padalo na
-        MultiFileUploadComponent's vlastní český `@Input() label = 'Přílohy'` default
-        bez ohledu na aktivní jazyk. Nahrazeno `i18n.getValue('file-upload.attachments_label')`
-        - viz form-builder.component.ts stejné datum pro odpovídající opravu
-        `fileUploadTexts` getteru (getMergedSection -> getValue, ať chybějící klíč
-        vždy skončí jako 'Cannot load text', nikdy ne jako tichý český fallback).
 
-    @refactor-note (2026-10-21): The title binds `displayHeader` instead of
-        `headerText` – "Create new record" vs. "Edit record: <id>" depending on the
-        mode; an explicit `[headerText]` still wins. See form-builder.component.ts.
 -->
 
 <div class="popup-overlay" (mousedown)="onOverlayClick($event)">

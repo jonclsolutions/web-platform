@@ -1,8 +1,8 @@
 /**
  * @file reset-password.component.spec.ts
  * @path src/app/admin/auth/reset-password/reset-password.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ResetPasswordComponent – setting a new password from the e-mailed
  *   link: token from the URL, password policy, confirmation, API errors and redirect to login;

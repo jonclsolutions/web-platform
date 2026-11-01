@@ -1,8 +1,8 @@
 /**
  * @file edit-legal.component.spec.ts
  * @path src/app/admin/core-pages/edit-legal/edit-legal.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of EditLegalComponent – editing the legal documents (terms, privacy …)
  *   section by section per language: tabs, languages, missing translations per position,

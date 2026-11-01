@@ -2,9 +2,9 @@
 =============================================================================
  @file init-workspace.ps1
  @path dev/windows/init-workspace.ps1
- @project RPSW Web
- @author RPSW
- @created 2026-10-31
+ @project JS web-platform
+ @author JS
+ @created 2026
  @description WINDOWS entry point of the workspace setup - start it with init-workspace.cmd
    (double-click or `.\init-workspace.cmd`). The application runs in Docker on Linux, so on
    Windows it uses WSL 2 + Docker Desktop (the setup Docker recommends for Windows):
@@ -16,8 +16,6 @@
         there (-InPlace keeps it where it is)
      4. runs ./init-workspace.sh inside WSL - the same setup as on Linux / macOS
    Afterwards: dev.cmd (or ./dev.sh in the Linux terminal) starts the application.
- @refactor-note (2026-10-31) Moved to dev/windows/ (root clean-up); the marker file is
-   dev/wsl-workspace (read by dev.cmd).
  @note Only ASCII characters in this file: Windows PowerShell 5.1 reads a script without BOM in
    the ANSI code page.
  @note Output of wsl.exe itself is UTF-16; the script uses only its exit codes and the UTF-8

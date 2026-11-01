@@ -1,8 +1,8 @@
 /**
  * @file tech-stack.config.ts
  * @path src/app/public/web-pages/home/tech-stack.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Static configuration of the technology stack shown in the home page
  * "tech stack" marquee (two rows, top row moves right, bottom row moves left).

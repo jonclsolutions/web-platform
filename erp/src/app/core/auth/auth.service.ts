@@ -1,26 +1,15 @@
 /**
  * @file auth.service.ts
  * @path src/app/core/auth/auth.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Core authentication service managing login, session persistence, token lifecycle, and user authorization state.
  * @dependencies
  * - HttpClient: Facilitates API communication for authentication endpoints.
  * - PermissionService: Synchronizes user permissions within the application.
- * - GenericTableService: Zneplatnění tabulkové cache při změně přihlášeného uživatele
- *   (viz bugfix-note 2026-08-17 níže) - žádná cyklická závislost, GenericTableService
- *   sám na AuthService nijak nezávisí.
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `setUserEmail`.
- * @bugfix-note (2026-10-23) The fallback error texts ('Přihlášení se nezdařilo.', 'Příliš mnoho
- *   pokusů…', …) were hardcoded Czech and shown as they are on the login page in every language.
- *   The service has no translations (it is used by the HTTP interceptor), so the errors now
- *   carry a `messageKey` (AuthErrorKey) and an empty message when the backend sent none; the
- *   login page shows the backend message or its own translation `login.errors.<messageKey>`.
- * @refactor-note (2026-10-24) Open finding #6: login / 2FA / refresh / reset answer
- *   `{data, message?}` - the methods return the payload (`data`), so the callers and
- *   persistSession() keep reading `token`, `user`, `requires_2fa`, … as before.
+ * - GenericTableService: Invalidates the table cache when the logged-in user changes - no
+ *   circular dependency, GenericTableService does not depend on AuthService.
  */
 
 import { Injectable } from '@angular/core';
@@ -40,12 +29,12 @@ export interface AuthError extends Error {
   messageKey?: AuthErrorKey;
 }
 
-/** Chyba loginu obohacená o informaci, zda je od teď nutná captcha. */
+/** Login error extended with whether a captcha is required from now on. */
 export interface LoginError extends AuthError {
   captchaRequired?: boolean;
 }
 
-/** Chyba 2FA endpointů obohacená o dobu, po které lze zkusit resend znovu (sekundy). */
+/** Error of the 2FA endpoints extended with the time (seconds) after which a resend is allowed again. */
 export interface TwoFactorError extends AuthError {
   retryAfter?: number;
 }
@@ -90,18 +79,18 @@ export class AuthService {
   }
 
   /**
-   * @description Krok 1 loginu: ověří heslo (+ captcha, pokud si ji backend vyžádal).
-   * @param credentials Email, heslo a volitelný captcha_token.
-   * @returns {Observable<any>} Buď plná session (token/refreshToken/user), nebo
-   * `LoginTwoFactorChallenge` ({ requires_2fa: true, login_token, ... }) - v TOM případě
-   * se NIC neukládá do sessionStorage, session vznikne až po verifyTwoFactor().
+   * @description Step 1 of the login: verifies the password (+ captcha when the backend asked for it).
+   * @param credentials E-mail, password and optional captcha_token.
+   * @returns {Observable<any>} Either the full session (token / refreshToken / user), or a
+   * `LoginTwoFactorChallenge` ({ requires_2fa: true, login_token, ... }) - in THAT case NOTHING
+   * is stored in sessionStorage, the session is created only after verifyTwoFactor().
    */
   login(credentials: { email: string; password: string; captcha_token?: string }): Observable<any> {
     return this.http.post<ApiEnvelope<any>>(`${this.baseUrl}/login`, credentials).pipe(
       map(res => res.data),
       tap((response: any) => {
         if (response?.requires_2fa) {
-          // Pending-2FA stav - záměrně se NEPERSISTUJE nikam (viz hlavička souboru).
+          // Pending 2FA state - deliberately NOT persisted anywhere.
           return;
         }
         this.persistSession(response);
@@ -111,11 +100,11 @@ export class AuthService {
   }
 
   /**
-   * @description Krok 2 loginu (jen pokud login() vrátil requires_2fa): ověří OTP kód
-   * a teprve po úspěchu založí skutečnou session (stejně jako dřív dělal login()).
-   * @param loginToken Opaque token z kroku 1 - drží se JEN v paměti volající komponenty,
-   * nikdy v sessionStorage (viz login.component.ts).
-   * @param code 6místný číselný kód z e-mailu.
+   * @description Step 2 of the login (only when login() returned requires_2fa): verifies the OTP
+   * code and only on success creates the real session.
+   * @param loginToken Opaque token from step 1 - kept ONLY in the memory of the calling
+   * component, never in sessionStorage (see login.component.ts).
+   * @param code 6-digit numeric code from the e-mail.
    */
   verifyTwoFactor(loginToken: string, code: string): Observable<any> {
     return this.http.post<ApiEnvelope<any>>(`${this.baseUrl}/login/verify-2fa`, { login_token: loginToken, code }).pipe(
@@ -126,8 +115,8 @@ export class AuthService {
   }
 
   /**
-   * @description Vyžádá nový OTP kód pro probíhající pending-2FA session. Backend má
-   * vlastní cooldown (60s) i strop počtu resendů - 429 odpověď obsahuje `retry_after`.
+   * @description Requests a new OTP code for the running pending 2FA session. The backend has its
+   * own cooldown (60 s) and a resend cap - a 429 answer contains `retry_after`.
    */
   resendTwoFactor(loginToken: string): Observable<{ expires_in: number }> {
     return this.http.post<ApiEnvelope<{ expires_in: number }>>(`${this.baseUrl}/login/resend-2fa`, { login_token: loginToken }).pipe(
@@ -191,13 +180,6 @@ export class AuthService {
     );
   }
 
-  /**
-   * @bugfix-note (2026-08-17) Přidáno `genericTableService.invalidateAll()` - viz
-   * hlavička souboru. Volá se při KAŽDÉM ukončení session (explicitní logout přes
-   * logout(), i implicitní vypršení refresh tokenu přes refreshAccessToken()), aby
-   * příští uživatel na stejném zařízení/prohlížeči nikdy nedostal cache hit s daty
-   * po předchozím uživateli.
-   */
   public clearAuthData(): void {
     sessionStorage.clear();
     this.permissionService.clearPermissions();
@@ -230,14 +212,9 @@ export class AuthService {
   }
 
   /**
-   * @description Uloží plnou session (access/refresh token, uživatel, role, oprávnění)
-   * do sessionStorage. Sdíleno mezi přímým loginem (bez 2FA) a dokončením
-   * verifyTwoFactor() - stejná logika, jen jiný vstupní endpoint.
-   * @bugfix-note (2026-08-17) Přidáno `genericTableService.invalidateAll()` - viz
-   * hlavička souboru. I když v mezičase proběhl `clearAuthData()` (logout), pro
-   * jistotu se cache zneplatňuje i tady - pokrývá i případ, kdy by session vznikla
-   * bez předchozího explicitního logoutu (např. přihlášení do jiného účtu po
-   * vypršení tokenu bez viditelného "odhlášení").
+   * @description Stores the full session (access / refresh token, user, role, permissions) in
+   * sessionStorage. Shared by the direct login (no 2FA) and the completion of
+   * verifyTwoFactor() - same logic, only a different entry endpoint.
    */
   private persistSession(response: any): void {
     const userId = (response.user.id || response.user.user_login_id).toString();
@@ -281,8 +258,8 @@ export class AuthService {
   }
 
   /**
-   * @description Mapuje chyby /login na uživatelskou zprávu a propaguje
-   * `captcha_required` flag z backendu, ať komponenta ví, kdy zobrazit widget.
+   * @description Maps /login errors to a user message and passes on the `captcha_required` flag
+   * of the backend, so the component knows when to show the widget.
    */
   private handleLoginError = (error: HttpErrorResponse) => {
     const err: LoginError = authError(error.error?.message, error.status === 429 ? 'too_many_attempts' : 'login_failed');
@@ -291,8 +268,8 @@ export class AuthService {
   };
 
   /**
-   * @description Mapuje chyby /login/verify-2fa a /login/resend-2fa, propaguje
-   * `retry_after` (sekundy) z 429 odpovědi pro zobrazení countdownu na resend tlačítku.
+   * @description Maps the /login/verify-2fa and /login/resend-2fa errors, passes on `retry_after`
+   * (seconds) of a 429 answer for the countdown of the resend button.
    */
   private handleTwoFactorError = (error: HttpErrorResponse) => {
     const err: TwoFactorError = authError(error.error?.message, 'verification_failed');

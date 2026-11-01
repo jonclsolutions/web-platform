@@ -1,9 +1,5 @@
 <?php
 
-// @refactor-note (2026-10-22) PDO::MYSQL_ATTR_SSL_CA is deprecated since PHP 8.5 (replaced by
-// Pdo\Mysql::ATTR_SSL_CA) - the mysql/mariadb `options` pick the constant by PHP version,
-// same as the current Laravel 12 skeleton, so the config works on PHP 8.2 - 8.5+ without
-// deprecation notices.
 
 use Illuminate\Support\Str;
 

@@ -2,14 +2,10 @@
 # =============================================================================
 # @file generate-ssh.sh
 # @path docs/scripts/generate-ssh.sh
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @description Generates the Ed25519 deploy key pair.
 # @usage bash docs/scripts/generate-ssh.sh [target-dir]   (default: ~/.ssh)
-# @bugfix-note (2026-10-24) Open finding #51: the key was generated into the CURRENT directory
-#   (= docs/scripts in the repo) and the private key got committed. The default target is
-#   ~/.ssh now, the script refuses a directory inside a git work tree and no longer deletes an
-#   existing key.
 # =============================================================================
 
 # 1. Target directory (outside of any repository)

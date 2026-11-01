@@ -3,8 +3,8 @@
 /**
  * @file SiteSettingTest.php
  * @path api/tests/Feature/Web/SiteSettingTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the web settings (WebSiteSettingController, WebPublicController):
  *   maintenance mode with password confirmation, the commission request e-mail template and

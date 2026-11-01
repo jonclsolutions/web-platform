@@ -2,19 +2,15 @@
 /**
  * @file ProjectThreadActivityMail.php
  * @path app/Mail/Web/ProjectThreadActivityMail.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Notifikace na `web_projects.contact_email` (e-mail připnutý k
- * projektu, NE zákazníkovo vlastní kontaktní pole - viz backlog "informovat o
- * aktivitě zákazníka ve vlákně, protože admin panel se nekontroluje denně")
- * - odesílá se při KAŽDÉ zákaznické aktivitě ve vlákně: založení nového vlákna i
- * každá další odpověď v "ping-pongu", bez debounce. Pokud `contact_email` na
- * projektu chybí, e-mail se prostě nevytváří (viz volající kód v
+ * @description Notification to `web_projects.contact_email` (the e-mail of the project, not a
+ * field of the customer) on EVERY customer activity in a thread - a new thread and every reply,
+ * no debounce. Without `contact_email` on the project no e-mail is created (see
  * WebProjectPublicController).
- * @note Obsahuje ZÁMĚRNĚ jen téma vlákna a odkaz do administrace, NE text zprávy
- * samotné - kdyby zákazník napsal něco citlivého, nechceme to duplikovat do
- * e-mailové schránky (horší kontrola nad mazáním/šifrováním než v databázi).
+ * @note Contains only the thread subject and a link to the admin, NOT the message text - a
+ * sensitive message is not copied into a mailbox.
  */
 
 namespace App\Mail\Web;

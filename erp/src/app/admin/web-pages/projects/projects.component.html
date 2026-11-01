@@ -1,26 +1,10 @@
 <!--
     @file: projects.component.html
     @path: /src/app/admin/web-pages/projects/projects.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    (Earlier refactor-notes for the projects/project-threads merge and the layout
-    gap fix are unchanged.)
-    @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded
-        texty": VŠECHNY natvrdo psané texty (nadpisy, tlačítka, modal texty, inline
-        ternáry pro stav vlákna/autora zprávy) nahrazeny `t('projects.xxx')` bindingy
-        nebo `threadStatusLabel()`/`threadAuthorLabel()` metodami - viz
-        projects.component.ts stejné datum.
-    @refactor-note (2026-09-11v3) BACKLOG "vlákna přijímají přílohy": zobrazení
-        existujících příloh u zpráv (odkaz + ikona + název + velikost) + file input
-        se seznamem vybraných souborů v obou reply boxech ("Správa" modal i
-        cross-project thread modal) - viz projects.component.ts stejné datum.
-    @refactor-note (2026-09-11v4) BACKLOG "otevření vlákna ukazuje nejstarší zprávu /
-        stránkování zpráv / real-time validace příloh": `#pmMessageListEl`/
-        `#threadModalMessageListEl` template refs na `.pm-message-list` (scroll na
-        spodek po otevření), tlačítko "Načíst starší zprávy" nad seznamem (jen když
-        `has_more_older_messages`), chybová hláška pod file inputem v obou reply
-        boxech - viz projects.component.ts stejné datum.
+    @description: Template of the projects component.
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -170,7 +154,7 @@
 </app-details-builder>
 }
 
-<!-- ═══════════ "Správa" modal - checkpointy + heslo/URL + vlákna JEDNOHO projektu ═══════════ -->
+<!-- ═══════════ "Manage" modal - checkpoints + password / URL + threads of ONE project ═══════════ -->
 @if (showManageModal) {
 <div class="pm-overlay" (mousedown)="$event.target === $event.currentTarget && closeManageModal()">
 <div class="pm-card" (mousedown)="$event.stopPropagation()">
@@ -335,7 +319,7 @@
 </div>
 }
 
-<!-- ═══════════ Lehký modal na jedno konkrétní vlákno z cross-project tabulky ═══════════ -->
+<!-- ═══════════ Light modal of one thread from the cross-project table ═══════════ -->
 @if (showThreadModal) {
 <div class="pm-overlay" (mousedown)="$event.target === $event.currentTarget && closeThreadModal()">
 <div class="pm-card" (mousedown)="$event.stopPropagation()">

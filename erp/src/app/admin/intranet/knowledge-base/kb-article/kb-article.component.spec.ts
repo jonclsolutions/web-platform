@@ -1,8 +1,8 @@
 /**
  * @file kb-article.component.spec.ts
  * @path src/app/admin/intranet/knowledge-base/kb-article/kb-article.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of KbArticleComponent (one intranet knowledge base page): page found by the route
  *   id, every page of KB_PAGES renders in both languages (all block types), breadcrumb, the

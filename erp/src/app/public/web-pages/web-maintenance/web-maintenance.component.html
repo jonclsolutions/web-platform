@@ -1,19 +1,10 @@
 <!-- 
     @file: web-maintenance.component.html
     @path: /src/app/public/web-pages/web-maintenance/web-maintenance.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026 
-    @refactor-note (2026-08): Přidány sociální ikony + kontaktní řádek (email/telefon),
-        čteno ze stejné settings/socialLinks cache jako footer. Bez tlačítka "zpět na web"
-        (celý web je v údržbě - není kam se vrátit).
-    @refactor-note (2026-08-15): Přidána malá odkazová ikona vpravo dole na /auth/login -
-        ta routa leží mimo AuthGuard i webMaintenanceGuard (viz app.routes.ts), takže
-        zůstává dostupná i během maintenance. Umožňuje adminovi dostat se k přihlášení
-        bez ručního zadávání URL, aby mohl režim údržby vypnout.
-    @bugfix-note (2026-10-23): the tel: link used `replace('/\s/g', '')` - a STRING, not a
-        regex - so spaces were never removed ("tel:+420 777 …", invalid per RFC 3966, some
-        dialers refuse it). It now uses `phoneHref` of BasePublicComponent.
+    @description: Template of the web maintenance component.
 -->
 <div class="maintenance-container">
 <div class="maintenance-grid-bg" aria-hidden="true"></div>

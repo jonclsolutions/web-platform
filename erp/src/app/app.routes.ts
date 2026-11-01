@@ -1,8 +1,8 @@
 /**
  * @file app.routes.ts
  * @path src/app/app.routes.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Central routing configuration for the application, managing lazy-loaded modules and route guards.
  * @dependencies
@@ -10,37 +10,6 @@
  * - webMaintenanceGuard: Validates public web availability status.
  * - LoginComponent: Handles administrative authentication.
  * - AdminRoutingModule: Loads the protected administrative section.
- *
- * @refactor-note (2026-08) Přidán `webMaintenanceGuard` jako `canActivateChild` na
- * kořenovou '' routu (WebLayoutComponent) - blokuje CELÝ veřejný web najednou, na rozdíl
- * od `shopMaintenanceGuard`, který je duplikovaný per-child uvnitř 'shop' skupiny. Nová
- * routa 'web-maintenance' mimo AuthGuard i webMaintenanceGuard (jinak by se sama
- * zablokovala - ochranu proti smyčce navíc řeší i guard samotný, viz jeho komentář).
- *
- * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu": přidána
- * `auth/activate-account/:token` - veřejná stránka pro nastavení hesla a aktivaci účtu
- * založeného adminem (odkaz z AccountActivationMail). STEJNÝ vzorec jako
- * `auth/reset-password` výše - mimo AdminLayoutComponent i AuthGuard, protože uživatel
- * v tu chvíli ještě nemá platnou session.
- *
- * @refactor-note (2026-09-30) Browser tab titles editable in admin: every public route
- * got `title: 'area.page_key'`. The value is NOT the literal title – it is a key that
- * PageTitleStrategy (shared/services/page-title.strategy.ts) resolves against the
- * `legal_page_titles` table in the current language. New public page = new row in that
- * table + `title` here. Nothing else in this file changed.
- *
- * @refactor-note (2026-09-30b) Administration and login pages share ONE tab title:
- * `title: 'admin.panel'` on `admin` (children without own title inherit it) and on the
- * `auth/*` routes. Editable in admin -> Firemní údaje -> Názvy stránek -> Administrace.
- *
- * @refactor-note (2026-10-27) 404 pages: there was no catch-all route - an unknown URL ended in a
- * router error and an empty page; only `/404` existed (outside any layout). Now every public area
- * ends its children with `publicNotFoundRoute('<area>')` (shared NotFoundComponent, see
- * public/not-found/public-not-found.config.ts): the e-shop inside ShopLayout (`/shop/<unknown>`),
- * the web inside WebLayout as the LAST top-level route (any other unknown URL). It matches only
- * when no other route does - the router tries the routes in order and comes back to it last. The
- * admin has its own 404 / 403 pages inside its layout (admin-routing.module.ts). `/404` stays as
- * a known address of the web 404 page.
  */
 
 import { Routes } from '@angular/router';
@@ -53,7 +22,7 @@ import { publicNotFoundRoute } from './public/not-found/public-not-found.config'
  * @usage Imported by the root application module/app config.
  * @note All public and shop pages use lazy loading to ensure optimal bundle size and performance.
  *   The root path ('') and '/home' both resolve directly to HomeComponent (no redirectTo) so the
- *   browser address bar keeps showing the clean domain root (e.g. www.rpsw.cz) instead of being
+ *   browser address bar keeps showing the clean domain root (e.g. www.example.com) instead of being
  *   rewritten to /home. Both URLs remain independently accessible as aliases for the same view.
  *   `title` values are page keys for PageTitleStrategy, not display texts.
  */
@@ -149,7 +118,7 @@ export const routes: Routes = [
   // --- 4. ADMIN & AUTH ---
   { path: 'auth/login', title: 'admin.panel', component: LoginComponent },
   {
-    // Veřejná stránka mimo AdminLayoutComponent i AuthGuard - cílová stránka odkazu z e-mailu.
+    // Public page outside AdminLayoutComponent and AuthGuard - target of the link in the e-mail.
     path: 'auth/reset-password',
     title: 'admin.panel',
     loadComponent: () =>
@@ -157,8 +126,8 @@ export const routes: Routes = [
         .then(m => m.ResetPasswordComponent)
   },
   {
-    // Veřejná stránka mimo AdminLayoutComponent i AuthGuard - cílová stránka odkazu z
-    // AccountActivationMail (účet založený adminem, čeká na nastavení hesla).
+    // Public page outside AdminLayoutComponent and AuthGuard - target of the link in
+    // AccountActivationMail (account created by an admin, waiting for the password).
     path: 'auth/activate-account/:token',
     title: 'admin.panel',
     loadComponent: () =>

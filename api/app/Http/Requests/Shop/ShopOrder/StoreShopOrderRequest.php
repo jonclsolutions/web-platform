@@ -2,8 +2,8 @@
 /**
  * @file StoreShopOrderRequest.php
  * @path app/Http/Requests/Shop/ShopOrder/StoreShopOrderRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation logic for creating new shop orders, including real-time stock availability verification.
  */
@@ -52,8 +52,6 @@ class StoreShopOrderRequest extends FormRequest
             
             'shipping_address'     => ['required', 'string', 'max:255'],
             'shipping_city'        => ['required', 'string', 'max:100'],
-            // @bugfix-note (2026-10-23) max:20 although the column is varchar(10) - a longer value
-            // passed validation and failed in MySQL strict mode with 500 (update already had max:10).
             'shipping_postal_code' => ['required', 'string', 'max:10'],
             'shipping_country'     => ['required', 'string', 'max:50'],
             'notes'                => ['nullable', 'string', 'max:1000'],

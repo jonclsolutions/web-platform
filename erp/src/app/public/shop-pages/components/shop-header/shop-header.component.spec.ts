@@ -1,13 +1,12 @@
 /**
  * @file shop-header.component.spec.ts
  * @path src/app/public/shop-pages/components/shop-header/shop-header.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ShopHeaderComponent: shop module texts, languages and site data, scrolled
  *   state, the language dropdown (closed by outside clicks), language
  *   switch and opening the cart.
- * @refactor-note (2026-10-31) Open finding #64: test of the hidden phone / company rows.
  * @dependencies
  * - createPublicPageContext (get spy answers the site config); real CartService.
  */

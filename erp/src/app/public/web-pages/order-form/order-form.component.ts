@@ -1,26 +1,10 @@
 /**
  * @file order-form.component.ts
  * @path src/app/public/web-pages/order-form/order-form.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
- * @refactor-note (2026) Route parametr přejmenován z 'leadParam' na 'token' (viz app.routes.ts)
- *      a přestal se parsovat jako "lead_id=123" (odhalovalo to interní DB ID a strukturu -
- *      IDOR riziko). Nově je to čistý neuhodnutelný `public_token` z web_sales_leads.
- *      Komponenta při načtení zavolá GET /public/sales-leads/{token} (WebSalesLeadController::
- *      showByToken), předvyplní kontaktní pole a ošetří tři stavy: platný odkaz, neplatný
- *      odkaz (404) a už jednou použitý odkaz (410 - backend ho po odeslání invaliduje).
- *      Formulář už neposílá `lead_id` - odesílá `lead_token`, ze kterého si lead dohledá
- *      a napojí backend sám (WebSalesOrderController::store), nikdy ne podle klientem
- *      posílaného ID.
- * @refactor-note (2026-08) `selectedFile: File | null` (jeden soubor) nahrazeno
- * `selectedFiles: File[]` (max 10, viz StoreWebSalesOrderRequest) - `onFileSelected()`
- * nahrazeno `onFilesChanged()`, napojeno na sdílenou `MultiFileUploadComponent`. FormData
- * teď posílá `attachments[]` (pole) místo `attachment` (jeden soubor).
- * @bugfix-note (2026-08-19) Regex validátoru telefonu `^\+?[0-9]*$` NEPOVOLOVAL mezery,
- * takže i validní formát ve stylu vlastního placeholderu ("+420 123 456 789") padal na
- * chybu - opraveno na `^\+?[0-9 ]*$` (číslice i mezery povoleny, `+` jen na začátku).
- * Stejná oprava provedena i v contact.component.ts, který měl identický regex/stejnou chybu.
+ * @description Public order form - optionally prefilled from a sales lead link (public_token).
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -30,10 +14,10 @@ import { BasePublicComponent } from '../../base-public.component';
 import { MultiFileUploadComponent } from '../../../shared/components/multi-file-upload/multi-file-upload.component';
 import * as Web from '../../../shared/imports/web-providers';
 
-/** Stav ověření odkazu podle public_token - řídí, co komponenta zobrazí. */
+/** State of the link check by public_token - decides what the component shows. */
 type LinkState = 'loading' | 'valid' | 'no-token' | 'invalid' | 'used';
 
-/** Bezpečná podmnožina polí leadu, kterou vrací veřejný showByToken endpoint. */
+/** Safe subset of the lead fields returned by the public showByToken endpoint. */
 interface LeadPrefill {
   id: number;
   subject_name: string | null;
@@ -58,7 +42,7 @@ export class OrderFormComponent extends BasePublicComponent {
 
   orderForm!: FormGroup;
 
-  /** Čistý public_token z URL (/order_form/:token) - nikdy interní DB id. */
+  /** Plain public_token from the URL (/order_form/:token) - never the internal database id. */
   token: string | null = null;
   linkState: LinkState = 'loading';
   leadPrefill: LeadPrefill | null = null;
@@ -68,7 +52,7 @@ export class OrderFormComponent extends BasePublicComponent {
   selectedFiles: File[] = [];
   errorMessage: string | null = null;
 
-  // Hook volaný po základní inicializaci v bázi
+  // Hook called after the base initialization in the base class
   protected override onInit(): void {
     this.initForm();
 
@@ -76,9 +60,9 @@ export class OrderFormComponent extends BasePublicComponent {
     this.token = token;
 
     if (!token) {
-      // Formulář dostupný i bez tokenu (obecná poptávka mimo obchodní proces) -
-      // WebSalesOrderController::store() v takovém případě vytvoří objednávku bez
-      // navázání na lead, přesně jako dřív.
+      // The form works without a token too (general inquiry outside the sales process) -
+      // WebSalesOrderController::store() then creates an order without a link
+      // to a lead.
       this.linkState = 'no-token';
       this.cdr.markForCheck();
       return;
@@ -98,7 +82,7 @@ export class OrderFormComponent extends BasePublicComponent {
           this.cdr.markForCheck();
         },
         error: (err: any) => {
-          // Backend vrací 410 pro už jednou použitý odkaz, 404 pro neplatný/neexistující.
+          // The backend returns 410 for an already used link, 404 for an invalid / unknown one.
           this.linkState = err?.status === 410 ? 'used' : 'invalid';
           this.cdr.markForCheck();
         }
@@ -122,10 +106,6 @@ export class OrderFormComponent extends BasePublicComponent {
     if (!this.t) return '...';
     return this.isLoading ? this.t.buttons.sending : this.t.buttons.send;
   }
-    /**
-   * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
-   * (public strana) - viz stejná poznámka v contact.component.ts.
-   */
   get attachmentUploaderTexts() {
     const s = this.t?.attachment_uploader;
     if (!s) return {};
@@ -143,9 +123,9 @@ export class OrderFormComponent extends BasePublicComponent {
   }
 
   /**
-   * @description Přijímá aktuální seznam souborů z MultiFileUploadComponent. Komponenta
-   * sama hlídá klientský limit (10 souborů / 20 MB / 50 MB celkem) - jde jen o UX
-   * pomůcku, skutečnou hranici vždy vynucuje backend (StoreWebSalesOrderRequest).
+   * @description Takes the current file list from MultiFileUploadComponent. The component guards
+   * the client-side limit (10 files / 20 MB / 50 MB total) itself - only a UX aid, the real limit
+   * is always enforced by the backend (StoreWebSalesOrderRequest).
    */
   onFilesChanged(files: File[]): void {
     this.selectedFiles = files;
@@ -165,9 +145,9 @@ export class OrderFormComponent extends BasePublicComponent {
       }
     });
 
-    // Lead se váže výhradně přes token - backend si podle něj dohledá a ověří
-    // lead sám (viz WebSalesOrderController::store). Posílá se jen když existuje
-    // (formulář může běžet i bez navázání na konkrétní lead).
+    // The lead is linked only through the token - the backend looks up and checks
+    // the lead itself (see WebSalesOrderController::store). Sent only when it exists
+    // (the form can run without a link to a specific lead).
     if (this.token) {
       formData.append('lead_token', this.token);
     }
@@ -188,8 +168,8 @@ export class OrderFormComponent extends BasePublicComponent {
         this.cdr.markForCheck();
       },
       error: (err: any) => {
-        // 410 může přijít i tady, pokud byl token použit souběžně (dvě otevřené karty) -
-        // zobrazíme stejnou hlášku jako při načtení, ať uživatel ví, co se stalo.
+        // 410 can come here too when the token was used concurrently (two open tabs) -
+        // the same message as on load is shown, so the user knows what happened.
         if (err?.status === 410) {
           this.linkState = 'used';
           this.errorMessage = null;

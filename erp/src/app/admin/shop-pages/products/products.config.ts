@@ -1,26 +1,13 @@
 /**
  * @file products.config.ts
  * @path src/app/admin/shop-pages/products/products.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Static-turned-dynamic configuration for shop product management.
- *
- * (Earlier bugfix-note 2026-09-07 for shop permissions granularization is unchanged
- * - see version history.)
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * kompletní přepis na FACTORY FUNKCE. Žádná SQL migrace potřeba - `category_id`/
- * `supplier_id` jsou dynamická data (options: [] doplňuje komponenta po async
- * fetch), `is_active`/`is_featured` jsou booleany (řešeny centrálně přes
- * `shared.yes`/`shared.no`, ne přes tuhle config). `low_stock`/`is_featured`/
- * `is_active` FILTER options (`true`/`false` string hodnoty) jsou canonical -
- * `mapLabeledOptions()`-style přeložené páry.
- *
- * FUNKCIONALITA ZACHOVÁNA BEZE ZMĚNY: pořadí/klíče/permission stringy tlačítek,
- * struktura filtrů (včetně skrytých `type: 'hidden'` sort-only sloupců), struktura
- * formulářových polí - jediná změna je `label`/`header`/`placeholder`/
- * `errorMessage` text, teď za `i18n.getValue()`.
+ * @description Configuration for shop product management: order / keys / permission strings of
+ * the buttons, the filter structure (incl. hidden `type: 'hidden'` sort-only columns) and the
+ * form fields; the `label` / `header` / `placeholder` / `errorMessage` texts come from
+ * `i18n.getValue()`.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -32,7 +19,6 @@ export function createToolbarButtons(i18n: AdminLocalizationService): Core.Butto
     { action: 'toggleFilters', label: i18n.getValue(`${SECTION}.toolbar_filters`), icon: '', class: 'btn-filter', isActive: false },
     { action: 'handleCreateFormOpened', label: i18n.getValue(`${SECTION}.toolbar_create_record`), icon: '', class: 'btn-create', showIf: true, permission: 'shop-products-create' },
     { action: 'exportActiveTable', label: i18n.getValue(`${SECTION}.toolbar_export_data`), icon: '', class: 'btn-export', showIf: true },
-    // @refactor-note (2026-10-23) no 'triggerImport' - the API has no import for this page (open finding #25, the button answered 404).
     { action: 'openGraphBuilder', label: i18n.getValue(`${SECTION}.toolbar_generate_reports`), icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-view-reports' },
     { action: 'toggleTrash', label: i18n.getValue(`${SECTION}.toolbar_show_trash`), icon: '', class: 'btn-trash', permission: 'view-deleted' },
   ];
@@ -49,8 +35,8 @@ export function createProductButtons(i18n: AdminLocalizationService): Core.Table
 }
 
 /**
- * @description `category_id`/`supplier_id` mají `options: []` - komponenta je po
- * async `loadCategories()`/`loadSuppliers()` doplní přes `updateFormFieldsOptions()`.
+ * @description `category_id` / `supplier_id` have `options: []` - the component fills them after
+ * the async `loadCategories()` / `loadSuppliers()` through `updateFormFieldsOptions()`.
  */
 export function createProductFormFields(i18n: AdminLocalizationService): Core.InputDefinition[] {
   return [
@@ -77,10 +63,9 @@ export function createTrashProductColumns(i18n: AdminLocalizationService): Core.
 }
 
 /**
- * @description `category_id`/`supplier_id` mají `options: []` - doplní komponenta
- * (viz `createProductFormFields()` hlavička). Poslední pětice `type: 'hidden'` řádků
- * jsou sort-only sloupce beze změny funkce (FilterFormBuilderComponent je
- * nevykresluje, jen umožňují `canSort`).
+ * @description `category_id` / `supplier_id` have `options: []` - filled by the component (see
+ * the `createProductFormFields()` header). The last five `type: 'hidden'` rows are sort-only
+ * columns (FilterFormBuilderComponent does not render them, they only enable `canSort`).
  */
 export function createFilterColumns(i18n: AdminLocalizationService): Core.FilterColumns[] {
   return [

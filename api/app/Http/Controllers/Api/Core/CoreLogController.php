@@ -2,24 +2,12 @@
 /**
  * @file CoreLogController.php
  * @path app/Http/Controllers/Api/Core/CoreLogController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Read/write access to the system-wide audit log (core_logs) - authentication
  * events, user/role/permission management, legal document changes, core site settings.
  * Structurally mirrors WebLogController / ShopLogController.
- *
- * @bugfix-note (2026-08-15) KRITICKÁ OPRAVA FILTRŮ: `index()` zpracovával jen
- * `event_type`/`module` (přesná shoda) a `search` (LIKE jen na `description`). Frontend
- * (core-pages/logs.config.ts FILTER_COLUMNS) ale nabízí i `id`, `user_plain` a `origin` -
- * tyhle tři se nikde nezpracovávaly. Stejná díra byla nalezena a opravena souběžně u
- * WebLogController a ShopLogController (identická šablona, viz jejich bugfix-notes
- * stejné datum). Doplněno `id` (přesná shoda) a `user_plain`/`origin` (LIKE).
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -42,19 +30,8 @@ class CoreLogController extends Controller
      * @return JsonResponse
      */
 /**
-     * @bugfix-note (2026-08-25) BACKLOG "hledat napříč vším": `search` param TADY UŽ
-     * EXISTOVAL, ale hledal VÝHRADNĚ v `description` - přejmenováno na skutečně
-     * GLOBÁLNÍ search napříč VŠEMI textovými sloupci, které tahle metoda už dřív
-     * filtrovala jednotlivě (`event_type`, `module`, `user_plain`, `origin`,
-     * `description`). `id` záměrně VYNECHÁN ze search - je to numerický přesný
-     * identifikátor (viz komentář "Přesná shoda" u samostatného `id` filtru výše), ne
-     * fulltextové pole; kdo hledá podle ID, použije dedikované pole `id`, ne globální
-     * search.
-     *
-     * Obalené `where(function ($q) { ... })` - stejný vzor jako u ostatních kontrolerů
-     * (viz CoreExternalLinkController) - i když tenhle konkrétní endpoint nemá žádný
-     * vlastnický/scope filtr, který by mohl OR nechtěně "prorazit", je to konzistentní
-     * a odolné vůči budoucímu přidání dalšího `where()` podmínky nad rámec search.
+     * @note `search` is wrapped in its own `where(function ($q) { ... })` like in the other
+     * controllers, so a future scope condition cannot be bypassed by the OR.
      */
     public function index(Request $request): JsonResponse
     {
@@ -62,7 +39,7 @@ class CoreLogController extends Controller
 
         $query = CoreLog::query();
 
-        // Přesná shoda - ID je číselný identifikátor.
+        // Exact match - the ID is numeric.
         if ($request->filled('id')) {
             $query->where('id', $request->input('id'));
         }
@@ -75,7 +52,7 @@ class CoreLogController extends Controller
             $query->where('module', $request->module);
         }
 
-        // Částečná shoda - uživatel typicky zná jen část e-mailu.
+        // Partial match - users usually know only a part of the e-mail.
         if ($request->filled('user_plain')) {
             $query->where('user_plain', 'like', '%' . $request->input('user_plain') . '%');
         }
@@ -84,9 +61,7 @@ class CoreLogController extends Controller
             $query->where('origin', 'like', '%' . $request->input('origin') . '%');
         }
 
-        // Globální fulltextový search napříč VŠEMI relevantními textovými sloupci -
-        // viz bugfix-note výše. Nezávislý na jednotlivých sloupcových filtrech nad ním
-        // (AND, ne náhrada).
+        // Full-text search over the text columns; narrows together with the column filters (AND).
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('event_type', 'like', "%{$search}%")

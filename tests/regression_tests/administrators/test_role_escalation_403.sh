@@ -2,8 +2,8 @@
 #
 # @file test_role_escalation_403.sh
 # @path tests/regression_tests/administrators/test_role_escalation_403.sh
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Manual security check: verifies that the API itself (not only the role select in
 # the Angular form) refuses to create an account with a role that holds more permissions than

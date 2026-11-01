@@ -3,8 +3,8 @@
 /**
  * @file SupplierTest.php
  * @path api/tests/Feature/Shop/SupplierTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the suppliers (ShopSupplierController): list with filters,
  *   create / edit with validation, delete / bulk delete / restore / trash and the import

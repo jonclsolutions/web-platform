@@ -2,18 +2,11 @@
 /**
  * @file CheckWebActive.php
  * @path app/Http/Middleware/CheckWebActive.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Middleware that enforces public-web availability by verifying the
  * `is_web_active` flag on the web-owned settings table.
- *
- * @refactor-note (2026-08-15) Renamed from `CheckCoreWebActive` and repointed from
- * `App\Models\Core\CoreSiteSetting` to `App\Models\Web\WebSiteSetting`, following the
- * move of web maintenance data out of the (now-deleted) Core domain into Web. The
- * middleware alias itself (`web.active`, registered in bootstrap/app.php) is unchanged -
- * only the class it points to. Cache key (`site_setting_active_web`) unchanged, so any
- * existing cached row is transparently replaced by the model's next `firstOrCreate()`.
  */
 
 namespace App\Http\Middleware;

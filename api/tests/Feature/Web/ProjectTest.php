@@ -3,8 +3,8 @@
 /**
  * @file ProjectTest.php
  * @path api/tests/Feature/Web/ProjectTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the customer projects administration (WebProjectController):
  *   list, create (access token + one-time password), edit, delete (permanent = sessions,

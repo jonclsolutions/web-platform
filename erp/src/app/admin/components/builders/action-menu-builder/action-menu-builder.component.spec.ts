@@ -1,8 +1,8 @@
 /**
  * @file action-menu-builder.component.spec.ts
  * @path src/app/admin/components/builders/action-menu-builder/action-menu-builder.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ActionMenuBuilderComponent – the "⋯ Actions" dropdown of the admin
  *   toolbars (open/close, outside click, action emit, position inside the viewport).

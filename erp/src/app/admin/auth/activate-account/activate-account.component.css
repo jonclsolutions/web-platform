@@ -1,8 +1,8 @@
 /*
     @file: activate-account.component.css
     @path: src/app/admin/auth/activate-account/activate-account.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description: "Set password & activate account" page opened from the activation
         e-mail. Visually 1:1 with reset-password.component.css (same tokens and classes)
@@ -15,7 +15,6 @@
     @note: The only addition over reset-password.component.css is `.header-icon--loading`
         (rotating icon for the "Verifying link..." state) - the token is checked on page
         entry here, whereas the reset page validates it only on submit. Keep both in sync.
-    @refactor-note (2026-10-01) Replaced the blue palette with the admin palette.
 */
 
 /*

@@ -1,8 +1,8 @@
 /**
  * @file welcome-page.component.spec.ts
  * @path src/app/admin/core-pages/welcome-page/welcome-page.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of WelcomePageComponent – the core welcome page: loads the logged-in
  *   user's profile, greets by name (fallback e-mail / default), formats dates in the admin locale.

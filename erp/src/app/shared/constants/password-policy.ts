@@ -1,35 +1,19 @@
 /**
  * @file password-policy.ts
  * @path src/app/shared/constants/password-policy.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Jediný zdroj pravdy pro pravidla hesla napříč celou aplikací (admin
- * vytvoření uživatele, admin reset cizího hesla, self-service změna v personal-info,
- * veřejný "zapomenuté heslo" flow). Backend (Laravel `Password` rule) implementuje
- * stejnou politiku nezávisle, ale se stejnými čísly - viz odpovídající FormRequest třídy.
+ * @description Single source of truth of the password rules across the whole application (admin
+ * user creation, admin reset of another user's password, self-service change in personal-info,
+ * the public "forgotten password" flow). The backend (Laravel `Password` rule) implements the
+ * same policy independently with the same numbers - see the matching FormRequest classes.
  *
- * @note `PASSWORD_SPECIAL_CHARS` je čistý řetězec povolených znaků (ne regex) - test na
- * "obsahuje speciální znak" se dělá přes `.includes()`, ne regexem, aby se předešlo
- * chybám s escapováním uvnitř znakové třídy. `PASSWORD_PATTERN` (regex string pro HTML
- * `pattern` atribut / Angular PatternValidator) se z něj odvozuje automaticky přes
- * `escapeForRegexClass()`, takže existuje jen jedno místo, kde se sada znaků definuje.
- *
- * @refactor-note (2026-10-09) i18n: every requirement carries `labelKey` (admin i18n
- * section `password-policy`), translated by PasswordRequirementsChecklistComponent. The
- * `{min}` / `{max}` placeholders are filled from the length constants, so the numbers stay
- * defined only here. The hardcoded Czech `label` and `PASSWORD_ERROR_MESSAGE` were removed
- * (no callers left); use `labelKey` and `getPasswordErrorMessage()`.
- *
- * @bugfix-note (2026-10-23) Open finding #37 - there were TWO rule sets: this file checked ASCII
- *   letters, a fixed list of special characters and the UTF-16 length (`PASSWORD_PATTERN`,
- *   compiled by Angular WITHOUT the `u` flag), `utils/password-validation.ts` the Unicode rules of
- *   the Laravel `Password` rule. Activation, personal info, administrators and the checklist
- *   refused passwords the API accepts (`§`, `€`, `ž`-only letters, …). Now ONE rule set
- *   (`PASSWORD_RULE_CHECKS`, Unicode like Laravel `letters()->numbers()->symbols()`, length in code
- *   points like `mb_strlen`) used everywhere; forms validate with `passwordPolicyValidator()` /
- *   the `appPasswordPolicy` directive instead of a string pattern. `PASSWORD_PATTERN` and
- *   `PASSWORD_SPECIAL_CHARS` were removed.
+ * @note `PASSWORD_SPECIAL_CHARS` is a plain string of allowed characters (not a regex) - the
+ * "contains a special character" test uses `.includes()`, not a regex, to avoid escaping errors
+ * inside a character class. `PASSWORD_PATTERN` (regex string for the HTML `pattern` attribute /
+ * Angular PatternValidator) is derived from it through `escapeForRegexClass()`, so the
+ * character set is defined in one place only.
  */
 
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
@@ -94,9 +78,9 @@ export function getPasswordErrorMessage(translate: (path: string) => string): st
 }
 
 /**
- * @description Jednotlivé požadavky pro live checklist (viz
- * PasswordRequirementsChecklistComponent) - každý se vyhodnocuje nezávisle na regexu,
- * aby šlo v UI zeleně/šedě odlišit KTERÝ konkrétní požadavek je/není splněný.
+ * @description Single requirements of the live checklist (see
+ * PasswordRequirementsChecklistComponent) - each is evaluated independently of the regex, so
+ * the UI can show WHICH requirement is (not) met.
  */
 export const PASSWORD_REQUIREMENTS: PasswordRequirement[] = [
   { id: 'length',  labelKey: 'password-policy.length',  test: PASSWORD_RULE_CHECKS.length },

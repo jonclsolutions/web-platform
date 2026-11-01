@@ -1,8 +1,8 @@
 /**
  * @file admin-localization.service.ts
  * @path src/app/core/services/admin-localization.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Static (bundled, non-editable-in-admin-UI) multi-language support for the
  * ADMIN interface itself - distinct from `LocalizationService`, which handles the PUBLIC
@@ -81,10 +81,10 @@ export class AdminLocalizationService {
 
   public readonly availableLanguages = ADMIN_AVAILABLE_LANGUAGES;
 /**
- * @description Mapuje interní kód admin jazyka (`cz`/`en`/...) na BCP-47 locale
- * string očekávaný Angular `DatePipe`/`registerLocaleData` (`cs-CZ`/`en-US`/...).
- * Nový jazyk vyžaduje: 1) přidat sem mapování, 2) zaregistrovat jeho locale data
- * v main.ts (`registerLocaleData(localeXx)`), 3) přidat JSON+PNG jako u ostatních.
+ * @description Maps the internal admin language code (`cz` / `en` / ...) to the BCP-47 locale
+ * string expected by Angular `DatePipe` / `registerLocaleData` (`cs-CZ` / `en-US` / ...). A new
+ * language needs: 1) a mapping here, 2) its locale data registered in main.ts
+ * (`registerLocaleData(localeXx)`), 3) JSON + PNG like the other languages.
  */
 private readonly DATE_LOCALE_MAP: Record<string, string> = {
   cz: 'cs-CZ',

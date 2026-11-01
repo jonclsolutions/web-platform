@@ -44,7 +44,7 @@ export class FaqComponent extends BasePublicComponent {
     return result;
   }
 
-  // Hook volaný po načtení překladů z báze
+  // Hook called after the translations are loaded by the base class
   protected override onTranslationsLoaded(): void {
     this.setCategory(this.activeCategory);
   }

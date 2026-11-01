@@ -1,30 +1,27 @@
 /**
  * @file auth.service.spec.ts
  * @path src/app/core/auth/auth.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Důkladná testovací sada pro AuthService — kritickou část
- * autentizace celé aplikace.
+ * @description Thorough test suite of AuthService - the critical part of the authentication
+ * of the whole application.
  *
- * DŮLEŽITÉ ARCHITEKTONICKÉ ÚSKALÍ, které tyto testy musí respektovat:
+ * @note Architectural pitfalls these tests must respect:
  *
- * 1) Konstruktor SYNCHRONNĚ čte `sessionStorage.getItem('accessToken')` již při
- *    definici `_isLoggedIn` a `_userEmailSubject`, a navíc — pokud token existuje —
- *    rovnou spouští `startTokenRefreshTimer()` a `syncPermissions()`. To znamená,
- *    že testy ověřující chování "bez přihlášení" MUSÍ mít sessionStorage vyčištěný
- *    PŘED zavoláním `TestBed.inject(AuthService)`, a testy ověřující chování
- *    "s existujícím tokenem" musí nastavit sessionStorage TAKÉ před injektováním.
- *    Proto zde service NENÍ vytvářen v globálním `beforeEach`, ale přes pomocnou
- *    funkci `createService()`, volanou uvnitř každého testu AŽ PO přípravě
- *    sessionStorage.
+ * 1) The constructor SYNCHRONOUSLY reads `sessionStorage.getItem('accessToken')` when
+ *    defining `_isLoggedIn` and `_userEmailSubject` and - when a token exists - starts
+ *    `startTokenRefreshTimer()` and `syncPermissions()` at once. Tests of the "logged out"
+ *    behaviour MUST clear sessionStorage BEFORE `TestBed.inject(AuthService)`, and tests of the
+ *    "existing token" behaviour must set sessionStorage before the injection as well. Hence
+ *    the service is NOT created in a global `beforeEach`, but through the helper
+ *    `createService()`, called inside every test AFTER sessionStorage is prepared.
  *
- * 2) `startTokenRefreshTimer()` vytváří nekonečně se opakující `timer(...)` s
- *    periodou 20 minut. V `fakeAsync` testech, které tento timer spustí (ať už
- *    přes konstruktor, `login()`, nebo přímo), je NUTNÉ jej na konci testu
- *    zastavit — jinak Angular nahlásí "periodic timer(s) still in the queue".
- *    Zastavení zajišťuje `service.clearAuthData()` (přes `stopTokenRefreshTimer`
- *    -> `takeUntil`), doplněné pro jistotu o `discardPeriodicTasks()`.
+ * 2) `startTokenRefreshTimer()` creates an endlessly repeating `timer(...)` with a period of
+ *    20 minutes. `fakeAsync` tests that start it (through the constructor, `login()` or
+ *    directly) MUST stop it at the end - otherwise Angular reports "periodic timer(s) still in
+ *    the queue". It is stopped by `service.clearAuthData()` (through `stopTokenRefreshTimer` ->
+ *    `takeUntil`), plus `discardPeriodicTasks()` to be safe.
  */
 
 import { TestBed } from '@angular/core/testing';
@@ -47,7 +44,7 @@ describe('AuthService', () => {
   };
   const baseUrl = environment.base_api_url;
 
-  /** Vytvoří instanci AŽ TEĎ — voláno uvnitř testu, po přípravě sessionStorage. */
+  /** Creates the instance only NOW - called inside a test, after sessionStorage is prepared. */
   function createService(): void {
     service = TestBed.inject(AuthService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -76,7 +73,7 @@ describe('AuthService', () => {
   });
 
   // ---------------------------------------------------------------------
-  // Konstruktor — inicializace stavu ze sessionStorage
+  // Constructor - state initialization from sessionStorage
   // ---------------------------------------------------------------------
   describe('konstruktor — inicializace stavu', () => {
     it('isLoggedIn$ by mělo být false, pokud v sessionStorage není accessToken', () => {
@@ -93,7 +90,7 @@ describe('AuthService', () => {
       service.isLoggedIn$.subscribe(v => (loggedIn = v));
       expect(loggedIn).toBeTrue();
 
-      service.clearAuthData(); // úklid spuštěného refresh timeru
+      service.clearAuthData(); // clean up the started refresh timer
     });
 
     it('userEmail$ by mělo být inicializováno hodnotou z sessionStorage', () => {
@@ -262,7 +259,7 @@ describe('AuthService', () => {
     });
 
     it('by mělo aktualizovat userEmail$ a isLoggedIn$ po úspěšném přihlášení', () => {
-      let email: string | null = null; // Změna: přidáno = null
+      let email: string | null = null;
       let loggedIn = false;
       service.userEmail$.subscribe(v => (email = v));
       service.isLoggedIn$.subscribe(v => (loggedIn = v));
@@ -271,7 +268,7 @@ describe('AuthService', () => {
       const req = httpMock.expectOne(`${baseUrl}/login`);
       req.flush({ data: { token: 't', refreshToken: 'r', user: { id: 1, user_email: 'new@rpsw.cz' } } });
 
-      expect(email!).toBe('new@rpsw.cz'); // Přidán vykřičník (!) pro potlačení chyby
+      expect(email!).toBe('new@rpsw.cz');
       expect(loggedIn).toBeTrue();
     });
 
@@ -326,7 +323,7 @@ describe('AuthService', () => {
       service.checkAuth().subscribe(v => (result = v));
       expect(result).toBeTrue();
 
-      service.clearAuthData(); // úklid timeru spuštěného konstruktorem
+      service.clearAuthData(); // clean up the timer started by the constructor
     });
 
     it('by mělo přepnout isLoggedIn$ z true na false, pokud accessToken mezitím zmizí', () => {
@@ -436,14 +433,14 @@ describe('AuthService', () => {
   });
 
   describe('clearAuthData — zastavení refresh timeru (samostatná instance, bez sdíleného beforeEach)', () => {
-    // POZOR: tento test záměrně NEPOUŽÍVÁ vnořený `beforeEach(() => createService())` výše,
-    // protože `TestBed.inject(AuthService)` vrací uvnitř jednoho testu VŽDY stejnou (již
-    // vytvořenou) instanci — druhé volání by nezpůsobilo opětovné proběhnutí konstruktoru.
-    // Instanci proto vytváříme přesně jednou, až POTÉ, co je v sessionStorage token.
+    // NOTE: this test deliberately does NOT use the nested `beforeEach(() => createService())` above,
+    // because inside one test `TestBed.inject(AuthService)` ALWAYS returns the same (already
+    // created) instance - a second call would not run the constructor again.
+    // So the instance is created exactly once, AFTER the token is in sessionStorage.
     it('by mělo zastavit refresh timer spuštěný konstruktorem (žádné další HTTP volání po uplynutí intervalu)', fakeAsync(() => {
       sessionStorage.setItem('accessToken', 'tok');
       sessionStorage.setItem('refreshToken', 'reftok');
-      createService(); // konstruktor nyní spustí refresh timer
+      createService(); // the constructor now starts the refresh timer
 
       service.clearAuthData();
       tick(20 * 60 * 1000);
@@ -454,7 +451,7 @@ describe('AuthService', () => {
   });
 
   // ---------------------------------------------------------------------
-  // Gettery a settery
+  // Getters and setters
   // ---------------------------------------------------------------------
   describe('gettery a settery', () => {
     beforeEach(() => createService());
@@ -558,7 +555,7 @@ describe('AuthService', () => {
   });
 
   // ---------------------------------------------------------------------
-  // Error mapping + 2FA / password reset (bugfix-note 2026-10-23: no hardcoded texts)
+  // Error mapping + 2FA / password reset
   // ---------------------------------------------------------------------
   describe('error mapping and 2FA / password reset', () => {
     /**

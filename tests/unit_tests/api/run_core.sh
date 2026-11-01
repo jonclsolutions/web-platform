@@ -2,8 +2,8 @@
 #
 # @file run_core.sh
 # @path tests/unit_tests/api/run_core.sh
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Runs the api (Laravel / PHPUnit) tests: suite Core (core administration + authentication) - tests/Unit/Core and tests/Feature/Core.
 #   Measures code coverage of the Core section files (lines + methods,

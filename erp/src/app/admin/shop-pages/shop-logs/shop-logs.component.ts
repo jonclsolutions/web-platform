@@ -1,18 +1,14 @@
 /**
  * @file shop-logs.component.ts
  * @path src/app/admin/shop-pages/shop-logs/shop-logs.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages the display, filtering, and detailed inspection of system logs related to shop activities.
  * @dependencies
  * - BaseDataComponent: Provides the base logic for data fetching, pagination, and state management.
  * - TableBuilderComponent: Used for rendering the data grid and supporting CSV exports.
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the administrative dashboard.
- * @refactor-note (2026-10-23) Localized (open finding #16): texts from the admin translation
- *   section `shop-logs` (`Config.create*()` factories rebuilt on every language change,
- *   `takeUntilDestroyed()`). The no-op `buttons.filter(create / edit)` was removed (the log only
- *   has the details button).
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -98,8 +94,6 @@ export class ShopLogsComponent extends BaseDataComponent<any> implements Core.On
           updatedBtn.label = this.isFilterVisible ? this.t('toolbar_hide_filters') : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
-        // @refactor-note (2026-10-22) The log is read-only without a trash view (toolbar: filters,
-        // reports, export) – the unreachable create / import / trash cases were removed.
       }
 
       return updatedBtn;

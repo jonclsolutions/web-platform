@@ -1,16 +1,10 @@
 /**
  * @file shop-maintenance.component.ts
  * @path src/app/public/shop-pages/shop-maintenance/shop-maintenance.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @refactor-note (2026-08) Vylepšený vzhled - `loadSiteSettings = true` přidáno, ať
- * komponenta dostane `this.settings`/`this.socialLinks` ze stejné cache jako
- * PublicFooterComponent (žádné nové HTTP volání, jen čtení z BasePublicComponent). Nová
- * šablona zobrazuje sociální ikony a kontaktní údaje (e-mail, telefon), ať návštěvník má
- * i během údržby jak se spojit s firmou.
- * @refactor-note (2026-10-21) Lokalizace 1:1 jako web: `translationModule = 'shop'`, texty ze sekce
- *   `shop_maintenance` v `translations/shop/{lang}.json`.
+ * @description Maintenance page shown while the e-shop is switched off.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';

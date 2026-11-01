@@ -2,8 +2,8 @@
 /**
  * @file ShopOrderItemResource.php
  * @path app/Http/Resources/Shop/ShopOrderItemResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Resource transformation for individual order line items.
  */

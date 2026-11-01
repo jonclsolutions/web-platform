@@ -2,32 +2,11 @@
 /**
  * @file AuthController.php
  * @path app/Http/Controllers/Api/AuthController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Manages user authentication, token-based session lifecycle (Access/Refresh
  * tokens), CAPTCHA-gated brute-force protection, and mandatory/optional 2FA verification.
- * @refactor-note (2026-10-23) Open finding #52: the audit log descriptions (core_logs) were Czech
- *   while every other module logs in English - the log is read in the admin in any language and
- *   searched / exported as one dataset. The descriptions are English now; event types are unchanged.
- * @refactor-note (2026-10-09) SECURITY: login and token refresh refuse an account whose
- * e-mail is no longer allowed by the e-mail access policy (no role exempt since 2026-10-24). Checked only
- * after the password matched, with a generic message that reveals nothing about the
- * allowed domains - see `emailPolicyAllowsLogin()`.
- * @bugfix-note (2026-10-24) SECURITY: the sysadmin role was EXEMPT from the e-mail access
- *   policy ("must never lock itself out"). Removing a domain / exception therefore cut off
- *   every regular account of it but left the most privileged accounts of that domain working
- *   - a former partner's or a private-mailbox sysadmin stayed a way in although the policy
- *   said "no longer allowed". The policy now applies to every role, also in the 2FA step
- *   (the policy may change between the password and the code). The lock-out risk is handled
- *   where it arises: CoreEmailAccessPolicyController refuses a change that would exclude the
- *   acting sysadmin, and `php artisan security:email-policy-allow` restores access from the
- *   server.
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
- * @bugfix-note (2026-10-26) The login looks the account up by the normalized e-mail
- *   (User::normalizeEmail() - trim incl. invisible characters, lower case), the same form the
- *   column is stored in.
  */
 
 namespace App\Http\Controllers\Api;
@@ -54,10 +33,10 @@ class AuthController extends Controller
 {
     use LogsActivity;
 
-    /** Práh počtu neúspěšných pokusů (per e-mail), od kterého se vyžaduje captcha. */
+    /** Failed attempts (per e-mail) after which the captcha is required. */
     private const CAPTCHA_THRESHOLD = 3;
 
-    /** Okno pro počítání neúspěšných pokusů per e-mail (sekundy). */
+    /** Window for counting failed attempts per e-mail (seconds). */
     private const FAILED_ATTEMPTS_DECAY_SECONDS = 900; // 15 min
 
     /**
@@ -71,15 +50,10 @@ class AuthController extends Controller
     ) {}
 
     /**
-     * @description Krok 1 loginu: ověří heslo (+ captcha od 3. neúspěšného pokusu).
-     * PŘED ověřením hesla zamítne zablokované a dosud neaktivované účty (viz
-     * refactor-note v hlavičce souboru). Pokud uživatel vyžaduje 2FA, NEVYDÁ tokeny,
-     * ale založí pending-login session a pošle OTP e-mailem. Jinak přihlásí rovnou
-     * (stávající chování).
-     * @refactor-note (2026-10-09) SECURITY: an account whose e-mail is no longer allowed
-     * by the e-mail access policy cannot log in (403; every role since 2026-10-24). Checked only
-     * AFTER the password matched and with a generic message, so the endpoint cannot be
-     * used to probe which domains are allowed - see `emailPolicyAllowsLogin()`.
+     * @description Login step 1: checks the password (+ captcha from the 3rd failed attempt).
+     * Blocked and not yet activated accounts are refused BEFORE the password check. When the
+     * user needs 2FA, no tokens are issued: a pending-login session is created and the OTP is
+     * e-mailed. Otherwise the user is logged in directly.
      */
     public function login(Request $request): JsonResponse
     {
@@ -101,7 +75,7 @@ class AuthController extends Controller
             $context = CoreSecurityEvent::contextFromRequest($request, ['email' => $email]);
 
             if (!$this->captcha->verify($captchaToken, $request->ip(), $context)) {
-                // Captcha selhání samo zapisuje CaptchaVerificationService::verify().
+                // A captcha failure is recorded by CaptchaVerificationService::verify() itself.
                 $this->logAction($request, CoreLog::class, 'login_captcha_failed', 'Auth', "Invalid or missing captcha for: {$email}", null, 'User');
 
                 return response()->json([
@@ -112,9 +86,9 @@ class AuthController extends Controller
         }
 
 
-        // ── Blokace / neaktivovaný účet - MUSÍ se ověřit PŘED Auth::attempt() ──────────
-        // (viz refactor-note v hlavičce souboru - Auth::attempt by s NULL heslem mohlo
-        // spadnout do Hash::check() s neplatným argumentem místo hezké JSON odpovědi).
+        // ── Blocked / not activated account - MUST be checked BEFORE Auth::attempt() ──────────
+        // (an account without a password would reach Hash::check() with an invalid argument
+        // instead of a clean JSON answer).
         $targetUser = User::where('user_email', $email)->first();
 
         if ($targetUser) {
@@ -141,7 +115,7 @@ class AuthController extends Controller
             /** @var User $user */
             $user = Auth::user();
 
-            // Přihlašovací pokus byl úspěšný - vyčistit počítadlo neúspěchů pro tento e-mail.
+            // Successful attempt - reset the failure counter of this e-mail.
             RateLimiter::clear($failedAttemptsKey);
 
             $user->load('roles.permissions');
@@ -168,16 +142,16 @@ class AuthController extends Controller
             return $this->issueTokens($request, $user);
         }
 
-        // Špatné heslo - zvýšit počítadlo, ihned odhlásit případnou částečnou auth session.
+        // Wrong password - increase the counter, log out any partial auth session.
         RateLimiter::hit($failedAttemptsKey, self::FAILED_ATTEMPTS_DECAY_SECONDS);
         $attemptsAfter = RateLimiter::attempts($failedAttemptsKey);
 
         $securityContext = CoreSecurityEvent::contextFromRequest($request, ['email' => $email]);
         CoreSecurityEvent::record('login_failed', 'warning', $request->ip(), $securityContext);
 
-        // Práh pro captchu byl PRÁVĚ TEĎ (tímto pokusem) poprvé překročen - signalizuje
-        // reálné brute-force podezření, ne jen jeden překlep v heslu. Zaznamenáno jako
-        // 'critical', aby se v adminu odlišilo od běžných jednotlivých login_failed.
+        // The captcha threshold was crossed right NOW (by this attempt) - a real brute-force
+        // suspicion, not a single typo. Recorded as 'critical' to stand out from ordinary
+        // login_failed events in the admin.
         if ($attemptsBefore < self::CAPTCHA_THRESHOLD && $attemptsAfter >= self::CAPTCHA_THRESHOLD) {
             CoreSecurityEvent::record('login_brute_force_suspected', 'critical', $request->ip(), $securityContext);
         }
@@ -211,14 +185,14 @@ class AuthController extends Controller
     }
 
     /**
-     * @description Založí pending-login 2FA session: vygeneruje 6místný kód, uloží jeho
-     * SHA-256 hash (nikdy raw), a odešle ho e-mailem (queued). Vrátí klientovi opaque
-     * `login_token` (raw, jeho hash jde do DB), který se použije ve verifyTwoFactor/resendTwoFactor.
+     * @description Creates a pending-login 2FA session: a 6-digit code, stored as a SHA-256 hash
+     * (never raw), sent by e-mail (queued). Returns an opaque `login_token` (raw to the client,
+     * its hash in the database) for verifyTwoFactor / resendTwoFactor.
      */
     private function beginTwoFactorChallenge(Request $request, User $user): JsonResponse
     {
-        // Předchozí nedokončené pending-login session tohoto uživatele zneplatnit -
-        // platí jen ta nejnovější (stejný princip jako u password reset tokenů).
+        // Invalidate earlier unfinished pending-login sessions of this user - only the newest
+        // is valid (same principle as password reset tokens).
         TwoFactorCode::where('user_id', $user->id)->whereNull('used_at')->delete();
 
         $rawLoginToken = Str::random(64);
@@ -249,8 +223,8 @@ class AuthController extends Controller
     }
 
     /**
-     * @description Krok 2 loginu (jen pro uživatele s vynucenou 2FA): ověří OTP kód a
-     * teprve poté vydá access/refresh tokeny.
+     * @description Login step 2 (users with forced 2FA): checks the OTP code and only then issues
+     * the access / refresh tokens.
      */
     public function verifyTwoFactor(VerifyTwoFactorRequest $request): JsonResponse
     {
@@ -260,11 +234,10 @@ class AuthController extends Controller
         $pending = TwoFactorCode::where('login_token_hash', $tokenHash)->first();
 
         if (!$pending || !$pending->isValid()) {
-            // Neplatná/expirovaná/vyčerpaná pending-login session - hádání login_token
-            // by (na rozdíl od hádání 6místného OTP kódu, což už hlásí login_2fa_invalid)
-            // znamenalo přeskočení ověření hesla úplně. Severity 'info' - běžně jde o
-            // legitimně vypršelou session (uživatel neklikl včas), ne o útok; opakovaný
-            // vysoký objem ze stejné IP je i tak vidět přes occurrences.
+            // Invalid / expired / exhausted pending-login session. Guessing the login_token would
+            // (unlike guessing the 6-digit OTP, reported as login_2fa_invalid) mean skipping the
+            // password check entirely. Severity 'info' - usually a legitimately expired session;
+            // a high volume from one IP still shows through occurrences.
             CoreSecurityEvent::record(
                 'login_2fa_session_invalid',
                 'info',
@@ -303,9 +276,8 @@ class AuthController extends Controller
             return response()->json(['message' => 'Account not found.'], 401);
         }
 
-        // Dodatečná pojistka: kdyby byl účet zablokován MEZI odesláním OTP kódu a jeho
-        // ověřením (admin zasáhl uprostřed pending-login session), tokeny se přesto
-        // nesmí vydat.
+        // Extra safeguard: when the account was blocked BETWEEN sending the OTP and its check
+        // (an admin acted during the pending login), the tokens must not be issued.
         if ($user->is_blocked) {
             $pending->delete();
             return response()->json(['message' => 'This account has been blocked. Please contact the administrator.'], 403);
@@ -331,9 +303,9 @@ class AuthController extends Controller
     }
 
     /**
-     * @description Znovu odešle OTP kód pro existující pending-login session. Chráněno
-     * cooldownem (60s) a tvrdým stropem počtu resendů na session - viz TwoFactorCode
-     * konstanty. Route navíc nese throttle limiter 'login-2fa-resend' (viz AppServiceProvider).
+     * @description Sends the OTP code again for an existing pending-login session. Protected by a
+     * 60 s cooldown and a hard cap of resends per session (TwoFactorCode constants) and the
+     * 'login-2fa-resend' rate limiter of the route (AppServiceProvider).
      */
     public function resendTwoFactor(ResendTwoFactorRequest $request): JsonResponse
     {
@@ -341,9 +313,8 @@ class AuthController extends Controller
         $pending = TwoFactorCode::where('login_token_hash', $tokenHash)->first();
 
         if (!$pending || is_null($pending->expires_at) || $pending->used_at) {
-            // Stejný event_type jako ve verifyTwoFactor() - obě metody řeší tentýž
-            // scénář (neplatný/expirovaný/použitý login_token), jen na jiném kroku
-            // 2FA flow (žádost o nový kód vs. ověření kódu).
+            // Same event_type as in verifyTwoFactor() - the same situation (invalid / expired / used
+            // login_token), only in another step of the 2FA flow.
             CoreSecurityEvent::record(
                 'login_2fa_session_invalid',
                 'info',
@@ -388,7 +359,7 @@ class AuthController extends Controller
         $pending->expires_at = now()->addMinutes(TwoFactorCode::CODE_TTL_MINUTES);
         $pending->last_sent_at = now();
         $pending->resend_count += 1;
-        $pending->attempts = 0; // nový kód = reset pokusů na uhodnutí
+        $pending->attempts = 0; // New code = attempts reset.
         $pending->save();
 
         Mail::to($user->user_email)->send(
@@ -403,8 +374,8 @@ class AuthController extends Controller
     }
 
     /**
-     * @description Vydá access + refresh token přihlášenému uživateli. Sdíleno mezi
-     * přímým loginem (bez 2FA) a dokončením 2FA verifikace.
+     * @description Issues the access + refresh token to the authenticated user. Shared by the
+     * direct login (no 2FA) and the finished 2FA verification.
      */
     private function issueTokens(Request $request, User $user): JsonResponse
     {
@@ -433,13 +404,8 @@ class AuthController extends Controller
 
     /**
      * @description Refreshes the access token using a valid refresh token.
-     * @note Dodatečná kontrola `is_blocked` - pokud byl účet zablokován MEZI vydáním
-     * refresh tokenu a jeho použitím (`update()` mezitím smazal Sanctum access tokeny,
-     * ale samotný refresh token flow jde jinou cestou), nesmí se vydat nový access token.
-     * @refactor-note (2026-10-09) SECURITY: the e-mail access policy is checked here as
-     * well (same rule and message as `login()`), otherwise a session opened before the
-     * policy changed would stay alive for up to 7 days through refreshes. All of the
-     * account's tokens are revoked when it fails.
+     * @note Checks `is_blocked` again: an account blocked between issuing the refresh token and
+     * using it must not get a new access token.
      */
     public function refresh(Request $request): JsonResponse
     {
@@ -455,9 +421,9 @@ class AuthController extends Controller
                                      ->first();
 
         if (!$dbRefreshToken || !$dbRefreshToken->user) {
-            // 'info', ne 'warning' - vypršelý refresh token je běžný legitimní jev
-            // (uživatel se dlouho nepřihlásil), ne sám o sobě signál útoku. Opakovaný
-            // vysoký objem ze stejné IP je i tak vidět přes `occurrences` v adminu.
+            // 'info', not 'warning' - an expired refresh token is normal (the user was away for a long
+            // time), not a sign of an attack. A high volume from one IP still shows through
+            // `occurrences` in the admin.
             CoreSecurityEvent::record(
                 'refresh_token_invalid',
                 'info',
@@ -481,7 +447,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'This account has been blocked. Please contact the administrator.'], 403);
         }
 
-        // E-mail access policy - see @refactor-note above.
+        // E-mail access policy.
         if (!$this->emailPolicyAllowsLogin($user)) {
             $dbRefreshToken->delete();
             $user->tokens()->delete();
@@ -515,8 +481,6 @@ class AuthController extends Controller
     /**
      * @description Whether the account may log in under the e-mail access policy
      * (`CoreEmailAccessRule::isEmailAllowed()`) - the same rule for EVERY role.
-     * @bugfix-note (2026-10-24) SECURITY: sysadmin accounts were exempt here - see the file
-     *   header. No role is exempt any more; the lock-out protection is in the policy editor.
      * @param User $user The account that has just proved its credentials (or refresh token / 2FA code).
      * @return bool True when the login may continue.
      */
@@ -526,8 +490,7 @@ class AuthController extends Controller
     }
 
     /**
-     * @description Revokes user access and refresh tokens.
-     * @note Beze změny oproti předchozí verzi.
+     * @description Revokes the access and refresh tokens of the user.
      */
     public function logout(Request $request): JsonResponse
     {

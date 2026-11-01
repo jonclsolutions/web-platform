@@ -1,49 +1,21 @@
 /**
  * @file welcome-page.component.ts
- * @path src/app/admin/web-pages/welcome-page/welcome-page.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @path src/app/admin/core-pages/welcome-page/welcome-page.component.ts
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Uvítací stránka po přihlášení - vidí ji každý uživatel s oprávněním
- *              `web-view-welcome-page` (viz routes). Obsahuje jen nesenzitivní údaje
- *              (jméno, e-mail, role, datum vytvoření účtu) a rychlý odkaz na nahlášení
- *              chyby. Citlivé přehledy (počty uživatelů, tickety, systémové logy) zůstávají
- *              výhradně na Dashboardu, chráněném samostatným `web-view-dashboard` oprávněním.
+ * @description Welcome page after login - seen by every user with the `web-view-welcome-page`
+ *              permission (see routes). Holds only non-sensitive data (name, e-mail, role,
+ *              account creation date) and a quick link for reporting a bug. Sensitive
+ *              overviews (user counts, tickets, system logs) stay on the Dashboard only,
+ *              protected by the separate `web-view-dashboard` permission.
  * @dependencies
- * - AuthService: Poskytuje roli/e-mail aktuálně přihlášeného uživatele ze session.
- * - CurrentUserProfileService: TTL-cached čtení vlastního profilu, sdílené s
- *   PersonalInfoComponent - viz refactor-note (2026-08-8) níže.
- * - AdminLocalizationService: Statické i18n admin UI - viz refactor-note (2026-09) níže.
- * @note `dataHandler.get()` se používal záměrně místo `dataHandler.getOne()`, protože
- *       endpoint `core/users/{id}` vrací zdroj NEobalený v `{ data: ... }` (viz
- *       UserController::show()) - stejné chování teď zapouzdřuje `CurrentUserProfileService`.
- * @refactor-note (2026-08-8) Zdroj profilu přepnut z přímého `dataHandler.get('core/users/
- * {id}')` na sdílenou `CurrentUserProfileService` (backlog: "zbytečně moc dotazů na API") -
- * tahle stránka je typický post-login landing point, takže uživatel co odsud pokračuje na
- * "Osobní Informace" (PersonalInfoComponent) dřív vždy vyvolal DRUHÝ nezávislý požadavek
- * na tentýž `core/users/{id}` záznam. Sdílená TTL cache (2 min) tomu předchází. `DataHandler`
- * injekce už tu není potřeba, komponenta ji nikde jinde nepoužívala.
- *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * Komponenta NEdědí BaseDataComponent (samostatná landing page, ne datová stránka
- * s CRUD), proto ruční injection `AdminLocalizationService` dle vzoru
- * `PersonalInfoComponent`/`AdminLayoutComponent`. Nahrazeny VŠECHNY uživatelsky
- * viditelné texty (subtitle, profil labely, chybová hláška, welcome zpráva, footer,
- * "Nahlásit chybu" karta). BUG OPRAVEN SOUČASNĚ: `currentDateTime`/`formatDate()`
- * měly natvrdo `'cs-CZ'` v `toLocaleDateString()`/`toLocaleString()` - datum bylo VŽDY
- * česky bez ohledu na zvolený admin jazyk. Nahrazeno `this.i18n.getDateLocale()`
- * (stejný helper jako u AdminLayoutComponent, viz admin-localization.service.ts
- * refactor-note 2026-09). `helpSection` (NavSection) je teď getter, ne `readonly`
- * pole, protože i18n hodnoty musí být čerstvé při každém přístupu, ne zafixované
- * jednou v okamžiku definice třídy - viz stejný důvod jako gettery v
- * user-request.config.ts.
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `helpSection`, `currentDateTime`.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`):
- *  `dataHandler.get()` returns the payload - no `data ?? response` guessing.
+ * - AuthService: Provides the role / e-mail of the logged-in user from the session.
+ * - CurrentUserProfileService: TTL-cached read of the own profile, shared with
+ *   PersonalInfoComponent.
+ * - AdminLocalizationService: Static i18n of the admin UI.
+ * @note The endpoint `core/users/{id}` returns the resource NOT wrapped in `{ data: ... }` (see
+ *       UserController::show()) - handled by `CurrentUserProfileService`.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
@@ -68,9 +40,6 @@ export class WelcomePageComponent implements OnInit, OnDestroy {
   private profileService = inject(CurrentUserProfileService);
   private cd = inject(ChangeDetectorRef);
 
-  /**
-   * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty".
-   */
   public readonly i18n = inject(AdminLocalizationService);
   public get strings(): any { return this.i18n.getMergedSection('welcome-page'); }
   public t(key: string): string { return this.i18n.getValue(`welcome-page.${key}`); }
@@ -85,9 +54,9 @@ export class WelcomePageComponent implements OnInit, OnDestroy {
   private emailSub?: Subscription;
 
   constructor() {
-    // Po přepnutí admin jazyka donutí komponentu přehodnotit `strings`/`helpSection`/
-    // `currentDateTime` výstup - stejný důvod jako u AdminLayoutComponent, jen řešeno
-    // ručně (tahle komponenta i18n službu nedědí přes BaseDataComponent).
+    // After switching the admin language, forces the component to re-evaluate the `strings` /
+    // `helpSection` / `currentDateTime` output - same reason as in AdminLayoutComponent, done
+    // manually (this component does not get the i18n service through BaseDataComponent).
     this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
   }
 
@@ -103,9 +72,8 @@ export class WelcomePageComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Načte profil aktuálně přihlášeného uživatele (jméno, datum vytvoření
-   * účtu) přes sdílenou TTL-cached `CurrentUserProfileService` (viz refactor-note
-   * v hlavičce souboru).
+   * @description Loads the profile of the logged-in user (name, account creation date) through
+   * the shared TTL-cached `CurrentUserProfileService`.
    */
   private loadUserProfile(): void {
     const userId = this.authService.getUserId();
@@ -133,9 +101,6 @@ export class WelcomePageComponent implements OnInit, OnDestroy {
     return this.t('welcome_message').replace('{name}', name);
   }
 
-  /**
-   * @refactor-note (2026-09) BUGFIX - stejná oprava jako `currentDateTime` výše.
-   */
   formatDate(iso?: string | null): string {
     if (!iso) return this.t('empty_value');
     return new Date(iso).toLocaleString(this.i18n.getDateLocale(), {

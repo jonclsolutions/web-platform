@@ -1,8 +1,8 @@
 /**
  * @file legal-docs.service.spec.ts
  * @path src/app/shared/services/legal-docs.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of LegalDocsService: documents cached per slug + language, a failed
  *   load answers null (not cached) and preload() warms the cache.

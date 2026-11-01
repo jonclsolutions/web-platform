@@ -3,8 +3,8 @@
 /**
  * @file CaptchaVerificationServiceTest.php
  * @path api/tests/Unit/Core/CaptchaVerificationServiceTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the Cloudflare Turnstile verification: empty token, provider
  *   answer (success / rejection) and provider outage (fail closed), with and without a

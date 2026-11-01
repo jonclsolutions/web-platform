@@ -1,8 +1,8 @@
 /**
  * @file knowledge-base.component.spec.ts
  * @path src/app/public/web-pages/knowledge-base/knowledge-base.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the public KnowledgeBaseComponent: initial section from the URL hash, the
  *   scroll-spy (rAF throttled, last section above the 110 px line wins, missing sections skipped)

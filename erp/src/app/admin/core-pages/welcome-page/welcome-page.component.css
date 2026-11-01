@@ -1,12 +1,10 @@
 /*     
     @file: welcome-page.component.css
     @path: /src/app/admin/web-pages/welcome-page/welcome-page.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @redesign: 2026 - stejný vizuální jazyk jako admin-layout/dashboard (Kravio styl):
-               generózní zaoblení (18px), jemné stíny, tmavý akcent (#18181b) místo
-               fialové. Struktura/třídy beze změny, jde jen o barvy a zaoblení.
+    @description: Styles of the welcome page component.
 */
 
 .wp-page {

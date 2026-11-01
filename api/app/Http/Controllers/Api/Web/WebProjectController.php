@@ -2,33 +2,17 @@
 /**
  * @file WebProjectController.php
  * @path app/Http/Controllers/Api/Web/WebProjectController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Admin CRUD for customer projects, plus password regeneration and
  * nested checkpoint management.
- *
- * (Earlier bugfix-note 2026-08-29b for the ['data' => ...] wrapping consistency is
- * unchanged - see version history.)
  *
  * @note SECURITY (consultation note 3): regeneratePassword() invalidates ALL existing
  * customer sessions for the project and returns the new PLAINTEXT password exactly
  * once - it is never recoverable again after this response.
  * @note SECURITY (consultation note 2): checkpoint mutations verify
  * `$checkpoint->project_id === $project->id` explicitly (IDOR guard).
- *
- * @bugfix-note (2026-09-11v7) BACKLOG "smazaný projekt zanechává osiřelá vlákna":
- * `destroy()`/`bulkDestroy()`/`forceDeleteAllTrashed()` nikdy neuklízely navázaná
- * `checkpoints`/`sessions`/`threads` (+ jejich `messages` + přílohy zpráv) při
- * TRVALÉM smazání (`forceDelete()`) - zůstávaly osiřelé v DB a přílohy fyzicky na
- * disku. Nová `cascadeDeleteProjectRelations()` metoda uklízí vše v jednom místě,
- * volaná ze všech tří force-delete cest. SOFT delete (`->delete()`) ZÁMĚRNĚ beze
- * změny - projekt lze obnovit, takže vlákna/checkpointy musí zůstat netknuté.
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -83,10 +67,9 @@ class WebProjectController extends Controller
     }
 
     /**
-     * @description Creates a project - store() itself doesn't care whether it came
-     * from "Založit projekt" (sales order, `order_id` present) or a fully standalone
-     * "Nový projekt" (both fields absent). Generates the permanent access token AND
-     * the initial password in one step, returning the plaintext password exactly once.
+     * @description Creates a project - from a sales order (`order_id` present) or standalone
+     * (both fields absent). Generates the permanent access token AND the initial password in
+     * one step and returns the plaintext password exactly once.
      */
     public function store(StoreWebProjectRequest $request): JsonResponse
     {
@@ -123,9 +106,6 @@ class WebProjectController extends Controller
 
     public function update(UpdateWebProjectRequest $request, $id): JsonResponse
     {
-        // @bugfix-note (2026-10-22) findOrFail() outside the try block (all actions of this
-        // controller): inside it the "not found" exception was caught by `catch (\Exception)`
-        // and answered 500 instead of 404. Found by the unit tests.
         $project = WebProject::findOrFail($id);
 
         try {
@@ -141,11 +121,6 @@ class WebProjectController extends Controller
         }
     }
 
-    /**
-     * @bugfix-note (2026-09-11v7) `forceDelete` větev teď volá
-     * `cascadeDeleteProjectRelations()` PŘED samotným smazáním projektu - viz
-     * hlavička souboru.
-     */
     public function destroy(Request $request, $id): JsonResponse
     {
         $item = WebProject::withTrashed()->findOrFail($id);
@@ -168,10 +143,6 @@ class WebProjectController extends Controller
         }
     }
 
-    /**
-     * @bugfix-note (2026-09-11v7) Stejná cascade cleanup logika jako `destroy()` -
-     * viz hlavička souboru.
-     */
     public function bulkDestroy(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -209,11 +180,6 @@ class WebProjectController extends Controller
         return $this->respond((new WebProjectResource($item))->resolve());
     }
 
-    /**
-     * @bugfix-note (2026-09-11v7) Stejná cascade cleanup logika jako `destroy()` -
-     * viz hlavička souboru. Trash je vždy 100% force-delete, takže cleanup se
-     * volá bezpodmínečně pro každou položku.
-     */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
         $trashed = WebProject::onlyTrashed()->get();

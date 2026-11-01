@@ -1,15 +1,13 @@
 /**
  * @file public-footer.component.spec.ts
  * @path src/app/public/web-pages/components/public-footer/public-footer.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of PublicFooterComponent: link groups (translated titles, no Czech
  *   fallback any more - finding #44), legal and login links, the copyright / tagline per language (localized
  *   setting → plain setting, no translation fallback since 2026-10-31) and rendering without a
  *   contact phone (bugfix 2026-10-23 - the footer is on every web page).
- * @refactor-note (2026-10-31) Optional company details / open finding #64: empty or switched-off
- *   fields (null from the API) render no row; no translation fallback for tagline / copyright.
  * @dependencies
  * - createPublicPageContext (getText resolves the navigation keys).
  */

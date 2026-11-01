@@ -3,11 +3,11 @@
 /**
  * @file PasswordResetToken.php
  * @path app/Models/PasswordResetToken.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Model reprezentující jednorázový token pro reset hesla administrátorského účtu.
- *              V databázi je uložen vždy jen HASH tokenu (nikdy raw hodnota).
+ * @description One-time password reset token of an admin account.
+ *              The database always stores only the HASH of the token (never the raw value).
  */
 
 namespace App\Models;
@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PasswordResetToken extends Model
 {
-    public $timestamps = false; // spravujeme created_at ručně (viz. migrace - useCurrent)
+    public $timestamps = false; // created_at is managed manually (the column uses useCurrent()).
 
     protected $fillable = [
         'user_id',
@@ -36,7 +36,7 @@ class PasswordResetToken extends Model
     }
 
     /**
-     * @description Token je platný, pokud ještě nebyl použit a nevypršela jeho expirace.
+     * @description The token is valid when it was not used and has not expired.
      */
     public function isValid(): bool
     {

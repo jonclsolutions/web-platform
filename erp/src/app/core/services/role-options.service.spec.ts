@@ -1,8 +1,8 @@
 /**
  * @file role-options.service.spec.ts
  * @path src/app/core/services/role-options.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of RoleOptionsService: role list loaded once for 5 minutes,
  *   invalidate() and no caching of a failed load (bugfix 2026-10-23).

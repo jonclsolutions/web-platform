@@ -2,17 +2,10 @@
 /**
  * @file WebProjectResource.php
  * @path app/Http/Resources/Web/WebProjectResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description ADMIN-facing project resource.
- * @bugfix-note (2026-08-29e) BACKLOG "stav projektu se nezobrazuje v tabulce/editu":
- * `status` chyběl v `toArray()` výstupu úplně - hodnota se do DB zapisovala
- * (WebProjectController::store()), ale nikdy se nedostala do JSON odpovědi, kterou
- * čte tabulka i edit formulář. Doplněno vedle `visibility`.
- * @refactor-note (2026-09-11) BACKLOG "project portal - odhad termínu dokončení":
- * `estimated_completion_from`/`estimated_completion_to` doplněny - admin je
- * needituje v jiné formě než přes update() formulář, žádná speciální logika.
  */
 
 namespace App\Http\Resources\Web;

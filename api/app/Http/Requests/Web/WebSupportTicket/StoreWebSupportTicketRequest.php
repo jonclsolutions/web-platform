@@ -2,19 +2,10 @@
 /**
  * @file StoreWebSupportTicketRequest.php
  * @path app/Http/Requests/Web/WebSupportTicket/StoreWebSupportTicketRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation logic for creating new support tickets, including file attachment constraints.
- *
- * @refactor-note (2026-08) `$safeExtensions` drasticky zúžen. Pole je popsané jako
- * "Příloha (Screenshot / Log)" - původní seznam ale povoloval audio (mp3/wav/flac...),
- * video (mp4/mov/mkv...), CAD/design formáty (dwg/stl/psd/ai...) a širokou škálu archivů
- * (rar/7z/tar.gz), což nikdy neodpovídalo účelu pole a umožňovalo nahrát cokoliv (viz
- * incident - reálný .mp3 soubor prošel validací a přehrával se v adminu). Ponechány jen
- * typy relevantní pro screenshoty a textové/log přílohy. SVG záměrně VYLOUČENO - může
- * obsahovat vložený <script> a při přímém otevření (ne přes <img>) jde o stored XSS
- * riziko z nahraného souboru.
  */
 
 namespace App\Http\Requests\Web\WebSupportTicket;
@@ -40,13 +31,13 @@ class StoreWebSupportTicketRequest extends FormRequest
      */
     public function rules(): array
     {
-        // Jen screenshoty a textové/log přílohy - viz @refactor-note výše.
+        // Only screenshots and text / log attachments.
         $safeExtensions = [
-            // Screenshoty
+            // Screenshots
             'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic', 'heif',
-            // Textové logy / exporty
+            // Text logs / exports
             'pdf', 'txt', 'csv', 'doc', 'docx', 'xls', 'xlsx',
-            // Bundling více log souborů
+            // Several log files bundled
             'zip',
         ];
 

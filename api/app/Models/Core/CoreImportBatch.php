@@ -2,14 +2,13 @@
 /**
  * @file CoreImportBatch.php
  * @path app/Models/Core/CoreImportBatch.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Eloquent model pro core_import_batches - audit trail a stav zpracování
- * hromadného importu (synchronního i queue). Odděleno od core_logs (jednořádkový
- * audit záznam) i od core_security_events (diagnostika útoků) - tohle je stavový
- * objekt konkrétní importní operace, na který se dá dotazovat opakovaně (frontend
- * poll u velkých importů běžících na pozadí).
+ * @description Model of core_import_batches - state and audit trail of one bulk import
+ * (synchronous or queued). Separate from core_logs (one audit line) and core_security_events
+ * (attack diagnostics): a state object of one import, polled by the frontend for large imports
+ * running in the background.
  */
 
 namespace App\Models\Core;

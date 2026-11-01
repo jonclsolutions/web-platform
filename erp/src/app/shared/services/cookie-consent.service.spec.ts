@@ -1,8 +1,8 @@
 /**
  * @file cookie-consent.service.spec.ts
  * @path src/app/shared/services/cookie-consent.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of CookieConsentService (GDPR / ePrivacy consent): stored consent is
  *   restored, consent validity (version and 180 day expiry), save / accept all / reject

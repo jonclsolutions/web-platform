@@ -1,8 +1,8 @@
 /**
  * @file paginated-list-store.spec.ts
  * @path src/app/admin/components/base-data/paginated-list-store.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of PaginatedListStore – pagination, trash table and refresh state shared
  *   by every admin table page (used through BaseDataComponent).

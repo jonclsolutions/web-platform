@@ -1,7 +1,7 @@
 /**
  * @file base-public.component.ts
  * @path src/app/public/base-public.component.ts
- * @project RPSW Web
+ * @project JS web-platform
  * @description Abstract base for all public-facing components.
  *   Handles translation subscription, optional site-settings loading,
  *   destroy$ cleanup, and getIconUrl — so subclasses only declare
@@ -24,24 +24,6 @@
  * @note Components that already extend BaseDataComponent (e.g. JobItemComponent)
  *   cannot use this class due to single-inheritance. They must manage
  *   translations manually as before.
- *
- * @fix (EMERGENCY) Site settings now read from PublicDataService.siteSettingsValue$
- *   (the cache populated once by AppBootstrapService at startup) instead of firing
- *   a duplicate HTTP request here. IMPORTANT: the cache holds the FULL response
- *   shape { settings, social_links } — not just the settings sub-object — so both
- *   `settings` and `socialLinks` are unwrapped from it below. Previously,
- *   AppBootstrapService cached only `data.settings`, which silently dropped
- *   `social_links` for every component reading from cache (footer, about-us,
- *   contact, faq, etc.). That has been fixed in AppBootstrapService itself;
- *   this file now matches that corrected shape.
- *
- * @refactor-note (2026-10-21) Added `translationModule` ('web' default, 'shop' for the
- *   e-shop pages). `ngOnInit()` switches LocalizationService to it before subscribing, so
- *   a page always reads its own module's JSON regardless of where the user came from
- *   (web -> shop, shop -> web, shop -> admin login). Missing keys behave the same for both
- *   modules: `t?.key` renders empty, no hardcoded fallback texts.
- * @refactor-note (2026-10-23) `formatEur()` - one EUR price formatter in the current language for
- *   every shop page (open finding #44).
  */
 
 import { Directive, inject, ChangeDetectorRef, OnInit, OnDestroy } from '@angular/core';

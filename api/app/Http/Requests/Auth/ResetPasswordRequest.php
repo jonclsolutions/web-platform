@@ -3,24 +3,10 @@
 /**
  * @file ResetPasswordRequest.php
  * @path app/Http/Requests/Auth/ResetPasswordRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Input validation for completing a password reset (step 5) - token + new password.
- *
- * @refactor-note (2026-08) `Password::min(10)->mixedCase()->numbers()` replaced with the
- * policy shared across the app: `min(8)` + `max:16` + `letters()` (no mixedCase) +
- * `numbers()` + `symbols()`.
- * @refactor-note (2026-10-01) Hardening + FE parity:
- * - `password` gets an explicit `string` rule (array/object payloads are rejected cleanly
- *   instead of reaching the Password rule).
- * - `token` is format-checked (exactly 64 ASCII alphanumerics = output of Str::random(64))
- *   so oversized/garbage input is rejected before hashing and the DB lookup.
- * - Token format errors return the same generic "invalid link" text as an unknown token,
- *   so the response doesn't reveal which check failed.
- * - Policy is mirrored 1:1 on the frontend in `src/app/shared/utils/password-validation.ts`
- *   (same Unicode classes as letters()/numbers()/symbols(); length counted like mb_strlen).
- *   The two MUST be changed together.
  */
 
 namespace App\Http\Requests\Auth;

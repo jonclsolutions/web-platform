@@ -1,23 +1,14 @@
 /**
  * @file personal-info.component.ts
- * @path src/app/admin/web-pages/personal-info/personal-info.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @path src/app/admin/core-pages/personal-info/personal-info.component.ts
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Manages user profile information and security settings, specifically handling
  * password updates and the self-service 2FA toggle.
- * @note Tři efektivní stavy 2FA: (a) role admin/sysadmin vynucuje vždy; (b) sysadmin
- * osobně vynutil `two_fa_forced_by_admin`; (c) běžný self-service toggle. Checkbox je
- * disabled v obou vynucených stavech (a)+(b).
- * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
- * z `error:` callbacku v `onToggle2fa()` - `DataHandler.handleError()` je jediné
- * autoritativní místo pro chybový toast. `onSubmit()` používá inline `errorMessage`
- * (ne toast), beze změny.
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace (statická, ne
- * editovatelná)": tahle komponenta NEDĚDÍ `BaseDataComponent`, takže
- * `AdminLocalizationService` se injektuje ručně (stejný vzor jako
- * `EntityCrudService` o pár řádků níže) - viz refactor-note v
- * `base-data.component.ts` hlavičce.
+ * @note Three effective 2FA states: (a) the admin / sysadmin role always enforces it; (b) a
+ * sysadmin personally enforced `two_fa_forced_by_admin`; (c) the ordinary self-service toggle.
+ * The checkbox is disabled in both enforced states (a) + (b).
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
@@ -102,23 +93,16 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Merged `shared` + `personal-info` i18n section - stejný vzor jako
-   * `BaseDataComponent.strings`, jen ručně replikovaný, protože tahle komponenta
-   * `BaseDataComponent` nedědí. Viz refactor-note v hlavičce souboru.
-   * @note Typ `any` záměrně - viz stejná poznámka u
+   * @description Merged `shared` + `personal-info` i18n section - same pattern as
+   * `BaseDataComponent.strings`, replicated manually because this component does not extend
+   * `BaseDataComponent`.
+   * @note Type `any` on purpose - see the same note on
    * `AdminLocalizationService.getMergedSection()`.
    */
   get strings(): any {
     return this.i18n.getMergedSection('personal-info');
   }
 
-  /**
-   * @refactor-note (2026-09c) BACKLOG "žádné hardcoded texty": doplněno pro
-   * imperativní volání (alert dialogy, chybové zprávy), kde template binding
-   * (`strings.xxx`) nejde použít. Stejný vzor jako u ostatních ručně injektovaných
-   * komponent (WelcomePageComponent atd.) - prefix sekce 'personal-info.' přidává
-   * metoda sama, volající kód předává jen krátký klíč.
-   */
   t(key: string): string {
     return this.i18n.getValue(`personal-info.${key}`);
   }
@@ -155,12 +139,6 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
     return (this.userData as any)?.roles?.[0]?.role_name ?? null;
   }
 
-  /**
-   * @refactor-note (2026-09c) Nahrazeny natvrdo psané české texty odpovídajícími
-   * `t()` voláními - klíče `security_2fa_role_forced`/`security_2fa_admin_forced`/
-   * `security_2fa_enabled`/`security_2fa_disabled` v JSONu existovaly už dřív, jen se
-   * v kódu nepoužívaly. `{role}` placeholder nahrazen přes `.replace()`.
-   */
   get security2faStatusMessage(): string {
     if (this.isRoleForced2fa) {
       return this.t('security_2fa_role_forced').replace('{role}', this.userRoleName ?? '');
@@ -232,12 +210,6 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
     return !!this.passwordForm.errors?.['passwordsNotMatching'];
   }
 
-  /**
-   * @refactor-note (2026-09c) Nahrazeny natvrdo psané české texty (success title,
-   * success message, error message) odpovídajícími `t()` voláními - klíče
-   * `password_change_success_title`/`password_change_success_message`/
-   * `password_change_error` v JSONu existovaly už dřív, jen se v kódu nepoužívaly.
-   */
   onSubmit(): void {
     if (this.passwordForm.invalid) return;
 

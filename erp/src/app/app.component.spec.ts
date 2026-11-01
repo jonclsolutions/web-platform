@@ -1,16 +1,12 @@
 /**
  * @file app.component.spec.ts
  * @path src/app/app.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Unit tests of AppComponent (root shell): session check on start, favicon from
  *   the site logo (created once, then updated), the initial loader fades out and is removed
  *   once the app is stable, and the router outlet.
- * @refactor-note (2026-10-23) The old spec mocked `PublicDataService.get('public/legal/config')`,
- *   which the component no longer calls (settings come through `siteSettingsValue$`, filled by
- *   AppBootstrapService) - three tests failed on `undefined.subscribe`. Rewritten to the real
- *   contract.
  * @dependencies
  * - AuthService / PublicDataService stubs; ApplicationRef.isStable replaced by a Subject.
  */

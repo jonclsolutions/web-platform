@@ -3,8 +3,8 @@
 /**
  * @file AttachmentDownloadTest.php
  * @path api/tests/Feature/Other/AttachmentDownloadTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the attachment download / preview (AttachmentDownloadController):
  *   only signed, unexpired URLs work; files of web_attachments (any disk) are served under their
@@ -73,9 +73,9 @@ class AttachmentDownloadTest extends TestCase
     /**
      * @description web_attachments: download (attachment) and preview (inline) under the original
      *   name from the record's disk; a missing file or unknown path is 404.
-     * @input Attachment 'Nabídka 2026.pdf' on private disk; public-disk attachment without name;
+     * @input Attachment 'Offer 2026.pdf' on private disk; public-disk attachment without name;
      *        attachment row whose file is gone; unknown path.
-     * @output download: attachment; filename "Nabídka 2026.pdf" (ASCII fallback) + content; view: inline;
+     * @output download: attachment; filename "Offer 2026.pdf" + content; view: inline;
      *   public file under its base name; 404; 404.
      */
     public function test_web_attachments(): void

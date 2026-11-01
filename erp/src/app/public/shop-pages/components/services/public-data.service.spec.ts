@@ -1,14 +1,12 @@
 /**
  * @file public-data.service.spec.ts
  * @path src/app/public/shop-pages/components/services/public-data.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ShopPublicService (storefront API): query building for products,
  *   the no_pagination lists, product detail, coupon validation, order creation and the
  *   translated error messages (network, 404, 422 with / without API message, 500, other).
- * @refactor-note (2026-10-23) Real spec - the previous file was a copy of the EntityCrud spec
- *   and was removed.
  * @dependencies
  * - HttpTestingController; LocalizationService stub (getText returns the key).
  */

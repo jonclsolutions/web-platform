@@ -1,8 +1,8 @@
 /**
  * @file edit-roles.component.css
  * @path src/app/admin/core-pages/edit-roles/edit-roles.component.css
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Styles of the role and permission management screen: page header, new-role form,
  * master-detail layout (role list + role detail), three-level permission checklist, the
@@ -10,9 +10,6 @@
  * the admin: rounded cards, soft shadows, dark accent, fully rounded ("pill") buttons.
  * @dependencies
  * - None. All design tokens are declared locally on :host (no shared variables file).
- * @refactor-note (2026-10-27) Delete modal styles removed (standard confirm dialog); labelled
- * fields of the detail edit mode, the visible "cannot delete" note and the heading of the
- * permission save bar added.
  */
 
 /**

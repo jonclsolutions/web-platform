@@ -1,24 +1,5 @@
 <!-- 
   multi-file-upload.component.html
-  @refactor-note (2026-08-19): Přidán read-only seznam existujících příloh
-      (existingFiles) NAD dropzonu pro nové soubory - viz multi-file-upload.component.ts
-      stejné datum. Počítadlo dole ("mfu-total") ukazuje combinedCount (neodebrané
-      existující + nově vybrané), ne jen nově vybrané.
-  @refactor-note (2026-08-19v2): Existující přílohy teď mají tlačítko "✕"
-      (removeExistingFile(id)) - STAGED odebrání, žádné API volání odsud (viz
-      multi-file-upload.component.ts stejné datum). Seznam iteruje přes
-      `visibleExistingFiles` (ne `existingFiles`), takže odebraná položka z UI hned
-      zmizí, i když se reálně smaže až s uložením formuláře.
-  @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
-      všechny natvrdo psané texty nahrazeny `t.*` bindingy (getter v .ts, slučuje
-      `textOverrides` s výchozími hodnotami) - viz multi-file-upload.component.ts
-      stejné datum. Komponenta SAMA neinjektuje žádnou i18n službu (ani
-      LocalizationService, ani AdminLocalizationService) - texty vždy přicházejí
-      zvenku přes `[textOverrides]`, ať zůstane použitelná na public webu i v adminu.
-  @refactor-note (2026-09v2) BUGFIX "hint pod labelem zůstával česky natvrdo": limitový
-      hint vedle `{{ label }}` byl natvrdo psaný text, unikl první vlně migrace - nyní
-      `{{ limitsHintText }}` (getter v .ts skládající `t.limitsHint` s dosazenými
-      hodnotami maxFiles/maxFileSizeMb/maxTotalSizeMb).
 -->
 <div class="mfu-container">
 <label class="mfu-label">{{ label }} <span class="mfu-hint">{{ limitsHintText }}</span></label>

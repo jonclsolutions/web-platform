@@ -3,8 +3,8 @@
 /**
  * @file bootstrap/app.php
  * @path bootstrap/app.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Application bootstrap configuration including routing, middleware, and exception handling.
  */
@@ -48,10 +48,8 @@ return Application::configure(basePath: dirname(__DIR__))
         /**
          * @description Customize the rendering of AuthenticationException. Ensures API
          * requests receive a JSON response with a 401 status code instead of a redirect,
-         * a zapíše bezpečnostní event - viz refactor-note (2026-08-24) v hlavičce
-         * souboru. Tohle je NEJČASTĚJŠÍ místo, kde reálně vzniká "chybějící/expirovaný
-         * token na chráněné routě", protože `auth:sanctum` middleware vyhazuje tuhle
-         * výjimku dřív, než request vůbec dorazí ke `CheckPermission`.
+         * and records a security event - the most common place of a "missing / expired token
+         * on a protected route", because `auth:sanctum` throws it before `CheckPermission`.
          *
          * @param AuthenticationException $e
          * @param Request $request
@@ -70,14 +68,11 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         /**
-         * @description Zachytí vyhození throttle limitu na kterékoliv routě (viz
-         * refactor-note výše) a zapíše bezpečnostní event PŘED vrácením standardní 429
-         * odpovědi - ALE JEN pokud request nemá přihlášeného uživatele (veřejný/cizí
-         * provoz). Throttle na chráněných admin routách u PŘIHLÁŠENÉHO uživatele je
-         * jen kapacitní ochrana vlastní práce, ne bezpečnostní incident - viz
-         * bugfix-note (2026-08-23) v hlavičce souboru. `Retry-After` hlavička z
-         * původní výjimky se přenáší dál v OBOU případech, ať se chování API pro
-         * klienta nijak neliší od výchozího Laravel throttle handlingu.
+         * @description Records a security event for a throttle limit hit on any route BEFORE the
+         * standard 429 answer - ONLY for requests without a logged-in user (public / foreign
+         * traffic); throttling a LOGGED-IN user on admin routes is capacity protection, not an
+         * incident. The `Retry-After` header of the original exception is passed on in BOTH cases,
+         * so the API behaves like the default Laravel throttle handling.
          * @param ThrottleRequestsException $e
          * @param Request $request
          */
@@ -94,7 +89,6 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->expectsJson()) {
                 $headers = $e->getHeaders();
 
-                // @bugfix-note (2026-10-23) English like every other API message (open finding #35).
                 return response()->json([
                     'message' => 'Too many requests. Please try again later.',
                 ], 429, $headers);

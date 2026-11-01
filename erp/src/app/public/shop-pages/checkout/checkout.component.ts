@@ -1,24 +1,14 @@
 /**
  * @file checkout.component.ts
  * @path src/app/public/shop-pages/checkout/checkout.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages the multi-step checkout process including form validation, coupon application, and final order submission.
  * @dependencies
  * - CartService: Provides reactive access to cart items and clearing operations.
  * - ShopPublicService: Handles shipping/payment methods, coupon validation, and order submission.
  * - AlertDialogService: Provides user feedback for submission or validation errors.
- * @refactor-note (2026-10-21) Dědí `BasePublicComponent` (`translationModule = 'shop'`, sekce
- *   `checkout`). Validační hlášky (`errors.*`), kupóny a alerty (`alerts.*`) jdou z překladů;
- *   odstraněny natvrdo psané české fallbacky. Hláška ze serveru (`e.error.message`) má dál přednost.
- * @bugfix-note (2026-10-23) Prices were formatted with cs-CZ in every language (open finding #44) -
- *   BasePublicComponent.formatEur() now; an unpriced cart line shows a translated alert instead of an
- *   uncaught Czech exception.
- * @bugfix-note (2026-10-23) Open finding #53: order / coupon errors showed the English API messages
- *   on the Czech shop - translated texts by status now (stock / rejected order / too many requests).
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): shipping /
- *  payment methods are the payload lists of ShopPublicService.
  */
 
 import { Component, OnInit, signal, computed } from '@angular/core';

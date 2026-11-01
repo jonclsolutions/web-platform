@@ -3,8 +3,8 @@
 /**
  * @file CheckPermissionTest.php
  * @path api/tests/Unit/Core/CheckPermissionTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the CheckPermission middleware called directly: no user,
  *   sysadmin bypass, OR of several permissions, self access through a route parameter

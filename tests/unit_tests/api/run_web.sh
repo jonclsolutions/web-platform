@@ -2,8 +2,8 @@
 #
 # @file run_web.sh
 # @path tests/unit_tests/api/run_web.sh
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Runs the api (Laravel / PHPUnit) tests: suite Web - tests/Unit/Web and tests/Feature/Web.
 #   Measures code coverage of the Web section files (lines + methods,

@@ -1,19 +1,16 @@
 /**
  * @file web-layout.component.ts
  * @path src/app/public/web-pages/web-layout/web-layout.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Layout container for all public-facing web pages, providing a consistent structure with shared header and footer components.
  * @dependencies
  * - PublicHeaderComponent: Displays top-level navigation.
  * - PublicFooterComponent: Displays site-wide legal and contact information.
- * - CookieConsentComponent: Globální lišta souhlasu s cookies (2026).
- * - AnalyticsService: Google Analytics 4 + Consent Mode v2 (2026) - spuštěno tady, protože
- *   tenhle layout obaluje celý veřejný web bez ohledu na aktuální podstránku.
- * @refactor-note (2026-10-23) Removed `toggleRootScroll()` (open finding #41): it was bound to the
- *   header's `menuToggled` output, which the header never emitted - the header locks the page
- *   scroll itself (ScrollLockService).
+ * - CookieConsentComponent: Global cookie consent bar.
+ * - AnalyticsService: Google Analytics 4 + Consent Mode v2 - started here, because this layout
+ *   wraps the whole public web regardless of the current subpage.
  */
 
 import { Component, OnInit, inject } from '@angular/core';

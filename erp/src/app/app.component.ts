@@ -1,8 +1,8 @@
 /**
  * @file app.component.ts
  * @path src/app/app.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Root component of the application, serving as the main entry point for the component tree.
  * @dependencies
@@ -11,28 +11,6 @@
  *   AppBootstrapService at startup) and resolve dynamic assets.
  * - ApplicationRef: Used to detect when the app (including lazy-loaded route chunks and
  *   any in-flight HTTP requests) has become fully stable, to hide the static index.html loader.
- *
- * @refactor-note (2026-08) Přidáno skrytí `#initial-loader` (statický spinner v index.html,
- * viz jeho @refactor-note) přes `ApplicationRef.isStable`. Dřív tenhle spinner mizel
- * automaticky, jakmile Angular vložil AppComponent šablonu do DOM (konec
- * APP_INITIALIZERu) - ale routovaná (lazy-loaded) komponenta s headerem v tu chvíli ještě
- * nebyla stažená ani vykreslená, takže bylo krátce vidět prázdnou stránku. `isStable`
- * emitne `true` až NgZone nemá ŽÁDNÉ čekající úlohy - to zahrnuje dynamický `import()`
- * lazy route chunku (Promise, patchovaný zone.js), veškeré HTTP requesty spuštěné uvnitř
- * NgZone (checkAuth() níže) i libovolné `setTimeout`. Používá se
- * `first(isStable => isStable)`, takže se loader skrývá jen JEDNOU - po prvním dosažení
- * stability, i kdyby appka později (např. při navigaci) zase krátce "nestabilizovala"
- * kvůli dalším HTTP voláním (o ty se stará LoadingInterceptor/LoadingService, ne tenhle kód).
- *
- * @bugfix-note (2026-08-15) `ngOnInit()` dřív volalo vlastní, NEZÁVISLÉ
- * `publicDataService.get('public/legal/config')` jen kvůli faviconě - mimo jednotnou
- * cache (`siteSettingsValue$`) populovanou `AppBootstrapService` při startu. Důsledek:
- * duplicitní síťový request na KAŽDÉ stránce (AppComponent se renderuje vždy, nezávisle
- * na routě) - viditelné i během web maintenance, protože tohle volání běželo úplně mimo
- * `webMaintenanceGuard`/`AppBootstrapService` logiku a nikdo ho negatoval. Přepojeno na
- * `siteSettingsValue$` (stejný vzor jako `BasePublicComponent`) - žádný nový request,
- * jen čtení z paměti. Favicon se aktualizuje, jakmile cache poprvé dostane hodnotu
- * (APP_INITIALIZER již dokončen v tu chvíli, takže první emit přijde synchronně).
  */
 
 import { Component, OnInit, ApplicationRef, inject } from '@angular/core';
@@ -69,7 +47,7 @@ export class AppComponent implements OnInit {
     this.authService.checkAuth().subscribe();
 
     // Read from the cache populated by AppBootstrapService at startup instead of
-    // firing a duplicate HTTP request here (see bugfix-note in file header).
+    // firing a duplicate HTTP request here.
     this.publicDataService.siteSettingsValue$.subscribe(res => {
       if (res?.settings?.logo_path) {
         const url = this.publicDataService.getStorageUrl(res.settings.logo_path);

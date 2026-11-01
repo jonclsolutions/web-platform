@@ -1,8 +1,8 @@
 /**
  * @file business-logs.component.ts
  * @path src/app/admin/web-pages/business-logs/business-logs.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Provides a management interface for viewing and filtering business-related system logs.
  * @dependencies
@@ -10,21 +10,7 @@
  * - TableBuilderComponent: Used for rendering the data grid and supporting CSV exports.
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the administrative dashboard.
  * - Config.create* factory functions: i18n-aware definitions for UI columns and toolbar
- *   actions - see refactor-note (2026-09-08) below.
- *
- * @bugfix-note (2026-09-08) `toolbarButtons` getter NIKDY nekontroloval `btn.permission`
- * (na rozdíl od VŠECH ostatních web-pages stránek) - `openGraphBuilder` tlačítko s
- * `permission: 'web-view-web-logs'` se tak zobrazovalo i uživatelům bez tohoto práva.
- * Doplněna stejná `permissionService.hasPermission()` kontrola jako všude jinde.
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `Config.*` konstanty nahrazeny `Config.create*()` factory funkcemi. `buttons.filter(b
- * => b.action !== 'create' && b.action !== 'edit')` ODSTRANĚN - byl to no-op (`BUTTONS`
- * nikdy `create`/`edit` tlačítko neobsahoval, jen `details`), zbytečně matoucí mrtvý
- * kód stejně jako u `EditNewsComponent`. `graphColumns` přestalo být `readonly`.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
+ *   actions.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -71,7 +57,6 @@ export class BusinessLogsComponent extends BaseDataComponent<any> implements Cor
     sort_direction: 'desc'
   };
 
-  /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
 
   constructor(
@@ -103,7 +88,6 @@ export class BusinessLogsComponent extends BaseDataComponent<any> implements Cor
   /**
    * @description Constructs the toolbar configuration.
    * @returns List of buttons updated to reflect current filter visibility and permission state.
-   * @bugfix-note (2026-09-08) Doplněna `permission` kontrola - viz hlavička souboru.
    */
   get toolbarButtons(): Core.Button[] {
     return Config.createBusinessLogToolbarButtons(this.i18n).map(btn => {

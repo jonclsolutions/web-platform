@@ -1,8 +1,8 @@
 /**
  * @file knowledge-base.component.spec.ts
  * @path src/app/admin/intranet/knowledge-base/knowledge-base.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the intranet KnowledgeBaseComponent (layout + side menu): navigation groups
  *   built from KB_PAGES (pages sorted by navOrder, groups by their first page), rebuilt on

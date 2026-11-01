@@ -1,24 +1,12 @@
 /**
  * @file sales-orders.config.ts
  * @path src/app/admin/web-pages/sales-orders/sales-orders.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
- * @description Static-turned-dynamic configuration (buttons, form fields, table/filter/detail
- * columns) for the Sales Orders (realizace zakázek) management page.
- *
- * (Earlier refactor-note 2026-08-5 for permission granularization - "Přidat" tlačítko
- * záměrně chybí, realizace vznikají automaticky ze Sales Leadů - unchanged, see version
- * history.)
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * přepis na FACTORY FUNKCE (create*), stejný vzor jako `support-tickets.config.ts`/
- * `user-request.config.ts`. ŽÁDNÁ enum-slug DB migrace tady NEBYLA potřeba - tenhle
- * resource nemá žádný `status`/`priority` sloupec (realizace nemají vlastní workflow
- * stav, jen `data_processing_agreement`/`tos_agreement` booleany, které už řeší
- * centrální `shared.yes`/`shared.no` mechanismus přes `type: 'boolean'`, viz
- * enum-hodnoty-v-builder-komponentach.md sekce 7 - žádná `options` mapa pro ně
- * není potřeba).
+ * @description Configuration (buttons, form fields, table / filter / detail columns) of the
+ * Sales Orders management page.
+ * @note No "Add" button on purpose - orders come from the public order form of a Sales Lead.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -136,11 +124,10 @@ export function createSalesOrderFilterColumns(i18n: AdminLocalizationService): C
 }
 
 /**
- * @description `data_processing_agreement`/`tos_agreement` zůstávají `chartPossibleValues:
- * ['1','0']` - canonical (NEpřekládané) hodnoty pro GraphBuilderComponent bucketing,
- * stejná logika jako enum sloupce jinde (viz @TODO-FOLLOWUP v user-request.config.ts) -
- * boolean sloupce navíc automaticky dostávají Ano/Ne text v tabulce/detailu přes
- * `shared.yes`/`shared.no`, viz hlavička souboru.
+ * @description `data_processing_agreement` / `tos_agreement` keep `chartPossibleValues:
+ * ['1','0']` - canonical (NOT translated) values for the GraphBuilderComponent bucketing, the
+ * same logic as enum columns elsewhere (see the @note in user-request.config.ts). Boolean
+ * columns get the Yes / No text in the table / detail through `shared.yes` / `shared.no`.
  */
 export function createSalesOrderDetailsColumns(i18n: AdminLocalizationService): Core.ItemDetailsColumns[] {
   return [

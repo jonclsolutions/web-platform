@@ -1,8 +1,8 @@
 /**
  * @file not-found.component.spec.ts
  * @path src/app/public/not-found/not-found.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the shared public 404 page: texts of the `not_found` section of the
  *   area's translation module, button to the home page of the area, look class of the area, the

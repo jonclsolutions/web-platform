@@ -1,25 +1,14 @@
 /**
  * @file news.component.ts
  * @path src/app/admin/pages/news/news.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Page component for displaying a scrollable list of news articles with infinite-scroll functionality.
  * @dependencies
  * - BaseDataComponent: Provides the base logic for paginated API requests.
  * - LoadingService: Manages application-wide loading states to prevent redundant network calls.
  * - GenericTableService: Handles pagination logic and response processing.
- *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * Komponenta DĚDÍ BaseDataComponent, proto `translationSection = 'kb-news'` a
- * override `t()` (zděděná `BaseDataComponent.t(path)` čeká plnou cestu se sekcí -
- * stejná oprava jako u EditRolesComponent/AdministratorsComponent). `item.thema`/
- * `item.title`/`item.message`/`item.bullet_*`/`item.author` PŘICHÁZEJÍ Z BACKENDU
- * (`web/news` resource) a NEJSOU touto migrací dotčeny - jde o obsah spravovaný přes
- * EditNewsComponent, jeho případná vícejazyčnost je samostatný backendový úkol (mimo
- * scope statické admin i18n vrstvy). `DatePipe` locale opraven z natvrdo `cs-CZ`
- * (implicitní přes globální LOCALE_ID) na `i18n.getDateLocale()` - stejná oprava jako
- * u AdminLayoutComponent/WelcomePageComponent.
  */
 
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
@@ -47,15 +36,11 @@ export class NewsComponent extends BaseDataComponent<any> implements OnInit {
   override apiEndpoint: string = 'web/news';
   protected override translationSection: string = 'kb-news';
 
-  /**
-   * @refactor-note (2026-09) BUGFIX - viz hlavička souboru. Doplňuje prefix
-   * `kb-news.` automaticky, ať krátký klíč z volání `this.t('xxx')` funguje.
-   */
   public override t(key: string): string {
     return this.i18n.getValue(`kb-news.${key}`);
   }
 
-  /** @description BCP-47 locale pro `DatePipe` v šabloně - viz refactor-note v hlavičce. */
+  /** @description BCP-47 locale for the `DatePipe` in the template. */
   get dateLocale(): string {
     return this.i18n.getDateLocale();
   }
@@ -84,16 +69,13 @@ export class NewsComponent extends BaseDataComponent<any> implements OnInit {
    */
 
   loadMore(): void {
-    // 1. Zkontroluj, zda už nenačítáme nebo nejsme na konci
-    // @bugfix-note (2026-10-23) The guard read `.value` of `isLoading$` - an asObservable() without a
-    // value, so it was always undefined: a second click while a page was loading requested the
-    // same page again and the news appeared twice. Own in-flight flag instead.
+    // 1. Stop when already loading or at the end
     if (this.loadingMore || (this.currentPage > this.totalPages && this.totalPages !== 0)) {
       return;
     }
     this.loadingMore = true;
 
-    // 2. Voláme fetchPaginatedData přes delegovanou službu 'list'
+    // 2. Call fetchPaginatedData through the delegated 'list' service
     this.list.fetchPaginatedData(
       false, 
       this.currentPage, 
@@ -102,9 +84,9 @@ export class NewsComponent extends BaseDataComponent<any> implements OnInit {
     ).pipe(finalize(() => { this.loadingMore = false; })).subscribe({
       next: (response: PaginatedResponse<any>) => {
         if (response && response.data) {
-          // 3. Akumulujeme data
+          // 3. Accumulate the data
           this.accumulatedNews = [...this.accumulatedNews, ...response.data];
-          // 4. Inkrementujeme stránku (Pozor: toto už může interně řešit PaginatedListStore)
+          // 4. Increment the page (note: PaginatedListStore may already handle this internally)
           this.currentPage++;
         }
         this.cd.markForCheck();

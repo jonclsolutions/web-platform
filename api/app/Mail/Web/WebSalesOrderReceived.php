@@ -2,12 +2,8 @@
 /**
  * @file WebSalesOrderReceived.php
  * @path app/Mail/Web/WebSalesOrderReceived.php
- * @project RPSW Web
+ * @project JS web-platform
  * @description Confirmation email sent to the client after submitting a sales order (realizace) request.
- * @refactor-note (2026-08-19) BACKLOG "hezčí a přehlednější maily": šablona přepracována
- * (viz emails/web/sales-order-received.blade.php) a doplněna o firemní kontakt
- * v patičce - `content()` teď předává `CompanyContactInfo::get()` přes `Content::with()`,
- * stejně jako auth maily a WebRawRequestCommissionReceived.
  */
 
 namespace App\Mail\Web;

@@ -1,8 +1,8 @@
 /**
  * @file base-public.component.spec.ts
  * @path src/app/public/base-public.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of BasePublicComponent (parent of all public pages): translation
  *   module selection, the page's translation section, the optional site settings stream, the

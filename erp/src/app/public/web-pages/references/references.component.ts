@@ -1,9 +1,10 @@
 /**
  * @file references.component.ts
  * @path src/app/public/web-pages/references/references.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
+ * @description References page of the public web.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -24,7 +25,7 @@ export class ReferencesComponent extends BasePublicComponent {
   protected readonly translationKey = 'projects';
   projects: any[] = [];
 
-  // Hook volaný automaticky po načtení překladů z bázové třídy
+  // Hook called automatically after the translations are loaded by the base class
   protected override onTranslationsLoaded(): void {
     this.projects = Object.keys(this.t)
       .filter(key => key.startsWith('project_'))

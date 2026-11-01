@@ -1,25 +1,10 @@
 <!-- 
     @file: admin-layout.component.html
     @path: /src/app/admin/components/admin-layout/admin-layout.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    (Earlier refactor-notes for permission granularization, nav-group visibility,
-    and security monitoring are unchanged - see version history.)
-    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
-        texty": VŠECHNY uživatelsky viditelné texty (labels, titles, aria-labels,
-        nav-item texty i tituly) nahrazeny `strings.xxx` binding.
-    @refactor-note (2026-09d) BACKLOG "jazykový přepínač do headeru, zrušit globální
-        refresh": tlačítko "Aktualizovat vše" (desktop header i mobilní panel) BYLO
-        ODSTRANĚNO - viz admin-layout.component.ts stejné datum. Přidán jazykový
-        přepínač (vlaječkový dropdown) v headeru vpravo, hned vedle odkazu Wiki -
-        stejná funkcionalita, jaká dřív žila v PersonalInfoComponent, jen přesunutá
-        sem, ať je dostupná odkudkoliv v adminu. Duplikováno i v mobilním vysouvacím
-        panelu, stejný vzor jako moduly/hodiny.
-    @bugfix-note (2026-10-27) Module tabs (desktop + mobile panel) shown by
-        `isModuleAvailable()` (tab permission AND at least one page the user may open) instead
-        of the tab permission alone; the Web / E-shop welcome items have their own group
-        condition (`showWebWelcomeGroup` / `showShopWelcomeGroup`).
+    @description: Template of the admin layout component.
 -->
 
 <header class="admin-header">
@@ -109,7 +94,7 @@
 </svg>
     </a>
 
-<!-- ── Jazykový přepínač - viz refactor-note (2026-09d) v hlavičce souboru ── -->
+<!-- ── Language switcher ── -->
 <div class="header-lang-switcher" style="">
   <button
     type="button"
@@ -145,8 +130,8 @@
   }
 </div>
 
-    <!-- Mobilní hamburger - viditelný jen na malé šířce (viz CSS media query).
-         Vysune panel se vším, co se na mobilu nevejde do řádku headeru. -->
+    <!-- Mobile hamburger - visible only on narrow screens (see the CSS media query).
+         Opens a panel with everything that does not fit into the header row on mobile. -->
     <button class="mobile-actions-toggle" (click)="toggleMobileActions()" [title]="strings.mobile_menu_title" [attr.aria-label]="strings.mobile_menu_aria">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="4" y1="7" x2="20" y2="7"/>
@@ -158,9 +143,9 @@
 
 </header>
 
-<!-- ── Mobilní vysouvací panel (uživatel, role, hodiny, moduly, odkazy, jazyk) ───
-     Duplikuje obsah, který se na mobilu schovává z hlavního řádku headeru (viz CSS),
-     ať nic nezmizí, jen se to přesune na požádání do samostatného panelu. -->
+<!-- ── Mobile slide-out panel (user, role, clock, modules, links, language) ───
+     Duplicates the content hidden from the main header row on mobile (see CSS), so nothing
+     disappears - it only moves into a separate panel on demand. -->
 @if (isMobileActionsOpen) {
   <div class="mobile-actions-overlay" (click)="closeMobileActions()"></div>
   <div class="mobile-actions-panel">
@@ -225,7 +210,7 @@
       </button>
     </div>
 
-    <!-- ── Jazykový přepínač (mobilní varianta) ── -->
+    <!-- ── Language switcher (mobile variant) ── -->
     <div class="map-lang-switcher-label">
       {{ strings.language_switcher_title }}
     </div>
@@ -469,10 +454,6 @@
                 <span class="nav-text">{{ strings.nav_gdpr }}</span>
               </a>
             </li>
-            <!-- @bugfix-note (2026-08-6): bylo omylem 'core-settings-view' (jiný backend -
-                 CoreSiteSettingController). WebSettingsComponent volá legal/config/*
-                 (SiteConfigurationController), proto core-legal-config-view - viz
-                 bugfix-note v admin-routing.module.ts stejné datum. -->
             <li *appHasPermission="'core-legal-config-view'">
               <a routerLink="/admin/core/web-settings" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_company_info">
                 <span class="nav-icon">

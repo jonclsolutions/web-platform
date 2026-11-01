@@ -1,8 +1,8 @@
 /*     
     @file: dashboard.component.css
     @path: /src/app/admin/shop-pages/dashboard/dashboard.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description: Visual language shared with CoreDashboardComponent/WebDashboardComponent
         - the `.cd-*` header classes are copied 1:1 from those files so every dashboard's
@@ -10,11 +10,6 @@
         status breakdown, orders table, low stock, maintenance) is Shop-specific but
         retokenized into the SAME admin-layout design tokens (--accent/--text/--border/
         --success/--error/--warning/...) - no colors outside that palette anywhere.
-    @refactor-note (2026-09-07) KOMPLETNÍ PŘEPIS - viz dashboard.component.ts stejné
-        datum. Dřívější 5barevná KPI paleta (indigo/amber/sky/rose/green) ZCELA
-        ODSTRANĚNA. Nové: .kpi-trend-* (barevný trend badge), .kpi-urgent (warning
-        accent), .chart-dot-hit/.chart-dot-highlight (neviditelný hit-target + viditelná
-        tečka jen při hoveru, nahrazuje dřívější vždy-viditelné .chart-dot).
 */
 
 .shop-dashboard {
@@ -28,7 +23,7 @@
   max-width: 1400px;
 }
 
-/* ── Header (1:1 shodné s Core/Web dashboardem) ────────────────────── */
+/* ── Header (same as the Core / Web dashboard) ────────────────────── */
 
 /* ── Loading state ──────────────────────────────────────────────────── */
 
@@ -177,7 +172,7 @@
 .chart-area { fill: var(--accent-dim, var(--color-zinc-100)); opacity: 0.7; }
 .chart-line { stroke: var(--accent, var(--color-zinc-900)); stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
 
-/* Neviditelný hit-target pro tooltip - vidět je jen chart-dot-highlight při hoveru. */
+/* Invisible hit target of the tooltip - only chart-dot-highlight is visible on hover. */
 .chart-dot-hit { fill: transparent; cursor: pointer; }
 .chart-dot-highlight { fill: var(--accent, var(--color-zinc-900)); stroke: var(--surface, var(--color-white)); stroke-width: 2; }
 
@@ -297,9 +292,9 @@
 
 .stock-limit { margin-top: 4px; font-size: 0.7rem; color: var(--text-dim, var(--color-zinc-400)); }
 
-/* ── Režim údržby e-shopu (shodné s Web dashboardem) ───────────────── */
+/* ── E-shop maintenance mode (same as the Web dashboard) ───────────────── */
 
-/* ── Potvrzovací modál (shodné s Web dashboardem) ──────────────────── */
+/* ── Confirmation modal (same as the Web dashboard) ──────────────────── */
 
 /* ── Responsive ─────────────────────────────────────────────────────── */
 

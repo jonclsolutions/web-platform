@@ -3,17 +3,11 @@
 /**
  * @file PasswordResetRequested.php
  * @path app/Mail/Auth/PasswordResetRequested.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description E-mail s odkazem na dočasnou frontend stránku pro nastavení nového hesla.
- *              Odkaz obsahuje RAW token pouze zde (v e-mailu), v DB je uložen jen jeho hash.
- * @refactor-note (2026-08-19) BACKLOG "hezčí a přehlednější maily": šablona přepracována
- * (viz emails/auth/password-reset.blade.php) a doplněna o firemní kontakt v patičce -
- * `content()` teď předává `CompanyContactInfo::get()` (companyName/contactEmail/
- * contactPhone) přes `Content::with()`, odkud se proměnné dostanou do view i do
- * sdíleného `emails/partials/footer.blade.php` partialu (@include automaticky sdílí
- * proměnné rodičovské view).
+ * @description E-mail with the link to the frontend page for setting a new password.
+ *              The RAW token exists only here (in the e-mail); the database stores its hash.
  */
 
 namespace App\Mail\Auth;

@@ -3,8 +3,8 @@
 /**
  * @file ProjectPortalTest.php
  * @path api/tests/Feature/Web/ProjectPortalTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the public customer project portal (WebProjectPublicController
  *   + CheckProjectSession middleware): password login by access token, the 24h sliding

@@ -1,8 +1,8 @@
 /**
  * @file has-permission.directive.spec.ts
  * @path src/app/core/directives/has-permission.directive.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of HasPermissionDirective: renders the content for a granted key
  *   (any of 'a|b'), removes it when the key changes to a denied one and never renders it twice.

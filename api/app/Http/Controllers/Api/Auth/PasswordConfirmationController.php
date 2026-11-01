@@ -2,9 +2,9 @@
 /**
  * @file PasswordConfirmationController.php
  * @path app/Http/Controllers/Api/Auth/PasswordConfirmationController.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-26
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description POST /api/confirm-password - the signed-in user confirms its password for ONE
  *   sensitive operation (scope), see App\Traits\RequiresPasswordConfirmation. A wrong password
  *   is a security event (a stolen session trying to escalate); after MAX_FAILURES wrong passwords

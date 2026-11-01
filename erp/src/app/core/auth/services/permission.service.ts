@@ -1,17 +1,13 @@
 /**
  * @file permission.service.ts
  * @path src/app/core/auth/services/permission.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages user authorization states globally, providing methods for checking access to specific application features.
  * @dependencies
  * - BehaviorSubject: Reactive stream for maintaining and broadcasting current permission sets.
  * - Injectable: Angular decorator for service lifecycle management.
- * @refactor-note (2026-10-23) Removed the restore from `localStorage.userPermissions` (open finding
- *   #38): nothing writes that key - AuthService keeps the permissions in sessionStorage and calls
- *   setPermissions() on start / login. A stale or hand-written localStorage value could only
- *   show UI the API refuses anyway.
  */
 
 import { Injectable } from '@angular/core';

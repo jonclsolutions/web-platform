@@ -3,8 +3,8 @@
 /**
  * @file ProjectThreadTest.php
  * @path api/tests/Feature/Web/ProjectThreadTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the admin view of customer conversation threads
  *   (WebProjectThreadController): list across projects, detail with the latest messages

@@ -1,8 +1,8 @@
 /*
     @file: kb-article.component.css
     @path: /src/app/admin/intranet/knowledge-base/kb-article/kb-article.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description: Styles for the generic Knowledge Base article renderer (every static
         manual page from KB_PAGES). Document-style layout in the spirit of a wiki page:
@@ -10,16 +10,6 @@
         alert and note panels keep a boxed look. Black-and-white admin palette.
     @dependencies: kb-article.component.html, kb-article.component.ts; palette shared
         with knowledge-base.component.css.
-    @refactor-note (2026) KNOWLEDGE BASE REFACTOR: this component is the GENERIC renderer
-        for all static manual pages, so the block styles (.lead-text/.alert-box/
-        .grid-layout/.process-flow/.note-box/...) live HERE and are shared by any page.
-    @refactor-note (2026-10) DOCUMENT LAYOUT: card/grid presentation removed. Class names
-        and markup are unchanged - only the visual treatment changed:
-        - .grid-layout/.info-card: stacked "title + paragraph" entries, no boxes, no columns.
-        - .process-flow/.flow-item: steps stacked vertically along a thin guide line.
-        - .alert-box/.note-box: kept as boxed panels (intentional, they must stand out).
-        - Layout resets (display/border/background/shadow) are declared explicitly so the
-          result does not depend on any shared or global card styles.
 */
 
 /*

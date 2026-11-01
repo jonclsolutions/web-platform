@@ -1,8 +1,8 @@
 /*
     @file: dashboard-cards.css
     @path: /src/app/admin/shared-styles/dashboard-cards.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description: Statistic cards, section labels, KPI rows and chart areas used by the core and the web dashboard.
     @dependencies: none
@@ -360,7 +360,7 @@
   white-space: nowrap;
 }
 
-/* "Rozklad posledních událostí" widget */
+/* "Recent events breakdown" widget */
 .cd-breakdown-card { display: flex; flex-direction: column; }
 
 .cd-breakdown-body {

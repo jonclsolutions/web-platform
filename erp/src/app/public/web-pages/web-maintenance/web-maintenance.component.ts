@@ -1,13 +1,11 @@
 /**
  * @file web-maintenance.component.ts
  * @path src/app/public/web-pages/web-maintenance/web-maintenance.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Mirror of ShopMaintenanceComponent - shown when the public web is in
  * maintenance mode, polls status and redirects back to /home once active again.
- * @refactor-note (2026-08) Vylepšený vzhled - `loadSiteSettings = true` přidáno (stejný
- * princip jako ShopMaintenanceComponent), zobrazuje sociální ikony a kontaktní údaje.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';

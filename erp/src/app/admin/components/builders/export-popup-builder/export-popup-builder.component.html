@@ -1,19 +1,10 @@
 <!-- 
     @file: export-popup-builder.component.html
     @path: /src/app/admin/components/builders/export-popup-builder/export-popup-builder.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description: Format-picker popup shown when the admin clicks "Export" on any table.
-    @refactor-note (2026-08-18): Přidána sekce výběru sloupců.
-    @refactor-note (2026-08-23): Přidán přepínač "Exportovat v surovém formátu" (jen
-        pokud showRawFormatOption) a sloupcový seznam teď čte z activeColumnSource
-        (přepíná se mezi columns/importableColumns podle stavu rawFormat).
-    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
-        texty": VŠECHNY uživatelsky viditelné texty nahrazeny `strings.xxx` binding -
-        viz export-popup-builder.component.ts refactor-note stejné datum. Subtitle
-        (počet záznamů) jde přes vypočtený `subtitleText` getter (interpolace
-        `{count}`), ne přímo přes `strings.xxx` binding.
 -->
 
 <div class="export-popup-overlay" (mousedown)="onOverlayClick($event)">

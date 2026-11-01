@@ -3,15 +3,10 @@
 /**
  * @file PasswordChangedNotification.php
  * @path app/Mail/Auth/PasswordChangedNotification.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Informativní e-mail odeslaný vždy po úspěšné změně hesla (bez odkazu).
- * @refactor-note (2026-08-19) BACKLOG "hezčí a přehlednější maily": šablona přepracována
- * (viz emails/auth/password-changed.blade.php) a doplněna o firemní kontakt v patičce
- * i v bezpečnostním upozornění ("kontaktujte správce na ...") - `content()` teď
- * předává `CompanyContactInfo::get()` přes `Content::with()`, stejně jako
- * PasswordResetRequested.
+ * @description Information e-mail sent after every successful password change (no link).
  */
 
 namespace App\Mail\Auth;

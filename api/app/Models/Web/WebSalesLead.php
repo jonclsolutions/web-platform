@@ -2,15 +2,10 @@
 /**
  * @file WebSalesLead.php
  * @path app/Models/Web/WebSalesLead.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Model representing a sales lead.
- * @refactor-note (2026) Přidán `public_token` (viz DB sloupec `web_sales_leads.public_token`)
- *      - náhodný, neuhodnutelný identifikátor pro veřejný odkaz na objednávkový formulář
- *      (/order_form/{token}), aby se v URL neobjevovalo interní `id` (sekvenční, prozrazuje
- *      objem dat i strukturu DB - IDOR riziko). Záměrně NENÍ v $fillable - token se nikdy
- *      nepřiřazuje z uživatelského vstupu, jen serverem přes getOrCreatePublicToken().
  */
 
 namespace App\Models\Web;
@@ -25,8 +20,8 @@ use App\Models\User;
 
 /**
  * @description Manages potential client interactions, tracking contact progress and lead status.
- * * @property int $id Unique identifier.
- * @property string|null $public_token Neuhodnutelný token pro veřejný odkaz na objednávkový formulář.
+ * @property int $id Unique identifier.
+ * @property string|null $public_token Unguessable token of the public link to the order form.
  * @property int $user_id The salesman assigned to the lead.
  */
 class WebSalesLead extends Model
@@ -86,12 +81,12 @@ return $this->hasMany(WebSalesOrder::class, 'lead_id');
     }
 
 /**
-     * @description Vrátí existující public_token, nebo pokud ještě neexistuje, vygeneruje
-     *              nový, ověří jeho unikátnost proti DB a uloží.
-     * @return string Platný, unikátní public_token pro tento lead.
-     * @note Str::random(40) používá kryptograficky bezpečný generátor (random_bytes pod
-     *       kapotou) - token není odvozený od `id` ani od jiného předvídatelného vstupu,
-     *       takže ho nejde uhodnout ani postupně projíždět jako sekvenční ID.
+     * @description Returns the existing public_token or generates a new one, checks it is unique
+     *              and stores it.
+     * @return string A valid, unique public_token of this lead.
+     * @note Str::random(40) uses a cryptographically secure generator (random_bytes) - the token
+     *       is not derived from `id` or any predictable input, so it cannot be guessed or
+     *       enumerated like a sequential ID.
      */
 public function getOrCreatePublicToken(): string
     {

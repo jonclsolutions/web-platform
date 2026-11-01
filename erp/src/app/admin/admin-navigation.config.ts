@@ -1,9 +1,9 @@
 /**
  * @file admin-navigation.config.ts
  * @path src/app/admin/admin-navigation.config.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-27
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description One list of the admin pages per module (Web / Core / E-shop) with the permission
  *   each page needs - the same keys as the sidebar, the welcome-page cards and the API
  *   (`permission:` middleware). AdminLayoutComponent uses it to decide whether a module tab is

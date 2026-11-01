@@ -1,46 +1,10 @@
 <!-- 
     @file: web-settings.component.html
     @path: /src/app/admin/web-pages/web-settings/web-settings.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026 
-    @refactor-note (2026-08-6) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php a
-        base-data.component.ts stejné datum): stránka nepoužívá TableBuilderComponent
-        (vlastní formulářové UI), tlačítka proto kontrolují viditelnost přes zděděný
-        hasAnyPermission() (BaseDataComponent):
-        - Logo výběr/zrušení + "Uložit firemní údaje" -> core-legal-config-update
-          (formulářová POLE zůstávají editovatelná i bez tohoto práva - gatuje se jen
-          možnost odeslat/uložit, stejný princip jako u ostatních modulů v této
-          granularizaci; needěláme z toho readonly formulář).
-        - "+ Přidat sociální síť" -> core-legal-config-create.
-        - Řádkové Uložit u sociální sítě -> core-legal-config-create pro NOVÝ
-          (ještě neuložený, link._isNew) řádek, core-legal-config-update pro existující
-          - jedno tlačítko slouží oběma akcím podle stavu řádku (viz saveSocialLink()
-          v .ts, které samo rozlišuje POST vs. PUT).
-        - Řádkové Smazat u sociální sítě -> pro NOVÝ řádek (ještě neodeslaný na
-          server) je mazání čistě lokální (žádné API volání, viz deleteSocialLink()),
-          proto beze změny vždy viditelné; pro existující řádek vyžaduje
-          core-legal-config-delete.
-    @refactor-note (2026-08-30) BACKLOG "sjednotit ikonky napříč adminem": emoji
-        (⚠️/🖼️/🏢/🔄/📁/✕/ℹ️/✓/💾/🌐/📭/↑/🗑️/↻/+) nahrazena inline SVG ve
-        stejném stylu jako edit-legal.component.html (width/height 12-16,
-        viewBox 0 0 24 24, stroke="currentColor" stroke-width="2").
-    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
-        všechny natvrdo psané české texty nahrazeny `strings.*` bindingy
-        (AdminLocalizationService, sekce 'web-settings') - viz
-        web-settings.component.ts stejné datum. `{{ currentLang | uppercase }}` a
-        `getLangName(currentLang)` beze změny - jazykové kódy/názvy jazyků jsou
-        obsahová data (LangMeta), ne UI text.
-    @refactor-note (2026-09-30) Page tab titles: the page got two tabs –
-        "Company details" (everything that was here before, unchanged, only wrapped
-        in `@if (activeTab === 'company')`) and "Page titles" (inline block, members
-        prefixed `pt` in .ts – no child component). Unsaved page titles survive a tab
-        switch (state lives in this component). Nothing else in this template changed.
-    @refactor-note (2026-10-31) Optional company details: only the company name and the
-        contact e-mail are required (moved to the first row). Every other field has a
-        checkbox in its label (`isFieldOn` / `setFieldOn`); a switched-off field is disabled,
-        greyed out and struck through (.ws-field--off). The GA hint was removed - the
-        checkbox replaces it; the GA pattern is upper-case like the API rule.
+    @description: Template of the web settings component.
 -->
 
 <div class="ws-container">

@@ -2,11 +2,10 @@
 /**
  * @file CoreRoleResource.php
  * @path app/Http/Resources/Core/CoreRoleResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Resource transformation for system roles.
- * @refactor-note (2026-08-16) Přidáno pole `forces_2fa` - viz CoreRole.php.
  */
 
 namespace App\Http\Resources\Core;

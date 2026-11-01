@@ -3,10 +3,10 @@
 /**
  * @file VerifyTwoFactorRequest.php
  * @path app/Http/Requests/Auth/VerifyTwoFactorRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Validuje vstup pro dokončení loginu 2FA kódem.
+ * @description Validates the input of the 2FA step of the login.
  */
 
 namespace App\Http\Requests\Auth;

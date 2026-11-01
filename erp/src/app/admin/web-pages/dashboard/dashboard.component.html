@@ -1,8 +1,8 @@
 <!-- 
     @file: dashboard.component.html
     @path: /src/app/admin/web-pages/dashboard/dashboard.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description: Website-content overview - hero metric + module comparison bars,
         a full-width module distribution bar, quick navigation into Web management
@@ -11,12 +11,6 @@
     @dependencies: DashboardComponent (t(), getIcon, heroStat, secondaryStats,
         statBarPct, distributionSegments, visibleNavSections, recentActivity,
         activityBreakdown, breakdownBarPct, maintenance toggle state)
-    @refactor-note (2026-09-07) VIZUÁLNÍ REFAKTOR + i18n, sjednoceno s
-        CoreDashboardComponent (hero dlaždice + comparison bars nahrazují starou plochou
-        7-dlaždicovou grid). NAVÍC oproti Core verzi: `distributionSegments` (plnošířková
-        segmentovaná tyč srovnávající všech 7 modulů najednou) a "rozklad posledních
-        událostí" widget vedle seznamu aktivity - viz dashboard.component.ts stejné
-        datum. Karta údržby beze změny funkčnosti, jen `t()` bindingy.
 -->
 
 <div class="core-dashboard">

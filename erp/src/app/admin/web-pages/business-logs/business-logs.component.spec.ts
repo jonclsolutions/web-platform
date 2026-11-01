@@ -1,8 +1,8 @@
 /**
  * @file business-logs.component.spec.ts
  * @path src/app/admin/web-pages/business-logs/business-logs.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of BusinessLogsComponent and business-logs.config.ts – the read-only
  *   audit log of the Web module: translated configuration, event type / module filter options,

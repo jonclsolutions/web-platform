@@ -1,9 +1,10 @@
 /**
  * @file about-us.component.ts
  * @path src/app/public/web-pages/about-us/about-us.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
+ * @description "About us" page of the public web.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -20,13 +21,11 @@ import { BasePublicComponent } from '../../base-public.component';
 })
 export class AboutUsComponent extends BasePublicComponent {
   
-  // 1. Konfigurace pro bázovou třídu
+  // Configuration of the base class
   protected readonly translationKey = 'about_us';
   protected override readonly loadSiteSettings = true; 
 
-  // 2. Všechny potřebné proměnné (t, socialLinks, settings)
-  // a metody (getIconUrl) jsou nyní automaticky dostupné z BasePublicComponent.
+  // All needed fields (t, socialLinks, settings)
+  // and methods (getIconUrl) come from BasePublicComponent.
 
-  // 3. Pokud nepotřebuješ extra logiku v ngOnInit nebo onDestroy,
-  // nemusíš je vůbec definovat.
 }

@@ -1,8 +1,8 @@
 /**
  * @file auth.guard.ts
  * @path src/app/core/auth/guards/auth.guard.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Route guard enforcing authentication and permission-based access control for
  * the whole admin area, including every child page of a guarded layout route. A user refused a
@@ -11,12 +11,6 @@
  * - AuthService: Verifies the session and resolves the user's role.
  * - PermissionService: Tells whether the user holds a permission key.
  * - Router: Builds the redirects.
- * @refactor-note (2026-10-27) Admin 403 page: a refused page no longer shows the "Access denied"
- *   dialog over a fallback page - the user lands on `/admin/forbidden` (AdminErrorPageComponent),
- *   which names the refused address (passed in the navigation state, not in the URL). Only the
- *   automatic entry page after login (`/admin` → welcome page) still redirects silently to the
- *   first page the user may open, so a role without the welcome page does not see a 403 after
- *   every login. The error pages themselves are never chosen as a fallback target.
  */
 
 import { Injectable } from '@angular/core';
@@ -190,8 +184,6 @@ export class AuthGuard implements CanActivate, CanActivateChild {
    * Shop one. Every candidate is verified with the SAME check that
    * just refused the request, so the redirect can never bounce back and loop, and no list of
    * landing pages per role has to be maintained here.
-   * @refactor-note (2026-10-27) The preferred target (the core welcome page) was removed: the
-   * search runs only when that very page (the entry page) was refused, so it could never be chosen.
    */
   private findAccessibleUrl(denied: ActivatedRouteSnapshot): string | null {
     // Ancestors that own a route table, nearest first, each with the URL segments leading to it.

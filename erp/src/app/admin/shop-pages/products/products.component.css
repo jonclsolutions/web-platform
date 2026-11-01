@@ -1,15 +1,10 @@
 /*     
     @file: products.component.css
     @path: /src/app/admin/shop-pages/products/products.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
-               zaoblené karty/modály (18px), jemné stíny, tmavý akcent (#18181b)
-               místo indigo, plně zaoblená ("pill") tlačítka a badge. Sémantické
-               barvy (ano/ne, primární obrázek, DPH kalkulačka jako neutrální
-               zvýrazněný box) zůstaly rozlišitelné, jen posunuté na stejnou
-               paletu. Struktura/třídy a logika beze změny.
+    @description: Styles of the products component.
 */
 
 .products-container {

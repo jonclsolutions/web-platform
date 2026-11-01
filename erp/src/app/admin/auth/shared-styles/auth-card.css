@@ -1,8 +1,8 @@
 /*
     @file: auth-card.css
     @path: /src/app/admin/auth/shared-styles/auth-card.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description: Centered card layout (wrapper, card, header icon, password rules, messages) of account activation and password reset.
     @dependencies: admin/shared-styles/theme.css (tokens)

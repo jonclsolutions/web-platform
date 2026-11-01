@@ -1,8 +1,8 @@
 /**
  * @file categories.component.spec.ts
  * @path src/app/admin/shop-pages/categories/categories.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of CategoriesComponent and categories.config.ts – the category tree of
  *   the e-shop: building the tree with child counts, remembered expanded nodes, buttons by

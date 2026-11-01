@@ -1,8 +1,8 @@
 /**
  * @file confirm-dialog.service.spec.ts
  * @path src/app/core/services/confirm-dialog.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ConfirmDialogService: the dialog is mounted with the texts and the
  *   scroll lock, confirm → true, cancel → false, the dialog is removed afterwards and a dialog

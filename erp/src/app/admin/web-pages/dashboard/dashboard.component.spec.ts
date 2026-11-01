@@ -1,8 +1,8 @@
 /**
  * @file dashboard.component.spec.ts
  * @path src/app/admin/web-pages/dashboard/dashboard.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of DashboardComponent – the dashboard of the Web module: statistics
  *   only for the sections the user may see (urgent open tickets, failed counts), hero / secondary

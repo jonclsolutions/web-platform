@@ -1,18 +1,17 @@
 /**
  * @file shop-welcome-page.component.ts
  * @path src/app/admin/shop-pages/shop-welcome-page/shop-welcome-page.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Uvítací/rozcestníková stránka modulu "E-shop" - vidí ji uživatel s
- * oprávněním `shop-welcome-page-view` po přepnutí na modul Shop v headeru. Stejná
- * role jako `WebWelcomePageComponent` pro modul Web - čistě informační rozcestník
- * (kompletní správa e-shopu: produkty, objednávky, platby, doprava, dodavatelé),
- * BEZ osobních údajů uživatele. Karty gatované permission klíči 1:1 shodnými s
- * levým menu `AdminLayoutComponent`.
+ * @description Welcome / landing page of the "E-shop" module - seen by a user with the
+ * `shop-welcome-page-view` permission after switching to the Shop module in the header. Same
+ * role as `WebWelcomePageComponent` for the Web module - a purely informational landing page
+ * (products, orders, payments, shipping, suppliers), WITHOUT personal data of the user. The
+ * cards are gated by the same permission keys as the left menu of `AdminLayoutComponent`.
  * @dependencies
- * - HasPermissionDirective: Gatuje viditelnost jednotlivých karet (`*appHasPermission`).
- * - AdminLocalizationService: Statické i18n admin UI - ruční injection.
+ * - HasPermissionDirective: Gates the visibility of the cards (`*appHasPermission`).
+ * - AdminLocalizationService: Static i18n of the admin UI - manual injection.
  */
 
 import { Component, inject } from '@angular/core';
@@ -21,7 +20,7 @@ import { RouterModule } from '@angular/router';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 
-/** @description Jeden rychlý odkaz na kartě - `icon` je klíč vykreslený přes @switch v šabloně (sdílené SVG se stejným vizuálním jazykem jako admin-layout menu). */
+/** @description One quick link of a card - `icon` is a key rendered through @switch in the template (shared SVGs in the same visual language as the admin-layout menu). */
 interface QuickLinkCard {
   icon: string;
   titleKey: string;
@@ -43,10 +42,9 @@ export class ShopWelcomePageComponent {
   public get strings(): any { return this.i18n.getMergedSection('shop-welcome-page'); }
 
   /**
-   * @description Rychlé odkazy na klíčové stránky modulu Shop, v pořadí odpovídajícím
-   * levému menu (viz admin-layout.component.html, sekce "Katalog"/"Transakce"/
-   * "Zákazníci"/"Logistika"/"Obsah webu"/"Systém"). Permission klíče jsou 1:1 shodné
-   * s těmi v menu.
+   * @description Quick links to the key pages of the Shop module, in the order of the left menu
+   * (see admin-layout.component.html, sections "Catalog" / "Transactions" / "Customers" /
+   * "Logistics" / "Web content" / "System"). The permission keys match the menu 1:1.
    */
   readonly quickLinks: QuickLinkCard[] = [
     { icon: 'products', titleKey: 'card_products_title', descKey: 'card_products_desc', route: '/admin/shop/products', permission: 'shop-products-view' },

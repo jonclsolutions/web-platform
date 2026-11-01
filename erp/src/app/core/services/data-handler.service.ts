@@ -1,52 +1,21 @@
 /**
  * @file data-handler.service.ts
  * @path src/app/core/services/data-handler.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Centralized HTTP data handler service for administrative operations, providing standard CRUD methods with integrated error reporting.
  * @dependencies
  * - HttpClient: Facilitates secure API communication.
  * - AlertDialogService: Displays the single, authoritative user-facing error dialog upon API failure.
- * - AdminLocalizationService: Statická (bundlovaná) lokalizace admin UI - zdroj všech
- *   uživatelsky viditelných textů chybového dialogu, viz refactor-note (2026-10) níže.
+ * - AdminLocalizationService: Static (bundled) localization of the admin UI - source of all
+ *   user-visible texts of the error dialog (resolved lazily, see `i18n`).
  *
- * @refactor-note (2026-10) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * Všechny uživatelsky viditelné texty v `handleError` (titulek dialogu + všechny
- * varianty chybové zprávy) nahrazeny i18n klíči ze sekce `data-handler`
- * v `assets/i18n/admin/{lang}/{lang}.json`. Služba nededí BaseDataComponent, proto
- * ruční injection `AdminLocalizationService` dle vzoru `WelcomePageComponent`
- * (privátní `t(key)` s automatickým prefixem sekce).
- * - Signatura konstruktoru zůstává beze změny (žádný dopad na existující testy/mocky);
- *   služba se získává LÍNĚ přes `Injector` - viz bugfix-note (2026-10) níže.
- * - Dynamické části zpráv (HTTP status, text z backendu, validační chyby) se do
- *   přeloženého textu dosazují přes pojmenované placeholdery `{status}`, `{message}`,
- *   `{errors}`, `{statusText}` - stejná konvence jako `{name}` ve
- *   `welcome-page.welcome_message`. Viz `t()` níže.
- * - Texty se čtou až V OKAMŽIKU chyby (ne při vytvoření služby), takže dialog je vždy
- *   v aktuálně zvoleném admin jazyce i po jeho přepnutí za běhu.
- * - ZÁMĚRNĚ NEPŘELOŽENO: `console.error` výpisy (diagnostika pro vývojáře, ne UI)
- *   a texty, které přijdou hotové z backendu (`error.error.message`, validační chyby
- *   v `error.error.errors`) - jejich jazyk určuje Laravel API, ne tahle služba.
- * - Žádná změna logiky větvení, HTTP volání ani veřejného API - jen texty.
- *
- * @refactor-note (2026-10-24) Open finding #6 - one response envelope: every read / write
- *   method returns the `data` of `{data, meta?, message?}`; `getPaginatedCollection()` /
- *   `getWithMeta()` / `postWithMeta()` return the whole envelope for callers that need `meta`
- *   (pagination, `has_more_older_messages`, `activation_email_sent`). See `ApiEnvelope`.
- *
- * @refactor-note (2026-10-24) 422 `EMAIL_POLICY_SELF_LOCKOUT` (e-mail policy change that would lock
- *   out the acting sysadmin) shows the translated `data-handler.email_policy_self_lockout`.
- *
- * @refactor-note (2026-10-26) 403 `PASSWORD_CONFIRMATION_REQUIRED` (the password dialog of the
- *   step-up confirmation was cancelled, see PasswordConfirmationInterceptor) shows the translated
- *   `data-handler.password_confirmation_required`.
- *
- * @note Důsledek: pokud by první chyba přes `DataHandler` nastala dřív, než si
- * `AdminLocalizationService` vyžádá jakákoli admin komponenta (v administraci to dělá
- * `AdminLayoutComponent`/`BaseDataComponent`), služba teprve vznikne a JSON se teprve
- * začne stahovat - tento jeden dialog pak ukáže `'Cannot load text'`.
- * NIKDY nevracet eager injection do pole třídy ani do konstruktoru.
+ * @note Consequence of the lazy lookup: when the first error through `DataHandler` happens before
+ * any admin component asked for `AdminLocalizationService` (in the admin this is done by
+ * `AdminLayoutComponent` / `BaseDataComponent`), the service is created only then and its JSON
+ * only starts loading - that one dialog then shows `'Cannot load text'`.
+ * NEVER switch back to eager injection in a class field or the constructor.
  */
 
 import { Injectable, Injector, inject } from '@angular/core';
@@ -61,7 +30,7 @@ import { ApiEnvelope, ApiPage } from '../../shared/interfaces/api-envelope';
 /**
  * @description Handles REST API interactions, including header management, serialization, and global error processing.
  * @usage Used exclusively within the 'admin' module for managing authenticated data Sresources.
- * @note SINGLE SOURCE OF TRUTH for error toasts - see bugfix-note above. Consuming
+ * @note SINGLE SOURCE OF TRUTH for error toasts. Consuming
  * components must NOT show their own error toast; they may still branch on
  * `err.status`/`err.error` in their `error:` callback for non-toast cleanup logic
  * (resetting a loading flag, restoring edit state, etc).
@@ -73,23 +42,19 @@ export class DataHandler {
   private baseUrl = environment.base_api_url;
 
   /**
-   * @description Injector pro LÍNÉ získání `AdminLocalizationService` - viz getter
-   * `i18n` níže a bugfix-note (2026-10) v hlavičce souboru. `Injector` sám žádný HTTP
-   * request nespouští, jeho eager injection je proto bezpečná.
+   * @description Injector for the LAZY lookup of `AdminLocalizationService` - see the `i18n`
+   * getter below. `Injector` itself sends no HTTP request, so its eager injection is safe.
    */
   private readonly injector = inject(Injector);
 
-  /** Cache instance pro getter `i18n` - `undefined` do prvního použití. */
+  /** Cached instance of the `i18n` getter - `undefined` until first use. */
   private _i18n?: AdminLocalizationService;
 
   /**
-   * @description Líně (až při prvním čtení) vytáhne `AdminLocalizationService`
-   * z `Injector`. ZÁMĚRNĚ ne `inject(AdminLocalizationService)` jako pole třídy:
-   * `DataHandler` vzniká uvnitř sestavování řetězce HTTP interceptorů a konstruktor
-   * `AdminLocalizationService` hned posílá HTTP request -> NG0200. Viz bugfix-note
-   * (2026-10) v hlavičce souboru.
-   * @refactor-note (2026-10) BACKLOG "vícejazyčná administrace, žádné hardcoded texty" -
-   * viz hlavička souboru.
+   * @description Lazily (on the first read) gets `AdminLocalizationService` from the `Injector`.
+   * Deliberately NOT `inject(AdminLocalizationService)` as a class field: `DataHandler` is created
+   * while the HTTP interceptor chain is being built and the constructor of
+   * `AdminLocalizationService` sends an HTTP request at once -> NG0200.
    */
   private get i18n(): AdminLocalizationService {
     if (!this._i18n) {
@@ -104,17 +69,16 @@ export class DataHandler {
   ) { }
 
   /**
-   * @description Vrátí přeložený text ze sekce `data-handler` a dosadí do něj
-   * pojmenované placeholdery (`{status}`, `{message}`, ...). Viz refactor-note (2026-10)
-   * v hlavičce souboru.
-   * @param key Klíč UVNITŘ sekce `data-handler` (bez prefixu sekce), např. `'network_error'`.
-   * @param params Hodnoty pro placeholdery - klíč objektu = název placeholderu bez závorek.
-   * @returns {string} Hotový text v aktuálně zvoleném admin jazyce.
-   * @note Dosazení běží v JEDNOM průchodu přes callback, ne řetězením `.replace()`:
-   * hodnoty pocházejí z backendu (chybová zpráva, validační texty) a mohou samy
-   * obsahovat `{...}` nebo `$&`/`$1` - ty se tak nikdy nevyhodnotí jako další
-   * placeholder ani jako speciální náhradový vzor. Placeholder bez odpovídající
-   * hodnoty v `params` zůstane v textu beze změny (snadno viditelná chyba v JSONu).
+   * @description Returns a translated text of the `data-handler` section with the named
+   * placeholders (`{status}`, `{message}`, ...) filled in.
+   * @param key Key INSIDE the `data-handler` section (without the section prefix), e.g. `'network_error'`.
+   * @param params Values of the placeholders - object key = placeholder name without braces.
+   * @returns {string} Ready text in the current admin language.
+   * @note The substitution runs in ONE pass through a callback, not by chaining `.replace()`:
+   * the values come from the backend (error message, validation texts) and may contain `{...}`
+   * or `$&` / `$1` themselves - they are never evaluated as another placeholder or a special
+   * replacement pattern. A placeholder without a value in `params` stays in the text unchanged
+   * (an easily visible error in the JSON).
    */
   private t(key: string, params: Record<string, string | number> = {}): string {
     const template = this.i18n.getValue(`data-handler.${key}`);
@@ -149,10 +113,6 @@ export class DataHandler {
    * cleanup logic without ever showing a second toast themselves.
    * @param error The raw HttpErrorResponse object.
    * @returns {Observable<never>} An observable that throws the original error.
-   * @refactor-note (2026-10) Všechny uživatelsky viditelné texty (titulek dialogu
-   * i zprávy) nahrazeny i18n klíči sekce `data-handler` - viz hlavička souboru.
-   * Větvení podle `error.status` beze změny; `console.error` výpisy zůstávají
-   * záměrně nepřeložené (diagnostika, ne UI).
    */
   private handleError = (error: HttpErrorResponse): Observable<never> => {
     let errorMessage = this.t('unknown_error');
@@ -189,7 +149,7 @@ export class DataHandler {
           const validationErrors = Object.values(error.error.errors).flat().join('; ');
           errorMessage = this.t('validation_error', { status: error.status, errors: validationErrors });
         } else {
-          // `.trim()` - prázdný `statusText` (běžné u HTTP/2) by jinak nechal mezeru na konci.
+          // `.trim()` - an empty `statusText` (common with HTTP/2) would leave a trailing space.
           errorMessage = this.t('client_error', { status: error.status, statusText: error.statusText || '' }).trim();
         }
      } else if (error.status >= 500) {
@@ -204,17 +164,11 @@ export class DataHandler {
 
     this.alertDialogService.open(this.t('dialog_title'), errorMessage, 'danger');
 
-    // @bugfix-note (2026-08-31): rethrow the ORIGINAL error (not a repackaged plain
-    // Error) - see bugfix-note in file header. Consuming components can inspect
-    // err.status/err.error for non-toast logic, but must never show a second toast.
     return throwError(() => error);
   };
 
   /**
    * @description Fetches a list and returns its `data`.
-   * @refactor-note (2026-10-24) Open finding #6: the API answers every payload as `{data, meta?}`
-   *   (App\Traits\RespondsWithData), so `data` is read without guessing - the tolerance for bare
-   *   answers is gone (a bare answer would now be an API bug, caught by its tests).
    * @param apiUrl The relative path to the resource endpoint.
    * @param params Optional query parameters.
    * @returns {Observable<T[]>} A stream containing the item collection.
@@ -252,9 +206,6 @@ export class DataHandler {
 
   /**
    * @description GET returning the payload (`data`) of the answer.
-   * @refactor-note (2026-10-24) Returned the raw body before (each caller read its own shape -
-   *   `.languages`, `.page_titles`, `.data`, the bare record …, open finding #6); now the same as
-   *   getOne(). Callers that need `meta` use getWithMeta().
    * @param apiUrl The relative path to the resource.
    * @returns {Observable<T>} The payload.
    */
@@ -288,10 +239,6 @@ export class DataHandler {
 
   /**
    * @description Reads the payload of an answer.
-   * @bugfix-note (2026-10-23) post / put / patch read `response.data` unconditionally while many
-   *   endpoints answered the bare resource (open finding #6) - both shapes were accepted then.
-   * @refactor-note (2026-10-24) The API answers one envelope now (finding #6) - only `data` is
-   *   read; an answer without a body (204) gives null.
    * @param response Raw response body (`{data, …}` or null for 204).
    * @returns The payload, or null.
    */
@@ -328,9 +275,6 @@ export class DataHandler {
 
   /**
    * @description Performs a PUT request (full update) and unwraps the result.
-   * @bugfix-note (2026-08-19) `FormData` payload (soubory) se teď posílá jako `POST`
-   * s method-override polem `_method=PUT` - viz hlavička souboru. Bez multipart obsahu
-   * (běžný JSON payload) beze změny - skutečný HTTP PUT, jako dřív.
    */
   put<T>(apiUrl: string, data: any): Observable<T> {
     if (data instanceof FormData) {
@@ -344,9 +288,6 @@ export class DataHandler {
 
   /**
    * @description Performs a PATCH request (partial update) and unwraps the result.
-   * @bugfix-note (2026-08-19) `FormData` payload (soubory) se teď posílá jako `POST`
-   * s method-override polem `_method=PATCH` - viz hlavička souboru. Bez multipart obsahu
-   * (běžný JSON payload) beze změny - skutečný HTTP PATCH, jako dřív.
    */
   patch<T>(apiUrl: string, data: any): Observable<T> {
     if (data instanceof FormData) {
@@ -359,15 +300,14 @@ export class DataHandler {
   }
 
   /**
-   * @description Pošle `FormData` payload jako skutečný HTTP `POST` s Laravel method-
-   * override polem `_method` v těle requestu - jediný spolehlivý způsob, jak dostat
-   * multipart (soubory) tělo do PUT/PATCH endpointu, protože PHP samo o sobě multipart
-   * tělo pro PUT/PATCH nikdy neparsuje (viz bugfix-note v hlavičce souboru). Laravel
-   * router `_method` pole v POST requestu automaticky rozpozná a nasměruje na
-   * odpovídající PUT/PATCH route - žádná úprava backend routes není potřeba.
-   * @param apiUrl Cílová cesta (stejná, na kterou by šel "opravdový" PUT/PATCH).
-   * @param formData Multipart payload, do kterého se přidá `_method` pole.
-   * @param method Metoda, kterou má Laravel uvnitř aplikace použít místo transportního POST.
+   * @description Sends a `FormData` payload as a real HTTP `POST` with the Laravel method-override
+   * field `_method` in the body - the only reliable way to get a multipart (files) body into a
+   * PUT / PATCH endpoint, because PHP never parses a multipart body of PUT / PATCH by itself.
+   * The Laravel router recognizes the `_method` field of a POST and routes it to the matching
+   * PUT / PATCH route - no backend route change needed.
+   * @param apiUrl Target path (the same a "real" PUT / PATCH would go to).
+   * @param formData Multipart payload the `_method` field is added to.
+   * @param method Method Laravel should use inside the application instead of the transport POST.
    */
   private postWithMethodOverride<T>(apiUrl: string, formData: FormData, method: 'PUT' | 'PATCH'): Observable<T> {
     formData.append('_method', method);

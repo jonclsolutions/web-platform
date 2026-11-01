@@ -1,20 +1,13 @@
 /**
  * @file public-data.service.ts
  * @path src/app/shared/services/public-data.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Service providing public API access to shop settings, legal documents, and contact forms.
  * @note siteSettings$ acts as an in-memory cache populated once by AppBootstrapService
  *   during APP_INITIALIZER. Components should read from siteSettingsValue$ instead of
  *   calling getSiteSettings() themselves, to avoid redundant requests and loading flicker.
- * @refactor-note (2026-08) Přidána `getWebStatus()` - mirror `getShopStatus()`, používá
- *   `webMaintenanceGuard` k rozhodnutí, jestli přesměrovat na /web-maintenance.
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `getCachedSettingsSnapshot`.
- * @refactor-note (2026-10-24) Open finding #6: the API answers `{data, meta?}` - every method
- *   returns the payload (`data`); getWithMeta() keeps the envelope for answers with `meta`
- *   (e.g. `has_more_older_messages` of the project portal message pages).
  */
 
 import { Injectable } from '@angular/core';

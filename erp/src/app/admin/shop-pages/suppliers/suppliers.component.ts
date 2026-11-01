@@ -1,25 +1,14 @@
 /**
  * @file suppliers.component.ts
  * @path src/app/admin/shop-pages/suppliers/suppliers.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages the administration of store suppliers, including CRUD operations, archive management, and data filtering.
  * @dependencies
  * - BaseDataComponent: Provides the base logic for API interactions, pagination, and entity state management.
  * - TableBuilderComponent: Used for displaying supplier data and handling CSV exports.
- * - Config.create* factory functions: i18n-aware definitions - viz refactor-note
- *   (2026-09-09) níže.
- *
- * (Earlier bugfix-note 2026-08-31 for duplicate error toasts is unchanged.)
- *
- * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `Config.SUPPLIER_*` konstanty nahrazeny `Config.create*()` factory funkcemi.
- * `graphColumns` přestalo být `readonly`. `'Úspěch'`/`'Požadavek byl upraven.'`/
- * `'Požadavek byl vytvořen.'` (dřív natvrdo česky) nahrazeny `t()` voláním.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
+ * - Config.create* factory functions: i18n-aware definitions.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -55,7 +44,6 @@ export class SuppliersComponent extends BaseDataComponent<any> implements Core.O
   supplierColumns: Core.ColumnDefinition[] = [];
   trashSupplierColumns: Core.ColumnDefinition[] = [];
 
-  /** @refactor-note (2026-09-09) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
 
   constructor(
@@ -99,8 +87,6 @@ export class SuppliersComponent extends BaseDataComponent<any> implements Core.O
           updatedBtn.label = this.isFilterVisible ? this.t('toolbar_hide_filters') : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
-        // @bugfix-note (2026-10-22) Import was offered in the trash view and the trash button was
-        // never highlighted – same rules as the other shop pages now.
         case 'handleCreateFormOpened':
         case 'exportActiveTable':
         case 'triggerImport':

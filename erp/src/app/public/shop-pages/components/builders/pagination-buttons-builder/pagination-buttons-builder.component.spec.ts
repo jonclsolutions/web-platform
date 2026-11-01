@@ -1,8 +1,8 @@
 /**
  * @file pagination-buttons-builder.component.spec.ts
  * @path src/app/public/shop-pages/components/builders/pagination-buttons-builder/pagination-buttons-builder.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the shop PaginationButtonsBuilderComponent: window of max. 5 page numbers
  *   around the current page and page-change events only for valid, different pages.

@@ -3,8 +3,8 @@
 /**
  * @file ShopModelsTest.php
  * @path api/tests/Unit/Shop/ShopModelsTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the shop models: coupon validity rules, query scopes, relations
  *   and helpers not reached through the API, order number sequence, stock re-summing and the

@@ -1,14 +1,12 @@
 /**
  * @file loading.service.ts
  * @path src/app/core/services/loading.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Global service to manage and track the application's loading state.
  * @dependencies
  * - NgZone: Ensures state changes trigger change detection outside of standard Angular event loops when necessary.
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `isLoadingSnapshot`.
  */
 
 import { Injectable, NgZone } from '@angular/core';

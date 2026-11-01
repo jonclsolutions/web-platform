@@ -1,8 +1,8 @@
 /**
  * @file home.component.spec.ts
  * @path src/app/public/web-pages/home/home.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of HomeComponent and the tech-stack marquee helper: the marquee rows are
  *   repeated to a minimum length and doubled for a seamless loop; the page renders its texts and

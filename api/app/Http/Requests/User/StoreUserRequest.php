@@ -2,27 +2,18 @@
 /**
  * @file StoreUserRequest.php
  * @path app/Http/Requests/User/StoreUserRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Validates the payload for creating a new administrative user account.
- * @refactor-note (2026-09-02) BACKLOG "explicit user permissions": added optional
- * `permission_ids` array validation so the create form can grant explicit extra
- * permissions in the same request as account creation. Authorization for WHICH
- * permission ids the caller may actually grant is enforced in
- * `UserController::applyExplicitPermissions()`, not here - this request only
- * checks that the submitted ids are well-formed and reference real permissions.
  *
  * NOTE: this file reconstructs the request class based on the fields observed in
  * use across UserController/administrators.config.ts. If the project's actual
  * StoreUserRequest already contains additional rules, merge this diff into it
  * rather than overwriting wholesale.
- * @security-note (2026-10-23) `role_id` must be an ACTIVE role - `exists:core_roles,id` also
+ * @security `role_id` must be an ACTIVE role - `exists:core_roles,id` also
  *   accepted soft-deleted (trashed) roles, so an account could be given a role that was removed
  *   (open finding #4).
- * @bugfix-note (2026-10-26) Account e-mails are normalized (trim incl. invisible characters,
- *   lower case) before validation and checked with `email:rfc,strict`: the plain `email` rule let
- *   `a @b.cz` / `"a b"@b.cz` through and the stored case varied (`TEST@x.cz`).
  */
 
 namespace App\Http\Requests\User;
@@ -56,7 +47,7 @@ class StoreUserRequest extends FormRequest
             'internal_note' => ['nullable', 'string'],
             'dpp_hours_spent' => ['nullable', 'integer', 'min:0'],
 
-            // Explicit permission grants - see refactor-note above. Bounds/authority
+            // Explicit permission grants. Bounds/authority
             // checking happens in the controller, not here.
             'permission_ids' => ['sometimes', 'array'],
             'permission_ids.*' => ['integer', 'exists:core_permissions,id'],
@@ -87,7 +78,6 @@ class StoreUserRequest extends FormRequest
      * this is a defensive normalization at the API boundary, not a workaround for
      * one specific bug, since any HTTP client (not just this project's own
      * frontend) could send loosely-typed JSON here.
-     * @refactor-note (2026-09-06) BACKLOG "permission_ids validation robustness".
      */
     protected function prepareForValidation(): void
     {

@@ -2,14 +2,12 @@
 /**
  * @file CorePermissionController.php
  * @path app/Http/Controllers/Api/Core/CorePermissionController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Read-only listing of all available system permissions, used to render the
  *              permission matrix (rows) on the role management page. Permissions themselves
  *              are seeded/managed directly in the database, not through this API.
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Core;

@@ -3,8 +3,8 @@
 /**
  * @file TestCase.php
  * @path api/tests/TestCase.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Base class of every api test. Boots the application against a fresh
  *   SQLite in-memory database with the test schema (Tests\Support\TestSchema) and refuses

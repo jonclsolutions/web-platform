@@ -1,9 +1,9 @@
 /**
  * @file admin-navigation.config.spec.ts
  * @path src/app/admin/admin-navigation.config.spec.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-27
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Consistency of the admin navigation (bugfix 2026-10-27): every page of
  *   ADMIN_MODULE_PAGES exists in the admin route table and the route requires exactly the same
  *   permission (or the sysadmin guard for a role-only page), and every page route of the table is

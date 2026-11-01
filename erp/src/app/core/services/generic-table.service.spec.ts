@@ -1,8 +1,8 @@
 /**
  * @file generic-table.service.spec.ts
  * @path src/app/core/services/generic-table.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of GenericTableService: query building (page, per_page, non-empty
  *   filters), the per-user page cache with its 3 minute TTL, removal of failed requests from the

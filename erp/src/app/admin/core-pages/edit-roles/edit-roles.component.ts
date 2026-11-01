@@ -1,8 +1,8 @@
 /**
  * @file edit-roles.component.ts
  * @path src/app/admin/web-pages/edit-roles/edit-roles.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Role & permission management screen. Master-detail layout: a scrollable,
  *              searchable role list on the left, and the currently selected role's
@@ -14,36 +14,6 @@
  *              System roles (sysadmin/admin) are shown read-only - their name,
  *              description, and permissions cannot be changed here (enforced both in the UI
  *              and, as the source of truth, on the backend).
- *
- * (Earlier refactor-notes for role hierarchy, group-select-all, two-level grouping +
- * search, TTL caching, and export mechanism are unchanged - see version history,
- * omitted here for brevity.)
- *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * Komponenta DĚDÍ BaseDataComponent, proto jen `translationSection = 'edit-roles'` a
- * zděděné `strings`/`t()`, žádná ruční injection. Nahrazeny VŠECHNY uživatelsky
- * viditelné texty vč. `window.confirm(...)` textu (nativní dialog nejde stylovat, ale
- * text uvnitř přeložit jde). Pluralizace "uživatel/uživatelé/uživatelů" (čeština má 3
- * tvary, angličtina 2) řešena `usersCountLabel()` metodou - JSON má VŽDY 4 klíče
- * (`users_zero/one/few/many`), jazyky se 2 tvary prostě nechají `few`/`many` stejné.
- * `MODULE_LABELS`/`GENERAL_RESOURCE_LABEL` byly PŮVODNĚ statické konstanty vyhodnocené
- * při načtení modulu - nahrazeny `moduleLabel()` metodou čtoucí `i18n.getValue()` přímo
- * (ne factory funkce jako u *.config.ts souborů, protože tahle komponenta nemá vlastní
- * `.config.ts` - konfigurace exportu/modulů žije přímo v komponentě).
- * `humanizeResourceKey()` NEPŘEKLÁDÁN ZÁMĚRNĚ - algoritmicky odvozuje fallback popisek
- * přímo z technického `permission_key` (např. "edit-website" -> "Edit Website"), použije
- * se JEN když daný resource nemá jinde explicitní překlad; jde o technický název, ne
- * redakčně psaný text, a jeho "překlad" by ve skutečnosti jen kapitalizoval anglická
- * slova bez ohledu na zvolený jazyk.
- * `ROLE_EXPORT_COLUMNS` (statická konstanta) nahrazena `getRoleExportColumns()` metodou
- * - export labely i "Ano"/"Ne" hodnoty v `getExportValue()` i XLSX sheet název jsou teď
- * přeložené, protože jde o viditelný obsah stahovaného souboru, ne jen UI.
- *
- * @refactor-note (2026-10-27) UI of the role detail: deleting asks with the standard admin
- *   confirm dialog (ConfirmDialogService) instead of an own modal; the edit mode of the details
- *   has labelled fields (Role name / Description / Require 2FA); the reason why a role cannot be
- *   deleted is written next to the disabled button (before only a tooltip); the permission save
- *   bar has a heading and a hint, so it is not an empty box with two buttons.
  */
 
 import { Component, inject } from '@angular/core';
@@ -77,22 +47,22 @@ interface CoreRole {
   updated_at?: string;
 }
 
-/** Jedna z rozpoznaných CRUD akcí na konci klíče - viz parsePermissionKey(). */
+/** One of the recognized CRUD actions at the end of the key - see parsePermissionKey(). */
 type PermissionAction = 'view' | 'create' | 'update' | 'delete';
 const ACTION_SUFFIXES: PermissionAction[] = ['view', 'create', 'update', 'delete'];
 const ACTION_ORDER: Record<PermissionAction, number> = { view: 0, create: 1, update: 2, delete: 3 };
 
-/** Interní klíč (ne zobrazovaný) záchytné skupiny pro permissions bez rozpoznatelného vzoru. */
+/** Internal (not displayed) key of the catch-all group for permissions without a recognizable pattern. */
 const GENERAL_RESOURCE_KEY = '__general__';
 
-/** Druhá úroveň grupování - jeden "zdroj" (resource) uvnitř modulu, např. "News". */
+/** Second grouping level - one resource inside a module, e.g. "News". */
 interface PermissionResourceGroup {
   resourceKey: string;
   resourceLabel: string;
   items: CorePermission[];
 }
 
-/** První úroveň grupování - jeden modul (Web/Core/E-shop), obsahuje své zdroje. */
+/** First grouping level - one module (Web / Core / E-shop), holds its resources. */
 interface PermissionModuleGroup {
   module: string;
   moduleLabel: string;
@@ -100,9 +70,9 @@ interface PermissionModuleGroup {
 }
 
 /**
- * @description Mapa technického `module` klíče na i18n cestu jeho popisku - viz
- * `moduleLabel()`. Nová hodnota modulu na backendu vyžaduje jen přidání sem +
- * odpovídající klíč do cz.json/en.json, žádnou další logiku.
+ * @description Map of the technical `module` key to the i18n path of its label - see
+ * `moduleLabel()`. A new module value on the backend needs only an entry here + the matching
+ * key in cz.json / en.json, no other logic.
  */
 const MODULE_LABEL_KEYS: Record<string, string> = {
   web: 'module_web',
@@ -132,20 +102,10 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   draftForcesTwoFa = false;
   newRoleForcesTwoFa = false;
 
-  /**
-   * @refactor-note (2026-09) BUGFIX "Cannot load text" u users count/module/resource
-   * labelů: `this.t(key)` volání v tomto souboru VŠUDE předávají KRÁTKÝ klíč
-   * (např. 'module_core', 'users_one'), ale zděděná `BaseDataComponent.t(path)`
-   * očekává PLNOU tečkovanou cestu VČETNĚ sekce (např. 'edit-roles.module_core') -
-   * bez prefixu `getValue()` hledá klíč `module_core` na NEJVYŠŠÍ úrovni JSONu, kde
-   * neexistuje, a vrací fallback 'Cannot load text'. Přidán lokální override, který
-   * prefix 'edit-roles.' doplní automaticky, takže všechna dosavadní krátká volání
-   * `this.t('xxx')` v této třídě fungují beze změny.
-   */
   public override t(key: string): string {
     return this.i18n.getValue(`edit-roles.${key}`);
   }
-  // ── Export (BACKLOG "export mechanismus i na negenerické stránky") ─────
+  // ── Export ─────
   showExportPopup = false;
   isExporting = false;
   get exportColumnOptions(): ExportColumnOption[] { return this.getRoleExportColumns(); }
@@ -162,11 +122,11 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   isLoading = true;
   permissionGroups: PermissionModuleGroup[] = [];
 
-  /** Čitelnější alias nad zděděným `this.data` (pole rolí) - beze změny sémantiky. */
+  /** More readable alias of the inherited `this.data` (array of roles) - same semantics. */
   get roles(): CoreRole[] { return this.data; }
   set roles(value: CoreRole[]) { this.data = value; }
 
-  // ── Seznam rolí (levý panel) ──────────────────────────────────────────
+  // ── Role list (left panel) ──────────────────────────────────────────
   roleSearch = '';
 
   get filteredRoles(): CoreRole[] {
@@ -184,10 +144,10 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   }
 
   /**
-   * @description Skloňuje "N uživatel/uživatelé/uživatelů" (nebo anglický ekvivalent)
-   * podle počtu - JSON nese VŽDY 4 tvary (`users_zero/one/few/many`); jazyky bez
-   * české 3-tvarové pluralizace (např. angličtina) mají `few`/`many` prostě identické.
-   * České pravidlo: 0 -> many, 1 -> one, 2-4 -> few, 5+ -> many.
+   * @description Inflects "N user / users" (or the Czech equivalent) by the count - the JSON
+   * ALWAYS carries 4 forms (`users_zero/one/few/many`); languages without the Czech 3-form
+   * pluralization (e.g. English) simply have identical `few` / `many`.
+   * Czech rule: 0 -> many, 1 -> one, 2-4 -> few, 5+ -> many.
    */
   usersCountLabel(count: number): string {
     let key: string;
@@ -198,7 +158,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     return `${count} ${this.t(key)}`;
   }
 
-  // ── Detail vybrané role (pravý panel) ─────────────────────────────────
+  // ── Detail of the selected role (right panel) ─────────────────────────────────
   selectedRole: CoreRole | null = null;
   currentPermissions = new Set<string>();
   isPermissionsDirty = false;
@@ -209,17 +169,17 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   draftDescription = '';
   isSavingDetails = false;
 
-  // ── Formulář pro novou roli ─────────────────────────────────────────
+  // ── New role form ─────────────────────────────────────────
   showNewRoleForm = false;
   newRoleName = '';
   newRoleDescription = '';
   isCreatingRole = false;
   newRoleError = '';
 
-  // ── Smazání role (standard confirm dialog, 2026-10-27) ──────────────
+  // ── Role deletion (standard confirm dialog) ──────────────
   isDeletingRole = false;
 
-  // ── Vyhledávání v checklistu oprávnění ─────────────────────────────
+  // ── Search in the permission checklist ─────────────────────────────
   permissionSearch = '';
 
   get visiblePermissionGroups(): PermissionModuleGroup[] {
@@ -248,9 +208,8 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   }
 
   /**
-   * @description Načte seznam oprávnění přes TTL cache (viz refactor-note v hlavičce
-   * souboru) - jde o statická data, která se mění jen při vývoji, ne za běhu, proto
-   * dlouhá TTL a žádná invalidace odsud.
+   * @description Loads the permission list through the TTL cache - static data that changes only
+   * during development, not at runtime, hence the long TTL and no invalidation from here.
    */
   private initializeRolesAndPermissions(): void {
     this.isLoading = true;
@@ -273,12 +232,12 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   }
 
   /**
-   * @description Načte seznam rolí přes TTL cache (viz refactor-note v hlavičce
-   * souboru). Pokud je zadaný `preferred` (id a/nebo role_name), po načtení se pokusí
-   * vybrat PRÁVĚ TU roli místo automatického výběru první v poli - používá se ve
-   * fallback větvích po uložení, kdy odpověď serveru nepřišla v očekávaném tvaru.
-   * @param preferred Volitelně id a/nebo role_name role, která má zůstat vybraná.
-   * @param force Bypass cache - voláno po každé úspěšné mutaci (create/update/delete role).
+   * @description Loads the role list through the TTL cache. When `preferred` (id and / or
+   * role_name) is given, tries to select EXACTLY that role after the load instead of the first
+   * one of the array - used in the fallback branches after saving, when the server response did
+   * not have the expected shape.
+   * @param preferred Optional id and / or role_name of the role that should stay selected.
+   * @param force Bypass cache - called after every successful mutation (create / update / delete role).
    */
   private loadRoles(preferred?: { id?: number; name?: string }, force: boolean = false): void {
     if (force) {
@@ -314,7 +273,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     });
   }
 
-  // ── Parsování a grupování permission klíčů (modul -> zdroj) ───────────
+  // ── Parsing and grouping of permission keys (module -> resource) ───────────
 
   private parsePermissionKey(perm: CorePermission): { resourceKey: string; resourceLabel: string; action: PermissionAction | null } {
     const key = perm.permission_key;
@@ -341,9 +300,8 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   }
 
   /**
-   * @description Algoritmicky odvozuje fallback popisek z technického permission_key
-   * (např. "edit-website" -> "Edit Website"). ZÁMĚRNĚ nepřekládáno - viz refactor-note
-   * (2026-09) v hlavičce souboru.
+   * @description Derives a fallback label from the technical permission_key algorithmically
+   * (e.g. "edit-website" -> "Edit Website"). NOT translated on purpose.
    */
   private humanizeResourceKey(rawResource: string): string {
     return rawResource
@@ -398,11 +356,6 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     });
   }
 
-  /**
-   * @refactor-note (2026-09) Nahrazeno voláním `i18n.getValue()` přes `MODULE_LABEL_KEYS`
-   * mapu - PŮVODNĚ statická `MODULE_LABELS` konstanta. Neznámý modul (mimo mapu) vrátí
-   * surový klíč beze změny, stejně jako předtím.
-   */
   moduleLabel(module: string): string {
     const key = MODULE_LABEL_KEYS[module];
     return key ? this.t(key) : module;
@@ -420,14 +373,12 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     return perm.id;
   }
 
-  // ── Výběr role v levém seznamu ─────────────────────────────────────────
+  // ── Role selection in the left list ─────────────────────────────────────────
 
   /**
    * @description Shows a role in the editor; with unsaved changes the user is asked first.
    * @param role Role from the list.
    * @returns Promise settled after the (optional) confirmation.
-   * @bugfix-note (2026-10-23) Asked with the native, page-blocking `window.confirm()` (open finding
-   *   #48) - the app's ConfirmDialogService now (styled, translated buttons).
    */
   async selectRole(role: CoreRole): Promise<void> {
     if (this.isPermissionsDirty || this.isEditingDetails) {
@@ -445,7 +396,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     this.permissionSearch = '';
   }
 
-  // ── Checklist oprávnění vybrané role ───────────────────────────────────
+  // ── Permission checklist of the selected role ───────────────────────────────────
 
   isChecked(permissionKey: string): boolean {
     return this.currentPermissions.has(permissionKey);
@@ -526,19 +477,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   }
 
   /**
-   * @description Uloží oprávnění role. Po úspěchu invaliduje cache seznamu rolí.
-   * @bugfix-note (2026-09-05) KRITICKÝ BUG - MATOUCÍ "NEOČEKÁVANÝ FORMÁT" HLÁŠKA PŘI
-   * KAŽDÉM ÚSPĚŠNÉM ULOŽENÍ: `CoreRoleController::syncPermissions()` vrací
-   * `response()->json(new CoreRoleResource(...))` BEZ obálky `{ data: ... }`, kterou
-   * `DataHandler.put()` bezpodmínečně očekává a rozbaluje přes `response.data` (viz
-   * data-handler.service.ts). `response.data` je proto u tohoto endpointu VŽDY
-   * `undefined` - nejde o občasnou vadnou odpověď, jak předpokládala stará
-   * `if (!updated || updated.id === undefined)` větev, která se tak spouštěla při
-   * KAŽDÉM úspěšném uložení a mátla uživatele hláškou "pravděpodobně uloženo, ale...".
-   * Řešení SCOPOVANÉ jen na tuhle komponentu (bez zásahu do sdílené DataHandler vrstvy,
-   * na kterou spoléhá zbytek adminu): aktualizovaný stav role sestavíme lokálně - přesně
-   * víme, co jsme odeslali (`keys`), server na úspěšný request odpovídá jen 2xx/chybou,
-   * nikdy částečně, takže žádné dohadování z odpovědi není potřeba.
+   * @description Saves the permissions of the role. Invalidates the role list cache on success.
    */
   savePermissions(): void {
     if (!this.selectedRole || this.selectedRole.is_protected || this.isSavingPermissions) return;
@@ -566,7 +505,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     });
   }
 
-  // ── Editace názvu / popisu vybrané role ────────────────────────────────
+  // ── Editing the name / description of the selected role ────────────────────────────────
 
   startEditingDetails(): void {
     if (!this.selectedRole || this.selectedRole.is_protected) return;
@@ -585,13 +524,8 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   }
 
   /**
-   * @description Uloží název/popis role. Po úspěchu invaliduje cache seznamu rolí
-   * i sdílenou `RoleOptionsService` cache.
-   * @bugfix-note (2026-09-05) Stejný kořenový problém jako u `savePermissions()` výše -
-   * `CoreRoleController::update()` vrací roli bez `{ data: ... }` obálky, takže
-   * `EntityCrudService.update()` -> `DataHandler.put()` vždy vrátí `undefined`. Řešeno
-   * stejně: `payload`, který jsme sami odeslali, JE novým stavem role - sestavíme
-   * `updated` z něj, žádný dohad z odpovědi serveru.
+   * @description Saves the name / description of the role. Invalidates the role list cache and
+   * the shared `RoleOptionsService` cache on success.
    */
   saveDetails(): void {
     if (!this.selectedRole || this.selectedRole.is_protected || this.isSavingDetails) return;
@@ -644,7 +578,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     }
   }
 
-  // ── Vytvoření nové role ───────────────────────────────────────────────
+  // ── Creating a new role ───────────────────────────────────────────────
 
   openNewRoleForm(): void {
     this.newRoleName = '';
@@ -659,13 +593,8 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   }
 
   /**
-   * @description Vytvoří novou roli. Po úspěchu invaliduje cache seznamu rolí i sdílenou
-   * `RoleOptionsService` cache.
-   * @bugfix-note (2026-09-05) Stejný kořenový problém jako u save*() výše, ALE tady ho
-   * nejde obejít sestavením lokálně - nové `id` přiděluje výhradně server, takže reload
-   * přes `loadRoles({name}, true)` musí zůstat. Rozdíl je jen v tom, že tahle cesta je
-   * TEĎ prezentovaná jako normální/očekávaný průběh (viz zpráva), ne jako fallback pro
-   * vzácně "poškozenou" odpověď - protože poškozená není, jen záměrně nezabalená.
+   * @description Creates a new role. Invalidates the role list cache and the shared
+   * `RoleOptionsService` cache on success.
    */
   createRole(): void {
     const name = this.newRoleName.trim();
@@ -704,7 +633,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     });
   }
 
-  // ── Smazání role ──────────────────────────────────────────────────────
+  // ── Role deletion ──────────────────────────────────────────────────────
 
   canDeleteRole(role: CoreRole): boolean {
     return !role.is_protected && role.users_count === 0;
@@ -718,12 +647,9 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
   /**
    * @description Asks with the standard admin confirm dialog and deletes the role. After success
-   *   the role-list cache and the shared `RoleOptionsService` cache are invalidated (see
-   *   refactor-note 2026-08-8/10 in the file header).
+   *   the role-list cache and the shared `RoleOptionsService` cache are invalidated.
    * @param role Role to delete (a role that cannot be deleted is ignored).
    * @returns Promise settled after the dialog (the delete request runs on).
-   * @refactor-note (2026-10-27) Own delete modal replaced by ConfirmDialogService (same look as
-   *   every other confirmation of the admin). An API error is shown by DataHandler's error dialog.
    */
   async openDeleteConfirm(role: CoreRole): Promise<void> {
     if (!this.canDeleteRole(role) || this.isDeletingRole) return;
@@ -762,14 +688,11 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   // ── Export do CSV/XLSX/JSON/TXT ───────────────────────────────────────
 
   /**
-   * @description Sloupce nabízené v exportním popupu - EditRolesComponent NENÍ
-   * `TableBuilderComponent`, takže si generování souboru řeší sama (viz
-   * `buildExportRows()`/`downloadExportFile()` níže), ale znovupoužívá stejnou
-   * `ExportPopupBuilderComponent` (formátový picker) jako zbytek admin sekce.
-   * `permissions` je jediné pole, které není přímo na `CoreRole` jako string - viz
-   * `getExportValue()`.
-   * @refactor-note (2026-09) PŮVODNĚ statická `ROLE_EXPORT_COLUMNS` konstanta -
-   * nahrazeno metodou, ať labely reagují na aktuální admin jazyk.
+   * @description Columns offered in the export popup - EditRolesComponent is NOT a
+   * `TableBuilderComponent`, so it builds the file itself (see `buildExportRows()` /
+   * `downloadExportFile()` below), but reuses the same `ExportPopupBuilderComponent` (format
+   * picker) as the rest of the admin. `permissions` is the only field that is not a plain string
+   * on `CoreRole` - see `getExportValue()`.
    */
   private getRoleExportColumns(): ExportColumnOption[] {
     return [
@@ -782,7 +705,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     ];
   }
 
-  /** @description `this.roles` je VŽDY kompletní (viz `loadAllData()`/`loadRoles()` výše - žádná paginace) - export tak vždy pokrývá úplně všechny role, ne jen aktuálně zobrazenou stránku. */
+  /** @description `this.roles` is ALWAYS complete (see `loadAllData()` / `loadRoles()` above - no pagination) - the export always covers all roles, not only the shown page. */
   openExportPopup(): void {
     if (this.roles.length === 0) {
       this.alertDialogService.open(this.t('btn_export'), this.t('export_empty_error'), 'danger');
@@ -799,9 +722,9 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   }
 
   /**
-   * @description `columnKeys` je `null`, pokud caller (`ExportPopupBuilderComponent`)
-   * nedostal žádné `[columns]` - u nás se to nestane (export sloupce vždy neprázdné),
-   * ale ošetřeno defenzivně stejně jako `TableBuilderComponent` to dělá.
+   * @description `columnKeys` is `null` when the caller (`ExportPopupBuilderComponent`) got no
+   * `[columns]` - cannot happen here (the export columns are never empty), handled defensively
+   * like in `TableBuilderComponent`.
    */
   handleExportFormatSelected(selection: ExportSelection): void {
     const columns = this.getRoleExportColumns();
@@ -845,17 +768,15 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     }).subscribe({ error: (err) => console.error('Failed to log export:', err) });
   }
 
-  /** @description Vrátí pole řádků (pole stringů, ve stejném pořadí jako `keys`) - jedna položka pole = jedna role. */
+  /** @description Returns an array of rows (arrays of strings in the order of `keys`) - one item = one role. */
   private buildExportRows(keys: string[]): string[][] {
     return this.roles.map(role => keys.map(key => this.getExportValue(role, key)));
   }
 
   /**
-   * @description Formátuje jednu hodnotu pro export - `permissions` (pole klíčů) se
-   * spojí středníkem (je jich typicky desítky, nedávají smysl jako samostatné
-   * sloupce), boolean pole se přeloží na Ano/Ne resp. Yes/No (čitelnější v Excelu než
-   * 1/0/true/false) - hodnota reaguje na aktuální admin jazyk, viz refactor-note
-   * (2026-09) v hlavičce souboru.
+   * @description Formats one value for the export - `permissions` (array of keys) are joined with
+   * a semicolon (typically dozens, they make no sense as separate columns), booleans become
+   * Yes / No in the current admin language (more readable in Excel than 1/0/true/false).
    */
   private getExportValue(role: CoreRole, key: string): string {
     if (key === 'permissions') return (role.permissions ?? []).join('; ');

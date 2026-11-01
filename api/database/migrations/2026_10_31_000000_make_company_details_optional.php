@@ -2,9 +2,9 @@
 /**
  * @file 2026_10_31_000000_make_company_details_optional.php
  * @path api/database/migrations/2026_10_31_000000_make_company_details_optional.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-31
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Company details (legal_site_settings): only the company name and the contact
  *   e-mail stay required (the e-mail is used by the outgoing mails). Every other field can be
  *   switched off in the admin:
@@ -13,7 +13,7 @@
  *     to the public pages or the e-mails;
  *   - ico, brand_tagline, copyright_text and address become nullable (an installation may
  *     have no value for them at all);
- *   - an existing row gets every EMPTY field switched off (e.g. no DIČ, no GA ID), so the
+ *   - an existing row gets every EMPTY field switched off (e.g. no VAT ID, no GA ID), so the
  *     admin form opens without a required-but-empty field.
  * @note Non-destructive: no value is changed. down() restores NOT NULL only after filling
  *   empty values with '' (MariaDB would refuse NULL rows) and drops `hidden_fields`.

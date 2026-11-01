@@ -1,15 +1,10 @@
 /*
     @file: job-item.component.css
     @path: /src/app/public/web-pages/jobs/job-item/job-item.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @refactor-note (2026-09) Unified spacing across public pages: spacing tokens
-        (--gutter, --section-y, --hero-top, --hero-bottom, --head-gap), content
-        width 1200px (+ gutters). Back link sits above the title so that the title
-        itself starts at --hero-top like on other pages. Description and form
-        column sit flush with the content column (no inner offsets, they have no
-        background). Only padding / margin / gap / max-width changed.
+    @description: Styles of the job item component.
 */
 
 :host {

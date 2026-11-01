@@ -1,24 +1,12 @@
 /**
  * @file shop-logs.config.ts
  * @path src/app/admin/shop-pages/shop-logs/shop-logs.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description i18n-aware configuration (buttons, table / filter / detail columns) of the
  *   read-only e-shop audit log. Every text comes from the admin translation section `shop-logs`.
  *
- * @bugfix-note (2026-09-07) BACKLOG "permission audit napříč shop stránkami":
- * `openGraphBuilder` opraven z `web-user-requests-view` (nesouvisející permission
- * z web sekce) na `shop-view-logs` - dedikovaná permission pro tuto stránku,
- * stejný princip jako `view-core` u core-pages/logs.
- * @refactor-note (2026-10-23) Localized (open finding #16): static constants with Czech texts
- *   replaced by `create*()` factory functions (same pattern as web business-logs).
- * @bugfix-note (2026-10-23) The module filter offered `shop-products`, `shop-orders`, … while the
- *   API writes the model names (`ShopProduct`, `ShopOrder`, …) and filters by exact match - the
- *   module filter never found anything. The event list also missed most real events (`delete`,
- *   `force_delete_all`, `import`, `payment`, `error`, maintenance) and offered `login` /
- *   `order_status_change`, which the shop log never writes. Both lists now mirror the
- *   `logAction(…, ShopLog::class, …)` calls of the API (app/Http/Controllers/Api/Shop).
  * @dependencies
  * - AdminLocalizationService: translated texts (`shop-logs.*`).
  */

@@ -1,30 +1,15 @@
 /**
  * @file job-applications.component.ts
  * @path src/app/admin/web-pages/job-applications/job-applications.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Manages the administration of job applications, providing filtered views, details retrieval, and status updates.
  * @dependencies
  * - BaseDataComponent: Core logic for data fetching, pagination, and state management.
  * - TableBuilderComponent: Used for tabular data rendering and CSV export functionality.
  * - Config.create* factory functions: i18n-aware definitions for UI columns, form
- *   fields, and toolbar actions - see refactor-note (2026-09-08) below.
- * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
- * volání z `error:` callbacků (handleViewDetails, handleFormSubmitted) -
- * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `Config.JOB_APPLICATION_*` konstanty nahrazeny `Config.create*()` factory funkcemi -
- * stejný vzor jako ostatní web-pages stránky. `buttons.filter(b => b.action !== 'create')`
- * ODSTRANĚN - byl to no-op i v původním kódu (`JOB_APPLICATION_BUTTONS` nikdy
- * `action: 'create'` tlačítko neobsahovalo, viz refactor-note 2026-08-5 v config.ts:
- * "NEMÁ tlačítko Přidat"), zbytečně matoucí mrtvý kód. `graphColumns` přestalo být
- * `readonly`. `'Úspěch'`/`'Požadavek byl upraven.'`/`'Požadavek byl vytvořen.'` (dřív
- * natvrdo česky) nahrazeny `t()` voláním.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
+ *   fields, and toolbar actions.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -65,7 +50,6 @@ export class JobApplicationsComponent extends BaseDataComponent<any> implements 
   columns: Core.ColumnDefinition[] = [];
   trashColumns: Core.ColumnDefinition[] = [];
 
-  /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
 
   constructor(
@@ -111,8 +95,6 @@ export class JobApplicationsComponent extends BaseDataComponent<any> implements 
             : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
-        // @refactor-note (2026-10-22) Only export exists here (no create / import button in
-        // the config) – the dead `handleCreateFormOpened` / `triggerImport` cases were removed.
         case 'exportActiveTable':
           if (updatedBtn.showIf !== false) {
             updatedBtn.showIf = !this.showTrashTable;
@@ -161,12 +143,6 @@ export class JobApplicationsComponent extends BaseDataComponent<any> implements 
     }, 50);
   }
 
-  /**
-   * @refactor-note (2026-09-08) Natvrdo česká 'Úspěch'/'Požadavek byl upraven.'/
-   * 'Požadavek byl vytvořen.' nahrazeny `t()` voláním.
-   * @refactor-note (2026-10-22) Applications are only edited here (no create form, and
-   * `updateData()` without an id fails), so the unreachable "created" message was removed.
-   */
   override handleFormSubmitted(formData: any): void {
     this.updateData(formData.id, formData).pipe(
       Core.finalize(() => {

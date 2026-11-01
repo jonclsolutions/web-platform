@@ -1,21 +1,10 @@
 <!-- 
     @file: edit-website.component.html
     @path: /src/app/admin/web-pages/edit-website/edit-website.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025 
-    @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded
-        texty": všechny natvrdo psané české texty (nadpisy, tlačítka, placeholdery,
-        title/aria atributy, modal texty) nahrazeny `t('edit-website.xxx')` bindingy -
-        viz edit-website.component.ts stejné datum. `lang.name`/`item.path`/`meta.name`
-        ZŮSTÁVAJÍ beze změny - jsou to DATA (název jazyka, JSON cesta klíče), ne UI
-        text patřící do i18n systému.
-    @refactor-note (2026-09-26) Doplněno chybějící tlačítko "Uložit změny" (metoda
-        `onSubmit()` existovala, ale šablona ji nevolala - změny se neukládaly). Aktivní
-        jen při neuložených změnách (`isDirty`), s indikátorem `.ew-dirty-dot`. Topbar
-        sjednocen s edit-eshop (Stáhnout JSON / Nahrát JSON / Uložit změny); duplicitní
-        "Přidat jazyk" v topbaru odstraněno, tlačítko v řadě záložek je nově za
-        `canUpdate` (dřív ho viděl i uživatel bez oprávnění).
+    @description: Template of the edit website component.
 -->
 
 <div class="ew-root">

@@ -1,24 +1,13 @@
 /**
  * @file job-applications.config.ts
  * @path src/app/admin/web-pages/job-applications/job-applications.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
- * @description Static-turned-dynamic configuration (buttons, form fields, table/filter/
- * detail columns) for the Job Applications (nábor) management page.
- *
- * (Earlier refactor-notes for permission granularization - no "create" button, no
- * `handleCreateFormOpened` - and the openGraphBuilder permission fix are unchanged, see
- * version history.)
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * + "enum hodnoty jako přeložitelné anglické slugy": kompletní přepis na FACTORY
- * FUNKCE, stejný vzor jako ostatní web-pages stránky. `state` PŘEPSÁN z plného
- * českého textu ('Nový'/'Pohovor'/'Vybrán'/'Zamítnut'/'Zásobník') na anglické slugy
- * ('new'/'interview'/'selected'/'rejected'/'pool') - viz SQL migrace
- * `006_state_slugs_web_job_applications.sql` a `UpdateWebJobApplicationRequest`
- * (doplněna `in:...` validace, kterou `state` dřív vůbec neměl), obojí SOUČASNĚ s
- * touto změnou.
+ * @description Configuration (buttons, form fields, table / filter / detail columns) of the Job
+ * Applications (recruitment) management page.
+ * @note No "create" button and no `handleCreateFormOpened` - applications come only from the
+ * public form.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';

@@ -1,31 +1,19 @@
 /**
  * @file external-links.component.ts
- * @path src/app/admin/web-pages/external-links/external-links.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @path src/app/admin/core-pages/external-links/external-links.component.ts
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Spravuje seznam externích odkazů zobrazovaných v adminu (Google Analytics
- * dashboard, webmail, Search Console apod.) - CRUD s košem, žádné živé statistiky.
+ * @description Manages the list of external links shown in the admin (Google Analytics
+ * dashboard, webmail, Search Console, ...) - CRUD with trash, no live statistics.
  * @dependencies
  * - BaseDataComponent: Provides the base logic for API interactions, pagination, and entity state management.
- * - TableBuilderComponent: Used for displaying supplier data and handling CSV exports.
+ * - TableBuilderComponent: Displays the links and handles the exports.
  * - SHARED_UI_BUILDERS: Collection of reusable UI components for the dashboard.
  * - Config.create* factory functions: i18n-aware definitions for UI columns, form
- *   fields, and toolbar actions - see refactor-note (2026-09-08) below.
- * @note Struktura je záměrně 1:1 stejná jako u SuppliersComponent, aby zůstala konzistentní
- * s ostatními jednoduchými CRUD stránkami v adminu.
- *
- * (Earlier bugfix-notes for the sort_by 'position' 500 error and the duplicate toast
- * removal are unchanged - see version history.)
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `Config.EXTERNAL_LINK_*` konstanty nahrazeny `Config.create*()` factory funkcemi -
- * stejný vzor jako web-pages stránky. `graphColumns` přestalo být `readonly`.
- * `'Úspěch'`/`'Požadavek byl upraven.'`/`'Požadavek byl vytvořen.'` (dřív natvrdo česky)
- * nahrazeny `t()` voláním.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
+ *   fields, and toolbar actions.
+ * @note The structure is deliberately the same as SuppliersComponent, to stay consistent with
+ * the other simple CRUD pages of the admin.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -71,7 +59,6 @@ export class ExternalLinksComponent extends BaseDataComponent<any> implements Co
     sort_direction: 'asc'
   };
 
-  /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
 
   constructor(

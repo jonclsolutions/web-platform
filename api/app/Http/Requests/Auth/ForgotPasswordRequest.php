@@ -3,16 +3,10 @@
 /**
  * @file ForgotPasswordRequest.php
  * @path app/Http/Requests/Auth/ForgotPasswordRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Input validation for requesting a password reset (step 1).
- *
- * @refactor-note (2026-10-01) Comments translated to English; e-mail is trimmed and
- * lower-cased before validation so the rules, the per-e-mail rate limiter and the user
- * lookup in PasswordResetController all see the same normalised value.
- * @bugfix-note (2026-10-26) The e-mail is normalized with User::normalizeEmail() (also invisible
- *   characters) and validated with `email:rfc,strict` like the account e-mail itself.
  */
 
 namespace App\Http\Requests\Auth;

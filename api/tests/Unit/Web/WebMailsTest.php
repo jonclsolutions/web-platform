@@ -3,8 +3,8 @@
 /**
  * @file WebMailsTest.php
  * @path api/tests/Unit/Web/WebMailsTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the web e-mails: subject and rendered content of the raw
  *   request confirmation, the sales order confirmation and the project thread notification.

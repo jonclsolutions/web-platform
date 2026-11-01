@@ -1,26 +1,14 @@
 /**
  * @file logs.config.ts
  * @path src/app/admin/core-pages/logs/logs.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Static-turned-dynamic configuration (buttons, table/filter/detail
  * columns) for the Core system logs (audit trail) page. Read-only - no FORM_FIELDS,
  * no create/edit/delete buttons, since log entries are never created or edited
  * through the admin UI, only written internally by LogsActivity trait calls
  * throughout the backend.
- *
- * (Earlier bugfix-notes for module/event_type recalculation, security-audit event
- * types, and the openGraphBuilder permission fix are unchanged - see version
- * history.)
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * kompletní přepis na FACTORY FUNKCE, stejný vzor jako `business-logs.config.ts`
- * (web). Žádná SQL migrace potřeba - `event_type`/`module` jsou stabilní anglické
- * slugy (`PasswordChanged` má nekonzistentní CamelCase oproti ostatním
- * snake_case hodnotám, ale pořád jde o anglický kód, ne český text - ponecháno
- * beze změny, přejmenování by vyžadovalo zásah do LogsActivity trait volání napříč
- * celým backendem, mimo rozsah i18n úkolu).
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';

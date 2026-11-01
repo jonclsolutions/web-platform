@@ -1,8 +1,8 @@
 /**
  * @file shop-footer.component.ts
  * @path src/app/public/shop-pages/components/shop-footer/shop-footer.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Presentational component for the e-shop footer, managing dynamic content such as site settings, social links, payment icons, and localized navigation.
  * @dependencies
@@ -10,10 +10,6 @@
  * - PublicDataService: Fetches global configuration, social media links, and payment method assets.
  * - RouterModule: Facilitates navigation to internal support/legal pages.
  * - RxJS: Manages subscription lifecycles to prevent memory leaks.
- * @refactor-note (2026-10-21) Lokalizace 1:1 jako PublicFooterComponent, ale z modulu
- *   `shop`: v konstruktoru `setModule('shop')`, texty ze sekce `footer`, odkazy přes
- *   `getText('navigation.*' / 'legal.*')` z `translations/shop/{lang}.json`. Dřív četl
- *   sekci `footer` z překladů webu (modul `shop` se nenačítal vůbec).
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';

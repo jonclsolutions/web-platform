@@ -1,8 +1,8 @@
 /* 
     @file: styles.css
     @path: /src/styles.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
     @description: Global styles: html/body, scrollbar, headings font. Only truly global rules belong
         here – component styles live in the components and their shared-styles/ folders.
@@ -149,7 +149,7 @@ input, textarea { cursor: text; }
   transition: background-color 0.2s;
   border: 1px solid transparent;
   text-transform: uppercase;
-  background-color: #007bff; /* modrá */
+  background-color: #007bff; /* blue */
   color: white;
 }
 
@@ -166,7 +166,7 @@ input, textarea { cursor: text; }
   transition: background-color 0.2s;
   border: 1px solid transparent;
   text-transform: uppercase;
-  background-color: #6c757d; /* šedá */
+  background-color: #6c757d; /* grey */
   color: white;
 }
 
@@ -183,7 +183,7 @@ input, textarea { cursor: text; }
   transition: background-color 0.2s;
   border: 1px solid transparent;
   text-transform: uppercase;
-  background-color: #dc3545; /* červená */
+  background-color: #dc3545; /* red */
   color: white;
 }
 
@@ -200,7 +200,7 @@ input, textarea { cursor: text; }
   transition: background-color 0.2s;
   border: 1px solid transparent;
   text-transform: uppercase;
-  background-color: #28a745; /* zelená */
+  background-color: #28a745; /* green */
   color: white;
 }
 

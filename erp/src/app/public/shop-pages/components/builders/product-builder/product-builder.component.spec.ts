@@ -1,8 +1,8 @@
 /**
  * @file product-builder.component.spec.ts
  * @path src/app/public/shop-pages/components/builders/product-builder/product-builder.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ProductBuilderComponent (catalog product card): thumbnail fallbacks, EUR price
  *   format and the stock badge rendering.

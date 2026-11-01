@@ -3,18 +3,16 @@
 /**
  * @file CompanyContactInfo.php
  * @path app/Support/Mail/CompanyContactInfo.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Sdílená pomocná třída pro naplnění e-mailových šablon firemními
- * kontaktními údaji (patička s e-mailem/telefonem) - jeden zdroj pravdy napříč VŠEMI
- * Mailable třídami v aplikaci, ne kopírování `SiteSetting::first()->contact_email`
- * do každé zvlášť. Zdrojem je `SiteSetting` (`core/edit-legal` -> "Firemní údaje"
- * stránka v adminu, `SiteConfigurationController::updateSettings()`).
+ * @description Company contact details for the e-mail templates (footer with e-mail / phone) -
+ * one source for EVERY Mailable instead of reading `SiteSetting::first()->contact_email` in
+ * each. The source is `SiteSetting` (admin "Company details",
+ * `SiteConfigurationController::updateSettings()`). A phone switched off in the admin
+ * (`hidden_fields`) is returned as null.
  * @dependencies
- * - App\Models\Legal\SiteSetting: Singleton řádek s firemní konfigurací.
- * @refactor-note (2026-10-31) A phone switched off in the admin (SiteSetting::hidden_fields)
- *   is returned as null - the mail footer leaves it out like a missing phone.
+ * - App\Models\Legal\SiteSetting: singleton row of the company details.
  */
 
 namespace App\Support\Mail;
@@ -24,12 +22,10 @@ use App\Models\Legal\SiteSetting;
 class CompanyContactInfo
 {
     /**
-     * @description Vrátí asociativní pole připravené k předání jako `Content::with()`
-     * v Mailable třídě - klíče se stanou proměnnými přímo v Blade view
-     * (`$companyName`, `$contactEmail`, `$contactPhone`). Chybějící/prázdný
-     * `SiteSetting` řádek nikdy nezpůsobí chybu při odesílání e-mailu - v tom případě
-     * se vrátí `companyName` z `config('app.name')` a kontakty jako `null` (šablona
-     * pak celý řádek s kontaktem v patičce jednoduše vynechá, viz
+     * @description Returns an array for `Content::with()` of a Mailable - the keys become
+     * variables of the Blade view (`$companyName`, `$contactEmail`, `$contactPhone`). A missing
+     * `SiteSetting` row never breaks sending: `companyName` falls back to `config('app.name')` and
+     * the contacts are `null` (the footer then leaves the contact line out, see
      * `emails/partials/footer.blade.php`).
      * @return array{companyName: string, contactEmail: string|null, contactPhone: string|null}
      */

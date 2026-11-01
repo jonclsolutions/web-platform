@@ -1,64 +1,23 @@
 /**
  * @file multi-file-upload.component.ts
  * @path src/app/shared/components/multi-file-upload/multi-file-upload.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Univerzální komponenta pro výběr více souborů (drag&drop i klik), s
- * klientskou validací počtu/velikosti - jen UX pomůcka, skutečnou hranici vždy vynucuje
- * backend (viz StoreWebRawRequestCommissionRequest/StoreWebSalesOrderRequest).
- * Znovupoužitelná napříč veřejnými i admin formuláři.
+ * @description Universal component for choosing several files (drag&drop and click) with a
+ * client-side count / size check - only a UX aid, the real limit is always enforced by the
+ * backend (see StoreWebRawRequestCommissionRequest / StoreWebSalesOrderRequest). Reusable in
+ * public and admin forms.
  * @usage `<app-multi-file-upload (filesChanged)="onFilesChanged($event)" />`
- *
- * @refactor-note (2026-08-19) BACKLOG "existující přílohy vidět v editu": přidán
- * `@Input() existingFiles` - read-only seznam už nahraných příloh (z API, typicky
- * `formDataToEdit.attachments`), zobrazený NAD dropzonou pro nové soubory. Limit počtu
- * souborů (`maxFiles`) počítá `existingFiles.length + files.length`, ne jen nově
- * přidávané - admin tak nemůže klientsky "omylem" navrhnout víc příloh, než kolik
- * záznam po uložení reálně unese, i když už nějaké má.
- *
- * @refactor-note (2026-08-19v2) BACKLOG "mazání existujících příloh v editu - staged":
- * přidáno tlačítko "✕" u existující přílohy - klik ji OKAMŽITĚ jen VIZUÁLNĚ schová
- * (žádné API volání odsud, žádná změna na disku/DB v tuhle chvíli) a přidá její `id` do
- * `removedExistingIds`. Nový `@Output() existingFileRemoved` emituje aktuální seznam
- * odebraných ID při každé změně - konzumující `FormBuilderComponent` si ho uloží do
- * `formData` a pošle spolu s ostatními daty AŽ při reálném uložení formuláře (viz
- * form-builder.component.ts). Storno/zrušení formuláře komponentu celou zahodí (typicky
- * `@if`/`*ngIf` na rodiči), takže žádný extra reset stavu není potřeba - při příštím
- * otevření je to čerstvá instance. `visibleExistingFiles`/`combinedCount`/`addFiles()`
- * limit počtu souborů teď počítají jen s NEODEBRANÝMI existujícími přílohami.
- *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * Tahle komponenta je sdílená mezi PUBLIC webem (LocalizationService, DB-editovatelný
- * obsah, typicky 1-2 jazyky) a ADMIN rozhraním (AdminLocalizationService, statický
- * bundlovaný JSON, potenciálně 10+ jazyků). Injektovat KTEROUKOLIV z těch dvou služeb
- * přímo sem by komponentu natvrdo svázalo s jedním z těch dvou kontextů a rozbilo
- * použití ve druhém - proto místo toho zůstává ČISTĚ PREZENTAČNÍ: žádné texty si
- * neshání sama, všechny přijímá zvenku přes `@Input() textOverrides` (viz
- * `DEFAULT_MULTI_FILE_UPLOAD_TEXTS` níže pro výchozí/fallback hodnoty - použijí se,
- * pokud konzument nic nepředá, takže žádné dosavadní použití touhle změnou nespadne).
- * Konzument (form-builder.component.ts v adminu, libovolná public stránka) si texty
- * vytáhne ze SVÉ VLASTNÍ i18n vrstvy a pošle je dovnitř jako obyčejná data - stejný
- * vzor, jaký už dřív existoval jen pro `@Input() label`, teď rozšířený na VŠECHNY
- * dřív natvrdo psané texty (error hlášky, popisky, tlačítka). Texty s proměnnou
- * ({count}/{max}/{filename}/{size}) jsou šablony nahrazované přes `.replace()` v
- * gettrech/metodách níže - žádný templating engine, stejný vzor jako jinde v projektu.
- *
- * @refactor-note (2026-09v2) BUGFIX "hint pod labelem zůstával česky natvrdo": limitový
- * hint ("(max. X souborů, Y MB/soubor, Z MB celkem)") byl PŮVODNĚ natvrdo napsaný přímo
- * v šabloně vedle `{{ label }}` a unikl první vlně migrace (2026-09), protože nebyl
- * součástí `MultiFileUploadTexts`. Přidán jako `limitsHint` (šablona s {max}/{maxMb}/
- * {totalMb}, stejný `.replace()` vzor jako ostatní parametrizované texty zde) + getter
- * `limitsHintText` níže.
  */
 
 import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 /**
- * @description Minimální tvar existující přílohy potřebný pro zobrazení - odpovídá
- * `WebAttachmentResource` z API, ale typ je zde záměrně vlastní (ne import backendového
- * DTO), ať komponenta zůstává nezávislá na konkrétním resource.
+ * @description Minimal shape of an existing attachment needed for display - matches
+ * `WebAttachmentResource` of the API, but the type is deliberately own (not an import of the
+ * backend DTO), so the component stays independent of a specific resource.
  */
 export interface ExistingAttachment {
   id: number;
@@ -69,41 +28,39 @@ export interface ExistingAttachment {
 }
 
 /**
- * @description Kompletní sada textů, které komponenta potřebuje vykreslit. Konzument
- * (public i admin) posílá `Partial<MultiFileUploadTexts>` - cokoliv nepředá, doplní se
- * z `DEFAULT_MULTI_FILE_UPLOAD_TEXTS`. Placeholdery ve tvaru `{name}` nahrazuje sama
- * komponenta přes `.replace()`, NIKDY konzument - konzument posílá šablonu, ne hotový
- * text (jinak by musel znát interní detaily typu `existingCount`).
+ * @description Complete set of texts the component needs to render. The consumer (public and
+ * admin) passes `Partial<MultiFileUploadTexts>` - anything missing is taken from
+ * `DEFAULT_MULTI_FILE_UPLOAD_TEXTS`. Placeholders like `{name}` are replaced by the component
+ * itself through `.replace()`, NEVER by the consumer - the consumer passes a template, not a
+ * ready text (otherwise it would need internal details like `existingCount`).
  */
 export interface MultiFileUploadTexts {
   /** Hint vedle labelu - {max} = maxFiles, {maxMb} = maxFileSizeMb, {totalMb} = maxTotalSizeMb */
   limitsHint: string;
-  /** "Již nahrané přílohy ({count})" - {count} = visibleExistingFiles.length */
+  /** "Already uploaded attachments ({count})" - {count} = visibleExistingFiles.length */
   existingSectionTitle: string;
-  /** title atribut tlačítka "✕" u existující přílohy */
+  /** title attribute of the "✕" button of an existing attachment */
   removeExistingTitle: string;
-  /** Text uvnitř dropzony */
+  /** Text inside the dropzone */
   dropzoneLabel: string;
-  /** Chyba při překročení limitu POČTU souborů, když už nějaké existující jsou -
-   * {max} = maxFiles, {existing} = počet existujících */
+  /** Error when the file COUNT limit is exceeded while some existing files exist -
+   * {max} = maxFiles, {existing} = number of existing files */
   errorMaxFilesWithExisting: string;
-  /** Chyba při překročení limitu POČTU souborů bez existujících - {max} = maxFiles */
+  /** Error when the file COUNT limit is exceeded without existing files - {max} = maxFiles */
   errorMaxFiles: string;
-  /** Chyba jednotlivého souboru nad limit - {filename}, {maxMb} */
+  /** Error of a single file over the limit - {filename}, {maxMb} */
   errorFileTooLarge: string;
-  /** Chyba celkové velikosti nad limit - {maxMb} */
+  /** Error of the total size over the limit - {maxMb} */
   errorTotalSizeExceeded: string;
-  /** Počítadlo dole - {count} = combinedCount, {max} = maxFiles */
+  /** Counter at the bottom - {count} = combinedCount, {max} = maxFiles */
   totalLabel: string;
-  /** Připojeno za totalLabel, jen když jsou nové soubory - {size} = totalSizeLabel */
+  /** Appended after totalLabel only when there are new files - {size} = totalSizeLabel */
   totalNewSuffix: string;
 }
 
 /**
  * @description Neutral English fallback texts - only for a consumer without `textOverrides`
  * (every current consumer passes its own translated set: admin form builder, contact, order form).
- * @bugfix-note (2026-10-23) Were Czech (also the `label` default 'Přílohy') - shown in any language
- *   to a consumer without overrides (open finding #44).
  */
 export const DEFAULT_MULTI_FILE_UPLOAD_TEXTS: MultiFileUploadTexts = {
   limitsHint: '(max. {max} files, {maxMb} MB per file, {totalMb} MB in total)',
@@ -133,26 +90,25 @@ export class MultiFileUploadComponent {
   @Input() label = 'Attachments';
 
   /**
-   * @description Read-only přílohy, které záznam už má (z API) - komponenta je sama
-   * nemaže na serveru, jen umožní je STAGED odebrat z pohledu (viz `removeExistingFile()`
-   * / `existingFileRemoved` output). Default `[]` = beze změny chování (nový záznam,
-   * žádné existující přílohy).
+   * @description Read-only attachments the record already has (from the API) - the component never
+   * deletes them on the server itself, it only lets them be STAGED for removal in the view (see
+   * `removeExistingFile()` / the `existingFileRemoved` output). Default `[]` = new record, no
+   * existing attachments.
    */
   @Input() existingFiles: ExistingAttachment[] = [];
 
   /**
-   * @description Texty pro tuhle instanci komponenty - viz refactor-note (2026-09) v
-   * hlavičce souboru. Cokoliv nevyplněné se doplní z `DEFAULT_MULTI_FILE_UPLOAD_TEXTS`
-   * (getter `t` níže).
+   * @description Texts of this component instance. Anything not filled in is taken from
+   * `DEFAULT_MULTI_FILE_UPLOAD_TEXTS` (getter `t` below).
    */
   @Input() textOverrides: Partial<MultiFileUploadTexts> = {};
 
   @Output() filesChanged = new EventEmitter<File[]>();
 
   /**
-   * @description Emituje aktuální seznam ID existujících příloh označených ke smazání
-   * (celé pole, ne jen nově přidané ID) - konzumující komponenta si tenhle seznam uloží
-   * a pošle ho na server až při reálném uložení formuláře. Nic se odsud samo neposílá.
+   * @description Emits the current list of IDs of existing attachments marked for deletion (the
+   * whole array, not only the new ID) - the consuming component keeps the list and sends it to
+   * the server only when the form is really saved. Nothing is sent from here.
    */
   @Output() existingFileRemoved = new EventEmitter<number[]>();
 
@@ -160,24 +116,23 @@ export class MultiFileUploadComponent {
   errorMessage: string | null = null;
   isDragging = false;
 
-  /** ID existujících příloh, které uživatel v UI odebral - jen lokální stav do uložení. */
+  /** IDs of existing attachments the user removed in the UI - local state only until saving. */
   removedExistingIds = new Set<number>();
 
   private cd = inject(ChangeDetectorRef);
 
   /**
-   * @description Sloučené texty (výchozí + `textOverrides`) - jediné místo, odkud
-   * šablona i interní metody čtou UI texty. Recomputed při každém přístupu (levné,
-   * jde jen o spread malého objektu), takže reaguje i na `textOverrides` změněné za
-   * běhu (např. přepnutí jazyka admin rozhraní, viz form-builder.component.ts).
+   * @description Merged texts (defaults + `textOverrides`) - the only place the template and the
+   * internal methods read UI texts from. Recomputed on every access (cheap, a spread of a small
+   * object), so it reacts to `textOverrides` changed at runtime (e.g. switching the admin
+   * language, see form-builder.component.ts).
    */
   get t(): MultiFileUploadTexts {
     return { ...DEFAULT_MULTI_FILE_UPLOAD_TEXTS, ...this.textOverrides };
   }
 
   /**
-   * @description Hint vedle labelu s dosazenými limity - viz `t.limitsHint`.
-   * @refactor-note (2026-09v2) viz hlavička souboru - dřív natvrdo v šabloně.
+   * @description Hint next to the label with the limits filled in - see `t.limitsHint`.
    */
   get limitsHintText(): string {
     return this.t.limitsHint
@@ -211,21 +166,21 @@ export class MultiFileUploadComponent {
     this.isDragging = false;
   }
 
-  /** @description Existující přílohy, které uživatel (zatím jen v UI) NEoznačil ke smazání. */
+  /** @description Existing attachments the user has NOT marked for deletion (in the UI so far). */
   get visibleExistingFiles(): ExistingAttachment[] {
     return this.existingFiles.filter(f => !this.removedExistingIds.has(f.id));
   }
 
-  /** @description "Již nahrané přílohy (N)" s dosazeným počtem - viz `t.existingSectionTitle`. */
+  /** @description "Already uploaded attachments (N)" with the count filled in - see `t.existingSectionTitle`. */
   get existingSectionTitleText(): string {
     return this.t.existingSectionTitle.replace('{count}', String(this.visibleExistingFiles.length));
   }
 
   /**
-   * @description Staged odebrání existující přílohy - žádné API volání, jen vizuální
-   * skrytí + evidence ID pro pozdější odeslání s uložením formuláře. Nevratné v rámci
-   * TÉTO komponenty (žádné "vrátit zpět" tlačítko) - jediný způsob, jak si to uživatel
-   * rozmyslí, je formulář zavřít bez uložení (Storno), čímž se celá komponenta zahodí.
+   * @description Staged removal of an existing attachment - no API call, only visual hiding +
+   * recording the ID to be sent when the form is saved. Irreversible inside THIS component (no
+   * "undo" button) - the only way back is closing the form without saving (Cancel), which
+   * discards the whole component.
    */
   removeExistingFile(id: number): void {
     this.removedExistingIds.add(id);
@@ -233,11 +188,6 @@ export class MultiFileUploadComponent {
     this.cd.markForCheck();
   }
 
-  /**
-   * @bugfix-note (2026-08-19) Limit počtu souborů teď počítá `visibleExistingFiles`
-   * (existující MÍNUS staged odebrané), ne surové `existingFiles` - jinak by odebrání
-   * staré přílohy neuvolnilo místo pro novou, dokud by se formulář reálně neuložil.
-   */
   private addFiles(newFiles: File[]): void {
     this.errorMessage = null;
     const combined = [...this.files, ...newFiles];
@@ -290,12 +240,12 @@ export class MultiFileUploadComponent {
     return this.formatSize(total);
   }
 
-  /** @description Kolik souborů celkem (neodebrané existující + nově vybrané) - pro počítadlo v šabloně. */
+  /** @description Total file count (not removed existing + newly chosen) - for the counter of the template. */
   get combinedCount(): number {
     return this.visibleExistingFiles.length + this.files.length;
   }
 
-  /** @description "Celkem: N / max souborů (X MB nových)" - viz `t.totalLabel`/`t.totalNewSuffix`. */
+  /** @description "Total: N / max files (X MB new)" - see `t.totalLabel` / `t.totalNewSuffix`. */
   get totalLabelText(): string {
     const base = this.t.totalLabel.replace('{count}', String(this.combinedCount)).replace('{max}', String(this.maxFiles));
     const suffix = this.files.length > 0 ? this.t.totalNewSuffix.replace('{size}', this.totalSizeLabel) : '';

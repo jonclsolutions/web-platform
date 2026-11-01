@@ -1,8 +1,8 @@
 /**
  * @file auth-token.interceptor.ts
  * @path src/app/core/interceptors/auth-token.interceptor.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Interceptor that automatically attaches JWT tokens to outgoing requests and handles token refreshing upon 401 Unauthorized responses.
  * @dependencies

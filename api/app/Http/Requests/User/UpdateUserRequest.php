@@ -2,32 +2,19 @@
 /**
  * @file UpdateUserRequest.php
  * @path app/Http/Requests/User/UpdateUserRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Validates the payload for updating an existing administrative user
  * account.
- * @refactor-note (2026-09-02) BACKLOG "explicit user permissions": added optional
- * `permission_ids` array validation. The actual authority check ("can THIS actor
- * grant THESE specific permission ids to THIS target") happens in
- * `UserController::applyExplicitPermissions()` - this request only validates that
- * submitted ids are well-formed and reference real permissions.
- *
- * @refactor-note (2026-10-07) SECURITY: the `user_password_hash` rule was removed. A
- * password can no longer be set through `UserController::update()` - it bypassed the
- * current-password confirmation and the notification e-mail of `changePassword()`. An
- * unknown key is dropped by `validated()`, so sending it has no effect.
  *
  * NOTE: this file reconstructs the request class based on the fields observed in
  * use across UserController/administrators.config.ts. If the project's actual
  * UpdateUserRequest already contains additional rules, merge this diff into it
  * rather than overwriting wholesale.
- * @security-note (2026-10-23) `role_id` must be an ACTIVE role - `exists:core_roles,id` also
+ * @security `role_id` must be an ACTIVE role - `exists:core_roles,id` also
  *   accepted soft-deleted (trashed) roles, so an account could be given a role that was removed
  *   (open finding #4).
- * @bugfix-note (2026-10-26) Account e-mails are normalized (trim incl. invisible characters,
- *   lower case) before validation and checked with `email:rfc,strict`: the plain `email` rule let
- *   `a @b.cz` / `"a b"@b.cz` through and the stored case varied (`TEST@x.cz`).
  */
 
 namespace App\Http\Requests\User;
@@ -65,7 +52,7 @@ class UpdateUserRequest extends FormRequest
             'internal_note' => ['nullable', 'string'],
             'dpp_hours_spent' => ['nullable', 'integer', 'min:0'],
 
-            // Explicit permission grants - see refactor-note above. Authority
+            // Explicit permission grants. Authority
             // checking happens in the controller, not here.
             'permission_ids' => ['sometimes', 'array'],
             'permission_ids.*' => ['integer', 'exists:core_permissions,id'],
@@ -88,7 +75,6 @@ class UpdateUserRequest extends FormRequest
      * @description Normalizes `permission_ids` BEFORE validation runs - see
      * StoreUserRequest::prepareForValidation() for the full rationale (defensive
      * type-coercion at the API boundary, not a one-off workaround).
-     * @refactor-note (2026-09-06) BACKLOG "permission_ids validation robustness".
      */
     protected function prepareForValidation(): void
     {

@@ -2,9 +2,9 @@
 /**
  * @file DevelopmentSeeder.php
  * @path api/database/seeders/DevelopmentSeeder.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-30
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Data for LOCAL development only (DatabaseSeeder calls it only when APP_ENV=local):
  *   - the test sysadmin account `sysadmin@sysadmin.sysadmin` / `123456Ab.` - activated, role
  *     sysadmin (2FA by e-mail is forced for the role: the code arrives in Mailpit,
@@ -20,9 +20,6 @@
  *   database, so a new permission is picked up by a role created later.
  * @security NEVER run in production: a known password. DatabaseSeeder guards the call and this
  *   seeder refuses itself outside APP_ENV=local.
- * @refactor-note (2026-10-31) Test role set changed: editor-web, editor-shop and manager
- *   replaced by full-web-core, full-shop-core and all-permissions. The former test roles are
- *   soft-deleted when they still carry the test note and no user has them (OBSOLETE_TEST_ROLES).
  * @dependencies
  * - BaseDataSeeder (permissions, sysadmin role) must have run first.
  */

@@ -19,7 +19,7 @@ export class JobsListComponent extends BasePublicComponent {
 
   availableJobs: JobItem[] = [];
 
-  // Hook volaný automaticky po načtení překladů
+  // Hook called automatically after the translations are loaded
   protected override onTranslationsLoaded(): void {
     this.loadJobs();
   }

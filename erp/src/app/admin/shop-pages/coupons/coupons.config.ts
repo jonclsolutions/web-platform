@@ -1,23 +1,12 @@
 /**
  * @file coupons.config.ts
  * @path src/app/admin/shop-pages/coupons/coupons.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description i18n-aware configuration (buttons, form fields, table / filter / detail columns)
  *   of the shop coupons page. Every text comes from the admin translation section `shop-coupons`.
  *
- * @bugfix-note (2026-09-07) BACKLOG "granularizace shop permissions": nahrazeno
- * nesouvisející `shop-view-reports` (a chybějící permission na Edit/Smazat/Přidat/
- * Import) NOVOU dedikovanou sadou `shop-coupons-view/-create/-update/-delete` -
- * viz migrace 002_shop_permissions_granularization.sql a api.php stejné datum.
- * `openGraphBuilder` zůstává na `shop-view-reports` (grafy/reporty jsou napříč
- * celým e-shopem sdílená permission, ne resource-specific).
- * @refactor-note (2026-10-23) The page was not localized (open finding #16): the static
- *   `COUPON_*` constants with hardcoded Czech texts were replaced by `create*()` factory functions
- *   (same pattern as the other shop pages). The values (`percent` / `fixed`, `all` / `products` /
- *   `categories`, `1` / `0`) are unchanged; the filter now shows translated labels instead of the
- *   raw slugs, and the fixed discount says EUR instead of "Kč" (the shop currency is EUR).
  * @dependencies
  * - AdminLocalizationService: translated texts (`shop-coupons.*`, `shared.yes` / `shared.no`).
  */
@@ -76,7 +65,6 @@ export function createCouponToolbarButtons(i18n: AdminLocalizationService): Core
     { action: 'toggleFilters', label: tr(i18n, 'toolbar_filters'), icon: '', class: 'btn-filter', isActive: false },
     { action: 'handleCreateFormOpened', label: tr(i18n, 'toolbar_add_record'), icon: '', class: 'btn-create', showIf: true, permission: 'shop-coupons-create' },
     { action: 'exportActiveTable', label: tr(i18n, 'toolbar_export_data'), icon: '', class: 'btn-export', showIf: true },
-    // @refactor-note (2026-10-23) no 'triggerImport' - the API has no import for this page (open finding #25, the button answered 404).
     { action: 'openGraphBuilder', label: tr(i18n, 'toolbar_generate_reports'), icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-view-reports' },
     { action: 'toggleTable', label: tr(i18n, 'toolbar_show_trash'), icon: '', class: 'btn-trash', permission: 'view-deleted' },
   ];

@@ -2,56 +2,22 @@
 /**
  * @file CheckPermission.php
  * @path app/Http/Middleware/CheckPermission.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Globální backendové vynucení permission systému, který dosud existoval jen
- * jako Angular route metadata (`data: { permission: '...' }` v admin-routing.module.ts /
- * `*appHasPermission` direktiva). Laravel tyhle klíče nikdy nekontroloval - jakýkoliv
- * přihlášený uživatel mohl zavolat libovolný chráněný endpoint přímo (Postman/curl) a
- * zcela obejít frontendové UI. Tento middleware vyžaduje STEJNÝ permission klíč i na
- * backendu.
- *
- * @note Sysadmin obchází každou permission kontrolu bezpodmínečně - je to nejvyšší
- * autorita v appce (viz UserController::SYSADMIN_ROLE_NAME / CoreRoleController) a nesmí
- * ho zablokovat chybějící/špatně nastavené přiřazení oprávnění jeho roli.
- *
- * @note Volitelný druhý parametr `$selfParam` umožňuje routě propustit buď požadovaný
- * permission, NEBO vlastnictví záznamu (route parametr odpovídá ID přihlášeného
- * uživatele) - použito u `core/users/{id}` endpointů, které musí zůstat dostupné i
- * běžnému uživateli prohlížejícímu/editujícímu VLASTNÍ účet (stránka personal-info), i
- * když nemá `web-manage-administrators`.
- *
- * @refactor-note (2026-08) `$permission` nyní podporuje více klíčů oddělených `|`
- * (logika OR - stačí mít KTERÝKOLIV z nich), např.
- * `permission:web-view-web-settings|shop-set-maintenance-mode` na `core/settings` -
- * tenhle endpoint obsluhuje jak plný formulář firemních údajů (web-view-web-settings),
- * tak rychlý přepínač údržby e-shopu v headeru (shop-set-maintenance-mode), a jsou to
- * dvě různé skupiny uživatelů, které se nemusí překrývat.
- *
- * @bugfix-note (2026-08-24) KRITICKÁ MEZERA V BEZPEČNOSTNÍM MONITORINGU: tento middleware
- * chrání VŠECHNY permission-gated endpointy v aplikaci (desítky routes napříč core/web/
- * shop sekcemi), ale zamítnuté pokusy (401 chybějící auth, 403 nedostatečné oprávnění)
- * se NIKDY nezapisovaly do `core_security_events` - jen se tiše vrátila chybová
- * odpověď. To znamená, že klasický vzorec privilege-escalation pokusu (přihlášený, ale
- * nízko-privilegovaný účet zkoušející endpointy, na které nemá právo - ať už omylem,
- * zvědavostí, nebo protože byl účet kompromitován) byl pro administrátora zcela
- * neviditelný, přestože jde přesně o typ hrozby, který má bezpečnostní monitoring
- * odhalovat.
- *
- * ŘEŠENÍ: přidány dva zápisy do `CoreSecurityEvent::record()`:
- * - `unauthenticated_access_attempt` (severity `info`) - request bez platného
- *   přihlášení dorazil až sem. V praxi vzácné (routa je navíc uvnitř
- *   `auth:sanctum` middleware skupiny, který neautentizované requesty typicky odmítne
- *   ještě DŘÍV, než se dostanou k `CheckPermission` - viz globální
- *   `AuthenticationException` handler v `bootstrap/app.php`, plánovaný jako
- *   doplňkový zápis v další vlně). `info`, ne `warning` - samotný `auth:sanctum` handler
- *   je primární místo pro tenhle scénář, tady jde jen o obranu do hloubky.
- * - `permission_denied` (severity `warning`) - PŘIHLÁŠENÝ uživatel nemá požadované
- *   oprávnění. Kontext obsahuje `required_permission`, ať je z monitoringu hned vidět,
- *   o co se uživatel pokoušel, ne jen že "něco" bylo zamítnuto.
- * Sysadmin a legitimní `$selfParam` průchod (vlastní účet) logování NESPOUŠTÍ - nejde
- * o odepřený pokus, ale o platný, očekávaný scénář.
+ * @description Backend enforcement of the permission system (the same keys as the Angular route
+ * metadata `data: { permission: '...' }` and the `*appHasPermission` directive), so a direct
+ * API call (Postman / curl) cannot bypass the UI.
+ * @note The sysadmin passes every permission check unconditionally - the highest authority of
+ * the application (UserController::SYSADMIN_ROLE_NAME / CoreRoleController); a missing
+ * permission assignment of its role must not lock it out.
+ * @note The optional second parameter `$selfParam` lets a route pass either the permission OR
+ * the ownership of the record (route parameter = ID of the logged-in user) - used by the
+ * `core/users/{id}` endpoints, which a user must reach for their OWN account (personal info).
+ * @note Security events: `unauthenticated_access_attempt` (severity `info` - normally the
+ * `auth:sanctum` group refuses such requests earlier, this is defence in depth) and
+ * `permission_denied` (severity `warning`, context `required_permission`). The sysadmin and a
+ * valid `$selfParam` pass (own account) are not logged.
  */
 
 namespace App\Http\Middleware;
@@ -64,19 +30,18 @@ use Symfony\Component\HttpFoundation\Response;
 class CheckPermission
 {
     /**
-     * @description Role name, která obchází každou permission kontrolu - viz doc bloku výše.
-     * Musí sedět s `UserController::SYSADMIN_ROLE_NAME` / `CoreRoleController`.
+     * @description Role name that passes every permission check (see the class description).
+     * Must match `UserController::SYSADMIN_ROLE_NAME` / `CoreRoleController`.
      */
     private const SYSADMIN_ROLE_NAME = 'sysadmin';
 
     /**
      * @param Request $request
      * @param Closure $next
-     * @param string $permission Jeden nebo více (oddělených `|`) požadovaných permission
-     * klíčů - stejné klíče jako `data.permission` na frontendu. Pro průchod stačí mít
-     * KTERÝKOLIV z nich (OR).
-     * @param string|null $selfParam Název route parametru (např. 'id'), jehož shoda s ID
-     * přihlášeného uživatele propustí request i bez permission - viz doc bloku výše.
+     * @param string $permission One or more (separated by `|`) required permission keys - the
+     * same keys as `data.permission` on the frontend. ANY of them is enough (OR).
+     * @param string|null $selfParam Route parameter (e.g. 'id') whose match with the ID of the
+     * logged-in user lets the request pass without the permission (see the class description).
      * @return Response
      */
     public function handle(Request $request, Closure $next, string $permission, ?string $selfParam = null): Response

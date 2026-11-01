@@ -2,8 +2,8 @@
 /**
  * @file UpdateWebNewsRequest.php
  * @path app/Http/Requests/Web/WebNews/UpdateWebNewsRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation logic for updating existing web news articles.
  */

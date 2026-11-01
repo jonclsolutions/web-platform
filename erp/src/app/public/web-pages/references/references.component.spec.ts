@@ -1,8 +1,8 @@
 /**
  * @file references.component.spec.ts
  * @path src/app/public/web-pages/references/references.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ReferencesComponent: project cards built from the `project_*` keys of the
  *   translations (sorted, collapsed), expanding a card and the category legend labels.

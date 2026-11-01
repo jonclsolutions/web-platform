@@ -1,14 +1,15 @@
 /*  
     @file: services.component.html
     @path: /src/app/public/shop-pages/components/services/services.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
+    @description: Styles of the pagination buttons builder component.
 */
 :host {
   display: block;
   width: 100%;
-  /* Černobílý moderní design systém */
+  /* Black and white modern design system */
   --bg-main: var(--color-white);
 }
 
@@ -32,7 +33,7 @@
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border);
-  border-radius: 0;          /* Absolutně ostré hrany */
+  border-radius: 0;          /* Sharp corners */
   background: var(--bg-main);
   color: var(--text-main);
   cursor: pointer;
@@ -45,7 +46,7 @@
   box-sizing: border-box;
 }
 
-/* Hover efekt pro neaktivní a povolená tlačítka - ztmavnutí rámečku */
+/* Hover of inactive enabled buttons - darker border */
 .page-btn:hover:not(.active), 
 .nav-btn:hover:not(:disabled) {
   border-color: var(--border-dark);
@@ -53,33 +54,30 @@
   background: var(--bg-main);
 }
 
-/* Aktivní stránka - Čistá inverze barev bez záře */
+/* Active page - plain color inversion without glow */
 .page-btn.active {
   background-color: var(--bg-dark);
   color: var(--bg-main);
   border-color: var(--bg-dark);
-  box-shadow: none;          /* Odstraněna fialová záře */
+  box-shadow: none;
   z-index: 2;
   cursor: default;
 }
 
-/* Blokované šipky na koncích seznamu */
+/* Disabled arrows at the ends of the list */
 .nav-btn:disabled {
-  opacity: 0.25;             /* Mírně zvýšená viditelnost pro lepší čitelnost šipky */
+  opacity: 0.25;             /* Slightly raised visibility for a more readable arrow */
   cursor: not-allowed;
   border-color: var(--border);
   color: var(--text-dim);
 }
 
-/* 
-   Odstraněna skákavá animace slideUp. 
-   Ponecháno pouze čisté, nerušivé zobrazení elementu.
-*/
+/* Plain, unobtrusive display of the element (no animation). */
 .reveal-up {
   animation: none !important;
 }
 
-/* Responzivita - menší geometrická tlačítka na mobilních zařízeních */
+/* Responsive - smaller buttons on mobile devices */
 @media (max-width: 480px) {
   .page-btn, .nav-btn {
     min-width: 36px;

@@ -1,9 +1,10 @@
 /*  
     @file: catalog.component.html
     @path: /src/app/public/shop-pages/catalog/catalog.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026 
+    @description: Styles of the catalog component.
 */
 :host {
   --bg-main: var(--color-white);

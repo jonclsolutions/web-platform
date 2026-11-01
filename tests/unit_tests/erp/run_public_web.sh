@@ -2,14 +2,13 @@
 #
 # @file run_public_web.sh
 # @path tests/unit_tests/erp/run_public_web.sh
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Runs the erp unit tests: public website – public/web-pages + the shared public 404 (public/not-found).
 #   Result: tests/unit_tests/erp/report/report.html and report.xml (last run only).
 # @dependencies
 # - Node.js, erp/node_modules (npm install in erp/), Chrome/Chromium (CHROME_BIN or on PATH).
-# @refactor-note (2026-10-27) Also runs public/not-found (404 shared by web and e-shop).
 #
 # @usage
 #   ./run_public_web.sh            (from any directory)

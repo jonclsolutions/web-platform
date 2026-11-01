@@ -2,8 +2,8 @@
 /**
  * @file UpdateDocumentSectionRequest.php
  * @path app/Http/Requests/Legal/DocumentSection/UpdateDocumentSectionRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation logic for updating existing legal document sections.
  */

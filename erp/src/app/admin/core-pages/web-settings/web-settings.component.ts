@@ -1,34 +1,16 @@
 /**
  * @file web-settings.component.ts
- * @path src/app/admin/web-pages/web-settings/web-settings.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @path src/app/admin/core-pages/web-settings/web-settings.component.ts
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages global web configuration including company details, localized brand assets, site branding, and social media links.
  * @dependencies
  * - BaseDataComponent: Provides base CRUD and state management.
  * - ConfirmDialogService: Orchestrates user confirmation for destructive actions (e.g., deleting social links).
- * - ResourceCacheService: TTL cache pro languages (10 min) / settings (2 min) fetch.
- * Po KAŽDÉ úspěšné mutaci se cache klíč `web-settings:all` explicitně invaliduje
- * PŘED voláním `loadAll()`.
- * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
- * volání z HTTP `error:` callbacků (onSettingsError, saveSocialLink onError,
- * deleteSocialLink error) - `DataHandler.handleError()` je jediné autoritativní místo
- * pro chybový toast. Reset stavových flagů (`settingsSaving`, `_saving`) ZŮSTÁVÁ.
- * `onSettingsError()` je teď jen cleanup metoda bez vlastní zprávy.
- *  * @howto Add a page to "Názvy stránek":
- *   1) app.routes.ts – route gets `title: 'area.page_key'` (e.g. 'web.blog').
- *   2) DB – INSERT row into `legal_page_titles` (area + page_key = route key).
- *   3) Optional – translation key `pt_page_{area}_{page_key}` for the admin label.
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `logoRemoving`, `markDirty`.
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): language lists
- *  and page-title rows are the payload itself (were `{languages}` / `{page_titles}`).
- * @refactor-note (2026-10-31) Optional company details: every field except the company name and
- *   the contact e-mail has a checkbox. A switched-off field is greyed out and struck through,
- *   its value stays stored but the public pages do not get it (`settings.hidden_fields`, sent on
- *   save). A switched-on field must be filled in - checked before saving (`missingFieldLabels`),
- *   the API checks the same. The GA hint was removed (the checkbox says it).
+ * - ResourceCacheService: TTL cache of the languages (10 min) / settings (2 min) fetch.
+ * @note After EVERY successful mutation the cache key `web-settings:all` is invalidated
+ * explicitly BEFORE `loadAll()` is called.
  */
 
 import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -65,14 +47,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
   private resourceCache = inject(ResourceCacheService);
 
-  /**
-   * @refactor-note (2026-09) BUGFIX "Cannot load text" - stejná chyba jako
-   * EditRolesComponent (viz jeho refactor-note stejné datum): `this.t(key)` volání
-   * v tomto souboru všude předávají KRÁTKÝ klíč (např. 'load_error_message'), ale
-   * zděděná `BaseDataComponent.t(path)` očekává PLNOU tečkovanou cestu včetně
-   * sekce ('web-settings.load_error_message'). Přidán lokální override doplňující
-   * prefix 'web-settings.' automaticky.
-   */
   public override t(key: string): string {
     return this.i18n.getValue(`web-settings.${key}`);
   }
@@ -418,7 +392,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   }
 
   /**
-   * @description Cleanup po neúspěšném uložení nastavení - toast už zobrazil
+   * @description Clean-up after a failed settings save - the toast was already shown by
    * `DataHandler.handleError()`.
    */
   private onSettingsError(): void {

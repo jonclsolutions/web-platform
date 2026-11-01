@@ -1,43 +1,14 @@
 /**
  * @file admin-routing.module.ts
  * @path src/app/admin/admin-routing.module.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Centralized routing configuration for the administrative module, separating Web, Core, and E-Shop interfaces with role-based access control.
  * @dependencies
  * - RouterModule: Core Angular routing service.
  * - AuthGuard: Authentication middleware ensuring restricted access to administrative routes.
  * - AdminLayoutComponent: Main wrapper layout for the admin section.
- *
- * @refactor-note (2026) KNOWLEDGE BASE REFACTOR: `pages/introductions|security|contacts|
- * sales-rep` komponenty odstraněny - jejich obsah je teď statická data v
- * `kb-pages.data.ts`, vykreslovaná JEDNÍM generickým `KbArticleComponent` přes
- * `:pageId` route. `support-form` a `news` ZŮSTÁVAJÍ vlastní explicitní komponenty
- * (mají skutečnou logiku, ne statický text) - musí být v `children` PŘED `:pageId`,
- * jinak by je Angular router zachytil jako hodnotu parametru dřív, než by došel
- * k jejich explicitní route (router matchuje shora dolů).
- *
- * @bugfix-note (2026-10-05) PERMISSIONS OF CHILD PAGES WERE NEVER CHECKED: AuthGuard was
- * registered only as `canActivate` of the layout route. That hook receives the layout's own
- * route (no `data.permission`) and does not run again while the layout stays active, so every
- * page could be opened by typing its URL (the API still answered 403, so no data leaked).
- * Both top-level routes now also register `canActivateChild: [AuthGuard]`, which checks the
- * `data.permission` of each child page on every navigation.
- *
- * @bugfix-note (2026-10-27) The E-shop pages and Web → Edit website still required the old
- * permission keys (`shop-manage-products`, `shop-view-orders`, `shop-view-reports`,
- * `web-view-edit-website`, …) while the sidebar, the welcome-page cards and the API use the
- * current ones (`shop-products-view`, `shop-orders-view`, `shop-coupons-view`,
- * `web-edit-website-view`, …): a non-sysadmin saw the menu item and got "Access denied" on click.
- * The routes now require the same keys as `admin-navigation.config.ts` (checked by its spec); the
- * duplicated `web/dashboard` route was removed. The route table is exported for that check.
- *
- * @refactor-note (2026-10-27) Admin error pages inside the layout: `forbidden` (403, where
- * AuthGuard sends a refused page) and the catch-all `**` (404, an unknown /admin/... address).
- * Unknown addresses inside a module (`/admin/shop/xyz`) fall through the module's children to the
- * catch-all of the layout. Both need only a valid login (layout canActivate) - an anonymous
- * visitor is still sent to the login page first and learns nothing about the admin addresses.
  */
 
 import { NgModule } from '@angular/core';
@@ -60,7 +31,7 @@ import { NewsComponent } from './intranet/knowledge-base/pages/news/news.compone
 import { SupportFormComponent } from './intranet/knowledge-base/pages/support-form/support-form.component';
 import { ProjectsComponent } from './web-pages/projects/projects.component';
 
-// Core module components (přesunuto z web-pages do core-pages skriptem create-core-pages.sh)
+// Core module components
 import { CoreDashboardComponent } from './core-pages/dashboard/dashboard.component';
 import { EditLegalComponent } from './core-pages/edit-legal/edit-legal.component';
 import { PersonalInfoComponent } from './core-pages/personal-info/personal-info.component';
@@ -107,7 +78,7 @@ export const ADMIN_ROUTES: Routes = [
     children: [
       { path: '', redirectTo: 'core/welcome-page', pathMatch: 'full' },
 
-      // 🌍 WEB STRÁNKY (Core website management interfaces)
+      // 🌍 WEB PAGES (website management interfaces)
       {
         path: 'web',
         children: [
@@ -126,7 +97,7 @@ export const ADMIN_ROUTES: Routes = [
          ]
       },
 
-      // 🧩 CORE STRÁNKY (systémové/sdílené napříč Web a E-shop)
+      // 🧩 CORE PAGES (system / shared across Web and E-shop)
       {
         path: 'core',
         children: [
@@ -137,16 +108,16 @@ export const ADMIN_ROUTES: Routes = [
           { path: 'personal-info', component: PersonalInfoComponent, data: { permission: 'web-view-personal-info' } },
           { path: 'web-settings', component: WebSettingsComponent, data: { permission: 'core-legal-config-view' } },
           { path: 'external-links', component: ExternalLinksComponent, data: { permission: 'core-external-links-view' } },
-          // Nezávisle na permission systému natvrdo omezeno na roli 'sysadmin' (viz sysadminGuard).
+          // Restricted to the 'sysadmin' role regardless of the permission system (see sysadminGuard).
           { path: 'edit-roles', component: EditRolesComponent, canActivate: [sysadminGuard] },
           { path: 'administrators', component: AdministratorsComponent, data: { permission: 'core-administrators-view' } },
-          // Placeholder - dočasně čte ze stejného zdroje jako web/business-logs, viz poznámka v logs.component.ts.
+          // System audit log (core/logs).
           { path: 'logs', component: CoreLogsComponent, data: { permission: 'view-core' } },
           { path: 'security-events', component: SecurityEventsComponent, data: { permission: 'core-security-view' } },
         ]
       },
 
-      // 🛒 E-SHOP STRÁNKY (E-commerce administrative interfaces)
+      // 🛒 E-SHOP PAGES (e-commerce administrative interfaces)
       {
         path: 'shop',
         children: [
@@ -182,12 +153,12 @@ export const ADMIN_ROUTES: Routes = [
         path: 'knowledge-base',
         component: KnowledgeBaseComponent,
         children: [
-          // Vlastní explicitní komponenty (reálná logika, ne statický text) - MUSÍ
-          // být před ':pageId', jinak by je router zachytil jako parametr.
+          // Explicit components (real logic, not static text) - MUST
+          // come before ':pageId', otherwise the router would catch them as the parameter.
           { path: 'support-form', component: SupportFormComponent },
           { path: 'news', component: NewsComponent },
-          // Generický renderer pro VŠECHNY ostatní stránky manuálu - viz
-          // kb-pages.data.ts pro přidání nové stránky (žádná nová route potřeba).
+          // Generic renderer for ALL other manual pages - see
+          // kb-pages.data.ts for adding a new page (no new route needed).
           { path: ':pageId', component: KbArticleComponent },
           { path: '', redirectTo: 'introductions', pathMatch: 'full' }
         ]

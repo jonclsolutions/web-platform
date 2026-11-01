@@ -2,20 +2,10 @@
 /**
  * @file StoreWebRawRequestCommissionRequest.php
  * @path app/Http/Requests/Web/WebRawRequestCommission/StoreWebRawRequestCommissionRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Validation logic for creating new commission requests from the web, including secure file attachment handling.
- *
- * @bugfix-note (2026-08-19) KRITICKÝ BUG - JAZYK POTVRZOVACÍHO E-MAILU SE IGNOROVAL:
- * `rules()` neobsahovala `lang` - Laravel FormRequest validace propouští do
- * `$request->safe()`/`validated()` VÝHRADNĚ pole definovaná v `rules()`, takže i když
- * frontend (`ContactComponent`) `lang` v FormData reálně posílal, `store()`
- * (`$request->safe()->except(['attachments'])`) ho nikdy nedostal a
- * `WebRawRequestCommission::lang` zůstával na defaultu `'cz'` bez ohledu na to, v jakém
- * jazyce byl web přepnutý. Potvrzovací e-mail (`RawRequestEmailTemplate::forLang()`)
- * tak vždy vybíral českou variantu šablony. Přidáno `'lang' => ['sometimes', 'nullable',
- * 'string', 'max:5']` - stejné pravidlo, jaké má `UpdateWebRawRequestCommissionRequest`.
  */
 
 namespace App\Http\Requests\Web\WebRawRequestCommission;
@@ -65,10 +55,6 @@ class StoreWebRawRequestCommissionRequest extends FormRequest
             'priority'          => ['sometimes', 'string', 'in:low,neutral,high'],
             'note'              => ['nullable', 'string'],
             'lang'              => ['sometimes', 'nullable', 'string', 'max:5'],
-            // @bugfix-note (2026-10-22) SECURITY: the public contact form (and the admin form)
-            // send `attachments[]`, which the controller stores - but only a single
-            // `attachment` field was validated, so the files of this PUBLIC endpoint were
-            // stored without any count, size or extension check. Same limits as the update.
             'attachments'       => ['sometimes', 'nullable', 'array', 'max:' . self::MAX_ATTACHMENTS, new AttachmentsTotalSize(self::MAX_TOTAL_SIZE_BYTES)],
             'attachments.*'     => ['file', 'max:' . self::MAX_FILE_SIZE_KB, $this->attachmentExtensionRule()],
         ];

@@ -1,8 +1,8 @@
 /**
  * @file project-portal-localization.service.ts
  * @path src/app/public/web-pages/project-portal/project-portal-localization.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Static (bundled, non-editable-in-admin-UI) multi-language support for the
  * CUSTOMER-facing project portal (`ProjectPortalComponent`) - a THIRD, separate i18n
@@ -49,12 +49,6 @@ export interface ProjectPortalLanguageMeta {
   code: string;
   /** Human-readable name, shown in ITS OWN language (matches AdminLocalizationService convention). */
   name: string;
-  /**
-   * @refactor-note (2026-09-11) BACKLOG "dropdown jazykový přepínač": path k flag
-   * ikoně. Záměrně sdílené soubory s adminem (`assets/i18n/admin/{code}/{code}.png`)
-   * - jde o identické vlaječky, netřeba je duplikovat do vlastní `project-portal`
-   * assets složky jen kvůli obrázku.
-   */
   icon: string;
 }
 

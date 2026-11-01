@@ -1,8 +1,8 @@
 /**
  * @file shop-welcome-page.component.spec.ts
  * @path src/app/admin/shop-pages/shop-welcome-page/shop-welcome-page.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ShopWelcomePageComponent – the landing page of the E-shop module:
  *   translated texts and quick-link cards shown only for the pages the user may open.

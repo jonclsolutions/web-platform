@@ -1,9 +1,9 @@
 /**
  * @file public-not-found.config.ts
  * @path src/app/public/not-found/public-not-found.config.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-27
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description The public "page not found" (404) is ONE component shared by every public area
  *   (web, e-shop, …). Each area only says which translations it reads, where the "back" button
  *   leads and which look it uses; the route of the area gets a catch-all `**` route built by

@@ -1,8 +1,8 @@
 /**
  * @file edit-roles.component.spec.ts
  * @path src/app/admin/core-pages/edit-roles/edit-roles.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of EditRolesComponent – role and permission management: grouping of
  *   permission keys (module → resource → CRUD order), role list search, permission checklist

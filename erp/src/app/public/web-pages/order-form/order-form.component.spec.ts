@@ -1,8 +1,8 @@
 /**
  * @file order-form.component.spec.ts
  * @path src/app/public/web-pages/order-form/order-form.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of OrderFormComponent (order via a sales-lead link): link states (no token,
  *   valid with prefill, invalid, already used), validation, the multipart submit with the lead

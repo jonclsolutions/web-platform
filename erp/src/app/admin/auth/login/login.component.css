@@ -1,8 +1,8 @@
 /*
     @file: login.component.css
     @path: /src/app/admin/auth/login/login.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
     @description: Admin login (credentials -> OTP step) + "forgot password" modal.
         Visual language aligned 1:1 with the admin dashboard (dashboard.component.css):
@@ -12,11 +12,6 @@
         are declared on :host with values identical to admin-layout.
     @dependencies: none (self-contained; token values mirror admin-layout /
         dashboard.component.css - keep in sync)
-    @refactor-note (2026-10-01) Replaced the dark purple theme with the admin palette.
-        Removed unused selectors (.login-brand, .login-card-header, .login-eyebrow,
-        .login-title, .login-subtitle, .submit-arrow) - not referenced by the template.
-        Added selectors the template uses but were missing: .otp-subtitle, .otp-input,
-        .captcha-container, disabled states and :focus-visible outlines.
 */
 
 /*

@@ -1,8 +1,8 @@
 /**
  * @file user-request.component.spec.ts
  * @path src/app/admin/web-pages/user-request/user-request.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of UserRequestComponent and user-request.config.ts – requests sent
  *   from the public contact form: translated configuration, theme / status / priority options,

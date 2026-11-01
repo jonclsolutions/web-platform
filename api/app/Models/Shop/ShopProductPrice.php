@@ -2,14 +2,10 @@
 /**
  * @file ShopProductPrice.php
  * @path app/Models/Shop/ShopProductPrice.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Model for managing granular pricing data for products and variants.
- *
- * @refactor-note (2026-10-23) Removed the CZK columns (price_czk_with_vat, price_czk_without_vat,
- * cost_price_czk) from fillable / casts: shop_product_prices has only EUR columns (all prices
- * are EUR), mass-assigning them failed with an SQL error.
  */
 
 namespace App\Models\Shop;

@@ -2,14 +2,10 @@
 /**
  * @file WebSalesLeadResource.php
  * @path app/Http/Resources/Web/WebSalesLeadResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Resource transformation for sales leads.
- * @bugfix-note (2026-10-23) Open finding #52: a lead without priority / status was returned with
- *   the Czech texts 'Neutrální' / 'nové' - values outside the slug vocabulary the API validates
- *   (`neutral`, `new`, Store/UpdateWebSalesLeadRequest) and the admin translates, so the admin
- *   showed the raw Czech word. The defaults are the slugs now.
  */
 
 namespace App\Http\Resources\Web;

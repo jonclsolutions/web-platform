@@ -3,8 +3,8 @@
 /**
  * @file CoreModelsTest.php
  * @path api/tests/Unit/Core/CoreModelsTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the Core / Auth models: relations, effective permissions,
  *   2FA requirement, token validity, the e-mail access policy and the security setting

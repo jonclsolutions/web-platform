@@ -3,8 +3,8 @@
 /**
  * @file RoleTest.php
  * @path api/tests/Feature/Core/RoleTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of roles and permissions (CoreRoleController,
  *   CorePermissionController): listing, sysadmin-only management, the protected sysadmin

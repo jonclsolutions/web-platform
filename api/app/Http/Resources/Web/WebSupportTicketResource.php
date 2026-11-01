@@ -2,15 +2,10 @@
 /**
  * @file WebSupportTicketResource.php
  * @path app/Http/Resources/Web/WebSupportTicketResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Resource transformation for support tickets.
- * @refactor-note (2026-08-2) `attachment_path`/`attachment_url` nahrazeny `attachments`
- *      kolekcí (viz WebAttachment.php/WebAttachmentResource.php) - stejný tvar jako u
- *      WebSalesOrderResource/WebRawRequestCommissionResource, aby frontend mohl použít
- *      stejnou komponentu pro zobrazení/stažení/náhled napříč všemi čtyřmi entitami.
- *      Nejvýš 1 prvek v kolekci (vynuceno v HandlesAttachments::storeSingleAttachment()).
  */
 
 namespace App\Http\Resources\Web;

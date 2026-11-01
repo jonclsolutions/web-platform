@@ -1,34 +1,15 @@
 /**
  * @file security-events.config.ts
  * @path src/app/admin/core-pages/security-events/security-events.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Statická-teď-dynamická konfigurace (tlačítka, sloupce tabulky/filtrů/
- * detailů, vysvětlující texty) pro stránku bezpečnostního monitoringu
- * (core_security_events).
- *
- * (Earlier refactor-note 2026-08-22 - EVENT_TYPE_INFO / buildEventExplanation() -
- * a bugfix-note 2026-09-07 pro openGraphBuilder permission jsou nahrazeny/rozšířeny
- * touhle verzí, viz níže.)
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded
- * texty": kompletní přepis na FACTORY FUNKCE. Žádná SQL migrace - `event_type`/
- * `severity`/`status` jsou už anglické slugy. `status` hodnoty byly dřív DUPLICITNĚ
- * definované na třech místech (FORM_FIELDS, FILTER_COLUMNS, komponenta's
- * `statusOptions` pro triage modal) - sjednoceno do jedné `STATUS_VALUES`/
- * `STATUS_LABEL_KEYS` dvojice, ze které si všechna tři místa berou stejná data přes
- * `createStatusOptions(i18n)`.
- *
- * `EVENT_TYPE_INFO` (šablonované "co se stalo"/"doporučujeme" texty s placeholdery
- * `{route}`/`{ip}`/`{email}`/`{user_id}`/`{occurrences}`) přepsáno na
- * `createEventTypeInfo(i18n)` factory funkci - placeholdery ZŮSTÁVAJÍ doslovně
- * v přeloženém textu (nejsou to i18n proměnné, `buildEventExplanation()` je
- * nahrazuje AŽ za běhu konkrétními daty záznamu, stejně jako dřív).
- * `buildEventExplanation()` teď vyžaduje `i18n` parametr navíc.
- *
- * @bugfix-note (2026-09-08) `openGraphBuilder` permission (`web-user-requests-view`
- * -> `core-security-view`) byla opravena už v předchozí verzi - zachováno.
+ * @description Configuration (buttons, table / filter / detail columns, explanation texts) of
+ * the security monitoring page (core_security_events).
+ * @note `createEventTypeInfo(i18n)` builds the templated "what happened" / "we recommend" texts
+ * with the placeholders `{route}` / `{ip}` / `{email}` / `{user_id}` / `{occurrences}`. The
+ * placeholders STAY literally in the translated text (they are not i18n variables -
+ * `buildEventExplanation()` replaces them at runtime with the data of the record).
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -43,7 +24,7 @@ export const EVENT_TYPE_VALUES: string[] = [
 
 export const SEVERITY_VALUES: string[] = ['info', 'warning', 'critical'];
 
-/** @description Sdíleno mezi FORM_FIELDS/FILTER_COLUMNS a `SecurityEventsComponent`'s triage modal select. */
+/** @description Shared by FORM_FIELDS / FILTER_COLUMNS and the triage modal select of `SecurityEventsComponent`. */
 export const STATUS_VALUES: string[] = ['new', 'reviewed', 'false_positive', 'confirmed_attack'];
 
 const EVENT_TYPE_LABEL_KEYS: Record<string, string> = {
@@ -93,9 +74,9 @@ export function createToolbarButtons(i18n: AdminLocalizationService): Core.Butto
 }
 
 /**
- * @description Mapování technických hodnot na přeložený text pro sloupce
- * `event_type`/`severity`/`status` v tabulce i exportu - `TableBuilderComponent`
- * tohle mapování aplikuje automaticky podle `column_name`.
+ * @description Mapping of the technical values to translated text for the
+ * `event_type` / `severity` / `status` columns in the table and the export -
+ * `TableBuilderComponent` applies it automatically by `column_name`.
  */
 export function createFormFields(i18n: AdminLocalizationService): Core.InputDefinition[] {
   return [
@@ -147,20 +128,18 @@ export function createDetailsColumns(i18n: AdminLocalizationService): Core.ItemD
 }
 
 /**
- * @description `{value,label}` páry pro triage modal select v komponentě (dřív
- * hardcoded `readonly statusOptions` pole) - stejná `STATUS_VALUES`/`STATUS_LABEL_KEYS`
- * dvojice jako FORM_FIELDS/FILTER_COLUMNS.
+ * @description `{value,label}` pairs of the triage modal select of the component - the same
+ * `STATUS_VALUES` / `STATUS_LABEL_KEYS` pair as FORM_FIELDS / FILTER_COLUMNS.
  */
 export function createStatusOptions(i18n: AdminLocalizationService) {
   return mapLabeledOptions(STATUS_VALUES, STATUS_LABEL_KEYS, i18n);
 }
 
 /**
- * @description Jedno vysvětlení pro daný `event_type` - "co se stalo" a "co
- * doporučujeme" jsou ŠABLONY s placeholdery (`{route}`, `{ip}`, `{email}`,
- * `{user_id}`, `{occurrences}`), které `buildEventExplanation()` nahradí konkrétními
- * daty daného záznamu. Placeholdery ZŮSTÁVAJÍ doslovně v přeloženém textu - nejsou to
- * i18n proměnné, ale runtime substituce.
+ * @description One explanation of an `event_type` - "what happened" and "what we recommend" are
+ * TEMPLATES with placeholders (`{route}`, `{ip}`, `{email}`, `{user_id}`, `{occurrences}`) that
+ * `buildEventExplanation()` replaces with the data of the record. The placeholders STAY
+ * literally in the translated text - runtime substitution, not i18n variables.
  */
 interface EventTypeInfo {
   label: string;
@@ -169,8 +148,8 @@ interface EventTypeInfo {
 }
 
 /**
- * @description Sestaví `EVENT_TYPE_INFO` mapu ze `event-explanations` i18n klíčů -
- * jedna položka na `event_type`, plus fallback pro neznámý typ.
+ * @description Builds the `EVENT_TYPE_INFO` map from the `event-explanations` i18n keys - one
+ * item per `event_type`, plus a fallback for an unknown type.
  */
 export function createEventTypeInfo(i18n: AdminLocalizationService): Record<string, EventTypeInfo> {
   const result: Record<string, EventTypeInfo> = {};
@@ -184,7 +163,7 @@ export function createEventTypeInfo(i18n: AdminLocalizationService): Record<stri
   return result;
 }
 
-/** @description Fallback pro typ eventu, který zatím nemá vlastní vysvětlení. */
+/** @description Fallback for an event type without its own explanation yet. */
 export function createFallbackEventInfo(i18n: AdminLocalizationService): EventTypeInfo {
   return {
     label: i18n.getValue(`${SECTION}.explain_fallback_label`),
@@ -194,13 +173,12 @@ export function createFallbackEventInfo(i18n: AdminLocalizationService): EventTy
 }
 
 /**
- * @description Sestaví konkrétní vysvětlení pro daný záznam - dosadí skutečná data
- * (IP, route, e-mail, ID uživatele, počet výskytů) do šablony. E-mail se čte z
- * `context_data.email` (ukládá ho jen `AuthController` u login eventů, u ostatních
- * typů chybí - placeholder `{email}` se pak nahradí obecným textem).
- * @param item Řádek `core_security_events` (tvar `CoreSecurityEventResource`).
- * @param i18n Potřebný pro sestavení event-type-info mapy a fallback textu -
- *   viz refactor-note (2026-09-08) v hlavičce souboru.
+ * @description Builds the explanation of a specific record - fills the real data (IP, route,
+ * e-mail, user ID, occurrence count) into the template. The e-mail is read from
+ * `context_data.email` (stored only by `AuthController` for login events, missing for other
+ * types - the `{email}` placeholder is then replaced by a generic text).
+ * @param item Row of `core_security_events` (shape of `CoreSecurityEventResource`).
+ * @param i18n Needed for building the event-type-info map and the fallback text.
  */
 export function buildEventExplanation(item: any, i18n: AdminLocalizationService): EventTypeInfo {
   const eventTypeInfo = createEventTypeInfo(i18n);

@@ -1,8 +1,8 @@
 /**
  * @file app.config.ts
  * @path src/app/app.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Global Angular application configuration, provider registration, and dependency injection setup.
  * @dependencies
@@ -12,31 +12,6 @@
  *   so the first paint never shows an empty/blank state.
  * - PageTitleStrategy: Resolves route `title` keys ("web.home") to the client-editable
  *   browser tab titles from `legal_page_titles`.
- *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace - lokalizovaná data":
- * Přidána registrace `en-US` locale dat vedle stávající `cs-CZ` - potřebné pro
- * `DatePipe` v adminu, aby uměl vykreslit datum/čas v jazyce podle aktuálně zvoleného
- * admin jazyka (viz `AdminLocalizationService.getDateLocale()` a
- * `AdminLayoutComponent.dateLocale` getter), NE podle globálního `LOCALE_ID` (ten
- * zůstává `cs-CZ` - viz `AdminLayoutComponent`'s `providers: [{ provide: LOCALE_ID,
- * useValue: 'cs-CZ' }]` - měnit globální LOCALE_ID by ovlivnilo celou aplikaci,
- * včetně veřejného webu, což není žádoucí). `registerLocaleData()` je globální
- * registrace dostupných locale dat (jednou při startu aplikace), zatímco KTERÉ z
- * nich se použije v konkrétním `date` pipe volání se řídí čtvrtým parametrem
- * (`{{ value | date:'format':undefined:locale }}`), ne touto registrací samotnou.
- * Při přidání dalšího admin jazyka (např. němčiny) je potřeba: 1) sem přidat
- * `import localeDe from '@angular/common/locales/de'` +
- * `registerLocaleData(localeDe, 'de-DE')`, 2) doplnit mapování v
- * `AdminLocalizationService.DATE_LOCALE_MAP`, 3) přidat JSON+PNG jako u ostatních
- * admin jazyků (viz AdminLocalizationService hlavička).
- *
- * @refactor-note (2026-09-30) Registered `PageTitleStrategy` as the router
- * `TitleStrategy`. Without it Angular's default strategy writes the route `title`
- * literally into the browser tab ("web.home" instead of the client's text).
- * Nothing else in this file changed.
- *
- * @refactor-note (2026-10-26) Registered `PasswordConfirmationInterceptor` (step-up password
- * confirmation of sysadmin operations) as the first HTTP interceptor.
  */
 
 import { ApplicationConfig, APP_INITIALIZER } from '@angular/core';
@@ -89,7 +64,7 @@ export const appConfig: ApplicationConfig = {
     ),
 
     /**
-     * @description Browser tab titles from the admin ("Názvy stránek").
+     * @description Browser tab titles from the admin ("Page titles").
      * @note Route `title` values are keys ("web.home", "admin.panel"), resolved by
      *   PageTitleStrategy in the current language. Must be registered, otherwise
      *   the default strategy shows the raw key.

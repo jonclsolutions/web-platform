@@ -1,8 +1,8 @@
 /**
  * @file security-events.component.spec.ts
  * @path src/app/admin/core-pages/security-events/security-events.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of SecurityEventsComponent – the security events page: 14-day severity
  *   chart (data, bar segments, day filter, tooltip side), retention setting and purge, and the

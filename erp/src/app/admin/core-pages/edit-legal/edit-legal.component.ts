@@ -1,54 +1,16 @@
 /**
  * @file edit-legal.component.ts
- * @path src/app/admin/web-pages/edit-legal/edit-legal.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @path src/app/admin/core-pages/edit-legal/edit-legal.component.ts
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Provides a multi-language content management interface for legal document sections (e.g., GDPR, Terms of Service, Cookies).
  * @dependencies
  * - BaseDataComponent: Manages core CRUD operations and API communication.
  * - ConfirmDialogService: Facilitates secure deletion of content sections.
  * - AlertDialogService: Provides feedback to users after operations.
- * - ResourceCacheService: TTL cache pro document-types/languages/section fetche (viz
- *   refactor-note 2026-08-8).
+ * - ResourceCacheService: TTL cache of the document-types / languages / section fetches.
  * - RxJS: Used for reactive data fetching and cross-language consistency checks.
- *
- * @refactor-note (2026) `activeTab: 1 | 2` bylo natvrdo napsané pro přesně 2 typy dokumentů
- * (GDPR/TOS). Po přidání třetího typu (Cookies) byl tenhle hardcoded výčet nahrazen
- * dynamickým načítáním typů dokumentů z nového endpointu `legal/document-types`
- * (viz DocumentTypeController) - přidání dalšího typu dokumentu v budoucnu tak
- * nebude vyžadovat žádnou další změnu v tomhle souboru.
- *
- * @refactor-note (2026-08-8) TTL CACHE (backlog: "zbytečně moc dotazů na API"). Tahle
- * stránka měla dva zdroje zbytečných requestů:
- * 1) `loadDocumentTypes()`/`loadLanguages()` se natahovaly znovu při KAŽDÉM vstupu na
- *    stránku, přestože typy dokumentů a jazyky se mění jen zřídka - teď cache 10 min.
- * 2) `checkCompleteness()` volá `loadAllData()` JEDNOU ZA KAŽDÝ JAZYK při KAŽDÉM
- *    přepnutí tabu/jazyka - přidána `fetchSections()` obalující stejné volání TTL cache
- *    (2 min) s klíčem podle `document_type_id` + `lang`, sdílenou s `refreshData()`.
- * Po jakékoliv mutaci (saveEdit/submitAdd/confirmDelete) se invaliduje jen cache klíč
- * PRÁVĚ upravované kombinace.
- *
- * @refactor-note (2026-08-11) KRITICKÁ OPRAVA - `usesPaginatedList = false` (backlog:
- * "zbytečně moc dotazů na API", stejná třída bugu jako u `CategoriesComponent`). Tahle
- * komponenta NEPOUŽÍVÁ stránkování vůbec - `this.data` je plněno výhradně vlastním
- * `override refreshData()`/`fetchSections()` podle `document_type_id`+`lang`. Bez
- * `usesPaginatedList = false` ale `BaseDataComponent.initWithAuthCheck()` navíc spouští
- * `this.list.loadInitial()` - pokus o STRÁNKOVANÝ fetch na `legal/document-sections`.
- * Backend (`DocumentSectionController::index()`) ale na tomhle endpointu vůbec
- * nestránkuje - vrací holé pole `DocumentSectionResource::collection($data)`, ne
- * `{ data: [...], total, ... }`. `GenericTableService`/`PaginatedListStore` pak udělá
- * `this.data = response.data`, kde `response` JE to pole samo -> `response.data` je
- * `undefined` -> `this.data` (přes `this.list.data`) se přepíše na `undefined` ->
- * runtime chyba `ctx.data is undefined` v šabloně (`@if (data.length === 0)`).
- * Stejnou cestou byl zranitelný i globální "Aktualizovat vše" button v headeru a
- * 15minutový background refresh (oba volaly zděděné `forceFullRefresh()`, které jde
- * přes `this.list`) - proto `forceFullRefresh()` teď PŘEPSÁNO, ať místo toho zavolá
- * `invalidateCurrentSections()` + `refreshData()` (skutečný zdroj dat téhle komponenty).
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): unused constructor dependency `fb: FormBuilder`.
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): the language list
- *  is the payload itself (was `{languages}`).
  */
 
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
@@ -100,9 +62,9 @@ protected override translationSection: string = 'edit-legal';
 
   private resourceCache = inject(ResourceCacheService);
 
-  /** Typy dokumentů (GDPR/TOS/Cookies/...) načtené z API - taby se vykreslují podle tohoto pole. */
+  /** Document types (GDPR / TOS / Cookies / ...) loaded from the API - the tabs are rendered from this array. */
   documentTypes: DocumentTypeItem[] = [];
-  /** ID aktuálně vybraného typu dokumentu; null dokud se typy ještě nenačetly. */
+  /** ID of the currently selected document type; null until the types are loaded. */
   activeTabId: number | null = null;
 
   languages: any[] = [];
@@ -130,9 +92,9 @@ protected override translationSection: string = 'edit-legal';
     private alertDialog: AlertDialogService
   ) {
     super(dataHandler, cd, genericTableService);
-    // Chráníme se před `undefined` i kdyby cokoliv (staré cache, race, budoucí regrese)
-    // omylem přepsalo `this.data` přes zděděné `this.list` mechanismy - šablona s tímhle
-    // polem počítá jako s polem vždy.
+    // Guards against `undefined` even if anything (old cache, race, future regression)
+    // overwrote `this.data` through the inherited `this.list` mechanisms - the template always
+    // treats this field as an array.
     this.data = [];
   }
 
@@ -143,8 +105,8 @@ protected override translationSection: string = 'edit-legal';
   }
 
   /**
-   * @description Načte dostupné typy právních dokumentů a nastaví první z nich jako
-   * výchozí tab. Cache 10 min (viz refactor-note v hlavičce souboru).
+   * @description Loads the available legal document types and sets the first one as the default
+   * tab. Cached for 10 min.
    */
   private loadDocumentTypes(): void {
     this.resourceCache.get(
@@ -167,7 +129,7 @@ protected override translationSection: string = 'edit-legal';
 
   /**
    * @description Retrieves supported languages for the 'web' module and initializes the
-   * active language state. Cache 10 min (viz refactor-note v hlavičce souboru).
+   * active language state. Cached for 10 min.
    */
   private loadLanguages(): void {
     this.resourceCache.get(
@@ -189,10 +151,9 @@ protected override translationSection: string = 'edit-legal';
   }
 
   /**
-   * @description Sjednocené načtení sekcí pro danou kombinaci typu dokumentu + jazyka,
-   * přes TTL cache (viz refactor-note v hlavičce souboru). SDÍLENO mezi `refreshData()`
-   * a `checkCompleteness()` - stejný klíč, stejný cache záznam, ať se stejná data
-   * netahají dvakrát nezávisle.
+   * @description Unified load of the sections of a document type + language combination through
+   * the TTL cache. SHARED by `refreshData()` and `checkCompleteness()` - same key, same cache
+   * entry, so the same data is not fetched twice independently.
    */
   private fetchSections(documentTypeId: number, lang: string): Observable<DocumentSection[]> {
     const key = `edit-legal:sections:${documentTypeId}:${lang}`;
@@ -204,8 +165,9 @@ protected override translationSection: string = 'edit-legal';
   }
 
   /**
-   * @description Zneplatní cache klíč PRÁVĚ upravované kombinace (aktivní typ dokumentu +
-   * aktivní jazyk) - volat po každé úspěšné mutaci (create/update/delete sekce).
+   * @description Invalidates the cache key of the combination BEING edited (active document type
+   * + active language) - call after every successful mutation (create / update / delete of a
+   * section).
    */
   private invalidateCurrentSections(): void {
     if (this.activeTabId === null) return;
@@ -242,8 +204,8 @@ protected override translationSection: string = 'edit-legal';
         this.cd.markForCheck();
       },
       error: () => {
-        // I na chybu se `data` musí vrátit do prokazatelně platného stavu (prázdné pole),
-        // ne zůstat undefined - viz refactor-note (2026-08-11) v hlavičce souboru.
+        // Even on an error `data` must return to a valid state (an empty array),
+        // not stay undefined.
         this.data = [];
         this.cd.markForCheck();
       }
@@ -251,11 +213,10 @@ protected override translationSection: string = 'edit-legal';
   }
 
   /**
-   * @description "Tvrdý" refresh - přepsáno (ne zděděno z `BaseDataComponent`), ať
-   * globální "Aktualizovat vše" tlačítko v headeru a periodický background refresh
-   * (oba volají `forceFullRefresh()`) míří na SKUTEČNÝ zdroj dat téhle komponenty, ne
-   * na `this.list` (které tahle komponenta vůbec nepoužívá - viz refactor-note
-   * 2026-08-11 v hlavičce souboru).
+   * @description "Hard" refresh - overridden (not inherited from `BaseDataComponent`), so the
+   * global "Refresh all" button in the header and the periodic background refresh (both call
+   * `forceFullRefresh()`) target the REAL data source of this component, not `this.list` (which
+   * this component does not use).
    */
   override forceFullRefresh(_currentFilters: Core.FilterParams = this.defaultFilters): void {
     if (this.activeTabId === null) return;
@@ -264,8 +225,8 @@ protected override translationSection: string = 'edit-legal';
   }
 
   /**
-   * @description Přepne aktivní typ dokumentu (tab) a resetuje rozpracovaný stav editace.
-   * @param tabId ID typu dokumentu z `documentTypes`.
+   * @description Switches the active document type (tab) and resets the unfinished edit state.
+   * @param tabId ID of the document type from `documentTypes`.
    */
   switchTab(tabId: number): void {
     if (this.activeTabId === tabId) return;
@@ -281,9 +242,9 @@ protected override translationSection: string = 'edit-legal';
 
   /**
    * @description Performs an asynchronous check across all languages to identify missing translations for existing sections.
-   * @note Uses forkJoin to aggregate data for every supported language and compares position availability. Přes `fetchSections()`
-   * sdílí cache se zobrazenou sekcí, takže opakované přepínání tabů/jazyků nevyvolává
-   * pokaždé nové requesty - viz refactor-note v hlavičce souboru.
+   * @note Uses forkJoin to aggregate data for every supported language and compares position
+   * availability. Shares the cache with the shown section through `fetchSections()`, so
+   * switching tabs / languages repeatedly does not fire new requests every time.
    */
   private checkCompleteness(): void {
     if (this.languages.length <= 1 || this.activeTabId === null) {
@@ -337,7 +298,6 @@ protected override translationSection: string = 'edit-legal';
       .filter(pos => this.missingSummary[pos].includes(this.activeLang))
       .sort((a, b) => a - b);
   }
-    /** @refactor-note (2026-09) viz hlavička souboru - plain-text varianta bez <strong>. */
   get totalWarningsLabel(): string {
     const count = this.totalWarnings;
     const word = count === 1 ? this.strings.warning_count_singular : this.strings.warning_count_plural;
@@ -460,8 +420,6 @@ protected override translationSection: string = 'edit-legal';
 
   /**
    * @description Adds a new section in the active document / language.
-   * @bugfix-note (2026-10-23) The validation / success / error alerts were hardcoded Czech (open
-   *   finding #20) - now `edit-legal.add_*` keys (cz + en).
    */
   submitAdd(): void {
     if (!this.newContent?.trim() || !this.newHeading?.trim()) {
@@ -521,7 +479,7 @@ protected override translationSection: string = 'edit-legal';
   }
 
   /**
-   * @description Název aktuálně vybraného typu dokumentu (dřív natvrdo `activeTab === 1 ? 'GDPR' : ...`).
+   * @description Name of the currently selected document type.
    */
   get tabLabel(): string {
     return this.documentTypes.find(t => t.id === this.activeTabId)?.title ?? '';

@@ -1,8 +1,8 @@
 /**
  * @file import-popup-builder.component.spec.ts
  * @path src/app/admin/components/builders/import-popup-builder/import-popup-builder.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ImportPopupBuilderComponent – the 4-step import wizard
  *   (format → upload → validation summary → done): template download, validation request,

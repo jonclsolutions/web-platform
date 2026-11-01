@@ -3,8 +3,8 @@
 /**
  * @file SecurityMonitoringTest.php
  * @path api/tests/Feature/Core/SecurityMonitoringTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the security monitoring administration
  *   (CoreSecurityEventController, CoreSecuritySettingController): list with filters,

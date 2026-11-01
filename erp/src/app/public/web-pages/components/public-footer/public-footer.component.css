@@ -1,14 +1,10 @@
 /*
     @file: public-footer.component.css
     @path: /src/app/public/web-pages/components/public-footer/public-footer.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @refactor-note (2026-09-30) Five-column layout (brand | offer | company | support |
-        contact), legal column removed (links live in the bottom bar together with
-        Login). Side padding uses the same --gutter tokens as public pages so the
-        footer content lines up with the 1200px page column. Duplicate
-        .footer-contact-icon rules merged (same effective values).
+    @description: Styles of the public footer component.
 */
 
 :host {

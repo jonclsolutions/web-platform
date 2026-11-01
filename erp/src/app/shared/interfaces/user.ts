@@ -1,12 +1,10 @@
 /**
  * @file user.ts
  * @path src/app/shared/interfaces/user.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Shared TypeScript interfaces for user/role data across the admin app.
- * @refactor-note (2026-08-16) Přidána pole enable_2fa a two_fa_forced_by_admin (backlog
- * "captcha + 2FA na mail") a nový LoginTwoFactorChallenge typ pro pending-login odpověď.
  */
 
 export interface UserRole {
@@ -39,15 +37,15 @@ export interface UserLogin {
   updated_at: string;
   deleted_at: string | null;
   roles: UserRole[];
-  /** Vlastní volba uživatele - self-service toggle na personal-info stránce. */
+  /** The user's own choice - self-service toggle on the personal-info page. */
   enable_2fa?: boolean;
-  /** Sysadmin override - vynucuje 2FA nezávisle na enable_2fa. Viditelné/měnitelné jen sysadminem. */
+  /** Sysadmin override - enforces 2FA regardless of enable_2fa. Visible / changeable by a sysadmin only. */
   two_fa_forced_by_admin?: boolean;
 }
 
 /**
- * @description Tvar odpovědi backendu, když je vyžadována 2FA - login ještě NENÍ
- * dokončen, tokeny se vydají až po AuthService.verifyTwoFactor().
+ * @description Shape of the backend answer when 2FA is required - the login is NOT finished yet,
+ * the tokens are issued only after AuthService.verifyTwoFactor().
  */
 export interface LoginTwoFactorChallenge {
   requires_2fa: true;

@@ -2,37 +2,12 @@
 /**
  * @file UserController.php
  * @path app/Http/Controllers/Api/UserController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Manages user account lifecycles, including creation, role assignment,
  * explicit permission grants, password security policies, and administrative audit
  * logging.
- * @refactor-note (2026-10-07) SECURITY - "what may a non-sysadmin do to ANOTHER account":
- * project decision that the following are sysadmin-only, enforced here and not only in
- * the admin UI: blocking AND unblocking an account, changing another account's login
- * e-mail, changing another account's password. Each of them let a single compromised
- * account holding `core-administrators-update` lock out, or take over, any non-sysadmin
- * account (including accounts with MORE permissions than its own). `update()` also no
- * longer accepts a password at all (`user_password_hash` removed) - it bypassed the
- * current-password confirmation and the notification of `changePassword()`.
- * @refactor-note (2026-10-09) SECURITY: the e-mail access policy now also applies when a
- * login e-mail CHANGES in `update()` (anyone, sysadmin included); the rules moved to
- * `CoreEmailAccessRule::isEmailAllowed()`, shared with the login check in AuthController.
- * @refactor-note (2026-10-09b) A self-edit that asks for a DIFFERENT role is now refused
- * (422 "You cannot change your own role.") instead of being silently ignored - the admin UI
- * showed "saved" although nothing changed. The role was never actually applied on a
- * self-edit; this only makes the API say so.
- * * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-26) SECURITY - step-up for the sysadmin role: creating a sysadmin,
- *   promoting to / editing / demoting a sysadmin (any update of a sysadmin account, also the own
- *   one), deleting and restoring a sysadmin and emptying a trash with sysadmins require a fresh
- *   single-use password confirmation of the acting sysadmin (RequiresPasswordConfirmation; scope
- *   `user:{id}`, `user:new`, `users:trash`). A stolen session alone can no longer add a second
- *   sysadmin or remove the others. Checked AFTER the authorization checks (a non-sysadmin still
- *   gets its 403 reason), BEFORE anything is written.
  */
 
 namespace App\Http\Controllers\Api;
@@ -66,43 +41,15 @@ class UserController extends Controller
     /**
      * @description Role names whose accounts can NEVER be blocked - an absolute
      * prohibition that applies even to sysadmin itself (project decision).
-     * @refactor-note (2026-09-02) Narrowed to sysadmin-only - the 'admin' role no
-     * longer exists. Must match `User::FORCED_2FA_ROLE_NAMES`.
      */
     private const NEVER_BLOCK_ROLE_NAMES = ['sysadmin'];
 
        /**
-     * @bugfix-note (2026-08-25) BACKLOG "hledat napříč vším": added a global `search`
-     * parameter (OR across `full_name`/`user_email`) - the same two text columns this
-     * method already filtered individually. `search` is wrapped in its own
-     * `where(function ($q) { ... })` block - see CoreExternalLinkController for a
-     * detailed explanation of why a bare `orWhere()` on the main `$query` builder is
-     * dangerous (it would break the AND-composition with previous conditions,
-     * specifically the `onlyTrashed()`/`withoutTrashed()` scoping from Eloquent
-     * SoftDeletes here - without wrapping, `search` could return deleted/non-deleted
-     * records outside the currently selected view).
-     *
      * @note Search does NOT cover `role_name` (the assigned role) - that would
      * require an always-active JOIN onto `user_roles`/`roles`, whereas today it is
      * only joined conditionally (when sorting by role_name, see the block below). If
      * searching by role is needed in the future, that is a separate extension
      * (permanent LEFT JOIN), not a trivial addition to the existing search block.
-     *
-     * @bugfix-note (2026-09-08) KRITICKÝ BUG - filtr na roli (`role_id`) byl v UI
-     * dostupný, ale tato metoda parametr `role_id` nikde nečetla, takže se v praxi
-     * NIKDY neaplikoval - výsledek vždy obsahoval VŠECHNY uživatele bez ohledu na
-     * zvolenou roli.
-     *
-     * @bugfix-note (2026-09-08v2) DRUHÝ, NEZÁVISLÝ BUG odhalený při ladění výše:
-     * `whereHas('roles', ...)` použil špatný název tabulky (`'roles.id'`), zatímco
-     * reálná tabulka za relací `User::roles()` je `core_roles` - způsobilo SQL chybu
-     * "Unknown column 'roles.id'". Opraveno na `'core_roles.id'`. Souběžně
-     * odhalen TŘETÍ, STARŠÍ bug ve frontendu (`administrators.config.ts`
-     * `rebuildFormFields()`) - filtr posílal NÁZEV role (`role_id=sysadmin`), ne
-     * číselné ID, protože `roleOptions.map(o => o.label)` stavěl plochý seznam
-     * jmen místo `{value,label}` párů. To vysvětluje, proč se do where klauzule
-     * dostal řetězec "sysadmin" místo čísla - viz administrators.config.ts
-     * bugfix-note stejné datum pro opravu na straně frontendu.
      */
     public function index(Request $request): JsonResponse
     {
@@ -119,20 +66,19 @@ class UserController extends Controller
         if ($request->filled('full_name')) $query->where('full_name', 'like', "%{$request->full_name}%");
         if ($request->filled('user_email')) $query->where('user_email', 'like', "%{$request->user_email}%");
 
-        // Role filter - see bugfix-note above (previously silently ignored, then had
-        // a wrong table name).
+        // Role filter.
         if ($request->filled('role_id')) {
             $query->whereHas('roles', function ($q) use ($request) {
                 $q->where('core_roles.id', $request->input('role_id'));
             });
         }
 
-        // Blocked/active filter - see bugfix-note above.
+        // Blocked/active filter.
         if ($request->filled('is_blocked')) {
             $query->where('is_blocked', filter_var($request->input('is_blocked'), FILTER_VALIDATE_BOOLEAN));
         }
 
-        // Global fulltext search across full_name/user_email - see bugfix-note above.
+        // Global fulltext search across full_name/user_email.
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('full_name', 'like', "%{$search}%")
@@ -140,9 +86,6 @@ class UserController extends Controller
             });
         }
 
-        // @bugfix-note (2026-10-22) The join used the table `roles` (does not exist - the
-        // role table is `core_roles`, same bug as 2026-09-08v2 above), so sorting the
-        // administrators list by role failed with an SQL error. Found by the unit tests.
         if ($sortBy === 'role_name') {
             $query->select('users.*')
                 ->leftJoin('user_roles as ur', 'users.id', '=', 'ur.user_id')
@@ -178,7 +121,7 @@ class UserController extends Controller
     {
         $validated = $request->validated();
 
-        // ── Email domain whitelist - see refactor-note (2026-08-25) in the header ──────
+        // ── Email domain whitelist ──────
         $domainCheck = $this->assertEmailDomainAllowed($request, $validated['user_email']);
         if ($domainCheck instanceof JsonResponse) {
             return $domainCheck;
@@ -252,12 +195,6 @@ class UserController extends Controller
                 'User'
             );
 
-            // @bugfix-note (2026-10-22) Returned through the resource's own response() now:
-            // `response()->json($resource->additional(...))` serialized only the bare user -
-            // `additional()` and the `data` wrapper were dropped, so `activation_email_sent`
-            // never reached the client and `DataHandler.post()` (unwraps `.data`) got
-            // `undefined`. Shape: {data: user, activation_email_sent: bool}. Found by the unit tests.
-            // Shape since finding #6: {data: user, meta: {activation_email_sent}}.
             return $this->respond(
                 new UserResource($user->load(['roles.permissions', 'explicitPermissions'])),
                 201,
@@ -300,14 +237,12 @@ class UserController extends Controller
      * change their own. A password can NOT be set through this method at all - see
      * `changePassword()`. Any actual
      * ROLE CHANGE unconditionally wipes all of the target's explicit permission
-     * grants BEFORE `permission_ids` (if present) is applied - see header
-     * refactor-note (2026-09-06). Transitioning to `is_blocked = true` revokes all
+     * grants BEFORE `permission_ids` (if present) is applied. Transitioning to `is_blocked = true` revokes all
      * active tokens. `permission_ids` is applied via `applyExplicitPermissions()`,
      * which enforces that an actor can only grant/revoke permissions they
      * themselves effectively hold - a hard anti-privilege-escalation guard, not a
      * UX nicety, and cannot be bypassed by the frontend.
-     * @note Nobody may change their OWN role, sysadmin included (422) - see header
-     * refactor-note (2026-10-09b).
+     * @note Nobody may change their OWN role, sysadmin included (422).
      * @note The e-mail access policy (`assertEmailDomainAllowed()`) is checked only
      * when the login e-mail actually CHANGES (422), for every caller including a
      * sysadmin. An account whose stored e-mail is no longer allowed can still be
@@ -334,7 +269,7 @@ class UserController extends Controller
             return response()->json(['message' => 'Only another sysadmin may edit, or promote an account to, the sysadmin role.'], 403);
         }
 
-        // ── Sysadmin-only changes on ANOTHER account - see header refactor-note
+        // ── Sysadmin-only changes on ANOTHER account
         // (2026-10-07). Both checks compare against the stored value, so a client that
         // sends the whole record back unchanged is not refused.
         $actorIsSysadmin = $this->actorIsSysadmin($request);
@@ -374,17 +309,6 @@ class UserController extends Controller
         // current role (not $effectiveRoleId below, which already folds in the
         // requested change and would make this comparison always false).
         //
-        // @bugfix-note (2026-09-06) A self-edit NEVER actually changes the target's
-        // role - see the pre-existing `$request->user()->id !== $user->id` guard
-        // around `$user->roles()->sync(...)` further down, which silently skips the
-        // sync when an actor edits their own account. `$roleWillActuallyApply`
-        // reflects that same condition, so `$roleChanged` (used below both for the
-        // authority check and for the explicit-permissions wipe) is FALSE whenever
-        // no real role change is about to happen - previously it was computed only
-        // from the submitted payload, so a self-edit that merely INCLUDED a
-        // different `role_id` (which was always going to be silently ignored)
-        // could still trigger the "wipe all explicit permissions" side effect below
-        // even though the account's role never actually changed.
         $oldRoleId = $user->roles()->first()?->id;
         $roleWillActuallyApply = $request->user()->id !== $user->id;
         $roleChanged = $roleWillActuallyApply
@@ -406,13 +330,7 @@ class UserController extends Controller
             return response()->json(['message' => 'You cannot assign a role that grants permissions you do not yourself have.'], 403);
         }
 
-        // ── 2FA enforcement (role) - see refactor-note in the header ─────────────────
-        // @bugfix-note (2026-09-06) Uses $oldRoleId whenever the role change won't
-        // actually apply (self-edit) - same principle as $roleChanged above. Without
-        // this, a self-edit that merely INCLUDED a different (never-applied) role_id
-        // would evaluate 2FA enforcement, the is_blocked protected-role check, and
-        // applyExplicitPermissions()'s redundant-permission filtering against a role
-        // the account doesn't actually end up with.
+        // ── 2FA enforcement (role) ─────────────────
         $effectiveRoleId = $roleWillActuallyApply ? ($validated['role_id'] ?? $oldRoleId) : $oldRoleId;
         $forcedByRole = $this->isRoleForced2fa($effectiveRoleId);
 
@@ -432,7 +350,7 @@ class UserController extends Controller
 
         $validated['enable_2fa'] = $isForced ? true : ($validated['enable_2fa'] ?? $user->enable_2fa);
 
-        // ── two_fa_forced_by_admin (sysadmin override) - see refactor-note in the header ──
+        // ── two_fa_forced_by_admin (sysadmin override) ──
         if (array_key_exists('two_fa_forced_by_admin', $validated)) {
             if (!$this->actorIsSysadmin($request)) {
                 $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Denied attempt to change 2FA enforcement (not sysadmin): {$user->user_email}", (int) $id, 'User');
@@ -483,7 +401,7 @@ class UserController extends Controller
         $requestedPermissionIds = array_key_exists('permission_ids', $validated) ? $validated['permission_ids'] : null;
         unset($validated['permission_ids']);
 
-        // A password is NEVER written by update() - see header refactor-note
+        // A password is NEVER written by update()
         // (2026-10-07). The rule was removed from UpdateUserRequest; this unset is a
         // second line of defence in case the key ever reappears in the validated data.
         unset($validated['user_password_hash']);
@@ -498,7 +416,7 @@ class UserController extends Controller
                 }
             }
 
-            // ── Role-change wipe - see header refactor-note (2026-09-06). MUST
+            // ── Role-change wipe. MUST
             // happen before applyExplicitPermissions() reads the account's current
             // explicit grants, otherwise it would treat pre-change grants as
             // "outside the actor's authority, leave untouched" and effectively
@@ -516,21 +434,13 @@ class UserController extends Controller
                 );
             }
 
-            // @bugfix-note (2026-09-06) Uses $effectiveRoleId directly (already
-            // resolved above to reflect the role the account will ACTUALLY end up
-            // with, self-edit-aware) instead of re-preferring $validated['role_id'] -
-            // the previous `$validated['role_id'] ?? $effectiveRoleId` expression
-            // would silently reintroduce the same self-edit bug this whole patch
-            // fixes, by feeding a never-applied role_id into the redundant-
-            // permission filtering inside applyExplicitPermissions().
             if ($requestedPermissionIds !== null) {
                 $this->applyExplicitPermissions($request, $user, $requestedPermissionIds, (int) $effectiveRoleId);
             }
 
             // Transition false -> true: IMMEDIATELY invalidate all active access,
             // otherwise a compromised account could keep using the system until its
-            // access token expires on its own (see backlog decision on the purpose of
-            // blocking).
+            // access token expires on its own.
             if (!$wasBlocked && $user->is_blocked) {
                 $user->tokens()->delete();
                 RefreshToken::where('user_id', $user->id)->delete();
@@ -552,20 +462,9 @@ class UserController extends Controller
     /**
      * Handles password changes with administrative validation requirements.
      * @note CRITICAL PROTECTION: everyone may change their OWN password; the password of
-     * ANOTHER account may only be changed by a sysadmin (403 otherwise) - see header
-     * refactor-note (2026-10-07). In both cases the caller confirms with their own
+     * ANOTHER account may only be changed by a sysadmin (403 otherwise). In both cases the caller confirms with their own
      * current password. A success notification (PasswordChangedNotification) is ALWAYS
      * sent afterwards, rate-limited.
-     * @refactor-note (2026-10-07) The `core-administrators-update` permission no longer
-     * allows changing someone else's password (it supersedes the 2026-09-02 note below):
-     * it was a way to take over any non-sysadmin account, including one with more
-     * permissions than the caller.
-     * @refactor-note (2026-09-02) Replaced the legacy hardcoded
-     * `whereIn('role_name', ['admin', 'sysadmin'])` "is this caller an admin" check
-     * with a permission-key check against the caller's EFFECTIVE permission set
-     * (`core-administrators-update`, which already unions role + explicit grants -
-     * see `User::getPermissionsAttribute()`). This was the last hardcoded reference
-     * to the 'admin' role name in this controller.
      */
     public function changePassword(PasswordChangeRequest $request, string $id): JsonResponse
     {
@@ -573,9 +472,6 @@ class UserController extends Controller
             return response()->json(['message' => 'Invalid user ID.'], 422);
         }
 
-        // @bugfix-note (2026-10-22) findOrFail() moved out of the try block (also in restore()
-        // and destroy()): inside it the "not found" exception was caught by the generic
-        // `catch (\Exception)` and answered 500 "... failed" instead of 404.
         $user = User::findOrFail($id);
 
         try {
@@ -760,7 +656,6 @@ class UserController extends Controller
      * a new one) onto ANY role - including one with more permissions than the actor
      * themselves holds - a direct privilege-escalation path one level above the
      * explicit-permissions guard.
-     * @refactor-note (2026-09-06) BACKLOG "who can change roles".
      */
     private function actorCanAssignRole(Request $request, int $roleId): bool
     {
@@ -768,9 +663,6 @@ class UserController extends Controller
             return true;
         }
 
-        // @refactor-note (2026-10-23) `role_id` is validated as an existing, non-trashed role
-        // (finding #4), so the former `if (!$role) return false` was unreachable; a role removed
-        // between validation and this query fails the request (ModelNotFound) instead of passing.
         $role = CoreRole::with('permissions')->findOrFail($roleId);
 
         $rolePermissionKeys = $role->permissions->pluck('permission_key')->all();
@@ -794,16 +686,14 @@ class UserController extends Controller
      *
      * Permissions the TARGET's role already grants are silently filtered out before
      * saving: explicit grants only make sense for permissions the role does NOT
-     * already carry (project decision log - "K roli půjde uživateli přidat volitelné
-     * explicitní permissions navíc - jen ty, které role sama nemá").
+     * already carry.
      *
      * Any existing explicit grant on the target that falls OUTSIDE the actor's own
      * authority (i.e. was granted earlier by someone with broader permissions, most
      * likely sysadmin) is left untouched - the actor can only add/remove within the
-     * slice of permission-space they themselves control. (Note: on an actual ROLE
-     * CHANGE, `update()` wipes the pivot to empty BEFORE calling this method - see
-     * header refactor-note (2026-09-06) - so this "leave untouched" behaviour only
-     * ever applies when the role is NOT changing.)
+     * slice of permission-space they themselves control. (On a ROLE CHANGE, `update()`
+     * empties the pivot BEFORE calling this method, so this only applies when the role
+     * stays the same.)
      *
      * @param Request $request The current request (used for the acting user and audit log).
      * @param User $target The user whose explicit permissions are being updated.
@@ -891,8 +781,6 @@ class UserController extends Controller
      * @param string $action 'create' (store) or 'update' (login e-mail change).
      * @param int|null $targetId Id of the edited account ('update' only).
      * @return JsonResponse|null `null` = allowed, otherwise a ready-made 422 response to return.
-     * @refactor-note (2026-10-09) Also used by `update()` when the login e-mail changes;
-     * policy logic moved to the model so login can use the same rules.
      */
     private function assertEmailDomainAllowed(Request $request, string $email, string $action = 'create', ?int $targetId = null): ?JsonResponse
     {
@@ -979,11 +867,7 @@ class UserController extends Controller
     /**
      * @description Checks whether the given role forces 2FA - either because it is
      * sysadmin (hardcoded, see User::FORCED_2FA_ROLE_NAMES), or because sysadmin set
-     * `forces_2fa=true` on a custom role (see CoreRole - backlog point 3).
-     * @refactor-note (2026-10-23) The separate `if (!$role) return false;` branch became unreachable
-     *   with open finding #4 (role_id validation refuses soft-deleted roles, `roles()->first()` skips
-     *   them) - only a role deleted between validation and this check could hit it. Kept as a
-     *   null-safe expression (fail-safe: a missing role forces nothing) instead of a dead branch.
+     * `forces_2fa=true` on a custom role (see CoreRole).
      */
     private function isRoleForced2fa(?int $roleId): bool
     {

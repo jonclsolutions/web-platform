@@ -1,8 +1,8 @@
 /**
  * @file run.js
  * @path tests/unit_tests/erp/lib/run.js
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Runs the Angular (Karma + Jasmine) unit tests of the given erp folders and writes
  *   tests/unit_tests/erp/report/report.html + report.xml.

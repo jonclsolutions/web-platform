@@ -2,8 +2,8 @@
 /**
  * @file UpdateCoreExternalLinkRequest.php
  * @path app/Http/Requests/Core/CoreExternalLink/UpdateCoreExternalLinkRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation rules for updating an existing CoreExternalLink. Authorization
  * (permission `core-external-links-update`) is enforced at the route/middleware level

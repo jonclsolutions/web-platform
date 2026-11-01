@@ -2,14 +2,10 @@
 /**
  * @file WebRawRequestCommissionResource.php
  * @path app/Http/Resources/Web/WebRawRequestCommissionResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Resource transformation for raw commission requests.
- *
- * @refactor-note (2026-08) Odstraněna jednosouborová pole `file_path`/`file_url` -
- * nahrazeno `attachments` kolekcí (viz WebAttachment.php/WebAttachmentResource.php),
- * podporující až 10 příloh na jeden požadavek místo jedné.
  */
 
 namespace App\Http\Resources\Web;

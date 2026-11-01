@@ -1,25 +1,10 @@
 /*
     @file: home.component.css
     @path: /src/app/public/web-pages/home/home.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @refactor-note (2026-09-25): Added the TECH STACK section styles (two-row infinite
-        marquee, see home.component.html). Removed style blocks with no matching element
-        in the template (shared eyebrow primitives, about-service cards/rows, select-us
-        benefits, sys-info tooltips, sys-feature icons, trust banner, home-proof section,
-        unused fadeUp keyframes) and merged duplicate declarations of sys-feature-body/
-        label/desc, sys-demo-video and smoke-bg into single rules with the SAME effective
-        values as before (no visual change).
-    @refactor-note (2026-09-26): Hero - two-column layout (text left, product mockup
-        right): `.hero-section` got `justify-content`/`gap`, `.hero-content` a flex-basis,
-        new `.hero-brand-logo`, `.hero-visual`, `.hero-visual-img` (3D tilt + slow float)
-        and a 1100px breakpoint that stacks the mockup under the text. Nothing else changed.
-    @refactor-note (2026-09-30): Unified spacing across public pages - spacing tokens
-        (--gutter, --section-y, --hero-top, --head-gap, --title-gap), hero content aligned
-        to the shared 1200px column, sections separated by gradient lines get half of
-        --section-y on each side (96px / 64px between content blocks in total).
-        Only padding / margin / gap / max-width changed.
+    @description: Styles of the home component.
 */
 
 :host {

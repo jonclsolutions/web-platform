@@ -1,9 +1,9 @@
 -- =============================================================================
 -- @file baseline.sql
 -- @path api/database/schema/baseline.sql
--- @project RPSW Web
--- @author RPSW
--- @created 2026-10-30
+-- @project JS web-platform
+-- @author JS
+-- @created 2026
 -- @description STRUCTURE of the whole database (no data) - created from the dump of 2026-10-29
 --   (database/db.sql) by removing every INSERT, the `migrations` table (Laravel keeps its own)
 --   and the data-dependent AUTO_INCREMENT counters. Executed once by the migration

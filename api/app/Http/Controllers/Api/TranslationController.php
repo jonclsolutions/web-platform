@@ -2,41 +2,10 @@
 /**
  * @file TranslationController.php
  * @path app/Http/Controllers/Api/TranslationController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Manages internationalization (i18n) data, including JSON translation file management, language metadata administration, and associated icon assets.
- *
- * @refactor-note (2026-08-7) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
- * lokální duplicitní logAction(). Doménově beze změny (WebLog::class - spravuje se pod
- * `web/edit-website`, permission `web-view-edit-website`). Lokální verze měla
- * nestandardní 6. parametr `array $changes` (diff starých/nových hodnot překladu), který
- * sdílený trait nepodporuje - diff se teď stejně jako u SiteConfigurationController
- * (viz @refactor-note 2026-08-2 tamtéž) vkládá přímo do čitelného `$description`, ne do
- * zvláštního parametru. `context_data` necháváme na traitu (automaticky ořízne velikost).
- *
- * @bugfix-note (2026-10-23) Found by the API tests:
- * - SECURITY (path traversal): `{module}`, the `lang` body field and the language `code`s of
- *   saveLanguages() became parts of file paths without any check ('..' allowed) - e.g. module
- *   '..' wrote `storage/app/public/{lang}.json`, the public GET read it back. Routes now only
- *   match MODULE_PATTERN / LANG_PATTERN and the body values are validated the same way.
- * - SECURITY: the 500 answer of save() contained the exception text (server paths) → generic.
- * - storeLanguageIcon() searched the language code in ALL modules - an icon uploaded for 'en'
- *   of the shop replaced the icon of 'en' of the web. Now limited to the module in the URL.
- * - Without languages.json the defaults had no `module`: getLanguages() / destroyLanguage()
- *   treated them as no module (empty list), saveLanguages() as 'web'. All methods now use the
- *   same default module 'web' (moduleOf()).
- * - saveLanguages() crashed (500) on an entry without `code`; entries are validated now.
- * @bugfix-note (2026-10-23) Open finding #32: the write routes accepted
- *   `web-edit-website-update|shop-edit-eshop-update` for EVERY module - a web editor could change
- *   the shop translations / languages and the other way round. Each write now checks the
- *   permission of the module in the URL (MODULE_PERMISSIONS, sysadmin always); an unknown module
- *   can be written by sysadmin only.
- * @bugfix-note (2026-10-23) Open finding #34: the icon rules listed `svg` in `mimes`, but `image`
- *   refuses SVG (Laravel 11+), so an SVG flag could never be uploaded. Decided raster only (an SVG
- *   on the public disk can carry scripts) - `svg` removed, the admin file pickers no longer offer it.
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api;
@@ -88,9 +57,6 @@ class TranslationController extends Controller
 
     /**
      * @var array<int, array<string, mixed>> Language list used while no languages.json exists.
-     * @refactor-note (2026-10-23) Was the method defaultLanguages() returning this literal; a
-     *   constant has no executable lines (PHP 8.5 + pcov reported the returned array lines as
-     *   uncovered although the method ran).
      */
     private const DEFAULT_LANGUAGES = [
         ['code' => 'cz', 'name' => 'Čeština', 'active' => true, 'isBuiltIn' => true, 'icon_path' => null],
@@ -439,9 +405,8 @@ class TranslationController extends Controller
     }
 
     /**
-     * @description Sbalí pole diff-položek z getDeepDiff() do jednoho ořízlého řetězce
-     * vhodného pro vložení do $description (nahrazuje dřívější zvláštní parametr
-     * `array $changes` v lokální logAction() - viz refactor-note v hlavičce souboru).
+     * @description Joins the diff items of getDeepDiff() into one shortened string for the log
+     * `description`.
      */
     private function summarizeDiff(array $changes): string
     {

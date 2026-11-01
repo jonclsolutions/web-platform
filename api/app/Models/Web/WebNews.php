@@ -2,8 +2,8 @@
 /**
  * @file WebNews.php
  * @path app/Models/Web/WebNews.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Model representing a news article or announcement.
  */

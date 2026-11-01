@@ -1,8 +1,8 @@
 /**
  * @file scroll-lock.service.spec.ts
  * @path src/app/core/services/scroll-lock.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ScrollLockService: reference-counted body lock (fixed position at
  *   the saved scroll offset), released only by the last unlock which restores the scroll; extra

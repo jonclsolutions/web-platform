@@ -1,17 +1,12 @@
 <!--
     @file: security-events.component.html
     @path: /src/app/admin/core-pages/security-events/security-events.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @description Stránka bezpečnostního monitoringu - graf objemu za posledních N dní,
-    karta nastavení retence (+ ruční purge), tabulka eventů (TableBuilderComponent) a
-    triage modal pro změnu stavu/poznámky jednoho záznamu.
-
-    (Earlier refactor-note 2026-08-22v2 for SVG icons/tooltip is unchanged.)
-    @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded
-        texty": VŠECHNY natvrdo psané české texty nahrazeny `t('security-events.xxx')`
-        bindingy - viz security-events.component.ts stejné datum.
+    @description Security monitoring page - volume chart of the last N days, retention
+    settings card (+ manual purge), event table (TableBuilderComponent) and the triage modal
+    for changing the state / note of one record.
 -->
 <div class="sec-container container mx-auto p-4">
 
@@ -19,7 +14,7 @@
     <div class="error-banner">⚠️ {{ errorMessage }}</div>
   }
 
-  <!-- ── Graf objemu za posledních N dní ─────────────────────────────────── -->
+  <!-- ── Volume chart of the last N days ─────────────────────────────────── -->
   <div class="sec-card">
     <div class="sec-card-header">
       <span class="sec-card-icon">
@@ -78,7 +73,7 @@
     }
   </div>
 
-  <!-- ── Nastavení retence + ruční purge ─────────────────────────────────── -->
+  <!-- ── Retention settings + manual purge ─────────────────────────────────── -->
   <div class="sec-card">
     <div class="sec-card-header">
       <span class="sec-card-icon">
@@ -153,7 +148,7 @@
     }
   </div>
 
-  <!-- ── Tabulka eventů ───────────────────────────────────────────────────── -->
+  <!-- ── Event table ───────────────────────────────────────────────────── -->
   @if (!errorMessage) {
     <div>
       <div class="toolbar-actions m-b-t-5">
@@ -218,7 +213,7 @@
   </app-details-builder>
 }
 
-<!-- ── Triage modal (stav + poznámka) ────────────────────────────────────── -->
+<!-- ── Triage modal (state + note) ────────────────────────────────────── -->
 @if (triageItem) {
   <div class="sec-modal-overlay" (mousedown)="$event.target === $event.currentTarget && closeTriageModal()">
     <div class="sec-modal" (mousedown)="$event.stopPropagation()">

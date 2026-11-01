@@ -1,35 +1,11 @@
 /**
  * @file edit-website.component.ts
  * @path src/app/admin/web-pages/edit-website/edit-website.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Manages internationalization (i18n) settings, translation keys, and language
  * metadata for the public web module.
- *
- * (Earlier refactor-notes for the DataHandler unification and TTL cache are unchanged -
- * see version history, omitted here for brevity.)
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `translationSection`/`t()` doplněny stejným vzorem jako `CoreDashboardComponent`/
- * `UserRequestComponent`. Tahle stránka NEMÁ `*.config.ts` (tlačítka/labely jsou přímo
- * v šabloně, ne v deklarativním poli), takže žádné NG0956 riziko a žádná factory funkce
- * není potřeba - stačí `translations$.subscribe(() => markForCheck())` v konstruktoru
- * (OnPush komponenta) a `t()` volání přímo v šabloně. Všechny `alertDialogService.open()`
- * volání s jazykovým kódem interpolovaným do natvrdo psaného textu nahrazeny `t()` +
- * `.replace('{lang}', ...)` stejným vzorem jako `rowSelectAriaLabel()` v `TableBuilderComponent`.
- *
- * @refactor-note (2026-09-26) Přidán příznak `isDirty` (neuložené změny) - nastavuje se
- * v `updateValue()`, nuluje po úspěšném uložení, po (re)loadu překladů, po přidání
- * a po smazání aktuálního jazyka. Řídí stav nově doplněného tlačítka "Uložit změny"
- * v šabloně (dřív v šabloně chybělo a `onSubmit()` se nikdy nevolal - změny se
- * neukládaly).
- *
- *
- * @refactor-note (2026-10-21) Veškerá logika přesunuta beze změny do
- * `BaseTranslationEditorComponent` (shared/components/base-translation-editor), kterou
- * tato stránka jen konfiguruje: modul `'web'`, sekce `'edit-website'`, cache klíče
- * a oprávnění `'web-edit-website-update'`. Na EditEshopComponent nijak nezávisí.
  *
  * @dependencies
  * - BaseTranslationEditorComponent: language/translation editor logic.

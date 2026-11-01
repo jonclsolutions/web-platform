@@ -1,20 +1,13 @@
 /*
     @file: action-menu-builder.component.css
     @path: /src/app/admin/components/builders/action-menu-builder/action-menu-builder.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @note: Vizuálně 1:1 odvozeno z `.bulk-actions-dropdown`/`.bulk-actions-menu`
-        v table-style.css - stejný "Kravio" jazyk (zaoblení, tlumené barvy, #18181b
-        jako akcent aktivního stavu), aby uživatel poznal stejný vzorec chování
-        (tlačítko -> šipka -> seznam pod ním) na obou místech aplikace.
-    @refactor-note (2026-08-24v2): `.action-menu-list` přepnut z `position: absolute`
-        (vůči `.action-menu`, `left: 0`) na `position: fixed` - přesné `top`/`left`
-        teď dodává JS (`positionMenu()` v .ts, clampované na viewport), CSS už žádnou
-        pozici nenastavuje, jen vzhled. `max-width` navíc zabraňuje tomu, aby menu na
-        úzkém mobilu bylo širší než obrazovka i po JS clampingu x-ové souřadnice -
-        dlouhé popisky (např. "Potvrzovací e-mail") se v takovém případě zalomí na
-        druhý řádek místo přetečení.
+    @note: Visually derived 1:1 from `.bulk-actions-dropdown` / `.bulk-actions-menu` in
+        table-style.css - the same look (rounding, muted colors, #18181b as the accent of
+        the active state), so the user recognizes the same behaviour (button -> arrow ->
+        list below) in both places of the application.
 */
 
 .action-menu {
@@ -50,7 +43,7 @@
 .action-menu-trigger svg.action-menu-chevron-open { transform: rotate(180deg); }
 
 .action-menu-list {
-  /* top/left dodává JS (positionMenu()) - viz action-menu-builder.component.ts. */
+  /* top / left are set by JS (positionMenu()) - see action-menu-builder.component.ts. */
   position: fixed;
   width: max-content;
   min-width: 210px;
@@ -84,8 +77,8 @@
 }
 .action-menu-item:hover { background: var(--color-zinc-100); }
 
-/* Přepínací akce (Filtry zapnuté, Koš zobrazený...) - stejná konvence jako
-   .small-btn.active v buttons-builder.component.css, jen v kontextu seznamu. */
+/* Toggle actions (filters on, trash shown...) - same convention as
+   .small-btn.active in buttons-builder.component.css, only inside a list. */
 .action-menu-item.active {
   background: var(--color-zinc-100);
   box-shadow: inset 2px 0 0 var(--color-zinc-900);

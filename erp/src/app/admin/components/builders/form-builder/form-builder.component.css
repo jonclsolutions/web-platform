@@ -1,13 +1,10 @@
 /*     
     @file: form-builder.component.css
     @path: /src/app/admin/components/builders/form-builder/form-builder.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
-               zaoblené karty (18px), jemné stíny, tmavý akcent (#18181b) místo
-               fialové/indigo, plně zaoblená ("pill") tlačítka. Struktura/třídy
-               a veškerá logika formuláře beze změny, jen barvy a zaoblení.
+    @description: Styles of the form builder component.
 */
 .form-container {
   --mfu-surface-2: var(--color-zinc-100);

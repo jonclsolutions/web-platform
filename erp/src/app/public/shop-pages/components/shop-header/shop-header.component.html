@@ -1,13 +1,10 @@
 <!-- 
     @file: shop-header.component.html
     @path: /src/app/public/shop-pages/components/shop-header/shop-header.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026 
-    @refactor-note (2026-10-21): Texty ze sekce `header` (shop překlady), volby jazyka
-        z `availableLanguages` (jazyky modulu shop) místo natvrdo psaných CZ/EN.
-    @bugfix-note (2026-10-31): open finding #64 - the phone link renders only with a phone (none
-        set, or switched off in the admin).
+    @description: Template of the shop header component.
 -->
     
 <header class="shop-header" [class.scrolled]="isScrolled">
@@ -45,8 +42,6 @@
           }
         </div>
 
-        <!-- @refactor-note (2026-10-23) The EUR / CZK switch changed nothing - every price is EUR
-             (open finding #43). Removed; the shop shows EUR only. -->
       </div>
 
       <div class="divider"></div>

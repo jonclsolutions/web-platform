@@ -2,8 +2,8 @@
 /**
  * @file StoreWebJobApplicationRequest.php
  * @path app/Http/Requests/Web/WebJobApplication/StoreWebJobApplicationRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Validation logic for incoming job applications, including file type constraints for CVs.
  */

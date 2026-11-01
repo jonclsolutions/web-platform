@@ -1,25 +1,25 @@
 /**
  * @file analytics.service.ts
  * @path src/app/shared/services/analytics.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Dynamicky vkládá Google Analytics 4 (gtag.js) a řídí Google Consent Mode v2.
- * @note Neguje potřebu mít GA skript napevno v index.html - respektuje souhlas uživatele
- * (viz CookieConsentService) i to, jestli je vůbec Measurement ID nastavené (viz
- * SiteSetting.google_analytics_id, spravováno v adminu na stránce Nastavení webu).
+ * @description Injects Google Analytics 4 (gtag.js) dynamically and drives Google Consent Mode v2.
+ * @note No GA script hard-coded in index.html - respects the user's consent (see
+ * CookieConsentService) and whether a Measurement ID is set at all (see
+ * SiteSetting.google_analytics_id, managed in the admin on the web settings page).
  *
  * @dependencies
- * - PublicDataService: Zdroj `google_analytics_id` (z cache naplněné při bootstrapu).
- * - CookieConsentService: Zdroj aktuálního stavu souhlasu s cookies.
+ * - PublicDataService: Source of `google_analytics_id` (from the cache filled at bootstrap).
+ * - CookieConsentService: Source of the current cookie consent state.
  *
- * Postup podle doporučení Google (Consent Mode v2):
- * 1) Defaultní stav (denied) se nastaví HNED při startu - dřív, než se cokoliv
- *    dalšího stihne stát, bez ohledu na to, jestli už známe Measurement ID.
- * 2) Skript gtag.js se vloží teprve, když jsou splněné OBĚ podmínky: známe
- *    Measurement ID A uživatel odsouhlasil kategorii "Analytické".
- * 3) Při jakékoli další změně souhlasu se pošle `consent update` signál -
- *    skript se needstraňuje, GA jen podle signálu přestane/začne sbírat data.
+ * @note Procedure recommended by Google (Consent Mode v2):
+ * 1) The default state (denied) is set AT ONCE on start - before anything else can happen,
+ *    regardless of whether the Measurement ID is known yet.
+ * 2) The gtag.js script is injected only when BOTH conditions are met: the Measurement ID is
+ *    known AND the user accepted the "Analytics" category.
+ * 3) On any further consent change a `consent update` signal is sent - the script is not
+ *    removed, GA only stops / starts collecting data by the signal.
  */
 
 import { Injectable, inject } from '@angular/core';
@@ -37,20 +37,19 @@ export class AnalyticsService {
   private initialized = false;
 
   /**
-   * @description Spustí sledování defaultního consent stavu a reaguje na příchod
-   *              Measurement ID / změny souhlasu. Volat jednou při startu aplikace
-   *              (viz WebLayoutComponent) - je bezpečné zavolat vícekrát, druhé
-   *              volání se ignoruje.
+   * @description Starts tracking the default consent state and reacts to the Measurement ID
+   *              arriving / consent changes. Call once on application start (see
+   *              WebLayoutComponent) - calling it again is safe, the second call is ignored.
    */
   init(): void {
     if (this.initialized) return;
     this.initialized = true;
 
-    // 1) Defaultní stav HNED, bez čekání na cokoliv dalšího.
+    // 1) Default state AT ONCE, without waiting for anything else.
     this.setDefaultConsentState();
 
-    // 2) Jakmile dorazí site settings (z cache naplněné při bootstrapu, viz
-    //    AppBootstrapService), zjistíme Measurement ID a zkusíme případně načíst.
+    // 2) Once the site settings arrive (from the cache filled at bootstrap, see
+    //    AppBootstrapService), read the Measurement ID and try loading.
     this.publicDataService.siteSettingsValue$.subscribe(data => {
       const id = data?.settings?.google_analytics_id || null;
       if (id && id !== this.measurementId) {
@@ -59,7 +58,7 @@ export class AnalyticsService {
       }
     });
 
-    // 3) Reakce na (jakoukoli) změnu souhlasu - i opakovanou.
+    // 3) React to (any) consent change - also repeated.
     this.cookieConsentService.consent$.subscribe(consent => {
       this.updateConsentState(consent);
       this.maybeLoadGtag();
@@ -67,9 +66,9 @@ export class AnalyticsService {
   }
 
   /**
-   * @description Nastaví výchozí (odmítnutý) stav pro všechny 4 signály Consent Mode v2.
-   *              `wait_for_update` dává gtag.js 500ms na to počkat na případnou aktualizaci
-   *              souhlasu, než odešle první data - drobná pojistka proti race podmínce.
+   * @description Sets the default (denied) state of all 4 Consent Mode v2 signals.
+   *              `wait_for_update` gives gtag.js 500 ms to wait for a consent update before
+   *              sending the first data - a small safeguard against a race condition.
    */
   private setDefaultConsentState(): void {
     this.pushToDataLayer('consent', 'default', {
@@ -82,8 +81,8 @@ export class AnalyticsService {
   }
 
   /**
-   * @description Aktualizuje Consent Mode signály podle aktuálního stavu souhlasu.
-   *              Marketingové cookies řídí ad_* signály, analytické analytics_storage.
+   * @description Updates the Consent Mode signals by the current consent state.
+   *              Marketing cookies drive the ad_* signals, analytics drive analytics_storage.
    */
   private updateConsentState(consent: CookieConsentState | null): void {
     if (!consent) return;
@@ -97,9 +96,8 @@ export class AnalyticsService {
   }
 
   /**
-   * @description Vloží gtag.js skript, pokud (a jen pokud) máme Measurement ID
-   *              a uživatel zároveň odsouhlasil analytické cookies. Skript se
-   *              vloží nejvýše jednou (viz `gaLoaded`).
+   * @description Injects the gtag.js script if (and only if) the Measurement ID is known and the
+   *              user accepted analytics cookies. Injected at most once (see `gaLoaded`).
    */
   private maybeLoadGtag(): void {
     if (this.gaLoaded) return;

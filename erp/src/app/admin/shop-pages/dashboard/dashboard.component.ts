@@ -1,70 +1,40 @@
 /**
  * @file dashboard.component.ts
  * @path src/app/admin/shop-pages/dashboard/dashboard.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Serves as the central management hub, aggregating operational KPIs, sales trends,
  * and real-time shop status.
- *
- * @refactor-note (2026-09-07) BACKLOG "shop dashboard refactor - vizuál + multijazyk +
- * analytika": kompletní přepis komponenty. Permission-gating logika (`canView*` gettery,
- * `PERM_*` konstanty) je BEZE ZMĚNY oproti předchozí verzi - viz zadání "jen kompletní
- * přepis, logiku permission ponech beze změny".
- *
- * - i18n: stejný minimalistický vzor jako `GraphBuilderComponent` - komponenta NEdědí
- *   `BaseDataComponent` (na rozdíl od Core/Web dashboardu), proto ruční
- *   `inject(AdminLocalizationService)` + `t()` čtoucí sekci `shop-dashboard`. Komponenta
- *   NEMÁ `ChangeDetectionStrategy.OnPush` (defaultní strategie), takže na rozdíl od
- *   `GraphBuilderComponent`/`CoreDashboardComponent` NENÍ potřeba explicitní
- *   `translations$.subscribe(() => markForCheck())` - defaultní CD strategie
- *   přehodnotí `t()` volání v šabloně samo při každém běžném CD cyklu.
- * - `eventTypeLabel`-like vzor (viz Core/Web dashboard) aplikován i tady:
- *   `statusLabel()`/`paymentStatusLabel()` teď mapují syrový `status`/`payment_status`
- *   na PŘEKLADOVÝ klíč, ne na text přímo z API (`order.status_label`/
- *   `order.payment_status_label` z `ShopOrderResource` jsou pravděpodobně jen česky -
- *   klientský multijazyk je nezávislý na tom, co vrátí backend).
- * - `formatDate()`/`formatCurrency()` respektují `i18n.getDateLocale()` místo natvrdo
- *   `'cs-CZ'` - stejná oprava jako u Core/Web dashboardu.
- *
- * - ANALYTIKA (backlog "chci graf s vývojem v čase, jen uzavřené zaplacené objednávky,
- *   procentuální srovnání oproti minulému týdnu"):
- *   - `isRevenueEligible()` - JEDINÉ centrální místo pravdy pro to, co se počítá jako
- *     "uzavřená zaplacená objednávka": `payment_status === 'paid'` AND `status`
- *     NENÍ `canceled`/`returned`. Zvoleno záměrně širší než jen `status === 'delivered'`
- *     - objednávka zaplacená, ale ještě ve stavu `shipped`, je pro firmu už reálně
- *     inkasovaná tržba, ne rozpracovaný obchod. Použito VŠUDE, kde jde o peníze
- *     (`buildChartData`, `buildRevenueStats`, `computeWeeklyComparison`) - `buildStatusBreakdown`
- *     záměrně NEfiltruje (ukazuje celý pipeline objednávek, ne jen zaplacené).
- *   - `buildChartData()` teď staví graf VÝHRADNĚ z eligible objednávek - dřív počítal se
- *     všemi objednávkami bez ohledu na stav platby.
- *   - `computeWeeklyComparison()` - nové: `revenueThisWeek`/`revenueLastWeek` (eligible
- *     objednávky, klouzavé 7denní okno) a `ordersThisWeek`/`ordersLastWeek` (VŠECHNY
- *     objednávky bez ohledu na platbu - jde o obchodní VOLUME, ne o peníze). `pctChange()`
- *     převádí dvojici čísel na `{ pct, direction }` s bezpečným ošetřením dělení nulou.
- *   - `buildRevenueStats()` navíc počítá `avgOrderValueThisMonth` (AOV) z eligible
- *     objednávek aktuálního kalendářního měsíce.
- *   - `buildKpiCards()` přepsán na deklarativní pole nesoucí `trend`/`urgent` navíc k
- *     dřívějším `label`/`value`/`icon` - viz `KpiCard` interface.
- *
- * - GRAF (backlog "nechci to bodové, chci křivku"): `chartPoints` (jeden bod na den,
- *   beze změny výpočtu) se teď vykresluje přes `buildSmoothPath()` (Catmull-Rom -> cubic
- *   Bézier, bez závislosti na žádné grafové knihovně) místo `<polyline>`. Samotné body
- *   zůstávají v DOM jen jako NEVIDITELNÉ hit-targety pro tooltip (`chart-dot`
- *   v `dashboard.component.css` má `opacity: 0`) - viditelný je jen při hoveru
- *   (`chart-dot-highlight`).
+ * @note i18n: the component does NOT extend `BaseDataComponent` (unlike the Core / Web
+ * dashboard), hence the manual `inject(AdminLocalizationService)` + `t()` reading the
+ * `shop-dashboard` section. It uses the default change detection (no OnPush), so no explicit
+ * `translations$.subscribe(() => markForCheck())` is needed. `statusLabel()` /
+ * `paymentStatusLabel()` map the raw `status` / `payment_status` to a TRANSLATION key, not to
+ * a text from the API. `formatDate()` / `formatCurrency()` use `i18n.getDateLocale()`.
+ * @note Analytics: `isRevenueEligible()` is the SINGLE source of truth of a "closed paid order":
+ * `payment_status === 'paid'` AND `status` NOT `canceled` / `returned` (wider than
+ * `status === 'delivered'` - a paid order still `shipped` is already collected revenue). Used
+ * everywhere money is involved (`buildChartData`, `buildRevenueStats`,
+ * `computeWeeklyComparison`); `buildStatusBreakdown` deliberately does NOT filter (it shows the
+ * whole order pipeline). `computeWeeklyComparison()` compares a rolling 7-day window with the
+ * previous one: revenue from eligible orders, order count from ALL orders (volume, not money);
+ * `pctChange()` turns a pair of numbers into `{ pct, direction }` with safe division by zero.
+ * `buildRevenueStats()` also computes `avgOrderValueThisMonth` (AOV) of the current month.
+ * @note Chart: `chartPoints` (one point a day) are drawn through `buildSmoothPath()`
+ * (Catmull-Rom -> cubic Bézier, no chart library). The points stay in the DOM only as INVISIBLE
+ * hit targets of the tooltip (`chart-dot` has `opacity: 0`), visible only on hover
+ * (`chart-dot-highlight`).
  *
  * @dependencies
- * - DataHandler: Centralizovaná HTTP komunikace (baseUrl + error handling).
- * - AlertDialogService: Zpětná vazba při úspěchu/chybě změny režimu údržby.
- * - HasPermissionDirective: Gate karty údržby na permission `shop-set-maintenance-mode`.
- * - PermissionService: Synchronní kontrola permission klíčů - řídí, které dílčí KPI/chart/
- *   tabulkové požadavky se vůbec pošlou.
- * - ResourceCacheService: TTL cache pro stats/maintenance fetch.
- * - AdminLocalizationService: Statické i18n admin UI (sekce `shop-dashboard`).
+ * - DataHandler: Centralized HTTP communication (baseUrl + error handling).
+ * - AlertDialogService: Feedback on success / failure of the maintenance mode change.
+ * - HasPermissionDirective: Gates the maintenance card on the `shop-set-maintenance-mode` permission.
+ * - PermissionService: Synchronous check of permission keys - decides which KPI / chart / table
+ *   requests are sent at all.
+ * - ResourceCacheService: TTL cache of the stats / maintenance fetch.
+ * - AdminLocalizationService: Static i18n of the admin UI (section `shop-dashboard`).
  * - RxJS (forkJoin, interval): Manages concurrent data streams and polling mechanisms.
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): KPI totals from
- *  `meta.total`, lists from `data` of the pages.
  */
 
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
@@ -161,12 +131,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   public readonly i18n = inject(AdminLocalizationService);
   private refreshSub?: Subscription;
 
-  /**
-   * @refactor-note (2026-09-07) i18n - stejný minimalistický vzor jako
-   * `GraphBuilderComponent.t()`. Komponenta nemá `ChangeDetectionStrategy.OnPush`, takže
-   * na rozdíl od Core/Web dashboardu NENÍ potřeba `translations$.subscribe()` pro
-   * přerenderování při přepnutí jazyka - defaultní CD strategie to udělá sama.
-   */
   t(key: string): string {
     return this.i18n.getValue(`shop-dashboard.${key}`);
   }
@@ -176,21 +140,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private readonly MAINTENANCE_CACHE_KEY = 'shop-dashboard:maintenance';
   private readonly MAINTENANCE_TTL_MS = 60 * 1000;
 
-  /** Permission klíče - přímo odpovídají `data: { permission }` v `admin-routing.module.ts`
-   *  pro danou shop stránku. BEZE ZMĚNY oproti předchozí verzi. */
+  /** Permission keys - match `data: { permission }` of the shop page in `admin-routing.module.ts`. */
   private readonly PERM_ORDERS = 'shop-orders-view';
   private readonly PERM_CUSTOMERS = 'shop-customers-view';
   private readonly PERM_PRODUCTS = 'shop-products-view';
   private readonly PERM_COUPONS = 'shop-coupons-view';
   private readonly PERM_MAINTENANCE = 'shop-set-maintenance-mode';
 
-  /** Objednávky, tržby, graf 30 dní, stavy objednávek - vše z `shop/orders`. */
+  /** Orders, revenue, 30-day chart, order states - all from `shop/orders`. */
   get canViewOrders(): boolean { return this.permissionService.hasPermission(this.PERM_ORDERS); }
-  /** Počet zákazníků. */
+  /** Customer count. */
   get canViewCustomers(): boolean { return this.permissionService.hasPermission(this.PERM_CUSTOMERS); }
-  /** Aktivní produkty + nízký sklad. */
+  /** Active products + low stock. */
   get canViewProducts(): boolean { return this.permissionService.hasPermission(this.PERM_PRODUCTS); }
-  /** Aktivní kupóny. */
+  /** Active coupons. */
   get canViewCoupons(): boolean { return this.permissionService.hasPermission(this.PERM_COUPONS); }
 
   loading = true;
@@ -215,15 +178,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   get chartInnerW() { return this.chartWidth - this.chartPadL - this.chartPadR; }
   get chartInnerH() { return this.chartHeight - this.chartPadT - this.chartPadB; }
 
-  /**
-   * @refactor-note (2026-09-07) BACKLOG "chci křivku, ne body": `polylinePoints`
-   * nahrazeno `linePath` (hladká Catmull-Rom -> Bézier křivka, viz `buildSmoothPath()`).
-   */
   get linePath(): string {
     return this.buildSmoothPath(this.chartPoints);
   }
 
-  /** @description Stejná hladká křivka jako `linePath`, uzavřená dolů k ose X pro výplň plochy pod grafem. */
+  /** @description The same smooth curve as `linePath`, closed down to the X axis for the area fill below the chart. */
   get areaPath(): string {
     if (!this.chartPoints.length) return '';
     const bottom = this.chartPadT + this.chartInnerH;
@@ -248,19 +207,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
   activeProducts = 0;
   activeCoupons = 0;
 
-  /** Souhrn PLATNĚ INKASOVANÝCH tržeb (eligible objednávky) - viz `isRevenueEligible()`. */
+  /** Summary of really COLLECTED revenue (eligible orders) - see `isRevenueEligible()`. */
   totalRevenue = 0;
   revenueThisMonth = 0;
-  /** Průměrná hodnota objednávky (AOV) za aktuální kalendářní měsíc, jen eligible objednávky. */
+  /** Average order value (AOV) of the current calendar month, eligible orders only. */
   avgOrderValueThisMonth = 0;
 
-  /** @refactor-note (2026-09-07) BACKLOG "procentuální srovnání oproti minulému týdnu". */
   revenueThisWeek = 0;
   revenueLastWeek = 0;
   ordersThisWeek = 0;
   ordersLastWeek = 0;
 
-  // ── Režim údržby e-shopu ────────────────────────────────────────────
+  // ── E-shop maintenance mode ────────────────────────────────────────────
   isShopActive = true;
   shopMaintenanceMessage = '';
   showShopMaintenanceModal = false;
@@ -268,22 +226,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   pendingShopTargetState = true;
 
   /**
-   * @description "Uzavřená zaplacená objednávka" - jediné centrální místo pravdy pro to,
-   * co se počítá jako reálně inkasovaná tržba (graf, KPI tržeb, AOV, týdenní srovnání).
-   * Zvoleno záměrně jako `payment_status === 'paid'` AND `status` NENÍ v
-   * `canceled`/`returned` - širší než jen `status === 'delivered'`, protože zaplacená,
-   * ale ještě nedoručená objednávka (`shipped`) je z pohledu firmy už reálná tržba, ne
-   * rozpracovaný obchod. `buildStatusBreakdown()` tuhle metodu ZÁMĚRNĚ NEPOUŽÍVÁ - ten
-   * widget má ukazovat celý pipeline objednávek, ne jen zaplacené.
-   * @param order Syrový objekt objednávky z `shop/orders`.
+   * @description "Closed paid order" - the single source of truth of what counts as really
+   * collected revenue (chart, revenue KPI, AOV, weekly comparison): `payment_status === 'paid'`
+   * AND `status` NOT in `canceled` / `returned` - wider than `status === 'delivered'`, because a
+   * paid but not yet delivered order (`shipped`) is already real revenue. `buildStatusBreakdown()`
+   * deliberately does NOT use it - that widget shows the whole order pipeline.
+   * @param order Raw order object from `shop/orders`.
    */
   private isRevenueEligible(order: any): boolean {
     return order?.payment_status === 'paid' && !['canceled', 'returned'].includes(order?.status);
   }
 
   /**
-   * @description Bezpečně spočítá procentuální změnu `current` oproti `previous`, s
-   * ošetřením dělení nulou (žádné `Infinity`/`NaN` v UI).
+   * @description Safely computes the percentage change of `current` against `previous`, handling
+   * division by zero (no `Infinity` / `NaN` in the UI).
    */
   private pctChange(current: number, previous: number): KpiTrend {
     if (previous === 0) {
@@ -294,19 +250,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return { pct: Math.abs(pct), direction: pct > 0 ? 'up' : pct < 0 ? 'down' : 'neutral' };
   }
 
-  /** @description event_type-like mapa: `status` -> překladový klíč (`statusLabel()`). */
+  /** @description Map `status` -> translation key (`statusLabel()`). */
   private readonly STATUS_LABEL_KEYS: Record<string, string> = {
     pending: 'status_pending', confirmed: 'status_confirmed', processing: 'status_processing',
     shipped: 'status_shipped', delivered: 'status_delivered', canceled: 'status_canceled', returned: 'status_returned',
   };
 
-  /** @description `payment_status` -> překladový klíč (`paymentStatusLabel()`). */
+  /** @description `payment_status` -> translation key (`paymentStatusLabel()`). */
   private readonly PAYMENT_STATUS_LABEL_KEYS: Record<string, string> = {
     paid: 'payment_status_paid', pending: 'payment_status_pending',
   };
 
   /**
-   * Knihovna ikon použitých na dashboardu. Bez `viewBox`, velikost na obrazovce řídí CSS
+   * Icon library of the dashboard. No `viewBox`, the on-screen size is set by CSS
    * (`.kpi-icon svg`).
    */
   private readonly ICONS: Record<string, string> = {
@@ -320,7 +276,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   };
 
   /**
-   * @description Vrátí bezpečně vysanitizovanou SVG značku pro zadaný klíč ikony (viz `ICONS`).
+   * @description Returns the sanitized SVG markup for the given icon key (see `ICONS`).
    */
   getIcon(key: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(this.ICONS[key] ?? '');
@@ -339,7 +295,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Ruční "Aktualizovat" - stejný UX vzor jako Core/Web dashboard.
+   * @description Manual "Refresh" - same UX pattern as the Core / Web dashboard.
    */
   refresh(): void {
     if (this.isRefreshing) return;
@@ -349,13 +305,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * @description Fetches all dashboard modules the current user is permitted to see,
-   * concurrently using forkJoin, and handles global loading/error states. Přes TTL cache.
-   * @param force Bypass cache - použito ručním tlačítkem "Obnovit" a periodickým pollingem
-   * (interval 120s).
-   * @note Každé volání je zabaleno vlastním `catchError(() => of(null))` — jednotlivý selhavší
-   * widget tak nespadne celý dashboard, jen se příslušná karta nevykreslí.
-   * @note BEZE ZMĚNY: dílčí volání se posílají POUZE pro moduly, na které má uživatel
-   * permission (`canViewOrders`/`canViewCustomers`/`canViewProducts`/`canViewCoupons`).
+   * concurrently using forkJoin, and handles global loading/error states. Through the TTL cache.
+   * @param force Bypass cache - used by the manual "Refresh" button and the periodic polling
+   * (interval 120 s).
+   * @note Every call is wrapped in its own `catchError(() => of(null))` - a single failed widget
+   * does not break the whole dashboard, only its card is not rendered.
+   * @note Partial calls are sent ONLY for modules the user has permission for
+   * (`canViewOrders` / `canViewCustomers` / `canViewProducts` / `canViewCoupons`).
    */
   loadAll(force: boolean = false): void {
     this.loading = true;
@@ -435,8 +391,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * @description Calculates 30-day revenue trends by aggregating order totals per calendar day.
-   * @refactor-note (2026-09-07) Filtruje na `isRevenueEligible()` PŘED agregací - graf teď
-   * ukazuje jen reálně inkasované tržby, ne hodnotu všech vystavených objednávek.
    */
   private buildChartData(orders: any[]): void {
     const eligibleOrders = orders.filter(o => this.isRevenueEligible(o));
@@ -474,8 +428,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * to cubic-Bézier conversion - no charting library required. Falls back to straight
    * line segments when there are fewer than 3 points (a cubic curve needs neighbours on
    * both sides to be meaningful).
-   * @refactor-note (2026-09-07) BACKLOG "chci křivku, ne body" - nahrazuje dřívější
-   * `<polyline>` (ostré lomené čáry mezi jednotlivými dny).
    */
   private buildSmoothPath(points: { x: number; y: number }[]): string {
     if (points.length === 0) return '';
@@ -499,10 +451,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * @description Normalizes order status counts into a percentage breakdown for the status
-   * visualization. ZÁMĚRNĚ nefiltruje na `isRevenueEligible()` - tenhle widget má ukazovat
-   * CELÝ pipeline objednávek (včetně nezaplacených/zrušených), ne jen inkasované tržby.
-   * Barvy jsou CSS proměnné z admin-layout palety (`--success`/`--error`/`--warning`/
-   * `--accent`), ne natvrdo psané hexy.
+   * visualization. Deliberately does NOT filter by `isRevenueEligible()` - this widget shows the
+   * WHOLE order pipeline (incl. unpaid / canceled), not only collected revenue. The colors are
+   * CSS variables of the admin-layout palette (`--success` / `--error` / `--warning` /
+   * `--accent`), not hard-coded hex values.
    */
   private buildStatusBreakdown(orders: any[]): void {
     const map: Record<string, number> = {};
@@ -533,8 +485,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   /**
    * @description Aggregates revenue (eligible orders only) globally and for the current
    * calendar month, and derives the average order value (AOV) for the current month.
-   * @refactor-note (2026-09-07) Filtruje na `isRevenueEligible()` - dřív počítalo se
-   * VŠEMI objednávkami bez ohledu na stav platby.
    */
   private buildRevenueStats(orders: any[]): void {
     const eligibleOrders = orders.filter(o => this.isRevenueEligible(o));
@@ -550,10 +500,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description BACKLOG "procentuální srovnání oproti minulému týdnu" - klouzavé
-   * 7denní okno (dnes - 7 dní) vs. bezprostředně předchozí 7denní okno (dnes - 14 dní
-   * až dnes - 7 dní). Tržby počítají jen eligible objednávky (peníze); počet objednávek
-   * počítá VŠECHNY objednávky bez ohledu na platbu (obchodní objem, ne peníze).
+   * @description Comparison with the previous week - rolling 7-day window (today - 7 days) vs.
+   * the immediately preceding 7-day window (today - 14 days to today - 7 days). Revenue counts
+   * only eligible orders (money); the order count counts ALL orders regardless of payment
+   * (business volume, not money).
    */
   private computeWeeklyComparison(allOrders: any[]): void {
     const now = new Date();
@@ -583,10 +533,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * @description Constructs the KPI dashboard cards. Only builds cards for modules the
-   * current user has permission to view - beze změny oproti předchozí verzi.
-   * @refactor-note (2026-09-07) Přepsáno na deklarativní pole nesoucí i `trend`/`urgent`
-   * - viz `KpiCard` interface. Text se resolvuje AŽ v šabloně přes `t()`, `KpiCard` nese
-   * jen klíče (stejný princip jako Core/Web dashboard `QuickStat`).
+   * current user has permission to view.
    */
   private buildKpiCards(): void {
     const cards: KpiCard[] = [];
@@ -663,10 +610,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   /**
    * @description Formats numeric amounts as EUR currency strings (whole euros on the KPI cards /
    * chart), respecting the current admin UI locale for digit grouping.
-   * @refactor-note (2026-09-07) BUGFIX - natvrdo `'cs-CZ'` nahrazeno
-   * `this.i18n.getDateLocale()`.
-   * @bugfix-note (2026-10-23) The currency was CZK while the shop (prices, orders, customers in
-   *   the admin) is in EUR - the dashboard showed the EUR sums with a "Kč" sign (open finding #15).
    * @param value Amount in EUR (NaN → 0).
    * @returns Formatted amount, e.g. "1 500 €".
    */
@@ -677,7 +620,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * @description Localizes date strings for display in UI tables.
-   * @refactor-note (2026-09-07) BUGFIX - natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()`.
    */
   formatDate(iso: string): string {
     if (!iso) return '—';
@@ -687,8 +629,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * @description Maps a raw order `status` to a translated label.
-   * @refactor-note (2026-09-07) Nahrazuje `order.status_label` z API - klientský
-   * multijazyk je nezávislý na tom, co vrátí backend.
    */
   statusLabel(status: string): string {
     const key = this.STATUS_LABEL_KEYS[status];
@@ -767,17 +707,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.chartPadT + this.chartInnerH - (step / 4) * this.chartInnerH;
   }
 
-  // ── Režim údržby e-shopu ────────────────────────────────────────────
+  // ── E-shop maintenance mode ────────────────────────────────────────────
 
   /**
-   * @description Načte aktuální stav režimu údržby e-shopu ze shop-owned `shop/settings`
-   * endpointu, přes krátkou TTL cache (1 min). Volá se samostatně od `loadAll()`, ať
-   * výpadek shop-KPI dat neblokuje zobrazení stavu údržby a naopak. BEZE ZMĚNY oproti
-   * předchozí verzi.
+   * @description Loads the current maintenance state of the e-shop from the shop-owned
+   * `shop/settings` endpoint, through a short TTL cache (1 min). Called separately from
+   * `loadAll()`, so an outage of the shop KPI data does not block the maintenance state and
+   * vice versa.
    */
-  // @refactor-note (2026-10-22) The never used `force` parameter was removed (the cache is
-  // invalidated after a successful change in submitShopMaintenanceChange()).
-  // @bugfix-note (2026-10-22) Added the `error` handler – a failed request was an unhandled RxJS error.
   private loadMaintenanceStatus(): void {
     if (!this.permissionService.hasPermission(this.PERM_MAINTENANCE)) {
       return;
@@ -810,8 +747,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Odešle změnu stavu e-shopu na `shop/settings`
-   * (ShopSiteSettingController::update). Po úspěchu invaliduje maintenance cache klíč.
+   * @description Sends the e-shop state change to `shop/settings`
+   * (ShopSiteSettingController::update). Invalidates the maintenance cache key on success.
    */
   submitShopMaintenanceChange(): void {
     if (!this.shopConfirmPasswordValue.trim()) {

@@ -2,15 +2,12 @@
 /**
  * @file page_titles.php
  * @path api/database/seeders/data/page_titles.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-30
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Browser tab titles (legal_page_titles): one row per page key of the Angular routes
  *   (`title: 'area.page_key'`). Rows are never created from the admin - only here.
  *   Generated from the database dump of 2026-10-29; edit by hand from now on.
- * @refactor-note (2026-10-31) Neutral defaults: the brand "JonclSolutions" replaced by the
- *   placeholder "Company name" (same as the default company details) - the operator renames
- *   it in admin → Web settings → Page titles. Existing rows are never overwritten.
  */
 
 return [

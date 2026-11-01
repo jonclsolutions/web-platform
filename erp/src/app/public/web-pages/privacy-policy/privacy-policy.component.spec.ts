@@ -1,8 +1,8 @@
 /**
  * @file privacy-policy.component.spec.ts
  * @path src/app/public/web-pages/privacy-policy/privacy-policy.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of PrivacyPolicyComponent (Privacy policy (GDPR) page): the document 'gdpr' is loaded in the
  *   current language through LegalDocsService, reloaded on a language switch and rendered with

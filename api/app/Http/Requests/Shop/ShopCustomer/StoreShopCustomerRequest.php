@@ -2,13 +2,10 @@
 /**
  * @file StoreShopCustomerRequest.php
  * @path app/Http/Requests/Shop/ShopCustomer/StoreShopCustomerRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation logic for creating new shop customer profiles.
- *
- * @refactor-note (2026-09-09) BACKLOG "backend fully in English": validation
- * messages translated from Czech.
  */
 
 namespace App\Http\Requests\Shop\ShopCustomer;

@@ -3,8 +3,8 @@
 /**
  * @file SecurityEventRecordTest.php
  * @path api/tests/Unit/Core/SecurityEventRecordTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of CoreSecurityEvent::record() and ::contextFromRequest(): the
  *   bucketed, atomic aggregation of security events and the minimal request context.

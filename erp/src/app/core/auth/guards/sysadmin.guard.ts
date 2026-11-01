@@ -1,8 +1,8 @@
 /**
  * @file sysadmin.guard.ts
  * @path src/app/core/auth/guards/sysadmin.guard.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Route guard restricting a route strictly to the 'sysadmin' role. Unlike the rest
  * of the app (permission-key based, see AuthGuard and HasPermissionDirective), this check is
@@ -12,7 +12,6 @@
  * - AuthService: Provides the current user's role name.
  * - AuthGuard: Single definition of the sysadmin role name (`SYSADMIN_ROLE_NAME`) and the shared
  *   handling of a refused navigation (`denyAccess()`).
- * @refactor-note (2026-10-27) Passes the refused URL to `denyAccess()` - shown on the admin 403 page.
  */
 
 import { inject } from '@angular/core';
@@ -26,7 +25,7 @@ import { AuthGuard, SYSADMIN_ROLE_NAME } from './auth.guard';
  * @param route Snapshot of the route being activated.
  * @param state Router state (the refused URL for the 403 page).
  * @returns True for a sysadmin; otherwise whatever `AuthGuard.denyAccess()` decides (the admin
- *   403 page, see its refactor-note 2026-10-27).
+ *   403 page).
  * @note The refusal is delegated to AuthGuard so it behaves exactly like a missing permission.
  * (The former fixed target `/admin/dashboard` stopped existing when the pages moved under
  * `web/`, `core/` and `shop/`.) The API enforces the same restriction; this guard only keeps the

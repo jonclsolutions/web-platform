@@ -1,76 +1,49 @@
 #!/usr/bin/env bash
 #
 # @file attack_security_monitoring.sh
-# @project RPSW Web
-# @description LOKÁLNÍ zátěžový/testovací skript pro bezpečnostní monitoring
-# (core_security_events). Generuje reálný HTTP provoz proti VLASTNÍMU dev API, který
-# spustí jednotlivé detekční hooky (CaptchaVerificationService, AuthController,
-# throttle exception handler v bootstrap/app.php, fallback routa v api.php,
+# @project JS web-platform
+# @description LOCAL load / test script of the security monitoring (core_security_events).
+# Generates real HTTP traffic against YOUR OWN dev API that triggers the detection hooks
+# (CaptchaVerificationService, AuthController,
+# the throttle exception handler in bootstrap/app.php, the fallback route in api.php,
 # CheckPermission middleware, AccountActivationController, PasswordResetController,
 # WebSalesLeadController).
 #
-# POUZE PRO LOKÁLNÍ VÝVOJ/TESTOVÁNÍ - nikdy nespouštět proti produkci nebo cizí doméně.
-# Cílem je API (Laravel), NE Angular dev server na :4200 - žádný z hooků neběží
-# v prohlížeči, monitoring sleduje jen backendový provoz.
+# LOCAL DEVELOPMENT / TESTING ONLY - never run it against production or a foreign domain.
+# The target is the API (Laravel), NOT the Angular dev server on :4200 - none of the hooks
+# runs in the browser, the monitoring watches the backend traffic only.
 #
-# @bugfix-note (2026-08-22) Curl volání bez timeoutu ČEKALA NEKONEČNĚ (resp. dokud to
-# nevzdá OS síťová vrstva, klidně minuty), pokud API vůbec neposlouchá (server neběží,
-# špatný port/URL) - skript pak vypadal jako "zaseklý" bez jakékoliv chybové hlášky.
-# Přidány `--connect-timeout`/`--max-time` na KAŽDÉ volání a preflight kontrola
-# dostupnosti API na začátku, která selhání ohlásí hned a srozumitelně, místo aby se
-# celý skript tiše zasekl na prvním requestu.
-#
-# @bugfix-note (2026-08-22v2) Chyběla hlavička `Accept: application/json`. Bez ní
-# Laravel u chyby validace (např. neúplný payload na /sales_orders) defaultně dělá
-# `redirect()->back()` místo vrácení JSON 422 - v terminálu se to projevilo jako
-# matoucí `HTTP 302` u prvních pokusů, než se stihl limit throttlu. Na samotný
-# bezpečnostní monitoring to vliv nemělo (throttle_exceeded se zapisuje bez ohledu na
-# Accept hlavičku), ale výstup skriptu teď realističtěji odpovídá tomu, co posílá
-# skutečný Angular frontend (DataHandler tuhle hlavičku nastavuje vždy).
-#
-# @refactor-note (2026-08-25) ROZŠÍŘENO O VŠECHNY NOVĚ PŘIDANÉ DETEKČNÍ HOOKY (backlog
-# "security_events musí pokrýt VŠECHNY typy útoku/obran/nesrovnalostí"). Přidáno 6
-# nových povinných sekcí ([6]-[11]) pokrývajících CheckPermission middleware (401/403),
-# AccountActivationController, PasswordResetController (neplatný token - rate limit na
-# e-mail je vedlejší efekt sekce [2], viz poznámka tam) a WebSalesLeadController.
-# Dále přidána JEDNA volitelná sekce [12] (permission_denied s reálným nízko-
-# privilegovaným účtem - vyžaduje TEST_USER_EMAIL/TEST_USER_PASSWORD) a dvě čistě
-# DOKUMENTAČNÍ poznámky na konci pro scénáře, které NEJDE bezpečně automatizovat bez
-# ruční úpravy `.env`/DB (captcha "rejected_by_provider" a
-# account_activation_blocked_account) - skript je NESPOUŠTÍ, jen vysvětluje proč a jak
-# je otestovat ručně.
-#
-# Použití:
+# Usage:
 #   chmod +x attack_security_monitoring.sh
 #   ./attack_security_monitoring.sh
 #
-#   # Volitelně pro sekci [12] (permission_denied) - reálný účet s NÍZKÝM oprávněním,
-#   # který NEMÁ 'core-security-view' (jinak sekce jen vypíše, že přístup prošel):
+#   # Optional for section [12] (permission_denied) - a real LOW-privilege account
+#   # WITHOUT 'core-security-view' (otherwise the section only reports that access passed):
 #   TEST_USER_EMAIL="nizke-opravneni@example.com" TEST_USER_PASSWORD="Heslo123!" \
 #     ./attack_security_monitoring.sh
 #
-# Vyžaduje: bash + curl (dostupné na Linuxu/macOS/WSL/Git Bash).
-# Vyžaduje BĚŽÍCÍ Laravel server (např. `php artisan serve`) na adrese níže.
+# Needs: bash + curl (Linux / macOS / WSL / Git Bash).
+# Needs a RUNNING Laravel API (./dev.sh) at the address below.
 
 set -uo pipefail
 
-# ── Konfigurace - uprav podle svého lokálního prostředí ─────────────────────
+# ── Configuration - adjust to your local environment ─────────────────────
 API_BASE="http://127.0.0.1:8000/api"   # z local_laravel_.env: APP_URL=http://127.0.0.1:8000
-FAKE_EMAIL="utok-test@example.com"      # e-mail použitý pro simulaci brute-force loginu
+FAKE_EMAIL="utok-test@example.com"      # e-mail used for simulating the brute-force login
 SCANNER_UA="Mozilla/5.0 (compatible; SecurityTestBot/1.0)"
 
-# Volitelné - viz sekce [12] (permission_denied). Prázdné = sekce se přeskočí.
+# Optional - see section [12] (permission_denied). Empty = the section is skipped.
 TEST_USER_EMAIL="${TEST_USER_EMAIL:-}"
 TEST_USER_PASSWORD="${TEST_USER_PASSWORD:-}"
-# Endpoint, na který testovací účet NESMÍ mít oprávnění, aby sekce [12] něco ukázala.
+# Endpoint the test account must NOT have access to, for section [12] to show something.
 TEST_PROTECTED_ENDPOINT="${TEST_PROTECTED_ENDPOINT:-core/security_events}"
 
-# Timeouty pro KAŽDÉ curl volání - bez nich curl čeká na TCP spojení donekonečna,
-# pokud server na dané adrese vůbec neposlouchá (viz bugfix-note výše).
-CONNECT_TIMEOUT=3   # max. sekund na navázání TCP spojení
-MAX_TIME=8          # max. sekund na celý request (spojení + odpověď)
+# Timeouts for EVERY curl call - without them curl waits forever for a TCP connection
+# when nothing listens at the address.
+CONNECT_TIMEOUT=3   # max seconds to establish the TCP connection
+MAX_TIME=8          # max seconds for the whole request (connection + response)
 
-# `-H "Accept: application/json"` - viz bugfix-note v2 v hlavičce souboru.
+# `-H "Accept: application/json"` - Laravel answers JSON instead of redirects / HTML.
 curl_opts=(--connect-timeout "${CONNECT_TIMEOUT}" --max-time "${MAX_TIME}" -s -H "Accept: application/json")
 
 echo "=================================================================="
@@ -79,8 +52,8 @@ echo " Cíl: ${API_BASE}"
 echo "=================================================================="
 echo
 
-# ── Preflight: ověř, že API vůbec odpovídá, PŘED spuštěním útoku ───────────
-# Používá veřejný, autentizaci nevyžadující endpoint (web/public/status).
+# ── Preflight: check that the API answers at all, BEFORE the attack ───────────
+# Uses a public endpoint without authentication (web/public/status).
 echo "Ověřuji dostupnost API (${API_BASE}/web/public/status)..."
 preflight_code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" "${API_BASE}/web/public/status" 2>/dev/null)
 preflight_exit=$?
@@ -105,18 +78,16 @@ echo "✅ API odpovědělo (HTTP ${preflight_code}). Spouštím testovací provo
 echo
 
 # ── [1/12] Brute-force login (login_failed, login_brute_force_suspected,    ──
-# ──        login_captcha_failed - viz AuthController::CAPTCHA_THRESHOLD)    ──
-# POZOR: RateLimiter klíč 'login-fail:<email>' žije v cache (CACHE_STORE=database,
-# TTL 15 minut - viz AuthController::FAILED_ATTEMPTS_DECAY_SECONDS). Pokud skript
-# spouštíš opakovaně na stejný FAKE_EMAIL do 15 minut, captcha bude vyžadovaná
-# HNED od 1. pokusu (počítadlo si "pamatuje" předchozí běh) - to je správné chování,
-# ne bug. Pro čistou demonstraci od nuly buď počkej, spusť `php artisan cache:clear`,
-# nebo změň FAKE_EMAIL níže na jiný řetězec.
+# ──        login_captcha_failed - see AuthController::CAPTCHA_THRESHOLD)    ──
+# NOTE: the RateLimiter key 'login-fail:<email>' lives in the cache (CACHE_STORE=database,
+# TTL 15 minutes - AuthController::FAILED_ATTEMPTS_DECAY_SECONDS). Running the script again
+# with the same FAKE_EMAIL within 15 minutes requires the captcha FROM THE FIRST attempt
+# (the counter remembers the previous run) - correct behaviour, not a bug. To start from
+# zero: wait, run `./dev.sh artisan cache:clear`, or change FAKE_EMAIL below.
 #
-# Od 4. pokusu (CAPTCHA_THRESHOLD=3 je právě překročen) skript NEPOSÍLÁ captcha_token,
-# takže CaptchaVerificationService::verify() dostane prázdný token a zapíše
-# `login_captcha_failed` (reason: empty_token) - tahle sekce tak zároveň otestuje i tenhle
-# hook, samostatná sekce pro něj není potřeba.
+# From the 4th attempt (CAPTCHA_THRESHOLD=3 exceeded) the script sends NO captcha_token,
+# so CaptchaVerificationService::verify() gets an empty token and records
+# `login_captcha_failed` (reason: empty_token) - this section tests that hook as well.
 echo "[1/12] Simuluji brute-force login (10 pokusů, email: ${FAKE_EMAIL})..."
 for i in $(seq 1 10); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
@@ -128,11 +99,11 @@ for i in $(seq 1 10); do
 done
 echo
 
-# ── [2/12] Throttle na /forgot-password (throttle:5,1) + email rate limit ──
-# 8 requestů na STEJNÝ e-mail zároveň spolehlivě překročí i samostatný per-e-mail
-# limiter uvnitř PasswordResetController (EMAIL_MAX_ATTEMPTS=3/15min) - od 4. volání
-# tak vedle `throttle_exceeded` (IP throttle na routě) očekávej i
-# `password_reset_email_rate_limited` (vlastní limiter cílený na schránku, ne IP).
+# ── [2/12] Throttle of /forgot-password (throttle:5,1) + e-mail rate limit ──
+# 8 requests for the SAME e-mail also exceed the per-e-mail limiter of
+# PasswordResetController (EMAIL_MAX_ATTEMPTS=3/15min) - from the 4th call expect
+# `password_reset_email_rate_limited` (limiter of the mailbox, not the IP) besides
+# `throttle_exceeded` (IP throttle of the route).
 echo "[2/12] Zahlcuji /forgot-password (8 rychlých požadavků, limit je 5/min IP + 3/15min e-mail)..."
 for i in $(seq 1 8); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
@@ -143,7 +114,7 @@ for i in $(seq 1 8); do
 done
 echo
 
-# ── [3/12] Throttle na veřejný /sales_orders (throttle:10,1) ────────────────
+# ── [3/12] Throttle of the public /sales_orders (throttle:10,1) ────────────────
 echo "[3/12] Zahlcuji /sales_orders (14 rychlých požadavků, limit je 10/min)..."
 for i in $(seq 1 14); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
@@ -154,11 +125,11 @@ for i in $(seq 1 14); do
 done
 echo
 
-# ── [4/12] Scanning/probing - typické cesty hledané automatizovanými skenery ─
-# Poznámka: zachytí je jen fallback routa uvnitř routes/api.php, tedy cesty POD
-# /api/... - reálný bot často zkouší i kořenové cesty (/.env, /wp-login.php mimo
+# ── [4/12] Scanning / probing - typical paths of automated scanners ─
+# Note: only the fallback route of routes/api.php catches them, i.e. paths UNDER
+# /api/... - real bots also try root paths (/.env, /wp-login.php outside
 # /api), ty by v tomhle projektu padly do web.php a NEBYLY by zachyceny (web.php
-# vlastní fallback nemá) - to je případné budoucí rozšíření, ne bug tohoto skriptu.
+# its own fallback) - a possible future extension, not a bug of this script.
 echo "[4/12] Simuluji scanning/probing pod /api/... (typické cesty skenerů zranitelností)..."
 SCAN_PATHS=(
   ".env"
@@ -180,7 +151,7 @@ for path in "${SCAN_PATHS[@]}"; do
 done
 echo
 
-# ── [5/12] Neplatný refresh token (refresh_token_invalid) ───────────────────
+# ── [5/12] Invalid refresh token (refresh_token_invalid) ───────────────────
 echo "[5/12] Posílám neplatné refresh tokeny (5x)..."
 for i in $(seq 1 5); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
@@ -191,10 +162,10 @@ for i in $(seq 1 5); do
 done
 echo
 
-# ── [6/12] Neautentizovaný přístup na chráněnou routu, ŽÁDNÝ token ──────────
-# Zachytává globální AuthenticationException handler v bootstrap/app.php
+# ── [6/12] Unauthenticated access to a protected route, NO token ──────────
+# Caught by the global AuthenticationException handler of bootstrap/app.php
 # (unauthenticated_access_attempt, severity info) - `auth:sanctum` middleware tenhle
-# request odmítne dřív, než se vůbec dostane ke CheckPermission.
+# refuses the request before it reaches CheckPermission.
 echo "[6/12] Volám chráněný endpoint (core/users) BEZ jakéhokoliv tokenu (5x)..."
 for i in $(seq 1 5); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
@@ -203,10 +174,10 @@ for i in $(seq 1 5); do
 done
 echo
 
-# ── [7/12] Neautentizovaný přístup - NEPLATNÝ/uhodnutý Bearer token ─────────
-# Stejný event_type jako [6] (unauthenticated_access_attempt), ale jiná cesta k němu -
-# token FORMÁTOVĚ vypadá jako platný Sanctum token, jen neexistuje v DB. Testuje, že
-# hook funguje i při "skoro platném" tokenu, ne jen při jeho úplné absenci.
+# ── [7/12] Unauthenticated access - INVALID / guessed Bearer token ─────────
+# Same event_type as [6] (unauthenticated_access_attempt), another path to it - the
+# token LOOKS like a valid Sanctum token, it just does not exist in the database. Tests
+# the hook with an "almost valid" token, not only with none.
 echo "[7/12] Volám chráněný endpoint s NEPLATNÝM Bearer tokenem (5x)..."
 for i in $(seq 1 5); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
@@ -216,7 +187,7 @@ for i in $(seq 1 5); do
 done
 echo
 
-# ── [8/12] Aktivace účtu - neplatný/neexistující token (GET i POST) ─────────
+# ── [8/12] Account activation - invalid / unknown token (GET and POST) ─────────
 # account_activation_token_invalid (warning) - AccountActivationController::findValidToken().
 echo "[8/12] Ověřuji + aktivuji přes NEEXISTUJÍCÍ aktivační token (5x GET, 3x POST)..."
 for i in $(seq 1 5); do
@@ -233,7 +204,7 @@ for i in $(seq 1 3); do
 done
 echo
 
-# ── [9/12] Reset hesla - neplatný/neexistující token ────────────────────────
+# ── [9/12] Password reset - invalid / unknown token ────────────────────────
 # password_reset_token_invalid (warning) - PasswordResetController::resetPassword().
 echo "[9/12] Dokončuji reset hesla s NEEXISTUJÍCÍM tokenem (5x)..."
 for i in $(seq 1 5); do
@@ -245,10 +216,10 @@ for i in $(seq 1 5); do
 done
 echo
 
-# ── [10/12] 2FA - neplatná/neexistující pending-login session ───────────────
+# ── [10/12] 2FA - invalid / unknown pending-login session ───────────────
 # login_2fa_session_invalid (info) - AuthController::verifyTwoFactor()/resendTwoFactor().
-# Testuje hádání `login_token` (opaque session identifikátor), NE hádání 6místného OTP
-# kódu (to už pokrývá login_2fa_invalid, netestováno tady - vyžadovalo by reálný účet
+# Tests guessing the `login_token` (opaque session identifier), NOT guessing the 6-digit OTP
+# code (covered by login_2fa_invalid, not tested here - it would need a real account
 # s vynucenou 2FA a platnou pending session).
 echo "[10/12] Ověřuji + žádám o nový kód s NEEXISTUJÍCÍ 2FA session (3x verify, 3x resend)..."
 for i in $(seq 1 3); do
@@ -267,10 +238,10 @@ for i in $(seq 1 3); do
 done
 echo
 
-# ── [11/12] Veřejný lead token - neexistující ───────────────────────────────
+# ── [11/12] Public lead token - unknown ───────────────────────────────
 # sales_lead_token_invalid (warning) - WebSalesLeadController::showByToken().
-# Endpoint vrací osobní údaje kontaktu, takže enumerace tokenů je citlivější než u
-# čistě informačních veřejných endpointů - proto vlastní event_type, ne jen 404 potichu.
+# The endpoint returns personal data of the contact, so token enumeration is more sensitive
+# than on purely informational public endpoints - hence its own event_type, not a silent 404.
 echo "[11/12] Načítám objednávkový formulář přes NEEXISTUJÍCÍ lead token (5x)..."
 for i in $(seq 1 5); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
@@ -279,11 +250,11 @@ for i in $(seq 1 5); do
 done
 echo
 
-# ── [12/12] VOLITELNÉ: permission_denied s reálným nízko-privilegovaným účtem ─
-# Na rozdíl od [6]/[7] (chybějící/neplatný token) tahle sekce testuje PLATNĚ
-# přihlášeného uživatele, kterému chybí konkrétní oprávnění - to je scénář, který nejde
-# simulovat bez skutečného účtu v DB. Bez TEST_USER_EMAIL/TEST_USER_PASSWORD se sekce
-# přeskočí (nejde o chybu skriptu, jen chybí předpoklad k jejímu spuštění).
+# ── [12/12] OPTIONAL: permission_denied with a real low-privilege account ─
+# Unlike [6] / [7] (missing / invalid token) this section tests a VALIDLY
+# logged-in user lacking a specific permission - impossible to simulate
+# without a real account. Without TEST_USER_EMAIL / TEST_USER_PASSWORD the section
+# is skipped (a missing precondition, not an error).
 if [ -z "$TEST_USER_EMAIL" ] || [ -z "$TEST_USER_PASSWORD" ]; then
   echo "[12/12] PŘESKOČENO - permission_denied vyžaduje reálný testovací účet."
   echo "         Spusť skript s TEST_USER_EMAIL a TEST_USER_PASSWORD nastavenými na účet,"
@@ -300,7 +271,7 @@ else
     echo "  ⚠️  Účet má vynucenou 2FA - tenhle skript neumí dokončit OTP krok interaktivně."
     echo "      Použij účet bez vynucené 2FA, nebo otestuj permission_denied ručně přes Postman."
   else
-    # Bez jq (aby skript nepotřeboval další závislost) - hrubé vytažení "token":"..." z JSON.
+    # No jq (no extra dependency) - a rough extraction of "token":"..." from the JSON.
     test_token=$(echo "$login_response" | grep -o '"token":"[^"]*"' | head -n1 | cut -d'"' -f4)
 
     if [ -z "$test_token" ]; then

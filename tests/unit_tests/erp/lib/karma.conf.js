@@ -1,8 +1,8 @@
 /**
  * @file karma.conf.js
  * @path tests/unit_tests/erp/lib/karma.conf.js
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Karma configuration used by the unit test runners. It reuses erp/karma.conf.js
  *   (browser, frameworks, plugins) and adds a reporter that writes every spec result to a JSON

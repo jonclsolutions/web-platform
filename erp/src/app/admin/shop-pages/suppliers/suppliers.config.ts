@@ -1,20 +1,10 @@
 /**
  * @file suppliers.config.ts
  * @path src/app/admin/shop-pages/suppliers/suppliers.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Static-turned-dynamic configuration for shop supplier management.
- *
- * (Earlier bugfix-note 2026-09-07 for shop permissions granularization is unchanged
- * - see version history.)
- *
- * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * kompletní přepis na FACTORY FUNKCE. Žádná SQL migrace potřeba - `is_active` je
- * boolean-jako-select (`'1'`/`'0'` canonical hodnoty), labely řešeny přes centrální
- * `shared.yes`/`shared.no` - STEJNÝ mechanismus jako `type: 'boolean'` sloupce jinde,
- * jen tady je pole `type: 'select'` (ne `checkbox`), protože je `required` a nesmí
- * mít žádný "prázdný"/neurčitý stav.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';

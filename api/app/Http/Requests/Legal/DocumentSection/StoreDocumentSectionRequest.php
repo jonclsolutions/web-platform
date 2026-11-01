@@ -2,8 +2,8 @@
 /**
  * @file StoreDocumentSectionRequest.php
  * @path app/Http/Requests/Legal/DocumentSection/StoreDocumentSectionRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation logic for creating sections within legal documents.
  */

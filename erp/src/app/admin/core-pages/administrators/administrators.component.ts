@@ -1,8 +1,8 @@
 /**
  * @file administrators.component.ts
  * @path src/app/admin/core-pages/administrators/administrators.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Manages administrative user accounts, including CRUD operations, password resets, and audit trail viewing.
  * @dependencies
@@ -13,18 +13,6 @@
  *   `permission_ids` multiselect (explicit extra permissions).
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the dashboard.
  * - ScrollLockService: Blocks page scrolling behind the e-mail access policy modal.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`):
- *  `activation_email_sent` of a new account is read from `meta` of the envelope.
- * @refactor-note (2026-10-26) Step-up confirmation of sysadmin operations: the edit form of a
- *   sysadmin account opens only after the own password was confirmed (scope `user:{id}`, the same
- *   single-use confirmation the API then consumes on save). Create / promote / demote / delete /
- *   restore of a sysadmin are refused by the API until confirmed - PasswordConfirmationInterceptor
- *   asks for the password and repeats the request, nothing to do here.
- * @bugfix-note (2026-10-26) The edit form of a sysadmin appeared only on the next click after the
- *   password confirmation (OnPush view not marked for check after the await) - see handleEditFormOpened.
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
@@ -129,7 +117,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   newRuleType: 'domain' | 'email' = 'domain';
   newRuleValue = '';
 
-  /** @refactor-note (2026-09-08) Přestalo být `readonly` field initializer - přepočítáno v rebuildFormFields()/subscribe. */
   graphColumns: GraphColumnOption[] = [];
 
   constructor(
@@ -255,14 +242,13 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   }
 
   /**
-   * @description Jediné místo, kde se `formFields`/`filterColumns` skládají z DVOU
-   * nezávislých zdrojů - přeloženého textu (`Config.createFormFields(i18n)`) a
-   * dynamických role/permission dat (`this.roleOptions`/`this.permissionOptions`,
-   * NIKDY nepřekládaných). Volá se z konstruktoru (i18n subscribe) i z
-   * `loadRoleOptions()`/`loadPermissionOptions()` callbacků, ať je `formFields` vždy
-   * aktuální kombinace obou. Pokud je zrovna otevřený formulář, přepočítá i
-   * `visibleFormFields` se zachovaným kontextem (aktuálně zvolená role) - přepnutí
-   * jazyka s otevřeným formulářem tak nezobrazí zastaralý text.
+   * @description The only place where `formFields` / `filterColumns` are composed from TWO
+   * independent sources - the translated text (`Config.createFormFields(i18n)`) and the dynamic
+   * role / permission data (`this.roleOptions` / `this.permissionOptions`, NEVER translated).
+   * Called from the constructor (i18n subscribe) and from the `loadRoleOptions()` /
+   * `loadPermissionOptions()` callbacks, so `formFields` is always the current combination of
+   * both. When the form is open, `visibleFormFields` is recomputed too with the kept context
+   * (currently chosen role) - switching the language with an open form never shows stale text.
    */
   private rebuildFormFields(): void {
     this.formFields = Config.createFormFields(this.i18n).map(field => {
@@ -529,9 +515,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
    *   (step-up confirmation, scope `user:{id}`). Cancelled = the form stays closed.
    * @param item Row of the table.
    * @returns Promise settled once the form is open (or the confirmation was cancelled).
-   * @bugfix-note (2026-10-26) After the confirmation the form did not appear (it showed only on the
-   *   next click, together with a new password prompt): the form state is set after the `await`,
-   *   outside any template event, and the OnPush view was never marked for check - it is now.
    */
   override async handleEditFormOpened(item: any): Promise<void> {
     if (this.isSysadminAccount(item)) {
@@ -681,10 +664,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       delete payload.is_blocked;
     }
 
-    // @bugfix-note (2026-10-23) The API answers `{data, activation_email_sent}` on create, but the
-    // page never read the flag - a new account whose activation e-mail failed looked fully OK
-    // (open finding #11). Create uses postWithMeta() and warns when the e-mail was not sent.
-    // Since finding #6 the flag is in `meta` ({data: user, meta: {activation_email_sent}}).
     const request$: Core.Observable<any> = payload.id
       ? this.updateData(payload.id, payload)
       : this.dataHandler.postWithMeta(this.apiEndpoint, payload).pipe(Core.takeUntil(this.destroy$));

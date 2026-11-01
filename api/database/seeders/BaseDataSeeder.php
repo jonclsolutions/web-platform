@@ -2,9 +2,9 @@
 /**
  * @file BaseDataSeeder.php
  * @path api/database/seeders/BaseDataSeeder.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-30
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description The data EVERY installation needs before the first login (local and production):
  *   - the permission keys (data/permissions.php),
  *   - the role `sysadmin` with all permissions - it cannot be renamed, edited or deleted in the
@@ -24,8 +24,6 @@
  *   files are added; edited texts, descriptions, settings and uploaded files stay. Legal sections
  *   are added only to a document type without any section. A new permission key added to
  *   data/permissions.php is given to the sysadmin role on the next run.
- * @refactor-note (2026-10-31) Company details, legal document templates and default media added
- *   (a fresh installation showed no logo, no flags, no footer, no FAQ and empty legal pages).
  * @dependencies
  * - CorePermission, CoreRole, PageTitle, DocumentType, WebSiteSetting, ShopSiteSetting.
  */

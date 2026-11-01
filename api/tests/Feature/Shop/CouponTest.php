@@ -3,8 +3,8 @@
 /**
  * @file CouponTest.php
  * @path api/tests/Feature/Shop/CouponTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the coupons administration (ShopCouponController): list,
  *   create / edit with validation, delete / restore and emptying the trash (coupons used by

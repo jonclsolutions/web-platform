@@ -2,8 +2,8 @@
 /**
  * @file WebLog.php
  * @path app/Models/Web/WebLog.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Model representing web module audit logs.
  */

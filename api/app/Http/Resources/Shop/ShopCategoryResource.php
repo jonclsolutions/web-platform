@@ -2,8 +2,8 @@
 /**
  * @file ShopCategoryResource.php
  * @path app/Http/Resources/Shop/ShopCategoryResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Resource transformation for shop categories, including parent/child relationships.
  */

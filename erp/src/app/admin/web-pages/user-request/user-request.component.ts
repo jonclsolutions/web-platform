@@ -1,49 +1,16 @@
 /**
  * @file user-request.component.ts
  * @path src/app/admin/web-pages/user-request/user-request.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Administrative component for managing user-submitted requests (raw commissions), handling data lifecycle, filtering, and detail views.
  * @dependencies
  * - BaseDataComponent: Core logic for API interactions and state management.
  * - TableBuilderComponent: UI component for rendering the request data tables and handling CSV exports and imports.
- * - ActionMenuBuilderComponent: Dropdown ("Akce") rendering `toolbarButtons` config - viz refactor-note (2026-08-24).
- * - GraphBuilderComponent: Generic date-range analytics/report popup (charts + PDF export) - viz refactor-note (2026-08-26).
+ * - ActionMenuBuilderComponent: Dropdown ("Actions") rendering the `toolbarButtons` config.
+ * - GraphBuilderComponent: Generic date-range analytics/report popup (charts + PDF export).
  * - USER_REQUEST Config: Domain-specific definitions for form fields, table columns, and button configurations.
- *
- * (Earlier refactor-notes for the editable e-mail confirmation template modal, the
- * mousedown/textarea focus bugfix, toolbar consolidation into ActionMenuBuilderComponent,
- * the graph-builder report popup, and the duplicate error-toast bugfix are unchanged -
- * see version history, omitted here for brevity.)
- *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * (Earlier note about the modal/CRUD messages/toolbar translation is unchanged.)
- *
- * @bugfix-note (2026-09v3) KRITICKÝ BUG - NG0956 NEKONEČNÝ CYKLUS + "Cannot load
- * text" NATRVALO: `buttons`/`formFields`/`userRequestColumns`/atd. byly PŮVODNĚ
- * GETTERY volající `Config.create*(this.i18n)` PŘI KAŽDÉM čtení (tzn. při každém
- * change-detection průchodu). Factory funkce vrací pokaždé NOVÉ pole NOVÝCH objektů
- * - `@for (col of columnDefinitions; track col)` v TableBuilderComponent používal
- * track-by-identity, takže Angular pokaždé viděl "jinou kolekci" a zbořil/znovu
- * vytvořil celou tabulku (NG0956), což vyvolalo další CD cyklus -> nekonečná smyčka.
- * OPRAVA ČÁST 1 (jinde, mimo tento soubor): `table-builder.component.html`
- * `@for` track výrazy přepsány na `track col.key`/`track button.action` (stabilní
- * klíč, ne identita objektu).
- * OPRAVA ČÁST 2 (tento soubor): gettery nahrazeny OBYČEJNÝMI POLI, PŘIŘAZENÝMI
- * VÝHRADNĚ UVNITŘ KONSTRUKTORU (NE jako field initializer nad konstruktorem - field
- * initializery běží při vytvoření instance a NEPŘEPOČÍTAJÍ se při dalších emitech
- * `translations$`). Konstruktor navíc subscribuje `this.i18n.translations$` - jde o
- * `BehaviorSubject`, takže subscribe OKAMŽITĚ dostane aktuální (byť případně ještě
- * nenačtenou/`null`) hodnotu, a znovu se spustí při KAŽDÉM dalším emitu (úspěšné
- * načtení JSONu po HTTP requestu, i budoucí přepnutí jazyka) - pole se tak naplní
- * správnými texty, jakmile JSON skutečně dorazí, i když v okamžiku prvního
- * spuštění subscribe callbacku ještě `null` byl.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): the language list
- *  is the payload itself (was `{languages}`).
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -57,14 +24,14 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './user-request.config';
 
-/** Jeden jazyk z `GET languages/{module}` - stejný tvar, jaký používá WebSettingsComponent. */
+/** One language from `GET languages/{module}` - the same shape as used by WebSettingsComponent. */
 interface EmailTemplateLang {
   code: string;
   name: string;
   active?: boolean;
 }
 
-/** Popisky a pevné texty šablony, editovatelné per jazyk (viz raw_request_email_labels_i18n). */
+/** Labels and fixed texts of the template, editable per language (see raw_request_email_labels_i18n). */
 interface EmailTemplateLabels {
   greeting: string;
   summary_header: string;
@@ -76,7 +43,7 @@ interface EmailTemplateLabels {
   label_date: string;
 }
 
-/** i18n textový obsah editovatelné šablony potvrzovacího e-mailu. */
+/** i18n text content of the editable confirmation e-mail template. */
 interface EmailTemplateState {
   subject_i18n: Record<string, string>;
   title_i18n: Record<string, string>;
@@ -112,7 +79,7 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
   userRequestColumns: Core.ColumnDefinition[] = [];
   trashUserRequestColumns: Core.ColumnDefinition[] = [];
 
-  // ── Šablona potvrzovacího e-mailu (modal) ──────────────────────────────
+  // ── Confirmation e-mail template (modal) ──────────────────────────────
   showEmailTemplateModal = false;
   emailTemplateLoading = false;
   emailTemplateSaving = false;
@@ -121,12 +88,12 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
   emailTemplate: EmailTemplateState = { subject_i18n: {}, title_i18n: {}, intro_i18n: {}, outro_i18n: {}, labels_i18n: {} };
 
   /**
-   * Výchozí texty šablony - MUSÍ přesně odpovídat konstantám v
-   * `App\Support\Mail\RawRequestEmailTemplate` (backend). Použity jako (1) placeholdery
-   * v prázdných polích a (2) fallback v živém náhledu, když admin pro daný jazyk (ani
-   * pro 'cz') nic nevyplnil - přesně stejná logika, jakou použije skutečný odeslaný mail.
-   * @note Getter je zde v pořádku (NE pole) - jednoduchý plochý objekt s primitivy,
-   * ne pole objektů čtené přes `@for`/`track`, takže NG0956 riziko se ho netýká.
+   * Default texts of the template - MUST match the constants of
+   * `App\Support\Mail\RawRequestEmailTemplate` (backend) exactly. Used as (1) placeholders of
+   * empty fields and (2) the fallback of the live preview when the admin filled in nothing for
+   * the language (nor for 'cz') - the same logic as the really sent e-mail.
+   * @note A getter is fine here (NOT an array) - a flat object of primitives, not an array of
+   * objects read through `@for` / `track`, so no NG0956 risk.
    */
   private get emailTemplateDefaults() {
     return {
@@ -150,9 +117,6 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
    * editor modal - never sent or stored anywhere, it only fills the summary block so
    * the admin sees the whole e-mail. Translatable values come from the admin i18n
    * (`thema` reuses the real `thema_new_project` label), the rest is language-neutral.
-   * @refactor-note (2026-09-25) BACKLOG "žádné hardcoded texty": previously a hardcoded
-   * Czech object; now a getter. `attachments` is a stable readonly array (same
-   * reference on every read), so `@for`/`track` in the template is not affected (NG0956).
    */
   private readonly previewSampleAttachments: readonly string[] = ['brief.pdf', 'logo.png'];
 
@@ -170,12 +134,11 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
   }
 
   /**
-   * @description Chartable podmnožina `detailsColumns` namapovaná na minimální
-   * tvar, který `GraphBuilderComponent` potřebuje.
-   * @note Getter je v pořádku - GraphBuilderComponent si sám v `ngOnChanges()`
-   * hlídá "stejná množina klíčů = stejná kolekce" (viz `sameColumnKeySet()`), takže
-   * nová reference pole zde NEZPŮSOBÍ zbytečné překreslení, na rozdíl od
-   * TableBuilderComponent dřív.
+   * @description Chartable subset of `detailsColumns` mapped to the minimal shape
+   * `GraphBuilderComponent` needs.
+   * @note A getter is fine - GraphBuilderComponent checks "same key set = same collection" in
+   * `ngOnChanges()` (see `sameColumnKeySet()`), so a new array reference does NOT cause a
+   * needless re-render.
    */
   get graphColumns(): GraphColumnOption[] {
     return this.detailsColumns
@@ -196,15 +159,6 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
   ) {
     super(dataHandler, cd, genericTableService);
 
-    /**
-     * @bugfix-note (2026-09v3) VÝHRADNÍ místo, kde se `buttons`/`formFields`/atd.
-     * plní - `translations$` je BehaviorSubject, takže tenhle subscribe:
-     * 1) proběhne OKAMŽITĚ s aktuální (možná ještě `null`) hodnotou,
-     * 2) proběhne ZNOVU při každém dalším emitu (úspěšné doražení JSONu po HTTP
-     *    requestu, budoucí přepnutí jazyka) a přepíše pole správnými texty.
-     * Díky tomu i konzumenti (TableBuilderComponent), kteří dřív viděli
-     * "Cannot load text" natrvalo, dostanou správný text hned, jak JSON dorazí.
-     */
     this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => {
       this.tableCaption = this.t('table_header');
       this.buttons = Config.createUserRequestButtons(this.i18n);
@@ -285,15 +239,6 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
    * @description Processes form submission, routing to either create or update API endpoints based on entity ID presence.
    * @param formData The data object derived from the form interaction.
    */
-  /**
-   * @bugfix-note (2026-08-25) BACKLOG "alert dialogy až podle API odpovědi":
-   * `FormBuilderComponent` už neukazuje žádný zelený toast sám od sebe (dřív ho
-   * ukazoval hned po emitu, ještě před HTTP requestem, takže při 422 chybě uživatel
-   * viděl NEJDŘÍV zelený "úspěch" a hned poté červenou chybu). Zelený toast se teď
-   * zobrazuje VÝHRADNĚ tady, v `next()` callbacku - tedy až po reálném úspěchu z API.
-   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
-   * z `error:` callbacku - viz bugfix-note v hlavičce souboru.
-   */
   override handleFormSubmitted(formData: any): void {
     const request$ = formData.id
       ? this.updateData(formData.id, formData)
@@ -312,17 +257,13 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
     });
   }
 
-  // ── Šablona potvrzovacího e-mailu (modal) ──────────────────────────────
+  // ── Confirmation e-mail template (modal) ──────────────────────────────
 
   /**
-   * @description Otevře modal pro editaci šablony potvrzovacího e-mailu. Nezávisle
-   * načte (1) seznam dostupných jazyků (`languages/web`, stejný modul jako
-   * WebSettingsComponent) a (2) aktuálně uložené texty
-   * (`GET web/settings/raw-request-email-template`). Bez TTL cache - modal se otevírá
-   * příležitostně, čerstvý fetch při každém otevření je v pořádku.
-   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
-   * z `error:` callbacku šablony (jazykový fallback beze změny, žádný toast tam nikdy
-   * nebyl) - viz bugfix-note v hlavičce souboru.
+   * @description Opens the modal for editing the confirmation e-mail template. Loads
+   * independently (1) the available languages (`languages/web`, the same module as
+   * WebSettingsComponent) and (2) the stored texts (`GET web/settings/raw-request-email-template`).
+   * No TTL cache - the modal is opened occasionally, a fresh fetch on every open is fine.
    */
   openEmailTemplateEditor(): void {
     this.showEmailTemplateModal = true;
@@ -343,9 +284,8 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
         this.cd.markForCheck();
       },
       error: () => {
-        // Neblokující - bez seznamu jazyků zůstane aspoň výchozí 'cz' tab funkční.
-        // Název jazyka samotného ('Čeština') ZŮSTÁVÁ nepřeložen - viz refactor-note
-        // (2026-09) v hlavičce souboru.
+        // Non-blocking - without the language list at least the default 'cz' tab works.
+        // The name of the language itself (e.g. 'Čeština') is NOT translated.
         this.emailTemplateLanguages = [{ code: 'cz', name: 'Čeština' }];
         this.ensureLabelsForLang('cz');
         this.cd.markForCheck();
@@ -373,12 +313,12 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
   }
 
   /**
-   * @description Zajistí, že `emailTemplate.labels_i18n[lang]` je vždy reálný objekt
-   * (ne `undefined`) PŘED tím, než na něj šablona naváže `[(ngModel)]` na vnořenou
-   * vlastnost (`labels_i18n[lang].greeting` apod.) - bez toho by čtení/zápis vlastnosti
-   * na `undefined` shodilo běhovou chybu. Volá se při načtení jazyků, při načtení
-   * šablony i při přepnutí tabu - nezávisle na pořadí, ve kterém dorazí dva paralelní
-   * HTTP požadavky výše.
+   * @description Ensures `emailTemplate.labels_i18n[lang]` is always a real object (not
+   * `undefined`) BEFORE the template binds `[(ngModel)]` to a nested property
+   * (`labels_i18n[lang].greeting` etc.) - otherwise reading / writing a property of
+   * `undefined` would throw at runtime. Called when the languages load, when the template loads
+   * and on a tab switch - regardless of the order in which the two parallel HTTP requests above
+   * arrive.
    */
   private ensureLabelsForLang(lang: string): void {
     if (!this.emailTemplate.labels_i18n[lang]) {
@@ -386,7 +326,7 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
     }
   }
 
-  /** @description Přepne jazykový tab v modalu šablony - beze změny vybraného textu, jen zobrazený jazyk. */
+  /** @description Switches the language tab of the template modal - only the shown language changes. */
   switchEmailTemplateLang(code: string): void {
     this.ensureLabelsForLang(code);
     this.emailTemplateCurrentLang = code;
@@ -399,12 +339,9 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
   }
 
   /**
-   * @description Uloží šablonu potvrzovacího e-mailu. Endpoint je záměrně BEZ
-   * `confirm_password` (na rozdíl od maintenance toggle) - editace textu e-mailu není
-   * bezpečnostně citlivá akce, jen `web-user-requests-update` permission na route úrovni.
-   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
-   * z `error:` callbacku - reset `emailTemplateSaving` ZŮSTÁVÁ, jen se odstranilo
-   * volání toastu. Viz bugfix-note v hlavičce souboru.
+   * @description Saves the confirmation e-mail template. The endpoint deliberately has NO
+   * `confirm_password` (unlike the maintenance toggle) - editing the e-mail text is not a
+   * security sensitive action, only the `web-user-requests-update` permission on the route.
    */
   saveEmailTemplate(): void {
     if (this.emailTemplateSaving) return;
@@ -433,13 +370,13 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
     });
   }
 
-  // ── Živý náhled e-mailu ─────────────────────────────────────────────────
-  // Gettery čtené přímo v šabloně modalu - Angular je znovu vyhodnotí při každé
-  // change detection (OnPush komponenta se překontroluje i na vlastní DOM eventy,
-  // tzn. i na (ngModelChange) z inputů výše), takže náhled reaguje na každý úhoz bez
-  // jakéhokoliv dalšího zásahu (žádný debounce, žádný HTTP request). Fallback logika
-  // 1:1 kopíruje `RawRequestEmailTemplate::resolve()`/`resolveLabel()` na backendu -
-  // náhled tak přesně odpovídá tomu, co reálně dostane zákazník.
+  // ── Live e-mail preview ─────────────────────────────────────────────────
+  // Getters read directly by the modal template - Angular re-evaluates them on every
+  // change detection (an OnPush component is also checked on its own DOM events,
+  // i.e. on (ngModelChange) of the inputs above), so the preview reacts to every keystroke
+  // without anything else (no debounce, no HTTP request). The fallback logic
+  // mirrors `RawRequestEmailTemplate::resolve()` / `resolveLabel()` of the backend 1:1 -
+  // the preview matches exactly what the customer receives.
 
   private get currentEmailLabels(): Partial<EmailTemplateLabels> {
     return this.emailTemplate.labels_i18n[this.emailTemplateCurrentLang] || {};

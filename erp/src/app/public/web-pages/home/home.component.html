@@ -1,30 +1,18 @@
 <!--
     @file: home.component.html
     @path: /src/app/public/web-pages/home/home.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @refactor-note (2026-09-25): Added the "tech stack" section (two infinite marquee
-        rows, top row moves right, bottom row moves left, HTEC-like cards) between the
-        FAQ separators. Data come from tech-stack.config.ts, texts from `t.tech_stack`.
-        Nothing else in this template changed.
-    @refactor-note (2026-09-26): Hero - added the JONCL SOLUTIONS wordmark above the
-        headline (assets/images/logos/logo_big.svg) and the product mockup on the right
-        side (assets/images/home/hero-mockup-en.svg, `.hero-visual`). Nothing else in this
-        template changed.
-    @refactor-note (2026-09-26): Hero background - the animated particle <canvas> was
-        replaced by a static space scene (planet horizon + eclipse beam,
-        assets/images/home/hero-space-bg.svg, `.hero-bg`). Nothing else in this template
-        changed.
+    @description: Template of the home component.
 -->
 
 @if (t) {
 
   <!--
-    JSON-LD strukturovaná data pro vyhledávače (Organization schema).
-    Poznámka: pro produkční nasazení je robustnější vkládat tohle přes
-    Angular Meta/Renderer2 service v .ts (funguje spolehlivě i při SSR),
-    ale jako statický blok přímo v šabloně projde i takto.
+    JSON-LD structured data for search engines (Organization schema).
+    Note: injecting it through the Angular Meta / Renderer2 service in .ts is more robust
+    (works reliably with SSR), a static block in the template works as well.
   -->
   <script type="application/ld+json">
   {
@@ -145,10 +133,9 @@
       </div>
 
 <!-- ═══════════════════════════════════════════════════
-     CO NAŠE SYSTÉMY OBSAHUJÍ - bodově, srozumitelně i pro laika.
-     Každá položka má tlačítko "i" s vysvětlivkou (čistě CSS hover/focus
-     tooltip, žádná JS logika navíc není potřeba). Na konci zvýrazněný
-     "trust" pruh o bezpečnosti.
+     WHAT OUR SYSTEMS CONTAIN - point by point, understandable for a layman.
+     Every item has an "i" button with an explanation (pure CSS hover / focus tooltip, no
+     extra JS logic). A highlighted security "trust" bar at the end.
      ═══════════════════════════════════════════════════ -->
 <section class="sys-features-section_temp_new">
   <div class="select-us-header-wrp_temp_new">

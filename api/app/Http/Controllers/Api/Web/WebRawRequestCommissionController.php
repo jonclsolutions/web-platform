@@ -2,56 +2,11 @@
 /**
  * @file WebRawRequestCommissionController.php
  * @path app/Http/Controllers/Api/Web/WebRawRequestCommissionController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Manages raw commission request submissions, supporting multiple file
  * attachments, status tracking, and administrative audit logging.
- *
- * @refactor-note (2026-08) Jednosouborove pole file_path KOMPLETNE ODSTRANENO (sloupec
- * smazan z DB) - nahrazeno polymorfnim web_attachments vztahem pres HandlesAttachments
- * trait, podporujicim az 10 priloh na jeden pozadavek.
- *
- * @refactor-note (2026-08-6) MIGRACE LOGOVANI na sdileny LogsActivity trait misto
- * lokalni duplicitni logAction().
- *
- * @bugfix-note (2026-08-19) index() NEEAGER-LOADOVAL vztah attachments - doplneno
- * ->with('attachments').
- *
- * @bugfix-note (2026-08-19v2) ->send() PREPNUTO NA ->queue() - sjednoceno s
- * WebSalesOrderController::store().
- *
- * @refactor-note (2026-08-23a) HROMADNE MAZANI V JEDNOM REQUESTU: pridana bulkDestroy() -
- * viz TableBuilderComponent.onBulkDeleteClick() (vola POST web/raw_request_commissions/bulk-delete).
- * ZAMERNE replikuje STEJNOU logiku jako destroy() (uklid priloh z disku pres
- * deleteAllAttachments() pri force_delete=true), ne genericky Model::destroy($ids), ktery
- * by tenhle uklid potichu preskocil.
- *
- * @refactor-note (2026-08-23b) HROMADNY IMPORT PRIMO V KONTROLERU (importTemplate/
- * importValidate/importCommit) - nahrazuje driv testovanou centralni verzi pres
- * ImportController/importable_resources.php. importCommit() NEVOLA store()/Mail::queue() -
- * import zamerne neposila potvrzovaci e-mail (rozhodnuto drive v tasku - hromadny
- * import historickych/cizich dat nema rozesilat notifikace kontaktum ze souboru).
- * importCommit() proto NEVOLA store()/Mail::queue() primo, jen
- * WebRawRequestCommission::create() se stejnym whitelistem sloupcu jako store(), bez
- * emailu a bez prilohy (tabulkovy import neumi prenest soubor per radek).
- *
- * @refactor-note (2026-08-31) BACKLOG "privátní úložiště citlivých příloh": přílohy
- * teď jdou na disk 'private' (default v HandlesAttachments, žádná změna zdejšího
- * volání storeAttachments() nebyla potřeba) a do modulově prefixované složky
- * `web/raw_request_commissions` (viz ATTACHMENT_FOLDER) - viz AttachmentDownloadController
- * a WebAttachmentResource pro autorizovaný přístup přes krátkodobě podepsané URL.
- *
- * @refactor-note (2026-08-31v2) BACKLOG "osiřelé importní soubory": import
- * validate/commit flow přepsán na sdílený `HandlesImportBatches` trait - dřív
- * chyběl `Storage::delete($batch->temp_path)` v `catch` větvi importCommit()
- * (i po neúspěšném importu zůstal dočasný soubor navždy na disku), teď to
- * garantuje `try/finally` uvnitř `runImportCommit()`, ne ruční mazání zde.
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -103,11 +58,6 @@ class WebRawRequestCommissionController extends Controller
      */
     /**
      * Retrieves a paginated or full collection of commission requests with search and filtering.
-     * @refactor-note (2026-08-26) Added optional date-range filter `date_from`/`date_to`
-     * (whereDate on `created_at`, >= / <=) - used by GraphBuilderComponent (admin
-     * analytics/reports), see graph-builder.component.ts. Intentionally SEPARATED from
-     * the existing single-day `created_at` filter below (table UI filter) - both
-     * variants coexist peacefully without conflict, no other behavior of the method changes.
      */
     public function index(Request $request)
     {
@@ -134,8 +84,7 @@ class WebRawRequestCommissionController extends Controller
 
         if ($request->filled('created_at')) $query->whereDate('created_at', $request->created_at);
 
-        // GraphBuilderComponent date-range filter (admin analytics popup) - see
-        // refactor-note above. Independent of the single-day 'created_at' filter above
+        // GraphBuilderComponent date-range filter (admin analytics popup). Independent of the single-day 'created_at' filter above
         // this block, both conditions can (but do not have to) apply simultaneously.
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->input('date_from'));
@@ -199,9 +148,6 @@ class WebRawRequestCommissionController extends Controller
      */
     public function update(UpdateWebRawRequestCommissionRequest $request, $id): JsonResponse
     {
-        // @bugfix-note (2026-10-22) findOrFail() outside the try block (all actions of this
-        // controller): inside it the "not found" exception was caught by `catch (\Exception)`
-        // and answered 500 instead of 404. Found by the unit tests.
         $rawRequestCommission = WebRawRequestCommission::findOrFail($id);
 
         try {
@@ -326,9 +272,6 @@ class WebRawRequestCommissionController extends Controller
         $baseFilename = 'import-template-web-raw_request_commissions';
 
         if ($format === 'csv' || $format === 'txt') {
-            // @bugfix-note (2026-10-22) CSV delimiter ';' - the import parser
-            // (ImportFileParser) reads CSV with ';' like every other template; with ',' the
-            // downloaded template could not be imported back (header mismatch).
             $delimiter = $format === 'txt' ? "\t" : ';';
             $mime = $format === 'txt' ? 'text/plain' : 'text/csv';
             return response(implode($delimiter, $columns) . "\n", 200, [
@@ -348,9 +291,6 @@ class WebRawRequestCommissionController extends Controller
     /**
      * @description Dry-run validation of the import file - DOES NOT write anything to DB. Stores
      * the file temporarily and returns an import_token for the subsequent importCommit().
-     * @refactor-note (2026-08-31) File storage + CoreImportBatch creation now goes
-     * through `startImportBatch()` (HandlesImportBatches trait) instead of manual
-     * `Storage::put()`/`CoreImportBatch::create()`.
      */
     public function importValidate(
         Request $request,
@@ -409,9 +349,6 @@ class WebRawRequestCommissionController extends Controller
      * @description Confirms and executes the actual import write. PARSES AND VALIDATES
      * the file AGAIN (never trusts the dry-run result without verification). DOES NOT CALL store()/Mail::queue() -
      * the import intentionally does not send a confirmation email and cannot carry an attachment.
-     * @refactor-note (2026-08-31) Rewritten to `findPendingImportBatch()` +
-     * `runImportCommit()` (HandlesImportBatches trait) - temporary file is now deleted
-     * ALWAYS (even on failure), see trait header.
      */
     public function importCommit(
         Request $request,
@@ -437,7 +374,7 @@ class WebRawRequestCommissionController extends Controller
                             continue;
                         }
                         // Same column whitelist as store(), but INTENTIONALLY WITHOUT attachment and
-                        // WITHOUT Mail::queue() - see refactor-note in class header.
+                        // WITHOUT Mail::queue() - see the class header.
                         WebRawRequestCommission::create(
                             array_intersect_key($row, array_flip(self::IMPORTABLE_COLUMNS))
                         );
@@ -469,11 +406,6 @@ class WebRawRequestCommissionController extends Controller
             ]);
         } catch (\Exception $e) {
             // Expired temporary file - see runImportCommit(), code 410.
-            // @bugfix-note (2026-10-22) Previously every RuntimeException was answered with its
-            // own message and code: a database error (QueryException is a RuntimeException)
-            // put the SQL error text into the response and its SQLSTATE string as the HTTP
-            // status (crash), a parser error answered 500 without an error log. Now only the
-            // expired-file case passes through, everything else is logged and answered 500.
             if ($e instanceof \RuntimeException && $e->getCode() === 410) {
                 return response()->json(['message' => $e->getMessage()], 410);
             }

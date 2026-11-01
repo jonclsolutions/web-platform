@@ -1,14 +1,11 @@
 /**
  * @file administrators.config.ts
  * @path src/app/admin/core-pages/administrators/administrators.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Static-turned-dynamic configuration (buttons, form fields, table/filter/
  * detail columns) for the Administrators (core user account) management page.
- *
- * (Earlier refactor-notes for 2FA split, account-creation workflow, and explicit
- * permission grants are unchanged - see version history, omitted here for brevity.)
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -65,9 +62,8 @@ export function createResetPasswordFormFields(i18n: AdminLocalizationService): C
 }
 
 /**
- * @description `role_id`/`permission_ids` mají `options: []` - komponenta je po
- * async načtení dat sama doplní (viz `rebuildFormFields()` v `.component.ts`), viz
- * refactor-note v hlavičce souboru.
+ * @description `role_id` / `permission_ids` have `options: []` - the component fills them after
+ * the async data load (see `rebuildFormFields()` in `.component.ts`).
  */
 export function createFormFields(i18n: AdminLocalizationService): Core.InputDefinition[] {
   return [
@@ -144,10 +140,7 @@ export function createTrashTableColumns(i18n: AdminLocalizationService): Core.Co
   ];
 }
 
-/** @description `role_id` má `options: []` - komponenta je po `loadRoleOptions()` doplní (viz `rebuildFormFields()`).
- * @refactor-note (2026-09-08) BACKLOG "chybí filtr na blokované účty": doplněn
- * `is_blocked` select filtr - viz UserController::index() bugfix-note stejné datum
- * (backend `role_id` filtr byl navíc už dřív nefunkční, opraveno zároveň).
+/** @description `role_id` has `options: []` - the component fills them after `loadRoleOptions()` (see `rebuildFormFields()`).
  */
 export function createFilterColumns(i18n: AdminLocalizationService): Core.FilterColumns[] {
   return [

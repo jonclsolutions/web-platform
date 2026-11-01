@@ -2,18 +2,11 @@
 /**
  * @file WebProjectCheckpoint.php
  * @path app/Models/Web/WebProjectCheckpoint.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Freeform per-project checklist item (e.g. "Návrh UI", "Deploy") -
+ * @description Freeform per-project checklist item (e.g. "UI design", "Deploy") -
  * toggled by an admin, visible read-only to the customer on the public project page.
- * @refactor-note (2026-08-28) `status` je 3-stavový enum ('new'/'active'/'done'),
- * NE boolean `is_checked` - odpovídá reálnému průběhu práce na checkpointu
- * (nezahájeno / rozpracováno / hotovo), ne jen binárnímu hotovo/nehotovo.
- * `status_changed_at` se aktualizuje při KAŽDÉ změně stavu (ne jen při přechodu na
- * 'done') - viz `setStatus()`.
- * @refactor-note (2026-10-23) Open finding #52: the exception of `setStatus()` is English
- *   ("Invalid checkpoint status") like the other API messages; it reaches only logs / tests.
  */
 
 namespace App\Models\Web;
@@ -44,10 +37,8 @@ class WebProjectCheckpoint extends Model
     }
 
     /**
-     * @description Nastaví nový stav a automaticky zaznamená `status_changed_at` -
-     * jediné místo, kudy by se `status` měl v aplikaci měnit (viz
-     * WebProjectController::updateCheckpointStatus() v pozdější fázi), ať se nikde
-     * nezapomene timestamp aktualizovat.
+     * @description Sets the new state and records `status_changed_at` - the one place where
+     * `status` should change, so the timestamp is never forgotten.
      */
     public function setStatus(string $status): void
     {

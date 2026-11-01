@@ -2,20 +2,10 @@
 /**
  * @file ShopCategoryController.php
  * @path app/Http/Controllers/Api/Shop/ShopCategoryController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages CRUD operations for shop product categories, including hierarchical relationships, validation logic for deletion, and audit logging.
- *
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
- * lokální duplicitní logAction(). Doménově beze změny (ShopLog::class).
- *
- * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update / destroy (findOrFail inside try).
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;

@@ -1,17 +1,10 @@
 /*
     @file: references.component.css
     @path: /src/app/public/web-pages/references/references.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @refactor-note (2026-09) Removed tag pills (.ref-tag*) and category dots
-        (.ref-cat-dot*). Added informative project detail (features list,
-        fact sheet, tech stack, result). Accordion uses grid-template-rows
-        0fr -> 1fr instead of fixed max-height.
-    @refactor-note (2026-09-30) Unified spacing across public pages: spacing tokens
-        (--gutter, --section-y, --hero-top, --hero-bottom), content width 1200px
-        (+ gutters), hero top 180/120px, page bottom 96/64px.
-        Only padding / margin / max-width changed.
+    @description: Styles of the references component.
 */
 
 :host {

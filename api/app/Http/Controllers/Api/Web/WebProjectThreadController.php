@@ -2,28 +2,10 @@
 /**
  * @file WebProjectThreadController.php
  * @path app/Http/Controllers/Api/Web/WebProjectThreadController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Admin view of customer conversation threads.
- *
- * (Earlier bugfix-note 2026-08-29e for the updateStatus() ['data' => ...] wrapper,
- * refactor-note 2026-09-08 for backend-fully-in-English, and refactor-note
- * 2026-09-11 for HandlesAttachments/reply() attachments are unchanged - see version
- * history.)
- *
- * @refactor-note (2026-09-11v4) BACKLOG "otevření vlákna ukazuje nejstarší zprávu
- * / vlákno s 1000 zprávami nemá načítat všechny najednou": `show()` teď natahuje
- * jen POSLEDNÍCH `WebProjectThread::DEFAULT_MESSAGE_PAGE_SIZE` zpráv přes
- * `pagedMessages()` (místo `->with('messages.attachments')`, které tahalo úplně
- * všechny), a do odpovědi přidává `has_more_older_messages` flag. Nová
- * `olderMessages()` metoda + route obsluhuje tlačítko "Načíst starší zprávy" ve
- * frontendu (`before_message_id` = id aktuálně nejstarší načtené zprávy).
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -68,10 +50,6 @@ class WebProjectThreadController extends Controller
         return $this->respondPaginated($data, WebProjectThreadResource::class);
     }
 
-    /**
-     * @refactor-note (2026-09-11v4) Natahuje jen posledních `DEFAULT_MESSAGE_PAGE_SIZE`
-     * zpráv přes `pagedMessages()` - viz hlavička souboru.
-     */
     public function show($id): JsonResponse
     {
         $thread = WebProjectThread::with('project:id,name')->findOrFail($id);
@@ -83,9 +61,8 @@ class WebProjectThreadController extends Controller
     }
 
     /**
-     * @description Vrátí `$limit` zpráv STARŠÍCH než `before_message_id` - obsluha
-     * tlačítka "Načíst starší zprávy". Vrací PLOCHÉ pole zpráv (ne celé vlákno),
-     * frontend výsledek jen předřadí před stávající lokální seznam.
+     * @description Returns `$limit` messages OLDER than `before_message_id` ("Load older
+     * messages"). A FLAT list of messages (not the whole thread) - the frontend prepends it.
      */
     public function olderMessages(Request $request, $threadId): JsonResponse
     {

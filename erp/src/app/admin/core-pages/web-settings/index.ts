@@ -1,13 +1,11 @@
 /**
  * @file index.ts
  * @path src/app/admin/core-pages/web-settings/index.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Types of the Web settings page: languages, company details (SiteSetting) and
  *   social links.
- * @refactor-note (2026-10-31) Optional company details: `hidden_fields` (switched-off fields,
- *   CompanyOptionalField) and nullable optional values.
  */
 
 export interface LangMeta {
@@ -29,7 +27,7 @@ export interface SiteSetting {
   copyright_text_i18n: I18nMap;
   ico: string | null;
   dic: string | null;
-  /** GA4 Measurement ID (formát "G-XXXXXXXXXX"). Nepovinné - web bez GA funguje dál beze změny. */
+  /** GA4 Measurement ID (format "G-XXXXXXXXXX"). Optional - the web works the same without GA. */
   google_analytics_id?: string | null;
   contact_email: string;
   contact_phone: string | null;

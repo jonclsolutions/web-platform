@@ -1,8 +1,8 @@
 /*
     @file: legal-document.css
     @path: /src/app/public/web-pages/shared-styles/legal-document.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description: Shared look for all legal document pages (GDPR, TOS, Cookies, ...).
         Previously tos.component.css and privacy-policy.component.css had identical
@@ -11,13 +11,6 @@
         to all of them. Moved from app/shared/ in the 2026-10 CSS cleanup: only the
         public web uses it.
     @dependencies: none (defines its own spacing tokens on :host)
-    @refactor-note (2026-09) Unified spacing across public pages: spacing tokens
-        (--gutter, --section-y, --hero-top), page title starts at the same height
-        as on other pages (180px / 120px mobile). Text column intentionally stays
-        860px (long-form reading width, ~80 characters per line).
-        Headings restyled to match other public pages: h1 = page title style
-        (white, clamp(2.4rem, 5vw, 4rem), line-height 1.15, no text-shadow),
-        h2 / h3 = white like section / card titles elsewhere (was purple / lavender).
 */
 
 :host {

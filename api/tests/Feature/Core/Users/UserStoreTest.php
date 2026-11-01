@@ -3,8 +3,8 @@
 /**
  * @file UserStoreTest.php
  * @path api/tests/Feature/Core/Users/UserStoreTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of creating an administrator account (UserController::store; e-mail
  *   normalized + strictly validated since 2026-10-26):

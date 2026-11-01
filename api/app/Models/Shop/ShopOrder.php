@@ -2,20 +2,10 @@
 /**
  * @file ShopOrder.php
  * @path app/Models/Shop/ShopOrder.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Model representing a customer sales order.
- *
- * @refactor-note (2026-10-23) restoreStock() shares the stock movement with the new
- * deductStock() (reopening a cancelled / returned order) - see ShopOrderController::update().
- * @bugfix-note (2026-10-23) Buyer contact snapshot `customer_first_name` … `customer_company`
- *   (open findings #22 / #23): the order is an accounting document and keeps the buyer as given
- *   for THIS order - checkout no longer overwrites the customer master data and an anonymised
- *   customer must not take the name off his invoices. `contact()` falls back to the customer
- *   for rows without a snapshot.
- * @bugfix-note (2026-10-23) Status labels were Czech (`status_label` of the API, open finding
- *   #29) - English now; the admin translates the status values itself.
  */
 
 namespace App\Models\Shop;
@@ -189,9 +179,6 @@ class ShopOrder extends Model
      */
     public static function generateOrderNumber(): string
     {
-        // @bugfix-note (2026-10-23) date('Ym') used the PHP default timezone instead of the
-        // application timezone (wrong month around midnight of the 1st) - now(), which also
-        // follows the test clock.
         $prefix = now()->format('Ym');
         
         $lastOrder = self::withTrashed()

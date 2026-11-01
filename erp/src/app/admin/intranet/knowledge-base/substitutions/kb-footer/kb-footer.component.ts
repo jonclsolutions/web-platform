@@ -1,13 +1,10 @@
 /**
  * @file kb-footer.component.ts
  * @path src/app/admin/intranet/knowledge-base/substitutions/kb-footer/kb-footer.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * Komponenta NEdědí BaseDataComponent, proto ruční injection AdminLocalizationService,
- * stejný vzor jako ostatní drobné buildery. Nemá `ChangeDetectionStrategy.OnPush`,
- * takže na rozdíl od TableBuilderComponent zde není potřeba `translations$` subscribe.
+ * @description Footer of the internal Knowledge Base pages.
  */
 
 import { Component, inject } from '@angular/core';

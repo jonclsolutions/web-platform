@@ -3,8 +3,8 @@
 /**
  * @file RawRequestCommissionTest.php
  * @path api/tests/Feature/Web/RawRequestCommissionTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the commission requests (WebRawRequestCommissionController):
  *   the public contact form (validation, attachments, confirmation e-mail, rate limit) and the

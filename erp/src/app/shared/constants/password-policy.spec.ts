@@ -1,8 +1,8 @@
 /**
  * @file password-policy.spec.ts
  * @path src/app/shared/constants/password-policy.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the password policy (the single rule set of the app, open finding
  *   #37): the Unicode rule checks (same classes as the Laravel `Password` rule), the checklist

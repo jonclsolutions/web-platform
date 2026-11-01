@@ -1,9 +1,9 @@
 /**
  * @file password-confirm-dialog.component.spec.ts
  * @path src/app/admin/components/password-confirm-dialog/password-confirm-dialog.component.spec.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-26
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Unit tests of PasswordConfirmDialogComponent (step-up password prompt): the field
  *   is focused, submit emits the password once and clears it, cancel is blocked while checking,
  *   an error re-enables the form, texts are applied, the scroll lock is released exactly once.

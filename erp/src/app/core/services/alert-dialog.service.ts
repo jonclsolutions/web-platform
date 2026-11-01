@@ -1,8 +1,8 @@
 /**
  * @file alert-dialog.service.ts
  * @path src/app/core/services/alert-dialog.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Service for programmatically creating and managing dynamic AlertDialogComponent instances globally.
  * @dependencies
@@ -17,8 +17,8 @@ import { AlertDialogComponent, AlertType } from '../../admin/components/alert-di
 /**
  * @description Provides functionality to display global alert dialogs without needing to declare them in every template.
  * @usage Used across the application to trigger user alerts, confirmations, or notifications.
- * @note Manages a single persistent toast-queue component for the lifetime of the app -
- * see @refactor-note above for why this replaced the old create/destroy-per-alert approach.
+ * @note Manages a single persistent toast-queue component for the lifetime of the app
+ * (no component created / destroyed per alert).
  */
 @Injectable({
   providedIn: 'root'

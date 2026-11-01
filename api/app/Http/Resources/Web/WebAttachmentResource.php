@@ -2,27 +2,10 @@
 /**
  * @file WebAttachmentResource.php
  * @path app/Http/Resources/Web/WebAttachmentResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Resource transformation for individual file attachments.
- *
- * @refactor-note (2026-08-31) BACKLOG "privátní úložiště citlivých příloh":
- * `download_url`/`view_url` teď generujeme jako KRÁTKODOBĚ PODEPSANÉ (10 min TTL)
- * Laravel signed URL (`URL::temporarySignedRoute`), místo prostého `url('/api/...')`
- * odkazu bez jakékoliv ochrany. Důvod: přílohy se dnes typicky ukládají na `private`
- * disk (viz HandlesAttachments), který je fyzicky nedosažitelný přímo přes webserver -
- * jediná cesta k souboru je přes `AttachmentDownloadController` (dřív
- * `PublicFileDownloadController`), jehož routy vyžadují platný podpis (`signed`
- * middleware, viz routes/api.php). Autorizace tak probíhá NEPŘÍMO: tenhle resource se
- * vždy vrací až jako součást odpovědi z autentizovaného a permission-gated endpointu
- * (`GET web/raw_request_commissions/{id}` apod.) - v okamžiku, kdy je tahle URL
- * vygenerovaná, uživatel už prošel kontrolou oprávnění. 10minutová expirace omezuje
- * riziko sdílení/prosáknutí odkazu (screenshot, network log) - po vypršení je odkaz
- * mrtvý, admin si detail záznamu prostě znovu otevře pro čerstvou URL.
- * @refactor-note (2026-10-23) The legacy `url` field (direct storage link, dead for files on
- * the `private` disk) was removed (open finding #9) - the frontend uses only
- * `download_url` / `view_url`.
  */
 
 namespace App\Http\Resources\Web;
@@ -33,7 +16,7 @@ use Illuminate\Support\Facades\URL;
 
 class WebAttachmentResource extends JsonResource
 {
-    /** @description TTL podepsané URL v minutách - viz refactor-note v hlavičce souboru. */
+    /** @description Lifetime of a signed URL in minutes - links in an API answer expire quickly. */
     private const SIGNED_URL_TTL_MINUTES = 10;
 
     public function toArray(Request $request): array
@@ -50,9 +33,9 @@ class WebAttachmentResource extends JsonResource
     }
 
     /**
-     * @description Vygeneruje krátkodobě podepsanou URL pro daný route name, s `path`
-     * jako route parametrem - stejný pro download i view (liší se jen route name/
-     * Content-Disposition, viz AttachmentDownloadController).
+     * @description Builds a short-lived signed URL of the route with `path` as its parameter -
+     * the same for download and view (only the route name / Content-Disposition differ, see
+     * AttachmentDownloadController).
      */
     private function signedUrl(string $routeName): string
     {

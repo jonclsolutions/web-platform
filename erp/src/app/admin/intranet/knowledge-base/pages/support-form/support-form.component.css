@@ -1,11 +1,10 @@
 /*     
     @file: support-form.component.css
     @path: /src/app/admin/intranet/knowledge-base/pages/support-form/support-form.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @refactor-note (2026) RETHEME: black&white admin paletou (--accent = #18181b místo
-        purple #a67dff). Layout, rozměry, breakpointy BEZE ZMĚNY.
+    @description: Styles of the support form component.
 */
 
 .kb-form-container {

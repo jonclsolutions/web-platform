@@ -2,30 +2,10 @@
 /**
  * @file DocumentSectionController.php
  * @path app/Http/Controllers/Api/Legal/DocumentSectionController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Manages CRUD operations and public delivery of legal document sections, featuring language-based fallback logic and audit logging.
- * @refactor-note (2026-10-31) Public view: when neither the requested language nor 'cz' has
- *   sections, the sections of any other language are shown (a new installation has only the
- *   English templates of BaseDataSeeder - the Czech page was empty).
- *
- * @refactor-note (2026) `publicShow()` dřív mapovalo slug na document_type_id natvrdo
- * (`$slug === 'gdpr' ? 1 : ($slug === 'tos' ? 2 : null)`), takže nový typ dokumentu
- * ("cookies") by vždy skončil 404. Přepsáno na dohledání `DocumentType` podle `slug`
- * sloupce - funguje tak pro libovolný typ dokumentu bez další úpravy kódu. Zároveň
- * doplněno pole `footer_effective`, které šablona (`{{ data.footer_effective }}`)
- * očekávala, ale odpověď ho dřív vůbec neposílala.
- *
- * @refactor-note (2026-08) Logování přesunuto z lokální `logAction()` (chybně mířila
- * do `shop_logs`, viz incident - GDPR/TOS/Cookies změny se logovaly do e-shopové audit
- * tabulky) na sdílený `LogsActivity` trait, zapisující do `CoreLog::class`. Právní
- * dokumenty jsou dle dohodnutého rozdělení Core/Web/Shop doménou Core (sdílené napříč
- * Web a Shop), stejně jako auth, uživatelé, role a site settings.
- *
- * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update / destroy (findOrFail inside try).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Legal;
@@ -174,9 +154,6 @@ class DocumentSectionController extends Controller
         return $this->respond([
             'header_main' => $documentType->title,
             'last_update_date' => $lastUpdate?->format('d.m.Y') ?? date('d.m.Y'),
-            // @bugfix-note (2026-10-23) Was a hardcoded Czech sentence in every language (open
-            // finding #35). English fallback text now; the web shows its own translation
-            // (`effective_from_text` + last_update_date, LegalDocsService.effectiveFooter()).
             'footer_effective' => $lastUpdate
                 ? 'This policy is effective from ' . $lastUpdate->format('d.m.Y') . '.'
                 : null,

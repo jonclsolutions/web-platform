@@ -1,21 +1,14 @@
 /**
  * @file support-form.component.ts
  * @path src/app/admin/intranet/knowledge-base/pages/support/support-form/support-form.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description A reactive form component enabling users to submit support tickets with optional file attachments.
  * @dependencies
  * - BaseDataComponent: Inherits standard API interaction methods.
  * - ReactiveFormsModule: Provides the form builder and validation infrastructure.
  * - LoadingService: Observes and propagates global loading states.
- *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * Komponenta DĚDÍ BaseDataComponent, proto `translationSection = 'kb-support-form'`
- * a override `t()` (viz stejná oprava u NewsComponent/EditRolesComponent). Hodnoty
- * `category`/`priority` polí ('it'/'obchod'/'chyba'/'ostatni', 'low'/'medium'/'high')
- * ZŮSTÁVAJÍ nepřeložené - jsou to backendové hodnoty ukládané do DB, přeložen je jen
- * zobrazený `<option>` text (stejný vzor value/label jako u user-request status/priority).
  */
 
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
@@ -43,10 +36,6 @@ export class SupportFormComponent extends BaseDataComponent<any> implements OnIn
   override apiEndpoint: string = 'web/support_tickets';
   protected override translationSection: string = 'kb-support-form';
 
-  /**
-   * @refactor-note (2026-09) BUGFIX - viz hlavička souboru. Doplňuje prefix
-   * `kb-support-form.` automaticky.
-   */
   public override t(key: string): string {
     return this.i18n.getValue(`kb-support-form.${key}`);
   }

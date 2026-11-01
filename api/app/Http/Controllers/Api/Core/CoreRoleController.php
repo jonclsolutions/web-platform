@@ -2,36 +2,14 @@
 /**
  * @file CoreRoleController.php
  * @path app/Http/Controllers/Api/Core/CoreRoleController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Manages CRUD operations for user roles, including pagination for administrative tables,
  *              permission-matrix synchronization, and audit logging of all data changes.
  * @note System roles (see CoreRole::PROTECTED_ROLE_NAMES - sysadmin/admin) cannot be
  *       edited, deleted, or have their permissions changed via this controller. A role that has at least
  *       one user assigned cannot be deleted.
- * @bugfix-note (2026) update() and show() previously used implicit route-model-binding
- *       (`CoreRole $role` typehint). Because routes for 'roles' have their URL parameter renamed
- *       to `id` (see routes/api.php: ->parameters(['roles' => 'id'])), the route parameter name
- *       (`id`) did not match the method argument name (`role`) - implicit binding therefore did not
- *       occur at all and the Laravel container injected an EMPTY, never saved instance of CoreRole
- *       instead of the actual role from the DB. Fixed identically to destroy()/syncPermissions()/restore()
- *       which already correctly do it - $id is taken directly and the model is looked up manually via findOrFail().
- *
- * @refactor-note (2026-08-5) CRITICAL SECURITY PROTECTION added: `isProtected()`
- * protected only the role being worked with (sysadmin/admin as TARGET), but no one checked
- * WHO is performing the action. store(), update(), syncPermissions(), destroy(), restore() and
- * forceDeleteAllTrashed() now require that the ACTOR (actorIsSysadmin()) has the sysadmin role.
- *
- * @refactor-note (2026-08-6) LOGGING MIGRATION to shared `LogsActivity` trait (see Traits/
- * LogsActivity.php) instead of local duplicate logAction(). At the same time FIXED target log model:
- * the local version wrote to `WebLog::class`, although roles/permissions according to the agreed
- * Core/Web/Shop division are purely a CORE domain (just like auth, users, legal, site
- * settings - see DocumentSectionController/SiteConfigurationController, which log to CoreLog
- * correctly already earlier). Moreover, the new trait automatically truncates `description` to 990 characters
- * and safely strips sensitive fields from `context_data` - the local version had none of these protections.
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -54,7 +32,7 @@ class CoreRoleController extends Controller
 
     /**
      * @description Role name required of the ACTOR (not the role being edited) for every
-     * mutating action on this controller - see @refactor-note (2026-08-5). Must match
+     * mutating action on this controller. Must match
      * `UserController::SYSADMIN_ROLE_NAME`.
      */
     private const SYSADMIN_ROLE_NAME = 'sysadmin';
@@ -75,10 +53,6 @@ class CoreRoleController extends Controller
             $query->onlyTrashed();
         }
 
-        // @bugfix-note (2026-10-22) Wrapped in its own where() group - the bare orWhere() broke
-        // out of the onlyTrashed() scope, so searching the trash also listed active roles
-        // whose description matched (same pitfall as described in CoreExternalLinkController).
-        // Found by the unit tests.
         if ($s = $request->input('search')) {
             $query->where(function ($q) use ($s) {
                 $q->where('role_name', 'like', "%$s%")

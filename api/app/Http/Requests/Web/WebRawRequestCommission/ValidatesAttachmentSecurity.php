@@ -2,17 +2,10 @@
 /**
  * @file ValidatesAttachmentSecurity.php
  * @path app/Http/Requests/Web/WebRawRequestCommission/ValidatesAttachmentSecurity.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Trait providing shared security logic for validating file attachments using a blacklist approach.
- *
- * @refactor-note (2026-08) `validateAttachmentMime()` přepsáno z kontroly jediného pole
- * `attachment` na iteraci přes pole `attachments` (vícenásobný upload) - kontroluje MIME
- * typ KAŽDÉHO nahraného souboru zvlášť, chybu přidává na konkrétní index pole
- * (`attachments.0`, `attachments.1`, ...), ať uživatel přesně vidí, který soubor je
- * problematický. `attachmentExtensionRule()` beze změny - používá se jako closure
- * pravidlo přímo na `attachments.*`, takže Laravel jí už předá jednotlivý soubor, ne pole.
  */
 
 namespace App\Http\Requests\Web\WebRawRequestCommission;
@@ -60,8 +53,8 @@ trait ValidatesAttachmentSecurity
     }
 
     /**
-     * Validation rule for file extensions - použito jako closure pravidlo přímo na
-     * `attachments.*`, Laravel do `$value` předá jednotlivý UploadedFile, ne celé pole.
+     * Validation rule for file extensions - a closure rule on `attachments.*`; Laravel passes one
+     * UploadedFile as `$value`, not the whole array.
      *
      * @return \Closure
      */

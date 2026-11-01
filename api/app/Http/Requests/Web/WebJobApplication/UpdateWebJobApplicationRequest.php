@@ -2,8 +2,8 @@
 /**
  * @file UpdateWebJobApplicationRequest.php
  * @path app/Http/Requests/Web/WebJobApplication/UpdateWebJobApplicationRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Validation logic for updating existing job application records, including status changes and notes.
  */

@@ -2,8 +2,8 @@
 /**
  * @file PageTitle.php
  * @path app/Models/Legal/PageTitle.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Browser tab title (<title>) of one page (web, e-shop or the whole
  *              administration),

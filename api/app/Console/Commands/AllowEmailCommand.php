@@ -2,9 +2,9 @@
 /**
  * @file AllowEmailCommand.php
  * @path app/Console/Commands/AllowEmailCommand.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-24
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Emergency access for the e-mail access policy. Since 2026-10-24 the policy
  *   applies to every role, sysadmin included (AuthController). The policy editor refuses a
  *   change that locks out the ACTING sysadmin, but a policy edited directly in the database

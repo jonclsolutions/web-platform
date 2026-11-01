@@ -3,8 +3,8 @@
 /**
  * @file SalesOrderTest.php
  * @path api/tests/Feature/Web/SalesOrderTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the sales orders (WebSalesOrderController): the public order
  *   form (with or without a one-time lead link, attachments, confirmation e-mail, rate limit)

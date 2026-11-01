@@ -2,9 +2,9 @@
 /**
  * @file CreateSysadminCommand.php
  * @path app/Console/Commands/CreateSysadminCommand.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-30
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Creates the first system administrator of a new installation from the server
  *   console: `php artisan security:create-sysadmin [email]` asks for the e-mail, the name and the
  *   password (typed twice, never shown), validates them like the application does (e-mail

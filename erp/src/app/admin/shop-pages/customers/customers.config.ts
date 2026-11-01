@@ -1,18 +1,10 @@
 /**
  * @file customers.config.ts
  * @path src/app/admin/shop-pages/customers/customers.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Static-turned-dynamic configuration for shop customer management.
- *
- * (Earlier bugfix-note 2026-09-07 for shop permissions granularization is unchanged
- * - see version history.)
- *
- * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * kompletní přepis na FACTORY FUNKCE. Žádná SQL migrace potřeba - `is_active` je
- * boolean-jako-select (`'1'`/`'0'`), řešeno přes centrální `shared.yes`/`shared.no`
- * - stejný mechanismus jako `shop-suppliers.config.ts`.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -50,7 +42,6 @@ export function createCustomerToolbarButtons(i18n: AdminLocalizationService): Co
     { action: 'toggleFilters', label: i18n.getValue(`${SECTION}.toolbar_filters`), icon: '', class: 'btn-filter', isActive: false },
     { action: 'handleCreateFormOpened', label: i18n.getValue(`${SECTION}.toolbar_create_record`), icon: '', class: 'btn-create', showIf: true, permission: 'shop-customers-create' },
     { action: 'exportActiveTable', label: i18n.getValue(`${SECTION}.toolbar_export_data`), icon: '', class: 'btn-export', showIf: true },
-    // @refactor-note (2026-10-23) 'triggerImport' removed - the API has no customer import (finding #25, 404).
     { action: 'openGraphBuilder', label: i18n.getValue(`${SECTION}.toolbar_generate_reports`), icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-view-reports' },
     { action: 'toggleTable', label: i18n.getValue(`${SECTION}.toolbar_show_trash`), icon: '', class: 'btn-trash', permission: 'view-deleted' },
   ];
@@ -161,7 +152,7 @@ export function createCustomerFormFields(i18n: AdminLocalizationService): Core.I
       editable: true, show_in_edit: true, show_in_create: true,
     },
 
-    // Skrytá systémová pole
+    // Hidden system fields
     { column_name: 'user_id', label: '', type: 'hidden', required: false, editable: false, show_in_edit: true, show_in_create: true },
     { column_name: 'country', label: '', type: 'hidden', required: false, editable: false, show_in_edit: true, show_in_create: true },
   ];

@@ -1,19 +1,20 @@
 /*  
     @file: app.component.css
     @path: /src/app/public/shop-pages/components/shop-header/shop-header.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026 
+    @description: Styles of the shop header component.
 */
 :host {
-  /* Černobílý minimalistický design systém */
+  /* Black and white minimalist design system */
   --bg-main: var(--color-white);        
 }
 
 .shop-header {
   background: var(--bg-main);
   color: var(--text-main);
-  /* Výrazně snížený fixní padding pro kompaktní výšku */
+  /* Small fixed padding for a compact height */
   padding: 0.6rem 0;
   border-bottom: 1px solid var(--border);
   position: sticky;
@@ -23,10 +24,9 @@
   letter-spacing: -0.2px;
 }
 
-/* 
-   ODSTRANĚNA ZMĚNA PADDINGU PŘI SCROLLU 
-   Při scrollu se nyní pouze jemně zvýrazní spodní linka pro oddělení od bílého pozadí webu,
-   což uživatele nijak neruší pohybem obsahu.
+/*
+   The padding does not change on scroll - only the bottom line gets slightly highlighted to
+   separate the header from the white page background, without moving the content.
 */
 .shop-header.scrolled {
   border-bottom-color: var(--border-dark);
@@ -41,7 +41,7 @@
   padding: 0 1.5rem;
 }
 
-/* Logo - zmenšeno z 40px na 30px pro úsporu místa */
+/* Logo - 30px to save space */
 .logo-wrp {
   height: 30px;
   display: flex;
@@ -83,7 +83,7 @@
   background: var(--border);
 }
 
-/* Seskupení selektorů */
+/* Selector group */
 .selectors {
   display: flex;
   gap: 8px;
@@ -153,7 +153,7 @@
   color: var(--text-main);
 }
 
-/* Košík */
+/* Cart */
 .cart-trigger {
   position: relative;
   cursor: pointer;
@@ -176,7 +176,7 @@
   color: var(--text-main);
 }
 
-/* Černobílá kontrastní tečka košíku */
+/* Black and white contrast dot of the cart */
 .cart-dot {
   background: var(--bg-dark);
   color: var(--bg-main);
@@ -193,10 +193,10 @@
   right: -6px;
 }
 
-/* Mobilní responzivita */
+/* Mobile responsiveness */
 @media (max-width: 850px) {
   .contact-info, .divider { display: none; }
   .shop-container { padding: 0 1rem; }
   .custom-dropdown { width: 55px; }
-  .shop-header { padding: 0.5rem 0; } /* Na mobilech ještě o kousek kompaktnější */
+  .shop-header { padding: 0.5rem 0; } /* A bit more compact on mobile */
 }

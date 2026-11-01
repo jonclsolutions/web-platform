@@ -3,8 +3,8 @@
 /**
  * @file WebSupportTest.php
  * @path api/tests/Unit/Web/WebSupportTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the web helpers called directly: the AttachmentsTotalSize rule,
  *   the HandlesAttachments trait edge cases (invalid uploads skipped, nothing to remove) and

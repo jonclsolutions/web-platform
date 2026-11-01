@@ -23,7 +23,7 @@ class BusinessLogFactory extends Factory
             'description' => $this->faker->sentence(),
             'affected_entity_type' => $this->faker->word(),
             'affected_entity_id' => $this->faker->randomNumber(),
-            'user_login_id' => $this->faker->numberBetween(1, 10), // Předpokládáme existující user_login_id
+            'user_login_id' => $this->faker->numberBetween(1, 10), // Assumes an existing user_login_id.
             'context_data' => $this->faker->text(),
         ];
     }

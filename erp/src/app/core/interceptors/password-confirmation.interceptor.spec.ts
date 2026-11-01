@@ -1,9 +1,9 @@
 /**
  * @file password-confirmation.interceptor.spec.ts
  * @path src/app/core/interceptors/password-confirmation.interceptor.spec.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-26
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Unit tests of PasswordConfirmationInterceptor: a 403 PASSWORD_CONFIRMATION_REQUIRED
  *   asks for the password of its scope and repeats the request once; cancelled = the original 403;
  *   other errors and the confirmation request itself pass untouched; a second refusal of the

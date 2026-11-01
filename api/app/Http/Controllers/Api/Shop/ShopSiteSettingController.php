@@ -2,23 +2,12 @@
 /**
  * @file ShopSiteSettingController.php
  * @path app/Http/Controllers/Api/Shop/ShopSiteSettingController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages e-shop maintenance mode - toggling storefront/checkout availability
  * and the customer-facing maintenance message, with mandatory password re-confirmation
  * for the write action and a public read-only endpoint for the storefront.
- *
- * @refactor-note (2026-08-15) Replaces the shop branch of `CoreSiteSettingController`
- * (formerly a generic `TOGGLE_GROUPS` loop shared with web maintenance). Shop maintenance
- * is now a Shop-domain concern with its own table (`shop_site_settings`), model
- * (`ShopSiteSetting`), and permission-gated routes under `/api/shop/settings`. Web
- * maintenance is untouched and remains in `CoreSiteSettingController`.
- *
- * @refactor-note (2026-10-23) update(): removed the unreachable `if (!$auth)` 401 branch
- * (the route requires auth:sanctum + permission) - same as WebSiteSettingController.
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;

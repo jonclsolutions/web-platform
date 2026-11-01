@@ -3,8 +3,8 @@
 /**
  * @file ShopFixtures.php
  * @path api/tests/Support/ShopFixtures.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Test helpers of the Shop section: creates the catalogue (categories,
  *   suppliers, products with prices / variants / images), coupons, customers, payment and

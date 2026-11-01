@@ -1,17 +1,18 @@
 /*  
     @file: product-builder.component.css
     @path: /src/app/public/shop-pages/components/product-builder/product-builder.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026 
+    @description: Styles of the product builder component.
 */
 :host {
   display: block;
   height: 100%;
-  /* Černobílý moderní design systém */
+  /* Black and white modern design system */
   --bg-main: var(--color-white);
   
-  /* Decentní indikátory stavu skladu */
+  /* Subtle stock state indicators */
   --success: #2e7d32;
   --warning: #ed6c02;
   --danger: #d32f2f;
@@ -21,7 +22,7 @@
 .product-card {
   background: var(--bg-main);
   border: 1px solid var(--border);
-  border-radius: 0;          /* Absolutně ostré hrany */
+  border-radius: 0;          /* Sharp corners */
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -32,7 +33,7 @@
 
 .product-card:hover {
   border-color: var(--border-dark);
-  box-shadow: none;          /* Bez záře */
+  box-shadow: none;          /* No glow */
 }
 
 /* --- IMAGE SECTION --- */
@@ -40,7 +41,7 @@
   position: relative;
   width: 100%;
   padding-top: 100%;
-  background: #f9f9f9;       /* Velmi jemné šedé pozadí pod produktem */
+  background: #f9f9f9;       /* Very light grey background below the product */
   cursor: pointer;
   overflow: hidden;
   display: flex;
@@ -57,10 +58,10 @@
 }
 
 .product-card:hover .product-img {
-  opacity: 0.9;              /* Decentní interakce obrázku */
+  opacity: 0.9;              /* Subtle image interaction */
 }
 
-/* Ostrý monochromatický TIP badge */
+/* Sharp monochrome TIP badge */
 .badge-overlay {
   position: absolute;
   top: 10px;
@@ -75,7 +76,7 @@
   font-weight: 700;
   text-transform: uppercase;
   padding: 4px 8px;
-  border-radius: 0;          /* Ostré hrany */
+  border-radius: 0;          /* Sharp corners */
   letter-spacing: 0.5px;
 }
 
@@ -107,7 +108,7 @@
 }
 
 .product-title:hover {
-  color: var(--text-dim);    /* Čistý přechod do jemnější barvy */
+  color: var(--text-dim);    /* Clean transition to a lighter color */
 }
 
 /* --- STOCK STATUS --- */
@@ -137,7 +138,7 @@
   color: var(--text-main);
 }
 
-/* --- BUTTON DETAIL (Čistý černobílý čtvercový styl) --- */
+/* --- BUTTON DETAIL (clean black and white square style) --- */
 .btn-detail {
   background: var(--bg-main);
   border: 1px solid var(--border-dark);
@@ -148,15 +149,14 @@
   text-transform: uppercase;
   font-size: 0.7rem;
   letter-spacing: 0.5px;
-  transform: none;           /* Odstraněno zkosení */
-  border-radius: 0;          /* Absolutně ostré hrany */
+  transform: none;
+  border-radius: 0;          /* Sharp corners */
   display: inline-flex;
   align-items: center;
   gap: 6px;
   transition: var(--transition);
 }
 
-/* Odstraněny efekty na pozadí přes ::before */
 .btn-detail::before {
   display: none;
 }
@@ -164,19 +164,19 @@
 .btn-detail:hover {
   background: var(--bg-dark);
   color: var(--bg-main);
-  box-shadow: none;          /* Odstraněna záře */
+  box-shadow: none;
 }
 
-/* Ikona šipky uvnitř tlačítka */
+/* Arrow icon inside the button */
 .btn-detail svg {
   transition: transform var(--transition);
 }
 
 .btn-detail:hover svg {
-  transform: translateX(2px); /* Jemný posun samotné šipky místo celého textu */
+  transform: translateX(2px); /* Subtle shift of the arrow only instead of the whole text */
 }
 
-/* Vyrovnání textu, zrušeno dřívější protizkosení */
+/* Text alignment */
 .btn-detail span {
   display: inline-block;
   transform: none !important;

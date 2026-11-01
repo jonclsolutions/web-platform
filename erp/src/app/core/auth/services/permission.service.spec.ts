@@ -1,8 +1,8 @@
 /**
  * @file permission.service.spec.ts
  * @path src/app/core/auth/services/permission.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of PermissionService: never restored from localStorage (finding #38),
  *   set / check / clear of the permission list.

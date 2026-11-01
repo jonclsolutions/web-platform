@@ -1,8 +1,8 @@
 /**
  * @file dashboard.component.spec.ts
  * @path src/app/admin/core-pages/dashboard/dashboard.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of CoreDashboardComponent – the core dashboard: statistics only for the
  *   sections the user may see, hero / secondary stat, recent activity with its breakdown,

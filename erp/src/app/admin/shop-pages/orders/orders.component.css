@@ -1,16 +1,10 @@
 /*     
     @file: orders.component.css
     @path: /src/app/admin/shop-pages/orders/orders.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
-               zaoblené karty/modály (14-18px), jemné stíny, tmavý akcent (#18181b)
-               místo indigo, plně zaoblená ("pill") tlačítka/taby/badge. Sémantické
-               barvy (stavy objednávek, zaplaceno/kupón = zelená, zrušeno/vráceno =
-               červená/žlutá) zůstaly - jen posunuté na stejnou paletu. Aktuální
-               krok v timeline je teď tmavý akcent místo indigo, hotové kroky
-               zůstávají zelené. Struktura/třídy a logika beze změny.
+    @description: Styles of the orders component.
 */
 
 .orders-container {

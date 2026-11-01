@@ -2,21 +2,10 @@
 /**
  * @file WebRawRequestCommission.php
  * @path app/Models/Web/WebRawRequestCommission.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Model representing raw commission requests submitted from the web.
- *
- * @refactor-note (2026-08) Odstraněno jednosouborové pole `file_path` - nahrazeno
- * polymorfním vztahem `attachments()` (viz WebAttachment.php), který umožňuje uložit
- * až 10 příloh na jeden požadavek místo jedné.
- *
- * @refactor-note (2026-08-19) BACKLOG "editovatelný obsah potvrzovacího e-mailu":
- * přidán sloupec `lang` (default `'cz'`) - zaznamenává, v jakém jazyce zákazník
- * veřejný formulář (ContactComponent) odeslal. Potvrzovací e-mail
- * (`WebRawRequestCommissionReceived`/`App\Support\Mail\RawRequestEmailTemplate`) podle
- * něj vybere odpovídající jazykovou variantu editovatelné šablony (nadpis/úvod/závěr),
- * s fallbackem na `cz`, pokud daný jazyk vůbec nemá vlastní text vyplněný.
  */
 
 namespace App\Models\Web;
@@ -30,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
  * @description Handles raw commission inquiry submissions, preserving contact info and order details.
  * @property int $id Unique identifier.
  * @property string $thema Subject of the commission.
- * @property string $lang Jazyk, ve kterém byl formulář odeslán (řídí jazyk potvrzovacího e-mailu).
+ * @property string $lang Language the form was sent in (language of the confirmation e-mail).
  */
 class WebRawRequestCommission extends Model
 {

@@ -3,8 +3,8 @@
 /**
  * @file ExternalLinkTest.php
  * @path api/tests/Feature/Core/ExternalLinkTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the personal external links (CoreExternalLinkController):
  *   every action is scoped to the links of the signed-in account.

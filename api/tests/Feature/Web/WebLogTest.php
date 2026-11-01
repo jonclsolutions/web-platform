@@ -3,8 +3,8 @@
 /**
  * @file WebLogTest.php
  * @path api/tests/Feature/Web/WebLogTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the web audit log API (WebLogController): reading needs
  *   web-view-web-logs, writing an own entry is open to every signed-in account.

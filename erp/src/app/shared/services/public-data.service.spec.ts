@@ -1,8 +1,8 @@
 /**
  * @file public-data.service.spec.ts
  * @path src/app/shared/services/public-data.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the public PublicDataService: GET / POST to the API base URL,
  *   storage URLs, site settings and the no-cache status endpoints; errors are logged and

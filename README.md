@@ -1,17 +1,11 @@
 <!--
   @file README.md
   @path README.md (repository root)
-  @project RPSW Web
-  @author RPSW
+  @project JS web-platform
+  @author JS
   @created 2026
   @description Developer guide for the web-platform monorepo: structure, first-time
   setup, daily local workflow, background jobs, production build and deployment.
-  @refactor-note (2026-10-31) Local development in Docker (compose.yaml, docker/app/Dockerfile):
-  setup, daily workflow, tools, troubleshooting rewritten; XAMPP / host packages removed.
-  @refactor-note (2026-10-31b) Every platform: Linux, macOS, Windows (WSL 2 - init-workspace.cmd,
-  dev.cmd).
-  @refactor-note (2026-10-31c) Root clean-up: the local environment lives in dev/ (compose.yaml,
-  .env, docker/, windows/, logs/).
 -->
 
 # RPSW Web – web-platform

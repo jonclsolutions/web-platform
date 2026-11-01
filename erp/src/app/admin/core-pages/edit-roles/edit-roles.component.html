@@ -1,8 +1,8 @@
 <!--
     @file: edit-roles.component.html
     @path: src/app/admin/core-pages/edit-roles/edit-roles.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description: Role and permission management screen. Master-detail layout: searchable
         role list on the left, detail of the selected role (name, description, forced 2FA and
@@ -12,9 +12,6 @@
         - ExportPopupBuilderComponent (app-export-popup-builder): format / column picker of the export.
         - CommonModule, FormsModule: structural directives and ngModel.
         - AdminLocalizationService: every visible text comes from `strings.*` (section 'edit-roles').
-    @refactor-note (2026-10-27) Own delete modal removed (standard confirm dialog, see the
-        component); labelled fields in the edit mode of the details; visible reason why a role
-        cannot be deleted; heading + hint in the permission save bar.
 -->
 
 <div class="roles-page">

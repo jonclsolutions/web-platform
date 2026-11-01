@@ -1,12 +1,11 @@
 /**
  * @file shop-footer.component.spec.ts
  * @path src/app/public/shop-pages/components/shop-footer/shop-footer.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ShopFooterComponent: shop module, site data (footer text with {year}), social
  *   links, navigation / legal links, payment method icons (image or icon) and request errors.
- * @refactor-note (2026-10-31) Open finding #64: test of the hidden phone / company rows.
  * @dependencies
  * - createPublicPageContext (get spy routed by URL).
  */

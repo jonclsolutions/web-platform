@@ -1,23 +1,17 @@
 <!--
     @file: knowledge-base.component.html
     @path: /src/app/public/web-pages/knowledge-base/knowledge-base.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @redesign-note (2026-08-28) BACKLOG "levý postranní seznam sekcí, vpravo obsah
-        s nadpisem": přidán `.kb-layout` dvousloupcový grid - `.kb-sidebar` (trvale
-        viditelný, "sticky" seznam odkazů na sekce, zvýrazňuje aktuální sekci podle
-        scrollu - viz knowledge-base.component.ts `activeSectionId`) + `.kb-content`
-        (stávající sekce, beze změny jejich vnitřního obsahu/struktury). Dosavadní
-        vodorovný `.kb-toc` (pilulky) NEBYL smazán - zůstává jako fallback JEN pro
-        mobil (viz .css media query), kde by postranní sloupec nedával smysl.
+    @description: Template of the knowledge base component.
 -->
 
 @if (t) {
 
   <div class="kb-main-content">
 
-    <!-- Hero / úvod stránky -->
+    <!-- Hero / page introduction -->
     <section class="kb-hero">
       <h1 class="kb-hero-heading">{{ t?.hero?.heading }}</h1>
       <p class="kb-hero-lead">{{ t?.hero?.lead }}</p>
@@ -25,7 +19,7 @@
 
     <div class="kb-layout">
 
-      <!-- Postranní seznam sekcí (desktop) - "scrollspy": zvýrazňuje aktuální sekci -->
+      <!-- Side list of the sections (desktop) - "scrollspy": highlights the current section -->
       <aside class="kb-sidebar">
         <nav class="kb-sidebar-nav" aria-label="Navigace kapitolami">
           <a href="#kb-security" (click)="scrollToSection($event, 'kb-security')" class="kb-sidebar-link" [class.active]="activeSectionId === 'kb-security'">{{ t?.sections?.security?.header }}</a>
@@ -44,7 +38,7 @@
 
       <div class="kb-content">
 
-        <!-- Obsah / rychlá navigace na jednotlivé sekce - JEN NA MOBILU (viz .css), na desktopu nahrazeno .kb-sidebar výše -->
+        <!-- Contents / quick navigation to the sections - MOBILE ONLY (see .css), replaced by .kb-sidebar above on desktop -->
         <nav class="kb-toc" aria-label="Obsah stránky">
           <a href="#kb-security" (click)="scrollToSection($event, 'kb-security')" class="kb-toc-item">{{ t?.sections?.security?.header }}</a>
           <a href="#kb-legal" (click)="scrollToSection($event, 'kb-legal')" class="kb-toc-item">{{ t?.sections?.legal?.header }}</a>
@@ -60,7 +54,7 @@
         </nav>
 
         <!-- ═══════════════════════════════════════════
-             BEZPEČNOST
+             SECURITY
              ═══════════════════════════════════════════ -->
         <section id="kb-security" class="kb-section">
           <div class="kb-section-head">
@@ -90,7 +84,7 @@
         </section>
 
         <!-- ═══════════════════════════════════════════
-             PRÁVNÍ SOULAD / GDPR / EU
+             LEGAL COMPLIANCE / GDPR / EU
              ═══════════════════════════════════════════ -->
         <section id="kb-legal" class="kb-section kb-section--alt">
           <div class="kb-section-head">
@@ -180,7 +174,7 @@
         </section>
 
         <!-- ═══════════════════════════════════════════
-             DATABÁZE
+             DATABASE
              ═══════════════════════════════════════════ -->
         <section id="kb-database" class="kb-section">
           <div class="kb-section-head">
@@ -270,7 +264,7 @@
         </section>
 
         <!-- ═══════════════════════════════════════════
-             NASAZENÍ / SSH / FTP
+             DEPLOYMENT / SSH / FTP
              ═══════════════════════════════════════════ -->
         <section id="kb-deployment" class="kb-section kb-section--alt">
           <div class="kb-section-head">
@@ -300,7 +294,7 @@
         </section>
 
         <!-- ═══════════════════════════════════════════
-             VÝKON A ŠKÁLOVATELNOST
+             PERFORMANCE AND SCALABILITY
              ═══════════════════════════════════════════ -->
         <section id="kb-performance" class="kb-section">
           <div class="kb-section-head">
@@ -330,7 +324,7 @@
         </section>
 
         <!-- ═══════════════════════════════════════════
-             PODPORA A ÚDRŽBA
+             SUPPORT AND MAINTENANCE
              ═══════════════════════════════════════════ -->
         <section id="kb-support" class="kb-section kb-section--alt">
           <div class="kb-section-head">
@@ -360,7 +354,7 @@
         </section>
 
         <!-- ═══════════════════════════════════════════
-             SLOVNÍČEK POJMŮ (accordion, čisté CSS)
+             GLOSSARY (accordion, pure CSS)
              ═══════════════════════════════════════════ -->
         <section id="kb-glossary" class="kb-glossary-section">
           <div class="kb-glossary-header">
@@ -503,7 +497,7 @@
           </div>
         </section>
 
-        <!-- CTA na konci stránky -->
+        <!-- CTA at the end of the page -->
         <section class="kb-cta-section">
           <div class="kb-cta-block">
             <p class="kb-cta-text">{{ t?.cta?.text }}</p>

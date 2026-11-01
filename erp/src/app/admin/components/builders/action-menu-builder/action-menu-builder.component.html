@@ -1,19 +1,13 @@
 <!--
     @file: action-menu-builder.component.html
     @path: /src/app/admin/components/builders/action-menu-builder/action-menu-builder.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @note: (click)="$event.stopPropagation()" na .action-menu-list NENÍ potřeba -
-        HostListener v TS zavírá menu jen při kliknutí MIMO host element komponenty
-        (viz onDocumentClick), takže klik uvnitř seznamu ho nezavře dřív, než
-        onSelect() stihne emitovat akci.
-    @refactor-note (2026-08-24v2): přidány template ref proměnné #trigger a #menu -
-        `positionMenu()` v TS je potřebuje pro `getBoundingClientRect()` (viz
-        action-menu-builder.component.ts stejné datum). `[style.top.px]`/
-        `[style.left.px]` a `[style.visibility]` řídí fixed pozicování - dokud
-        `menuPosition` je `null` (mezi otevřením a prvním změřením), menu je
-        vykreslené ale neviditelné, aby nebylo vidět "cuknutí" ze špatné pozice.
+    @note: (click)="$event.stopPropagation()" on .action-menu-list is NOT needed - the
+        HostListener in TS closes the menu only on a click OUTSIDE the host element
+        (see onDocumentClick), so a click inside the list does not close it before
+        onSelect() emits the action.
 -->
 <div class="action-menu">
   <button

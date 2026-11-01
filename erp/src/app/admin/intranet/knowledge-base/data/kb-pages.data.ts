@@ -1,32 +1,30 @@
 /**
  * @file kb-pages.data.ts
  * @path src/app/admin/intranet/knowledge-base/data/kb-pages.data.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description STATICKÝ obsah celého interního manuálu (Knowledge Base). Editace
- * manuálu = editace tohoto pole v kódu - viz kb-content.ts pro vysvětlení architektury.
+ * @description STATIC content of the whole internal manual (Knowledge Base). Editing the
+ * manual = editing this array in code - see kb-content.ts for the architecture.
  *
- * @editing-guide Jak přidat novou stránku manuálu:
- * 1) Přidej nový objekt do `KB_PAGES` pole níže, `id` musí být unikátní kebab-case slug.
- *    Pozor na kolize napříč moduly (např. web/core/shop mají každý vlastní "dashboard" a
- *    "logs" route) - proto jsou tyto stránky prefixované (`web-dashboard`,
+ * @editing-guide How to add a new manual page:
+ * 1) Add a new object to the `KB_PAGES` array below; `id` must be a unique kebab-case slug.
+ *    Beware of collisions across modules (e.g. web / core / shop each have their own
+ *    "dashboard" and "logs" route) - hence these pages are prefixed (`web-dashboard`,
  *    `core-dashboard`, `shop-dashboard`, `web-business-logs`, `core-logs`, `shop-logs`).
- * 2) `navGroup`/`navOrder` určují, kde se stránka objeví v bočním menu - žádná úprava
- *    knowledge-base.component.html není potřeba, menu se generuje z tohoto pole
- *    automaticky (viz KnowledgeBaseComponent.buildNavGroups()).
- * 3) Pokud stránka dokumentuje funkci vázanou na konkrétní permission/roli, popiš to do
- *    `devNote` (viditelné jen v kódu, NEPŘEKLÁDÁ SE) - permission klíče odpovídají 1:1
- *    hodnotám `data: { permission: '...' }` v admin-routing.module.ts.
- * 4) Obrázky (KBImageBlock.path) patří do `src/assets/kb/<page-id>/...`.
- * 5) VŠECHNY uživatelsky viditelné texty (navLabel, header, obsah bloků) MUSÍ mít
- *    vyplněné `cz` i `en` pole - viz `LocalizedText` v kb-content.ts. `devNote`
- *    zůstává jednojazyčný (dev-only, nikdy se nevykresluje).
+ * 2) `navGroup` / `navOrder` decide where the page shows in the side menu - no change of
+ *    knowledge-base.component.html is needed, the menu is generated from this array
+ *    (see KnowledgeBaseComponent.buildNavGroups()).
+ * 3) When the page documents a function bound to a specific permission / role, describe it in
+ *    `devNote` (visible only in code, NOT translated) - the permission keys match the values
+ *    `data: { permission: '...' }` of admin-routing.module.ts 1:1.
+ * 4) Images (KBImageBlock.path) belong to `src/assets/kb/<page-id>/...`.
+ * 5) ALL user-visible texts (navLabel, header, block content) MUST have both `cz` and `en`
+ *    filled in - see `LocalizedText` in kb-content.ts. `devNote` stays in one language
+ *    (dev-only, never rendered).
  *
- * @note `support-form` a `news` NEJSOU v tomhle poli - obě zůstávají vlastní
- * komponenty/routy (mají skutečnou logiku, ne statický text) - viz admin-routing.module.ts.
- * @refactor-note (2026-10-27) devNote permission keys of Edit website and the E-shop pages
- *   updated to the current keys (same as admin-navigation.config.ts and the routes).
+ * @note `support-form` and `news` are NOT in this array - both stay own components / routes
+ * (real logic, not static text) - see admin-routing.module.ts.
  */
 
 import { KBPage } from "../../../../shared/interfaces/kb-content";
@@ -72,19 +70,7 @@ export const KB_PAGES: KBPage[] = [
 
   // ── Roles ────────────────────────────────────────────────────────────────
 
-  // {
-  //   id: 'sales-rep',
-  //   navGroup: 'roles',
-  //   navLabel: { cz: 'Sales Rep', en: 'Sales Rep' },
-  //   navOrder: 5,
-  //   header: { cz: 'Role: Obchodní zástupce', en: 'Role: Sales Representative' },
-  //   sections: [ { blocks: [ { type: 'lead', content: {
-  //     cz: 'Testovací obsah - sem patří popis náplně role obchodního zástupce v systému (Sales Leads, Sales Orders).',
-  //     en: 'Placeholder content - this should describe the responsibilities of the Sales Representative role in the system (Sales Leads, Sales Orders).'
-  //   } } ] } ]
-  // },
-
-  // ── Web (odpovídá routám 'web/*' v admin-routing.module.ts) ─────────────
+  // ── Web (matches the 'web/*' routes of admin-routing.module.ts) ─────────────
 
   {
     id: 'web-dashboard',
@@ -207,7 +193,7 @@ export const KB_PAGES: KBPage[] = [
     } } ] } ]
   },
 
-  // ── Core (odpovídá routám 'core/*' v admin-routing.module.ts) ────────────
+  // ── Core (matches the 'core/*' routes of admin-routing.module.ts) ────────────
 
   {
     id: 'core-dashboard',
@@ -302,7 +288,7 @@ export const KB_PAGES: KBPage[] = [
     devNote: "AdministratorsComponent, route 'core/administrators', permission 'core-administrators-view'. Akce: vytvoření 'core-administrators-create'; úprava, změna hesla a znovuodeslání aktivace 'core-administrators-update'; smazání a trvalé smazání z koše 'core-administrators-delete'; koš 'view-deleted'; reporty 'core-administrators-view'; e-mailové domény jen role sysadmin (bez permission klíče, viz isSysadmin). Text popisuje i navazující veřejné stránky: LoginComponent (2FA krok, zapomenuté heslo), ResetPasswordComponent, ActivateAccountComponent - při změně jejich chování aktualizuj kapitoly 05, 08 a 11. Názvy tlačítek jsou v textu záměrně POPISNÉ (ne doslovné), texty aktivační/reset stránky jsou v admin překladech (sekce reset-password / activate-account), anglické popisky v uvozovkách zůstávají jen v e-mailech. Limit hesla 8-16 znaků vychází z password-policy konstant - při změně politiky uprav kapitoly 05 a 11.",
     sections: [
 
-      // ── Úvod ────────────────────────────────────────────────────────────
+      // ── Introduction ────────────────────────────────────────────────────────────
       {
         blocks: [
           { type: 'lead', content: {
@@ -1206,7 +1192,7 @@ export const KB_PAGES: KBPage[] = [
         ]
       },
 
-      // ── Závěr ───────────────────────────────────────────────────────────
+      // ── Conclusion ───────────────────────────────────────────────────────────
       {
         blocks: [
           { type: 'note', highlight: true, content: {
@@ -1242,7 +1228,7 @@ export const KB_PAGES: KBPage[] = [
     } } ] } ]
   },
 
-  // ── Shop (odpovídá routám 'shop/*' v admin-routing.module.ts) ────────────
+  // ── Shop (matches the 'shop/*' routes of admin-routing.module.ts) ────────────
 
   {
     id: 'shop-dashboard',

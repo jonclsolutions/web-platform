@@ -1,15 +1,10 @@
 /*
     @file: contact.component.css
     @path: /src/app/public/web-pages/contact/contact.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @refactor-note (2026-09) Unified spacing across public pages: spacing tokens
-        (--gutter, --section-y, --hero-top, --hero-bottom), content aligned to the
-        shared 1200px column. Split layout keeps the full-bleed left panel
-        background; grid gained outer "side" columns so the panel text starts at
-        the content column's left edge and the form ends at its right edge.
-        Only padding / margin / max-width / grid tracks changed.
+    @description: Styles of the contact component.
 */
 
 :host {

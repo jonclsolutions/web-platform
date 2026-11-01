@@ -1,8 +1,8 @@
 /**
  * @file icon.component.ts
  * @path src/app/shared/components/icon/icon.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Centralized inline-SVG icon set used across admin table builders
  * (replaces ad-hoc emoji in TableButtons/Button configs). Adding a new icon = one

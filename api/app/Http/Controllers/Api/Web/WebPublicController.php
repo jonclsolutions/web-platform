@@ -2,17 +2,12 @@
 /**
  * @file WebPublicController.php
  * @path app/Http/Controllers/Api/Web/WebPublicController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Public (unauthenticated) status endpoint used by `webMaintenanceGuard` on
  * the frontend to decide whether to redirect visitors to the web maintenance page. Mirror
  * of ShopPublicController::getStatus() for the web section.
- *
- * @refactor-note (2026-08-15) `getStatus()` repointed from `App\Models\Core\CoreSiteSetting`
- * (table dropped) to `App\Models\Web\WebSiteSetting` following the move of web maintenance
- * data out of the Core domain - see WebSiteSettingController for the accompanying admin
- * endpoint. Cache key unchanged; since 2026-10-24 the answer is `{data: {is_web_active}}` (finding #6).
  */
 
 namespace App\Http\Controllers\Api\Web;

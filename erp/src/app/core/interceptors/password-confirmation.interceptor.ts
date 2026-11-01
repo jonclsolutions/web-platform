@@ -1,9 +1,9 @@
 /**
  * @file password-confirmation.interceptor.ts
  * @path src/app/core/interceptors/password-confirmation.interceptor.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-26
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Step-up re-authentication for every admin call: a request refused with 403
  *   `PASSWORD_CONFIRMATION_REQUIRED` (+ `scope`) opens the password prompt
  *   (PasswordConfirmationService) and, once confirmed, is sent ONCE more - the calling component

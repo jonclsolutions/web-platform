@@ -2,8 +2,8 @@
 #
 # @file test_auth_401.sh
 # @path tests/regression_tests/administrators/test_auth_401.sh
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Manual security check: verifies that `core/users` cannot be read without a valid
 # session. Every request must end with HTTP 401.

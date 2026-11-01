@@ -1,8 +1,8 @@
 /**
  * @file external-links.component.spec.ts
  * @path src/app/admin/core-pages/external-links/external-links.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ExternalLinksComponent – the core "external links" table page:
  *   configuration from translations, toolbar buttons by permission and state, default sorting

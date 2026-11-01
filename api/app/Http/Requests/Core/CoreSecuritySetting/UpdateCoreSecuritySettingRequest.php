@@ -2,12 +2,11 @@
 /**
  * @file UpdateCoreSecuritySettingRequest.php
  * @path app/Http/Requests/Core/CoreSecuritySetting/UpdateCoreSecuritySettingRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Validace retenční doby bezpečnostních logů. Rozsah 7-365 dní - příliš
- * krátká retence by smazala evidenci dřív, než se stihne vyhodnotit útok; příliš dlouhá
- * koliduje s GDPR zásadou minimalizace uchovávaných dat.
+ * @description Validates the retention of the security logs: 7-365 days - shorter would delete
+ * the evidence before an attack is analysed, longer conflicts with GDPR storage limitation.
  */
 
 namespace App\Http\Requests\Core\CoreSecuritySetting;
@@ -18,7 +17,7 @@ class UpdateCoreSecuritySettingRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // řešeno middlewarem 'permission:core-security-update'
+        return true; // Authorization: middleware 'permission:core-security-update'.
     }
 
     public function rules(): array

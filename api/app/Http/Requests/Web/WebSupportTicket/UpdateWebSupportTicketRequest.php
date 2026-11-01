@@ -2,14 +2,10 @@
 /**
  * @file UpdateWebSupportTicketRequest.php
  * @path app/Http/Requests/Web/WebSupportTicket/UpdateWebSupportTicketRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation logic for updating existing support tickets.
- *
- * @refactor-note (2026-08) `$safeExtensions` zúžen shodně se StoreWebSupportTicketRequest -
- * viz jeho hlavička pro odůvodnění. Oba seznamy MUSÍ zůstat identické, jinak by šlo
- * obejít omezení na create tak, že by se nežádoucí typ souboru nahrál až přes update.
  */
 
 namespace App\Http\Requests\Web\WebSupportTicket;
@@ -43,7 +39,6 @@ class UpdateWebSupportTicketRequest extends FormRequest
 
         return [
             'priority'         => ['sometimes', 'required', 'string', 'max:50', 'in:low,medium,high'],
-            // rules() - nahradit řádek 'category', a zpřísnit 'state' na stejný vzor jako priority:
             'category'         => ['sometimes', 'required', 'string', 'max:100', 'in:it,business,bug,other'],
             'state'            => ['sometimes', 'required', 'string', 'max:50', 'in:new,open,closed'],
             'subject'          => ['sometimes', 'required', 'string', 'max:255'],

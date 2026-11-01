@@ -1,12 +1,10 @@
 /*     
     @file: pagination-button-builder.component.css
     @path: /src/app/admin/components/builders/pagination-button-builder/pagination-button-builder.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
-               plně zaoblená ("pill") tlačítka, tmavý akcent (#18181b) místo indigo
-               pro aktivní stránku. Struktura/třídy a logika beze změny.
+    @description: Styles of the pagination buttons builder component.
 */
 
 .pagination-controls-wrapper {

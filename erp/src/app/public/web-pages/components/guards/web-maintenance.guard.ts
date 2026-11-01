@@ -1,14 +1,14 @@
 /**
  * @file web-maintenance.guard.ts
  * @path src/app/public/web-pages/components/guards/web-maintenance.guard.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Authentication-level guard that intercepts public web routes to verify if
  * the public web is currently active or in maintenance mode. Mirror of
  * shopMaintenanceGuard, but applied ONCE via canActivateChild on the top-level web layout
  * route (app.routes.ts) instead of duplicated per-child route - blocks the entire public
- * web at once, by design (see task requirement: "blokovat celý web").
+ * web at once, by design.
  * @dependencies
  * - inject: Angular function for dependency injection in functional guards.
  * - Router: Enables redirection to the maintenance page.

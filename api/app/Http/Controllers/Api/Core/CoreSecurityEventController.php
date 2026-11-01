@@ -2,8 +2,8 @@
 /**
  * @file CoreSecurityEventController.php
  * @path app/Http/Controllers/Api/Core/CoreSecurityEventController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Admin reading/triage of security monitoring (core_security_events).
  * Writing (`CoreSecurityEvent::record()`) happens exclusively internally from the backend (captcha,
@@ -12,26 +12,6 @@
  *
  * @note Without the trash/restore concept - these records are diagnostics, not a business entity
  * that makes sense to restore. Deletion (`destroy`/`purge`) is therefore directly permanent.
- *
- * @bugfix-note (2026-08-22) `update()` (triage) returns the result wrapped in `{data: ...}` -
- * frontend `DataHandler.put<T>()` (called via `EntityCrudService::update()` from
- * `BaseDataComponent.updateData()`) automatically unwraps `response.data`. `show()`
- * remains UNWRAPPED (called via `EntityCrudService::getOne()` -> `DataHandler.get<T>()`,
- * which unwraps nothing), just like `destroy()` (via `DataHandler.delete()`, which
- * doesn't type/read the returned body at all).
- *
- * @refactor-note (2026-08-22v2) AUDIT LOG: `update()` (triage), `destroy()` and
- * `purge()` now write to `core_logs` (via `LogsActivity` trait) - who and when changed
- * the status of the event, deleted an individual record, or triggered a mass purge (and how many records
- * it deleted). `store()`/writing of the events themselves (`CoreSecurityEvent::record()`) is NOT written to
- * `core_logs` - during an attack that would flood the audit log just as much as
- * unbucketed writes would flood `core_security_events` (see CoreSecurityEvent.php).
- * Only administrative ACTIONS over monitoring are logged, not the diagnostic data itself.
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -125,7 +105,7 @@ $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALID
             'CoreSecurityEvent'
         );
 
-        // Wrapper {data: ...} - see bugfix-note in class header (DataHandler.put() unwrap).
+        // Wrapper {data: ...} - DataHandler.put() unwraps it on the frontend.
         return $this->respond(new CoreSecurityEventResource($event));
     }
 

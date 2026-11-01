@@ -2,32 +2,10 @@
 /**
  * @file ShopCustomerController.php
  * @path app/Http/Controllers/Api/Shop/ShopCustomerController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages CRUD operations for shop customers, including soft-delete lifecycle management, comprehensive audit logging, and bulk trash cleanup.
- *
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
- * lokální duplicitní logAction() - doménově beze změny (ShopLog::class). Zároveň
- * ODSTRANĚNA ladicí `Log::info()` volání rozeseta po store()/update()/destroy()/
- * restore()/forceDeleteAllTrashed() (payload celého requestu do laravel.log při KAŽDÉM
- * volání) - jde o pozůstatek z debugování, v produkci zbytečně plní log soubor a u
- * zákaznických dat (jméno, e-mail, adresa) navíc zbytečně duplikuje osobní údaje mimo
- * řízený audit trail (`shop_logs`), což je z pohledu GDPR/data minimalizace nežádoucí.
- * `forceDeleteAllTrashed()` dosud neměl žádné auditní volání do `shop_logs` - doplněno.
- *
- * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update / destroy / restore (findOrFail inside try);
- * SECURITY: the 500 answers of store / update contained the exception text → generic messages.
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @bugfix-note (2026-10-23) Open finding #22: a permanent delete removed all orders of the
- *   customer (FK CASCADE) although orders / invoices must be kept for the accounting retention
- *   period (CZ 10 years). A customer with orders is now refused (409, use the anonymisation),
- *   emptying the trash keeps such customers (answer with deleted / skipped counts) and the new
- *   `anonymize()` endpoint is the GDPR erasure that keeps the orders.
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;

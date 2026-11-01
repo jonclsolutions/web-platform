@@ -3,8 +3,8 @@
 /**
  * @file SalesLeadTest.php
  * @path api/tests/Feature/Web/SalesLeadTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the sales leads (WebSalesLeadController): list, create with
  *   the salesman from the signed-in account, validated edit, delete / restore / trash, the
@@ -204,7 +204,7 @@ class SalesLeadTest extends TestCase
 
     /**
      * @description A lead without priority / status is returned with the slug defaults (finding #52 -
-     *   were the Czech 'Neutrální' / 'nové', outside the validated vocabulary).
+     *   they were the old Czech texts, outside the validated vocabulary).
      * @input WebSalesLeadResource of an unsaved lead with priority and status null.
      * @output priority 'neutral', status 'new'.
      */

@@ -2,9 +2,9 @@
 /**
  * @file web_site_settings.php
  * @path api/database/seeders/data/web_site_settings.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-30
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Default row of web_site_settings (singleton id 1): web switched on, maintenance
  *   message, texts of the confirmation e-mail of a raw request (all editable in the admin).
  *   Generated from the database dump of 2026-10-29 (typos of the default e-mail texts fixed);

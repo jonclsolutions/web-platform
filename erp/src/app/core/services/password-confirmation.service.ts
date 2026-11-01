@@ -1,9 +1,9 @@
 /**
  * @file password-confirmation.service.ts
  * @path src/app/core/services/password-confirmation.service.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-26
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Step-up re-authentication of the admin (OWASP ASVS V2 "re-authentication before
  *   sensitive operations"). The API refuses an operation on a sysadmin account (create / promote /
  *   demote / edit / delete / restore) and a change of the e-mail access policy with 403

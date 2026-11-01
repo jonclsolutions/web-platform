@@ -3,8 +3,8 @@
 /**
  * @file routes/api.php
  * @path routes/api.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Defines all application API endpoints, including public access for the
  * frontend, checkout processes, and protected administrative routes.
@@ -66,11 +66,6 @@ use App\Http\Controllers\Api\Legal\PageTitleController;
 |--------------------------------------------------------------------------
 | Only GET for language lists and translations — no mutations without authorization.
 */
-// @bugfix-note (2026-10-23) SECURITY - {module} / {lang} / {code} are parts of file paths in
-// TranslationController (storage/app/public/translations/{module}/{lang}.json). They accepted
-// anything without a slash, incl. '..' (e.g. module '..' wrote / read JSON files one folder up).
-// Now restricted to a module name and a language code (TranslationController::MODULE_PATTERN /
-// LANG_PATTERN) - anything else is 404.
 Route::get('languages/{module}', [TranslationController::class, 'getLanguages'])
     ->where('module', TranslationController::MODULE_PATTERN);
 Route::get('translations/{module}/{lang}', [TranslationController::class, 'show'])
@@ -89,15 +84,11 @@ Route::prefix('shop/public')->group(function () {
     Route::middleware('shop.active')->group(function () {
         Route::get('products', [ShopProductController::class, 'publicIndex']);
         Route::get('products/{slugOrId}', [ShopProductController::class, 'publicShow']);
-        // Prefix 'shop-check-stock' - viz bugfix-note (2026-08-25) v hlavičce souboru.
         Route::get('products/{id}/check-stock', [ShopPublicController::class, 'checkStock'])
             ->middleware('throttle:15,1,shop-check-stock');
-        // @bugfix-note (2026-10-23) was the admin index (inactive categories, 15 per page) - finding #27.
         Route::get('categories', [ShopCategoryController::class, 'publicIndex']);
         Route::get('shipping-methods', [ShopPublicController::class, 'getShippingMethods']);
         Route::get('payment-methods', [ShopPublicController::class, 'getPaymentMethods']);
-        // @bugfix-note (2026-10-23) Own throttle bucket - without it coupon codes could be
-        // guessed by brute force (the endpoint answers which codes exist).
         Route::post('coupons/validate', [ShopPublicController::class, 'validateCoupon'])
             ->middleware('throttle:20,1,shop-coupon-validate');
     });
@@ -113,8 +104,6 @@ Route::get('web/public/status', [WebPublicController::class, 'getStatus']);
 | CHECKOUT
 |--------------------------------------------------------------------------
 */
-// @bugfix-note (2026-10-23) The public checkout endpoints had no rate limit (order spam
-// that also blocks stock, payment-simulation id probing) - own buckets per endpoint.
 Route::prefix('shop/checkout')->middleware('shop.active')->group(function () {
     Route::post('create-order', [ShopCheckoutController::class, 'createOrder'])
         ->middleware('throttle:10,1,shop-checkout-create');
@@ -137,15 +126,10 @@ Route::prefix('public/legal')->group(function () {
 |--------------------------------------------------------------------------
 | PUBLIC SALES LEADS — resolve by unguessable token (order form prefill)
 |--------------------------------------------------------------------------
-| Slouží OrderFormComponent k předvyplnění formuláře podle odkazu, který lead
-| dostal od obchodníka (viz WebSalesLeadController::generateLink v chráněné
-| sekci níže). NIKDY nepřidávat sem přístup podle interního `id` - jen `token`.
+| OrderFormComponent prefills the form from the link the salesman sent to the lead
+| (WebSalesLeadController::generateLink in the protected section). NEVER add access by the
+| internal `id` here - only by `token`.
 */
-// @bugfix-note (2026-10-23) `web.active` (CheckWebActive) was registered but used on NO route -
-// with the web switched to maintenance the public web forms still accepted data (open finding #7).
-// It now guards the web-only public endpoints: lead prefill + the three public forms (503 with the
-// maintenance message). NOT on status / legal config / translations / languages - the maintenance
-// page itself and the e-shop need those.
 Route::prefix('public')->middleware('web.active')->group(function () {
     Route::get('sales-leads/{token}', [WebSalesLeadController::class, 'showByToken']);
 });
@@ -155,15 +139,6 @@ Route::prefix('public')->middleware('web.active')->group(function () {
 | PUBLIC PROJECT PORTAL — customer login by permanent access_token, then a
 | 24h-sliding session (CheckProjectSession middleware, alias 'project.session')
 |--------------------------------------------------------------------------
-| @refactor-note (2026-08-28) VLASTNÍ, na Sanctum NEZÁVISLÁ auth doména - viz
-| CheckProjectSession.php a WebProjectSession model pro plný bezpečnostní rozbor.
-| `login()` je jediný nepřihlášený krok; vše ostatní visí za `project.session`,
-| který na KAŽDÉM requestu (ne jen při loginu) ověřuje, že daný projekt je pořád
-| `visibility = 'public'` - přepnutí na 'private' tak okamžitě odhlásí i právě
-| aktivní zákaznickou relaci, ne jen zablokuje budoucí přihlášení.
-| Throttle prefixy 'project-login'/'project-thread-create'/'project-message-create'/
-| 'project-session' - každý vlastní bucket, stejný princip jako bugfix-note
-| (2026-08-25) výše (žádné sdílení bucketů mezi nesouvisejícími endpointy).
 */
 Route::post('projects/public/{token}/login', [WebProjectPublicController::class, 'login'])
     ->middleware('throttle:10,1,project-login');
@@ -187,16 +162,8 @@ Route::prefix('projects/public/{token}')
 
 /*
 |--------------------------------------------------------------------------
-| ACCOUNT ACTIVATION — public, token-based (účet založený adminem bez hesla)
+| ACCOUNT ACTIVATION — public, token-based (account created by an admin without a password)
 |--------------------------------------------------------------------------
-| @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu": odkaz z
-| AccountActivationMail (viz UserController::store()/resendActivation()). GET ověří
-| platnost tokenu bez jeho spotřebování, POST nastaví heslo, aktivuje účet
-| (`activated_at`) a token spotřebuje. Throttle chrání proti hrubému hádání tokenů
-| (token samotný je 64znakový random string, ale defense-in-depth se nevyplácí
-| přeskakovat ani tady).
-| @bugfix-note (2026-08-25) Prefixy 'account-activation-show'/'account-activation-activate'
-| - viz hlavička souboru. Bez nich sdílely bucket s /forgot-password, /sales_orders atd.
 */
 Route::prefix('account-activation')->group(function () {
     Route::get('/{token}',  [AccountActivationController::class, 'show'])
@@ -215,7 +182,6 @@ Route::get('/sanctum/csrf-cookie', fn(Request $r) => response()->json([], 204));
 Route::post('/login', [AuthController::class, 'login'])
     ->middleware('throttle:login');
 
-// Prefix 'login-verify-2fa' - viz bugfix-note (2026-08-25) v hlavičce souboru.
 Route::post('/login/verify-2fa', [AuthController::class, 'verifyTwoFactor'])
     ->middleware('throttle:10,1,login-verify-2fa');
 
@@ -226,10 +192,9 @@ Route::post('/refresh', [AuthController::class, 'refresh']);
 
 /*
 |--------------------------------------------------------------------------
-| Password reset (public) — krok 1 (vyžádání odkazu) a krok 5 (nastavení nového hesla)
+| Password reset (public) — request the link and set the new password
 |--------------------------------------------------------------------------
-| Throttle per-IP proti hrubému útoku / enumeraci; interní audit log viz. web_system_logs.
-| @bugfix-note (2026-08-25) Prefixy 'password-forgot'/'password-reset' - viz hlavička souboru.
+| IP throttle against brute force / enumeration; audit log in core_logs.
 */
 Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword'])
     ->middleware('throttle:5,1,password-forgot');
@@ -237,15 +202,8 @@ Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']
     ->middleware('throttle:10,1,password-reset');
 
 // Public web forms
-// @bugfix-note (2026-10-22) SECURITY: the contact form (raw_request_commissions) and the job
-// application form had no rate limit - anyone could flood the database / storage with
-// records and attachments and, through the confirmation e-mail of the contact form, send
-// unlimited e-mails to any address. Now the same per-IP limit as sales_orders, each with
-// its own bucket prefix (see the bugfix-note (2026-08-25) in the file header).
 Route::post('raw_request_commissions', [WebRawRequestCommissionController::class, 'store'])
     ->middleware(['web.active', 'throttle:10,1,raw-request-commissions']);
-// Prefix 'sales-orders' - viz bugfix-note (2026-08-25) v hlavičce souboru (tenhle
-// endpoint byl hlavní zdroj falešného křížení v reálném testu skriptu).
 Route::post('sales_orders', [WebSalesOrderController::class, 'store'])
     ->middleware(['web.active', 'throttle:10,1,sales-orders']);
 Route::post('job_applications',        [WebJobApplicationController::class, 'store'])
@@ -255,15 +213,6 @@ Route::post('job_applications',        [WebJobApplicationController::class, 'sto
 |--------------------------------------------------------------------------
 | ATTACHMENT DOWNLOAD / VIEW — signed URLs only
 |--------------------------------------------------------------------------
-| @refactor-note (2026-08-31) BACKLOG "privátní úložiště citlivých příloh":
-| PublicFileDownloadController -> AttachmentDownloadController. `signed` middleware
-| ověřuje kryptografický podpis vygenerovaný WebAttachmentResource (10 min TTL) -
-| bez platného/nevypršeného podpisu 403. Autentizace/oprávnění se řeší NEPŘÍMO,
-| v okamžiku vydání URL (admin musí projít auth:sanctum + permission na endpointu,
-| který detail se seznamem příloh vrátil), ne tady - proto tyto routy NEJSOU uvnitř
-| auth:sanctum skupiny. Jeden wildcard `{path}` (ne dva segmenty `{folder}/{file}`) -
-| moduly teď mají prefixované cesty (`web/raw_request_commissions/...`), folder
-| segment tak sám obsahuje lomítko.
 */
 Route::get('/attachments/download/{path}', [AttachmentDownloadController::class, 'download'])
     ->where('path', '.*')
@@ -279,11 +228,9 @@ Route::get('/attachments/view/{path}', [AttachmentDownloadController::class, 'vi
 |--------------------------------------------------------------------------
 | Protected Routes (auth:sanctum + rate limit)
 |--------------------------------------------------------------------------
-| @note `throttle:300,1` zde NEPOTŘEBOVAL prefix - resolveRequestSignature() u
-| PŘIHLÁŠENÉHO uživatele klíčuje podle user_id, ne podle IP, takže je od veřejných
-| (nepřihlášených) throttle bucketů výše přirozeně oddělený už teď - auth:sanctum
-| middleware navíc běží PŘED throttle, takže sem se bez platného uživatele vůbec
-| nedostaneme.
+| @note `throttle:300,1` needs no prefix: for a LOGGED-IN user the throttle signature is the
+| user_id, not the IP, so it is separate from the public buckets above; auth:sanctum runs
+| BEFORE the throttle.
 */
 Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
 
@@ -310,14 +257,10 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
     |----------------------------------------------------------------------
     | CORE
     |----------------------------------------------------------------------
-    | @refactor-note (2026-08-15): blok `core/settings` (CoreSiteSettingController)
-    |    ZRUŠEN celý - viz hlavička souboru. Web maintenance žije nově pod `web/settings`
-    |    (WEB sekce níže), shop maintenance pod `shop/settings` (SHOP sekce níže).
     */
     Route::prefix('core')->group(function () {
 
-        // POST bez permission middleware - zápis vlastního audit záznamu (viz
-        // @refactor-note 2026-08-2 v hlavičce souboru). GET (čtení historie) chráněno.
+        // POST without a permission middleware - writes an audit entry of the user's own action (see
         Route::prefix('logs')->group(function () {
             Route::get('/',     [CoreLogController::class, 'index'])
                 ->middleware('permission:view-core');
@@ -361,18 +304,14 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         });
 
         // ── core/users ────────────────────────────────────────────────────
-        // {id} routy mají 'selfParam' => id (viz CheckPermission) - vlastní účet
-        // (personal-info stránka) je dostupný i bez core-administrators-*.
+        // {id} routes pass 'selfParam' => id (CheckPermission) - the own account
+        // (personal info page) is reachable without core-administrators-*.
         //
-        // TODO (budoucí task): bulk-delete/import pro core/users VĚDOMĚ zatím NEEXISTUJE.
-        // UserController::destroy() obsahuje sysadmin ochranu (nelze smazat sám sebe,
-        // jen sysadmin smí smazat jiného sysadmina) - bulkDestroy() by musel tuhle logiku
-        // přesně replikovat, ne obejít. Import navíc musí řešit hashování hesla a
-        // přiřazení role - vyžaduje samostatný bezpečnostní rozbor před implementací.
+        // No bulk delete / import for core/users on purpose: UserController::destroy() protects the
+        // sysadmin (no deleting yourself, only a sysadmin deletes a sysadmin) - a bulkDestroy() would
+        // have to repeat that exactly; an import would have to hash passwords and assign roles - both
+        // need a security review first.
         //
-        // @refactor-note (2026-08-24) `resend-activation` přidána vedle `change-password` -
-        // znovu odešle aktivační odkaz účtu, který se ještě nikdy neaktivoval (viz
-        // UserController::resendActivation()).
         Route::prefix('users')->group(function () {
             Route::delete('/force-delete-all', [UserController::class, 'forceDeleteAllTrashed'])
                 ->middleware('permission:core-administrators-delete');
@@ -399,10 +338,9 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
 
         Route::get('/permissions', [CorePermissionController::class, 'index']);
 
-        // core/roles - záměrně BEZ permission middleware. Chráněno výhradně
-        // role_name === 'sysadmin' kontrolou přímo v CoreRoleController.
-        // TODO: bulk-delete pro role VĚDOMĚ zatím NEEXISTUJE - hromadné smazání rolí
-        // může osiřet uživatele bez role, potřebuje vlastní rozbor, ne mechanické přidání.
+        // core/roles - NO permission middleware on purpose: protected only by the
+        // role_name === 'sysadmin' check in CoreRoleController.
+        // No bulk delete of roles on purpose - it could leave users without a role.
         Route::prefix('roles')->group(function () {
             Route::post('/',                   [CoreRoleController::class, 'store']);
             Route::post('/{id}/restore',       [CoreRoleController::class, 'restore']);
@@ -415,9 +353,9 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
             ->parameters(['roles' => 'id']);
 
         // ── core/external_links ──────────────────────────────────────────
-        // TODO: bulk-delete VĚDOMĚ zatím NEEXISTUJE - destroy() je scoped na vlastníka
-        // ($request->user()->externalLinks()), bulkDestroy() musí replikovat STEJNÝ
-        // scope, jinak by šlo hromadně smazat cizí odkazy jen uhodnutím ID.
+        // No bulk delete on purpose - destroy() is scoped to the owner
+        // ($request->user()->externalLinks()); a bulkDestroy() must use the SAME scope, otherwise
+        // foreign links could be deleted by guessing IDs.
         Route::prefix('external_links')->group(function () {
             Route::delete('/force-delete-all', [CoreExternalLinkController::class, 'forceDeleteAllTrashed'])
                 ->middleware('permission:core-external-links-delete');
@@ -445,18 +383,6 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
     |----------------------------------------------------------------------
     | SHOP
     |----------------------------------------------------------------------
-    | @refactor-note (2026-09-07) BACKLOG "permission audit napříč shop
-    | stránkami / granularizace shop permissions": shop sekce byla dosud
-    | JEDINÁ chráněná mimo `view/create/update/delete` vzor - products,
-    | categories, customers, suppliers, shipping_methods a payment_methods
-    | měly jen jednu "manage" permission na celý resource, orders měly jen
-    | "view" permission použitou i pro mutace, a coupons byly chráněné
-    | zcela nesouvisející `shop-view-reports`. Sjednoceno na stejný
-    | `{resource}-view/-create/-update/-delete` vzor jako `core-administrators-*`/
-    | `web-news-*` - viz migrace 002_shop_permissions_granularization.sql
-    | (nové permissions + automatický přenos přiřazení rolí ze starých klíčů).
-    | Payment methods mají jen `-view`/`-update` (žádný create/delete route
-    | v této skupině neexistuje - viz `->only(['index', 'update'])` níže).
     */
     Route::prefix('shop')->group(function () {
 
@@ -469,10 +395,7 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
 
         // Products
         Route::prefix('products')->group(function () {
-            // TODO: Route::post('/bulk-delete', [ShopProductController::class, 'bulkDestroy']);
-            // TODO: Route::get('/import/template', [ShopProductController::class, 'importTemplate']);
-            // TODO: Route::post('/import/validate', [ShopProductController::class, 'importValidate'])->middleware('throttle:30,1');
-            // TODO: Route::post('/import/commit', [ShopProductController::class, 'importCommit'])->middleware('throttle:30,1');
+            // No bulk delete / import for this resource yet.
             Route::patch('/{id}/category',     [ShopProductController::class, 'updateCategory'])
                 ->middleware('permission:shop-products-update');
             Route::get('/{id}',                [ShopProductController::class, 'show'])
@@ -495,10 +418,7 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
 
         // Customers
         Route::prefix('customers')->group(function () {
-            // TODO: Route::post('/bulk-delete', [ShopCustomerController::class, 'bulkDestroy']);
-            // TODO: Route::get('/import/template', [ShopCustomerController::class, 'importTemplate']);
-            // TODO: Route::post('/import/validate', [ShopCustomerController::class, 'importValidate'])->middleware('throttle:30,1');
-            // TODO: Route::post('/import/commit', [ShopCustomerController::class, 'importCommit'])->middleware('throttle:30,1');
+            // No bulk delete / import for this resource yet.
             Route::get('/{id}',                [ShopCustomerController::class, 'show'])
                 ->middleware('permission:shop-customers-view');
             Route::post('/{id}/restore',       [ShopCustomerController::class, 'restore'])
@@ -522,9 +442,7 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
 
         // Orders
         Route::prefix('orders')->group(function () {
-            // TODO: Route::post('/bulk-delete', [ShopOrderController::class, 'bulkDestroy']);
-            // (import pro orders pravděpodobně nedává smysl - obdobný důvod jako
-            // web/sales_orders, prověřit až budeme u tohohle kontroleru)
+            // No bulk delete for this resource yet.
             Route::get('/{id}',                [ShopOrderController::class, 'show'])
                 ->middleware('permission:shop-orders-view');
             Route::post('/{id}/restore',       [ShopOrderController::class, 'restore'])
@@ -544,9 +462,6 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
             ->middleware('permission:shop-orders-delete');
 
         // Suppliers
-        // @bugfix-note (2026-08-25) Prefixy 'import-suppliers-validate'/'import-suppliers-commit'
-        // - viz hlavička souboru (import throttly napříč resources dřív sdílely jeden
-        // per-uživatelský bucket).
         Route::prefix('suppliers')->group(function () {
             Route::post('/bulk-delete', [ShopSupplierController::class, 'bulkDestroy'])
                 ->middleware('permission:shop-suppliers-delete');
@@ -584,13 +499,8 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         });
 
         // Coupons
-        // @refactor-note (2026-09-07) NOVÁ dedikovaná permission sada
-        // (shop-coupons-*) - dříve chráněno nesouvisející shop-view-reports.
         Route::prefix('coupons')->group(function () {
-            // TODO: Route::post('/bulk-delete', [ShopCouponController::class, 'bulkDestroy']);
-            // TODO: Route::get('/import/template', [ShopCouponController::class, 'importTemplate']);
-            // TODO: Route::post('/import/validate', [ShopCouponController::class, 'importValidate'])->middleware('throttle:30,1');
-            // TODO: Route::post('/import/commit', [ShopCouponController::class, 'importCommit'])->middleware('throttle:30,1');
+            // No bulk delete / import for this resource yet.
             Route::get('/{id}',                [ShopCouponController::class, 'show'])
                 ->middleware('permission:shop-coupons-view');
             Route::post('/{id}/restore',       [ShopCouponController::class, 'restore'])
@@ -611,8 +521,7 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
 
         // Categories
         Route::prefix('categories')->group(function () {
-            // TODO: Route::post('/bulk-delete', [ShopCategoryController::class, 'bulkDestroy']);
-            // (pozor na rodič/potomek strukturu - viz bulk_destroy_recipe.txt)
+            // No bulk delete for this resource yet.
             Route::get('/{id}', [ShopCategoryController::class, 'show'])
                 ->middleware('permission:shop-categories-view');
         });
@@ -629,7 +538,7 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
 
         // Shipping Methods
         Route::prefix('shipping_methods')->group(function () {
-            // TODO: Route::post('/bulk-delete', [ShopShippingMethodController::class, 'bulkDestroy']);
+            // No bulk delete for this resource yet.
             Route::get('/{id}',                [ShopShippingMethodController::class, 'show'])
                 ->middleware('permission:shop-shipping-methods-view');
             Route::post('/{id}/restore',       [ShopShippingMethodController::class, 'restore'])
@@ -648,7 +557,7 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         Route::delete('shipping_methods/{id}', [ShopShippingMethodController::class, 'destroy'])
             ->middleware('permission:shop-shipping-methods-delete');
 
-        // Payment Methods (jen index/update - žádné destroy(), bulk-delete se netýká)
+        // Payment methods (index / update only - no destroy(), no bulk delete).
         Route::prefix('payment_methods')->group(function () {
             Route::get('/{id}', [ShopPaymentMethodController::class, 'show'])
                 ->middleware('permission:shop-payment-methods-view');
@@ -660,7 +569,6 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         Route::patch('payment_methods/{id}', [ShopPaymentMethodController::class, 'update'])
             ->middleware('permission:shop-payment-methods-update');
 
-        // TODO (budoucí task): EditEshopController zatím neexistuje.
     });
     /*
     |----------------------------------------------------------------------
@@ -681,7 +589,6 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         });
 
         // ── web/job_applications ─────────────────────────────────────────
-        // bulkDestroy() hotovo. Import zatím NE - čeká na StoreWebJobApplicationRequest.
         Route::prefix('job_applications')->group(function () {
             Route::post('/bulk-delete', [WebJobApplicationController::class, 'bulkDestroy'])
                 ->middleware('permission:web-job-applications-delete');
@@ -713,9 +620,6 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         });
 
         // ── web/support_tickets ────────────────────────────────────────────
-        // bulkDestroy() hotovo. Import zatím NE (nebylo požadováno).
-        // @bugfix-note (2026-08-25) Prefixy 'import-support-tickets-validate'/'-commit'
-        // - viz hlavička souboru.
         Route::prefix('support_tickets')->group(function () {
             Route::post('/bulk-delete', [WebSupportTicketController::class, 'bulkDestroy'])
                 ->middleware('permission:web-support-tickets-delete');
@@ -744,10 +648,8 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         });
 
         // ── web/raw_request_commissions ────────────────────────────────────
-        // bulkDestroy() I import HOTOVO KOMPLETNĚ (import bez potvrzovacího e-mailu -
-        // viz WebRawRequestCommissionController hlavička).
-        // @bugfix-note (2026-08-25) Prefixy 'import-raw-request-validate'/'-commit'
-        // - viz hlavička souboru.
+        // Bulk delete and import (the import sends no confirmation e-mail - see the header of
+        // WebRawRequestCommissionController).
         Route::prefix('raw_request_commissions')->group(function () {
             Route::post('/bulk-delete', [WebRawRequestCommissionController::class, 'bulkDestroy'])
                 ->middleware('permission:web-user-requests-delete');
@@ -776,8 +678,8 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         });
 
         // ── web/sales_orders ───────────────────────────────────────────────
-        // bulkDestroy() hotovo. Import ZÁMĚRNĚ NIKDY - viz WebSalesOrderController
-        // hlavička (atomický lead_token + GDPR souhlas, nelze retroaktivně importovat).
+        // No import on purpose (WebSalesOrderController: atomic lead_token + GDPR consent cannot be
+        // imported retroactively).
         Route::prefix('sales_orders')->group(function () {
             Route::post('/bulk-delete', [WebSalesOrderController::class, 'bulkDestroy'])
                 ->middleware('permission:web-sales-orders-delete');
@@ -800,9 +702,6 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         });
 
         // ── web/news ────────────────────────────────────────────────────────
-        // bulkDestroy() hotovo. Import zatím NE - čeká na StoreWebNewsRequest.
-        // @bugfix-note (2026-08-25) Prefixy 'import-news-validate'/'import-news-commit'
-        // - viz hlavička souboru.
         Route::prefix('news')->group(function () {
             Route::post('/bulk-delete', [WebNewsController::class, 'bulkDestroy'])
                 ->middleware('permission:web-news-delete');
@@ -831,10 +730,6 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         });
 
         // ── web/sales_leads ────────────────────────────────────────────────
-        // bulkDestroy() hotovo. Import zatím NE (store() má defaultní přiřazení
-        // salesman_name/user_id, které by import musel replikovat - neřešeno zatím).
-        // @bugfix-note (2026-08-25) Prefixy 'import-sales-leads-validate'/'-commit'
-        // - viz hlavička souboru.
         Route::prefix('sales_leads')->group(function () {
             Route::post('/bulk-delete', [WebSalesLeadController::class, 'bulkDestroy'])
                 ->middleware('permission:web-sales-leads-delete');
@@ -866,12 +761,6 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         });
 
         // ── web/projects ─────────────────────────────────────────────────────
-        // @refactor-note (2026-08-28) BACKLOG "customer project portal". Vzniká buď
-        // z web/sales_orders ("Založit projekt" tlačítko, `order_id` v těle requestu)
-        // nebo úplně samostatně ("Nový projekt", bez lead_id/order_id) - store() to
-        // řeší identicky, viz WebProjectController hlavička. Import ZÁMĚRNĚ NENÍ -
-        // access_token/heslo jsou systémem generovaná pole, ne uživatelský vstup
-        // (stejný princip jako u sales_leads public_token).
         Route::prefix('projects')->group(function () {
             Route::post('/bulk-delete', [WebProjectController::class, 'bulkDestroy'])
                 ->middleware('permission:web-projects-delete');
@@ -893,14 +782,13 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
             Route::delete('/{id}', [WebProjectController::class, 'destroy'])
                 ->middleware('permission:web-projects-delete');
 
-            // Heslo je bezpečnostně citlivá akce (zneplatní i všechny aktivní
-            // zákaznické relace - viz WebProjectController::regeneratePassword()),
-            // ale žádané chování je "kdokoliv smí editovat projekt může resetovat
-            // přístup" - stejné oprávnění jako update(), žádný nový permission klíč.
+            // Regenerating the password is security sensitive (it ends every active customer session -
+            // WebProjectController::regeneratePassword()), but whoever may edit a project may reset its
+            // access: the same permission as update(), no extra key.
             Route::post('/{id}/regenerate-password', [WebProjectController::class, 'regeneratePassword'])
                 ->middleware('permission:web-projects-update');
 
-            // ── Checkpointy (nested pod konkrétní projekt) ──────────────────
+            // ── Checkpoints (nested under a project) ──────────────────
             Route::post('/{projectId}/checkpoints', [WebProjectController::class, 'storeCheckpoint'])
                 ->middleware('permission:web-projects-update');
             Route::put('/{projectId}/checkpoints/{checkpointId}', [WebProjectController::class, 'updateCheckpoint'])
@@ -910,10 +798,6 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         });
 
         // ── web/project-threads ───────────────────────────────────────────────
-        // @refactor-note (2026-08-28) NAPŘÍČ VŠEMI PROJEKTY najednou (konzultační
-        // poznámka 2 - "jedna hromadná tabulka" místo proklikávání jednotlivých
-        // projektů). `project_id` query filtr umožňuje TUTÉŽ routu použít i uvnitř
-        // detailu jednoho konkrétního projektu.
         Route::prefix('project-threads')->group(function () {
             Route::get('/',    [WebProjectThreadController::class, 'index'])
                 ->middleware('permission:web-projects-view');
@@ -930,7 +814,7 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
 
     /*
     |----------------------------------------------------------------------
-    | LEGAL — spravováno na core/edit-legal stránce (GDPR/TOS/Cookies)
+    | LEGAL — managed on the core/edit-legal page (GDPR / TOS / cookies)
     |----------------------------------------------------------------------
     */
 Route::prefix('legal')->group(function () {
@@ -976,22 +860,12 @@ Route::prefix('legal')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| SCANNING / PROBING DETECTION — MUSÍ zůstat úplně na konci souboru
+| SCANNING / PROBING DETECTION — MUST stay at the very end of the file
 |--------------------------------------------------------------------------
-| @refactor-note (2026-08-22) BEZPEČNOSTNÍ MONITORING (krok 2): `Route::fallback()`
-| se aktivuje jen tehdy, když žádná jiná routa výše požadavek nezachytí. Proto MUSÍ
-| být registrována jako úplně poslední.
 |
-| Typický vzorec automatizovaného skenování zranitelností. Throttle `throttle:30,1`
-| chrání SAMOTNOU fallback routu před tím, aby se stala novým zdrojem zátěže.
-| `CoreSecurityEvent::record()` je bucketované (viz model), takže i bez throttle by
-| DB zápis zůstal levný, ale HTTP odpověď samotná má svou cenu, kterou throttle omezuje.
-| Tahle routa nemá přihlášeného uživatele nikdy (je mimo chráněnou skupinu), takže
-| filtr "jen nepřihlášené requesty" z throttle handleru (bootstrap/app.php) se na ni
-| ani nemusí vztahovat - zůstává vždy zaznamenaná.
-| @bugfix-note (2026-08-25) Prefix 'scan-probe' - viz hlavička souboru. Bez něj mohl
-| scanning z jedné IP vyčerpat/zkreslit throttle bucket sdílený s jinými veřejnými
-| routami zasaženými ze stejné IP, a naopak.
+| Typical pattern of automated vulnerability scanning. `throttle:30,1` protects the fallback
+| route itself from becoming a load source (CoreSecurityEvent::record() is bucketed, the HTTP
+| answer still has a cost). The route never has a logged-in user, so it is always recorded.
 */
 Route::fallback(function (Request $request) {
     CoreSecurityEvent::record(

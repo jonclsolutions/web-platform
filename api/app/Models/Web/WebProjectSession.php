@@ -2,8 +2,8 @@
 /**
  * @file WebProjectSession.php
  * @path app/Models/Web/WebProjectSession.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description The customer's authenticated 24h-sliding session, issued after
  * successful password verification (see WebProjectPublicController::login()).
@@ -39,7 +39,7 @@ class WebProjectSession extends Model
         'last_used_at' => 'datetime',
     ];
 
-    /** @description Sliding window length (minut) - re-applied na každý autentizovaný request, viz CheckProjectSession middleware. */
+    /** @description Sliding window length (minutes) - re-applied on every authenticated request, see CheckProjectSession. */
     public const LIFETIME_MINUTES = 24 * 60;
 
     public function project(): BelongsTo
@@ -48,8 +48,8 @@ class WebProjectSession extends Model
     }
 
     /**
-     * @description Vytvoří novou session a vrátí PLAINTEXT bearer token - dostupný
-     * jen v tomto přesném okamžiku, nikdy znovu (ukládá se jen hash).
+     * @description Creates a new session and returns the PLAINTEXT bearer token - available only
+     * at this moment, never again (only its hash is stored).
      */
     public static function issueFor(WebProject $project, ?string $ip, ?string $userAgent): string
     {
@@ -68,10 +68,9 @@ class WebProjectSession extends Model
     }
 
     /**
-     * @description Najde session podle PLAINTEXT bearer tokenu (znovu se hashuje pro
-     * porovnání - nikdy se neukládá plaintext), vrací null pokud neexistuje nebo už
-     * vypršela. NEPOSOUVÁ expiraci sama - to dělá volající (middleware), tahle metoda
-     * je čisté vyhledání.
+     * @description Finds a session by the PLAINTEXT bearer token (hashed again for the lookup -
+     * the plaintext is never stored); null when missing or expired. Does NOT extend the expiry
+     * (the middleware does) - a pure lookup.
      */
     public static function findValidByPlaintextToken(string $plaintext): ?self
     {

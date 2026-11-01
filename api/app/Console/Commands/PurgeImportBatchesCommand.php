@@ -2,18 +2,15 @@
 /**
  * @file PurgeImportBatchesCommand.php
  * @path app/Console/Commands/PurgeImportBatchesCommand.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Denní úklid nevyzvednutých importních dávek - smaže dočasné soubory
- * (a jejich `core_import_batches` záznamy) starší než `temp_file_ttl_hours`
- * (`config/importable_resources.php`), které zůstaly ve stavu `validated` (uživatel
- * udělal dry-run, ale nikdy nepotvrdil commit) nebo `failed`. Zabraňuje neomezenému
- * hromadění dočasných souborů na disku.
- *
- * @note Dávky ve stavu `completed` se NEMAŽOU automaticky - zůstávají jako audit trail
- * (samotný dočasný soubor už byl smazán hned po dokončení zpracování, viz
- * `ImportBatchProcessor::process()`).
+ * @description Daily clean-up of abandoned import batches: deletes the temporary files (and
+ * their `core_import_batches` rows) older than `temp_file_ttl_hours`
+ * (`config/importable_resources.php`) that stayed `validated` (dry run, never committed) or
+ * `failed`, so temporary files do not pile up on the disk.
+ * @note `completed` batches are kept as an audit trail (their temporary file was already
+ * deleted right after processing, see `ImportBatchProcessor::process()`).
  */
 
 namespace App\Console\Commands;

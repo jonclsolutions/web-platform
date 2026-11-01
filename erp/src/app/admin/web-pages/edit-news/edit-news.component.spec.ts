@@ -1,8 +1,8 @@
 /**
  * @file edit-news.component.spec.ts
  * @path src/app/admin/web-pages/edit-news/edit-news.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of EditNewsComponent and edit-news.config.ts – the news table page of
  *   the Web module: translated table / form / filter / detail configuration, theme options,

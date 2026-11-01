@@ -1,8 +1,8 @@
 /**
  * @file support-tickets.component.spec.ts
  * @path src/app/admin/web-pages/support-tickets/support-tickets.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of SupportTicketsComponent and support-tickets.config.ts – support
  *   tickets: translated configuration, category / priority / state options, requester data

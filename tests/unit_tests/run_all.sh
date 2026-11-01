@@ -2,8 +2,8 @@
 #
 # @file run_all.sh
 # @path tests/unit_tests/run_all.sh
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Runs ALL unit tests: erp/run_all_erp.sh (Angular) and api/run_all_api.sh
 #   (Laravel), then writes one combined report: tests/unit_tests/report/report.html,

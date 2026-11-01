@@ -1,13 +1,11 @@
 /**
  * @file page-titles.model.ts
  * @path src/app/admin/core-pages/web-settings/page-titles/page-titles.model.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Types for the "Page titles" tab of Website settings
  *   (table `legal_page_titles`, API `legal/config/page-titles`).
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`):
- *  `PageTitlesResponse` (`{page_titles}`) removed - the API answers the rows as the payload.
  */
 
 /**

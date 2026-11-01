@@ -1,18 +1,19 @@
 /* 
     @file: checkout.component.css
     @path: /src/app/public/shop-pages/checkout/checkout.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026 
+    @description: Styles of the checkout component.
 */
 :host {
-  /* Černobílý minimalistický design systém implementovaný na pokladnu */
+  /* Black and white minimalist design system of the checkout */
   --bg-main: var(--color-white);        
   
-  /* Intuitivní stavové barvy */
+  /* State colors */
   --success: var(--color-emerald-500);        
   --warning: var(--color-amber-500);        
-  --error: #df2020; /* Změněno na čistou minimalistickou červenou pro chybové stavy */
+  --error: #df2020; /* Minimalist red for error states */
   
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* local value – public shop theme.css: all 0.2s ease-in-out */
 
@@ -40,7 +41,7 @@ h1 {
 }
 
 /* ==========================================================================
-   DVOUSLOUPCOVÝ LAYOUT
+   TWO-COLUMN LAYOUT
    ========================================================================== */
 .instant-checkout-grid {
   display: grid;
@@ -76,7 +77,7 @@ h1 {
 }
 
 /* ==========================================================================
-   FORMULÁŘE, INPUTY A CHYBOVÉ STAVY (REAL-TIME VALIDACE)
+   FORMS, INPUTS AND ERROR STATES (REAL-TIME VALIDATION)
    ========================================================================== */
 .form-grid {
   display: grid;
@@ -125,19 +126,19 @@ h1 {
   border-color: var(--border-dark);
 }
 
-/* Styl pro pole, která neprošla validací */
+/* Fields that failed validation */
 .form-group input.is-invalid,
 .terms-checkbox.is-invalid {
   border-color: var(--error) !important;
 }
 
-/* Kontejnerové boxy (Doprava/Platba) při chybě */
+/* Container boxes (Shipping / Payment) on error */
 .is-invalid-container {
   border: 1px solid var(--error) !important;
   padding: 4px;
 }
 
-/* Textové chybové hlášky perfektně pasující do konceptu */
+/* Text error messages */
 .error-message {
   color: var(--error);
   font-size: 0.75rem;
@@ -156,7 +157,7 @@ h1 {
 }
 
 /* ==========================================================================
-   ZPŮSOB DOPRAVY
+   SHIPPING METHOD
    ========================================================================== */
 .shipping-methods-list {
   display: flex;
@@ -211,7 +212,7 @@ h1 {
 }
 
 /* ==========================================================================
-   PLATEBNÍ METODY
+   PAYMENT METHODS
    ========================================================================== */
 .payment-methods-list-vertical {
   display: flex;
@@ -513,7 +514,7 @@ h1 {
 }
 
 /* ==========================================================================
-   SOUHLAS S PODMÍNKAMI
+   TERMS CONSENT
    ========================================================================== */
 .checkout-terms-agreement {
   margin-bottom: 1.5rem;
@@ -585,7 +586,7 @@ h1 {
   color: var(--text-dim);
 }
 
-/* FINÁLNÍ TLAČÍTKO DOKONČENÍ */
+/* FINAL SUBMIT BUTTON */
 .btn-pay-instant {
   display: block;
   width: 100%;
@@ -628,7 +629,7 @@ h1 {
 }
 
 /* ==========================================================================
-   SUCCESS STRÁNKA
+   SUCCESS PAGE
    ========================================================================== */
 .checkout-step.success {
   text-align: center;
@@ -641,7 +642,7 @@ h1 {
 }
 
 .success-box h2 {
-  color: var(--color-emerald-500); /* Zůstává originální success zelená */
+  color: var(--color-emerald-500); /* Success green */
   font-size: 1.8rem;
   font-weight: 700;
   margin-bottom: 1rem;

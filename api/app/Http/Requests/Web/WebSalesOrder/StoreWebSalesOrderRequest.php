@@ -2,15 +2,12 @@
 /**
  * @file StoreWebSalesOrderRequest.php
  * @path app/Http/Requests/Web/WebSalesOrder/StoreWebSalesOrderRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Validation logic for creating new sales orders, including file attachments and required agreements.
  *
- * @refactor-note (2026-08) `attachment` (jeden soubor) nahrazeno `attachments` (pole,
- * max. 10 souborů, každý max. 20 MB, souhrnně max. 50 MB) - sjednoceno se stejnou
- * politikou jako StoreWebRawRequestCommissionRequest.
- * @security-note (2026-10-23) `lead_id` was validated with `exists` on this PUBLIC request - the
+ * @security `lead_id` was validated with `exists` on this PUBLIC request - the
  *   different 422 answers let anyone probe which lead ids exist (open finding #2). The field is
  *   gone: the lead is resolved only from the unguessable `lead_token` in the controller.
  */

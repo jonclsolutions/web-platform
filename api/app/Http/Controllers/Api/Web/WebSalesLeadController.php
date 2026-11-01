@@ -2,33 +2,10 @@
 /**
  * @file WebSalesLeadController.php
  * @path app/Http/Controllers/Api/Web/WebSalesLeadController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Controller responsible for managing sales lead lifecycle, including filtering, lifecycle state management (soft-delete), and comprehensive administrative audit logging.
- * @refactor-note (2026) Added generateLink() and showByToken().
- * @refactor-note (2026-08-6) LOGGING MIGRATION to shared LogsActivity trait.
- *
- * @refactor-note (2026-08-23a) BULK DELETE IN A SINGLE REQUEST: added bulkDestroy().
- *
- * @refactor-note (2026-08-23b) BULK IMPORT - two intentional deviations from store():
- * 1) `user_id` is NOT an importable field - always remains `null` for imported leads.
- * 2) `salesman_name` is TAKEN FROM THE FILE unchanged.
- * `public_token`/`public_token_used_at` remain OUTSIDE the import.
- *
- * @bugfix-note (2026-08-24) `showByToken()` now writes `sales_lead_token_invalid`
- * to core_security_events for both invalid and already used tokens.
- *
- * @refactor-note (2026-08-31) BACKLOG "orphaned import files": import
- * validate/commit flow rewritten to shared `HandlesImportBatches` trait - previously
- * `Storage::delete($batch->temp_path)` was missing in the `catch` branch of importCommit()
- * (even after a failed import, the temporary file remained on disk forever), now this is
- * guaranteed by `try/finally` inside `runImportCommit()`, no manual deletion here.
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -60,7 +37,7 @@ class WebSalesLeadController extends Controller
 
     /**
      * @description Columns allowed to come from the import file - all fields from
-     * StoreWebSalesLeadRequest EXCEPT `user_id` (see refactor-note in class header).
+     * StoreWebSalesLeadRequest EXCEPT `user_id`.
      */
     private const IMPORTABLE_COLUMNS = [
         'subject_name', 'first_contact_date', 'source_channel', 'salesman_name',
@@ -71,10 +48,6 @@ class WebSalesLeadController extends Controller
 
     /**
      * Retrieves a list of sales leads based on filtering and pagination criteria.
-     */
-    /**
-     * @refactor-note (2026-08-25) BACKLOG "search across everything": `search` extended with
-     * `contact_phone`, `location`, `salesman_name`.
      */
     public function index(Request $request): JsonResponse
     {
@@ -163,16 +136,9 @@ class WebSalesLeadController extends Controller
      */
     public function update(UpdateWebSalesLeadRequest $request, $id): JsonResponse
     {
-        // @bugfix-note (2026-10-22) findOrFail() outside the try block (all actions of this
-        // controller): inside it the "not found" exception was caught by `catch (\Exception)`
-        // and answered 500 instead of 404. Found by the unit tests.
         $lead = WebSalesLead::findOrFail($id);
 
         try {
-            // @bugfix-note (2026-10-22) SECURITY: validated through UpdateWebSalesLeadRequest -
-            // the update used `$request->all()` with no validation at all (the request class
-            // existed but was never used), so any fillable column could be set to anything
-            // (e.g. user_id of a non-existing account, unchecked status / priority values).
             $lead->update($request->validated());
 
             $this->logAction($request, WebLog::class, 'update', 'WebSalesLead', "Updated lead ID: {$lead->id} ({$lead->subject_name})", $lead->id, 'WebSalesLead');
@@ -288,8 +254,6 @@ class WebSalesLeadController extends Controller
 
     /**
      * @description Dry-run validation of the import file - DOES NOT write anything to DB.
-     * @refactor-note (2026-08-31) File storage + CoreImportBatch creation now goes
-     * through `startImportBatch()` (HandlesImportBatches trait).
      */
     public function importValidate(
         Request $request,
@@ -347,9 +311,6 @@ class WebSalesLeadController extends Controller
     /**
      * @description Confirms and executes the actual import write. DOES NOT CALL store() - no
      * automatic user_id/salesman_name assignment based on the logged-in admin.
-     * @refactor-note (2026-08-31) Rewritten to `findPendingImportBatch()` +
-     * `runImportCommit()` (HandlesImportBatches trait) - temporary file is now deleted
-     * ALWAYS (even on failure), see trait header.
      */
     public function importCommit(
         Request $request,
@@ -405,11 +366,6 @@ class WebSalesLeadController extends Controller
             ]);
         } catch (\Exception $e) {
             // Expired temporary file - see runImportCommit(), code 410.
-            // @bugfix-note (2026-10-22) Previously every RuntimeException was answered with its
-            // own message and code: a database error (QueryException is a RuntimeException)
-            // put the SQL error text into the response and its SQLSTATE string as the HTTP
-            // status (crash), a parser error answered 500 without an error log. Now only the
-            // expired-file case passes through, everything else is logged and answered 500.
             if ($e instanceof \RuntimeException && $e->getCode() === 410) {
                 return response()->json(['message' => $e->getMessage()], 410);
             }

@@ -1,15 +1,10 @@
 /**
  * @file cart.component.ts
  * @path src/app/public/shop-pages/cart/cart.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `alertDialogService`.
- * @refactor-note (2026-10-21) Lokalizace 1:1 jako veřejný web: `translationModule = 'shop'`, všechny texty ze sekce
- *   `cart`. Odstraněny české fallbacky v potvrzovacím dialogu.
- * @bugfix-note (2026-10-23) Prices were formatted with cs-CZ in every language (open finding #44) -
- *   BasePublicComponent.formatEur() now.
+ * @description Shopping cart page of the public e-shop (items, quantities, totals).
  */
 
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
@@ -89,8 +84,6 @@ export class CartComponent extends BasePublicComponent {
   /**
    * @description Triggers a confirmation dialog before permanently removing an item from the cart.
    * @param itemId Cart item id.
-   * @bugfix-note (2026-10-23) The dialog buttons were the hardcoded Czech 'Zrušit' / 'Potvrdit' of the
-   *   admin dialog (open finding #20) - the cart passes its own labels from the shop translations.
    */
   removeItem(itemId: string): void {
     this.confirmDialogService.open(

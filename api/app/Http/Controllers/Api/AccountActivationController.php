@@ -2,34 +2,18 @@
 /**
  * @file AccountActivationController.php
  * @path app/Http/Controllers/Api/AccountActivationController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Public (unauthenticated) endpoints for activating an account created by an admin -
  * verification of link validity (`show`) and setting the initial password (`activate`). An account that
  * is blocked (`is_blocked`) CANNOT be activated, even with a valid token.
  * @note Upon successful activation, the user is NOT automatically logged in - the frontend redirects
- * to login (decided in backlog: "redirect to login").
+ * to login.
  * @dependencies
  * - AccountActivationToken: token model, hashed in DB, see its header.
  * - LogsActivity: shared audit trait, same call as the rest of admin controllers.
- * - CoreSecurityEvent: security monitoring, see refactor-note below.
- *
- * @bugfix-note (2026-08-24) BACKLOG "security_events must cover ALL attack types":
- * invalid/expired activation token and attempt to activate a blocked account previously
- * were not logged at all - neither to `core_logs` nor to `core_security_events`. The token is
- * a 64-character random string, so guessing one specific token is practically
- * impossible, BUT the endpoint gives an attacker the ability to SET A PASSWORD on a foreign account if the
- * token is guessed or leaked (log leak, accidental shared link) - hence defense
- * in depth applies here as well. Two writes added:
- * - `account_activation_token_invalid` (warning) in `findValidToken()` - token
- *   does not exist or has expired. Shared by both public methods (`show()`/`activate()`).
- * - `account_activation_blocked_account` (warning) in `activate()` - token is valid,
- *   but the account was blocked in the meantime. Signals that someone holds a link to an account that
- *   the admin intentionally blocked in the meantime (e.g., employee left before setting
- *   a password).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
+ * - CoreSecurityEvent: security monitoring.
  */
 
 namespace App\Http\Controllers\Api;
@@ -125,7 +109,7 @@ class AccountActivationController extends Controller
      * @description Shared token verification for show()/activate() - must exist and
      * must not be expired. Returns either a valid model or a ready error JsonResponse
      * (union return type - caller checks `instanceof JsonResponse`). Invalid/
-     * expired token logs a security event - see bugfix-note in file header.
+     * expired token logs a security event.
      */
     private function findValidToken(Request $request, string $token): AccountActivationToken|JsonResponse
     {

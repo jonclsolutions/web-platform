@@ -3,23 +3,19 @@
 /**
  * @file PasswordResetController.php
  * @path app/Http/Controllers/Api/Auth/PasswordResetController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Řeší celý flow resetu hesla administrátorského účtu:
- *              1) POST /forgot-password  - vyžádání resetu (vždy stejná odpověď, ochrana proti enumeraci)
- *              2) POST /reset-password   - dokončení resetu (ověření tokenu, uložení nového hesla)
+ * @description Password reset of an admin account:
+ *              1) POST /forgot-password - request a reset (always the same answer - no account enumeration)
+ *              2) POST /reset-password  - finish it (token check, new password stored)
  * @dependencies
- * - App\Models\User: administrátorský účet (login = user_email)
- * - App\Models\PasswordResetToken: jednorázový token s expirací
- * - App\Models\Core\CoreLog / App\Traits\LogsActivity: sdílený audit log (viz bugfix-note
- *   2026-08-19v2 níže) - stejná tabulka, do které AuthController zapisuje
- *   login_success/login_failed/logout apod., ať je celá auth audit stopa na jednom místě.
- * - App\Models\Core\CoreSecurityEvent: bezpečnostní monitoring, viz refactor-note
- *   (2026-08-24) níže - oddělené od `core_logs` (audit vs. diagnostika hrozeb).
- * - App\Mail\Auth\PasswordResetRequested / PasswordChangedNotification: e-mailové notifikace
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
+ * - App\Models\User: admin account (login = user_email)
+ * - App\Models\PasswordResetToken: one-time token with expiry
+ * - App\Models\Core\CoreLog / App\Traits\LogsActivity: shared auth audit log (core_logs, the same
+ *   table AuthController writes login_success / login_failed / logout to)
+ * - App\Models\Core\CoreSecurityEvent: security monitoring (separate from the audit log)
+ * - App\Mail\Auth\PasswordResetRequested / PasswordChangedNotification: e-mail notifications
  */
 
 namespace App\Http\Controllers\Api\Auth;
@@ -45,23 +41,23 @@ class PasswordResetController extends Controller
 {
     use LogsActivity;
 
-    /** Doba platnosti odkazu v minutách (dle rozhodnutí: 15 minut) */
+    /** Validity of the reset link in minutes. */
     private const TOKEN_TTL_MINUTES = 15;
 
     /**
-     * Max. počet požadavků na reset hesla pro JEDEN e-mail v rámci okna (bez ohledu na IP).
-     * Chrání konkrétní schránku před zahlcením e-maily, i kdyby útočník rotoval IP adresy
-     * (IP throttle 'throttle:5,1' na routě toto sám o sobě nepokryje).
+     * Maximum reset requests for ONE e-mail within the window (regardless of the IP) - protects
+     * the mailbox from flooding even when the attacker rotates IP addresses (the IP throttle of
+     * the route does not cover that).
      */
     private const EMAIL_MAX_ATTEMPTS = 3;
 
-    /** Délka okna pro limit dle e-mailu v sekundách (15 minut - stejně jako platnost tokenu). */
+    /** Window of the per-e-mail limit in seconds (15 minutes - same as the token validity). */
     private const EMAIL_DECAY_SECONDS = 900;
 
     /**
-     * @description Krok 1+2+3: přijme e-mail, pokud účet existuje vygeneruje token a odešle e-mail.
-     *              Odpověď je VŽDY stejná bez ohledu na to, zda účet existuje (ochrana proti user enumeration)
-     *              a bez ohledu na to, zda byl request zamítnut limitem podle e-mailu.
+     * @description Accepts an e-mail; when the account exists, creates a token and sends the link.
+     *              The answer is ALWAYS the same - whether the account exists or the per-e-mail
+     *              limit refused the request (no user enumeration).
      */
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
@@ -71,9 +67,9 @@ class PasswordResetController extends Controller
             'message' => 'If an account with this email exists, a password reset link has been sent to it.',
         ]);
 
-        // ── Rate limiting podle e-mailu (nezávisle na IP throttlingu na routě) ──────────
-        // Kontrolujeme PŘED ověřením existence účtu a se STEJNOU odpovědí pro oba případy,
-        // aby rozdílné chování nešlo použít k odhalení, jestli účet existuje.
+        // ── Per-e-mail rate limit (independent of the IP throttle of the route) ──────────
+        // Checked BEFORE the account lookup and with the SAME answer in both cases, so the
+        // behaviour does not reveal whether the account exists.
         $emailLimiterKey = 'password-reset-email:' . $email;
 
         if (RateLimiter::tooManyAttempts($emailLimiterKey, self::EMAIL_MAX_ATTEMPTS)) {
@@ -81,9 +77,8 @@ class PasswordResetController extends Controller
                 'email_requested' => $email,
             ]);
 
-            // Samostatný, per-e-mail cílený limiter (na rozdíl od IP throttle na routě,
-            // který hlásí 'throttle_exceeded' přes globální handler) - viz refactor-note
-            // (2026-08-24) v hlavičce souboru.
+            // A dedicated per-e-mail limiter (the IP throttle of the route reports 'throttle_exceeded'
+            // through the global handler).
             CoreSecurityEvent::record(
                 'password_reset_email_rate_limited',
                 'warning',
@@ -91,13 +86,13 @@ class PasswordResetController extends Controller
                 CoreSecurityEvent::contextFromRequest($request, ['email_requested' => $email])
             );
 
-            // Tiché odmítnutí - stejná generická odpověď, žádný e-mail se neposílá,
-            // útočník ani napohled nepozná, že narazil na limit.
+            // Silent refusal - the same generic answer, no e-mail, the attacker cannot tell
+            // that the limit was hit.
             return $genericResponse;
         }
 
-        // Počítáme KAŽDÝ pokus (i pro neexistující e-mail), jinak by šlo limit obejít
-        // tím, že by se nejdřív "vyzkoušely" neexistující adresy bez postihu.
+        // Every attempt counts (also for unknown e-mails), otherwise the limit could be bypassed
+        // by "testing" unknown addresses first.
         RateLimiter::hit($emailLimiterKey, self::EMAIL_DECAY_SECONDS);
 
         $user = User::whereRaw('LOWER(user_email) = ?', [$email])->first();
@@ -107,11 +102,11 @@ class PasswordResetController extends Controller
         ]);
 
         if (!$user) {
-            // Účet neexistuje - vracíme stejnou odpověď, žádný e-mail se neposílá.
+            // Unknown account - same answer, no e-mail.
             return $genericResponse;
         }
 
-        // Invalidace (smazání) všech předchozích nepoužitých tokenů uživatele - platí jen poslední odkaz.
+        // Delete all earlier unused tokens of the user - only the newest link is valid.
         PasswordResetToken::where('user_id', $user->id)->delete();
 
         $rawToken  = Str::random(64);
@@ -124,8 +119,8 @@ class PasswordResetController extends Controller
         ]);
 
         $frontendUrl = rtrim(config('app.frontend_url'), '/');
-        // Frontend routa je veřejná stránka vedle přihlášení: 'auth/login' -> 'auth/reset-password'
-        // (viz app.routes.ts, mimo AdminRoutingModule/AuthGuard).
+        // The frontend route is a public page next to the login: 'auth/login' -> 'auth/reset-password'
+        // (app.routes.ts, outside AdminRoutingModule / AuthGuard).
         $resetUrl = "{$frontendUrl}/auth/reset-password?token={$rawToken}";
 
         Mail::to($user->user_email)->queue(
@@ -136,8 +131,8 @@ class PasswordResetController extends Controller
     }
 
     /**
-     * @description Krok 4+5: ověří token (hash, expirace, použití), uloží nové heslo,
-     *              zneplatní token i všechny existující session/refresh tokeny a odešle notifikaci.
+     * @description Checks the token (hash, expiry, use), stores the new password, invalidates the
+     *              token and every session / refresh token of the user and sends a notification.
      */
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
@@ -153,8 +148,7 @@ class PasswordResetController extends Controller
                 'reason' => $reason,
             ]);
 
-            // Token brute-force/enumerace = potenciální převzetí cizího účtu - viz
-            // refactor-note (2026-08-24) v hlavičce souboru.
+            // Guessing / enumerating tokens = possible account takeover - recorded as a security event.
             CoreSecurityEvent::record(
                 'password_reset_token_invalid',
                 'warning',
@@ -179,11 +173,11 @@ class PasswordResetController extends Controller
             $user->user_password_hash = Hash::make($data['password']);
             $user->save();
 
-            // Token je jednorázový - označíme ho jako použitý.
+            // One-time token - mark it as used.
             $resetToken->used_at = now();
             $resetToken->save();
 
-            // Zneplatnění všech existujících přihlášení uživatele.
+            // Invalidate every existing login of the user.
             DB::table('personal_access_tokens')
                 ->where('tokenable_type', User::class)
                 ->where('tokenable_id', $user->id)
@@ -194,8 +188,8 @@ class PasswordResetController extends Controller
                 ->delete();
         });
 
-        // Úspěšný reset - vyčistíme i limiter pro tenhle e-mail, ať legitimní uživatel
-        // po vyřešení problému hned může žádat o další reset, kdyby ho náhodou potřeboval.
+        // Successful reset - clear the per-e-mail limiter too, so the user can request another
+        // reset right away if needed.
         RateLimiter::clear('password-reset-email:' . mb_strtolower($user->user_email));
 
         $this->logAttempt('password_reset_completed', $request, $user->id, []);
@@ -205,32 +199,24 @@ class PasswordResetController extends Controller
         );
 
         return $this->respond([
-            // E-mail vracíme jen pro zobrazení potvrzení na frontendu (např. "heslo změněno pro: x@y.cz"),
-            // aby uživatel měl jistotu, že se změna týkala správného účtu.
+            // The e-mail is returned only for the confirmation on the frontend ("password changed for: x@y.cz"),
+            // so the user knows which account was changed.
             'email' => $user->user_email,
         ], 200, [], 'Password has been successfully changed. You can now log in with your new password.');
     }
 
     /**
-     * @description Zaloguje pokus o reset hesla do sdíleného auth audit logu (`core_logs`,
-     * module 'Auth') přes `LogsActivity::logAction()` - viz bugfix-note (2026-08-19v2)
-     * v hlavičce souboru. Chyba při logování nesmí shodit hlavní flow -
-     * `logAction()` má vlastní try/catch a nikdy nevyhazuje.
+     * @description Writes a password reset attempt to the shared auth audit log (`core_logs`,
+     * module 'Auth') through `LogsActivity::logAction()`, which never throws - logging must not
+     * break the flow.
      * @param string $eventType password_reset_requested / password_reset_email_rate_limited
      *   / password_reset_failed / password_reset_completed.
-     * @param Request $request Aktuální request (FormRequest instance - je to podtyp
-     *   Illuminate\Http\Request, takže sedí na `logAction()` typový hint beze změny).
-     * @param int|null $userId Cílový uživatel resetu (ne přihlášený actor - tahle routa
-     *   je veřejná/nepřihlášená) - promítá se do `affected_entity_id`/`description`.
-     * @param array $context Doplňkové okolnosti specifické pro daný event
-     *   (`email_requested` u požadavku/rate-limitu, `reason` u selhání) - promítají se
-     *   do čitelného textu `description`; `email_requested`/ostatní request pole se navíc
-     *   automaticky objeví v `context_data` samotným `logAction()` (natahuje request
-     *   payload sám, viz LogsActivity::safeContextData()).
-     * @refactor-note (2026-10-22) Removed unreachable code found by the unit tests: the
-     *   `default` arm (every caller passes one of the four event types above - an unknown
-     *   type is a programming error and now fails loudly with UnhandledMatchError) and the
-     *   `isset($context['email_requested'])` fallbacks (both callers always pass the e-mail).
+     * @param Request $request Current request (a FormRequest is an Illuminate\Http\Request).
+     * @param int|null $userId Target user of the reset (the route is public - no logged-in actor);
+     *   used for `affected_entity_id` / `description`.
+     * @param array $context Details of the event (`email_requested`, `reason`) for the readable
+     *   `description`; request fields also reach `context_data` through `logAction()`
+     *   (LogsActivity::safeContextData()).
      */
     private function logAttempt(string $eventType, $request, ?int $userId, array $context): void
     {

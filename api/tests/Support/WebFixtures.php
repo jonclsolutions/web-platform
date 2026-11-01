@@ -3,8 +3,8 @@
 /**
  * @file WebFixtures.php
  * @path api/tests/Support/WebFixtures.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Test helpers of the Web section: creates the web records (requests, tickets,
  *   news, leads, orders, job applications, projects with sessions / threads / messages),

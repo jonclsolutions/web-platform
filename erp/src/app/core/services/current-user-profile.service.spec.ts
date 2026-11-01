@@ -1,8 +1,8 @@
 /**
  * @file current-user-profile.service.spec.ts
  * @path src/app/core/services/current-user-profile.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of CurrentUserProfileService: the profile of the logged-in user is
  *   loaded once per user (cached per user id) and invalidate() forces a reload.

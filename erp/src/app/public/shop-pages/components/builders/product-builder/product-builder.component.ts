@@ -1,17 +1,13 @@
 /**
  * @file product-builder.component.ts
  * @path src/app/public/shop-pages/components/builders/product-builder/product-builder.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Presentational component responsible for rendering individual product cards within the catalog, handling thumbnail resolution and price formatting.
  * @dependencies
  * - CommonModule: Standard Angular utilities for structural directives.
  * - RouterModule: Enables navigation to specific product detail pages via templates.
- * @refactor-note (2026-10-21) Dědí `BasePublicComponent` kvůli lokalizaci (sekce `product_card`, modul
- *   `shop`) - stejný mechanismus jako stránky, žádné vlastní předávání textů přes @Input.
- * @bugfix-note (2026-10-23) Prices were formatted with cs-CZ in every language (open finding #44) -
- *   BasePublicComponent.formatEur() now.
  */
 
 import { Component, Input } from '@angular/core';

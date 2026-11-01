@@ -2,8 +2,8 @@
 /**
  * @file WebNewsResource.php
  * @path app/Http/Resources/Web/WebNewsResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Resource transformation for website news articles.
  */

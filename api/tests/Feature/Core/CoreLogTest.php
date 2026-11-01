@@ -3,8 +3,8 @@
 /**
  * @file CoreLogTest.php
  * @path api/tests/Feature/Core/CoreLogTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the core audit log API (CoreLogController): reading needs
  *   view-core, writing an own entry is open to every signed-in account.

@@ -2,9 +2,9 @@
 # =============================================================================
 # @file Dockerfile
 # @path dev/docker/Dockerfile
-# @project RPSW Web
-# @author RPSW
-# @created 2026-10-31
+# @project JS web-platform
+# @author JS
+# @created 2026
 # @description ONE development image for the whole monorepo - everything the app needs to run,
 #   test and build, so the host needs only Docker and git:
 #   - PHP 8.5 CLI (same major/minor as the FORPSI hosting) + the extensions of Laravel / the
@@ -21,7 +21,6 @@
 #   (vendor/, node_modules/, storage/, build/) belong to you, not to root.
 # @note Versions: PHP_VERSION / NODE_VERSION are build args (compose.yaml passes them from .env).
 #   Keep PHP equal to the hosting (FORPSI: administration → PHP version).
-# @refactor-note (2026-10-31) Moved from docker/app/ to dev/docker/ (root clean-up).
 # @security Base images are official (php, node, composer) or the widely used
 #   mlocati/php-extension-installer; no secrets are copied into the image (the repository is
 #   mounted at run time, never COPY-ed).

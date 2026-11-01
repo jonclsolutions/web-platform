@@ -1,20 +1,13 @@
 <!--
     @file: references.component.html
     @path: /src/app/public/web-pages/references/references.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
     @description Public references page – accordion list of delivered projects.
         Collapsed row: index, name, year, client. Expanded detail: description,
         key features, fact sheet (category, scope, role, year, client),
         technology stack and result.
-    @refactor-note (2026-09) Removed purple tag pills and category dots,
-        replaced with a structured, informative detail (features, fact sheet,
-        tech stack, result). Accordion rewritten to grid-rows animation (no
-        fixed max-height), accessible accordion pattern (h2 > button,
-        aria-controls, region, inert when collapsed).
-    @bugfix-note (2026-10-23) Czech fallbacks of the detail labels removed (open finding #44) - the
-        texts are in the `projects` translations (label_features … label_result).
 -->
 @if (t) {
 <div class="ref-page content-page">

@@ -1,9 +1,10 @@
 <!-- 
     @file: index.html
     @path: /src/index.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
+    @description: Host page of the Angular application (meta tags, fonts, inline initial loader).
 -->
 
 <!doctype html>
@@ -33,17 +34,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <style>
-    /* Inline a mimo Angular záměrně — musí se zobrazit dřív, než se
-       stáhne cokoliv dalšího (JS bundle, překlady, settings).
-       @refactor-note (2026-08): Loader je teď SOUROZENEC <app-root>, ne jeho
-       obsah. Uvnitř <app-root> by Angular přepsal (vyčistil) obsah hned při
-       vložení AppComponent šablony — tedy hned po dokončení APP_INITIALIZERu,
-       ne po skutečném vykreslení routované (lazy-loaded) stránky. Tím vznikala
-       mezera "spinner zmizel, ale header/obsah ještě není hotový" (bílá
-       stránka na moment). Skrytí teď řeší explicitně AppComponent přes
-       ApplicationRef.isStable (viz app.component.ts), který čeká i na
-       dokončení lazy-chunk importu a veškerých HTTP volání provedených
-       uvnitř NgZone, ne jen na dokončení APP_INITIALIZERu. */
+    /* Inline and outside Angular on purpose - the loader must show before anything else
+       is downloaded (JS bundle, translations, settings). */
     #initial-loader {
       position: fixed;
       inset: 0;

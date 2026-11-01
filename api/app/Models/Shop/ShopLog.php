@@ -2,8 +2,8 @@
 /**
  * @file ShopLog.php
  * @path app/Models/Shop/ShopLog.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Model representing shop-specific system event logs.
  */

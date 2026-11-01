@@ -1,12 +1,11 @@
 /**
  * @file faq.component.spec.ts
  * @path src/app/public/web-pages/faq/faq.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of FaqComponent: categories and their questions from the translations, the
  *   default category, switching categories (answers collapsed again) and expanding a question.
- * @refactor-note (2026-10-31) Open finding #64: test of the hidden phone / company rows.
  * @dependencies
  * - createPublicPageContext (translations + site settings).
  */

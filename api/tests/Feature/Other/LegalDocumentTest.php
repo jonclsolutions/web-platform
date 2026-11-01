@@ -3,8 +3,8 @@
 /**
  * @file LegalDocumentTest.php
  * @path api/tests/Feature/Other/LegalDocumentTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the legal documents (DocumentTypeController,
  *   DocumentSectionController): document types, section administration per type and

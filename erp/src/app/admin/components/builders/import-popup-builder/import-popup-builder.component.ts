@@ -1,51 +1,27 @@
 /**
  * @file import-popup-builder.component.ts
  * @path src/app/admin/components/builders/import-popup-builder/import-popup-builder.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Reusable import popup - stejná role jako `ExportPopupBuilderComponent`,
- * ale pro opačný směr (soubor -> DB, append-only). Řeší celý flow: výběr formátu,
- * stažení prázdné šablony, upload souboru, zobrazení dry-run souhrnu (validní/chybné
- * řádky) a po potvrzení spuštění skutečného zápisu (`core/import/commit`).
+ * @description Reusable import popup - the same role as `ExportPopupBuilderComponent`, for the
+ * opposite direction (file -> database, append-only). Handles the whole flow: format choice,
+ * download of the empty template, file upload, the dry-run summary (valid / invalid rows) and,
+ * after confirmation, the real write (`core/import/commit`).
  *
- * @security Import je VŽDY dvoukrokový (dry-run token -> commit) - komponenta sama
- * nikdy neposílá soubor podruhé, jen `import_token` vrácený z validace (viz
- * `ImportController` na backendu). Skutečné vynucení oprávnění (`-create` permission
- * daného resource) i whitelist sloupců řeší výhradně backend - tahle komponenta je
- * čistě prezentační/orchestrační vrstva, stejně jako export.
+ * @security The import is ALWAYS two-step (dry-run token -> commit) - the component never sends
+ * the file twice, only the `import_token` returned by the validation (see `ImportController` on
+ * the backend). The permission check (`-create` permission of the resource) and the column
+ * whitelist are enforced only by the backend - this component is a presentation /
+ * orchestration layer, like the export.
  *
  * @dependencies
- * - DataHandler: multipart upload (`upload()`) a JSON volání (`post()`/`get()`).
- * - HttpClient: přímé volání pro stažení šablony jako blob (DataHandler.get() nemá
- *   responseType 'blob' variantu - stejný důvod, proč TableBuilderComponent pro XLSX
- *   export taky nepoužívá DataHandler, ale volá SheetJS přímo).
- * - ScrollLockService: Sdílený zámek scrollu na pozadí (viz refactor-note 2026-08-31).
- * - AdminLocalizationService: Statické i18n admin UI.
- *
- * (Earlier refactor-notes for per-resource import endpoints, XLSX removal from
- * import, and the OnPush change-detection bugfix are unchanged - see version
- * history, omitted here for brevity.)
- *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * ImportPopupBuilderComponent NEdědí BaseDataComponent, proto ruční injection
- * AdminLocalizationService + lokální `strings`/`t()`, přesně dle vzoru
- * TableBuilderComponent/GraphBuilderComponent. Komponenta MÁ
- * `ChangeDetectionStrategy.OnPush`, proto JE potřeba `translations$.subscribe(()
- * => markForCheck())` v konstruktoru. Nahrazeny VŠECHNY uživatelsky viditelné texty
- * (nadpisy, hlášky, chybové texty, tlačítka). `keyvalue` pipe iterace nad
- * `err.errors` v šabloně (technické názvy sloupců + Laravel validační zprávy z
- * backendu) VĚDOMĚ nepřekládána - je to backendový výstup, mimo scope frontendové
- * i18n vrstvy.
- *
- * @refactor-note (2026-09v2) BACKLOG "žádný český fallback": `EXPORT_FORMAT_OPTIONS`
- * (statická konstanta) byla ODSTRANĚNA z export-format.ts (i jako "záložní" varianta
- * porušovala pravidlo žádného tichého českého fallbacku). `readonly formatOptions`
- * pole nahrazeno getterem volajícím `createExportFormatOptions(this.i18n)` - viz
- * export-format.ts refactor-note (2026-09v2).
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
+ * - DataHandler: multipart upload (`upload()`) and JSON calls (`post()` / `get()`).
+ * - HttpClient: direct call to download the template as a blob (DataHandler.get() has no
+ *   responseType 'blob' variant - the same reason why the XLSX export of TableBuilderComponent
+ *   calls SheetJS directly).
+ * - ScrollLockService: Shared background scroll lock.
+ * - AdminLocalizationService: Static i18n of the admin UI.
  */
 
 import { Component, EventEmitter, Input, Output, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
@@ -60,13 +36,13 @@ import { environment } from '../../../../../environments/environment';
 import { ExportFormat, createExportFormatOptions, ExportFormatOption } from '../../../../shared/interfaces/export-format';
 import { ImportEnumHint } from '../table-builder/table-builder.component';
 
-/** @description Jeden řádek chybového souhrnu z dry-run validace. */
+/** @description One row of the error summary of the dry-run validation. */
 interface ImportRowError {
   row: number;
   errors: Record<string, string[]>;
 }
 
-/** @description Odpověď `POST core/import/validate`. */
+/** @description Response of `POST core/import/validate`. */
 interface ImportValidateResponse {
   import_token: number;
   total_rows: number;
@@ -76,7 +52,7 @@ interface ImportValidateResponse {
   can_commit: boolean;
 }
 
-/** @description Odpověď `POST core/import/commit` pro synchronní (malé) importy. */
+/** @description Response of `POST core/import/commit` for synchronous (small) imports. */
 interface ImportCommitResponse {
   queued: boolean;
   batch_id?: number;
@@ -89,8 +65,8 @@ interface ImportCommitResponse {
 type ImportStep = 'format' | 'upload' | 'summary' | 'done';
 
 /**
- * @description Modální popup pro hromadný append-only import dat do libovolné tabulky
- * registrované v backendovém `config/importable_resources.php`.
+ * @description Modal popup for a bulk append-only data import into any table registered in the
+ * backend `config/importable_resources.php`.
  * @usage `<app-import-popup-builder [resource]="apiEndpoint" (imported)="onImported()" (closed)="onClose()" />`
  */
 @Component({
@@ -102,7 +78,7 @@ type ImportStep = 'format' | 'upload' | 'summary' | 'done';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
-  /** @description Resource klíč - MUSÍ přesně odpovídat `apiEndpoint` stránky a klíči v backendovém registru. */
+  /** @description Resource key - MUST match the `apiEndpoint` of the page and the key of the backend registry exactly. */
   @Input({ required: true }) resource!: string;
 
   @Output() imported = new EventEmitter<void>();
@@ -114,9 +90,6 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
   private cd = inject(ChangeDetectorRef);
   private scrollLock = inject(ScrollLockService);
 
-  /**
-   * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty".
-   */
   public readonly i18n = inject(AdminLocalizationService);
   public get strings(): any { return this.i18n.getMergedSection('import-popup'); }
   public t(key: string): string { return this.i18n.getValue(`import-popup.${key}`); }
@@ -132,12 +105,6 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
   validation: ImportValidateResponse | null = null;
   commitResult: ImportCommitResponse | null = null;
 
-  /**
-   * @refactor-note (2026-09v2) `readonly formatOptions` -> getter, ať se
-   * `description` texty přepočítají po přepnutí admin jazyka; `EXPORT_FORMAT_OPTIONS`
-   * (statický deprecated fallback) byl odstraněn z export-format.ts, takže i toto
-   * musí přejít na `createExportFormatOptions(i18n)`.
-   */
   get formatOptions(): ExportFormatOption[] {
     return createExportFormatOptions(this.i18n).filter(opt => opt.value !== 'xlsx');
   }
@@ -145,8 +112,8 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
   private readonly baseUrl = environment.base_api_url;
 
   constructor() {
-    // Po přepnutí admin jazyka donutí OnPush komponentu přehodnotit `strings`/gettery -
-    // stejný vzor jako TableBuilderComponent/GraphBuilderComponent.
+    // After switching the admin language, forces the OnPush component to re-evaluate
+    // `strings` / getters - same pattern as TableBuilderComponent / GraphBuilderComponent.
     this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
   }
 
@@ -158,7 +125,7 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
     this.scrollLock.unlock();
   }
 
-  // ── Krok 1: volba formátu ────────────────────────────────────────────────
+  // ── Step 1: format choice ────────────────────────────────────────────────
 
   selectFormat(format: ExportFormat): void {
     this.selectedFormat = format;
@@ -171,16 +138,12 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
     this.step = 'format';
   }
 
-  // ── Šablona ──────────────────────────────────────────────────────────────
+  // ── Template ──────────────────────────────────────────────────────────────
 
   /**
-   * @description Stáhne prázdnou šablonu se správnými hlavičkami. Volá `HttpClient`
-   * přímo (ne `DataHandler`), protože potřebujeme `responseType: 'blob'` - stejný
-   * důvod jako u XLSX exportu v `TableBuilderComponent`.
-   * @bugfix-note (2026-08-22) Dřív se `format` parametr backendu vůbec neposílal a
-   * přípona souboru byla natvrdo `.csv` bez ohledu na zvolený formát - backend teď
-   * podle `format` generuje odpovídající soubor (viz ImportController::template()),
-   * frontend musí poslat stejnou hodnotu a použít odpovídající příponu.
+   * @description Downloads an empty template with the correct headers. Calls `HttpClient`
+   * directly (not `DataHandler`) because `responseType: 'blob'` is needed - the same reason as
+   * the XLSX export of `TableBuilderComponent`.
    */
   downloadTemplate(): void {
     if (this.isDownloadingTemplate || !this.selectedFormat) return;
@@ -210,7 +173,7 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── Krok 2: výběr souboru + dry-run validace ────────────────────────────
+  // ── Step 2: file choice + dry-run validation ────────────────────────────
 
   onFileSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -223,16 +186,8 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Odešle soubor na `core/import/validate` - NEZAPISUJE nic do DB,
-   * jen vrátí souhrn a `import_token` pro následný `commit()`.
-   * @bugfix-note (2026-08-22) HLAVNÍ PŘÍČINA "zaseknutého" UI: komponenta má
-   * `ChangeDetectionStrategy.OnPush`, ale chyběl `ChangeDetectorRef`/`markForCheck()`.
-   * Backend odpovídal správně a `this.step = 'summary'` se v JS proměnné SKUTEČNĚ
-   * nastavilo (potvrzeno console.logem), ale Angular OnPush komponentu bez explicitního
-   * `markForCheck()` po async RxJS callbacku nepřekreslí - view tak zůstalo vizuálně
-   * na kroku "upload", i když interní stav byl už dávno "summary". Přidán `cd.markForCheck()`
-   * po KAŽDÉ asynchronní změně stavu v této komponentě (viz i `downloadTemplate()`/
-   * `confirmCommit()`).
+   * @description Sends the file to `core/import/validate` - writes NOTHING to the database, only
+   * returns the summary and the `import_token` for the following `commit()`.
    */
   runValidation(): void {
     if (!this.selectedFile || !this.selectedFormat || this.isValidating) return;
@@ -251,23 +206,23 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
         this.cd.markForCheck();
       },
       error: () => {
-        // Chybová hláška se zobrazí přes DataHandler.handleError() (globální alert),
-        // tady jen odemkneme UI zpátky.
+        // The error message is shown by DataHandler.handleError() (global alert),
+        // here only the UI is unlocked again.
         this.isValidating = false;
         this.cd.markForCheck();
       }
     });
   }
 
-  // ── Krok 3: souhrn dry-run + potvrzení zápisu ───────────────────────────
+  // ── Step 3: dry-run summary + write confirmation ───────────────────────────
 
   get hasErrors(): boolean {
     return (this.validation?.invalid_rows ?? 0) > 0;
   }
 
   /**
-   * @description Potvrdí zápis - pošle jen `import_token` (soubor se znovu NEPOSÍLÁ,
-   * viz bezpečnostní poznámka v hlavičce souboru).
+   * @description Confirms the write - sends only the `import_token` (the file is NOT sent again,
+   * see the security note in the file header).
    */
   confirmCommit(): void {
     if (!this.validation || this.isCommitting) return;

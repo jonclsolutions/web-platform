@@ -1,8 +1,8 @@
 /*     
     @file: dashboard.component.css
     @path: /src/app/admin/web-pages/dashboard/dashboard.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description: Visual language shared 1:1 with CoreDashboardComponent (`core-pages/
         dashboard`) - same admin-layout design tokens (--accent/--text/--border/
@@ -124,9 +124,9 @@
 .cd-breakdown-fill.ev-error   { background: var(--warning, var(--color-amber-600)); }
 .cd-breakdown-fill.ev-default { background: var(--text-dim, var(--color-zinc-400)); }
 
-/* ── Režim údržby webu ────────────────────────────────────────────── */
+/* ── Web maintenance mode ────────────────────────────────────────────── */
 
-/* ── Potvrzovací modál ────────────────────────────────────────────── */
+/* ── Confirmation modal ────────────────────────────────────────────── */
 
 /* ── Responsive ─────────────────────────────────────────────────────── */
 
@@ -140,9 +140,9 @@
   .maintenance-switch-btn { width: 100%; }
   .core-dashboard { gap: 16px; }
 }
-/* ── Hero dropdown (výběr zobrazené metriky) ───────────────────────── */
+/* ── Hero dropdown (choice of the shown metric) ───────────────────────── */
 
-/* .cd-hero-icon zůstává beze změny - jen teď žije uvnitř .cd-hero-top místo přímo v kartě */
+/* .cd-hero-icon keeps its style - it only lives inside .cd-hero-top instead of directly in the card */
 
 .cd-hero-dropdown-value-urgent { color: var(--warning, var(--color-amber-600)); }
 

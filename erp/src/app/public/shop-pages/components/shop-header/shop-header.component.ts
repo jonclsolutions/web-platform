@@ -1,8 +1,8 @@
 /**
  * @file shop-header.component.ts
  * @path src/app/public/shop-pages/components/shop-header/shop-header.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Presentational component for the e-shop header, handling UI state for navigation, language selection and cart access.
  * @dependencies
@@ -10,13 +10,6 @@
  * - PublicDataService: Fetches global site branding and configuration.
  * - Angular Router: Enables navigation to cart or shop pages.
  * - LocalizationService: Translations and languages of the `shop` module.
- *
- * @refactor-note (2026-10-21) Lokalizace 1:1 jako PublicHeaderComponent: v konstruktoru
- *   `setModule('shop')`, texty ze sekce `header` v `translations/shop/{lang}.json`, přepínač
- *   jazyků plní `fetchLanguages()` (jazyky modulu shop) a volá `setLanguage()`. Natvrdo psané
- *   volby CZ/EN a `selectedLang` odstraněny - aktivní jazyk je `currentLanguage$`.
- * @refactor-note (2026-10-23) Removed the currency switch (`showCurrency`, `selectedCurrency`,
- *   `toggleCurrency()`, `selectCurrency()`) - it changed nothing, all prices are EUR (open finding #43).
  */
 
 import { Component, OnInit, OnDestroy, HostListener, ChangeDetectorRef } from '@angular/core';

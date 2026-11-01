@@ -1,8 +1,8 @@
 /**
  * @file base-translation-editor.component.spec.ts
  * @path src/app/shared/components/base-translation-editor/base-translation-editor.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of BaseTranslationEditorComponent through a minimal concrete editor
  *   (module 'test'). Complements the EditWebsite / EditEshop specs with the parts they do not

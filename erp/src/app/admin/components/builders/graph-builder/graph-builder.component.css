@@ -1,16 +1,10 @@
 /*
     @file: graph-builder.component.css
     @path: /src/app/admin/components/builders/graph-builder/graph-builder.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @bugfix-note (2026-08-27v8) BACKLOG "křížek překrytý hamburgerem/nadpisem
-        sidebaru": `.graph-popup-card` je teď SLOUPCOVÝ layout - nová
-        `.graph-window-topbar` (plná šířka, jen zavírací tlačítko) NAHOŘE, pod ní
-        `.graph-body-row` (dřívější řádkový layout sidebar+main). Křížek tak sedí VŽDY
-        nad oběma panely, nemůže se překrýt s ničím pod sebou na žádné šířce obrazovky.
-        `.graph-window-close` přestal být absolutně pozicovaný - je normální flex
-        položka v nové liště.
+    @description: Styles of the graph builder component.
 */
 
 .graph-popup-overlay {
@@ -32,7 +26,7 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
 
-/* ── Lišta se zavíracím tlačítkem - NAD celým dvoupanelovým layoutem, nemůže se s ničím překrýt ── */
+/* ── Bar with the close button - ABOVE the whole two-panel layout, cannot overlap anything ── */
 .graph-window-topbar {
   display: flex;
   justify-content: end;
@@ -58,7 +52,7 @@
 .graph-window-close:hover:not(:disabled) { background: var(--color-zinc-100); color: var(--color-zinc-900); }
 .graph-window-close:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ── Řádkový layout sidebar + hlavní obsah, pod lištou se zavíracím tlačítkem ── */
+/* ── Row layout sidebar + main content, below the bar with the close button ── */
 .graph-body-row {
   flex: 1;
   min-height: 0;
@@ -68,7 +62,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   SIDEBAR - nastavení reportu (desktop: trvalý, kompaktní / mobil: vysouvací)
+   SIDEBAR - report settings (desktop: permanent, compact / mobile: slide-out)
    ══════════════════════════════════════════════════════════════════════ */
 
 .graph-sidebar-backdrop { display: none; }

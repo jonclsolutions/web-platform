@@ -3,8 +3,8 @@
 /**
  * @file UserAccountActionsTest.php
  * @path api/tests/Feature/Core/Users/UserAccountActionsTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the account actions of UserController: password change,
  *   restore, delete (soft / hard), emptying the trash and resending the activation e-mail.

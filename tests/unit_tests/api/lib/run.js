@@ -1,8 +1,8 @@
 /**
  * @file run.js
  * @path tests/unit_tests/api/lib/run.js
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Runs the Laravel (PHPUnit) tests of the api and writes
  *   tests/unit_tests/api/report/report.html + report.xml.

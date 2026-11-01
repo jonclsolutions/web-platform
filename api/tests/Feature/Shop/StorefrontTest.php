@@ -3,8 +3,8 @@
 /**
  * @file StorefrontTest.php
  * @path api/tests/Feature/Shop/StorefrontTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the public storefront (ShopProductController public methods,
  *   ShopPublicController): product list / detail without internal data, stock check, shipping

@@ -2,49 +2,10 @@
 /**
  * @file WebSupportTicketController.php
  * @path app/Http/Controllers/Api/Web/WebSupportTicketController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages the support ticket lifecycle, including creation, status tracking, file attachment management, and audit logging.
- * @refactor-note (2026-08-2) Attachment storage moved to the polymorphic web_attachments table.
- * @refactor-note (2026-08-6) MIGRACE LOGOVANI na sdileny LogsActivity trait misto
- * lokalni duplicitni logAction(). Domenove beze zmeny (WebLog::class).
- *
- * @refactor-note (2026-08-23a) HROMADNE MAZANI V JEDNOM REQUESTU: pridana bulkDestroy() -
- * viz TableBuilderComponent.onBulkDeleteClick() (vola POST web/support_tickets/bulk-delete).
- * ZAMERNE replikuje STEJNOU logiku jako destroy() (uklid prilohy z disku pres
- * deleteAllAttachments() pri force_delete=true), ne genericky Model::destroy($ids).
- *
- * @refactor-note (2026-08-23b) HROMADNY IMPORT (importTemplate/importValidate/
- * importCommit) - stejny per-controller vzor jako WebRawRequestCommissionController.
- * Dve zamerne odchylky od store():
- * 1) `state` (stav tiketu) NENI vubec v StoreWebSupportTicketRequest::rules()
- *    (na store() se nikdy nenastavuje, DB defaultuje na 'new'), ale pro IMPORT
- *    historickych/archivnich ticketu dava smysl umet rovnou nastavit finalni stav.
- *    Doplneno VLASTNI validacni pravidlo pro state navic k tomu, co vraci
- *    ImportRowValidator::buildRules() (ta bere jen pravidla, ktera uz Store request zna).
- * 2) Import NEPRIRAZUJE user_id/user_name_plain/user_plain podle prihlaseneho
- *    admina (jak to dela store() pro logged-in uzivatele) - naopak ZACHOVAVA hodnoty
- *    user_name_plain/user_plain primo ze souboru (historicky zadatel), user_id
- *    zustava vzdy null (import nezna realne propojeni na existujici ucet).
- * attachment (upload souboru) neni a nemuze byt soucasti tabulkoveho importu.
- *
- * @refactor-note (2026-08-31) BACKLOG "privátní úložiště citlivých příloh": přílohy
- * teď jdou na disk 'private' (default v HandlesAttachments) a do modulově prefixované
- * složky `web/tickets` (viz ATTACHMENT_FOLDER). Staré legacy záznamy (attachment_path
- * sloupec, předcházející přechod na web_attachments) zůstávají beze změny na 'tickets'/
- * disk 'public' - viz AttachmentDownloadController::FOLDER_MAP.
- *
- * @refactor-note (2026-08-31v2) BACKLOG "osiřelé importní soubory": import
- * validate/commit flow přepsán na sdílený `HandlesImportBatches` trait - dřív
- * chyběl `Storage::delete($batch->temp_path)` v `catch` větvi importCommit()
- * (i po neúspěšném importu zůstal dočasný soubor navždy na disku), teď to
- * garantuje `try/finally` uvnitř `runImportCommit()`, ne ruční mazání zde.
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -81,9 +42,8 @@ class WebSupportTicketController extends Controller
     private const ATTACHMENT_FOLDER = 'web/tickets';
 
     /**
-     * @description Sloupce, ktere smi prijit z importniho souboru. attachment (soubor)
-     * a user_id (realne propojeni na ucet) jsou ZAMERNE mimo - viz refactor-note
-     * v hlavicce tridy.
+     * @description Columns an import file may contain. `attachment` (a file) and `user_id` (a
+     * real account link) are left out on purpose.
      */
     private const IMPORTABLE_COLUMNS = [
         'user_name_plain', 'user_plain', 'category', 'subject', 'description', 'priority', 'state',
@@ -173,9 +133,6 @@ class WebSupportTicketController extends Controller
      */
     public function update(UpdateWebSupportTicketRequest $request, $id): JsonResponse
     {
-        // @bugfix-note (2026-10-22) findOrFail() outside the try block (all actions of this
-        // controller): inside it the "not found" exception was caught by `catch (\Exception)`
-        // and answered 500 instead of 404. Found by the unit tests.
         $ticket = WebSupportTicket::withTrashed()->findOrFail($id);
 
         try {
@@ -221,12 +178,11 @@ class WebSupportTicketController extends Controller
     }
 
     /**
-     * @description Hromadně smaže vybrané tickety JEDNÍM requestem - viz
-     * TableBuilderComponent.onBulkDeleteClick() (volá POST web/support_tickets/bulk-delete).
-     * Replikuje STEJNOU logiku jako destroy() (úklid přílohy z disku při
-     * force_delete=true) - ne generický Model::destroy($ids), který by tenhle úklid
-     * potichu přeskočil a nechal osiřelé soubory na disku.
-     * @param Request $request Tělo obsahuje { ids: number[], force_delete?: boolean }.
+     * @description Deletes the selected tickets in ONE request (TableBuilderComponent
+     * onBulkDeleteClick() → POST web/support_tickets/bulk-delete). Repeats the logic of
+     * destroy() (attachment removed from the disk on force_delete=true) instead of a generic
+     * Model::destroy($ids), which would leave orphaned files.
+     * @param Request $request Body `{ ids: number[], force_delete?: boolean }`.
      */
     public function bulkDestroy(Request $request): JsonResponse
     {
@@ -281,9 +237,9 @@ class WebSupportTicketController extends Controller
     }
 
     /**
-     * @description Stáhne prázdnou importní šablonu (CSV/TXT/JSON) se sloupci
-     * z IMPORTABLE_COLUMNS. CSV/TXT používá STEJNÝ oddělovač jako
-     * TableBuilderComponent.downloadCsv()/downloadTxt() (středník / tabulátor).
+     * @description Downloads an empty import template (CSV / TXT / JSON) with the columns of
+     * IMPORTABLE_COLUMNS. CSV / TXT use the same separator as TableBuilderComponent
+     * downloadCsv() / downloadTxt() (semicolon / tab).
      */
     public function importTemplate(Request $request)
     {
@@ -312,9 +268,8 @@ class WebSupportTicketController extends Controller
     }
 
     /**
-     * @description Sestaví validační pravidla pro import - Store request pravidla
-     * (přes ImportRowValidator) PLUS vlastní pravidlo pro state, které Store request
-     * vůbec nezná (viz refactor-note v hlavičce třídy).
+     * @description Import validation rules: the rules of the Store request (ImportRowValidator)
+     * PLUS a rule for `state`, which the Store request does not know.
      */
     private function buildImportRules(ImportRowValidator $rowValidator): array
     {
@@ -324,10 +279,7 @@ class WebSupportTicketController extends Controller
     }
 
     /**
-     * @description Dry-run validace importního souboru - NEZAPISUJE nic do DB.
-     * @refactor-note (2026-08-31) Uložení souboru + vytvoření CoreImportBatch teď jde
-     * přes `startImportBatch()` (HandlesImportBatches trait) místo ručního
-     * `Storage::put()`/`CoreImportBatch::create()`.
+     * @description Dry-run validation of an import file - writes NOTHING to the database.
      */
     public function importValidate(
         Request $request,
@@ -383,13 +335,9 @@ class WebSupportTicketController extends Controller
     }
 
     /**
-     * @description Potvrdí a provede skutečný zápis importu. NEVOLÁ store() - viz
-     * refactor-note v hlavičce třídy (žádné automatické přiřazení přihlášenému
-     * adminovi, žádná příloha; state defaultuje na 'new', pokud v souboru chybí,
-     * stejně jako by to udělal DB default při běžném vytvoření).
-     * @refactor-note (2026-08-31) Přepsáno na `findPendingImportBatch()` +
-     * `runImportCommit()` (HandlesImportBatches trait) - dočasný soubor se teď maže
-     * VŽDY (i při selhání), viz trait hlavička.
+     * @description Confirms and writes the import. Does NOT call store(): no automatic
+     * assignment to the logged-in admin, no attachment; `state` defaults to 'new' when the file
+     * has none (same as the database default of a normal create).
      */
     public function importCommit(
         Request $request,
@@ -416,8 +364,8 @@ class WebSupportTicketController extends Controller
                         }
 
                         $safeData = array_intersect_key($row, array_flip(self::IMPORTABLE_COLUMNS));
-                        // 'state' prázdné/chybějící -> 'new', stejně jako DB default při
-                        // běžném vytvoření přes store() (které 'state' vůbec neposílá).
+                        // Empty / missing 'state' -> 'new', same as the database default of a normal store()
+                        // (which never sends 'state').
                         if (empty($safeData['state'])) {
                             $safeData['state'] = 'new';
                         }
@@ -451,11 +399,6 @@ class WebSupportTicketController extends Controller
             ]);
         } catch (\Exception $e) {
             // Expired temporary file - see runImportCommit(), code 410.
-            // @bugfix-note (2026-10-22) Previously every RuntimeException was answered with its
-            // own message and code: a database error (QueryException is a RuntimeException)
-            // put the SQL error text into the response and its SQLSTATE string as the HTTP
-            // status (crash), a parser error answered 500 without an error log. Now only the
-            // expired-file case passes through, everything else is logged and answered 500.
             if ($e instanceof \RuntimeException && $e->getCode() === 410) {
                 return response()->json(['message' => $e->getMessage()], 410);
             }

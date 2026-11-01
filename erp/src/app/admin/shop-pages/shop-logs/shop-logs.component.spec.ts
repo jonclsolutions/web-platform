@@ -1,8 +1,8 @@
 /**
  * @file shop-logs.component.spec.ts
  * @path src/app/admin/shop-pages/shop-logs/shop-logs.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ShopLogsComponent and shop-logs.config.ts – the read-only audit log
  *   of the e-shop: configuration, chartable columns, toolbar by permission and filter state,

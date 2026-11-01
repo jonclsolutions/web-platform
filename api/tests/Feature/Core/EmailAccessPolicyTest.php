@@ -3,8 +3,8 @@
 /**
  * @file EmailAccessPolicyTest.php
  * @path api/tests/Feature/Core/EmailAccessPolicyTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the e-mail access policy administration
  *   (CoreEmailAccessPolicyController): sysadmin only, primary domain, whitelist rules, no self

@@ -3,8 +3,8 @@
 /**
  * @file CheckoutTest.php
  * @path api/tests/Feature/Shop/CheckoutTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the public checkout (ShopCheckoutController): order created
  *   with catalogue prices (never the prices sent by the browser), availability checks, coupon

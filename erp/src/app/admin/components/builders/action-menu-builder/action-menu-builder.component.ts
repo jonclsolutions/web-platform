@@ -1,31 +1,12 @@
 /**
  * @file action-menu-builder.component.ts
  * @path src/app/admin/components/builders/action-menu-builder/action-menu-builder.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Reusable dropdown ("Akce") nahrazující řadu jednotlivých pill tlačítek na
- * listových stránkách jedním spouštěčem + vysouvacím seznamem. Bere STEJNÝ `Button[]`
- * config jako `ButtonBuilderComponent` - žádná nová konfigurační vrstva.
- *
- * @refactor-note (2026-08-24) KONSOLIDACE TOOLBAR TLAČÍTEK - viz předchozí verze
- * hlavičky souboru pro plný kontext (Filtry/Přidat/Export/Import/Koš sjednoceny do
- * jednoho tlačítka "Akce").
- *
- * @refactor-note (2026-08-24v2) BACKLOG "dropdown se zařezává do okraje obrazovky /
- * je schovaný pod jinými prvky": menu už není pozicované relativně uvnitř
- * `.action-menu` (běžný `position:absolute` v layoutu), ale FIXNĚ vůči viewportu,
- * spočítané ručně z `getBoundingClientRect()` spouštěcího tlačítka - řeší to
- * zařezávání do pravého okraje na užších obrazovkách a schovávání pod `overflow:hidden`
- * kontejnery (např. `.table-responsive` v table-style.css), kterými `position:absolute`
- * menu dřív procházet nemohlo.
- * - `menuPosition` je `null` mezi otevřením menu a prvním změřením (`positionMenu()`
- *   běží až PO vykreslení `@if (isOpen)` bloku, protože potřebuje `#menu` v DOM kvůli
- *   vlastní šířce/výšce) - `.html` proto menu vykreslí, ale `[style.visibility]:hidden`,
- *   dokud `menuPosition` není spočítané, ať není vidět "cuknutí" ze špatné pozice.
- * - Přepočet probíhá i na `window:resize`/`window:scroll` (capture, ať zachytí i scroll
- *   uvnitř vnořených scrollovatelných kontejnerů, ne jen scroll celé stránky), dokud je
- *   menu otevřené - jinak by zůstalo "přilepené" na staré pozici po scrollu/resize.
+ * @description Reusable dropdown ("Actions") replacing a row of single pill buttons on list
+ * pages with one trigger + a slide-out list. Takes the SAME `Button[]` config as
+ * `ButtonBuilderComponent` - no new configuration layer.
  */
 import {
   Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef,
@@ -39,10 +20,10 @@ export interface ActionMenuPosition {
 }
 
 /**
- * @description Vykresluje jedno spouštěcí tlačítko a po kliknutí vysouvací seznam akcí,
- * fixně pozicovaný vůči viewportu (viz refactor-note 2026-08-24v2).
- * @usage Drop-in náhrada za `<app-button-builder>` na listových stránkách admin sekce -
- * stačí vyměnit tag v šabloně, `[configs]` binding zůstává stejný.
+ * @description Renders one trigger button and, after a click, the slide-out list of actions,
+ * fixed-positioned against the viewport.
+ * @usage Drop-in replacement of `<app-button-builder>` on admin list pages - only swap the tag
+ * in the template, the `[configs]` binding stays the same.
  */
 @Component({
   selector: 'app-action-menu-builder',
@@ -61,7 +42,7 @@ export class ActionMenuBuilderComponent {
 
   isOpen = false;
 
-  /** Spočítaná fixed pozice menu vůči viewportu - null = ještě nezměřeno (viz refactor-note výše). */
+  /** Computed fixed position of the menu against the viewport - null = not measured yet. */
   menuPosition: ActionMenuPosition | null = null;
 
   @ViewChild('trigger') private triggerRef?: ElementRef<HTMLButtonElement>;
@@ -70,7 +51,7 @@ export class ActionMenuBuilderComponent {
   private host = inject(ElementRef<HTMLElement>);
   private cd = inject(ChangeDetectorRef);
 
-  /** Malá mezera (px) mezi spouštěcím tlačítkem a menu, a od okrajů viewportu. */
+  /** Small gap (px) between the trigger button and the menu, and from the viewport edges. */
   private static readonly GAP = 6;
   private static readonly VIEWPORT_MARGIN = 8;
 
@@ -79,8 +60,8 @@ export class ActionMenuBuilderComponent {
 
     if (this.isOpen) {
       this.menuPosition = null;
-      // Menu musí být nejdřív v DOM (za `@if (isOpen)`), než ho jde změřit -
-      // `setTimeout(0)` počká na nejbližší mikro-tick po vykreslení šablony.
+      // The menu must be in the DOM first (behind `@if (isOpen)`) before it can be measured -
+      // `setTimeout(0)` waits for the next tick after the template renders.
       setTimeout(() => this.positionMenu());
     } else {
       this.menuPosition = null;
@@ -94,9 +75,9 @@ export class ActionMenuBuilderComponent {
   }
 
   /**
-   * @description Spočítá fixed `top`/`left` menu podle polohy spouštěcího tlačítka a
-   * skutečných rozměrů menu, s ořezáním o okraje viewportu (nikdy nevykreslí menu
-   * částečně mimo obrazovku).
+   * @description Computes the fixed `top` / `left` of the menu from the position of the trigger
+   * button and the real size of the menu, clamped to the viewport edges (never renders the menu
+   * partly off screen).
    */
   private positionMenu(): void {
     const triggerEl = this.triggerRef?.nativeElement;
@@ -120,11 +101,11 @@ export class ActionMenuBuilderComponent {
   }
 
   /**
-   * @description Zavře menu při kliknutí kamkoliv mimo komponentu - stejný vzor jako
-   * `onDocumentClick()` v `TableBuilderComponent` pro `.bulk-actions-menu`. Menu je teď
-   * fixed-pozicované MIMO `.action-menu` host element (vizuálně), ale je pořád jeho
-   * potomek v DOM (`.html` ho vnořuje uvnitř `<div class="action-menu">`), takže
-   * `contains()` kontrola funguje beze změny.
+   * @description Closes the menu on a click anywhere outside the component - same pattern as
+   * `onDocumentClick()` in `TableBuilderComponent` for `.bulk-actions-menu`. The menu is
+   * fixed-positioned visually OUTSIDE the `.action-menu` host element, but it is still its
+   * child in the DOM (nested inside `<div class="action-menu">`), so the `contains()` check
+   * works.
    */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -135,7 +116,7 @@ export class ActionMenuBuilderComponent {
     }
   }
 
-  /** @description Přepočítá pozici při scrollu (capture - zachytí i scroll uvnitř vnořených kontejnerů) a resize okna, dokud je menu otevřené. */
+  /** @description Recomputes the position on scroll (capture - also catches scrolling inside nested containers) and window resize while the menu is open. */
   @HostListener('window:scroll')
   onWindowScroll(): void {
     if (this.isOpen) this.positionMenu();

@@ -1,33 +1,13 @@
 /**
  * @file filter-form-builder.component.ts
  * @path src/app/admin/components/builders/filter-form-builder/filter-form-builder.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description A dynamic form builder for generating filter interfaces based on column definitions.
  * @dependencies
  * - FormsModule: Angular template-driven form support.
  * - FilterColumns: Interface defining the structure and metadata of filterable columns.
- *
- * @refactor-note (2026-08-25) BACKLOG "hledat napříč vším": přidán globální fulltextový
- * input NEZÁVISLÝ na `filterColumns` - vždy zobrazený nahoře formuláře (na rozdíl od
- * jednotlivých sloupcových filtrů, které se řídí konfigurací dané stránky), odesílaný
- * pod rezervovaným klíčem `search` (`GLOBAL_SEARCH_KEY`). Backend (jednotlivé
- * kontrolery) si sám rozhodne, přes které textové sloupce `search` OR-matchuje - viz
- * `WebSalesLeadController::index()` jako existující vzor (`search` param tam už
- * fungoval, jen ne z UI). Klíč `search` je záměrně VYŇATÝ z `filterColumns` iterace ve
- * `setFilterFormValues()`/`applyFilters()`/`clearFilters()` - stará se o něj zvlášť
- * pár řádků navíc, ať zůstává nezávislý na tom, jaké sloupcové filtry daná stránka má
- * nebo nemá nakonfigurované.
- *
- * @refactor-note (2026-08-25v2) Přidán `@Output() closed` - křížek přímo v rohu
- * filtru pro jeho rychlé zavření, NEZÁVISLE na stávajícím přepínání přes "Akce"
- * dropdown v mateřské komponentě (ten zůstává, obě cesty fungují souběžně). Komponenta
- * sama NEZNÁ `isFilterVisible` stav rodiče (ten drží `BaseDataComponent`/stránka), jen
- * emituje `closed` - rodičovská stránka na to naváže stejně, jako už dnes váže
- * `toggleFilters()` na "Akce" dropdown (typicky `(closed)="toggleFilters()"`, protože
- * filtr je viditelný jen když `isFilterVisible` je `true`, takže druhé zavolání
- * `toggleFilters()` ho spolehlivě přepne zpět na `false`).
  */
 
 import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, inject } from '@angular/core';
@@ -35,9 +15,9 @@ import { FormsModule } from '@angular/forms';
 import { FilterColumns } from '../../../../shared/interfaces/filter-columns';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 /**
- * @description Klíč, pod kterým se globální fulltextový filtr posílá v emitovaném
- * filtrů objektu (`{ search: '...', sort_by: ..., sort_direction: ... }`). Sdílený
- * konstantou, ať se stejný literál neopisuje na třech místech v týhle třídě zvlášť.
+ * @description Key under which the global full-text filter is sent in the emitted filter
+ * object (`{ search: '...', sort_by: ..., sort_direction: ... }`). A shared constant, so the
+ * same literal is not repeated in three places of this class.
  */
 const GLOBAL_SEARCH_KEY = 'search';
 
@@ -66,14 +46,13 @@ export class FilterFormBuilderComponent implements OnChanges {
 
   @Output() filtersApplied = new EventEmitter<any>();
   @Output() filtersCleared = new EventEmitter<void>();
-  /** Emitováno kliknutím na křížek v rohu filtru - viz refactor-note (2026-08-25v2). */
+  /** Emitted by a click on the close cross in the corner of the filter. */
   @Output() closed = new EventEmitter<void>();
   public readonly i18n = inject(AdminLocalizationService);
 
   /**
-   * @description Merged `shared` + `filter-form` i18n section - viz refactor-note
-   * (2026-09) v hlavičce souboru.
-   * @note Typ `any` záměrně - viz `AdminLocalizationService.getMergedSection()`.
+   * @description Merged `shared` + `filter-form` i18n section.
+   * @note Type `any` on purpose - see `AdminLocalizationService.getMergedSection()`.
    */
   public get strings(): any {
     return this.i18n.getMergedSection('filter-form');
@@ -82,8 +61,8 @@ export class FilterFormBuilderComponent implements OnChanges {
   public sortBy: string = '';
   public sortDirection: 'asc' | 'desc' = 'asc';
 
-  /** Zpřístupněno šabloně pro `[(ngModel)]="filterForm[globalSearchKey]"` bez nutnosti
-   *  literál `'search'` opisovat i v .html souboru. */
+  /** Exposed to the template for `[(ngModel)]="filterForm[globalSearchKey]"`, so the
+   *  literal `'search'` is not repeated in the .html file. */
   public readonly globalSearchKey = GLOBAL_SEARCH_KEY;
 
   /**
@@ -117,9 +96,9 @@ export class FilterFormBuilderComponent implements OnChanges {
       }
     });
 
-    // Globální search - stejná logika jako u sloupcových filtrů výše (nepřepisovat
-    // rozepsanou hodnotu uživatele), ale mimo `filterColumns` smyčku, protože na
-    // konfiguraci stránky vůbec nezávisí.
+    // Global search - same logic as the column filters above (do not overwrite the value
+    // the user is typing), but outside the `filterColumns` loop, because it does not depend
+    // on the page configuration at all.
     if (this.filterForm[GLOBAL_SEARCH_KEY] === undefined || this.filterForm[GLOBAL_SEARCH_KEY] === '') {
       this.filterForm[GLOBAL_SEARCH_KEY] = this.initialFilters?.[GLOBAL_SEARCH_KEY] ?? '';
     }
@@ -140,8 +119,8 @@ export class FilterFormBuilderComponent implements OnChanges {
       }
     });
 
-    // Prázdný globální search se stejně jako prázdné sloupcové filtry vůbec neposílá -
-    // backend tak nemusí řešit rozdíl mezi "nevyplněno" a "vyplněno prázdným řetězcem".
+    // An empty global search is not sent at all, like empty column filters - the backend
+    // does not have to tell "not filled in" from "filled in with an empty string".
     if (rawFilters[GLOBAL_SEARCH_KEY] === '') {
       delete rawFilters[GLOBAL_SEARCH_KEY];
     }
@@ -156,9 +135,9 @@ export class FilterFormBuilderComponent implements OnChanges {
   }
 
   /**
-   * @description Emituje `closed` - kliknutí na křížek v rohu filtru. Komponenta sama
-   * neřídí svoji viditelnost (tu drží rodičovská stránka přes `isFilterVisible`), jen
-   * o zavření požádá.
+   * @description Emits `closed` - a click on the close cross in the corner of the filter. The
+   * component does not control its own visibility (the parent page holds it in
+   * `isFilterVisible`), it only asks to be closed.
    */
   onClose(): void {
     this.closed.emit();

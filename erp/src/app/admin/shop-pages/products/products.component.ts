@@ -1,40 +1,15 @@
 /**
  * @file products.component.ts
  * @path src/app/admin/shop-pages/products/products.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Central management component for store inventory, handling CRUD operations for products, variants, and product imagery.
  * @dependencies
  * - BaseDataComponent: Provides base CRUD functionality.
  * - ConfirmDialogService: Facilitates user confirmation for deletion actions.
- * - ResourceCacheService: TTL cache pro lookup data (kategorie, dodavatelé), 5 min.
- * - Config.create* factory functions: i18n-aware definitions - viz refactor-note
- *   (2026-09-08) níže.
- *
- * (Earlier bugfix-note 2026-08-31 for duplicate error toasts is unchanged.)
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded
- * texty" - FUNKCIONALITA ZACHOVÁNA BEZE ZMĚNY (na explicitní požadavek), pouze
- * text nahrazen `t()` voláním:
- * - `toolbarButtons` ZŮSTÁVÁ plain polem (NE getter, na rozdíl od ostatních
- *   admin stránek v projektu) - přesně stejné chování jako originál (žádné
- *   dynamické přepínání labelu podle `showFiltersPanel`/`showTrashTable`, žádná
- *   runtime permission-based `showIf` filtrace). Přebudováno jen uvnitř i18n
- *   subscribe bloku, ať se text jazykově přepne.
- *   @bugfix-note (2026-10-22) Pořád plain pole, jen tlačítka bez oprávnění (create, import,
- *   reporty, koš) teď dostanou `showIf: false` - dřív je viděl každý admin (API požadavek
- *   stejně odmítlo). Import tlačítko nemělo handler - doplněn `triggerImport`.
- * - `Config.PRODUCT_*` konstanty nahrazeny `Config.create*()` factory funkcemi.
- * - `formatCurrency()` natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()` -
- *   přímá součást i18n (formátování čísel dle jazyka), ne byznys logika.
- * - `console.error()` volání (export/lookup fetch chyby) ZÁMĚRNĚ ponechána
- *   nepřeložená - jde o dev diagnostiku, ne uživatelský text.
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `getTrashToolbarButtons`.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
+ * - ResourceCacheService: TTL cache of the lookup data (categories, suppliers), 5 min.
+ * - Config.create* factory functions: i18n-aware definitions.
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, inject } from '@angular/core';
@@ -95,12 +70,10 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
 
   productColumns: Core.ColumnDefinition[]  = [];
   trashProductColumns: Core.ColumnDefinition[] = [];
-  /** @refactor-note (2026-09-08) Plain pole, NE getter - viz hlavička souboru. */
   toolbarButtons: Core.Button[]           = [];
   override formFields: any[]      = [];
   selectedFormCategories: Category[] = [];
 
-  /** @refactor-note (2026-09-08) Přestalo být `readonly` - přepočítáno v i18n subscribe. */
   graphColumns: GraphColumnOption[] = [];
 
   constructor(
@@ -130,8 +103,8 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
           aggregation: col.chartAggregation ?? 'count',
           possibleValues: col.chartPossibleValues,
         }));
-      // category_id/supplier_id options jsou dynamická data (ne i18n text) -
-      // musí se po každém přebudování formFields/filterColumns znovu doplnit.
+      // category_id / supplier_id options are dynamic data (not i18n text) -
+      // they must be filled in again after every rebuild of formFields / filterColumns.
       this.updateFormFieldsOptions();
       this.cd.markForCheck();
     });
@@ -150,9 +123,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
   }
 
   /**
-   * @bugfix-note (2026-10-22) The former `loadData()` override did this mapping, but nothing
-   *   calls `loadData()` (the table is loaded by PaginatedListStore), so the price, category and
-   *   supplier columns of the product table stayed empty. The mapping now runs for every loaded row.
    * @description Derives the table columns price_eur / category_name / supplier_name from the
    *   nested API data of a product row.
    */
@@ -176,7 +146,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
       toggleTrash:            () => this.toggleTrash(),
       openGraphBuilder: () => this.openGraphBuilder(),
       exportActiveTable:      () => this.exportActiveTable(),
-      // @refactor-note (2026-10-23) `triggerImport` removed with the button - no product import in the API (finding #25).
     };
     actions[action]?.();
   }
@@ -777,7 +746,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     return supplierId ? (this.suppliers.find(s => s.id === supplierId)?.name ?? 'N/A') : '-';
   }
 
-  /** @refactor-note (2026-09-08) BUGFIX - natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()`. */
   formatCurrency(value: number, currency = 'EUR'): string {
     if (value == null) return '-';
     return new Intl.NumberFormat(this.i18n.getDateLocale(), { style: 'currency', currency }).format(value);

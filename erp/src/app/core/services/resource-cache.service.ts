@@ -1,19 +1,14 @@
 /**
  * @file resource-cache.service.ts
  * @path src/app/core/services/resource-cache.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Generic, keyed TTL cache for arbitrary GET requests that don't go through
  * GenericTableService (single-record endpoints, aggregations, no_pagination collections).
- * Generalizes the pattern already used by RoleOptionsService, so it doesn't have to be
- * hand-rolled again for every non-tabular page (dashboards, settings screens, profile
- * pages) - see backlog task "zbytečně moc dotazů na API".
- * @note RoleOptionsService is left untouched as its own small dedicated class - this
- * service is for new call sites going forward. Retrofitting RoleOptionsService onto this
- * would be a pure no-behaviour-change refactor and can be done separately if desired.
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `invalidatePrefix`, `invalidateAll`.
+ * Generalizes the pattern used by RoleOptionsService, so it doesn't have to be hand-rolled
+ * again for every non-tabular page (dashboards, settings screens, profile pages).
+ * @note RoleOptionsService stays its own small dedicated class.
  */
 
 import { Injectable } from '@angular/core';
@@ -43,8 +38,6 @@ export class ResourceCacheService {
       return cached.obs$ as Observable<T>;
     }
 
-    // @bugfix-note (2026-10-23) A failed load stayed cached for the whole TTL (shareReplay
-    // replays the error) - the entry is dropped when the load fails, the next get() retries.
     const obs$: Observable<T> = loader().pipe(
       catchError(err => {
         if (this.cache.get(key)?.obs$ === obs$) {
@@ -58,7 +51,7 @@ export class ResourceCacheService {
     return obs$;
   }
 
-  /** Zneplatní jeden konkrétní klíč (např. po uložení formuláře). */
+  /** Invalidates one specific key (e.g. after saving a form). */
   invalidate(key: string): void {
     this.cache.delete(key);
   }

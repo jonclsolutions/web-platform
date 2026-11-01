@@ -2,35 +2,15 @@
 /**
  * @file WebSalesOrderController.php
  * @path app/Http/Controllers/Api/Web/WebSalesOrderController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Manages sales order lifecycle, including integration with sales leads, multiple file attachment handling, and comprehensive audit logging.
- * @refactor-note (2026) store() resolves lead exclusively via unguessable lead_token
- *      (public_token) in a transaction with lockForUpdate(), which atomically prevents double
- *      submission of the same order form.
- * @refactor-note (2026-2) Confirmation email switched to Mail::queue().
- * @refactor-note (2026-08) attachment_path removed, replaced by web_attachments.
- * @refactor-note (2026-08-6) LOGGING MIGRATION to shared LogsActivity trait instead of
- * local duplicate logAction(). Domain-wise unchanged (WebLog::class).
  *
- * @bugfix-note (2026-08-15) CRITICAL FIX (GDPR): store() now explicitly remaps
- * dataProcessingAgreement/tosAgreement to snake_case DB columns BEFORE calling
- * WebSalesOrder::create().
- *
- * @refactor-note (2026-08-23) BULK DELETE IN A SINGLE REQUEST: added bulkDestroy() -
- * see TableBuilderComponent.onBulkDeleteClick() (calls POST web/sales_orders/bulk-delete).
- * INTENTIONALLY replicates THE SAME logic as destroy() (cleanup of attachments from disk via
- * deleteAllAttachments() when force_delete=true), not generic Model::destroy($ids).
  * @note This resource is NOT a good candidate for future bulk import - store() has
  * an atomic binding to lead_token (lockForUpdate transaction consuming a single-use
  * link) and requires explicit GDPR consent (data_processing_agreement/tos_agreement),
  * which cannot be meaningfully "consented to" retroactively for historical imported data.
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -185,14 +165,11 @@ class WebSalesOrderController extends Controller
 
     /**
      * Updates an existing order record. Newly uploaded attachments are ADDED to the
-     * existing set (not replaced). Consent fields are intentionally untouched here -
-     * see bugfix-note in file header.
+     * existing set (not replaced). Consent fields are intentionally untouched here (they
+     * are recorded once, by the customer, on the public form).
      */
     public function update(UpdateWebSalesOrderRequest $request, $id): JsonResponse
     {
-        // @bugfix-note (2026-10-22) findOrFail() outside the try block (all actions of this
-        // controller): inside it the "not found" exception was caught by `catch (\Exception)`
-        // and answered 500 instead of 404. Found by the unit tests.
         $order = WebSalesOrder::findOrFail($id);
 
         try {

@@ -1,8 +1,8 @@
 /**
  * @file page-title.strategy.service.spec.ts
  * @path src/app/shared/services/page-title.strategy.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of PageTitleStrategy: the route title key is resolved from the
  *   page-title map loaded once from the API, by current language → Czech → any non-empty value →

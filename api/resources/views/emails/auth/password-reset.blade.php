@@ -1,15 +1,14 @@
-<!--
+{{--
     @file password-reset.blade.php
     @path resources/views/emails/auth/password-reset.blade.php
-    @project RPSW Web
-    @author RPSW
+    @project JS web-platform
+    @author JS
     @created 2026
-    @description E-mail s odkazem na reset hesla - přepracovaný vzhled (2026-08-19):
-    jemný header pruh, konzistentní paleta se zbytkem administrace (#18181b/#71717a/
-    #ececea), sdílená patička s firemním kontaktem (viz emails/partials/footer.blade.php,
-    proměnné dodává App\Support\Mail\CompanyContactInfo::get() přes Content::with()
-    v PasswordResetRequested Mailable třídě).
--->
+    @description E-mail with the password reset link: header bar, palette of the admin
+    (#18181b / #71717a / #ececea), shared company footer (emails/partials/footer.blade.php - the
+    variables come from App\Support\Mail\CompanyContactInfo::get() through Content::with() of
+    PasswordResetRequested).
+--}}
 @php
     /** Brand name shown in header, sign-off and footer. */
     $brand  = $companyName ?? config('app.name');
@@ -34,7 +33,7 @@
 </head>
 <body style="margin:0;padding:0;background:#f7f7f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
 
-<!-- Preheader: preview text shown in the inbox list, hidden in the body -->
+{{-- Preheader: preview text shown in the inbox list, hidden in the body --}}
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">
     We've received a request to reset your password. The link is valid for {{ $expiresInMinutes }} minutes.
 </div>
@@ -44,7 +43,7 @@
 <td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;">
 
-<!-- Brand header: logo + company name -->
+{{-- Brand header: logo + company name --}}
 <tr>
 <td style="padding:36px 40px 8px;">
     <table role="presentation" cellpadding="0" cellspacing="0">
@@ -68,7 +67,7 @@
 </td>
 </tr>
 
-<!-- Body copy -->
+{{-- Body copy --}}
 <tr>
 <td style="padding:24px 40px 0;">
     <p style="margin:0 0 20px;font-size:16px;line-height:1.5;color:#484848;">
@@ -86,7 +85,7 @@
 </td>
 </tr>
 
-<!-- CTA button (bulletproof table button, left-aligned like the reference) -->
+{{-- CTA button (bulletproof table button, left-aligned like the reference) --}}
 <tr>
 <td style="padding:0 40px 28px;">
     <table role="presentation" cellpadding="0" cellspacing="0">
@@ -103,7 +102,7 @@
 </td>
 </tr>
 
-<!-- Sign-off -->
+{{-- Sign-off --}}
 <tr>
 <td style="padding:0 40px 32px;">
     <p style="margin:0;font-size:16px;line-height:1.5;color:#484848;">
@@ -113,7 +112,7 @@
 </td>
 </tr>
 
-<!-- Fallback link -->
+{{-- Fallback link --}}
 <tr>
 <td style="padding:0 40px 32px;">
     <p style="margin:0;font-size:13px;line-height:1.6;color:#767676;">
@@ -123,14 +122,14 @@
 </td>
 </tr>
 
-<!-- Divider -->
+{{-- Divider --}}
 <tr>
 <td style="padding:0 40px;">
     <div style="border-top:1px solid #dddddd;line-height:0;font-size:0;">&nbsp;</div>
 </td>
 </tr>
 
-<!-- Footer (muted, small) -->
+{{-- Footer (muted, small) --}}
 <tr>
 <td style="padding:24px 40px 36px;font-size:13px;line-height:1.7;color:#767676;">
     @include('emails.partials.footer')

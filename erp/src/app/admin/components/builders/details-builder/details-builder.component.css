@@ -1,13 +1,10 @@
 /*     
     @file: details-builder.component.css
     @path: /src/app/admin/components/builders/details-builder/details-builder.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
-               zaoblené karty (18px), jemné stíny, tmavý akcent (#18181b), plně
-               zaoblená ("pill") tlačítka. Původní CSS nebylo k dispozici, jde tedy
-               o kompletní nový styl nad stávajícími třídami z HTML.
+    @description: Styles of the details builder component.
 */
 
 .popup-overlay {

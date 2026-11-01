@@ -3,9 +3,9 @@
 /**
  * @file ResponseEnvelopeTest.php
  * @path api/tests/Unit/Other/ResponseEnvelopeTest.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-24
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Tests of the one response envelope of the API (open finding #6): the
  *   RespondsWithData trait (`{data, meta?, message?}`, pagination meta, resources resolved) and
  *   an architecture check that no controller / middleware builds a success shape by hand.

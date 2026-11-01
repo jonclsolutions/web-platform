@@ -1,16 +1,16 @@
 /**
  * @file cookies-policy.component.ts
  * @path src/app/public/web-pages/cookies-policy/cookies-policy.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @note Document loading goes through LegalDocsService, which caches by slug+language.
  *   If AppBootstrapService already prefetched this doc in the background, this resolves
- *   instantly with no network wait. Stejný vzor jako TosComponent, jen se slugem 'cookies'.
+ *   instantly with no network wait. Same pattern as TosComponent, only with the slug 'cookies'.
  *
- * @note Navíc oproti TOS/GDPR obsahuje tlačítko pro znovuotevření cookie lišty
- * (CookieConsentService.openSettings()) - nejpřirozenější místo pro "Změnit nastavení
- * cookies" je přímo na téhle stránce, ne jen odkaz v patičce.
+ * @note Unlike TOS / GDPR it also has a button that reopens the cookie bar
+ * (CookieConsentService.openSettings()) - the most natural place for "Change cookie settings"
+ * is this page, not only a link in the footer.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -57,8 +57,8 @@ export class CookiesPolicyComponent extends BasePublicComponent {
   }
 
   /**
-   * @description Znovu otevře cookie lištu v rozbaleném (nastavovacím) stavu, ať uživatel
-   *              může kdykoli změnit svůj souhlas přímo z téhle stránky.
+   * @description Reopens the cookie bar in the expanded (settings) state, so the user can change
+   *              the consent at any time directly from this page.
    */
   openCookieSettings(): void {
     this.cookieConsentService.openSettings();

@@ -1,8 +1,8 @@
 /**
  * @file web-welcome-page.component.spec.ts
  * @path src/app/admin/web-pages/web-welcome-page/web-welcome-page.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of WebWelcomePageComponent – the landing page of the Web module:
  *   translated texts and quick-link cards shown only for the pages the user may open.

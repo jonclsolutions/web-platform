@@ -1,22 +1,10 @@
 <!-- 
     @file: contact.component.html
     @path: /src/app/public/web-pages/contact/contact.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @refactor-note (2026-08): Jednosouborový file-zone nahrazen sdílenou
-        <app-multi-file-upload> komponentou (max. 10 souborů, 20 MB/soubor, 50 MB celkem).
-    @refactor-note (2026-08-19): Pole telefonu dostalo stejnou real-time validaci jako
-        order-form.component.html - `[class.is-error]="fieldInvalid('phone')"` +
-        chybové hlášky pro `pattern`/`maxlength` (viz contact.component.ts stejné datum,
-        `Validators.pattern('^\\+?[0-9]*$')` + `Validators.maxLength(20)`). Přidán i
-        native `maxlength="20"` atribut na input, ať se nedá napsat víc znaků, než
-        validátor stejně povolí - stejný vzor jako u order-form.
-    @bugfix-note (2026-10-23): the phone link called `settings.contact_phone.replace()` -
-        site settings without a phone (allowed in the admin) crashed the whole contact block
-        (TypeError during rendering). It now uses the null-safe `phoneHref` of BasePublicComponent.
-    @bugfix-note (2026-10-31): open finding #64 - the phone row renders only with a phone (none
-        set, or switched off in the admin → no empty row with a dead tel: link).
+    @description: Template of the contact component.
 -->
 <div *ngIf="t">
 

@@ -1,8 +1,8 @@
 /**
  * @file pagination-buttons-builder.component.spec.ts
  * @path src/app/admin/components/builders/pagination-buttons-builder/pagination-buttons-builder.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of PaginationButtonsBuilderComponent – range text, 5-page window,
  *   page / page-size events of the admin tables.

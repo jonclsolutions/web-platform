@@ -1,27 +1,15 @@
 /**
  * @file sales-leads.config.ts
  * @path src/app/admin/web-pages/sales-leads/sales-leads.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
- * @description Static-turned-dynamic configuration (buttons, form fields, table/filter/
- * detail columns) for the Sales Leads (CRM) management page.
- *
- * (Earlier refactor-notes for permission granularization, bulk import/export importable
- * columns, and the openGraphBuilder permission fix are unchanged - see version history.)
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * + "enum hodnoty jako přeložitelné anglické slugy": kompletní přepis na FACTORY FUNKCE,
- * stejný vzor jako `support-tickets.config.ts`/`user-request.config.ts`. TŘI enum
- * skupiny (`status` 14 hodnot, `priority` 5, `source_channel` 23) přepsány z plného
- * českého textu na anglické slugy - viz SQL migrace
- * `005_enum_slugs_web_sales_leads.sql` a `Store/UpdateWebSalesLeadRequest`
- * (přepsané `in:...` seznamy), obojí SOUČASNĚ s touto změnou.
- *
- * Recept identický s `user-request.config.ts`/`support-tickets.config.ts`:
- * 1) `..._VALUES` - canonical anglický slug, nikdy nepřekládat.
- * 2) `..._LABEL_KEYS` - slug -> i18n klíč.
- * 3) `mapLabeledOptions()` - `{value,label}` páry, sdílené mezi formulářem a filtrem.
+ * @description Configuration (buttons, form fields, table / filter / detail columns) of the
+ * Sales Leads (CRM) management page.
+ * @note Same recipe as `user-request.config.ts` / `support-tickets.config.ts`:
+ * 1) `..._VALUES` - canonical English slug, never translated.
+ * 2) `..._LABEL_KEYS` - slug -> i18n key.
+ * 3) `mapLabeledOptions()` - `{value,label}` pairs shared by the form and the filter.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -275,10 +263,9 @@ export function createSalesLeadFilterColumns(i18n: AdminLocalizationService): Co
 }
 
 /**
- * @description `importable: true` beze změny oproti předchozí verzi - musí sedět s
- * `WebSalesLeadController::IMPORTABLE_COLUMNS`. `chartPossibleValues` zůstávají
- * canonical VALUES pole - stejné známé omezení jako u ostatních (viz @TODO-FOLLOWUP
- * v `user-request.config.ts`).
+ * @description `importable: true` must match `WebSalesLeadController::IMPORTABLE_COLUMNS`.
+ * `chartPossibleValues` stay the canonical VALUES arrays - same known limitation as elsewhere
+ * (see the @note in `user-request.config.ts`).
  */
 export function createSalesLeadDetailsColumns(i18n: AdminLocalizationService): Core.ItemDetailsColumns[] {
   return [

@@ -2,44 +2,10 @@
 /**
  * @file SiteConfigurationController.php
  * @path app/Http/Controllers/Api/Legal/SiteConfigurationController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Centralized management for site-wide configuration, including company details, localized branding assets, and social media links with file handling.
- *
- * @refactor-note (2026) Přidáno pole `google_analytics_id` do `updateSettings()` validace -
- * GA4 Measurement ID má formát "G-" následované 10 alfanumerickými znaky, proto přidán
- * i `regex` požadavek navíc k `nullable|string` (je to volitelné pole, web bez GA funguje
- * stejně dál). Hodnota se pak čte na veřejné straně přes `publicShow()`/`index()`, které
- * se neměnily - Eloquent ji serializuje automaticky jako každý jiný sloupec.
- *
- * @refactor-note (2026-08) Logování přesunuto z lokální `logAction()` (chybně mířila do
- * `shop_logs` a ručně `json_encode()`-ovala `context_data`, což při Eloquent `'array'`
- * castu vede k dvojitému enkódování - stejný bug jako u DocumentSectionController) na
- * sdílený `LogsActivity` trait, zapisující do `CoreLog::class`. Site-wide konfigurace je
- * dle dohodnutého Core/Web/Shop rozdělení doménou Core. Volání navíc traitu předávají
- * `['logo_file', 'icon_file']` jako extra vyloučené klíče, ať se do `context_data`
- * nesnaží (marně) serializovat nahrávaný soubor.
- *
- * @refactor-note (2026-08-2) `updateSettings()` dřív logoval jen statický text 'Updated
- * company details and logo' bez informace, KTERÁ pole se změnila - u citlivých/GDPR-
- * relevantních položek (google_analytics_id, kontaktní údaje) to znamenalo, že admin musel
- * rozklikávat celý `context_data`, aby zjistil, co se vlastně stalo. Popis teď obsahuje
- * seznam skutečně změněných klíčů (`array_keys($data)` proti hodnotám PŘED update() voláním),
- * hodnoty samotné zůstávají jen v `context_data` jako dřív - popis je čitelný souhrn, ne
- * duplicitní úložiště dat.
- *
- * @bugfix-note (2026-10-23) Found by the API tests:
- * - SECURITY (mass assignment): updateSettings() saved `$request->except(...)` instead of the
- *   validated data, so any fillable column could be set unchecked - e.g. `logo_path` pointing to
- *   another file of the public disk, which the next logo upload then DELETED. Now only
- *   validated fields are stored (logo_path only from an uploaded logo).
- * - Validation limits longer than the columns (MySQL strict mode → 500 "Data too long"):
- *   contact_phone 30 → 20, footer_text 1000 → 255, social link name 100 → 50, url 500 → 255.
- * - The first save on an empty table used firstOrCreate([]) = INSERT without the required
- *   columns (and with the missing created_at) → 500; now a new row is filled and saved once.
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Legal;
@@ -109,7 +75,7 @@ class SiteConfigurationController extends Controller
             'logo_file'            => 'nullable|file|image|max:2048',
         ]);
 
-        // Only validated fields - see bugfix-note (2026-10-23).
+        // Only validated fields.
         $data = collect($validated)->except(['logo_file', 'brand_tagline_i18n', 'copyright_text_i18n'])->all();
 
         // Normalize i18n fields for consistency
@@ -150,7 +116,7 @@ class SiteConfigurationController extends Controller
             $data['logo_path'] = $request->file('logo_file')->store('site-logos', 'public');
         }
 
-        // Zachytit skutečně změněné klíče PŘED update() (isDirty() po update() by už nic nenašel).
+        // Collect the really changed keys BEFORE save() (isDirty() finds nothing afterwards).
         $settings->fill($data);
         $changedKeys = array_keys($settings->getDirty());
         $settings->save();
@@ -186,7 +152,7 @@ class SiteConfigurationController extends Controller
         }
 
         return $this->respond([
-            // Switched-off fields are null - see refactor-note (2026-10-31).
+            // Switched-off fields are null.
             'settings'     => $settings?->toPublicArray(),
             'social_links' => $socialLinks,
         ]);

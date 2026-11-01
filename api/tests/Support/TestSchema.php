@@ -3,8 +3,8 @@
 /**
  * @file TestSchema.php
  * @path api/tests/Support/TestSchema.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Database schema of the unit/feature tests (SQLite in-memory). Mirrors the
  *   production tables (MariaDB) that the tested code reads and writes - same table names,
@@ -15,10 +15,6 @@
  *   that SQL. Keep this file in sync with the migrations whenever a tested table changes. Tables are added per test round (Core + Auth, Web, Shop; Other
  *   with its tests). The web_project* tables are not in database/db.sql (added
  *   later) - their columns follow the models and controllers.
- * @refactor-note (2026-10-31b) The root database/ folder (db.sql + manual SQL scripts) was
- *   removed; mentions of it below are historical (where a column came from).
- * @refactor-note (2026-10-31) legal_site_settings follows migration
- *   2026_10_31_000000_make_company_details_optional (hidden_fields, nullable optional columns).
  */
 
 namespace Tests\Support;

@@ -1,25 +1,14 @@
 /**
  * @file shop-public.service.ts
  * @path src/app/public/shop-pages/components/services/public-data.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Provides a centralized service for fetching public-facing e-shop data from the API, including product catalogs, cart validation, and checkout operations.
  * @dependencies
  * - HttpClient: Facilitates HTTP communication with the backend.
  * - RxJS: Handles asynchronous data streams and error handling.
  * - environment: Provides base API URL configuration.
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `checkStockAvailability`.
- * @refactor-note (2026-10-21) Chybové hlášky `handleError()` přesunuty do sekce `api_errors` shop
- *   překladů (`LocalizationService.getText()`, chybějící klíč se chová jako všude jinde - vrátí
- *   se klíč). `handleError` je teď arrow funkce, protože se předává do `catchError()` bez
- *   `bind` a nově používá `this`.
- * @bugfix-note (2026-10-23) Open finding #53: a 422 showed the English API message; 422 / 429 map to
- *   the translated `api_errors` texts now.
- * @refactor-note (2026-10-24) Open finding #6: the API answers `{data, meta?}`. getProducts()
- *   returns the page (`data` + `meta` pagination); every other method returns the payload
- *   (`data`), so the callers no longer guess (`res.data || res`).
  */
 
 import { Injectable } from '@angular/core';

@@ -2,25 +2,10 @@
 /**
  * @file UpdateWebRawRequestCommissionRequest.php
  * @path app/Http/Requests/Web/WebRawRequestCommission/UpdateWebRawRequestCommissionRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Validation logic for updating existing commission requests, including secure file handling.
- *
- * @refactor-note (2026-08) `attachment` (jeden soubor, max 10 MB) nahrazeno `attachments`
- * (pole, max. 10 souborů, každý max. 20 MB, souhrnně max. 50 MB) - sjednoceno se
- * StoreWebRawRequestCommissionRequest, ať mají create i update stejnou politiku.
- *
- * @refactor-note (2026-08-19) BACKLOG "mazání jednotlivých existujících příloh v editu":
- * přidáno `attachments_removed_ids` - pole ID příloh, které admin v editačním formuláři
- * odebral (UI-only akce, propíše se až s uložením celého formuláře). Validace zde řeší
- * jen TVAR vstupu (pole celých čísel) - vlastnictví (že dané ID skutečně patří k
- * editovanému požadavku) ověřuje až `HandlesAttachments::deleteAttachmentsByIds()`
- * v kontroleru, scoped přes `$model->attachments()` relaci - cizí ID se tam tiše
- * ignorují, takže sem záměrně NEPŘIDÁVÁME `exists:web_attachments,id` (to by ověřilo
- * jen globální existenci záznamu, ne vlastnictví, a zbytečně by to plodilo 422 chybu
- * místo tichého no-opu u případného race-conditions scénáře, kdy mezitím jinam zásahem
- * příloha už zanikla).
  */
 
 namespace App\Http\Requests\Web\WebRawRequestCommission;
@@ -35,13 +20,13 @@ class UpdateWebRawRequestCommissionRequest extends FormRequest
 {
 use ValidatesAttachmentSecurity;
 
-/** @description Max. počet příloh přidaných v rámci JEDNOHO update requestu. */
+/** @description Maximum number of attachments added in ONE update request. */
 private const MAX_ATTACHMENTS = 10;
 
 /** @description Max. velikost jednoho souboru v kB (Laravel `max:` pravidlo je v kB). */
 private const MAX_FILE_SIZE_KB = 20480; // 20 MB
 
-/** @description Max. souhrnná velikost všech nově nahraných příloh v bytech. */
+/** @description Maximum total size of all newly uploaded attachments in bytes. */
 private const MAX_TOTAL_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
 public function authorize(): bool

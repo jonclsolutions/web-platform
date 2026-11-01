@@ -2,8 +2,8 @@
 /**
  * @file RefreshToken.php
  * @path app/Models/RefreshToken.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Model representing authentication refresh tokens.
  */

@@ -1,8 +1,8 @@
 /**
  * @file cart.service.ts
  * @path src/app/public/shop-pages/components/services/cart.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages the e-shop shopping cart state: item persistence (LocalStorage), quantities
  *   limited by the shown stock, totals and tax.
@@ -10,13 +10,6 @@
  * - Angular Core: For signals, computed properties, and effects to handle reactive state.
  * - HttpClient: For communicating with the checkout API endpoints.
  * - environment: Provides API configuration URLs.
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `timeRemaining`, `isExpired`, `createOrder`, expiredNotificationPending (write-only flag).
- * @refactor-note (2026-10-23) Removed the "15-minute reservation" (open finding #42): the backend
- *   reserves no stock (availability is checked when the order is placed), the private
- *   `timerSignal` / `isExpiredSignal` were read by nobody, a 1-second interval ran forever and an
- *   "expired" cart was kept as is anyway. Gone: RESERVATION_TIME, the timer, `expiresAt` of the cart
- *   and `reservedAt` of the items (old stored carts still load - the fields are ignored).
  */
 
 import { Injectable, signal, computed, effect } from '@angular/core';

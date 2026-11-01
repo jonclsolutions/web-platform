@@ -1,8 +1,8 @@
 /**
  * @file suppliers.component.spec.ts
  * @path src/app/admin/shop-pages/suppliers/suppliers.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of SuppliersComponent and suppliers.config.ts – product suppliers:
  *   translated configuration, name / e-mail validation, chartable columns, toolbar by

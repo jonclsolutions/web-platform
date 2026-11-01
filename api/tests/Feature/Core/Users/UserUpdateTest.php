@@ -3,8 +3,8 @@
 /**
  * @file UserUpdateTest.php
  * @path api/tests/Feature/Core/Users/UserUpdateTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of editing an administrator account (UserController::update):
  *   sysadmin protection, sysadmin-only changes on other accounts (login e-mail, blocking,

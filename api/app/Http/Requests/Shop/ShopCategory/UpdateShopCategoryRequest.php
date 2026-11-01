@@ -2,8 +2,8 @@
 /**
  * @file UpdateShopCategoryRequest.php
  * @path app/Http/Requests/Shop/ShopCategory/UpdateShopCategoryRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation logic for updating existing shop categories.
  */
@@ -65,12 +65,6 @@ class UpdateShopCategoryRequest extends FormRequest
                 })->ignore($id),
             ],
             'description' => 'nullable|string',
-            // @bugfix-note (2026-10-23) `different:id` compared with an `id` INPUT field that is never
-            // sent, so a category could be made its own parent (endless tree in the admin /
-            // storefront). Now the route id itself is excluded.
-            // @bugfix-note (2026-10-23) Open finding #28: a category could still be moved under its OWN
-            // descendant (A → B → A), a cycle that made the tree endless / unreachable. The new
-            // parent's ancestor chain must not contain the edited category.
             'parent_id' => ['nullable', 'integer', 'exists:shop_categories,id', Rule::notIn([(int) $id]),
                 function (string $attribute, mixed $value, \Closure $fail) use ($id) {
                     if ($value !== null && self::isDescendantOf((int) $value, (int) $id)) {

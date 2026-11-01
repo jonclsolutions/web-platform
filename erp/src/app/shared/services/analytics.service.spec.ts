@@ -1,8 +1,8 @@
 /**
  * @file analytics.service.spec.ts
  * @path src/app/shared/services/analytics.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of AnalyticsService (Google Consent Mode v2): everything denied by
  *   default, consent updates mirrored to the dataLayer, gtag loaded only once and only when a

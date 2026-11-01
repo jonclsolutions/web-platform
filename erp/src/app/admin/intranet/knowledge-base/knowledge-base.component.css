@@ -1,12 +1,10 @@
 /*     
     @file: knowledge-base.component.css
     @path: /src/app/admin/intranet/knowledge-base/knowledge-base.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @refactor-note (2026) RETHEME: tmavé barvy nahrazeny black&white admin paletou
-        (--bg/--surface/--border/--accent/--text/... proměnné, stejné jako admin
-        stránky). Layout, rozměry, breakpointy BEZE ZMĚNY.
+    @description: Styles of the knowledge base component.
 */
 
 :host {

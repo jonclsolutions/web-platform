@@ -2,8 +2,8 @@
 /**
  * @file SocialLink.php
  * @path app/Models/Legal/SocialLink.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Model for managing social media link associations.
  */

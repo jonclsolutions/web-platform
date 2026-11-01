@@ -1,14 +1,13 @@
 /*
     @file: admin-error-page.component.css
     @path: /src/app/admin/error-pages/admin-error-page.component.css
-    @project: RPSW Web
-    @author: RPSW
-    @created: 2026-10-27
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
     @description: 404 / 403 page of the administration - a centred card in the admin look. Colours
         come from the admin theme tokens inherited from the admin layout (--surface, --border,
         --text, --text-muted, --accent, --ff); the 403 variant marks the status code in the danger
         colour.
-    @refactor-note (2026-10-27b) Icons removed (the status code carries the kind of the page).
     @dependencies: admin layout (inherited theme tokens), app/shared/styles/tokens.css (--color-*)
 */
 

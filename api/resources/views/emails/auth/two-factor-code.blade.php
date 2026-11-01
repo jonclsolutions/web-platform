@@ -1,15 +1,13 @@
-<!--
-    @file: two-factor-code.blade.php
-    @path: resources/views/emails/auth/two-factor-code.blade.php
-    @project: RPSW Web
-    @author RPSW
+{{--
+    @file two-factor-code.blade.php
+    @path resources/views/emails/auth/two-factor-code.blade.php
+    @project JS web-platform
+    @author JS
     @created 2026
-    @description Ověřovací 2FA kód pro dokončení přihlášení - přepracovaný vzhled
-    (2026-08-19), stejný vizuální jazyk jako password-reset.blade.php/
-    password-changed.blade.php. Kód zvýrazněný ve vlastním rámečku (velké písmo,
-    rozestupy mezi znaky) místo prostého <h2> - lépe čitelné/opsatelné na mobilu.
-    Sdílená patička s firemním kontaktem - viz emails/partials/footer.blade.php.
--->
+    @description 2FA code that finishes the login, same look as password-reset.blade.php. The code
+    stands in its own frame (large letters, letter spacing) - easy to read and copy on a phone.
+    Shared company footer (emails/partials/footer.blade.php).
+--}}
 @php
     /** Brand name shown in header, sign-off and footer. */
     $brand  = $companyName ?? config('app.name');
@@ -34,7 +32,7 @@
 </head>
 <body style="margin:0;padding:0;background:#f7f7f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
 
-<!-- Preheader: deliberately generic - the code must not appear in inbox previews -->
+{{-- Preheader: deliberately generic - the code must not appear in inbox previews --}}
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">
     Use this code to complete your sign-in. It expires in {{ $expiresInMinutes }} minutes.
 </div>
@@ -44,7 +42,7 @@
 <td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;">
 
-<!-- Brand header: logo + company name -->
+{{-- Brand header: logo + company name --}}
 <tr>
 <td style="padding:36px 40px 8px;">
     <table role="presentation" cellpadding="0" cellspacing="0">
@@ -68,7 +66,7 @@
 </td>
 </tr>
 
-<!-- Body copy -->
+{{-- Body copy --}}
 <tr>
 <td style="padding:24px 40px 0;">
     <p style="margin:0 0 20px;font-size:16px;line-height:1.5;color:#484848;">
@@ -80,7 +78,7 @@
 </td>
 </tr>
 
-<!-- Verification code box -->
+{{-- Verification code box --}}
 <tr>
 <td style="padding:0 40px 24px;">
     <table role="presentation" cellpadding="0" cellspacing="0">
@@ -96,7 +94,7 @@
 </td>
 </tr>
 
-<!-- Validity + warning -->
+{{-- Validity + warning --}}
 <tr>
 <td style="padding:0 40px 28px;">
     <p style="margin:0;font-size:16px;line-height:1.5;color:#484848;">
@@ -107,7 +105,7 @@
 </td>
 </tr>
 
-<!-- Sign-off -->
+{{-- Sign-off --}}
 <tr>
 <td style="padding:0 40px 32px;">
     <p style="margin:0;font-size:16px;line-height:1.5;color:#484848;">
@@ -117,14 +115,14 @@
 </td>
 </tr>
 
-<!-- Divider -->
+{{-- Divider --}}
 <tr>
 <td style="padding:0 40px;">
     <div style="border-top:1px solid #dddddd;line-height:0;font-size:0;">&nbsp;</div>
 </td>
 </tr>
 
-<!-- Footer (muted, small) -->
+{{-- Footer (muted, small) --}}
 <tr>
 <td style="padding:24px 40px 36px;font-size:13px;line-height:1.7;color:#767676;">
     @include('emails.partials.footer')

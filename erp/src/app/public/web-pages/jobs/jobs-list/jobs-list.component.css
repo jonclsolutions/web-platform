@@ -1,14 +1,10 @@
 /*
     @file: jobs-list.component.css
     @path: /src/app/public/web-pages/jobs/jobs-list/jobs-list.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @refactor-note (2026-09) Unified spacing across public pages: spacing tokens
-        (--gutter, --section-y, --hero-top, --hero-bottom), content width 1200px
-        (+ gutters), hero top 180/120px, 96/64px around the divider. CTA panel
-        (no background) sits flush with the content column.
-        Only padding / margin / max-width changed.
+    @description: Styles of the jobs list component.
 */
 
 :host {

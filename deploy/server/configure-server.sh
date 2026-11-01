@@ -2,23 +2,13 @@
 # =============================================================================
 # @file configure-server.sh
 # @path deploy/server/configure-server.sh  (shipped into the webroot by deploy/build.sh)
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Server-side setup of a deployed package, run from the webroot after upload:
 #   Composer dependencies, .env, application key, DATABASE (created + migrated + base data),
 #   the first sysadmin account, storage link, queue/scheduler cron, permissions, public
 #   storage symlink.
-# @refactor-note (2026-10-30) Database by Laravel instead of a manual SQL import:
-#   `db:create-if-missing` (creates the database when the account may - on shared hosting
-#   create the empty database in the hosting panel instead), `migrate --force` (the baseline
-#   migration creates the whole schema on an empty database, does nothing on a filled one),
-#   `db:seed --force` (base data only - APP_ENV=production never gets the local test account)
-#   and `security:create-sysadmin --if-none` (asks for the e-mail and the password of the first
-#   sysadmin; skipped when one exists). Safe to run on every deployment.
-# @bugfix-note (2026-10-30) `key:generate --force` ran on EVERY run and replaced APP_KEY: all
-#   sessions / tokens and everything encrypted with the old key became invalid after each
-#   deployment. The key is generated only when APP_KEY is empty now.
 # @note NOT TESTED ON THE SERVER YET (written 2026-10-30, tested only locally / by review).
 #   Run it the first time step by step and check every output; report anything unexpected.
 # @usage  cd <webroot> && bash configure-server.sh
@@ -82,21 +72,19 @@ php artisan security:create-sysadmin --if-none
 # --- 6. Storage link (within Laravel) ---
 php artisan storage:link --force
 
-# --- 6b. Queue worker + Scheduler (cron, ne Supervisor - sdílený hosting nemá sudo/
-# persistentní procesy) ---
-# Dva NEZÁVISLÉ cron záznamy, oba idempotentní (vlastní marker, kontrola existence
-# před přidáním):
+# --- 6b. Queue worker + scheduler (cron, not Supervisor - shared hosting has no sudo /
+# persistent processes) ---
+# Two INDEPENDENT cron entries, both idempotent (own marker, checked before adding):
 #
-# 1) QUEUE WORKER - "queue:work --stop-when-empty" zpracuje všechny aktuálně čekající
-#    joby (potvrzovací e-maily, ImportRowsJob u velkých importů) a SÁM SE UKONČÍ, jakmile
-#    je fronta prázdná. Žádný trvalý proces, žádné sudo.
+# 1) QUEUE WORKER - "queue:work --stop-when-empty" processes every waiting job
+#    (confirmation e-mails, ImportRowsJob of large imports) and EXITS when the queue is
+#    empty. No permanent process, no sudo.
 #
-# 2) SCHEDULER - "schedule:run" je NUTNÝ pro jakékoliv `Schedule::command(...)` volání
+# 2) SCHEDULER - "schedule:run" is REQUIRED for every `Schedule::command(...)`:
 #    v routes/console.php (PurgeSecurityEventsCommand, PurgeImportBatchesCommand apod.) -
-#    Laravel scheduler sám o sobě nic nespouští, jen při KAŽDÉM zavolání "schedule:run"
-#    zkontroluje, jestli něco nemá naplánované na tuhle minutu. BEZ TOHOTO CRONU se
-#    žádná naplánovaná úloha (denní GDPR purge, úklid nevyzvednutých importů...)
-#    NIKDY NESPUSTÍ, i kdyby byla v kódu správně nadefinovaná.
+#    the Laravel scheduler runs nothing by itself, each "schedule:run" call only checks
+#    what is due this minute. WITHOUT THIS CRON no scheduled job (daily GDPR purge,
+#    clean-up of abandoned imports, ...) EVER runs.
 echo "Configuring queue processing and scheduler via user crontab..."
 
 if command -v crontab &> /dev/null; then

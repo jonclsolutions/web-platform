@@ -2,15 +2,10 @@
 /**
  * @file WebSupportTicket.php
  * @path app/Models/Web/WebSupportTicket.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Model representing a customer support request.
- * @refactor-note (2026-08-2) Přidán `attachments()` polymorfní vztah - příloha se od teď
- *      ukládá přes `web_attachments` (viz HandlesAttachments::storeSingleAttachment())
- *      místo přímo do `attachment_path`. `attachment_path`/`attachment_original_name`
- *      sloupce zůstávají v DB kvůli historickým záznamům nahraným před touto změnou,
- *      ale nový upload už do nich nezapisuje - viz WebSupportTicketController.
  */
 
 namespace App\Models\Web;

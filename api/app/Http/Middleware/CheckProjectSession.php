@@ -2,8 +2,8 @@
 /**
  * @file CheckProjectSession.php
  * @path app/Http/Middleware/CheckProjectSession.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Customer-portal session guard - COMPLETELY SEPARATE from Sanctum/
  * CheckPermission (staff auth). Applied to every authenticated public project route
@@ -25,7 +25,7 @@
  * WebProjectSession::slideExpiry(), the concrete implementation of consultation
  * note 1's "24h of inactivity, not a hard wall-clock timer from login".
  *
- * @security-note (2026-10-23) The session token is accepted ONLY as `Authorization: Bearer`.
+ * @security The session token is accepted ONLY as `Authorization: Bearer`.
  *   The former `session_token` query / body fallback put a bearer credential into webserver and
  *   proxy access logs and the browser history (open finding #1) and was removed; the portal
  *   frontend sends the header.
@@ -49,8 +49,8 @@ class CheckProjectSession
         $project = WebProject::where('access_token', $token)->first();
 
         if (!$project || $project->visibility !== 'public') {
-            // Stejná odpověď pro "neexistuje" i "je private" - nerozlišujeme,
-            // ať odkaz na privátní projekt nejde odlišit od úplně neplatného.
+            // Same answer for "does not exist" and "is private", so a link to a private project
+            // cannot be told apart from an invalid one.
             CoreSecurityEvent::record(
                 'project_session_invalid',
                 'info',

@@ -3,8 +3,8 @@
 /**
  * @file PasswordResetTest.php
  * @path api/tests/Feature/Core/Auth/PasswordResetTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the public password reset: requesting the link (same answer
  *   for every e-mail, per-e-mail limit) and setting the new password with the token

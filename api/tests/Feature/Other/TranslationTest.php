@@ -3,8 +3,8 @@
 /**
  * @file TranslationTest.php
  * @path api/tests/Feature/Other/TranslationTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the translations (TranslationController): public language
  *   list and translation files, saving translations with a change summary, the language list
@@ -83,9 +83,9 @@ class TranslationTest extends TestCase
      * @description Saving translations: creates the folder and file, logs a summary of new and
      *   changed keys (nested, cut at 200 chars), says when nothing changed; the public endpoint
      *   returns the file; validation of the language code.
-     * @input POST web cz {home: {title: Domů}}; POST changed title + new keys (long); POST same again;
+     * @input POST web cz {home: {title: …}}; POST changed title + new keys (long); POST same again;
      *        POST en with 20 keys; GET translations/web/cz and /de; invalid lang values.
-     * @output 200 detected 1 / 3 / 0; log "NEW:home(…" / "CHNG:home.title(Domů->Úvod)" /
+     * @output 200 detected 1 / 3 / 0; log "NEW:home(…" / "CHNG:home.title(…->…)" /
      *   "no value changes"; 20 new keys → summary cut to 200 chars + '...'; GET returns the data /
      *   404; 422 for 'c', '../x', 'english'.
      */

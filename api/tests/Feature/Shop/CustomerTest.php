@@ -3,8 +3,8 @@
 /**
  * @file CustomerTest.php
  * @path api/tests/Feature/Shop/CustomerTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the shop customers (ShopCustomerController): list with search,
  *   create / edit with validation, delete / restore / trash.

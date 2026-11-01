@@ -1,8 +1,8 @@
 /**
  * @file export-popup-builder.component.ts
  * @path src/app/admin/components/builders/export-popup-builder/export-popup-builder.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Reusable format-picker popup for table data export. Presents the
  * available export formats (CSV, XLSX, JSON, TXT) as selectable cards and emits the
@@ -12,42 +12,8 @@
  * @dependencies
  * - CommonModule: @if/@for control flow.
  * - DomSanitizer: Safely renders inline SVG icons via [innerHTML].
- * - ScrollLockService: Sdílený zámek scrollu na pozadí (viz refactor-note 2026-08-31).
- * - AdminLocalizationService: Statické i18n admin UI.
- *
- * @refactor-note (2026-08-18) SLOUPCOVÝ VÝBĚR PŘI EXPORTU - viz backlog task "export:
- * uživatelský výběr sloupců přes checkboxy". Přidán `@Input() columns`.
- *
- * @refactor-note (2026-08-23) EXPORT V "SUROVÉM" (IMPORT-KOMPATIBILNÍM) FORMÁTU - viz
- * backlog task "raw_request_commissions: plně funkční bulk import/export/delete".
- * Přidán volitelný přepínač "Exportovat v surovém formátu" - dostupný jen pokud
- * caller předá `showRawFormatOption = true` (tj. daná tabulka má aspoň jeden sloupec
- * označený `importable: true` v `detailsColumns`, viz TableBuilderComponent).
- * V zapnutém stavu:
- * 1) Sloupcový checkbox seznam se přepne z PLNÉHO seznamu (`columns`) na podmnožinu
- *    `importableColumns` - jen sloupce, které daný resource umí přijmout zpátky přes
- *    import (syrové technické názvy sloupců jako hlavičky, ne české popisky).
- * 2) XLSX se z nabídky formátů SCHOVÁ - import aktuálně podporuje jen CSV/JSON/TXT
- *    (viz ImportFileParser), takže surový export do XLSX by stejně nešel zpětně
- *    naimportovat.
- * `ExportSelection` nese nové pole `rawFormat: boolean` - `TableBuilderComponent` podle
- * něj přepíná mezi zpracovaným (`getExportValueForKey`, české popisky) a syrovým
- * (`getRawExportValueForKey`, technické názvy sloupců, needitované hodnoty) exportem.
- *
- * @refactor-note (2026-08-31) SCROLL LOCK SJEDNOCEN - dřív vlastní statický
- * `scrollLockCount` + přímé `document.body.style.overflow`, teď deleguje na sdílený
- * `ScrollLockService` (stejný mechanismus jako u všech ostatních overlay komponent -
- * viz scroll-lock.service.ts).
- *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * Ruční injection AdminLocalizationService + `strings`/`subtitleText` getter -
- * viz `{count}` interpolace v `subtitleText` (jediné místo v komponentě, kde i18n
- * text nese proměnnou).
- *
- * @refactor-note (2026-09v2) BACKLOG "žádný český fallback": `EXPORT_FORMAT_OPTIONS`
- * (statická konstanta) byla ODSTRANĚNA z export-format.ts. `private readonly
- * formatOptions` pole nahrazeno getterem volajícím `createExportFormatOptions
- * (this.i18n)` - viz export-format.ts refactor-note (2026-09v2).
+ * - ScrollLockService: Shared background scroll lock.
+ * - AdminLocalizationService: Static i18n of the admin UI.
  */
 
 import { Component, EventEmitter, Input, Output, OnChanges, OnInit, OnDestroy, SimpleChanges, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -72,9 +38,8 @@ export interface ExportColumnOption {
  * @property columnKeys Keys of the columns the admin left checked, in the same order as
  * the active `columns` source (`columns` or, in raw mode, `importableColumns`) - or
  * `null` when this popup instance was never given any columns to pick from.
- * @property rawFormat True když admin zaškrtl "Exportovat v surovém formátu" - viz
- * refactor-note (2026-08-23) v hlavičce souboru. Vždy `false`, pokud `showRawFormatOption`
- * nebyl daný resource vůbec nabídnut.
+ * @property rawFormat True when the admin checked "Export in raw format". Always `false` when
+ * `showRawFormatOption` was not offered for the resource.
  */
 export interface ExportSelection {
   format: ExportFormat;
@@ -112,22 +77,21 @@ export class ExportPopupBuilderComponent implements OnChanges, OnInit, OnDestroy
   @Input() formats: ExportFormat[] = ['csv', 'xlsx', 'json', 'txt'];
   /**
    * @description Columns the admin may choose to include/exclude from the STANDARD
-   * (zpracovaný, česky popsaný) export, in display order. Empty (default) = column
+   * (processed, human-labelled) export, in display order. Empty (default) = column
    * picker section is not rendered at all.
    */
   @Input() columns: ExportColumnOption[] = [];
   /**
-   * @description Podmnožina sloupců, které resource umí přijmout ZPĚT přes import -
-   * nabízí se místo `columns` v okamžiku, kdy admin zaškrtne "Exportovat v surovém
-   * formátu". Prázdné pole = raw export by neměl co exportovat, `showRawFormatOption`
-   * by v takovém případě neměl být `true` vůbec.
+   * @description Subset of the columns the resource can take BACK through the import - offered
+   * instead of `columns` once the admin checks "Export in raw format". An empty array = the raw
+   * export would have nothing to export, `showRawFormatOption` should not be `true` then.
    */
   @Input() importableColumns: ExportColumnOption[] = [];
   /**
-   * @description Zda vůbec nabídnout přepínač "Exportovat v surovém formátu" - má
-   * smysl jen u resources, které mají hotový i import (jinak by export nikam zpátky
-   * nešel naimportovat). Caller (TableBuilderComponent) tohle vyhodnocuje podle toho,
-   * jestli `detailsColumns` obsahuje aspoň jeden sloupec s `importable: true`.
+   * @description Whether to offer the "Export in raw format" toggle at all - only for resources
+   * that also have an import (otherwise the export could not be imported back). The caller
+   * (TableBuilderComponent) decides by whether `detailsColumns` has at least one column with
+   * `importable: true`.
    */
   @Input() showRawFormatOption: boolean = false;
 
@@ -141,35 +105,28 @@ export class ExportPopupBuilderComponent implements OnChanges, OnInit, OnDestroy
   selectedColumnKeys = new Set<string>();
 
   public readonly i18n = inject(AdminLocalizationService);
-  /** @description Stav přepínače "Exportovat v surovém formátu" - viz refactor-note (2026-08-23). */
+  /** @description State of the "Export in raw format" toggle. */
   rawFormat = false;
 
   private sanitizer = inject(DomSanitizer);
   private scrollLock = inject(ScrollLockService);
 
-  /**
-   * @refactor-note (2026-09v2) `private readonly formatOptions` -> getter, ať se
-   * `description` texty přepočítají po přepnutí admin jazyka; `EXPORT_FORMAT_OPTIONS`
-   * (statický deprecated fallback) byl odstraněn z export-format.ts.
-   */
   private get formatOptions(): ExportFormatOption[] {
     return createExportFormatOptions(this.i18n);
   }
 
   /**
-   * @description Merged `shared` + `export-popup` i18n section - viz refactor-note
-   * (2026-09) v hlavičce souboru.
-   * @note Typ `any` záměrně - viz `AdminLocalizationService.getMergedSection()`.
+   * @description Merged `shared` + `export-popup` i18n section.
+   * @note Type `any` on purpose - see `AdminLocalizationService.getMergedSection()`.
    */
   get strings(): any {
     return this.i18n.getMergedSection('export-popup');
   }
 
   /**
-   * @description Subtitle textu s interpolovaným počtem záznamů - jediné místo
-   * v komponentě, kde se do i18n textu vkládá proměnná (`{count}`), řešeno prostým
-   * `.replace()` (stejný vzor jako `PersonalInfoComponent.security2faStatusMessage`) -
-   * jeden výskyt v celé komponentě nestojí za obecný templating engine.
+   * @description Subtitle with the interpolated record count - the only place of the component
+   * that inserts a variable into an i18n text (`{count}`), done with a plain `.replace()` (same
+   * pattern as `PersonalInfoComponent.security2faStatusMessage`).
    */
   get subtitleText(): string {
     return this.itemCount > 0
@@ -177,8 +134,8 @@ export class ExportPopupBuilderComponent implements OnChanges, OnInit, OnDestroy
       : this.strings.subtitle_no_count;
   }
   /**
-   * @description Zdroj sloupců pro checkbox seznam - PODLE AKTUÁLNÍHO stavu `rawFormat`.
-   * V raw módu se nabízí jen `importableColumns`, jinak plný `columns` seznam.
+   * @description Source of the columns of the checkbox list - BY the CURRENT `rawFormat` state.
+   * In raw mode only `importableColumns` are offered, otherwise the full `columns` list.
    */
   get activeColumnSource(): ExportColumnOption[] {
     return this.rawFormat ? this.importableColumns : this.columns;
@@ -192,13 +149,6 @@ export class ExportPopupBuilderComponent implements OnChanges, OnInit, OnDestroy
     this.scrollLock.unlock();
   }
 
-  /**
-   * @bugfix-note (2026-08-18) KRITICKÝ BUG - VÝBĚR SLOUPCŮ SE IGNOROVAL - viz
-   * TableBuilderComponent.exportableColumnOptions bugfix-note stejné datum (stabilní
-   * property místo getteru, aby se `columns`/`importableColumns` reference neměnila
-   * při každém CD průchodu). Reset proběhne JEN při reálné změně OBSAHU klíčů zdroje,
-   * který je zrovna aktivní (`activeColumnSource`), ne mere reference change.
-   */
   ngOnChanges(changes: SimpleChanges): void {
     const columnsChange = changes['columns'];
     const importableChange = changes['importableColumns'];
@@ -212,8 +162,8 @@ export class ExportPopupBuilderComponent implements OnChanges, OnInit, OnDestroy
   }
 
   get visibleFormatOptions(): ExportFormatOption[] {
-    // V raw módu se XLSX schovává - import ho nepodporuje, surový export do XLSX by
-    // stejně nešel zpětně naimportovat (viz refactor-note 2026-08-23 v hlavičce souboru).
+    // In raw mode XLSX is hidden - the import does not support it, a raw XLSX export
+    // could not be imported back anyway.
     const allowed = this.rawFormat ? this.formats.filter(f => f !== 'xlsx') : this.formats;
     return this.formatOptions.filter(opt => allowed.includes(opt.value));
   }
@@ -222,20 +172,19 @@ export class ExportPopupBuilderComponent implements OnChanges, OnInit, OnDestroy
     return this.sanitizer.bypassSecurityTrustHtml(svg);
   }
 
-  // ── Přepínač surového (import-kompatibilního) formátu ────────────────────
+  // ── Raw (import-compatible) format toggle ────────────────────
 
   /**
-   * @description Přepne mezi standardním a surovým exportem - při přepnutí se
-   * checkbox výběr sloupců přenastaví na "vše zaškrtnuto" z nově aktivního zdroje
-   * (`columns` vs `importableColumns`), ať staré zaškrtnutí z jiného seznamu
-   * nezůstane matoucně "napůl" aplikované.
+   * @description Switches between the standard and the raw export - the column selection is
+   * reset to "all checked" from the newly active source (`columns` vs `importableColumns`), so
+   * an old selection from the other list does not stay half applied.
    */
   toggleRawFormat(): void {
     this.rawFormat = !this.rawFormat;
     this.resetSelectionToActiveSource();
   }
 
-  // ── Výběr sloupců k exportu ───────────────────────────────────────────
+  // ── Choice of the exported columns ───────────────────────────────────────────
 
   isColumnSelected(key: string): boolean {
     return this.selectedColumnKeys.has(key);
@@ -264,11 +213,10 @@ export class ExportPopupBuilderComponent implements OnChanges, OnInit, OnDestroy
   }
 
   /**
-   * @description Zda mají být formátové karty i export zablokované - buď se ještě
-   * generuje soubor, nebo je aktivní zdroj sloupců neprázdný, ale výběr je prázdný
-   * (export s 0 sloupci nemá smysl), nebo je zapnutý raw mód a `importableColumns`
-   * je prázdné (nemělo by se to stát, pokud `showRawFormatOption` bylo nastavené
-   * správně, ale kontrola tu je jako pojistka).
+   * @description Whether the format cards and the export are blocked - either the file is still
+   * being generated, or the active column source is non-empty but the selection is empty (an
+   * export with 0 columns makes no sense), or raw mode is on and `importableColumns` is empty
+   * (should not happen when `showRawFormatOption` is set correctly, kept as a safety net).
    */
   get formatGridDisabled(): boolean {
     if (this.isExporting) return true;
@@ -277,7 +225,7 @@ export class ExportPopupBuilderComponent implements OnChanges, OnInit, OnDestroy
     return source.length > 0 && this.selectedColumnKeys.size === 0;
   }
 
-  // ── Overlay / zavírání ────────────────────────────────────────────────
+  // ── Overlay / closing ────────────────────────────────────────────────
 
   onOverlayClick(event: MouseEvent): void {
     if (event.target === event.currentTarget) {

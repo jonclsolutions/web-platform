@@ -1,15 +1,11 @@
-<!-- 
+<!--
     @file: kb-article.component.html
     @path: /src/app/admin/intranet/knowledge-base/kb-article/kb-article.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @description Generický renderer - iteruje page.sections a uvnitř section.blocks,
-        vykresluje podle block.type. Viz kb-content.ts pro popis jednotlivých typů bloků.
-    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
-        veškerý textový obsah teď prochází přes `l(...)` metodu, která rozřeší
-        `LocalizedText` podle aktuálního admin jazyka - viz kb-article.component.ts
-        stejné datum. Breadcrumb se skládá dynamicky přes `breadcrumb` getter.
+    @description Generic renderer - iterates page.sections and inside them section.blocks,
+        renders by block.type. See kb-content.ts for the block types.
 -->
 
 @if (page) {

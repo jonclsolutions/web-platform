@@ -1,21 +1,14 @@
 /**
  * @file business-logs.config.ts
  * @path src/app/admin/web-pages/business-logs/business-logs.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Static-turned-dynamic configuration (buttons, table/filter/detail
  * columns) for the Web business logs (audit trail) page. Read-only - no FORM_FIELDS,
  * no create/edit/delete buttons, since log entries are never created or edited through
  * the admin UI, only written internally by LogsActivity trait calls throughout the
  * backend.
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * kompletní přepis na FACTORY FUNKCE, stejný vzor jako ostatní web-pages stránky.
- * `event_type`/`module` NEVYŽADOVALY žádnou SQL migraci - byly to od začátku anglické
- * slugy (`create`/`update`/..., `WebNews`/`WebJobApplication`/...), ne český text.
- * Jen přidán `mapLabeledOptions()` mechanismus, ať se ve filtru/detailu zobrazí
- * přeložený popisek místo syrového technického slugu/PascalCase názvu třídy.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';

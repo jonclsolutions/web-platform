@@ -1,12 +1,11 @@
 /**
  * @file email-access-policy-modal.css
  * @path src/app/admin/core-pages/administrators/email-access-policy-modal.css
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Styly pro modal "Domény e-mailů" (BACKLOG
- * "core-admin-email-domain-restriction"). Stejná paleta jako ostatní inline modaly
- * v projektu (#18181b/#71717a/#ececea) - Kravio styl, konzistentní se zbytkem adminu.
+ * @description Styles of the "E-mail domains" modal. Same palette as the other inline modals of
+ * the project (#18181b / #71717a / #ececea), consistent with the rest of the admin.
  */
 
 .email-policy-overlay {

@@ -2,13 +2,10 @@
 /**
  * @file ShopOrderResource.php
  * @path app/Http/Resources/Shop/ShopOrderResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Resource transformation for complete sales orders.
- * @bugfix-note (2026-10-23) `contact` = buyer as given for this order (snapshot columns, falling
- *   back to the customer record for old rows) - open findings #22 / #23. The admin shows the
- *   order's contact from here, not from the (changeable / anonymisable) customer master data.
  */
 
 namespace App\Http\Resources\Shop;

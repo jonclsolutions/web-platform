@@ -1,15 +1,10 @@
 <!-- 
     @file: shop-maintenance.component.html
     @path: /src/app/public/shop-pages/shop-maintenance/shop-maintenance.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026 
-    @refactor-note (2026-08): Přidány sociální ikony + kontaktní řádek (email/telefon),
-        čteno ze stejné settings/socialLinks cache jako footer (viz .ts hlavička).
-    @refactor-note (2026-10-21): Natvrdo psané texty nahrazeny `t?.*` (sekce `shop_maintenance`).
-    @bugfix-note (2026-10-23): the tel: link used `replace('/\s/g', '')` - a STRING, not a
-        regex - so spaces were never removed ("tel:+420 777 …", invalid per RFC 3966, some
-        dialers refuse it). It now uses `phoneHref` of BasePublicComponent.
+    @description: Template of the shop maintenance component.
 -->
 <div class="maintenance-container">
   <div class="maintenance-grid-bg" aria-hidden="true"></div>

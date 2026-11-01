@@ -1,9 +1,9 @@
 # =============================================================================
 # @file compose.yaml
 # @path dev/compose.yaml
-# @project RPSW Web
-# @author RPSW
-# @created 2026-10-31
+# @project JS web-platform
+# @author JS
+# @created 2026
 # @description LOCAL development environment in Docker - replaces XAMPP, Mailpit in ~/.local/bin
 #   and the PHP / Node.js installed on the host. Services:
 #     api        Laravel API - `php artisan serve`                 http://127.0.0.1:${API_PORT}
@@ -19,8 +19,6 @@
 #   ./init-workspace.sh prepares everything (.env files, images, dependencies, database).
 # @note Paths here are relative to this folder (dev/ = the Compose project directory), so it
 #   also works by hand: `docker compose -f dev/compose.yaml ps`; Compose reads dev/.env itself.
-# @refactor-note (2026-10-31) Moved from the repository root to dev/ (root clean-up): build
-#   context `docker`, repository mount `..`.
 # @note Configuration: dev/.env (from dev/.env.example, git-ignored) - ports, PHP / Node.js /
 #   MariaDB versions, the UID / GID of your user and the local database root password.
 #   The project name (COMPOSE_PROJECT_NAME = app directory name) keeps containers, volumes and

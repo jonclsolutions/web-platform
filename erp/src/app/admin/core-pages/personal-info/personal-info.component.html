@@ -1,24 +1,10 @@
 <!-- 
     @file: personal-info.component.html
     @path: /src/app/admin/web-pages/personal-info/personal-info.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @refactor-note (2026-08-16): sekce Zabezpečení doplněna o barevný status banner
-        (security2faStatusMessage / security2faStatusType) - rozlišuje 3 stavy: role
-        vynucuje / sysadmin vynutil / volný self-service toggle.
-    @refactor-note (2026-09b) BACKLOG "žádné hardcoded texty": VŠECHNY uživatelsky
-        viditelné texty v šabloně nahrazeny `strings.xxx` binding - žádný natvrdo
-        psaný český text nezůstal (viz personal-info.component.ts refactor-note
-        stejné datum pro odpovídající JSON klíče).
-    @refactor-note (2026-09c) BUGFIX: `aria-label="Zavřít"` na zavíracím tlačítku
-        popupu hesla byl poslední natvrdo psaný text v šabloně - nahrazen
-        `i18n.getValue('shared.close')` (existující sdílený klíč, ne nový).
-    @refactor-note (2026-09d) BACKLOG "jazykový přepínač do headeru": karta "Jazyk
-        administrace" (dropdown s vlaječkami) ODSTRANĚNA CELÁ - přesunuta do
-        `AdminLayoutComponent` headeru, vedle odkazu Wiki - viz
-        personal-info.component.ts a admin-layout.component.html stejné datum.
-        Zbytek stránky (základní údaje, zabezpečení, změna hesla) beze změny.
+    @description: Template of the personal info component.
 -->
     
 <div class="personal-info-container">

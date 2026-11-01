@@ -1,30 +1,24 @@
 /**
  * @file table-builder.component.ts
  * @path src/app/admin/components/builders/table-builder/table-builder.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description A generic, highly configurable table component for displaying datasets with
  * built-in CRUD actions, multi-format export (CSV/XLSX/JSON/TXT), append-only import, and
  * localized formatting.
  *
  * @dependencies
- * - EntityCrudService: CRUD volani (delete radku/hromadne delete po jednom, POST log exportu).
- * - ConfirmDialogService: Facilitates safe delete operations (single i bulk).
- * - ExportPopupBuilderComponent: Formatovy picker popup pro export dat, vcetne vyberu sloupcu.
- * - ImportPopupBuilderComponent: Append-only import popup (sablona, upload, dry-run, commit).
- * - PermissionService: Vyhodnoceni TableButtons.permission pro radkova tlacitka i
- *   viditelnost "Smazat vybrane" v dropdownu (canBulkDelete).
+ * - EntityCrudService: CRUD calls (row delete, POST of the export log).
+ * - ConfirmDialogService: Facilitates safe delete operations (single and bulk).
+ * - ExportPopupBuilderComponent: Format picker popup of the data export, incl. the column choice.
+ * - ImportPopupBuilderComponent: Append-only import popup (template, upload, dry-run, commit).
+ * - PermissionService: Evaluates TableButtons.permission for the row buttons and the
+ *   visibility of "Delete selected" in the dropdown (canBulkDelete).
  * - CurrencyPipe, DatePipe: Standard pipes for data formatting.
- * - xlsx (SheetJS): Lazy-loaded jen pri volbe XLSX exportu, viz downloadXlsx().
- * - IconComponent: Sdílená sada SVG ikon pro řádková tlačítka.
- * - AdminLocalizationService: Statické i18n admin UI (NE obsah webu/eshopu) - viz
- *   refactor-note (2026-09) níže.
- *
- * @bugfix-note (2026-10-23) Open finding #50: table cells and exports formatted currency / dates
- *   always with cs-CZ, booleans as English 'Yes' / 'No' and named selected-rows files '-vybrane' in
- *   every admin language - now the admin locale (`getDateLocale()`), `shared.yes` / `shared.no` and
- *   the translated `table-builder.export_selected_suffix` (like TrashTableBuilder already did).
+ * - xlsx (SheetJS): Lazy-loaded only when the XLSX export is chosen, see downloadXlsx().
+ * - IconComponent: Shared SVG icon set of the row buttons.
+ * - AdminLocalizationService: Static i18n of the admin UI (NOT the web / e-shop content).
  */
 
 import {
@@ -76,10 +70,10 @@ const SENSITIVE_JSON_KEYS = new Set([
   'authorization',
 ]);
 /**
- * @description Jeden řádek nápovědy povolených hodnot pro import - zobrazeno v
- * ImportPopupBuilderComponent na kroku "upload", ať uživatel neplní CSV/XLSX sloupec
- * naslepo a neriskuje, že mu importní validace (Store*Request `in:...` pravidlo)
- * řádek odmítne kvůli neznámé hodnotě.
+ * @description One row of the allowed-values hint of the import - shown in
+ * ImportPopupBuilderComponent on the "upload" step, so the user does not fill a CSV column
+ * blindly and risk the import validation (Store*Request `in:...` rule) refusing the row for an
+ * unknown value.
  */
 export interface ImportEnumHint {
   key: string;
@@ -114,12 +108,11 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   @Input() lastUpdatedAt: Date | null = null;
 
   /**
-   * @description Vypne položku "Smazat vybrané" v bulk-actions dropdownu, i když má
-   * tabulka aktivní `delete_button` s dostatečným oprávněním. Použito na tabulkách,
-   * kde je HROMADNÉ mazání záměrně nepodporováno na backendu (chybí `bulkDestroy()`)
-   * kvůli citlivé per-záznam byznys logice, kterou nelze mechanicky replikovat -
-   * viz core/users (UserController, sysadmin ochrana). Jednotlivé mazání (řádkové
-   * tlačítko) tímto NENÍ dotčeno.
+   * @description Disables "Delete selected" in the bulk-actions dropdown even when the table has
+   * an active `delete_button` with enough permission. Used on tables where BULK deletion is
+   * deliberately not supported by the backend (no `bulkDestroy()`) because of sensitive
+   * per-record business logic - see core/users (UserController, sysadmin protection). Single
+   * deletion (row button) is NOT affected.
    */
   @Input() bulkDeleteDisabled: boolean = false;
 
@@ -130,10 +123,10 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   @Output() generateFormOpened = new EventEmitter<any>();
   @Output() resetPasswordFormOpened = new EventEmitter<any>();
   /**
-   * @description Tlačítko "Aktivace" v řádku (viditelné jen u řádků splňujících
-   * `visibleWhen`, viz administrators.config.ts) - stránka na něj napojuje
-   * POST core/users/{id}/resend-activation. Stejný vzor jako ostatní *Opened eventy -
-   * TableBuilderComponent jen přeposílá, žádnou byznys logiku neřeší.
+   * @description "Activation" button in the row (visible only on rows matching `visibleWhen`,
+   * see administrators.config.ts) - the page wires it to POST core/users/{id}/resend-activation.
+   * Same pattern as the other *Opened events - TableBuilderComponent only forwards it, no
+   * business logic.
    */
   @Output() resendActivationOpened = new EventEmitter<any>();
   @Output() openImagesModal = new EventEmitter<any>();
@@ -145,11 +138,10 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   @Output() refreshRequested = new EventEmitter<void>();
 
   /**
-   * @description Emitovano po uspesnem dokonceni importu (synchronnim i queued) - viz
-   * refactor-note (2026-08-22) v hlavicce souboru. Rodicovska stranka na to navaze
-   * stejne jako u itemDeleted/refreshRequested, typicky volanim forceFullRefresh(), at
-   * se nove pridane zaznamy hned zobrazi (na rozdil od mazani tahle komponenta nema
-   * lokalni kopii nove vytvorenych radku - musi prijit znovu z API).
+   * @description Emitted after a successful import (synchronous or queued). The parent page
+   * reacts like to itemDeleted / refreshRequested, typically with forceFullRefresh(), so the new
+   * records show at once (unlike deletion, this component has no local copy of newly created
+   * rows - they must come from the API again).
    */
   @Output() importCompleted = new EventEmitter<void>();
 
@@ -159,7 +151,7 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   isExporting = false;
   exportSelectedOnly = false;
 
-  /** Ridi viditelnost import popupu (otevira importData()) - viz refactor-note (2026-08-22). */
+  /** Controls the visibility of the import popup (opened by importData()). */
   showImportPopup = false;
 
   selectedIds = new Set<any>();
@@ -170,12 +162,6 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   public authService = inject(AuthService);
   public permissionService = inject(PermissionService);
 
-  /**
-   * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
-   * TableBuilderComponent NEdědí BaseDataComponent (sdílená builder komponenta), proto
-   * ruční injection + lokální `strings`/`t()` přesně dle vzoru z ostatních builderů
-   * (ExportPopupBuilderComponent, PaginationButtonsBuilderComponent atd.).
-   */
   public readonly i18n = inject(AdminLocalizationService);
   public get strings(): any { return this.i18n.getMergedSection('table-builder'); }
   public t(key: string): string { return this.i18n.getValue(`table-builder.${key}`); }
@@ -204,13 +190,10 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
     return this._logCrud;
   }
   /**
- * @description Odvodí nápovědu povolených hodnot pro import - jen ty sloupce, které
- * jsou `importable: true` (viz `detailsColumns`) A ZÁROVEŇ mají definovaný `options`
- * seznam na odpovídajícím `InputDefinition` (enum sloupce jako status/priority/thema).
- * Prosté textové sloupce (bez `options`) se do nápovědy nedostanou - tam žádné
- * omezení neexistuje, legenda by byla prázdná/matoucí.
- * @refactor-note (2026-09-08) BACKLOG "import šablona neukazuje povolené hodnoty" -
- * nová nápověda předávaná do `ImportPopupBuilderComponent` přes `[enumHints]`.
+ * @description Derives the allowed-values hint of the import - only the columns that are
+ * `importable: true` (see `detailsColumns`) AND have an `options` list on the matching
+ * `InputDefinition` (enum columns like status / priority / thema). Plain text columns (no
+ * `options`) are left out - they have no restriction, the legend would be empty / confusing.
  */
 get importEnumHints(): ImportEnumHint[] {
   return this.detailsColumns
@@ -285,9 +268,8 @@ get importEnumHints(): ImportEnumHint[] {
   }
 
   /**
-   * @description Permission-only kontrola (globální, per-přihlášený-uživatel) - beze
-   * změny oproti dřívějšku. Stavební kámen pro isButtonVisibleForItem()/
-   * isButtonColumnVisible() níže, ale sama zůstává použitelná nezávisle.
+   * @description Permission-only check (global, per logged-in user). Building block of
+   * isButtonVisibleForItem() / isButtonColumnVisible() below, usable on its own as well.
    */
   isButtonVisible(button: TableButtons): boolean {
     if (!button.permission) return true;
@@ -295,10 +277,10 @@ get importEnumHints(): ImportEnumHint[] {
   }
 
   /**
-   * @description Vyhodnotí, zda se má tlačítko zobrazit na KONKRÉTNÍM řádku - kombinuje
-   * permission kontrolu (isButtonVisible) s volitelnou per-řádkovou podmínkou
-   * (`button.visibleWhen`). Bez `visibleWhen` je výsledek identický s isButtonVisible().
-   * Použito při vykreslení samotného <button> uvnitř <td> (viz .html).
+   * @description Decides whether the button is shown on a SPECIFIC row - combines the
+   * permission check (isButtonVisible) with the optional per-row condition
+   * (`button.visibleWhen`). Without `visibleWhen` the result equals isButtonVisible(). Used when
+   * rendering the <button> inside the <td> (see .html).
    */
   isButtonVisibleForItem(button: TableButtons, item: any): boolean {
     if (!this.isButtonVisible(button)) return false;
@@ -306,10 +288,10 @@ get importEnumHints(): ImportEnumHint[] {
   }
 
   /**
-   * @description Zda alespoň JEDEN řádek na aktuální stránce (`this.data`) tlačítko
-   * potřebuje - řídí, jestli se sloupec v hlavičce vůbec vykreslí. Bez `visibleWhen`
-   * (tlačítko nemá per-řádkovou podmínku) se chová jako dřív - sloupec se ukáže vždy,
-   * když projde permission kontrola, bez ohledu na obsah dat.
+   * @description Whether at least ONE row of the current page (`this.data`) needs the button -
+   * decides whether the column header is rendered at all. Without `visibleWhen` (no per-row
+   * condition) the column is always shown when the permission check passes, regardless of the
+   * data.
    */
   hasAnyRowForButton(button: TableButtons): boolean {
     if (!button.visibleWhen) return true;
@@ -317,27 +299,25 @@ get importEnumHints(): ImportEnumHint[] {
   }
 
   /**
-   * @description Kombinovaná podmínka pro vykreslení CELÉHO sloupce (hlavička i
-   * colspanValue) - permission i "má to na téhle stránce dat vůbec smysl" zároveň.
-   * Používá se v šabloně u hlavičkových buněk místo samotného isButtonVisible().
+   * @description Combined condition for rendering the WHOLE column (header and colspanValue) -
+   * the permission and "does it make sense on this page of data" at once. Used by the header
+   * cells of the template instead of isButtonVisible() alone.
    */
   isButtonColumnVisible(button: TableButtons): boolean {
     return this.isButtonVisible(button) && this.hasAnyRowForButton(button);
   }
 
   /**
-   * @description Aria-label pro checkbox konkrétního řádku (obsahuje ID záznamu) -
-   * viz refactor-note (2026-09) v hlavičce souboru, důvod proč metoda a ne inline
-   * .replace() v šabloně: template binding by musel volat .replace() na `strings`
-   * gettru přímo v HTML, což je méně čitelné a hůř testovatelné než metoda zde.
+   * @description Aria label of the checkbox of a specific row (contains the record ID). A method
+   * instead of an inline .replace() in the template - more readable and easier to test.
    */
   rowSelectAriaLabel(id: any): string {
     return this.strings.select_row_aria.replace('{id}', String(id));
   }
 
   /**
-   * @description Text bulk-lišty "{count} vybráno" - viz rowSelectAriaLabel() výše
-   * pro zdůvodnění gettru namísto inline interpolace v šabloně.
+   * @description Text of the bulk bar "{count} selected" - see rowSelectAriaLabel() above for why
+   * a getter and not inline interpolation in the template.
    */
   get bulkCountLabel(): string {
     return this.strings.bulk_count_label.replace('{count}', String(this.selectedIds.size));
@@ -373,15 +353,6 @@ get importEnumHints(): ImportEnumHint[] {
     }, 0);
   }
 
-  /**
-   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Error', ...)`
-   * z `error:` callbacku - `crud.remove()` je čistě HTTP volání (přes DataHandler),
-   * takže toast už zobrazil `DataHandler.handleError()`. Cleanup `processingItemIds`
-   * ZŮSTÁVÁ. Viz bugfix-note v hlavičce souboru.
-   * @refactor-note (2026-09) Dialogové texty i success hláška nahrazeny `t()` voláním
-   * (dříve natvrdo anglicky 'Delete Confirmation'/'Success'/'Item deleted.' uprostřed
-   * jinak českého souboru) - viz refactor-note (2026-09) v hlavičce souboru.
-   */
   public onDeleteAction(item: any): void {
     this.confirmDialogService.open(this.t('confirm_delete_title'), this.t('confirm_delete_message'))
       .then(result => {
@@ -479,30 +450,12 @@ get importEnumHints(): ImportEnumHint[] {
   }
 
   /**
-   * @description Hromadně smaže všechny vybrané řádky - JEDNÍM HTTP requestem na
-   * `{apiEndpoint}/bulk-delete` (konkrétní kontrolér dané tabulky musí mít metodu
-   * `bulkDestroy()` - viz šablona/recipe v dokumentaci k tomuto refactoru), ne N
-   * paralelními jednotlivými DELETE voláními jako dřív.
-   * @refactor-note (2026-08-23) DŘÍVE: `Promise.allSettled` nad `crud.remove(id)` pro
-   * KAŽDÉ vybrané ID zvlášť. Mezikrok (zavržený): centrální `core/bulk_delete`
-   * endpoint s registrem resources - zahozeno, protože bezpečně rozhodnout "smí se
-   * tenhle model mazat hromadně bez byznys pravidel" zvenku (bez pohledu do
-   * `destroy()` KAŽDÉHO kontroleru) nejde spolehlivě udělat. Řešení: `bulkDestroy()`
-   * žije PŘÍMO v konkrétním kontroleru, vedle `destroy()` - přirozeně tak sdílí
-   * stejnou byznys logiku (vlastnictví, ochrana, úklid souvisejících souborů), ne
-   * generický `Model::destroy($ids)` naslepo zvenku.
-   * @note Endpoint musí existovat na daném resource, jinak backend vrátí 404
-   * (zachyceno v `catch` bloku níže) - tabulky, které `bulkDestroy()` ještě nemají
-   * implementovaný, prostě dostanou chybovou hlášku místo tichého selhání.
-   * @bugfix-note (2026-08-31) Odstraněn duplicitní toast z `catch` bloku - jediné
-   * volání uvnitř `try` (`firstValueFrom(dataHandler.post(...))`) je čistě HTTP, takže
-   * chyba je VŽDY `HttpErrorResponse` a `DataHandler.handleError()` už toast zobrazil.
-   * Specifické 404/403 hlášky ("Hromadné mazání pro tuto tabulku zatím není
-   * implementováno."/"Nedostatečná oprávnění...") byly odstraněny - viz bugfix-note
-   * v hlavičce souboru.
-   * @refactor-note (2026-09) Potvrzovací dialog i všechny 3 výsledné hlášky (úspěch/
-   * selhání/částečný úspěch) nahrazeny `t()` voláním s `.replace()` na proměnné
-   * ({count}/{deleted}/{requested}/{skipped}) - viz refactor-note (2026-09) v hlavičce.
+   * @description Bulk-deletes all selected rows with ONE HTTP request to
+   * `{apiEndpoint}/bulk-delete` (the controller of the table must have a `bulkDestroy()`
+   * method), not N parallel single DELETE calls.
+   * @note The endpoint must exist on the resource, otherwise the backend returns 404 (caught in
+   * the `catch` block below) - tables without `bulkDestroy()` get an error message instead of a
+   * silent failure.
    */
   async onBulkDeleteClick(): Promise<void> {
     if (!this.canBulkDelete || this.selectedIds.size === 0 || this.bulkDeleting) return;
@@ -557,8 +510,8 @@ get importEnumHints(): ImportEnumHint[] {
 
       this.itemDeleted.emit(ids);
     } catch (err) {
-      // DataHandler.handleError() už zobrazil toast pro tuto HTTP chybu - viz
-      // bugfix-note v hlavičce souboru. Žádná další akce tady není potřeba.
+      // DataHandler.handleError() already showed a toast for this HTTP error.
+      // No further action needed here.
     } finally {
       this.bulkDeleting = false;
       this.cd.markForCheck();
@@ -597,18 +550,17 @@ get importEnumHints(): ImportEnumHint[] {
   exportableColumnOptions: ExportColumnOption[] = [];
 
   /**
-   * @description Podmnožina `detailsColumns` označená `importable: true` - nabízí se
-   * v export popupu jako checkbox seznam v okamžiku, kdy admin zapne "Exportovat
-   * v surovém formátu" (viz refactor-note 2026-08-23). Prázdné pole = resource ještě
-   * nemá hotový import, `hasImportableColumns` bude `false` a přepínač se v popupu
-   * vůbec nenabídne.
+   * @description Subset of `detailsColumns` marked `importable: true` - offered in the export
+   * popup as a checkbox list once the admin switches on "Export in raw format". An empty array =
+   * the resource has no import yet, `hasImportableColumns` is `false` and the toggle is not
+   * offered at all.
    */
   importableColumnOptions: ExportColumnOption[] = [];
 
   /**
-   * @description Zda tahle tabulka vůbec má smysl nabízet "Exportovat v surovém
-   * formátu" - jen pokud aspoň jeden sloupec v `detailsColumns` má `importable: true`.
-   * Používá se jako `[showRawFormatOption]` binding na export popup.
+   * @description Whether offering "Export in raw format" makes sense for this table - only when
+   * at least one column of `detailsColumns` has `importable: true`. Used as the
+   * `[showRawFormatOption]` binding of the export popup.
    */
   get hasImportableColumns(): boolean {
     return this.detailsColumns.some(col => col.importable === true);
@@ -623,9 +575,9 @@ get importEnumHints(): ImportEnumHint[] {
   }
 
   /**
-   * @description Vypočítá seznam sloupců pro RAW export - jen ty s `importable: true`,
-   * label = TECHNICKÝ název sloupce (`col.key`), ne český popisek, protože v raw
-   * módu je hlavička souboru přesně to, co import zpětně očekává jako název sloupce.
+   * @description Computes the column list of the RAW export - only `importable: true` columns,
+   * label = the TECHNICAL column name (`col.key`), not the human label, because in raw mode the
+   * file header is exactly what the import expects as the column name.
    */
   private computeImportableColumnOptions(): ExportColumnOption[] {
     return this.detailsColumns
@@ -641,18 +593,6 @@ get importEnumHints(): ImportEnumHint[] {
     return Array.isArray(responseData) ? responseData : [];
   }
 
-  /**
-   * @bugfix-note (2026-08-31) `catch` blok teď rozlišuje `instanceof HttpErrorResponse`:
-   * pokud data selhala na HTTP úrovni (`resolveExportData()` -> `loadDataAsCollection()`
-   * -> `dataHandler.getCollection()`), `DataHandler.handleError()` už toast zobrazil,
-   * takže se tady NEUKAZUJE znovu. Pokud selhal ČISTĚ LOKÁLNÍ krok (generování
-   * XLSX/CSV/JSON souboru, `downloadXlsx()`/`downloadCsv()`/`downloadJson()`/
-   * `downloadTxt()`), DataHandler o něm neví - toast tady ZŮSTÁVÁ, jinak by uživatel
-   * neviděl žádnou chybovou hlášku vůbec. Viz bugfix-note v hlavičce souboru.
-   * @refactor-note (2026-09) "No data available for export."/'Error'/"An error
-   * occurred during export." (dříve natvrdo anglicky) nahrazeny `t()` voláním - viz
-   * refactor-note (2026-09) v hlavičce souboru.
-   */
   async handleExportFormatSelected(selection: ExportSelection): Promise<void> {
     if (this.isExporting) return;
     this.isExporting = true;
@@ -700,13 +640,12 @@ get importEnumHints(): ImportEnumHint[] {
   }
 
   /**
-   * @description Maps raw records to plain header->RAW-value objects, pro export
-   * kompatibilní se zpětným importem (viz refactor-note 2026-08-23 v hlavičce souboru).
-   * Na rozdíl od buildExportRows():
-   * - hlavička sloupce je TECHNICKÝ název (col.key), ne český popisek - musí přesně
-   *   sedět s tím, co ImportFileParser::assertHeadersMatch() na dané resource čeká,
-   * - hodnoty se NEFORMÁTUJÍ (žádný select->label překlad, žádný DatePipe) - import
-   *   zpět čeká syrovou hodnotu ve stejném tvaru, v jakém by přišla z API.
+   * @description Maps raw records to plain header->RAW-value objects for an export compatible
+   * with the import. Unlike buildExportRows():
+   * - the column header is the TECHNICAL name (col.key), not the human label - it must match
+   *   exactly what ImportFileParser::assertHeadersMatch() expects for the resource,
+   * - values are NOT formatted (no select->label translation, no DatePipe) - the import
+   *   expects the raw value in the same shape as the API returns it.
    */
   private buildRawExportRows(data: any[], selectedColumnKeys: string[] | null = null): Record<string, any>[] {
     const importableColumns = this.detailsColumns.filter(col => col.importable === true);
@@ -724,10 +663,9 @@ get importEnumHints(): ImportEnumHint[] {
   }
 
   /**
-   * @description Vrátí SYROVOU hodnotu pole (žádné formátování/label překlad) - podporuje
-   * tečkové cesty stejně jako getExportValueForKey(). null/undefined se převádí na
-   * prázdný string kvůli konzistenci s ostatními export formáty, objekty/pole se pro
-   * jistotu serializují do JSON stringu.
+   * @description Returns the RAW value of the field (no formatting / label translation) -
+   * supports dot paths like getExportValueForKey(). null / undefined become an empty string for
+   * consistency with the other export formats, objects / arrays are serialized to a JSON string.
    */
   private getRawExportValueForKey(item: any, key: string): any {
     const keys = key.split('.');
@@ -869,11 +807,10 @@ get importEnumHints(): ImportEnumHint[] {
   // ── Import (append-only) ─────────────────────────────────────────────────
 
   /**
-   * @description Otevre import popup. Na rozdil od exportu neni potreba nic
-   * predpocitavat - popup si sablonu i validaci resi sam volanim core/import/*
-   * endpointu s resource = this.apiEndpoint. Voláno zvenku přes ViewChild
-   * (stránkový "Akce" dropdown, akce `triggerImport`) - viz refactor-note 2026-08-24
-   * v hlavičce souboru. Bez vlastního tlačítka v interním toolbaru.
+   * @description Opens the import popup. Unlike the export nothing has to be precomputed - the
+   * popup handles the template and the validation itself through the core/import/* endpoints
+   * with resource = this.apiEndpoint. Called from outside through ViewChild (the page "Actions"
+   * dropdown, action `triggerImport`). No own button in the internal toolbar.
    */
   importData(): void {
     this.showImportPopup = true;
@@ -886,9 +823,9 @@ get importEnumHints(): ImportEnumHint[] {
   }
 
   /**
-   * @description Po dokonceni importu (i queued) jen preda event nahoru - na rozdil od
-   * mazani tahle komponenta nema lokalni kopii nove vytvorenych zaznamu, rodicovska
-   * stranka si musi data natvrdo znovu natahnout z API.
+   * @description After an import (also queued) only passes the event up - unlike deletion this
+   * component has no local copy of the newly created records, the parent page must reload the
+   * data from the API.
    */
   onImportCompleted(): void {
     this.importCompleted.emit();

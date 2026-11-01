@@ -2,15 +2,10 @@
 /**
  * @file ShopProductResource.php
  * @path app/Http/Resources/Shop/ShopProductResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Resource transformation for products including categories, suppliers, and variants.
- *
- * @bugfix-note (2026-10-23) `prices.cost_price_eur` (purchase price) is no longer part of
- * public storefront responses - see DetectsPublicShopRequest.
- * @refactor-note (2026-10-23) Removed `reviews_count` / `average_rating`: they depended on a
- * `reviews` relation whose model (ShopReview) does not exist - never loaded, unreachable.
  */
 
 namespace App\Http\Resources\Shop;

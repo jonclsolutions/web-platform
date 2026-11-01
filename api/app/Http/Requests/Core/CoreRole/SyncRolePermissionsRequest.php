@@ -2,8 +2,8 @@
 /**
  * @file SyncRolePermissionsRequest.php
  * @path app/Http/Requests/Core/CoreRole/SyncRolePermissionsRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation logic for syncing a role's assigned permissions (matrix UI).
  */

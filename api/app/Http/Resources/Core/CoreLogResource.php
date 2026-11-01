@@ -2,16 +2,11 @@
 /**
  * @file CoreLogResource.php
  * @path app/Http/Resources/Core/CoreLogResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Transforms CoreLog models into a stable API response shape. Mirrors
  * WebLogResource / ShopLogResource field-for-field.
- *
- * @refactor-note (2026-08) `context_data` chybělo v prvotní verzi tohoto resource -
- * DB záznam existoval a byl správně naplněný (viz CoreLog $casts oprava), ale API
- * odpověď ho nikdy neposílala, takže na frontendu vypadal detail logu jako prázdný,
- * i když se do sloupce zapisovalo správně.
  */
 
 namespace App\Http\Resources\Core;

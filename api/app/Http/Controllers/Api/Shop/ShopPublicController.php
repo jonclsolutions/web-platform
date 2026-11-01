@@ -2,22 +2,10 @@
 /**
  * @file ShopPublicController.php
  * @path app/Http/Controllers/Api/Shop/ShopPublicController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Provides public-facing API endpoints for shop storefront operations, including stock verification, payment/shipping configuration, and real-time coupon validation.
- *
- * @refactor-note (2026-08-15) `getStatus()` repointed from `App\Models\Core\CoreSiteSetting`
- * to `App\Models\Shop\ShopSiteSetting` following the move of shop maintenance data out of
- * the Core domain - see ShopSiteSettingController for the accompanying admin endpoint.
- *
- * @bugfix-note (2026-10-23) `validateCoupon()` returned the whole coupon model (usage counters,
- *   limits, timestamps - open finding #26); only the fields the checkout needs are returned now.
- * @refactor-note (2026-10-23) `checkStock()`: removed the guessing of the variant foreign
- * key (`method_exists(..., 'product')` is always true, so the key is always `product_id`)
- * and the two QueryException fallbacks behind it - unreachable code.
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;

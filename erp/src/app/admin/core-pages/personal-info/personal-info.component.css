@@ -1,13 +1,10 @@
 /*     
     @file: personal-info.component.css
     @path: /src/app/admin/web-pages/personal-info/personal-info.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
-               zaoblené karty (18px), jemné stíny, tmavý akcent (#18181b) místo
-               indigo, plně zaoblené ("pill") tlačítko. Struktura/třídy a logika
-               beze změny, jde jen o barvy/zaoblení/typografii.
+    @description: Styles of the personal info component.
 */
 
 .personal-info-container {
@@ -214,7 +211,7 @@
     grid-column: span 1; 
   }
 }
-/* ── Zabezpečení / 2FA ─────────────────────────────────────────────────── */
+/* ── Security / 2FA ─────────────────────────────────────────────────── */
 
 .security-row {
   display: flex;
@@ -269,7 +266,7 @@
   transform: translateY(-1px);
 }
 
-/* ── Popup na změnu hesla ──────────────────────────────────────────────── */
+/* ── Password change popup ──────────────────────────────────────────────── */
 
 .password-popup-overlay {
   position: fixed;

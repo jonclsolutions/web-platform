@@ -1,8 +1,8 @@
 /**
  * @file sales-leads.component.spec.ts
  * @path src/app/admin/web-pages/sales-leads/sales-leads.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of SalesLeadsComponent and sales-leads.config.ts – the sales lead CRM
  *   table: translated configuration, status / priority / source channel options, form validation

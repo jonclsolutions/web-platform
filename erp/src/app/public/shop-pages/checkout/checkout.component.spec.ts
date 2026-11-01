@@ -1,8 +1,8 @@
 /**
  * @file checkout.component.spec.ts
  * @path src/app/public/shop-pages/checkout/checkout.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of CheckoutComponent: empty cart redirect, shipping / payment methods with the
  *   first preselected, field validation with translated messages, the order summary (coupon

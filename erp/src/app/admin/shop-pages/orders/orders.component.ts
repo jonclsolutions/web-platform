@@ -1,38 +1,15 @@
 /**
  * @file orders.component.ts
  * @path src/app/admin/shop-pages/orders/orders.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages the lifecycle of customer orders, including creation, editing, status tracking, and inventory validation.
  * @dependencies
  * - BaseDataComponent: Inherits standard CRUD operations for order management.
  * - ConfirmDialogService: Facilitates user confirmation for sensitive deletions.
  * - Core Providers: Handles API communication and dependency injection.
- * - Config.create* factory functions: i18n-aware definitions - viz refactor-note
- *   (2026-09-09) níže.
- *
- * @bugfix-note (2026-09-09) BACKLOG "vícejazyčná administrace" side-effect fixes:
- * 1) `PAYMENT_STATUS_OPTIONS` chybějící `unpaid` hodnota doplněna - viz
- *    orders.config.ts hlavička.
- * 2) Duplicitní lokální `orderTabButtons` pole (bez permission kontroly na koš
- *    tabu) ODSTRANĚNO - `tabButtonsConfigs` teď staví ze `Config.createOrderTabButtons()`
- *    S permission kontrolou (stejný vzor jako `toolbarButtons`).
- *
- * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `Config.*` konstanty nahrazeny `Config.create*()` factory funkcemi. Všechny
- * `alertDialogService.open()`/`confirmDialog.open()` volání a natvrdo psané texty
- * nahrazeny `t()` voláním. `console.error()` volání (dev diagnostika) přeloženy do
- * angličtiny - stejná konvence jako `products.component.ts`. Timeline kroky
- * v šabloně teď volají existující `getStatusLabel(step.key)` místo vlastního
- * natvrdo psaného labelu v poli - odstraňuje duplicitní zdroj pravdy pro stavové
- * texty. `formatCurrency()` natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()`
- * - měna zůstává EUR (obchodní rozhodnutí, nesouvisí s jazykem UI).
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `summaryTaxAmount`, `editingItemIdx`, `getTrashToolbarButtons`, `getShippingMethodName`, `getProductName`, `getPaymentStatusLabel`.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
+ * - Config.create* factory functions: i18n-aware definitions.
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
@@ -109,10 +86,8 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   trashOrderColumns: Core.ColumnDefinition[] = [];
   toolbarButtons: Core.Button[] = [];
 
-  /** @bugfix-note (2026-09-09) Přestalo být samostatné - viz hlavička souboru. */
   private orderTabButtons: Core.Button[] = [];
 
-  /** @refactor-note (2026-09-09) Přestalo být `readonly` - přepočítáno v i18n subscribe. */
   graphColumns: GraphColumnOption[] = [];
 
   constructor(
@@ -130,7 +105,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       this.orderColumns = Config.createOrderColumns(this.i18n);
       this.trashOrderColumns = Config.createTrashOrderColumns(this.i18n);
       this.filterColumns = Config.createFilterColumns(this.i18n);
-      // @bugfix-note (2026-10-22) buttons without permission (create, import, reports) were shown to every admin
       this.toolbarButtons = Config.createToolbarButtons(this.i18n).map(btn =>
         btn.permission && !this.permissionService.hasPermission(btn.permission) ? { ...btn, showIf: false } : btn);
       this.detailsColumns = Config.createOrderDetailsColumns(this.i18n);
@@ -152,7 +126,7 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
 
   /**
    * @returns Map of tab configurations with active state synchronized to current
-   * table mode, filtered by permission - viz bugfix-note v hlavičce souboru.
+   * table mode, filtered by permission.
    */
   get tabButtonsConfigs(): Core.Button[] {
     return this.orderTabButtons.map(btn => {
@@ -166,9 +140,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
 
   /**
    * @description Loads the first orders page (initWithAuthCheck) and the form lookups.
-   * @bugfix-note (2026-10-23) ngOnInit also called `refreshData()` after `initWithAuthCheck()` -
-   *   the list (active + trash) was requested twice on every visit and the cache was thrown away
-   *   (open finding #18). initWithAuthCheck alone loads it, with the page's filters.
    */
   override ngOnInit(): void {
     super.ngOnInit();
@@ -332,7 +303,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       openGraphBuilder: () => this.openGraphBuilder(),
       exportActiveTable: () => this.exportActiveTable(),
       // The unused `toggleTable` entry was removed (2026-10-22) – the trash is a tab here (setTableMode).
-      // @refactor-note (2026-10-23) `triggerImport` removed with the button - no order import in the API (finding #25).
     };
 
     if (actions[action]) actions[action]();
@@ -471,7 +441,7 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       Core.takeUntil(this.destroy$)
     ).subscribe({
       next: (fullOrder) => {
-        // The form edits the order's own contact (snapshot) - see the bugfix-note at getPaymentStatusLabel().
+        // The form edits the order's own contact (snapshot)
         const contact = fullOrder.contact ?? fullOrder.customer;
         this.editingOrder = {
           ...fullOrder,
@@ -884,9 +854,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
    * @description Formats numbers to currency strings.
    * @param value The amount to format.
    * @returns {string} Formatted EUR currency string.
-   * @refactor-note (2026-09-09) BUGFIX - natvrdo `'cs-CZ'` nahrazeno
-   * `this.i18n.getDateLocale()`. Měna zůstává EUR (obchodní rozhodnutí,
-   * nesouvisí s jazykem UI).
    */
   formatCurrency(value: number): string {
     return new Intl.NumberFormat(this.i18n.getDateLocale(), {
@@ -904,10 +871,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
    * @description Translated label of a payment status.
    * @param status Raw `payment_status`.
    * @returns Label of the admin language, the raw value when unknown.
-   * @bugfix-note (2026-10-23) The table / detail showed the API `status_label` /
-   *   `payment_status_label` - Czech texts from the backend in every admin language (open finding
-   *   #29). The labels are translated here now (`mapListRow()` for the table) and the buyer is
-   *   the order's own `contact` snapshot (findings #22 / #23), not the customer master data.
    */
   getPaymentStatusLabel(status: string): string {
     return this.paymentStatusOptions.find(o => o.value === status)?.label || status;

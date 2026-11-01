@@ -1,8 +1,8 @@
 /**
  * @file cookie-consent.component.spec.ts
  * @path src/app/public/web-pages/cookie-consent/cookie-consent.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the cookie consent banner (GDPR / ePrivacy): shown until a valid consent
  *   exists, accept all / necessary only / custom settings saved through CookieConsentService,

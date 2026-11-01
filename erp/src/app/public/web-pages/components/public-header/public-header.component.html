@@ -1,12 +1,10 @@
 <!-- 
     @file: public-header.component.html
     @path: /src/app/public/web-pages/components/public-header/public-header.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @refactor-note (2026-09) Mobilní menu — slide-in drawer. Jazyk jako dropdown
-        identický se desktop headerem (vlajka + kód + chevron + rozbalovací menu),
-        login odstraněn, kontakt jako pill tlačítka dole.
+    @description: Template of the public header component.
 -->
 
 <header [class.scrolled]="scrolled">
@@ -74,7 +72,7 @@
   </div>
 </div>
 
-<!-- ── Mobilní hlavička ────────────────────────────────────────── -->
+<!-- ── Mobile header ────────────────────────────────────────── -->
 <div class="mobile-header">
   <a routerLink="/home" class="m-logo">
     @if (siteSettings?.logo_path) {
@@ -126,7 +124,7 @@
     </a>
   </nav>
 
-<!-- Spodní část — lang dropdown -->
+<!-- Bottom part - lang dropdown -->
 <div class="m-drawer-bottom">
   <div class="m-drawer-lang-dropdown" [class.m-drawer-lang-dropdown--open]="isDrawerLangOpen">
     <button class="m-drawer-lang-trigger" (click)="toggleDrawerLangDropdown()" [attr.aria-expanded]="isDrawerLangOpen">
@@ -161,7 +159,7 @@
     }
   </div>
 </div>
-  <!-- Kontakt — pill tlačítka -->
+  <!-- Contact - pill buttons -->
   @if (siteSettings) {
     <div class="m-drawer-contact">
       @if (siteSettings.contact_phone) {

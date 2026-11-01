@@ -1,8 +1,8 @@
 /**
  * @file web-layout.component.spec.ts
  * @path src/app/public/web-pages/web-layout/web-layout.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of WebLayoutComponent: analytics initialised once with the layout and the root
  *   scroll lock toggled for the mobile menu.

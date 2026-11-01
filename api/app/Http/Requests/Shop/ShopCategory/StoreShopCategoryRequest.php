@@ -2,8 +2,8 @@
 /**
  * @file StoreShopCategoryRequest.php
  * @path app/Http/Requests/Shop/ShopCategory/StoreShopCategoryRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation logic for creating new shop categories, including automated slug generation.
  */

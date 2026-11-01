@@ -1,12 +1,12 @@
-/*     
+/*
     @file: cookie-consent.component.css
-    @path: /src/app/public/web-pages/components/cookie-consent/cookie-consent.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @path: /src/app/public/web-pages/cookie-consent/cookie-consent.component.css
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @note Stejná paleta jako zbytek "signature" tmavých sekcí webu (about-section,
-    sys-features) - tmavé pozadí #111128, fialový akcent #a67dff. Lišta je fixní,
-    nezávislá na tom, jestli je zrovna pod ní na stránce světlá, nebo tmavá sekce.
+    @note Same palette as the other dark "signature" sections of the web (about-section,
+    sys-features) - dark background #111128, purple accent #a67dff. The bar is fixed,
+    regardless of whether a light or dark section is below it.
 */
 
 .cc-overlay {
@@ -36,7 +36,7 @@
   to   { transform: translateY(0);    opacity: 1; }
 }
 
-/* ── Hlavní stav (Přijmout vše / Jen nezbytné / Nastavení) ─────────── */
+/* ── Main state (Accept all / Necessary only / Settings) ─────────── */
 .cc-main {
   display: flex;
   align-items: center;
@@ -72,7 +72,7 @@
   flex-shrink: 0;
 }
 
-/* ── Tlačítka ───────────────────────────────────────────────────── */
+/* ── Buttons ───────────────────────────────────────────────────── */
 .cc-btn {
   display: inline-flex;
   align-items: center;
@@ -118,7 +118,7 @@
   transform: translateY(-1px);
 }
 
-/* ── Panel nastavení (kategorie) ────────────────────────────────── */
+/* ── Settings panel (categories) ────────────────────────────────── */
 .cc-settings {
   display: flex;
   flex-direction: column;
@@ -164,7 +164,7 @@
   line-height: 1.5;
 }
 
-/* ── Vlastní přepínač (switch), needitovatelný stav pro "Nezbytné" ── */
+/* ── Own switch, locked state for "Necessary" ── */
 .cc-switch {
   position: relative;
   display: inline-block;

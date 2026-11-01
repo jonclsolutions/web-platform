@@ -1,8 +1,8 @@
 /**
  * @file shop-layout.component.spec.ts
  * @path src/app/public/shop-pages/shop-layout/shop-layout.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ShopLayoutComponent: the shop shell renders header, router outlet and footer.
  * @dependencies

@@ -1,8 +1,8 @@
 /**
  * @file localization.service.spec.ts
  * @path src/app/shared/services/localization.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the public LocalizationService: stored language, initial load,
  *   fallback to Czech (not cached under the failed language - bugfix 2026-10-23), translation

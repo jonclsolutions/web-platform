@@ -2,24 +2,10 @@
 /**
  * @file ShopPaymentMethodController.php
  * @path app/Http/Controllers/Api/Shop/ShopPaymentMethodController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages configuration and status of shop payment methods, with strict protections against deletion or unauthorized modification of system-critical payment logic.
- *
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
- * lokální duplicitní logAction(). Doménově beze změny (ShopLog::class).
- *
- * @refactor-note (2026-10-23) Removed `store()`, `destroy()` and `restore()`: payment methods
- * are fixed gateway integrations, the routes expose only index / show / update (`store()`
- * even referenced the non-existent StoreShopPaymentMethodRequest) - unreachable code.
- *
- * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update (findOrFail inside try).
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;

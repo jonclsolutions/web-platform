@@ -3,8 +3,8 @@
 /**
  * @file AccountActivationTest.php
  * @path api/tests/Feature/Core/Auth/AccountActivationTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the public account activation (an account created by an
  *   administrator sets its own password through the e-mailed link).

@@ -1,9 +1,9 @@
 /**
  * @file app.routes.spec.ts
  * @path src/app/app.routes.spec.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-27
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Route matching of the application route table (404 pages, 2026-10-27): known web /
  *   e-shop / maintenance / auth / admin URLs open their own page, only an UNKNOWN URL opens the
  *   404 page of its area - `/shop/<unknown>` the e-shop 404, any other unknown URL the web 404 -

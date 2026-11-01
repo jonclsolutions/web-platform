@@ -1,21 +1,14 @@
 <!-- 
     @file: dashboard.component.html
     @path: /src/app/admin/core-pages/dashboard/dashboard.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description: System-wide overview - hero metric + module comparison bars, quick
         navigation into Core management screens, and the core_logs activity feed with a
         recent-events breakdown widget.
     @dependencies: CoreDashboardComponent (t(), getIcon, heroStat, secondaryStats,
         statBarPct, visibleNavSections, recentActivity, activityBreakdown, breakdownBarPct)
-    @refactor-note (2026-09-07) VIZUÁLNÍ REFAKTOR + i18n - viz dashboard.component.ts
-        stejné datum. Plochá 5-dlaždicová grid nahrazena hero dlaždicí (první povolená
-        metrika) + srovnávacím pruhovým grafem zbylých metrik. Aktivita doplněna o
-        widget "rozklad posledních událostí" vedle existujícího seznamu. Všechny
-        uživatelsky viditelné texty nahrazeny `t('core-dashboard.xxx')` voláními -
-        `STAT_DEFS`/`navSections` teď nesou jen klíče (`labelKey`/`titleKey`/
-        `descriptionKey`), text se resolvuje ZDE, ne v TS.
 -->
 
 <div class="core-dashboard">
@@ -127,7 +120,7 @@
   </div>
 
   <!-- @component: Quick navigation — one card per Core management screen the user has
-       permission (or sysadmin role, for "Role a oprávnění") to open. Iterates
+       permission (or the sysadmin role, for "Roles and permissions") to open. Iterates
        `visibleNavSections` (filtered getter). -->
   <div class="cd-section">
     <div class="cd-section-label">{{ t('section_quick_nav') }}</div>

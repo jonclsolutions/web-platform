@@ -2,53 +2,10 @@
 /**
  * @file ShopCheckoutController.php
  * @path app/Http/Controllers/Api/Shop/ShopCheckoutController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages the end-to-end checkout process, including order persistence, atomic inventory stock updates, coupon validation, and payment simulation.
- *
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
- * lokální duplicitní logAction() - doménově beze změny (ShopLog::class). Zároveň
- * ODSTRANĚN ladicí `Log::info("Checkout createOrder started", ['payload' => $request->all()])`
- * na začátku createOrder() - jde o VEŘEJNÝ (bez auth) endpoint, takže tohle volání
- * zapisovalo do laravel.log kompletní nešifrovaný payload (jméno, e-mail, adresa,
- * telefon zákazníka) při KAŽDÉm checkoutu bez jakékoli ochrany/expirace typické pro
- * `shop_logs` audit trail - zbytečná duplicita osobních údajů mimo řízené úložiště.
- * Skutečná obchodní událost (vytvoření objednávky) se loguje standardně přes
- * logAction() níže.
- *
- * @bugfix-note (2026-10-23) SECURITY - prices came from the customer: `createOrder()`
- * calculated the order (items, total, tax, coupon minimum) from the `unit_price` /
- * `vat_rate` the browser sent, so anyone could order any product for 0.01 EUR with a
- * crafted request. The price and VAT rate are now always read from the catalogue
- * (`shop_product_prices` of the variant, else of the product); the client values are
- * accepted for backward compatibility but ignored. Also fixed in the same method:
- * - inactive / trashed products could be ordered (`exists` accepts them) → 422;
- * - a variant of a different product could be combined with any product id → 422;
- * - `$product->lockForUpdate()` on a model instance locks nothing (it only builds a new
- *   query) → the product row is now loaded with `lockForUpdate()`, so two parallel
- *   checkouts can no longer both take the last piece;
- * - the 500 answer contained the exception text (SQL details) → generic message, the
- *   detail stays in the audit log;
- * - the coupon minimum was reported in CZK although all prices are EUR;
- * - no length limits on the customer / address fields → a long value passed validation and
- *   failed in MySQL strict mode ("Data too long") with 500; now limited to the column sizes.
- *
- * @refactor-note (2026-10-23) Removed `checkStock()` and `validateCoupon()`: the public
- * routes point to the identical methods of ShopPublicController, these copies were
- * unreachable. Removed the unreachable non-duplicate branch of the customer insert
- * race handling (a failed insert now always re-reads the customer; if it still does
- * not exist the checkout fails with the generic error as before).
- *
- * @bugfix-note (2026-10-23) Open findings #21 / #23:
- * - the VAT rate of every line is stored on the order item (was dropped → 21 % everywhere);
- * - an anonymous checkout with the e-mail of an existing customer overwrote that customer's
- *   stored name / phone / address and restored a trashed (possibly erased) customer. Now the
- *   order is only linked to the existing record (only EMPTY master fields are filled in, a
- *   trashed customer stays trashed) and the order keeps the contact given at checkout in
- *   its own snapshot columns (`customer_*`).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -87,7 +44,7 @@ class ShopCheckoutController extends Controller
      */
     public function createOrder(Request $request): JsonResponse
     {
-        // Lengths = column sizes of shop_customers / shop_orders (see header bugfix-note).
+        // Lengths = column sizes of shop_customers / shop_orders.
         $validated = $request->validate([
             'email' => 'required|email|max:150',
             'first_name' => 'required|string|max:100',
@@ -106,7 +63,7 @@ class ShopCheckoutController extends Controller
             'items.*.product_id' => 'required|integer|exists:shop_products,id',
             'items.*.product_variant_id' => 'nullable|integer|exists:shop_product_variants,id',
             'items.*.quantity' => 'required|integer|min:1',
-            // Sent by the storefront, never trusted - see bugfix-note (2026-10-23).
+            // Sent by the storefront, never trusted.
             'items.*.unit_price' => 'nullable|numeric|min:0',
             'items.*.vat_rate' => 'nullable|integer|between:0,100'
         ]);
@@ -355,10 +312,6 @@ class ShopCheckoutController extends Controller
     /**
      * @description Simulates a payment gateway response (90 % success) - dev / test
      *   systems only, see config `services.shop.payment_simulation`.
-     * @bugfix-note (2026-10-23) SECURITY - this public endpoint marked ANY order as paid
-     *   (also already paid, cancelled or foreign ones). Now: 404 when the simulation is
-     *   switched off (production default), 409 for an order that is not waiting for payment.
- *   The 90 % odds use Laravel's Lottery (tests force win / loss).
      * @param Request $request {order_id}.
      * @return JsonResponse 200 paid | 402 declined | 404 disabled | 409 not payable | 422 | 500.
      */

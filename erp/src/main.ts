@@ -1,8 +1,8 @@
 /**
  * @file main.ts
  * @path src/main.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Application entry point responsible for bootstrapping the Angular framework with provided configurations.
  * @dependencies

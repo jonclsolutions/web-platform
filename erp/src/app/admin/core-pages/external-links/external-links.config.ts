@@ -1,19 +1,11 @@
 /**
  * @file external-links.config.ts
  * @path src/app/admin/core-pages/external-links/external-links.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Static-turned-dynamic configuration (buttons, form fields, table/filter/
  * detail columns) for the External Links management page.
- *
- * (Earlier refactor-notes for permission granularization, position/is_active removal,
- * and the openGraphBuilder permission fix are unchanged - see version history.)
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * kompletní přepis na FACTORY FUNKCE, stejný vzor jako web-pages stránky. Žádná enum-slug
- * DB migrace tady NEBYLA potřeba - `name`/`url` jsou volná textová pole, žádný uzavřený
- * seznam hodnot.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';

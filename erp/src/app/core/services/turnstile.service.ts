@@ -1,14 +1,13 @@
 /**
  * @file turnstile.service.ts
  * @path src/app/core/services/turnstile.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Lazy-loading wrapper nad Cloudflare Turnstile (captcha) skriptem.
- * Skript se injektuje do <head> AŽ při prvním zavolání render() - ne automaticky
- * s appkou - protože captcha se má zobrazovat až od 3. neúspěšného loginu (viz
- * login.component.ts), ne pokaždé. Menší třetí-stranový tracking surface pro běžné
- * přihlášení.
+ * @description Lazy-loading wrapper of the Cloudflare Turnstile (captcha) script. The script is
+ * injected into <head> only on the first render() call - not with the app - because the
+ * captcha shows only from the 3rd failed login (see login.component.ts). A smaller third-party
+ * tracking surface for an ordinary login.
  */
 
 import { Injectable } from '@angular/core';
@@ -29,8 +28,8 @@ export class TurnstileService {
   private scriptLoadPromise: Promise<void> | null = null;
 
   /**
-   * @description Vloží Turnstile <script> do <head>, jen jednou (další volání
-   * vrací stejnou promise / rovnou resolvne, pokud už je window.turnstile dostupné).
+   * @description Inserts the Turnstile <script> into <head> only once (further calls return the
+   * same promise / resolve at once when window.turnstile is already available).
    */
   private loadScript(): Promise<void> {
     if (window.turnstile) return Promise.resolve();
@@ -50,11 +49,11 @@ export class TurnstileService {
   }
 
   /**
-   * @description Vykreslí widget do daného kontejneru.
-   * @param container Element, do kterého se widget vyrenderuje.
-   * @param onSuccess Callback s vygenerovaným tokenem - poslat na backend při loginu.
-   * @param onExpired Callback při vypršení tokenu (Turnstile tokeny mají krátkou platnost).
-   * @returns ID widgetu, potřebné pro pozdější reset()/remove().
+   * @description Renders the widget into the given container.
+   * @param container Element the widget is rendered into.
+   * @param onSuccess Callback with the generated token - sent to the backend on login.
+   * @param onExpired Callback when the token expires (Turnstile tokens are short-lived).
+   * @returns ID of the widget, needed for a later reset() / remove().
    */
   async render(container: HTMLElement, onSuccess: (token: string) => void, onExpired?: () => void): Promise<string> {
     await this.loadScript();
@@ -68,14 +67,14 @@ export class TurnstileService {
   }
 
   /**
-   * @description Vynutí nový token - MUSÍ se zavolat po každém neúspěšném pokusu
-   * o login, protože Turnstile token je jednorázový (server ho po ověření spotřebuje).
+   * @description Forces a new token - MUST be called after every failed login attempt, because a
+   * Turnstile token is single-use (the server consumes it when verifying).
    */
   reset(widgetId: string): void {
     window.turnstile?.reset(widgetId);
   }
 
-  /** @description Odstraní widget z DOM a uvolní zdroje (volat v ngOnDestroy). */
+  /** @description Removes the widget from the DOM and frees the resources (call in ngOnDestroy). */
   remove(widgetId: string): void {
     window.turnstile?.remove(widgetId);
   }

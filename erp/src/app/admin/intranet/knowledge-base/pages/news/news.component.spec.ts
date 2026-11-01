@@ -1,8 +1,8 @@
 /**
  * @file news.component.spec.ts
  * @path src/app/admin/intranet/knowledge-base/pages/news/news.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the intranet NewsComponent: first page on start (newest first), "load more"
  *   appends the next page, stops after the last page, ignores a second click while a page is

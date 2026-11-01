@@ -1,17 +1,14 @@
 /**
  * @file current-user-profile.service.ts
  * @path src/app/core/services/current-user-profile.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Shared TTL-cached accessor for the currently logged-in user's own profile
- * (`core/users/{id}`). PersonalInfoComponent and WelcomePageComponent each fetched exactly
- * this same record independently on every mount - a user landing on the welcome page
- * right after login, then clicking into "Osobní Informace", triggered TWO identical
- * requests for the same data (see backlog task "zbytečně moc dotazů na API"). Consolidated
- * here with a short TTL (own profile rarely changes mid-session) and an explicit
- * `invalidate()` for callers that mutate it (2FA toggle, password change) so the next
- * read anywhere in the app is guaranteed fresh.
+ * (`core/users/{id}`), used by PersonalInfoComponent and WelcomePageComponent so the same record
+ * is not fetched twice. Short TTL (the own profile rarely changes mid-session) and an explicit
+ * `invalidate()` for callers that mutate it (2FA toggle, password change), so the next read
+ * anywhere in the app is fresh.
  */
 
 import { Injectable, inject } from '@angular/core';
@@ -31,8 +28,8 @@ export class CurrentUserProfileService {
   private resourceCache = inject(ResourceCacheService);
 
   /**
-   * @description Vrací profil aktuálně přihlášeného uživatele. `core/users/{id}` vrací
-   * zdroj NEobalený v `{ data: ... }` (viz UserController::show()), proto `dataHandler.get()`.
+   * @description Returns the profile of the logged-in user. `core/users/{id}` returns the resource
+   * NOT wrapped in `{ data: ... }` (see UserController::show()), hence `dataHandler.get()`.
    */
   getProfile(): Observable<UserLogin> {
     const userId = this.authService.getUserId();
@@ -44,7 +41,7 @@ export class CurrentUserProfileService {
     );
   }
 
-  /** Zavolat po jakékoliv mutaci vlastního profilu (2FA toggle, změna hesla, ...). */
+  /** Call after any mutation of the own profile (2FA toggle, password change, ...). */
   invalidate(): void {
     const userId = this.authService.getUserId();
     this.resourceCache.invalidate(`${this.CACHE_KEY_PREFIX}${userId}`);

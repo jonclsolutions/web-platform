@@ -3,8 +3,8 @@
 /**
  * @file PurgeSecurityEventsCommandTest.php
  * @path api/tests/Unit/Core/PurgeSecurityEventsCommandTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the scheduled GDPR clean-up `security:purge-events`.
  * @dependencies

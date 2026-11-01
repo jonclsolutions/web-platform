@@ -1,35 +1,10 @@
 <!-- 
     @file: user-request.component.html
     @path: /src/app/admin/web-pages/user-request/user-request.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @refactor-note (2026-08-5): app-trash-table-builder dostal [deletePermission]
-        ('web-user-requests-delete') - viz trash-table-builder.component.ts stejné datum.
-    @refactor-note (2026-08-19): Přidán modal "Editovat potvrzovací e-mail" (na konci
-        souboru) - jazykové taby + 3 editovatelná pole (nadpis/úvod/závěr), "Souhrn"
-        zobrazen jen jako needitovatelná poznámka. Styly jsou INLINE (ne v sdíleném
-        `../default-style.css`), ať modal funguje nezávisle na tom, co ten sdílený
-        soubor obsahuje - stejná paleta (#18181b/#71717a/#ececea), jaká se používá
-        napříč admin systémem a v e-mailových šablonách.
-    @refactor-note (2026-08-24) KONSOLIDACE TOOLBAR TLAČÍTEK: `<app-button-builder>`
-        nahrazeno `<app-action-menu-builder>` - stejný `[configs]="toolbarButtons"`
-        binding, jen se teď vykresluje jako jedno tlačítko "Akce" s vysouvacím seznamem
-        (Filtry/Přidat/Export/Import/Potvrzovací e-mail/Koš) místo řady pilulek vedle
-        sebe. Viz action-menu-builder.component.ts a user-request.component.ts/.config.ts
-        stejné datum.
-    @refactor-note (2026-08-26) Přidán `<app-graph-builder>` popup (na konci souboru,
-        za e-mailovým modalem) - vlastní full-page overlay komponenta (viz
-        graph-builder.component.html), řízená `showGraphBuilder`/`graphColumns` -
-        viz user-request.component.ts a user-request.config.ts stejné datum. Toolbar
-        tlačítko "Grafy a reporty" je součástí `USER_REQUEST_TOOLBAR_BUTTONS`
-        (action: 'openGraphBuilder'), takže se vykresluje automaticky přes stávající
-        `<app-action-menu-builder>` výše, žádná úprava toolbar markupu není potřeba.
-    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
-        texty": VŠECHNY natvrdo psané české texty (toolbar caption, e-mail template
-        modal, dateFieldLabel binding pro GraphBuilderComponent) nahrazeny
-        `t('user-request.xxx')`/`strings.xxx` bindingy - viz user-request.component.ts
-        stejné datum.
+    @description: Template of the user request component.
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -242,7 +217,7 @@
           [placeholder]="t('email_tpl_placeholder_outro')"></textarea>
 </div>
 
-<!-- ── Živý náhled ─────────────────────────────────────────────────────── -->
+<!-- ── Live preview ─────────────────────────────────────────────────────── -->
 <div class="email-tpl-section-label">{{ t('email_tpl_preview_section') }}</div>
 <p class="email-tpl-hint" style="margin-top:0;margin-bottom:10px;">
 {{ t('email_tpl_preview_hint') }}

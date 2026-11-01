@@ -1,8 +1,8 @@
 /**
  * @file dashboard.component.spec.ts
  * @path src/app/admin/shop-pages/dashboard/dashboard.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the e-shop DashboardComponent: data requested by permission, KPI
  *   cards with week-over-week trends, revenue only from paid and not cancelled / returned orders,

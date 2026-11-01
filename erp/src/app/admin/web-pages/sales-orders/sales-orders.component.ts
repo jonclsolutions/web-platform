@@ -1,34 +1,17 @@
 /**
  * @file sales-orders.component.ts
  * @path src/app/admin/web-pages/sales-orders/sales-orders.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Administrative component for managing sales orders, providing capabilities for status tracking, detail viewing, and data export.
  * @dependencies
  * - BaseDataComponent: Standardized CRUD and state management.
  * - TableBuilderComponent: Handling tabular views and CSV exports.
  * - Config.create* factory functions: Domain-specific, i18n-aware definitions for UI
- *   columns, form fields, and toolbar actions - see refactor-note (2026-09-08) below.
- * @note `createProject(item)` je čistě navigační přesměrování na ProjectsComponent
- * s `order_id`/`open_project` query parametrem - žádné vlastní API volání zde.
- * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
- * volání z `error:` callbacků (handleViewDetails, handleFormSubmitted) -
- * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `Config.SALES_ORDER_*` konstanty nahrazeny `Config.create*()` factory funkcemi -
- * stejný vzor jako `SupportTicketsComponent`/`UserRequestComponent`, viz jejich hlavička
- * pro plné odůvodnění (NG0956 riziko getterů, `translations$` je `BehaviorSubject`).
- * `buttons`/`formFields`/`columns`/`trashColumns`/`filterColumns`/`detailsColumns`
- * přesunuty z field initializerů do konstruktoru, plněné výhradně přes
- * `this.i18n.translations$.subscribe()`. `graphColumns` přestalo být `readonly` -
- * počítá se ze `detailsColumns`, které teď vznikají až uvnitř téhož subscribu.
- * `'Úspěch'`/`'Požadavek byl upraven.'`/`'Požadavek byl vytvořen.'` (dřív natvrdo
- * česky) nahrazeny `t()` voláním.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
+ *   columns, form fields, and toolbar actions.
+ * @note `createProject(item)` is only a navigation to ProjectsComponent with the `order_id` /
+ * `open_project` query parameter - no own API call here.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -69,7 +52,6 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
   columns: Core.ColumnDefinition[] = [];
   trashColumns: Core.ColumnDefinition[] = [];
 
-  /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
 
   constructor(
@@ -160,15 +142,6 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
     }
   }
 
-  /**
-   * @refactor-note (2026-09-08) Natvrdo česká 'Úspěch'/'Požadavek byl upraven.'/
-   * 'Požadavek byl vytvořen.' nahrazeny `t()` voláním. Metoda VŽDY volá `updateData()`
-   * (beze změny oproti originálu) - tenhle resource nemá "vytvořit" cestu z UI (realizace
-   * vznikají automaticky ze Sales Leadů, viz info-banner v šabloně), takže "byl vytvořen"
-   * větev je fakticky nedosažitelná, ale ponechána pro konzistenci s ostatními stránkami.
-   * @refactor-note (2026-10-22) Orders are only edited here (no create button, and
-   * `updateData()` without an id fails), so the unreachable "created" message was removed.
-   */
   override handleFormSubmitted(formData: any): void {
     this.updateData(formData.id, formData).pipe(
       Core.finalize(() => {

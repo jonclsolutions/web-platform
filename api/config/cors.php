@@ -2,8 +2,8 @@
 /**
  * @file config/cors.php
  * @path config/cors.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Configuration for Cross-Origin Resource Sharing (CORS) settings.
  */

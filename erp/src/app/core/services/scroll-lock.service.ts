@@ -1,28 +1,16 @@
 /**
  * @file scroll-lock.service.ts
  * @path src/app/core/services/scroll-lock.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Centralizovaný, sdílený zámek scrollu na pozadí pro všechny modální/
- * overlay komponenty (export popup, import popup, form builder, details builder,
- * graph builder, confirm dialog, atd.). Používá referenční počítadlo (ne prosté
- * true/false) - pokud je otevřeno víc overlayů zároveň, scroll se odemkne až po
- * zavření TOHO POSLEDNÍHO.
- * @refactor-note (2026-08-31) SJEDNOCENÍ MECHANISMU: dřív každá komponenta zamykala
- * scroll nezávisle, dvěma různými technikami - buď prostým `document.body.style.overflow
- * = 'hidden'` (ConfirmDialogComponent, DetailsBuilderComponent, FormBuilderComponent,
- * ExportPopupBuilderComponent), nebo `position: fixed` pinningem s uložením/obnovením
- * `window.scrollY` (GraphBuilderComponent - viz jeho `lockBackgroundScroll()`/
- * `unlockBackgroundScroll()`, bugfix-note 2026-08-27v9: `overflow:hidden` samo o sobě
- * nezastaví scroll-chaining z vnořeného scrollovatelného panelu). Kombinace obou
- * technik napříč SOUČASNĚ otevřenými overlayi (např. confirm dialog nad graph
- * builderem) vedla k nekonzistentnímu chování. Tahle služba používá VŽDY `position:
- * fixed` pinning (robustnější varianta) a je JEDINÝM místem, které smí měnit
- * `document.body.style` kvůli scroll locku - všechny komponenty níže na ni deleguj í.
- * @usage V `ngOnInit()`/imperativním `show()`: `this.scrollLock.lock()`.
- *        V `ngOnDestroy()`/imperativním `hide()`: `this.scrollLock.unlock()`.
- *        Každé volání `lock()` MUSÍ mít odpovídající `unlock()`.
+ * @description Centralized shared background scroll lock for all modal / overlay components
+ * (export popup, import popup, form builder, details builder, graph builder, confirm dialog,
+ * ...). Uses a reference counter (not a plain true / false) - with several overlays open at
+ * once, scrolling is unlocked only after THE LAST one closes.
+ * @usage In `ngOnInit()` / an imperative `show()`: `this.scrollLock.lock()`.
+ *        In `ngOnDestroy()` / an imperative `hide()`: `this.scrollLock.unlock()`.
+ *        Every `lock()` call MUST have a matching `unlock()`.
  */
 import { Injectable } from '@angular/core';
 

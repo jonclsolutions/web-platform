@@ -1,20 +1,12 @@
 /**
  * @file generic-table.service.ts
  * @path src/app/core/services/generic-table.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Provides generic pagination, caching, and preloading logic for data-driven tables within the admin panel.
  * @dependencies
  * - DataHandler: Used to perform the actual HTTP requests for collection data.
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `getAllData`.
- * @bugfix-note (2026-10-23) A FAILED page request stayed in the cache: `shareReplay(1)` replays
- *   the error, so for 3 minutes every reload / retry of that page answered the same error without
- *   asking the API again (also a failed preload poisoned the page the user opens next). The
- *   entry is now removed when its request fails.
- * @refactor-note (2026-10-24) Open finding #6: a page is `{data, meta}` - `PaginatedResponse`
- *   is the shared `ApiPage` type now (pagination in `meta`).
  */
 
 import { Injectable } from '@angular/core';
@@ -43,31 +35,29 @@ interface CacheEntry {
 /**
  * @description Manages state and caching for paginated data tables.
  * @usage Injected into admin list components to handle server-side pagination, search filtering, and performance optimizations.
- * @note Cache je bezpečná i pro velké (desetitisícové) tabulky - cachuje se vždy jen
- * konkrétní REQUESTOVANÁ stránka (15-50 řádků), nikdy "vše". Paměťová stopa roste jen
- * s tím, kolik stránek/filtrů uživatel reálně navštívil, ne s velikostí tabulky.
- * @note Cache klíč je per-uživatel (viz bugfix-note 2026-08-17 výše) - přepnutí
- * přihlášeného uživatele automaticky znamená nové (prázdné) cache klíče, nikdy sdílené
- * s předchozím uživatelem.
+ * @note The cache is safe even for large (tens of thousands of rows) tables - only the REQUESTED
+ * page (15-50 rows) is cached, never "everything". The memory footprint grows only with the
+ * pages / filters the user really visited, not with the table size.
+ * @note The cache key is per user - switching the logged-in user means new (empty) cache keys,
+ * never shared with the previous user.
  */
 @Injectable({
   providedIn: 'root'
 })
 export class GenericTableService {
   /**
-   * @description Doba (ms), po kterou se cachovaná stránka považuje za "čerstvou" a
-   * nevyvolá nový HTTP dotaz. 3 minuty je kompromis mezi "admin vidí rozumně aktuální
-   * data bez ručního refreshe" a "nechceme zbytečně bušit do API při rychlé navigaci
-   * tam a zpět". Ruční refresh tlačítko (viz `invalidateEndpoint`) i mutace dat (create/
-   * update/delete/restore, přes stejný mechanismus v PaginatedListStore.forceFullRefresh())
-   * TTL vždy obcházejí.
+   * @description Time (ms) a cached page counts as "fresh" and triggers no new HTTP request. 3
+   * minutes is a compromise between "the admin sees reasonably current data without a manual
+   * refresh" and "no needless API load on fast back-and-forth navigation". The manual refresh
+   * button (see `invalidateEndpoint`) and data mutations (create / update / delete / restore,
+   * through PaginatedListStore.forceFullRefresh()) always bypass the TTL.
    */
   public readonly CACHE_TTL_MS = 3 * 60 * 1000;
 
-  /** @description Klíč v sessionStorage, pod kterým `AuthService.persistSession()` ukládá ID přihlášeného uživatele. Musí zůstat v souladu s auth.service.ts. */
+  /** @description sessionStorage key under which `AuthService.persistSession()` stores the ID of the logged-in user. Must stay in sync with auth.service.ts. */
   private readonly USER_ID_STORAGE_KEY = 'userId';
 
-  /** @description Fallback segment cache klíče, když žádný uživatel není přihlášený (sessionStorage prázdný) - odlišuje "nepřihlášeno" od reálného ID, ať se náhodou nesrazí. */
+  /** @description Fallback segment of the cache key when nobody is logged in (sessionStorage empty) - tells "logged out" apart from a real ID, so they never collide. */
   private readonly ANONYMOUS_CACHE_SEGMENT = '__anon__';
 
   private pageCache = new Map<string, CacheEntry>();
@@ -76,9 +66,9 @@ export class GenericTableService {
 
   /**
    * @description Fetches a paginated result set with support for filters and caching.
-   * @note Pokud je cachovaná stránka mladší než `CACHE_TTL_MS`, vrátí se BEZ síťového
-   * dotazu (shareReplay observable z předchozího volání). Jinak se cache položka
-   * zahodí a provede se reálný fetch s novým timestampem.
+   * @note When the cached page is younger than `CACHE_TTL_MS`, it is returned WITHOUT a network
+   * request (shareReplay observable of the previous call). Otherwise the cache entry is dropped
+   * and a real fetch with a new timestamp is made.
    */
   getPaginatedData<T>(
     endpoint: string,
@@ -106,7 +96,7 @@ export class GenericTableService {
     const dataObservable = this.dataHandler
       .getPaginatedCollection<T>(`${endpoint}?${params.toString()}`)
       .pipe(
-        // A failed request must not be served from the cache (see bugfix-note 2026-10-23).
+        // A failed request must not be served from the cache.
         catchError(err => {
           if (this.pageCache.get(cacheKey)?.observable === dataObservable) {
             this.pageCache.delete(cacheKey);
@@ -122,8 +112,8 @@ export class GenericTableService {
 
   /**
    * @description Proactively fetches adjacent pages to improve perceived performance during pagination.
-   * @note Respektuje TTL stejně jako `getPaginatedData()` - sousední stránku, která je
-   * už čerstvě cachovaná, znovu nestahuje.
+   * @note Respects the TTL like `getPaginatedData()` - an adjacent page that is already freshly
+   * cached is not downloaded again.
    */
   preloadAdjacentPages<T>(
     endpoint: string,
@@ -157,14 +147,10 @@ export class GenericTableService {
   }
 
   /**
-   * @description Zneplatní VŠECHNY cachované stránky/filtry pro daný endpoint NAPŘÍČ
-   * VŠEMI uživateli (napříč všemi kombinacemi page/perPage/filters/userId). Použít po
-   * mutaci dat (create/update/delete/restore) nebo tlačítkem "Aktualizovat" na konkrétní
-   * tabulce - ENDPOINT-SCOPED, ostatní tabulky zůstávají nedotčené (opravuje starý bug
-   * s globálním `clearCache()`).
-   * @bugfix-note (2026-08-17) Prefix match upraven na nový formát klíče (viz
-   * `getCacheKey()`) - endpoint je pořád první segment, takže logika zůstává funkčně
-   * stejná jako předtím, jen se změnil oddělovač.
+   * @description Invalidates ALL cached pages / filters of the endpoint ACROSS ALL users (all
+   * combinations of page / perPage / filters / userId). Use after a data mutation (create /
+   * update / delete / restore) or from the "Refresh" button of a table - ENDPOINT-SCOPED, other
+   * tables stay untouched.
    */
   invalidateEndpoint(endpoint: string): void {
     const prefix = `${endpoint}|`;
@@ -174,27 +160,20 @@ export class GenericTableService {
   }
 
   /**
-   * @description Zneplatní ÚPLNĚ CELOU cache napříč všemi endpointy a všemi uživateli -
-   * použito globálním refresh tlačítkem v admin headeru (viz TableRefreshBusService) a
-   * (jako bezpečnostní opatření, viz bugfix-note 2026-08-17) automaticky při KAŽDÉ změně
-   * přihlášeného uživatele - viz `AuthService.persistSession()` / `clearAuthData()`.
-   * Samo o sobě nevyvolá žádný síťový dotaz - jen zajistí, že příští čtení (aktuálně
-   * otevřené stránky i budoucí navigace) bude vždy reálný fetch, ne stará data.
+   * @description Invalidates the WHOLE cache across all endpoints and all users - used by the
+   * global refresh button of the admin header (see TableRefreshBusService) and, as a security
+   * measure, automatically on EVERY change of the logged-in user - see
+   * `AuthService.persistSession()` / `clearAuthData()`. Sends no network request by itself - it
+   * only ensures the next read (the open page and future navigation) is always a real fetch,
+   * not stale data.
    */
   invalidateAll(): void {
     this.pageCache.clear();
   }
 
   /**
-   * @description Sestaví cache klíč jednoznačně identifikující kombinaci
-   * endpoint + stránkování + filtry + PŘIHLÁŠENÝ UŽIVATEL.
-   * @bugfix-note (2026-08-17) Přidán `userId` jako samostatný segment klíče (druhý,
-   * hned za endpointem, aby `invalidateEndpoint()` mohl dál fungovat jako prostý prefix
-   * match nezávisle na uživateli). Bez tohoto segmentu byla cache sdílená napříč
-   * uživateli, viz hlavička souboru - CROSS-USER CACHE LEAK. `|` jako oddělovač místo
-   * `-` je záměrná změna proti staršímu formátu, ať se žádný segment (endpoint cesty
-   * typicky obsahuje `-`, např. `web-external-links`) nemůže náhodou zaměnit za hranici
-   * mezi segmenty.
+   * @description Builds the cache key identifying the combination endpoint + pagination +
+   * filters + LOGGED-IN USER.
    */
   private getCacheKey(
     endpoint: string,
@@ -216,11 +195,11 @@ export class GenericTableService {
   }
 
   /**
-   * @description Vrátí ID přihlášeného uživatele pro účely cache klíče, nebo neutrální
-   * placeholder, pokud nikdo přihlášený není. Čte přímo `sessionStorage` (stejný klíč,
-   * jaký nastavuje `AuthService.persistSession()`), aby nevznikla kruhová DI závislost
-   * na `AuthService` (ten sám injektuje `GenericTableService` kvůli `invalidateAll()`
-   * při loginu/logoutu - viz auth.service.ts).
+   * @description Returns the ID of the logged-in user for the cache key, or a neutral placeholder
+   * when nobody is logged in. Reads `sessionStorage` directly (the same key that
+   * `AuthService.persistSession()` sets) to avoid a circular DI dependency on `AuthService`
+   * (which injects `GenericTableService` for `invalidateAll()` on login / logout - see
+   * auth.service.ts).
    */
   private getCurrentUserIdForCacheKey(): string {
     return sessionStorage.getItem(this.USER_ID_STORAGE_KEY) ?? this.ANONYMOUS_CACHE_SEGMENT;

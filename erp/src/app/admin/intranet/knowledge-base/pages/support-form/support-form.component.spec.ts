@@ -1,8 +1,8 @@
 /**
  * @file support-form.component.spec.ts
  * @path src/app/admin/intranet/knowledge-base/pages/support-form/support-form.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the intranet SupportFormComponent: default values and validation, optional
  *   attachment, multipart submit to web/support_tickets with the ticket number on success, the

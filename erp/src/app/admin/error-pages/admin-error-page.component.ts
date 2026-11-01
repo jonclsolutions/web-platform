@@ -1,9 +1,9 @@
 /**
  * @file admin-error-page.component.ts
  * @path src/app/admin/error-pages/admin-error-page.component.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-27
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Error pages of the administration, rendered inside the admin layout (header and
  *   menu stay usable). The route data `adminErrorPage` decides which page:
  *   - `not-found` (404): the catch-all `**` route of the admin - an address no admin route knows.

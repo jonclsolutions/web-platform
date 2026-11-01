@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # @file fix-admin-links.sh
-# @project RPSW Web
+# @project JS web-platform
 # @created 2026
-# @description Opraví zastaralý routerLink odkaz na starou (před-core-split) URL strukturu.
-#   Konkrétně: routerLink="/admin/dashboard" -> routerLink="/admin/web/dashboard"
-#   v knowledge-base.component.html ("Exit" odkaz z intranetu zpět do administrace).
-# @usage Spustit z kořene Angular projektu: cd /rp_website/erp && bash fix-admin-links.sh
-# @note Používá `sed -i` s přesným, plně uzavřeným řetězcem (routerLink="/admin/dashboard"
-#   včetně uvozovky na konci), takže nemůže omylem zasáhnout jiné odkazy jako
-#   "/admin/dashboard-something" nebo "/admin/web/dashboard" (ten už uvozovku nemá hned
-#   po "dashboard", takže nesedí).
+# @description Fixes an outdated routerLink pointing to the old (pre core split) URL structure.
+#   Specifically: routerLink="/admin/dashboard" -> routerLink="/admin/web/dashboard"
+#   in knowledge-base.component.html (the "Exit" link from the intranet back to the admin).
+# @usage Run from the root of the Angular project: cd erp && bash move.sh
+# @note Uses `sed -i` with an exact, fully closed string (routerLink="/admin/dashboard"
+#   including the closing quote), so it cannot hit other links such as
+#   "/admin/dashboard-something" or "/admin/web/dashboard" (no quote right after
+#   "dashboard", so they do not match).
 
 set -euo pipefail
 

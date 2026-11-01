@@ -2,9 +2,9 @@
 /**
  * @file AppliesSafeSorting.php
  * @path app/Traits/AppliesSafeSorting.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-23
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Shared, safe `sort_by` / `sort_direction` handling of the index endpoints. The
  *   requested column is accepted only when it is a real column of the queried table (or an
  *   explicitly allowed extra key), the direction only as `asc` / `desc`; anything else falls

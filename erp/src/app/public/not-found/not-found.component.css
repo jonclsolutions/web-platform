@@ -1,20 +1,13 @@
 /*     
     @file: not-found.component.css
     @path: /src/app/public/not-found/not-found.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description: Public 404 page. Own palette on purpose (like the maintenance pages - the page is
         shared by web and e-shop and must not depend on either module's theme): `.not-found--web`
         = the dark violet look of the web (the former look of this page), `.not-found--shop` =
         light look matching the e-shop. A new area without its own block uses the web look.
-    @refactor-note (2026-10-27) Rendered inside the layout of its area now (header + footer) -
-        the full screen height became a minimum height of the content area.
-    @refactor-note (2026-10-27c) `.attempted-url` removed (the path is not shown any more).
-    @refactor-note (2026-10-27b) The button had no font of its own (a link outside the global
-        `button` rule = the browser's serif default) - it now uses the font of its area, the web one
-        is styled like the accent call-to-action of the web pages; the web texts use the web fonts;
-        `.not-found-illustration` = the web illustration (image).
 */
 
 .main-content {

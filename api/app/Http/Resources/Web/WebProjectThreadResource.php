@@ -2,21 +2,13 @@
 /**
  * @file WebProjectThreadResource.php
  * @path app/Http/Resources/Web/WebProjectThreadResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Shared by BOTH the admin cross-project table (needs `project_name`
  * badge - consultation note 2) AND the customer's per-project thread list (where
  * `project_name` is simply redundant/ignored by the frontend, not a leak - it's the
  * customer's own project).
- * @refactor-note (2026-09-11) BACKLOG "project portal - nepřečtené zprávy":
- * `unread_count` - počet ADMIN zpráv novějších než `customer_last_read_at` (nebo
- * VŠECH admin zpráv, pokud zákazník vlákno ještě nikdy neotevřel - `null`).
- * Záměrně `whenLoaded('messages')` guard - admin's `WebProjectThreadController::index()`
- * NEnačítá `messages` relaci (jen `project:id,name`), takže se pole u admina v
- * odpovědi vůbec neobjeví (nedávalo by smysl - "nepřečteno zákazníkem" je čistě
- * customer-facing koncept). Customer-facing `threadsIndex()`/`threadShow()` VŽDY
- * `messages` eager-loadují, takže tam se počítá vždy.
  */
 
 namespace App\Http\Resources\Web;

@@ -3,17 +3,17 @@
 /**
  * @file TwoFactorCode.php
  * @path app/Models/TwoFactorCode.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Reprezentuje jednu "pending-login" 2FA relaci - vzniká po úspěšném
- * ověření hesla u uživatele s vynucenou 2FA, dokud nezadá platný OTP kód. Vzor
- * (hash namísto raw hodnoty, expirace, used_at) převzat z PasswordResetToken.
+ * @description One "pending-login" 2FA session - created after a successful password check of a
+ * user with forced 2FA, valid until the user enters a valid OTP code. Same pattern as
+ * PasswordResetToken (hash instead of the raw value, expiry, used_at).
  * @property int $user_id
- * @property string $login_token_hash SHA-256 hash opaque tokenu pending-login session.
- * @property string $code_hash SHA-256 hash 6místného OTP kódu.
- * @property int $attempts Počet neúspěšných pokusů o ověření kódu.
- * @property int $resend_count Počet vyžádání nového kódu v rámci téhle session.
+ * @property string $login_token_hash SHA-256 hash of the opaque token of the pending-login session.
+ * @property string $code_hash SHA-256 hash of the 6-digit OTP code.
+ * @property int $attempts Failed attempts to verify the code.
+ * @property int $resend_count Requests for a new code within this session.
  * @property \Illuminate\Support\Carbon $expires_at
  * @property \Illuminate\Support\Carbon $last_sent_at
  * @property \Illuminate\Support\Carbon|null $used_at
@@ -26,16 +26,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TwoFactorCode extends Model
 {
-    /** Platnost OTP kódu v minutách od posledního odeslání. */
+    /** Validity of the OTP code in minutes since it was last sent. */
     public const CODE_TTL_MINUTES = 10;
 
-    /** Minimální odstup mezi dvěma odesláními kódu (anti-spam cooldown). */
+    /** Minimum gap between two sends of a code (anti-spam cooldown). */
     public const RESEND_COOLDOWN_SECONDS = 60;
 
-    /** Maximální počet resendů v rámci jedné pending-login session. */
+    /** Maximum resends within one pending-login session. */
     public const MAX_RESENDS = 5;
 
-    /** Maximální počet špatných pokusů o zadání kódu, než se session zneplatní. */
+    /** Maximum wrong attempts before the session is invalidated. */
     public const MAX_ATTEMPTS = 5;
 
     public $timestamps = false;
@@ -57,8 +57,8 @@ class TwoFactorCode extends Model
     }
 
     /**
-     * @description Ověří, zda je tato pending-login session ještě platná pro dokončení
-     * loginu (nepoužitá, nevypršelá, pod limitem pokusů).
+     * @description Whether this pending-login session can still finish the login (unused, not
+     * expired, below the attempt limit).
      */
     public function isValid(): bool
     {
@@ -68,7 +68,7 @@ class TwoFactorCode extends Model
     }
 
     /**
-     * @description Zjistí, zda ještě neuplynul cooldown od posledního odeslání kódu.
+     * @description Whether the cooldown since the last send of the code is still running.
      */
     public function isInCooldown(): bool
     {

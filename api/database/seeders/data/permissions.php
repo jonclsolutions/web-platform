@@ -2,9 +2,9 @@
 /**
  * @file permissions.php
  * @path api/database/seeders/data/permissions.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-30
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Permission keys of the application (core_permissions): key, description, module.
  *   BaseDataSeeder adds the missing ones; the sysadmin role gets all of them.
  *   Generated from the database dump of 2026-10-29; edit by hand from now on.

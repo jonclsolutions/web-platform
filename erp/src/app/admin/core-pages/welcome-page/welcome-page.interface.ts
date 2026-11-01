@@ -1,15 +1,13 @@
 /**
  * @file welcome-page.interface.ts
- * @path src/app/admin/web-pages/welcome-page/welcome-page.interface.ts
- * @project RPSW Web
- * @author RPSW
+ * @path src/app/admin/core-pages/welcome-page/welcome-page.interface.ts
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Typy použité na uvítací stránce. NavSection se tu využívá jen pro jednu
- *              kartu (rychlý odkaz "Nahlásit chybu") - stejný tvar, jaký dashboard používá
- *              pro svoji síť rychlých odkazů, ať je vzhled i datový model konzistentní.
- *              QuickStat a ActivityLog tu nejsou aktuálně použité (ty citlivé přehledy
- *              zůstávají výhradně na Dashboardu), export tu nechávám podle zadání pro
- *              případ budoucího rozšíření welcome page o podobné prvky.
+ * @description Types of the welcome page. NavSection is used for one card only (quick link
+ *              "Report a bug") - the same shape the dashboard uses for its quick links, so
+ *              the look and the data model stay consistent. QuickStat and ActivityLog are
+ *              not used here at the moment (the sensitive overviews stay on the Dashboard).
  */
 
 export interface ActivityLog {

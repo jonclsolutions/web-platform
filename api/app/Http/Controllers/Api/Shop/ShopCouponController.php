@@ -2,22 +2,10 @@
 /**
  * @file ShopCouponController.php
  * @path app/Http/Controllers/Api/Shop/ShopCouponController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Handles CRUD operations for promotional coupons, including soft-delete functionality, restore capabilities, and integrity-checked batch cleanup.
- *
- * @refactor-note (2026-08-6) LOGGING MIGRATION to shared `LogsActivity` trait instead of
- * local duplicate logAction(). Domain-wise unchanged (ShopLog::class). `forceDeleteAllTrashed()`
- * previously had no audit call - added so that bulk coupon deletion from trash
- * is trackable just like other Shop resources.
- *
- * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update (findOrFail inside try).
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;

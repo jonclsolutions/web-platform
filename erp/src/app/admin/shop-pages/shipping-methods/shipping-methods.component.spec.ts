@@ -1,8 +1,8 @@
 /**
  * @file shipping-methods.component.spec.ts
  * @path src/app/admin/shop-pages/shipping-methods/shipping-methods.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ShippingMethodsComponent and shipping-methods.config.ts – shipping
  *   methods: translated configuration, shipping type / yes-no options, code validation,

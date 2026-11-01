@@ -1,8 +1,8 @@
 /**
  * @file password-requirements-checklist.component.spec.ts
  * @path src/app/shared/components/password-requirements-checklist/password-requirements-checklist.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of PasswordRequirementsChecklistComponent: one item per requirement
  *   with translated label ({min} / {max} filled), "met" state following the password input and

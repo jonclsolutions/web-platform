@@ -1,34 +1,10 @@
 /**
  * @file orders.config.ts
  * @path src/app/admin/shop-pages/orders/orders.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Static-turned-dynamic configuration for shop order management.
- *
- * (Earlier bugfix-note 2026-09-07 for shop permissions granularization is unchanged
- * - see version history.)
- *
- * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * kompletní přepis na FACTORY FUNKCE. Žádná SQL migrace potřeba - `status`/
- * `payment_status` jsou už anglické slugy, matchují backendový `in:...` seznam v
- * Store/UpdateShopOrderRequest 1:1.
- *
- * @bugfix-note (2026-09-09) DVA reálné bugy odhalené při i18n převodu:
- * 1) `PAYMENT_STATUS_OPTIONS` neobsahoval hodnotu `unpaid`, přestože
- *    `OrdersComponent.handleCreateFormOpened()` novou objednávku touto hodnotou
- *    inicializuje (a backend `in:...` seznam ji má) - select pro platbu u nové
- *    objednávky tak ukazoval prázdnou/nevalidní volbu. Doplněno.
- * 2) `ORDER_TAB_BUTTONS` export s `permission: 'view-deleted'` na koš tabu byl
- *    MRTVÝ KÓD - `OrdersComponent` místo něj používala vlastní lokální
- *    `orderTabButtons` pole BEZ permission kontroly, takže koš byl viditelný
- *    úplně všem uživatelům bez ohledu na oprávnění. Sjednoceno na jeden zdroj
- *    (`createOrderTabButtons()`), permission kontrola aplikována v komponentě
- *    stejně jako u `toolbarButtons`.
- * @bugfix-note (2026-10-23) Buyer columns read the order's own `contact` (snapshot, open findings
- *   #22 / #23) instead of the customer master data. The chartable status columns used the
- *   `*_status_label` text (Czech from the API) with the raw values as possible values - the chart
- *   never matched; they use the raw `status` / `payment_status` now (labels translated here).
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -37,7 +13,6 @@ const SECTION = 'shop-orders';
 
 export const STATUS_VALUES: string[] = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'canceled', 'returned'];
 
-/** @bugfix-note (2026-09-09) `unpaid` doplněn - viz hlavička souboru. */
 export const PAYMENT_STATUS_VALUES: string[] = ['pending', 'paid', 'failed', 'refunded', 'cod', 'unpaid'];
 
 const STATUS_LABEL_KEYS: Record<string, string> = {
@@ -77,7 +52,6 @@ export function createToolbarButtons(i18n: AdminLocalizationService): Core.Butto
     { action: 'handleCreateFormOpened', label: i18n.getValue(`${SECTION}.toolbar_create_record`), icon: '', class: 'btn-create', showIf: true, permission: 'shop-orders-create' },
     { action: 'openGraphBuilder', label: i18n.getValue(`${SECTION}.toolbar_generate_reports`), icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-view-reports' },
     { action: 'exportActiveTable', label: i18n.getValue(`${SECTION}.toolbar_export_data`), icon: '', class: 'btn-export', showIf: true },
-    // @refactor-note (2026-10-23) no 'triggerImport' - the API has no import for this page (open finding #25, the button answered 404).
   ];
 }
 
@@ -143,11 +117,6 @@ export function createOrderDetailsColumns(i18n: AdminLocalizationService): Core.
   ];
 }
 
-/**
- * @bugfix-note (2026-09-09) Toto je teď JEDINÝ zdroj tab tlačítek - komponenta
- * dřív měla vlastní duplicitní lokální pole bez permission kontroly na koš tabu,
- * viz hlavička souboru.
- */
 export function createOrderTabButtons(i18n: AdminLocalizationService): Core.Button[] {
   return [
     { action: 'all', label: i18n.getValue(`${SECTION}.tab_all`), icon: '📦', class: 'btn-filter', isActive: true },

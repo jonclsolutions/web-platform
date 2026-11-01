@@ -1,8 +1,8 @@
 /**
  * @file public-header.component.ts
  * @path src/app/public/web-pages/components/public-header/public-header.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Manages the site-wide public header, including dynamic navigation, language switching, and scroll-responsive UI animations.
  * @dependencies
@@ -13,15 +13,6 @@
  * @note siteSettings is read from PublicDataService.siteSettingsValue$ (populated once by
  *   AppBootstrapService during APP_INITIALIZER) instead of being fetched here. By the time
  *   this component renders, the value — and the logo image bytes — are already available.
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `en_flag_link`, `tel_icon`, `mail_icon`.
- * @bugfix-note (2026-10-23) The router.events subscription was never closed: after leaving the
- *   web layout (e.g. to /shop or /admin) every navigation still ran handleRouteChange() of the
- *   destroyed header (scrollTo + detectChanges on a destroyed view → NG0911 errors in the
- *   console, one more leaked subscriber per visit). It now ends with destroy$, and the initial
- *   route sync timeout is cleared on destroy.
- * @refactor-note (2026-10-23) Removed the `menuToggled` output (open finding #41) - it was never
- *   emitted; the header locks the page scroll for its menus itself.
  */
 
 import {

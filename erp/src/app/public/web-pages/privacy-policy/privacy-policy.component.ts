@@ -1,8 +1,8 @@
 /**
  * @file privacy-policy.component.ts
  * @path src/app/public/web-pages/privacy-policy/privacy-policy.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @note Document loading goes through LegalDocsService, which caches by slug+language.
  *   If AppBootstrapService already prefetched this doc in the background, this resolves

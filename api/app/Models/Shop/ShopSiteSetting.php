@@ -2,18 +2,11 @@
 /**
  * @file ShopSiteSetting.php
  * @path app/Models/Shop/ShopSiteSetting.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Model for shop-specific global configuration - currently limited to
  * e-shop maintenance mode (active flag + customer-facing message).
- *
- * @refactor-note (2026-08-15) Extracted from `App\Models\Core\CoreSiteSetting`, which
- * previously held both shop and web maintenance flags in a single shared table
- * (`core_site_settings`). Shop maintenance is a Shop-domain concern, not a Core-domain
- * concern, so it now lives in its own `shop_site_settings` table and model, consistent
- * with how `ShopPublicController::getStatus()` was already scoped to Shop. See migration
- * SQL executed against `core_site_settings` / `shop_site_settings` for the data move.
  */
 
 namespace App\Models\Shop;

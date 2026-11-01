@@ -1,24 +1,12 @@
-/* 
+/*
     @file: email-template-modal.component.css
     @path: /src/app/admin/web-pages/user-request/email-template-modal.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @description Styly pro modal "Editovat potvrzovací e-mail" - dřív inline v šabloně,
-    přesunuto do vlastního component-scoped souboru (Angular Emulated encapsulation),
-    přidáno VEDLE sdíleného `../default-style.css` (ne místo něj), viz styleUrls
-    v user-request.component.ts.
-
-    @bugfix-note (2026-08-19) KRITICKÝ BUG - NEJDE PSÁT DO INPUTŮ V MODALU: kurzor nad
-    polem správně ukazoval textový I-beam (input samo o sobě `cursor` správně dostává),
-    ale klik focus nezpůsobil - typický příznak NEVIDITELNÉHO ELEMENTU LEŽÍCÍHO NAD
-    inputem, který "vyhraje" hit-test pro klik, i když vizuálně nic vidět není (např.
-    zapomenutý fixed/absolute overlay jinde v appce - sidebar-overlay v
-    AdminLayoutComponent, bulk-actions dropdown v TableBuilderComponent apod. - který
-    zůstává v DOMu i "zavřený" a nemá explicitně `pointer-events: none` v neaktivním
-    stavu). Oprava: `z-index` overlaye zvednut z 1100 na 99999 (bezpečně nad JAKÝMKOLIV
-    jiným z-indexem v appce), a `pointer-events: auto` explicitně vynuceno na
-    inputy/textarey, ať nemůže být nic zděděno/přebito zvenčí.
+    @description Styles of the "Edit confirmation e-mail" modal - component-scoped (Angular
+    Emulated encapsulation), loaded NEXT TO the shared `../default-style.css` (see styleUrls of
+    user-request.component.ts).
 */
 
 .email-tpl-overlay {
@@ -133,8 +121,8 @@
   font-size: 13.5px;
   color: var(--color-zinc-900);
   font-family: inherit;
-  /* Explicitní pojistka proti jakémukoliv globálnímu pravidlu, které by mohlo
-     nechtěně vypnout interaktivitu - viz bugfix-note v hlavičce souboru. */
+  /* Explicit safeguard against any global rule that could unintentionally switch off the
+     interactivity. */
   pointer-events: auto !important;
   position: relative;
   z-index: 1;
@@ -183,7 +171,6 @@
 }
 .email-tpl-btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* @refactor-note (2026-08-19v3) BACKLOG "editace vsech textu + live preview" */
 
 .email-tpl-section-label {
   font-size: 11px;

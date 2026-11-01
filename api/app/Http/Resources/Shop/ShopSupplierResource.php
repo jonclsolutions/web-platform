@@ -2,8 +2,8 @@
 /**
  * @file ShopSupplierResource.php
  * @path app/Http/Resources/Shop/ShopSupplierResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Resource transformation for product suppliers.
  */

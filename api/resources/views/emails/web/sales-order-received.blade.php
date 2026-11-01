@@ -1,18 +1,12 @@
-<!--
-    @file: sales-order-received.blade.php
-    @path: resources/views/emails/web/sales-order-received.blade.php
-    @project: RPSW Web
-    @author: RPSW
-    @created: 2026
-    @description Potvrzení přijetí realizace/objednávky (WebSalesOrder) - přepracovaný
-    vzhled (2026-08-19), stejný vizuální jazyk jako emails/auth/*.blade.php a
-    raw-request-commission-received.blade.php.
-    @refactor-note (2026-08-19v2) Přidán řádek "Přiložené soubory" - jen VÝPIS názvů
-    (original_filename), BEZ odkazů ke stažení/náhledu - stejné zdůvodnění jako
-    u raw-request-commission-received.blade.php (zákazník soubor už má u sebe, odkaz by
-    jen zbytečně rozšiřoval bezpečnostní plochu). Řádek se nezobrazí, pokud objednávka
-    nemá žádné přílohy.
--->
+{{--
+    @file sales-order-received.blade.php
+    @path resources/views/emails/web/sales-order-received.blade.php
+    @project JS web-platform
+    @author JS
+    @created 2026
+    @description Confirmation of a received order (WebSalesOrder), same look as
+    emails/auth/*.blade.php and raw-request-commission-received.blade.php.
+--}}
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -26,7 +20,7 @@
 <td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #ececea;">
 
-<!-- Header pruh -->
+{{-- Header bar --}}
 <tr>
 <td style="background:#18181b;padding:20px 32px;">
 <span style="color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.02em;">
@@ -35,7 +29,7 @@
 </td>
 </tr>
 
-<!-- Obsah -->
+{{-- Content --}}
 <tr>
 <td style="padding:32px;">
 <h1 style="margin:0 0 20px;font-size:19px;font-weight:700;color:#18181b;">

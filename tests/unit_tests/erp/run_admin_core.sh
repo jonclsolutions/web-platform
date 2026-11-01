@@ -2,14 +2,13 @@
 #
 # @file run_admin_core.sh
 # @path tests/unit_tests/erp/run_admin_core.sh
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Runs the erp unit tests: admin core section – admin/core-pages, the shared admin components (base-data, builders, layout, dialogs) and admin/auth.
 #   Result: tests/unit_tests/erp/report/report.html and report.xml (last run only).
 # @dependencies
 # - Node.js, erp/node_modules (npm install in erp/), Chrome/Chromium (CHROME_BIN or on PATH).
-# @refactor-note (2026-10-27) Also runs admin/error-pages (admin 404 / 403).
 #
 # @usage
 #   ./run_admin_core.sh            (from any directory)

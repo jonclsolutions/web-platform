@@ -1,8 +1,8 @@
 /**
  * @file permission-options.service.spec.ts
  * @path src/app/core/services/permission-options.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of PermissionOptionsService: permission list cached for 5 minutes
  *   after a successful load; a failed load answers [] and is retried next time.

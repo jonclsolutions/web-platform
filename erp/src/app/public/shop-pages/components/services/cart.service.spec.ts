@@ -1,8 +1,8 @@
 /**
  * @file cart.service.spec.ts
  * @path src/app/public/shop-pages/components/services/cart.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of CartService: adding products / variants (EUR price with VAT
  *   required, image fallbacks, stock cap, merge of the same item), quantity changes, removal,

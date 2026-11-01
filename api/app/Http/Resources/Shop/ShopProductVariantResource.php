@@ -2,13 +2,10 @@
 /**
  * @file ShopProductVariantResource.php
  * @path app/Http/Resources/Shop/ShopProductVariantResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Resource transformation for product variants.
- *
- * @bugfix-note (2026-10-23) `prices.cost_price_eur` (purchase price) is no longer part of
- * public storefront responses - see DetectsPublicShopRequest.
  */
 
 namespace App\Http\Resources\Shop;

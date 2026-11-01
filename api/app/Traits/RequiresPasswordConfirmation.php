@@ -2,9 +2,9 @@
 /**
  * @file RequiresPasswordConfirmation.php
  * @path app/Traits/RequiresPasswordConfirmation.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-26
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Step-up authentication for operations on sysadmin accounts and on the e-mail
  *   access policy (re-authentication for sensitive operations, OWASP ASVS V2/V3). A stolen
  *   access token or an unattended browser of a sysadmin must not be enough to create / promote /

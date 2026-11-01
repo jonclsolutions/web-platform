@@ -157,7 +157,7 @@ return [
     |
     */
 
-      'domain' => env('SESSION_DOMAIN', null), // <<<<<<< DŮLEŽITÉ: Mělo by být null pro localhost
+      'domain' => env('SESSION_DOMAIN', null), // null = the cookie is valid for the host only (correct for localhost).
 
     /*
     |--------------------------------------------------------------------------
@@ -170,8 +170,8 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE', false), // MUSÍ BÝT false, pokud je Laravel na HTTP
-    'same_site' => env('SESSION_SAMESITE', 'lax'), // Zkuste 'lax' nebo 'none' // <<<<<<< DŮLEŽITÉ: Pro vývoj na HTTP MUSÍ být false
+    'secure' => env('SESSION_SECURE_COOKIE', false), // true in production (HTTPS); false only for local development over HTTP.
+    'same_site' => env('SESSION_SAMESITE', 'lax'),
 
     /*
     |--------------------------------------------------------------------------

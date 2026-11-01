@@ -1,19 +1,10 @@
 /**
  * @file categories.config.ts
  * @path src/app/admin/shop-pages/categories/categories.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Static-turned-dynamic configuration for shop category tree buttons.
- *
- * (Earlier bugfix-note 2026-09-07 for permission granularization, and icons-note
- * 2026-08-31 for emoji->SVG icons, are unchanged - see version history.)
- *
- * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
- * texty": kompletní přepis na FACTORY FUNKCE. Žádná SQL migrace potřeba - žádné enum
- * sloupce, jen UI text tlačítek. `toggleStatus` dynamický label ("Aktivní"/
- * "Neaktivní") ZŮSTÁVÁ řešen v komponentě (`getRowButtons()`), ne tady - stejně jako
- * dřív, jen teď přes `t()`.
  */
 import { Button } from '../../../shared/interfaces/button';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -45,8 +36,9 @@ export function createCategoryToolbarButtons(i18n: AdminLocalizationService): Bu
 }
 
 /**
- * @description `toggleStatus` label/class je přepsán v `CategoriesComponent.getRowButtons()`
- * (dynamický podle `node.is_active`) - hodnoty zde jsou jen výchozí/fallback.
+ * @description The `toggleStatus` label / class is overridden in
+ * `CategoriesComponent.getRowButtons()` (dynamic by `node.is_active`) - the values here are
+ * only the default / fallback.
  */
 export function createCategoryRowButtons(i18n: AdminLocalizationService): Button[] {
   return [

@@ -3,18 +3,11 @@
 /**
  * @file AppServiceProvider.php
  * @path app/Providers/AppServiceProvider.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Bootstrapuje aplikační služby. Definuje kombinovaný rate limiter pro
- * login endpoint (IP + e-mail současně - viz @refactor-note níže).
- * @refactor-note (2026-08) Přidán pojmenovaný limiter 'login' přes RateLimiter::for().
- * Dřívější `throttle:5,1` na routě limitoval pouze podle IP - útočník mohl útok
- * distribuovat přes více IP adres a limit tak efektivně obejít, protože z pohledu
- * každé jednotlivé IP šlo jen o pár pokusů. Nový limiter kombinuje DVA nezávislé klíče
- * (IP i normalizovaný e-mail) do jednoho throttle bucketu - stačí překročit limit
- * podle KTERÉHOKOLIV z nich a request je odmítnut. To pokrývá jak útok na jeden účet
- * z mnoha IP, tak "spray" útok z jedné IP na mnoho účtů.
+ * @description Bootstraps the application services; defines the rate limiters of the login
+ * (keyed by IP and by e-mail separately) and of the 2FA code resend.
  */
 
 namespace App\Providers;
@@ -38,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // ── Login rate limiter: 5 pokusů / minutu, klíčováno IP i e-mailem zvlášť ──────
+        // ── Login rate limiter: 5 attempts / minute, keyed by the IP and by the e-mail separately ──────
         RateLimiter::for('login', function ($request) {
             $email = mb_strtolower(trim((string) $request->input('email')));
 
@@ -48,7 +41,7 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
-        // ── Resend 2FA kódu: samostatný, přísnější limiter proti mail-bombingu ─────────
+        // ── 2FA code resend: a separate, stricter limiter against mail bombing ─────────
         RateLimiter::for('login-2fa-resend', function ($request) {
             return [
                 Limit::perMinute(5)->by('2fa-resend-ip:' . $request->ip()),

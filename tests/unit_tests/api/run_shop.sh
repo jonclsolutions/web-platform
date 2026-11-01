@@ -2,8 +2,8 @@
 #
 # @file run_shop.sh
 # @path tests/unit_tests/api/run_shop.sh
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Runs the api (Laravel / PHPUnit) tests: suite Shop - tests/Unit/Shop and tests/Feature/Shop.
 #   Measures code coverage of the Shop section files (lines + methods,

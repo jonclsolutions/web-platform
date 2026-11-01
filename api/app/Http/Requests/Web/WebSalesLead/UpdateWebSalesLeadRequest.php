@@ -2,8 +2,8 @@
 /**
  * @file UpdateWebSalesLeadRequest.php
  * @path app/Http/Requests/Web/WebSalesLead/UpdateWebSalesLeadRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Validation logic for updating existing web sales leads.
  */

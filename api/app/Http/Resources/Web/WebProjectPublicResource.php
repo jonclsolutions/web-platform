@@ -2,15 +2,12 @@
 /**
  * @file WebProjectPublicResource.php
  * @path app/Http/Resources/Web/WebProjectPublicResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description PUBLIC/customer-facing project view - deliberately narrower than
  * WebProjectResource: no `access_token`/`lead_id`/`order_id`/internal FKs, nothing
  * that could reveal internal CRM structure to the end customer.
- * @refactor-note (2026-09-11) BACKLOG "project portal - odhad termínu dokončení":
- * `estimated_completion_from`/`estimated_completion_to` doplněny - customer-facing
- * pole, zákazník je má vidět (rozptyl, ne pevný termín - viz WebProject model).
  */
 
 namespace App\Http\Resources\Web;

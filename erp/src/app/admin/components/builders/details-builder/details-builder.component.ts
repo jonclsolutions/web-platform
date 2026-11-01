@@ -1,51 +1,16 @@
 /**
  * @file details-builder.component.ts
  * @path src/app/admin/components/builders/details-builder/details-builder.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description A dynamic detail viewer component that generates structured layouts from data objects and column definitions.
  * @dependencies
  * - CommonModule, DatePipe, CurrencyPipe: Formatting utilities.
  * - ItemDetailsColumns: Interface for column metadata.
  * - InputDefinition: Interface for field configuration and options.
- * - ScrollLockService: Sdílený zámek scrollu na pozadí (viz refactor-note 2026-08-31).
- * - AdminLocalizationService: Statická (bundlovaná) lokalizace admin UI - viz
- *   refactor-note (2026-09) níže.
- *
- * @refactor-note (2026-08) Přidán typ `'files'` (množné číslo) - zobrazuje seznam VÍCE
- * příloh (z `web_attachments` relace, pole objektů `{id, original_filename, mime_type,
- * size_bytes, download_url, view_url, created_at}`) místo jediného souboru, jak to
- * řešil dosavadní `'file'` case. `formatFileSize()` přidán jako pomocná metoda pro
- * čitelný výpis velikosti.
- *
- * @refactor-note (2026-08-31) BACKLOG "privátní úložiště citlivých příloh": `downloadFile()`
- * a `getViewUrl()` dřív RUČNĚ skládaly URL z `file.url` (přímý storage odkaz) přes
- * starý vzor `/download-file/{folder}/{file}` / `/view-file/{folder}/{file}`
- * (`PublicFileDownloadController`, dva route parametry) - ten vzor už NEEXISTUJE (viz
- * `AttachmentDownloadController`, `routes/api.php`, jeden wildcard `{path}` +
- * `signed` middleware). `WebAttachmentResource` teď navíc VŽDY posílá HOTOVÉ,
- * krátkodobě podepsané (10 min TTL) `download_url`/`view_url` pro každou přílohu -
- * šablona (viz `@case ('files')`) je používá PŘÍMO, žádné skládání na frontendu není
- * potřeba ani žádoucí (frontend nezná/nemá znát interní route strukturu ani podpis).
- * `downloadFile()` proto zjednodušen na prosté `window.location.href = downloadUrl`
- * (vstup je už hotová `download_url`, ne syrový storage `url`). `getViewUrl()` zůstává
- * jako tenký passthrough kvůli zpětné kompatibilitě `@case ('file')` (legacy sloupce
- * nesoucí přímý URL string, ne objekt přílohy) - u zdrojů na `private` disku ale
- * fungovat NEBUDE (žádný symlink, žádná signed URL), dokud takový sloupec
- * nepřejde na typ `'files'` s reálnou `web_attachments` vazbou.
- *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * tahle komponenta NEDĚDÍ `BaseDataComponent` (je to sdílený builder, ne stránka),
- * takže `AdminLocalizationService` je injektována ručně - stejný vzor jako
- * `PersonalInfoComponent`. VŠECHNY uživatelsky viditelné texty (nadpis, tlačítka
- * Zobrazit/Stáhnout, "žádný soubor" hlášky) nahrazeny `strings.xxx` binding v šabloně.
- * `getFormattedValue()`'s boolean formatting měl natvrdo anglické `'Yes'`/`'No'`
- * uprostřed jinak české šablony (nekonzistence, patrně kopírovaný default z jiného
- * projektu) - teď jde přes `shared.yes`/`shared.no` z JSON souboru, tedy sjednocené
- * se zbytkem aplikace a lokalizované společně s ní.
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `getFileName`.
+ * - ScrollLockService: Shared background scroll lock.
+ * - AdminLocalizationService: Static (bundled) localization of the admin UI.
  */
 
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject } from '@angular/core';
@@ -83,9 +48,8 @@ private currencyPipe: CurrencyPipe
   ) {}
 
   /**
-   * @description Merged `shared` + `details-builder` i18n section - viz refactor-note
-   * v hlavičce souboru.
-   * @note Typ `any` záměrně - viz `AdminLocalizationService.getMergedSection()`.
+   * @description Merged `shared` + `details-builder` i18n section.
+   * @note Type `any` on purpose - see `AdminLocalizationService.getMergedSection()`.
    */
   public get strings(): any {
     return this.i18n.getMergedSection('details-builder');
@@ -153,9 +117,9 @@ return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   }
 
   /**
-   * @description Spustí stažení souboru přesměrováním na už hotovou, backendem
-   * vygenerovanou `download_url` (podepsaná, viz refactor-note v hlavičce souboru).
-   * @param downloadUrl Hotová `download_url` z WebAttachmentResource.
+   * @description Starts a file download by navigating to the ready `download_url` generated
+   * (signed) by the backend.
+   * @param downloadUrl Ready `download_url` from WebAttachmentResource.
    */
 downloadFile(downloadUrl: string): void {
     if (!downloadUrl) return;
@@ -163,11 +127,10 @@ downloadFile(downloadUrl: string): void {
   }
 
   /**
-   * @description Tenký passthrough pro zpětnou kompatibilitu `@case ('file')` (legacy
-   * sloupce s přímým URL stringem) - viz refactor-note v hlavičce souboru. Pro
-   * `@case ('files')` (reálné přílohy) šablona používá `file.view_url` PŘÍMO, tahle
-   * metoda se pro ně nevolá.
-   * @param fullUrl Syrová hodnota sloupce (typicky `itemData[column.key]`).
+   * @description Thin passthrough for backward compatibility of `@case ('file')` (legacy
+   * columns with a plain URL string). For `@case ('files')` (real attachments) the template
+   * uses `file.view_url` DIRECTLY, this method is not called for them.
+   * @param fullUrl Raw value of the column (typically `itemData[column.key]`).
    */
   getViewUrl(fullUrl: string): string {
     return fullUrl || '';

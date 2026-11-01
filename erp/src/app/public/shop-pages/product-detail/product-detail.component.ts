@@ -1,16 +1,10 @@
 /**
  * @file product-detail.component.ts
  * @path src/app/public/shop-pages/product-detail/product-detail.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @refactor-note (2026-10-21) Lokalizace 1:1 jako veřejný web: `translationModule = 'shop'`, všechny texty ze sekce
- *   `product_detail`. Odstraněny anglické fallbacky v `alert()`; `errors.max_stock` je teď jedna
- *   věta s `{count}` místo skládání tří kusů textu.
- * @bugfix-note (2026-10-23) Prices were formatted with cs-CZ in every language (open finding #44) -
- *   BasePublicComponent.formatEur() now.
- * @bugfix-note (2026-10-23) The add-to-cart errors used the blocking native `window.alert()` (open
- *   finding #45) - the app's alert dialog with the title `errors.alert_title` now.
+ * @description Product detail page of the public e-shop (gallery, variants, stock, add to cart).
  */
 
 import { Component, OnInit, signal, computed, effect, inject } from '@angular/core';
@@ -40,7 +34,7 @@ export class ProductDetailComponent extends BasePublicComponent implements OnIni
   /** Dialog of the add-to-cart errors (was `window.alert()`, finding #45). */
   private alertDialogService = inject(AlertDialogService);
 
-  // Signály pro reaktivní UI
+  // Signals of the reactive UI
   product = signal<any>(null);
   selectedVariant = signal<any>(null);
   isLoading = signal(true);
@@ -48,7 +42,7 @@ export class ProductDetailComponent extends BasePublicComponent implements OnIni
   selectedQuantity = signal<number>(1);
   addedToCart = signal<boolean>(false);
 
-  // Computeds pro odvozený stav
+  // Computeds of the derived state
   variantImages = computed(() => this.selectedVariant()?.images || []);
   generalImages = computed(() => { 
     const allImgs = this.product()?.images || []; 
@@ -88,7 +82,7 @@ export class ProductDetailComponent extends BasePublicComponent implements OnIni
 
   constructor() {
     super();
-    // Efekt pro automatickou úpravu množství podle skladu
+    // Effect that adjusts the quantity to the stock automatically
     effect(() => {
       const stock = this.currentStock();
       if (this.selectedQuantity() > stock) {

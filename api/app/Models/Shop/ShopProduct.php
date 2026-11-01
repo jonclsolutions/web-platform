@@ -2,14 +2,10 @@
 /**
  * @file ShopProduct.php
  * @path app/Models/Shop/ShopProduct.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Model representing a product within the shop catalog.
- *
- * @refactor-note (2026-10-23) Removed the `reviews()` relation: its model ShopReview does not
- * exist (calling it would fail) and nothing loads it. Re-add together with the model when
- * product reviews are implemented (table `shop_reviews` exists).
  */
 
 namespace App\Models\Shop;

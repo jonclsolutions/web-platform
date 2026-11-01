@@ -2,15 +2,10 @@
 /**
  * @file WebJobApplicationResource.php
  * @path app/Http/Resources/Web/WebJobApplicationResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Resource transformation for job application submissions.
- * @refactor-note (2026-08-2) `cv_path`/`cv_url` nahrazeny `attachments` kolekcí (viz
- *      WebAttachment.php/WebAttachmentResource.php) - stejný tvar jako u
- *      WebSalesOrderResource/WebRawRequestCommissionResource, aby frontend mohl použít
- *      stejnou komponentu pro zobrazení/stažení/náhled napříč všemi čtyřmi entitami.
- *      Nejvýš 1 prvek v kolekci (vynuceno v HandlesAttachments::storeSingleAttachment()).
  */
 
 namespace App\Http\Resources\Web;

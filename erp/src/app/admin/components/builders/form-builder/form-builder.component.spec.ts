@@ -1,8 +1,8 @@
 /**
  * @file form-builder.component.spec.ts
  * @path src/app/admin/components/builders/form-builder/form-builder.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of FormBuilderComponent – the generic create / edit popup of the admin
  *   (field visibility, defaults, value normalisation, multiselect, password confirmation, header

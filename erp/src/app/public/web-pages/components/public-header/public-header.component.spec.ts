@@ -1,8 +1,8 @@
 /**
  * @file public-header.component.spec.ts
  * @path src/app/public/web-pages/components/public-header/public-header.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of PublicHeaderComponent: texts, languages and settings, the active
  *   link highlight + sliding indicator after navigation (desktop only), the scrolled state,

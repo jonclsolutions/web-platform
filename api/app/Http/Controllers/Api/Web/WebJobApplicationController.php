@@ -2,38 +2,10 @@
 /**
  * @file WebJobApplicationController.php
  * @path app/Http/Controllers/Api/Web/WebJobApplicationController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Manages the lifecycle of job applications, including document handling (CVs), status updates, and soft-delete administrative workflows.
- * @refactor-note (2026-08-2) CV storage moved to the polymorphic `web_attachments` table
- *      (HandlesAttachments::storeSingleAttachment()). `cv_path`/`cv_original_name` columns
- *      NOT dropped - legacy fallback preserved for pre-migration applications, see
- *      PublicFileDownloadController's FOLDER_MAP fallback.
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
- * lokální duplicitní logAction() - stejný důvod jako u ostatních Web kontrolerů (viz
- * WebRawRequestCommissionController hlavička). Doménově beze změny (WebLog::class).
- *
- * @bugfix-note (2026-08-15) KRITICKÁ OPRAVA FILTRŮ: `index()` zpracovával jen textové
- * filtry (`first_name`, `last_name`, `email`, `position_name`, `state`) přes LIKE, ale
- * `id` z `JOB_APPLICATION_FILTER_COLUMNS` (frontend) se nikde nezpracovával - stejný
- * symptom jako u WebNewsController (viz jeho bugfix-note stejné datum). `id` teď má
- * vlastní přesnou shodu (`where('id', ...)`), oddělenou od LIKE smyčky pro textová pole -
- * konzistentní s WebSalesLeadController/WebRawRequestCommissionController, které tenhle
- * vzor už měly správně.
- *
- * @refactor-note (2026-08-23) HROMADNÉ MAZÁNÍ V JEDNOM REQUESTU: přidána `bulkDestroy()`
- * - viz TableBuilderComponent.onBulkDeleteClick() na frontendu (volá `{apiEndpoint}/bulk-delete`).
- * ZÁMĚRNĚ NENÍ generický `Model::destroy($ids)` - `destroy()` u tohoto resource má
- * netriviální vedlejší efekt (`force_delete` maže i přílohy z disku přes
- * `deleteAllAttachments()`), který by generická zkratka potichu přeskočila a nechala by
- * osiřelé soubory na disku. `bulkDestroy()` proto replikuje STEJNOU logiku jako
- * `destroy()`, jen ve smyčce nad více záznamy v jedné transakci.
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -61,20 +33,12 @@ class WebJobApplicationController extends Controller
     use LogsActivity;
 
     /**
-     * Storage folder for CV uploads within the public disk.
+     * @description Storage folder of the CV uploads on the private disk (default of storeSingleAttachment()).
      */
     private const CV_FOLDER = 'web/cv_files';
 
     /**
      * Retrieves a paginated list of job applications with optional search and filtering.
-     */
-/**
-     * @refactor-note (2026-08-25) BACKLOG "hledat napříč vším": `search` rozšířen o
-     * `state` - tenhle sloupec byl už dřív dostupný jako individuální filtr (a to
-     * přes LIKE, ne přesnou shodu - na rozdíl třeba od `WebSupportTicket.status`,
-     * který je enum s exaktní shodou a proto do fulltextového search záměrně
-     * NEPATŘÍ). `state` je tady fuzzy-filtrovatelné pole stejně jako ostatní, takže
-     * patří i do globálního search pro konzistenci.
      */
     public function index(Request $request)
     {
@@ -92,7 +56,7 @@ class WebJobApplicationController extends Controller
                 ->orWhere('state', 'like', "%$s%"));
         }
 
-        // Přesná shoda - ID je číselný identifikátor, LIKE by tu nedávalo smysl.
+        // Exact match - the ID is numeric, LIKE makes no sense here.
         if ($request->filled('id')) {
             $query->where('id', $request->input('id'));
         }
@@ -155,9 +119,6 @@ class WebJobApplicationController extends Controller
      */
     public function update(UpdateWebJobApplicationRequest $request, $id): JsonResponse
     {
-        // @bugfix-note (2026-10-22) findOrFail() outside the try block (all actions of this
-        // controller): inside it the "not found" exception was caught by `catch (\Exception)`
-        // and answered 500 instead of 404. Found by the unit tests.
         $jobApplication = WebJobApplication::withTrashed()->findOrFail($id);
 
         try {
@@ -220,16 +181,12 @@ class WebJobApplicationController extends Controller
     }
 
     /**
-     * @description Hromadně smaže vybrané uchazeče JEDNÍM requestem - viz
-     * `TableBuilderComponent.onBulkDeleteClick()` na frontendu (volá
-     * `POST web/job_applications/bulk-delete`).
-     *
-     * @note ZÁMĚRNĚ replikuje STEJNOU logiku jako `destroy()` (viz jeho refactor-note
-     * v hlavičce třídy) - ne generický `Model::destroy($ids)`. Ten by u `force_delete=true`
-     * potichu přeskočil úklid příloh z disku (`deleteAllAttachments()`) a nechal by
-     * osiřelé CV soubory ve `storage/app/public/cv_files`.
-     *
-     * @param Request $request Tělo obsahuje `{ ids: number[], force_delete?: boolean }`.
+     * @description Deletes the selected applicants in ONE request (TableBuilderComponent
+     * onBulkDeleteClick() → POST web/job_applications/bulk-delete).
+     * @note Repeats the logic of `destroy()` on purpose instead of a generic
+     * `Model::destroy($ids)`, which would skip deleting the attachments
+     * (`deleteAllAttachments()`) on `force_delete=true` and leave orphaned CV files.
+     * @param Request $request Body `{ ids: number[], force_delete?: boolean }`.
      */
     public function bulkDestroy(Request $request): JsonResponse
     {

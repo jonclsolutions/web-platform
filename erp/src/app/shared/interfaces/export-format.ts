@@ -1,30 +1,11 @@
 /**
  * @file export-format.ts
  * @path src/app/shared/interfaces/export-format.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Shared type and static metadata for the table export format picker
  * (ExportPopupBuilderComponent + TableBuilderComponent + ImportPopupBuilderComponent).
- *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * `EXPORT_FORMAT_OPTIONS` byla PŮVODNĚ statická konstanta vyhodnocená JEDNOU při
- * načtení modulu s natvrdo českým `description` textem - žádné přepnutí admin
- * jazyka za běhu by se do konzumentů nikdy nepropsalo. Přepsáno na FACTORY FUNKCI
- * `createExportFormatOptions(i18n)`, kterou volající komponenta čte přes GETTER (ne
- * jednorázové přiřazení), stejný vzor jako user-request.config.ts.
- * `label`/`extension`/`icon` zůstávají beze změny (technické/značkové názvy jako
- * "CSV"/"Excel"/".xlsx", ne popisný text) - překládá se jen `description`.
- *
- * @refactor-note (2026-09v2) BACKLOG "žádný český fallback": statická
- * `EXPORT_FORMAT_OPTIONS` konstanta (deprecated fallback s natvrdo českým textem)
- * ODSTRANĚNA - i jako "záložní" varianta porušovala pravidlo, že chybějící překlad
- * se má projevit jako 'Cannot load text', nikdy ne tichým pádem na češtinu.
- * VŠICHNI konzumenti (ExportPopupBuilderComponent, ImportPopupBuilderComponent)
- * přešli na `createExportFormatOptions(i18n)`. Pokud tenhle soubor po odstranění
- * hlásí TS chybu "Cannot find name 'EXPORT_FORMAT_OPTIONS'" někde jinde v projektu,
- * je to signál, že daný soubor ještě nebyl migrován na factory funkci - dohledej ho
- * a oprav stejným vzorem.
  */
 
 import { AdminLocalizationService } from '../../core/services/admin-localization.service';

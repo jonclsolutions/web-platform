@@ -29,9 +29,9 @@ export class AlertDialogComponent implements OnDestroy {
   private static readonly EXIT_ANIMATION_MS = 220;
 
   addToast(toast: AlertToastItem): void {
-    // Nový toast dáváme na začátek (nahoru)
+    // The new toast goes first (top)
     this.toasts = [toast, ...this.toasts];
-    this.cdr.detectChanges(); // Vynutíme detekci pro dynamicky mountnutou komponentu
+    this.cdr.detectChanges(); // Force change detection for the dynamically mounted component
 
     if (toast.type === 'success' || toast.type === 'info') {
       const timeout = setTimeout(() => this.removeToast(toast.id), 5000);

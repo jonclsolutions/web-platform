@@ -2,11 +2,10 @@
 /**
  * @file StoreCoreRoleRequest.php
  * @path app/Http/Requests/Core/CoreRole/StoreCoreRoleRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Validation logic for creating a new system role.
- * @refactor-note (2026-08-16) Přidána validace `forces_2fa` - viz CoreRole.php.
  */
 
 namespace App\Http\Requests\Core\CoreRole;

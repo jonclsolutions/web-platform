@@ -1,8 +1,8 @@
 /*
     @file: tokens.css
     @path: /src/app/shared/styles/tokens.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description: Global colour primitives shared by the admin and the public part. Raw palette values
         only – no meaning attached. Imported once by src/styles.css, so every component can use them.

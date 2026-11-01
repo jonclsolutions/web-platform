@@ -2,18 +2,12 @@
 /**
  * @file UserResource.php
  * @path app/Http/Resources/UserResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Transforms a User model into its public API representation, exposing
  * roles (with their permissions), the user's own explicit permission grants, and the
  * calculated effective permission set.
- * @refactor-note (2026-09-02) BACKLOG "explicit user permissions": added
- * `user_permissions` (the account's own explicit grants, for prefilling the admin
- * edit form) alongside the pre-existing `permissions` (effective = role ∪ explicit,
- * used for authorization decisions on the frontend). Both are computed on the User
- * model itself (see `User::getPermissionsAttribute()` /
- * `User::getUserPermissionsAttribute()`), this resource just surfaces them.
  *
  * NOTE: this file reconstructs the resource class based on the fields observed in
  * use across administrators.config.ts / UserController audit log payloads. If the

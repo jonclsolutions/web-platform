@@ -3,8 +3,8 @@
 /**
  * @file NewsTest.php
  * @path api/tests/Feature/Web/NewsTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the news administration (WebNewsController): list with
  *   filters, create / edit with validation, delete / bulk delete / restore / trash.

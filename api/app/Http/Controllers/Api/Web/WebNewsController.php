@@ -2,40 +2,10 @@
 /**
  * @file WebNewsController.php
  * @path app/Http/Controllers/Api/Web/WebNewsController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages news article lifecycle, including categorization, content management, and soft-delete administrative workflows.
- *
- * @refactor-note (2026-08-6) LOGGING MIGRATION to shared `LogsActivity` trait instead
- * of local duplicate logAction(). Domain unchanged (WebLog::class).
- *
- * @bugfix-note (2026-08-15) CRITICAL FILTER FIX: `index()` did not process
- * filters `id` and `title` at all, despite `NEWS_FILTER_COLUMNS` (frontend) offering
- * them. Added `id` (exact match) and `title` (partial match via LIKE, consistent
- * with `author`).
- *
- * @refactor-note (2026-08-23a) BULK DELETION IN A SINGLE REQUEST: added `bulkDestroy()`
- * - see TableBuilderComponent.onBulkDeleteClick() on frontend (calls
- * POST web/news/bulk-delete). `destroy()` has no side effects on files/other
- * tables (no attachments) - the only difference from generic `Model::destroy($ids)` is
- * the need to explicitly call `forceDelete()` for the `force_delete=true` branch.
- *
- * @refactor-note (2026-08-23b) BULK IMPORT (importTemplate/importValidate/
- * importCommit) - SIMPLEST case so far: `store()` has no file upload,
- * no automated logic - it's a pure `WebNews::create($request->validated())`.
- * `IMPORTABLE_COLUMNS` corresponds 1:1 to ALL fields in `StoreWebNewsRequest::rules()`.
- *
- * @refactor-note (2026-08-31) BACKLOG "orphaned import files": import
- * validate/commit flow rewritten to shared `HandlesImportBatches` trait - previously
- * missing `Storage::delete($batch->temp_path)` in `catch` branch of `importCommit()`
- * (even after failed import, temporary file remained on disk forever), now
- * guaranteed by `try/finally` inside `runImportCommit()`, not manual deletion here.
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -131,9 +101,6 @@ class WebNewsController extends Controller
 
     public function update(UpdateWebNewsRequest $request, $id): JsonResponse
     {
-        // @bugfix-note (2026-10-22) findOrFail() outside the try block (all actions of this
-        // controller): inside it the "not found" exception was caught by `catch (\Exception)`
-        // and answered 500 instead of 404. Found by the unit tests.
         $news = WebNews::findOrFail($id);
 
         try {
@@ -251,9 +218,6 @@ class WebNewsController extends Controller
 
     /**
      * @description Dry-run validation of the import file - DOES NOT write anything to DB.
-     * @refactor-note (2026-08-31) File storage + creation of CoreImportBatch now goes
-     * through `startImportBatch()` (HandlesImportBatches trait) instead of manual
-     * `Storage::put()`/`CoreImportBatch::create()`.
      */
     public function importValidate(
         Request $request,
@@ -311,12 +275,6 @@ class WebNewsController extends Controller
     /**
      * @description Confirms and executes the actual import write. Re-parses and validates
      * the file (never trusts dry-run result without verification).
-     * @refactor-note (2026-08-31) Rewritten to `findPendingImportBatch()` +
-     * `runImportCommit()` (HandlesImportBatches trait) - temporary file is now deleted
-     * ALWAYS (even on failure), see trait header. `catch` block here remains only for
-     * handling HTTP response (error message/status code), NOT for file deletion -
-     * that is ensured by `finally` inside `runimportCommit()` regardless of whether
-     * we reach here at all.
      */
     public function importCommit(
         Request $request,
@@ -370,11 +328,6 @@ class WebNewsController extends Controller
             ]);
         } catch (\Exception $e) {
             // Expired temporary file - see runImportCommit(), code 410.
-            // @bugfix-note (2026-10-22) Previously every RuntimeException was answered with its
-            // own message and code: a database error (QueryException is a RuntimeException)
-            // put the SQL error text into the response and its SQLSTATE string as the HTTP
-            // status (crash), a parser error answered 500 without an error log. Now only the
-            // expired-file case passes through, everything else is logged and answered 500.
             if ($e instanceof \RuntimeException && $e->getCode() === 410) {
                 return response()->json(['message' => $e->getMessage()], 410);
             }

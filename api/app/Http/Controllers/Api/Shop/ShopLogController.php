@@ -2,24 +2,12 @@
 /**
  * @file ShopLogController.php
  * @path app/Http/Controllers/Api/Shop/ShopLogController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Read/write access to the shop-domain audit log (shop_logs) - e-commerce
  * activity across products, orders, customers, coupons, categories, suppliers, shipping
  * and payment methods. Structurally mirrors CoreLogController / WebLogController.
- *
- * @bugfix-note (2026-08-15) KRITICKÁ OPRAVA FILTRŮ: `index()` zpracovával jen
- * `event_type`/`module` (přesná shoda) a `search` (LIKE jen na `description`). Frontend
- * (shop-pages logs config FILTER_COLUMNS) ale nabízí i `id`, `user_plain` a `origin` -
- * tyhle tři se nikde nezpracovávaly. Stejná díra byla nalezena a opravena souběžně u
- * WebLogController a CoreLogController (identická šablona, viz jejich bugfix-notes
- * stejné datum). Doplněno `id` (přesná shoda) a `user_plain`/`origin` (LIKE).
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -41,21 +29,13 @@ class ShopLogController extends Controller
      * @param Request $request Incoming request containing filters and pagination.
      * @return JsonResponse
      */
-/**
-     * @bugfix-note (2026-08-25) BACKLOG "hledat napříč vším": stejná oprava jako
-     * `CoreLogController::index()` - `search` param TADY UŽ EXISTOVAL, ale hledal
-     * VÝHRADNĚ v `description`, přejmenováno na skutečně GLOBÁLNÍ search napříč VŠEMI
-     * textovými sloupci, které tahle metoda už dřív filtrovala jednotlivě
-     * (`event_type`, `module`, `user_plain`, `origin`, `description`). `id` záměrně
-     * VYNECHÁN ze search - numerický přesný identifikátor, ne fulltextové pole.
-     */
 public function index(Request $request): JsonResponse
 {
     $perPage = $request->input('per_page', 15);
 
     $query = ShopLog::query();
 
-    // Přesná shoda - ID je číselný identifikátor.
+    // Exact match - the ID is numeric.
     if ($request->filled('id')) {
         $query->where('id', $request->input('id'));
     }
@@ -68,7 +48,7 @@ public function index(Request $request): JsonResponse
         $query->where('module', $request->module);
     }
 
-    // Částečná shoda - uživatel typicky zná jen část e-mailu.
+    // Partial match - users usually know only a part of the e-mail.
     if ($request->filled('user_plain')) {
         $query->where('user_plain', 'like', '%' . $request->input('user_plain') . '%');
     }
@@ -77,9 +57,7 @@ public function index(Request $request): JsonResponse
         $query->where('origin', 'like', '%' . $request->input('origin') . '%');
     }
 
-    // Globální fulltextový search napříč VŠEMI relevantními textovými sloupci -
-    // viz bugfix-note výše. Nezávislý na jednotlivých sloupcových filtrech nad ním
-    // (AND, ne náhrada).
+    // Full-text search over the text columns; narrows together with the column filters (AND).
     if ($search = $request->input('search')) {
         $query->where(function ($q) use ($search) {
             $q->where('event_type', 'like', "%{$search}%")
@@ -92,13 +70,6 @@ public function index(Request $request): JsonResponse
 
     $this->applySorting($query, $request, 'created_at', 'desc');
 
-    /**
-     * @bugfix-note (2026-08-29) BACKLOG "graph builder vidí jen 15 z X záznamů" -
-     * stejná oprava jako WebLogController::index() stejné datum. GraphBuilderComponent
-     * posílá `no_pagination=true` pro plný dataset; bez téhle větve se to dřív tiše
-     * ignorovalo a vždy vrátila jen jedna stránka (15 položek). Běžná paginovaná
-     * tabulka tenhle parametr neposílá, takže její chování se nemění.
-     */
     $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 
     if ($noPagination) {

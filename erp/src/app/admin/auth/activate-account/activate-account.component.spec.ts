@@ -1,8 +1,8 @@
 /**
  * @file activate-account.component.spec.ts
  * @path src/app/admin/auth/activate-account/activate-account.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ActivateAccountComponent – activating a new admin account from the
  *   e-mailed link: token check, setting the first password, error states and redirect to login.

@@ -2,56 +2,19 @@
 /**
  * @file CoreSecurityEvent.php
  * @path app/Models/Core/CoreSecurityEvent.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Eloquent model + zápisová logika pro `core_security_events` - diagnostický
- * log podezřelé aktivity (captcha failures, throttle, scanning, brute-force login, ...),
- * oddělený od `core_logs` (auditní log akcí přihlášených uživatelů). Záznamy vytváří
- * VÝHRADNĚ backend (žádný veřejný POST endpoint) přes statickou metodu `record()`.
- *
- * @note BUCKETING: `record()` NEVYTVÁŘÍ nový řádek na každý výskyt. Eventy se agregují do
- * časových oken (`BUCKET_SECONDS`) pomocí `fingerprint` (SHA-256 z typu události, IP,
- * route a čísla okna) a atomického `INSERT ... ON DUPLICATE KEY UPDATE`. Důvod: při
- * reálném útoku (stovky/tisíce requestů za minutu) by INSERT na každý request sám o sobě
- * přetížil databázi dřív, než útočníka vůbec stihneme zaznamenat. Díky bucketingu vznikne
- * při útoku jen několik řádků za minutu (`occurrences` se inkrementuje), ne tisíce.
- *
- * @bugfix-note (2026-08-22) FINGERPRINT MUSÍ OBSAHOVAT ROUTE. Bez ní (dřívější verze:
- * jen `event_type|ip|bucket`) se např. `throttle_exceeded` ze TŘÍ různých endpointů
- * (`/login`, `/forgot-password`, `/sales_orders`) zasažených ze stejné IP ve stejné
- * minutě slilo do JEDNOHO řádku - `occurrences` sečetl všechny tři (matoucně vysoké
- * číslo), ale zobrazená `route`/`context_data` zůstala z PRVNÍHO zápisu (upsert mění jen
- * `occurrences`/`last_seen_at`, ne route), takže admin viděl např. "17× throttle na
- * /login", i když reálně šlo o tři různé, mnohem méně dramatické útoky. Route je teď
- * součástí fingerprintu - agregace probíhá PER endpoint, ne napříč nimi.
- *
- * @bugfix-note (2026-08-22v2) VÝJIMKA PRO `scan_probe`: route-based fingerprint měl
- * nechtěný vedlejší efekt - skenování ZÁMĚRNĚ zkouší desítky/stovky RŮZNÝCH cest ze
- * stejné IP (`.env`, `wp-login.php`, `.git/config`, ...), takže s route ve fingerprintu
- * by každá zkoušená cesta dostala VLASTNÍ řádek (`occurrences: 1` u každé) - přesně ten
- * scénář zahlcení tabulky při útoku, kterému měl bucketing předejít, jen přesunutý
- * z "requestů" na "unikátních cest". Throttle/login typicky míří na pár ZNÁMÝCH
- * endpointů (login, forgot-password), takže tam je route-based rozlišení žádoucí a
- * bezpečné. `ROUTE_AGNOSTIC_EVENT_TYPES` proto pro vyjmenované typy (zatím jen
- * `scan_probe`) route z fingerprintu vynechává - jedna IP skenující cokoliv v rámci
- * jednoho 5minutového okna skončí v JEDNOM řádku s rostoucím `occurrences`, bez ohledu
- * na to, kolik různých cest zkusila. Konkrétní poslední zkoušená cesta zůstává vidět
- * v `route`/`context_data` sloupci (jen se neediscriminuje pro účely agregace).
- *
- * @refactor-note (2026-10-22) The upsert was rewritten from hand-written MySQL SQL
- * (`ON DUPLICATE KEY UPDATE`, `NOW()`, `"new"` in double quotes) to Laravel's
- * `DB::table()->upsert()`. On MariaDB it is still one atomic `INSERT ... ON DUPLICATE KEY
- * UPDATE`, but the query now also runs on SQLite, which the unit tests use. The
- * timestamps now come from PHP `now()` (application timezone) instead of the DB `NOW()`
- * (DB session timezone) - the same clock the purge (PurgeSecurityEventsCommand,
- * CoreSecurityEventController::purge) and the admin filters compare them with.
- *
- * @refactor-note (2026-08-22v3) KROK 2 BEZPEČNOSTNÍHO MONITORINGU: přidán statický helper
- * `contextFromRequest()` - sjednocuje sestavení `$context` pole (route, method, user_agent,
- * user_id) na všech hook bodech (CaptchaVerificationService, AuthController, throttle
- * exception handler, scanning fallback route), ať se stejná logika neopisuje na čtyřech
- * místech nezávisle a nerozjede se do budoucna.
+ * @description Model and write logic of `core_security_events` - a diagnostic log of suspicious
+ * activity (captcha failures, throttling, scanning, brute-force logins, ...), separate from
+ * `core_logs` (audit log of the actions of logged-in users). Rows are created ONLY by the
+ * backend through the static `record()` (no public POST endpoint).
+ * @note BUCKETING: `record()` does NOT create a row per occurrence. Events are aggregated into
+ * time windows (`BUCKET_SECONDS`) by a `fingerprint` (SHA-256 of the event type, IP, route and
+ * window number) with an atomic `INSERT ... ON DUPLICATE KEY UPDATE`. During a real attack
+ * (hundreds or thousands of requests a minute) an INSERT per request would overload the database
+ * before the attacker is even recorded; with bucketing only a few rows a minute are created
+ * (`occurrences` grows).
  */
 
 namespace App\Models\Core;
@@ -64,19 +27,17 @@ use Illuminate\Support\Facades\DB;
 
 class CoreSecurityEvent extends Model
 {
-    /** @description Délka časového okna pro agregaci (bucketing) jednoho fingerprintu. */
+    /** @description Length of the aggregation window (bucket) of one fingerprint. */
     private const BUCKET_SECONDS = 300; // 5 minut
 
     /**
-     * @description Typy eventů, u kterých se `route` VYNECHÁVÁ z fingerprintu -
-     * agregace probíhá napříč VŠEMI cestami zkoušenými danou IP v jednom okně, ne
-     * per-route. Viz bugfix-note (2026-08-22v2) v hlavičce třídy - scanning záměrně
-     * zkouší mnoho různých cest, route-based fingerprint by tak vytvořil jeden řádek
-     * na každou zkoušenou cestu místo agregace celého náletu do pár řádků.
+     * @description Event types whose fingerprint does NOT contain the `route`: aggregated over
+     * ALL paths one IP tries in a window. Scanning tries many paths on purpose - a per-route
+     * fingerprint would create one row per tried path.
      */
     private const ROUTE_AGNOSTIC_EVENT_TYPES = ['scan_probe'];
 
-    /** @description Maximální délka context_data JSON - tvrdý strop proti PII/velkým payloadům. */
+    /** @description Maximum length of the context_data JSON - a hard cap against PII / large payloads. */
     private const CONTEXT_MAX_LENGTH = 500;
 
     /** @description Max length of one string value when an over-long context is shortened. */
@@ -101,11 +62,10 @@ class CoreSecurityEvent extends Model
     }
 
     /**
-     * @description Sestaví standardizovaný kontext z HTTP requestu pro zápis do
-     * bezpečnostního eventu. Úmyslně NEOBSAHUJE tělo requestu/input data - jen metadata
-     * (GDPR minimalizace, viz doc blok třídy `CONTEXT_MAX_LENGTH`).
+     * @description Builds the standard context of a security event from the HTTP request. Holds
+     * NO request body / input data - only metadata (GDPR data minimization, CONTEXT_MAX_LENGTH).
      * @param Request $request
-     * @param array $extra Doplňkové klíče (např. 'note' s krátkým lidsky čitelným detailem).
+     * @param array $extra Extra keys (e.g. 'note' with a short human-readable detail).
      * @return array
      */
     public static function contextFromRequest(Request $request, array $extra = []): array
@@ -119,17 +79,16 @@ class CoreSecurityEvent extends Model
     }
 
     /**
-     * @description Zaznamená bezpečnostní událost - agregovaně, atomicky, bez zatížení
-     * DB při hromadném výskytu (viz doc blok třídy).
+     * @description Records a security event - aggregated and atomic, without loading the database
+     * on mass occurrence (see the class description).
      *
-     * @param string $eventType Typ události, např. 'captcha_failed', 'throttle_exceeded',
+     * @param string $eventType Event type, e.g. 'captcha_failed', 'throttle_exceeded',
      * 'scan_probe', 'login_failed', 'login_brute_force_suspected', 'login_2fa_invalid',
      * 'login_2fa_exhausted'.
      * @param string $severity 'info' | 'warning' | 'critical'.
-     * @param string|null $ip IP adresa klienta (obvykle $request->ip()).
-     * @param array $context Volitelný krátký kontext (route, method, user_agent, user_id,
-     * poznámka) - typicky výstup `contextFromRequest()`. NIKDY sem nedávat celý request
-     * payload/tělo formuláře.
+     * @param string|null $ip IP address of the client (usually $request->ip()).
+     * @param array $context Optional short context (route, method, user_agent, user_id, note) -
+     * usually from `contextFromRequest()`. NEVER the whole request payload / form body.
      * @return void
      */
     public static function record(
@@ -139,17 +98,15 @@ class CoreSecurityEvent extends Model
         array $context = []
     ): void {
         $bucket = intdiv(now()->timestamp, self::BUCKET_SECONDS);
-        // Route je součástí fingerprintu, KROMĚ typů v ROUTE_AGNOSTIC_EVENT_TYPES
-        // (zatím jen 'scan_probe') - viz bugfix-notes v hlavičce třídy. Tam se místo
-        // skutečné route použije pevný placeholder 'any', ať se agregace děje napříč
-        // všemi zkoušenými cestami, ne per-route.
+        // The route is part of the fingerprint, EXCEPT for ROUTE_AGNOSTIC_EVENT_TYPES ('scan_probe'):
+        // there a fixed placeholder 'any' is used, so the aggregation spans every tried path.
         $route = $context['route'] ?? 'unknown';
         $fingerprintRoute = in_array($eventType, self::ROUTE_AGNOSTIC_EVENT_TYPES, true) ? 'any' : $route;
         $fingerprint = hash('sha256', $eventType . '|' . ($ip ?? 'unknown') . '|' . $fingerprintRoute . '|' . $bucket);
 
         $contextJson = self::encodeContext($context);
 
-        // Atomic upsert - see refactor-note (2026-10-22) in the file header. Laravel builds
+        // Atomic upsert. Laravel builds
         // `INSERT ... ON DUPLICATE KEY UPDATE` on MySQL/MariaDB and `INSERT ... ON CONFLICT
         // (fingerprint) DO UPDATE` on SQLite (tests) - one atomic statement in both cases,
         // no race condition and no SELECT-then-UPDATE. `occurrences + 1` refers to the
@@ -185,13 +142,9 @@ class CoreSecurityEvent extends Model
     /**
      * @description Encodes the event context as JSON of at most CONTEXT_MAX_LENGTH characters.
      *   An over-long context is shortened VALUE by value (every string cut to
-     *   CONTEXT_VALUE_MAX_LENGTH) instead of cutting the JSON text - see bugfix-note below.
+     *   CONTEXT_VALUE_MAX_LENGTH) instead of cutting the JSON text.
      * @param array $context Context from record().
      * @return string|null JSON, or null for an empty / not encodable context.
-     * @bugfix-note (2026-10-22) The JSON used to be cut with mb_substr() at 500 characters,
-     *   which leaves invalid JSON - the model's `array` cast then returned null and the admin
-     *   saw no context at all for exactly the long (most suspicious) requests. Found by the
-     *   unit tests.
      */
     private static function encodeContext(array $context): ?string
     {
@@ -221,10 +174,6 @@ class CoreSecurityEvent extends Model
      * @param string|null $value Value to store.
      * @param int $length Maximum length in characters.
      * @return string|null
-     * @bugfix-note (2026-10-22) `user_agent` and `route` are varchar(255) and the client
-     *   controls both (User-Agent header, URL; `method` varchar(10) likewise). A longer value made the INSERT fail in MySQL
-     *   strict mode ("Data too long"), so record() threw and the request answered 500 - e.g.
-     *   a failed login with a 300-character User-Agent - and the event was never stored.
      */
     private static function limit(?string $value, int $length): ?string
     {

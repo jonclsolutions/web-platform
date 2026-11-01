@@ -3,8 +3,8 @@
 /**
  * @file UserListTest.php
  * @path api/tests/Feature/Core/Users/UserListTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the administrators list and detail (UserController index /
  *   show): permission, filters, global search, trash view, sorting and export.

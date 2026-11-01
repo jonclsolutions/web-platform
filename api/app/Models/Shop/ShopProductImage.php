@@ -2,8 +2,8 @@
 /**
  * @file ShopProductImage.php
  * @path app/Models/Shop/ShopProductImage.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Model for managing product and variant imagery.
  */

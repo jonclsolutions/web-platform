@@ -2,22 +2,11 @@
 /**
  * @file DetectsPublicShopRequest.php
  * @path app/Http/Resources/Shop/Concerns/DetectsPublicShopRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Lets shop resources tell the public storefront / checkout responses apart
  *   from the authenticated admin responses, so internal fields are only sent to the admin.
- *
- * @bugfix-note (2026-10-23) SECURITY - the public product list / detail returned the
- *   purchase price (`cost_price_eur`) of every product and variant, and the public payment
- *   methods (also embedded in the checkout order response) returned the gateway `config`
- *   (intended for API keys / merchant settings). Resources now leave these fields out of
- *   public responses.
- * @bugfix-note (2026-10-23) Open finding #26: public products / variants returned the exact
- *   stock (`stock_quantity`) although check-stock is designed to hide it (competitors could
- *   scrape the stock levels). Public responses cap it at PUBLIC_STOCK_CAP (the cart uses it
- *   only as the quantity limit; low stock is still shown exactly) and leave out the internal
- *   `stock_warning_level`.
  */
 
 namespace App\Http\Resources\Shop\Concerns;

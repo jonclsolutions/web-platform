@@ -1,42 +1,25 @@
 /**
  * @file base-translation-editor.component.ts
  * @path src/app/shared/components/base-translation-editor/base-translation-editor.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Shared logic of the admin translation editors: language list (add / toggle /
  * delete, flag upload), loading and editing translation keys against the CZ reference,
  * JSON upload/download and saving. One page per module extends it.
- *
- * @refactor-note (2026-10-21) Vytvořeno sloučením `EditWebsiteComponent` a `EditEshopComponent`,
- * které měly 65 ze 71 členů znak po znaku stejných. Kód je sem přesunutý beze změny logiky.
- * Potomek dodá jen to, čím se modul liší (abstraktní členy níže) a vlastní šablonu/styly.
- * Potomci na sobě navzájem NEZÁVISÍ - každý importuje jen tuto třídu, smazání jednoho
- * nijak neovlivní druhý.
- *
- * Earlier notes (moved here from both components, unchanged in meaning):
- * - (2026-09-08) i18n: `t()` = lookup v sekci `translationSection` potomka; hlášky
- *   s jazykovým kódem přes `.replace('{lang}', ...)`. OnPush komponentu po přepnutí jazyka
- *   přehodnotí `translations$.subscribe(() => markForCheck())` v konstruktoru (žádný
- *   `*.config.ts`, žádné NG0956 riziko).
- * - (2026-09-26) `isDirty` (neuložené změny) - nastavuje `updateValue()`, nuluje se po
- *   uložení, po (re)loadu překladů, po přidání a po smazání aktuálního jazyka. Řídí
- *   tlačítko "Uložit změny" v šabloně.
- * - (2026-09-07) `canUpdate`: GET routy (`languages/{module}`, `translations/{module}/{lang}`)
- *   jsou veřejné (čte je veřejný web), takže se hlídají jen mutační akce.
+ * @note i18n: `t()` = lookup in the `translationSection` of the subclass; messages with a
+ * language code use `.replace('{lang}', ...)`. The OnPush component is re-evaluated after a
+ * language switch by `translations$.subscribe(() => markForCheck())` in the constructor.
+ * @note `isDirty` (unsaved changes) - set by `updateValue()`, reset after saving, after a
+ * (re)load of the translations, after adding and after deleting the current language. Drives
+ * the "Save changes" button of the template.
+ * @note `canUpdate`: the GET routes (`languages/{module}`, `translations/{module}/{lang}`) are
+ * public (read by the public web), so only the mutating actions are guarded.
  *
  * @dependencies
  * - BaseDataComponent: CRUD state, i18n, alert dialog, permission service.
  * - DataHandler: multipart/form-data and REST requests for language assets.
  * - ResourceCacheService: TTL cache for the languages / translations fetch.
- * @bugfix-note (2026-10-23) (1) The editor edited the translations object served by
- *   ResourceCacheService IN PLACE (the cached response itself): unsaved edits survived
- *   "refresh / discard" and a language switch (the cache returned the already edited object
- *   with isDirty = false), and editing Czech also changed the Czech reference. Loaded data is
- *   now deep-copied before it is edited. (2) The translations$ subscription of the constructor
- *   was never closed (leaked one subscription per opened editor) - it now ends with destroy$.
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): languages are the
- *  payload list (was `{languages}`); saving the language list answers 204.
  */
 
 import { ChangeDetectorRef, Directive, inject, OnInit, OnDestroy } from '@angular/core';
@@ -113,7 +96,7 @@ export abstract class BaseTranslationEditorComponent
   filteredKeys: FlatKey[] = [];
   searchQuery: string = '';
 
-  /** Neuložené změny v aktuálně editovaném jazyce (řídí stav tlačítka "Uložit změny"). */
+  /** Unsaved changes of the currently edited language (drives the state of the "Save changes" button). */
   isDirty: boolean = false;
 
   showAddForm: boolean = false;
@@ -161,9 +144,9 @@ export abstract class BaseTranslationEditorComponent
   }
 
   /**
-   * @description Fetches language metadata from the server (přes TTL cache), falling back
+   * @description Fetches language metadata from the server (through the TTL cache), falling back
    * to local storage if necessary.
-   * @param force Bypass cache - voláno po přidání/smazání/toggle jazyka.
+   * @param force Bypass cache - called after adding / deleting / toggling a language.
    */
   private loadLanguages(force: boolean = false): void {
     if (force) {
@@ -209,10 +192,9 @@ export abstract class BaseTranslationEditorComponent
   }
 
   /**
-   * @description Sjednocené načtení překladů pro daný jazyk, přes TTL cache SDÍLENOU mezi
-   * `loadCzReference()` (referenční CZ struktura) a `refreshTranslations()` (aktivní
-   * jazyk).
-   * @param lang Jazykový kód.
+   * @description Unified load of the translations of a language through the TTL cache SHARED by
+   * `loadCzReference()` (CZ reference structure) and `refreshTranslations()` (active language).
+   * @param lang Language code.
    * @param force Bypass cache.
    */
   private fetchTranslations(lang: string, force: boolean = false): Observable<any> {
@@ -257,10 +239,6 @@ export abstract class BaseTranslationEditorComponent
     this.refreshTranslations();
   }
 
-  /**
-   * @refactor-note (2026-09-08) Info hláška nahrazena `t()` voláním.
-   * @refactor-note (2026-09-26) Nuluje `isDirty` - načítají se čerstvá data jazyka.
-   */
   public refreshTranslations(): void {
     this.isDirty = false;
     this.errorMessage = null;
@@ -276,7 +254,7 @@ export abstract class BaseTranslationEditorComponent
       )
       .subscribe({
         next: (data) => {
-          // a private copy - the cached response must stay untouched (see bugfix-note 2026-10-23)
+          // a private copy - the cached response must stay untouched
           this.translations = structuredClone(data ?? {});
           this.buildFlatList();
           this.applyFilter();
@@ -367,11 +345,10 @@ export abstract class BaseTranslationEditorComponent
   }
 
   /**
-   * @description Zapíše novou hodnotu klíče do `translations` (vnořená struktura) i do
-   * plochého seznamu a označí stránku jako neuloženou.
-   * @param path Tečková cesta klíče (např. `hero.heading`).
-   * @param newValue Nová hodnota překladu.
-   * @refactor-note (2026-09-26) Nastavuje `isDirty = true`.
+   * @description Writes the new value of the key into `translations` (nested structure) and the
+   * flat list and marks the page as unsaved.
+   * @param path Dot path of the key (e.g. `hero.heading`).
+   * @param newValue New translation value.
    */
   updateValue(path: string, newValue: string): void {
     const keys = path.split('.');
@@ -399,34 +376,27 @@ export abstract class BaseTranslationEditorComponent
   }
 
   /**
-   * @description Batch-resizuje všechny textarea prvky bez layout thrashingu. Původní
-   * verze prokládala čtení (scrollHeight) a zápis (style.height) v jedné smyčce pro
-   * KAŽDÝ element zvlášť - to nutí prohlížeč přepočítat layout znovu při každé iteraci
-   * (classic "layout thrashing"), což je skutečná příčina ~1s zamrznutí při vstupu na
-   * stránku s velkým počtem překladových klíčů. Řešení: tři oddělené průchody (reset ->
-   * hromadné čtení -> hromadný zápis) vynutí reflow jen jednou pro celou dávku místo
-   * jednou na element. NENÍ to problém s cachí ani s ukládáním - tahle metoda běží čistě
-   * na klientovi po tom, co data už dorazila (ze sítě nebo z cache), stejně zamrzne
-   * v obou případech.
+   * @description Batch-resizes all textarea elements without layout thrashing: three separate
+   * passes (reset -> bulk read -> bulk write) force one reflow for the whole batch instead of
+   * one per element (interleaving the scrollHeight read and the style.height write per element
+   * caused a ~1 s freeze on pages with many translation keys). Runs purely on the client after
+   * the data arrived (network or cache).
    */
   private resizeAllTextareas(): void {
     const elements = Array.from(document.querySelectorAll<HTMLTextAreaElement>('.ew-edit-input'));
     if (elements.length === 0) return;
 
-    // Průchod 1: reset (write)
+    // Pass 1: reset (write)
     elements.forEach(el => { el.style.height = 'auto'; });
-    // Průchod 2: čtení (jeden vynucený reflow pro celou dávku)
+    // Pass 2: read (one forced reflow for the whole batch)
     const heights = elements.map(el => el.scrollHeight);
-    // Průchod 3: zápis (write)
+    // Pass 3: write
     elements.forEach((el, i) => { el.style.height = `${heights[i]}px`; });
   }
 
   /**
-   * @description Uloží aktuálně editovaný jazyk. Po úspěchu invaliduje cache klíč tohoto
-   * jazyka.
-   * @refactor-note (2026-09-08) Hlášky nahrazeny `t()` voláním.
-   * @refactor-note (2026-09-26) Po úspěchu nuluje `isDirty`; bez oprávnění nic neodešle
-   * (tlačítko je sice skryté, ale metoda je veřejná).
+   * @description Saves the currently edited language. Invalidates the cache key of the language on
+   * success.
    */
   onSubmit(): void {
     if (!this.canUpdate) return;
@@ -472,7 +442,6 @@ export abstract class BaseTranslationEditorComponent
   /**
    * @description Processes user-selected flag file, creates a local preview, and validates file
    * size.
-   * @refactor-note (2026-09-08) Chybová hláška nahrazena `t()` voláním.
    */
   onIconFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -504,9 +473,7 @@ export abstract class BaseTranslationEditorComponent
 
   /**
    * @description Submits a new language definition using multipart/form-data to include flag
-   * imagery. Po úspěchu invaliduje cache jazykového seznamu.
-   * @refactor-note (2026-09-08) Všechny validační/úspěšné hlášky nahrazeny `t()` voláním.
-   * @refactor-note (2026-09-26) Po přepnutí na nový (prázdný) jazyk nuluje `isDirty`.
+   * imagery. Invalidates the cache of the language list on success.
    */
   confirmAddLang(): void {
     const code = this.newLangCode.trim().toLowerCase();
@@ -582,10 +549,8 @@ export abstract class BaseTranslationEditorComponent
   }
 
   /**
-   * @description Smaže jazyk. Po úspěchu invaliduje cache seznamu jazyků i překladů
-   * smazaného jazyka.
-   * @refactor-note (2026-09-08) Fallback chybová hláška nahrazena `t()` voláním.
-   * @refactor-note (2026-09-26) Při smazání aktuálně editovaného jazyka nuluje `isDirty`.
+   * @description Deletes a language. Invalidates the cache of the language list and of the
+   * translations of the deleted language on success.
    */
   confirmDeleteLang(): void {
     if (!this.langToDelete) return;
@@ -618,10 +583,9 @@ export abstract class BaseTranslationEditorComponent
 
   /**
    * @description Toggles language activation state by posting the full updated language metadata
-   * list to the server. Po úspěchu invaliduje cache seznamu jazyků - lokální mutace
-   * `lang.active` je optimistická, ale cache by jinak mohla po vypršení TTL vrátit
-   * dřívější (neplatnou) hodnotu.
-   * @refactor-note (2026-09-08) Chybová hláška nahrazena `t()` voláním.
+   * list to the server. Invalidates the cache of the language list on success - the local
+   * mutation of `lang.active` is optimistic, but the cache could return the earlier (invalid)
+   * value after the TTL otherwise.
    */
   toggleLangActive(lang: LangMeta): void {
     lang.active = !lang.active;
@@ -678,10 +642,8 @@ export abstract class BaseTranslationEditorComponent
   }
 
   /**
-   * @description Nahraje JSON pro daný jazyk. Po úspěchu invaliduje cache klíč tohoto
-   * jazyka, ať se při případném refreshi aktivního jazyka nezobrazí stará (pre-upload)
-   * data.
-   * @refactor-note (2026-09-08) Hlášky nahrazeny `t()` voláním.
+   * @description Uploads the JSON of a language. Invalidates the cache key of the language on
+   * success, so a refresh of the active language never shows the old (pre-upload) data.
    */
   private uploadJsonToServer(data: any): void {
     this.dataHandler.post(`save_translations/${this.MODULE}`, {

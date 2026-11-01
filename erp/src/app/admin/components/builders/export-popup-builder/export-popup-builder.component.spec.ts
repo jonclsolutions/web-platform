@@ -1,8 +1,8 @@
 /**
  * @file export-popup-builder.component.spec.ts
  * @path src/app/admin/components/builders/export-popup-builder/export-popup-builder.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ExportPopupBuilderComponent – choosing the export format and the
  *   columns, the "raw (import-compatible) format" switch and what is sent to the table.

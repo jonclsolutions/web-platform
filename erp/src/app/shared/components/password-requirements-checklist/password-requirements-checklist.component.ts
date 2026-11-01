@@ -1,19 +1,15 @@
 /**
  * @file password-requirements-checklist.component.ts
  * @path src/app/shared/components/password-requirements-checklist/password-requirements-checklist.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Live checklist pravidel hesla - každý požadavek (délka, písmeno, číslice,
- * speciální znak) se zvýrazní zeleně, jakmile je aktuálně zadané heslo splňuje. Čistě
- * prezentační, žádná validační logika navíc - zdroj pravdy je PASSWORD_REQUIREMENTS.
+ * @description Live checklist of the password rules - every requirement (length, letter, digit,
+ * special character) turns green as soon as the typed password meets it. Purely presentational,
+ * no extra validation logic - the source of truth is PASSWORD_REQUIREMENTS.
  * @usage `<app-password-requirements-checklist [password]="formData['user_password_hash']" />`
  * @dependencies
  * - AdminLocalizationService: Texts of the requirements (section `password-policy`).
- * @refactor-note (2026-10-09) i18n: requirement texts come from the admin translations
- * (`labelKey`) and follow a language switch. The component is OnPush, so it re-renders on
- * `translations$` - also covers pages outside the admin layout (account activation), where
- * the language file is only downloaded once this component asks for it. Look unchanged.
  */
 
 import { Component, Input, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';

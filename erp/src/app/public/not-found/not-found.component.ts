@@ -1,23 +1,14 @@
 /**
  * @file not-found.component.ts
  * @path src/app/public/not-found/not-found.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Public "page not found" (404), shared by the public web and the e-shop. The area
  *   comes from the route data (`publicNotFoundRoute()`, see public-not-found.config.ts): it decides
  *   the translations (`not_found` of the web / shop module), the target of the button and the look
  *   (dark web / light e-shop). The page is rendered inside the layout of its area (header, footer,
  *   navigation), and only for a URL no route knows - the URL stays as typed.
- * @refactor-note (2026-10-23) `icon_path` removed - pointed to a non-existing file with a dev path
- *   (`/erp/src/assets/...`); the illustration is inline SVG in the template now (open finding #46).
- * @refactor-note (2026-10-27) Moved from `public/web-pages/not-found` to `public/not-found` and
- *   made shared: before, only the route `/404` existed (outside any layout, no catch-all route),
- *   an unknown URL did not render anything. Adds `<meta name="robots" content="noindex">` while
- *   shown (a single-page app answers HTTP 200 for every URL - search engines must not index the
- *   404 page as content).
- * @refactor-note (2026-10-27c) The requested path is no longer shown on the public page (it says
- *   nothing to a visitor); the admin error pages keep it.
  * @dependencies
  * - BasePublicComponent: translations (module set from the area before ngOnInit subscribes).
  * - PUBLIC_NOT_FOUND_AREAS: per-area settings.

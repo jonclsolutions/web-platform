@@ -2,8 +2,8 @@
 # =============================================================================
 # @file dev.sh
 # @path dev.sh (root of the web-platform monorepo)
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Starts / stops the LOCAL development environment and runs the project tools -
 # everything in Docker (dev/compose.yaml), nothing installed on the host except Docker and git:
@@ -16,28 +16,11 @@
 #   phpmyadmin                                               http://127.0.0.1:8080
 # (ports from the root .env). First run ./init-workspace.sh once.
 #
-# @refactor-note (2026-10-31) Rewritten for Docker: XAMPP, Mailpit in ~/.local/bin and the PHP /
-#   Node.js of the host are no longer used; the services are containers of compose.yaml (one dev
-#   image docker/app/Dockerfile). The former PID files / logs in .dev/ are replaced by
-#   `docker compose ps` / `logs`; Ctrl+C in the foreground mode stops the containers like before.
-#   New: tool commands (artisan, composer, npm, npx, shell), tests, build, db-import / db-dump.
-# @refactor-note (2026-10-31d) Root clean-up: the Docker files live in dev/ (dev/compose.yaml,
-#   dev/.env, dev/docker/Dockerfile), the logs in dev/logs/, PID files in dev/pids/. A root .env of
-#   the previous layout is moved to dev/.env once; the scratch folder .temp/ is renamed to temp/.
-# @refactor-note (2026-10-31b) Log files are back: every service writes its own
-#   dev/logs/<service>.log again (api, queue, scheduler, erp, db, mailpit, phpmyadmin - plain
-#   text with Docker timestamps, emptied on every start). A background `docker compose logs -f`
-#   per service writes them (PID files in .dev/pids/); they end with their container. The
-#   console shows all services together as before; `./dev.sh logs [service]` follows the files.
-#   `up -d` waits until the API and the ERP answer and prints the end of the log of a service
-#   that failed.
 # @note WHY NOT CRON (unchanged): the queue and the scheduler run only while the environment
 #   runs - nothing is written to crontab or systemd. Production: queue:work + cron
 #   (deploy/server/configure-server.sh).
 # @note The database data live in the Docker volume <app>_db-data: `stop` / `down` keep them,
 #   only `docker compose -f dev/compose.yaml down -v` deletes them.
-# @refactor-note (2026-10-31c) macOS: re-runs itself with bash 4+ from Homebrew (macOS ships 3.2);
-#   no setsid there - the log writers use nohup. Windows: dev.cmd runs this script inside WSL.
 #
 # @security
 #   - Every port is published on 127.0.0.1 only (dev/compose.yaml, BIND_IP).

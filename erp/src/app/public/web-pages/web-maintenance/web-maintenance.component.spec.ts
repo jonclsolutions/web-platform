@@ -1,15 +1,13 @@
 /**
  * @file web-maintenance.component.spec.ts
  * @path src/app/public/web-pages/web-maintenance/web-maintenance.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of WebMaintenanceComponent and webMaintenanceGuard: the maintenance page sends
  *   the visitor home as soon as the web is active again (status error only logged) and shows the
  *   contacts; the guard redirects to the maintenance page while the web is off, lets everything
  *   through on errors and never blocks the maintenance page itself.
- * @refactor-note (2026-10-23) The old spec had no router providers (NG0201 ActivatedRoute) -
- *   rewritten with createPublicPageContext.
  * @dependencies
  * - createPublicPageContext (status endpoint spies), Router spied.
  */

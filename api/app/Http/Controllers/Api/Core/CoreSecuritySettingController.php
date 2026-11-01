@@ -2,25 +2,11 @@
 /**
  * @file CoreSecuritySettingController.php
  * @path app/Http/Controllers/Api/Core/CoreSecuritySettingController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Management of security monitoring retention period (core_security_settings) -
  * singleton setting, same pattern as WebSiteSettingController for web maintenance.
- *
- * @bugfix-note (2026-08-22) `update()` must return the result wrapped in `{data: ...}` -
- * frontend `DataHandler.put<T>()` automatically unwraps `response.data` (see
- * data-handler.service.ts). `show()` on the other hand remains UNWRAPPED because it is called via
- * `DataHandler.get<T>()`, which does no unwrapping. Without this distinction, after
- * saving the retention, `saveRetention()` would receive `undefined` instead of the current value.
- *
- * @refactor-note (2026-08-22v2) AUDIT LOG: `update()` now writes to `core_logs`
- * (via `LogsActivity` trait, just like `AuthController` etc.) - who and when changed
- * the security monitoring retention period, including the old and new values. This is
- * different from `core_security_events` (suspicious activity diagnostics) - it's an audit of
- * the administrator's action over the monitoring itself.
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -58,7 +44,7 @@ class CoreSecuritySettingController extends Controller
             'CoreSecuritySetting'
         );
 
-        // Wrapper {data: ...} - see bugfix-note above (DataHandler.put() unwrap).
+        // Wrapper {data: ...} - DataHandler.put() unwraps it on the frontend.
         return $this->respond($setting);
     }
 }

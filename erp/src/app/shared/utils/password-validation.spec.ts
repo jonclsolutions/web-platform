@@ -1,8 +1,8 @@
 /**
  * @file password-validation.spec.ts
  * @path src/app/shared/utils/password-validation.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the Unicode password rules (same classes as Laravel
  *   `Password::letters()->numbers()->symbols()`): length in code points, any-script letters,

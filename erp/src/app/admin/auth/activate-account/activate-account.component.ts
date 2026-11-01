@@ -1,48 +1,19 @@
 /**
  * @file activate-account.component.ts
  * @path src/app/admin/auth/activate-account/activate-account.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Veřejná stránka pro nastavení hesla a aktivaci účtu založeného adminem
- * (backlog "workflow zakládání účtů z adminu"). Otevírá se z odkazu v e-mailu
- * (AccountActivationMail). Stejný vzorec jako ResetPasswordComponent - veřejná routa
- * mimo AdminLayoutComponent i AuthGuard, cílová stránka odkazu z e-mailu.
- * @note Po úspěšné aktivaci uživatel NENÍ automaticky přihlášen - přesměruje se na
- * `/auth/login` (rozhodnuto v backlogu: "presmerovat na prihlaseni").
+ * @description Public page for setting the password and activating an account created by an
+ * admin. Opened from the link in the e-mail (AccountActivationMail). Same pattern as
+ * ResetPasswordComponent - a public route outside AdminLayoutComponent and AuthGuard.
+ * @note After a successful activation the user is NOT logged in automatically - redirected to
+ * `/auth/login`.
  * @dependencies
- * - HttpClient: HTTP volání na veřejné `account-activation/{token}` endpointy.
+ * - HttpClient: HTTP calls to the public `account-activation/{token}` endpoints.
  * - environment: Base URL of the API.
- * - PasswordRequirementsChecklistComponent: Live vizuální checklist pravidel hesla -
- *   stejná komponenta jako ResetPasswordComponent/admin vytvoření uživatele.
- * @refactor-note (2026-08-24) SJEDNOCENO s ResetPasswordComponent: vlastní regex
- * validace hesla (PASSWORD_PATTERN) odstraněna - stejně jako u resetu hesla se
- * spoléhá na (a) vizuální checklist pro uživatele PŘED odesláním a (b) backendovou
- * validaci (Password::min()->letters()->numbers()->symbols()) jako jediný zdroj
- * pravdy, jejíž chybová hláška se zobrazí v `fieldError`, pokud přesto neprojde.
- * @bugfix-note (2026-08-24) STRÁNKA SE ZASEKÁVALA NA "Ověřuji odkaz…": komponenta má
- * `ChangeDetectionStrategy.OnPush`, ale změny stavu (`this.state`, `this.email`, ...)
- * prováděné uvnitř `subscribe()` callbacků nikdy nespustily re-render - HTTP request
- * proběhl v pořádku (ověřeno v HAR: 200 OK se správnými daty), ale view zůstalo
- * vykreslené ve starém stavu. Řešení: `ChangeDetectorRef.markForCheck()` po KAŽDÉ
- * asynchronní změně stavu - stejný vzor, jaký důsledně používá zbytek projektu
- * (TableBuilderComponent, AdministratorsComponent, UserRequestComponent, ...).
- * @bugfix-note (2026-10-09) An expired / invalid link also opened a "Cannot load text"
- * error popup on top of the page. It came from DataHandler's global error dialog, whose
- * texts belong to the admin translations that are not loaded on this public page. This
- * page reports every error inline, so both public calls now use HttpClient directly
- * (no global dialog); DataHandler itself is unchanged. Fallback messages are in English
- * like the rest of the page.
- * @refactor-note (2026-10-09) UX: the submit button stays disabled until the password meets
- * every rule of the password policy (`meetsPasswordRequirements()`, the same rules the checklist shows) and both fields
- * match. `fieldError` no longer repeats the password rules - it is only used for a lost
- * connection or an unexpected failure; an invalid / expired link switches to the
- * 'invalid' state.
- * @bugfix-note (2026-10-23) Open finding #39: the page was English-only; every text comes from the
- *   admin translations `activate-account` now. API error texts (English) are no longer shown - the
- *   status decides the translated message.
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): GET
- *  account-activation/{token} answers `{data: {email, full_name}}` - the payload is read.
+ * - PasswordRequirementsChecklistComponent: Live checklist of the password rules - the same
+ *   component as ResetPasswordComponent / admin user creation.
  */
 
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
@@ -58,10 +29,10 @@ import { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH, meetsPasswordRequirements, fi
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { PasswordRequirementsChecklistComponent } from '../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 
-/** Řídí, který blok šablony se vykresluje - ověřování odkazu, formulář, chyba, hotovo. */
+/** Controls which block of the template is rendered - link check, form, error, done. */
 type ViewState = 'loading' | 'form' | 'invalid' | 'success';
 
-/** Odpověď z GET account-activation/{token} (AccountActivationController::show()). */
+/** Response of GET account-activation/{token} (AccountActivationController::show()). */
 interface ActivationCheckResponse {
   email: string;
   full_name: string;
@@ -101,7 +72,7 @@ export class ActivateAccountComponent implements OnInit {
   readonly minLength = PASSWORD_MIN_LENGTH;
   readonly maxLength = PASSWORD_MAX_LENGTH;
 
-  /** Sekundy do automatického přesměrování po úspěchu - zobrazeno v UI. */
+  /** Seconds until the automatic redirect after success - shown in the UI. */
   redirectCountdown = 4;
 
   private token = '';
@@ -157,9 +128,9 @@ export class ActivateAccountComponent implements OnInit {
   }
 
   /**
-   * @description Live neshoda hesel, počítaná z aktuálních hodnot - žádný uložený stav.
-   * Prázdné potvrzení se nepovažuje za neshodu (chyba se neukáže, dokud ho uživatel
-   * nezačne psát). Stejná logika jako ResetPasswordComponent.passwordsMismatch.
+   * @description Live password mismatch computed from the current values - no stored state.
+   * An empty confirmation is not a mismatch (no error until the user starts typing it). Same
+   * logic as ResetPasswordComponent.passwordsMismatch.
    */
   get passwordsMismatch(): boolean {
     return !!this.passwordConfirmation && this.password !== this.passwordConfirmation;
@@ -237,9 +208,9 @@ export class ActivateAccountComponent implements OnInit {
   }
 
   /**
-   * @description Odpočet v UI ("Přesměrujeme za N s…") před automatickým přechodem na
-   * login - čistě kosmetické, samotné přesměrování by fungovalo i bez něj, ale dává
-   * uživateli jasnou zpětnou vazbu, že se něco děje.
+   * @description UI countdown ("Redirecting in N s…") before the automatic redirect to the
+   * login - purely cosmetic, the redirect works without it, but the user sees that something
+   * is happening.
    */
   private startRedirectCountdown(): void {
     const interval = setInterval(() => {

@@ -3,8 +3,8 @@
 /**
  * @file SiteConfigurationTest.php
  * @path api/tests/Feature/Other/SiteConfigurationTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the site configuration (SiteConfigurationController,
  *   PageTitleController): company details with translated tagline / copyright and logo,
@@ -107,7 +107,7 @@ class SiteConfigurationTest extends TestCase
     /**
      * @description Translations that are not sent (or not decodable) keep the stored ones;
      *   a new logo replaces the old file; validation incl. column lengths and GA format.
-     * @input Stored tagline i18n {cz Stary}; PUT with logo; PUT with new logo + tagline i18n 'not json';
+     * @input Stored tagline i18n {cz 'Stary'}; PUT with logo; PUT with new logo + tagline i18n 'not json';
      *        PUT invalid values.
      * @output tagline i18n kept, brand_tagline 'Stary'; first logo deleted, second stored; 422 fields.
      */
@@ -232,8 +232,8 @@ class SiteConfigurationTest extends TestCase
      *   merges the sent languages, strips HTML, collapses whitespace (max 120 chars), ignores
      *   invalid language keys and logs only changed rows; stale ids refused; validation; the
      *   public map leaves out empty translations.
-     * @input admin.users (0), shop.cart (1), web.home (2) {cz Domů, en Home}, web.about (1).
-     * @output Order [about, home, cart, users]; home {cz '<b>Úvod</b>  x' → 'Úvod x', en kept, de without <i>};
+     * @input admin.users (0), shop.cart (1), web.home (2) {cz, en Home}, web.about (1).
+     * @output Order [about, home, cart, users]; home cz '<b>…</b>  x' → '… x', en kept, de without <i>;
      *   1 log; 422 for id 999 / bad body; public {web.home: {cz, en, de}, shop.cart: {}}.
      */
     public function test_page_titles(): void

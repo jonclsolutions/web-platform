@@ -3,8 +3,8 @@
 /**
  * @file SupportAndProvidersTest.php
  * @path api/tests/Unit/Other/SupportAndProvidersTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the remaining shared code: company details of the e-mail footer
  *   (CompanyContactInfo), legal model relations and the rate limiters defined by the service

@@ -2,8 +2,8 @@
 /**
  * @file WebLogResource.php
  * @path app/Http/Resources/Web/WebLogResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Resource transformation for system audit logs within the web module.
  */

@@ -1,8 +1,8 @@
 /**
  * @file logs.component.spec.ts
  * @path src/app/admin/core-pages/logs/logs.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of CoreLogsComponent – the read-only core system log: newest first,
  *   only filter / report / export toolbar actions, details by business_log_id.

@@ -1,13 +1,13 @@
 /*
     @file: security-events.component.css
     @path: /src/app/admin/core-pages/security-events/security-events.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @description Styly ve stejném vizuálním jazyce jako web-settings.component.css
-    (zaoblené karty, tmavý akcent #18181b, pill tlačítka) - graf, retence, triage modal.
-    Tabulka/filtr/pagination sekce používá sdílené `../default-style.css`
-    (viz business-logs.component.ts styleUrl) - proto se tu tyhle třídy neopakují.
+    @description Styles in the same visual language as web-settings.component.css (rounded
+    cards, dark accent #18181b, pill buttons) - chart, retention, triage modal. The table /
+    filter / pagination section uses the shared `../default-style.css`, so those classes are
+    not repeated here.
 */
 
 .sec-container {
@@ -81,13 +81,12 @@
   cursor: pointer;
 }
 
-/* Scroll (a tím pádem i minimální šířka sloupce místo zmenšování) jen na malých
-   obrazovkách - na desktopu žádný overflow na `.sec-chart` NENÍ záměrně: podle CSS
-   Overflow specifikace nelze mít jednu osu `overflow` jinou než `visible` a druhou
-   `visible` zároveň - prohlížeč by automaticky převedl i `overflow-y` na `auto`, což
-   by ořezávalo hover tooltip (pozicovaný NAD sloupcem, mimo box grafu). Proto na
-   širších obrazovkách sloupce radši zmenšíme (`min-width: 0`), než abychom museli
-   povolit scroll a rozbít tooltip. */
+/* Scrolling (and so a minimum column width instead of shrinking) only on small screens - on
+   desktop `.sec-chart` deliberately has NO overflow: by the CSS Overflow specification one
+   axis cannot be `visible` while the other is not - the browser would turn `overflow-y` into
+   `auto` as well, which would clip the hover tooltip (positioned ABOVE the column, outside the
+   chart box). So on wider screens the columns shrink (`min-width: 0`) instead of allowing a
+   scroll that breaks the tooltip. */
 @media (max-width: 1000px) {
   .sec-chart {
     overflow-x: auto;
@@ -323,7 +322,7 @@
 }
 .sec-field { display: flex; flex-direction: column; gap: 5px; }
 
-/* ── Vysvětlující karta (co se stalo / doporučení) v triage modalu ───────── */
+/* ── Explanation card (what happened / recommendation) in the triage modal ───────── */
 .sec-explanation {
   background: var(--color-zinc-50);
   border: 1px solid var(--color-sand-200);

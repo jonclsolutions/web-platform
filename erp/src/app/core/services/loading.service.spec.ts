@@ -1,8 +1,8 @@
 /**
  * @file loading.service.spec.ts
  * @path src/app/core/services/loading.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of LoadingService: show() / hide() switch isLoading$ asynchronously
  *   (next microtask - avoids ExpressionChanged errors during change detection).

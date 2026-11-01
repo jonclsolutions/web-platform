@@ -1,14 +1,10 @@
 /*     
     @file: buttons-builder.component.css
     @path: /src/app/admin/components/builders/buttons-builder/buttons-builder.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
-               plně zaoblené "pill" tlačítko místo hranatého, tlumené tónované pozadí
-               po vzoru barev z dashboardu (green/rose/indigo/slate). Aktivní stav teď
-               tlačítko "překlopí" na plnou barvu (stejný vzor jako přepínač modulů
-               v headeru), ať je jasně vidět, co je zapnuté.
+    @description: Styles of the button builder component.
 */
 
 .toolbar-actions-in {
@@ -18,7 +14,7 @@
   gap: 8px;
 }
 
-/* Základní definice tlačítka */
+/* Basic button definition */
 .small-btn {
   padding: 8px 14px;
   font-size: 13px;
@@ -41,7 +37,7 @@
   display: flex;
 }
 
-/* Specifické barvy a okraje - odlišené podle akce */
+/* Specific colors and borders - per action */
 .btn-filter {
   background-color: var(--color-zinc-100);
   color: var(--color-zinc-700);
@@ -70,8 +66,8 @@
 }
 .btn-export:hover { background-color: #e0e7ff; }
 
-/* Stav active pro přepínače (např. aktivní filtr) - tlačítko se "překlopí"
-   na plnou barvu, stejný vzor jako aktivní záložka v přepínači modulů headeru. */
+/* Active state of toggles (e.g. an active filter) - the button "flips" to a solid color,
+   the same pattern as the active tab of the module switcher in the header. */
 .small-btn.active {
   filter: none;
 }

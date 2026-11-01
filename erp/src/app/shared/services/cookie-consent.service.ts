@@ -1,18 +1,16 @@
 /**
  * @file cookie-consent.service.ts
  * @path src/app/shared/services/cookie-consent.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Spravuje stav souhlasu s cookies (localStorage) a poskytuje ho zbytku aplikace
- * - hlavně budoucímu loaderu Google Analytics (fáze 2), který se bude řídit podle
- * `consent$.analytics`, a odkazu "Nastavení cookies" v patičce (fáze 3), který zavolá
- * `openSettings()` a znovu otevře lištu v rozbaleném stavu.
+ * @description Manages the cookie consent state (localStorage) and provides it to the rest of the
+ * application - mainly to the Google Analytics loader (AnalyticsService, driven by
+ * `consent$.analytics`) and to `openSettings()`, which reopens the bar in the expanded state.
  *
- * @note (2026) Zatím čistě klientské řešení (localStorage). Server-side logování souhlasu
- * (pro doložení při kontrole ÚOOÚ) je naplánované na pozdější fázi - až se přidá, půjde
- * volání API dovnitř metody `save()`, na místo označené `@future-note` níže, beze změny
- * veřejného rozhraní služby (komponenty, co ji používají, se nemusí měnit).
+ * @note Client-side only (localStorage) for now. Server-side logging of the consent (as proof
+ * for an inspection by the data protection authority) is not implemented yet - when added, the
+ * API call goes into `save()` without changing the public interface of the service.
  */
 
 import { Injectable } from '@angular/core';
@@ -34,19 +32,19 @@ export interface CookieConsentState extends CookieConsentCategories {
 export class CookieConsentService {
 
   private readonly STORAGE_KEY = 'rpsw_cookie_consent';
-  /** Zvednout při jakékoli změně v tom, co/jak se sbírá - vynutí to nové zobrazení lišty
-   *  všem, i těm, co už dřív odsouhlasili starší verzi. */
+  /** Raise on any change of what / how data is collected - forces the bar to show again to
+   *  everyone, also to those who accepted an older version. */
   private readonly CONSENT_VERSION = 1;
-  /** Po tolika dnech se souhlas považuje za neplatný a lišta se ukáže znovu. */
+  /** After this many days the consent is invalid and the bar shows again. */
   private readonly MAX_AGE_DAYS = 180;
 
   private readonly consentSubject = new BehaviorSubject<CookieConsentState | null>(this.readStored());
-  /** Aktuální stav souhlasu - null, dokud uživatel nic neodsouhlasil. */
+  /** Current consent state - null until the user accepted anything. */
   readonly consent$ = this.consentSubject.asObservable();
 
   private readonly openSettingsSubject = new Subject<void>();
-  /** Signál pro CookieConsentComponent, aby se znovu otevřela v rozbaleném stavu
-   *  (použije se z odkazu "Nastavení cookies" v patičce - fáze 3). */
+  /** Signal for CookieConsentComponent to reopen in the expanded state
+   *  (used by the "Cookie settings" button). */
   readonly openSettingsRequested$ = this.openSettingsSubject.asObservable();
 
   get current(): CookieConsentState | null {
@@ -54,7 +52,7 @@ export class CookieConsentService {
   }
 
   /**
-   * @description Zjistí, jestli má uživatel platný (a dostatečně čerstvý) souhlas uložený.
+   * @description Checks whether the user has a valid (and fresh enough) stored consent.
    */
   hasValidConsent(): boolean {
     const c = this.current;
@@ -66,8 +64,8 @@ export class CookieConsentService {
   }
 
   /**
-   * @description Uloží souhlas s konkrétními kategoriemi (nezbytné jsou vždy zahrnuté).
-   * @param categories Stav jednotlivých volitelných kategorií.
+   * @description Stores the consent with the given categories (necessary ones are always included).
+   * @param categories State of the optional categories.
    */
   save(categories: CookieConsentCategories): void {
     const state: CookieConsentState = {
@@ -82,30 +80,27 @@ export class CookieConsentService {
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(state));
     } catch {
-      // localStorage nedostupný (např. striktní privátní režim) - souhlas se
-      // v takovém případě nepersistuje mezi návštěvami, lišta se objeví znovu.
+      // localStorage unavailable (e.g. strict private mode) - the consent then
+      // does not persist between visits, the bar shows again.
     }
 
     this.consentSubject.next(state);
 
-    // @future-note (fáze 3): sem přijde POST na backend endpoint pro server-side
-    // log souhlasu (timestamp, kategorie, verze) - beze změny veřejného API téhle
-    // metody, volající komponenty se nemusí měnit.
   }
 
-  /** Zkratka pro tlačítko "Přijmout vše". */
+  /** Shortcut for the "Accept all" button. */
   acceptAll(): void {
     this.save({ functional: true, analytics: true, marketing: true });
   }
 
-  /** Zkratka pro tlačítko "Jen nezbytné". */
+  /** Shortcut for the "Necessary only" button. */
   rejectNonEssential(): void {
     this.save({ functional: false, analytics: false, marketing: false });
   }
 
   /**
-   * @description Vyžádá si znovuotevření lišty v rozbaleném (nastavovacím) stavu.
-   *              Volá se z odkazu "Nastavení cookies" v patičce (fáze 3).
+   * @description Requests reopening the bar in the expanded (settings) state.
+   *              Called from the "Cookie settings" button.
    */
   openSettings(): void {
     this.openSettingsSubject.next();

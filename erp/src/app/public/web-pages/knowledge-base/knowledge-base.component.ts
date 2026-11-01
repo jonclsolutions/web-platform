@@ -15,10 +15,10 @@ export class KnowledgeBaseComponent extends BasePublicComponent {
   protected readonly translationKey = 'knowledge-base';
 
   /**
-   * @description IDs jednotlivých sekcí v pořadí, v jakém se objevují na stránce -
-   * jediný zdroj pravdy pro levý postranní seznam ("scrollspy") i pro výpočet, která
-   * sekce je aktuálně "aktivní" podle pozice scrollu. Musí odpovídat `id` atributům
-   * <section> elementů v šabloně.
+   * @description IDs of the sections in the order they appear on the page - the single source of
+   * truth of the left side list ("scrollspy") and of the computation which section is "active"
+   * by the scroll position. Must match the `id` attributes of the <section> elements of the
+   * template.
    */
   private readonly sectionIds: string[] = [
     'kb-security', 'kb-legal', 'kb-admin', 'kb-uiux', 'kb-database',
@@ -26,29 +26,29 @@ export class KnowledgeBaseComponent extends BasePublicComponent {
   ];
 
   /**
-   * @description ID aktuálně "aktivní" sekce (zvýrazněná v levém seznamu) - vypočtená
-   * z pozice scrollu, viz `recomputeActiveSection()`. Výchozí hodnota (než uživatel
-   * poprvé scrolluje) se zkusí odvodit z URL fragmentu (#kb-...), jinak první sekce.
+   * @description ID of the currently "active" section (highlighted in the left list) - computed
+   * from the scroll position, see `recomputeActiveSection()`. The default (before the first
+   * scroll) is derived from the URL fragment (#kb-...), otherwise the first section.
    */
   activeSectionId: string = (typeof window !== 'undefined' && window.location.hash)
     ? window.location.hash.replace('#', '')
     : 'kb-security';
 
   /**
-   * @note `inject()` místo přidání parametru do konstruktoru - komponenta zatím
-   * žádný vlastní konstruktor nemá (deleguje na `BasePublicComponent`), takhle se
-   * nemusí nic měnit na dědičnosti/volání `super()`.
+   * @note `inject()` instead of a constructor parameter - the component has no own constructor
+   * (it delegates to `BasePublicComponent`), so nothing changes in the inheritance / `super()`
+   * call.
    */
   private cd = inject(ChangeDetectorRef);
 
-  /** @description Zabraňuje spouštění výpočtu vícekrát za jeden animační frame při rychlém scrollování. */
+  /** @description Prevents running the computation more than once per animation frame on fast scrolling. */
   private scrollTicking = false;
 
   /**
-   * @description Sleduje scroll okna a přepočítává, která sekce je "aktivní" - viz
-   * `recomputeActiveSection()`. `@HostListener` binding Angular automaticky odregistruje
-   * při zániku komponenty, takže zde není potřeba žádný `ngOnDestroy()` (a tedy ani
-   * riziko, že by přepsal případný cleanup z `BasePublicComponent`).
+   * @description Watches the window scroll and recomputes which section is "active" - see
+   * `recomputeActiveSection()`. Angular unregisters the `@HostListener` binding automatically on
+   * destroy, so no `ngOnDestroy()` is needed (and no risk of overriding a clean-up of
+   * `BasePublicComponent`).
    */
   @HostListener('window:scroll')
   onWindowScroll(): void {
@@ -61,10 +61,9 @@ export class KnowledgeBaseComponent extends BasePublicComponent {
   }
 
   /**
-   * @description Najde poslední sekci, jejíž horní okraj už "prošel" prahovou hodnotou
-   * (odpovídá `scroll-margin-top` sekcí v CSS) - tedy sekci, ve které se uživatel
-   * aktuálně nachází při čtení. Jednoduchý, výkonově levný přístup (pár
-   * `getBoundingClientRect()` volání na malém, pevném počtu sekcí).
+   * @description Finds the last section whose top edge already "passed" the threshold (matches the
+   * `scroll-margin-top` of the sections in CSS) - the section the user is reading now. Simple and
+   * cheap (a few `getBoundingClientRect()` calls on a small, fixed number of sections).
    */
   private recomputeActiveSection(): void {
     const threshold = 110;
@@ -102,7 +101,7 @@ export class KnowledgeBaseComponent extends BasePublicComponent {
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       this.activeSectionId = targetId;
-      // Aktualizuje URL fragment bez dalšího navigačního skoku prohlížeče.
+      // Updates the URL fragment without another navigation jump of the browser.
       history.replaceState(null, '', `#${targetId}`);
     }
   }

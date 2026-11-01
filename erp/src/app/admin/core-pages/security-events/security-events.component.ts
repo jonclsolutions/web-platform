@@ -1,40 +1,16 @@
 /**
  * @file security-events.component.ts
  * @path src/app/admin/core-pages/security-events/security-events.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Admin stránka bezpečnostního monitoringu (core_security_events) - tabulka
- * podezřelých eventů s triage (změna stavu + poznámka), graf objemu za posledních N dní,
- * a nastavení retenční doby (GDPR úklid) s možností okamžitého ručního purge.
+ * @description Admin page of the security monitoring (core_security_events) - table of
+ * suspicious events with triage (state change + note), volume chart of the last N days, and the
+ * retention setting (GDPR clean-up) with an immediate manual purge.
  * @dependencies
- * - BaseDataComponent: Standardní CRUD/stránkování pro `core/security_events`.
- * - ConfirmDialogService: Potvrzení PŘED destruktivním purge a před 'false_positive' triage.
- * - Config.create* factory functions: i18n-aware definitions - viz refactor-note
- *   (2026-09-08) níže.
- *
- * (Earlier bugfix-note 2026-08-31 for duplicate error toasts is unchanged.)
- *
- * @bugfix-note (2026-09-08) `toolbarButtons` getter NIKDY nekontroloval `btn.permission`
- * - `openGraphBuilder` tlačítko s `permission: 'core-security-view'` se tak
- * zobrazovalo i uživatelům bez tohoto práva. Doplněna stejná
- * `permissionService.hasPermission()` kontrola jako u ostatních stránek.
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `Config.*` konstanty nahrazeny `Config.create*()` factory funkcemi.
- * `readonly statusOptions` (dřív hardcoded) přepsáno na `Config.createStatusOptions(i18n)`,
- * přepočítávané ve stejném `translations$.subscribe()` bloku - sjednoceno s
- * FORM_FIELDS/FILTER_COLUMNS `status` hodnotami (viz config.ts hlavička).
- * `graphColumns` přestalo být `readonly`. `formatChartDayLabel()`/
- * `formatChartDayLabelFull()` respektují `i18n.getDateLocale()` místo natvrdo
- * `'cs-CZ'`. `triageExplanation` getter teď volá `Config.buildEventExplanation(item, this.i18n)`
- * (nová signatura vyžaduje i18n parametr).
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): stats are the
- *  payload (array); the purge alert is the translated text with `deleted` of the payload instead of
- *  the English API message.
+ * - BaseDataComponent: Standard CRUD / pagination for `core/security_events`.
+ * - ConfirmDialogService: Confirmation BEFORE the destructive purge and before 'false_positive' triage.
+ * - Config.create* factory functions: i18n-aware definitions.
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
@@ -97,7 +73,7 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
     sort_direction: 'desc'
   };
 
-  // ── Graf objemu za posledních N dní ──────────────────────────────────────
+  // ── Volume chart of the last N days ──────────────────────────────────────
   statsLoading = true;
   statsDays = 14;
   chartDays: ChartDay[] = [];
@@ -109,12 +85,12 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
 
   private readonly MIN_SEGMENT_SHARE = 0.14;
 
-  // ── Nastavení retence (core_security_settings) ───────────────────────────
+  // ── Retention settings (core_security_settings) ───────────────────────────
   settingsLoading = true;
   settingsSaving = false;
   retentionDays: number = 90;
 
-  // ── Ruční purge ───────────────────────────────────────────────────────────
+  // ── Manual purge ───────────────────────────────────────────────────────────
   purging = false;
 
   // ── Triage modal ───────────────────────────────────────────────────────
@@ -123,12 +99,10 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
   triageNotes: string = '';
   triageSaving = false;
 
-  /** @refactor-note (2026-09-08) Přestalo být `readonly` hardcoded pole - viz hlavička souboru. */
   statusOptions: { value: string; label: string }[] = [];
 
   readonly retentionOptions = [7, 14, 30, 60, 90, 180, 365];
 
-  /** @refactor-note (2026-09-08) Přestalo být `readonly` - přepočítáno v i18n subscribe. */
   graphColumns: GraphColumnOption[] = [];
 
   constructor(
@@ -159,9 +133,6 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
     });
   }
 
-  /**
-   * @bugfix-note (2026-09-08) Doplněna `permission` kontrola - viz hlavička souboru.
-   */
   get toolbarButtons(): Core.Button[] {
     return Config.createToolbarButtons(this.i18n).map(btn => {
       const updatedBtn = { ...btn };
@@ -228,10 +199,6 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
     this.cd.markForCheck();
   }
 
-  /**
-   * @refactor-note (2026-09-08) `Config.buildEventExplanation()` nyní vyžaduje `i18n`
-   * parametr navíc - viz config.ts hlavička.
-   */
   get triageExplanation(): { label: string; whatHappened: string; recommendation: string } | null {
     return this.triageItem ? Config.buildEventExplanation(this.triageItem, this.i18n) : null;
   }
@@ -243,8 +210,8 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
   }
 
   /**
-   * @description Uloží triage rozhodnutí (stav + poznámka). Změna na
-   * 'false_positive' se navíc potvrzuje dialogem.
+   * @description Saves the triage decision (state + note). A change to 'false_positive' is
+   * confirmed by a dialog as well.
    */
   async saveTriage(): Promise<void> {
     if (!this.triageItem || this.triageSaving) return;
@@ -362,7 +329,6 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
     this.cd.markForCheck();
   }
 
-  /** @refactor-note (2026-09-08) BUGFIX - natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()`. */
   formatChartDayLabel(day: string): string {
     const d = new Date(day + 'T00:00:00');
     return d.toLocaleDateString(this.i18n.getDateLocale(), { day: 'numeric', month: 'numeric' });
@@ -449,8 +415,8 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
   }
 
   /**
-   * @description Okamžitý ruční purge záznamů starších než retenční doba -
-   * destruktivní hromadná akce, vždy potvrzovaná dialogem předem.
+   * @description Immediate manual purge of the records older than the retention period - a
+   * destructive bulk action, always confirmed by a dialog first.
    */
   async purgeOldEvents(): Promise<void> {
     if (this.purging) return;

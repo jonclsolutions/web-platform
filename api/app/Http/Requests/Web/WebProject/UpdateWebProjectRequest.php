@@ -2,16 +2,13 @@
 /**
  * @file UpdateWebProjectRequest.php
  * @path app/Http/Requests/Web/WebProject/UpdateWebProjectRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Same field set as Store, but nothing is required (partial update) -
  * `access_token`/`access_password_hash`/`visibility` (via update()) can be changed
  * here; the actual PASSWORD VALUE can only change through
  * WebProjectController::regeneratePassword(), never through this generic update.
- * @refactor-note (2026-09-11) BACKLOG "project portal - odhad termínu dokončení":
- * `estimated_completion_from`/`estimated_completion_to` validace doplněna - stejné
- * pravidlo jako Store (`to >= from`).
  */
 
 namespace App\Http\Requests\Web\WebProject;

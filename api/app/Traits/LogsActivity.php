@@ -2,41 +2,14 @@
 /**
  * @file LogsActivity.php
  * @path app/Traits/LogsActivity.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Shared audit-logging helper used by Core/Web/Shop controllers. Writes to
  * whichever log model is passed in (CoreLog::class, WebLog::class, ShopLog::class - all
  * three share an identical column structure and an `'array'` cast on `context_data` by
  * design). Centralizes truncation safety so an oversized description/context_data can
  * never itself throw and mask the original error.
- *
- * @refactor-note (2026-08) Fixed a double-JSON-encoding bug: the original version called
- * `json_encode()` on `context_data` before passing it to `create()`, but the log models'
- * `'array'` cast ALSO json_encodes on write - stacking both meant the DB ended up with an
- * escaped JSON string instead of a usable object. Fix: pass a plain PHP array and let the
- * model cast handle serialization exactly once. Also strips common sensitive keys
- * (passwords, tokens) before logging.
- *
- * @refactor-note (2026-08-7) Two fixes found while auditing controllers still on the old
- * local logAction() pattern (AuthController/TranslationController/UserController):
- * 1) SENSITIVE_KEYS was missing `old_password`, `new_password`, `new_password_confirmation`.
- *    UserController::changePassword() sends exactly these field names - migrating it to
- *    this trait without adding them here would have logged plaintext passwords into
- *    `context_data`. Added.
- * 2) Added an optional 8th parameter `$extraExcludedKeys` - SiteConfigurationController
- *    already relied on this call shape (`logAction(..., ['logo_file'])`) to keep binary
- *    file uploads out of `context_data`; the trait signature didn't actually support it
- *    yet, which would have caused an ArgumentCountError. Any caller passing an uploaded
- *    file field (logo_file, icon_file, attachment, cv_file, ...) should use this instead
- *    of relying on the global SENSITIVE_KEYS list, since those are per-endpoint field
- *    names, not universally sensitive data.
- * @bugfix-note (2026-10-26) SECURITY: `confirm_password` (the password confirming a maintenance
- *   switch of the web / e-shop) was not in SENSITIVE_KEYS - the admin's real password was written
- *   in plain text into web_logs / shop_logs `context_data`, readable by everyone with the log
- *   permission. Besides the explicit list, every key whose name contains "password", "token" or
- *   "secret" (any case, at any depth) is now removed, so a new field name cannot leak again.
- *   Existing rows: SQL migration 2026_10_26_scrub_logged_passwords.sql.
  */
 
 namespace App\Traits;
@@ -120,12 +93,6 @@ trait LogsActivity
      * @param Request $request
      * @param array $extraExcludedKeys
      * @return array
-     * @bugfix-note (2026-10-22) `$request->except()` also returns the uploaded files. An
-     *   UploadedFile cannot be JSON-encoded, so the model cast threw, logAction() swallowed
-     *   it and EVERY action with an attachment (contact form, orders, tickets, CVs, project
-     *   messages, imports) was missing from the audit log. Files are now logged as
-     *   {file, size}. A payload that still cannot be encoded (e.g. invalid UTF-8) is
-     *   replaced by a marker instead of losing the whole log row. Found by the unit tests.
      */
     private function safeContextData(Request $request, array $extraExcludedKeys = []): array
     {

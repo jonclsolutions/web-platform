@@ -2,51 +2,10 @@
 /**
  * @file ShopOrderController.php
  * @path app/Http/Controllers/Api/Shop/ShopOrderController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages comprehensive shop order lifecycle operations, including creation, status tracking, inventory synchronization, and complex financial recalculations.
- *
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
- * lokální duplicitní logAction() - doménově beze změny (ShopLog::class). ODSTRANĚNY
- * ladicí `Log::info("...Store/Update started", ['payload' => $request->all()])` volání -
- * stejný důvod jako u ShopCheckoutController/ShopCustomerController: zbytečná duplikace
- * osobních/platebních údajů objednávky mimo řízený `shop_logs` audit trail.
- * `updateStatus()`, `destroy()`, `forceDeleteAllTrashed()` dosud NEMĚLY žádné auditní
- * volání do `shop_logs` (na rozdíl od store/update/restore) - doplněno, ať je změna
- * stavu objednávky a mazání stejně dohledatelné jako ostatní mutace.
- *
- * @bugfix-note (2026-10-23) Found by the API tests:
- * - SECURITY (IDOR): `delete_items` and `items[].id` of `update()` were not limited to the
- *   edited order - saving order A could delete or rewrite the items of order B. Now scoped
- *   to the order in the URL; foreign ids are ignored.
- * - SECURITY: the 500 answers of store / update contained the exception text → generic.
- * - `restore()` always failed with 500: it called `restore()` on the items, which are not
- *   soft-deletable (BadMethodCallException). Items are never soft-deleted with the order,
- *   so only the order is restored.
- * - Cancelling / returning an order through `update()` never returned the pieces to stock
- *   (the stock logic lived in `updateStatus()`, which has no route) and a later permanent
- *   delete skipped them because the status was already 'canceled' → stock was lost for good.
- *   `update()` now restores the stock on active → canceled / returned and deducts it again
- *   on canceled / returned → active. The unreachable `updateStatus()` was removed.
- * - `$product->lockForUpdate()` on a model locks nothing → the product row is loaded with
- *   the lock.
- * - unknown id → 500 instead of 404 (findOrFail inside try) in update, destroy, restore.
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @bugfix-note (2026-10-23) Open findings #21 / #22 / #23 / #24:
- * - VAT: the item rate is stored (`shop_order_items.vat_rate`) and taken from the catalogue
- *   (variant price, else product price; the form value only when the catalogue has none) -
- *   `$product->vat_rate` does not exist, so every admin order was taxed at 21 %.
- * - Buyer contact: the order keeps its own contact snapshot (`customer_*` columns, set on
- *   create, changed by the order edit). The edit no longer rewrites the customer master data
- *   - an old order corrected by the admin must not rename the customer everywhere.
- * - Stock: adding, changing the quantity of or deleting items of an order that holds stock
- *   (pending … delivered) moves the difference in / out of stock. Before only status changes
- *   did, so stock drifted after every item edit.
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;

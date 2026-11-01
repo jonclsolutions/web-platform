@@ -1,55 +1,16 @@
 /**
  * @file admin-layout.component.ts
- * @path src/app/admin/pages/admin-layout/admin-layout.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @path src/app/admin/components/admin-layout/admin-layout.component.ts
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Main shell component for the administrative panel, managing sidebar navigation, module switching, and global UI state.
  * @dependencies
  * - AuthService: Manages user authentication and session status.
  * - PermissionService: Validates access to specific administrative modules.
  * - LoadingService: Observes global loading states for the UI.
- * - AdminLocalizationService: Statické i18n admin UI + jazykový přepínač v headeru.
+ * - AdminLocalizationService: Static i18n of the admin UI + the language switcher in the header.
  * - ScrollLockService: Shared background scroll lock (mobile overlay panels).
- * (Earlier redesign/refactor-notes for mobile actions panel, core module, unified
- * web/... route prefix, maintenance switch removal, permission-based nav-group
- * visibility, and the header language switcher relocation are unchanged - see version
- * history, omitted here for brevity.)
- *
- * @bugfix-note (2026-09e) KRITICKÝ BUG - PŘEPÍNAČ MODULŮ V HEADERU NEREAGOVAL NA
- * PŘÍMOU NAVIGACI: `currentModule` se dřív měnil VÝHRADNĚ kliknutím na tlačítko
- * modulu (`switchModule()`), které samo volalo `router.navigate()`. Jakákoliv JINÁ
- * cesta k navigaci (routerLink odjinud, jako "Exit" tlačítko v Knowledge Base
- * mířící natvrdo na `/admin/core/welcome-page`, deep link, návrat v historii
- * prohlížeče) obsah stránky správně vyměnila, ale `currentModule` (a s ním i
- * zvýrazněné tlačítko v headeru) zůstal na PŘEDCHOZÍ hodnotě - header tak lhal o
- * tom, ve kterém modulu se admin skutečně nachází. Opraveno přidáním
- * `router.events` subscribe na `NavigationEnd`, který `currentModule` ODVOZUJE
- * PŘÍMO Z AKTUÁLNÍ URL (`syncModuleFromUrl()`) při KAŽDÉ navigaci, bez ohledu na
- * to, jak k ní došlo. `switchModule()` (klik na tlačítko) zůstává funkční beze
- * změny - vyvolá `router.navigate()`, což samo spustí `NavigationEnd` a
- * `syncModuleFromUrl()` synchronizaci potvrdí (žádná duplicitní/konfliktní logika).
- *
- * @refactor-note (2026-09-25) BACKLOG "zablokovaný scroll pozadí při otevřeném bočním
- * panelu": on mobile (<= 768px) the sidebar (`isMenuOpen`) and the mobile actions
- * panel (`isMobileActionsOpen`) are modal overlays, so the page behind them must not
- * scroll (scroll chaining, iOS rubber-band, lost scroll position). Implemented via the
- * shared `ScrollLockService` (same service as FormBuilderComponent) through ONE
- * central method `updateScrollLock()`, called after every state change of either
- * panel and on mobile/desktop breakpoint crossing. A local `scrollLocked` flag
- * guarantees lock()/unlock() are always called in pairs (never twice in a row), so
- * the layout never leaks or double-releases a lock held by another component (e.g. an
- * open form modal). On desktop the sidebar sits next to the content (not an overlay),
- * so no lock is applied there. The lock is released in `ngOnDestroy()`.
- * No other behavior of this component changed.
- *
- * @bugfix-note (2026-10-27) Module tabs of the header: a tab is shown only when the user may open
- * at least one page of the module (`isModuleAvailable()`, pages and keys in
- * `admin-navigation.config.ts`) - before, `view-web` alone showed Web even with every web
- * permission removed (empty sidebar / "Access denied"). A click opens the first page the user may
- * open; the active tab follows only the real URL (it stayed on the refused module before). The
- * welcome page items of Web / E-shop have their own group condition (they were hidden behind the
- * dashboard key).
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, LOCALE_ID, inject } from '@angular/core';
@@ -102,17 +63,16 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   private isMobileViewport: boolean = false;
 
-  /** Vysouvací panel na mobilu (hamburger vpravo nahoře) - uživatel, role, hodiny, moduly, odkazy. */
+  /** Mobile slide-out panel (hamburger top right) - user, role, clock, modules, links. */
   isMobileActionsOpen: boolean = false;
   /**
-   * @description Ručně injektovaná i18n služba - tahle komponenta `BaseDataComponent`
-   * nedědí (je to layout shell, ne datová stránka), stejný manuální vzor jako
-   * ostatní ručně injektované komponenty - viz base-data.component.ts refactor-note.
+   * @description Manually injected i18n service - this component does not extend
+   * `BaseDataComponent` (it is the layout shell, not a data page).
    */
   public readonly i18n = inject(AdminLocalizationService);
 
   /**
-   * @description Shared background scroll lock - see refactor-note (2026-09-25) in the
+   * @description Shared background scroll lock
    * file header.
    */
   private scrollLock = inject(ScrollLockService);
@@ -127,15 +87,14 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   private scrollLocked: boolean = false;
 
   /**
-   * @description Merged `shared` + `admin-layout` i18n section - viz refactor-note
-   * v hlavičce souboru (BACKLOG "vícejazyčná administrace, žádné hardcoded texty").
-   * @note Typ `any` záměrně - viz `AdminLocalizationService.getMergedSection()`.
+   * @description Merged `shared` + `admin-layout` i18n section.
+   * @note Type `any` on purpose - see `AdminLocalizationService.getMergedSection()`.
    */
   public get strings(): any {
     return this.i18n.getMergedSection('admin-layout');
   }
 
-  // ── Jazykový přepínač (BACKLOG "jazykový přepínač do headeru") ──────────────
+  // ── Language switcher ──────────────
   readonly languages: AdminLanguageMeta[] = this.i18n.availableLanguages;
   isLangMenuOpen = false;
 
@@ -168,12 +127,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   private maxWidth: number = 500;
   private authSubscription: Subscription | undefined;
   private userEmailSubscription: Subscription | undefined;
-  /**
-   * @bugfix-note (2026-09e) Sleduje KAŽDOU dokončenou navigaci, ať `currentModule`
-   * nikdy nezůstane "za pravdou" - viz hlavička souboru.
-   */
   private routerSubscription: Subscription | undefined;
-  /** Re-render on admin language change (bugfix-note 2026-10-23). */
+  /** Re-render on admin language change. */
   private i18nSubscription: Subscription | undefined;
 
   constructor(
@@ -185,13 +140,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   ) {
     this.isLoadingGlobal$ = this.loadingService.isLoading$;
 
-    // Po přepnutí admin jazyka donutí i tenhle persistentní layout shell přehodnotit
-    // `strings` výstup - stejný důvod jako u BaseDataComponent, jen řešeno ručně
-    // (tahle komponenta ji nedědí).
-    // @bugfix-note (2026-10-23) This subscription was never closed (a new one per login, the layout
-    // is re-created after every logout / login) - kept and unsubscribed in ngOnDestroy.
-    // @bugfix-note (2026-10-23) The confirmation dialog had hardcoded Czech buttons (open finding
-    // #20): while the admin is shown, its default labels follow the admin language.
+    // After switching the admin language, forces this persistent layout shell to re-evaluate
+    // the `strings` output - same reason as in BaseDataComponent, only done manually
+    // (this component does not extend it).
     this.i18nSubscription = this.i18n.translations$.subscribe(() => {
       this.confirmDialog.setDefaultLabels({
         confirm: this.i18n.getValue('shared.confirm'),
@@ -200,12 +151,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       this.cdr.markForCheck();
     });
 
-    /**
-     * @bugfix-note (2026-09e) Jediné autoritativní místo, které nastavuje
-     * `currentModule` NA ZÁKLADĚ SKUTEČNÉ URL - `switchModule()` (klik na tlačítko)
-     * i libovolná jiná navigace (routerLink odjinud, historie prohlížeče, deep
-     * link) proto vždy skončí se správně zvýrazněným modulem v headeru.
-     */
     this.routerSubscription = this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe(event => this.syncModuleFromUrl(event.urlAfterRedirects));
@@ -220,9 +165,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       const savedWidth = localStorage.getItem('admin_sidebar_width');
       if (savedWidth) this.sidebarWidth = parseInt(savedWidth, 10);
 
-      // Výchozí hodnota z localStorage, dokud router poprvé nepotvrdí skutečnou
-      // aktuální URL (viz syncModuleFromUrl() níže) - zabraňuje krátkému probliknutí
-      // špatně zvýrazněného modulu při prvním vykreslení.
+      // Default value from localStorage until the router confirms the real current URL for
+      // the first time (see syncModuleFromUrl() below) - prevents a short flash of a wrongly
+      // highlighted module on the first render.
       const savedState = localStorage.getItem('admin_menu_open');
       const savedModule = localStorage.getItem('admin_current_module') as 'web' | 'core' | 'shop';
       if (savedModule) this.currentModule = savedModule;
@@ -235,9 +180,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       this.isMobileViewport = window.innerWidth <= 768;
     }
 
-    // Okamžitá synchronizace podle SKUTEČNÉ aktuální URL - kryje první vykreslení
-    // (NavigationEnd z konstruktoru mohl proběhnout dřív, než tahle komponenta
-    // vůbec existovala, typicky při hard-refresh na konkrétní stránce).
+    // Immediate sync with the REAL current URL - covers the first render
+    // (NavigationEnd from the constructor may have fired before this component
+    // existed, typically on a hard refresh of a specific page).
     this.syncModuleFromUrl(this.router.url);
 
     this.authSubscription = this.authService.isLoggedIn$.subscribe(loggedIn => {
@@ -253,12 +198,10 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Odvodí `currentModule` z první cestové segmentu za `/admin/`
-   * (`/admin/core/welcome-page` -> `'core'`). Neznámý/chybějící segment (např.
-   * `/admin` samotné, nebo cesty mimo web/core/shop) ponechá `currentModule` beze
-   * změny - nemá smysl mazat poslední platný výběr kvůli přechodné/neshodné URL.
-   * @bugfix-note (2026-09e) BACKLOG "přepínač modulů v headeru nereaguje na přímou
-   * navigaci" - viz hlavička souboru.
+   * @description Derives `currentModule` from the first path segment after `/admin/`
+   * (`/admin/core/welcome-page` -> `'core'`). An unknown / missing segment (e.g. `/admin`
+   * itself, or paths outside web/core/shop) leaves `currentModule` unchanged - no point
+   * clearing the last valid choice because of a transient / unmatched URL.
    */
   private syncModuleFromUrl(url: string): void {
     const match = url.match(/^\/admin\/(web|core|shop)(\/|$|\?)/);
@@ -275,10 +218,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Reaguje POUZE na přechod přes hranici 768px (mobil/desktop) - viz
-   * bugfix-note výše. Nikdy nemění `isMenuOpen`, pokud viewport zůstává ve stejné
-   * kategorii, takže běžné plynulé zmenšování/zvětšování okna žádný panel
-   * nerozbaluje ani nesbaluje samo od sebe.
+   * @description Reacts ONLY to crossing the 768px boundary (mobile / desktop). Never changes
+   * `isMenuOpen` while the viewport stays in the same category, so ordinary smooth resizing of
+   * the window never opens or closes a panel by itself.
    */
   @HostListener('window:resize')
   onWindowResize(): void {
@@ -290,12 +232,12 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.isMobileViewport = nowMobile;
 
     if (nowMobile) {
-      // Přechod DO mobilu - panel VŽDY zavřít, bez ohledu na předchozí desktopový stav.
+      // Switching TO mobile - ALWAYS close the panel, whatever the previous desktop state.
       this.isMenuOpen = false;
       this.isMobileActionsOpen = false;
     } else {
-      // Návrat NA desktop - obnovit uloženou desktopovou preferenci, ne transientní
-      // hodnotu z mobilního režimu.
+      // Back TO desktop - restore the stored desktop preference, not the transient
+      // value of the mobile mode.
       const savedState = localStorage.getItem('admin_menu_open');
       this.isMenuOpen = savedState !== null ? savedState === 'true' : true;
     }
@@ -308,13 +250,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
    * @description Opens a module: navigates to the first page of it the user may open (welcome page
    *   first, then the sidebar order - see ADMIN_MODULE_PAGES).
    * @param module The target module.
-   * @bugfix-note (2026-09e) `syncModuleFromUrl()` after `NavigationEnd` sets the active module.
-   * @bugfix-note (2026-10-27) The tab was set active BEFORE the navigation; when the router refused
-   *   the fixed landing page (no permission → redirect to the page the user already was on, a
-   *   skipped navigation without NavigationEnd) the header kept the wrong module highlighted while
-   *   the URL stayed. The active module now follows ONLY the real URL, and the click opens a page
-   *   the user may open, so a tab never leads to "Access denied". A module without any page for
-   *   the user is not shown at all (`isModuleAvailable()`), the click does nothing for it.
    */
   switchModule(module: AdminModule): void {
     const page = this.firstAccessiblePage(module);
@@ -364,8 +299,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Otevře/zavře mobilní panel s uživatelskými informacemi a akcemi
-   *              (hamburger vpravo nahoře, viditelný jen na mobilu přes CSS media query).
+   * @description Opens / closes the mobile panel with the user information and actions
+   *              (hamburger top right, visible only on mobile through the CSS media query).
    */
   toggleMobileActions(): void {
     this.isMobileActionsOpen = !this.isMobileActionsOpen;
@@ -385,7 +320,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
    * panel is open (both are modal overlays there); on desktop the sidebar is part of
    * the layout, so the page scrolls normally. The `scrollLocked` flag makes every
    * call idempotent - lock()/unlock() on ScrollLockService are always paired.
-   * @refactor-note (2026-09-25) See file header.
    */
   private updateScrollLock(): void {
     const shouldLock = this.isMobileViewport && (this.isMenuOpen || this.isMobileActionsOpen);
@@ -442,20 +376,19 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // VIDITELNOST SEKCÍ LEVÉHO MENU (nav-group)
+  // VISIBILITY OF THE LEFT MENU SECTIONS (nav-group)
   // ══════════════════════════════════════════════════════════════════════
 
   /**
-   * @description Ověří, zda má aktuální uživatel ALESPOŇ JEDNO z předaných oprávnění.
-   *      Používá se ke skrytí celé sekce menu (nav-group), pokud by v ní po vyhodnocení
-   *      *appHasPermission na jednotlivých položkách nezůstala viditelná ani jedna -
-   *      direktiva sama o sobě neumí "schovat rodiče, když zmizí všechny děti", proto
-   *      se viditelnost sekce počítá zde a řídí se přes *ngIf na .nav-group v šabloně.
-   * @param keys Seznam permission klíčů odpovídající položkám v sekci. Každý prvek
-   *      pole může sám obsahovat OR syntaxi ('core-legal-documents-view|core-legal-config-view')
-   *      stejně jako *appHasPermission - viz has-permission.directive.ts.
-   * @returns true, pokud uživatel splňuje alespoň jeden z klíčů (resp. alespoň jednu
-   *      stranu některé OR skupiny).
+   * @description Checks whether the current user has AT LEAST ONE of the given permissions.
+   *      Hides a whole menu section (nav-group) when none of its items would stay visible after
+   *      *appHasPermission - the directive cannot "hide the parent when all children vanish",
+   *      so the section visibility is computed here and applied with *ngIf on .nav-group.
+   * @param keys Permission keys of the items of the section. Each element may itself contain
+   *      the OR syntax ('core-legal-documents-view|core-legal-config-view') like
+   *      *appHasPermission - see has-permission.directive.ts.
+   * @returns true when the user satisfies at least one of the keys (or at least one side of an
+   *      OR group).
    */
   hasAnyPermission(keys: string[]): boolean {
     return keys.some(key =>

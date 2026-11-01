@@ -1,8 +1,8 @@
 /**
  * @file permission-options.service.ts
  * @path src/app/core/services/permission-options.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description TTL-cached source of `GET core/permissions` (the full, flat list of
  * every permission key in the system), used to build the "extra explicit
@@ -13,8 +13,6 @@
  * - DataHandler: Shared HTTP wrapper used across the admin app for API calls.
  * - shareReplay: Keeps a single in-flight/most-recent request shared across all
  *   subscribers instead of firing a new HTTP request per subscription.
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `invalidate`.
  */
 
 import { Injectable } from '@angular/core';

@@ -3,8 +3,8 @@
 /**
  * @file AuthMailsTest.php
  * @path api/tests/Unit/Core/AuthMailsTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the authentication e-mails: subject, rendered content (link,
  *   code, validity) and the company footer from the legal settings.

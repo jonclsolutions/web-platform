@@ -1,6 +1,6 @@
 """
 @file embed_services.py
-@project RPSW Web
+@project JS web-platform
 @description Replaces the green-screen areas in the "services" SVG illustrations with real
              screenshots, embedded as base64 WebP (SVG loaded via <img> must not reference
              external files). Each screenshot is scaled to 2x the size of its screen area

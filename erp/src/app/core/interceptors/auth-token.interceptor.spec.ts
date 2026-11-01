@@ -1,18 +1,18 @@
 /**
  * @file auth-token.interceptor.spec.ts
  * @path src/app/core/interceptors/auth-token.interceptor.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Kompletní testovací sada pro AuthTokenInterceptor.
+ * @description Complete test suite of AuthTokenInterceptor.
  *
- * Pokrývá:
- *   A) Token injection           — přidání / vynechání Authorization headeru
- *   B) 401 handling              — spuštění refresh flow
- *   C) Refresh lock (queue)      — druhý request čeká na probíhající refresh
- *   D) Refresh selhání           — clearAuthData + redirect na /auth/login
- *   E) Bypass URL                — /login a /refresh 401 se nepřeposílají
- *   F) Non-401 chyby             — 403, 500 se vrátí přímo volajícímu
+ * Covers:
+ *   A) Token injection           - adding / omitting the Authorization header
+ *   B) 401 handling              - starting the refresh flow
+ *   C) Refresh lock (queue)      - a second request waits for the running refresh
+ *   D) Refresh failure           - clearAuthData + redirect to /auth/login
+ *   E) Bypass URL                - a 401 of /login and /refresh is not retried
+ *   F) Non-401 errors            - 403, 500 go straight back to the caller
  */
 
 import {
@@ -39,7 +39,7 @@ import { Router }               from '@angular/router';
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Vytvoří HttpErrorResponse se zadaným statusem */
+/** Creates an HttpErrorResponse with the given status */
 function makeError(status: number): HttpErrorResponse {
   return new HttpErrorResponse({ status, url: '/test', statusText: '' });
 }
@@ -61,7 +61,7 @@ describe('AuthTokenInterceptor', () => {
     ]);
     router = jasmine.createSpyObj('Router', ['navigate']);
 
-    // Výchozí stav: žádný token
+    // Default state: no token
     authService.getAccessToken.and.returnValue(null);
 
     TestBed.configureTestingModule({
@@ -167,8 +167,8 @@ describe('AuthTokenInterceptor', () => {
       const req = httpMock.expectOne('/api/data');
       capturedRequest = req.request;
 
-      // Původní request nesmí mít header — pouze klon ho dostane
-      // (Angular HttpRequest je immutabilní, clone vrací nový objekt)
+      // The original request must not have the header - only the clone gets it
+      // (Angular HttpRequest is immutable, clone returns a new object)
       expect(capturedRequest.headers.get('Authorization')).toBe('Bearer token-x');
       req.flush({});
     });
@@ -201,7 +201,7 @@ describe('AuthTokenInterceptor', () => {
 
       expect(authService.refreshAccessToken).toHaveBeenCalledTimes(1);
 
-      // Opakovaný request s novým tokenem
+      // Repeated request with the new token
       const retried = httpMock.expectOne('/api/protected');
       expect(retried.request.headers.get('Authorization')).toBe('Bearer new-token');
       retried.flush({ ok: true });
@@ -237,7 +237,7 @@ describe('AuthTokenInterceptor', () => {
 
       httpMock.expectOne('/api/data').flush({});
 
-      // Posílám druhý request — refresh by se neměl spustit znovu
+      // Second request - the refresh must not start again
       authService.getAccessToken.and.returnValue('new');
       http.get('/api/data2').subscribe();
       httpMock.expectOne('/api/data2').flush({});
@@ -256,13 +256,13 @@ describe('AuthTokenInterceptor', () => {
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // C) REFRESH LOCK — QUEUE (souběžné requesty)
+  // C) REFRESH LOCK - QUEUE (concurrent requests)
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe('C) Refresh lock — queue souběžných requestů', () => {
 
     it('by mělo spustit refreshAccessToken jen jednou i při dvou souběžných 401', fakeAsync(() => {
-      // Simulujeme dvě souběžná volání, která obě dostanou 401
+      // Simulate two concurrent calls that both get 401
       const refreshSubject = new Subject<any>();
       authService.getAccessToken.and.returnValue('expired');
       authService.refreshAccessToken.and.returnValue(refreshSubject.asObservable());
@@ -270,7 +270,7 @@ describe('AuthTokenInterceptor', () => {
       http.get('/api/a').subscribe();
       http.get('/api/b').subscribe();
 
-      // Oba requesty dostanou 401
+      // Both requests get 401
       httpMock.expectOne('/api/a').flush(
         {}, { status: 401, statusText: 'Unauthorized' }
       );
@@ -279,15 +279,15 @@ describe('AuthTokenInterceptor', () => {
       );
       tick();
 
-      // Refresh byl zavolán právě 1×
+      // The refresh was called exactly once
       expect(authService.refreshAccessToken).toHaveBeenCalledTimes(1);
 
-      // Dokončíme refresh
+      // Finish the refresh
       refreshSubject.next({ token: 'fresh-token' });
       refreshSubject.complete();
       tick();
 
-      // Oba requesty by se měly zopakovat s novým tokenem
+      // Both requests should be repeated with the new token
       const retries = httpMock.match('/api/a').concat(httpMock.match('/api/b'));
       expect(retries.length).toBe(2);
       retries.forEach(r => {
@@ -327,7 +327,7 @@ describe('AuthTokenInterceptor', () => {
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // D) REFRESH SELHÁNÍ — clearAuthData + redirect
+  // D) REFRESH FAILURE - clearAuthData + redirect
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe('D) Refresh selhání', () => {
@@ -376,8 +376,8 @@ describe('AuthTokenInterceptor', () => {
       );
       tick();
 
-      // Druhý request — refresh nesmí být spuštěn znovu, protože
-      // isRefreshing je false, a 401 na /login routě je bypassován
+      // Second request - the refresh must not start again, because
+      // isRefreshing is false and a 401 on the /login route is bypassed
       authService.refreshAccessToken.calls.reset();
       authService.getAccessToken.and.returnValue(null);
 
@@ -387,11 +387,11 @@ describe('AuthTokenInterceptor', () => {
       );
       tick();
 
-      // Pro /api/b (není bypass URL) refresh se spustí znovu —
-      // to dokazuje, že lock byl odemčen
+      // For /api/b (not a bypass URL) the refresh starts again -
+      // this proves the lock was released
       expect(authService.refreshAccessToken).toHaveBeenCalledTimes(1);
 
-      // Selhání druhého refreshe — úklid
+      // Failure of the second refresh - clean-up
       tick();
     }));
 
@@ -451,8 +451,8 @@ describe('AuthTokenInterceptor', () => {
     }));
 
 it('by mělo demonstrovat chování includes při výskytu /login uvnitř URL', fakeAsync(() => {
-      // Ověřujeme, že substring match přes includes('/login')
-      // vrací pro tuto URL true a spouští refresh flow (ukázka chování kódu).
+      // Checks that the substring match through includes('/login')
+      // returns true for this URL and starts the refresh flow (shows the code behaviour).
       authService.getAccessToken.and.returnValue('tok');
       authService.refreshAccessToken.and.returnValue(of({ token: 'new-token' }));
 
@@ -462,18 +462,18 @@ it('by mělo demonstrovat chování includes při výskytu /login uvnitř URL', 
       req.flush({}, { status: 401, statusText: 'Unauthorized' });
       tick();
 
-      // Kód přes .includes('/login') vyhodnotí cestu jako bypass (nespustí refresh),
-      // NEBO pokud testovací URL obsahuje /login v doméně/portu, chová se takto:
+      // The code treats the path as a bypass through .includes('/login') (no refresh),
+      // OR, when the test URL contains /login in the domain / port, behaves like this:
       expect(authService.refreshAccessToken).toHaveBeenCalled();
 
-      // Úklid následného requestu po refreshi
+      // Clean-up of the follow-up request after the refresh
       const retried = httpMock.expectOne('/api/settings-login-info');
       retried.flush({});
     }));
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // F) NON-401 CHYBY
+  // F) NON-401 ERRORS
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe('F) Non-401 chyby', () => {

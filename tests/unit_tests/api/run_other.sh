@@ -2,8 +2,8 @@
 #
 # @file run_other.sh
 # @path tests/unit_tests/api/run_other.sh
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Runs the api (Laravel / PHPUnit) tests: suite Other (everything outside Core, Web and Shop: legal, translations, import, …) - tests/Unit/Other and tests/Feature/Other.
 #   Measures code coverage of the Other section files (lines + methods,

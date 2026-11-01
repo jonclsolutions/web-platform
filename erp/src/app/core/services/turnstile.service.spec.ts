@@ -1,8 +1,8 @@
 /**
  * @file turnstile.service.spec.ts
  * @path src/app/core/services/turnstile.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of TurnstileService: the Cloudflare script is injected only once and
  *   only when window.turnstile is missing, a load error rejects, render() passes the site key,

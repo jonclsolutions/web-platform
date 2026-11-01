@@ -2,8 +2,8 @@
 /**
  * @file CoreLog.php
  * @path app/Models/Core/CoreLog.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Eloquent model for the `core_logs` table - system-wide audit trail shared
  * across Web and Shop (authentication, user/role/permission management, legal documents,

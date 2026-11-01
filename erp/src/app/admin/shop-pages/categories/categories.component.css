@@ -1,16 +1,10 @@
 /*     
     @file: categories.component.css
     @path: /src/app/admin/shop-pages/categories/categories.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
-               zaoblené karty (14-18px), jemné stíny, tmavý akcent (#18181b)
-               místo modré, plně zaoblená ("pill") tlačítka/badge. Zelená u akcí
-               "přidat produkt" zůstala - je to sémantická barva (kladná akce),
-               ne branding. ::ng-deep override pro btn-filter/trash/create/export
-               sjednocen s paletou z buttons-builder, ať se komponenty nerozcházejí.
-               Struktura/třídy a logika beze změny.
+    @description: Styles of the categories component.
 */
 
 .toolbar-actions {
@@ -610,8 +604,8 @@
   font-weight: bold;
 }
 
-/* Sjednoceno se stejnou paletou jako v buttons-builder.component.css, ať se
-   komponenty nerozcházejí, ať už vyhraje kterýkoli z ::ng-deep/lokálních stylů. */
+/* Same palette as buttons-builder.component.css, so the components do not drift apart,
+   whichever of the ::ng-deep / local styles wins. */
 ::ng-deep .btn-filter { background: var(--color-zinc-100); color: var(--color-zinc-700); border-color: var(--color-zinc-200); }
 ::ng-deep .btn-trash  { background: var(--color-rose-50); color: var(--color-rose-700); border-color: var(--color-rose-200); }
 ::ng-deep .btn-create { background: var(--color-emerald-50); color: var(--color-emerald-700); border-color: var(--color-emerald-200); }

@@ -1,21 +1,10 @@
 /**
  * @file shipping-methods.config.ts
  * @path src/app/admin/shop-pages/shipping-methods/shipping-methods.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Static-turned-dynamic configuration for shop shipping method management.
- *
- * (Earlier bugfix-note 2026-09-07 for shop permissions granularization is unchanged
- * - see version history.)
- *
- * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * kompletní přepis na FACTORY FUNKCE. `shipping_type` je enum se třemi hodnotami
- * (`address`/`pickup_point`/`store`) - už anglické slugy, matchují backendový
- * `shipping_type` sloupec 1:1, žádná SQL migrace potřeba. `allows_cod`/
- * `requires_pickup_point`/`is_active` jsou boolean-jako-select, řešeny přes
- * centrální `shared.yes`/`shared.no` - stejný mechanismus jako `shop-suppliers`/
- * `shop-customers`.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -54,7 +43,6 @@ export function createShippingToolbarButtons(i18n: AdminLocalizationService): Co
     { action: 'toggleFilters', label: i18n.getValue(`${SECTION}.toolbar_filters`), icon: '', class: 'btn-filter', isActive: false },
     { action: 'handleCreateFormOpened', label: i18n.getValue(`${SECTION}.toolbar_create_record`), icon: '', class: 'btn-create', showIf: true, permission: 'shop-shipping-methods-create' },
     { action: 'exportActiveTable', label: i18n.getValue(`${SECTION}.toolbar_export_data`), icon: '', class: 'btn-export', showIf: true },
-    // @refactor-note (2026-10-23) no 'triggerImport' - the API has no import for this page (open finding #25, the button answered 404).
     { action: 'openGraphBuilder', label: i18n.getValue(`${SECTION}.toolbar_generate_reports`), icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-view-reports' },
     { action: 'toggleTable', label: i18n.getValue(`${SECTION}.toolbar_show_trash`), icon: '', class: 'btn-trash', permission: 'view-deleted' },
   ];

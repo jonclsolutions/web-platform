@@ -1,36 +1,10 @@
 /*     
     @file: trash-table-builder.component.css
     @path: /src/app/admin/components/builders/table-style.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
-               zaoblený kontejner (18px), jemnější dělící linky, tmavý akcent (#18181b)
-               místo modré/indigo pro odkazy a checkboxy, plně zaoblená ("pill")
-               tlačítka v toolbaru. Struktura/třídy a logika beze změny.
-    @redesign-note (2026-08-16a) TOOLBAR LAYOUT: `.toolbar` přepnut na `flex-wrap` layout,
-        kde `.checkbox-container` má `flex-basis: 100%` - donutí ho zabrat celý řádek,
-        takže "Aktualizovat" tlačítko + timestamp badge se automaticky zalomí NA ŘÁDEK
-        POD checkbox (bez zásahu do HTML, čistě pořadím/`order` ve flexboxu). Přidán
-        media query pro mobil (`max-width: 640px`) - toolbar se srovná na střed a
-        tlačítko/timestamp zůstanou vedle sebe, jen užší mezery.
-    @redesign-note (2026-08-16b) HROMADNÝ VÝBĚR + HROMADNÉ MAZÁNÍ: přidán styl pro
-        sloupec výběrových checkboxů (`.checkbox-header`/`.checkbox-cell`, úzký pevný
-        sloupec jako u akčních tlačítek) a `.bulk-actions-bar` nad tabulkou (počet
-        vybraných + dropdown "Akce" se šipkou + "Zrušit výběr") - viz
-        table-builder.component.ts/.html stejné datum.
-    @redesign-note (2026-08-24a) KONSOLIDACE TOOLBAR TLAČÍTEK: `.table-refresh-btn`
-        (textové tlačítko sdílené dřív pro "Aktualizovat" i "Import") nahrazeno
-        `.table-refresh-icon-btn` - malé kulaté ikonové tlačítko bez popisku, protože
-        "Import" se přesunul do stránkového "Akce" dropdownu (ActionMenuBuilderComponent)
-        a v tomto interním toolbaru už nežije. `.toolbar` layout (flex-wrap, pořadí
-        checkboxu) zůstává beze změny - jen je teď v řádku o jedno tlačítko méně.
-    @redesign-note (2026-08-24b) TOOLBAR NA JEDNÉ ŘÁDCE: opuštěn trik s
-        `flex-basis: 100%` na `.checkbox-container` (dřív ho posílal na vlastní řádek
-        NAD refresh+timestamp). Teď `justify-content: flex-start` nechá refresh ikonu
-        a timestamp v přirozeném pořadí VLEVO a `margin-left: auto` na
-        `.checkbox-container` ho odtlačí VPRAVO - obě skupiny tak sedí na stejné řádce,
-        každá na svém konci. HTML se vůbec nemění.
+    @description: Shared table style styles.
 */
 
 .table-responsive {
@@ -198,7 +172,7 @@ border-color: var(--color-rose-200);
 }
 .btn-trash:hover { background-color: #ffe4e6; }
 
-/* Kontejner pro checkbox a text */
+/* Container of the checkbox and the text */
 .checkbox-container {
 display: flex;
 align-items: center;
@@ -276,7 +250,7 @@ white-space: nowrap;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   HROMADNÝ VÝBĚR - sloupec checkboxů
+   BULK SELECTION - checkbox column
    ══════════════════════════════════════════════════════════════════════ */
 
 th.checkbox-header,
@@ -311,7 +285,7 @@ background-color: var(--color-sand-200);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   HROMADNÉ AKCE - lišta nad tabulkou (počet vybraných + dropdown "Akce")
+   BULK ACTIONS - bar above the table (selected count + "Actions" dropdown)
    ══════════════════════════════════════════════════════════════════════ */
 
 .bulk-actions-bar {

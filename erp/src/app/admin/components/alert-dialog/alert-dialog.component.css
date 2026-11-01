@@ -1,15 +1,10 @@
 /*     
     @file: alert-dialog.component.css
     @path: /src/app/admin/components/alert-dialog/alert-dialog.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @refactor-note (2026-08): .toast-wrapper je teď flex sloupec držící VÍCE položek
-        najednou (dřív obalovalo jedinou absolutně "naplácnutou" krabičku). Nové toasty se
-        v poli přidávají na konec -> vizuálně přibývají dole pod existujícími. Když se
-        položka odstraní odkudkoliv ze sloupce, zbytek se automaticky srovná nahoru -
-        to je jen běžné chování flexboxu, žádné extra CSS není potřeba. Přidána .leaving
-        varianta (slideOutRight) pro plynulé mizení - viz removeToast() v .ts.
+    @description: Styles of the alert dialog component.
 */
 
 .toast-wrapper {
@@ -24,7 +19,7 @@
   pointer-events: none;
 }
 
-/* Hlavní kontejner jednoho toastu */
+/* Main container of one toast */
 .dialog-container {
   display: flex;
   align-items: center;
@@ -37,10 +32,10 @@
   position: relative;
   pointer-events: auto;
   cursor: pointer;
-  /* Důležité: plynulý posun při zmizení jiného toastu */
+  /* Important: smooth shift when another toast disappears */
   transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.25s, box-shadow 0.2s;
   
-  /* ZDE BYLA CHYBA: odstranili jsme 'forwards', aby animace nezamykala transform natvrdo */
+  /* No 'forwards' here, so the animation does not lock the transform */
   animation: slideInRight 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
@@ -50,7 +45,7 @@
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
-/* Mizení toastu */
+/* Toast fade-out */
 .dialog-container.leaving {
   animation: slideOutRight 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
   pointer-events: none;
@@ -61,7 +56,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-/* Levý blok s ikonou - vycentrovaný */
+/* Left block with the icon - centered */
 .dialog-icon {
   display: flex;
   align-items: center;
@@ -71,7 +66,7 @@
   height: 32px;
 }
 
-/* Středový textový blok - roztáhne se a vyplní střed */
+/* Middle text block - stretches to fill the center */
 .dialog-content {
   display: flex;
   flex-direction: column;
@@ -94,7 +89,7 @@
   opacity: 0.85;
 }
 
-/* Pravý křížek */
+/* Close cross on the right */
 .close-x-btn {
   background: none;
   border: none;
@@ -118,7 +113,7 @@
 }
 
 /* ==========================================================================
-   BAREVNÉ VARIANTY
+   COLOR VARIANTS
    ========================================================================== */
 
 .success-dialog {
@@ -141,7 +136,7 @@
   color: #842029;
 }
 
-/* Animace vjetí zprava */
+/* Slide-in animation from the right */
 @keyframes slideInRight {
   from {
     opacity: 0;
@@ -153,7 +148,7 @@
   }
 }
 
-/* Animace vyjetí zpět doprava (mizení) */
+/* Slide-out animation back to the right (fade-out) */
 @keyframes slideOutRight {
   from {
     opacity: 1;

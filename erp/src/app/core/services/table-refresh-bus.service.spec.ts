@@ -1,8 +1,8 @@
 /**
  * @file table-refresh-bus.service.spec.ts
  * @path src/app/core/services/table-refresh-bus.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of TableRefreshBusService: a global refresh clears the table cache
  *   first and then notifies all subscribers.

@@ -1,9 +1,9 @@
 # =============================================================================
 # @file .gitattributes
 # @path .gitattributes (root of the web-platform monorepo)
-# @project RPSW Web
-# @author RPSW
-# @created 2026-10-31
+# @project JS web-platform
+# @author JS
+# @created 2026
 # @description Line endings that must not depend on the platform of the checkout: shell
 #   scripts, Docker and dotenv files run inside Linux containers / WSL and break with CRLF
 #   ("bad interpreter: /usr/bin/env: bash\r"), so they are always LF - also when the repository

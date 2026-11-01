@@ -1,8 +1,8 @@
 <!--
   @file README.md
   @path erp/src/app/shared/styles/README.md
-  @project RPSW Web
-  @author RPSW
+  @project JS web-platform
+  @author JS
   @created 2026
   @description How the CSS of the Angular app is organised: where styles live, how a component
   gets them, the tokens, the rules for where a new style goes, and what to avoid.

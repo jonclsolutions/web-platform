@@ -1,8 +1,8 @@
 /**
  * @file filter-form-builder.component.spec.ts
  * @path src/app/admin/components/builders/filter-form-builder/filter-form-builder.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of FilterFormBuilderComponent – the filter panel of the admin tables
  *   (initial values, global search, sorting, which filters are sent, clearing).

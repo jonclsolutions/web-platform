@@ -1,8 +1,8 @@
 /**
  * @file product-detail.component.spec.ts
  * @path src/app/public/shop-pages/product-detail/product-detail.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ProductDetailComponent: product loaded by the route slug, images (variant /
  *   primary / first / placeholder), variants with own price and stock, quantity limits, adding to

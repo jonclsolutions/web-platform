@@ -2,15 +2,10 @@
 /**
  * @file WebJobApplication.php
  * @path app/Models/Web/WebJobApplication.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Model representing a job application submission.
- * @refactor-note (2026-08-2) Přidán `attachments()` polymorfní vztah - CV se od teď
- *      ukládá přes `web_attachments` (viz HandlesAttachments::storeSingleAttachment())
- *      místo přímo do `cv_path`. `cv_path`/`cv_original_name` sloupce zůstávají v DB
- *      kvůli historickým záznamům nahraným před touto změnou, ale nový upload už do
- *      nich nezapisuje - viz WebJobApplicationController.
  */
 
 namespace App\Models\Web;

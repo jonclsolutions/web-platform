@@ -1,9 +1,9 @@
 /**
  * @file password-policy.directive.ts
  * @path src/app/shared/directives/password-policy.directive.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-23
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Template-driven validator of the password policy (`[appPasswordPolicy]` on an
  *   `ngModel` input). Replaces the string `[pattern]` of the password fields: Angular compiles a
  *   string pattern without the `u` flag, so the Unicode rules of the Laravel `Password` rule

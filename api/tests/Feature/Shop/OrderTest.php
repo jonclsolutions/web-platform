@@ -3,8 +3,8 @@
 /**
  * @file OrderTest.php
  * @path api/tests/Feature/Shop/OrderTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the order administration (ShopOrderController): list with
  *   filters, manual order (customer, stock, coupon rules, totals and tax), edit (customer,

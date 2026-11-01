@@ -1,8 +1,8 @@
 /**
  * @file admin-test-helpers.ts
  * @path src/testing/admin-test-helpers.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Shared test doubles for the admin unit tests (used only by *.spec.ts files, never
  *   by application code). They replace the services every admin page injects, so a spec only
@@ -13,8 +13,6 @@
  *   - jasmine spies for DataHandler, GenericTableService, AlertDialogService, ConfirmDialogService.
  * @dependencies
  * - jasmine (global in Karma), @angular/core, @angular/router, @angular/common/http(/testing), rxjs.
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): DataHandler spy
- *  has `getWithMeta`; `paginated()` and the page default answer `{data, meta}`.
  */
 
 import { EnvironmentProviders, Provider } from '@angular/core';

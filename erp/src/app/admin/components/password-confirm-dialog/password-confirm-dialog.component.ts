@@ -1,9 +1,9 @@
 /**
  * @file password-confirm-dialog.component.ts
  * @path src/app/admin/components/password-confirm-dialog/password-confirm-dialog.component.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-26
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Modal asking for the own password before a sensitive operation (operations on
  *   sysadmin accounts, changes of the e-mail access policy). Rendered and driven by
  *   PasswordConfirmationService - the component only collects the password and shows the state

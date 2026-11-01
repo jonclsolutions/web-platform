@@ -2,14 +2,10 @@
 /**
  * @file ShopCustomer.php
  * @path app/Models/Shop/ShopCustomer.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Model representing shop customers and their associated data.
- * @bugfix-note (2026-10-23) Open finding #22 (EU law / accounting retention): permanently
- *   deleting a customer deleted all his orders (FK CASCADE). The FK is RESTRICT now, a customer
- *   with orders cannot be deleted permanently (`hasRetainedOrders()`) and `anonymize()` is the
- *   GDPR erasure for such customers.
  */
 
 namespace App\Models\Shop;

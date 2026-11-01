@@ -2,16 +2,10 @@
 /**
  * @file CoreRole.php
  * @path app/Models/Core/CoreRole.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Model representing user roles within the system.
- * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail", bod 3: přidán sloupec
- * `forces_2fa` - umožňuje sysadminovi vynutit 2FA HROMADNĚ pro celou (custom) roli,
- * místo nutnosti klikat uživatele jednoho po druhém. Netýká se `sysadmin`/`admin` -
- * ty mají 2FA vynuceno natvrdo v `User::FORCED_2FA_ROLE_NAMES`, nezávisle na datech
- * (viz User::requiresTwoFactor()), a `isProtected()` navíc blokuje jakoukoliv úpravu
- * těchto rolí přes CoreRoleController, takže `forces_2fa` u nich není ani editovatelné.
  */
 
 namespace App\Models\Core;
@@ -50,7 +44,7 @@ class CoreRole extends Model
     public const PROTECTED_ROLE_NAMES = ['sysadmin'];
 
     /**
-     * @description Určuje, zda je role systémová (chráněná před editací/smazáním).
+     * @description Whether the role is a system role (protected from editing / deleting).
      * @return bool
      */
     public function isProtected(): bool

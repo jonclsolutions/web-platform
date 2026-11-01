@@ -1,21 +1,12 @@
 /**
  * @file payment-methods.config.ts
  * @path src/app/admin/shop-pages/payment-methods/payment-methods.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Static-turned-dynamic configuration for shop payment method management.
- *
- * (Earlier bugfix-note 2026-09-07 for shop permissions granularization is unchanged
- * - see version history. `PAYMENT_TOOLBAR_BUTTONS` NEMÁ "Přidat záznam" - platební
- * metody vznikají výhradně seedem/migrací, admin je jen edituje.)
- *
- * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * kompletní přepis na FACTORY FUNKCE. Žádná SQL migrace potřeba:
- * - `variable_symbol_type` (`order_number`/`phone_number`/`none`) - už anglické slugy.
- * - `provider` (`manual`/`stripe`/`paypal`) - už anglické slugy, jen READ-ONLY (v
- *   `filterColumns`/`detailsColumns`, ne ve `formFields` - sloupec se needituje).
- * - `is_active` - boolean-jako-select, řešeno přes centrální `shared.yes`/`shared.no`.
+ * @description Configuration for shop payment method management.
+ * @note `PAYMENT_TOOLBAR_BUTTONS` has NO "Add record" - payment methods are created only by a
+ * seed / migration, the admin only edits them.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -64,9 +55,9 @@ export function createPaymentToolbarButtons(i18n: AdminLocalizationService): Cor
 }
 
 /**
- * @description VŠECHNA pole `show_in_create: false` - platební metody vznikají
- * výhradně seedem/migrací, admin je jen edituje (žádné "Přidat" tlačítko/handler
- * v komponentě) - viz hlavička souboru.
+ * @description ALL fields `show_in_create: false` - payment methods are created only by a seed /
+ * migration, the admin only edits them (no "Add" button / handler in the component) - see the
+ * file header.
  */
 export function createPaymentFormFields(i18n: AdminLocalizationService): Core.InputDefinition[] {
   return [

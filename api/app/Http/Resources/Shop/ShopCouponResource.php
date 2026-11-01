@@ -2,8 +2,8 @@
 /**
  * @file ShopCouponResource.php
  * @path app/Http/Resources/Shop/ShopCouponResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Resource transformation for shop discount coupons.
  */

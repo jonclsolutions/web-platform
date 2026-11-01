@@ -2,51 +2,16 @@
 /**
  * @file CoreEmailAccessPolicyController.php
  * @path app/Http/Controllers/Api/Core/CoreEmailAccessPolicyController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Správa politiky povolených e-mailových domén pro vytváření admin účtů
- * (BACKLOG "core-admin-email-domain-restriction") - hlavní doména firmy
- * (`CoreSecuritySetting.primary_email_domain`) + whitelist dalších domén/konkrétních
- * e-mailů (`CoreEmailAccessRule`).
- * @note VÝHRADNĚ SYSADMIN - jde o bezpečnostní politiku, ne běžnou administrátorskou
- * operaci (rozhodnutí zadavatele: "tato featura bude jak UI tak backend dostupná jen
- * pro sysadmina"). Stejný vzor jako `CoreRoleController` - ŽÁDNÉ `permission:`
- * middleware na routách, kontrola role `sysadmin` přímo v každé metodě. Skutečné
- * vynucení domény při vytváření účtu je v `UserController::store()`
- * (`assertEmailDomainAllowed()`) - tenhle kontroler jen spravuje DATA politiky.
- *
- * @bugfix-note (2026-08-25) KONVENCE ODBALOVÁNÍ ODPOVĚDI - `DataHandler` na frontendu
- * (viz data-handler.service.ts) se chová TAKHLE a MUSÍ se přesně dodržet u KAŽDÉ
- * metody, jinak frontend dostane `undefined` bez jakékoliv chyby na backendu:
- * - `get<T>()`   -> NEODBALUJE nic, vrací celé tělo odpovědi tak, jak přišlo.
- * - `post<T>()`  -> VŽDY odbaluje `response.data` (`map(response => response.data)`).
- * - `put<T>()`   -> VŽDY odbaluje `response.data` (u JSON payloadu).
- * - `delete()`   -> vrací `Observable<void>`, tělo odpovědi se nečte vůbec.
- * `show()` proto vrací PLAIN JSON (žádný obal), `updatePrimaryDomain()` a `storeRule()`
- * MUSÍ obalovat do `{data: ...}`, jinak dojde přesně k bugu, který se stal při prvním
- * nasazení: `storeRule()` vracelo neobalený `$rule`, `post()` z něj udělalo
- * `response.data` (tedy `undefined`), frontend přidal do seznamu `undefined` a šablona
- * spadla na `{{ rule.value }}` - záznam se přitom do DB zapsal správně, chyba byla
- * čistě v přenosu odpovědi zpět.
- *   (Historical - since finding #6, 2026-10-24, every answer is the envelope `{data, meta?}`
- *   and DataHandler always reads `data`; the per-method convention above no longer applies.)
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
- * @bugfix-note (2026-10-24) SECURITY: the policy now applies to every role, sysadmin included
- *   (AuthController). Two consequences are handled here:
- *   1) NO SELF LOCK-OUT - a primary-domain change or a deleted rule that would exclude the
- *      ACTING sysadmin's own e-mail is refused (422, `EMAIL_POLICY_SELF_LOCKOUT`). So at least
- *      the sysadmin who edits the policy can always log in again and fix it.
- *   2) IMMEDIATE EFFECT - after a change that may exclude accounts (primary domain changed,
- *      rule deleted) the sessions of every account the policy no longer allows are ended at
- *      once (access + refresh tokens, pending 2FA logins); before, an open session lived on
- *      until its access token expired (60 min). The count is returned in
- *      `meta.sessions_revoked` and written to the core log.
- * @refactor-note (2026-10-26) SECURITY: changing the primary domain and deleting a rule (the two
- *   changes that can exclude accounts - also other sysadmins) require a fresh single-use password
- *   confirmation (RequiresPasswordConfirmation, scope `email-policy`). Adding a rule only widens
- *   the policy and needs none.
+ * @description E-mail access policy of admin accounts: the company domain
+ * (`CoreSecuritySetting.primary_email_domain`) + a whitelist of further domains / single
+ * e-mails (`CoreEmailAccessRule`).
+ * @note SYSADMIN ONLY (a security policy, not ordinary administration): no `permission:`
+ * middleware on the routes, the sysadmin role is checked in every method (same pattern as
+ * CoreRoleController). This controller manages the policy DATA; it is enforced when an account
+ * is created (UserController) and at every login / request.
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -74,9 +39,7 @@ class CoreEmailAccessPolicyController extends Controller
     private const SELF_LOCKOUT_MESSAGE = 'This change would block your own login: your e-mail would no longer be allowed. Add an exception for it first.';
 
     /**
-     * @description Vrátí aktuální hlavní doménu a celý whitelist (domény i e-maily).
-     * NEobalené v `{data: ...}` - konzumováno přes `DataHandler.get()`, který
-     * neodbaluje (stejná konvence jako `CoreSecuritySettingController::show()`).
+     * @description Returns the company domain and the whole whitelist (domains and e-mails).
      */
     public function show(Request $request): JsonResponse
     {
@@ -91,10 +54,7 @@ class CoreEmailAccessPolicyController extends Controller
     }
 
     /**
-     * @description Nastaví hlavní e-mailovou doménu (nebo ji vynuluje na `null` =
-     * "bez omezení"). Obalené v `{data: ...}` - konzumováno přes `DataHandler.put()`,
-     * který `response.data` automaticky odbaluje (stejná konvence jako
-     * `CoreSecuritySettingController::update()`).
+     * @description Sets the company e-mail domain (or clears it - `null` = no restriction).
      */
     public function updatePrimaryDomain(Request $request): JsonResponse
     {
@@ -133,14 +93,7 @@ class CoreEmailAccessPolicyController extends Controller
     }
 
     /**
-     * @description Přidá novou položku do whitelistu (doménu nebo konkrétní e-mail).
-     * Obalené v `{data: ...}` - konzumováno přes `DataHandler.post()`, který
-     * `response.data` VŽDY automaticky odbaluje (viz data-handler.service.ts).
-     * @bugfix-note (2026-08-25) KRITICKÝ BUG: dřív vracelo neobalený `$rule` přímo -
-     * `DataHandler.post()` z něj udělal `response.data`, což bylo `undefined` (žádné
-     * `.data` pole v neobalené odpovědi), takže frontend přidal do seznamu `undefined`
-     * a šablona spadla na `{{ rule.value }}`. Záznam se přitom do DB zapsal správně -
-     * chyba byla čistě v přenosu odpovědi zpět.
+     * @description Adds a whitelist entry (a domain or a single e-mail).
      */
     public function storeRule(Request $request): JsonResponse
     {
@@ -189,8 +142,7 @@ class CoreEmailAccessPolicyController extends Controller
     }
 
     /**
-     * @description Smaže položku z whitelistu (trvale - žádný koš, jde o krátký
-     * konfigurační seznam, ne byznys entitu).
+     * @description Deletes a whitelist entry (permanently - a short configuration list, no trash).
      */
     public function destroyRule(Request $request, string $id): JsonResponse
     {

@@ -1,19 +1,10 @@
 /*     
     @file: web-settings.component.css
     @path: /src/app/admin/web-pages/web-settings/web-settings.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
-               zaoblené karty (18px), jemné stíny, tmavý akcent (#18181b) místo
-               indigo, plně zaoblená ("pill") tlačítka/taby. Struktura/třídy a
-               logika beze změny, jde jen o barvy/zaoblení/typografii.
-    @refactor-note (2026-09-30) Added page tabs (.ws-tabs / .ws-tab / .ws-tab-dot)
-               for "Company details" / "Page titles" and the page titles block
-               (`pt-` classes, appended at the end of this file). Nothing else changed.
-    @refactor-note (2026-10-31) Optional company details: .ws-fields-note, the checkbox in
-               the label (.ws-label--toggle, .ws-field-toggle) and the switched-off state
-               (.ws-field--off: muted label, disabled struck-through input).
+    @description: Styles of the web settings component.
 */
 
 .ws-container {

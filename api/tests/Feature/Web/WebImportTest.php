@@ -3,8 +3,8 @@
 /**
  * @file WebImportTest.php
  * @path api/tests/Feature/Web/WebImportTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the bulk import of the web section - template download,
  *   validation (dry run) and commit - for commission requests, support tickets, news and

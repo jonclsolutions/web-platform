@@ -2,24 +2,13 @@
 /**
  * @file WebProjectThread.php
  * @path app/Models/Web/WebProjectThread.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description One conversation thread within a project - bidirectional (customer
  * and admin can both post multiple messages) per consultation. `last_message_at` is
  * denormalized for cheap sorting in both the admin's cross-project table and the
  * customer's per-project thread list.
- *
- * (Earlier refactor-note for customer_last_read_at unread tracking is unchanged.)
- *
- * @refactor-note (2026-09-11v4) BACKLOG "otevření vlákna ukazuje nejstarší zprávu
- * místo nejnovější / vlákno s 1000 zprávami nemá načítat všechny najednou":
- * `pagedMessages()` - vrací jen POSLEDNÍCH `$limit` zpráv (výchozí otevření vlákna),
- * nebo zprávy STARŠÍ než `$beforeId` (tlačítko "Načíst starší zprávy" ve frontendu).
- * `messages()` relace samotná ZŮSTÁVÁ beze změny (pořadí `orderBy('created_at')` asc) -
- * `pagedMessages()` na ní volá `reorder()` (zruší zděděné řazení) a řadí sestupně přes
- * `id` (levnější index než `created_at` a při shodném timestampu deterministické),
- * pak vrácenou dávku otočí zpět do vzestupného pořadí pro zobrazení.
  */
 
 namespace App\Models\Web;
@@ -33,7 +22,7 @@ class WebProjectThread extends Model
 {
     public const STATUSES = ['active', 'closed'];
 
-    /** @description Default počet zpráv natažených při otevření vlákna - viz `pagedMessages()`. */
+    /** @description Default number of messages loaded when a thread is opened - see `pagedMessages()`. */
     public const DEFAULT_MESSAGE_PAGE_SIZE = 50;
 
     protected $fillable = [

@@ -1,16 +1,10 @@
 /*  
     @file: web-maintenance.component.css
     @path: /src/app/public/web-pages/web-maintenance/web-maintenance.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @refactor-note (2026-08): Vylepšený vzhled - stejný princip jako
-        ShopMaintenanceComponent, jen odlišná akcentová barva (--accent) pro vizuální
-        odlišení web vs. shop údržby.
-    @refactor-note (2026-08-15): Přidán `.maintenance-admin-link` - drobná ikonka vpravo
-        dole vedoucí na /auth/login (viz html). Záměrně nenápadná (nízký kontrast v
-        klidovém stavu), aby nepůsobila jako běžný UI prvek pro návštěvníky, ale byla
-        snadno dohledatelná pro adminy, kteří ji hledají.
+    @description: Styles of the web maintenance component.
 */
 
 :host {

@@ -1,35 +1,14 @@
 /**
  * @file graph-format.ts
  * @path src/app/shared/interfaces/graph-format.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Shared types and static UI metadata for the generic report/graph
  * builder (GraphBuilderComponent).
  * @dependencies
  * - AdminLocalizationService: i18n lookup for chart-mode labels/descriptions
  *   (section `graph-builder`), passed into the factory functions below.
- *
- * @refactor-note (2026-08-27v11) BACKLOG "graf neukazuje hodnoty, které se nikdy
- * nezvolily (0×) - např. hodnocení 1-5, kde nikdo nedal '5'": přidáno volitelné
- * `possibleValues?: string[]` na `GraphColumnOption`. Pochází z JIŽ EXISTUJÍCÍCH
- * konstant, které stránka stejně používá pro `<select>` v `USER_REQUEST_FORM_FIELDS`/
- * filtry (`USER_REQUEST_STATUS_OPTIONS` apod., viz user-request.config.ts) - žádný
- * nový zdroj pravdy, jen se ta samá konstanta navíc předá do grafu. Bez tohoto pole
- * (default `undefined`) je chování BEZE ZMĚNY - graf ukáže jen hodnoty reálně
- * přítomné v datech, přesně jako dřív.
- *
- * @refactor-note (2026-09-25) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * - BUGFIX "české názvy typů grafů i v EN": `COLUMN_CHART_MODE_OPTIONS` /
- * `METRIC_CHART_MODE_OPTIONS` (static constants with hardcoded Czech `label`/
- * `description`) REMOVED and replaced by the same recipe as user-request.config.ts:
- * 1) `..._VALUES` arrays hold the canonical (never translated) chart-mode keys,
- * 2) `..._LABEL_KEYS` / `..._DESCRIPTION_KEYS` map value -> i18n key (explicit, greppable),
- * 3) factory functions `createColumnChartModeOptions(i18n)` /
- *    `createMetricChartModeOptions(i18n)` return fully translated `ChartModeOption`s.
- * Icons are language-neutral and stay static in `CHART_MODE_ICONS`.
- * GraphBuilderComponent calls the factories inside its `translations$` subscribe, so
- * the options are rebuilt on JSON load and on every admin language switch.
  */
 
 import type { AdminLocalizationService } from '../../core/services/admin-localization.service';
@@ -148,11 +127,10 @@ export function createMetricChartModeOptions(i18n: AdminLocalizationService): Ch
 
 /**
  * @description Reduced column shape offered to the report builder's sidebar.
- * @property possibleValues Volitelný ÚPLNÝ seznam hodnot, které pole může nabývat
- * (typicky stejná konstanta jako u `<select>` formulářového pole/filtru - viz
- * refactor-note 2026-08-27v11 výše). Když je vyplněný, `GraphBuilderComponent`
- * doplní do katalogu hodnot i ty, které se v datech vůbec nevyskytly (s počtem 0) -
- * bez tohoto pole se zobrazí jen reálně pozorované hodnoty (dosavadní chování).
+ * @property possibleValues Optional COMPLETE list of the values the field can take (typically
+ * the same constant as the `<select>` of the form field / filter). When filled in,
+ * `GraphBuilderComponent` adds to the value catalog also the values that never occur in the
+ * data (with count 0) - without it only the really observed values are shown.
  */
 export interface GraphColumnOption {
   key: string;

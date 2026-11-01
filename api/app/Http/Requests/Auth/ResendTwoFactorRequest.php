@@ -3,13 +3,10 @@
 /**
  * @file ResendTwoFactorRequest.php
  * @path app/Http/Requests/Auth/ResendTwoFactorRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Input validation for re-sending the 2FA verification code.
- *
- * @refactor-note (2026-10-01) Comments translated to English; `login_token` gets an
- * upper length bound so oversized payloads are rejected before the token lookup.
  */
 
 namespace App\Http\Requests\Auth;

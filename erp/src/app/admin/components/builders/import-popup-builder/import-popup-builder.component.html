@@ -1,16 +1,11 @@
 <!--
     @file: import-popup-builder.component.html
     @path: src/app/admin/components/builders/import-popup-builder/import-popup-builder.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @description Stejný vizuální jazyk jako export-popup-builder - kartový výběr formátu,
-    pak upload, pak dry-run souhrn s možností potvrdit/zrušit.
-    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
-        všechny natvrdo psané české texty nahrazeny `strings.*` bindingy
-        (AdminLocalizationService, sekce 'import-popup') - viz
-        import-popup-builder.component.ts stejné datum. `keyvalue` iterace nad
-        `err.errors` (backendový výstup) beze změny - mimo scope frontendové i18n.
+    @description Same visual language as export-popup-builder - card choice of the format,
+    then upload, then the dry-run summary with confirm / cancel.
 -->
 
 <div class="import-popup-overlay" (mousedown)="onOverlayClick($event)">
@@ -28,7 +23,7 @@
       </button>
     </div>
 
-    <!-- ── Krok 1: formát ─────────────────────────────────────────────── -->
+    <!-- ── Step 1: format ─────────────────────────────────────────────── -->
     @if (step === 'format') {
       <div class="import-format-grid">
         @for (option of formatOptions; track option.value) {
@@ -43,7 +38,7 @@
       </div>
     }
 
-    <!-- ── Krok 2: šablona + upload ───────────────────────────────────── -->
+    <!-- ── Step 2: template + upload ───────────────────────────────────── -->
         @if (step === 'upload') {
       <div class="import-body">
         <button type="button" class="import-template-btn" (click)="downloadTemplate()" [disabled]="isDownloadingTemplate">
@@ -97,7 +92,7 @@
       </div>
     }
 
-    <!-- ── Krok 3: souhrn dry-run ─────────────────────────────────────── -->
+    <!-- ── Step 3: dry-run summary ─────────────────────────────────────── -->
     @if (step === 'summary' && validation) {
       <div class="import-body">
         <div class="import-summary-grid">
@@ -145,7 +140,7 @@
       </div>
     }
 
-    <!-- ── Krok 4: hotovo ─────────────────────────────────────────────── -->
+    <!-- ── Step 4: done ───────────────────────────────────────────────── -->
     @if (step === 'done' && commitResult) {
       <div class="import-body">
         @if (commitResult.queued) {

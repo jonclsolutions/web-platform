@@ -2,8 +2,8 @@
 #
 # @file run_all_api.sh
 # @path tests/unit_tests/api/run_all_api.sh
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Runs the api (Laravel / PHPUnit) tests: every test suite (Core, Web, Shop, Other).
 #   Measures code coverage of all of api/app (lines + methods,

@@ -1,35 +1,15 @@
 /**
  * @file sales-leads.component.ts
  * @path src/app/admin/web-pages/sales-leads/sales-leads.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Administrative dashboard component for managing sales leads, including link generation, logging, and CRUD operations.
  * @dependencies
  * - BaseDataComponent: Inheritance for base table/data handling.
  * - TableBuilderComponent: For UI rendering of lead collections.
  * - Config.create* factory functions: i18n-aware definitions for forms, columns, and
- *   toolbar buttons - see refactor-note (2026-09-08) below.
- * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
- * z HTTP `error:` callbacku v `handleGenerateFormLink()` - `DataHandler.handleError()`
- * je jediné autoritativní místo pro chybový toast. Klientský clipboard `.catch(...)`
- * toast ZŮSTÁVÁ - selhání zápisu do schránky není HTTP chyba, DataHandler o ní neví.
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `Config.SALES_LEAD_*` konstanty nahrazeny `Config.create*()` factory funkcemi - stejný
- * vzor jako `SalesOrdersComponent`/`SupportTicketsComponent`. Pole přesunuta z field
- * initializerů do konstruktoru (`translations$.subscribe()`). `graphColumns` přestalo
- * být `readonly`. Klipboard/log hlášky ('Odkaz zkopírován'/'Nepodařilo se zkopírovat
- * odkaz.'/'Úspěch'/'Požadavek byl upraven.'/'Požadavek byl vytvořen.') nahrazeny `t()`
- * voláním - `logAction()` popis (`description`) ZŮSTÁVÁ anglicky natvrdo, protože jde o
- * INTERNÍ audit log (`web_logs.description`), ne UI text - stejná logika jako
- * `CoreSecuritySettingController`'s `logAction()` na backendu (auditní záznamy nejsou
- * user-facing, nemají procházet i18n).
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `logAction`, `logEndpoint`.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
+ *   toolbar buttons.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -70,7 +50,6 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
   salesLeadColumns: Core.ColumnDefinition[] = [];
   trashSalesLeadColumns: Core.ColumnDefinition[] = [];
 
-  /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
 
   constructor(
@@ -153,12 +132,10 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
   }
 
   /**
-   * @description Vyžádá (nebo znovu použije) unikátní veřejný odkaz na objednávkový
-   *              formulář pro daný lead a zkopíruje ho do schránky.
-   * @param item Konkrétní obchodní lead.
-   * @note Token se generuje/ověřuje na backendu - frontend URL nikdy neskládá sám.
-   * @refactor-note (2026-09-08) 'Odkaz zkopírován'/'Nepodařilo se zkopírovat odkaz.'
-   * nahrazeny `t()` voláním.
+   * @description Requests (or reuses) the unique public link to the order form of the lead and
+   *              copies it to the clipboard.
+   * @param item The sales lead.
+   * @note The token is generated / checked by the backend - the frontend never builds the URL itself.
    */
   handleGenerateFormLink(item: any): void {
     this.dataHandler.post<{ token: string; url: string }>(`web/sales_leads/${item.id}/generate-link`, {})

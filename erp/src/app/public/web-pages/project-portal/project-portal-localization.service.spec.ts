@@ -1,8 +1,8 @@
 /**
  * @file project-portal-localization.service.spec.ts
  * @path src/app/public/web-pages/project-portal/project-portal-localization.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ProjectPortalLocalizationService: stored language, loading of the
  *   portal JSON (failure → empty dictionary), language switching and the flat key lookup with

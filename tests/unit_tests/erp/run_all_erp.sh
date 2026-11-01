@@ -2,8 +2,8 @@
 #
 # @file run_all_erp.sh
 # @path tests/unit_tests/erp/run_all_erp.sh
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Runs the erp unit tests: every *.spec.ts in erp/src (admin, public, core, shared).
 #   Result: tests/unit_tests/erp/report/report.html and report.xml (last run only).

@@ -1,8 +1,8 @@
 /**
  * @file admin-layout.component.spec.ts
  * @path src/app/admin/components/admin-layout/admin-layout.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of AdminLayoutComponent – the admin shell: module switch (web / core /
  *   shop) incl. sync from the URL, sidebar open/resize state in localStorage, mobile scroll lock,

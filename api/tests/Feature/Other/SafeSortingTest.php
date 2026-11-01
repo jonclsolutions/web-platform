@@ -3,9 +3,9 @@
 /**
  * @file SafeSortingTest.php
  * @path api/tests/Feature/Other/SafeSortingTest.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-23
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Tests of the shared sorting of the index endpoints (AppliesSafeSorting, open
  *   finding #5): an unknown `sort_by` column or `sort_direction` no longer answers 500 but falls
  *   back to the default sorting; real columns (also table-qualified) and both directions work.

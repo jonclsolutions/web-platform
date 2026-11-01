@@ -1,27 +1,24 @@
 #!/bin/bash
 # @file: setup-queue-cron.sh
 # @path: scripts/setup-queue-cron.sh
-# @project: RPSW Web
-# @description: Nastaví zpracování Laravel queue frontu přes CRON (ne Supervisor) -
-# stejný mechanismus, jaký používá produkční deploy skript (viz sekce "6b. Queue
-# worker" v deploy.sh). Vytažen sem jako SAMOSTATNÝ skript, aby lokální vývoj i
-# produkce spouštěly IDENTICKOU logiku - žádné riziko, že se lokální a produkční
-# chování postupem času rozjedou (dřív šlo o kód zkopírovaný jen v deploy.sh).
+# @project: JS web-platform
+# @description: Runs the Laravel queue through CRON (not Supervisor) - the same mechanism as
+# the production setup (deploy/server/configure-server.sh), so local and production behave
+# the same.
 #
-# CO DĚLÁ: přidá do uživatelského crontabu řádek, který každou minutu spustí
-# `php artisan queue:work --stop-when-empty --tries=3` - ten zpracuje VŠECHNY
-# aktuálně čekající joby a SÁM SE UKONČÍ, jakmile je fronta prázdná. Žádný trvale
-# běžící proces, žádné sudo/Supervisor - čistě per-uživatelský crontab, funguje
-# stejně na sdíleném hostingu i na lokálním vývojovém stroji.
+# WHAT IT DOES: adds a crontab line of the user that runs every minute
+# `php artisan queue:work --stop-when-empty --tries=3` - it processes ALL waiting
+# jobs and EXITS when the queue is empty. No permanent process, no sudo / Supervisor -
+# a per-user crontab, works the same on shared hosting and on a development machine.
 #
-# POUŽITÍ:
-#   cd api/                  # spustit z kořenového adresáře Laravel projektu
+# USAGE:
+#   cd api/                  # run from the root of the Laravel project
 #   bash scripts/setup-queue-cron.sh
 #
-# IDEMPOTENTNÍ: opakované spuštění (stejná cesta) řádek nepřidá znovu - pozná ho podle
-# markeru "# rpsw-queue-worker". Pokud projekt přesuneš na jinou cestu, stará položka
-# v crontabu zůstane osiřelá (ukazuje na neexistující adresář) - v tom případě si ji
-# ručně smaž přes `crontab -e` a spusť skript znovu z nové cesty.
+# IDEMPOTENT: running it again (same path) adds no second line - recognized by the
+# marker "# rpsw-queue-worker". After moving the project, the old entry stays orphaned
+# (pointing to a missing folder) - remove it with `crontab -e` and run the script again
+# from the new path.
 
 set -e
 

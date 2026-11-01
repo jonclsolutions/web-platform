@@ -1,8 +1,8 @@
 /**
  * @file multi-file-upload.component.spec.ts
  * @path src/app/shared/components/multi-file-upload/multi-file-upload.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of MultiFileUploadComponent: adding files from the input and by
  *   drag & drop, the three limits (count incl. existing files, size per file, total size) with

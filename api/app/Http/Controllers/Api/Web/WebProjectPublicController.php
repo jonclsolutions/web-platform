@@ -2,30 +2,11 @@
 /**
  * @file WebProjectPublicController.php
  * @path app/Http/Controllers/Api/Web/WebProjectPublicController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Customer-facing endpoints. `login()` is the ONLY unauthenticated
  * action - everything else sits behind `project.session` middleware.
- *
- * (Earlier refactor-notes for notifyProjectContact() e-mail, backend-fully-in-English
- * translation, the customer-side null author_label, customer_last_read_at unread
- * tracking, and HandlesAttachments/messageStore()/threadStore() attachments are
- * unchanged - see version history.)
- *
- * @refactor-note (2026-09-11v4) BACKLOG "otevření vlákna ukazuje nejstarší zprávu
- * / vlákno s 1000 zprávami nemá načítat všechny najednou": `threadShow()` teď
- * natahuje jen posledních `WebProjectThread::DEFAULT_MESSAGE_PAGE_SIZE` zpráv přes
- * `pagedMessages()`, přidává `has_more_older_messages` do odpovědi. Nová
- * `olderMessages()` metoda obsluhuje "Načíst starší zprávy" na zákaznickém portálu.
- * `threadsIndex()` ZÁMĚRNĚ BEZE ZMĚNY - pořád eager-loaduje `messages.attachments`
- * v plné šíři, protože zákaznické fulltextové vyhledávání ve vláknech prohledává
- * text VŠECH zpráv na frontendu (viz `ProjectPortalComponent.filteredThreads`) -
- * omezení na posledních N zpráv by hledání ve starších zprávách tiše rozbilo.
- * Pokud se v budoucnu ukáže výkonnostní problém i tady, hledání bude muset přejít
- * na server-side endpoint místo klient-side filtru nad plně načtenými daty.
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -104,11 +85,6 @@ class WebProjectPublicController extends Controller
         return $this->respond(WebProjectThreadResource::collection($threads));
     }
 
-    /**
-     * @refactor-note (2026-09-11v4) Natahuje jen posledních `DEFAULT_MESSAGE_PAGE_SIZE`
-     * zpráv přes `pagedMessages()` - viz hlavička souboru. `customer_last_read_at`
-     * zápis ZŮSTÁVÁ beze změny.
-     */
     public function threadShow(Request $request): JsonResponse
     {
         $project = $request->attributes->get('current_project');
@@ -128,10 +104,9 @@ class WebProjectPublicController extends Controller
     }
 
     /**
-     * @description Vrátí `$limit` zpráv STARŠÍCH než `before_message_id` - obsluha
-     * tlačítka "Načíst starší zprávy" na zákaznickém portálu. Scoped na `$project`
-     * (`$project->threads()->find(...)`) - stejná IDOR ochrana jako ostatní metody
-     * v tomhle controlleru.
+     * @description Returns `$limit` messages OLDER than `before_message_id` ("Load older
+     * messages" in the client portal). Scoped to `$project` (`$project->threads()->find(...)`) -
+     * the same IDOR protection as the other methods of this controller.
      */
 public function olderMessages(Request $request): JsonResponse
 {
@@ -176,10 +151,6 @@ public function newMessages(Request $request): JsonResponse
 
     return $this->respond(WebProjectThreadMessageResource::collection($messages), 200, ['status' => $thread->status]);
 }
-    /**
-     * @bugfix-note (2026-09-08) `author_label` for the customer's first message is
-     * now `null` - see file header. Frontend resolves the generic label itself.
-     */
     public function threadStore(StoreProjectThreadRequest $request): JsonResponse
     {
         $project = $request->attributes->get('current_project');
@@ -207,10 +178,6 @@ public function newMessages(Request $request): JsonResponse
         return $this->respond(new WebProjectThreadResource($thread->load('messages.attachments')), 201);
     }
 
-    /**
-     * @bugfix-note (2026-09-08) `author_label` for customer messages is now `null` -
-     * see file header.
-     */
     public function messageStore(StoreProjectThreadMessageRequest $request): JsonResponse
     {
         $project = $request->attributes->get('current_project');
@@ -242,11 +209,6 @@ public function newMessages(Request $request): JsonResponse
  * a customer can accidentally close a thread and needs a way back without waiting
  * on an admin. Scoped on `$project` (`$project->threads()->find(...)`) - same IDOR
  * guard as the rest of this controller.
- * @bugfix-note (2026-09-12) Replaces the old `threadClose()`, which had the SAME
- * route-parameter-order bug as `olderMessages()`/`newMessages()` before their fix
- * (`$threadId` declared as the second method parameter got bound to `{token}`
- * instead, since Laravel injects positionally when a parameter isn't type-hinted
- * as a route-model-bound class) - `$request->route('threadId')` is immune to that.
  */
 public function updateStatus(Request $request): JsonResponse
 {

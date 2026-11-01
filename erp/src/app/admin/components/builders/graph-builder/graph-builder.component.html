@@ -1,19 +1,10 @@
 <!--
     @file: graph-builder.component.html
     @path: /src/app/admin/components/builders/graph-builder/graph-builder.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @bugfix-note (2026-08-27v8) BACKLOG "křížek překrytý hamburgerem / nadpisem
-        sidebaru 'Nastavení reportu / Období'": `.graph-window-close` už není
-        absolutně pozicované tlačítko přes celou kartu (kolidovalo s obsahem POD
-        sebou), ale žije v NOVÉ vlastní liště `.graph-window-topbar` NAD celým
-        dvoupanelovým layoutem (sidebar + hlavní obsah) - viz .css stejné datum.
-        Se žádným jiným prvkem se tak nemůže překrývat na žádné šířce obrazovky.
-    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
-        všechny natvrdo psané české texty nahrazeny `strings.*` bindingy
-        (AdminLocalizationService, sekce 'graph-builder') - viz
-        graph-builder.component.ts stejné datum.
+    @description: Template of the graph builder component.
 -->
 
 <div class="graph-popup-overlay" (mousedown)="onOverlayMouseDown($event)">

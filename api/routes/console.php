@@ -2,24 +2,13 @@
 /**
  * @file console.php
  * @path routes/console.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
- * @description Registrace Artisan příkazů a definice naplánovaných (scheduled) úloh
- * aplikace. V Laravel 11+ žije scheduler přímo zde, ne v `app/Console/Kernel.php`.
- *
- * @refactor-note (2026-08-22) BEZPEČNOSTNÍ MONITORING (krok 3/4 backlogu): naplánován
- * denní běh `security:purge-events` (PurgeSecurityEventsCommand) - maže záznamy
- * `core_security_events` starší než `core_security_settings.retention_days` (GDPR
- * retence osobních údajů, primárně IP adres). `withoutOverlapping()` zabraňuje souběhu
- * dvou instancí, pokud by předchozí běh trval nezvykle dlouho (velký objem dat po
- * útoku); `runInBackground()` ať case neblokuje ostatní naplánované úlohy v tomtéž
- * cyklu. Stejnou akci lze kdykoliv spustit i ručně z admin UI
- * (`DELETE /core/security_events/purge`, CoreSecurityEventController::purge) - tenhle
- * scheduled běh je jen automatizace stejné operace, ne náhrada za manuální tlačítko.
- * @note Vyžaduje, aby na serveru běžel systémový cron volající `php artisan schedule:run`
- * jednou za minutu (standardní Laravel nastavení) - bez toho scheduler sám o sobě nic
- * nespustí.
+ * @description Artisan commands and the scheduled jobs of the application (Laravel 11+ keeps the
+ * scheduler here, not in `app/Console/Kernel.php`).
+ * @note Needs a system cron calling `php artisan schedule:run` every minute on the server -
+ * without it the scheduler runs nothing.
  */
 
 use App\Console\Commands\PurgeSecurityEventsCommand;
@@ -33,8 +22,8 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 /**
- * @description Denní GDPR úklid bezpečnostního monitoringu - viz PurgeSecurityEventsCommand
- * a refactor-note výše. Spouští se brzy ráno, mimo běžnou návštěvnost webu/e-shopu.
+ * @description Daily GDPR clean-up of the security monitoring (PurgeSecurityEventsCommand) - early
+ * in the morning, outside the usual traffic.
  */
 Schedule::command(PurgeSecurityEventsCommand::class)
     ->dailyAt('03:15')
@@ -42,9 +31,8 @@ Schedule::command(PurgeSecurityEventsCommand::class)
     ->runInBackground();
 
 /**
- * @description Denní úklid nevyzvednutých importních dávek (dry-run bez commitu,
- * nebo se selhaným zpracováním) a jejich dočasných souborů na disku - viz
- * PurgeImportBatchesCommand.
+ * @description Daily clean-up of abandoned import batches (dry run without commit, or failed) and
+ * their temporary files (PurgeImportBatchesCommand).
  */
 Schedule::command(PurgeImportBatchesCommand::class)
     ->dailyAt('03:30')

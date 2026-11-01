@@ -2,8 +2,8 @@
 #
 # @file test_permissions_403.sh
 # @path tests/regression_tests/administrators/test_permission_403.sh
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Manual security check: verifies that the API itself (not only the Angular UI)
 # refuses every operation on `core/users` for a user WITHOUT the administrators permissions.

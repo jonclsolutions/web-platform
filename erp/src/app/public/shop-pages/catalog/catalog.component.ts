@@ -1,16 +1,10 @@
 /**
  * @file catalog.component.ts
  * @path src/app/public/shop-pages/catalog/catalog.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `onItemsPerPageChange`, `getProductUrl`.
- * @refactor-note (2026-10-21) Lokalizace 1:1 jako veřejný web: `translationModule = 'shop'`, všechny texty ze sekce
- *   `catalog` v `translations/shop/{lang}.json`. Odstraněno `CATALOG_CONFIG.TEXTS` (výchozí texty
- *   v kódu; HEADER/TOTAL_FOUND/ITEMS_UNIT se navíc nikde nepoužívaly).
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): categories are
- *  the payload list, the product page carries the pagination in `meta`.
+ * @description Product catalog page of the public e-shop (listing, filters, pagination).
  */
 
 import { Component, OnInit, signal, inject } from '@angular/core';
@@ -42,7 +36,7 @@ export class CatalogComponent extends BasePublicComponent implements OnInit {
 
   protected readonly translationKey = 'catalog';
   protected override readonly translationModule = 'shop';
-  readonly config = CATALOG_CONFIG; // Zpět v komponentě
+  readonly config = CATALOG_CONFIG;
   
   private shopService = inject(ShopPublicService);
 

@@ -1,19 +1,13 @@
 /**
  * @file coupons.component.ts
  * @path src/app/admin/shop-pages/coupons/coupons.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages the lifecycle of shop coupons, handling filtering, CRUD operations, and switching between active and trashed views.
  * @dependencies
  * - TableBuilderComponent: Used for rendering the data grids.
  * - BaseDataComponent: Inherits core API interaction and pagination state management.
- * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
- * volání z `error:` callbacků (handleFormSubmitted, handleViewDetails) -
- * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
- * @refactor-note (2026-10-23) Localized (open finding #16): texts from the admin translation
- *   section `shop-coupons` (`Config.create*()` factories rebuilt on every language change,
- *   `takeUntilDestroyed()`), the success alerts use `shared.success` + `crud_*_message`.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';

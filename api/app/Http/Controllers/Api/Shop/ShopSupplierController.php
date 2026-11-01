@@ -2,28 +2,10 @@
 /**
  * @file ShopSupplierController.php
  * @path app/Http/Controllers/Api/Shop/ShopSupplierController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Controller managing supplier lifecycle, including search, filtering, CRUD operations, and administrative audit logging.
- *
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
- * lokální duplicitní logAction(). Doménově beze změny (ShopLog::class).
- *
- * @bugfix-note (2026-10-23) The routes `suppliers/bulk-delete` and `suppliers/import/{template,
- * validate,commit}` (used by the admin suppliers page: bulk delete + "Import data") pointed to
- * methods that did not exist → every call answered 500. Implemented `bulkDestroy()`,
- * `importTemplate()`, `importValidate()` and `importCommit()` with the same contract as the web
- * imports (HandlesImportBatches, ImportFileParser / ImportRowValidator, StoreShopSupplierRequest
- * rules per row). Empty cells are stored as NULL (an empty `ico` would otherwise collide with
- * the unique index on the second empty row).
- *
- * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update / destroy / restore (findOrFail inside try).
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -60,13 +42,6 @@ class ShopSupplierController extends Controller
 
     /**
      * Retrieves a paginated or full collection of suppliers based on filter criteria.
-     */
-/**
-     * @refactor-note (2026-08-25) BACKLOG "hledat napříč vším": `search` rozšířen o
-     * `phone`, `country`, `payment_terms` - tyhle 3 sloupce už byly dostupné jako
-     * jednotlivé filtry v `$likeFields` níže, ale v globálním `search` chyběly. Teď
-     * `search` pokrývá STEJNOU množinu textových sloupců jako jednotlivé filtry
-     * dohromady, konzistentně s ostatními kontrolery v projektu.
      */
     public function index(Request $request): JsonResponse
     {

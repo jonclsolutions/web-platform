@@ -2,13 +2,10 @@
 /**
  * @file ShopPaymentMethodResource.php
  * @path app/Http/Resources/Shop/ShopPaymentMethodResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Resource transformation for shop payment methods.
- *
- * @bugfix-note (2026-10-23) The gateway `config` is no longer part of public storefront /
- * checkout responses - see DetectsPublicShopRequest.
  */
 
 namespace App\Http\Resources\Shop;

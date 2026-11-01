@@ -2,35 +2,18 @@
 /**
  * @file WebSiteSettingController.php
  * @path app/Http/Controllers/Api/Web/WebSiteSettingController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages public-web maintenance mode - toggling web availability and the
  * visitor-facing maintenance message, with mandatory password re-confirmation for the
  * write action. Also manages the editable content of the WebRawRequestCommission
- * confirmation email (heading/intro/outro, per language) - see refactor-note
+ * confirmation email (heading/intro/outro, per language)
  * (2026-08-19) below.
  *
- * @refactor-note (2026-08-15) Replaces the web branch of `CoreSiteSettingController`
- * (now deleted, along with `App\Models\Core\CoreSiteSetting` and the `core_site_settings`
- * table). Web maintenance is now a Web-domain concern with its own table
- * (`web_site_settings`), model (`WebSiteSetting`), and permission-gated routes under
- * `/api/web/settings`. Mirrors `ShopSiteSettingController`, which underwent the same
- * extraction for shop maintenance earlier.
  * @note No `publicShow()` here - the unauthenticated public consumer for web status was
  * already `WebPublicController::getStatus()` (`GET /api/web/public/status`) before this
  * refactor and remains the single public entry point; no new public route was introduced.
- *
- * @refactor-note (2026-08-19) BACKLOG "editable confirmation email content":
- * added `showRawRequestEmailTemplate()`/`updateRawRequestEmailTemplate()` - shares
- * the same singleton `WebSiteSetting` row as maintenance settings (it's still a
- * Web-domain configuration), but INTENTIONALLY WITHOUT the `confirm_password` requirement
- * like `update()` above - editing confirmation email text is not a security-sensitive
- * action like toggling the availability of the entire web. Gated by permission middleware
- * `web-user-requests-update` at route level (see api.php) - the same permission that
- * already controls editing an individual request on the admin page "Commission Requests".
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -89,9 +72,6 @@ class WebSiteSettingController extends Controller
             'web_maintenance_message' => 'sometimes|nullable|string|max:500',
         ]);
 
-        // @refactor-note (2026-10-22) The "not authenticated" branch was removed - the route is
-        // behind auth:sanctum + permission, so there is always a user here (unreachable code
-        // found by the unit tests).
         $auth = $request->user();
 
         // Security check: Verify password against database hash
@@ -162,7 +142,7 @@ class WebSiteSettingController extends Controller
 
     /**
      * @description Saves the editable WebRawRequestCommission confirmation email template.
-     * INTENTIONALLY WITHOUT `confirm_password` (see refactor-note in file header) -
+     * INTENTIONALLY WITHOUT `confirm_password` -
      * only permission middleware at route level.
      */
     public function updateRawRequestEmailTemplate(Request $request): JsonResponse

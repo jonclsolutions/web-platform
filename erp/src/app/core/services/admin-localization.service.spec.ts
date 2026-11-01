@@ -1,8 +1,8 @@
 /**
  * @file admin-localization.service.spec.ts
  * @path src/app/core/services/admin-localization.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of AdminLocalizationService: initial language from localStorage,
  *   loading of the admin JSON (failure → empty object), language switching, key lookup with the

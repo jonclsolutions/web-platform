@@ -2,23 +2,10 @@
 /**
  * @file WebSalesOrderResource.php
  * @path app/Http/Resources/Web/WebSalesOrderResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Resource transformation for sales orders linked to leads.
- *
- * @refactor-note (2026-08) Odstraněna jednosouborová pole `attachment_path`/`attachment_url`
- * - nahrazeno `attachments` kolekcí (viz WebAttachment.php/WebAttachmentResource.php),
- * podporující až 10 příloh na jednu realizaci místo jedné.
- *
- * @bugfix-note (2026-08-15) KRITICKÁ OPRAVA (GDPR): `data_processing_agreement` a
- * `tos_agreement` doplněny do výstupu. Sloupce existovaly v DB a byly správně zapisovány
- * (viz WebSalesOrderController::store() a WebSalesOrder.php $fillable/$casts), ale tato
- * Resource třída je při serializaci na JSON odřezávala - frontend (admin Detail modal,
- * sales-orders.config.ts SALES_ORDER_DETAILS_COLUMNS) je tedy nikdy nedostal, přestože
- * v databázi byly správně uložené `1`/`1`. Bez explicitního zařazení do `toArray()`
- * Laravel Resource NEVRACÍ žádné pole, které tu není vyjmenované - i kdyby existovalo
- * na modelu.
  */
 
 namespace App\Http\Resources\Web;

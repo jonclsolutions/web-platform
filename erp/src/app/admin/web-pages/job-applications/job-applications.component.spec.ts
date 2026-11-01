@@ -1,8 +1,8 @@
 /**
  * @file job-applications.component.spec.ts
  * @path src/app/admin/web-pages/job-applications/job-applications.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of JobApplicationsComponent and job-applications.config.ts – job
  *   applications sent from the public web: translated configuration, applicant data read-only in

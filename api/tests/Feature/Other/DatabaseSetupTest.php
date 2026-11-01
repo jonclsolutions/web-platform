@@ -3,9 +3,9 @@
 /**
  * @file DatabaseSetupTest.php
  * @path api/tests/Feature/Other/DatabaseSetupTest.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-30
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Tests of the database setup of a new installation (2026-10-30):
  *   `db:create-if-missing` (database created only when missing, invalid settings refused, no
  *   privilege reported), `security:create-sysadmin` (first production sysadmin: validated input,

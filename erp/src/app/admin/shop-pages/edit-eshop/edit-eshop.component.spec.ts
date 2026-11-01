@@ -1,8 +1,8 @@
 /**
  * @file edit-eshop.component.spec.ts
  * @path src/app/admin/shop-pages/edit-eshop/edit-eshop.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of EditEshopComponent – the translation editor of the e-shop
  *   (module 'shop'). The page only configures BaseTranslationEditorComponent, so the tests check

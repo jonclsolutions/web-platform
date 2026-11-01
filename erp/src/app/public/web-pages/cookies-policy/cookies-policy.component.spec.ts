@@ -1,8 +1,8 @@
 /**
  * @file cookies-policy.component.spec.ts
  * @path src/app/public/web-pages/cookies-policy/cookies-policy.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of CookiesPolicyComponent (Cookies policy page): the document 'cookies' is loaded in the
  *   current language through LegalDocsService, reloaded on a language switch and rendered with

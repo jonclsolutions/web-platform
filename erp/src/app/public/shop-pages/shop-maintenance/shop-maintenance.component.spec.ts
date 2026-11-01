@@ -1,8 +1,8 @@
 /**
  * @file shop-maintenance.component.spec.ts
  * @path src/app/public/shop-pages/shop-maintenance/shop-maintenance.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ShopMaintenanceComponent and shopMaintenanceGuard: the maintenance page goes
  *   to the catalog once the shop is active (errors logged) and shows the contacts with a valid

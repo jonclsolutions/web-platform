@@ -1,8 +1,8 @@
 /**
  * @file about-us.component.spec.ts
  * @path src/app/public/web-pages/about-us/about-us.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of AboutUsComponent: texts of the `about_us` section are rendered (the page has
  *   no own logic beyond BasePublicComponent).

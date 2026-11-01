@@ -1,8 +1,8 @@
 /**
  * @file table-builder.component.spec.ts
  * @path src/app/admin/components/builders/table-builder/table-builder.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of TableBuilderComponent – the main admin data table: cell formatting,
  *   button visibility by permission, row actions, delete with confirmation, bulk selection /

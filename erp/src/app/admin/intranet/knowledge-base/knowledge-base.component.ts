@@ -1,32 +1,18 @@
 /**
  * @file knowledge-base.component.ts
  * @path src/app/admin/intranet/knowledge-base/knowledge-base.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Shell komponenta Knowledge Base - layout, responzivní menu, a GENEROVÁNÍ
- * bočního menu z `KB_PAGES` dat (viz kb-pages.data.ts). Přidání nové stránky do
- * KB_PAGES se v menu projeví automaticky, bez úpravy téhle komponenty nebo šablony.
+ * @description Shell component of the Knowledge Base - layout, responsive menu and GENERATION
+ * of the side menu from the `KB_PAGES` data (see kb-pages.data.ts). A new page in KB_PAGES
+ * shows in the menu automatically, without changing this component or its template.
  * @dependencies
- * - RouterModule: Nested routing (`:pageId` -> KbArticleComponent) + samostatná
+ * - RouterModule: Nested routing (`:pageId` -> KbArticleComponent) + the separate
  *   `support-form` route.
- * - KB_PAGES: Zdroj dat pro menu i obsah jednotlivých stránek.
- * - AdminLocalizationService: Statické i18n admin UI + jazyk pro rozřešení
- *   `LocalizedText` polí v KB_PAGES (navLabel).
- *
- * @bugfix-note (2026-10) Menu group headings showed "Cannot load text":
- * `navGroups` is a CACHED array (group labels are resolved once, inside
- * `buildNavGroups()`), but it was rebuilt only on `i18n.currentLanguage$`. That stream
- * says which language is SELECTED, not that its JSON is LOADED:
- * - on a page reload / direct URL entry the component is constructed while the JSON
- *   request is still pending, so every `t()` call returned the service fallback text,
- *   and nothing rebuilt the cache once the JSON arrived;
- * - on a language switch `currentLanguage$` emits BEFORE the new JSON is fetched, so
- *   the headings were rebuilt from the previous language's data.
- * Fix: rebuild on `i18n.translations$` instead - it emits the current state on
- * subscribe and again every time a language file finishes loading (or fails), which is
- * exactly when the cached labels become stale. `AdminLocalizationService` is unchanged.
- * @refactor-note (2026-10-21) Removed unused imports.
+ * - KB_PAGES: Data source of the menu and of the page content.
+ * - AdminLocalizationService: Static i18n of the admin UI + language for resolving the
+ *   `LocalizedText` fields of KB_PAGES (navLabel).
  */
 
 import { Component, ChangeDetectorRef, OnDestroy, inject } from '@angular/core';
@@ -37,11 +23,11 @@ import { KB_PAGES } from './data/kb-pages.data';
 import { KBPage, resolveLoc } from '../../../shared/interfaces/kb-content';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 
-/** Jedna skupina v bočním menu se svými seřazenými stránkami. */
+/** One group of the side menu with its sorted pages. */
 interface NavGroup {
-  /** Stabilní identifikátor (KBNavGroupKey) - použit jako `track` klíč v šabloně. */
+  /** Stable identifier (KBNavGroupKey) - used as the `track` key in the template. */
   key: string;
-  /** Přeložený zobrazovaný název skupiny. */
+  /** Translated display name of the group. */
   label: string;
   pages: KBPage[];
 }
@@ -73,7 +59,7 @@ export class KnowledgeBaseComponent implements OnDestroy {
   /**
    * @description Cached menu model (groups + their sorted pages) bound by the template.
    * Rebuilt in the constructor subscription every time the translation data changes -
-   * see bugfix-note (2026-10) in the file header.
+   *.
    */
   navGroups: NavGroup[] = [];
 
@@ -87,7 +73,7 @@ export class KnowledgeBaseComponent implements OnDestroy {
    * @note `translations$` is a BehaviorSubject stream, so the callback runs
    * synchronously on subscribe (initial build - no separate call needed) and again
    * whenever a language file finishes loading. Subscribing to `currentLanguage$` here
-   * would rebuild too early - see bugfix-note (2026-10) in the file header.
+   * would rebuild too early.
    */
   constructor(private router: Router, private cd: ChangeDetectorRef) {
     this.langSubscription = this.i18n.translations$.subscribe(() => {
@@ -101,23 +87,22 @@ export class KnowledgeBaseComponent implements OnDestroy {
   }
 
   /**
-   * @description Aktuální jazyk pro rozřešení `LocalizedText` polí (`navLabel`).
+   * @description Current language for resolving `LocalizedText` fields (`navLabel`).
    */
   get currentLang(): string {
     return this.i18n.getCurrentLanguage();
   }
 
-  /** @description Zpřístupní `resolveLoc()` v šabloně pro `page.navLabel`. */
+  /** @description Exposes `resolveLoc()` to the template for `page.navLabel`. */
   navLabel(page: KBPage): string {
     return resolveLoc(page.navLabel, this.currentLang);
   }
 
   /**
-   * @description Seskupí KB_PAGES podle `navGroup`, seřadí uvnitř skupiny podle
-   * `navOrder` a skupiny samotné podle nejnižšího `navOrder` v nich obsaženém - tak,
-   * aby přidání nové stránky s vlastním `navOrder` řídilo pořadí i bez ruční úpravy
-   * pořadí skupin. Název skupiny se překládá přes `AdminLocalizationService`
-   * (klíč `nav_group_{key}`, sekce 'knowledge-base').
+   * @description Groups KB_PAGES by `navGroup`, sorts inside a group by `navOrder` and the groups
+   * by the lowest `navOrder` they contain - so a new page with its own `navOrder` drives the
+   * order without manually reordering the groups. The group name is translated through
+   * `AdminLocalizationService` (key `nav_group_{key}`, section 'knowledge-base').
    */
   private buildNavGroups(): NavGroup[] {
     const groups = new Map<string, KBPage[]>();

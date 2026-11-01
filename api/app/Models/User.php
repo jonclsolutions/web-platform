@@ -2,48 +2,10 @@
 /**
  * @file User.php
  * @path app/Models/User.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Core User model representing authentication and profile data.
- * @refactor-note (2026-08) Removed legacy HR/personal columns. Added `enable_2fa`.
- * @refactor-note (2026-08-3) Removed `commission_rate` and `has_tax_declaration`.
- * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail": `requiresTwoFactor()`
- * now combines FOUR independent sources of truth (in priority order):
- * (1) role sysadmin - always forced, hardcoded, cannot be bypassed by editing data;
- * (2) any assigned role has `forces_2fa=true` (CoreRole - bulk enforcement for a
- *     custom role);
- * (3) `two_fa_forced_by_admin` - sysadmin override on a SPECIFIC account;
- * (4) `enable_2fa` - the user's own choice.
- * Added `two_fa_forced_by_admin` column (fillable/cast).
- * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu": added
- * `is_blocked` (independent of activation - "is this account allowed to log in RIGHT
- * NOW?") and `activated_at` ("was the account ever bootstrapped by the user at all?" -
- * only filled once the password is set via AccountActivationController::activate()).
- * `user_password_hash` is now nullable - `null` means "account is pending
- * activation", checked explicitly in AuthController::login() BEFORE Auth::attempt().
- * @refactor-note (2026-09-02) BACKLOG "explicit user permissions + admin role
- * removal":
- * - The hardcoded 'admin' role has been retired entirely (see migration SQL
- *   001_explicit_user_permissions_and_admin_role_removal.sql). `sysadmin` is now
- *   the ONLY hardcoded role in the whole application. `FORCED_2FA_ROLE_NAMES` is
- *   narrowed to `['sysadmin']` accordingly - any account that previously relied on
- *   the hardcoded 'admin' 2FA enforcement now gets it via the migrated 'manager'
- *   role's `forces_2fa = 1` flag instead (a normal, editable role setting).
- * - New `explicitPermissions()` relation + `user_permissions` pivot table: a user
- *   can be granted permission keys directly, on top of whatever their role grants.
- *   There is NO revoke/override concept - explicit permissions are strictly
- *   additive. `getPermissionsAttribute()` now returns the UNION of
- *   `role.permissions` and `user.explicitPermissions` (deduplicated by
- *   `permission_key`), so every consumer of `$user->permissions` (most
- *   importantly `CheckPermission` middleware) is upgraded automatically without
- *   needing any change on its own.
- * - New `getUserPermissionsAttribute()` appended attribute exposes the user's
- *   OWN explicit grants (id + permission_key pairs) separately from the
- *   effective union, so the admin edit form can show/prefill "extra permissions"
- *   without also re-listing everything the role already grants.
- * @bugfix-note (2026-10-26) `user_email` is normalized on every write (trim incl. invisible
- *   characters, lower case) - an e-mail with a trailing new line could not log in.
  */
 
 namespace App\Models;
@@ -78,10 +40,6 @@ class User extends Authenticatable
      * column - the check is hardcoded in code so it cannot be bypassed by editing
      * data. Must match FORCED_2FA_ROLE_NAMES in personal-info.component.ts and
      * administrators.component.ts.
-     * @refactor-note (2026-09-02) Narrowed to sysadmin-only - the 'admin' role no
-     * longer exists (removed, see migration SQL). Any custom role, including the
-     * 'manager' role that replaced 'admin', enforces 2FA via its own `forces_2fa`
-     * column instead of being hardcoded here.
      */
     public const FORCED_2FA_ROLE_NAMES = ['sysadmin'];
 
@@ -139,9 +97,8 @@ class User extends Authenticatable
 
     /**
      * @description Explicit, per-user permission grants IN ADDITION to whatever the
-     * user's role(s) already grant. Strictly additive - there is no mechanism to use
-     * this relation to revoke a permission the role itself grants (see project
-     * decision log: "Odebírání permission, které roli náleží, se neřeší").
+     * user's role(s) already grant. Strictly additive - this relation cannot revoke a
+     * permission the role itself grants.
      * @return BelongsToMany
      */
     public function explicitPermissions(): BelongsToMany
@@ -196,7 +153,7 @@ class User extends Authenticatable
 
     /**
      * @description Computes whether the user must go through 2FA verification at
-     * login - see priority order of sources in the file header refactor-note.
+     * login - see the priority order of the sources in the file header.
      * @return bool
      */
     public function requiresTwoFactor(): bool

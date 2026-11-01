@@ -1,11 +1,10 @@
 <!-- 
     @file: faq.component.html
     @path: /src/app/public/web-pages/faq/faq.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @bugfix-note (2026-10-31): open finding #64 - both phone rows of the contact sidebars render
-        only with a phone (none set, or switched off in the admin).
+    @description: Template of the faq component.
 -->
     
 @if (t && settings) {
@@ -64,15 +63,6 @@
           </div>
         <a routerLink="/contact" class="sidebar-cta-btn">{{ t?.sidebar_cta }} </a>
       </div>
-      <!-- <div class="sidebar-stats-card">
-        <div class="sidebar-stat"><span class="sidebar-stat-num">{{ filteredItems.length }}+</span><span class="sidebar-stat-label">{{ t?.stat_answers_label }}</span></div>
-        <div class="sidebar-stat-divider"></div>
-        <div class="sidebar-stat"><span class="sidebar-stat-num">{{ t?.stat_response_value }}</span><span class="sidebar-stat-label">{{ t?.stat_response_label }}</span></div>
-      </div> -->
-      <!-- <div class="sidebar-tip-card">
-        <div class="sidebar-tip-icon" aria-hidden="true">💡</div>
-        <p class="sidebar-tip-text" [innerHTML]="t?.tip_text"></p>
-      </div> -->
     </aside>
 
     <main class="faq-main">
@@ -98,15 +88,6 @@
       }
       
       <div class="faq-mobile-extras">
-        <!-- <div class="sidebar-stats-card">
-          <div class="sidebar-stat"><span class="sidebar-stat-num">{{ filteredItems.length }}+</span><span class="sidebar-stat-label">{{ t?.stat_answers_label }}</span></div>
-          <div class="sidebar-stat-divider"></div>
-          <div class="sidebar-stat"><span class="sidebar-stat-num">{{ t?.stat_response_value }}</span><span class="sidebar-stat-label">{{ t?.stat_response_label }}</span></div>
-        </div> -->
-        <!-- <div class="sidebar-tip-card">
-          <div class="sidebar-tip-icon" aria-hidden="true">💡</div>
-          <p class="sidebar-tip-text" [innerHTML]="t?.tip_text"></p>
-        </div> -->
         <div class="sidebar-card">
             <div class="sidebar-contact-list">
               <a [href]="emailHref" class="sidebar-contact-item">

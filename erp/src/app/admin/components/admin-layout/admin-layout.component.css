@@ -1,13 +1,10 @@
 /*     
     @file: admin-layout.component.css
     @path: /src/app/admin/components/admin-layout/admin-layout.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @redesign: 2026 - vizuální styl podle referenčního "Kravio" dashboardu (světlé
-               zaoblené karty, jemné stíny, tmavá "pill" aktivní položka v menu).
-               Veškerá logika (sbalování menu, resize, permission direktivy) je
-               beze změny - upraveny jsou jen barvy/rozměry/zaoblení tříd.
+    @description: Styles of the admin layout component.
 */
 
 :host {
@@ -37,8 +34,8 @@
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   display: flex;
-  flex-wrap: wrap;              /* NOVÉ - povolí zalomení na 2. řádek */
-  row-gap: 4px;                 /* NOVÉ - mezera mezi řádky po zalomení */
+  flex-wrap: wrap;              /* Allows wrapping to a second line */
+  row-gap: 4px;                 /* Gap between the lines after wrapping */
   align-items: center;
   z-index: 1100;
   padding: 0 20px 0 0;
@@ -46,15 +43,14 @@
   font-family: var(--ff);
   margin-top: 22px;
 }
-/* ── Levá skupina ────────────────────────────────────────────── */
+/* ── Left group ────────────────────────────────────────────── */
 .header-left {
   display: flex;
   align-items: center;
   gap: 0;
   flex-shrink: 0;
-  height: var(--header-h);      /* ZMĚNA z implicitního stretch(100%) - potřebuje
-                                    pevnou výšku, jakmile header přestane mít
-                                    fixní výšku kvůli wrapu */
+  height: var(--header-h);      /* Fixed height instead of the implicit stretch(100%) - needed once the header no longer
+                                    has a fixed height because of the wrap */
   overflow: hidden;
 }
 .menu-toggle-btn {
@@ -89,7 +85,7 @@
   height: 100%;
 }
 
-/* Dekorativní "logo" čtvereček - čistě CSS (::before), žádný zásah do HTML/bindings. */
+/* Decorative "logo" square - pure CSS (::before), no change to the HTML / bindings. */
 .header-brand-dot {
   width: 26px;
   height: 26px;
@@ -174,7 +170,7 @@
 .module-switcher {
   display: flex;
   align-items: center;
-  height: var(--header-h);      /* ZMĚNA ze 100% na pevnou hodnotu - stejný důvod */
+  height: var(--header-h);      /* Fixed value instead of 100% - same reason */
   margin-left: 8px;
   gap: 4px;
 }
@@ -207,12 +203,12 @@
   background: var(--accent);
 }
 
-/* ── Header pravá skupina ─────────────────────────────────────── */
+/* ── Header right group ─────────────────────────────────────── */
 .header-right {
   margin-left: auto;
   display: flex;
   align-items: center;
-  height: var(--header-h);      /* NOVÉ - pro konzistentní výšku i po zalomení */
+  height: var(--header-h);      /* Consistent height even after wrapping */
   gap: 8px;
   padding-left: 12px;
   flex-shrink: 0;
@@ -248,7 +244,7 @@
   background: var(--surface);
 }
 
-/* Hamburger pro mobilní panel - na desktopu skrytý, zobrazí se přes media query níže. */
+/* Hamburger of the mobile panel - hidden on desktop, shown by the media query below. */
 .mobile-actions-toggle {
   display: none;
   align-items: center;
@@ -269,7 +265,7 @@
   color: var(--text);
 }
 
-/* ── Mobilní vysouvací panel ─────────────────────────────────── */
+/* ── Mobile slide-out panel ─────────────────────────────────── */
 .mobile-actions-overlay {
   position: fixed;
   inset: 0;
@@ -545,7 +541,7 @@
   text-overflow: ellipsis;
 }
 
-/* Skupina dole (odhlášení) */
+/* Bottom group (logout) */
 .nav-group--bottom {
   margin-top: auto;
   border-top: 1px solid var(--border) !important;
@@ -639,9 +635,9 @@
   .header-action-label { display: none; }
   .header-lang-switcher{display: none;}
 
-  /* Na mobilu se do řádku headeru vejde jen menu-toggle + logo + hamburger.
-     Zbytek (uživatel, hodiny, přepínač modulů, maintenance, wiki/bug) se
-     přesouvá do vysouvacího panelu (viz .mobile-actions-panel výše). */
+  /* On mobile only menu-toggle + logo + hamburger fit into the header row.
+     The rest (user, clock, module switcher, maintenance, wiki / bug) moves into the
+     slide-out panel (see .mobile-actions-panel above). */
   .header-user { display: none; }
   .module-switcher { display: none; }
   .header-action-btn--wiki,

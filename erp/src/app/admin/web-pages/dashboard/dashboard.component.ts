@@ -1,72 +1,22 @@
 /**
  * @file dashboard.component.ts
  * @path src/app/admin/web-pages/dashboard/dashboard.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Central administrative dashboard component providing website-content
  * metrics, recent activity, and navigation shortcuts. Gated behind `web-view-dashboard`
  * permission.
  *
- * (Earlier refactor-notes for the WelcomePageComponent split, the Core/Web dashboard
- * split, the maintenance-mode card migration to `web/settings`, TTL cache + manual
- * refresh, and the permission-aware stat/nav/activity/maintenance filtering are
- * unchanged - see version history, omitted here for brevity.)
- *
- * @refactor-note (2026-09-07) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * + VIZUÁLNÍ REFAKTOR (sjednoceno s `CoreDashboardComponent`, viz jeho refactor-note
- * stejné datum pro plné odůvodnění vzoru):
- * - `translationSection`/`t()` doplněny stejně jako u `CoreDashboardComponent`/
- *   `UserRequestComponent`. `ActivityLog`/`QuickStat`/`NavSection` z dřívějšího
- *   `import { ... } from './'` NAHRAZENY lokálními typy (`WebDashboardStatDef`,
- *   `NavSectionWithPermission`, ...) nesoucími překladové KLÍČE (`labelKey`/
- *   `titleKey`/`descriptionKey`), ne hotový text ani pevnou barvu z `QuickStat.color`
- *   union - černobílá paleta z `admin-layout` žádnou per-modul barvu nepotřebuje.
- *   Sdílený `./` barrel touhle změnou není dotčen - jen ho tento soubor přestal
- *   importovat, jiné komponenty ho můžou používat dál beze změny.
- * - Bývalá "otevřené tickety mění barvu podle počtu" logika nahrazena sémanticky
- *   čistším `urgent` příznakem (`openTickets > 0`) - zvýrazní se `--warning` tokenem
- *   POUZE když je to skutečně naléhavé, ne jako dekorace.
- * - `eventTypeLabel()`/`eventTypeClass()` přepsány na klíče - navíc oproti Core verzi
- *   nesou `export`/`payment`, zmapované na `ev-export`/`ev-create` třídy.
- * - `currentDateTime`/`formatDate()` respektují `i18n.getDateLocale()` místo natvrdo
- *   `'cs-CZ'`.
- * - NOVÉ widgety (bez jakéhokoliv nového API volání, jen přepočet už načtených dat):
- *   `heroStat`/`secondaryStats`/`statBarPct()` - stejný hero + comparison-bars vzor
- *   jako `CoreDashboardComponent`. `distributionSegments` - PLNOŠÍŘKOVÁ segmentovaná
- *   tyč srovnávající VŠECHNY povolené moduly vedle sebe najednou - druhý graf navíc,
- *   který dává smysl jen u dashboardu s 7 moduly. `activityBreakdown`/
- *   `computeActivityBreakdown()` - rozklad POSLEDNÍCH načtených `recentActivity`
- *   záznamů podle `eventTypeClass()`, stejně jako u `CoreDashboardComponent`.
- * - Karta "Režim údržby" zůstává funkčně BEZE ZMĚNY - jen texty přes `t()`.
- *
- * @refactor-note (2026-09-07v2) BACKLOG "výběr metriky v hero dlaždici": `QuickStat`
- * dostal `selectedHeroKey`/`heroDropdownOpen` + trojici metod
- * (`toggleHeroDropdown`/`selectHeroStat`/`closeHeroDropdown`), stejný vzor jako
- * `CoreDashboardComponent` (viz jeho refactor-note stejné datum pro plné vysvětlení).
- * `heroStat`/`secondaryStats` gettery přepsány stejně - `secondaryStats` je vždy
- * "všechno kromě aktuálně zvoleného hero", ne natvrdo `.slice(1)`.
- * `distributionSegments` zůstává BEZE ZMĚNY - ukazuje VŠECH 7 modulů bez ohledu na to,
- * který z nich je zrovna v hero dlaždici, protože jde o nezávislý srovnávací graf.
- *
  * @dependencies
- * - BaseDataComponent: Poskytuje errorMessage/cd/alertDialogService/i18n.
+ * - BaseDataComponent: Provides errorMessage / cd / alertDialogService / i18n.
  * - LoadingService: Manages global loading states.
  * - DataHandler: Facilitates API communication for dashboard aggregation endpoints.
- * - HasPermissionDirective: Gate karty údržby a aktivity na příslušný permission klíč.
- * - PermissionService: Synchronní kontrola permission klíčů - řídí, které dílčí
- *   stat/nav/activity/maintenance požadavky se vůbec pošlou.
- * - ResourceCacheService: TTL cache pro stats/activity/maintenance fetch.
+ * - HasPermissionDirective: Gates the maintenance and activity cards on their permission keys.
+ * - PermissionService: Synchronous check of permission keys - decides which stat / nav /
+ *   activity / maintenance requests are sent at all.
+ * - ResourceCacheService: TTL cache of the stats / activity / maintenance fetch.
  * - RxJS: Handles asynchronous data aggregation using forkJoin.
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `currentDateTime`.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): stat totals from
- *  `meta.total`, recent activity from `data`.
- * @bugfix-note (2026-10-27) The "Edit website" navigation card required the old key
- *   `web-view-edit-website` - now `web-edit-website-view` (same as the route, sidebar and API).
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -99,7 +49,7 @@ interface ActivityLog {
 
 /**
  * @description A single aggregated metric tile shown in the stats grid. Carries a
- * translation KEY, not resolved text or a fixed palette color - see refactor-note
+ * translation KEY, not resolved text or a fixed palette color
  * (2026-09-07) in the file header. `key` identifies the tile for the hero-selector
  * dropdown (2026-09-07v2).
  */
@@ -108,7 +58,7 @@ interface QuickStat {
   labelKey: string;
   value: number | string;
   icon: string;
-  /** True only for "otevřené tickety" when the count is > 0 - the one metric on this dashboard that is genuinely actionable/urgent, not decorative. */
+  /** True only for "open tickets" when the count is > 0 - the one metric on this dashboard that is genuinely actionable/urgent, not decorative. */
   urgent?: boolean;
 }
 
@@ -174,14 +124,11 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
   private sanitizer = inject(DomSanitizer);
   private resourceCache = inject(ResourceCacheService);
   override permissionService = inject(PermissionService);
-  // Pozn.: `alertDialogService` se ZDE ZÁMĚRNĚ znovu nedeklaruje - už ho poskytuje
-  // zděděný BaseDataComponent, stačí `this.alertDialogService`.
+  // Note: `alertDialogService` is deliberately NOT declared again here - the inherited
+  // BaseDataComponent already provides it as `this.alertDialogService`.
 
   override apiEndpoint = 'core/users';
 
-  /**
-   * @refactor-note (2026-09-07) i18n - stejný vzor jako `CoreDashboardComponent.t()`.
-   */
   protected override translationSection: string = 'web-dashboard';
   public override t(key: string): string {
     return this.i18n.getValue(`web-dashboard.${key}`);
@@ -193,15 +140,14 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
   private readonly ACTIVITY_CACHE_KEY = 'web-dashboard:activity';
   private readonly MAINTENANCE_CACHE_KEY = 'web-dashboard:maintenance';
 
-  /** Permission klíč, který stránka `web/settings` (maintenance) v api.php vyžaduje. */
+  /** Permission key required by the `web/settings` (maintenance) endpoint in api.php. */
   private readonly MAINTENANCE_PERMISSION = 'web-set-maintenance-mode';
-  /** Permission klíč, který endpoint `web/logs` (GET) v api.php vyžaduje. */
+  /** Permission key required by the `web/logs` (GET) endpoint in api.php. */
   private readonly LOGS_PERMISSION = 'web-view-web-logs';
 
   /**
-   * Jediné místo pravdy pro stat karty dashboardu - `loadStats()` z tohoto pole
-   * vyfiltruje jen položky, na které má přihlášený uživatel dané `permission`, a JEN
-   * za ty pošle request.
+   * Single source of truth of the dashboard stat cards - `loadStats()` keeps only the items the
+   * logged-in user has the `permission` for and sends requests ONLY for those.
    */
   private readonly STAT_DEFS: WebDashboardStatDef[] = [
     { key: 'news', permission: 'web-news-view', labelKey: 'stat_news_label', icon: 'newspaper', endpoint: 'web/news?per_page=1' },
@@ -219,21 +165,17 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
   recentActivity: ActivityLog[] = [];
   loadingActivity = true;
 
-  /** Rozklad `recentActivity` podle `eventTypeClass()` - viz refactor-note v hlavičce. */
+  /** Breakdown of `recentActivity` by `eventTypeClass()`. */
   activityBreakdown: ActivityBreakdownEntry[] = [];
 
-  /** Kdy naposledy proběhlo úspěšné načtení dashboardu - zobrazeno v hlavičce. */
+  /** Time of the last successful dashboard load - shown in the header. */
   lastUpdatedAt: Date | null = null;
   isRefreshing = false;
 
-  /**
-   * @refactor-note (2026-09-07v2) Výběr metriky pro hero dlaždici - `null` = výchozí
-   * chování (první povolená metrika). Viz `heroStat` getter a `selectHeroStat()`.
-   */
   selectedHeroKey: string | null = null;
   heroDropdownOpen = false;
 
-  // ── Režim údržby webu ────────────────────────────────────────────
+  // ── Web maintenance mode ────────────────────────────────────────────
   isWebActive = true;
   webMaintenanceMessage = '';
   showWebMaintenanceModal = false;
@@ -252,18 +194,18 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
   ];
 
   /**
-   * @description Podmnožina `navSections`, na kterou má přihlášený uživatel právo -
-   * šablona nad tímto getterem iteruje místo nad `navSections` přímo.
+   * @description Subset of `navSections` the logged-in user may access - the template iterates
+   * this getter instead of `navSections` directly.
    */
   get visibleNavSections(): NavSectionWithPermission[] {
     return this.navSections.filter(section => this.permissionService.hasPermission(section.permission));
   }
 
   /**
-   * @description Metrika zvýrazněná v hero dlaždici - buď admin zvolená přes dropdown
-   * (`selectedHeroKey`), nebo (výchozí/fallback) první povolená metrika v `quickStats`.
-   * Pokud dřív zvolený `key` mezi aktuálně povolenými metrikami už není, `find()`
-   * vrátí `undefined` a `??` tiše spadne zpět na `quickStats[0]`.
+   * @description Metric highlighted in the hero tile - either chosen by the admin in the dropdown
+   * (`selectedHeroKey`) or (default / fallback) the first allowed metric of `quickStats`. When
+   * the earlier chosen `key` is no longer among the allowed metrics, `find()` returns
+   * `undefined` and `??` falls back to `quickStats[0]`.
    */
   get heroStat(): QuickStat | null {
     if (this.quickStats.length === 0) return null;
@@ -271,24 +213,14 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
   }
 
   /**
-   * @description Zbývající povolené metriky (VŠECHNO kromě aktuálně zvoleného hero) -
-   * vykresleny jako srovnávací pruhový graf.
+   * @description The remaining allowed metrics (EVERYTHING except the current hero) - rendered as
+   * a comparison bar chart.
    */
   get secondaryStats(): QuickStat[] {
     const heroKey = this.heroStat?.key;
     return this.quickStats.filter(s => s.key !== heroKey);
   }
 
-  /**
- * @refactor-note (2026-09-07v4) BACKLOG "logy jsou o řády větší než ostatní moduly":
- * lineární škála (value / max) dělala z jakéhokoliv modulu vedle `core_logs`/`web_logs`
- * (stovky až tisíce záznamů) vizuálně neviditelný pruh, i když číselně šlo o desítky
- * záznamů. Přepnuto na LOGARITMICKOU škálu šířky pruhu - zobrazená HODNOTA
- * (`{{ stat.value }}`) zůstává přesné číslo, mění se jen vizuální reprezentace jeho
- * podílu na pruhu, takže menší moduly dostanou čitelnou, nenulovou šířku i vedle
- * řádově většího modulu. `log(0)` je nedefinované, proto nulové hodnoty (typicky
- * "Otevřené tickety: 0") dostávají pevných 4 % místo pokusu o log(0)/NaN.
- */
 private get maxStatLog(): number {
   const numericValues = this.quickStats.map(s => typeof s.value === 'number' ? s.value : 0);
   const max = Math.max(1, ...numericValues);
@@ -299,35 +231,22 @@ statBarPct(stat: QuickStat): number {
   const value = typeof stat.value === 'number' ? stat.value : 0;
   if (value <= 0) return 4;
   const pct = (Math.log(value + 1) / this.maxStatLog) * 100;
-  // Dolní hranice 8 % - i hodnota o mnoho řádů menší než max zůstane vizuálně patrná
-  // jako pruh, ne jako tenká čárka.
+  // Lower bound of 8 % - even a value many orders smaller than the max stays visible
+  // as a bar, not as a thin line.
   return Math.max(8, Math.round(pct));
 }
 
   /**
-   * @description PLNOŠÍŘKOVÝ segmentovaný pruh srovnávající VŠECHNY povolené moduly
-   * najednou (ne jen `secondaryStats`, ne omezeno hero volbou) - druhý, doplňkový graf
-   * k hero+bars kombinaci. Monochromatický: každý segment má stejnou `--accent` barvu,
-   * jen klesající opacitu podle pořadí (největší modul = nejtmavší).
+   * @description FULL-WIDTH segmented bar comparing ALL allowed modules at once (not only
+   * `secondaryStats`, not limited by the hero choice) - a second chart next to the hero + bars
+   * combination. Monochrome: every segment has the same `--accent` color, only a decreasing
+   * opacity by rank (largest module = darkest).
    */
- /**
- * @refactor-note (2026-09-07v5) BACKLOG "logy jsou o řády větší než ostatní moduly"
- * (stejný problém jako `statBarPct()`, viz jeho refactor-note (2026-09-07v4)):
- * procentuální podíl na CELKOVÉM SOUČTU (`value / total`) měl stejnou vadu jako dřívější
- * lineární `statBarPct()` - u poměru typu 374:20:3:3:3:1:0 zabraly `core_logs`/`web_logs`
- * přes 90 % šířky tyče a zbylých 6 modulů bylo vizuálně na hranici viditelnosti/nuly.
- * Segmenty teď váží LOGARITMEM hodnoty (`log(value + 1)`), ne hodnotou samotnou - `pct`
- * pak není doslovné "procento z celkového počtu záznamů", ale relativní VIZUÁLNÍ váha
- * segmentu v tyči. `value`/legenda pod tyčí zůstávají přesná čísla beze změny - jen
- * šířka segmentu je teď čitelná i pro řádově menší moduly. `log(0)` nedefinované, proto
- * nulové hodnoty (typicky "Otevřené tickety: 0") dostávají pevnou minimální váhu místo
- * pokusu o log(0)/NaN - segment se v tyči pořád zobrazí (tenký), ne že by úplně zmizel.
- */
 get distributionSegments(): DistributionSegment[] {
   const numericStats = this.quickStats.filter(s => typeof s.value === 'number') as (QuickStat & { value: number })[];
   if (numericStats.length === 0) return [];
 
-  /** Minimální log-váha pro nulové hodnoty - odpovídá přibližně hodnotě "1" na logu. */
+  /** Minimum log weight of zero values - roughly the value "1" on the log scale. */
   const ZERO_WEIGHT = 0.35;
 
   const weighted = numericStats.map(stat => ({
@@ -335,8 +254,6 @@ get distributionSegments(): DistributionSegment[] {
     weight: stat.value > 0 ? Math.log(stat.value + 1) : ZERO_WEIGHT,
   }));
 
-  // @refactor-note (2026-10-22) Every weight is > 0 (log(v + 1) for v > 0, ZERO_WEIGHT otherwise),
-  // so the former unreachable `totalWeight === 0` guard was removed.
   const totalWeight = weighted.reduce((sum, w) => sum + w.weight, 0);
 
   const sorted = [...weighted].sort((a, b) => b.stat.value - a.stat.value);
@@ -360,8 +277,8 @@ get distributionSegments(): DistributionSegment[] {
   }
 
   /**
-   * Knihovna ikon použitých na dashboardu - klíč odpovídá hodnotě `icon` v
-   * `QuickStat`/`NavSection`. Bez `viewBox`, velikost na obrazovce řídí CSS.
+   * Icon library of the dashboard - the key matches the `icon` value of `QuickStat` /
+   * `NavSection`. No `viewBox`, the on-screen size is set by CSS.
    */
   private readonly ICONS: Record<string, string> = {
     logs: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/></svg>`,
@@ -374,7 +291,7 @@ get distributionSegments(): DistributionSegment[] {
     inbox: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>`,
   };
 
-  /** @description event_type -> překladový klíč pro `eventTypeLabel()`. */
+  /** @description event_type -> translation key for `eventTypeLabel()`. */
   private readonly EVENT_TYPE_LABEL_KEYS: Record<string, string> = {
     create: 'ev_label_create',
     update: 'ev_label_update',
@@ -386,14 +303,14 @@ get distributionSegments(): DistributionSegment[] {
     payment: 'ev_label_payment',
   };
 
-  /** @description event_type -> CSS badge třída. `export`/`payment` navíc oproti CoreDashboardComponent. */
+  /** @description event_type -> CSS badge class. `export` / `payment` in addition to CoreDashboardComponent. */
   private readonly EVENT_TYPE_CLASS_MAP: Record<string, string> = {
     create: 'ev-create', update: 'ev-update', soft_delete: 'ev-delete',
     hard_delete: 'ev-delete', restore: 'ev-restore',
     export: 'ev-export', error: 'ev-error', payment: 'ev-create',
   };
 
-  /** @description `eventTypeClass()` CSS klíč -> překladový klíč pro "rozklad posledních událostí" widget. */
+  /** @description `eventTypeClass()` CSS key -> translation key of the "recent events breakdown" widget. */
   private readonly BREAKDOWN_LABEL_KEYS: Record<string, string> = {
     'ev-create': 'breakdown_create_label',
     'ev-update': 'breakdown_update_label',
@@ -411,11 +328,6 @@ get distributionSegments(): DistributionSegment[] {
   ) {
     super(dataHandler, cd, genericTableService);
 
-    /**
-     * @refactor-note (2026-09-07) Stejný minimalistický vzor jako
-     * `CoreDashboardComponent`/`GraphBuilderComponent` - žádné pole se nepřestavuje,
-     * jen se OnPush komponenta donutí přehodnotit šablonu při přepnutí jazyka.
-     */
     this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
   }
 
@@ -431,8 +343,8 @@ get distributionSegments(): DistributionSegment[] {
   }
 
   /**
-   * @description Ruční "Aktualizovat" - obchází TTL cache pro všechny tři sekce
-   * dashboardu (stats + activity + maintenance) a vynutí čerstvý fetch.
+   * @description Manual "Refresh" - bypasses the TTL cache of all three dashboard sections
+   * (stats + activity + maintenance) and forces a fresh fetch.
    */
   refresh(): void {
     if (this.isRefreshing) return;
@@ -445,37 +357,25 @@ get distributionSegments(): DistributionSegment[] {
     this.loadWebMaintenanceStatus();
   }
 
-  /**
-   * @refactor-note (2026-09-07v2) Otevře/zavře dropdown pro výběr hero metriky.
-   */
   toggleHeroDropdown(): void {
     this.heroDropdownOpen = !this.heroDropdownOpen;
   }
 
   /**
-   * @refactor-note (2026-09-07v2) Zvolí jinou metriku do hero dlaždice a dropdown
-   * zavře.
-   * @param key `QuickStat.key` zvolené metriky.
+   * @param key `QuickStat.key` of the chosen metric.
    */
   selectHeroStat(key: string): void {
     this.selectedHeroKey = key;
     this.heroDropdownOpen = false;
   }
 
-  /**
-   * @refactor-note (2026-09-07v2) Zavře dropdown bez výběru - volá backdrop overlay v
-   * šabloně (klik mimo dropdown).
-   */
   closeHeroDropdown(): void {
     this.heroDropdownOpen = false;
   }
 
   /**
    * @description Aggregates statistical data from every website-content module the
-   * current user is permitted to see, concurrently using forkJoin. Přes TTL cache.
-   * @bugfix-note (2026-10-22) Bez oprávnění k jakékoli statistice je `forkJoin({})` prázdný -
-   * dokončí se BEZ emise, `next` se nezavolá a dashboard zůstal navždy ve stavu načítání
-   * (a `isRefreshing` blokoval tlačítko obnovit). Prázdný seznam se teď vyřídí hned.
+   * current user is permitted to see, concurrently using forkJoin. Through the TTL cache.
    */
   private loadStats(): void {
     this.loadingStats = true;
@@ -524,7 +424,7 @@ get distributionSegments(): DistributionSegment[] {
   /**
    * @description Fetches the latest business-level events for the activity feed AND
    * the "recent events breakdown" widget (`activityBreakdown` - computed client-side
-   * from the same rows, no extra request). Přes TTL cache.
+   * from the same rows, no extra request). Through the TTL cache.
    */
   private loadRecentActivity(): void {
     if (!this.permissionService.hasPermission(this.LOGS_PERMISSION)) {
@@ -593,13 +493,11 @@ get distributionSegments(): DistributionSegment[] {
     return this.EVENT_TYPE_CLASS_MAP[type] ?? 'ev-default';
   }
 
-  // ── Režim údržby webu ────────────────────────────────────────────
+  // ── Web maintenance mode ────────────────────────────────────────────
 
   /**
-   * @description Načte aktuální stav režimu údržby webu z `web/settings`, přes krátkou
-   * TTL cache (1 min). Volá se samostatně od `loadStats()`/`loadRecentActivity()`.
-   * @bugfix-note (2026-10-22) Doplněn `error` handler - chyba požadavku dřív skončila jako
-   * neošetřená RxJS chyba; teď se jen ponechá poslední známý stav (výchozí "web aktivní").
+   * @description Loads the current web maintenance state from `web/settings`, through a short
+   * TTL cache (1 min). Called separately from `loadStats()` / `loadRecentActivity()`.
    */
   private loadWebMaintenanceStatus(): void {
     if (!this.permissionService.hasPermission(this.MAINTENANCE_PERMISSION)) {
@@ -634,8 +532,8 @@ get distributionSegments(): DistributionSegment[] {
   }
 
   /**
-   * @description Odešle změnu stavu webu na `web/settings`. Po úspěchu invaliduje
-   * maintenance cache klíč, ať další čtení (i jinde v adminu) odráží novou hodnotu.
+   * @description Sends the web state change to `web/settings`. Invalidates the maintenance cache
+   * key on success, so the next read (also elsewhere in the admin) reflects the new value.
    */
   submitWebMaintenanceChange(): void {
     if (!this.webConfirmPasswordValue.trim()) {

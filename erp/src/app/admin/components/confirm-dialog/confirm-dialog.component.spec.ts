@@ -1,8 +1,8 @@
 /**
  * @file confirm-dialog.component.spec.ts
  * @path src/app/admin/components/confirm-dialog/confirm-dialog.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ConfirmDialogComponent – the yes/no dialog used by ConfirmDialogService
  *   (visibility, scroll lock, confirm / cancel events).

@@ -2,8 +2,8 @@
 /**
  * @file ShopLogResource.php
  * @path app/Http/Resources/Shop/ShopLogResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Resource transformation for system audit logs.
  */

@@ -1,18 +1,10 @@
 /**
  * @file services.component.ts
  * @path src/app/public/web-pages/services/services.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
- * @refactor-note (2026-09) BACKLOG "zjednodušení stránky služeb": odstraněny
- *     tech záložky, sidebar stat karty, AI kategorie a s nimi spojená logika
- *     (currentTech, selectTech, currentServices, currentPricing, currentInfoHeader,
- *     currentMainText, technologies array, ActivatedRoute queryParams subscription).
- *     Stránka je nyní jednotný celek - `t.services` pro FAQ, `t.pricing` přímo
- *     (ne per-tech), `t.service_main_text` a `t.info_header` jako scalar klíče.
- *     Tabulka cen zachována ale bez cenového řádku - `pm-pkg-price` odstraněn
- *     ze šablony, data v JSON ho neobsahují.
- * @refactor-note (2026-10-21) Removed unused imports.
+ * @description Services page of the public web.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -68,8 +60,6 @@ services_4: string = "assets/images/services/services-card4.svg";
 
 /**
  * @description Builds the feature cards from the `services.cards` translations.
- * @bugfix-note (2026-10-23) The card tags were hardcoded Czech arrays (open finding #44) - they are
- *   `cards.<key>_tags` arrays in the translations now.
  */
 protected override onTranslationsLoaded(): void {
   this.featureCards = [

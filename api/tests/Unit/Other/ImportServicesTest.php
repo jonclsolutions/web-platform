@@ -3,8 +3,8 @@
 /**
  * @file ImportServicesTest.php
  * @path api/tests/Unit/Other/ImportServicesTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the shared import building blocks: ImportFileParser (formats,
  *   MIME check, headers, row limit, JSON shape), ImportRowValidator (rules of a store request)

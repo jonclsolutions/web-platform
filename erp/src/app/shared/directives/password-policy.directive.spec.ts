@@ -1,9 +1,9 @@
 /**
  * @file password-policy.directive.spec.ts
  * @path src/app/shared/directives/password-policy.directive.spec.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-23
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Unit tests of PasswordPolicyDirective: a template-driven `ngModel` input gets the
  *   password policy (Unicode rules, finding #37) when `[appPasswordPolicy]` is true.
  */

@@ -3,8 +3,8 @@
 /**
  * @file LogsActivityTest.php
  * @path api/tests/Unit/Core/LogsActivityTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the LogsActivity trait (audit log writer): actor and IP,
  *   credentials never logged, per-call excluded keys, uploaded files (name + size only),

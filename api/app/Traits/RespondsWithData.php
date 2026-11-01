@@ -2,9 +2,9 @@
 /**
  * @file RespondsWithData.php
  * @path app/Traits/RespondsWithData.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-24
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description The ONE response envelope of the API (open finding #6). Every successful answer
  *   that carries a payload is `{ "data": … }`, optionally with `"meta": { … }` beside it:
  *   - one record / result  → `{ data: {…} }`            (`respond()`, 201 via `$status`)

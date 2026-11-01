@@ -1,21 +1,12 @@
 /**
  * @file reset-password.component.ts
  * @path src/app/admin/auth/reset-password/reset-password.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Public page (no auth guard) opened from the password-reset e-mail link.
  *              The token is read from the `token` query parameter; the backend verifies it
  *              (existence, expiry, single use) only when the form is submitted.
- *
- * @refactor-note (2026-08) `passwordStrength`/`passwordStrengthLabel` (0-4 meter) replaced
- * by the shared `PasswordRequirementsChecklistComponent`. `minlength` aligned with the
- * shared policy (`PASSWORD_MIN_LENGTH`/`MAX`). Live `passwordsMismatch` getter added.
- * @refactor-note (2026-10-01) Client-side policy pre-check via shared `isPasswordValid()`
- * (submit is disabled until the password meets the policy and both fields match), so
- * obviously invalid input no longer reaches the API and produces 422s. The backend
- * (ResetPasswordRequest) stays authoritative. Copy translated to English; redirect timer
- * is now cleared on destroy; double-submit guard added; 422 field errors are surfaced.
  *
  * @dependencies
  * - AuthService: calls the /forgot-password and /reset-password endpoints.
@@ -23,9 +14,6 @@
  * - Router: redirects back to sign-in after a successful reset.
  * - PasswordRequirementsChecklistComponent: live visual checklist of the password rules.
  * - shared/utils/password-validation: `isPasswordValid()` - same rules as the backend.
- * @bugfix-note (2026-10-23) Open finding #39: the page was English-only (template texts and the
- *   error messages); everything comes from the admin translations `reset-password` now. API error
- *   texts (English) are no longer shown - the status decides the translated message.
  */
 
 import { Component, ChangeDetectorRef, OnDestroy, OnInit } from '@angular/core';

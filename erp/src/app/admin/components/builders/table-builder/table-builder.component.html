@@ -1,18 +1,11 @@
-<!-- 
+<!--
     @file: table-builder.component.html
     @path: /src/app/admin/components/builders/table-builder/table-builder.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    ... (ponechat všechny předchozí @refactor-note komentáře beze změny) ...
-    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
-        všechny natvrdo psané české texty a title/aria-label atributy nahrazeny
-        `strings.*` bindingy (AdminLocalizationService, sekce 'table-builder') -
-        viz table-builder.component.ts stejné datum. Dynamický text s proměnnou
-        (řádkové aria-label, počet vybraných) řeší metody/gettery v .ts
-        (rowSelectAriaLabel(), bulkCountLabel()), NE inline .replace() v šabloně.
-        `button.header_name`/`button.display_name` beze změny - přichází z
-        *.config.ts, není součástí téhle migrace (viz .ts hlavička).
+    @description Template of the generic admin table (toolbar, active / trash table, row
+    actions, bulk actions, pagination, export / import / graph popups).
 -->
 
 @if (selectedIds.size > 0) {

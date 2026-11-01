@@ -1,27 +1,26 @@
 /**
  * @file loading.interceptor.spec.ts
  * @path src/app/core/interceptors/loading.interceptor.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Důkladná testovací sada pro LoadingInterceptor.
+ * @description Thorough test suite of LoadingInterceptor.
  *
- * KLÍČOVÉ ASPEKTY, KTERÉ TESTUJEME:
- *  - 500ms debounce před zobrazením loaderu (rychlé requesty ho vůbec nespustí)
- *  - `activeRequests` čítač u souběžných requestů (hide() se volá až když čítač
- *    klesne zpět na 0, ne po dokončení JAKÉHOKOLI requestu)
- *  - `clearTimeout` skutečně zruší naplánovaný `show()`, pokud request skončí dřív
- *  - chování při chybové odpovědi (finalize se spustí i na error cestě)
- *  - DŮLEŽITÁ NUANCE: `hide()` se zavolá i v případě, že `show()` NIKDY nebyl
- *    zavolán (rychlý request) — dokumentujeme to jako současné chování.
- *  - DŮLEŽITÁ NUANCE: každý request má svůj VLASTNÍ setTimeout, takže při více
- *    souběžných pomalých requestech se `show()` může zavolat vícekrát (není to
- *    globálně deduplikované) — otestováno explicitně.
+ * KEY ASPECTS UNDER TEST:
+ *  - 500 ms debounce before the loader shows (fast requests never start it)
+ *  - the `activeRequests` counter of concurrent requests (hide() is called only when the
+ *    counter drops back to 0, not when ANY request finishes)
+ *  - `clearTimeout` really cancels the scheduled `show()` when the request ends earlier
+ *  - behaviour on an error response (finalize runs on the error path too)
+ *  - IMPORTANT NUANCE: `hide()` is called even when `show()` was NEVER called (fast
+ *    request) - documented as the current behaviour.
+ *  - IMPORTANT NUANCE: every request has its OWN setTimeout, so with several concurrent slow
+ *    requests `show()` may be called more than once (not deduplicated globally) - tested
+ *    explicitly.
  *
- * Používáme `fakeAsync` + `tick()`, protože interceptor pracuje s reálným
- * `setTimeout`. Každý test musí buď dotáhnout HTTP request do konce (flush/error),
- * nebo explicitně odtikat čas, jinak `fakeAsync` na konci testu nahlásí
- * "X timer(s) still in the queue."
+ * Uses `fakeAsync` + `tick()`, because the interceptor works with a real `setTimeout`. Every
+ * test must either finish the HTTP request (flush / error) or tick the time explicitly,
+ * otherwise `fakeAsync` reports "X timer(s) still in the queue." at the end of the test.
  */
 
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
@@ -63,18 +62,18 @@ describe('LoadingInterceptor', () => {
   });
 
   // ---------------------------------------------------------------------
-  // Rychlý request (dokončí se dřív než za 500ms)
+  // Fast request (finishes before 500 ms)
   // ---------------------------------------------------------------------
   describe('rychlý request (< 500ms)', () => {
     it('NEMĚLO by zavolat loadingService.show(), pokud request skončí před uplynutím 500ms', fakeAsync(() => {
       http.get('/test').subscribe();
       const req = httpMock.expectOne('/test');
 
-      tick(100); // requst "trvá" jen 100ms
+      tick(100); // the request "takes" only 100 ms
       req.flush({});
 
-      // Ověříme, že ani po uplynutí zbytku původních 500ms se show() nezavolá,
-      // protože finalize() mezitím zavolal clearTimeout().
+      // Checks that show() is not called even after the rest of the original 500 ms,
+      // because finalize() called clearTimeout() in the meantime.
       tick(400);
 
       expect(loadingServiceSpy.show).not.toHaveBeenCalled();
@@ -97,13 +96,13 @@ describe('LoadingInterceptor', () => {
       const req = httpMock.expectOne('/test');
       req.flush({});
 
-      tick(5000); // i po dlouhé době žádný zpožděný show() nenastane
+      tick(5000); // no delayed show() happens even after a long time
       expect(loadingServiceSpy.show).not.toHaveBeenCalled();
     }));
   });
 
   // ---------------------------------------------------------------------
-  // Pomalý request (trvá déle než 500ms)
+  // Slow request (takes longer than 500 ms)
   // ---------------------------------------------------------------------
   describe('pomalý request (> 500ms)', () => {
    it('by mělo zavolat loadingService.show() po uplynutí 500ms, pokud request stále běží', fakeAsync(() => {
@@ -124,7 +123,7 @@ describe('LoadingInterceptor', () => {
       tick(500);
       expect(loadingServiceSpy.show).toHaveBeenCalledTimes(1);
 
-      tick(1000); // request "běží" dál
+      tick(1000); // the request keeps "running"
       req.flush({});
 
       expect(loadingServiceSpy.hide).toHaveBeenCalledTimes(1);
@@ -137,7 +136,7 @@ describe('LoadingInterceptor', () => {
       tick(499);
       expect(loadingServiceSpy.show).not.toHaveBeenCalled();
 
-      tick(1); // dorovnání do přesně 500ms
+      tick(1); // up to exactly 500 ms
       expect(loadingServiceSpy.show).toHaveBeenCalledTimes(1);
 
       req.flush({});
@@ -145,7 +144,7 @@ describe('LoadingInterceptor', () => {
   });
 
   // ---------------------------------------------------------------------
-  // Souběžné requesty — activeRequests čítač
+  // Concurrent requests - activeRequests counter
   // ---------------------------------------------------------------------
   describe('souběžné requesty (activeRequests čítač)', () => {
     it('NEMĚLO by zavolat hide() po dokončení PRVNÍHO ze dvou souběžných requestů — jen po dokončení POSLEDNÍHO', fakeAsync(() => {
@@ -158,13 +157,13 @@ describe('LoadingInterceptor', () => {
       tick(100);
       reqFirst.flush({});
 
-      // Pořád běží druhý request, takže by se hide() ještě neměl zavolat.
+      // The second request is still running, so hide() must not be called yet.
       expect(loadingServiceSpy.hide).not.toHaveBeenCalled();
 
       tick(100);
       reqSecond.flush({});
 
-      // Až teď, když activeRequests kleslo na 0, by se mělo zavolat hide().
+      // Only now, when activeRequests dropped to 0, hide() should be called.
       expect(loadingServiceSpy.hide).toHaveBeenCalledTimes(1);
     }));
 
@@ -177,7 +176,7 @@ describe('LoadingInterceptor', () => {
 
       tick(500);
 
-      // Každý request měl svůj vlastní 500ms timer, oba stále běží -> show() 2x.
+      // Every request had its own 500 ms timer, both still running -> show() twice.
       expect(loadingServiceSpy.show).toHaveBeenCalledTimes(2);
 
       reqFirst.flush({});
@@ -193,19 +192,19 @@ describe('LoadingInterceptor', () => {
       const reqB = httpMock.expectOne('/b');
       const reqC = httpMock.expectOne('/c');
 
-      reqB.flush({}); // dokončí se prostřední jako první
+      reqB.flush({}); // the middle one finishes first
       expect(loadingServiceSpy.hide).not.toHaveBeenCalled();
 
       reqC.flush({});
       expect(loadingServiceSpy.hide).not.toHaveBeenCalled();
 
-      reqA.flush({}); // poslední zbývající
+      reqA.flush({}); // the last remaining one
       expect(loadingServiceSpy.hide).toHaveBeenCalledTimes(1);
     }));
   });
 
   // ---------------------------------------------------------------------
-  // Chybová odpověď — finalize musí proběhnout i na error cestě
+  // Error response - finalize must run on the error path too
   // ---------------------------------------------------------------------
   describe('chybová odpověď', () => {
     it('by mělo zavolat hide(), i když request skončí chybou (finalize běží i na error cestě)', fakeAsync(() => {
@@ -250,7 +249,7 @@ describe('LoadingInterceptor', () => {
   });
 
   // ---------------------------------------------------------------------
-  // Sekvenční requesty (jeden po druhém, ne souběžně)
+  // Sequential requests (one after another, not concurrent)
   // ---------------------------------------------------------------------
   describe('sekvenční requesty (jeden po druhém)', () => {
     it('by mělo nezávisle spravovat show/hide pro každý samostatný request', fakeAsync(() => {

@@ -2,8 +2,8 @@
 /**
  * @file StoreCoreExternalLinkRequest.php
  * @path app/Http/Requests/Core/CoreExternalLink/StoreCoreExternalLinkRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation rules for creating a new CoreExternalLink. Authorization
  * (permission `core-external-links-create`) is enforced at the route/middleware level

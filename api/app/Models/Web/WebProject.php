@@ -2,24 +2,18 @@
 /**
  * @file WebProject.php
  * @path app/Models/Web/WebProject.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Core entity of the customer project portal - can originate from a
  * `WebSalesOrder` (or its originating `WebSalesLead`) or be created standalone by an
- * admin; both paths result in an identical row here (see backlog task).
+ * admin; both paths result in an identical row here.
  * @property string $access_token Permanent, plaintext, unguessable public URL id -
  * see migration for the security rationale (mirrors `WebSalesLead::public_token`).
  * @property string $access_password_hash Bcrypt hash - the actual secret. Never
  * customer-changeable; regenerated exclusively by an admin.
  * @property string $visibility 'public' | 'private' - checked on EVERY public
  * request by `WebProjectPublicController`, not just at login.
- *
- * @refactor-note (2026-09-11) BACKLOG "project portal - odhad termínu dokončení":
- * `estimated_completion_from`/`estimated_completion_to` - ZÁMĚRNĚ rozptyl, ne jedno
- * pevné datum. Vývoj může kolabovat na neočekávané chybě/blockeru, jeden natvrdo
- * slíbený termín by byl zavádějící. Obě pole nullable - projekt beze zadaného odhadu
- * prostě zákazníkovi žádný termín nezobrazí (frontend to řeší podmínkou).
  */
 
 namespace App\Models\Web;

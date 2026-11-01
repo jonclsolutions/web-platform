@@ -3,20 +3,13 @@
 /**
  * @file RawRequestEmailTemplate.php
  * @path app/Support/Mail/RawRequestEmailTemplate.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Sdílená pomocná třída pro výběr editovatelného obsahu potvrzovacího
- * e-mailu WebRawRequestCommission podle jazyka odesílatele - jeden zdroj pravdy pro
- * fallback logiku, analogicky k `CompanyContactInfo`.
+ * @description Picks the editable content of the WebRawRequestCommission confirmation e-mail by
+ * the language of the sender - one place for the fallback logic, like `CompanyContactInfo`.
  * @dependencies
- * - App\Models\Web\WebSiteSetting: Singleton řádek s editovatelnou i18n šablonou
- *   (viz refactor-note 2026-08-19 v hlavičce WebSiteSetting.php).
- *
- * @refactor-note (2026-08-19v2) BACKLOG "editace všech textů + live preview":
- * rozšířeno o pozdrav, nadpis rekapitulace a 6 popisků tabulky (dřív natvrdo v Blade
- * šabloně) - viz `raw_request_email_labels_i18n` sloupec. Fallback logika stejná jako
- * u title/intro/outro: text pro `$lang` -> text pro `'cz'` -> hardcoded default.
+ * - App\Models\Web\WebSiteSetting: singleton row with the editable i18n template.
  */
 
 namespace App\Support\Mail;
@@ -26,9 +19,8 @@ use App\Models\Web\WebSiteSetting;
 class RawRequestEmailTemplate
 {
     /**
-     * @description Výchozí texty použité, pokud admin pro daný jazyk (ani pro 'cz')
-     * nikdy nic nevyplnil - stejné znění, jaké šablona měla natvrdo PŘED zavedením
-     * editovatelného obsahu, takže bez zásahu admina se e-mail chová beze změny.
+     * @description Default texts used when the admin never filled in anything for the language
+     * (nor for 'cz').
      */
     private const DEFAULT_TITLE = 'Your request has been received';
     private const DEFAULT_SUBJECT = 'Your request has been received';
@@ -44,12 +36,12 @@ class RawRequestEmailTemplate
     private const DEFAULT_LABEL_DATE = 'Date Received';
 
     /**
-     * @description Vrátí `Content::with()` pole s texty pro daný jazyk. Priorita:
-     * (1) text vyplněný pro `$lang`, (2) text vyplněný pro `'cz'` (fallback jazyk),
-     * (3) hardcoded default - nikdy nevrátí prázdný/chybějící text, ani když
-     * `WebSiteSetting` řádek vůbec neexistuje (nový/nenastavený systém).
-     * @param string|null $lang Jazyk záznamu (`WebRawRequestCommission::lang`) -
-     * `null`/prázdný string se chová jako `'cz'`.
+     * @description Returns the `Content::with()` array of texts for the language. Priority:
+     * (1) the text filled in for `$lang`, (2) the text for `'cz'` (fallback language),
+     * (3) the hard-coded default - never an empty / missing text, not even without a
+     * `WebSiteSetting` row (new installation).
+     * @param string|null $lang Language of the record (`WebRawRequestCommission::lang`) -
+     * `null` / empty string behaves like `'cz'`.
      * @return array{emailSubject: string, emailTitle: string, emailIntro: string, emailOutro: string,
      * emailGreeting: string, emailSummaryHeader: string, emailLabelThema: string,
      * emailLabelEmail: string, emailLabelPhone: string, emailLabelDescription: string,
@@ -86,8 +78,8 @@ class RawRequestEmailTemplate
     }
 
     /**
-     * @description Vybere první neprázdnou hodnotu z: `$i18n[$lang]`, `$i18n['cz']`,
-     * `$default` (pro title/intro/outro - ploché i18n pole keyed přímo jazykem).
+     * @description First non-empty value of `$i18n[$lang]`, `$i18n['cz']`, `$default` (title /
+     * intro / outro - flat i18n arrays keyed by the language).
      */
     private static function resolve(array $i18n, string $lang, string $default): string
     {
@@ -96,9 +88,9 @@ class RawRequestEmailTemplate
     }
 
     /**
-     * @description Stejná fallback logika jako `resolve()`, ale pro vnořenou strukturu
-     * `raw_request_email_labels_i18n[jazyk][klíč]` - `$forLang`/`$forCz` jsou už
-     * rozbalené sub-objekty pro konkrétní jazyk resp. pro 'cz'.
+     * @description Same fallback as `resolve()` for the nested
+     * `raw_request_email_labels_i18n[language][key]` - `$forLang` / `$forCz` are the
+     * sub-objects of the language and of 'cz'.
      */
     private static function resolveLabel(array $forLang, array $forCz, string $key, string $default): string
     {

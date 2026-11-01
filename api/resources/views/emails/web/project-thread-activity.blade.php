@@ -1,15 +1,13 @@
-<!--
+{{--
     @file: project-thread-activity.blade.php
     @path: resources/views/emails/web/project-thread-activity.blade.php
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description Internal notification (ProjectThreadActivityMail) to the project's contact
     e-mail about customer activity in a project thread - only the thread subject and a link to
     the administration, never the message text.
-    @bugfix-note (2026-10-23) The texts were hardcoded in Czech (and `lang="cs"`) while the
-    subject of the same mail is English (open finding #10) - now English like the subject.
--->
+--}}
 <!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"></head>

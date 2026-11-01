@@ -3,8 +3,8 @@
 /**
  * @file InteractsWithAccounts.php
  * @path api/tests/Support/InteractsWithAccounts.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Test helpers for accounts: permissions, roles, users, signing in (Sanctum)
  *   and reading the audit log / security events the tested code writes.

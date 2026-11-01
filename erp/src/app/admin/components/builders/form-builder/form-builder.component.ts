@@ -1,8 +1,8 @@
 /**
  * @file form-builder.component.ts
  * @path src/app/admin/components/builders/form-builder/form-builder.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description A dynamic, template-driven form generator that maps field definitions to interactive UI controls.
  *
@@ -13,7 +13,7 @@
  * - PasswordRequirementsChecklistComponent: Live visual checklist of password rules.
  * - MultiFileUploadComponent: Shared drag&drop multi-file upload, see the `'files'` case.
  * - ScrollLockService: Shared background scroll lock.
- * - AdminLocalizationService: Statické i18n admin UI.
+ * - AdminLocalizationService: Static i18n of the admin UI.
  */
 
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef, ViewChild, OnInit, OnDestroy, OnChanges, SimpleChanges, inject } from '@angular/core';
@@ -51,7 +51,6 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
    * input changes (via `ngOnChanges()`) - e.g. a consumer resetting `permission_ids`
    * after the user changes `role_id` mid-edit. Only the listed keys are touched;
    * everything else in `formData` is left as the user left it.
-   * @refactor-note (2026-09-06) BACKLOG "who can change roles + role change UX/security".
    */
   @Input() fieldOverrides: Record<string, any> | null = null;
 
@@ -61,7 +60,6 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
    * Fires whenever a `'select'` field's value changes, carrying `{columnName,
    * value}`. Generic and domain-agnostic - this component doesn't interpret which
    * field changed, it just reports it so a consumer page can react.
-   * @refactor-note (2026-09-06) BACKLOG "who can change roles + role change UX/security".
    */
   @Output() fieldChanged = new EventEmitter<{ columnName: string; value: any }>();
 
@@ -75,15 +73,6 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
   private scrollLock = inject(ScrollLockService);
   private initialized = false;
 
-  /**
-   * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
-   * FormBuilderComponent NEdědí BaseDataComponent (sdílená builder komponenta), proto
-   * ruční injection + lokální `strings`/`t()` přesně dle vzoru z ostatních builderů
-   * (TableBuilderComponent, ExportPopupBuilderComponent atd.). Komponenta NEMÁ
-   * `ChangeDetectionStrategy.OnPush`, takže na rozdíl od TableBuilderComponent zde
-   * NENÍ potřeba `translations$.subscribe(() => markForCheck())` - výchozí change
-   * detection ji stejně překreslí po přepnutí jazyka.
-   */
   public readonly i18n = inject(AdminLocalizationService);
   public get strings(): any { return this.i18n.getMergedSection('form-builder'); }
   public t(key: string): string { return this.i18n.getValue(`form-builder.${key}`); }
@@ -124,9 +113,6 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
    * the rest of the component (`formDataToEdit` set = edit): "Create new record"
    * or "Edit record: <id>" ("Edit record" when the record has no `id`).
    * @return the translated title for the active admin language
-   * @refactor-note (2026-10-21) Create and edit modals showed the same
-   * "Create new record" title. Replaces the former one-time assignment in
-   * `ngOnInit()` – a getter also follows a language switch while the modal is open.
    */
   get displayHeader(): string {
     if (this.headerText) {
@@ -149,7 +135,6 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
    * options, `editable`, `disabledOptionValues`, etc. - whatever the user already
    * entered is preserved). `fieldOverrides` applies its keys directly onto
    * `formData`, overwriting only those keys.
-   * @refactor-note (2026-09-06) BACKLOG "who can change roles + role change UX/security".
    */
   ngOnChanges(changes: SimpleChanges): void {
     if (!this.initialized) return;
@@ -187,8 +172,8 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
-   * @description Forces an empty array for every `'files'` field WHILE EDITING - see
-   * pre-existing note in version history. Unchanged by this update.
+   * @description Forces an empty array for every `'files'` field WHILE EDITING - existing
+   * attachments are shown separately, new files always start from an empty selection.
    */
   private resetFileArrayFields(): void {
     this.visibleInputDefinitions.forEach(input => {
@@ -256,7 +241,6 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
    * rendered disabled - independent of the whole field's `editable` flag. Driven by
    * `input.disabledOptionValues` (e.g. `AdministratorsComponent` uses this to lock
    * permissions a user's role already grants automatically).
-   * @refactor-note (2026-09-05) BACKLOG "role/admin UX improvement".
    */
   isOptionDisabled(input: InputDefinition, optionValue: string | number): boolean {
     const disabledValues = (input as any).disabledOptionValues as (string | number)[] | undefined;
@@ -267,16 +251,14 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
    * @description Emits `fieldChanged` for a `'select'` field - see `@Output()`
    * doc-comment above. Called via `(ngModelChange)` alongside the field's existing
    * `[(ngModel)]` binding, so this fires AFTER `formData` has already been updated.
-   * @refactor-note (2026-09-06) BACKLOG "who can change roles + role change UX/security".
    */
   onFieldChange(columnName: string, value: any): void {
     this.fieldChanged.emit({ columnName, value });
   }
 
   /**
-   * @description Jestli existuje JAKÉKOLIV `confirm-password` pole ve formuláři s
-   * neshodujícím se potvrzením - použito v `onSubmit()` k zablokování odeslání a na
-   * submit tlačítku k jeho disable.
+   * @description Whether ANY `confirm-password` field of the form has a non-matching
+   * confirmation - used in `onSubmit()` to block the submit and to disable the submit button.
    */
   passwordMismatch(columnName: string): boolean {
     const confirmation = this.confirmPasswordData[columnName];
@@ -376,13 +358,6 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
           } else if (this.isFileArray(value)) {
             value.forEach((file: File) => payload.append(`${key}[]`, file, file.name));
           } else if (Array.isArray(value)) {
-            /**
-             * @bugfix-note (2026-08-19v2) Empty arrays are skipped (nothing to
-             * send); non-empty arrays are serialized as `key[]`, the same
-             * PHP/Laravel convention used for the file array above - covers both
-             * legacy `..._removed_ids` fields and, since 2026-09-02, `'multiselect'`
-             * values like `permission_ids`.
-             */
             if (value.length === 0) return;
             value.forEach((item: any) => payload.append(`${key}[]`, String(item)));
           } else if (value !== null && value !== undefined) {
@@ -399,20 +374,13 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
 
       this.formSubmitted.emit(payload);
 
-      // `isSubmitting` deliberately stays `true` - see version history bugfix-note
+      // `isSubmitting` deliberately stays `true`
       // (duplicate-submit guard).
     } else {
       this.alertDialogService.open(this.t('alert_invalid_form_title'), this.t('alert_invalid_form_message'), 'warning');
     }
   }
 
-  /**
-   * @refactor-note (2026-09v2) BUGFIX - viz hlavička souboru. Přepsáno z
-   * `getMergedSection()` (tiché `undefined` u chybějících klíčů) na `getValue()` s
-   * plnou tečkovanou cestou PRO KAŽDÝ klíč - chybějící klíč/sekce se teď spolehlivě
-   * projeví jako `'Cannot load text'`, nikdy ne jako tichý pád na
-   * `MultiFileUploadComponent`'s vlastní český default.
-   */
     get fileUploadTexts() {
     return {
       limitsHint: this.i18n.getValue('file-upload.limits_hint'),

@@ -3,8 +3,8 @@
 /**
  * @file ProductTest.php
  * @path api/tests/Feature/Shop/ProductTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the product administration (ShopProductController): list
  *   with filters, create with categories / prices / images / variants, edit (stock, images,

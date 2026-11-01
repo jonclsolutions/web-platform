@@ -2,26 +2,10 @@
 /**
  * @file ShopShippingMethodController.php
  * @path app/Http/Controllers/Api/Shop/ShopShippingMethodController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Controller managing shipping methods, including filtering, lifecycle operations, and administrative logging. Implements safety checks to protect system-critical hardcoded shipping methods from modification or deletion.
- *
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
- * lokální duplicitní logAction(). Doménově beze změny (ShopLog::class). `store()` už
- * loguje jen v úspěšné větvi (chybová větev nyní také přes logAction() namísto
- * vraceného `debug_error`/`line` v odpovědi - viz poznámka u store() níže, `debug_error`
- * v produkci zbytečně odhaluje interní implementační detaily volajícímu).
- *
- * @bugfix-note (2026-10-23) `DELETE shipping_methods/force-delete-all` ("Empty trash" in the admin)
- * pointed to a method that did not exist → 500. Implemented forceDeleteAllTrashed().
- *
- * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update (findOrFail inside try).
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -79,9 +63,8 @@ class ShopShippingMethodController extends Controller
 
     /**
      * Persists a new shipping method into the system.
-     * @note Chybová větev dřív vracela `debug_error`/`line` přímo klientovi - v produkci
-     * to zbytečně odhaluje interní implementační detaily; nahrazeno standardním
-     * logAction() zápisem do audit logu a obecnou chybovou hláškou pro klienta.
+     * @note An error is written to the audit log; the client gets a generic message only (no
+     * internal details).
      */
     public function store(StoreShopShippingMethodRequest $request): JsonResponse
     {

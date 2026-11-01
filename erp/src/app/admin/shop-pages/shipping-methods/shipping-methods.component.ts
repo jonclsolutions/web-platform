@@ -1,25 +1,14 @@
 /**
  * @file shipping-methods.component.ts
  * @path src/app/admin/shop-pages/shipping-methods/shipping-methods.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages the lifecycle of shipping methods, including configuration, filtering, and soft-delete/restore operations.
  * @dependencies
  * - BaseDataComponent: Provides foundational CRUD operations and state management.
  * - TableBuilderComponent: Used for rendering the shipping method registry.
- * - Config.create* factory functions: i18n-aware definitions - viz refactor-note
- *   (2026-09-09) níže.
- *
- * (Earlier bugfix-note 2026-08-31 for duplicate error toasts is unchanged.)
- *
- * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `Config.SHIPPING_*` konstanty nahrazeny `Config.create*()` factory funkcemi.
- * `graphColumns` přestalo být `readonly`. `'Úspěch'`/`'Požadavek byl upraven.'`/
- * `'Požadavek byl vytvořen.'` (dřív natvrdo česky) nahrazeny `t()` voláním.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
+ * - Config.create* factory functions: i18n-aware definitions.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -60,7 +49,6 @@ export class ShippingMethodsComponent extends BaseDataComponent<any> implements 
     sort_direction: 'asc'
   };
 
-  /** @refactor-note (2026-09-09) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
 
   constructor(

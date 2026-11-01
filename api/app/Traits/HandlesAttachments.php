@@ -2,26 +2,11 @@
 /**
  * @file HandlesAttachments.php
  * @path app/Traits/HandlesAttachments.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Sdílená logika pro ukládání a mazání souborových příloh, znovupoužitelná
- * pro libovolný model s `morphMany(WebAttachment::class, 'attachable')` vztahem.
- *
- * @refactor-note (2026-08-31) BACKLOG "privátní úložiště citlivých příloh": `storeAttachments()`
- * a `storeSingleAttachment()` dostaly nový volitelný parametr `$disk`, s DEFAULTNÍ hodnotou
- * změněnou z `'public'` na `'private'` (nový disk, viz config/filesystems.php - kořen
- * `storage/app/private`, BEZ symlinku, fyzicky nedosažitelný přímo přes webserver).
- * Protože je tenhle trait sdílený VŠEMI čtyřmi controllery s přílohami
- * (WebRawRequestCommissionController, WebSalesOrderController, WebSupportTicketController,
- * WebJobApplicationController), tahle JEDNA změna defaultu automaticky přesouvá VŠECHNY
- * nově nahrávané přílohy (CV, tickety, poptávky, realizace) na privátní disk, aniž by
- * bylo nutné upravovat volání v jednotlivých controllerech. Přístup k souboru pak jde
- * výhradně přes AttachmentDownloadController (dřív PublicFileDownloadController) a
- * krátkodobě podepsané (`signed`) URL - viz WebAttachmentResource a routes/api.php.
- * `deleteAllAttachments()`/`deleteAttachmentsByIds()` beze změny - už dřív čtou
- * `$attachment->disk` dynamicky z DB záznamu, takže fungují správně bez ohledu na to,
- * na kterém disku byla konkrétní příloha uložena.
+ * @description Storing and deleting file attachments, reusable for any model with a
+ * `morphMany(WebAttachment::class, 'attachable')` relation.
  */
 
 namespace App\Traits;
@@ -33,14 +18,13 @@ use Illuminate\Http\Request;
 trait HandlesAttachments
 {
     /**
-     * @description Uloží všechny nahrané soubory z daného pole requestu jako
-     * WebAttachment záznamy navázané na $model.
+     * @description Stores every uploaded file of the request field as a WebAttachment of $model.
      * @param Request $request
-     * @param Model $model Model s morphMany('attachments') vztahem.
-     * @param string $folder Podsložka v `storage/app/{$disk}/{folder}`.
-     * @param string $fileField Název pole v requestu (default 'attachments').
-     * @param string $disk Cílový disk - 'private' (default) pro citlivé přílohy,
-     *   'public' jen pro obsah, který má být přímo veřejně dostupný.
+     * @param Model $model Model with the morphMany('attachments') relation.
+     * @param string $folder Subfolder in `storage/app/{$disk}/{folder}`.
+     * @param string $fileField Request field (default 'attachments').
+     * @param string $disk Target disk - 'private' (default) for sensitive attachments,
+     *   'public' only for content meant to be publicly reachable.
      * @return void
      */
     protected function storeAttachments(Request $request, Model $model, string $folder, string $fileField = 'attachments', string $disk = 'private'): void
@@ -67,15 +51,15 @@ trait HandlesAttachments
     }
 
     /**
-     * @description Uloží PRÁVĚ JEDEN nahraný soubor jako WebAttachment navázaný na
-     *              $model a přitom nahradí jakoukoliv dřívější přílohu (smaže ji ze
-     *              disku i z DB) - použití pro entity, které smí mít vždy nejvýš 1
-     *              soubor (WebJobApplication::cv_file, WebSupportTicket::attachment).
+     * @description Stores EXACTLY ONE uploaded file as a WebAttachment of $model and replaces
+     *              any earlier attachment (deleted from the disk and the database) - for
+     *              entities with at most one file (WebJobApplication::cv_file,
+     *              WebSupportTicket::attachment).
      * @param Request $request
-     * @param Model $model Model s morphMany('attachments') vztahem.
-     * @param string $folder Podsložka v `storage/app/{$disk}/{folder}`.
-     * @param string $fileField Název pole jednoho souboru v requestu (např. 'cv_file', 'attachment').
-     * @param string $disk Cílový disk - 'private' (default).
+     * @param Model $model Model with the morphMany('attachments') relation.
+     * @param string $folder Subfolder in `storage/app/{$disk}/{folder}`.
+     * @param string $fileField Request field of the single file (e.g. 'cv_file', 'attachment').
+     * @param string $disk Target disk - 'private' (default).
      * @return void
      */
     protected function storeSingleAttachment(Request $request, Model $model, string $folder, string $fileField, string $disk = 'private'): void
@@ -90,8 +74,8 @@ trait HandlesAttachments
             return;
         }
 
-        // "Nejvýš 1 soubor" se vynucuje tady - nová příloha vždy nahradí tu
-        // předchozí (soubor na disku i DB záznam), nikdy se nehromadí.
+        // "At most one file" is enforced here - a new attachment always replaces the previous one
+        // (file and database row), they never pile up.
         $this->deleteAllAttachments($model);
 
         $path = $file->store($folder, $disk);
@@ -106,10 +90,10 @@ trait HandlesAttachments
     }
 
     /**
-     * @description Smaže všechny přílohy modelu (soubor z disku i DB záznam) - použito
-     * při force-delete entity. Čte `$attachment->disk` dynamicky - funguje správně
-     * bez ohledu na to, jestli je příloha na 'public' nebo 'private' disku.
-     * @param Model $model Model s morphMany('attachments') vztahem.
+     * @description Deletes every attachment of the model (file and database row) - used when the
+     * entity is force-deleted. Reads `$attachment->disk` per row, so 'public' and 'private'
+     * attachments both work.
+     * @param Model $model Model with the morphMany('attachments') relation.
      * @return void
      */
     protected function deleteAllAttachments(Model $model): void
@@ -121,12 +105,11 @@ trait HandlesAttachments
     }
 
     /**
-     * @description Smaže VYBRANÉ přílohy podle ID (ne všechny) - použito pro odebrání
-     * jednotlivých existujících příloh při update. Striktně SCOPED na `$model` přes
-     * `$model->attachments()` relaci - `$ids`, které nepatří tomuto modelu, se prostě
-     * nenajdou a tiše se ignorují.
-     * @param Model $model Model s morphMany('attachments') vztahem.
-     * @param array $ids ID příloh k odstranění (soubor z disku i DB záznam).
+     * @description Deletes the SELECTED attachments by ID (not all) - removing single existing
+     * attachments on update. Scoped to `$model` through `$model->attachments()`: IDs of other
+     * models are not found and silently ignored.
+     * @param Model $model Model with the morphMany('attachments') relation.
+     * @param array $ids IDs of the attachments to remove (file and database row).
      * @return void
      */
     protected function deleteAttachmentsByIds(Model $model, array $ids): void

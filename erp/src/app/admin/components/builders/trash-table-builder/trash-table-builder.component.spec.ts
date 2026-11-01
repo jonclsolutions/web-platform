@@ -1,8 +1,8 @@
 /**
  * @file trash-table-builder.component.spec.ts
  * @path src/app/admin/components/builders/trash-table-builder/trash-table-builder.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of TrashTableBuilderComponent – the trash (soft-deleted rows) table:
  *   restore, permanent delete, "empty trash", permission for trash actions and cell formatting.

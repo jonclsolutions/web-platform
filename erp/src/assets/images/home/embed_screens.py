@@ -1,9 +1,9 @@
 """
 @file embed_screens.py
-@description Vloží screenshoty do hero mockup SVG jako base64 data URI
-             (SVG v <img> nesmí načítat externí soubory). Obrázky nejdřív
-             zmenší a převede na WebP kvůli velikosti.
-Použití:  pip install pillow   &&   python3 embed_screens.py
+@description Embeds the screenshots into the hero mockup SVGs as base64 data URIs
+             (an SVG in <img> must not load external files). The images are resized
+             and converted to WebP first to keep the size down.
+@usage pip install pillow   &&   python3 embed_screens.py
 """
 import base64, io, re
 from pathlib import Path
@@ -11,7 +11,7 @@ from PIL import Image
 
 HERE = Path(__file__).parent
 SVGS = ["hero-mockup-cs.svg", "hero-mockup-en.svg"]
-# soubor -> max šířka v px (2× velikost obrazovky v SVG kvůli retina displejům)
+# file -> max width in px (2x the screen size in the SVG for retina displays)
 SCREENS = {"dashboard_sc_desktop.png": 1160, "dashboard_sc_mobil.png": 344}
 
 def to_data_uri(name: str, max_w: int) -> str:

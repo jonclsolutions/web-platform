@@ -1,8 +1,8 @@
 /**
  * @file sales-orders.component.spec.ts
  * @path src/app/admin/web-pages/sales-orders/sales-orders.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of SalesOrdersComponent and sales-orders.config.ts – sales orders
  *   (realisations created from sales leads): translated configuration, form validation, GDPR /

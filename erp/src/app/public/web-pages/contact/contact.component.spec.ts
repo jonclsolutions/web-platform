@@ -1,13 +1,12 @@
 /**
  * @file contact.component.spec.ts
  * @path src/app/public/web-pages/contact/contact.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ContactComponent (contact / inquiry form): form validation, stats from the
  *   home texts, attachment texts for the uploader, the multipart submit (language, optional
  *   phone, attachments) with success, error and double-submit protection.
- * @refactor-note (2026-10-31) Open finding #64: test of the hidden phone / company rows.
  * @dependencies
  * - createPublicPageContext (post spy); AlertDialogService spied (errors are shown in the app dialog).
  */

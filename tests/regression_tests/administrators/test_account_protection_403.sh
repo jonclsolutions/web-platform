@@ -2,8 +2,8 @@
 #
 # @file test_account_protection_403.sh
 # @path tests/regression_tests/administrators/test_account_protection_403.sh
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Manual security check: verifies that the API itself (not only the admin form)
 # refuses the changes only a sysadmin may make to ANOTHER account. Sent as a user who is not a

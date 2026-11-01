@@ -2,24 +2,10 @@
 /**
  * @file WebSalesOrder.php
  * @path app/Models/Web/WebSalesOrder.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Model representing a sales order generated from a lead.
- *
- * @refactor-note (2026-08) Odstraněno jednosouborové pole `attachment_path` - nahrazeno
- * polymorfním vztahem `attachments()` (viz WebAttachment.php), umožňuje uložit až 10
- * příloh na jednu realizaci místo jedné.
- *
- * @bugfix-note (2026-08-15) KRITICKÁ OPRAVA (GDPR): `data_processing_agreement` a
- * `tos_agreement` doplněny do `$fillable`. Frontend (order-form.component.html) i
- * `StoreWebSalesOrderRequest` (required|accepted) souhlas s GDPR i obchodními
- * podmínkami odjakživa VYŽADOVALY a validovaly - ale `WebSalesOrder::create()` obě
- * hodnoty mlčky zahazoval, protože nebyly ve `$fillable`, a tabulka pro ně navíc
- * neměla sloupce. Výsledek: uživatel musel zaškrtnout souhlas, aby formulář vůbec
- * prošel, ale nikde se netrvale nezaznamenalo, že tak učinil - bez auditní stopy pro
- * případnou GDPR kontrolu. Sloupce doplněny samostatnou SQL migrací (nedestruktivní
- * ALTER, DEFAULT 0 pro existující řádky - u těch souhlas retroaktivně nelze doložit).
  */
 
 namespace App\Models\Web;
@@ -78,9 +64,8 @@ class WebSalesOrder extends Model
     }
 
     /**
-     * @description Zda a jaký projekt už z téhle realizace vznikl - viz backlog
-     * "1 realizace = max 1 projekt". `web_projects.order_id` má UNIQUE constraint
-     * v DB, takže tenhle vztah může vrátit nejvýš jeden záznam.
+     * @description The project created from this order (at most one: `web_projects.order_id`
+     * has a UNIQUE constraint).
      */
     public function project(): HasOne
     {

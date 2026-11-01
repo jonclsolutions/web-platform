@@ -1,8 +1,8 @@
 /**
  * @file administrators.component.spec.ts
  * @path src/app/admin/core-pages/administrators/administrators.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of AdministratorsComponent – admin account management and its security
  *   rules: which roles / permissions a non-sysadmin may grant, 2FA forced by role or admin,

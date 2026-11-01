@@ -1,14 +1,10 @@
 /*
     @file: order-form.component.css
     @path: /src/app/public/web-pages/order-form/order-form.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @refactor-note (2026-09) Unified spacing across public pages: spacing tokens
-        (--gutter, --section-y, --hero-top). The form card (client-only page reached
-        via a one-time link) keeps its smaller in-card heading and 680px form width;
-        its top edge now starts at --hero-top like page titles elsewhere.
-        Only padding / margin changed.
+    @description: Styles of the order form component.
 */
 
 :host {

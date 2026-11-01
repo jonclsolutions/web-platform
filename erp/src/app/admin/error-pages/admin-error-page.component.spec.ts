@@ -1,9 +1,9 @@
 /**
  * @file admin-error-page.component.spec.ts
  * @path src/app/admin/error-pages/admin-error-page.component.spec.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-27
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Unit tests of the admin 404 / 403 page: kind from the route data, status code and
  *   texts of the section `error-pages`, requested path (404: current URL, 403: refused address from
  *   the navigation state - never the query / fragment), Back = history back, link to the admin

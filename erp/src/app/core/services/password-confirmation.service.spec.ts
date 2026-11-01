@@ -1,9 +1,9 @@
 /**
  * @file password-confirmation.service.spec.ts
  * @path src/app/core/services/password-confirmation.service.spec.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-26
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Unit tests of PasswordConfirmationService (step-up re-authentication): the dialog
  *   is mounted with the translated texts, the password goes to POST /confirm-password with the
  *   scope, 204 → true, a wrong password / lock / other failure keeps the dialog open with the

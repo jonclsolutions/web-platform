@@ -1,8 +1,8 @@
 <!--
     @file: activate-account.component.html
     @path: src/app/admin/auth/activate-account/activate-account.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description: "Set password & activate account" page opened from the activation e-mail.
         States: loading (token check on entry) -> invalid | form -> success (auto-redirect
@@ -11,9 +11,6 @@
         (open finding #39, was English-only).
     @dependencies: activate-account.component.ts, activate-account.component.css,
         <app-password-requirements-checklist>, RouterLink, FormsModule (ngModel)
-    @refactor-note (2026-08-24) Unified with reset-password.component.html: no emoji, only
-        SVG icons from the same set, shared password checklist and live `passwordsMismatch`.
-    @refactor-note (2026-10-01) Czech copy translated to English; aligned with admin tokens.
 -->
 <div class="reset-password-wrapper">
   <div class="reset-password-card">

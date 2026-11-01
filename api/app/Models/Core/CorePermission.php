@@ -2,8 +2,8 @@
 /**
  * @file CorePermission.php
  * @path app/Models/Core/CorePermission.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Model representing system-wide permissions.
  */
@@ -38,11 +38,9 @@ class CorePermission extends Model
     ];
 
     /**
-     * Get the roles associated with this permission.
+     * Get the roles associated with this permission (pivot `core_role_permissions`, see
+     * CoreRole::permissions()).
      *
-     * @note Opraveno: původně odkazovalo na neexistující `Role::class` a špatnou
-     *       pivot tabulku `role_permissions` (skutečná tabulka je `core_role_permissions`,
-     *       viz CoreRole::permissions()).
      * @return BelongsToMany
      */
     public function roles(): BelongsToMany

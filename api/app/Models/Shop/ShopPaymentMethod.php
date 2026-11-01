@@ -2,8 +2,8 @@
 /**
  * @file ShopPaymentMethod.php
  * @path app/Models/Shop/ShopPaymentMethod.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Model representing available payment options for the shop.
  */

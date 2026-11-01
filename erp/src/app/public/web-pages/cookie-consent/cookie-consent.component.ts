@@ -1,16 +1,16 @@
 /**
  * @file cookie-consent.component.ts
- * @path src/app/public/web-pages/components/cookie-consent/cookie-consent.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @path src/app/public/web-pages/cookie-consent/cookie-consent.component.ts
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Lišta souhlasu s cookies pro veřejný web - tři akce (Přijmout vše / Jen
- * nezbytné / Nastavení), kde "Nastavení" rozbalí panel se 4 kategoriemi (Nezbytné vždy
- * zapnuté a needitovatelné, Funkční/Analytické/Marketingové s vlastními přepínači).
+ * @description Cookie consent bar of the public web - three actions (Accept all / Necessary only
+ * / Settings), where "Settings" expands a panel with 4 categories (Necessary always on and
+ * locked, Functional / Analytics / Marketing with their own switches).
  * @dependencies
- * - BasePublicComponent: Poskytuje `t` (překlady), `cdr`, `destroy$`.
- * - CookieConsentService: Ukládání/čtení stavu souhlasu (localStorage), signál pro
- *   znovuotevření z patičky (fáze 3 - zatím nenapojeno).
+ * - BasePublicComponent: Provides `t` (translations), `cdr`, `destroy$`.
+ * - CookieConsentService: Storing / reading the consent state (localStorage) and the signal for
+ *   reopening the bar.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -33,12 +33,12 @@ export class CookieConsentComponent extends BasePublicComponent {
 
   private consentService = inject(CookieConsentService);
 
-  /** Zda je lišta vůbec vidět (schovaná, jakmile je platný souhlas uložený). */
+  /** Whether the bar is visible at all (hidden once a valid consent is stored). */
   visible = false;
-  /** Zda je rozbalený panel s jednotlivými kategoriemi. */
+  /** Whether the panel with the categories is expanded. */
   showSettings = false;
 
-  /** Rozpracovaný výběr v panelu nastavení, než se odešle "Uložit nastavení". */
+  /** Unsaved selection of the settings panel before "Save settings" is sent. */
   draft: CookieConsentCategories = {
     functional: false,
     analytics: false,
@@ -62,7 +62,7 @@ export class CookieConsentComponent extends BasePublicComponent {
   }
 
   /**
-   * @description Přijme všechny kategorie a lištu zavře.
+   * @description Accepts all categories and closes the bar.
    */
   acceptAll(): void {
     this.consentService.acceptAll();
@@ -70,7 +70,7 @@ export class CookieConsentComponent extends BasePublicComponent {
   }
 
   /**
-   * @description Odmítne vše kromě nezbytných cookies a lištu zavře.
+   * @description Refuses everything except the necessary cookies and closes the bar.
    */
   rejectNonEssential(): void {
     this.consentService.rejectNonEssential();
@@ -78,7 +78,7 @@ export class CookieConsentComponent extends BasePublicComponent {
   }
 
   /**
-   * @description Rozbalí/sbalí panel s jednotlivými kategoriemi.
+   * @description Expands / collapses the panel with the categories.
    */
   toggleSettings(): void {
     this.showSettings = !this.showSettings;
@@ -86,7 +86,7 @@ export class CookieConsentComponent extends BasePublicComponent {
   }
 
   /**
-   * @description Uloží aktuální rozpracovaný výběr kategorií z panelu nastavení.
+   * @description Saves the current selection of categories of the settings panel.
    */
   saveSettings(): void {
     this.consentService.save(this.draft);
@@ -94,8 +94,8 @@ export class CookieConsentComponent extends BasePublicComponent {
   }
 
   /**
-   * @description Připraví `draft` podle už existujícího souhlasu (pokud nějaký je),
-   *              ať se panel neotevírá pokaždé prázdný, když ho uživatel znovu otevře.
+   * @description Prepares `draft` from the existing consent (if any), so the panel does not open
+   *              empty every time the user reopens it.
    */
   private syncDraftFromCurrent(): void {
     const current = this.consentService.current;

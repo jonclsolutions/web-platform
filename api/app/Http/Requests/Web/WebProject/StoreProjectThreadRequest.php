@@ -2,8 +2,8 @@
 /**
  * @file StoreProjectThreadRequest.php
  * @path app/Http/Requests/Web/WebProject/StoreProjectThreadRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation for the customer opening a new project thread (first
  * message). `attachments.*` optional - the customer may attach files to their very

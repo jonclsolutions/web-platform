@@ -1,46 +1,20 @@
 /**
  * @file support-tickets.component.ts
  * @path src/app/admin/web-pages/support-tickets/support-tickets.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Administrative dashboard component for managing customer support tickets, including status updates and multi-part data submission.
  * @dependencies
  * - BaseDataComponent: Inheritance for base CRUD and state management.
  * - TableBuilderComponent: Used for tabular data rendering and CSV export.
  * - Config.create* factory functions: Centralized, i18n-aware definitions for UI elements
- *   and column configurations - see refactor-note (2026-09-08) below.
- * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
- * volání z `error:` callbacků (handleViewDetails, handleFormSubmitted) -
- * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `Config.SUPPORT_TICKET_*` konstanty (vyhodnocené jednou při načtení modulu) nahrazeny
- * `Config.create*()` FACTORY FUNKCEMI - stejný vzor jako `UserRequestComponent`, viz
- * jeho hlavička pro plné odůvodnění (NG0956 riziko getterů, `translations$` je
- * `BehaviorSubject`). `buttons`/`formFields`/`columns`/`trashColumns`/`filterColumns`/
- * `detailsColumns` PŘESUNUTY z field initializerů (běží jen jednou, při vytvoření
- * instance) do konstruktoru, plněné VÝHRADNĚ přes `this.i18n.translations$.subscribe()`.
- * `tableCaption` (dřív natvrdo `'Helpdesk tickety'`) teď taky přes `t()`.
- *
- * `graphColumns` (dřív `readonly` pole počítané JEDNOU z `Config.SUPPORT_TICKET_DETAILS_COLUMNS`
- * na úrovni field initializeru) muselo přestat být `readonly` konstanta - `detailsColumns`
- * teď vznikají AŽ uvnitř `translations$` subscribu (ne při deklaraci třídy, kdy by
- * `i18n` ještě nemusel mít data načtená), takže `graphColumns` je přepočítáno na
- * STEJNÉM místě, ihned po přiřazení `detailsColumns` - jde o plochý objekt bez vnořené
- * struktury čtené přes `@for`/`track` (`GraphBuilderComponent` navíc sám hlídá "stejná
- * množina klíčů = stejná kolekce" v `sameColumnKeySet()`), takže NG0956 riziko se ho
- * netýká i přesto, že nejde o `readonly`.
- *
- * `eventTypeLabel`-like vzor: `'Úspěch'`/`'Požadavek byl upraven.'`/`'Požadavek byl
- * vytvořen.'` (dřív natvrdo česky v `handleFormSubmitted()`) nahrazeny `t()` voláním.
- * Toolbar labely (`'Skrýt filtry'`/`'Filtry'`/`'Zobrazit aktivní'`/`'Koš'`) v
- * `toolbarButtons` getteru taky přes `t()` - getter samotný je bezpečný (nevrací
- * pole objektů čtené přes `track`, jde o `.map()` nad JIŽ přeloženými `buttons`, viz
- * `toolbarButtons` getter beze změny struktury).
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
+ *   and column configurations.
+ * @note `graphColumns` is not `readonly`: `detailsColumns` are created inside the
+ * `translations$` subscription (the i18n data may not be loaded when the class is declared),
+ * so `graphColumns` is recomputed in the SAME place right after `detailsColumns` are assigned.
+ * It is a flat object (GraphBuilderComponent also checks "same key set = same collection" in
+ * `sameColumnKeySet()`), so there is no NG0956 risk.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -81,11 +55,6 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
   columns: Core.ColumnDefinition[] = [];
   trashColumns: Core.ColumnDefinition[] = [];
 
-  /**
-   * @refactor-note (2026-09-08) Přestalo být `readonly` konstanta počítaná JEDNOU
-   * z field initializeru - `detailsColumns` teď vznikají až uvnitř subscribu, viz
-   * hlavička souboru.
-   */
   graphColumns: GraphColumnOption[] = [];
 
   constructor(
@@ -96,16 +65,6 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
   ) {
     super(dataHandler, cd, genericTableService);
 
-    /**
-     * @bugfix-note (2026-09-08) VÝHRADNÍ místo, kde se `buttons`/`formFields`/atd.
-     * plní - `translations$` je BehaviorSubject, takže tenhle subscribe:
-     * 1) proběhne OKAMŽITĚ s aktuální (možná ještě `null`) hodnotou,
-     * 2) proběhne ZNOVU při každém dalším emitu (úspěšné doražení JSONu po HTTP
-     *    requestu, budoucí přepnutí jazyka) a přepíše pole správnými texty.
-     * `graphColumns` je odvozeno ZE STEJNÉHO `detailsColumns`, přepočítané na
-     * stejném místě - žádná zvláštní logika navíc, jen `.filter()/.map()` nad
-     * čerstvě přiřazeným polem.
-     */
     this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => {
       this.tableCaption = this.t('table_header');
       this.buttons = Config.createSupportTicketButtons(this.i18n);
@@ -185,10 +144,6 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
     this.forceFullRefresh(this.filters);
   }
 
-  /**
-   * @refactor-note (2026-09-08) Natvrdo česká 'Úspěch'/'Požadavek byl upraven.'/
-   * 'Požadavek byl vytvořen.' nahrazeny `t()` voláním - viz hlavička souboru.
-   */
   override handleFormSubmitted(formData: any): void {
     const isFormData = formData instanceof FormData;
     const id = isFormData ? formData.get('id') : formData.id;

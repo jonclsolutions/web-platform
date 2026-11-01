@@ -1,8 +1,8 @@
 /**
  * @file public-test-helpers.ts
  * @path src/testing/public-test-helpers.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Shared stubs of the public web / e-shop specs: LocalizationService (translations,
  *   language, language list), PublicDataService (settings stream, requests, status endpoints)

@@ -1,19 +1,13 @@
 /*     
     @file: dashboard.component.css
     @path: /src/app/admin/core-pages/dashboard/dashboard.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description: Visual language shared with WebDashboardComponent (`web-pages/dashboard`)
         and, above all, with the app-wide admin-layout design tokens (--accent/--text/
         --border/--success/--error/--warning/... - see admin-layout.component.css :host
         block) - no colors outside that palette are used anywhere in this file.
-    @refactor-note (2026-09-07) VIZUÁLNÍ REFAKTOR: dřívější 6barevná paleta natvrdo
-        psaných hexů (sky/indigo/slate/green/rose/amber) ZCELA ODSTRANĚNA - všechny
-        barvy teď čtou proměnné z admin-layout (s bezpečným fallbackem, kdyby komponenta
-        byla někdy vykreslena mimo layout, který je definuje). Nové třídy pro hero
-        dlaždici (.cd-hero-*), srovnávací pruhový graf (.cd-bar-*) a "rozklad posledních
-        událostí" widget (.cd-breakdown-*) - viz dashboard.component.html stejné datum.
     @dependencies: CSS custom properties defined in admin-layout.component.css (:host block)
 */
 
@@ -65,9 +59,9 @@
   .cd-hero-value { font-size: 2.1rem; }
   .core-dashboard { gap: 16px; }
 }
-/* ── Hero dropdown (výběr zobrazené metriky) ───────────────────────── */
+/* ── Hero dropdown (choice of the shown metric) ───────────────────────── */
 
-/* .cd-hero-icon zůstává beze změny - jen teď žije uvnitř .cd-hero-top místo přímo v kartě */
+/* .cd-hero-icon keeps its style - it only lives inside .cd-hero-top instead of directly in the card */
 
 .cd-hero-dropdown-value-urgent { color: var(--warning, var(--color-amber-600)); }
 

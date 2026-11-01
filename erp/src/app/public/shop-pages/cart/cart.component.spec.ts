@@ -1,8 +1,8 @@
 /**
  * @file cart.component.spec.ts
  * @path src/app/public/shop-pages/cart/cart.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of CartComponent: quantity buttons (min 1, stock cap, unknown item), removal
  *   after confirmation, net total, checkout navigation and the EUR price format; renders the items.

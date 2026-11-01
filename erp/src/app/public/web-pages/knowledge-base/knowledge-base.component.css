@@ -1,22 +1,11 @@
 /*
     @file: knowledge-base.component.css
     @path: /src/app/public/web-pages/knowledge-base/knowledge-base.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
     @description: Calm, "documentation" look - no playful shapes or extra animations,
     just consistent dark cards and typography shared with the rest of the site.
-    @redesign-note (2026-08-28) BACKLOG "left section list, content with heading on
-        the right": `.kb-main-content` widened to 1180px, added `.kb-layout`
-        (grid: sticky `.kb-sidebar` + `.kb-content`). The existing `.kb-toc`
-        (horizontal pills) stays, but ONLY for mobile (<=960px) - on desktop it is
-        replaced by `.kb-sidebar`.
-    @refactor-note (2026-09) Unified spacing across public pages: spacing tokens
-        (--gutter, --section-y, --hero-top, --hero-bottom, --head-gap, --title-gap),
-        content width 1200px (+ gutters), content column fills the space next to
-        the sidebar, points and alt sections sit flush with section headings (they
-        have no background). Only padding / margin / gap / max-width / grid tracks
-        changed.
 */
 
 :host {

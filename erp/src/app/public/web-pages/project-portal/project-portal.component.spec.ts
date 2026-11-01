@@ -1,18 +1,14 @@
 /**
  * @file project-portal.component.spec.ts
  * @path src/app/public/web-pages/project-portal/project-portal.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ProjectPortalComponent (customer project portal): link token and
  *   stored session, password login / logout, project and thread loading, the 15 s polling of the
  *   thread list and of new messages, thread detail (older messages, status change, closing),
  *   replies and new threads incl. attachment validation and send errors (bugfix 2026-10-23),
  *   refresh, the lazily loaded contacts tab, derived labels and the language menu.
- * @refactor-note (2026-10-23) The old spec had no ActivatedRoute (NG0201) - rewritten. The session
- *   is expected in the `Authorization` header, never in the URL (open finding #1).
- * @refactor-note (2026-10-24) Finding #6: thread detail and message pages are read with
- *   getWithMeta() - `has_more_older_messages` / `status` come in `meta` of the envelope.
  * @dependencies
  * - PublicDataService stub routing GET / POST by URL; ProjectPortalLocalizationService stub
  *   (texts = keys); ActivatedRoute with the token; fakeAsync for timers.

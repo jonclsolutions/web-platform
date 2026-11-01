@@ -2,9 +2,9 @@
 /**
  * @file CreateDatabaseCommand.php
  * @path app/Console/Commands/CreateDatabaseCommand.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-30
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Creates the database of the configured connection when it does not exist yet
  *   (`CREATE DATABASE … utf8mb4_unicode_ci`), so a fresh installation needs no phpMyAdmin step:
  *   `php artisan db:create-if-missing && php artisan migrate && php artisan db:seed`.
@@ -15,7 +15,6 @@
  *   other drivers (SQLite of the tests) have nothing to create. On shared hosting the database
  *   account usually may not create databases - then create the empty database in the hosting
  *   panel; the command reports that and exits with an error code.
- * @refactor-note (2026-10-31) Local development moved from XAMPP to Docker (doc only).
  * @security The database name is validated against [A-Za-z0-9_] (it cannot be bound as a
  *   parameter in CREATE DATABASE); the password is never printed.
  * @dependencies

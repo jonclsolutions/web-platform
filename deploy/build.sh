@@ -2,8 +2,8 @@
 # =============================================================================
 # @file build.sh
 # @path deploy/build.sh
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Production build of the whole platform into a single deployable
 # package. Replaces the former root-level `build-and-deploy.sh`.
@@ -44,15 +44,6 @@
 #   build start; a failure stops the script (exit 1) and the previous build/ stays untouched.
 #   --skip-tests skips the gate (e.g. an urgent rebuild of an already tested commit).
 #
-# @refactor-note (2026-10-31) The root folder database/ (SQL dump + manual SQL scripts) was
-#   removed - the build no longer copies database/*.sql to build/database/. The schema reaches
-#   the server inside laravel/ (api/database: baseline SQL + migrations, run by configure-server.sh).
-# @refactor-note (2026-10-31b) Docker: started on the host, the script runs itself inside the dev
-#   container (dev/docker/Dockerfile: PHP 8.5 like the hosting, Composer, Node.js, Chromium for the
-#   tests, zip, rsync) - the host needs no PHP / Node.js and every machine builds with the same
-#   versions. BUILD_ON_HOST=1 skips that (host tools are used, as before).
-# @refactor-note (2026-10-31c) macOS: re-runs itself with bash 4+ from Homebrew (macOS ships 3.2).
-#
 # @usage
 #   deploy/build.sh                         run all tests, then the full build (Angular + Laravel + zip)
 #   deploy/build.sh --skip-tests            build without running the tests first
@@ -78,7 +69,7 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# Docker: run inside the dev container unless already there (see refactor-note 2026-10-31b).
+# Docker: run inside the dev container unless already there.
 if [[ -z "${IN_DEV_CONTAINER:-}" && "${BUILD_ON_HOST:-0}" != "1" ]] \
     && command -v docker >/dev/null && [[ -f "$ROOT_DIR/dev/compose.yaml" && -f "$ROOT_DIR/dev/.env" ]]; then
     echo "[build] running inside the dev container (docker compose run api) – BUILD_ON_HOST=1 to build on the host"

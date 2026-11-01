@@ -1,8 +1,8 @@
 /**
  * @file report.js
  * @path tests/unit_tests/lib/report.js
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Shared report writer for the erp and api unit test runners. Turns one normalized
  *   run result into `report.html` (summary block + numbered table: test name / pass|fail) and

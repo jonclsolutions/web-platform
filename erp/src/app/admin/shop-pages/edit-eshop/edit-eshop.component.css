@@ -1,15 +1,10 @@
 /*     
     @file: edit-website.component.css
     @path: /src/app/admin/web-pages/edit-website/edit-website.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
-               zaoblené karty, jemné stíny, tmavý akcent (#18181b) místo modré.
-               Komponenta už používala CSS proměnné, takže většina šla přepnout
-               jen hodnotami; navíc jsem jazykové taby a tlačítka převedl na
-               plně zaoblený ("pill") tvar, ať sedí se zbytkem aplikace. Struktura/
-               třídy a logika beze změny.
+    @description: Styles of the edit eshop component.
 */
 
 .ew-lang-tab:hover { color: var(--text); background: var(--surface-2); border-color: var(--text-dim); }

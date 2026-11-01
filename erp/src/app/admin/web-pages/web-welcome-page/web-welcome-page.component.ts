@@ -1,26 +1,24 @@
 /**
  * @file web-welcome-page.component.ts
  * @path src/app/admin/web-pages/web-welcome-page/web-welcome-page.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Uvítací/rozcestníková stránka modulu "Web" - vidí ji uživatel s
- * oprávněním `web-welcome-page-view` po přepnutí na modul Web v headeru. Na rozdíl od
- * `core/welcome-page` (osobní profil, role, e-mail) NEOBSAHUJE žádné údaje o
- * přihlášeném uživateli - je to čistě informační rozcestník popisující, co modul Web
- * obsahuje (editace veřejného webu, formuláře/poptávky, obchodní procesy) a rychlé
- * odkazy na jednotlivé stránky sekce. Každá karta je gatovaná stejným permission
- * klíčem, jaký v levém menu používá `AdminLayoutComponent` pro danou položku - takže
- * uživatel vidí jen odkazy na stránky, ke kterým reálně má přístup.
+ * @description Welcome / landing page of the "Web" module - seen by a user with the
+ * `web-welcome-page-view` permission after switching to the Web module in the header. Unlike
+ * `core/welcome-page` (personal profile, role, e-mail) it holds NO data of the logged-in user -
+ * it is an informational landing page describing the Web module (editing the public web,
+ * forms / inquiries, business processes) with quick links to its pages. Every card is gated by
+ * the same permission key as the matching item of the left menu of `AdminLayoutComponent`, so
+ * the user sees only links to pages they can open.
  * @dependencies
- * - HasPermissionDirective: Gatuje viditelnost jednotlivých karet (`*appHasPermission`),
- *   stejný vzor jako menu v AdminLayoutComponent.
- * - AdminLocalizationService: Statické i18n admin UI - ruční injection, komponenta
- *   nedědí BaseDataComponent (samostatná landing page, ne datová CRUD stránka).
- * @note Komponenta nepotřebuje ChangeDetectorRef/markForCheck() - nemá žádný
- * asynchronně měnící se stav (žádné HTTP volání, žádný subscribe), `quickLinks` je
- * statické pole a `strings`/`t()` gettery Angular přehodnotí při běžném change
- * detection cyklu bez nutnosti explicitního triggeru.
+ * - HasPermissionDirective: Gates the visibility of the cards (`*appHasPermission`), same
+ *   pattern as the menu of AdminLayoutComponent.
+ * - AdminLocalizationService: Static i18n of the admin UI - manual injection, the component
+ *   does not extend BaseDataComponent (a landing page, not a CRUD data page).
+ * @note No ChangeDetectorRef / markForCheck() needed - no asynchronously changing state (no
+ * HTTP call, no subscribe), `quickLinks` is a static array and Angular re-evaluates the
+ * `strings` / `t()` getters in the ordinary change detection cycle.
  */
 
 import { Component, inject } from '@angular/core';
@@ -29,7 +27,7 @@ import { RouterModule } from '@angular/router';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 
-/** @description Jeden rychlý odkaz na kartě - `icon` je klíč vykreslený přes @switch v šabloně (sdílené SVG se stejným vizuálním jazykem jako admin-layout menu). */
+/** @description One quick link of a card - `icon` is a key rendered through @switch in the template (shared SVGs in the same visual language as the admin-layout menu). */
 interface QuickLinkCard {
   icon: string;
   titleKey: string;
@@ -51,9 +49,9 @@ export class WebWelcomePageComponent {
   public get strings(): any { return this.i18n.getMergedSection('web-welcome-page'); }
 
   /**
-   * @description Rychlé odkazy na klíčové stránky modulu Web, v pořadí odpovídajícím
-   * levému menu (viz admin-layout.component.html, sekce "Obchod"/"Obsah webu"/"Lidé"/
-   * "Systém"). Permission klíče jsou 1:1 shodné s těmi v menu.
+   * @description Quick links to the key pages of the Web module, in the order of the left menu
+   * (see admin-layout.component.html, sections "Business" / "Web content" / "People" /
+   * "System"). The permission keys match the menu 1:1.
    */
   readonly quickLinks: QuickLinkCard[] = [
     { icon: 'edit-website', titleKey: 'card_edit_website_title', descKey: 'card_edit_website_desc', route: '/admin/web/edit-website', permission: 'web-edit-website-view' },

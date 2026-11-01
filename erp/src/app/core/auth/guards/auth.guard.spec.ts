@@ -1,8 +1,8 @@
 /**
  * @file auth.guard.spec.ts
  * @path src/app/core/auth/guards/auth.guard.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of AuthGuard and sysadminGuard: login check, permission keys
  *   ('a|b' = OR, sysadmin bypass), a refused page → the admin 403 page with the refused address in

@@ -1,42 +1,24 @@
 /**
  * @file paginated-list-store.ts
  * @path src/app/admin/components/base-data/paginated-list-store.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
- * @description Vlastní stav "aktivní vs. koš" tabulky: čítače stránek, aktivní filtry
- * a logiku fetch/refresh/změna stránky.
- *
- * @refactor-note (2026-08) ODSTRANĚNA vlastní lokální `Map` cache (`activeCache`/
- * `trashCache`) - byla to druhá, nezávislá cache vrstva NAD `GenericTableService`
- * (root singleton), navíc bez TTL a bez povědomí o mutacích dat. Protože je tahle
- * třída (stejně jako celý BaseDataComponent) při KAŽDÉ navigaci zničena a znovu
- * vytvořena, lokální cache navigaci mezi stránkami stejně nikdy nepřežila - jediná
- * cache, která ji reálně přežije, je `GenericTableService.pageCache` (root singleton).
- * Sjednoceno na jeden zdroj pravdy: `fetchPaginatedData()` teď vždy volá
- * `genericTableService.getPaginatedData()`, který sám rozhodne network vs. cache podle
- * TTL - transparentně, bez ohledu na to, jestli je tohle nový nebo starý mount.
- *
- * Přidány dvě odlišné metody pro dvě odlišné situace (klíčová oprava backlog tasku):
- * - `loadInitial()` - "jemné" načtení při vstupu na stránku (mount). NEinvaliduje nic -
- *   pokud je `GenericTableService` cache pro danou stránku/filtry ještě čerstvá (< TTL),
- *   proběhne bez síťového dotazu.
- * - `forceFullRefresh()` - "tvrdý" refresh. Napřed zavolá
- *   `genericTableService.invalidateEndpoint()` (zahodí VŠECHNY cachované stránky
- *   tohoto zdroje), pak refetchne. Použito: ruční refresh tlačítko na tabulce, refresh
- *   po create/update/delete/restore (přes stávající `refreshData()` override v každé
- *   stránkové komponentě), a globální refresh v headeru (přes TableRefreshBusService).
- *
- * Přidáno `activeLastUpdatedAt` / `trashLastUpdatedAt` (BehaviorSubject<Date | null>) -
- * nastavuje se při KAŽDÉM úspěšném `fetchPaginatedData()` (ať data přišla ze sítě nebo
- * z cache) - UI tak může zobrazit "Aktualizováno v HH:MM:SS", viz TableBuilderComponent.
- *
- * Přidáno volání `genericTableService.preloadAdjacentPages()` při změně stránky - dřív
- * existující, ale nikde nevolaná metoda.
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `removeLocal`.
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): a page is `{data,
- *  meta}` - totals / pages are read from `meta`.
+ * @description Own state of the "active vs. trash" table pair: page counters, active filters and
+ * the fetch / refresh / page change logic.
+ * @note Two methods for two situations:
+ * - `loadInitial()` - "soft" load on entering the page (mount). Invalidates nothing - when the
+ *   `GenericTableService` cache of the page / filters is still fresh (< TTL), no network
+ *   request is made.
+ * - `forceFullRefresh()` - "hard" refresh. Calls `genericTableService.invalidateEndpoint()`
+ *   first (drops ALL cached pages of the resource), then refetches. Used by the refresh button
+ *   of the table, after create / update / delete / restore (through the `refreshData()`
+ *   override of every page component) and by the global refresh in the header
+ *   (TableRefreshBusService).
+ * @note `activeLastUpdatedAt` / `trashLastUpdatedAt` (BehaviorSubject<Date | null>) are set on
+ * EVERY successful `fetchPaginatedData()` (network or cache), so the UI can show
+ * "Updated at HH:MM:SS" (TableBuilderComponent). A page change also calls
+ * `genericTableService.preloadAdjacentPages()`.
  */
 
 import { ChangeDetectorRef } from '@angular/core';
@@ -63,7 +45,7 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
   currentActiveFilters: FilterParams = {};
   currentTrashFilters: FilterParams = {};
 
-  /** Kdy naposledy proběhlo úspěšné načtení aktivní/koš tabulky - pro UI badge "Aktualizováno v...". */
+  /** Time of the last successful load of the active / trash table - for the UI badge "Updated at...". */
   public activeLastUpdatedAt = new BehaviorSubject<Date | null>(null);
   public trashLastUpdatedAt = new BehaviorSubject<Date | null>(null);
 
@@ -73,10 +55,6 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
     private destroy$: Subject<void>,
     private cd: ChangeDetectorRef,
     public defaultFilters: FilterParams = { sort_by: 'id', sort_direction: 'desc' },
-    /**
-     * @refactor-note (2026-10-22) Optional mapping of every loaded row (active and trash), e.g. to
-     * flatten nested API values into table columns. Identity by default.
-     */
     private rowMapper: (row: T) => T = row => row
   ) {}
 
@@ -85,8 +63,8 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
   }
 
   /**
-   * @description Načte stránku dat z `GenericTableService` (ten sám rozhodne
-   * network vs. TTL cache) pro aktivní nebo koš tabulku.
+   * @description Loads a page of data from `GenericTableService` (which decides network vs.
+   * TTL cache itself) for the active or the trash table.
    */
   fetchPaginatedData(
     isTrash: boolean,
@@ -126,9 +104,8 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
   }
 
   /**
-   * @description "Jemné" počáteční načtení při vstupu na stránku (mount). Neinvaliduje
-   * žádnou cache - pokud je `GenericTableService` cache ještě čerstvá, proběhne bez
-   * síťového dotazu (viz refactor-note výše).
+   * @description "Soft" initial load on entering the page (mount). Invalidates no cache - when
+   * the `GenericTableService` cache is still fresh, no network request is made.
    */
   loadInitial(filters: FilterParams = this.defaultFilters): void {
     forkJoin([
@@ -144,9 +121,9 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
   }
 
   /**
-   * @description "Tvrdý" refresh - zneplatní VŠECHNY cachované stránky tohoto endpointu
-   * a znovu je natáhne. Použít po mutaci dat (create/update/delete/restore) a u
-   * ručního/globálního refresh tlačítka.
+   * @description "Hard" refresh - invalidates ALL cached pages of this endpoint and loads them
+   * again. Use after a data mutation (create / update / delete / restore) and for the manual /
+   * global refresh button.
    */
   forceFullRefresh(currentFilters: FilterParams = this.defaultFilters): void {
     this.genericTableService.invalidateEndpoint(this.endpoint);

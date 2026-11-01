@@ -2,10 +2,10 @@
 /**
  * @file CoreSecurityEventResource.php
  * @path app/Http/Resources/Core/CoreSecurityEventResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description JSON reprezentace bezpečnostního eventu pro admin UI.
+ * @description JSON representation of a security event for the admin.
  */
 
 namespace App\Http\Resources\Core;

@@ -1,15 +1,10 @@
 /*
     @file: faq.component.css
     @path: /src/app/public/web-pages/faq/faq.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @refactor-note (2026-09) Unified spacing across public pages: spacing tokens
-        (--gutter, --section-y, --hero-top, --hero-bottom, --head-gap), content
-        width 1200px (+ gutters), hero top 180/120px, sections 96/64px.
-        Sidebar and FAQ column now sit flush with the content column edges
-        (removed inner 40px / 24px offsets). Only padding / margin / gap /
-        max-width changed.
+    @description: Styles of the faq component.
 */
 
 :host {

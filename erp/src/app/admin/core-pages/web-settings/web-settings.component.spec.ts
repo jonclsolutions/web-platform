@@ -1,15 +1,12 @@
 /**
  * @file web-settings.component.spec.ts
  * @path src/app/admin/core-pages/web-settings/web-settings.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of WebSettingsComponent – company settings (incl. logo upload and
  *   per-language texts), social links (add / save / delete with icon upload) and the page-titles
  *   tab (load, dirty tracking, save only changed rows, discard, permission).
- * @refactor-note (2026-10-31) Optional company details: the test settings switch off GA, phone,
- *   address and footer text; new tests of the field checkboxes, the required-field check and
- *   the switched-off look of a field.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, confirm/alert spies, permission stub),
  *   ResourceCacheService (real)

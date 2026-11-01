@@ -1,8 +1,8 @@
 /**
  * @file payment-methods.component.spec.ts
  * @path src/app/admin/shop-pages/payment-methods/payment-methods.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of PaymentMethodsComponent and payment-methods.config.ts – the fixed
  *   payment methods (edited only, never created or deleted here): translated configuration,

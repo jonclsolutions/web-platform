@@ -1,8 +1,8 @@
 /**
  * @file personal-info.component.spec.ts
  * @path src/app/admin/core-pages/personal-info/personal-info.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of PersonalInfoComponent – the logged-in admin's profile: 2FA switch
  *   (incl. 2FA forced by role or by an administrator) and the change-password popup.

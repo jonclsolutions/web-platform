@@ -3,9 +3,9 @@
 /**
  * @file PasswordConfirmationTest.php
  * @path api/tests/Feature/Core/Auth/PasswordConfirmationTest.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-26
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Feature tests of the step-up password confirmation (POST /api/confirm-password,
  *   App\Traits\RequiresPasswordConfirmation) and of every sysadmin operation guarded by it:
  *   creating, promoting, editing (also the own account), demoting, deleting and restoring a

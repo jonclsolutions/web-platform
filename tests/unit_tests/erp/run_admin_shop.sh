@@ -2,8 +2,8 @@
 #
 # @file run_admin_shop.sh
 # @path tests/unit_tests/erp/run_admin_shop.sh
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Runs the erp unit tests: admin e-shop section – admin/shop-pages.
 #   Result: tests/unit_tests/erp/report/report.html and report.xml (last run only).

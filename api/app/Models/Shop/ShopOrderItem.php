@@ -2,16 +2,10 @@
 /**
  * @file ShopOrderItem.php
  * @path app/Models/Shop/ShopOrderItem.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Model representing an individual line item in a customer order.
- * @bugfix-note (2026-10-23) `vat_rate` was not a column / fillable: the rate computed at checkout
- *   or sent by the admin was silently dropped and every recalculation, the resource and the
- *   invoice used 21 % (open finding #21, EU VAT). The rate of the sale is stored now
- *   (database/migrations/2026_10_23_shop_orders_vat_contact_retention.sql).
- * @refactor-note (2026-10-23) `adjustStock()` - one place for the stock movement of a line
- *   (status changes of the order and item edits, finding #24).
  */
 
 namespace App\Models\Shop;

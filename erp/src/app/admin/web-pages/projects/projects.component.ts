@@ -1,63 +1,15 @@
 /**
  * @file projects.component.ts
  * @path src/app/admin/web-pages/projects/projects.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Administrative component for managing customer Projects, including a
  * secondary independently-paginated table of cross-project customer threads.
- * @note Druhá tabulka (`threadsData`/`threadsFilters`/...) je natahována ručně přes
- * `genericTableService.getPaginatedData()`, protože `BaseDataComponent` spravuje jen
- * jeden primární `apiEndpoint` (projekty). Dva modaly ("Správa" pro konkrétní projekt,
- * "Vlákno" pro cross-project tabulku) sdílí stejný scroll-lock mechanismus a `pm-*` CSS.
- * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
- * volání ze VŠECH `error:`/`catch` bloků čistě HTTP volání (handleViewDetails,
- * handleFormSubmitted, regeneratePassword, addCheckpoint, deleteCheckpoint,
- * changeThreadStatus, sendReply, sendThreadModalReply) - `DataHandler.handleError()`
- * je jediné autoritativní místo pro chybový toast. `loadOrderOptions()` už žádný toast
- * neměl, beze změny.
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `Config.*` konstanty nahrazeny `Config.create*()` factory funkcemi, stejný vzor jako
- * ostatní web-pages stránky. `checkpointStatusLabels` (dřív `readonly` field
- * initializer) přepsán na `Config.createCheckpointStatusLabels(i18n)`, přepočítávaný
- * ve stejném `translations$.subscribe()` bloku. `graphColumns` přestalo být `readonly`.
- * `threadStatusLabel()`/`threadAuthorLabel()` NOVÉ pomocné metody nahrazují inline
- * ternární operátory v šabloně (`thread.status === 'closed' ? 'Uzavřeno' : 'Aktivní'`,
- * `msg.author_type === 'admin' ? 'Administrátor' : 'Zákazník'`) - šablona teď volá
- * `t()`-backed metodu místo natvrdo psaného českého textu přímo v HTML. VŠECHNY
- * `alertDialogService.open()`/`confirmDialogService.open()` texty přepsány na `t()`.
- * `loadOrderOptions()` teď používá `Config.createNoOrderOptionLabel(i18n)` pro placeholder
- * option - SDÍLENÝ s `createProjectFormFields()`, aby oba texty ("Bez realizace...")
- * vždy odpovídaly stejnému i18n klíči.
- *
- * @refactor-note (2026-09-11v3) BACKLOG "vlákna přijímají přílohy": `ProjectAttachment`
- * interface + `attachments` pole na `ProjectThreadMessage`. `replyFiles`/
- * `threadModalReplyFiles` - vybrané soubory PŘED odesláním (max 5). `sendReply()`/
- * `sendThreadModalReply()` staví `FormData` MÍSTO plain `{ body }`, jakmile je vybraný
- * alespoň jeden soubor (`DataHandler.post()` funguje beze změny - `FormData` detekce
- * je uvnitř `getHeaders()`). `formatFileSize()` pro zobrazení existujících příloh.
- *
- * @refactor-note (2026-09-11v4) BACKLOG "otevření vlákna ukazuje nejstarší zprávu /
- * vlákno s 1000 zprávami nemá načítat všechny najednou": `openThread()`/
- * `openThreadModal()` po úspěšném načtení scrollují `.pm-message-list` na SPODEK
- * (nejnovější zprávy) přes `pmMessageListEl`/`threadModalMessageListEl` ViewChild +
- * `scrollMessagesToBottom()`. `has_more_older_messages` flag z backendu řídí
- * viditelnost tlačítka "Načíst starší zprávy" (`loadOlderMessages()`/
- * `loadOlderThreadModalMessages()`) - nová dávka se PŘEDŘADÍ před stávající lokální
- * seznam, scroll pozice se zachová (rozdíl `scrollHeight` PŘED/PO).
- *
- * @refactor-note (2026-09-11v4) BACKLOG "real-time validace příloh na frontendu":
- * `validateAndAddFiles()` - kontroluje příponu, velikost a počet HNED při výběru
- * souboru, ne až po odeslání na server. Odmítnuté soubory se do `replyFiles`/
- * `threadModalReplyFiles` vůbec nedostanou, chybová hláška se zobrazí okamžitě pod
- * file inputem (`replyFileError`/`threadModalReplyFileError`).
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): thread detail /
- *  older messages via `getWithMeta()` - `has_more_older_messages` is in `meta`; threads table
- *  totals in `meta`.
+ * @note The second table (`threadsData` / `threadsFilters` / ...) is loaded manually through
+ * `genericTableService.getPaginatedData()`, because `BaseDataComponent` manages only one
+ * primary `apiEndpoint` (projects). The two modals ("Manage" of a project, "Thread" of the
+ * cross-project table) share the same scroll-lock mechanism and the `pm-*` CSS.
  */
 
 import { Component, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angular/core';
@@ -147,7 +99,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
 
   private prefillOrderId: string | null = null;
 
-  // ── "Správa" modal (jeden konkrétní projekt: Přístup / Checkpointy / Konverzace) ──
+  // ── "Manage" modal (one project: Access / Checkpoints / Conversation) ──
   showManageModal = false;
   manageLoading = false;
   managingProject: any | null = null;
@@ -161,22 +113,15 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   olderMessagesLoading = false;
   replyBody = '';
   replySending = false;
-  /** @refactor-note (2026-09-11v3) Vybrané soubory pro odpověď ve "Správa" modalu. */
   replyFiles: File[] = [];
   replyFileError: string | null = null;
 
   passwordRegenerating = false;
 
   revealedPassword: RevealedPassword | null = null;
-  /**
-   * @bugfix-note (2026-10-22) Project the in-memory `revealedPassword` belongs to. When
-   * sessionStorage refuses the entry (private mode, quota), `openManageModal()` used to reload
-   * the password only from storage and the one-time password was lost right after creation.
-   */
   private revealedPasswordProjectId: number | null = null;
   passwordVisible = false;
 
-  /** @refactor-note (2026-09-08) Přestalo být `readonly` field initializer - viz hlavička souboru. */
   checkpointStatusLabels: Record<string, string> = {};
 
   private readonly PASSWORD_STORAGE_PREFIX = 'rpsw_project_pw_';
@@ -189,7 +134,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
 
   private savedScrollY = 0;
 
-  // ── Cross-project tabulka požadavků ─────────────────────────────────────
+  // ── Cross-project table of requests ─────────────────────────────────────
   readonly threadsApiEndpoint = 'web/project-threads';
   threadColumns: Core.ColumnDefinition[] = [];
   threadButtons: Core.TableButtons[] = [];
@@ -211,7 +156,6 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   threadModalOlderMessagesLoading = false;
   threadModalReplyBody = '';
   threadModalReplySending = false;
-  /** @refactor-note (2026-09-11v3) Vybrané soubory pro odpověď v cross-project thread modalu. */
   threadModalReplyFiles: File[] = [];
   threadModalReplyFileError: string | null = null;
 
@@ -241,7 +185,6 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     return this._projectThreadsCrud;
   }
 
-  /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
 
   constructor(
@@ -363,10 +306,6 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.forceFullRefresh(this.filters);
   }
 
-  /**
-   * @refactor-note (2026-09-08) `— Bez realizace...` placeholder teď přes
-   * `Config.createNoOrderOptionLabel(i18n)` - SDÍLENÝ text s `createProjectFormFields()`.
-   */
   private loadOrderOptions(onLoaded: () => void): void {
     this.dataHandler.getCollection<any>('web/sales_orders', { no_pagination: 'true', sort_by: 'id', sort_direction: 'desc' })
       .subscribe({
@@ -423,7 +362,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.cd.markForCheck();
   }
 
-  // ── "Správa" modal ────────────────────────────────────────────────────
+  // ── "Manage" modal ────────────────────────────────────────────────────
 
   openManageModal(item: any): void {
     this.showManageModal = true;
@@ -580,10 +519,6 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   }
 
   /**
-   * @refactor-note (2026-09-11v4) Po úspěšném načtení scrolluje `.pm-message-list`
-   * na spodek (nejnovější zprávy) - viz `scrollMessagesToBottom()`.
-   */
-  /**
    * @description Loads a thread with its newest messages; `has_more_older_messages` comes in
    *   `meta` of the answer (finding #6) and is kept on the thread object for the templates.
    * @param id Thread id.
@@ -630,7 +565,7 @@ changeThreadStatus(status: string): void {
         const inManaging = this.managingThreads.find(t => t.id === this.selectedThread!.id);
         if (inManaging) inManaging.status = updated.status;
 
-        // ← přidáno: okamžitá lokální aktualizace spodní cross-project tabulky
+        // Immediate local update of the cross-project table below
         const inThreadsData = this.threadsData.find(t => t.id === this.selectedThread!.id);
         if (inThreadsData) inThreadsData.status = updated.status;
 
@@ -639,10 +574,6 @@ changeThreadStatus(status: string): void {
     });
 }
 
-  /**
-   * @refactor-note (2026-09-11v3) `FormData` MÍSTO plain `{ body }`, jakmile je vybraný
-   * alespoň jeden soubor - `DataHandler.post()` funguje beze změny.
-   */
   async sendReply(): Promise<void> {
     const body = this.replyBody.trim();
     if (!body || !this.selectedThread || this.replySending) return;
@@ -663,30 +594,22 @@ changeThreadStatus(status: string): void {
       if (this.managingProject) this.loadManagingThreads(this.managingProject.id);
       this.loadThreadsTable();
     } catch {
-      // DataHandler.handleError() už zobrazil toast pro tuto HTTP chybu.
+      // DataHandler.handleError() already showed a toast for this HTTP error.
     } finally {
       this.replySending = false;
       this.cd.markForCheck();
     }
   }
 
-  /**
-   * @refactor-note (2026-09-08) NOVÉ - nahrazuje inline ternár v šabloně
-   * (`thread.status === 'closed' ? 'Uzavřeno' : 'Aktivní'`). Přeložený text pro
-   * DVĚ hodnoty thread `status`, ne generický `mapLabeledOptions()` lookup, protože se
-   * volá přímo se syrovým `status` stringem mimo `options` pole (šablona nemá
-   * `FilterColumns`/`InputDefinition` po ruce v tomhle konkrétním místě).
-   */
   threadStatusLabel(status: string): string {
     return status === 'closed' ? this.t('thread_status_closed') : this.t('thread_status_active');
   }
 
-  /** @refactor-note (2026-09-08) NOVÉ - nahrazuje inline ternár `msg.author_type === 'admin' ? 'Administrátor' : 'Zákazník'`. */
   threadAuthorLabel(authorType: 'customer' | 'admin'): string {
     return authorType === 'admin' ? this.t('thread_author_admin') : this.t('thread_author_customer');
   }
 
-  // ── Přílohy - výběr souborů + REAL-TIME VALIDACE před odesláním ─────────
+  // ── Attachments - file choice + REAL-TIME VALIDATION before sending ─────────
 
   formatFileSize(bytes: number): string {
     if (!bytes && bytes !== 0) return '';
@@ -694,10 +617,6 @@ changeThreadStatus(status: string): void {
     return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   }
 
-  /**
-   * @refactor-note (2026-09-11v4) Validuje typ/velikost/počet HNED při výběru -
-   * stejná pravidla jako backend `Store*Request` (`mimes:...`, `max:15360`).
-   */
   private validateAndAddFiles(existing: File[], incoming: FileList, onError: (msg: string) => void): File[] {
     let result = [...existing];
     let errorSet = false;
@@ -707,8 +626,6 @@ changeThreadStatus(status: string): void {
         if (!errorSet) { onError(this.t('attachment_error_too_many').replace('{max}', String(this.MAX_THREAD_ATTACHMENTS))); errorSet = true; }
         break;
       }
-      // @refactor-note (2026-10-22) A name without a dot has no extension ('') – the former
-      // `split('.').pop() ?? ''` used the whole name as the extension (fallback never reached).
       const dot = file.name.lastIndexOf('.');
       const ext = dot >= 0 ? file.name.slice(dot + 1).toLowerCase() : '';
       if (!this.ALLOWED_ATTACHMENT_EXTENSIONS.includes(ext)) {
@@ -762,7 +679,7 @@ changeThreadStatus(status: string): void {
     return fd;
   }
 
-  // ── Scroll + stránkování zpráv ("Načíst starší") ────────────────────────
+  // ── Scrolling + message paging ("Load older") ────────────────────────
 
   private scrollMessagesToBottom(el?: ElementRef<HTMLDivElement>): void {
     setTimeout(() => {
@@ -770,7 +687,6 @@ changeThreadStatus(status: string): void {
     });
   }
 
-  /** @refactor-note (2026-09-11v4) "Načíst starší zprávy" - "Správa" modal vlákno. */
   loadOlderMessages(): void {
     if (!this.selectedThread || this.olderMessagesLoading || !this.selectedThread.has_more_older_messages) return;
     const oldestId = this.selectedThread.messages?.[0]?.id;
@@ -798,7 +714,6 @@ changeThreadStatus(status: string): void {
     });
   }
 
-  /** @refactor-note (2026-09-11v4) "Načíst starší zprávy" - cross-project thread modal. */
   loadOlderThreadModalMessages(): void {
     if (!this.activeThread || this.threadModalOlderMessagesLoading || !this.activeThread.has_more_older_messages) return;
     const oldestId = this.activeThread.messages?.[0]?.id;
@@ -826,7 +741,7 @@ changeThreadStatus(status: string): void {
     });
   }
 
-  // ── Cross-project tabulka požadavků ─────────────────────────────────────
+  // ── Cross-project table of requests ─────────────────────────────────────
 
   public loadThreadsTable(): void {
     this.genericTableService.getPaginatedData<any>(this.threadsApiEndpoint, this.threadsCurrentPage, this.threadsItemsPerPage, this.threadsFilters)
@@ -863,10 +778,6 @@ changeThreadStatus(status: string): void {
     this.loadThreadsTable();
   }
 
-  /**
-   * @refactor-note (2026-09-11v4) Po úspěšném načtení scrolluje `.pm-message-list`
-   * na spodek (nejnovější zprávy).
-   */
   openThreadModal(item: any): void {
     this.showThreadModal = true;
     this.threadModalLoading = true;
@@ -894,10 +805,6 @@ changeThreadStatus(status: string): void {
     this.unlockBackgroundScroll();
   }
 
-  /**
-   * @refactor-note (2026-09-11v3) `FormData` MÍSTO plain `{ body }`, jakmile je vybraný
-   * alespoň jeden soubor - viz `sendReply()` výše pro stejné odůvodnění.
-   */
   async sendThreadModalReply(): Promise<void> {
     const body = this.threadModalReplyBody.trim();
     if (!body || !this.activeThread || this.threadModalReplySending) return;
@@ -917,27 +824,19 @@ changeThreadStatus(status: string): void {
       this.openThreadModal(this.activeThread);
       this.loadThreadsTable();
     } catch {
-      // DataHandler.handleError() už zobrazil toast pro tuto HTTP chybu.
+      // DataHandler.handleError() already showed a toast for this HTTP error.
     } finally {
       this.threadModalReplySending = false;
       this.cd.markForCheck();
     }
   }
 
-  /** @bugfix-note (2026-09-11v5) Formát shodný s backend `format('Y-m-d H:i:s')`. */
 private nowFormattedForDisplay(): string {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
-/**
- * @bugfix-note (2026-09-11v5) BACKLOG "čas poslední zprávy se v cross-project
- * tabulce po odeslání nezaktualizoval": okamžitá lokální aktualizace záznamu v
- * `threadsData`, NEZÁVISLE na `loadThreadsTable()` (ten pořád běží jako plný
- * refetch v pozadí a časem zajistí i správné přeřazení podle sort_by). Řeší
- * problém i kdyby síťový round-trip trval déle, než uživatel čeká.
- */
 private patchThreadsDataLastMessageAt(threadId: number): void {
   const row = this.threadsData.find(t => t.id === threadId);
   if (row) {
@@ -945,7 +844,7 @@ private patchThreadsDataLastMessageAt(threadId: number): void {
     this.cd.markForCheck();
   }
 }
-  // ── Scroll lock (sdíleno mezi oběma modaly - jen jeden je vždy otevřený) ──
+  // ── Scroll lock (shared by both modals - only one is open at a time) ──
 
   private lockBackgroundScroll(): void {
     this.savedScrollY = window.scrollY;

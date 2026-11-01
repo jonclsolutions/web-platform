@@ -2,9 +2,9 @@
 /**
  * @file MigrateLegacyAttachmentsCommand.php
  * @path app/Console/Commands/MigrateLegacyAttachmentsCommand.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-23
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description One-time GDPR migration (open finding #31): CVs of job applications
  *   (`web_job_applications.cv_path`) and ticket attachments (`web_support_tickets.attachment_path`)
  *   uploaded before the `web_attachments` refactor lie on the PUBLIC disk - with the `storage`

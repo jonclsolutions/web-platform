@@ -1,8 +1,8 @@
 /**
  * @file projects.component.spec.ts
  * @path src/app/admin/web-pages/projects/projects.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ProjectsComponent and projects.config.ts – client projects of the
  *   Web module: translated configuration, toolbars, prefill from a sales order (?order_id) and

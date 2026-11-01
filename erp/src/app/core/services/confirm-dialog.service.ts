@@ -1,19 +1,14 @@
 /**
  * @file confirm-dialog.service.ts
  * @path src/app/core/services/confirm-dialog.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Service for programmatically creating and managing dynamic ConfirmDialogComponent instances globally.
  * @dependencies
  * - ConfirmDialogComponent: The UI component to be dynamically rendered.
  * - ApplicationRef: Required to manually attach/detach component views to the application tree.
  * - EnvironmentInjector: Required for dependency injection within dynamically created components.
- * @bugfix-note (2026-10-23) Button labels (open finding #20): `open()` takes optional `labels`;
- *   without them the defaults of the current surface are used (`setDefaultLabels()`, set by the
- *   admin layout from the admin translations), and only then the neutral English defaults of the
- *   component. The service itself stays independent of the admin / public translation services
- *   (the dialog is used on both).
  */
 
 import { Injectable, ComponentRef, ApplicationRef, createComponent, EnvironmentInjector, EmbeddedViewRef } from '@angular/core';
@@ -55,8 +50,6 @@ export class ConfirmDialogService {
    * @param labels Optional button texts; missing ones come from `setDefaultLabels()` / the component.
    * @returns {Promise<boolean>} Resolves to 'true' on confirm, 'false' on cancel.
    * @note If a dialog is already active, it is destroyed before the new one is initialized.
-   * @bugfix-note (2026-10-23) The promise of a dialog replaced by a newer open() never settled
-   *   (the awaiting caller hung forever and leaked) - it now resolves to `false` (= not confirmed).
    */
   open(title: string, message: string, labels?: ConfirmDialogLabels): Promise<boolean> {
     this.settle(false);

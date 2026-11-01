@@ -2,8 +2,8 @@
 /**
  * @file UpdateShopShippingMethodRequest.php
  * @path app/Http/Requests/Shop/ShopShippingMethod/UpdateShopShippingMethodRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation logic for updating existing shop shipping methods.
  */

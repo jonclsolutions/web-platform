@@ -1,25 +1,11 @@
 /**
  * @file projects.config.ts
  * @path src/app/admin/web-pages/projects/projects.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Static-turned-dynamic configuration for the customer Project management
  * page, including the cross-project customer threads sub-table.
- *
- * (Earlier refactor-notes for the projects/project-threads merge and the
- * openGraphBuilder permission fix are unchanged, see version history.)
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * + "enum hodnoty jako přeložitelné anglické slugy": kompletní přepis na FACTORY
- * FUNKCE. Pět enum skupin, jen JEDNA vyžadovala SQL migraci:
- * - `platform` PŘEPSÁN z plného českého textu ('Web'/'Mobilní'/'Desktopová'/'AI'/
- *   'Jiné') na anglické slugy ('web'/'mobile'/'desktop'/'ai'/'other') - viz SQL
- *   migrace `008_platform_slugs_web_projects.sql` a `Store/UpdateWebProjectRequest`
- *   (doplněna `in:...` validace, kterou `platform` dřív vůbec neměl).
- * - `status` (projekt), `visibility`, checkpoint `status`, thread `status`, thread
- *   `priority` UŽ BYLY anglické slugy - žádná SQL migrace, jen `mapLabeledOptions()`
- *   místo natvrdo psaných českých labelů přímo v `{value,label}` párech.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -53,7 +39,7 @@ const THREAD_PRIORITY_LABEL_KEYS: Record<string, string> = {
   low: 'thread_priority_low', medium: 'thread_priority_medium', high: 'thread_priority_high', critic: 'thread_priority_critic',
 };
 
-/** @description Checkpoint stav se cyklicky posouvá kliknutím - beze změny, canonical slugy. */
+/** @description The checkpoint state cycles on click - canonical slugs. */
 export const CHECKPOINT_STATUS_CYCLE: Record<string, string> = {
   new: 'active',
   active: 'done',
@@ -64,7 +50,7 @@ function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, 
   return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
 }
 
-/** @description Sdílená čitelná mapa pro checkpoint badge text v šabloně (`checkpointStatusLabels[cp.status]`). */
+/** @description Shared readable map for the checkpoint badge text in the template (`checkpointStatusLabels[cp.status]`). */
 export function createCheckpointStatusLabels(i18n: AdminLocalizationService): Record<string, string> {
   const result: Record<string, string> = {};
   for (const v of CHECKPOINT_STATUS_VALUES) result[v] = i18n.getValue(`${SECTION}.${CHECKPOINT_STATUS_LABEL_KEYS[v]}`);
@@ -89,7 +75,7 @@ export function createProjectToolbarButtons(i18n: AdminLocalizationService): Cor
   ];
 }
 
-/** @description `— Bez realizace (samostatný projekt) —` sdíleno s `loadOrderOptions()` v komponentě - stejný `t()` klíč na obou místech. */
+/** @description `— No order (standalone project) —` shared with `loadOrderOptions()` of the component - the same `t()` key in both places. */
 export function createNoOrderOptionLabel(i18n: AdminLocalizationService): string {
   return i18n.getValue(`${SECTION}.field_order_none_option`);
 }
@@ -111,12 +97,6 @@ export function createProjectFormFields(i18n: AdminLocalizationService): Core.In
     { column_name: 'contact_phone', label: i18n.getValue(`${SECTION}.field_phone_label`), type: 'tel', required: false, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'contact_email', label: i18n.getValue(`${SECTION}.field_email_label`), type: 'email', required: false, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'technologies', label: i18n.getValue(`${SECTION}.field_technologies_label`), type: 'textarea', required: false, editable: true, show_in_edit: true, show_in_create: true },
-    /**
-     * @refactor-note (2026-09-11) BACKLOG "project portal - odhad termínu dokončení":
-     * dvě samostatná date pole (rozptyl, ne jeden pevný termín - viz WebProject model
-     * pro odůvodnění). Oba `required: false` - projekt beze zadaného odhadu je platný
-     * stav, portál pak sekci s termínem prostě nezobrazí.
-     */
     { column_name: 'estimated_completion_from', label: i18n.getValue(`${SECTION}.field_estimated_from_label`), type: 'date', required: false, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'estimated_completion_to', label: i18n.getValue(`${SECTION}.field_estimated_to_label`), type: 'date', required: false, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'visibility', label: i18n.getValue(`${SECTION}.field_visibility_label`), type: 'select', options: mapLabeledOptions(PROJECT_VISIBILITY_VALUES, VISIBILITY_LABEL_KEYS, i18n), required: true, editable: true, show_in_edit: true, show_in_create: true },
@@ -172,7 +152,7 @@ export function createProjectDetailsColumns(i18n: AdminLocalizationService): Cor
   ];
 }
 
-// ── Cross-project tabulka požadavků ──────────────────────────────────────
+// ── Cross-project table of requests ──────────────────────────────────────
 
 export function createProjectThreadColumns(i18n: AdminLocalizationService): Core.ColumnDefinition[] {
   return [

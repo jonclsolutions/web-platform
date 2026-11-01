@@ -1,8 +1,8 @@
 /**
  * @file alert-dialog.service.spec.ts
  * @path src/app/core/services/alert-dialog.service.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of AlertDialogService: one toast container mounted to <body> lazily,
  *   every open() adds a toast and its promise resolves when exactly that toast is closed.

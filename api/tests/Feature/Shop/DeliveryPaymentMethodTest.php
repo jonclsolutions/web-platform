@@ -3,8 +3,8 @@
 /**
  * @file DeliveryPaymentMethodTest.php
  * @path api/tests/Feature/Shop/DeliveryPaymentMethodTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the shipping methods (ShopShippingMethodController: CRUD,
  *   protected system methods, trash) and the payment methods (ShopPaymentMethodController:

@@ -2,14 +2,13 @@
 /**
  * @file AccountActivationMail.php
  * @path app/Mail/Auth/AccountActivationMail.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Aktivační e-mail s odkazem na nastavení hesla nově vytvořeného účtu.
- * Odkaz vede na veřejnou (nepřihlášenou) frontend stránku `/activate-account/{token}`.
- * @note `config('app.frontend_url')` musí být nastaveno v `.env` (FRONTEND_URL) -
- * stejná proměnná, jaká už se pravděpodobně používá pro reset-password odkazy
- * (PasswordResetController) - pokud tam existuje jiný klíč, uprav podle něj.
+ * @description Activation e-mail of a new account with the link to set the password. The link
+ * leads to the public frontend page `/activate-account/{token}`.
+ * @note Needs `config('app.frontend_url')` (FRONTEND_URL in .env), like the password reset
+ * links (PasswordResetController).
  */
 
 namespace App\Mail\Auth;

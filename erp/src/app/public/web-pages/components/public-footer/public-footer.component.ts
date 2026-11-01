@@ -1,17 +1,11 @@
 /**
  * @file public-footer.component.ts
  * @path src/app/public/web-pages/components/public-footer/public-footer.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Public site footer – brand block, grouped quick links
  *   (offer / company / support), contact, copyright bar with legal links and login.
- * @refactor-note (2026-09-30) Flat `footerNavLinks` list replaced by
- *   `footerLinkGroups` (3 topic groups). "Home" removed (logo links home).
- *   Login moved to the bottom bar (`footerLoginLink`).
- * @refactor-note (2026-10-31) Optional company details: `copyrightText` / `brandTagline` no
- *   longer fall back to the translation texts - the footer renders only with the company details,
- *   and a field switched off in the admin (null from the API) must stay hidden.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -61,8 +55,6 @@ export class PublicFooterComponent extends BasePublicComponent {
   /**
    * @description Footer link groups by what the visitor is looking for.
    *   titleKey = key inside the `footer` translation object (this.t).
-   * @bugfix-note (2026-10-23) The Czech `fallback` titles ('Nabídka', 'Společnost', 'Podpora')
-   *   were removed (open finding #44) - the keys exist in the `footer` translations.
    */
   private readonly linkGroupDefs: { titleKey: string; links: FooterLinkDef[] }[] = [
     {

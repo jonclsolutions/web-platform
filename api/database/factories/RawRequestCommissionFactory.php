@@ -31,9 +31,7 @@ class RawRequestCommissionFactory extends Factory
             'order_description' => $this->faker->paragraphs(rand(2, 4), true),
             'status' => $this->faker->randomElement(['Nově zadané', 'Zpracovává se', 'Dokončeno', 'Zrušeno']),
             'priority' => $this->faker->randomElement(['Nízká', 'Neutrální', 'Vysoká']),
-            // created_at, updated_at a deleted_at jsou automaticky spravovány Laravelem
-            // díky timestamps() a softDeletes() v migraci a výchozímu chování modelu.
-            // Není potřeba je zde definovat.
+            // created_at, updated_at and deleted_at are managed by Laravel (timestamps / softDeletes).
         ];
     }
 }

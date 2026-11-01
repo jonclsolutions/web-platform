@@ -2,8 +2,8 @@
 /**
  * @file DocumentType.php
  * @path app/Models/Legal/DocumentType.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Model representing a type of legal document (e.g., TOS, Privacy Policy).
  */

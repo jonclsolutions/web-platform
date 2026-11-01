@@ -1,8 +1,8 @@
 /**
  * @file coupons.component.spec.ts
  * @path src/app/admin/shop-pages/coupons/coupons.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of CouponsComponent and coupons.config.ts – discount coupons:
  *   configuration, code validation, chartable / importable columns, toolbar by permission and

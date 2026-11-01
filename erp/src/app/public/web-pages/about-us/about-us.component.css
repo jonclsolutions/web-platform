@@ -1,13 +1,10 @@
 /*
     @file: about-us.component.css
     @path: /src/app/public/web-pages/about-us/about-us.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @refactor-note (2026-09) Unified spacing across public pages: spacing tokens
-        (--gutter, --section-y, --hero-top, --hero-bottom, --head-gap), content
-        width 1200px (+ gutters), hero top 180/120px, sections 96/64px.
-        Only padding / margin / gap / max-width changed.
+    @description: Styles of the about us component.
 */
 
 :host {

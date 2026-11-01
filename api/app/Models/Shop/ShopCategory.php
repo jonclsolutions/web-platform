@@ -2,8 +2,8 @@
 /**
  * @file ShopCategory.php
  * @path app/Models/Shop/ShopCategory.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Model representing product categories in the shop system.
  */

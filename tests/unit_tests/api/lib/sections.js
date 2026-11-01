@@ -1,8 +1,8 @@
 /**
  * @file sections.js
  * @path tests/unit_tests/api/lib/sections.js
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Which api source files (app/…) belong to which test section. The coverage of
  *   a section run (run_core.sh, run_web.sh, run_shop.sh, run_other.sh) is measured over

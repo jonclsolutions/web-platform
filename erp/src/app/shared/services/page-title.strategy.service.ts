@@ -1,11 +1,11 @@
 /**
  * @file page-title.strategy.ts
  * @path src/app/shared/services/page-title.strategy.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Sets the browser tab title (<title>) of public pages from the texts
- *   the client writes in admin (Firemní údaje -> záložka "Názvy stránek").
+ *   the client writes in admin (Company details -> "Page titles" tab).
  * @dependencies
  * - PublicDataService: loads the title map once from `public/legal/page-titles`.
  * - LocalizationService: current language + language changes (title switches
@@ -19,15 +19,6 @@
  *   the static <title> from index.html. Routes without any `title` in their
  *   route chain also get the index.html title (admin + auth use 'admin.panel'). The title is set via Angular `Title`
  *   (document.title = text), so client text can never inject HTML.
- * @bugfix-note (2026-09-30) The router creates TitleStrategy very early – while
- *   HTTP interceptors (AuthTokenInterceptor) are still being constructed. Injecting
- *   PublicDataService / LocalizationService and firing an HTTP request in the
- *   constructor re-entered HttpClient -> interceptors -> Router -> this strategy
- *   (circular DI) and the app did not start. Both services are now resolved lazily
- *   through the Injector on the FIRST updateTitle() call (after the first
- *   navigation, when DI is fully built). Nothing HTTP-related runs in the constructor.
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): the titles map is
- *  the payload itself (was `{titles}`).
  */
 
 import { Injectable, Injector, inject } from '@angular/core';
@@ -49,7 +40,7 @@ type PageTitleMap = Record<string, Record<string, string>>;
 @Injectable({ providedIn: 'root' })
 export class PageTitleStrategy extends TitleStrategy {
 
-  // Only dependencies WITHOUT HttpClient are injected eagerly (see bugfix-note).
+  // Only dependencies WITHOUT HttpClient are injected eagerly.
   private readonly titleService = inject(Title);
   private readonly injector     = inject(Injector);
 

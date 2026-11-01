@@ -1,9 +1,10 @@
 /*    
     @file: cart.component.html
     @path: /src/app/public/shop-pages/cart/cart.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026 
+    @description: Styles of the cart component.
 */
 :host {
   --bg-main: var(--color-white);        

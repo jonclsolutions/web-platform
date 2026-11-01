@@ -1,8 +1,8 @@
 /*
     @file: settings-page.css
     @path: /src/app/admin/shared-styles/settings-page.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
     @description: Layout of the site-settings editors: top bar, language switcher, sections, fields, image uploads and the save bar. Identical for the e-shop and the website settings.
     @dependencies: admin/shared-styles/theme.css (tokens)

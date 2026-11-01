@@ -1,14 +1,10 @@
 <!--
     @file: services.component.html
     @path: /src/app/public/web-pages/services/services.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @refactor-note (2026-09) BACKLOG "zjednodušení stránky služeb": odstraněny
-        tech záložky (web/desktop/mobile/ai), pravý sidebar se stat kartami,
-        AI kategorie. Stránka je nyní jednotná sekce "Vývoj softwaru" (web,
-        desktop, mobil). Tabulka přepracována bez cen - pouze srovnání rozsahu.
-        Sekce "Poraďte se s námi" a CTA beze změny.
+    @description: Template of the services component.
 -->
 @if (t) {
 <div class="svc-page content-page">
@@ -36,7 +32,7 @@
 <h2 class="svc-panel-title paddint-top-18-px">{{ t.info_header_2 }}</h2>
 <div class="features-bento">
 
-  <!-- Řádek 1: karty vlevo + obrázek vpravo -->
+  <!-- Row 1: cards on the left + image on the right -->
   <div class="features-row">
     <div class="features-col-cards">
       <div class="feature-card">
@@ -53,7 +49,7 @@
     </div>
   </div>
 
-  <!-- Řádek 2: karty první v DOM, CSS je vizuálně přehodí (obrázek vlevo) -->
+  <!-- Row 2: cards first in the DOM, CSS swaps them visually (image on the left) -->
   <div class="features-row features-row--reverse">
     <div class="features-col-cards">
       <div class="feature-card">
@@ -71,7 +67,7 @@
     </div>
   </div>
 
-  <!-- Řádek 3: karty vlevo + obrázek vpravo -->
+  <!-- Row 3: cards on the left + image on the right -->
   <div class="features-row">
     <div class="features-col-cards">
       <div class="feature-card">
@@ -88,7 +84,7 @@
     </div>
   </div>
 
-  <!-- Řádek 4: karty první v DOM, CSS je vizuálně přehodí (obrázek vlevo) -->
+  <!-- Row 4: cards first in the DOM, CSS swaps them visually (image on the left) -->
   <div class="features-row features-row--reverse">
     <div class="features-col-cards">
       <div class="feature-card">
@@ -152,7 +148,7 @@
   </svg>
 }
 @case (4) {
-  <!-- Projektový portál -->
+  <!-- Project portal -->
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <rect x="3" y="3" width="18" height="18" rx="2"/>
     <path d="M3 9h18"/>
@@ -164,13 +160,13 @@
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
 }
 @case (6) {
-  <!-- Předání a školení -->
+  <!-- Handover and training -->
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
   </svg>
 }
 @default {
-  <!-- Podpora a údržba -->
+  <!-- Support and maintenance -->
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
   </svg>
@@ -188,7 +184,7 @@
       </div>
     </div>
 
-    <!-- MOBILNÍ VERZE -->
+    <!-- MOBILE VERSION -->
     <div class="wf-mobile">
       @for (step of workflowSteps; track step; let i = $index; let last = $last) {
         <div class="wfm-step">
@@ -218,7 +214,7 @@
   </svg>
 }
 @case (4) {
-  <!-- Projektový portál -->
+  <!-- Project portal -->
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <rect x="3" y="3" width="18" height="18" rx="2"/>
     <path d="M3 9h18"/>
@@ -232,13 +228,13 @@
   </svg>
 }
 @case (6) {
-  <!-- Předání a školení -->
+  <!-- Handover and training -->
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
   </svg>
 }
 @default {
-  <!-- Podpora a údržba -->
+  <!-- Support and maintenance -->
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
   </svg>

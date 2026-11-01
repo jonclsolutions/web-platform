@@ -1,8 +1,8 @@
 /**
  * @file graph-builder.component.ts
  * @path src/app/admin/components/builders/graph-builder/graph-builder.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Generic, config-driven report/analytics popup. Given a resource's
  * `apiEndpoint` and a subset of its `detailsColumns` marked `chartable` (see
@@ -14,47 +14,18 @@
  *   distinct value plotted over time buckets;
  * - numeric (`aggregation: 'sum' | 'avg'`) columns: always a value-over-time chart
  *   (bar or line - there is no "distribution" for a continuous metric).
- * An optional baseline "Celkový počet záznamů v čase" chart can be toggled on/off
+ * An optional baseline "Total records over time" chart can be toggled on/off
  * (`showOverallTrend`) independently of column selection.
  * All aggregation happens CLIENT-SIDE - the backend only needs `no_pagination=true` +
  * optional `date_from`/`date_to` on `index()`.
- *
- * (Earlier refactor-notes for sidebar layout, per-column value filters, custom
- * outside-slice labels, PDF export rebuild, scroll lock, and the zero-occurrence
- * value-catalog seeding are unchanged - see version history, omitted here for
- * brevity.)
- *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * GraphBuilderComponent NEdědí BaseDataComponent (sdílená builder komponenta), proto
- * ruční injection AdminLocalizationService + lokální `strings`/`t()`, přesně dle
- * vzoru TableBuilderComponent/FormBuilderComponent. Komponenta MÁ
- * `ChangeDetectionStrategy.OnPush`, proto (na rozdíl od FormBuilderComponent) JE
- * potřeba `translations$.subscribe(() => markForCheck())` v konstruktoru - stejný
- * důvod jako u TableBuilderComponent. Nahrazeny VŠECHNY uživatelsky viditelné texty
- * (sidebar labely, tlačítka, agregační popisky, generované nadpisy/popisy sekcí grafů,
- * metadata reportu, chybová hláška exportu). `dateFieldLabel` @Input default změněn
- * z natvrdo 'Datum vytvoření' na prázdný string s fallbackem na `t()` v ngOnInit() -
- * stejný vzor jako `headerText` v FormBuilderComponent. `logReportActivity()` audit
- * log popisky (anglicky) VĚDOMĚ nepřekládány - stejná konvence jako
- * TableBuilderComponent.logExportActivity().
- * BUGFIX SOUČASNĚ: `computeCanonicalBuckets()` (bucket labely) a `reportMetaLines`
- * ("Vygenerováno:") měly natvrdo `new DatePipe('cs-CZ')` - datum bylo VŽDY česky bez
- * ohledu na zvolený admin jazyk. Nahrazeno `this.i18n.getDateLocale()`, stejná
- * oprava jako u AdminLayoutComponent/WelcomePageComponent.
- *
- * @refactor-note (2026-09-25) BUGFIX "české názvy typů grafů v EN": sidebar chart-type
- * selects were bound to static COLUMN/METRIC_CHART_MODE_OPTIONS with hardcoded Czech
- * labels. Now built by `createColumnChartModeOptions()`/`createMetricChartModeOptions()`
- * (graph-format.ts) inside the existing `translations$` subscribe - rebuilt on JSON load
- * and on every language switch. No other behavior changed.
  *
  * @dependencies
  * - DataHandler: read-only GET against `apiEndpoint` (no_pagination + optional date range).
  * - EntityCrudService: single POST to `web/logs` for audit trail.
  * - chart.js (`chart.js/auto`, dynamic import): renders one <canvas> per section.
  * - jsPDF + html2canvas (dynamic import): client-side PDF snapshot of the report body.
- * - ScrollLockService: Sdílený zámek scrollu na pozadí.
- * - AdminLocalizationService: Statické i18n admin UI.
+ * - ScrollLockService: Shared background scroll lock.
+ * - AdminLocalizationService: Static i18n of the admin UI.
  */
 
 import {
@@ -90,7 +61,7 @@ interface BucketDescriptor {
   date: Date;
 }
 
-/** Vlastní (ne-Chart.js) legenda - "barevná tečka + text" - jen pro categoryTrend. */
+/** Own (non-Chart.js) legend - "colored dot + text" - only for categoryTrend. */
 interface LegendItem {
   label: string;
   color: string;
@@ -100,7 +71,7 @@ interface DistributionSection {
   columnKey: string;
   columnLabel: string;
   chartType: DistributionChartType;
-  /** Popisky UŽ obsahují počet výskytů, např. "AI vývoj (3×)". */
+  /** The labels ALREADY contain the occurrence count, e.g. "AI development (3×)". */
   labels: string[];
   values: number[];
   colors: string[];
@@ -140,9 +111,9 @@ type ChartSectionDescriptor =
   | { kind: 'metricTrend'; section: MetricTrendSection }
   | { kind: 'overallTrend'; section: OverallTrendSection };
 
-/** Max distinct category values plotted individually in a distribution chart before the rest is folded into "Ostatní". */
+/** Max distinct category values plotted individually in a distribution chart before the rest is folded into "Other". */
 const MAX_DISTRIBUTION_CATEGORIES = 12;
-/** Max colored lines drawn in a "vývoj v čase" (trend) chart before the rest is folded into "Ostatní". */
+/** Max colored lines drawn in a trend chart before the rest is folded into "Other". */
 const MAX_TREND_SERIES = 8;
 
 /**
@@ -268,34 +239,30 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
   /**
    * @description Translated chart-type options for the sidebar selects - filled ONLY in
    * the `translations$` subscribe (constructor). Plain fields, not getters (stable
-   * references between CD cycles). See graph-format.ts refactor-note (2026-09-25).
+   * references between CD cycles). See graph-format.ts.
    */
   public columnChartModeOptions: ChartModeOption<ColumnChartMode>[] = [];
   public metricChartModeOptions: ChartModeOption<MetricChartMode>[] = [];
 
-  /**
-   * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
-   * Ruční injection - viz hlavička souboru.
-   */
   public readonly i18n = inject(AdminLocalizationService);
   public get strings(): any { return this.i18n.getMergedSection('graph-builder'); }
   public t(key: string): string { return this.i18n.getValue(`graph-builder.${key}`); }
 
-  /** Prázdné = bez omezení (výchozí stav - "zobrazit vše"). */
+  /** Empty = no limit (default - "show all"). */
   dateFrom: string = '';
   dateTo: string = '';
 
-  /** Snapshot POUŽITÉHO období, pořízený v okamžiku skutečného generateReport() - viz bugfix-note (2026-08-27v10). `periodLabel` čte TOTO, ne živé dateFrom/dateTo. */
+  /** Snapshot of the APPLIED period, taken when generateReport() really runs. `periodLabel` reads THIS, not the live dateFrom/dateTo. */
   private generatedDateFrom: string = '';
   private generatedDateTo: string = '';
 
   selectedColumnKeys = new Set<string>();
-  /** Zvolený typ grafu PER kategorický sloupec (default 'bar'). */
+  /** Chosen chart type PER categorical column (default 'bar'). */
   columnChartModes = new Map<string, ColumnChartMode>();
-  /** Zvolený typ grafu PER numerický (sum/avg) sloupec (default 'line'). */
+  /** Chosen chart type PER numeric (sum/avg) column (default 'line'). */
   metricChartModes = new Map<string, MetricChartMode>();
 
-  /** Zda se má na konci reportu zobrazit doplňkový graf "Celkový počet záznamů v čase". Default zapnuto. */
+  /** Whether the extra "Total records over time" chart is shown at the end of the report. On by default. */
   showOverallTrend = true;
 
   isLoading = false;
@@ -304,24 +271,24 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
   reportGeneratedAt: Date | null = null;
   lastRowCount = 0;
 
-  /** Sjednocený, POŘADÍM daný seznam všech grafů reportu - šablona je vykresluje pod sebou. */
+  /** Unified, ORDERED list of all charts of the report - the template renders them one below another. */
   reportSections: ChartSectionDescriptor[] = [];
   trendGranularityLabel = '';
 
-  /** Ovládá vysouvací boční panel na mobilu (na desktopu je panel vždy viditelný, viz .css). */
+  /** Controls the slide-out side panel on mobile (on desktop the panel is always visible, see .css). */
   mobileSidebarOpen = false;
-  /** Které sloupce mají v postranním panelu rozbalený filtr konkrétních hodnot. */
+  /** Columns whose filter of specific values is expanded in the side panel. */
   private expandedValueFilterColumns = new Set<string>();
 
-  /** Raw rows z posledního reálného fetchnutí - drženo v paměti, ať toggle hodnoty/typu grafu nikdy nemusí znovu volat API. */
+  /** Raw rows of the last real fetch - kept in memory, so toggling a value / chart type never calls the API again. */
   private rawRows: any[] = [];
-  /** Distinct hodnoty + počty per kategorický sloupec, spočítané z `rawRows` (+ doplněné o `possibleValues` s počtem 0 - viz computeValueCatalog()). */
+  /** Distinct values + counts per categorical column, computed from `rawRows` (+ seeded with `possibleValues` with count 0 - see computeValueCatalog()). */
   columnValueCatalog = new Map<string, ColumnValueEntry[]>();
-  /** Které hodnoty (per sloupec) jsou aktuálně zahrnuté v grafu daného sloupce. */
+  /** Values (per column) currently included in the chart of the column. */
   selectedColumnValues = new Map<string, Set<string>>();
 
   private currentGranularity: BucketGranularity = 'month';
-  /** Sdílené časové "buckety" (stejná osa X) pro VŠECHNY časové grafy v reportu. */
+  /** Shared time "buckets" (same X axis) for ALL time charts of the report. */
   private canonicalBuckets: BucketDescriptor[] = [];
 
   private destroy$ = new Subject<void>();
@@ -342,11 +309,9 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
   }
 
   constructor(private dataHandler: DataHandler, private cd: ChangeDetectorRef) {
-    // Po přepnutí admin jazyka donutí OnPush komponentu přehodnotit `strings`/gettery -
-    // stejný vzor jako TableBuilderComponent. Zároveň přestaví přeložené volby typů
-    // grafů (viz graph-format.ts refactor-note 2026-09-25).
-    // @bugfix-note (2026-10-23) The subscription was never closed (one leaked subscriber per opened
-    // report popup on the root i18n service) - it now ends with destroy$.
+    // After switching the admin language, forces the OnPush component to re-evaluate
+    // `strings` / getters - same pattern as TableBuilderComponent. Also rebuilds the
+    // translated chart type options (see graph-format.ts).
     this.i18n.translations$.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.columnChartModeOptions = createColumnChartModeOptions(this.i18n);
       this.metricChartModeOptions = createMetricChartModeOptions(this.i18n);
@@ -386,12 +351,6 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
 
   /** @description Locks background scroll and auto-generates the report immediately on open (all columns, no date restriction). */
   ngOnInit(): void {
-    /**
-     * @refactor-note (2026-09) `dateFieldLabel` @Input default zůstává prázdný string
-     * (viz deklarace) místo natvrdo českého 'Datum vytvoření' - konzument by ho měl
-     * vždy předat vlastní přeložený text, tohle je jen záchranná síť pro případ, že to
-     * zapomene. Stejný vzor jako `headerText` v FormBuilderComponent.
-     */
     if (!this.dateFieldLabel) {
       this.dateFieldLabel = this.t('default_date_field_label');
     }
@@ -451,7 +410,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
     if (this.reportGenerated) this.rebuildAllSections();
   }
 
-  /** @description Čte SNAPSHOT období (`generatedDateFrom`/`generatedDateTo`), ne živé date inputy - viz bugfix-note (2026-08-27v10). */
+  /** @description Reads the period SNAPSHOT (`generatedDateFrom` / `generatedDateTo`), not the live date inputs. */
   get periodLabel(): string {
     if (!this.generatedDateFrom && !this.generatedDateTo) return this.t('period_all');
     return `${this.generatedDateFrom || this.t('period_start_fallback')} – ${this.generatedDateTo || this.t('period_end_fallback')}`;
@@ -493,9 +452,9 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
       if (this.dateFrom) params['date_from'] = this.dateFrom;
       if (this.dateTo) params['date_to'] = this.dateTo;
 
-      // Snapshot POUŽITÉHO období - viz bugfix-note (2026-08-27v10). periodLabel/PDF
-      // čtou TOTO, ne živé dateFrom/dateTo, takže hlavička se změní až po skutečném
-      // vygenerování, ne při každém úhozu v date inputu.
+      // Snapshot of the APPLIED period. periodLabel / PDF
+      // read THIS, not the live dateFrom / dateTo, so the header changes only after a real
+      // generation, not on every keystroke in the date input.
       this.generatedDateFrom = this.dateFrom;
       this.generatedDateTo = this.dateTo;
 
@@ -505,8 +464,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
       this.reportGeneratedAt = new Date();
       this.logReportActivity(this.lastRowCount, false);
        } catch {
-      // DataHandler.handleError() už zobrazil toast pro tuto HTTP chybu - viz
-      // bugfix-note (2026-08-31) v data-handler.service.ts.
+      // DataHandler.handleError() already showed a toast for this HTTP error.
     } finally {
       this.isLoading = false;
       this.cd.markForCheck();
@@ -564,13 +522,12 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
   // ── Value catalog + per-value filter ──────────────────────────────────
 
   /**
-   * @description Pro každý kategorický sloupec spočítá distinct hodnoty + počty
-   * z `rows`. Pokud sloupec nese `possibleValues` (viz GraphColumnOption -
-   * refactor-note 2026-08-27v11), katalog se PŘED počítáním "naseje" těmito hodnotami
-   * s počtem 0 - takže hodnota, která se v datech vůbec nevyskytla (např. hodnocení
-   * "5" u škály 1-5, kterou nikdo nezvolil), zůstane v katalogu, filtru hodnot i
-   * grafu (v typech grafu, které umí nulu zobrazit - viz refactor-note v hlavičce
-   * souboru). Bez `possibleValues` je chování beze změny oproti dřívějšku.
+   * @description Computes distinct values + counts from `rows` for every categorical column.
+   * When the column carries `possibleValues` (see GraphColumnOption), the catalog is "seeded"
+   * with these values with count 0 BEFORE counting - so a value that never occurs in the data
+   * (e.g. rating "5" of a 1-5 scale nobody chose) stays in the catalog, the value filter and
+   * the chart (in chart types that can show zero). Without `possibleValues` only the values
+   * found in the data are listed.
    */
   private computeValueCatalog(rows: any[]): void {
     const dimensionColumns = this.columns.filter(c => c.aggregation === 'count');
@@ -773,10 +730,6 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
     return { from, to };
   }
 
-  /**
-   * @refactor-note (2026-09) BUGFIX - natvrdo `new DatePipe('cs-CZ')` nahrazeno
-   * `new DatePipe(this.i18n.getDateLocale())` - viz hlavička souboru.
-   */
   private computeCanonicalBuckets(rows: any[], granularity: BucketGranularity): BucketDescriptor[] {
     const map = new Map<string, Date>();
     for (const row of rows) {
@@ -870,10 +823,10 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
   }
 
   /**
-   * @description Vlastní HTML legenda - JEN pro `categoryTrend` (vícebarevný spojnicový
-   * graf, kde by "leader lines" ke každému bodu na každé čáře nebyly čitelné).
-   * `distribution` (pie/doughnut/polarArea) místo toho kreslí popisky přímo do canvasu
-   * pomocí `OUTSIDE_SLICE_LABELS_PLUGIN`.
+   * @description Own HTML legend - ONLY for `categoryTrend` (multi-color line chart, where
+   * "leader lines" to every point of every line would not be readable). `distribution`
+   * (pie / doughnut / polarArea) draws the labels into the canvas instead, with
+   * `OUTSIDE_SLICE_LABELS_PLUGIN`.
    */
   legendItemsFor(descriptor: ChartSectionDescriptor): LegendItem[] | null {
     if (descriptor.kind === 'categoryTrend') return descriptor.section.legendItems;
@@ -1213,9 +1166,8 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
   }
 
   /**
-   * @note Audit log popisky VĚDOMĚ zůstávají anglicky bez ohledu na admin jazyk -
-   * stejná konvence jako TableBuilderComponent.logExportActivity() - viz refactor-note
-   * (2026-09) v hlavičce souboru.
+   * @note Audit log labels stay in English ON PURPOSE regardless of the admin language - same
+   * convention as TableBuilderComponent.logExportActivity().
    */
   private logReportActivity(rowCount: number, pdfExported: boolean): void {
     const caption = this.tableCaption || this.apiEndpoint;

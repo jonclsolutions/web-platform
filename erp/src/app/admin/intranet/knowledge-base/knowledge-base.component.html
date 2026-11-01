@@ -1,17 +1,10 @@
 <!-- 
     @file: knowledge-base.component.html
     @path: /src/app/admin/intranet/knowledge-base/knowledge-base.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @refactor-note (2026) Menu generováno dynamicky z `navGroups` (viz
-        knowledge-base.component.ts). `support-form` a `news` jsou jediné ručně psané
-        položky - obě mají vlastní logiku (formulář / real-time obsah), nejsou
-        v KB_PAGES statických datech.
-    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
-        texty": VŠECHNY uživatelsky viditelné texty nahrazeny `strings.xxx`/`t()`
-        binding - viz knowledge-base.component.ts stejné datum. `navLabel(page)`
-        rozřeší `LocalizedText` podle aktuálního admin jazyka.
+    @description: Template of the knowledge base component.
 -->
 
 <div class="kb-fullscreen-wrapper" [class.menu-open]="isMenuOpen">

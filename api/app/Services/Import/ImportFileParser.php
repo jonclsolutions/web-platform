@@ -2,38 +2,17 @@
 /**
  * @file ImportFileParser.php
  * @path app/Services/Import/ImportFileParser.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Parsuje nahraný importní soubor (CSV/JSON/TXT) do pole asociativních
- * řádků. Řeší VÝHRADNĚ parsování a strukturální kontrolu (skutečný typ obsahu, striktní
- * shoda hlaviček, limit počtu řádků) - byznys validaci jednotlivých hodnot řeší
- * `ImportRowValidator`.
- *
- * @refactor-note (2026-08-23) XLSX PODPORA ODEBRÁNA. Čtení binárního .xlsx formátu
- * vyžadovalo `phpoffice/phpspreadsheet`, který má tvrdou závislost na PHP rozšíření
- * `ext-gd` - na některých hostinzích (sdílený hosting bez možnosti měnit PHP moduly,
- * lokální XAMPP bez ručně zapnutého `gd`) to zbytečně komplikovalo nasazení kvůli
- * jedinému formátu, který má plnohodnotnou náhradu (CSV umí uložit z Excelu/Sheets
- * jedním kliknutím). CSV/JSON/TXT fungují čistě přes nativní PHP, BEZ JAKÉKOLIV
- * composer závislosti - pro ty tahle změna nic nemění.
- *
- * @security Typ souboru se ověřuje podle SKUTEČNÉHO obsahu (`finfo`/Symfony
- * `UploadedFile::getMimeType()`), NE podle přípony - útočník může nahrát cokoliv
- * s příponou `.csv`.
- *
- * @note Hlavičky sloupců MUSÍ přesně (jako množina) odpovídat `importable_columns`
- * daného kontroleru - žádné fuzzy matchování, žádné ignorování navíc/chybějících
- * sloupců. Důvod: nejednoznačné mapování sloupců je nejčastější příčina tichého
- * zapsání dat do špatného pole při hromadných importech - radši tvrdé odmítnutí
- * s jasnou hláškou než hádání.
- *
- * @bugfix-note (2026-10-23) parseDelimited(): an unreadable file ended in a PHP warning turned
- *   into a 500 ErrorException instead of the intended "Failed to open the file." (422) - the
- *   warning is suppressed now so the check is effective.
- * @refactor-note (2026-10-23) Removed the unreachable `$header === false` branch (an empty
- *   file is rejected by the MIME check before parsing) and the `default` arm of the format
- *   match (an unknown format is already refused by assertRealMimeType()).
+ * @description Parses an uploaded import file (CSV / JSON / TXT) into associative rows. ONLY
+ * parsing and structural checks (real content type, exact header match, row limit) - the
+ * business validation of the values is done by `ImportRowValidator`.
+ * @security The file type is checked by its REAL content (`finfo` / Symfony
+ * `UploadedFile::getMimeType()`), NOT by the extension - anything can be uploaded as `.csv`.
+ * @note The column headers MUST match `importable_columns` of the controller exactly (as a set) -
+ * no fuzzy matching, no ignored extra / missing columns: ambiguous column mapping is the most
+ * common cause of data silently written into the wrong field.
  */
 
 namespace App\Services\Import;
@@ -43,7 +22,7 @@ use RuntimeException;
 
 class ImportFileParser
 {
-    /** @description Podporované formáty a jejich očekávané MIME typy (skutečný obsah, ne přípona). */
+    /** @description Supported formats and their expected MIME types (real content, not the extension). */
     private const ALLOWED_MIME_TYPES = [
         'csv'  => ['text/csv', 'text/plain', 'application/csv'],
         'txt'  => ['text/plain'],
@@ -51,15 +30,15 @@ class ImportFileParser
     ];
 
     /**
-     * @description Parsuje soubor a vrátí hlavičky + syrové řádky. Neprovádí ŽÁDNOU
-     * byznys validaci hodnot - jen strukturální kontrolu (typ, hlavičky, počet řádků).
+     * @description Parses the file and returns the headers + raw rows. NO business validation of
+     * the values - only structural checks (type, headers, row count).
      *
      * @param UploadedFile $file
      * @param string $format 'csv' | 'json' | 'txt'
-     * @param string[] $expectedColumns Přesná množina očekávaných sloupců.
-     * @param int $maxRows Tvrdý strop počtu datových řádků (bez hlavičky).
+     * @param string[] $expectedColumns Exact set of the expected columns.
+     * @param int $maxRows Hard limit of data rows (without the header).
      * @return array{headers: string[], rows: array<int, array<string, string|null>>}
-     * @throws RuntimeException Při neplatném typu souboru, neshodě hlaviček nebo překročení limitu řádků.
+     * @throws RuntimeException On an invalid file type, a header mismatch or too many rows.
      */
     public function parse(UploadedFile $file, string $format, array $expectedColumns, int $maxRows): array
     {
@@ -89,10 +68,9 @@ class ImportFileParser
     }
 
     /**
-     * @description Ověří skutečný MIME typ souboru proti očekávanému formátu -
-     * nikdy nespoléhá na příponu ani na `Content-Type` hlavičku poslanou klientem
-     * (obojí lze snadno zfalšovat), `UploadedFile::getMimeType()` detekuje typ ze
-     * SKUTEČNÉHO obsahu souboru (finfo).
+     * @description Checks the real MIME type of the file against the expected format - never
+     * trusts the extension or the client's `Content-Type` (both are easy to fake);
+     * `UploadedFile::getMimeType()` detects the type from the REAL content (finfo).
      */
     private function assertRealMimeType(UploadedFile $file, string $format): void
     {
@@ -111,8 +89,8 @@ class ImportFileParser
     }
 
     /**
-     * @description Porovná hlavičky souboru s očekávanou množinou sloupců JAKO
-     * MNOŽINY (pořadí sloupců v souboru nevadí, ale nesmí chybět ani přebývat).
+     * @description Compares the file headers with the expected columns AS SETS (the order does
+     * not matter, but none may be missing or extra).
      */
     private function assertHeadersMatch(array $actualHeaders, array $expectedColumns): void
     {
@@ -136,8 +114,8 @@ class ImportFileParser
     }
 
     /**
-     * @description Parsuje CSV/TXT (oddělovač čárka/tab) do pole asociativních řádků,
-     * první řádek souboru je vždy hlavička.
+     * @description Parses CSV / TXT (separator comma / tab) into associative rows; the first line
+     * is always the header.
      */
     private function parseDelimited(UploadedFile $file, string $delimiter): array
     {
@@ -155,7 +133,7 @@ class ImportFileParser
 
             $rows = [];
             while (($line = fgetcsv($handle, 0, $delimiter)) !== false) {
-                // Přeskočit zcela prázdné řádky (typicky poslední prázdný řádek souboru).
+                // Skip completely empty lines (usually the last line of the file).
                 if (count($line) === 1 && ($line[0] === null || trim((string) $line[0]) === '')) {
                     continue;
                 }
@@ -169,7 +147,7 @@ class ImportFileParser
     }
 
     /**
-     * @description Parsuje JSON - očekává pole objektů `[{ "sloupec": "hodnota", ... }, ...]`.
+     * @description Parses JSON - expects an array of objects `[{ "column": "value", ... }, ...]`.
      */
     private function parseJson(UploadedFile $file): array
     {
@@ -189,10 +167,9 @@ class ImportFileParser
             throw new RuntimeException('The JSON file must contain an array of OBJECTS, not an array of primitive values.');
         }
 
-        // Prázdný string -> null (stejná normalizace jako u CSV/TXT v combineRow(),
-        // viz jeho bugfix-note) - JSON sice UMÍ nést skutečné `null`, ale pokud ho
-        // export/ruční úprava zapíše jako `""`, chováni musí být konzistentní napříč
-        // všemi třemi formáty.
+        // Empty string -> null (same normalization as CSV / TXT in combineRow()): JSON can carry a real
+        // `null`, but an export / manual edit may write `""` - the behaviour must be the same for all
+        // three formats.
         return array_map(function ($item) {
             if (!is_array($item)) {
                 throw new RuntimeException('Each record in the JSON array must be an object.');
@@ -205,22 +182,10 @@ class ImportFileParser
     }
 
     /**
-     * @description Spojí hlavičku a hodnoty řádku do asociativního pole. Pokud má
-     * datový řádek jiný počet sloupců než hlavička (běžné u ručně upravovaných CSV),
-     * chybějící hodnoty se doplní jako `null`, přebytečné se zahodí - přesná shoda
-     * SLOUPCŮ (hlaviček) je vynucena zvlášť v `assertHeadersMatch()`, tohle je jen
-     * ochrana proti pádu na neshodě počtu hodnot v jednotlivém řádku.
-     *
-     * @bugfix-note (2026-08-23) PRÁZDNÝ STRING SE NORMALIZUJE NA `null`. CSV/TXT nemá
-     * koncept "chybějící hodnoty" - prázdná buňka se vždy parsuje jako `""`, ne `null`.
-     * Laravel validační pravidlo `nullable` ale bere `nullable` DOSLOVA jako `is_null()`,
-     * ne jako "cokoliv prázdné" - pole s pravidlem `nullable|regex:...` by tak prázdný
-     * string `""` NEPŘESKOČILO a spadlo by na regexu (např. `contact_phone` u
-     * WebRawRequestCommission), zatímco skutečné `null` (jak vypadala PŮVODNÍ hodnota
-     * v DB před exportem) by v pořádku prošlo. Bez týhle normalizace by se export
-     * záznamu s prázdným nepovinným polem a jeho následný zpětný import choval jinak
-     * než původní data - tichý, matoucí rozdíl mezi "export/import kolo dokola" a
-     * realitou.
+     * @description Combines the header and the values of a row into an associative array. A row
+     * with a different number of values than the header (common in hand-edited CSV) gets the
+     * missing values as `null` and the extra ones dropped - the exact column match is enforced
+     * separately in `assertHeadersMatch()`, this only prevents a crash on a short / long row.
      */
     private function combineRow(array $header, array $values): array
     {

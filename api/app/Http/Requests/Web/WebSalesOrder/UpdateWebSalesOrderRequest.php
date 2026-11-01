@@ -2,16 +2,10 @@
 /**
  * @file UpdateWebSalesOrderRequest.php
  * @path app/Http/Requests/Web/WebSalesOrder/UpdateWebSalesOrderRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Validation logic for updating existing sales orders.
- *
- * @refactor-note (2026-08) `attachment` (jeden soubor, max 20 MB) nahrazeno `attachments`
- * (pole, max. 10 souborů, každý max. 20 MB, souhrnně max. 50 MB) - sjednoceno se
- * StoreWebSalesOrderRequest. Tenhle request byl dřív VŮBEC nepoužívaný -
- * WebSalesOrderController::update() bral $request->all() bez jakékoli validace
- * (mass-assignment riziko) - nyní kontroler skutečně typuje na tuhle třídu.
  */
 
 namespace App\Http\Requests\Web\WebSalesOrder;

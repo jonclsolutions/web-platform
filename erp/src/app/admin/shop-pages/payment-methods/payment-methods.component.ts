@@ -1,24 +1,15 @@
 /**
  * @file payment-methods.component.ts
  * @path src/app/admin/shop-pages/payment-methods/payment-methods.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages the administration of store payment methods, including configuration, filtering, and data export.
  * @dependencies
  * - BaseDataComponent: Provides base CRUD functionality and state management for entities.
  * - TableBuilderComponent: Used for rendering and exporting the payment method data list.
  * - SHARED_UI_BUILDERS: Provides standard UI components like forms and tables.
- * - Config.create* factory functions: i18n-aware definitions - viz refactor-note
- *   (2026-09-09) níže.
- *
- * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `Config.PAYMENT_*` konstanty nahrazeny `Config.create*()` factory funkcemi.
- * `graphColumns` přestalo být `readonly`. `'Úspěch'`/`'Chyba'`/'Aktualizace selhala.'/
- * 'Nepodařilo se načíst detail.' nahrazeny `t()` voláním.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
+ * - Config.create* factory functions: i18n-aware definitions.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -63,7 +54,6 @@ export class PaymentMethodsComponent extends BaseDataComponent<any> implements C
     sort_direction: 'asc'
   };
 
-  /** @refactor-note (2026-09-09) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
 
   constructor(
@@ -110,8 +100,6 @@ export class PaymentMethodsComponent extends BaseDataComponent<any> implements C
           updatedBtn.label = this.isFilterVisible ? this.t('toolbar_hide_filters') : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
-        // @refactor-note (2026-10-22) Payment methods are fixed (no create, import or trash in the
-        // toolbar) – those unreachable cases were removed.
       }
 
       return updatedBtn;
@@ -150,8 +138,6 @@ export class PaymentMethodsComponent extends BaseDataComponent<any> implements C
   /**
    * @description Handles form submission by calling the API update service.
    * @param formData The data object submitted from the edit form.
-   * @refactor-note (2026-09-09) Natvrdo 'Úspěch'/'Chyba'/'Aktualizace selhala.'
-   * nahrazeny `t()` voláním.
    */
   override handleFormSubmitted(formData: any): void {
     if (!formData.id) return;

@@ -1,8 +1,8 @@
 /**
  * @file edit-news.component.ts
  * @path src/app/admin/web-pages/news/edit-news.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages the lifecycle and administration of website news articles (for intern uses), including CRUD operations and archival functionality.
  * @dependencies
@@ -11,19 +11,7 @@
  * - LoadingService: Manages global UI loading states.
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the administrative dashboard.
  * - Config.create* factory functions: i18n-aware definitions for UI columns, form
- *   fields, and toolbar actions - see refactor-note (2026-09-08) below.
- * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
- * volání z `error:` callbacků (handleFormSubmitted, handleViewDetails) -
- * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `Config.NEWS_*` konstanty nahrazeny `Config.create*()` factory funkcemi - stejný
- * vzor jako ostatní web-pages stránky. `graphColumns` přestalo být `readonly`.
- * `'Úspěch'`/`'Požadavek byl upraven.'`/`'Požadavek byl vytvořen.'` (dřív natvrdo
- * česky) nahrazeny `t()` voláním.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
+ *   fields, and toolbar actions.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -64,7 +52,6 @@ export class EditNewsComponent extends BaseDataComponent<any> implements Core.On
   newsColumns: Core.ColumnDefinition[] = [];
   trashNewsColumns: Core.ColumnDefinition[] = [];
 
-  /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
 
   constructor(

@@ -1,22 +1,11 @@
 /**
  * @file edit-news.config.ts
  * @path src/app/admin/web-pages/edit-news/edit-news.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Static-turned-dynamic configuration (buttons, form fields, table/filter/
  * detail columns) for the News management page.
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * + "enum hodnoty jako přeložitelné anglické slugy": kompletní přepis na FACTORY
- * FUNKCE, stejný vzor jako ostatní web-pages stránky. `thema` PŘEPSÁN z plného
- * českého textu ('Milník'/'Update'/'Info'/'Novinka'/'Upozornění'/'Error'/'Údržba'/
- * 'Akce') na anglické slugy ('milestone'/'update'/'info'/'feature'/'warning'/
- * 'error'/'maintenance'/'event') - viz SQL migrace `007_thema_slugs_web_news.sql`
- * a `Store/UpdateWebNewsRequest`, obojí SOUČASNĚ s touto změnou. Poznámka:
- * 'Update'/'Info'/'Error' vypadaly latinkou anglicky, ALE nešlo o stabilní kód,
- * jen o česky zvolené kategorie bez diakritiky - migrovány stejně jako ostatní,
- * žádná výjimka.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -170,10 +159,10 @@ export function createNewsFilterColumns(i18n: AdminLocalizationService): Core.Fi
 }
 
 /**
- * @description `importable: true` beze změny oproti předchozí verzi - musí sedět s
- * `WebNewsController::IMPORTABLE_COLUMNS`. `id`/`created_at`/`updated_at` (systémová
- * pole) importable nedostávají. `chartPossibleValues` zůstává canonical VALUES pole -
- * stejné známé omezení jako u ostatních (viz @TODO-FOLLOWUP v `user-request.config.ts`).
+ * @description `importable: true` must match `WebNewsController::IMPORTABLE_COLUMNS`. `id` /
+ * `created_at` / `updated_at` (system fields) are not importable. `chartPossibleValues` stays
+ * the canonical VALUES array - same known limitation as elsewhere (see the @note in
+ * `user-request.config.ts`).
  */
 export function createNewsDetailsColumns(i18n: AdminLocalizationService): Core.ItemDetailsColumns[] {
   return [

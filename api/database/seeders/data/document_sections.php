@@ -2,9 +2,9 @@
 /**
  * @file document_sections.php
  * @path api/database/seeders/data/document_sections.php
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-30
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Default TEMPLATES of the legal documents (document_sections, language `en`) of a
  *   new installation - privacy policy (gdpr), terms of service (tos) and cookie policy (cookies).
  *   English translation of the texts in use on 2026-10-29 with the company details replaced by

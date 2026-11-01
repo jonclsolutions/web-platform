@@ -1,34 +1,10 @@
 <!-- 
     @file: edit-legal.component.html
     @path: /src/app/admin/web-pages/edit-legal/edit-legal.component.html
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026 
-    @refactor-note (2026-08-6) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php a
-        base-data.component.ts stejné datum): tato stránka nepoužívá
-        TableBuilderComponent (má vlastní inline edit/add/delete UI), takže tlačítka
-        kontrolují viditelnost přes zděděný hasAnyPermission() (BaseDataComponent), ne
-        přes *appHasPermission direktivu:
-        - "Upravit" -> core-legal-documents-update
-        - "Smazat sekci" -> core-legal-documents-delete
-        - "+ Doplnit pozici X" a "+ Přidat sekci do ..." -> core-legal-documents-create
-        Tlačítka uvnitř již otevřeného edit/add formuláře (Uložit, Přidat sekci,
-        Zrušit) NEJSOU gatovaná zvlášť - k jejich zobrazení už vede jen tlačítko, které
-        gatované JE (Upravit / Přidat sekci), takže bez příslušného práva se tam uživatel
-        vůbec nedostane.
-    @refactor-note (2026-08-29) BACKLOG "sjednotit ikonky napříč adminem": emoji
-        (⚠️/✏️/🗑️/💾/✕/📭) nahrazena inline SVG ve stejném stylu jako
-        admin-layout.component.html (width/height 14-16, viewBox 0 0 24 24,
-        stroke="currentColor" stroke-width="2").
-    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
-        všechny natvrdo psané české texty nahrazeny `strings.*` bindingy
-        (AdminLocalizationService, sekce 'edit-legal') - viz
-        edit-legal.component.ts stejné datum. `permission` stringy v
-        hasAnyPermission(...) NEJSOU UI text, ponechány beze změny. Missing-banner věta
-        s vnořeným <strong>{{ getLangName(...) }}</strong> je VĚDOMĚ složena ze
-        statických prefix/suffix/tvar-slova klíčů přímo v šabloně, ne jedním
-        interpolovaným řetězcem - viz .ts hlavička (důvod: [innerHTML] by bylo
-        zbytečné XSS riziko jen kvůli tučnému písmu).
+    @description: Template of the edit legal component.
 -->
 
 <div class="legal-container">
@@ -49,7 +25,7 @@
     }
   </div>
 
-  <!-- Taby typů dokumentů - dynamicky podle document_types z API, ne natvrdo 1|2 -->
+  <!-- Tabs of the document types - dynamic from document_types of the API, not hard-coded 1|2 -->
   <div class="legal-tabs">
     @for (docType of documentTypes; track trackByTypeId($index, docType)) {
       <button

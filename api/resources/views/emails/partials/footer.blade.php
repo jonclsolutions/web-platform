@@ -1,16 +1,15 @@
 {{--
     @file footer.blade.php
     @path resources/views/emails/partials/footer.blade.php
-    @project RPSW Web
-    @author RPSW
+    @project JS web-platform
+    @author JS
     @created 2026
-    @description Sdílená patička pro VŠECHNY transakční e-maily - název firmy + kontaktní
-    e-mail/telefon. Proměnné ($companyName, $contactEmail, $contactPhone) dodává
-    App\Support\Mail\CompanyContactInfo::get(), předané přes Content::with() v Mailable
-    třídě - @include automaticky sdílí proměnné rodičovské view, není potřeba nic
-    přeposílat ručně.
-    @note Chybějící $contactEmail/$contactPhone (SiteSetting prázdný/nevyplněný) patičku
-    nerozbije - řádek s kontaktem se v tom případě prostě vynechá, zůstane jen název firmy.
+    @description Shared footer of EVERY transactional e-mail - company name + contact e-mail /
+    phone. The variables ($companyName, $contactEmail, $contactPhone) come from
+    App\Support\Mail\CompanyContactInfo::get() through Content::with() of the Mailable; @include
+    shares the variables of the parent view.
+    @note A missing $contactEmail / $contactPhone does not break the footer - the contact line is
+    left out, only the company name stays.
 --}}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:32px;">
     <tr>

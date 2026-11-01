@@ -1,8 +1,8 @@
 /**
  * @file run_all.js
  * @path tests/unit_tests/lib/run_all.js
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Combined unit test run: runs erp/run_all_erp.sh and api/run_all_api.sh one after
  *   the other and writes ONE report for both into tests/unit_tests/report/ – report.html,

@@ -1,17 +1,13 @@
 /**
  * @file legal-docs.service.ts
  * @path src/app/shared/services/legal-docs.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Caches legal documents (privacy policy / GDPR, terms of service) keyed by
  *   slug + language, so navigating to these pages more than once — or coming back to them
  *   later — never re-triggers a network request. Also exposes preload() so AppBootstrapService
  *   can warm the cache in the background right after startup, without blocking the initial render.
- * @bugfix-note (2026-10-23) The "effective from" footer of the legal pages was a Czech sentence
- *   from the API in every language (open finding #35). `effectiveFooter()` builds it from the
- *   page's own translation (`effective_from_text` with `{date}`); the API text (English now) is
- *   only the fallback for a missing translation.
  */
 
 import { Injectable } from '@angular/core';
@@ -63,7 +59,7 @@ export class LegalDocsService {
   /**
    * @description Translated "effective from" footer of a legal document.
    * @param doc Document as returned by public/legal/{slug} (footer_effective, last_update_date).
-   * @param template Translation with a `{date}` placeholder, e.g. "Tyto zásady jsou účinné od {date}.".
+   * @param template Translation with a `{date}` placeholder, e.g. "These terms are effective from {date}.".
    * @returns The translated sentence; the API text without a translation; null for a document
    *   without sections (no footer).
    */

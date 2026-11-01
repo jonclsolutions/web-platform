@@ -2,8 +2,8 @@
 /**
  * @file StoreShopCouponRequest.php
  * @path App\Http\Requests\Shop\ShopCoupon\StoreShopCouponRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation logic for storing new discount coupons.
  */
@@ -41,10 +41,6 @@ class StoreShopCouponRequest extends FormRequest
             'applies_to' => 'required|in:all,products,categories',
             'valid_from' => 'nullable|date',
             'valid_until' => 'nullable|date|after_or_equal:valid_from',
-            // @bugfix-note (2026-10-23) Was `in:0,1,true,false,boolean`: prepareForValidation()
-            // turns the value into a PHP bool and `in` compares false as '' → an INACTIVE coupon
-            // could never be saved (422 "The selected is active is invalid."). `boolean` accepts
-            // the converted true / false.
             'is_active' => 'required|boolean',
         ];
     }

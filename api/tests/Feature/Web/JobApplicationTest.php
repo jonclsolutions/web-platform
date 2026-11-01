@@ -3,8 +3,8 @@
 /**
  * @file JobApplicationTest.php
  * @path api/tests/Feature/Web/JobApplicationTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the job applications (WebJobApplicationController): the public
  *   application form with a CV (validation, rate limit) and the admin list / edit (CV replaced)

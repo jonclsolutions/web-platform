@@ -2,8 +2,8 @@
 /**
  * @file StoreProjectThreadMessageRequest.php
  * @path app/Http/Requests/Web/WebProject/StoreProjectThreadMessageRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation for a single reply within an existing thread - used by
  * BOTH the customer's public reply endpoint and the admin's reply endpoint (shared

@@ -1,16 +1,10 @@
 /**
  * @file login.component.ts
  * @path src/app/admin/auth/login/login.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
- * @description Authentication component: přihlašovací formulář, captcha a 2FA OTP krok.
- * @refactor-note (2026-09) Lokalizace přes BasePublicComponent — stejný pattern jako
- *     contact.component, services.component. translationKey = 'login', přístup přes
- *     this.t?.key v šabloně i v .ts.
- * @refactor-note (2026-10-21) Removed unused imports.
- * @bugfix-note (2026-10-23) Auth error fallbacks come from `login.errors.<messageKey>` instead of
- *     the Czech texts hardcoded in AuthService (see authErrorText()).
+ * @description Authentication component: login form, captcha and the 2FA OTP step.
  */
 
 import { Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
@@ -280,7 +274,7 @@ export class LoginComponent extends BasePublicComponent implements OnDestroy {
 
   /**
    * @description Text of an auth error: the backend message, else the page translation of its
-   *   `messageKey` (login.errors.*) - see bugfix-note (2026-10-23) in auth.service.ts.
+   *   `messageKey` (login.errors.*)
    * @param error Error from AuthService.
    * @returns Text for the error line ('' when neither exists).
    */

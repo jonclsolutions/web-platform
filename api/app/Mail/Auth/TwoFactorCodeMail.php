@@ -3,15 +3,11 @@
 /**
  * @file TwoFactorCodeMail.php
  * @path app/Mail/Auth/TwoFactorCodeMail.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Odešle 6místný OTP kód pro dokončení přihlášení. Fronta (Queueable) -
- * odesílání e-mailu nesmí blokovat response loginu.
- * @refactor-note (2026-08-19) BACKLOG "hezčí a přehlednější maily": šablona přepracována
- * (viz emails/auth/two-factor-code.blade.php) a doplněna o firemní kontakt v patičce -
- * `content()` teď předává `CompanyContactInfo::get()` přes `Content::with()`, stejně
- * jako PasswordResetRequested/PasswordChangedNotification.
+ * @description Sends the 6-digit OTP code that finishes the login. Queued - sending the e-mail
+ * must not block the login response.
  */
 
 namespace App\Mail\Auth;

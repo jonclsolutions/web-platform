@@ -1,13 +1,10 @@
 /*     
     @file: filter-form-builder.component.css
     @path: /src/app/admin/components/builders/filter-form-builder/filter-form-builder.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
-    @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
-               zaoblené karty (18px), jemné stíny, tmavý akcent (#18181b) místo
-               indigo, plně zaoblená ("pill") tlačítka. Struktura/třídy a logika
-               formuláře beze změny, jen barvy/zaoblení/typografie.
+    @description: Styles of the filter form builder component.
 */
 
 .filter-form-container {
@@ -138,10 +135,7 @@ hr {
   background-color: var(--color-black);
 }
 
-/*
-  DOPLNIT do existujícího filter-form-builder.component.css - žádná stávající třída
-  se neruší ani nemění, jen nové třídy pro header řádek s křížkem a globální search.
-*/
+/* Header row with the close cross and the global search. */
 
 .filter-form-header {
   display: flex;
@@ -150,8 +144,8 @@ hr {
   gap: 12px;
 }
 
-/* .filter-form-title zůstává beze změny (existující styl) - jen teď žije uvnitř
-   .filter-form-header místo přímo v .filter-form-container. */
+/* .filter-form-title keeps its style - it only lives inside .filter-form-header now
+   instead of directly in .filter-form-container. */
 
 .filter-form-close-btn {
   flex-shrink: 0;

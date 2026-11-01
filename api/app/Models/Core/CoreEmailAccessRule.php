@@ -2,20 +2,16 @@
 /**
  * @file CoreEmailAccessRule.php
  * @path app/Models/Core/CoreEmailAccessRule.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Jedna položka whitelistu pro vytváření admin účtů (BACKLOG
- * "core-admin-email-domain-restriction") - buď povolená DOMÉNA (kdokoliv z ní smí
- * založit účet), nebo konkrétní jednotlivý E-MAIL (výjimka pro externího
- * spolupracovníka bez ohledu na jeho doménu). Hlavní doména firmy (`primary_email_domain`)
- * žije samostatně na `CoreSecuritySetting` - tahle tabulka drží jen DALŠÍ povolené
- * domény/e-maily nad rámec ní.
- * @note Správa (přidání/smazání) je VÝHRADNĚ sysadmin - viz
- * `CoreEmailAccessPolicyController`. Hodnota se vždy normalizuje na lowercase/trim
- * PŘED uložením (`booted()`), ať se stejná doména/e-mail nedostane do tabulky ve dvou
- * různě napsaných variantách (`RPSW.cz` vs `rpsw.cz`) a unikátní klíč
- * (`type`, `value`) fungoval spolehlivě.
+ * @description One whitelist entry of the e-mail access policy: an allowed DOMAIN (anyone of it)
+ * or a single E-MAIL (an exception, e.g. an external collaborator). The company domain
+ * (`primary_email_domain`) lives on `CoreSecuritySetting`; this table holds only the FURTHER
+ * allowed domains / e-mails.
+ * @note Managed by the sysadmin only (`CoreEmailAccessPolicyController`). The value is
+ * normalized (lower case, trimmed) BEFORE saving (`booted()`), so one domain / e-mail cannot be
+ * stored in two spellings and the unique key (`type`, `value`) holds.
  */
 
 namespace App\Models\Core;
@@ -30,9 +26,8 @@ class CoreEmailAccessRule extends Model
     ];
 
     /**
-     * @description Normalizuje `value` PŘED každým uložením - lowercase, trim, a u
-     * domény navíc odstraní případné `@` na začátku (pro případ, že admin omylem
-     * vloží e-mail do pole pro doménu).
+     * @description Normalizes `value` before every save - lower case, trimmed; for a domain a
+     * leading `@` is removed too (an e-mail typed into the domain field).
      */
     protected static function booted(): void
     {
@@ -59,8 +54,6 @@ class CoreEmailAccessRule extends Model
      * role, sysadmin included (2026-10-24, see AuthController).
      * @param string $email The e-mail to check (case and surrounding spaces ignored).
      * @return bool True when the e-mail is allowed.
-     * @refactor-note (2026-10-09) Moved here from UserController::assertEmailDomainAllowed()
-     * so the login check uses exactly the same rules.
      */
     public static function isEmailAllowed(string $email): bool
     {

@@ -1,19 +1,20 @@
 /* 
     @file: product-detail.component.css
     @path: /src/app/public/shop-pages/product-detail/product-detail.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
+    @description: Styles of the product detail component.
 */
     
 :host {
-  /* Černobílý minimalistický design systém */
+  /* Black and white minimalist design system */
   --bg-main: var(--color-white);        
   
-  /* Intuitivní barvy pro pozitivní emoce a přehlednost */
-  --success: var(--color-emerald-500);        /* Svěží moderní zelená */
-  --warning: var(--color-amber-500);        /* Jasná oranžová pro nízký sklad */
-  --error: #9ca3af;          /* Neutrální šedá pro nedostupné produkty */
+  /* State colors */
+  --success: var(--color-emerald-500);        /* Fresh modern green */
+  --warning: var(--color-amber-500);        /* Bright orange for low stock */
+  --error: #9ca3af;          /* Neutral grey for unavailable products */
   
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* local value – public shop theme.css: all 0.2s ease-in-out */
 }
@@ -33,7 +34,7 @@
   margin-bottom: 4rem;
 }
 
-/* --- LEVÁ STRANA: GALERIE --- */
+/* --- LEFT SIDE: GALLERY --- */
 .main-image-wrapper {
   background: var(--bg-main);
   border: 1px solid var(--border);
@@ -112,7 +113,7 @@
   border-color: var(--border-dark);
 }
 
-/* --- PRAVÁ STRANA: INFO A NÁKUP --- */
+/* --- RIGHT SIDE: INFO AND PURCHASE --- */
 .product-purchase-zone {
   position: sticky;
   top: 6rem;                 
@@ -150,7 +151,7 @@
   font-weight: 600;
 }
 
-/* Barevná psychologie pro skladové zásoby */
+/* Stock state colors */
 .product-stock.in-stock { 
   color: var(--success); 
 }
@@ -161,7 +162,7 @@
   color: var(--error);
 }
 
-/* --- VARIANTY (Identické s katalogovým filtrem) --- */
+/* --- VARIANTS (same as the catalog filter) --- */
 .variant-select-wrapper {
   margin-bottom: 1.5rem;
 }
@@ -185,7 +186,7 @@
   color: var(--text-main);
   font-size: 0.8rem;         /* Sjednoceno s katalogem */
   font-weight: 500;
-  border-radius: 0;          /* Ostré hrany */
+  border-radius: 0;          /* Sharp corners */
   cursor: pointer;
   outline: none;
   appearance: none;
@@ -193,13 +194,13 @@
   box-sizing: border-box;
   transition: var(--transition);
   
-  /* Minimalistická šipka přesně z katalogového filtru */
+  /* Minimalist arrow, same as the catalog filter */
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'><path d='M1 1L5 5L9 1' stroke='%23707070' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
   background-repeat: no-repeat;
   background-position: right 10px center;
 }
 
-/* Focus stav ztlumený, identický s katalogem */
+/* Muted focus state, same as the catalog */
 .variant-dropdown:focus {
   border-color: var(--border-dark);
 }
@@ -225,7 +226,7 @@
 .attr-label { color: var(--text-dim); margin-right: 6px; }
 .attr-val { color: var(--text-main); font-weight: 600; }
 
-/* --- NÁKUPNÍ KARTA --- */
+/* --- PURCHASE CARD --- */
 .purchase-card {
   background: transparent;
   border: 1px solid var(--border-dark); 
@@ -277,7 +278,7 @@
   letter-spacing: 0.5px;
 }
 
-/* Zelená barva pro stav K odeslání */
+/* Green for the "ready to ship" state */
 .status-badge.ready { 
   color: var(--success); 
 }
@@ -289,7 +290,7 @@
   padding-left: 26px;
 }
 
-/* --- MNOŽSTVÍ & ODSTRANĚNÍ MINI ŠIPEK --- */
+/* --- QUANTITY & REMOVING THE MINI ARROWS --- */
 .quantity-selector {
   margin-bottom: 1.5rem;
   display: flex;
@@ -335,7 +336,7 @@
   margin-top: 2px;
 }
 
-/* Vstup pro číslo bez nativních malých šipek */
+/* Number input without the native small arrows */
 .qty-display {
   background: transparent;
   border-left: 1px solid var(--border);
@@ -354,7 +355,7 @@
   -moz-appearance: textfield; 
 }
 
-/* --- TLAČÍTKA --- */
+/* --- BUTTONS --- */
 .action-buttons {
   display: flex;
   flex-direction: column;
@@ -402,7 +403,7 @@
 }
 .quick-description p { font-size: 0.85rem; line-height: 1.6; color: var(--text-main); margin: 0; }
 
-/* --- SPODNÍ TABY --- */
+/* --- BOTTOM TABS --- */
 .product-tabs { 
   margin-top: 5rem; 
   border-top: 1px solid var(--border); 
@@ -438,7 +439,7 @@
   color: var(--text-main);
 }
 
-/* --- NAČÍTÁNÍ --- */
+/* --- LOADING --- */
 .loading-state {
   text-align: center;
   padding: 5rem;

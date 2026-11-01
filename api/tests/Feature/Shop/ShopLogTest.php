@@ -3,8 +3,8 @@
 /**
  * @file ShopLogTest.php
  * @path api/tests/Feature/Shop/ShopLogTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the shop audit log (ShopLogController): list with filters
  *   and search, detail, own entries written by the admin frontend.

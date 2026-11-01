@@ -3,8 +3,8 @@
 /**
  * @file WebModelsTest.php
  * @path api/tests/Unit/Web/WebModelsTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of the web models: relations not reached through the API, the
  *   checkpoint status setter, the attachment storage URL and the project session lookup.

@@ -2,17 +2,11 @@
 /**
  * @file CheckShopActive.php
  * @path app/Http/Middleware/CheckShopActive.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Middleware that enforces e-shop availability by verifying the
  * `is_shop_active` flag on the shop-owned settings table.
- *
- * @refactor-note (2026-08-15) Renamed from `CheckCoreShopActive` and repointed from
- * `App\Models\Core\CoreSiteSetting` to `App\Models\Shop\ShopSiteSetting`, following the
- * move of shop maintenance data out of the Core domain into Shop. The middleware alias
- * itself (`shop.active`, registered in bootstrap/app.php) is unchanged - only the class
- * it points to needs updating, see delivery notes.
  */
 
 namespace App\Http\Middleware;

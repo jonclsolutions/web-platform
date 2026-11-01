@@ -1,8 +1,8 @@
 /**
  * @file loading.interceptor.ts
  * @path src/app/core/interceptors/loading.interceptor.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Interceptor that tracks global HTTP activity to manage the application's loading state.
  * @dependencies

@@ -1,24 +1,19 @@
 /**
  * @file entity-crud.service.ts
  * @path src/app/core/services/entity-crud.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
- * @description Lehká, jednoúčelová třída obalující volání DataHandleru pro JEDEN REST
- * endpoint (get/getOne/create/update/delete/restore/upload/updatePassword). Záměrně
- * neví vůbec nic o stránkování, cache, ani o duplicitě aktivní/koš tabulka — to je
- * odpovědnost PaginatedListStore.
+ * @description Light single-purpose class wrapping the DataHandler calls of ONE REST endpoint
+ * (get / getOne / create / update / delete / restore / upload / updatePassword). Deliberately
+ * knows nothing about pagination, cache or the active / trash table pair - that is the
+ * responsibility of PaginatedListStore.
+ * @usage Testable in isolation and usable without inheriting BaseDataComponent (see
+ * PersonalInfoComponent, TableBuilderComponent, TrashTableBuilderComponent - they compose it
+ * directly).
  *
- * Vyextrahováno z BaseDataComponent, aby base komponenta přestala být "god class":
- * tuto třídu lze testovat izolovaně a používat i mimo dědičnost z BaseDataComponent
- * (viz PersonalInfoComponent, TableBuilderComponent, TrashTableBuilderComponent —
- * ty si ji nyní skládají přímo, místo aby dědily celý BaseDataComponent kvůli
- * pár metodám).
- *
- * @note Toto NENÍ @Injectable — instance se vytváří ručně, per endpoint, tam kde je
- * potřeba (komponenta dodá vlastní DataHandler + destroy$ subject).
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`):
- *  `hardDeleteAllTrashed()` returns the payload `{deleted_count, skipped_count}` or null (204).
+ * @note This is NOT @Injectable - an instance is created manually, per endpoint, where needed
+ * (the component provides its own DataHandler + destroy$ subject).
  */
 
 import { Observable, Subject, throwError } from 'rxjs';
@@ -32,16 +27,16 @@ export interface DeleteOptions {
 
 export class EntityCrudService<T = any> {
   /**
-   * @param dataHandler Sdílený HTTP klient s centralizovaným error handlingem.
-   * @param endpointProvider Funkce vracející aktuální endpoint (ne plain string!) —
-   *   `apiEndpoint` bývá nastaven přes property initializer v potomkovi, který se
-   *   vyhodnotí AŽ PO doběhnutí konstruktoru base třídy / této služby. Lazy čtení
-   *   přes funkci zabrání zachycení `undefined`.
-   * @param destroy$ Subject, který komponenta pošle při zániku — zajišťuje úklid
-   *   všech requestů vytvořených touto instancí.
-   * @param onSettled Volitelný hook zavolaný po dokončení KAŽDÉHO requestu (úspěch
-   *   i chyba) — typicky `() => this.cd.markForCheck()`. Služba díky tomu vůbec
-   *   nemusí znát ChangeDetectorRef.
+   * @param dataHandler Shared HTTP client with centralized error handling.
+   * @param endpointProvider Function returning the current endpoint (not a plain string!) -
+   *   `apiEndpoint` is often set by a property initializer of the subclass, evaluated only AFTER
+   *   the constructor of the base class / this service finished. Reading it lazily through a
+   *   function prevents capturing `undefined`.
+   * @param destroy$ Subject the component emits on destroy - cleans up all requests created by
+   *   this instance.
+   * @param onSettled Optional hook called after EVERY request finishes (success and error) -
+   *   typically `() => this.cd.markForCheck()`. The service does not need to know
+   *   ChangeDetectorRef.
    */
   constructor(
     private dataHandler: DataHandler,
@@ -63,7 +58,7 @@ getOne(id: number | undefined): Observable<T> {
   );
 }
 
-  /** GET /{endpoint} (celá kolekce, bez stránkování) */
+  /** GET /{endpoint} (whole collection, no pagination) */
   getCollection(params?: any): Observable<T[]> {
     return this.dataHandler.getCollection<T>(this.endpoint, params).pipe(
       takeUntil(this.destroy$),
@@ -88,7 +83,7 @@ getOne(id: number | undefined): Observable<T> {
     );
   }
 
-  /** DELETE /{endpoint}/{id} (volitelně ?force_delete=true) */
+  /** DELETE /{endpoint}/{id} (optionally ?force_delete=true) */
   remove(id: number | undefined, options: DeleteOptions = {}): Observable<void> {
     if (!id) return throwError(() => new Error('ID undefined.'));
 
@@ -114,7 +109,7 @@ getOne(id: number | undefined): Observable<T> {
     );
   }
 
-  /** POST (multipart) na endpoint nebo na `targetUrl`, pokud je zadán */
+  /** POST (multipart) to the endpoint or to `targetUrl` when given */
   upload<U>(formData: FormData, targetUrl?: string): Observable<U> {
     return this.dataHandler.upload<U>(targetUrl || this.endpoint, formData).pipe(
       takeUntil(this.destroy$),
@@ -131,7 +126,7 @@ getOne(id: number | undefined): Observable<T> {
     );
   }
 
-  /** GET /{endpoint}?no_pagination=true (+ volitelné filtry) */
+  /** GET /{endpoint}?no_pagination=true (+ optional filters) */
   loadAll(filters?: Record<string, any>): Observable<T[]> {
     const params = new URLSearchParams();
     params.set('no_pagination', 'true');

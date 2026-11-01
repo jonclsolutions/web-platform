@@ -2,13 +2,12 @@
 /**
  * @file AttachmentsTotalSize.php
  * @path app/Rules/AttachmentsTotalSize.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Validuje souhrnnou velikost VŠECH souborů v poli příloh najednou - Laravel
- * nemá vestavěné pravidlo pro součet velikostí napříč polem souborů (`max:` na
- * `attachments.*` hlídá jen jednotlivý soubor). Znovupoužitelné pro libovolný formulář
- * s vícenásobným uploadem (raw_request_commissions, sales_orders, budoucí admin formuláře).
+ * @description Validates the total size of ALL files of an attachment array at once - Laravel has
+ * no built-in rule for that (`max:` on `attachments.*` checks one file). Reusable for any form
+ * with multiple uploads.
  */
 
 namespace App\Rules;
@@ -24,7 +23,7 @@ class AttachmentsTotalSize implements ValidationRule
 
     /**
      * @param string $attribute
-     * @param mixed $value Pole UploadedFile instancí.
+     * @param mixed $value Array of UploadedFile instances.
      * @param Closure $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void

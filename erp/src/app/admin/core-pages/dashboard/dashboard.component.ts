@@ -1,69 +1,23 @@
 /**
  * @file dashboard.component.ts
  * @path src/app/admin/core-pages/dashboard/dashboard.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Central administrative dashboard for the "Core" module - system-wide
  * settings and resources shared across the Web and Shop modules (user accounts, roles &
  * permissions, legal documents, external links, system-level audit logs). Gated behind
  * `core-view-dashboard` permission.
  *
- * (Earlier refactor-notes for the web/shop mirror structure, TTL cache + manual refresh,
- * and the permission-aware stat/nav filtering (STAT_DEFS/isAllowed) are unchanged - see
- * version history, omitted here for brevity.)
- *
- * @refactor-note (2026-09-07) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * + VIZUÁLNÍ REFAKTOR:
- * - `translationSection`/`t()` doplněny stejně jako u `UserRequestComponent` - dashboard
- *   dědí `i18n` z `BaseDataComponent` stejně jako ten formulář, takže jde o identický
- *   vzor. NA ROZDÍL od `UserRequestComponent` ale žádné pole s přeloženým TEXTEM
- *   nedrží stav v konstruktoru přes `translations$.subscribe()` (žádné riziko NG0956) -
- *   `STAT_DEFS`/`navSections` teď nesou jen stabilní překladové KLÍČE (`labelKey`/
- *   `titleKey`/`descriptionKey`), samotný text se resolvuje AŽ v šabloně voláním `t()`,
- *   stejně jako dnešní `getIcon()`. Konstruktor jen volá
- *   `this.i18n.translations$.subscribe(() => this.cd.markForCheck())`, aby OnPush
- *   komponenta přerenderovala texty při přepnutí jazyka (stejný minimalistický vzor
- *   jako `GraphBuilderComponent`).
- * - `eventTypeLabel()` přepsán z natvrdo českého `Record<string,string>` na mapování
- *   event_type -> překladový klíč (`EVENT_TYPE_LABEL_KEYS`), text opět přes `t()`.
- * - `formatDate()` teď respektuje `i18n.getDateLocale()` místo natvrdo `'cs-CZ'` - stejná
- *   oprava jako u `GraphBuilderComponent.computeCanonicalBuckets()`/`reportMetaLines`.
- * - NOVÉ widgety (bez jakéhokoliv nového API volání, jen přepočet už načtených dat):
- *   `heroStat`/`secondaryStats`/`statBarPct()` - srovnávací pruhový přehled všech
- *   povolených modulů z `quickStats` (nahrazuje plochou grid dlaždic hero dlaždicí +
- *   pruhovým grafem). `activityBreakdown`/`computeActivityBreakdown()` - rozklad
- *   POSLEDNÍCH načtených `recentActivity` záznamů podle `eventTypeClass()` (Vytvořeno/
- *   Úprava/Smazání/Obnova/Chyba/Ostatní), počítaný client-side ze stejných dat, která už
- *   `loadRecentActivity()` stahuje pro seznam - žádný nový endpoint, žádná nová cache.
- *
- * @refactor-note (2026-09-07v2) BACKLOG "výběr metriky v hero dlaždici": `QuickStat`
- * dostal stabilní `key` (dřív `STAT_DEFS[].key` existoval, ale do `quickStats` se
- * nekopíroval - `heroStat` byl natvrdo `quickStats[0]`). Přidán `selectedHeroKey`
- * (`null` = výchozí chování, první povolená metrika) + `heroDropdownOpen` a trojice
- * metod (`toggleHeroDropdown`/`selectHeroStat`/`closeHeroDropdown`) ovládající malý
- * dropdown v hero dlaždici, kterým uživatel zvolí, KTERÁ z povolených metrik se má
- * zvýraznit. `heroStat`/`secondaryStats` gettery přepsány tak, aby `secondaryStats`
- * vždy byl "všechno kromě aktuálně zvoleného hero", ne natvrdo `.slice(1)` - pořadí v
- * `quickStats` se tím pádem po výběru jiné metriky nijak nemísí, jen se přesune do
- * hero pozice. Pokud zvolený `key` mezi `quickStats` po refreshi/změně oprávnění
- * zmizí, `find()` nic nenajde a `??` fallback tiše spadne zpět na `quickStats[0]` -
- * žádný extra reset kód není potřeba.
- *
  * @dependencies
  * - BaseDataComponent: Provides errorMessage/cd/alertDialogService.
  * - LoadingService: Manages global loading states.
  * - DataHandler: Facilitates API communication for dashboard aggregation endpoints.
- * - HasPermissionDirective: Gate the "Poslední systémové události" section on `view-core`.
- * - PermissionService: Synchronní kontrola permission klíčů - řídí, které dílčí stat/nav/
- *   activity požadavky se vůbec pošlou.
- * - ResourceCacheService: TTL cache pro stats/activity fetch.
+ * - HasPermissionDirective: Gates the "Recent system events" section on `view-core`.
+ * - PermissionService: Synchronous check of permission keys - decides which stat / nav /
+ *   activity requests are sent at all.
+ * - ResourceCacheService: TTL cache of the stats / activity fetch.
  * - RxJS: Handles asynchronous data aggregation using forkJoin.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): stat totals are
- *  read from `meta.total` of the pages.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -82,8 +36,7 @@ import { ResourceCacheService } from '../../../core/services/resource-cache.serv
 
 /**
  * @description A single aggregated metric tile shown in the stats grid. Carries a
- * translation KEY, not resolved text - see refactor-note (2026-09-07) in the file
- * header for why (avoids the NG0956 pitfall documented in UserRequestComponent).
+ * translation KEY, not resolved text for why (avoids the NG0956 pitfall documented in UserRequestComponent).
  * `key` (2026-09-07v2) identifies the tile for the hero-selector dropdown.
  */
 interface QuickStat {
@@ -178,9 +131,6 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
 
   override apiEndpoint = 'core/users';
 
-  /**
-   * @refactor-note (2026-09-07) i18n - stejný vzor jako `UserRequestComponent.t()`.
-   */
   protected override translationSection: string = 'core-dashboard';
   public override t(key: string): string {
     return this.i18n.getValue(`core-dashboard.${key}`);
@@ -190,12 +140,12 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
   private readonly STATS_CACHE_KEY = 'core-dashboard:stats';
   private readonly ACTIVITY_CACHE_KEY = 'core-dashboard:activity';
 
-  /** Permission klíč gatující `core/logs` GET v api.php (`CheckPermission` middleware). */
+  /** Permission key gating the `core/logs` GET in api.php (`CheckPermission` middleware). */
   private readonly LOGS_PERMISSION = 'view-core';
 
   /**
-   * Jediné místo pravdy pro stat karty dashboardu - `loadStats()` z tohoto pole
-   * vyfiltruje jen položky, kde `isAllowed()` vrátí true, a JEN za ty pošle request.
+   * Single source of truth of the dashboard stat cards - `loadStats()` keeps only the items whose
+   * `isAllowed()` returns true and sends requests ONLY for those.
    */
   private readonly STAT_DEFS: DashboardStatDef[] = [
     {
@@ -204,7 +154,7 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
       isAllowed: () => this.permissionService.hasPermission('core-administrators-view'),
     },
     {
-      // core/roles NENÍ gated permission klíčem - jen sysadmin kontrolou v controlleru.
+      // core/roles is NOT gated by a permission key - only by the sysadmin check in the controller.
       key: 'roles', labelKey: 'stat_roles_label', icon: 'shield',
       endpoint: 'core/roles?per_page=1',
       isAllowed: () => this.isSysadmin(),
@@ -232,17 +182,13 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
   recentActivity: ActivityLog[] = [];
   loadingActivity = true;
 
-  /** Rozklad `recentActivity` podle `eventTypeClass()` - viz refactor-note v hlavičce. */
+  /** Breakdown of `recentActivity` by `eventTypeClass()`. */
   activityBreakdown: ActivityBreakdownEntry[] = [];
 
-  /** Kdy naposledy proběhlo úspěšné načtení dashboardu - zobrazeno v hlavičce. */
+  /** Time of the last successful dashboard load - shown in the header. */
   lastUpdatedAt: Date | null = null;
   isRefreshing = false;
 
-  /**
-   * @refactor-note (2026-09-07v2) Výběr metriky pro hero dlaždici - `null` = výchozí
-   * chování (první povolená metrika). Viz `heroStat` getter a `selectHeroStat()`.
-   */
   selectedHeroKey: string | null = null;
   heroDropdownOpen = false;
 
@@ -259,7 +205,7 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
       icon: 'shield',
       route: '/admin/core/edit-roles',
       descriptionKey: 'nav_roles_desc',
-      // core/edit-roles route je chráněná sysadminGuard, ne permission klíčem.
+      // The core/edit-roles route is protected by sysadminGuard, not by a permission key.
       isAllowed: () => this.isSysadmin(),
     },
     {
@@ -288,25 +234,25 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
       icon: 'settings',
       route: '/admin/core/web-settings',
       descriptionKey: 'nav_web_settings_desc',
-      // WebSettingsComponent volá legal/config/* (SiteConfigurationController).
+      // WebSettingsComponent calls legal/config/* (SiteConfigurationController).
       isAllowed: () => this.permissionService.hasPermission('core-legal-config-view'),
     },
   ];
 
   /**
-   * @description Podmnožina `navSections`, na kterou má přihlášený uživatel právo -
-   * šablona nad tímto getterem iteruje místo nad `navSections` přímo.
+   * @description Subset of `navSections` the logged-in user may access - the template iterates
+   * this getter instead of `navSections` directly.
    */
   get visibleNavSections(): NavSectionWithGuard[] {
     return this.navSections.filter(section => section.isAllowed());
   }
 
   /**
-   * @description Metrika zvýrazněná v hero dlaždici - buď admin zvolená přes dropdown
-   * (`selectedHeroKey`), nebo (výchozí/fallback) první povolená metrika v `quickStats`.
-   * Pokud dřív zvolený `key` mezi aktuálně povolenými metrikami už není (permission se
-   * mezitím změnil), `find()` vrátí `undefined` a `??` tiše spadne zpět na
-   * `quickStats[0]` - žádný extra reset kód není potřeba.
+   * @description Metric highlighted in the hero tile - either chosen by the admin in the dropdown
+   * (`selectedHeroKey`) or (default / fallback) the first allowed metric of `quickStats`. When
+   * the earlier chosen `key` is no longer among the allowed metrics (permissions changed),
+   * `find()` returns `undefined` and `??` falls back to `quickStats[0]` - no extra reset code
+   * needed.
    */
   get heroStat(): QuickStat | null {
     if (this.quickStats.length === 0) return null;
@@ -314,24 +260,14 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
   }
 
   /**
-   * @description Zbývající povolené metriky (VŠECHNO kromě aktuálně zvoleného hero,
-   * ne natvrdo "všechno od druhé pozice") - vykresleny jako srovnávací pruhový graf.
+   * @description The remaining allowed metrics (EVERYTHING except the current hero, not simply
+   * "everything from the second position") - rendered as a comparison bar chart.
    */
   get secondaryStats(): QuickStat[] {
     const heroKey = this.heroStat?.key;
     return this.quickStats.filter(s => s.key !== heroKey);
   }
 
-/**
- * @refactor-note (2026-09-07v4) BACKLOG "logy jsou o řády větší než ostatní moduly":
- * lineární škála (value / max) dělala z jakéhokoliv modulu vedle `core_logs`/`web_logs`
- * (stovky až tisíce záznamů) vizuálně neviditelný pruh, i když číselně šlo o desítky
- * záznamů. Přepnuto na LOGARITMICKOU škálu šířky pruhu - zobrazená HODNOTA
- * (`{{ stat.value }}`) zůstává přesné číslo, mění se jen vizuální reprezentace jeho
- * podílu na pruhu, takže menší moduly dostanou čitelnou, nenulovou šířku i vedle
- * řádově většího modulu. `log(0)` je nedefinované, proto nulové hodnoty (typicky
- * "Otevřené tickety: 0") dostávají pevných 4 % místo pokusu o log(0)/NaN.
- */
 private get maxStatLog(): number {
   const numericValues = this.quickStats.map(s => typeof s.value === 'number' ? s.value : 0);
   const max = Math.max(1, ...numericValues);
@@ -342,12 +278,12 @@ statBarPct(stat: QuickStat): number {
   const value = typeof stat.value === 'number' ? stat.value : 0;
   if (value <= 0) return 4;
   const pct = (Math.log(value + 1) / this.maxStatLog) * 100;
-  // Dolní hranice 8 % - i hodnota o mnoho řádů menší než max zůstane vizuálně patrná
-  // jako pruh, ne jako tenká čárka.
+  // Lower bound of 8 % - even a value many orders smaller than the max stays visible
+  // as a bar, not as a thin line.
   return Math.max(8, Math.round(pct));
 }
 
-  /** @description Nejvyšší počet napříč `activityBreakdown` - škáluje šířku pruhů widgetu. */
+  /** @description Highest count across `activityBreakdown` - scales the bar width of the widget. */
   get maxBreakdownCount(): number {
     return Math.max(1, ...this.activityBreakdown.map(b => b.count));
   }
@@ -370,7 +306,7 @@ statBarPct(stat: QuickStat): number {
     settings: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
   };
 
-  /** @description event_type -> překladový klíč pro `eventTypeLabel()`. */
+  /** @description event_type -> translation key for `eventTypeLabel()`. */
   private readonly EVENT_TYPE_LABEL_KEYS: Record<string, string> = {
     login_success: 'ev_label_login_success',
     login_failed: 'ev_label_login_failed',
@@ -387,7 +323,7 @@ statBarPct(stat: QuickStat): number {
     error: 'ev_label_error',
   };
 
-  /** @description `eventTypeClass()` CSS klíč -> překladový klíč pro "rozklad posledních událostí" widget. */
+  /** @description `eventTypeClass()` CSS key -> translation key of the "recent events breakdown" widget. */
   private readonly BREAKDOWN_LABEL_KEYS: Record<string, string> = {
     'ev-create': 'breakdown_create_label',
     'ev-update': 'breakdown_update_label',
@@ -404,13 +340,6 @@ statBarPct(stat: QuickStat): number {
   ) {
     super(dataHandler, cd, genericTableService);
 
-    /**
-     * @refactor-note (2026-09-07) Na rozdíl od `UserRequestComponent` zde
-     * NEPŘESTAVUJEME žádná pole - `STAT_DEFS`/`navSections` nesou jen stabilní
-     * překladové klíče, text řeší `t()` přímo v šabloně. Stačí tedy OnPush komponentu
-     * donutit přehodnotit šablonu při přepnutí jazyka - stejný minimalistický vzor
-     * jako `GraphBuilderComponent`.
-     */
     this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
   }
 
@@ -431,10 +360,9 @@ statBarPct(stat: QuickStat): number {
   }
 
   /**
-   * @description Ruční "Aktualizovat" - obchází TTL cache pro obě sekce dashboardu
-   * (stats + activity) a vynutí čerstvý fetch. Permission guardy v `loadStats()`/
-   * `loadRecentActivity()` platí i tady - ruční refresh nepřeskakuje kontrolu práv, jen
-   * obchází TTL cache.
+   * @description Manual "Refresh" - bypasses the TTL cache of both dashboard sections (stats +
+   * activity) and forces a fresh fetch. The permission guards of `loadStats()` /
+   * `loadRecentActivity()` apply here too - a manual refresh does not skip the permission check.
    */
   refresh(): void {
     if (this.isRefreshing) return;
@@ -445,35 +373,26 @@ statBarPct(stat: QuickStat): number {
     this.loadRecentActivity();
   }
 
-  /**
-   * @refactor-note (2026-09-07v2) Otevře/zavře dropdown pro výběr hero metriky.
-   */
   toggleHeroDropdown(): void {
     this.heroDropdownOpen = !this.heroDropdownOpen;
   }
 
   /**
-   * @refactor-note (2026-09-07v2) Zvolí jinou metriku do hero dlaždice a dropdown
-   * zavře.
-   * @param key `QuickStat.key` zvolené metriky.
+   * @param key `QuickStat.key` of the chosen metric.
    */
   selectHeroStat(key: string): void {
     this.selectedHeroKey = key;
     this.heroDropdownOpen = false;
   }
 
-  /**
-   * @refactor-note (2026-09-07v2) Zavře dropdown bez výběru - volá backdrop overlay v
-   * šabloně (klik mimo dropdown).
-   */
   closeHeroDropdown(): void {
     this.heroDropdownOpen = false;
   }
 
   /**
    * @description Aggregates resource counts from every Core-owned endpoint the current
-   * user is permitted to see, concurrently using forkJoin. Cached přes
-   * ResourceCacheService (2min TTL).
+   * user is permitted to see, concurrently using forkJoin. Cached through
+   * ResourceCacheService (2 min TTL).
    * @note If an individual request fails, it defaults to null so the rest of the
    * dashboard remains functional. `getPaginatedCollection` is used deliberately (not
    * `getCollection`) to keep `meta.total` from the response instead of just the unwrapped
@@ -484,9 +403,6 @@ statBarPct(stat: QuickStat): number {
 
     const allowedDefs = this.STAT_DEFS.filter(def => def.isAllowed());
 
-    // @bugfix-note (2026-10-23) Without any statistic permission `forkJoin({})` completed WITHOUT
-    // emitting - `next` never ran and the stats stayed in the loading state forever (open finding
-    // #14, same bug the web dashboard had). Nothing to load → done immediately.
     if (allowedDefs.length === 0) {
       this.quickStats = [];
       this.loadingStats = false;
@@ -525,10 +441,7 @@ statBarPct(stat: QuickStat): number {
    * @description Fetches the latest system-level audit events (authentication, role/
    * permission changes, legal document changes) for the activity feed AND the
    * "recent events breakdown" widget (`activityBreakdown` - computed client-side from
-   * the same rows, no extra request). Cached přes ResourceCacheService (2min TTL).
-   * @bugfix-note (2026-08-16) `core/logs` (GET) vyžaduje `view-core` - bez kontroly by
-   * uživatel bez tohoto práva dostal 403 při každém vstupu na dashboard. Bez práva se
-   * teď rovnou vrátí prázdný seznam bez volání API.
+   * the same rows, no extra request). Cached through ResourceCacheService (2 min TTL).
    */
   private loadRecentActivity(): void {
     if (!this.permissionService.hasPermission(this.LOGS_PERMISSION)) {
@@ -583,20 +496,12 @@ statBarPct(stat: QuickStat): number {
   /**
    * @description Whether the signed-in user has the 'sysadmin' role - `core/roles` (and the
    *   `/admin/core/edit-roles` route) are not gated by a permission key, only by the role name.
-   * @bugfix-note (2026-10-23) Read `localStorage.userRole`, which nothing writes (AuthService keeps
-   *   the role in sessionStorage) - the roles card / nav item was never shown, not even to the
-   *   sysadmin (open finding #19). Now `AuthService.getUserRole()`, like AuthGuard / administrators.
    * @returns True when the current user's role is 'sysadmin'.
    */
   private isSysadmin(): boolean {
     return this.authService.getUserRole() === 'sysadmin';
   }
 
-  /**
-   * @refactor-note (2026-09-07) BUGFIX - natvrdo `toLocaleString('cs-CZ', ...)`
-   * nahrazeno `this.i18n.getDateLocale()`, stejná oprava jako u
-   * `GraphBuilderComponent.computeCanonicalBuckets()`.
-   */
   formatDate(iso: string): string {
     if (!iso) return '—';
     return new Date(iso).toLocaleString(this.i18n.getDateLocale(), {

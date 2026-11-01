@@ -2,8 +2,8 @@
 # =============================================================================
 # @file init-workspace.sh
 # @path init-workspace.sh (root of the web-platform monorepo)
-# @project RPSW Web
-# @author RPSW
+# @project JS web-platform
+# @author JS
 # @created 2026
 # @description Prepares a freshly cloned application for LOCAL development - in DOCKER, so it
 # runs the same on every machine (any Linux, macOS, Windows via WSL 2): the host needs only Docker and
@@ -39,35 +39,6 @@
 #  10. Shell aliases   – <app>, <app>-dev, <app>-build in your shell profile
 #  11. Summary         – result + the manual step: review api/.env
 #
-# @refactor-note (2026-10-24) Open finding #54: the dev certificate of `ng serve` was a committed
-#   Laragon key pair (`erp/ssl/laragon.*`); it is generated per developer as
-#   `erp/ssl/localhost.{crt,key}` and the whole `erp/ssl/` is git-ignored.
-# @refactor-note (2026-10-30) Arch Linux support (pacman packages, PHP extensions in conf.d).
-# @refactor-note (2026-10-30d) Database created by Laravel (db:create-if-missing, migrate,
-#   db:seed) instead of the manual phpMyAdmin import; .temp/ folder for local scratch files.
-# @bugfix-note (2026-10-30) Stored as 100755 (it was 100644 – `./init-workspace.sh` could not start).
-# @refactor-note (2026-10-31b) GitHub (SSH) as the first step; .temp/temp.txt right after the clone.
-# @refactor-note (2026-10-31c) DOCKER instead of host packages: the steps "System packages"
-#   (dnf / pacman, PHP extensions, pcov from the AUR) and "Mailpit" (~/.local/bin) and the XAMPP
-#   prerequisite are gone - PHP 8.5 (like the FORPSI hosting), Composer, Node.js 24, Chromium,
-#   MariaDB, Mailpit and phpMyAdmin are containers. Every PHP / Node.js command of this script
-#   runs in the dev container; the host is not changed except Docker itself (asked first).
-#   The database of a former XAMPP installation is NOT moved automatically - see the summary
-#   (`./dev.sh db-import`). The storage symlink is relative now (valid on the host and in the
-#   container).
-# @refactor-note (2026-10-31e) EVERY PLATFORM: Linux (Docker installed with the package manager of
-#   Arch, Debian / Ubuntu, Fedora, openSUSE - asked), macOS (Docker Desktop via Homebrew, bash 4+
-#   from Homebrew - the script re-runs itself with it) and Windows (WSL 2 + Docker Desktop:
-#   init-workspace.cmd prepares them and runs this script inside WSL). Platform detected by
-#   `uname` / /proc/version - no menu.
-# @refactor-note (2026-10-31g) The scratch folder is temp/ (was .temp/ - hidden on some systems);
-#   an existing .temp/ is renamed once, with its content.
-# @refactor-note (2026-10-31f) Root clean-up: everything of the local environment lives in dev/
-#   (compose.yaml, .env / .env.example, docker/Dockerfile, windows/*.ps1, logs/, pids/); the
-#   root keeps only the entry points. A root .env of the previous layout is moved to dev/.env.
-# @refactor-note (2026-10-31d) Docker on demand: step 3 enables docker.socket instead of
-#   docker.service (asked; an enabled docker.service is offered the switch) - the daemon starts
-#   on the first docker command, not with the computer.
 # @note THE DATABASE IS CREATED BY THIS SCRIPT (step 7): `db:create-if-missing`, `migrate`,
 #   `db:seed` - an existing database is never dropped or overwritten, only missing migrations and
 #   missing base data are added. Its data live in the Docker volume <app>_db-data.

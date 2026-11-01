@@ -1,38 +1,17 @@
 /**
  * @file categories.component.ts
  * @path src/app/admin/shop-pages/categories/categories.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages a hierarchical tree of shop categories, including CRUD operations and product-to-category assignments.
  * @dependencies
  * - Core services: DataHandler, GenericTableService, LoadingService.
  * - Shared UI: SHARED_UI_BUILDERS, ConfirmDialogService.
  * - BaseDataComponent: Provides foundational data management for entity collections.
- * - ResourceCacheService: TTL cache pro strom kategorií, panel produktů kategorie a
- *   seznam "všech produktů" v add-product panelu (viz refactor-note 2026-08-9).
- * - Config.create* factory functions: i18n-aware button definitions - viz
- *   refactor-note (2026-09-09) níže.
- *
- * (Earlier refactor-note 2026-08-9 for TTL cache and the usesPaginatedList/
- * forceFullRefresh override, and bugfix-note 2026-08-31 for duplicate error toasts,
- * are unchanged - see version history.)
- *
- * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
- * texty": `translationSection`/`t()` doplněny. `toolbarButtons` getter a
- * `getRowButtons()`/`getEditButtons()` metody teď volají `Config.create*(this.i18n)`
- * přímo, MÍSTO odkazu na statické `CATEGORY_TOOLBAR_BUTTONS`/`CATEGORY_ROW_BUTTONS`
- * konstanty - protože jde o gettery/metody volané z šablony PŘI KAŽDÉM CD cyklu (ne
- * pole naplněná jednou v konstruktoru), žádný samostatný "rebuild" subscribe blok
- * není potřeba - stačí `this.i18n.translations$.subscribe(() => this.cd.markForCheck())`
- * v konstruktoru, ať OnPush komponenta vůbec vyvolá nový CD cyklus (a tedy nové
- * volání getterů/metod) při přepnutí jazyka. Všechny `alertDialogService.open()`/
- * `confirmDialogService.open()` volání a natvrdo psané texty ve `getEditButtons()`
- * nahrazeny `t()` voláním. `console.error()` volání (dev diagnostika) ZÁMĚRNĚ
- * ponechána nepřeložená.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
+ * - ResourceCacheService: TTL cache of the category tree, the product panel of a category and
+ *   the "all products" list of the add-product panel.
+ * - Config.create* factory functions: i18n-aware button definitions.
  */
 
 import { Component, OnInit, ViewChildren, QueryList, ElementRef, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -104,12 +83,6 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   ) {
     super(dataHandler, cd, genericTableService);
 
-    /**
-     * @refactor-note (2026-09-09) `toolbarButtons`/`getRowButtons()`/`getEditButtons()`
-     * jsou gettery/metody, ne pole naplněná v konstruktoru - žádný "rebuild" blok
-     * není potřeba. Stačí OnPush komponentu donutit přehodnotit šablonu (a tedy
-     * znovu zavolat tyhle gettery/metody) při přepnutí jazyka.
-     */
     this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
   }
 
@@ -120,17 +93,17 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   }
 
   /**
-   * @description "Jemné" počáteční/navigační načtení stromu - respektuje TTL cache.
+   * @description "Soft" initial / navigation load of the tree - respects the TTL cache.
    */
   override refreshData(): void {
     this.loadTree(undefined, false, false);
   }
 
   /**
-   * @description "Tvrdý" refresh stromu - obchází TTL cache. Voláno globálním
-   * "Aktualizovat vše" tlačítkem v headeru a periodickým background refreshem (viz
-   * BaseDataComponent.initWithAuthCheck()). PŘEPISUJE zděděnou implementaci, která by
-   * jinak volala `this.list.forceFullRefresh()` - nepoužívaná data pro tuhle stránku.
+   * @description "Hard" refresh of the tree - bypasses the TTL cache. Called by the global
+   * "Refresh all" button in the header and by the periodic background refresh (see
+   * BaseDataComponent.initWithAuthCheck()). OVERRIDES the inherited implementation, which would
+   * call `this.list.forceFullRefresh()` - data this page does not use.
    */
   override forceFullRefresh(_currentFilters: Core.FilterParams = this.defaultFilters): void {
     this.loadTree(undefined, false, true);
@@ -139,11 +112,6 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   /**
    * @description Provides the configuration for global category management toolbar buttons.
    * @returns {Button[]} List of toolbar buttons.
-   */
-  /**
-   * @bugfix-note (2026-10-22) ButtonBuilderComponent only reads `showIf`, so the `permission` of
-   * the category buttons was ignored and add / edit / delete were shown to every admin (the API
-   * still refused the request). Buttons without the permission are hidden now, like on the other pages.
    */
   private withPermission(btn: Button): Button {
     return btn.permission && !this.permissionService.hasPermission(btn.permission) ? { ...btn, showIf: false } : { ...btn };
@@ -157,9 +125,6 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    * @description Dynamically generates action buttons for individual category rows, adjusting labels and classes based on status.
    * @param node The category node being rendered.
    * @returns {Button[]} Array of action buttons.
-   * @icons-note (2026) Emoji odstraněny - stav (aktivní/neaktivní) teď nese jen text +
-   *      barva tlačítka (btn-export = zelená / btn-filter = neutrální šedá), bez
-   *      barevných emoji teček.
    */
   getRowButtons(node: CategoryNode): Button[] {
     return Config.createCategoryRowButtons(this.i18n).map(btn => {
@@ -270,8 +235,6 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   /**
    * @description Persists a newly created category node to the backend API.
    * @param node The new node to be created.
-   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
-   * z `error:` callbacku - `loadTree()` refetch ZŮSTÁVÁ. Viz bugfix-note v hlavičce souboru.
    */
   confirmAdd(node: CategoryNode): void {
     const parentId = node.parent_id;
@@ -316,7 +279,6 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    * @param node The category node to edit.
    */
   startEdit(node: CategoryNode): void {
-    // @bugfix-note (2026-10-22) a double click on the name started editing without the update permission
     if (!this.permissionService.hasPermission('shop-categories-update')) return;
     this.backupNames.set(node.id, node.name);
     node.isEditing = true;
@@ -337,11 +299,11 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   }
 
   /**
-   * @description Fetches the full category list (přes TTL cache - viz refactor-note
-   * v hlavičce souboru) and builds the recursive tree structure.
+   * @description Fetches the full category list (through the TTL cache) and builds the
+   * recursive tree structure.
    * @param forceExpandId Optional ID to ensure specific branch remains open after refresh.
    * @param silent If true, suppresses global loading spinner.
-   * @param force If true, invaliduje cache a vynutí reálný fetch (po mutaci dat).
+   * @param force If true, invalidates the cache and forces a real fetch (after a data mutation).
    */
   loadTree(forceExpandId?: number | null, silent: boolean = false, force: boolean = false): void {
     if (!silent) {
@@ -413,9 +375,6 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   /**
    * @description Updates an existing category's properties via the API.
    * @param node The updated node object.
-   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
-   * z `error:` callbacku - rollback `node.isEditing = true` ZŮSTÁVÁ. Viz bugfix-note
-   * v hlavičce souboru.
    */
   saveNode(node: CategoryNode): void {
     node.isEditing = false;
@@ -439,9 +398,6 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   /**
    * @description Toggles category active status and propagates the change to the API.
    * @param node The category to update.
-   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
-   * z `error:` callbacku - rollback `node.is_active` ZŮSTÁVÁ. Viz bugfix-note v hlavičce
-   * souboru.
    */
   toggleStatus(node: CategoryNode): void {
     const newStatus = !node.is_active;
@@ -461,11 +417,6 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   /**
    * @description Validates delete conditions and removes a category node from the database.
    * @param node The category to delete.
-   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
-   * z `error:` callbacku - `loadTree()` refetch ZŮSTÁVÁ. Viz bugfix-note v hlavičce
-   * souboru. Pre-check `alertDialogService.open('Nelze smazat', ...)` volání NÍŽE
-   * (validace podkategorií/přiřazených produktů) NEJSOU chyby z API, jsou to lokální
-   * validace PŘED odesláním requestu - zůstávají beze změny, nejde o duplicitu.
    */
   async deleteCategory(node: CategoryNode): Promise<void> {
     if (node.children?.length) {
@@ -601,10 +552,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   }
 
   /**
-   * @description Fetches all products currently assigned to the specific category, přes
-   * krátkou TTL cache (viz refactor-note v hlavičce souboru).
+   * @description Fetches all products currently assigned to the specific category, through a
+   * short TTL cache.
    * @param categoryId The ID of the category.
-   * @param force Bypass cache (voláno po mutaci přiřazení produktu).
+   * @param force Bypass cache (called after a product assignment mutation).
    */
   loadCategoryProducts(categoryId: number, force: boolean = false): void {
     this.loadingProducts = true;
@@ -659,8 +610,8 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   }
 
   /**
-   * @description Prepares the add-product view and lazily loads all products (přes TTL
-   * cache - viz refactor-note v hlavičce souboru) if necessary.
+   * @description Prepares the add-product view and lazily loads all products (through the TTL
+   * cache) if necessary.
    */
   openAddProductSearch(): void {
     if (!this.canManageCategoryProducts) return;
@@ -689,9 +640,6 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   /**
    * @description Whether the user may change the products of a category (add / remove in the
    *   product panel) - the API route `PATCH shop/products/{id}/category` needs `shop-products-update`.
-   * @bugfix-note (2026-10-23) The add / remove buttons of the product panel were shown to every
-   *   user who could open the categories page and the API then refused the request (open finding
-   *   #17). The buttons are hidden and both actions do nothing without the permission.
    * @returns True with `shop-products-update`.
    */
   get canManageCategoryProducts(): boolean {

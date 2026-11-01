@@ -2,50 +2,13 @@
 /**
  * @file CoreExternalLinkController.php
  * @path app/Http/Controllers/Api/Core/CoreExternalLinkController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Spravuje seznam externích odkazů zobrazovaných v adminu (Google Analytics
- * dashboard, webmail, Search Console apod.) - čisté odkazy ven, žádné živé statistiky.
- *
- * @refactor-note (2026-08) Odkazy jsou nyní PLNĚ SOUKROMÉ per-uživatel - viz IDOR bugfix
- * popsaný níže v historii souboru.
- *
- * @bugfix-note (2026-08-15) `destroy()`/`forceDeleteAllTrashed()` sjednoceny na
- * `soft_delete`/`force_delete_all` event_type.
- *
- * @refactor-note (2026-08-23) HROMADNÉ MAZÁNÍ V JEDNOM REQUESTU: přidána `bulkDestroy()` -
- * viz TableBuilderComponent.onBulkDeleteClick() (volá POST core/external_links/bulk-delete).
- * KRITICKÉ: MUSÍ zůstat scoped na `user_id` přihlášeného uživatele, stejně jako VŠECHNY
- * ostatní metody v tomto kontroleru (`show`/`update`/`destroy`/`restore` výše) - bez
- * tohohle scope by šlo hromadně smazat cizí odkazy jen uhodnutím/inkrementací ID, přesně
- * ten IDOR bug, který byl u jednotlivých akcí už opravený (viz refactor-note 2026-08).
- * ID, která patří jinému uživateli, se v `whereIn()` prostě nenajdou - stejné chování
- * jako 404 u jednotlivých akcí (žádný rozdíl mezi "neexistuje" a "patří někomu jinému"),
- * jen se to promítne do `skipped_count` bez zvláštního rozlišení důvodu.
- *
- * Logování ZŮSTÁVÁ zapnuté i pro tenhle typ dat (osobní odkazy) - i když jde o čistě
- * soukromý obsah, zachování stejné auditní konvence napříč VŠEMI resources má cenu samo
- * o sobě (konzistence, žádná výjimka, na kterou je nutné pamatovat) a cena zápisu jednoho
- * řádku do `web_logs` je zanedbatelná.
- *
- * IMPORT ZÁMĚRNĚ NEIMPLEMENTOVÁN - jde o osobní seznam bookmarků (typicky pár položek na
- * uživatele), hromadný import ze souboru pro tenhle typ dat nemá reálné praktické využití.
- *
- * @refactor-note (2026-08-31) ODSTRANĚNY `position`/`is_active` - viz CoreExternalLink
- * model a external-links.config.ts stejné datum (SQL migrace DROP COLUMN spuštěna
- * přímo na serveru). Dopady:
- * - `index()`: výchozí `sort_by` změněn z `'position'` na `'name'` (abecední řazení
- *   nahrazuje dřívější ruční pořadí); `?is_active=` filtr odstraněn.
- * - `store()`/`update()`: validace přesunuta do nových `StoreCoreExternalLinkRequest`/
- *   `UpdateCoreExternalLinkRequest` (jen `name`/`url`, bez `position`/`is_active`).
- * - Všechny odpovědi teď jdou přes `CoreExternalLinkResource` (jednotný tvar,
- *   `user_id` se nikdy nevrací klientovi).
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
+ * @description Personal list of external links shown in the admin (analytics dashboard, webmail,
+ * Search Console, ...) - plain links, no live statistics. Every query is scoped to the logged-in
+ * user. Changes are written to the audit log like every other resource.
+ * @note No import - a personal bookmark list of a few entries does not need a file import.
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -67,36 +30,14 @@ class CoreExternalLinkController extends Controller
     use LogsActivity, AppliesSafeSorting;
 
     /**
-     * @description Vrátí seznam externích odkazů PATŘÍCÍCH PŘIHLÁŠENÉMU UŽIVATELI
-     *              (aktivních, nebo košových podle ?only_trashed=) s podporou filtrování,
-     *              řazení a volitelného stránkování.
+     * @description Returns the external links OF THE LOGGED-IN USER (active, or trashed with
+     *              ?only_trashed=) with filtering, sorting and optional pagination.
      */
     /**
-     * @bugfix-note (2026-08-25) BACKLOG "hledat napříč vším": přidán globální `search`
-     * parametr (OR napříč `name`/`url`) - viz FilterFormBuilderComponent na frontendu,
-     * který ho teď posílá vždy vedle ostatních sloupcových filtrů. Sloupce vybrané pro
-     * `search` jsou VŠECHNY textové sloupce, které tahle metoda už dřív filtrovala
-     * jednotlivě (`name`, `url`) - žádný nový sloupec navíc, jen stejné dva pod jedním
-     * univerzálním polem.
-     *
-     * DŮLEŽITÉ: `search` je zabalený do VLASTNÍHO `where(function ($q) { ... })` bloku a
-     * uvnitř používá `orWhere()` - kdyby se `orWhere('url', ...)` napsalo přímo na
-     * `$query` bez obalení, spojilo by se to s PŘEDCHOZÍMI podmínkami (`user_id`
-     * scoping!) operátorem OR místo AND, a request by mohl vrátit i cizí odkazy jiných
-     * uživatelů, jen proto že jejich `url` obsahuje hledaný řetězec - klasická
-     * "OR bez závorek" díra. Obalení do jednoho `where(function...)` bloku zaručuje, že
-     * se CELÁ search podmínka chová jako jedna uzavřená jednotka v rámci AND řetězce
-     * (`user_id = ? AND (name LIKE ? OR url LIKE ?)`), a `search` tak nijak neobchází
-     * vlastnický scope ani žádný jiný existující filtr.
-     *
-     * `search` a jednotlivé sloupcové filtry (`name`, `url`) jsou navzájem NEZÁVISLÉ -
-     * pokud by frontend někdy poslal oboje najednou, výsledek se dál zužuje (AND), ne
-     * nahrazuje. To odpovídá tomu, jak `FilterFormBuilderComponent` filtry sestavuje -
-     * `search` je jen DALŠÍ klíč v tom samém objektu, ne náhrada za existující pole.
-     *
-     * @refactor-note (2026-08-31) Výchozí `sort_by` změněn z `'position'` na `'name'`
-     * (sloupec `position` byl odstraněn - viz hlavička souboru). `?is_active=` filtr
-     * odstraněn (sloupec `is_active` byl odstraněn).
+     * @note `search` is wrapped in its own `where(function ($q) { ... })`: a bare `orWhere()` on
+     * `$query` would be OR-ed with the `user_id` scope and return links of other users whose
+     * `url` matches. Wrapped, the query is `user_id = ? AND (name LIKE ? OR url LIKE ?)`.
+     * `search` and the column filters (`name`, `url`) narrow the result together (AND).
      */
     public function index(Request $request): JsonResponse
     {
@@ -113,8 +54,7 @@ class CoreExternalLinkController extends Controller
             $query->where('url', 'like', "%{$url}%");
         }
 
-        // Globální fulltextový search napříč VŠEMI relevantními textovými sloupci -
-        // viz bugfix-note výše. Obalené where(function...) je NUTNÉ kvůli user_id scopu.
+        // Full-text search over the text columns - wrapped because of the user_id scope (see above).
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -135,8 +75,8 @@ class CoreExternalLinkController extends Controller
     }
 
     /**
-     * @description Vrátí detail jednoho odkazu - jen pokud patří přihlášenému uživateli
-     *              (včetně smazaných, pro zobrazení v koši). Cizí ID -> 404, ne 403.
+     * @description Returns one link - only when it belongs to the logged-in user (trashed ones
+     *              included, for the trash view). A foreign ID gives 404, not 403.
      */
     public function show(Request $request, $id): JsonResponse
     {
@@ -148,8 +88,8 @@ class CoreExternalLinkController extends Controller
     }
 
     /**
-     * @description Vytvoří nový externí odkaz - vlastníkem je vždy přihlášený uživatel,
-     *              bez ohledu na to, co (případně) přijde v requestu.
+     * @description Creates an external link - the owner is always the logged-in user, whatever
+     *              the request contains.
      */
     public function store(StoreCoreExternalLinkRequest $request): JsonResponse
     {
@@ -166,8 +106,7 @@ class CoreExternalLinkController extends Controller
     }
 
     /**
-     * @description Aktualizuje existující externí odkaz - jen pokud patří přihlášenému
-     *              uživateli.
+     * @description Updates an external link - only when it belongs to the logged-in user.
      */
     public function update(UpdateCoreExternalLinkRequest $request, $id): JsonResponse
     {
@@ -180,8 +119,8 @@ class CoreExternalLinkController extends Controller
     }
 
     /**
-     * @description Soft-delete odkazu (přesun do koše) - jen pokud patří přihlášenému
-     *              uživateli.
+     * @description Soft-deletes a link (moves it to the trash) - only when it belongs to the
+     *              logged-in user.
      */
     public function destroy(Request $request, $id): JsonResponse
     {
@@ -194,13 +133,11 @@ class CoreExternalLinkController extends Controller
     }
 
     /**
-     * @description Hromadně smaže vybrané externí odkazy JEDNÍM requestem - viz
-     * TableBuilderComponent.onBulkDeleteClick() (volá POST core/external_links/bulk-delete).
-     * KRITICKY scoped na `user_id` přihlášeného uživatele - viz refactor-note v hlavičce
-     * třídy. ID patřící jinému uživateli se prostě nenajdou (whereIn na scoped query),
-     * promítnou se do `skipped_count` bez rozlišení důvodu (stejný princip jako 404 vs.
-     * "cizí" u jednotlivých akcí výše).
-     * @param Request $request Tělo obsahuje { ids: number[], force_delete?: boolean }.
+     * @description Deletes the selected links in ONE request (TableBuilderComponent
+     * onBulkDeleteClick() → POST core/external_links/bulk-delete). Scoped to the `user_id` of the
+     * logged-in user: IDs of other users are not found and count as `skipped_count` without a
+     * reason (same principle as 404 for a foreign ID).
+     * @param Request $request Body `{ ids: number[], force_delete?: boolean }`.
      */
     public function bulkDestroy(Request $request): JsonResponse
     {
@@ -218,8 +155,8 @@ class CoreExternalLinkController extends Controller
 
         try {
             DB::transaction(function () use ($ids, $forceDelete, $userId, &$deletedCount) {
-                // KRITICKÉ: where('user_id', $userId) - bez tohohle by šlo hromadně
-                // smazat cizí odkazy jen uhodnutím ID. Stejný scope jako destroy() výše.
+                // CRITICAL: where('user_id', $userId) - without it foreign links could be deleted just by
+                // guessing IDs. Same scope as destroy().
                 $items = CoreExternalLink::withTrashed()
                     ->where('user_id', $userId)
                     ->whereIn('id', $ids)
@@ -256,8 +193,7 @@ class CoreExternalLinkController extends Controller
     }
 
     /**
-     * @description Obnoví odkaz z koše zpět mezi aktivní - jen pokud patří přihlášenému
-     *              uživateli.
+     * @description Restores a link from the trash - only when it belongs to the logged-in user.
      */
     public function restore(Request $request, $id): JsonResponse
     {
@@ -272,8 +208,8 @@ class CoreExternalLinkController extends Controller
     }
 
     /**
-     * @description Trvale smaže VŠECHNY záznamy V KOŠI PATŘÍCÍ PŘIHLÁŠENÉMU UŽIVATELI
-     *              (nevratné) - nikdy ne cizí data.
+     * @description Permanently deletes every TRASHED link OF THE LOGGED-IN USER (irreversible) -
+     *              never data of other users.
      */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {

@@ -1,9 +1,9 @@
 /**
  * @file api-envelope.ts
  * @path src/app/shared/interfaces/api-envelope.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2026-10-24
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Types of the ONE response envelope of the Laravel API (open finding #6,
  *   `App\Traits\RespondsWithData`): every successful answer with a payload is
  *   `{ data, meta?, message? }`; a paginated list carries the pagination in `meta`.

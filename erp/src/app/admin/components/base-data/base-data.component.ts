@@ -1,8 +1,8 @@
 /**
  * @file base-data.component.ts
  * @path src/app/admin/components/base-data/base-data.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Abstract base class providing standardized CRUD operations, pagination, and
  * caching logic for administrative data components.
@@ -10,51 +10,11 @@
  * @dependencies
  * - DataHandler: Facilitates HTTP communication.
  * - GenericTableService: Used internally by PaginatedListStore.
- * - EntityCrudService, PaginatedListStore: Extrahovaná byznys logika.
- * - TableRefreshBusService: Globální "Aktualizovat vše" event bus (admin header).
+ * - EntityCrudService, PaginatedListStore: Extracted business logic.
+ * - TableRefreshBusService: Global "Refresh all" event bus (admin header).
  * - LoadingService, AlertDialogService, AuthService, PermissionService: Core infrastructure
- *   services for UI state and access control (skutečně cross-cutting, proto zůstávají zde).
- * - AdminLocalizationService: Statická (bundlovaná) lokalizace admin UI - viz refactor-note
- *   (2026-09) níže.
- *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace (statická, ne editovatelná)":
- * Přidán `AdminLocalizationService` jako společný vstupní bod i18n pro ~99 % admin
- * komponent, které dědí tuhle třídu (komponenty, co nededí - `PersonalInfoComponent`,
- * `EditWebsiteComponent`/`EditEshopComponent` - si službu injektují ručně, žádná změna
- * v nich není potřeba kvůli téhle úpravě).
- * - `translationSection` - potomek nastaví na název své sekce v JSON souboru (např.
- *   `'user-request'`). Prázdný default `''` znamená "žádná vlastní sekce, jen shared" -
- *   existující komponenty tak touhle změnou nic nerozbijí, dokud si vlastní sekci
- *   nenastaví samy při postupné migraci na i18n klíče.
- * - `strings` getter - pro šablony: `{{ strings.confirm }}` (shared klíč) nebo
- *   `{{ strings.save_failed }}` (vlastní sekce, přebíjí shared se stejným jménem).
- * - `t(path)` metoda - pro imperativní použití v `.ts` (texty v `alertDialogService.open()`
- *   apod.), vždy plná cesta včetně sekce: `this.t('shared.confirm')`,
- *   `this.t('user-request.save_failed')`.
- * - Konstruktor navíc odebírá `i18n.translations$` a při každé změně jazyka volá
- *   `cd.markForCheck()` - nutné pro komponenty s `ChangeDetectionStrategy.OnPush`
- *   (většina admin stránek), aby se `strings`/`t()` výstup po přepnutí jazyka na
- *   personal-info stránce reálně překreslil i v komponentách, které zrovna nejsou
- *   OnPush-triggerované jinou akcí. Bezpečné volat i pro non-OnPush komponenty
- *   (markForCheck je no-op navíc, ne chyba).
- *
- * @refactor-note (2026-10) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * Poslední natvrdo psané (anglické) texty PŘÍMO v této třídě nahrazeny i18n klíči
- * z vlastní sekce `base-data` - čteno přes `this.t('base-data.<klic>')`, tedy plnou
- * cestou včetně sekce (stejné pravidlo jako u `t()` výše). Záměrně NE přes `strings`
- * a NE přes `translationSection` potomka: jde o texty báze samotné, které mají být
- * stejné ve všech ~99 % zděděných komponent a potomek je nemá přebíjet.
- * Dotčené texty (jen texty, žádná změna logiky ani veřejného API):
- * - `loadData()`, `loadAllData()`, `hardDeleteAllTrashedDataFromApi()` -
- *   `base-data.api_endpoint_undefined` (dříve dvě drobně odlišné varianty téhož textu,
- *   sjednoceno na jeden klíč).
- * - `updatePassword()` - `base-data.password_change_error` (fallback, když chyba
- *   nenese vlastní `message`).
- * - `hardDeleteAllTrashedDataFromApi()` - `base-data.mass_delete_error` (stejný fallback).
- * Odpovídající JSON sekce `base-data` musí existovat v KAŽDÉM
- * `assets/i18n/admin/{lang}/{lang}.json` (cz, en).
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `currentTrashFilters`, `trashLastUpdatedAt$`, `restoreDataFromApi`, `updatePassword`, `hardDeleteAllTrashedDataFromApi`.
+ *   services for UI state and access control (truly cross-cutting, so they stay here).
+ * - AdminLocalizationService: Static (bundled) localization of the admin UI.
  */
 
 import { Directive, ViewChild, inject } from '@angular/core';
@@ -70,9 +30,9 @@ import { AdminLocalizationService } from '../../../core/services/admin-localizat
 /**
  * @description Serves as a base controller for all resource management components in the admin panel.
  * @usage Extended by specific feature components (e.g., UserComponent, ProductComponent) to eliminate
- * boilerplate code for data fetching and manipulation. Pokud komponenta potřebuje jen jednotlivé
- * CRUD volání a NE stránkování/koš (typicky detail/profil stránky), zvaž raději přímé použití
- * `EntityCrudService` bez dědění z této třídy.
+ * boilerplate code for data fetching and manipulation. When a component needs only single CRUD
+ * calls and NO pagination / trash (typically detail / profile pages), prefer using
+ * `EntityCrudService` directly instead of extending this class.
  */
 @Directive()
 export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: string | null }>
@@ -83,7 +43,7 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   errorMessage: string | null = null;
   protected destroy$ = new Core.Subject<void>();
 
-  // Čistě UI-stavové přepínače (nemají nic společného s daty/pagingem)
+  // Pure UI state toggles (unrelated to data / paging)
   isTableFullWidth = true;
   isFilterVisible = false;
   showCreateForm = false;
@@ -95,16 +55,16 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   };
 
   /**
-   * @description Řídí, jestli `initWithAuthCheck()` při mountu volá `this.list.loadInitial()`
-   * (default, standardní tabulkové stránky) nebo přímo `this.refreshData()` (komponenty
-   * s vlastním zdrojem dat mimo PaginatedListStore - viz refactor-note 2026-08-9 výše).
+   * @description Controls whether `initWithAuthCheck()` calls `this.list.loadInitial()` on mount
+   * (default, standard table pages) or `this.refreshData()` directly (components with their own
+   * data source outside PaginatedListStore).
    */
   protected usesPaginatedList = true;
 
   /**
-   * @description Perioda automatického refreshe na pozadí (viz `initWithAuthCheck()`).
-   * Nízká priorita (viz backlog task) - jen pokud je karta prohlížeče aktivní
-   * (`document.hidden` check), aby neaktivní karta negenerovala requesty donekonečna.
+   * @description Period of the automatic background refresh (see `initWithAuthCheck()`). Runs
+   * only while the browser tab is active (`document.hidden` check), so an inactive tab does not
+   * generate requests forever.
    */
   private static readonly BACKGROUND_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
 
@@ -116,17 +76,16 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   public i18n = inject(AdminLocalizationService);
 
   /**
-   * @description Název "vlastní" sekce v `assets/i18n/admin/{lang}/{lang}.json` pro
-   * tuhle komponentu (např. `'user-request'`). Prázdný default = žádná vlastní sekce,
-   * `strings` pak vrací jen `shared`. Nastavuje potomek při migraci na i18n klíče - viz
-   * refactor-note v hlavičce souboru.
+   * @description Name of the component's own section in `assets/i18n/admin/{lang}/{lang}.json`
+   * (e.g. `'user-request'`). Empty default = no own section, `strings` then returns only
+   * `shared`. Set by the subclass.
    */
   protected readonly translationSection: string = '';
 
   /**
-   * @description Merged `shared` + vlastní sekce (`translationSection`) - pro binding
-   * v šabloně: `{{ strings.confirm }}`. Viz refactor-note v hlavičce souboru.
-   * @note Typ `any` záměrně - viz stejná poznámka u
+   * @description Merged `shared` + own section (`translationSection`) - for template binding:
+   * `{{ strings.confirm }}`.
+   * @note Type `any` on purpose - see the same note on
    * `AdminLocalizationService.getMergedSection()`.
    */
   public get strings(): any {
@@ -134,10 +93,9 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   }
 
   /**
-   * @description Imperativní jednorázový lookup podle PLNÉ cesty (vč. sekce) - pro
-   * použití v `.ts` kódu, kde je potřeba hotový `string` hned (např.
+   * @description Imperative one-off lookup by the FULL path (incl. the section) - for `.ts` code
+   * that needs a ready `string` at once (e.g.
    * `this.alertDialogService.open(this.t('shared.error'), this.t('user-request.save_failed'), 'danger')`).
-   * Viz refactor-note v hlavičce souboru.
    */
   public t(path: string): string {
     return this.i18n.getValue(path);
@@ -146,8 +104,8 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   private _crud?: EntityCrudService<T>;
   private _list?: PaginatedListStore<T>;
 
-  /** Jednotlivé CRUD operace pro `apiEndpoint` (lazy — apiEndpoint bývá nastaven
-   *  až property initializerem potomka, proto se nesmí sestavovat v konstruktoru). */
+  /** Single CRUD operations for `apiEndpoint` (lazy - apiEndpoint is often set only by a
+   *  property initializer of the subclass, so it must not be built in the constructor). */
   protected get crud(): EntityCrudService<T> {
     if (!this._crud) {
       this._crud = new EntityCrudService<T>(
@@ -160,7 +118,7 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
     return this._crud;
   }
 
-  /** Stránkování + cache + duplicita aktivní/koš tabulka pro `apiEndpoint` (lazy). */
+  /** Pagination + cache + the active / trash table pair for `apiEndpoint` (lazy). */
   protected get list(): PaginatedListStore<T> {
     if (!this._list) {
       this._list = new PaginatedListStore<T>(
@@ -190,14 +148,14 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
     protected cd: Core.ChangeDetectorRef,
     protected genericTableService: Core.GenericTableService
   ) {
-    // Po přepnutí admin jazyka (personal-info dropdown) donutí i OnPush komponenty
-    // přehodnotit `strings`/`t()` výstup - viz refactor-note v hlavičce souboru.
+    // After switching the admin language (personal-info dropdown), forces OnPush components to
+    // re-evaluate the `strings` / `t()` output.
     this.i18n.translations$
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe(() => this.cd.markForCheck());
   }
 
-  // ── Pass-through stav — zachovává původní veřejné API beze změny ────────────
+  // ── Pass-through state - keeps the original public API unchanged ────────────
 
   get data(): T[] { return this.list.data; }
   set data(value: T[]) { this.list.data = value; }
@@ -234,7 +192,7 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
 
   protected get currentActiveFilters(): Core.FilterParams { return this.list.currentActiveFilters; }
 
-  /** Stream pro UI badge "Aktualizováno v HH:MM:SS" - aktivní tabulka. */
+  /** Stream for the UI badge "Updated at HH:MM:SS" - active table. */
   get activeLastUpdatedAt$(): Core.Observable<Date | null> { return this.list.activeLastUpdatedAt.asObservable(); }
 
   public refreshData(): void {}
@@ -244,7 +202,7 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
 
   /**
    * @description Cleans up resources by completing the destroy subject to unsubscribe from all
-   * active streams (sdílený i s `crud`/`list`, protože jim byl předán stejný `destroy$`).
+   * active streams (shared with `crud` / `list`, which got the same `destroy$`).
    */
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -253,15 +211,10 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
 
   /**
    * @description Initializes component state with authentication guard logic.
-   * @note Mount-time load respektuje TTL cache (`list.loadInitial()`), ne tvrdý
-   * refetch - viz refactor-note (2026-08-6) v hlavičce souboru. Komponenty s
-   * `usesPaginatedList = false` (viz refactor-note 2026-08-9) místo toho zavolají
-   * přímo `this.refreshData()`. Zároveň napojuje globální "Aktualizovat vše" tlačítko
-   * a volitelný periodický background refresh.
-   * @bugfix-note (2026-10-23) The first page was loaded with `defaultFilters` (id desc), so a
-   *   page with its own `filters` (business-logs / logs created_at, security-events last_seen_at,
-   *   external links name asc, shop customers / orders / shipping / payment methods) showed a
-   *   different order on mount than after any reload (open finding #13). Now the page's `filters`.
+   * @note The mount-time load respects the TTL cache (`list.loadInitial()`), not a hard
+   * refetch. Components with `usesPaginatedList = false` call `this.refreshData()` directly
+   * instead. Also wires the global "Refresh all" button and the optional periodic background
+   * refresh.
    */
   protected initWithAuthCheck(router: Core.Router): void {
     this.authService.isLoggedIn$
@@ -278,14 +231,13 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
         }
       });
 
-    // Globální "Aktualizovat vše" tlačítko v admin headeru (TableRefreshBusService).
+    // Global "Refresh all" button in the admin header (TableRefreshBusService).
     this.tableRefreshBus.refreshAll$
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe(() => this.forceFullRefresh(this.currentActiveFilters));
 
-    // Volitelný periodický refresh na pozadí - jen pokud je karta prohlížeče aktivní.
-    // Nízká priorita (viz backlog task) - lze snadno odstranit/vypnout bez dopadu
-    // na zbytek mechanismu.
+    // Optional periodic background refresh - only while the browser tab is active.
+    // Low priority - can be removed / switched off without impact on the rest of the mechanism.
     timer(BaseDataComponent.BACKGROUND_REFRESH_INTERVAL_MS, BaseDataComponent.BACKGROUND_REFRESH_INTERVAL_MS)
       .pipe(
         Core.takeUntil(this.destroy$),
@@ -307,7 +259,7 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
     return permission.split('|').some(p => this.permissionService.hasPermission(p));
   }
 
-  // ── Stránkování / koš — deleguje na PaginatedListStore ──────────────────────
+  // ── Pagination / trash - delegates to PaginatedListStore ──────────────────────
 
   public forceFullRefresh(currentFilters: Core.FilterParams = this.defaultFilters): void {
     this.list.forceFullRefresh(currentFilters);
@@ -330,8 +282,6 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   }
 
   // ── Shared table-page state and handlers ───────────────────────────────────
-  // @refactor-note (2026-10-21) Moved here from the table pages, where each one had an
-  // identical copy. A page with different behaviour keeps its own `override`.
 
   /**
    * @description Whether the graph builder overlay of a table page is open.
@@ -511,8 +461,6 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   }
 
   // ── Shared table configuration defaults ────────────────────────────────────
-  // @refactor-note (2026-10-21) Empty defaults and the toolbar dispatcher that most table
-  // pages declared identically. Pages that fill them from a *.config.ts keep an `override`.
 
   /**
    * @description Row action buttons of the main table. Empty by default; set by the page.
@@ -537,8 +485,6 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   /**
    * @description Dispatches a toolbar button action name to the matching handler; unknown names are ignored.
    * @param action Action name emitted by the toolbar.
-   * @bugfix-note (2026-10-22) `triggerImport` was missing - the "import data" toolbar button of
-   *   pages that rely on this default (shop coupons, suppliers, shipping methods) did nothing.
    */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
@@ -552,10 +498,6 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
     if (actions[action]) actions[action]();
   }
 
-  /**
-   * @refactor-note (2026-10) Natvrdo psaný text nahrazen i18n klíčem
-   * `base-data.api_endpoint_undefined` - viz hlavička souboru.
-   */
   loadData(): void {
     if (!this.apiEndpoint) {
       this.errorMessage = this.t('base-data.api_endpoint_undefined');
@@ -564,7 +506,7 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
     this.crud.getCollection().subscribe(responseData => { this.data = responseData; });
   }
 
-  // ── Jednotlivé CRUD operace — deleguje na EntityCrudService ─────────────────
+  // ── Single CRUD operations - delegates to EntityCrudService ─────────────────
 
   getItemDetails(id: number | undefined): Core.Observable<T> {
     return this.crud.getOne(id);
@@ -586,10 +528,6 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
     return this.crud.upload<U>(formData, targetUrl);
   }
 
-  /**
-   * @refactor-note (2026-10) Natvrdo psaný text nahrazen i18n klíčem
-   * `base-data.api_endpoint_undefined` - viz hlavička souboru.
-   */
   loadAllData(filters?: Core.FilterParams): Core.Observable<T[]> {
     if (!this.apiEndpoint) {
       return Core.throwError(() => new Error(this.t('base-data.api_endpoint_undefined')));

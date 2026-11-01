@@ -1,17 +1,10 @@
 /**
  * @file job-item.component.ts
  * @path src/app/public/web-pages/jobs/job-item/job-item.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Job detail page with the public application form (CV upload).
- * @refactor-note (2026-10-23) Open finding #47: the public page extended the admin
- *   `BaseDataComponent` - the public job page loaded the admin i18n JSON and admin services
- *   (DataHandler, GenericTableService, auth / permission services). It extends BasePublicComponent
- *   now (web translations `jobs`, site settings from the startup cache) like every public page.
- * @bugfix-note (2026-10-23) Open finding #44: hardcoded Czech / English fallbacks of the form
- *   errors were removed - the texts are in the `jobs` translations; the API error text (English)
- *   is no longer shown, the translated generic error is.
  * @dependencies
  * - BasePublicComponent (translations, site settings), PublicDataService (submit), LoadingService.
  */
@@ -25,25 +18,26 @@ import { BasePublicComponent } from '../../../base-public.component';
 import { LoadingService } from '../../../../core/services/loading.service';
 
 /**
- * @description Povolené znaky pro jméno/příjmení - písmena (včetně diakritiky přes \p{L}
- *              unicode property), mezery, pomlčky a apostrofy (např. "Marie-Anne", "O'Brien").
- *              Záměrně žádné číslice - jméno s číslem je vždy chyba vstupu, ne legitimní hodnota.
- * @note Vyžaduje 'u' (unicode) flag, jinak \p{L} funguje jen jako doslovné "p", "L" apod.
+ * @description Allowed characters of the first / last name - letters (incl. diacritics through
+ *              the \p{L} unicode property), spaces, hyphens and apostrophes (e.g. "Marie-Anne",
+ *              "O'Brien"). Deliberately no digits - a name with a digit is always an input error.
+ * @note Needs the 'u' (unicode) flag, otherwise \p{L} matches only a literal "p", "L" etc.
  */
 const NAME_PATTERN = /^[\p{L}\s'-]+$/u;
 
 /**
- * @description Povolené znaky pro telefonní číslo - číslice, mezery, +, závorky a pomlčky
- *              (pokrývá běžné zápisy typu "+420 733 188 328", "(420) 733-188-328").
- *              Min. 6 znaků, ať projde i extrémně krátké testovací číslo, ale ne prázdné/1 znak.
+ * @description Allowed characters of the phone number - digits, spaces, +, brackets and hyphens
+ *              (covers common forms like "+420 733 188 328", "(420) 733-188-328").
+ *              At least 6 characters, so even a very short test number passes, but not an
+ *              empty / 1-character value.
  */
 const PHONE_PATTERN = /^[0-9+()\s-]{6,20}$/;
 
 /**
- * @description Maximální povolená velikost přiloženého CV v bytech - zrcadlí limit
- *              `max:20480` (20 480 KB = 20 MB) ze `StoreWebJobApplicationRequest` na
- *              backendu. Kontrola zde je jen UX pojistka (rychlá zpětná vazba bez
- *              čekání na server) - autoritativní limit zůstává vynucený na backendu.
+ * @description Maximum allowed size of the attached CV in bytes - mirrors the `max:20480`
+ *              limit (20 480 KB = 20 MB) of `StoreWebJobApplicationRequest` on the backend.
+ *              The check here is only a UX aid (fast feedback without waiting for the
+ *              server) - the authoritative limit stays enforced by the backend.
  */
 const MAX_FILE_SIZE_BYTES = 20480 * 1024;
 
@@ -66,7 +60,7 @@ export class JobItemComponent extends BasePublicComponent {
   job: any = null;
   isSubmitted = false;
   selectedFile: File | null = null;
-  /** Nastaveno, pokud uživatel vybere soubor přes limit MAX_FILE_SIZE_BYTES. */
+  /** Set when the user chooses a file over the MAX_FILE_SIZE_BYTES limit. */
   fileSizeError = false;
   /** Translated error of a failed submit (null = none). */
   errorMessage: string | null = null;
@@ -101,10 +95,10 @@ export class JobItemComponent extends BasePublicComponent {
   }
 
   /**
-   * @description Zpracuje výběr souboru z file inputu a ověří jeho velikost proti
-   *              MAX_FILE_SIZE_BYTES. Soubor přes limit se do selectedFile vůbec
-   *              neuloží (formulář ho tedy nejde odeslat), místo toho se nastaví
-   *              fileSizeError pro zobrazení chybové hlášky v šabloně.
+   * @description Handles the file choice of the file input and checks its size against
+   *              MAX_FILE_SIZE_BYTES. A file over the limit is never stored in selectedFile
+   *              (so the form cannot be sent), fileSizeError is set instead for the error
+   *              message of the template.
    */
   onFileSelected(event: any): void {
     const file = event.target.files[0];

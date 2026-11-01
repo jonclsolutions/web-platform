@@ -1,14 +1,13 @@
 /**
  * @file job-item.component.spec.ts
  * @path src/app/public/web-pages/jobs/job-item/job-item.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of JobItemComponent (job detail + application form): job content by the route id,
  *   form validation (Unicode names, e-mail, phone, consent), the CV size limit (20 MB) and the
  *   multipart submit with success / API error; a public page (BasePublicComponent, finding #47) with
  *   translated texts only (finding #44).
- * @refactor-note (2026-10-31) Open finding #64: test of the hidden phone / company rows.
  * @dependencies
  * - createPublicPageContext (translations, site settings cache); ActivatedRoute with paramMap id.
  */

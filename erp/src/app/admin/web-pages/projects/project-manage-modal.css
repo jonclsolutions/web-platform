@@ -1,28 +1,12 @@
-/* 
+/*
     @file: project-manage-modal.css
     @path: src/app/admin/web-pages/projects/project-manage-modal.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @description: Styly pro "Správu projektu" - sdíleno mezi ProjectsComponent
-        (panel Správa u konkrétního projektu) a ProjectThreadsComponent (rychlý
-        detail vlákna z cross-project tabulky) - stejná paleta jako email-tpl modal.
-    @redesign-note (2026-08-29a) BACKLOG "kompletní UI refactor - levý panel /
-        pravá pracovní plocha, přehledné": `.pm-body` je teď DVOUPANELOVÝ CSS Grid
-        (`grid-template-areas`) - žádná úprava HTML nebyla potřeba, layout se
-        naváže čistě strukturálně přes `:nth-of-type()` na existující pořadí
-        `.pm-section` prvků (Přístup -> Checkpointy -> Konverzace), které v šabloně
-        ProjectsComponent přesně odpovídá pořadí sidebar/hlavní obsah/hlavní obsah.
-        `:has(> .pm-section)` scopuje tenhle grid VÝHRADNĚ na modal, který má
-        aspoň jednu `.pm-section` (tj. "Správa projektu") - modal ve
-        ProjectThreadsComponent (jen zprávy + odpověď, žádné sekce) tak zůstává
-        jednoduchý vycentrovaný jednosloupcový pohled, sidebar by tam neměl z čeho
-        vzniknout.
-        Sidebar ("Přístup") je teď vizuálně odlišený panel (`#fafafa` pozadí,
-        pravý okraj, tlačítka na plnou šířku) s vlastním scrollem; hlavní plocha
-        (Checkpointy nahoře s vlastním omezeným scrollem, Konverzace dole
-        vyplňující zbytek výšky s vlastním scrollem) - obě části se scrollují
-        NEZÁVISLE na sobě, žádný "jeden dlouhý formulář".
+    @description: Styles of the "Project management" modal - shared by ProjectsComponent
+        (Manage panel of a project) and ProjectThreadsComponent (quick thread detail from the
+        cross-project table) - same palette as the email-tpl modal.
 */
 
 .pm-overlay {
@@ -72,10 +56,10 @@
 .pm-close:hover { background: var(--color-zinc-100); color: var(--color-zinc-900); }
 
 /* ══════════════════════════════════════════════════════════════════════
-   .pm-body - DVA REŽIMY:
-   1) Výchozí: jednosloupcový, vycentrovaný, scrolluje jako celek
-      (ProjectThreadsComponent modal - jen zprávy + odpověď, žádné sekce).
-   2) `:has(> .pm-section)`: dvoupanelový grid (ProjectsComponent "Správa" modal).
+   .pm-body - TWO MODES:
+   1) Default: one column, centered, scrolls as a whole
+      (ProjectThreadsComponent modal - only messages + reply, no sections).
+   2) `:has(> .pm-section)`: two-panel grid (ProjectsComponent "Manage" modal).
    ══════════════════════════════════════════════════════════════════════ */
 
 .pm-body {
@@ -102,7 +86,7 @@
 
 .pm-loading, .pm-empty { color: var(--color-zinc-400); font-size: 0.85rem; padding: 4px 2px; }
 
-/* ── Levý panel: Přístup (URL, heslo, regenerace) ────────────────────── */
+/* ── Left panel: Access (URL, password, regeneration) ────────────────────── */
 .pm-body > .pm-section:nth-of-type(1) {
   grid-area: sidebar;
   overflow-y: auto;
@@ -117,7 +101,7 @@
   justify-content: center;
 }
 
-/* ── Pravá plocha, horní blok: Checkpointy (omezená výška, vlastní scroll) ── */
+/* ── Right area, top block: Checkpoints (limited height, own scroll) ── */
 .pm-body > .pm-section:nth-of-type(2) {
   grid-area: checkpoints;
   padding: 22px 28px 16px;
@@ -127,7 +111,7 @@
   margin: 0;
 }
 
-/* ── Pravá plocha, dolní blok: Konverzace (vyplní zbytek výšky, vlastní scroll) ── */
+/* ── Right area, bottom block: Conversation (fills the remaining height, own scroll) ── */
 .pm-body > .pm-section:nth-of-type(3) {
   grid-area: conversation;
   padding: 20px 28px 24px;
@@ -147,7 +131,7 @@
   margin-bottom: 12px;
 }
 
-/* ── Přístup (sidebar) ─────────────────────────────────────────────── */
+/* ── Access (sidebar) ─────────────────────────────────────────────── */
 .pm-access-row { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
 .pm-url {
   padding: 8px 10px; background: var(--color-white); border: 1px solid var(--color-sand-200); border-radius: 8px;
@@ -161,7 +145,7 @@
 }
 .pm-password-hint { margin: 10px 0 14px; font-size: 0.74rem; color: var(--color-zinc-400); line-height: 1.5; }
 
-/* ── Obecné prvky (sdíleno napříč oběma režimy) ──────────────────────── */
+/* ── Common elements (shared by both modes) ──────────────────────── */
 .pm-btn-small {
   padding: 7px 14px; border-radius: 999px; border: 1px solid var(--color-zinc-300); background: var(--color-white);
   color: var(--color-zinc-900); font-size: 0.78rem; font-weight: 600; cursor: pointer;
@@ -209,8 +193,8 @@
 .pm-reply-box { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
 
 /* ══════════════════════════════════════════════════════════════════════
-   MOBILE (<=860px) - sidebar se z levého sloupce přesune nahoru, hlavní
-   plocha zůstane jednosloupcová, každý blok scrolluje nezávisle jako dřív.
+   MOBILE (<=860px) - the sidebar moves from the left column to the top, the main area
+   stays one column, every block scrolls independently.
    ══════════════════════════════════════════════════════════════════════ */
 @media (max-width: 860px) {
   .pm-body:has(> .pm-section) {
@@ -235,9 +219,8 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   BACKLOG "obrovská mezera mezi tabulkou projektů a tabulkou požadavků":
-   .projects-threads-section nahrazuje druhý (duplicitní) .user-request-container
-   obal - žádné sčítání paddingů/marginů, jen pevný malý odstup shora.
+   .projects-threads-section wraps the second table (requests) - no stacked paddings /
+   margins, only a small fixed gap from the top.
    ══════════════════════════════════════════════════════════════════════ */
 .projects-threads-section {
   margin-top: 28px;

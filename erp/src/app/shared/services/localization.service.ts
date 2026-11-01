@@ -1,8 +1,8 @@
 /**
  * @file localization.service.ts
  * @path src/app/shared/services/localization.service.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Centralized service for managing application localization, translation loading, and active language state.
  * @dependencies
@@ -11,36 +11,6 @@
  *   It is triggered exactly once by AppBootstrapService.initTranslations() during
  *   APP_INITIALIZER, so the app never renders before translations are ready — and never
  *   fires the fetch twice (once in the constructor, once at bootstrap).
- * @refactor-note (2026) fetchLanguages() nyní filtruje jen jazyky s active:true - viz
- *   komentář přímo u metody. Bez toho se v jazykovém přepínači na veřejném webu zobrazovaly
- *   i jazyky, které admin v EditWebsiteComponent schválně deaktivoval.
- * @refactor-note (2026-08) Přidán `languages$` (BehaviorSubject) + `initLanguages()`,
- *   analogicky k tomu, jak `AppBootstrapService.preloadSiteSettings()` řeší `siteSettings`.
- *   Root cause opraveného bugu: `PublicHeaderComponent` dřív volalo `fetchLanguages()` samo
- *   v `ngOnInit()` - tedy AŽ PO APP_INITIALIZERu a prvním renderu, takže vlaječka aktivního
- *   jazyka na moment bliknutím zmizela/chyběla, zatímco logo (přednačtené přes bootstrap)
- *   se objevilo hned. `initLanguages()` teď volá `AppBootstrapService.init()` paralelně s
- *   `initTranslations()`, takže `languages$` má hodnotu už PŘED prvním renderem appky.
- *   `fetchLanguages()` sám o sobě zůstává beze změny v použití (stále ho volá `setModule()`
- *   při přepnutí modulu) - jen navíc plní `languagesSource`, aby zůstal jediný zdroj pravdy.
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `languages$`, `initLanguages`, `getLanguageMeta`.
- * @refactor-note (2026-10-21) Veřejný e-shop používá tuto službu 1:1 jako web, jen s modulem
- *   `'shop'` (`translations/shop/{lang}`, `languages/shop`). `setModule()` po přepnutí modulu
- *   nově rovnou načte překlady aktuálního jazyka nového modulu. Dřív jen vyčistil cache,
- *   takže po přechodu web -> shop zůstaly zobrazené překlady webu. Do doby, než nové
- *   překlady dorazí, emituje `currentTranslations$` hodnotu `null`, aby stránka nového modulu
- *   nikdy nezobrazila stejně pojmenovanou sekci (`footer`, `navigation`) z druhého modulu.
- *   Odpověď, která dorazí až po dalším přepnutí modulu, se zahodí.
- * @bugfix-note (2026-10-23) (1) initTranslations() stored the Czech FALLBACK texts (loaded
- *   because the requested language failed) in the cache under the requested language - the
- *   language then showed Czech for the rest of the session even after the API recovered; the
- *   cache is now filled only by loadTranslations$() under the language really loaded.
- *   (2) Switching languages quickly (cz → en → de) let a slower older response overwrite the
- *   newer one (wrong language on screen); a response for a language that is no longer
- *   selected is now dropped, same as for a module that is no longer active.
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): languages /
- *  translations are read from `data` of the envelope (were `{languages}` / the bare dictionary).
  */
 
 import { Injectable } from '@angular/core';
@@ -86,9 +56,9 @@ export class LocalizationService {
   public currentTranslations$ = this.currentTranslationsSource.asObservable();
 
   /**
-   * @description Aktuální seznam jazyků pro currentModule. Naplní se PŘED prvním renderem
-   *   appky přes `initLanguages()` (volané z AppBootstrapService.init()), takže komponenty
-   *   jako PublicHeaderComponent na něj mohou jen navázat subscribe bez čekání/bliknutí.
+   * @description Current language list of currentModule. Filled BEFORE the first render of the
+   *   app through `initLanguages()` (called from AppBootstrapService.init()), so components like
+   *   PublicHeaderComponent can just subscribe without waiting / flashing.
    */
   private languagesSource = new BehaviorSubject<LangMeta[]>([]);
 
@@ -133,11 +103,11 @@ export class LocalizationService {
   /**
    * @description Fetches supported languages for the current module from the API.
    * @returns {Observable<{languages: LangMeta[]}>} Observable containing language metadata.
-   * @note Backend endpoint /languages/{module} vrací VŠECHNY jazyky modulu (i neaktivní) -
-   *       to je záměr, protože stejný endpoint používá i admin (EditWebsiteComponent),
-   *       který potřebuje vidět a spravovat i deaktivované jazyky. Tato služba je ale
-   *       výhradně pro VEŘEJNÝ web, takže tady se neaktivní jazyky odfiltrují - jinak by
-   *       se v přepínači jazyků na webu zobrazily i ty, co admin schválně vypnul.
+   * @note The backend endpoint /languages/{module} returns ALL languages of the module (also
+   *       inactive) - on purpose, the admin (EditWebsiteComponent) uses the same endpoint and
+   *       needs to see and manage deactivated languages. This service is for the PUBLIC web
+   *       only, so inactive languages are filtered out here - otherwise the language switcher
+   *       would show languages the admin switched off.
    */
   public fetchLanguages(): Observable<{ languages: LangMeta[] }> {
     // Payload = the language list (`{data: [...]}`, finding #6 - was `{languages: [...]}`).

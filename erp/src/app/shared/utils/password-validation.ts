@@ -1,17 +1,14 @@
 /**
  * @file password-validation.ts
  * @path src/app/shared/utils/password-validation.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Single client-side source of truth for the password policy rules.
  *              Mirrors the Laravel backend rule
  *              `Password::min(MIN)->max(MAX)->letters()->numbers()->symbols()` so the
  *              frontend can block obviously invalid submits before they hit the API.
  *              The backend remains authoritative - this is a UX pre-check, not security.
- * @refactor-note (2026-10-23) The rules themselves live in `PASSWORD_RULE_CHECKS` of
- *   shared/constants/password-policy (one rule set, finding #37); this file only gives the
- *   per-rule result object used by reset-password.
  * @dependencies
  * - shared/constants/password-policy: PASSWORD_RULE_CHECKS.
  */

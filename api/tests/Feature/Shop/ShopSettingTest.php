@@ -3,8 +3,8 @@
 /**
  * @file ShopSettingTest.php
  * @path api/tests/Feature/Shop/ShopSettingTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the e-shop maintenance mode (ShopSiteSettingController +
  *   CheckShopActive middleware + public status): admin read / switch with password

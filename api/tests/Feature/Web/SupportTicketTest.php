@@ -3,8 +3,8 @@
 /**
  * @file SupportTicketTest.php
  * @path api/tests/Feature/Web/SupportTicketTest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Feature tests of the support tickets (WebSupportTicketController): list with
  *   filters and export, create with the reporter taken from the signed-in account and one

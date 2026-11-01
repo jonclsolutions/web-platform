@@ -2,24 +2,10 @@
 /**
  * @file SiteSetting.php
  * @path app/Models/Legal/SiteSetting.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Model for legal and corporate site configuration.
- *
- * @refactor-note (2026) Přidán `google_analytics_id` do `$fillable` - bez tohohle by
- * Eloquent při `$settings->update($data)` tiše zahodil hodnotu poslanou z
- * SiteConfigurationController::updateSettings(), i když by request sám o sobě
- * doběhl úspěšně (žádná validační chyba, jen mass-assignment ochrana v tichosti
- * ignoruje neznámé pole).
- *
- * @bugfix-note (2026-10-23) legal_site_settings has no `created_at` column (only updated_at),
- * so creating a row failed with "no such column created_at" - CREATED_AT = null like PageTitle.
- *
- * @refactor-note (2026-10-31) Optional company details: only `company_name` and `contact_email`
- * are required. The fields of HIDEABLE_FIELDS can be switched off in the admin - the keys are
- * stored in `hidden_fields`, the value stays in the row (switching on restores it).
- * `toPublicArray()` is what the public pages get: switched-off fields are null there.
  */
 
 namespace App\Models\Legal;
@@ -28,11 +14,11 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @description Stores business-critical information and site-wide legal settings, including i18n support.
- * 
+ *
  * @property string $company_name The registered business name.
  * @property string $ico The company identification number.
  * @property string $dic The tax identification number.
- * @property string|null $google_analytics_id GA4 Measurement ID (formát "G-XXXXXXXXXX").
+ * @property string|null $google_analytics_id GA4 Measurement ID (format "G-XXXXXXXXXX").
  * @property array $brand_tagline_i18n Internationalized brand taglines.
  * @property array $copyright_text_i18n Internationalized copyright notices.
  * @property array<int, string>|null $hidden_fields Keys of the switched-off fields (HIDEABLE_FIELDS).

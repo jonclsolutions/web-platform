@@ -2,8 +2,8 @@
 /**
  * @file ShopProductVariant.php
  * @path app/Models/Shop/ShopProductVariant.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Model representing a specific product variant (e.g., color, size).
  */

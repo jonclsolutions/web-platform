@@ -1,28 +1,13 @@
-<!--
-    @file: raw-request-commission-received.blade.php
-    @path: resources/views/emails/web/raw-request-commission-received.blade.php
-    @project: RPSW Web
-    @author: RPSW
-    @created: 2026
-    @description Potvrzení přijetí poptávky (WebRawRequestCommission) - přepracovaný
-    vzhled (2026-08-19), stejný vizuální jazyk jako emails/auth/*.blade.php (header
-    pruh, karta, sdílená patička s firemním kontaktem). Rekapitulační tabulka
-    přestylována do stejné palety (#18181b/#71717a/#ececea) místo generických šedých
-    <table border> řádků.
-    @refactor-note (2026-08-19v2) Přidán řádek "Přiložené soubory" - jen VÝPIS názvů
-    (original_filename), BEZ odkazů ke stažení/náhledu. Záměrně bez odkazu: zákazník
-    soubor už má na svém zařízení (sám ho nahrál), odkaz by tak nic nepřidal, jen
-    zbytečně rozšiřoval bezpečnostní plochu (e-mail jako méně bezpečný kanál +
-    download/view endpoint je veřejný, neautentizovaný). Řádek se vůbec nezobrazí, pokud
-    požadavek nemá žádné přílohy.
-    @refactor-note (2026-08-19v3) BACKLOG "editovatelný obsah potvrzovacího e-mailu":
-    nadpis a úvodní/závěrečná věta ($emailTitle/$emailIntro/$emailOutro) už NEJSOU
-    natvrdo v šabloně - dodává je WebRawRequestCommissionReceived::content() přes
-    App\Support\Mail\RawRequestEmailTemplate, podle jazyka záznamu
-    ($requestCommission->lang). Pozdrav "Dobrý den," zůstává pevný (není součástí
-    editovatelného obsahu) - jen samotná úvodní/závěrečná věta je nahraditelná admin
-    UI editorem. Rekapitulační tabulka (Souhrn) beze změny - generovaná data, needituje se.
--->
+{{--
+    @file raw-request-commission-received.blade.php
+    @path resources/views/emails/web/raw-request-commission-received.blade.php
+    @project JS web-platform
+    @author JS
+    @created 2026
+    @description Confirmation of a received inquiry (WebRawRequestCommission), same look as
+    emails/auth/*.blade.php (header bar, card, shared company footer); the summary table uses the
+    same palette (#18181b / #71717a / #ececea).
+--}}
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -36,7 +21,7 @@
 <td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #ececea;">
 
-<!-- Header pruh -->
+{{-- Header bar --}}
 <tr>
 <td style="background:#18181b;padding:20px 32px;">
 <span style="color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.02em;">
@@ -45,7 +30,7 @@
 </td>
 </tr>
 
-<!-- Obsah -->
+{{-- Content --}}
 <tr>
 <td style="padding:32px;">
 <h1 style="margin:0 0 20px;font-size:19px;font-weight:700;color:#18181b;">

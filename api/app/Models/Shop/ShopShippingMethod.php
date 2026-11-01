@@ -2,8 +2,8 @@
 /**
  * @file ShopShippingMethod.php
  * @path app/Models/Shop/ShopShippingMethod.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Model representing available shipping methods for the shop.
  */

@@ -2,23 +2,15 @@
 /**
  * @file ImportRowValidator.php
  * @path app/Services/Import/ImportRowValidator.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Validuje jednotlivé importované řádky proti SKUTEČNÝM validačním
- * pravidlům daného resource - znovupoužívá `rules()` z existující `Store*Request`
- * třídy (viz `importable_resources.php` -> `store_request`), omezené na sloupce
- * v `importable_columns`. Žádná duplicitní validační logika - import tak vždy
- * respektuje stejná byznys pravidla jako ruční vytvoření záznamu přes formulář.
- *
- * @security Validace probíhá jak při dry-run (`importValidate()` importujícího
- * controlleru), tak ZNOVU při commitu (`importCommit()`) - nikdy se nespoléhá na to,
- * že mezi validací a zápisem se stav (např. existující záznamy pro kontrolu duplicit)
- * nezměnil.
- *
- * @refactor-note (2026-10-23) Comment updated: the generic ImportController / ImportRowsJob
- * (and config importable_resources.php) do not exist - the queued job was removed as
- * unreachable; every resource controller imports synchronously via HandlesImportBatches.
+ * @description Validates imported rows against the REAL validation rules of the resource - reuses
+ * `rules()` of the existing `Store*Request` (`importable_resources.php` -> `store_request`),
+ * limited to `importable_columns`. No duplicated validation: an import follows the same business
+ * rules as a record created in the form.
+ * @security Validated in the dry run (`importValidate()`) AND again on commit (`importCommit()`) -
+ * the state (e.g. existing records for duplicate checks) may change in between.
  */
 
 namespace App\Services\Import;
@@ -28,10 +20,9 @@ use Illuminate\Support\Facades\Validator;
 class ImportRowValidator
 {
     /**
-     * @description Sestaví validační pravidla pro import - vezme `rules()` z dané
-     * `Store*Request` třídy a omezí je jen na sloupce z `importable_columns` (pravidla
-     * pro `attachments` a další nesloupcová pole se zahazují, protože import je čistě
-     * datový, bez souborů).
+     * @description Builds the import validation rules: `rules()` of the `Store*Request` limited
+     * to `importable_columns` (rules of `attachments` and other non-column fields are dropped -
+     * an import carries data only, no files).
      *
      * @param class-string $storeRequestClass
      * @param string[] $importableColumns
@@ -46,8 +37,8 @@ class ImportRowValidator
         $filtered = [];
         foreach ($importableColumns as $column) {
             if (isset($allRules[$column])) {
-                // 'required' pravidlo zůstává beze změny - import řádek BEZ povinné
-                // hodnoty je stejně neplatný, jako by byl neplatný ruční formulář.
+                // 'required' stays as it is - an import row WITHOUT a required value is as invalid as a
+                // form without it.
                 $filtered[$column] = $allRules[$column];
             }
         }
@@ -56,8 +47,8 @@ class ImportRowValidator
     }
 
     /**
-     * @description Zvaliduje jeden řádek. Vrací `null`, pokud je validní, jinak pole
-     * chybových hlášek (klíč = sloupec).
+     * @description Validates one row. Returns `null` when valid, otherwise the error messages
+     * (key = column).
      */
     public function validateRow(array $row, array $rules): ?array
     {

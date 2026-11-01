@@ -1,8 +1,8 @@
 /**
  * @file tos.component.spec.ts
  * @path src/app/public/web-pages/tos/tos.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of TosComponent (Terms of service page): the document 'tos' is loaded in the
  *   current language through LegalDocsService, reloaded on a language switch and rendered with

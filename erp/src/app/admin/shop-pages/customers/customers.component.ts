@@ -1,37 +1,14 @@
 /**
  * @file customers.component.ts
  * @path src/app/admin/shop-pages/customers/customers.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages the administration of shop customers, including CRUD operations, order history lookups, and data filtering.
  * @dependencies
  * - BaseDataComponent: Provides base CRUD functionality and pagination state management.
  * - TableBuilderComponent: Used for rendering the primary customer data grid.
- * - Config.create* factory functions: i18n-aware definitions - viz refactor-note
- *   (2026-09-09) níže.
- *
- * (Earlier bugfix-note 2026-08-31 for duplicate error toasts is unchanged.)
- *
- * @bugfix-note (2026-09-09) `formatCurrency()` mělo default `currency = 'CZK'`,
- * zatímco zbytek e-shopu (products, orders) pracuje výhradně v EUR - historie
- * objednávek zákazníka tak zobrazovala částky v CZK místo EUR. Opraveno default
- * na `'EUR'`.
- *
- * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `Config.CUSTOMER_*` konstanty nahrazeny `Config.create*()` factory funkcemi.
- * `graphColumns` přestalo být `readonly`. Všechny natvrdo psané texty a
- * `alertDialogService.open()` volání nahrazeny `t()` voláním. `formatCurrency()`/
- * `formatDate()` natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()`.
- * Status/payment status CSS třídy (`getStatusClass()`/`getPaymentStatusClass()`)
- * beze změny - jde o technické CSS class názvy, ne uživatelský text (skutečný
- * label přichází z `order.status_label`/`order.payment_status_label`, které vrací
- * backend).
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): orders of a
- *  customer are read as a page (`getPaginatedCollection`, pagination in `meta`).
+ * - Config.create* factory functions: i18n-aware definitions.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -85,7 +62,6 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     sort_direction: 'desc'
   };
 
-  /** @refactor-note (2026-09-09) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
 
   constructor(
@@ -146,8 +122,6 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
   }
 
   override handleToolbarAction(action: string): void {
-    // @refactor-note (2026-10-23) `triggerImport` removed with the toolbar button: the API has no
-    //   customer import (open finding #25, the button answered 404).
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
@@ -315,16 +289,10 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     return map[status] ?? 'pay-pending';
   }
 
-  /**
-   * @bugfix-note (2026-09-09) Default `currency` byl `'CZK'`, zatímco zbytek
-   * e-shopu pracuje výhradně v EUR - viz hlavička souboru.
-   * @refactor-note (2026-09-09) Natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()`.
-   */
   formatCurrency(value: number, currency = 'EUR'): string {
     return new Intl.NumberFormat(this.i18n.getDateLocale(), { style: 'currency', currency }).format(value ?? 0);
   }
 
-  /** @refactor-note (2026-09-09) Natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()`. */
   formatDate(iso: string): string {
     if (!iso) return '—';
     return new Intl.DateTimeFormat(this.i18n.getDateLocale(), { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));

@@ -1,25 +1,22 @@
 /**
  * @file entity-crud.service.spec.ts
  * @path src/app/core/services/entity-crud.service.spec.ts
- * @description Důkladné jednotkové testy pro EntityCrudService.
+ * @description Thorough unit tests of EntityCrudService.
  *
- * Třída NENÍ @Injectable (viz komentář v entity-crud.service.ts) — instance se
- * vytváří ručně, proto ji zde NEPOUŽÍVÁME přes `TestBed.inject`, ale přímo přes
- * `new EntityCrudService(...)` s mockovaným DataHandlerem. Původní vygenerovaný
- * spec (`TestBed.inject(EntitiyCrudService)`) byl jak typograficky, tak koncepčně
- * chybný — testoval neexistující třídu a spoléhal na DI kontejner, který tuto
- * třídu vůbec neregistruje.
+ * The class is NOT @Injectable (see the comment in entity-crud.service.ts) - the instance is
+ * created manually, so the tests do NOT use `TestBed.inject` but
+ * `new EntityCrudService(...)` with a mocked DataHandler.
  *
- * Pokrytí:
- *  - všechny CRUD metody (happy path + error path)
- *  - lazy vyhodnocování `endpointProvider` (volá se při KAŽDÉM requestu)
- *  - `!id` edge-case (id = 0 je považováno za neplatné — dokumentujeme aktuální
- *    chování, protože jde o kritickou část aplikace a případná budoucí změna by
- *    zde měla shodit test a vynutit vědomé rozhodnutí)
- *  - `remove()` — všechny kombinace `forceDelete` / `params.force_delete`
- *  - `loadAll()` — sestavení query stringu, filtrování prázdných/null/undefined hodnot
- *  - `onSettled` hook (volitelný, volá se přes `finalize` i při chybě)
- *  - `takeUntil(destroy$)` — request se odhlásí po zániku komponenty
+ * Coverage:
+ *  - all CRUD methods (happy path + error path)
+ *  - lazy evaluation of `endpointProvider` (called on EVERY request)
+ *  - the `!id` edge case (id = 0 is treated as invalid - documents the current behaviour; this
+ *    is a critical part of the application and a future change should break the test and
+ *    force a conscious decision)
+ *  - `remove()` - all combinations of `forceDelete` / `params.force_delete`
+ *  - `loadAll()` - building the query string, filtering empty / null / undefined values
+ *  - the `onSettled` hook (optional, called through `finalize` also on error)
+ *  - `takeUntil(destroy$)` - the request unsubscribes when the component is destroyed
  */
 
 import { Subject, of, throwError, Observable } from 'rxjs';
@@ -149,7 +146,7 @@ describe('EntityCrudService', () => {
       });
 
       destroy$.next();
-      source$.next({ id: 1 }); // po zničení už by neměla projít žádná hodnota
+      source$.next({ id: 1 }); // after destroy no value should pass any more
 
       expect(emittedValue).toBeUndefined();
       expect(completed).toBeTrue();
@@ -241,7 +238,7 @@ describe('EntityCrudService', () => {
   });
 
   // ---------------------------------------------------------------------
-  // remove — nejrizikovější metoda (force_delete logika), testujeme důkladně
+  // remove - the riskiest method (force_delete logic), tested thoroughly
   // ---------------------------------------------------------------------
   describe('remove', () => {
     beforeEach(() => {
@@ -303,7 +300,7 @@ describe('EntityCrudService', () => {
     });
 
     it('by mělo přidat force_delete, pokud je splněna ALESPOŇ JEDNA z podmínek (OR logika)', () => {
-      // params.force_delete je 'false', ale forceDelete flag je true -> mělo by se to vynutit
+      // params.force_delete is 'false' but the forceDelete flag is true -> it should be forced
       const options: DeleteOptions = { forceDelete: true, params: { force_delete: 'false' } };
       service.remove(7, options).subscribe();
       expect(dataHandlerSpy.delete).toHaveBeenCalledWith(`${endpoint}/7?force_delete=true`);
@@ -348,10 +345,10 @@ describe('EntityCrudService', () => {
       expect(onSettledSpy).toHaveBeenCalledTimes(1);
     });
 
-    // Pozor: na rozdíl od getOne/update/remove tato metoda NEMÁ guard na chybějící id
-    // (typový podpis vyžaduje `number`, runtime kontrola chybí). Test dokumentuje
-    // současné chování — pokud by volající poslal 0/undefined přes `any`, požadavek
-    // se přesto odešle.
+    // Note: unlike getOne / update / remove this method has NO guard against a missing id
+    // (the type signature requires `number`, there is no runtime check). The test documents
+    // the current behaviour - when a caller sends 0 / undefined through `any`, the request
+    // is still sent.
     it('nemá runtime guard proti id = 0 — request se přesto odešle (dokumentace současného chování)', () => {
       dataHandlerSpy.post.and.returnValue(of({}));
       service.restore(0).subscribe();
@@ -431,7 +428,7 @@ describe('EntityCrudService', () => {
   });
 
   // ---------------------------------------------------------------------
-  // loadAll — sestavení query stringu
+  // loadAll - building the query string
   // ---------------------------------------------------------------------
   describe('loadAll', () => {
     it('by mělo vždy nastavit no_pagination=true, i bez filtrů', () => {

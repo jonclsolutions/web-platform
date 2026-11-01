@@ -1,37 +1,18 @@
 /**
  * @file project-portal.component.ts
  * @path src/app/public/web-pages/project-portal/project-portal.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Customer-facing project portal - login (permanent access_token URL +
  * admin-generated password) followed by a 24h-sliding session. Session token stored
  * in localStorage (namespaced per project token) and sent to the backend as
- * `Authorization: Bearer` header on every request (see security-note below and the
+ * `Authorization: Bearer` header on every request (see @security below and the
  * CheckProjectSession middleware).
  *
- * (Earlier refactor-notes for the refresh() silent-update pattern,
- * closeThreadAsCustomer(), ProjectPortalLocalizationService integration, the tabbed
- * layout redesign, progress bar / unread count / estimated completion / contacts tab,
- * attachment upload, pagedMessages() open-thread scroll fix, real-time attachment
- * validation, global/detail polling, and the bidirectional thread status select are
- * unchanged - see version history.)
- *
- * @refactor-note (2026-09-12v2) BACKLOG "nápověda pro zákazníka na portálu": nová
- * záložka `'help'` přidána do `PortalTab` - čistě statický obsah (žádné API volání,
- * žádný nový stav), text celý žije v i18n JSON (`help_*` klíče), stejně jako zbytek
- * portálu. `setActiveTab()` beze změny - help záložka nepotřebuje lazy-loading jako
- * `contacts`.
- * @bugfix-note (2026-10-23) (1) A failed reply / new thread was silent - the customer saw the
- *   spinner stop and nothing else (the text stayed, no message). Both now show
- *   `error_send_failed` (`replySendError` / `newThreadSendError`), cleared on the next attempt.
- *   (2) The translations$ subscription of the constructor was never closed (one leaked
- *   subscription per opened portal) - it now ends with destroy$.
- * @security-note (2026-10-23) The portal session is sent as `Authorization: Bearer` header
+ * @security The portal session is sent as `Authorization: Bearer` header
  *   (portalGet / portalPost) instead of the `session_token` query parameter - the API accepts only
  *   the header now (open finding #1).
- * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): thread detail /
- *  message pages via `getWithMeta()` - `has_more_older_messages` / `status` are in `meta`.
  */
 
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef, ElementRef, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
@@ -47,7 +28,7 @@ type PortalState = 'loading' | 'login' | 'portal' | 'invalid';
 type PortalTab = 'description' | 'checkpoints' | 'threads' | 'contacts' | 'help';
 
 const MAX_ATTACHMENTS = 5;
-const MAX_ATTACHMENT_SIZE_BYTES = 15 * 1024 * 1024; // 15 MB - sedí s backend `max:15360` KB pravidlem
+const MAX_ATTACHMENT_SIZE_BYTES = 15 * 1024 * 1024; // 15 MB - matches the backend `max:15360` KB rule
 const ALLOWED_ATTACHMENT_EXTENSIONS = [
   'pdf', 'doc', 'docx', 'odt', 'rtf', 'txt', 'xls', 'xlsx', 'ods', 'csv',
   'ppt', 'pptx', 'odp', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'zip', 'rar', '7z',
@@ -158,14 +139,14 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
   newThreadSending = false;
   newThreadFiles: File[] = [];
   newThreadFileError: string | null = null;
-  /** Error of the last failed new thread (bugfix-note 2026-10-23). */
+  /** Error of the last failed new thread. */
   newThreadSendError: string | null = null;
 
   replyBody = '';
   replySending = false;
   replyFiles: File[] = [];
   replyFileError: string | null = null;
-  /** Error of the last failed reply (bugfix-note 2026-10-23). */
+  /** Error of the last failed reply. */
   replySendError: string | null = null;
 
   isRefreshing = false;
@@ -178,11 +159,9 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
 
   private sessionToken: string | null = null;
 
-  /** @refactor-note (2026-09-11v6) Detailní polling nových zpráv uvnitř otevřeného vlákna. */
   private readonly POLL_INTERVAL_MS = 15000;
   private stopPolling$ = new Subject<void>();
 
-  /** @refactor-note (2026-09-12) Globální polling seznamu vláken (badge nepřečtených). */
   private stopGlobalPolling$ = new Subject<void>();
 
   private get storageKey(): string {
@@ -201,9 +180,8 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
   }
 
   /**
- * @description BACKLOG "zákazník může sám uzavřít i znovu otevřít vlákno" -
- * OBOUSMĚRNÉ (dřív jen active -> closed) - zákazník může omylem zavřené vlákno
- * sám znovu otevřít, bez čekání na admina.
+ * @description The customer can close and reopen a thread - BOTH directions, so a thread closed
+ * by mistake can be reopened without waiting for an admin.
  */
 threadStatusChanging = false;
 
@@ -259,7 +237,7 @@ updateThreadStatus(status: string): void {
     this.stopGlobalPolling$.complete();
   }
 
-  // ── Jazykový dropdown (minimalistický - jen vlaječka) ──────────────────────
+  // ── Language dropdown (minimalist - flag only) ──────────────────────
 
   get currentLanguageMeta() {
     return this.portalI18n.availableLanguages.find(l => l.code === this.portalI18n.getCurrentLanguage());
@@ -272,7 +250,7 @@ updateThreadStatus(status: string): void {
     this.isLangMenuOpen = false;
   }
 
-  // ── Záložky ──────────────────────────────────────────────────────────────
+  // ── Tabs ──────────────────────────────────────────────────────────────
 
   setActiveTab(tab: PortalTab): void {
     this.activeTab = tab;
@@ -303,7 +281,7 @@ updateThreadStatus(status: string): void {
     return { done, total, percent };
   }
 
-  // ── Odhad termínu dokončení ──────────────────────────────────────────────
+  // ── Estimated completion date ──────────────────────────────────────────────
 
   get estimatedCompletionLabel(): string | null {
     const from = this.project?.estimated_completion_from;
@@ -319,13 +297,13 @@ updateThreadStatus(status: string): void {
     return fmt((from || to)!);
   }
 
-  // ── Nepřečtené zprávy ────────────────────────────────────────────────────
+  // ── Unread messages ────────────────────────────────────────────────────
 
   get totalUnreadCount(): number {
     return this.threads.reduce((sum, t) => sum + (t.unread_count ?? 0), 0);
   }
 
-  // ── Vyhledávání ve vláknech ──────────────────────────────────────────────
+  // ── Search in threads ──────────────────────────────────────────────
 
   get filteredThreads(): ProjectThread[] {
     const q = this.threadSearch.trim().toLowerCase();
@@ -337,7 +315,7 @@ updateThreadStatus(status: string): void {
     });
   }
 
-  // ── Přílohy - výběr + REAL-TIME VALIDACE před odesláním ────────────────
+  // ── Attachments - choice + REAL-TIME VALIDATION before sending ────────────────
 
   formatFileSize(bytes: number): string {
     if (!bytes && bytes !== 0) return '';
@@ -346,11 +324,10 @@ updateThreadStatus(status: string): void {
   }
 
   /**
-   * @description Validuje a filtruje nově vybrané soubory PROTI stávajícímu výběru -
-   * kontrola typu (přípona), velikosti a celkového počtu HNED při výběru, stejná
-   * pravidla jako backend `Store*Request` (`mimes:...`, `max:15360`). Odmítnuté
-   * soubory se do výsledku vůbec nedostanou, `onError` callback dostane první
-   * narazivší chybovou hlášku (jedna hláška najednou stačí, ať se UI nezaplní).
+   * @description Validates and filters newly chosen files AGAINST the current selection - checks
+   * the type (extension), size and total count AT ONCE on selection, with the same rules as the
+   * backend `Store*Request` (`mimes:...`, `max:15360`). Refused files never get into the result,
+   * the `onError` callback gets the first error message hit (one message at a time is enough).
    */
   private validateAndAddFiles(existing: File[], incoming: FileList, onError: (msg: string) => void): File[] {
     let result = [...existing];
@@ -516,14 +493,12 @@ updateThreadStatus(status: string): void {
   }
 
   /**
-   * @description Dokud je zákazník přihlášený, každých 15s tiše přetáhne seznam
-   * vláken (stejný endpoint jako `loadThreads()`) - `unread_count` na jednotlivých
-   * vláknech i celkový `totalUnreadCount` badge se tak aktualizují i když zákazník
-   * zrovna sedí na jiné záložce (Popis/Postup/Kontakty), ne jen uvnitř konkrétního
-   * otevřeného vlákna. Pokud je zrovna NĚJAKÉ vlákno otevřené, jeho vlastní detailní
-   * polling (`startPollingNewMessages()`) běží nezávisle vedle tohohle - dvojí
-   * request navíc každých 15s je zanedbatelná cena za "live" pocit bez nutnosti
-   * WebSocketů.
+   * @description While the customer is logged in, silently reloads the thread list every 15 s (the
+   * same endpoint as `loadThreads()`) - the `unread_count` of the threads and the total
+   * `totalUnreadCount` badge update even while the customer is on another tab (Description /
+   * Progress / Contacts). When a thread is open, its own detail polling
+   * (`startPollingNewMessages()`) runs independently next to this one - one extra request every
+   * 15 s is a negligible price for a "live" feel without WebSockets.
    */
   private startGlobalThreadsPolling(): void {
     this.stopGlobalPolling$.next();
@@ -538,9 +513,9 @@ updateThreadStatus(status: string): void {
       takeUntil(this.destroy$)
     ).subscribe({
       next: (threads) => {
-        // Pokud je právě otevřené konkrétní vlákno, jeho detailní polling se stará
-        // o messages/status samo - tady jen přeneseme čerstvý unread_count na
-        // odpovídající položku v seznamu, ať se badge needvádí PŘES otevřené vlákno.
+        // When a thread is open, its detail polling handles the
+        // messages / status itself - here only the fresh unread_count is copied to the
+        // matching list item, so the badge is not doubled OVER the open thread.
         if (this.selectedThread) {
           const fresh = threads.find(t => t.id === this.selectedThread!.id);
           if (fresh) fresh.unread_count = 0;
@@ -548,7 +523,7 @@ updateThreadStatus(status: string): void {
         this.threads = threads;
         this.cdr.markForCheck();
       },
-      error: () => { /* tichá chyba - další pokus za 15s */ }
+      error: () => { /* silent error - next attempt in 15 s */ }
     });
   }
 
@@ -574,10 +549,6 @@ updateThreadStatus(status: string): void {
       });
   }
 
-  /**
-   * @refactor-note (2026-09-11v6) Po úspěšném načtení scrolluje na spodek (nejnovější
-   * zprávy) a spouští detailní polling nových zpráv - viz `startPollingNewMessages()`.
-   */
   openThread(thread: ProjectThread): void {
     this.selectedThread = thread;
     this.threadDetailLoading = true;
@@ -605,14 +576,10 @@ updateThreadStatus(status: string): void {
   }
 
   /**
-   * @description Dokud je vlákno otevřené, každých 15s se zeptá jen na zprávy novější
-   * než ta poslední lokálně známá (`after_id`) - žádné zbytečné přetahování celého
-   * vlákna. Nové zprávy se PŘIPOJÍ na konec a scrollne se dolů. Zastaveno v
-   * `closeThread()`/`ngOnDestroy()` přes `stopPolling$`.
-   * @bugfix-note (2026-09-11v6) `timer(0, ...)` MÍSTO `interval(...)` - první
-   * kontrola proběhne OKAMŽITĚ, ne až po první plné periodě.
-   * `filter(() => !!this.selectedThread)` - pokud vlákno mezitím zmizí (uživatel
-   * ho zavřel přesně v okamžiku tiku), tik se přeskočí místo shození subscription.
+   * @description While the thread is open, asks every 15 s only for messages newer than the last
+   * locally known one (`after_id`) - no needless reload of the whole thread. New messages are
+   * APPENDED and the view scrolls down. Stopped in `closeThread()` / `ngOnDestroy()` through
+   * `stopPolling$`.
    */
   private startPollingNewMessages(): void {
     this.stopPolling$.next();
@@ -642,10 +609,10 @@ updateThreadStatus(status: string): void {
   }
 
   /**
-   * @description Předřadí starší dávku zpráv PŘED stávající lokální seznam a
-   * zachová scroll pozici (uživatel zůstane dívat se na stejnou zprávu, ne
-   * "vystřelí" nahoru/dolů) - měří `scrollHeight` PŘED vložením nové dávky a PO,
-   * rozdíl nastaví jako nový `scrollTop`.
+   * @description Prepends an older batch of messages BEFORE the current local list and keeps the
+   * scroll position (the user stays on the same message instead of jumping up / down) - measures
+   * `scrollHeight` BEFORE and AFTER inserting the batch and sets the difference as the new
+   * `scrollTop`.
    */
   loadOlderMessages(): void {
     if (!this.selectedThread || this.olderMessagesLoading || !this.selectedThread.has_more_older_messages) return;
@@ -691,13 +658,8 @@ updateThreadStatus(status: string): void {
   }
 
   /**
-   * @description BACKLOG "zákazník může sám uzavřít vlákno" - jednosměrné
-   * (active -> closed), znovuotevření je jen na adminovi.
-   * @bugfix-note (2026-09-11v6) Pokud backend odpoví 404 (vlákno mezitím zmizelo -
-   * reset dat, souběžná session apod.), appka se tiše vrátí na seznam vláken s
-   * obnoveným seznamem, místo nechání syrové HTTP chyby bez reakce.
-   * @note Nahrazeno `updateThreadStatus()` (obousměrné) - metoda zůstává
-   * nepoužívaná v šabloně, dokud nebude odstraněna při dalším úklidu.
+   * @description Closes the thread (one direction only, active -> closed).
+   * @deprecated Replaced by `updateThreadStatus()` (both directions) - not used by the template.
    */
   closeThreadAsCustomer(): void {
     if (!this.selectedThread || this.closingThread) return;

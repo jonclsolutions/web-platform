@@ -1,8 +1,8 @@
 /**
  * @file orders.component.spec.ts
  * @path src/app/admin/shop-pages/orders/orders.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of OrdersComponent and orders.config.ts – e-shop orders: translated
  *   configuration, toolbar and tabs (all / pending tasks / trash) by permission, lookups

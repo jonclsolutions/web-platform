@@ -2,8 +2,8 @@
 /**
  * @file routes/web.php
  * @path routes/web.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Defines the web-facing routes for the application.
  */

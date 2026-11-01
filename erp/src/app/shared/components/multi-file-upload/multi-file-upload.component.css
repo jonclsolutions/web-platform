@@ -1,17 +1,10 @@
-/*     
+/*
     @file: multi-file-upload.component.css
     @path: /src/app/shared/components/multi-file-upload/multi-file-upload.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2026
-    @description: Sdílená drag&drop multi-file upload komponenta.
-    @refactor-note (2026-08-2) Přepsáno z natvrdo definovaných `:host { --x: ... }`
-        proměnných (které STÍNOVALY stejnojmenné proměnné z jakéhokoliv nadřazeného
-        kontextu - Angular view encapsulation neizoluje CSS custom properties, ale
-        `:host` blok je stejně explicitně PŘEDEFINOVÁVAL na téhle komponentě) na
-        `var(--mfu-x, fallback)` vzor - komponenta teď respektuje `--mfu-*` proměnné
-        nastavené na libovolném předkovi (např. admin form-builder v LIGHT tématu), a
-        když nejsou nastavené, spadne na tmavý fallback (výchozí vzhled na veřejném webu).
+    @description: Shared drag&drop multi-file upload component.
 */
 
 :host {
@@ -107,7 +100,7 @@
   border-radius: var(--mfu-radius, 12px);
 }
 
-/* ── Seznam vybraných souborů ────────────────────────────────────────── */
+/* ── List of the chosen files ────────────────────────────────────────── */
 .mfu-file-list {
   list-style: none;
   margin: 4px 0 0;

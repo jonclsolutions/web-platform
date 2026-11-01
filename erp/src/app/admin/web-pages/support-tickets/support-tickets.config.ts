@@ -1,39 +1,22 @@
 /**
  * @file support-tickets.config.ts
  * @path src/app/admin/web-pages/support-tickets/support-tickets.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Static-turned-dynamic configuration (buttons, form fields, table/filter/
- * detail columns) for the Helpdesk Support Tickets management page.
- *
- * (Earlier refactor-notes for permission granularization, bulk import/export
- * importable columns, and the openGraphBuilder permission fix are unchanged - see
- * version history, omitted here for brevity.)
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded
- * texty" + "enum hodnoty jako přeložitelné anglické slugy": kompletní přepis na
- * FACTORY FUNKCE (create*), stejný vzor jako `user-request.config.ts` (viz jeho
- * hlavička pro plné odůvodnění vzoru - vyhodnocování při KAŽDÉM čtení `getValue()`
- * místo jednorázových konstant, kvůli přepínání admin jazyka za běhu).
- *
- * `category` PŘEPSÁNO z českých kódových slov ('obchod'/'chyba'/'ostatni') na
- * anglické slugy ('business'/'bug'/'other') - viz SQL migrace
- * `004_category_slugs_web_support_tickets.sql` a `Store/UpdateWebSupportTicketRequest`
- * (doplněna `in:...` validace, kterou `category` dřív vůbec neměla), obojí SOUČASNĚ
- * s touto změnou. `state`/`priority` byly už anglické slugy ('new'/'open'/'closed',
- * 'low'/'medium'/'high') - žádná DB migrace, jen převod na i18n factory vzor.
- *
- * Recept identický s `user-request.config.ts`:
- * 1) `..._VALUES` - canonical anglický slug, nikdy nepřekládat.
- * 2) `..._LABEL_KEYS` - slug -> i18n klíč (ne slug -> text přímo).
- * 3) `mapLabeledOptions()` - `{value,label}` páry, sdílené mezi formulářovým polem
- *    (`InputDefinition.options`) a filtrem (`FilterColumns.options`).
- *
- * `TableBuilderComponent.getCellValue()` (default case) hledá `options` v
- * `inputDefinitions` podle `column.key` - `category`/`priority`/`state` MUSÍ mít
- * `options` i na formulářovém poli (ne jen na filtru), jinak tabulka zobrazí slug
- * místo labelu, viz bugfix u `user-request`/`thema`.
+ * @description Configuration (buttons, form fields, table / filter / detail columns) of the
+ * Helpdesk Support Tickets management page.
+ * @note `category` / `state` / `priority` are English slugs ('business' / 'bug' / 'other',
+ * 'new' / 'open' / 'closed', 'low' / 'medium' / 'high'), validated by `in:...` in
+ * `Store/UpdateWebSupportTicketRequest`. Same recipe as `user-request.config.ts`:
+ * 1) `..._VALUES` - canonical English slug, never translated.
+ * 2) `..._LABEL_KEYS` - slug -> i18n key (not slug -> text).
+ * 3) `mapLabeledOptions()` - `{value,label}` pairs shared by the form field
+ *    (`InputDefinition.options`) and the filter (`FilterColumns.options`).
+ * @note `TableBuilderComponent.getCellValue()` (default case) looks up `options` in
+ * `inputDefinitions` by `column.key` - `category` / `priority` / `state` MUST have `options`
+ * on the form field too (not only on the filter), otherwise the table shows the slug instead
+ * of the label.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -41,9 +24,7 @@ import { AdminLocalizationService } from '../../../core/services/admin-localizat
 const SECTION = 'support-tickets';
 
 /**
- * @description Canonical (NEPŘEKLÁDANÉ) hodnoty - skutečné DB hodnoty. `category`
- * je od 2026-09-08 anglický slug (viz SQL migrace v hlavičce souboru), `priority`/
- * `state` byly anglické slugy odjakživa.
+ * @description Canonical (NOT translated) values - the real database values.
  */
 export const SUPPORT_TICKET_CATEGORY_VALUES: string[] = ['it', 'business', 'bug', 'other'];
 export const SUPPORT_TICKET_PRIORITY_VALUES: string[] = ['low', 'medium', 'high'];
@@ -67,9 +48,8 @@ const STATE_LABEL_KEYS: Record<string, string> = {
 };
 
 /**
- * @description `value` = canonical slug, `label` = přeložený text. Sdíleno mezi
- * form-field options a filter-column options - viz enum-hodnoty-v-builder-
- * komponentach.md, sekce 2.
+ * @description `value` = canonical slug, `label` = translated text. Shared by the form-field
+ * options and the filter-column options.
  */
 function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, i18n: AdminLocalizationService) {
   return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
@@ -184,10 +164,9 @@ export function createSupportTicketTrashColumns(i18n: AdminLocalizationService):
 }
 
 /**
- * @description `category`/`priority`/`state` teď používají `mapLabeledOptions()`
- * `{value,label}` páry - `FilterFormBuilderComponent`'s šablona podporuje obojí
- * (`option?.value !== undefined ? option.value : option`), viz enum-hodnoty-v-
- * builder-komponentach.md, sekce 4.
+ * @description `category` / `priority` / `state` use the `mapLabeledOptions()` `{value,label}`
+ * pairs - the template of `FilterFormBuilderComponent` supports both
+ * (`option?.value !== undefined ? option.value : option`).
  */
 export function createSupportTicketFilterColumns(i18n: AdminLocalizationService): Core.FilterColumns[] {
   return [
@@ -201,11 +180,8 @@ export function createSupportTicketFilterColumns(i18n: AdminLocalizationService)
 }
 
 /**
- * @refactor-note (2026-08-23) `importable: true` beze změny - musí přesně sedět
- * s `WebSupportTicketController::IMPORTABLE_COLUMNS`. `id`, `user_id`, `attachments`,
- * `created_at` ZÁMĚRNĚ bez tohoto příznaku. `chartPossibleValues` zůstává canonical
- * VALUES pole (ne přeložené) - stejné omezení jako `user-request`/`thema`, viz
- * @TODO-FOLLOWUP v jeho config.ts (GraphBuilderComponent zatím neumí label mapping).
+ * @note `chartPossibleValues` are canonical slugs - GraphBuilderComponent has no label mapping
+ * yet (see user-request.config.ts).
  */
 export function createSupportTicketDetailsColumns(i18n: AdminLocalizationService): Core.ItemDetailsColumns[] {
   return [

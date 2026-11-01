@@ -2,20 +2,13 @@
 /**
  * @file PageTitleController.php
  * @path app/Http/Controllers/Api/Legal/PageTitleController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Admin editing and public delivery of browser tab titles per page
  *              (table `legal_page_titles`). Admin: list + bulk update of texts.
  *              Public: map "area.page_key" => { lang: title } for the Angular
  *              PageTitleStrategy.
- * @refactor-note (2026-09-30b) Area 'admin' (one title for the whole administration,
- *              see 2026-09-30b_legal_page_titles_admin.sql) – listed after web and e-shop.
- *
- * @refactor-note (2026-10-23) sanitizeTitles(): removed the unreachable non-array branch - the
- *   request validation (`titles.*.title_i18n` present|array) guarantees an array.
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Legal;
@@ -84,9 +77,6 @@ class PageTitleController extends Controller
                 $current   = $row->title_i18n ?? [];
                 $merged    = array_merge($current, $sanitized);
 
-                // @bugfix-note (2026-10-23) Compared via isDirty(): a row without titles (NULL)
-                // and nothing sent became [] → "dirty" → saved and logged as changed. Now only a
-                // real difference of the title map is saved and logged.
                 if ($merged !== $current) {
                     $row->title_i18n = $merged;
                     $row->save();

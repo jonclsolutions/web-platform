@@ -2,40 +2,10 @@
 /**
  * @file ShopProductController.php
  * @path app/Http/Controllers/Api/Shop/ShopProductController.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Manages complex product catalog operations, including multi-variant handling, inventory synchronization, file management for product images, and relational data integrity.
- *
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
- * lokální duplicitní logAction(). Doménově beze změny (ShopLog::class). Ladicí
- * `Log::info('ShopProduct Store/Update started')` (bez payloadu, jen textová značka)
- * ponechány - na rozdíl od ShopCustomer/ShopCheckout/ShopOrder neobsahují osobní ani
- * platební údaje, takže nejde o GDPR/bezpečnostní problém, jen technickou telemetrii.
- * `updateCategory()` dosud logovala bez `affected_entity_type` - doplněno pro konzistenci
- * se zbytkem controlleru.
- *
- * @bugfix-note (2026-10-23) Found by the API tests:
- * - SECURITY: the 500 answers of store / update / destroy / emptying the trash contained the
- *   exception text (SQL statements, table names) → generic messages, detail in the audit log.
- * - SECURITY (IDOR): `delete_images`, `delete_variants`, `images[].id` and `variants[].id`
- *   were not limited to the edited product - saving product A could delete or overwrite the
- *   images / variants of product B. Now scoped to the product in the URL; foreign ids are
- *   ignored.
- * - `update()` always re-summed the stock from the variants, so saving a product WITHOUT
- *   variants reset its stock to 0. Now only products with variants are re-summed.
- * - `prices` were written from the raw request (`$request->input('prices')`), so any
- *   fillable price column (e.g. the non-existent CZK columns → SQL error) could be sent.
- *   `filterPriceData()` now keeps only the validated EUR / VAT fields.
- * - unknown id → 500 instead of 404 (findOrFail inside try) in update, updateCategory,
- *   destroy, restore.
- * - public list: `per_page` was unlimited (one request could load the whole catalogue with
- *   all relations) → capped at 100.
- * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
- *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
- *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
- * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
- *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -192,10 +162,6 @@ class ShopProductController extends Controller
                 ->except(['prices', 'images', 'variants', 'delete_images', 'delete_variants', 'category_ids'])
                 ->toArray();
 
-            // @bugfix-note (2026-10-23) Open finding #30: an update WITHOUT `category_id` in the body
-            // (e.g. only the price) saved the product inactive although its categories were kept.
-            // Only an explicitly emptied primary category deactivates it; a missing field keeps
-            // the current primary category.
             $sendsCategory = array_key_exists('category_id', $updateData);
             if ($sendsCategory && empty($updateData['category_id'])) {
                 $updateData['is_active'] = false;
@@ -234,7 +200,7 @@ class ShopProductController extends Controller
             }
 
             // Stock of a product with variants = sum of the variants; a product without
-            // variants keeps its own stock_quantity (see bugfix-note 2026-10-23).
+            // variants keeps its own stock_quantity.
             if ($request->has('variants') || $request->has('delete_variants') || $product->variants()->exists()) {
                 $this->syncProductStock($product);
             }
@@ -461,8 +427,8 @@ class ShopProductController extends Controller
     }
 
     /**
-     * @description Keeps only the validated price fields (EUR prices + VAT rate) - see
-     *   bugfix-note (2026-10-23); anything else sent in `prices` is dropped.
+     * @description Keeps only the validated price fields (EUR prices + VAT rate); anything
+     *   else sent in `prices` is dropped.
      * @param array $prices Raw `prices` object of a product or variant.
      * @return array Price attributes for ShopProductPrice.
      */

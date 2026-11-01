@@ -2,14 +2,10 @@
 /**
  * @file PasswordChangeRequest.php
  * @path app/Http/Requests/PasswordChangeRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation logic for user password update operations.
- *
- * @refactor-note (2026-08) Sjednoceno na politiku hesla platnou napříč aplikací
- * (8-16 znaků, alespoň 1 písmeno, 1 číslice, 1 speciální znak) - viz odpovídající
- * frontend `password-policy.ts`. Dřív jen `min:8` bez dalších požadavků.
  */
 
 namespace App\Http\Requests;

@@ -2,14 +2,12 @@
 /**
  * @file CoreExternalLinkResource.php
  * @path app/Http/Resources/Core/CoreExternalLinkResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description API resource pro CoreExternalLink - jednotný tvar odpovědi napříč
- * index()/show()/store()/update()/restore(). `user_id` se záměrně NEVRACÍ - frontend
- * ho nikdy nepotřebuje (odkazy jsou vždy scoped na přihlášeného uživatele) a jeho
- * vynechání z odpovědi je jedna vrstva ochrany navíc proti náhodnému leaku cizího ID
- * v budoucích úpravách frontendu.
+ * @description API resource of CoreExternalLink - one response shape for index / show / store /
+ * update / restore. `user_id` is NOT returned: the frontend never needs it (links are always
+ * scoped to the logged-in user).
  */
 
 namespace App\Http\Resources\Core;

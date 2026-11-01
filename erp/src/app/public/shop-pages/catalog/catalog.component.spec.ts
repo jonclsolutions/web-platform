@@ -1,8 +1,8 @@
 /**
  * @file catalog.component.spec.ts
  * @path src/app/public/shop-pages/catalog/catalog.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of CatalogComponent: categories and the first product page on start, only
  *   non-empty filters sent, filter changes reset to page 1, paging, filter panel toggle and

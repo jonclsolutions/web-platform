@@ -1,8 +1,8 @@
 /**
  * @file graph-builder.component.spec.ts
  * @path src/app/admin/components/builders/graph-builder/graph-builder.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of GraphBuilderComponent – the report / chart popup of the admin tables.
  *   The chart rendering itself (Chart.js on canvas) is not tested; the tests cover the data the

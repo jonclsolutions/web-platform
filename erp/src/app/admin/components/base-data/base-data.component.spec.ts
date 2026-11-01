@@ -1,8 +1,8 @@
 /**
  * @file base-data.component.spec.ts
  * @path src/app/admin/components/base-data/base-data.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of BaseDataComponent – the abstract base of every admin table page.
  *   A minimal host component supplies the abstract `apiEndpoint`; the real PaginatedListStore and

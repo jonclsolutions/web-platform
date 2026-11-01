@@ -2,16 +2,12 @@
 /**
  * @file WebProjectThreadMessageResource.php
  * @path app/Http/Resources/Web/WebProjectThreadMessageResource.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description JSON shape for a single project thread message. `author_label` may
  * be `null` for customer messages by design - see `WebProjectThreadMessage` model
  * header. Frontend resolves the display label from `author_type` when `null`.
- * @refactor-note (2026-09-11) BACKLOG "vlákna přijímají přílohy": `attachments`
- * doplněny přes sdílený `WebAttachmentResource` (signed download/view URLs) - stejný
- * vzor jako `WebRawRequestCommissionResource`. `whenLoaded()` guard - controllery
- * MUSÍ eager-loadovat `messages.attachments`, jinak se pole v odpovědi vůbec neobjeví.
  */
 
 namespace App\Http\Resources\Web;

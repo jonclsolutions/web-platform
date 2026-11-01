@@ -1,8 +1,8 @@
 /**
  * @file shop-layout.component.ts
  * @path src/app/public/shop-pages/shop-layout/shop-layout.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Provides the structural wrapper for the e-shop section, incorporating the global header and footer components with an outlet for nested routes.
  * @dependencies

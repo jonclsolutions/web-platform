@@ -1,8 +1,8 @@
 /*
     @file: page.css
     @path: /src/app/admin/core-pages/shared-styles/page.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
     @description: List-page rules used only by the core admin pages (info banner, small text helper and the
         filter side panel breakpoint). Everything the core, shop and web pages have in common lives in
@@ -10,10 +10,7 @@
     @dependencies: admin/shared-styles/page.css (included first); colour primitives from app/shared/styles/tokens.css (global)
 */
 
-/*
-  DOPLNIT do sdíleného admin CSS (default-style.css nebo obdoba) - použito
-  v administrators.component.html pro info banner při vytváření účtu.
-*/
+/* Info banner shown in administrators.component.html when an account is created. */
 .info-banner {
   display: flex;
   align-items: flex-start;

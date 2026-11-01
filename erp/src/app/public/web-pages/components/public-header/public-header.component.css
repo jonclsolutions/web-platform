@@ -1,9 +1,10 @@
 /*    
     @file: public-header.component.css
     @path: /src/app/public/web-pages/components/public-header/public-header.component.css
-    @project: RPSW Web
-    @author: RPSW
+    @project: JS web-platform
+    @author: JS
     @created: 2025
+    @description: Styles of the public header component.
 */
 
 header {
@@ -232,7 +233,7 @@ header.scrolled .active-indicator {
   .logo-wrp img { animation: none; }
 }
 
-/* ── Pravý panel ───────────────────────────────────────────── */
+/* ── Right panel ───────────────────────────────────────────── */
 .lang-wrp {
   position: fixed;
   right: 8px;
@@ -392,7 +393,7 @@ header.scrolled .active-indicator {
   flex-shrink: 0;
 }
 
-/* ── Mobilní header ────────────────────────────────────────── */
+/* ── Mobile header ────────────────────────────────────────── */
 .mobile-header {
   width: 100%;
   height: auto;
@@ -538,7 +539,7 @@ html.no-scroll { overflow: hidden !important; }
   transform: translateX(3px);
 }
 
-/* ── Kontakt — pill tlačítka ──────────────────────────────────── */
+/* ── Contact - pill buttons ──────────────────────────────────── */
 .m-drawer-contact {
   display: flex;
   flex-direction: column;
@@ -572,7 +573,7 @@ html.no-scroll { overflow: hidden !important; }
   opacity: 0.8;
 }
 
-/* ── Spodní část — lang dropdown ──────────────────────────────── */
+/* ── Bottom part - lang dropdown ──────────────────────────────── */
 .m-drawer-bottom {
   display: flex;
   align-items: center;
@@ -581,7 +582,7 @@ html.no-scroll { overflow: hidden !important; }
   flex-shrink: 0;
 }
 
-/* ── Lang dropdown v draweru — identický styl jako desktop ─────── */
+/* ── Lang dropdown in the drawer - same style as desktop ─────── */
 .m-drawer-lang-dropdown {
   position: relative;
 }
@@ -638,7 +639,7 @@ html.no-scroll { overflow: hidden !important; }
   transform: rotate(180deg);
 }
 
-/* Menu se otevírá nahoru — drawer je ve spodní části */
+/* The menu opens upwards - the drawer is at the bottom */
 .m-drawer-lang-menu {
   position: absolute;
   bottom: calc(100% + 8px);

@@ -1,20 +1,11 @@
 /**
  * @file home.component.ts
  * @path src/app/public/web-pages/home/home.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Public home page - hero, about, system features, tech stack, FAQ and CTA.
- * @refactor-note (2026-09-26): The animated hero particle field (canvas, ResizeObserver,
- *   mouse interaction, requestAnimationFrame loop) was removed - the hero now uses a static
- *   space background image (assets/images/home/hero-space-bg.svg). Unused imports
- *   (ElementRef, ViewChild, OnDestroy, NgZone, PLATFORM_ID, inject, isPlatformBrowser) and
- *   the HeroParticle / HeroMousePoint interfaces were removed with it. Nothing else changed.
  * @dependencies BasePublicComponent, RouterLink, tech-stack.config
- * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
- *   string literals): `web_desk`, `desktop_desk`, `mobile_desk`, `ai_desk`, `server_resp_1`, `server_resp_2`, `server_mobile`, `web_mob`, `desktop_mob`, `mobile_mob`, `ai_mob`, `check_mark`, `toggleTechStackPaused`, `getTechIcon`, `getHeroBackground`, `getServiceBackground`, `getServiceOverlayStyles`, `getTextStyles`, `getArrowStyles`, `setHoverState`, `heroBackgroundImageUrl`, `serviceBackgrounds`, `c_sharp`, `python`, `cpp`, `kotlin`, `hoverState`.
- * @refactor-note (2026-10-23) Removed `server` - it pointed to a missing assets/images/svg/server.svg
- *   and no template used it (open finding #46).
  */
 import {
   Component,

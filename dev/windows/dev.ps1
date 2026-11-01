@@ -2,16 +2,14 @@
 =============================================================================
  @file dev.ps1
  @path dev/windows/dev.ps1
- @project RPSW Web
- @author RPSW
- @created 2026-10-31
+ @project JS web-platform
+ @author JS
+ @created 2026
  @description WINDOWS entry point of ./dev.sh - start it with dev.cmd (`.\dev.cmd`,
    `.\dev.cmd up -d`, `.\dev.cmd logs api`, ... - the same commands as ./dev.sh). Starts Docker
    Desktop when it does not run, then runs ./dev.sh inside WSL in the project folder:
    the WSL copy made by init-workspace.cmd (dev/wsl-workspace), a project opened from
    \\wsl.localhost\..., or this folder on the Windows drive.
- @refactor-note (2026-10-31) Moved to dev/windows/ (root clean-up); marker dev/wsl-workspace,
-   the former .wsl-workspace in the root is still read.
  @note Only ASCII characters (Windows PowerShell 5.1 reads a script without BOM as ANSI).
  @usage
    dev.cmd                 start everything, follow the logs (Ctrl+C stops everything)

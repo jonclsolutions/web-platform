@@ -1,53 +1,30 @@
 /**
  * @file user-request.config.ts
  * @path src/app/admin/web-pages/user-request/user-request.config.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Static configuration (buttons, form fields, table/filter/detail columns) for
  * the User Request (raw commission requests) management page.
  *
- * (Earlier refactor-notes for permission granularization, editable email template
- * toolbar button, bulk import/export importable columns, and the 2026-09 i18n factory
- * function rewrite are unchanged - see version history, omitted here for brevity.)
- *
- * @refactor-note (2026-09-07) BACKLOG "enum hodnoty jako přeložitelné anglické slugy":
- * `USER_REQUEST_STATUS_VALUES`/`_PRIORITY_VALUES`/`_THEMA_VALUES` PŘEPSÁNY z českých
- * stringů ("Nově zadané", "Nízká", "Webový vývoj", ...) na anglické slugy ("new",
- * "low", "web", ...) - viz SQL migrace `003_status_slugs_web_raw_request_commissions.sql`
- * (přepsala existující DB data + column DEFAULT) a `Store/UpdateWebRawRequestCommissionRequest`
- * (přepsaly `in:...` validaci), obě SOUČASNĚ s touto změnou - žádný z kroků nesmí běžet
- * odděleně. `*_LABEL_KEYS` mapy překlíčovány na nové slugy, VÝZNAM/i18n klíče (`status_new`,
- * `priority_low`, `thema_web`, ...) se NEMĚNÍ - byly zavedeny už dřív a zůstávají stejné.
- *
- * DŮLEŽITÉ - toto je REFERENČNÍ IMPLEMENTACE "receptu" pro celý projekt (Core/Web/Shop):
- * 1) Canonical VALUES pole (`..._VALUES`) drží stabilní anglický slug - skutečná hodnota
- *    ukládaná do DB/posílaná na backend. NIKDY nepřekládat samotné pole.
- * 2) `..._LABEL_KEYS` mapuje slug -> i18n klíč (ne slug -> text přímo).
- * 3) `mapLabeledOptions(values, labelKeys, i18n)` vrací `{value: slug, label: přeložený text}`
- *    páry - použitelné JAK pro `InputDefinition.options` (select ve formuláři), TAK
- *    (nově, viz níže) pro `FilterColumns.options` (select ve filtru) - obě komponenty
- *    (`FormBuilderComponent`, `FilterFormBuilderComponent`) `{value,label}` pár už umí,
- *    ověřeno v `filter-form-builder.component.html`
+ * @note REFERENCE IMPLEMENTATION of the enum "recipe" of the whole project (Core / Web / Shop):
+ * 1) The canonical VALUES array (`..._VALUES`) holds the stable English slug - the real value
+ *    stored in the database / sent to the backend. NEVER translate the array itself.
+ * 2) `..._LABEL_KEYS` maps slug -> i18n key (not slug -> text).
+ * 3) `mapLabeledOptions(values, labelKeys, i18n)` returns `{value: slug, label: translated text}`
+ *    pairs - usable both for `InputDefinition.options` (form select) and for
+ *    `FilterColumns.options` (filter select); `FormBuilderComponent` and
+ *    `FilterFormBuilderComponent` both support the `{value,label}` pair
  *    (`option?.value !== undefined ? option.value : option`).
- * 4) `TableBuilderComponent.getCellValue()` (default case) překládá zobrazenou hodnotu v
- *    tabulce automaticky - hledá `value` v `inputDefinitions` (které stránka stejně musí
- *    předat table-builderu kvůli formuláři), takže žádná zvláštní úprava tabulky není
- *    potřeba, pokud `[inputDefinitions]="formFields"` binding už existuje (zde ano).
+ * 4) `TableBuilderComponent.getCellValue()` (default case) translates the shown table value
+ *    automatically - it looks up `value` in `inputDefinitions`, so no table change is needed
+ *    while the `[inputDefinitions]="formFields"` binding exists (it does here).
  *
- * OTEVŘENÁ OTÁZKA Z PŘEDCHOZÍ VERZE VYŘEŠENA: `FilterColumns.options` skutečně podporuje
- * `{value,label}` páry (potvrzeno v šabloně filter-form-builderu) - `createUserRequestFilterColumns()`
- * proto teď používá `mapLabeledOptions()` stejně jako formulářová pole, MÍSTO dřívějšího
- * plochého `string[]` v češtině.
- *
- * @TODO-FOLLOWUP `GraphBuilderComponent` (viz `chartPossibleValues: USER_REQUEST_THEMA_VALUES`
- * v `createUserRequestDetailsColumns()`) vykresluje popisky grafu ze SUROVÉ API hodnoty
- * (`"ai (3×)"` místo `"AI vývoj (3×)"`), protože bucketuje přímo podle `row[col.key]`, ne
- * podle přeloženého labelu - graf teď po přechodu na slugy zobrazí anglické zkratky místo
- * plného českého názvu. Oprava vyžaduje zásah do `GraphBuilderComponent`
- * (`computeValueCatalog()`/`buildDistributionSection()`), aby uměl per-sloupec volitelnou
- * `labelMap: Record<string,string>` funkci - mimo rozsah TÉTO změny, ale je potřeba to
- * doplnit, než bude tenhle report administrátorům dávat smysl v obou jazycích.
+ * @note Known limitation: `GraphBuilderComponent` (see `chartPossibleValues:
+ * USER_REQUEST_THEMA_VALUES` in `createUserRequestDetailsColumns()`) renders the chart labels
+ * from the RAW API value (`"ai (3×)"` instead of the translated label), because it buckets by
+ * `row[col.key]`. A fix needs an optional per-column `labelMap` in `GraphBuilderComponent`
+ * (`computeValueCatalog()` / `buildDistributionSection()`).
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -55,14 +32,14 @@ import { AdminLocalizationService } from '../../../core/services/admin-localizat
 const SECTION = 'user-request';
 
 /**
- * @description Canonical (NEPŘEKLÁDANÉ) hodnoty - VÝZNAM: skutečná hodnota ukládaná
- * do DB / posílaná na backend. Anglické slugy - viz refactor-note (2026-09-07) výše.
+ * @description Canonical (NOT translated) values - the real value stored in the database / sent
+ * to the backend. English slugs.
  */
 export const USER_REQUEST_STATUS_VALUES: string[] = ['new', 'in_progress', 'done', 'cancelled'];
 export const USER_REQUEST_PRIORITY_VALUES: string[] = ['low', 'neutral', 'high'];
 export const USER_REQUEST_THEMA_VALUES: string[] = ['new_project', 'support', 'careers', 'other'];
 
-/** @deprecated Zachováno pro zpětnou kompatibilitu s případnými dalšími importy - použij `..._VALUES`. */
+/** @deprecated Kept for backward compatibility with possible other imports - use `..._VALUES`. */
 export const USER_REQUEST_STATUS_OPTIONS = USER_REQUEST_STATUS_VALUES;
 export const USER_REQUEST_PRIORITY_OPTIONS = USER_REQUEST_PRIORITY_VALUES;
 export const USER_REQUEST_THEMA_OPTIONS = USER_REQUEST_THEMA_VALUES;
@@ -86,8 +63,8 @@ const THEMA_LABEL_KEYS: Record<string, string> = {
 };
 
 /**
- * @description `value` = canonical slug (viz VALUES výše), `label` = přeložený text.
- * Sdíleno mezi form-field options a (nově) filter-column options.
+ * @description `value` = canonical slug (see VALUES above), `label` = translated text. Shared by
+ * the form-field options and the filter-column options.
  */
 function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, i18n: AdminLocalizationService) {
   return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
@@ -207,12 +184,6 @@ export function createUserRequestTrashColumns(i18n: AdminLocalizationService): C
   ];
 }
 
-/**
- * @refactor-note (2026-09-07) `thema`/`status`/`priority` teď používají `mapLabeledOptions()`
- * (`{value,label}` páry) MÍSTO dřívějšího plochého `string[]` v češtině - vyřešená
- * "otevřená otázka" z předchozí verze, viz hlavička souboru. `header`/`placeholder`
- * beze změny (byly přeložené už dřív).
- */
 export function createUserRequestFilterColumns(i18n: AdminLocalizationService): Core.FilterColumns[] {
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_id_placeholder`), canSort: true },
@@ -224,11 +195,11 @@ export function createUserRequestFilterColumns(i18n: AdminLocalizationService): 
 }
 
 /**
- * @description `chartPossibleValues` zůstává canonical VALUES pole (ne přeložené) -
- * GraphBuilderComponent s ním porovnává surové hodnoty z API při bucketování, ne
- * zobrazený text - viz @TODO-FOLLOWUP v hlavičce souboru pro známé omezení (graf
- * zatím zobrazuje anglický slug, ne přeložený label). `displayName` (nadpis sloupce
- * v detailu i grafu) PŘELOŽEN je.
+ * @description `chartPossibleValues` stays the canonical VALUES array (not translated) -
+ * GraphBuilderComponent compares it with the raw API values when bucketing, not with the shown
+ * text - see the known limitation in the file header (the chart shows the English slug, not
+ * the translated label). `displayName` (column title in the detail and the chart) IS
+ * translated.
  */
 export function createUserRequestDetailsColumns(i18n: AdminLocalizationService): Core.ItemDetailsColumns[] {
   return [

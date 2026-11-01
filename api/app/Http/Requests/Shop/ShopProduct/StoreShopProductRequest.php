@@ -2,13 +2,10 @@
 /**
  * @file StoreShopProductRequest.php
  * @path app/Http/Requests/Shop/ShopProduct/StoreShopProductRequest.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Validation logic for creating new shop products, including support for variants, localized descriptions, and multi-category assignments.
- *
- * @refactor-note (2026-09-09) BACKLOG "backend fully in English": validation
- * messages and inline closure error strings translated from Czech.
  */
 
 namespace App\Http\Requests\Shop\ShopProduct;
@@ -131,10 +128,6 @@ class StoreShopProductRequest extends FormRequest
             'stock_warning_level' => $this->input('stock_warning_level', 10),
         ]);
 
-        // @bugfix-note (2026-10-23) Same as UpdateShopProductRequest: with only `category_ids`
-        // (no `category_id`) the controller treated the product as "without category" and saved
-        // it INACTIVE although is_active = true passed validation, and no category was marked
-        // primary. The first category of the list becomes the primary one.
         if (! $this->filled('category_id') && $this->filled('category_ids')) {
             $ids = (array) $this->input('category_ids');
             $this->merge(['category_id' => (int) reset($ids)]);

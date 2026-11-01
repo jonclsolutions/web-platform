@@ -2,19 +2,12 @@
 /**
  * @file CoreSecuritySetting.php
  * @path app/Models/Core/CoreSecuritySetting.php
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
- * @description Singleton nastavení bezpečnostního monitoringu (core_security_events) -
- * retenční doba ve dnech + hlavní e-mailová doména pro whitelist při vytváření admin
- * účtů. Stejný "jeden řádek" vzor jako WebSiteSetting. Čte/upravuje se vždy záznam
- * s `id = 1` (viz CoreSecuritySettingController).
- *
- * @bugfix-note (2026-08-25) KRITICKÝ BUG - `primary_email_domain` SE TICHE
- * NEUKLÁDALA: sloupec byl přidán do DB (viz email-domain-whitelist.sql), ale
- * zapomenutý v `$fillable` - `$setting->update(['primary_email_domain' => ...])` proto
- * Eloquent mass-assignment ochrana TICHE IGNOROVALA (žádná výjimka, žádná chybová
- * odpověď - request vrátil 200 "úspěch", ale do DB se nic nezapsalo). Doplněno.
+ * @description Singleton settings of the security monitoring: retention in days + the company
+ * e-mail domain of the e-mail access policy. Same "one row" pattern as WebSiteSetting - always
+ * the row `id = 1` (CoreSecuritySettingController).
  */
 
 namespace App\Models\Core;
@@ -23,7 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class CoreSecuritySetting extends Model
 {
-    /** @description ID singleton řádku - v tabulce nikdy nesmí existovat druhý záznam. */
+    /** @description ID of the singleton row - the table must never hold a second row. */
     public const SINGLETON_ID = 1;
 
     protected $fillable = [
@@ -36,7 +29,7 @@ class CoreSecuritySetting extends Model
     ];
 
     /**
-     * @description Vrátí (a při prvním spuštění založí) singleton řádek nastavení.
+     * @description Returns (and creates on the first call) the singleton settings row.
      * @return self
      */
     public static function current(): self

@@ -1,8 +1,8 @@
 /**
  * @file jobs-list.component.spec.ts
  * @path src/app/public/web-pages/jobs/jobs-list/jobs-list.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of JobsListComponent: open positions are read from the numbered `job_N_*`
  *   translation keys (1-10); incomplete entries are skipped.

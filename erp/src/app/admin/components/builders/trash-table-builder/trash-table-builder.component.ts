@@ -1,36 +1,18 @@
 /**
  * @file trash-table-builder.component.ts
  * @path src/app/admin/components/builders/trash-table-builder/trash-table-builder.component.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2025
  * @description Specialized table component for managing deleted records ("trash"), allowing for
  * permanent deletion or restoration.
  *
- * (Earlier refactor-notes for EntityCrudService composition, permission granularization,
- * SVG icons, and duplicate error toast removal are unchanged - see version history.)
- *
- * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `AdminLocalizationService` injektována manuálně (komponenta nededí `BaseDataComponent`,
- * stejný vzor jako `TableBuilderComponent`/`GraphBuilderComponent`). `buttons`
- * (dřív statické pole s natvrdo anglickým textem) přesunuto do konstruktoru, plněné
- * `translations$.subscribe()`. `getCellValue()` `date`/`currency`/`boolean` case
- * sjednoceny s `TableBuilderComponent`:
- * - `currency`: locale podle `column.currencyCode` (ne natvrdo `'cs-CZ'`/`'de-DE'`).
- * - `date`: `this.i18n.getDateLocale()` místo natvrdo `'cs-CZ'`.
- * - `boolean`: `shared.yes`/`shared.no` místo natvrdo anglického `'Yes'`/`'No'`.
- * Všechny `alertDialogService.open()`/`confirmDialogService.open()` texty a natvrdo
- * psaný `'Vysypat koš'` label nahrazeny `t()` voláním.
- *
  * @dependencies
  * - EntityCrudService: Inherits core CRUD and data lifecycle management.
  * - ConfirmDialogService: Ensures safe irreversible operations (permanent delete).
- * - PermissionService: Vyhodnocení `deletePermission` pro restore/delete/delete-all.
- * - IconComponent: Sdílená sada SVG ikon pro řádková tlačítka.
- * - AdminLocalizationService: i18n admin UI - viz refactor-note výše.
- * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
- *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
- *   the component (`takeUntilDestroyed()`).
+ * - PermissionService: Evaluates `deletePermission` for restore / delete / delete-all.
+ * - IconComponent: Shared SVG icon set of the row buttons.
+ * - AdminLocalizationService: i18n of the admin UI.
  */
 
 import {
@@ -58,9 +40,8 @@ import { IconComponent } from '../../../../shared/components/icon/icon.component
  * @description A dedicated table view for displaying soft-deleted records with utility actions
  * to restore or purge data.
  * @usage Used in admin modules to provide a "Trash" view for data recovery.
- * @note Skládá si `EntityCrudService` pro restore/delete/hard-delete-all — nededí z
- * BaseDataComponent (nikdy nepoužíval jeho paginační/koš logiku, tu vlastní rodičovská
- * stránková komponenta).
+ * @note Composes `EntityCrudService` for restore / delete / hard-delete-all - does not extend
+ * BaseDataComponent (the pagination / trash logic belongs to the parent page component).
  */
 @Component({
   selector: 'app-trash-table-builder',
@@ -82,11 +63,10 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
   @Input() uploadsBaseUrl: string = '';
 
   /**
-   * @description Permission klíč (nebo víc oddělených `|` - OR) požadovaný pro Restore,
-   * Delete Permanently I hromadné Delete All - všechny tři spadají na backendu pod
-   * stejný granulární `{resource}-delete` klíč (viz api.php). Když není nastaven,
-   * všechny akce zůstávají viditelné (zpětná kompatibilita se stránkami, které tenhle
-   * Input ještě nepředávají).
+   * @description Permission key (or several separated by `|` - OR) required for Restore, Delete
+   * Permanently AND the bulk Delete All - on the backend all three fall under the same granular
+   * `{resource}-delete` key (see api.php). When not set, all actions stay visible (backward
+   * compatibility with pages that do not pass this Input yet).
    */
   @Input() deletePermission?: string;
 
@@ -94,7 +74,6 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
   public get strings(): any { return this.i18n.getMergedSection('trash-table-builder'); }
   public t(key: string): string { return this.i18n.getValue(`trash-table-builder.${key}`); }
 
-  /** @refactor-note (2026-09-09) Přestalo být statické pole - plněno v konstruktoru přes `translations$`. */
   buttons: TableButtons[] = [];
 
   public isFullWidth: boolean = true;
@@ -108,7 +87,7 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
   private _crud?: EntityCrudService<any>;
 
-  /** CRUD pro řádky koš tabulky (aktuální `apiEndpoint`, lazy). */
+  /** CRUD of the rows of the trash table (current `apiEndpoint`, lazy). */
   private get crud(): EntityCrudService<any> {
     if (!this._crud) {
       this._crud = new EntityCrudService<any>(
@@ -143,9 +122,9 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
   }
 
   /**
-   * @description Bulk "Delete All" toolbar button config. Je to getter (ne statické
-   * pole) - `showIf` se dopočítává z `canManageTrash`, ať se hromadná akce schová
-   * stejně jako řádková tlačítka, když uživatel nemá `deletePermission`.
+   * @description Bulk "Delete All" toolbar button config. A getter (not a static array) -
+   * `showIf` is derived from `canManageTrash`, so the bulk action hides like the row buttons
+   * when the user lacks `deletePermission`.
    */
   get deleteAllButtonConfig(): Core.Button[] {
     return [
@@ -178,8 +157,6 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
 
   /**
    * @description Renders formatted cell content based on column definition type.
-   * @refactor-note (2026-09-09) `currency`/`date`/`boolean` case sjednoceny s
-   * `TableBuilderComponent` - viz hlavička souboru.
    */
   getCellValue(item: any, column: ColumnDefinition): any {
     const keys = column.key.split('.');
@@ -221,7 +198,6 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
 
   /**
    * @description Manages row-level restoration and deletion logic.
-   * @refactor-note (2026-09-09) Všechny texty nahrazeny `t()` voláním.
    */
   handleAction(item: any, action: string): void {
     if (!item.id) return;
@@ -267,7 +243,6 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
 
   /**
    * @description Executes a permanent wipe of all trashed items after user confirmation.
-   * @refactor-note (2026-09-09) Všechny texty nahrazeny `t()` voláním.
    */
   deleteAll(): void {
     if (this.data.length === 0) {
@@ -280,10 +255,6 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
         if (result) {
           this.crud.hardDeleteAllTrashed().subscribe({
             next: (res: any) => {
-              // @bugfix-note (2026-10-23) The API may keep records that must not be deleted
-              //   (shop customers with orders, finding #22) and answers {deleted_count,
-              //   skipped_count}. The trash was cleared locally anyway and "all deleted" shown.
-              //   Now a warning with the counts; the page reloads the real trash content.
               if (res?.skipped_count > 0) {
                 this.alertDialogService.open(
                   this.t('warning_title'),
@@ -305,9 +276,9 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
   }
 
   /**
-   * @description Calculates colspan for empty or error message rows. Řádková tlačítka
-   * (Restore/Delete) se počítají jako jeden souhrnný sloupec jen pokud `canManageTrash`
-   * - jinak by se objevil prázdný sloupec navíc bez tlačítek.
+   * @description Calculates colspan for empty or error message rows. The row buttons
+   * (Restore / Delete) count as one column only when `canManageTrash` - otherwise an extra
+   * empty column without buttons would appear.
    */
   get colspanValue(): number {
     const activeButtonsCount = this.canManageTrash

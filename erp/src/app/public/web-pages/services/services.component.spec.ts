@@ -1,8 +1,8 @@
 /**
  * @file services.component.spec.ts
  * @path src/app/public/web-pages/services/services.component.spec.ts
- * @project RPSW Web
- * @author RPSW
+ * @project JS web-platform
+ * @author JS
  * @created 2026
  * @description Unit tests of ServicesComponent: feature cards built from the translations, the pricing
  *   matrix (packages, features, cell types), tooltips and the workflow steps.
