@@ -14,12 +14,13 @@
 #   │   ├── (Angular browser build: index.html, chunks, assets)
 #   │   ├── (deploy/server/*: .htaccess, .user.ini, configure-server.sh)
 #   │   └── laravel/         → Laravel API, production dependencies only
-#   ├── www.zip              → the same www/ as one archive
+#   ├── www.zip              → the same www/ as one archive (contains laravel/.env = secrets)
 #   ├── www.zip.sha256       → checksum to verify the upload
 #   └── README.md, server_setup.* (preview only, NOT part of www)
 #
 # @note WHAT IS DELIBERATELY NOT SHIPPED (security / GDPR):
-#   - api/.env and any .env.* except .env.example (local secrets)
+#   - api/.env and any .env.* except .env.example (LOCAL settings) - laravel/.env of the
+#     package is built from deploy/production.env instead (checked first, see below)
 #   - storage/logs, framework cache/sessions/views (may contain personal data)
 #   - storage/app/private (user uploads: CVs, attachments, tickets = personal
 #     data; production keeps its own and a deploy must never overwrite them)
@@ -50,6 +51,14 @@
 #   deploy/build.sh --with-public-storage   also ship storage/app/public (first install)
 #   deploy/build.sh --skip-angular          reuse existing erp/dist (faster rebuild)
 #   deploy/build.sh --no-zip                skip the archive step
+#   deploy/build.sh --check                 only check the configuration (no tests, no build)
+#
+# @note PRODUCTION SETTINGS: deploy/production.env (git-ignored, template
+#   deploy/production.env.example) is checked before anything else and shipped as
+#   laravel/.env. Dangerous values stop the build (ERROR), questionable ones are only reported
+#   (WARNING) - see check_production_env(). The same check runs alone with --check.
+#   TURNSTILE_SITE_KEY from the same file (or an environment variable of that name) is
+#   injected into the Angular bundle with `ng build --define`.
 # =============================================================================
 
 # macOS ships bash 3.2 (too old for this script) - re-run with bash 4+ from Homebrew.
@@ -74,7 +83,8 @@ if [[ -z "${IN_DEV_CONTAINER:-}" && "${BUILD_ON_HOST:-0}" != "1" ]] \
     && command -v docker >/dev/null && [[ -f "$ROOT_DIR/dev/compose.yaml" && -f "$ROOT_DIR/dev/.env" ]]; then
     echo "[build] running inside the dev container (docker compose run api) – BUILD_ON_HOST=1 to build on the host"
     exec docker compose -f "$ROOT_DIR/dev/compose.yaml" \
-        run --rm --no-deps -w /workspace api deploy/build.sh "$@"
+        run --rm --no-deps -w /workspace ${TURNSTILE_SITE_KEY:+-e TURNSTILE_SITE_KEY} \
+        api deploy/build.sh "$@"
 fi
 
 API_DIR="$ROOT_DIR/api"
@@ -90,17 +100,21 @@ ZIP_NAME="www.zip"
 ANGULAR_PROJECT="${ANGULAR_PROJECT:-rp_website}"
 DIST_DIR="$ERP_DIR/dist/$ANGULAR_PROJECT/browser"
 
+# Production Laravel settings, git-ignored (template: deploy/production.env.example).
+PROD_ENV_FILE="$SCRIPT_DIR/production.env"
+
 WITH_PUBLIC_STORAGE=0
 SKIP_ANGULAR=0
 SKIP_TESTS=0
 TESTS_RUNNER="$ROOT_DIR/tests/unit_tests/run_all.sh"
 MAKE_ZIP=1
+CHECK_ONLY=0
 
 # -----------------------------------------------------------------------------
 # Output helpers
 # -----------------------------------------------------------------------------
 STEP=0
-TOTAL_STEPS=9
+TOTAL_STEPS=10
 step() { STEP=$((STEP + 1)); printf '\n\e[34m[%d/%d]\e[0m %s\n' "$STEP" "$TOTAL_STEPS" "$*"; }
 info() { printf '   - %s\n' "$*"; }
 warn() { printf '\e[33m   ! %s\e[0m\n' "$*" >&2; }
@@ -120,6 +134,7 @@ for arg in "$@"; do
         --skip-angular)        SKIP_ANGULAR=1 ;;
         --skip-tests)          SKIP_TESTS=1 ;;
         --no-zip)              MAKE_ZIP=0 ;;
+        --check)               CHECK_ONLY=1 ;;
         -h|--help) sed -n '/^# @usage/,/^# =====/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' | sed '$d'; exit 0 ;;
         *) die "unknown option: $arg (see --help)" ;;
     esac
@@ -142,6 +157,7 @@ preflight() {
     [[ -f "$ERP_DIR/angular.json" ]]  || die "Angular not found in $ERP_DIR"
     [[ -d "$SERVER_CONF_DIR" ]]       || die "server config not found in $SERVER_CONF_DIR"
 
+
     # Fail before the (slow) Angular build if the PHP used by Composer cannot
     # satisfy composer.lock (PHP version or missing extensions). Composer prints
     # exactly which requirement fails.
@@ -160,6 +176,113 @@ preflight() {
         info "commit: $(git -C "$ROOT_DIR" rev-parse --short HEAD)"
     fi
     info "OK"
+}
+
+# -----------------------------------------------------------------------------
+# @description Prints the value of KEY from deploy/production.env (last occurrence, without
+# surrounding quotes and a trailing \r). Empty output = missing or empty.
+# @param $1 Variable name.
+# -----------------------------------------------------------------------------
+prod_env() {
+    [[ -f "$PROD_ENV_FILE" ]] || return 0
+    sed -n "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*//p" "$PROD_ENV_FILE" | tail -n1 \
+        | sed -e 's/\r$//' -e 's/[[:space:]]*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/"
+}
+
+# -----------------------------------------------------------------------------
+# @description Checks deploy/production.env before anything is built. Lists ALL problems at
+# once: ERROR = the value would break production or open a security hole (the build stops),
+# WARNING = questionable, the build continues. Also resolves TURNSTILE_SITE_KEY for the
+# Angular build (an environment variable of that name wins over the file).
+# -----------------------------------------------------------------------------
+check_production_env() {
+    step "Checking production settings (deploy/production.env)"
+    local -a errors=() warnings=()
+    err()  { errors+=("$1"); }
+    wrn()  { warnings+=("$1"); }
+
+    if [[ ! -f "$PROD_ENV_FILE" ]]; then
+        die "deploy/production.env is missing - create it: cp deploy/production.env.example deploy/production.env, fill it in, then run deploy/build.sh --check"
+    fi
+
+    local v
+    # --- application ---
+    [[ "$(prod_env APP_ENV)" == "production" ]] || err "APP_ENV must be 'production' (is '$(prod_env APP_ENV)')"
+    [[ "$(prod_env APP_DEBUG)" == "false" ]]    || err "APP_DEBUG must be 'false' - debug pages show the configuration and stack traces to anybody"
+    v="$(prod_env APP_KEY)"
+    if [[ -z "$v" ]]; then
+        err "APP_KEY is empty - generate it once: ./dev.sh artisan key:generate --show (running server: copy its current key)"
+    elif [[ ! "$v" =~ ^base64:[A-Za-z0-9+/]{43}=$ ]]; then
+        err "APP_KEY does not look like a Laravel key (expected base64: + 44 characters)"
+    elif [[ -f "$API_DIR/.env" ]] && grep -qxF "APP_KEY=$v" "$API_DIR/.env"; then
+        wrn "APP_KEY is the same as in the local api/.env - production should have its own key"
+    fi
+    for v in APP_URL FRONTEND_URL; do
+        local url; url="$(prod_env "$v")"
+        if [[ ! "$url" =~ ^https://[^/]+ ]]; then
+            err "$v must be an https:// address (is '${url}')"
+        elif [[ "$url" =~ (localhost|127\.0\.0\.1|example\.com) ]]; then
+            err "$v still points to a local / example address ($url)"
+        fi
+    done
+    local app_host front_host
+    app_host="$(prod_env APP_URL | sed -E 's#^https?://([^/:]+).*#\1#')"
+    front_host="$(prod_env FRONTEND_URL | sed -E 's#^https?://([^/:]+).*#\1#')"
+    [[ "$app_host" == "$front_host" ]] || wrn "APP_URL ($app_host) and FRONTEND_URL ($front_host) differ - this deployment serves both from one origin"
+    [[ "$(prod_env LOG_LEVEL)" =~ ^(debug)?$ ]] && wrn "LOG_LEVEL is 'debug' or empty - logs grow fast and may contain personal data (use warning)"
+
+    # --- database ---
+    for v in DB_HOST DB_DATABASE DB_USERNAME; do
+        [[ -n "$(prod_env "$v")" ]] || err "$v is empty"
+    done
+    [[ -n "$(prod_env DB_PASSWORD)" ]] || wrn "DB_PASSWORD is empty"
+    [[ "$(prod_env DB_USERNAME)" == "root" ]] && wrn "DB_USERNAME is 'root' - use the database user of the hosting"
+
+    # --- session ---
+    [[ "$(prod_env SESSION_SECURE_COOKIE)" == "true" ]] || err "SESSION_SECURE_COOKIE must be 'true' - otherwise the session cookie is also sent over plain HTTP"
+
+    # --- mail (2FA codes, password reset, activation) ---
+    v="$(prod_env MAIL_MAILER)"
+    if [[ -z "$v" || "$v" =~ ^(log|array)$ ]]; then
+        err "MAIL_MAILER is '${v:-empty}' - no e-mail would leave the server, so nobody could finish the 2FA login"
+    fi
+    [[ -n "$(prod_env MAIL_HOST)" ]] || [[ "$v" != "smtp" ]] || err "MAIL_HOST is empty"
+    [[ "$(prod_env MAIL_HOST)" =~ ^(127\.0\.0\.1|localhost|mailpit)$ ]] && wrn "MAIL_HOST is a local address ($(prod_env MAIL_HOST))"
+    [[ "$(prod_env MAIL_FROM_ADDRESS)" =~ example\.com$|^$ ]] && wrn "MAIL_FROM_ADDRESS is empty or an example address"
+
+    # --- queue ---
+    [[ "$(prod_env QUEUE_CONNECTION)" == "sync" ]] && wrn "QUEUE_CONNECTION=sync - e-mails are sent inside the request (slower responses)"
+
+    # --- captcha ---
+    local site secret
+    site="${TURNSTILE_SITE_KEY:-$(prod_env TURNSTILE_SITE_KEY)}"
+    secret="$(prod_env TURNSTILE_SECRET_KEY)"
+    if [[ -z "$site" ]]; then
+        err "TURNSTILE_SITE_KEY is empty (Cloudflare -> Turnstile -> the site -> Site Key, starts with 0x)"
+    elif [[ ! "$site" =~ ^0x[A-Za-z0-9_-]{16,}$ ]]; then
+        err "TURNSTILE_SITE_KEY is not a production site key (expected 0x…; test keys 1x/2x/3x are not allowed)"
+    fi
+    if [[ -z "$secret" ]]; then
+        err "TURNSTILE_SECRET_KEY is empty - every captcha would be refused and logins needing it would be blocked"
+    elif [[ ! "$secret" =~ ^0x[A-Za-z0-9_-]{16,}$ ]]; then
+        err "TURNSTILE_SECRET_KEY is not a production secret key (expected 0x…; test keys 1x/2x/3x are not allowed)"
+    fi
+    TURNSTILE_SITE_KEY="$site"
+
+    # --- shop ---
+    [[ "$(prod_env SHOP_PAYMENT_SIMULATION)" =~ ^(true|1|on|yes)$ ]] && err "SHOP_PAYMENT_SIMULATION is on - anybody could mark orders as paid"
+
+    # --- server configuration shipped with the package ---
+    grep -q 'deny-internal-files' "$SERVER_CONF_DIR/.htaccess" 2>/dev/null \
+        || err "deploy/server/.htaccess does not block /laravel - the shipped .env would be downloadable"
+
+    local m
+    for m in "${warnings[@]}"; do warn "WARNING: $m"; done
+    for m in "${errors[@]}";   do printf '\e[31m   ✗ ERROR: %s\e[0m\n' "$m" >&2; done
+    if (( ${#errors[@]} > 0 )); then
+        die "${#errors[@]} configuration error(s) - fix them and run deploy/build.sh --check"
+    fi
+    info "OK (${#warnings[@]} warning(s)) - Turnstile site key: ${TURNSTILE_SITE_KEY:0:6}…"
 }
 
 # -----------------------------------------------------------------------------
@@ -182,11 +305,28 @@ build_angular() {
     if [[ "$SKIP_ANGULAR" == "1" ]]; then
         info "skipped (--skip-angular), reusing existing dist"
     else
-        (cd "$ERP_DIR" && npx ng build --configuration production)
+        # The key is validated in check_production_env() (only [A-Za-z0-9_-]), so it can
+        # be put into the JS string literal without escaping.
+        (cd "$ERP_DIR" && npx ng build --configuration production \
+            "--define=NG_TURNSTILE_SITE_KEY='${TURNSTILE_SITE_KEY}'")
     fi
     [[ -f "$DIST_DIR/index.html" ]] || die "Angular output not found in $DIST_DIR (check ANGULAR_PROJECT)"
+    verify_angular_bundle
     rsync -a "$DIST_DIR/" "$WWW_DIR/"
     info "Angular copied to build/www/"
+}
+
+# -----------------------------------------------------------------------------
+# @description Aborts when the Angular bundle still contains development settings - a local API
+# URL, a Cloudflare test site key or the placeholder. Catches a build made without the
+# production fileReplacements (erp/angular.json) or a reused dev build (--skip-angular).
+# -----------------------------------------------------------------------------
+verify_angular_bundle() {
+    local pattern='127\.0\.0\.1|localhost:8000|[123]x00000000000000000000[A-F]{2}|REPLACE_WITH_PUBLIC_SITE_KEY'
+    local hits
+    hits="$(grep -rlE "$pattern" "$DIST_DIR" --include='*.js' || true)"
+    [[ -z "$hits" ]] || die "the Angular bundle contains development settings (local API URL / test captcha key):"$'\n'"$hits"
+    info "bundle uses the production environment"
 }
 
 # -----------------------------------------------------------------------------
@@ -223,6 +363,16 @@ build_laravel() {
     fi
 
     rsync -a "${excludes[@]}" "$API_DIR/" "$LARAVEL_TARGET/"
+
+    # Production settings (checked in check_production_env) become laravel/.env. The header
+    # line lets configure-server.sh recognise a .env that came with the package.
+    {
+        echo "# Built by deploy/build.sh from deploy/production.env - $(date '+%Y-%m-%d %H:%M') - commit $(git -C "$ROOT_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+        echo "# Do not edit on the server - change deploy/production.env and build again."
+        sed 's/\r$//' "$PROD_ENV_FILE"
+    } > "$LARAVEL_TARGET/.env"
+    chmod 600 "$LARAVEL_TARGET/.env"
+    info "laravel/.env created from deploy/production.env"
 
     # Keep the empty storage skeleton Laravel expects on the server.
     mkdir -p "$LARAVEL_TARGET"/storage/{logs,app/private,app/public} \
@@ -261,6 +411,7 @@ copy_extras() {
     for f in README.md README.txt server_setup.md server_setup.txt; do
         [[ -f "$ROOT_DIR/$f" ]] && { cp "$ROOT_DIR/$f" "$BUILD_DIR/"; info "$f copied to build root"; }
     done
+    [[ -f "$SCRIPT_DIR/HOW_TO_DEPLOY.md" ]] && { cp "$SCRIPT_DIR/HOW_TO_DEPLOY.md" "$BUILD_DIR/"; info "HOW_TO_DEPLOY.md copied to build root"; }
     return 0
 }
 
@@ -271,17 +422,28 @@ copy_extras() {
 verify_package() {
     step "Verifying package contents"
     local leaks
-    leaks="$(find "$WWW_DIR" \( -name '.env' -o -name '.env.*' ! -name '.env.example' \
+    # Allowed on purpose: laravel/.env (built from deploy/production.env) and the schema baseline
+    # loaded by the first migration (database/schema/baseline.sql - structure only, checked
+    # below that it holds no data).
+    local schema="$LARAVEL_TARGET/database/schema/baseline.sql"
+    leaks="$(find "$WWW_DIR" ! -path "$LARAVEL_TARGET/.env" ! -path "$schema" \( -name '.env' -o -name '.env.*' ! -name '.env.example' \
         -o -name '*.sql' -o -name '*.key' -o -name '*.pem' -o -name 'id_rsa*' -o -name 'id_ed25519*' \
         -o -name '*.log' \) -print)"
     [[ -z "$leaks" ]] || die "sensitive files found in build/www – aborting:"$'\n'"$leaks"
+    [[ -f "$LARAVEL_TARGET/.env" ]] || die "laravel/.env missing in the package"
+    [[ -f "$schema" ]] || die "database/schema/baseline.sql missing - the first migration needs it"
+    if grep -qiE '^[[:space:]]*(INSERT|REPLACE)[[:space:]]+INTO' "$schema"; then
+        die "database/schema/baseline.sql contains data (INSERT) - it must hold the structure only"
+    fi
+    grep -q 'deny-internal-files' "$WWW_DIR/.htaccess" 2>/dev/null \
+        || die "build/www/.htaccess does not block /laravel – the shipped .env would be public"
 
     [[ -d "$LARAVEL_TARGET/vendor" ]] || die "vendor/ missing in the Laravel package"
     if [[ -d "$LARAVEL_TARGET/storage/app/private" ]] \
         && [[ -n "$(find "$LARAVEL_TARGET/storage/app/private" -type f -print -quit)" ]]; then
         die "personal data found in storage/app/private – aborting"
     fi
-    info "no secrets, dumps, logs or private uploads in www/"
+    info "no stray secrets, dumps, logs or private uploads in www/ (laravel/.env is protected by .htaccess)"
 }
 
 # -----------------------------------------------------------------------------
@@ -330,9 +492,17 @@ make_archive() {
 # Main
 # -----------------------------------------------------------------------------
 echo "------------------------------------------"
-echo "START: Production build"
+if [[ "$CHECK_ONLY" == "1" ]]; then echo "START: Configuration check (--check)"; else echo "START: Production build"; fi
 echo "------------------------------------------"
 preflight
+check_production_env
+if [[ "$CHECK_ONLY" == "1" ]]; then
+    echo
+    echo "------------------------------------------"
+    echo "CHECK OK: the configuration is ready for a production build (run deploy/build.sh)"
+    echo "------------------------------------------"
+    exit 0
+fi
 run_tests
 prepare_build_dir
 build_angular

@@ -41,6 +41,7 @@
 #   ./dev.sh shell [service]         bash in a container (default: a new dev container)
 #   ./dev.sh test [args]             all unit tests (tests/unit_tests/run_all.sh) in the container
 #   ./dev.sh build [args]            production build (deploy/build.sh) in the container
+#   ./dev.sh build --check           only check deploy/production.env and the build prerequisites
 #   ./dev.sh db-import <file.sql>    import an SQL dump into the app database (DB_DATABASE of api/.env)
 #   ./dev.sh db-dump [file.sql]      dump the app database (default temp/<db>-<date>.sql)
 #   ./dev.sh rebuild                 rebuild the dev image (after changing PHP / Node.js / UID in .env)

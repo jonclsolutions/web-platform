@@ -37,6 +37,8 @@ web-platform/
 │   └── logs/, pids/       (git-ignored) one log file per service, PIDs of the log writers
 ├── deploy/
 │   ├── build.sh         production build → build/www.zip
+│   ├── HOW_TO_DEPLOY.md step-by-step deployment guide
+│   ├── production.env.example  template of the production .env (copy to production.env)
 │   └── server/          server config shipped into the webroot (.htaccess, .user.ini, configure-server.sh)
 ├── docs/                project documentation, DOCS templates
 ├── tests/
@@ -291,6 +293,8 @@ The scheduler currently contains only nightly GDPR clean-up jobs (see `api/route
 
 ## Production build
 
+> Step-by-step deployment guide (first install, releases, rollback): **[deploy/HOW_TO_DEPLOY.md](deploy/HOW_TO_DEPLOY.md)**.
+
 ```bash
 deploy/build.sh                         # all unit tests first, then the full build
 deploy/build.sh --skip-tests            # build without running the tests
@@ -298,6 +302,37 @@ deploy/build.sh --skip-angular          # reuse the existing Angular build
 deploy/build.sh --with-public-storage   # also ship storage/app/public (first install only)
 deploy/build.sh --no-zip                # skip the archive
 ```
+
+**Production settings – `deploy/production.env`:** the production Laravel `.env` is prepared
+locally and shipped in the package as `laravel/.env`, so the server needs no manual editing.
+
+```bash
+cp deploy/production.env.example deploy/production.env   # once; the file is git-ignored
+deploy/build.sh --check                                  # checks it (and the prerequisites) without building
+```
+
+The check runs at the start of every build and lists all problems at once:
+
+- **ERROR** (the build stops) – values that would break production or open a hole: `APP_ENV`
+  not `production`, `APP_DEBUG` not `false`, missing / invalid `APP_KEY`, `APP_URL` /
+  `FRONTEND_URL` not `https://` or still local / example, empty `DB_HOST` / `DB_DATABASE` /
+  `DB_USERNAME`, `SESSION_SECURE_COOKIE` not `true`, `MAIL_MAILER` `log` / `array` (no 2FA
+  e-mails = nobody can log in), missing or test Turnstile keys, `SHOP_PAYMENT_SIMULATION` on,
+  `deploy/server/.htaccess` without the rule that blocks `/laravel`.
+- **WARNING** (the build continues) – empty `DB_PASSWORD`, `root` database user, local
+  `MAIL_HOST`, example `MAIL_FROM_ADDRESS`, `LOG_LEVEL=debug`, `QUEUE_CONNECTION=sync`, the
+  same `APP_KEY` as the local `api/.env`, different hosts in `APP_URL` and `FRONTEND_URL`.
+
+`TURNSTILE_SITE_KEY` (public, `0x…`) from the same file is built into the Angular app
+(`ng build --define`); `TURNSTILE_SECRET_KEY` stays in `laravel/.env`. The Angular production
+build uses `erp/src/environments/environment.prod.ts` (`/api`, `/storage` on the same origin)
+and the build aborts if the bundle still contains `127.0.0.1` or a test key.
+
+> **Every deploy overwrites `laravel/.env` on the server** with this file – it is the single
+> source of the production settings. On a server that is already running, copy its current
+> `APP_KEY` into `deploy/production.env` first (a new key logs everybody out and makes
+> encrypted data unreadable). Because the package now contains secrets, upload `www.zip` only
+> over SFTP / FTPS and delete it from the server after extracting.
 
 The build runs **inside the dev container** (same PHP as the hosting, Composer, Node.js,
 Chromium for the tests) – `deploy/build.sh` started on the host re-runs itself there
@@ -322,30 +357,38 @@ build/
 └── README.md             → preview only (never part of www)
 ```
 
-The build **never ships**: `.env` files, logs, framework cache/sessions/views, user uploads
+The build **never ships**: the local `api/.env` (only `laravel/.env` built from
+`deploy/production.env`, protected by `.htaccess`), logs, framework cache/sessions/views, user uploads
 in `storage/app/private` (personal data), dev dependencies, tests, IDE helpers, private keys.
 `storage/app/public` is skipped by default so local test files cannot overwrite production
-uploads. A final check aborts the build if any `.env`, `.sql`, key or log file ends up in `www/`.
+uploads. A final check aborts the build if any other `.env`, `.sql`, key or log file ends up in
+`www/`, or if `.htaccess` lacks the rule that blocks `/laravel`, `configure-server.sh` and dot
+files (`deny-internal-files`).
 
 ---
 
 ## Deployment checklist (monthly release)
 
+The full step-by-step guide with explanations is in [deploy/HOW_TO_DEPLOY.md](deploy/HOW_TO_DEPLOY.md).
+
 1. **Prepare**
    - all changes committed and pushed, tests and manual regression (`tests/regression_tests/`) done
    - tag the release: `git tag -a vYYYY.MM -m "Release YYYY-MM" && git push --tags`
-2. **Build** – `deploy/build.sh` (runs all unit tests first), check that it ends with `COMPLETE`
+2. **Build** – `deploy/build.sh --check` (production settings in `deploy/production.env`), then
+   `deploy/build.sh` (runs all unit tests first), check that it ends with `COMPLETE`
 3. **Back up production** – database dump, `laravel/.env`, `laravel/storage/app/`
 4. **Upload** `build/www.zip` – see [Uploading the package](#uploading-the-package):
    - use **SFTP or FTPS** (FTP over TLS), never plain FTP – it sends the hosting password unencrypted
    - upload it **outside the webroot**, or delete it right after extracting – the archive contains
-     the complete source code and would be downloadable at `https://<domain>/www.zip`
+     the complete source code **and `laravel/.env` with all production secrets** and would be
+     downloadable at `https://<domain>/www.zip`
    - verify it was not corrupted: `sha256sum -c www.zip.sha256` must print `www.zip: OK`
-5. **Extract over the existing deployment.** Do **not** delete `laravel/.env` or
-   `laravel/storage/` on the server – the package intentionally contains neither, so the
-   production secrets and user uploads stay in place.
-   - **First install only:** `cp .env.example .env`, fill in the production values and run
-     `bash configure-server.sh` in the webroot. It also prepares the database:
+5. **Extract over the existing deployment.** `laravel/.env` is replaced by the one from the
+   package (built from `deploy/production.env`). Do **not** delete `laravel/storage/` on the
+   server – the package does not contain it, so user uploads stay in place.
+   - **First install only:** run `bash configure-server.sh` in the webroot. It recognises the
+     `.env` from the package (no manual editing); without one it falls back to copying
+     `.env.example` and asks you to edit it. It also prepares the database:
      `db:create-if-missing` (on shared hosting create the empty database in the hosting panel
      first), `migrate --force` (whole schema on an empty database), `db:seed --force` (base data
      only – no test account in production) and `security:create-sysadmin --if-none`, which **asks
@@ -355,8 +398,10 @@ uploads. A final check aborts the build if any `.env`, `.sql`, key or log file e
      configure-server.sh is not tested on the server yet – go through its output carefully.)*
    - **Never regenerate `APP_KEY` on a running production** – it logs out all users and makes
      encrypted data unreadable.
-   - Production `.env` must contain `APP_ENV=production` and `APP_DEBUG=false`; with debug on,
+   - `APP_ENV=production` and `APP_DEBUG=false` are enforced by the build check; with debug on,
      error pages expose credentials and server paths.
+   - Check once after the upload that `https://<domain>/laravel/.env` answers **403** (the rule
+     `deny-internal-files` in `.htaccess`).
 6. **On the server** (in `laravel/`):
    ```bash
    php artisan down

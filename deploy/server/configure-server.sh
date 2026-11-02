@@ -6,7 +6,7 @@
 # @author JS
 # @created 2026
 # @description Server-side setup of a deployed package, run from the webroot after upload:
-#   Composer dependencies, .env, application key, DATABASE (created + migrated + base data),
+#   Composer dependencies, .env (shipped by deploy/build.sh, checked there), application key, DATABASE (created + migrated + base data),
 #   the first sysadmin account, storage link, queue/scheduler cron, permissions, public
 #   storage symlink.
 # @note NOT TESTED ON THE SERVER YET (written 2026-10-30, tested only locally / by review).
@@ -28,22 +28,27 @@ echo "Installing dependencies..."
 composer install --no-dev --optimize-autoloader
 
 # --- 4. .env file setup ---
-if [ ! -f ".env" ]; then
-    cp .env.example .env
-    echo ".env file created. !!! YOU MUST EDIT IT MANUALLY (DB, URL, etc.) NOW !!!"
+# deploy/build.sh ships laravel/.env built from deploy/production.env and checked during the
+# build (header line "# Built by deploy/build.sh"). Only a package without it falls back to the
+# manual way (copy .env.example and edit it by hand).
+if [ -f ".env" ] && head -n1 .env | grep -q '^# Built by deploy/build.sh'; then
+    echo ".env comes from the build package (checked by deploy/build.sh):"
+    echo "    $(head -n1 .env | sed 's/^# //')"
+    chmod 600 .env
+else
+    if [ ! -f ".env" ]; then
+        cp .env.example .env
+        echo ".env file created. !!! YOU MUST EDIT IT MANUALLY (DB, URL, etc.) NOW !!!"
+    fi
+    echo ""
+    echo "!!! This .env was NOT built by deploy/build.sh - nothing checked it. Set at least:"
+    echo "    APP_ENV=production, APP_DEBUG=false, APP_URL (https), DB_*, MAIL_*,"
+    echo "    SESSION_SECURE_COOKIE=true and TURNSTILE_SECRET_KEY (https://dash.cloudflare.com -> Turnstile)."
+    echo "    The first sysadmin logs in with a 2FA code sent by e-mail: MAIL_* must work. !!!"
+    echo "    Easier: fill in deploy/production.env locally and let deploy/build.sh check and ship it."
+    echo ""
+    read -p "Have you edited the .env file? Press [Enter] to continue..."
 fi
-
-echo ""
-echo "!!! REMINDER: set TURNSTILE_SECRET_KEY in .env (captcha login protection) !!!"
-echo "    Get it from https://dash.cloudflare.com -> Turnstile -> your site."
-echo ""
-echo "!!! REMINDER: set APP_ENV=production, APP_DEBUG=false, DB_* and MAIL_* in .env."
-echo "    The database itself is created and filled by this script (step 5b) - no SQL import."
-echo "    The first sysadmin logs in with a 2FA code sent by e-mail: MAIL_* must work. !!!"
-echo ""
-
-# Pause for .env configuration
-read -p "Have you edited the .env file? Press [Enter] to continue..."
 
 # --- 5. Generate key (only when missing) and clear cache ---
 # NEVER regenerate an existing key: it would invalidate sessions, tokens and encrypted data.

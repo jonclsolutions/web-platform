@@ -2,6 +2,16 @@
     RewriteEngine On
     Options -MultiViews -Indexes
 
+    # 0. deny-internal-files: the Laravel folder (.env with secrets, storage with uploads and
+    #    logs, vendor, config), the setup script and dot files are never served directly.
+    #    Only the original request is checked (REDIRECT_STATUS is empty) - the internal rewrite
+    #    of /api to laravel/public/index.php (rule 2) must still pass. REQUEST_URI is already
+    #    URL-decoded, so /%6caravel/.env is caught as well.
+    RewriteCond %{ENV:REDIRECT_STATUS} ^$
+    RewriteCond %{REQUEST_URI} ^/+(laravel|configure-server\.sh)(/|$) [NC,OR]
+    RewriteCond %{REQUEST_URI} /\.(?!well-known/) [NC]
+    RewriteRule ^ - [F,L]
+
     # 1. Rule for Storage - if a symlink exists in /www
     RewriteCond %{REQUEST_URI} ^/storage [NC]
     RewriteRule ^storage/(.*)$ storage/$1 [L]
@@ -18,3 +28,10 @@
     # 4. Everything else -> Angular index.html
     RewriteRule ^ index.html [L]
 </IfModule>
+
+# Second layer (works even without mod_rewrite): never serve .env / .user.ini / shell scripts.
+<FilesMatch "^(\.env.*|\.user\.ini|.*\.sh)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>
