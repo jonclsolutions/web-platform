@@ -14,7 +14,7 @@
  *    'private' therefore locks out an ALREADY-LOGGED-IN customer immediately, on
  *    their very next request, without needing to hunt down and delete their session
  *    row separately. This is the direct fix for consultation note 4.
- * 2) The Bearer token (the 24h-sliding SESSION, distinct from the permanent URL
+ * 2) The session cookie (the 24h-sliding SESSION, distinct from the permanent URL
  *    token) must resolve to a non-expired `web_project_sessions` row belonging to
  *    THIS SAME project - a session issued for project A can never be replayed
  *    against project B's routes, even if somehow guessed (IDOR guard).
@@ -23,12 +23,13 @@
  * `$request->attributes` so controllers never need to re-resolve/re-validate them,
  * and the session's expiry is SLID FORWARD (not just checked) - see
  * WebProjectSession::slideExpiry(), the concrete implementation of consultation
- * note 1's "24h of inactivity, not a hard wall-clock timer from login".
+ * note 1's "24h of inactivity, not a hard wall-clock timer from login". The cookie is re-issued
+ * with every answer, so it slides together with the session.
  *
- * @security The session token is accepted ONLY as `Authorization: Bearer`.
- *   The former `session_token` query / body fallback put a bearer credential into webserver and
- *   proxy access logs and the browser history (open finding #1) and was removed; the portal
- *   frontend sends the header.
+ * @security The session token is accepted ONLY from the HttpOnly / Secure / SameSite=Strict cookie
+ *   of AuthCookies (never a header, query or body value): JavaScript cannot read it (no theft by
+ *   XSS), and another site cannot make the browser send it (no CSRF). An invalid session deletes
+ *   the cookie.
  */
 
 namespace App\Http\Middleware;
@@ -36,6 +37,7 @@ namespace App\Http\Middleware;
 use App\Models\Core\CoreSecurityEvent;
 use App\Models\Web\WebProject;
 use App\Models\Web\WebProjectSession;
+use App\Support\Auth\AuthCookies;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -61,12 +63,12 @@ class CheckProjectSession
             return response()->json(['message' => 'The project was not found or is not available.'], 404);
         }
 
-        $bearer = $request->bearerToken();
-        if (!$bearer) {
+        $plainSession = (string) $request->cookie(AuthCookies::PORTAL);
+        if ($plainSession === '') {
             return response()->json(['message' => 'Authentication required.'], 401);
         }
 
-        $session = WebProjectSession::findValidByPlaintextToken($bearer);
+        $session = WebProjectSession::findValidByPlaintextToken($plainSession);
 
         if (!$session || (int) $session->project_id !== (int) $project->id) {
             CoreSecurityEvent::record(
@@ -76,7 +78,8 @@ class CheckProjectSession
                 CoreSecurityEvent::contextFromRequest($request, ['reason' => 'session_mismatch_or_expired', 'project_id' => $project->id])
             );
 
-            return response()->json(['message' => 'The session has expired or is invalid. Please log in again.'], 401);
+            return response()->json(['message' => 'The session has expired or is invalid. Please log in again.'], 401)
+                ->withCookie(AuthCookies::forgetPortal($request, $token));
         }
 
         $session->slideExpiry();
@@ -84,6 +87,13 @@ class CheckProjectSession
         $request->attributes->set('current_project', $project);
         $request->attributes->set('current_project_session', $session);
 
-        return $next($request);
+        $response = $next($request);
+
+        // Slide the cookie with the session - unless the action replaced it (logout).
+        $response->headers->setCookie(
+            $request->attributes->get('project_session_cookie') ?? AuthCookies::portal($request, $token, $plainSession)
+        );
+
+        return $response;
     }
 }

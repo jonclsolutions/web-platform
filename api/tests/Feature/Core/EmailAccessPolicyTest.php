@@ -20,6 +20,7 @@ use App\Models\Core\CoreEmailAccessRule;
 use App\Models\Core\CoreSecuritySetting;
 use App\Models\RefreshToken;
 use App\Models\TwoFactorCode;
+use App\Support\Auth\AuthCookies;
 use Laravel\Sanctum\PersonalAccessToken;
 use Tests\TestCase;
 
@@ -168,7 +169,8 @@ class EmailAccessPolicyTest extends TestCase
             $this->app['auth']->forgetGuards();
             $this->app['auth']->shouldUse('web');  // the test signed in through Sanctum - login uses the session guard
             $this->postJson('/api/login', ['email' => $account->user_email, 'password' => $this->defaultPassword])->assertStatus(403);
-            $this->postJson('/api/refresh', ['refreshToken' => "raw-{$i}"])->assertStatus(401);
+            $this->withUnencryptedCookie(AuthCookies::REFRESH, "raw-{$i}")->withCredentials()->postJson('/api/refresh')
+                ->assertStatus(401)->assertJsonPath('message', 'Invalid or expired token.');
         }
         $this->assertTrue(CoreEmailAccessRule::isEmailAllowed($actor->user_email));
     }

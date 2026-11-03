@@ -12,6 +12,7 @@
  *   only, bypassed CheckPermission - open finding #3).
  */
 
+use App\Support\Auth\AuthCookies;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -151,7 +152,7 @@ Route::post('projects/public/{token}/login', [WebProjectPublicController::class,
 Route::prefix('projects/public/{token}')
     ->middleware(['project.session', 'throttle:120,1,project-session'])
     ->group(function () {
-        Route::get('/',       [WebProjectPublicController::class, 'me']);
+        Route::get('/',       [WebProjectPublicController::class, 'me'])->name(AuthCookies::PORTAL_ROUTE);
         Route::post('logout', [WebProjectPublicController::class, 'logout']);
 
         Route::get('threads',            [WebProjectPublicController::class, 'threadsIndex']);
@@ -193,7 +194,10 @@ Route::post('/login/verify-2fa', [AuthController::class, 'verifyTwoFactor'])
 Route::post('/login/resend-2fa', [AuthController::class, 'resendTwoFactor'])
     ->middleware('throttle:login-2fa-resend');
 
-Route::post('/refresh', [AuthController::class, 'refresh']);
+// The refresh token comes ONLY from its HttpOnly cookie (AuthCookies), whose Path is this route.
+Route::post('/refresh', [AuthController::class, 'refresh'])
+    ->name(AuthCookies::REFRESH_ROUTE)
+    ->middleware('throttle:30,1,auth-refresh');
 
 /*
 |--------------------------------------------------------------------------

@@ -7,6 +7,10 @@
  * @created 2025
  * @description Manages user authentication, token-based session lifecycle (Access/Refresh
  * tokens), CAPTCHA-gated brute-force protection, and mandatory/optional 2FA verification.
+ * @security The access token (60 min) is returned in the body and kept by the admin only in
+ * memory. The refresh token (7 days, rotated on every use) is NEVER in a body: it travels only in
+ * the HttpOnly / Secure / SameSite=Strict cookie of AuthCookies, limited to POST /api/refresh, so
+ * a script (XSS) can neither read it nor keep the account beyond the access token's lifetime.
  */
 
 namespace App\Http\Controllers\Api;
@@ -27,6 +31,8 @@ use App\Models\Core\CoreLog;
 use App\Traits\LogsActivity;
 use Illuminate\Support\Str;
 use App\Http\Resources\UserResource;
+use App\Support\Auth\AuthCookies;
+use Laravel\Sanctum\PersonalAccessToken;
 use Illuminate\Http\JsonResponse;
 
 class AuthController extends Controller
@@ -177,11 +183,22 @@ class AuthController extends Controller
         $user = $request->user();
         $user->load('roles.permissions');
 
-        return $this->respond([
+        return $this->respond($this->sessionPayload($user), 200);
+    }
+
+    /**
+     * @description Profile, roles and effective permissions of the user - the part of the login,
+     * refresh and /user answers the admin builds its session state from.
+     * @param User $user User with loaded `roles.permissions`.
+     * @return array<string, mixed>
+     */
+    private function sessionPayload(User $user): array
+    {
+        return [
             'user'             => new UserResource($user),
             'user_roles'       => $user->roles->pluck('role_name'),
             'user_permissions' => method_exists($user, 'getPermissionsAttribute') ? $user->getPermissionsAttribute() : [],
-        ], 200);
+        ];
     }
 
     /**
@@ -375,7 +392,8 @@ class AuthController extends Controller
 
     /**
      * @description Issues the access + refresh token to the authenticated user. Shared by the
-     * direct login (no 2FA) and the finished 2FA verification.
+     * direct login (no 2FA) and the finished 2FA verification. The access token is in the body,
+     * the refresh token only in its HttpOnly cookie.
      */
     private function issueTokens(Request $request, User $user): JsonResponse
     {
@@ -388,30 +406,31 @@ class AuthController extends Controller
         RefreshToken::create([
             'user_id'    => $user->id,
             'token'      => hash('sha256', $refreshToken),
-            'expires_at' => now()->addDays(7),
+            'expires_at' => now()->addDays(AuthCookies::REFRESH_TTL_DAYS),
         ]);
 
         $this->logAction($request, CoreLog::class, 'login_success', 'Auth', "User logged in: {$user->user_email}", $user->id, 'User');
 
-        return $this->respond([
-            'user'             => new UserResource($user),
-            'user_roles'       => $user->roles->pluck('role_name'),
-            'user_permissions' => method_exists($user, 'getPermissionsAttribute') ? $user->getPermissionsAttribute() : [],
-            'token'            => $accessToken,
-            'refreshToken'     => $refreshToken,
-        ], 200, [], 'Login successful!');
+        return $this->respond($this->sessionPayload($user) + ['token' => $accessToken], 200, [], 'Login successful!')
+            ->withCookie(AuthCookies::refresh($request, $refreshToken));
     }
 
     /**
-     * @description Refreshes the access token using a valid refresh token.
+     * @description Refreshes the session with the refresh token of the HttpOnly cookie: rotates it
+     * (new cookie) and returns a new access token together with the profile, roles and permissions
+     * - the admin also uses this call to restore its session after a page reload.
      * @note Checks `is_blocked` again: an account blocked between issuing the refresh token and
-     * using it must not get a new access token.
+     * using it must not get a new access token. Every refusal deletes the cookie.
+     * @note Only the access token sent with the request (and the expired ones) is revoked, not
+     * every token of the user - several tabs of the same browser share the cookie and each keeps
+     * its own access token in memory; revoking all of them would log the tabs out in turn.
      */
     public function refresh(Request $request): JsonResponse
     {
-        $refreshToken = $request->input('refreshToken');
-        if (!$refreshToken) {
-            return response()->json(['message' => 'Refresh token is missing.'], 401);
+        $refreshToken = (string) $request->cookie(AuthCookies::REFRESH);
+        if ($refreshToken === '') {
+            return response()->json(['message' => 'Refresh token is missing.'], 401)
+                ->withCookie(AuthCookies::forgetRefresh($request));
         }
 
         $hashedRefreshToken = hash('sha256', $refreshToken);
@@ -431,7 +450,8 @@ class AuthController extends Controller
                 CoreSecurityEvent::contextFromRequest($request)
             );
 
-            return response()->json(['message' => 'Invalid or expired token.'], 401);
+            return response()->json(['message' => 'Invalid or expired token.'], 401)
+                ->withCookie(AuthCookies::forgetRefresh($request));
         }
 
         $user = $dbRefreshToken->user;
@@ -444,7 +464,8 @@ class AuthController extends Controller
                 $request->ip(),
                 CoreSecurityEvent::contextFromRequest($request, ['user_id' => $user->id])
             );
-            return response()->json(['message' => 'This account has been blocked. Please contact the administrator.'], 403);
+            return response()->json(['message' => 'This account has been blocked. Please contact the administrator.'], 403)
+                ->withCookie(AuthCookies::forgetRefresh($request));
         }
 
         // E-mail access policy.
@@ -457,11 +478,12 @@ class AuthController extends Controller
                 $request->ip(),
                 CoreSecurityEvent::contextFromRequest($request, ['user_id' => $user->id])
             );
-            return response()->json(['message' => self::LOGIN_NOT_ALLOWED_MESSAGE], 403);
+            return response()->json(['message' => self::LOGIN_NOT_ALLOWED_MESSAGE], 403)
+                ->withCookie(AuthCookies::forgetRefresh($request));
         }
 
         $dbRefreshToken->delete();
-        $user->tokens()->delete();
+        $this->revokeReplacedAccessTokens($request, $user);
 
         $newAccessToken = $user->createToken('access-token', ['*'], now()->addMinutes(60))->plainTextToken;
         $newRefreshToken = Str::random(60);
@@ -469,13 +491,33 @@ class AuthController extends Controller
         RefreshToken::create([
             'user_id'    => $user->id,
             'token'      => hash('sha256', $newRefreshToken),
-            'expires_at' => now()->addDays(7),
+            'expires_at' => now()->addDays(AuthCookies::REFRESH_TTL_DAYS),
         ]);
 
-        return $this->respond([
-            'token'        => $newAccessToken,
-            'refreshToken' => $newRefreshToken,
-        ], 200);
+        $user->load('roles.permissions');
+
+        return $this->respond($this->sessionPayload($user) + ['token' => $newAccessToken], 200)
+            ->withCookie(AuthCookies::refresh($request, $newRefreshToken));
+    }
+
+    /**
+     * @description Revokes the access token the refreshing tab sent (it is being replaced) and
+     * every expired access token of the user.
+     * @param Request $request Refresh request (optional `Authorization: Bearer` of the old token).
+     * @param User $user Owner of the refresh token.
+     * @return void
+     */
+    private function revokeReplacedAccessTokens(Request $request, User $user): void
+    {
+        $bearer = $request->bearerToken();
+        if ($bearer) {
+            $old = PersonalAccessToken::findToken($bearer);
+            if ($old && $old->tokenable_type === $user->getMorphClass() && (int) $old->tokenable_id === (int) $user->id) {
+                $old->delete();
+            }
+        }
+
+        $user->tokens()->where('expires_at', '<=', now())->delete();
     }
 
     /**
@@ -490,7 +532,12 @@ class AuthController extends Controller
     }
 
     /**
-     * @description Revokes the access and refresh tokens of the user.
+     * @description Ends the session of the user: revokes every access token and the refresh token
+     * and deletes the refresh cookie.
+     * @note The refresh cookie is not sent to this route (its Path is the refresh route), so the
+     * refresh token is revoked by its owner - there is one refresh session per user anyway
+     * (issueTokens() replaces the previous one). All access tokens go too: the other tabs of the
+     * browser shared that session.
      */
     public function logout(Request $request): JsonResponse
     {
@@ -499,14 +546,11 @@ class AuthController extends Controller
         if ($user) {
             $request->merge(['user_agent' => $request->userAgent()]);
             $this->logAction($request, CoreLog::class, 'logout', 'Auth', "User logged out: {$user->user_email}", $user->id, 'User');
-            $user->currentAccessToken()->delete();
+            $user->tokens()->delete();
+            RefreshToken::where('user_id', $user->id)->delete();
         }
 
-        $refreshToken = $request->input('refreshToken');
-        if ($refreshToken) {
-            RefreshToken::where('token', hash('sha256', $refreshToken))->delete();
-        }
-
-        return response()->json(['message' => 'Logout successful!'], 200);
+        return response()->json(['message' => 'Logout successful!'], 200)
+            ->withCookie(AuthCookies::forgetRefresh($request));
     }
 }

@@ -8,7 +8,7 @@
  *   filters), the per-user page cache with its 3 minute TTL, removal of failed requests from the
  *   cache (bugfix 2026-10-23), preloading of adjacent pages and invalidation.
  * @dependencies
- * - DataHandler spy; jasmine.clock() with a mocked Date for the TTL; sessionStorage 'userId'.
+ * - DataHandler spy; jasmine.clock() with a mocked Date for the TTL; setCurrentUser() as AuthService calls it.
  */
 
 import { TestBed } from '@angular/core/testing';
@@ -24,7 +24,6 @@ describe('GenericTableService', () => {
   const urls = () => dataHandler.getPaginatedCollection.calls.allArgs().map(a => a[0]);
 
   beforeEach(() => {
-    sessionStorage.removeItem('userId');
     dataHandler = createDataHandlerSpy();
     dataHandler.getPaginatedCollection.and.returnValue(of(paginated([{ id: 1 }])) as any);
     TestBed.configureTestingModule({ providers: [{ provide: DataHandler, useValue: dataHandler }] });
@@ -34,7 +33,6 @@ describe('GenericTableService', () => {
   });
   afterEach(() => {
     jasmine.clock().uninstall();
-    sessionStorage.removeItem('userId');
   });
 
   /**
@@ -60,16 +58,22 @@ describe('GenericTableService', () => {
   });
 
   /**
-   * @description The cache key contains the user id: another user never gets a cached page.
-   * @input Same request anonymous, as userId 5.
-   * @output Two requests.
+   * @description The cache key contains the user id AuthService set: another user (or the
+   *   logged-out state) never gets a cached page of someone else.
+   * @input Same request anonymous, as user 5 (twice), as user 6, after logout (null).
+   * @output Four requests: anonymous, 5 (cached once), 6, anonymous again from its own entry.
    */
   it('separates the cache per logged-in user', () => {
     service.getPaginatedData('core/users').subscribe();
-    sessionStorage.setItem('userId', '5');
+    service.setCurrentUser('5');
     service.getPaginatedData('core/users').subscribe();
     service.getPaginatedData('core/users').subscribe();
-    expect(urls().length).toBe(2);
+    service.setCurrentUser('6');
+    service.getPaginatedData('core/users').subscribe();
+    expect(urls().length).toBe(3);
+    service.setCurrentUser(null);
+    service.getPaginatedData('core/users').subscribe();
+    expect(urls().length).toBe(3);
   });
 
   /**

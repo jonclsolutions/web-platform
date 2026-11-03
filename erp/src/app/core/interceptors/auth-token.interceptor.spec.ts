@@ -32,7 +32,7 @@ import {
 import { of, throwError, Subject } from 'rxjs';
 
 import { AuthTokenInterceptor } from './auth-token.interceptor';
-import { AuthService }          from '../auth/auth.service';
+import { AuthService, AuthSessionResponse } from '../auth/auth.service';
 import { Router }               from '@angular/router';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -191,7 +191,7 @@ describe('AuthTokenInterceptor', () => {
 
     it('by mělo zavolat refreshAccessToken při 401 odpovědi', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('expired-token');
-      authService.refreshAccessToken.and.returnValue(of({ token: 'new-token' }));
+      authService.refreshAccessToken.and.returnValue(of({ token: 'new-token' } as AuthSessionResponse));
 
       http.get('/api/protected').subscribe();
 
@@ -209,7 +209,7 @@ describe('AuthTokenInterceptor', () => {
 
     it('by mělo po úspěšném refreshi zopakovat původní request s novým tokenem', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('old-token');
-      authService.refreshAccessToken.and.returnValue(of({ token: 'refreshed-token' }));
+      authService.refreshAccessToken.and.returnValue(of({ token: 'refreshed-token' } as AuthSessionResponse));
 
       let responseData: any;
       http.get('/api/resource').subscribe(d => (responseData = d));
@@ -227,7 +227,7 @@ describe('AuthTokenInterceptor', () => {
 
     it('po úspěšném refreshi by mělo nastavit isRefreshing zpět na false', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('old');
-      authService.refreshAccessToken.and.returnValue(of({ token: 'new' }));
+      authService.refreshAccessToken.and.returnValue(of({ token: 'new' } as AuthSessionResponse));
 
       http.get('/api/data').subscribe();
       httpMock.expectOne('/api/data').flush(
@@ -454,7 +454,7 @@ it('by mělo demonstrovat chování includes při výskytu /login uvnitř URL', 
       // Checks that the substring match through includes('/login')
       // returns true for this URL and starts the refresh flow (shows the code behaviour).
       authService.getAccessToken.and.returnValue('tok');
-      authService.refreshAccessToken.and.returnValue(of({ token: 'new-token' }));
+      authService.refreshAccessToken.and.returnValue(of({ token: 'new-token' } as AuthSessionResponse));
 
       http.get('/api/settings-login-info').subscribe();
       

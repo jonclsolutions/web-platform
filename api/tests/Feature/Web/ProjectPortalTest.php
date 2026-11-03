@@ -21,6 +21,7 @@ use App\Models\Core\CoreSecurityEvent;
 use App\Models\Web\WebProject;
 use App\Models\Web\WebProjectSession;
 use App\Models\Web\WebProjectThread;
+use App\Support\Auth\AuthCookies;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -54,7 +55,7 @@ class ProjectPortalTest extends TestCase
     }
 
     /**
-     * @description Portal request with the session as Bearer token.
+     * @description Portal request with the session in its cookie (as the browser sends it).
      * @param string $method HTTP method.
      * @param string $path Path after /api/projects/public/portal-token.
      * @param array<string, mixed> $data Body.
@@ -62,7 +63,20 @@ class ProjectPortalTest extends TestCase
      */
     private function portal(string $method, string $path = '', array $data = []): \Illuminate\Testing\TestResponse
     {
-        return $this->withToken($this->session)->json($method, "/api/projects/public/portal-token{$path}", $data);
+        return $this->withPortalSession($this->session)->json($method, "/api/projects/public/portal-token{$path}", $data);
+    }
+
+    /**
+     * @description Sets the portal session cookie of the next requests (null = no cookie).
+     * @param string|null $session Raw session token.
+     * @return static
+     */
+    private function withPortalSession(?string $session): static
+    {
+        $this->unencryptedCookies = [];
+
+        // JSON test requests send cookies only "with credentials" - like the browser's XHR.
+        return $session === null ? $this : $this->withCredentials()->withUnencryptedCookie(AuthCookies::PORTAL, $session);
     }
 
     /**
@@ -79,10 +93,12 @@ class ProjectPortalTest extends TestCase
     /**
      * @description Login: unknown token and private project answer the same 404 (recorded),
      *   wrong password 401 (recorded), right password opens a 24h session and returns the
-     *   project with its checkpoints - never the password hash or the access token.
+     *   project with its checkpoints - never the password hash or the access token. The session
+     *   is ONLY in the HttpOnly cookie limited to the routes of this project, never in the body.
      * @input Token 'nope'; private project; wrong password; right password; missing password.
-     * @output 404 + event; 404 + event; 401 + project_login_failed; 200 {session_token (64),
-     *   expires_in 86400, project.checkpoints}; 422.
+     * @output 404 + event; 404 + event; 401 + project_login_failed; 200 {expires_in 86400,
+     *   project.checkpoints} without session_token; cookie (64 chars, HttpOnly, SameSite=Strict,
+     *   Path /api/projects/public/portal-token) of a valid session; 422.
      */
     public function test_login(): void
     {
@@ -96,13 +112,16 @@ class ProjectPortalTest extends TestCase
         $this->assertSame(1, $this->events('project_login_failed'));
         $this->postJson('/api/projects/public/portal-token/login', [])->assertStatus(422)->assertJsonValidationErrors(['password']);
 
-        $json = $this->postJson('/api/projects/public/portal-token/login', ['password' => $this->projectPassword])
+        $response = $this->postJson('/api/projects/public/portal-token/login', ['password' => $this->projectPassword])
             ->assertOk()->assertJsonPath('data.expires_in', 86400)->assertJsonPath('data.project.name', 'Eshop')
-            ->assertJsonPath('data.project.checkpoints.0.label', 'Design')->json('data');
-        $this->assertSame(64, strlen($json['session_token']));
+            ->assertJsonPath('data.project.checkpoints.0.label', 'Design');
+        $json = $response->json('data');
+        $this->assertArrayNotHasKey('session_token', $json);
         $this->assertArrayNotHasKey('access_token', $json['project']);
         $this->assertArrayNotHasKey('access_password_hash', $json['project']);
-        $this->assertNotNull(WebProjectSession::findValidByPlaintextToken($json['session_token']));
+        $session = (string) $this->credentialCookie($response, AuthCookies::PORTAL, '/api/projects/public/portal-token')->getValue();
+        $this->assertSame(64, strlen($session));
+        $this->assertNotNull(WebProjectSession::findValidByPlaintextToken($session));
     }
 
     /**
@@ -121,28 +140,37 @@ class ProjectPortalTest extends TestCase
     /**
      * @description The session guard: project must exist and be public on every request,
      *   a session is required, must be valid, unexpired and belong to this project; each
-     *   request slides the expiry; the token is accepted only as Bearer header (never as
-     *   session_token query / body input - it would end up in access logs, finding #1).
-     * @input No token; unknown project; project switched to private; garbage token; another
-     *   project's session; expired session; session_token query / body input; valid request after 23h.
-     * @output 401 "Authentication required."; 404 (logged); 401 (logged ×3); 401 for query / body token; expiry moved; 401 after expiry (logged); 404 once private (logged).
+     *   request slides the expiry (DB row and cookie); the token is accepted only from its
+     *   HttpOnly cookie (never as Bearer header, session_token query or body input); an invalid
+     *   session deletes the cookie.
+     * @input No cookie; unknown project; project switched to private; garbage cookie; another
+     *   project's session; Bearer header / query / body token; expired session; valid request after 23h.
+     * @output 401 "Authentication required."; 404 (logged); 401 (logged ×3) with the cookie
+     *   deleted; 401 for header / query / body token; expiry and cookie moved; 401 after expiry
+     *   (logged); 404 once private (logged).
      */
     public function test_session_guard(): void
     {
-        $this->getJson('/api/projects/public/portal-token')->assertStatus(401)->assertJson(['message' => 'Authentication required.']);
-        $this->withToken($this->session)->getJson('/api/projects/public/nope')->assertStatus(404);
+        $path = '/api/projects/public/portal-token';
+        $this->getJson($path)->assertStatus(401)->assertJson(['message' => 'Authentication required.']);
+        $this->withPortalSession($this->session)->getJson('/api/projects/public/nope')->assertStatus(404);
 
-        $this->withToken('garbage')->getJson('/api/projects/public/portal-token')->assertStatus(401)
+        $garbage = $this->withPortalSession('garbage')->getJson($path)->assertStatus(401)
             ->assertJson(['message' => 'The session has expired or is invalid. Please log in again.']);
+        $this->assertCredentialCookieCleared($garbage, AuthCookies::PORTAL, $path);
         $foreign = $this->portalSession($this->project());
-        $this->withToken($foreign)->getJson('/api/projects/public/portal-token')->assertStatus(401);
-        $this->withoutToken()->getJson("/api/projects/public/portal-token?session_token={$this->session}")->assertStatus(401)->assertJson(['message' => 'Authentication required.']);
-        $this->withoutToken()->postJson('/api/projects/public/portal-token/logout', ['session_token' => $this->session])->assertStatus(401);
-        $this->withToken($this->session)->getJson('/api/projects/public/portal-token')->assertOk()->assertJsonPath('data.name', 'Eshop');
+        $this->withPortalSession($foreign)->getJson($path)->assertStatus(401);
+        $this->withPortalSession(null)->withToken($this->session)->getJson($path)->assertStatus(401)->assertJson(['message' => 'Authentication required.']);
+        $this->withoutToken()->getJson("{$path}?session_token={$this->session}")->assertStatus(401)->assertJson(['message' => 'Authentication required.']);
+        $this->postJson("{$path}/logout", ['session_token' => $this->session])->assertStatus(401);
+        $this->withPortalSession($this->session)->getJson($path)->assertOk()->assertJsonPath('data.name', 'Eshop');
 
         $this->travel(23)->hours();
-        $this->portal('GET')->assertOk();
+        $slid = $this->portal('GET')->assertOk();
         $this->assertTrue(WebProjectSession::where('project_id', $this->portal->id)->sole()->expires_at->gt(now()->addHours(23)));
+        $cookie = $this->credentialCookie($slid, AuthCookies::PORTAL, $path);
+        $this->assertSame($this->session, $cookie->getValue());
+        $this->assertGreaterThan(now()->addHours(23)->getTimestamp(), $cookie->getExpiresTime());
         $this->travel(25)->hours();
         $this->portal('GET')->assertStatus(401);
         $this->assertSame(4, $this->events('project_session_invalid'));
@@ -150,22 +178,23 @@ class ProjectPortalTest extends TestCase
         $this->travelBack();
         $fresh = $this->portalSession($this->portal);
         $this->portal->update(['visibility' => 'private']);
-        $this->withToken($fresh)->getJson('/api/projects/public/portal-token')->assertStatus(404)
+        $this->withPortalSession($fresh)->getJson('/api/projects/public/portal-token')->assertStatus(404)
             ->assertJson(['message' => 'The project was not found or is not available.']);
         $this->assertSame(5, $this->events('project_session_invalid'));
     }
 
     /**
-     * @description Project detail and logout (the session is gone afterwards).
+     * @description Project detail and logout (the session is gone afterwards, the cookie deleted).
      * @input GET /; POST logout; GET / again.
-     * @output 200 {name, checkpoints}; 200 "Logout successful."; 401.
+     * @output 200 {name, checkpoints}; 200 "Logout successful." + expired cookie; 401.
      */
     public function test_me_and_logout(): void
     {
         $this->portal->checkpoints()->create(['label' => 'Build']);
 
         $this->portal('GET')->assertOk()->assertJsonPath('data.name', 'Eshop')->assertJsonPath('data.checkpoints.0.label', 'Build')->assertJsonMissingPath('data.access_token');
-        $this->portal('POST', '/logout')->assertOk()->assertJson(['message' => 'Logout successful.']);
+        $logout = $this->portal('POST', '/logout')->assertOk()->assertJson(['message' => 'Logout successful.']);
+        $this->assertCredentialCookieCleared($logout, AuthCookies::PORTAL, '/api/projects/public/portal-token');
         $this->assertSame(0, WebProjectSession::count());
         $this->portal('GET')->assertStatus(401);
     }
@@ -229,7 +258,7 @@ class ProjectPortalTest extends TestCase
      */
     public function test_thread_store(): void
     {
-        $this->withToken($this->session)->post('/api/projects/public/portal-token/threads', [
+        $this->withPortalSession($this->session)->post('/api/projects/public/portal-token/threads', [
             'subject' => 'Logo', 'priority' => 'high', 'body' => 'Please change it', 'attachments' => [$this->upload('s.png', 1, 'image/png')],
         ], ['Accept' => 'application/json'])->assertCreated()
             ->assertJsonPath('data.opened_by', 'customer')->assertJsonPath('data.status', 'active')->assertJsonPath('data.unread_count', 0)
@@ -251,7 +280,7 @@ class ProjectPortalTest extends TestCase
     public function test_attachments_that_could_run_a_script_are_refused(): void
     {
         $thread = $this->thread($this->portal);
-        $send = fn (string $path, array $data) => $this->withToken($this->session)->post('/api/projects/public/portal-token' . $path, $data, ['Accept' => 'application/json']);
+        $send = fn (string $path, array $data) => $this->withPortalSession($this->session)->post('/api/projects/public/portal-token' . $path, $data, ['Accept' => 'application/json']);
         $threadData = ['subject' => 'Logo', 'priority' => 'high', 'body' => 'See the file'];
 
         $send('/threads', $threadData + ['attachments' => [$this->uploadWithContent('logo.svg', self::SVG_XSS)]])

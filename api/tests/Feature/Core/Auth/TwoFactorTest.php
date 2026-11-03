@@ -18,6 +18,7 @@ use App\Mail\Auth\TwoFactorCodeMail;
 use App\Models\RefreshToken;
 use App\Models\TwoFactorCode;
 use App\Models\User;
+use App\Support\Auth\AuthCookies;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -163,20 +164,23 @@ class TwoFactorTest extends TestCase
     /**
      * @description The correct code completes the login: tokens issued, session consumed.
      * @input Pending session, correct code.
-     * @output 200 {token, refreshToken, user}; session deleted.
+     * @output 200 {token, user} without refreshToken; refresh only in the HttpOnly cookie (its
+     *   hash = the refresh row); session deleted.
      */
     public function test_verify_correct_code_issues_tokens(): void
     {
         $user = $this->user();
         $this->pending($user);
 
-        $this->postJson('/api/login/verify-2fa', ['login_token' => self::LOGIN_TOKEN, 'code' => self::CODE])
+        $response = $this->postJson('/api/login/verify-2fa', ['login_token' => self::LOGIN_TOKEN, 'code' => self::CODE])
             ->assertOk()
             ->assertJsonPath('data.user.id', $user->id)
-            ->assertJsonStructure(['data' => ['token', 'refreshToken']]);
+            ->assertJsonStructure(['data' => ['token']]);
 
+        $this->assertArrayNotHasKey('refreshToken', $response->json('data'));
+        $refresh = $this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh')->getValue();
         $this->assertSame(0, TwoFactorCode::count());
-        $this->assertSame(1, RefreshToken::where('user_id', $user->id)->count());
+        $this->assertSame(hash('sha256', $refresh), RefreshToken::where('user_id', $user->id)->sole()->token);
     }
 
     /**
@@ -222,7 +226,8 @@ class TwoFactorTest extends TestCase
 
         $this->postJson('/api/login/verify-2fa', ['login_token' => $loginToken, 'code' => $code])
             ->assertOk()
-            ->assertJsonStructure(['data' => ['token', 'refreshToken']]);
+            ->assertJsonStructure(['data' => ['token']])
+            ->assertCookie(AuthCookies::REFRESH, null, false);
     }
 
     /**

@@ -4,7 +4,15 @@
  * @project JS web-platform
  * @author JS
  * @created 2025
- * @description Core authentication service managing login, session persistence, token lifecycle, and user authorization state.
+ * @description Core authentication service managing login, session restore, token lifecycle, and user authorization state.
+ * @security Nothing secret is stored by JavaScript. The access token (60 min) and the user's
+ * profile, role and permissions live only in the memory of this service. The refresh token
+ * (7 days) exists only in an HttpOnly / Secure / SameSite=Strict cookie that the API sets and only
+ * the browser sends (to POST /api/refresh) - an XSS can therefore not read it and keep the account.
+ * After a page reload the session is restored by one refresh call. The role and permissions only
+ * shape the UI; the API checks every request itself.
+ * @note The only value kept in localStorage is SESSION_HINT_KEY = "a session may exist" (no
+ * token, no user data). It spares visitors without a session the refresh call on every page load.
  * @dependencies
  * - HttpClient: Facilitates API communication for authentication endpoints.
  * - PermissionService: Synchronizes user permissions within the application.
@@ -15,7 +23,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, throwError, timer, Subject } from 'rxjs';
-import { tap, catchError, switchMap, takeUntil, map } from 'rxjs/operators';
+import { tap, catchError, switchMap, takeUntil, map, finalize, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ApiEnvelope } from '../../shared/interfaces/api-envelope';
 import { PermissionService } from './services/permission.service';
@@ -54,46 +62,86 @@ function authError(backendMessage: unknown, fallbackKey: AuthErrorKey): AuthErro
   return err;
 }
 
+/** Session answer of /login, /login/verify-2fa and /refresh (the refresh token is only in the cookie). */
+export interface AuthSessionResponse {
+  token: string;
+  user: { id?: number | string; user_login_id?: number | string; user_email: string };
+  user_roles?: string[];
+  user_permissions?: string[];
+}
+
+/** In-memory state of the signed-in user. */
+interface SessionState {
+  accessToken: string;
+  userId: string;
+  email: string;
+  role: string | null;
+  permissions: string[];
+}
+
+/** localStorage key of the "a session may exist" hint - holds no token and no user data. */
+export const SESSION_HINT_KEY = 'rpsw_session_hint';
+
+/** Name of the Web Lock that serializes refresh calls of all tabs (they share the refresh cookie). */
+const REFRESH_LOCK_NAME = 'rpsw-auth-refresh';
+
+/** Minimal shape of the Web Locks API (navigator.locks) used here. */
+export interface RefreshLockManager {
+  request<T>(name: string, callback: () => Promise<T>): Promise<T>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private baseUrl = environment.base_api_url;
 
-  private _isLoggedIn = new BehaviorSubject<boolean>(!!sessionStorage.getItem('accessToken'));
+  /** Session of the signed-in user - memory only (see the file header). */
+  private session: SessionState | null = null;
+
+  private _isLoggedIn = new BehaviorSubject<boolean>(false);
   public isLoggedIn$ = this._isLoggedIn.asObservable();
 
-  private _userEmailSubject = new BehaviorSubject<string | null>(sessionStorage.getItem('userEmail'));
+  private _userEmailSubject = new BehaviorSubject<string | null>(null);
   public userEmail$ = this._userEmailSubject.asObservable();
 
   private stopTokenRefresh$ = new Subject<void>();
   private readonly REFRESH_INTERVAL = 20 * 60 * 1000;
+
+  /** Running refresh call - every caller (timer, interceptor, restore) shares one request. */
+  private refreshInFlight$: Observable<AuthSessionResponse> | null = null;
+
+  /**
+   * Web Locks of the browser: the tabs share one refresh cookie and every refresh rotates it, so
+   * two tabs must never refresh at the same moment (the second would send the already used
+   * token). Null where the API does not exist (and in the unit tests).
+   */
+  public lockManager: RefreshLockManager | null =
+    (typeof navigator !== 'undefined' && (navigator as any).locks) ? (navigator as any).locks : null;
 
   constructor(
     private http: HttpClient,
     private permissionService: PermissionService,
     private genericTableService: GenericTableService
   ) {
-    if (this.getAccessToken()) {
-      this.startTokenRefreshTimer();
-      this.syncPermissions();
-    }
+    // Leftovers of the former sessionStorage session (tokens, user data) - removed for good.
+    this.removeLegacyStorage();
   }
 
   /**
    * @description Step 1 of the login: verifies the password (+ captcha when the backend asked for it).
    * @param credentials E-mail, password and optional captcha_token.
-   * @returns {Observable<any>} Either the full session (token / refreshToken / user), or a
-   * `LoginTwoFactorChallenge` ({ requires_2fa: true, login_token, ... }) - in THAT case NOTHING
-   * is stored in sessionStorage, the session is created only after verifyTwoFactor().
+   * @returns {Observable<any>} Either the session (token / user, the refresh token arrives as an
+   * HttpOnly cookie), or a `LoginTwoFactorChallenge` ({ requires_2fa: true, login_token, ... }) -
+   * in THAT case no session starts, it is created only after verifyTwoFactor().
    */
   login(credentials: { email: string; password: string; captcha_token?: string }): Observable<any> {
-    return this.http.post<ApiEnvelope<any>>(`${this.baseUrl}/login`, credentials).pipe(
+    return this.http.post<ApiEnvelope<any>>(`${this.baseUrl}/login`, credentials, { withCredentials: true }).pipe(
       map(res => res.data),
       tap((response: any) => {
         if (response?.requires_2fa) {
-          // Pending 2FA state - deliberately NOT persisted anywhere.
+          // Pending 2FA state - deliberately NOT kept anywhere.
           return;
         }
-        this.persistSession(response);
+        this.startSession(response);
       }),
       catchError(this.handleLoginError)
     );
@@ -103,13 +151,13 @@ export class AuthService {
    * @description Step 2 of the login (only when login() returned requires_2fa): verifies the OTP
    * code and only on success creates the real session.
    * @param loginToken Opaque token from step 1 - kept ONLY in the memory of the calling
-   * component, never in sessionStorage (see login.component.ts).
+   * component (see login.component.ts).
    * @param code 6-digit numeric code from the e-mail.
    */
   verifyTwoFactor(loginToken: string, code: string): Observable<any> {
-    return this.http.post<ApiEnvelope<any>>(`${this.baseUrl}/login/verify-2fa`, { login_token: loginToken, code }).pipe(
+    return this.http.post<ApiEnvelope<any>>(`${this.baseUrl}/login/verify-2fa`, { login_token: loginToken, code }, { withCredentials: true }).pipe(
       map(res => res.data),
-      tap((response: any) => this.persistSession(response)),
+      tap((response: any) => this.startSession(response)),
       catchError(this.handleTwoFactorError)
     );
   }
@@ -149,60 +197,76 @@ export class AuthService {
     );
   }
 
+  /**
+   * @description Whether a user is signed in. After a page reload the memory is empty: when the
+   * session hint says a session may exist, the session is restored with one refresh call (the
+   * refresh cookie); without the hint nobody is signed in and no request is made.
+   * @returns {Observable<boolean>}
+   */
   checkAuth(): Observable<boolean> {
-    const token = this.getAccessToken();
-    if (!token) {
+    if (this.session) {
+      this._isLoggedIn.next(true);
+      return of(true);
+    }
+    if (!this.hasSessionHint()) {
       this._isLoggedIn.next(false);
       return of(false);
     }
-    this._isLoggedIn.next(true);
-    return of(true);
-  }
-
-  refreshAccessToken(): Observable<any> {
-    const refreshToken = this.getRefreshToken();
-    if (!refreshToken) {
-      this.clearAuthData();
-      return throwError(() => new Error('Refresh token missing'));
-    }
-
-    return this.http.post<ApiEnvelope<{ token: string; refreshToken: string }>>(`${this.baseUrl}/refresh`, { refreshToken }).pipe(
-      map(res => res.data),
-      tap(res => {
-        sessionStorage.setItem('accessToken', res.token);
-        sessionStorage.setItem('refreshToken', res.refreshToken);
-        this._isLoggedIn.next(true);
-      }),
-      catchError(err => {
-        this.clearAuthData();
-        return throwError(() => err);
-      })
+    return this.refreshAccessToken().pipe(
+      map(() => true),
+      catchError(() => of(false))
     );
   }
 
+  /**
+   * @description Rotates the refresh cookie and gets a new access token together with the user's
+   * profile, role and permissions (POST /refresh with credentials). Concurrent callers share one
+   * request; the tabs of the browser take turns through a Web Lock.
+   * @returns {Observable<AuthSessionResponse>} The new session; on failure the session is cleared.
+   */
+  refreshAccessToken(): Observable<AuthSessionResponse> {
+    if (!this.refreshInFlight$) {
+      this.refreshInFlight$ = this.exclusive(() =>
+        this.http.post<ApiEnvelope<AuthSessionResponse>>(`${this.baseUrl}/refresh`, {}, { withCredentials: true }).pipe(map(res => res.data))
+      ).pipe(
+        tap(res => this.startSession(res)),
+        catchError(err => {
+          this.clearAuthData();
+          return throwError(() => err);
+        }),
+        finalize(() => { this.refreshInFlight$ = null; }),
+        shareReplay({ bufferSize: 1, refCount: false })
+      );
+    }
+    return this.refreshInFlight$;
+  }
+
   public clearAuthData(): void {
-    sessionStorage.clear();
+    this.session = null;
+    this.setSessionHint(false);
     this.permissionService.clearPermissions();
+    this.genericTableService.setCurrentUser(null);
     this.genericTableService.invalidateAll();
     this._isLoggedIn.next(false);
     this._userEmailSubject.next(null);
     this.stopTokenRefreshTimer();
   }
 
-  public getUserId(): string | null { return sessionStorage.getItem('userId'); }
-  public getUserEmail(): string | null { return sessionStorage.getItem('userEmail'); }
-  public getUserRole(): string | null { return sessionStorage.getItem('userRole'); }
-  public getAccessToken(): string | null { return sessionStorage.getItem('accessToken'); }
-  public getRefreshToken(): string | null { return sessionStorage.getItem('refreshToken'); }
+  public getUserId(): string | null { return this.session?.userId ?? null; }
+  public getUserEmail(): string | null { return this.session?.email ?? null; }
+  public getUserRole(): string | null { return this.session?.role ?? null; }
+  public getAccessToken(): string | null { return this.session?.accessToken ?? null; }
 
   public getUserPermissions(): string[] {
-    const perms = sessionStorage.getItem('userPermissions');
-    return perms ? JSON.parse(perms) : [];
+    return this.session ? [...this.session.permissions] : [];
   }
 
+  /**
+   * @description Ends the session on the server (all tokens of the user, refresh cookie deleted)
+   * and locally - also when the server cannot be reached.
+   */
   logout(): Observable<any> {
-    const body = { refreshToken: this.getRefreshToken() };
-    return this.http.post<any>(`${this.baseUrl}/logout`, body).pipe(
+    return this.http.post<any>(`${this.baseUrl}/logout`, {}, { withCredentials: true }).pipe(
       tap(() => this.clearAuthData()),
       catchError(() => {
         this.clearAuthData();
@@ -212,36 +276,37 @@ export class AuthService {
   }
 
   /**
-   * @description Stores the full session (access / refresh token, user, role, permissions) in
-   * sessionStorage. Shared by the direct login (no 2FA) and the completion of
-   * verifyTwoFactor() - same logic, only a different entry endpoint.
+   * @description Starts (or renews) the in-memory session from a login / 2FA / refresh answer.
+   * Shared by the direct login, the finished 2FA verification and every refresh.
    */
-  private persistSession(response: any): void {
-    const userId = (response.user.id || response.user.user_login_id).toString();
+  private startSession(response: AuthSessionResponse): void {
+    const userId = String(response.user.id ?? response.user.user_login_id);
+    const changedUser = this.session?.userId !== userId;
+    const permissions = response.user_permissions ?? [];
 
-    sessionStorage.setItem('accessToken', response.token);
-    sessionStorage.setItem('refreshToken', response.refreshToken);
-    sessionStorage.setItem('userEmail', response.user.user_email);
-    sessionStorage.setItem('userId', userId);
+    this.session = {
+      accessToken: response.token,
+      userId,
+      email: response.user.user_email,
+      role: response.user_roles?.length ? response.user_roles[0] : null,
+      permissions,
+    };
+    this.setSessionHint(true);
+    this.permissionService.setPermissions(permissions);
 
-    if (response.user_roles?.length > 0) {
-      sessionStorage.setItem('userRole', response.user_roles[0]);
+    if (changedUser) {
+      this.genericTableService.invalidateAll();
     }
+    this.genericTableService.setCurrentUser(userId);
 
-    if (response.user_permissions) {
-      sessionStorage.setItem('userPermissions', JSON.stringify(response.user_permissions));
-      this.permissionService.setPermissions(response.user_permissions);
-    }
-
-    this.genericTableService.invalidateAll();
-
-    this._userEmailSubject.next(response.user.user_email);
+    this._userEmailSubject.next(this.session.email);
     this._isLoggedIn.next(true);
     this.startTokenRefreshTimer();
   }
 
   private startTokenRefreshTimer(): void {
     this.stopTokenRefreshTimer();
+    // A failed refresh ends the session (clearAuthData), which also stops this timer.
     timer(this.REFRESH_INTERVAL, this.REFRESH_INTERVAL).pipe(
       switchMap(() => this.refreshAccessToken()),
       takeUntil(this.stopTokenRefresh$)
@@ -252,9 +317,57 @@ export class AuthService {
     this.stopTokenRefresh$.next();
   }
 
-  private syncPermissions(): void {
-    const perms = this.getUserPermissions();
-    this.permissionService.setPermissions(perms);
+  /**
+   * @description Runs the request under the refresh Web Lock when the browser has one.
+   * @param work Request to run (subscribed only once the lock is held).
+   * @returns {Observable<T>} Result of the request.
+   */
+  private exclusive<T>(work: () => Observable<T>): Observable<T> {
+    const locks = this.lockManager;
+    if (!locks) {
+      return work();
+    }
+    return new Observable<T>(subscriber => {
+      locks.request(REFRESH_LOCK_NAME, () => new Promise<void>(release => {
+        work().subscribe({
+          next: value => subscriber.next(value),
+          error: err => { release(); subscriber.error(err); },
+          complete: () => { release(); subscriber.complete(); },
+        });
+      })).catch(err => subscriber.error(err));
+    });
+  }
+
+  /** @description Whether a session may exist (set at its start, removed when it ends). */
+  private hasSessionHint(): boolean {
+    try {
+      return localStorage.getItem(SESSION_HINT_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  /** @description Sets / removes the session hint (storage blocked = no hint, harmless). */
+  private setSessionHint(on: boolean): void {
+    try {
+      if (on) {
+        localStorage.setItem(SESSION_HINT_KEY, '1');
+      } else {
+        localStorage.removeItem(SESSION_HINT_KEY);
+      }
+    } catch {
+      // Storage unavailable (private mode) - only the restore after a reload is lost.
+    }
+  }
+
+  /** @description Deletes the session keys the former versions kept in sessionStorage. */
+  private removeLegacyStorage(): void {
+    try {
+      ['accessToken', 'refreshToken', 'userId', 'userEmail', 'userRole', 'userPermissions']
+        .forEach(key => sessionStorage.removeItem(key));
+    } catch {
+      // Storage unavailable - nothing to remove.
+    }
   }
 
   /**

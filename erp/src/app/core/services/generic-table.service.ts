@@ -54,11 +54,11 @@ export class GenericTableService {
    */
   public readonly CACHE_TTL_MS = 3 * 60 * 1000;
 
-  /** @description sessionStorage key under which `AuthService.persistSession()` stores the ID of the logged-in user. Must stay in sync with auth.service.ts. */
-  private readonly USER_ID_STORAGE_KEY = 'userId';
-
-  /** @description Fallback segment of the cache key when nobody is logged in (sessionStorage empty) - tells "logged out" apart from a real ID, so they never collide. */
+  /** @description Fallback segment of the cache key when nobody is logged in - tells "logged out" apart from a real ID, so they never collide. */
   private readonly ANONYMOUS_CACHE_SEGMENT = '__anon__';
+
+  /** @description ID of the logged-in user, set by AuthService (null = nobody logged in). */
+  private currentUserId: string | null = null;
 
   private pageCache = new Map<string, CacheEntry>();
 
@@ -163,7 +163,7 @@ export class GenericTableService {
    * @description Invalidates the WHOLE cache across all endpoints and all users - used by the
    * global refresh button of the admin header (see TableRefreshBusService) and, as a security
    * measure, automatically on EVERY change of the logged-in user - see
-   * `AuthService.persistSession()` / `clearAuthData()`. Sends no network request by itself - it
+   * `AuthService.startSession()` / `clearAuthData()`. Sends no network request by itself - it
    * only ensures the next read (the open page and future navigation) is always a real fetch,
    * not stale data.
    */
@@ -195,13 +195,20 @@ export class GenericTableService {
   }
 
   /**
+   * @description Sets the user the cached pages belong to. Called by AuthService when a session
+   * starts or ends (pushed from there, so this service needs no AuthService - which injects it
+   * for `invalidateAll()` - and no circular DI dependency arises).
+   * @param userId ID of the logged-in user, null after logout.
+   */
+  setCurrentUser(userId: string | null): void {
+    this.currentUserId = userId;
+  }
+
+  /**
    * @description Returns the ID of the logged-in user for the cache key, or a neutral placeholder
-   * when nobody is logged in. Reads `sessionStorage` directly (the same key that
-   * `AuthService.persistSession()` sets) to avoid a circular DI dependency on `AuthService`
-   * (which injects `GenericTableService` for `invalidateAll()` on login / logout - see
-   * auth.service.ts).
+   * when nobody is logged in.
    */
   private getCurrentUserIdForCacheKey(): string {
-    return sessionStorage.getItem(this.USER_ID_STORAGE_KEY) ?? this.ANONYMOUS_CACHE_SEGMENT;
+    return this.currentUserId ?? this.ANONYMOUS_CACHE_SEGMENT;
   }
 } 

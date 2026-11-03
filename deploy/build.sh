@@ -241,6 +241,11 @@ check_production_env() {
     # --- session ---
     [[ "$(prod_env SESSION_SECURE_COOKIE)" == "true" ]] || err "SESSION_SECURE_COOKIE must be 'true' - otherwise the session cookie is also sent over plain HTTP"
 
+    # --- CORS (the admin, web and API share one origin - see api/config/cors.php) ---
+    v="$(prod_env CORS_ALLOWED_ORIGINS)"
+    [[ "$v" == *"*"* ]] && err "CORS_ALLOWED_ORIGINS contains '*' - any site could send authenticated requests; list exact origins or leave it empty"
+    [[ "$v" == *"http://"* ]] && wrn "CORS_ALLOWED_ORIGINS contains a plain http:// origin ($v)"
+
     # --- mail (2FA codes, password reset, activation) ---
     v="$(prod_env MAIL_MAILER)"
     if [[ -z "$v" || "$v" =~ ^(log|array)$ ]]; then

@@ -7,6 +7,8 @@
  * @created 2026
  * @description Customer-facing endpoints. `login()` is the ONLY unauthenticated
  * action - everything else sits behind `project.session` middleware.
+ * @security The portal session travels only in the HttpOnly / Secure / SameSite=Strict cookie of
+ * AuthCookies (Path = the routes of this project) - it is never in a body or in JavaScript.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -17,6 +19,7 @@ use App\Http\Resources\Web\{WebProjectPublicResource, WebProjectThreadResource, 
 use App\Mail\Web\ProjectThreadActivityMail;
 use App\Models\Core\CoreSecurityEvent;
 use App\Models\Web\{WebProject, WebProjectSession, WebProjectThread};
+use App\Support\Auth\AuthCookies;
 use App\Traits\HandlesAttachments;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -57,10 +60,9 @@ class WebProjectPublicController extends Controller
         $sessionToken = WebProjectSession::issueFor($project, $request->ip(), $request->userAgent());
 
         return $this->respond([
-            'session_token' => $sessionToken,
-            'expires_in'    => WebProjectSession::LIFETIME_MINUTES * 60,
-            'project'       => new WebProjectPublicResource($project->load('checkpoints')),
-        ]);
+            'expires_in' => WebProjectSession::LIFETIME_MINUTES * 60,
+            'project'    => new WebProjectPublicResource($project->load('checkpoints')),
+        ])->withCookie(AuthCookies::portal($request, $token, $sessionToken));
     }
 
     public function me(Request $request): JsonResponse
@@ -69,10 +71,14 @@ class WebProjectPublicController extends Controller
         return $this->respond(new WebProjectPublicResource($project->load('checkpoints')));
     }
 
-    public function logout(Request $request): JsonResponse
+    public function logout(Request $request, string $token): JsonResponse
     {
         $session = $request->attributes->get('current_project_session');
         $session?->delete();
+
+        // The middleware re-issues the session cookie on every request - replace it with the
+        // expired one so the browser deletes it.
+        $request->attributes->set('project_session_cookie', AuthCookies::forgetPortal($request, $token));
 
         return response()->json(['message' => 'Logout successful.']);
     }

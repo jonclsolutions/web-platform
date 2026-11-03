@@ -5,14 +5,13 @@
  * @author JS
  * @created 2026
  * @description Customer-facing project portal - login (permanent access_token URL +
- * admin-generated password) followed by a 24h-sliding session. Session token stored
- * in localStorage (namespaced per project token) and sent to the backend as
- * `Authorization: Bearer` header on every request (see @security below and the
- * CheckProjectSession middleware).
+ * admin-generated password) followed by a 24h-sliding session (CheckProjectSession middleware).
  *
- * @security The portal session is sent as `Authorization: Bearer` header
- *   (portalGet / portalPost) instead of the `session_token` query parameter - the API accepts only
- *   the header now (open finding #1).
+ * @security The portal session is NOT handled by JavaScript at all: the API sets it as an
+ *   HttpOnly / Secure / SameSite=Strict cookie limited to the routes of this project and the
+ *   browser sends it by itself (same origin). Nothing is stored in localStorage, so an XSS
+ *   cannot read the session. After a reload the portal simply asks the API (GET of the project):
+ *   200 = the session is still valid, 401 = show the login.
  */
 
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef, ElementRef, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
@@ -157,16 +156,16 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
   companySettings: CompanySettings | null = null;
   companySettingsLoading = false;
 
-  private sessionToken: string | null = null;
+  /** Whether the portal holds a session (the session itself is only in the HttpOnly cookie). */
+  private hasSession = false;
+
+  /** Key under which the former versions kept the session token in localStorage (removed on load). */
+  private readonly LEGACY_STORAGE_PREFIX = 'project_session_';
 
   private readonly POLL_INTERVAL_MS = 15000;
   private stopPolling$ = new Subject<void>();
 
   private stopGlobalPolling$ = new Subject<void>();
-
-  private get storageKey(): string {
-    return `project_session_${this.token}`;
-  }
 
   constructor() {
     this.portalI18n.translations$.pipe(takeUntil(this.destroy$)).subscribe(() => {
@@ -245,12 +244,17 @@ updateThreadStatus(status: string): void {
       return;
     }
 
-    const stored = localStorage.getItem(this.storageKey);
-    if (stored) {
-      this.sessionToken = stored;
-      this.loadProject();
-    } else {
-      this.state = 'login';
+    this.removeLegacySessionToken();
+    // The cookie (if any) is unreadable here - the API answers whether the session is valid.
+    this.loadProject();
+  }
+
+  /** @description Deletes the session token a former version of the portal kept in localStorage. */
+  private removeLegacySessionToken(): void {
+    try {
+      localStorage.removeItem(`${this.LEGACY_STORAGE_PREFIX}${this.token}`);
+    } catch {
+      // Storage unavailable - nothing to remove.
     }
   }
 
@@ -411,32 +415,23 @@ updateThreadStatus(status: string): void {
     this.cdr.markForCheck();
   }
 
-  /**
-   * @description Portal request headers: the session goes ONLY into `Authorization: Bearer`,
-   *   never into the URL (access logs / history leak, open finding #1).
-   */
-  private authHeaders(): Record<string, string> | undefined {
-    return this.sessionToken ? { Authorization: `Bearer ${this.sessionToken}` } : undefined;
-  }
-
-  /** GET of a portal endpoint with the session header. */
+  /** GET of a portal endpoint (the browser sends the session cookie). */
   private portalGet<T>(path: string): Observable<T> {
-    return this.publicDataService.get<T>(path, undefined, this.authHeaders());
+    return this.publicDataService.get<T>(path);
   }
 
   /** GET of a portal endpoint keeping the envelope (`meta`, finding #6). */
   private portalGetWithMeta<T, M>(path: string): Observable<ApiEnvelope<T, M>> {
-    return this.publicDataService.getWithMeta<T, M>(path, undefined, this.authHeaders());
+    return this.publicDataService.getWithMeta<T, M>(path);
   }
 
-  /** POST to a portal endpoint with the session header. */
+  /** POST to a portal endpoint (the browser sends the session cookie). */
   private portalPost<T>(path: string, body: any): Observable<T> {
-    return this.publicDataService.post<T>(path, body, this.authHeaders());
+    return this.publicDataService.post<T>(path, body);
   }
 
   private clearSession(): void {
-    localStorage.removeItem(this.storageKey);
-    this.sessionToken = null;
+    this.hasSession = false;
   }
 
   private loadProject(): void {
@@ -445,6 +440,7 @@ updateThreadStatus(status: string): void {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (project) => {
+          this.hasSession = true;
           this.project = project;
           this.state = 'portal';
           this.loadThreads();
@@ -466,7 +462,7 @@ updateThreadStatus(status: string): void {
     this.loginError = null;
     this.cdr.markForCheck();
 
-    this.portalPost<{ session_token: string; project: PublicProject }>(
+    this.portalPost<{ project: PublicProject }>(
       `projects/public/${this.token}/login`,
       { password: this.loginPassword }
     ).pipe(
@@ -474,8 +470,7 @@ updateThreadStatus(status: string): void {
       takeUntil(this.destroy$)
     ).subscribe({
       next: (res) => {
-        this.sessionToken = res.session_token;
-        localStorage.setItem(this.storageKey, this.sessionToken);
+        this.hasSession = true;
         this.project = res.project;
         this.state = 'portal';
         this.loadThreads();
@@ -490,7 +485,7 @@ updateThreadStatus(status: string): void {
   }
 
   logout(): void {
-    if (!this.sessionToken) { this.state = 'login'; return; }
+    if (!this.hasSession) { this.state = 'login'; return; }
 
     this.portalPost(`projects/public/${this.token}/logout`, {})
       .pipe(takeUntil(this.destroy$))
@@ -556,7 +551,7 @@ updateThreadStatus(status: string): void {
   }
 
   refresh(): void {
-    if (!this.sessionToken || this.isRefreshing) return;
+    if (!this.hasSession || this.isRefreshing) return;
     this.isRefreshing = true;
     this.cdr.markForCheck();
 

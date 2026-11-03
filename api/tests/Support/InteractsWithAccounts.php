@@ -6,8 +6,9 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Test helpers for accounts: permissions, roles, users, signing in (Sanctum)
- *   and reading the audit log / security events the tested code writes.
+ * @description Test helpers for accounts: permissions, roles, users, signing in (Sanctum),
+ *   the HttpOnly credential cookies (AuthCookies) and reading the audit log / security events
+ *   the tested code writes.
  * @dependencies
  * - App\Models\User, App\Models\Core\{CorePermission, CoreRole, CoreLog, CoreSecurityEvent}
  * - Laravel Sanctum (Sanctum::actingAs).
@@ -21,6 +22,8 @@ use App\Models\Core\CoreRole;
 use App\Models\Core\CoreSecurityEvent;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Testing\TestResponse;
+use Symfony\Component\HttpFoundation\Cookie;
 use Laravel\Sanctum\Sanctum;
 
 /**
@@ -168,5 +171,39 @@ trait InteractsWithAccounts
             $query->where('description', 'like', '%' . $descriptionContains . '%');
         }
         $this->assertTrue($query->exists(), "core_logs entry '{$eventType}'" . ($descriptionContains ? " containing '{$descriptionContains}'" : '') . ' not found.');
+    }
+
+    /**
+     * @description Returns a credential cookie the answer sets and checks the attributes every
+     *   credential cookie must have (HttpOnly, SameSite=Strict, the given Path, host-only).
+     * @param TestResponse $response Answer of the API.
+     * @param string $name Cookie name (AuthCookies::REFRESH / AuthCookies::PORTAL).
+     * @param string $path Expected Path.
+     * @return Cookie
+     */
+    protected function credentialCookie(TestResponse $response, string $name, string $path): Cookie
+    {
+        $cookie = $response->getCookie($name, false);
+        $this->assertNotNull($cookie, "Cookie '{$name}' was not set.");
+        $this->assertTrue($cookie->isHttpOnly(), "Cookie '{$name}' must be HttpOnly.");
+        $this->assertSame(Cookie::SAMESITE_STRICT, $cookie->getSameSite());
+        $this->assertSame($path, $cookie->getPath());
+        $this->assertNull($cookie->getDomain());
+
+        return $cookie;
+    }
+
+    /**
+     * @description Checks that the answer deletes the credential cookie (empty value, expiry in the past).
+     * @param TestResponse $response Answer of the API.
+     * @param string $name Cookie name.
+     * @param string $path Path of the cookie.
+     * @return void
+     */
+    protected function assertCredentialCookieCleared(TestResponse $response, string $name, string $path): void
+    {
+        $cookie = $this->credentialCookie($response, $name, $path);
+        $this->assertSame('', (string) $cookie->getValue());
+        $this->assertLessThan(time(), $cookie->getExpiresTime());
     }
 }

@@ -86,10 +86,10 @@ builds nothing.
 - **ERROR** – the build would stop: values that break production or open a hole
   (`APP_ENV`≠production, `APP_DEBUG`≠false, missing / invalid `APP_KEY`, non-https or example
   `APP_URL` / `FRONTEND_URL`, empty `DB_HOST` / `DB_DATABASE` / `DB_USERNAME`,
-  `SESSION_SECURE_COOKIE`≠true, `MAIL_MAILER` log / array, missing or test Turnstile keys,
+  `SESSION_SECURE_COOKIE`≠true, `*` in `CORS_ALLOWED_ORIGINS`, `MAIL_MAILER` log / array, missing or test Turnstile keys,
   `SHOP_PAYMENT_SIMULATION` on, `.htaccess` without the rule that blocks `/laravel`).
 - **WARNING** – the build continues, check the value (empty DB password, `root` DB user,
-  local `MAIL_HOST`, example sender, `LOG_LEVEL=debug`, `QUEUE_CONNECTION=sync`, the same
+  local `MAIL_HOST`, a plain `http://` origin in `CORS_ALLOWED_ORIGINS`, example sender, `LOG_LEVEL=debug`, `QUEUE_CONNECTION=sync`, the same
   `APP_KEY` as locally, different hosts in `APP_URL` / `FRONTEND_URL`).
 
 **Done when:** the output ends with `CHECK OK`. Also make sure no placeholder is left:

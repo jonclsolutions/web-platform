@@ -152,12 +152,14 @@ done
 echo
 
 # ── [5/12] Invalid refresh token (refresh_token_invalid) ───────────────────
+# The refresh token is read only from its HttpOnly cookie (rpsw_refresh) - a token in the body
+# is ignored (answer "Refresh token is missing.", no event).
 echo "[5/12] Posílám neplatné refresh tokeny (5x)..."
 for i in $(seq 1 5); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
     -X POST "${API_BASE}/refresh" \
-    -H "Content-Type: application/json" \
-    -d "{\"refreshToken\":\"neplatny-token-${i}-$(date +%s%N)\"}")
+    -H "Accept: application/json" \
+    -H "Cookie: rpsw_refresh=neplatny-token-${i}-$(date +%s%N)")
   printf "  pokus %-2s -> HTTP %s\n" "$i" "$code"
 done
 echo

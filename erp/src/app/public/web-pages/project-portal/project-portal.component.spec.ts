@@ -5,7 +5,8 @@
  * @author JS
  * @created 2026
  * @description Unit tests of ProjectPortalComponent (customer project portal): link token and
- *   stored session, password login / logout, project and thread loading, the 15 s polling of the
+ *   the session of the HttpOnly cookie (the component never sees it - the API answers 200 / 401),
+ *   password login / logout, project and thread loading, the 15 s polling of the
  *   thread list and of new messages, thread detail (older messages, status change, closing),
  *   replies and new threads incl. attachment validation and send errors (bugfix 2026-10-23),
  *   refresh, the lazily loaded contacts tab, derived labels and the language menu.
@@ -34,7 +35,10 @@ describe('ProjectPortalComponent', () => {
   let language$: BehaviorSubject<string>;
   let translations$: BehaviorSubject<any>;
 
-  const SESSION = 'project_session_tok';
+  /** localStorage key of the session token of the former portal versions (removed on load). */
+  const LEGACY_SESSION = 'project_session_tok';
+  /** Whether the browser holds a valid session cookie - decides the answer of GET /tok. */
+  let cookie = false;
   const project = {
     id: 1, name: 'Web', description: 'Desc', platform: null, project_lead: null, contact_phone: null, contact_email: null, technologies: null,
     estimated_completion_from: null, estimated_completion_to: null,
@@ -54,12 +58,9 @@ describe('ProjectPortalComponent', () => {
     const key = Object.keys(replies).filter(k => path.endsWith(k)).sort((a, b) => b.length - a.length)[0];
     return key ? replies[key]() : of({});
   };
-  /** The portal session header (never in the URL - finding #1). */
-  const AUTH = { Authorization: 'Bearer sess' };
-
-  /** Creates the portal for the token (null = none) with an optional stored session. */
-  function create(token: string | null = 'tok', session: string | null = null): void {
-    if (session) localStorage.setItem(SESSION, session);
+  /** Creates the portal for the token (null = none), with or without a valid session cookie. */
+  function create(token: string | null = 'tok', session = false): void {
+    cookie = session;
     TestBed.configureTestingModule({
       imports: [ProjectPortalComponent],
       providers: [
@@ -77,13 +78,13 @@ describe('ProjectPortalComponent', () => {
     fixture.detectChanges();
   }
 
-  /** Logged-in portal (stored session). */
-  const loggedIn = () => create('tok', 'sess');
+  /** Logged-in portal (valid session cookie). */
+  const loggedIn = () => create('tok', true);
 
   beforeEach(() => {
-    localStorage.removeItem(SESSION);
+    localStorage.removeItem(LEGACY_SESSION);
     replies = {
-      '/tok': () => of(project),
+      '/tok': () => cookie ? of(project) : throwError(() => ({ status: 401 })),
       '/tok/threads': () => of(threads()),
       // Envelopes of the getWithMeta() endpoints - extra information in `meta` (finding #6).
       '/threads/1': () => of({ data: detail(1), meta: { has_more_older_messages: true } }),
@@ -99,13 +100,15 @@ describe('ProjectPortalComponent', () => {
   });
   afterEach(() => {
     fixture?.destroy();
-    localStorage.removeItem(SESSION);
+    localStorage.removeItem(LEGACY_SESSION);
   });
 
   /**
-   * @description No token → invalid; token without session → login form; status labels set.
-   * @input token null; token 'tok'.
-   * @output 'invalid' (no request); 'login'; checkpointStatusLabels from the texts.
+   * @description No token → invalid; token without a session cookie → the API answers 401 →
+   *   login form; a session token a former version kept in localStorage is deleted; status labels set.
+   * @input token null; token 'tok' with a legacy localStorage session and no cookie.
+   * @output 'invalid' (no request); GET of the project (no header), 'login', legacy key removed;
+   *   checkpointStatusLabels from the texts.
    */
   it('starts invalid without a token and with the login otherwise', () => {
     create(null);
@@ -114,16 +117,21 @@ describe('ProjectPortalComponent', () => {
     fixture.destroy();
 
     TestBed.resetTestingModule();
+    localStorage.setItem(LEGACY_SESSION, 'old');
     create();
+    expect(get).toHaveBeenCalledOnceWith('projects/public/tok');
+    expect(localStorage.getItem(LEGACY_SESSION)).toBeNull();
     expect(portal.state).toBe('login');
     expect(portal.checkpointStatusLabels).toEqual({ new: 'checkpoint_status_new', active: 'checkpoint_status_active', done: 'checkpoint_status_done' });
   });
 
   /**
-   * @description Login: empty password ignored; success stores the session and opens the
-   *   portal with threads; 404 → project not found; other errors → invalid password.
-   * @input '' ; 'pw' → {session_token 's1', project}; 404; 401.
-   * @output No post; localStorage s1, 'portal', threads 2; 'error_project_not_found'; 'error_invalid_password'.
+   * @description Login: empty password ignored; success (the API sets the session cookie) opens
+   *   the portal with threads - nothing is stored by the component; 404 → project not found;
+   *   other errors → invalid password.
+   * @input '' ; 'pw' → {project}; 404; 401.
+   * @output No post; 'portal', threads 2, requests without headers, localStorage untouched;
+   *   'error_project_not_found'; 'error_invalid_password'.
    */
   it('logs in with the project password', fakeAsync(() => {
     create();
@@ -139,12 +147,13 @@ describe('ProjectPortalComponent', () => {
     expect(portal.loginError).toBe('error_invalid_password');
     expect(portal.loginLoading).toBeFalse();
 
-    replies['/tok/login'] = () => of({ session_token: 's1', project });
+    replies['/tok/login'] = () => { cookie = true; return of({ project }); };
+    const storedBefore = localStorage.length;
     portal.login();
-    expect(post).toHaveBeenCalledWith('projects/public/tok/login', { password: 'pw' }, undefined);
-    expect(get).toHaveBeenCalledWith('projects/public/tok/threads', undefined, { Authorization: 'Bearer s1' });
-    expect(get.calls.allArgs().every((a: any[]) => !String(a[0]).includes('session_token'))).toBeTrue();
-    expect(localStorage.getItem(SESSION)).toBe('s1');
+    expect(post).toHaveBeenCalledWith('projects/public/tok/login', { password: 'pw' });
+    expect(get).toHaveBeenCalledWith('projects/public/tok/threads');
+    expect(get.calls.allArgs().every((a: any[]) => a.length === 1)).toBeTrue();
+    expect(localStorage.length).toBe(storedBefore);
     expect(portal.state).toBe('portal');
     expect(portal.threads.length).toBe(2);
     fixture.destroy();
@@ -152,13 +161,14 @@ describe('ProjectPortalComponent', () => {
   }));
 
   /**
-   * @description Stored session: project loaded; an expired session is cleared → login.
-   * @input Session 'sess' with project ok; then project request failing.
-   * @output 'portal' + session in the URL; 'login' + storage cleared.
+   * @description After a reload the portal asks the API: a valid cookie → project loaded; an
+   *   expired session (401) → login.
+   * @input Valid cookie; then the project request failing.
+   * @output GET of the project without header, 'portal'; 'login'.
    */
-  it('restores or drops a stored session', fakeAsync(() => {
+  it('restores or drops the session of the cookie', fakeAsync(() => {
     loggedIn();
-    expect(get).toHaveBeenCalledWith('projects/public/tok', undefined, AUTH);
+    expect(get).toHaveBeenCalledWith('projects/public/tok');
     expect(portal.state).toBe('portal');
     fixture.destroy();
     discardPeriodicTasks();
@@ -167,7 +177,6 @@ describe('ProjectPortalComponent', () => {
     replies['/tok'] = () => throwError(() => ({ status: 401 }));
     loggedIn();
     expect(portal.state).toBe('login');
-    expect(localStorage.getItem(SESSION)).toBeNull();
   }));
 
   /**
@@ -205,7 +214,7 @@ describe('ProjectPortalComponent', () => {
     expect(portal.selectedThread!.messages!.map(m => m.id)).toEqual([10]);
     expect(portal.threads[0].unread_count).toBe(0);
     expect(portal.threadDetailLoading).toBeFalse();
-    expect(getWithMeta).toHaveBeenCalledWith(jasmine.stringMatching('/threads/1/new-messages\\?after_id=10$'), undefined, AUTH);
+    expect(getWithMeta).toHaveBeenCalledWith(jasmine.stringMatching('/threads/1/new-messages\\?after_id=10$'));
 
     replies['/new-messages'] = () => of({ data: [{ id: 11, body: 'New', author_type: 'admin', author_label: 'PM', created_at: '' }], meta: { status: 'closed' } });
     tick(15000);
@@ -239,7 +248,7 @@ describe('ProjectPortalComponent', () => {
     replies['/messages'] = () => of({ data: [{ id: 5, body: 'Old', author_type: 'admin', author_label: null, created_at: '' }], meta: { has_more_older_messages: false } });
     portal.loadOlderMessages();
     tick();
-    expect(getWithMeta).toHaveBeenCalledWith(jasmine.stringMatching('/threads/1/messages\\?before_message_id=10$'), undefined, AUTH);
+    expect(getWithMeta).toHaveBeenCalledWith(jasmine.stringMatching('/threads/1/messages\\?before_message_id=10$'));
     expect(portal.selectedThread!.messages!.map(m => m.id)).toEqual([5, 10]);
     const calls = get.calls.count();
     portal.loadOlderMessages();
@@ -271,7 +280,7 @@ describe('ProjectPortalComponent', () => {
 
     replies['/status'] = () => of({ status: 'closed' });
     portal.updateThreadStatus('closed');
-    expect(post).toHaveBeenCalledWith('projects/public/tok/threads/1/status', { status: 'closed' }, AUTH);
+    expect(post).toHaveBeenCalledWith('projects/public/tok/threads/1/status', { status: 'closed' });
     expect(portal.selectedThread!.status).toBe('closed');
     expect(portal.threads[0].status).toBe('closed');
 
@@ -378,7 +387,7 @@ describe('ProjectPortalComponent', () => {
 
     portal.replyBody = ' Thanks ';
     portal.sendReply();
-    expect(post).toHaveBeenCalledWith('projects/public/tok/threads/1/messages', { body: 'Thanks' }, AUTH);
+    expect(post).toHaveBeenCalledWith('projects/public/tok/threads/1/messages', { body: 'Thanks' });
     expect(portal.replyBody).toBe('');
 
     portal.replyBody = 'With file';
@@ -421,7 +430,7 @@ describe('ProjectPortalComponent', () => {
     portal.newThreadSubject = 'Bug';
     portal.newThreadBody = 'Broken';
     portal.submitNewThread();
-    expect(post).toHaveBeenCalledWith('projects/public/tok/threads', { subject: 'Bug', priority: 'medium', body: 'Broken' }, AUTH);
+    expect(post).toHaveBeenCalledWith('projects/public/tok/threads', { subject: 'Bug', priority: 'medium', body: 'Broken' });
     expect(portal.newThreadMode).toBeFalse();
 
     portal.openNewThreadForm();
@@ -450,8 +459,8 @@ describe('ProjectPortalComponent', () => {
     tick();
     get.calls.reset();
     portal.refresh();
-    expect(get).toHaveBeenCalledWith('projects/public/tok', undefined, AUTH);
-    expect(getWithMeta).toHaveBeenCalledWith('projects/public/tok/threads/1', undefined, AUTH);
+    expect(get).toHaveBeenCalledWith('projects/public/tok');
+    expect(getWithMeta).toHaveBeenCalledWith('projects/public/tok/threads/1');
     expect(portal.isRefreshing).toBeFalse();
     portal.closeThread();
     portal.refresh();
@@ -470,15 +479,14 @@ describe('ProjectPortalComponent', () => {
    * @description Logout ends the session on the server (also when that fails) and resets the
    *   portal; without a session it just shows the login.
    * @input logout() ok; login again + logout failing; logout without session.
-   * @output post …/logout with the Bearer header; state login, storage cleared, data reset.
+   * @output post …/logout (the API deletes the cookie); state login, data reset.
    */
   it('logs out', fakeAsync(() => {
     loggedIn();
     portal.setActiveTab('checkpoints');
     portal.logout();
-    expect(post).toHaveBeenCalledWith('projects/public/tok/logout', {}, AUTH);
+    expect(post).toHaveBeenCalledWith('projects/public/tok/logout', {});
     expect([portal.state, portal.project, portal.threads.length, portal.activeTab]).toEqual(['login', null, 0, 'description']);
-    expect(localStorage.getItem(SESSION)).toBeNull();
 
     portal.logout();
     expect(portal.state).toBe('login');

@@ -20,6 +20,7 @@ use App\Models\Core\CoreEmailAccessRule;
 use App\Models\Core\CoreSecuritySetting;
 use App\Models\RefreshToken;
 use App\Models\TwoFactorCode;
+use App\Support\Auth\AuthCookies;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
@@ -44,11 +45,12 @@ class LoginTest extends TestCase
     }
 
     /**
-     * @description Correct credentials of an account without 2FA issue an access and a
-     *   refresh token, store the hashed refresh token, set last_login_at, clear the
-     *   failed-attempt counter and write the audit log.
+     * @description Correct credentials of an account without 2FA issue an access token (body)
+     *   and a refresh token ONLY in the HttpOnly cookie, store the hashed refresh token, set
+     *   last_login_at, clear the failed-attempt counter and write the audit log.
      * @input Activated account (role with one permission), POST /api/login with its password.
-     * @output 200 with user, roles, permissions, token, refreshToken; one refresh_tokens row.
+     * @output 200 with user, roles, permissions, token and no refreshToken; refresh cookie
+     *   (HttpOnly, SameSite=Strict, Path /api/refresh) whose hash is the refresh_tokens row.
      */
     public function test_login_success_issues_tokens(): void
     {
@@ -62,7 +64,8 @@ class LoginTest extends TestCase
             ->assertJsonPath('data.user_permissions', ['core-administrators-view']);
 
         $this->assertNotEmpty($response->json('data.token'));
-        $refresh = $response->json('data.refreshToken');
+        $this->assertArrayNotHasKey('refreshToken', $response->json('data'));
+        $refresh = $this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh')->getValue();
         $this->assertSame(hash('sha256', $refresh), RefreshToken::where('user_id', $user->id)->value('token'));
         $this->assertNotNull($user->fresh()->last_login_at);
         $this->assertSame(0, RateLimiter::attempts('login-fail:' . $user->user_email));
@@ -143,7 +146,7 @@ class LoginTest extends TestCase
 
         $this->postJson('/api/login', [
             'email' => $user->user_email, 'password' => $this->defaultPassword, 'captcha_token' => 'ok-token',
-        ])->assertOk()->assertJsonStructure(['data' => ['token', 'refreshToken']]);
+        ])->assertOk()->assertJsonStructure(['data' => ['token']])->assertCookie(AuthCookies::REFRESH, null, false);
     }
 
     /**
@@ -264,7 +267,7 @@ class LoginTest extends TestCase
         $this->assertSame('mixed@example.com', $user->user_email);
 
         $this->postJson('/api/login', ['email' => ' MIXED@example.COM ', 'password' => $this->defaultPassword])
-            ->assertOk()->assertJsonStructure(['data' => ['token', 'refreshToken']]);
+            ->assertOk()->assertJsonStructure(['data' => ['token']])->assertCookie(AuthCookies::REFRESH, null, false);
     }
 
     /**
@@ -297,66 +300,77 @@ class LoginTest extends TestCase
     }
 
     /**
-     * @description Logout revokes the current access token and the given refresh token.
-     * @input Account with a real access token and a refresh token, POST /api/logout {refreshToken}.
-     * @output 200; no personal_access_tokens / refresh_tokens rows left; logout core log.
+     * @description Logout ends the session of the user: every access token (other tabs shared
+     *   the session) and the refresh token are revoked and the refresh cookie is deleted. Tokens
+     *   of other users stay.
+     * @input Account with two access tokens and a refresh token, another account's tokens; POST /api/logout.
+     * @output 200; the user has no tokens left; the other account keeps its two rows; expired
+     *   refresh cookie; logout core log.
      */
     public function test_logout_revokes_tokens(): void
     {
         $user = $this->user();
+        $user->createToken('access-token');
         RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'refresh-raw'), 'expires_at' => now()->addDay()]);
+        $other = $this->user();
+        $other->createToken('access-token');
+        RefreshToken::create(['user_id' => $other->id, 'token' => hash('sha256', 'other-raw'), 'expires_at' => now()->addDay()]);
 
-        $this->withHeaders($this->bearer($user))
-            ->postJson('/api/logout', ['refreshToken' => 'refresh-raw'])
+        $response = $this->withHeaders($this->bearer($user))
+            ->postJson('/api/logout')
             ->assertOk()
             ->assertJson(['message' => 'Logout successful!']);
 
-        $this->assertSame(0, PersonalAccessToken::count());
-        $this->assertSame(0, RefreshToken::count());
+        $this->assertSame(0, $user->tokens()->count());
+        $this->assertSame(0, RefreshToken::where('user_id', $user->id)->count());
+        $this->assertSame(1, $other->tokens()->count());
+        $this->assertSame(1, RefreshToken::where('user_id', $other->id)->count());
+        $this->assertCredentialCookieCleared($response, AuthCookies::REFRESH, '/api/refresh');
         $this->assertCoreLog('logout', $user->user_email);
     }
 
     /**
-     * @description Logout without a refresh token only revokes the access token.
-     * @input Account with a real access token and a refresh token, POST /api/logout {}.
-     * @output 200; the refresh token row stays.
+     * @description A refresh token sent in the body (the former API) is ignored - only the
+     *   cookie counts, so a script that got hold of a token cannot use it this way.
+     * @input Valid refresh token row, POST /api/refresh {refreshToken} without cookie.
+     * @output 401 "Refresh token is missing."; the row stays.
      */
-    public function test_logout_without_refresh_token(): void
+    public function test_refresh_ignores_a_token_in_the_body(): void
     {
         $user = $this->user();
-        RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'keep'), 'expires_at' => now()->addDay()]);
+        RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'raw'), 'expires_at' => now()->addDay()]);
 
-        $this->withHeaders($this->bearer($user))->postJson('/api/logout')->assertOk();
-
-        $this->assertSame(0, PersonalAccessToken::count());
+        $this->postJson('/api/refresh', ['refreshToken' => 'raw'])->assertStatus(401)->assertJson(['message' => 'Refresh token is missing.']);
         $this->assertSame(1, RefreshToken::count());
     }
 
     /**
-     * @description Refresh without a token is refused.
-     * @input POST /api/refresh {}.
-     * @output 401 "Refresh token is missing."
+     * @description Refresh without the cookie is refused (and the cookie deleted).
+     * @input POST /api/refresh without cookie.
+     * @output 401 "Refresh token is missing."; expired refresh cookie.
      */
     public function test_refresh_requires_token(): void
     {
-        $this->postJson('/api/refresh')->assertStatus(401)->assertJson(['message' => 'Refresh token is missing.']);
+        $response = $this->postJson('/api/refresh')->assertStatus(401)->assertJson(['message' => 'Refresh token is missing.']);
+        $this->assertCredentialCookieCleared($response, AuthCookies::REFRESH, '/api/refresh');
     }
 
     /**
-     * @description An unknown or expired refresh token is refused and recorded.
-     * @input Expired refresh token of an existing account.
-     * @output 401; refresh_token_invalid event (info).
+     * @description An unknown or expired refresh token is refused, recorded and its cookie deleted.
+     * @input Expired refresh token of an existing account (cookie).
+     * @output 401; refresh_token_invalid event (info); expired refresh cookie.
      */
     public function test_refresh_rejects_expired_token(): void
     {
         $user = $this->user();
         RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'old'), 'expires_at' => now()->subMinute()]);
 
-        $this->postJson('/api/refresh', ['refreshToken' => 'old'])
+        $response = $this->withUnencryptedCookie(AuthCookies::REFRESH, 'old')->withCredentials()->postJson('/api/refresh')
             ->assertStatus(401)
             ->assertJson(['message' => 'Invalid or expired token.']);
 
         $this->assertSecurityEvent('refresh_token_invalid', 'info');
+        $this->assertCredentialCookieCleared($response, AuthCookies::REFRESH, '/api/refresh');
     }
 
     /**
@@ -370,7 +384,7 @@ class LoginTest extends TestCase
         RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'raw'), 'expires_at' => now()->addDay()]);
         $user->delete();
 
-        $this->postJson('/api/refresh', ['refreshToken' => 'raw'])->assertStatus(401);
+        $this->withUnencryptedCookie(AuthCookies::REFRESH, 'raw')->withCredentials()->postJson('/api/refresh')->assertStatus(401);
     }
 
     /**
@@ -383,10 +397,11 @@ class LoginTest extends TestCase
         $user = $this->user(['is_blocked' => true]);
         RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'raw'), 'expires_at' => now()->addDay()]);
 
-        $this->postJson('/api/refresh', ['refreshToken' => 'raw'])->assertStatus(403);
+        $response = $this->withUnencryptedCookie(AuthCookies::REFRESH, 'raw')->withCredentials()->postJson('/api/refresh')->assertStatus(403);
 
         $this->assertSame(0, RefreshToken::count());
         $this->assertSecurityEvent('refresh_blocked_account');
+        $this->assertCredentialCookieCleared($response, AuthCookies::REFRESH, '/api/refresh');
     }
 
     /**
@@ -402,32 +417,89 @@ class LoginTest extends TestCase
         RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'raw'), 'expires_at' => now()->addDay()]);
         CoreSecuritySetting::current()->update(['primary_email_domain' => 'company.cz']);
 
-        $this->postJson('/api/refresh', ['refreshToken' => 'raw'])
+        $response = $this->withUnencryptedCookie(AuthCookies::REFRESH, 'raw')->withCredentials()->postJson('/api/refresh')
             ->assertStatus(403)
             ->assertJsonPath('message', 'Login is not allowed for this account. Please contact the administrator.');
 
+        $this->assertCredentialCookieCleared($response, AuthCookies::REFRESH, '/api/refresh');
         $this->assertSame(0, RefreshToken::count());
         $this->assertSame(0, PersonalAccessToken::count());
         $this->assertSecurityEvent('refresh_email_not_allowed');
     }
 
     /**
-     * @description A valid refresh token rotates: old refresh and access tokens are revoked,
-     *   a new pair is issued.
-     * @input Account with an access token and a valid refresh token.
-     * @output 200 {token, refreshToken}; exactly one new refresh token and one access token.
+     * @description A valid refresh cookie rotates: the old refresh token and the access token
+     *   the tab sent are revoked, a new refresh cookie and access token are issued together with
+     *   the profile, roles and permissions (the admin restores its session after a reload this
+     *   way). Another valid access token of the user (another tab) stays, expired ones go.
+     * @input Account with a sent access token, another valid one, an expired one and a refresh cookie.
+     * @output 200 {token, user, user_roles, user_permissions} without refreshToken; new cookie
+     *   (hash = the only refresh row); the sent and the expired token deleted; the other tab's
+     *   token and the new one remain.
      */
     public function test_refresh_rotates_tokens(): void
     {
-        $user = $this->user();
-        $user->createToken('access-token');
+        $user = $this->userWith(['core-administrators-view']);
+        $sent = $user->createToken('access-token', ['*'], now()->addHour())->plainTextToken;
+        $otherTab = $user->createToken('access-token', ['*'], now()->addHour())->accessToken;
+        $expired = $user->createToken('access-token', ['*'], now()->subMinute())->accessToken;
         RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'raw'), 'expires_at' => now()->addDay()]);
 
-        $response = $this->postJson('/api/refresh', ['refreshToken' => 'raw'])->assertOk();
+        $response = $this->withUnencryptedCookie(AuthCookies::REFRESH, 'raw')->withCredentials()
+            ->withHeaders(['Authorization' => 'Bearer ' . $sent])
+            ->postJson('/api/refresh')
+            ->assertOk()
+            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonPath('data.user_permissions', ['core-administrators-view']);
 
-        $this->assertNotSame('raw', $response->json('data.refreshToken'));
-        $this->assertSame(hash('sha256', $response->json('data.refreshToken')), RefreshToken::sole()->token);
-        $this->assertSame(1, PersonalAccessToken::count());
+        $this->assertArrayNotHasKey('refreshToken', $response->json('data'));
+        $newRefresh = $this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh')->getValue();
+        $this->assertNotSame('raw', $newRefresh);
+        $this->assertSame(hash('sha256', $newRefresh), RefreshToken::sole()->token);
+
+        $this->assertNull(PersonalAccessToken::findToken($sent));
+        $this->assertNull(PersonalAccessToken::find($expired->id));
+        $this->assertNotNull(PersonalAccessToken::find($otherTab->id));
         $this->assertTrue(PersonalAccessToken::findToken($response->json('data.token'))->expires_at->isFuture());
+        $this->assertSame(2, PersonalAccessToken::count());
+    }
+
+    /**
+     * @description A Bearer token of ANOTHER user sent with the refresh is not revoked.
+     * @input Refresh cookie of user A, Authorization of user B.
+     * @output 200; B's token still exists.
+     */
+    public function test_refresh_keeps_a_foreign_access_token(): void
+    {
+        $user = $this->user();
+        $foreign = $this->user()->createToken('access-token', ['*'], now()->addHour())->plainTextToken;
+        RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'raw'), 'expires_at' => now()->addDay()]);
+
+        $this->withUnencryptedCookie(AuthCookies::REFRESH, 'raw')->withCredentials()
+            ->withHeaders(['Authorization' => 'Bearer ' . $foreign])
+            ->postJson('/api/refresh')
+            ->assertOk();
+
+        $this->assertNotNull(PersonalAccessToken::findToken($foreign));
+    }
+
+    /**
+     * @description The credential cookie is Secure with SESSION_SECURE_COOKIE (production
+     *   .env) and the refresh route is rate limited.
+     * @input session.secure true, login; 31 refresh calls within a minute.
+     * @output Secure refresh cookie; the 31st refresh answers 429.
+     */
+    public function test_refresh_cookie_is_secure_and_refresh_is_throttled(): void
+    {
+        config(['session.secure' => true]);
+        $user = $this->user();
+
+        $response = $this->postJson('/api/login', ['email' => $user->user_email, 'password' => $this->defaultPassword])->assertOk();
+        $this->assertTrue($this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh')->isSecure());
+
+        foreach (range(1, 30) as $i) {
+            $this->postJson('/api/refresh')->assertStatus(401);
+        }
+        $this->postJson('/api/refresh')->assertStatus(429);
     }
 }
