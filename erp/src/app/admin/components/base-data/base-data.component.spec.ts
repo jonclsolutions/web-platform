@@ -173,6 +173,24 @@ describe('BaseDataComponent', () => {
     }));
 
     /**
+     * @description On a page without a paginated list the global refresh and the background
+     *   refresh reload through refreshData() - the list (and its endpoint) is never touched.
+     * @input  usesPaginatedList = false; refreshAll$ emits; 15 minutes pass
+     * @output refreshData() called 3× (init, global, background); getPaginatedData and
+     *   invalidateEndpoint never called
+     */
+    it('reloads non-paginated pages through refreshData() only', fakeAsync(() => {
+      component.setUsesPaginatedList(false);
+      component.init(TestBed.inject(Router));
+      ctx.refreshAll$.next();
+      tick(15 * 60 * 1000);
+      expect(component.refreshCalls).toBe(3);
+      expect(ctx.genericTable.getPaginatedData).not.toHaveBeenCalled();
+      expect(ctx.genericTable.invalidateEndpoint).not.toHaveBeenCalled();
+      discardPeriodicTasks();
+    }));
+
+    /**
      * @description Background refresh runs every 15 minutes while the tab is visible.
      * @input  15 minutes pass after init
      * @output invalidateEndpoint('core/things') called once

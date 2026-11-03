@@ -19,7 +19,8 @@ const SECTION = 'security-events';
 export const EVENT_TYPE_VALUES: string[] = [
   'captcha_failed', 'captcha_provider_error', 'throttle_exceeded', 'login_failed',
   'login_brute_force_suspected', 'login_2fa_invalid', 'login_2fa_exhausted',
-  'login_2fa_resend_exhausted', 'refresh_token_invalid', 'scan_probe',
+  'login_2fa_resend_exhausted', 'refresh_token_invalid', 'scan_probe', 'csp_violation',
+  'refresh_token_reuse',
 ];
 
 export const SEVERITY_VALUES: string[] = ['info', 'warning', 'critical'];
@@ -38,6 +39,8 @@ const EVENT_TYPE_LABEL_KEYS: Record<string, string> = {
   login_2fa_resend_exhausted: 'event_login_2fa_resend_exhausted',
   refresh_token_invalid: 'event_refresh_token_invalid',
   scan_probe: 'event_scan_probe',
+  csp_violation: 'event_csp_violation',
+  refresh_token_reuse: 'event_refresh_token_reuse',
 };
 
 const SEVERITY_LABEL_KEYS: Record<string, string> = {

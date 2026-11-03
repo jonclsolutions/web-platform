@@ -261,7 +261,18 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
 
   // ── Pagination / trash - delegates to PaginatedListStore ──────────────────────
 
+  /**
+   * @description "Hard" reload of the page data - the global "Refresh all" button, the background
+   * refresh and the mutations of the table pages call it.
+   * @param currentFilters Filters of the reload (paginated pages only).
+   * @note Pages with their own data source (`usesPaginatedList = false`) reload through their
+   * `refreshData()` - their endpoint is no paginated list and must never be read as one.
+   */
   public forceFullRefresh(currentFilters: Core.FilterParams = this.defaultFilters): void {
+    if (!this.usesPaginatedList) {
+      this.refreshData();
+      return;
+    }
     this.list.forceFullRefresh(currentFilters);
   }
 

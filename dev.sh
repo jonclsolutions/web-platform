@@ -34,7 +34,8 @@
 #   ./dev.sh stop                    stop the containers (data stay)
 #   ./dev.sh down                    stop and remove the containers (data stay in the volume)
 #   ./dev.sh status                  running services and URLs
-#   ./dev.sh logs [service]          follow dev/logs/<service>.log (api, queue, erp, db, mailpit, …)
+#   ./dev.sh logs [service]          follow dev/logs/<service>.log (api, queue, erp, db, mailpit, …,
+#                                    laravel = the application log api/storage/logs/laravel.log)
 #   ./dev.sh artisan <args>          php artisan … in the api container (e.g. migrate, tinker)
 #   ./dev.sh composer <args>         composer … in api/
 #   ./dev.sh npm <args>              npm … in erp/        ./dev.sh npx <args>   npx … in erp/
@@ -101,6 +102,7 @@ dc() { "${DC[@]}" "$@"; }
 start_log_writers() {
     local since="$1" s; shift
     mkdir -p "$LOG_DIR" "$PID_DIR"
+    link_laravel_log
     stop_log_writers
     for s in "$@"; do
         : > "$LOG_DIR/$s.log"
@@ -113,6 +115,17 @@ start_log_writers() {
         fi
         printf '%s\n' "$!" > "$PID_DIR/$s.pid"
     done
+}
+
+# @description Links dev/logs/laravel.log to the application log of Laravel
+# (api/storage/logs/laravel.log - exceptions, stack traces, Log::…), so every log of the
+# environment is in one folder. A relative symlink: it is the same file, nothing is copied, and
+# it keeps working when the repository is moved. The log stays where Laravel writes it.
+link_laravel_log() {
+    local target="$API_DIR/storage/logs/laravel.log"
+    mkdir -p "$(dirname "$target")"
+    [[ -e "$target" ]] || : > "$target"
+    ln -sfn "../../api/storage/logs/laravel.log" "$LOG_DIR/laravel.log"
 }
 
 # @description Ends the log writers of a previous start (if any are still running).
@@ -266,12 +279,16 @@ cmd_status() {
 # -----------------------------------------------------------------------------
 cmd_logs() {
     preflight
+    mkdir -p "$LOG_DIR"
+    link_laravel_log
     local files=() s
     if [[ $# -eq 0 ]]; then
         for s in "$LOG_DIR"/*.log; do [[ -f "$s" ]] && files+=("$s"); done
+        # Only the always present laravel.log link = no service logs of this run.
+        [[ ${#files[@]} -eq 1 && "${files[0]}" == "$LOG_DIR/laravel.log" ]] && files=()
     else
         for s in "$@"; do
-            [[ -f "$LOG_DIR/$s.log" ]] || die "no log file dev/logs/$s.log (services: ${SERVICES[*]} scheduler)"
+            [[ -f "$LOG_DIR/$s.log" ]] || die "no log file dev/logs/$s.log (services: ${SERVICES[*]} scheduler laravel)"
             files+=("$LOG_DIR/$s.log")
         done
     fi

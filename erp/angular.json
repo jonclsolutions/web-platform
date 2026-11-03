@@ -29,12 +29,21 @@
               }
             ],
             "styles": [
+              "src/fonts.css",
               "src/styles.css"
             ],
             "scripts": []
           },
           "configurations": {
             "production": {
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": false
+              },
               "budgets": [
                 {
                   "type": "initial",
@@ -103,6 +112,7 @@
               }
             ],
             "styles": [
+              "src/fonts.css",
               "src/styles.css"
             ],
             "scripts": []

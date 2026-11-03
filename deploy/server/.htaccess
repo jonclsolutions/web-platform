@@ -29,6 +29,29 @@
     RewriteRule ^ index.html [L]
 </IfModule>
 
+# Security headers of the SPA, the public web and /storage (mod_headers). The API answers
+# (/api, internally rewritten to /laravel/public/index.php) are left out - Laravel sets their
+# own, stricter headers (App\Http\Middleware\SecurityHeaders).
+# Content-Security-Policy - what the pages may load and run:
+#   script-src  own bundle + Cloudflare Turnstile (captcha) + Google Analytics (loaded only after
+#               consent); NO inline script and NO eval, so an injected <script> or onerror=… never runs
+#   style-src   'unsafe-inline' is required by Angular (component styles are <style> elements)
+#   font-src    the fonts are self-hosted (src/fonts.css) - nothing from Google Fonts
+#   frame-src   only the Turnstile widget; frame-ancestors 'self' = no clickjacking from other sites
+#   report-uri  every blocked resource is recorded as the security event csp_violation (admin)
+# To diagnose a broken page, switch the header name to Content-Security-Policy-Report-Only:
+# the browser then only reports (console + csp_violation) and blocks nothing.
+<IfModule mod_headers.c>
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self' data:; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests; report-uri /api/csp-report" "expr=%{REQUEST_URI} !~ m#^/(api|laravel)(/|$)#"
+    Header always set X-Content-Type-Options "nosniff" "expr=%{REQUEST_URI} !~ m#^/(api|laravel)(/|$)#"
+    Header always set X-Frame-Options "SAMEORIGIN" "expr=%{REQUEST_URI} !~ m#^/(api|laravel)(/|$)#"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin" "expr=%{REQUEST_URI} !~ m#^/(api|laravel)(/|$)#"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()" "expr=%{REQUEST_URI} !~ m#^/(api|laravel)(/|$)#"
+    Header always set Cross-Origin-Opener-Policy "same-origin" "expr=%{REQUEST_URI} !~ m#^/(api|laravel)(/|$)#"
+    # HTTPS only for one year (no includeSubDomains - other subdomains may have no HTTPS).
+    Header always set Strict-Transport-Security "max-age=31536000" "expr=%{HTTPS} == 'on' && %{REQUEST_URI} !~ m#^/(api|laravel)(/|$)#"
+</IfModule>
+
 # Second layer (works even without mod_rewrite): never serve .env / .user.ini / shell scripts.
 <FilesMatch "^(\.env.*|\.user\.ini|.*\.sh)$">
     <IfModule mod_authz_core.c>

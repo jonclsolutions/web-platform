@@ -1,0 +1,41 @@
+/*
+    @file: fonts.css
+    @path: /src/fonts.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Self-hosted web fonts (Inter, Poppins, Source Sans Pro) from the @fontsource
+        packages - the font files are part of the build and served from our own origin. No request
+        goes to Google before (or without) the visitor's consent (GDPR, LG Munich I 3 O 17493/20),
+        and the Content-Security-Policy can keep font-src 'self'. Only the latin and latin-ext
+        subsets (Czech diacritics) of the weights the styles use are imported; each @font-face has
+        a unicode-range, so the browser downloads only the files a page needs.
+    @dependencies: @fontsource/inter, @fontsource/poppins, @fontsource/source-sans-pro (angular.json styles)
+*/
+
+@import '@fontsource/inter/latin-300.css';
+@import '@fontsource/inter/latin-ext-300.css';
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-ext-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-ext-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/inter/latin-ext-600.css';
+@import '@fontsource/inter/latin-700.css';
+@import '@fontsource/inter/latin-ext-700.css';
+@import '@fontsource/poppins/latin-400.css';
+@import '@fontsource/poppins/latin-ext-400.css';
+@import '@fontsource/poppins/latin-500.css';
+@import '@fontsource/poppins/latin-ext-500.css';
+@import '@fontsource/poppins/latin-600.css';
+@import '@fontsource/poppins/latin-ext-600.css';
+@import '@fontsource/poppins/latin-700.css';
+@import '@fontsource/poppins/latin-ext-700.css';
+@import '@fontsource/source-sans-pro/latin-300.css';
+@import '@fontsource/source-sans-pro/latin-ext-300.css';
+@import '@fontsource/source-sans-pro/latin-400.css';
+@import '@fontsource/source-sans-pro/latin-ext-400.css';
+@import '@fontsource/source-sans-pro/latin-600.css';
+@import '@fontsource/source-sans-pro/latin-ext-600.css';
+@import '@fontsource/source-sans-pro/latin-700.css';
+@import '@fontsource/source-sans-pro/latin-ext-700.css';

@@ -4,7 +4,8 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Host page of the Angular application (meta tags, fonts, inline initial loader).
+    @description: Host page of the Angular application (meta tags, inline initial loader). The web
+        fonts are self-hosted (src/fonts.css) - nothing is loaded from Google.
 -->
 
 <!doctype html>
@@ -28,10 +29,6 @@
 <meta property="og:url" content="https://www.rpsw.cz/">
 <meta property="og:image" content="https://www.rpsw.cz/assets/images/logos/logo.png">
 <meta property="og:locale" content="cs_CZ">
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <style>
     /* Inline and outside Angular on purpose - the loader must show before anything else

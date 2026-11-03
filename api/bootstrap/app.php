@@ -35,6 +35,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(HandleCors::class);
 
         /**
+         * Security headers (CSP, nosniff, frame protection, HSTS on HTTPS) on every API answer.
+         */
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
+        /**
          * Register custom middleware aliases for use in route definitions.
          */
         $middleware->alias([

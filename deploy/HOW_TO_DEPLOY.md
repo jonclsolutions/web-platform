@@ -30,7 +30,7 @@ Contents:
 - all changes committed; the build warns about uncommitted changes in `api/`, `erp/`, `deploy/`
 
 **Hosting**
-- Apache with `mod_rewrite` and `.htaccess` (`AllowOverride All`), PHP 8.4+, MySQL / MariaDB
+- Apache with `mod_rewrite`, `mod_headers` and `.htaccess` (`AllowOverride All`), PHP 8.4+, MySQL / MariaDB
 - SSH access (needed for `configure-server.sh`, `php artisan` and cron) and SFTP / FTPS
 - an empty database + user (hosting panel → databases) and an SMTP mailbox
 - HTTPS certificate for the domain
@@ -87,10 +87,12 @@ builds nothing.
   (`APP_ENV`≠production, `APP_DEBUG`≠false, missing / invalid `APP_KEY`, non-https or example
   `APP_URL` / `FRONTEND_URL`, empty `DB_HOST` / `DB_DATABASE` / `DB_USERNAME`,
   `SESSION_SECURE_COOKIE`≠true, `*` in `CORS_ALLOWED_ORIGINS`, `MAIL_MAILER` log / array, missing or test Turnstile keys,
-  `SHOP_PAYMENT_SIMULATION` on, `.htaccess` without the rule that blocks `/laravel`).
+  `SHOP_PAYMENT_SIMULATION` on, `.htaccess` without the rule that blocks `/laravel` or without
+  `X-Frame-Options`).
 - **WARNING** – the build continues, check the value (empty DB password, `root` DB user,
   local `MAIL_HOST`, a plain `http://` origin in `CORS_ALLOWED_ORIGINS`, example sender, `LOG_LEVEL=debug`, `QUEUE_CONNECTION=sync`, the same
-  `APP_KEY` as locally, different hosts in `APP_URL` / `FRONTEND_URL`).
+  `APP_KEY` as locally, different hosts in `APP_URL` / `FRONTEND_URL`, `.htaccess` without an
+  enforced `Content-Security-Policy`).
 
 **Done when:** the output ends with `CHECK OK`. Also make sure no placeholder is left:
 
@@ -216,6 +218,11 @@ Release notes may list extra one-time steps – see *One-time steps* in the READ
 - `curl -I https://<domain>/laravel/.env` → must return **403** (or 404), **never 200**
 - `curl -I https://<domain>/configure-server.sh` → **403**
 - `https://<domain>/api/web/public/status` → JSON answer
+- `curl -I https://<domain>/` → has `Content-Security-Policy`, `Strict-Transport-Security`,
+  `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`; `curl -I https://<domain>/api/web/public/status`
+  → `Content-Security-Policy: default-src 'none'; …` and `X-Frame-Options: DENY` (no header = `mod_headers` is off)
+- open the web and the admin with the browser console open: no "Refused to load / execute …"
+  (Content-Security-Policy) message
 - after a few minutes: `laravel/storage/logs/queue-cron.log` and `scheduler-cron.log` exist (cron runs)
 - `laravel/storage/logs/` has no new errors
 
@@ -242,6 +249,7 @@ Release notes may list extra one-time steps – see *One-time steps* in the READ
 | `the Angular bundle contains development settings` | `erp/angular.json` lost the production `fileReplacements`, or `--skip-angular` reused a dev build |
 | `sensitive files found in build/www` | a file that must not be public got into the package – remove it from `api/` |
 | `/laravel/.env` returns 200 | `.htaccess` missing or `mod_rewrite` / `AllowOverride` off – take the site offline until fixed and change all passwords |
+| Page without styles / a feature does not work, console says "Refused to … Content-Security-Policy" | the policy in `deploy/server/.htaccess` blocks a source the page needs (Admin → Security events → *csp_violation* shows the directive and the origin). Add the origin to the right directive; to diagnose, rename the header to `Content-Security-Policy-Report-Only` (reports only, blocks nothing) and switch it back afterwards. Images from another host than the site: `APP_URL` must be the domain the site is opened on |
 | Login asks for captcha and always fails | wrong or test Turnstile keys, or the domain is not set in the Turnstile widget |
 | No 2FA / reset e-mails | `MAIL_*` in `production.env`, cron of the queue (`queue-cron.log`) |
 | `500` after a deploy | `laravel/storage/logs/laravel.log`; usually `php artisan config:cache` or permissions of `storage/` |

@@ -2084,6 +2084,8 @@
     "event_login_2fa_resend_exhausted": "Vyčerpané žádosti o 2FA kód",
     "event_refresh_token_invalid": "Neplatný přihlašovací token",
     "event_scan_probe": "Automatizované skenování",
+    "event_csp_violation": "Zablokováno bezpečnostní politikou (CSP)",
+    "event_refresh_token_reuse": "Znovupoužitý přihlašovací token (možná krádež)",
 
     "severity_info": "Informativní",
     "severity_warning": "Varování",
@@ -2194,6 +2196,10 @@
 
     "explain_scan_probe_what": "Bot zkusil zavolat cestu, která v aplikaci neexistuje, ale je typická pro známé zranitelnosti jiných systémů (odhalené .env soubory, staré WordPress instalace, exponovaný .git adresář apod.) - naposledy {route}, z IP adresy {ip}.",
     "explain_scan_probe_recommendation": "Tohle dělají prakticky nepřetržitě boti po celém internetu - protože takové cesty v aplikaci neexistují, sama o sobě nejsou zranitelností. Pokud provoz z jedné IP dlouhodobě pokračuje ve vysokém objemu, zvažte trvalé zablokování na úrovni firewallu/CDN.",
+    "explain_csp_violation_what": "Prohlížeč návštěvníka z IP adresy {ip} na stránce zablokoval zdroj, který bezpečnostní politika obsahu (Content-Security-Policy) nepovoluje - počet výskytů {occurrences}. Která direktiva, co bylo zablokováno a na které části webu, je v detailu záznamu (context).",
+    "explain_refresh_token_reuse_what": "Z IP adresy {ip} přišel přihlašovací (refresh) token účtu ID {user_id}, který už byl jednou použit a nahrazen novým. Token tedy drží dvě strany - jedna z nich ho nejspíš ukradla. Aplikace proto ukončila všechna přihlášení tohoto účtu.",
+    "explain_refresh_token_reuse_recommendation": "Ověřte s uživatelem, zda se nedávno nepřihlašoval z jiného zařízení nebo sítě. Pokud ne, nechte ho změnit heslo, zkontrolujte jeho zařízení (malware, rozšíření prohlížeče) a projděte další bezpečnostní události ze stejné IP adresy.",
+    "explain_csp_violation_recommendation": "Zablokovaný inline skript nebo neznámá cizí doména může být pokus o vložení škodlivého kódu (XSS) - pak ho politika právě zastavila. Rozšíření prohlížeče návštěvníků hlásí podobné záznamy často a jsou neškodná. Pokud se opakovaně hlásí doména, kterou web sám potřebuje (nová analytika, platební brána), je potřeba ji přidat do politiky v deploy/server/.htaccess.",
 
     "explain_fallback_label": "Neznámý typ události",
     "explain_fallback_what": "Pro tento typ události zatím není k dispozici podrobný popis.",

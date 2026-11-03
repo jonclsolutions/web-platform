@@ -245,7 +245,7 @@ Everything is started and stopped with one command from the repository root:
 ./dev.sh up -d                 # start in the background – keeps running after the terminal is closed
 ./dev.sh stop                  # stop the containers (data kept)
 ./dev.sh status                # what is running + URLs
-./dev.sh logs [service]        # follow dev/logs/<service>.log (api, queue, erp, db, mailpit, …)
+./dev.sh logs [service]        # follow dev/logs/<service>.log (api, queue, erp, db, mailpit, laravel, …)
 ./dev.sh up --with-scheduler   # also run the Laravel scheduler
 ```
 
@@ -253,6 +253,13 @@ Every service writes its own log file **`dev/logs/<service>.log`** (api, queue, 
 phpmyadmin, scheduler – plain text with timestamps, emptied on every start, git-ignored); the
 console of `./dev.sh` shows all of them together. `./dev.sh up -d` waits until the API and the ERP
 answer and prints the end of the log of a service that failed.
+
+**`dev/logs/laravel.log`** is the application log of Laravel (exceptions with stack traces,
+`Log::…`) – a relative **link** to `api/storage/logs/laravel.log`, created by `init-workspace.sh` and
+renewed by every `./dev.sh up` / `./dev.sh logs`. Unlike the service logs it is **not** emptied on
+start. It is one file: editing or emptying it in `dev/logs/` changes the log in `api/` too
+(`: > dev/logs/laravel.log` empties it); deleting `dev/logs/laravel.log` removes only the link.
+Follow it alone with `./dev.sh logs laravel`.
 
 | Service | URL |
 |---|---|

@@ -57,6 +57,7 @@ use App\Http\Controllers\Api\Core\CoreLogController;
 use App\Http\Controllers\Api\Web\WebPublicController;
 use App\Http\Controllers\Api\AttachmentDownloadController;
 use App\Http\Controllers\Api\UploadRulesController;
+use App\Http\Controllers\Api\CspReportController;
 use App\Models\Core\CoreSecurityEvent;
 use App\Http\Controllers\Api\Core\CoreEmailAccessPolicyController;
 use App\Http\Controllers\Api\Legal\PageTitleController;
@@ -105,6 +106,9 @@ Route::get('web/public/status', [WebPublicController::class, 'getStatus']);
 // Attachment rules of every upload (allowed types, limits) - the same AttachmentPolicy the
 // requests validate with; the frontend uses it for the file picker and the hints.
 Route::get('upload-rules', [UploadRulesController::class, 'index'])->middleware('throttle:60,1');
+
+// Violation reports of the Content-Security-Policy of the SPA (report-uri in deploy/server/.htaccess).
+Route::post('csp-report', [CspReportController::class, 'store'])->middleware('throttle:20,1,csp-report');
 /*
 |--------------------------------------------------------------------------
 | CHECKOUT

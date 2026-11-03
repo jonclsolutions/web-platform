@@ -2084,6 +2084,8 @@
     "event_login_2fa_resend_exhausted": "2FA code resend requests exhausted",
     "event_refresh_token_invalid": "Invalid login token",
     "event_scan_probe": "Automated vulnerability scan",
+    "event_csp_violation": "Blocked by the security policy (CSP)",
+    "event_refresh_token_reuse": "Reused login token (possible theft)",
 
     "severity_info": "Info",
     "severity_warning": "Warning",
@@ -2194,6 +2196,10 @@
 
     "explain_scan_probe_what": "A bot attempted to call a path that doesn't exist in this application, but is typical of known vulnerabilities in other systems (exposed .env files, old WordPress installs, an exposed .git directory, etc.) - most recently {route}, from IP address {ip}.",
     "explain_scan_probe_recommendation": "Bots do this virtually continuously across the entire internet - since such paths don't exist in this application, they are not a vulnerability on their own. If traffic from a single IP continues at high volume over time, consider a permanent block at the firewall/CDN level.",
+    "explain_csp_violation_what": "A visitor's browser from IP address {ip} blocked a resource on a page that the Content-Security-Policy does not allow - {occurrences} occurrence(s). The directive, what was blocked and on which part of the site are in the detail of the record (context).",
+    "explain_refresh_token_reuse_what": "A login (refresh) token of the account ID {user_id} that had already been used and replaced arrived from IP address {ip}. Two parties hold the token - one of them most likely stole it. The application therefore ended every login of this account.",
+    "explain_refresh_token_reuse_recommendation": "Check with the user whether they recently signed in from another device or network. If not, have them change the password, check their devices (malware, browser extensions) and review the other security events from the same IP address.",
+    "explain_csp_violation_recommendation": "A blocked inline script or an unknown foreign domain may be an attempt to inject malicious code (XSS) - the policy has just stopped it. Visitors' browser extensions often cause similar reports, which are harmless. If a domain the site itself needs (new analytics, a payment gateway) is reported repeatedly, add it to the policy in deploy/server/.htaccess.",
 
     "explain_fallback_label": "Unknown event type",
     "explain_fallback_what": "No detailed description is available yet for this event type.",

@@ -5,7 +5,10 @@
  * @project JS web-platform
  * @author JS
  * @created 2025
- * @description Model representing authentication refresh tokens.
+ * @description Model representing authentication refresh tokens (only the SHA-256 hash of the
+ * token is stored). The tokens of one login form a `family`: every refresh marks the used token
+ * `rotated_at` and issues a new one of the same family, so a second use of a used token (a stolen
+ * copy) is detected - see AuthController::refresh().
  */
 
 namespace App\Models;
@@ -16,8 +19,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @description Manages persistent authentication tokens for session renewal.
- * * @property int $user_id Associated user identifier.
- * @property string $token The secure token string.
+ * @property int $user_id Associated user identifier.
+ * @property string $token SHA-256 hash of the token.
+ * @property string|null $family Id shared by all tokens of one login.
+ * @property \Illuminate\Support\Carbon|null $expires_at Expiry of the token.
+ * @property \Illuminate\Support\Carbon|null $rotated_at When the token was used and replaced (null = current token).
  */
 class RefreshToken extends Model
 {
@@ -29,7 +35,9 @@ class RefreshToken extends Model
     protected $fillable = [
         'user_id',
         'token',
+        'family',
         'expires_at',
+        'rotated_at',
     ];
 
     /**
@@ -37,6 +45,7 @@ class RefreshToken extends Model
      */
     protected $casts = [
         'expires_at' => 'datetime',
+        'rotated_at' => 'datetime',
     ];
 
     /**

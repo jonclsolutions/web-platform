@@ -280,6 +280,10 @@ check_production_env() {
     # --- server configuration shipped with the package ---
     grep -q 'deny-internal-files' "$SERVER_CONF_DIR/.htaccess" 2>/dev/null \
         || err "deploy/server/.htaccess does not block /laravel - the shipped .env would be downloadable"
+    grep -q 'Header always set Content-Security-Policy ' "$SERVER_CONF_DIR/.htaccess" 2>/dev/null \
+        || wrn "deploy/server/.htaccess sets no enforced Content-Security-Policy - an XSS would not be contained"
+    grep -q 'Header always set X-Frame-Options' "$SERVER_CONF_DIR/.htaccess" 2>/dev/null \
+        || err "deploy/server/.htaccess sets no X-Frame-Options - the admin could be framed by another site (clickjacking)"
 
     local m
     for m in "${warnings[@]}"; do warn "WARNING: $m"; done

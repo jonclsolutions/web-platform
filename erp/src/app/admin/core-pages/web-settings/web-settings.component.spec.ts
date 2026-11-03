@@ -60,10 +60,12 @@ describe('WebSettingsComponent', () => {
     /**
      * @description Init loads the active languages and the settings; per-language texts get defaults.
      * @input  ngOnInit(); languages cz, en; settings with brand_tagline 'Tag' and no i18n
-     * @output settings.company_name 'RPSW'; brand_tagline_i18n { cz: 'Tag', en: '' }; socialLinks 1 (LinkedIn); loading flags false
+     * @output settings.company_name 'RPSW'; brand_tagline_i18n { cz: 'Tag', en: '' }; socialLinks 1 (LinkedIn); loading flags false;
+     *   legal/config is never read as a paginated list (it is one settings object)
      */
     it('loads settings with per-language defaults', fakeAsync(() => {
       init();
+      expect(ctx.genericTable.getPaginatedData).not.toHaveBeenCalled();
       expect(component.languages.map(l => l.code)).toEqual(['cz', 'en']);
       expect(component.settings.company_name).toBe('RPSW');
       expect(component.settings.brand_tagline_i18n).toEqual({ cz: 'Tag', en: '' });

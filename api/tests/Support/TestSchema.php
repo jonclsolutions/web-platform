@@ -128,7 +128,9 @@ final class TestSchema
             $t->id();
             $t->unsignedInteger('user_id');
             $t->string('token', 64)->unique();
+            $t->string('family', 64)->nullable()->index();
             $t->timestamp('expires_at')->nullable();
+            $t->timestamp('rotated_at')->nullable();
             $t->timestamps();
             $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });

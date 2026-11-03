@@ -440,8 +440,8 @@ class LoginTest extends TestCase
      *   way). Another valid access token of the user (another tab) stays, expired ones go.
      * @input Account with a sent access token, another valid one, an expired one and a refresh cookie.
      * @output 200 {token, user, user_roles, user_permissions} without refreshToken; new cookie
-     *   (hash = the only refresh row); the sent and the expired token deleted; the other tab's
-     *   token and the new one remain.
+     *   (hash = the current row of the same family); the used row is kept, marked rotated; the
+     *   sent and the expired access token deleted; the other tab's token and the new one remain.
      */
     public function test_refresh_rotates_tokens(): void
     {
@@ -449,7 +449,7 @@ class LoginTest extends TestCase
         $sent = $user->createToken('access-token', ['*'], now()->addHour())->plainTextToken;
         $otherTab = $user->createToken('access-token', ['*'], now()->addHour())->accessToken;
         $expired = $user->createToken('access-token', ['*'], now()->subMinute())->accessToken;
-        RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'raw'), 'expires_at' => now()->addDay()]);
+        RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'raw'), 'family' => 'fam-1', 'expires_at' => now()->addDay()]);
 
         $response = $this->withUnencryptedCookie(AuthCookies::REFRESH, 'raw')->withCredentials()
             ->withHeaders(['Authorization' => 'Bearer ' . $sent])
@@ -462,7 +462,9 @@ class LoginTest extends TestCase
         $this->assertArrayNotHasKey('refreshToken', $response->json('data'));
         $newRefresh = $this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh')->getValue();
         $this->assertNotSame('raw', $newRefresh);
-        $this->assertSame(hash('sha256', $newRefresh), RefreshToken::sole()->token);
+        $current = RefreshToken::whereNull('rotated_at')->sole();
+        $this->assertSame([hash('sha256', $newRefresh), 'fam-1'], [$current->token, $current->family]);
+        $this->assertNotNull(RefreshToken::where('token', hash('sha256', 'raw'))->sole()->rotated_at);
 
         $this->assertNull(PersonalAccessToken::findToken($sent));
         $this->assertNull(PersonalAccessToken::find($expired->id));
@@ -508,5 +510,109 @@ class LoginTest extends TestCase
             $this->postJson('/api/refresh')->assertStatus(401);
         }
         $this->postJson('/api/refresh')->assertStatus(429);
+    }
+
+    /**
+     * @description A login starts a new token family; it replaces every earlier refresh token of
+     *   the user (one refresh session per user).
+     * @input Two old refresh rows of the user; login.
+     * @output One row, family set, not rotated, hash of the cookie.
+     */
+    public function test_login_starts_a_new_family(): void
+    {
+        $user = $this->user();
+        RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'a'), 'family' => 'old', 'expires_at' => now()->addDay()]);
+        RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'b'), 'family' => 'old', 'expires_at' => now()->addDay(), 'rotated_at' => now()]);
+
+        $response = $this->postJson('/api/login', ['email' => $user->user_email, 'password' => $this->defaultPassword])->assertOk();
+
+        $row = RefreshToken::sole();
+        $this->assertSame(hash('sha256', $this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh')->getValue()), $row->token);
+        $this->assertNotNull($row->family);
+        $this->assertNotSame('old', $row->family);
+        $this->assertNull($row->rotated_at);
+    }
+
+    /**
+     * @description Reuse of an already used refresh token (a stolen copy) ends the whole login:
+     *   every token of the family and every access token of the user are revoked, the critical
+     *   event refresh_token_reuse and an audit log are written, the cookie is deleted. Tokens of
+     *   another user stay.
+     * @input Refresh 'raw' (rotates to the new token); 1 minute later 'raw' is sent again.
+     * @output 200; then 401 "The session was ended …"; no refresh / access token of the user left;
+     *   the other user keeps his; event critical; core log; expired refresh cookie; the new token
+     *   of the first refresh is refused too.
+     */
+    public function test_reuse_of_a_used_refresh_token_ends_the_family(): void
+    {
+        $user = $this->user();
+        RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'raw'), 'family' => 'fam', 'expires_at' => now()->addDay()]);
+        $other = $this->user();
+        $other->createToken('access-token');
+        RefreshToken::create(['user_id' => $other->id, 'token' => hash('sha256', 'other'), 'family' => 'fam-other', 'expires_at' => now()->addDay()]);
+
+        $first = $this->withUnencryptedCookie(AuthCookies::REFRESH, 'raw')->withCredentials()->postJson('/api/refresh')->assertOk();
+        $rotated = $this->credentialCookie($first, AuthCookies::REFRESH, '/api/refresh')->getValue();
+
+        $this->travel(1)->minutes();
+        $reuse = $this->withUnencryptedCookie(AuthCookies::REFRESH, 'raw')->withCredentials()->postJson('/api/refresh')
+            ->assertStatus(401)
+            ->assertJsonPath('message', 'The session was ended for security reasons. Please log in again.');
+
+        $this->assertSame(0, RefreshToken::where('user_id', $user->id)->count());
+        $this->assertSame(0, $user->tokens()->count());
+        $this->assertSame(1, RefreshToken::where('user_id', $other->id)->count());
+        $this->assertSame(1, $other->tokens()->count());
+        $this->assertSecurityEvent('refresh_token_reuse', 'critical');
+        $this->assertCoreLog('refresh_token_reuse');
+        $this->assertCredentialCookieCleared($reuse, AuthCookies::REFRESH, '/api/refresh');
+
+        $this->withUnencryptedCookie(AuthCookies::REFRESH, $rotated)->withCredentials()->postJson('/api/refresh')->assertStatus(401);
+    }
+
+    /**
+     * @description A second use within the grace period is a race of two requests of the same
+     *   browser: refused, nothing revoked, no event, and the cookie is NOT touched (it already holds
+     *   the new token) - the new token keeps working.
+     * @input Refresh 'raw'; 3 seconds later 'raw' again; then the new token.
+     * @output 200; 401 without Set-Cookie and without event, rows unchanged; the new token 200.
+     */
+    public function test_reuse_within_the_grace_period_is_a_harmless_race(): void
+    {
+        $user = $this->user();
+        RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'raw'), 'family' => 'fam', 'expires_at' => now()->addDay()]);
+
+        $first = $this->withUnencryptedCookie(AuthCookies::REFRESH, 'raw')->withCredentials()->postJson('/api/refresh')->assertOk();
+        $rotated = $this->credentialCookie($first, AuthCookies::REFRESH, '/api/refresh')->getValue();
+
+        $this->travel(3)->seconds();
+        $race = $this->withUnencryptedCookie(AuthCookies::REFRESH, 'raw')->withCredentials()->postJson('/api/refresh')
+            ->assertStatus(401)->assertJsonPath('message', 'Invalid or expired token.');
+        $this->assertNull($race->getCookie(AuthCookies::REFRESH, false));
+        $this->assertSame(2, RefreshToken::where('user_id', $user->id)->count());
+        $this->assertSame(0, \App\Models\Core\CoreSecurityEvent::where('event_type', 'refresh_token_reuse')->count());
+
+        $this->withUnencryptedCookie(AuthCookies::REFRESH, $rotated)->withCredentials()->postJson('/api/refresh')->assertOk();
+    }
+
+    /**
+     * @description Used tokens are kept only until they expire: a refresh deletes the expired rows
+     *   of the user; an expired used token is an ordinary invalid token (no reuse alarm).
+     * @input Expired rotated row + valid token; refresh; then the expired row's token.
+     * @output The expired row is gone after the refresh; its token answers 401 "Invalid or expired token." with no reuse event.
+     */
+    public function test_expired_used_tokens_are_pruned(): void
+    {
+        $user = $this->user();
+        RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'old'), 'family' => 'fam', 'expires_at' => now()->subMinute(), 'rotated_at' => now()->subDays(8)]);
+        RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'raw'), 'family' => 'fam', 'expires_at' => now()->addDay()]);
+
+        $this->withUnencryptedCookie(AuthCookies::REFRESH, 'raw')->withCredentials()->postJson('/api/refresh')->assertOk();
+        $this->assertSame(0, RefreshToken::where('token', hash('sha256', 'old'))->count());
+
+        RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'old2'), 'family' => 'fam', 'expires_at' => now()->subMinute(), 'rotated_at' => now()->subDays(8)]);
+        $this->withUnencryptedCookie(AuthCookies::REFRESH, 'old2')->withCredentials()->postJson('/api/refresh')
+            ->assertStatus(401)->assertJsonPath('message', 'Invalid or expired token.');
+        $this->assertSame(0, \App\Models\Core\CoreSecurityEvent::where('event_type', 'refresh_token_reuse')->count());
     }
 }

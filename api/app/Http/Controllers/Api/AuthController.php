@@ -42,6 +42,12 @@ class AuthController extends Controller
     /** Failed attempts (per e-mail) after which the captcha is required. */
     private const CAPTCHA_THRESHOLD = 3;
 
+    /**
+     * Seconds after a rotation in which a second use of the same refresh token counts as a race of
+     * two requests of the same browser (the cookie was not updated yet), not as theft.
+     */
+    private const REFRESH_REUSE_GRACE_SECONDS = 10;
+
     /** Window for counting failed attempts per e-mail (seconds). */
     private const FAILED_ATTEMPTS_DECAY_SECONDS = 900; // 15 min
 
@@ -403,10 +409,12 @@ class AuthController extends Controller
         $accessToken = $user->createToken('access-token', ['*'], now()->addMinutes(60))->plainTextToken;
         $refreshToken = Str::random(60);
 
+        // One refresh session per user: a new login replaces the previous family.
         RefreshToken::where('user_id', $user->id)->delete();
         RefreshToken::create([
             'user_id'    => $user->id,
             'token'      => hash('sha256', $refreshToken),
+            'family'     => (string) Str::uuid(),
             'expires_at' => now()->addDays(AuthCookies::REFRESH_TTL_DAYS),
         ]);
 
@@ -425,6 +433,12 @@ class AuthController extends Controller
      * @note Only the access token sent with the request (and the expired ones) is revoked, not
      * every token of the user - several tabs of the same browser share the cookie and each keeps
      * its own access token in memory; revoking all of them would log the tabs out in turn.
+     * @security Reuse detection: a used token is only marked `rotated_at` (kept until it expires)
+     * and its successor inherits the `family`. A second use of a used token means two parties hold
+     * it - one of them stole it - so the whole family and every access token of the user are
+     * revoked and the critical event `refresh_token_reuse` is recorded. A second use within
+     * REFRESH_REUSE_GRACE_SECONDS is a race of two requests of the same browser: it is refused
+     * without revoking anything and the cookie (already holding the new token) is kept.
      */
     public function refresh(Request $request): JsonResponse
     {
@@ -439,6 +453,10 @@ class AuthController extends Controller
                                      ->where('token', $hashedRefreshToken)
                                      ->where('expires_at', '>', now())
                                      ->first();
+
+        if ($dbRefreshToken && $dbRefreshToken->user && $dbRefreshToken->rotated_at !== null) {
+            return $this->refusedReuse($request, $dbRefreshToken);
+        }
 
         if (!$dbRefreshToken || !$dbRefreshToken->user) {
             // 'info', not 'warning' - an expired refresh token is normal (the user was away for a long
@@ -458,7 +476,7 @@ class AuthController extends Controller
         $user = $dbRefreshToken->user;
 
         if ($user->is_blocked) {
-            $dbRefreshToken->delete();
+            $this->deleteFamily($dbRefreshToken);
             CoreSecurityEvent::record(
                 'refresh_blocked_account',
                 'warning',
@@ -471,7 +489,7 @@ class AuthController extends Controller
 
         // E-mail access policy.
         if (!$this->emailPolicyAllowsLogin($user)) {
-            $dbRefreshToken->delete();
+            $this->deleteFamily($dbRefreshToken);
             $user->tokens()->delete();
             CoreSecurityEvent::record(
                 'refresh_email_not_allowed',
@@ -483,7 +501,13 @@ class AuthController extends Controller
                 ->withCookie(AuthCookies::forgetRefresh($request));
         }
 
-        $dbRefreshToken->delete();
+        // Atomic claim: only one request can rotate this token. A parallel request with the same
+        // cookie loses the race and is treated like a reuse within the grace period.
+        $claimed = RefreshToken::whereKey($dbRefreshToken->id)->whereNull('rotated_at')->update(['rotated_at' => now()]);
+        if ($claimed === 0) {
+            return $this->refusedReuse($request, $dbRefreshToken->fresh() ?? $dbRefreshToken);
+        }
+
         $this->revokeReplacedAccessTokens($request, $user);
 
         $newAccessToken = $user->createToken('access-token', ['*'], now()->addMinutes(60))->plainTextToken;
@@ -492,13 +516,59 @@ class AuthController extends Controller
         RefreshToken::create([
             'user_id'    => $user->id,
             'token'      => hash('sha256', $newRefreshToken),
+            'family'     => $dbRefreshToken->family ?? (string) Str::uuid(),
             'expires_at' => now()->addDays(AuthCookies::REFRESH_TTL_DAYS),
         ]);
+        // Used tokens are kept for the reuse detection only until they expire.
+        RefreshToken::where('user_id', $user->id)->where('expires_at', '<=', now())->delete();
 
         $user->load('roles.permissions');
 
         return $this->respond($this->sessionPayload($user) + ['token' => $newAccessToken], 200)
             ->withCookie(AuthCookies::refresh($request, $newRefreshToken));
+    }
+
+    /**
+     * @description Answer to a refresh token that was already used (see refresh()). Within the
+     * grace period a race of two requests of one browser: refused, nothing revoked, the cookie
+     * kept. Later: the token was stolen - the family and every access token of the user are
+     * revoked, the critical event `refresh_token_reuse` is recorded and the cookie deleted.
+     * @param Request $request Refresh request.
+     * @param RefreshToken $used The already rotated token (with its user).
+     * @return JsonResponse
+     */
+    private function refusedReuse(Request $request, RefreshToken $used): JsonResponse
+    {
+        if ($used->rotated_at !== null && $used->rotated_at->gt(now()->subSeconds(self::REFRESH_REUSE_GRACE_SECONDS))) {
+            return response()->json(['message' => 'Invalid or expired token.'], 401);
+        }
+
+        $user = $used->user;
+        $this->deleteFamily($used);
+        $user?->tokens()->delete();
+
+        CoreSecurityEvent::record(
+            'refresh_token_reuse',
+            'critical',
+            $request->ip(),
+            CoreSecurityEvent::contextFromRequest($request, ['user_id' => $used->user_id])
+        );
+        $this->logAction($request, CoreLog::class, 'refresh_token_reuse', 'Auth', "A used refresh token was presented again - all sessions of user_id {$used->user_id} ended", $used->user_id, 'User');
+
+        return response()->json(['message' => 'The session was ended for security reasons. Please log in again.'], 401)
+            ->withCookie(AuthCookies::forgetRefresh($request));
+    }
+
+    /**
+     * @description Deletes every refresh token of the token's family (the whole login).
+     * @param RefreshToken $token Any token of the family.
+     * @return void
+     */
+    private function deleteFamily(RefreshToken $token): void
+    {
+        $token->family !== null
+            ? RefreshToken::where('family', $token->family)->delete()
+            : $token->delete();
     }
 
     /**

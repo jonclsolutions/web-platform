@@ -653,6 +653,12 @@ setup_laravel() {
              "$API_DIR"/storage/framework/{cache/data,sessions,views} "$API_DIR"/bootstrap/cache
     chmod -R u+rwX,g+rwX "$API_DIR/storage" "$API_DIR/bootstrap/cache"
 
+    # dev/logs/laravel.log = a relative link to the application log (same file as in dev.sh,
+    # which renews it on every start) - every log of the environment is in dev/logs/.
+    mkdir -p "$ROOT_DIR/dev/logs"
+    [[ -e "$API_DIR/storage/logs/laravel.log" ]] || : > "$API_DIR/storage/logs/laravel.log"
+    ln -sfn "../../api/storage/logs/laravel.log" "$ROOT_DIR/dev/logs/laravel.log"
+
     info "composer install (container)"
     in_app api composer install --no-interaction --no-progress || die "composer install failed – see the output above"
     done_ "Composer dependencies installed"

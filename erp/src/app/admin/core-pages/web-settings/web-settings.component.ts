@@ -38,6 +38,8 @@ import {
 })
 export class WebSettingsComponent extends BaseDataComponent<any> implements OnInit {
   override apiEndpoint = 'legal/config';
+  /** One settings object (no paginated list) - loaded by `loadAll()` / `refreshData()`. */
+  override usesPaginatedList = false;
   protected override translationSection: string = 'web-settings';
 
   private readonly LANG_MODULE = 'web';
