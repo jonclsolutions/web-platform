@@ -61,6 +61,8 @@ class LoginTest extends TestCase
             ->assertOk()
             ->assertJsonPath('message', 'Login successful!')
             ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonMissingPath('data.user.roles')
+            ->assertJsonMissingPath('data.user.permissions')
             ->assertJsonPath('data.user_permissions', ['core-administrators-view']);
 
         $this->assertNotEmpty($response->json('data.token'));
@@ -271,9 +273,10 @@ class LoginTest extends TestCase
     }
 
     /**
-     * @description GET /api/user returns the signed-in account with roles and permissions.
+     * @description GET /api/user returns the signed-in account with roles and permissions -
+     *   each sent once: `user` is only the profile, roles and permissions are at the top level.
      * @input Account whose role grants core-security-view, signed in.
-     * @output 200 {user, user_roles, user_permissions}.
+     * @output 200 {user (profile only), user_roles, user_permissions}.
      */
     public function test_user_returns_current_account(): void
     {
@@ -282,6 +285,9 @@ class LoginTest extends TestCase
         $this->getJson('/api/user')
             ->assertOk()
             ->assertJsonPath('data.user.user_email', $user->user_email)
+            ->assertJsonMissingPath('data.user.roles')
+            ->assertJsonMissingPath('data.user.permissions')
+            ->assertJsonMissingPath('data.user.user_permissions')
             ->assertJsonPath('data.user_roles.0', $user->roles->first()->role_name)
             ->assertJsonPath('data.user_permissions', ['core-security-view']);
     }
@@ -450,6 +456,7 @@ class LoginTest extends TestCase
             ->postJson('/api/refresh')
             ->assertOk()
             ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonMissingPath('data.user.roles')
             ->assertJsonPath('data.user_permissions', ['core-administrators-view']);
 
         $this->assertArrayNotHasKey('refreshToken', $response->json('data'));

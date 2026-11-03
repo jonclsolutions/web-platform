@@ -188,14 +188,15 @@ class AuthController extends Controller
 
     /**
      * @description Profile, roles and effective permissions of the user - the part of the login,
-     * refresh and /user answers the admin builds its session state from.
+     * refresh and /user answers the admin builds its session state from. The roles and the
+     * permissions are sent once, at the top level; `user` holds only the profile.
      * @param User $user User with loaded `roles.permissions`.
      * @return array<string, mixed>
      */
     private function sessionPayload(User $user): array
     {
         return [
-            'user'             => new UserResource($user),
+            'user'             => (new UserResource($user))->profileOnly(),
             'user_roles'       => $user->roles->pluck('role_name'),
             'user_permissions' => method_exists($user, 'getPermissionsAttribute') ? $user->getPermissionsAttribute() : [],
         ];

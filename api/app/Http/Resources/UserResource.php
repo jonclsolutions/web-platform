@@ -7,12 +7,9 @@
  * @created 2025
  * @description Transforms a User model into its public API representation, exposing
  * roles (with their permissions), the user's own explicit permission grants, and the
- * calculated effective permission set.
- *
- * NOTE: this file reconstructs the resource class based on the fields observed in
- * use across administrators.config.ts / UserController audit log payloads. If the
- * project's actual UserResource already contains additional fields, merge this diff
- * into it rather than overwriting wholesale.
+ * calculated effective permission set. `profileOnly()` returns only the profile fields - used
+ * by the session answers of AuthController, which send the roles and the effective permissions
+ * once at the top level (`user_roles`, `user_permissions`).
  */
 
 namespace App\Http\Resources;
@@ -22,6 +19,20 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class UserResource extends JsonResource
 {
+    /** @description Only the profile fields, without roles and permissions (see profileOnly()). */
+    private bool $profileOnly = false;
+
+    /**
+     * @description Leaves out the roles, the explicit and the effective permissions.
+     * @return static
+     */
+    public function profileOnly(): static
+    {
+        $this->profileOnly = true;
+
+        return $this;
+    }
+
     /**
      * @description Transform the resource into an array.
      * @param Request $request
@@ -29,7 +40,7 @@ class UserResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
+        $profile = [
             'id' => $this->id,
             'user_email' => $this->user_email,
             'full_name' => $this->full_name,
@@ -43,7 +54,13 @@ class UserResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'deleted_at' => $this->deleted_at,
+        ];
 
+        if ($this->profileOnly) {
+            return $profile;
+        }
+
+        return $profile + [
             // First (and, in this system, only) assigned role, plus its own
             // permission list - kept as an array for forward-compat with a possible
             // future multi-role model, even though today a user has exactly one.
