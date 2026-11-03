@@ -23,16 +23,15 @@ import { Observable, Subject, takeUntil, finalize, timer, switchMap, filter } fr
 import { PublicDataService } from '../../../shared/services/public-data.service';
 import { ApiEnvelope } from '../../../shared/interfaces/api-envelope';
 import { ProjectPortalLocalizationService } from './project-portal-localization.service';
+import { UploadRulesService } from '../../../shared/services/upload-rules.service';
+import { UploadRule, extensionsLabel, fileExtension, isExtensionAllowed } from '../../../shared/utils/upload-rules';
 
 type PortalState = 'loading' | 'login' | 'portal' | 'invalid';
 type PortalTab = 'description' | 'checkpoints' | 'threads' | 'contacts' | 'help';
 
-const MAX_ATTACHMENTS = 5;
-const MAX_ATTACHMENT_SIZE_BYTES = 15 * 1024 * 1024; // 15 MB - matches the backend `max:15360` KB rule
-const ALLOWED_ATTACHMENT_EXTENSIONS = [
-  'pdf', 'doc', 'docx', 'odt', 'rtf', 'txt', 'xls', 'xlsx', 'ods', 'csv',
-  'ppt', 'pptx', 'odp', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'zip', 'rar', '7z',
-];
+/** Fallback limits of the thread attachments while the rules of the API (`GET upload-rules`, profile project_thread) are not loaded. */
+const DEFAULT_MAX_ATTACHMENTS = 5;
+const DEFAULT_MAX_ATTACHMENT_SIZE_MB = 15;
 
 interface ProjectCheckpoint {
   id: number;
@@ -46,7 +45,8 @@ interface ProjectAttachment {
   mime_type: string | null;
   size_bytes: number;
   download_url: string;
-  view_url: string;
+  /** Null for types that are download only (see AttachmentPolicy on the API). */
+  view_url: string | null;
 }
 
 interface ProjectThreadMessage {
@@ -211,7 +211,33 @@ updateThreadStatus(status: string): void {
   });
 }
 
+  private uploadRulesService = inject(UploadRulesService);
+
+  /** Attachment rules of the API (profile project_thread) - null until loaded / when unavailable. */
+  attachmentRules: UploadRule | null = null;
+
+  /** @description Maximum number of attachments of one message. */
+  get maxAttachments(): number {
+    return this.attachmentRules?.max_files ?? DEFAULT_MAX_ATTACHMENTS;
+  }
+
+  /** @description Maximum size of one attachment in MB. */
+  get maxAttachmentSizeMb(): number {
+    return this.attachmentRules?.max_file_size_mb ?? DEFAULT_MAX_ATTACHMENT_SIZE_MB;
+  }
+
+
+  /** @description "Allowed types: …" appended to a type error ('' while no rules are known). */
+  get attachmentTypesText(): string {
+    const ext = this.attachmentRules?.extensions ?? [];
+    return ext.length ? this.t('attachment_allowed_types').replace('{types}', extensionsLabel(ext)) : '';
+  }
+
   ngOnInit(): void {
+    this.uploadRulesService.rules('project_thread')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(rules => { this.attachmentRules = rules; this.cdr.markForCheck(); });
+
     this.token = this.route.snapshot.paramMap.get('token');
 
     if (!this.token) {
@@ -334,17 +360,19 @@ updateThreadStatus(status: string): void {
     let errorSet = false;
 
     for (const file of Array.from(incoming)) {
-      if (result.length >= MAX_ATTACHMENTS) {
-        if (!errorSet) { onError(this.t('attachment_error_too_many').replace('{max}', String(MAX_ATTACHMENTS))); errorSet = true; }
+      if (result.length >= this.maxAttachments) {
+        if (!errorSet) { onError(this.t('attachment_error_too_many').replace('{max}', String(this.maxAttachments))); errorSet = true; }
         break;
       }
-      const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
-      if (!ALLOWED_ATTACHMENT_EXTENSIONS.includes(ext)) {
-        if (!errorSet) { onError(this.t('attachment_error_type').replace('{name}', file.name)); errorSet = true; }
+      if (!isExtensionAllowed(file.name, this.attachmentRules?.extensions ?? [])) {
+        const ext = fileExtension(file.name);
+        // The allowed types are listed only now, together with the refusal (not up front)
+        // (a type error needs a non-empty list, so the types text is never empty here).
+        if (!errorSet) { onError(this.t('attachment_error_type').replace('{name}', file.name).replace('{ext}', ext ? '.' + ext : '?') + ' ' + this.attachmentTypesText); errorSet = true; }
         continue;
       }
-      if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
-        if (!errorSet) { onError(this.t('attachment_error_size').replace('{name}', file.name)); errorSet = true; }
+      if (file.size > this.maxAttachmentSizeMb * 1024 * 1024) {
+        if (!errorSet) { onError(this.t('attachment_error_size').replace('{name}', file.name).replace('{maxMb}', String(this.maxAttachmentSizeMb))); errorSet = true; }
         continue;
       }
       result.push(file);

@@ -263,7 +263,10 @@
   "error_total_size_exceeded": "Celková velikost příloh nesmí přesáhnout {maxMb} MB.",
   "total_label": "Celkem: {count} / {max} souborů",
   "total_new_suffix": " ({size} nových)",
-  "limits_hint": "(max. {max} souborů, {maxMb} MB/soubor, {totalMb} MB celkem)"
+  "limits_hint": "(max. {max} souborů, {maxMb} MB/soubor, {totalMb} MB celkem)",
+  "error_file_type": "Soubor \"{filename}\" nelze nahrát – typ {ext} není povolen.",
+  "allowed_types_hint": "Povolené typy: {types}",
+  "alert_file_refused_title": "Soubor nelze nahrát"
 },
 "welcome-page": {
   "subtitle": "Rádi vás vidíme v administračním systému RPSW.",
@@ -802,7 +805,10 @@
   "submitting_button": "ODESÍLÁM...",
   "success_title": "Požadavek byl odeslán",
   "success_message_prefix": "Váš ticket byl úspěšně zaevidován pod ID:",
-  "create_another_button": "Vytvořit další požadavek"
+  "create_another_button": "Vytvořit další požadavek",
+  "allowed_types_hint": "Povolené typy: {types} (max. {maxMb} MB)",
+  "file_type_error": "Soubor \"{filename}\" nelze nahrát – typ {ext} není povolen.",
+  "file_size_error": "Soubor \"{filename}\" přesahuje limit {maxMb} MB."
 },
 "web-welcome-page": {
   "header": "Web",
@@ -1491,8 +1497,9 @@
   "projects": {
   "load_older_messages": "Načíst starší zprávy",
   "attachment_error_too_many": "Můžete přiložit maximálně {max} souborů.",
-  "attachment_error_type": "Soubor \"{name}\" má nepodporovaný formát.",
-  "attachment_error_size": "Soubor \"{name}\" je příliš velký (max 15 MB).",
+  "attachment_error_type": "Soubor \"{name}\" nelze nahrát – typ {ext} není povolen.",
+  "attachment_error_size": "Soubor \"{name}\" je příliš velký (max {maxMb} MB).",
+  "attachment_allowed_types": "Povolené typy: {types}",
   "attach_files_button": "Přiložit soubory",
   "field_estimated_from_label": "Odhad dokončení od",
   "field_estimated_to_label": "Odhad dokončení do",

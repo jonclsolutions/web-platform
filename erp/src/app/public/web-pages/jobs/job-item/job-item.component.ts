@@ -16,6 +16,8 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { takeUntil } from 'rxjs/operators';
 import { BasePublicComponent } from '../../../base-public.component';
 import { LoadingService } from '../../../../core/services/loading.service';
+import { UploadRulesService } from '../../../../shared/services/upload-rules.service';
+import { UploadRule, extensionsLabel, isAttachmentRejection, isExtensionAllowed } from '../../../../shared/utils/upload-rules';
 
 /**
  * @description Allowed characters of the first / last name - letters (incl. diacritics through
@@ -34,12 +36,11 @@ const NAME_PATTERN = /^[\p{L}\s'-]+$/u;
 const PHONE_PATTERN = /^[0-9+()\s-]{6,20}$/;
 
 /**
- * @description Maximum allowed size of the attached CV in bytes - mirrors the `max:20480`
- *              limit (20 480 KB = 20 MB) of `StoreWebJobApplicationRequest` on the backend.
- *              The check here is only a UX aid (fast feedback without waiting for the
- *              server) - the authoritative limit stays enforced by the backend.
+ * @description Fallback size limit of the CV (20 MB) while the rules of the API are not loaded -
+ *              the real values come from `GET upload-rules` (profile job_application). The check
+ *              here is only a UX aid - the authoritative limit stays enforced by the backend.
  */
-const MAX_FILE_SIZE_BYTES = 20480 * 1024;
+const DEFAULT_MAX_FILE_SIZE_MB = 20;
 
 @Component({
   selector: 'app-job-item',
@@ -60,20 +61,35 @@ export class JobItemComponent extends BasePublicComponent {
   job: any = null;
   isSubmitted = false;
   selectedFile: File | null = null;
-  /** Set when the user chooses a file over the MAX_FILE_SIZE_BYTES limit. */
+  /** Set when the user chooses a file over the size limit. */
   fileSizeError = false;
+  /** Set when the user chooses a file of a type that is not allowed. */
+  fileTypeError = false;
+  /** CV rules of the API (allowed types, size) - null until loaded / when unavailable. */
+  cvRules: UploadRule | null = null;
   /** Translated error of a failed submit (null = none). */
   errorMessage: string | null = null;
 
   public loadingService = inject(LoadingService);
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
+  private uploadRules = inject(UploadRulesService);
 
   /**
    * @description Builds the form (the base class loads translations and site settings).
    */
   protected override onInit(): void {
     this.initForm();
+    this.uploadRules.rules('job_application')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(rules => { this.cvRules = rules; this.cdr.markForCheck(); });
+  }
+
+
+  /** @description Error text of a refused CV type with the allowed types filled in. */
+  get cvTypeErrorText(): string {
+    return (this.t?.form_cv_type_error ?? 'This file type cannot be uploaded. Allowed types: {types}')
+      .replace('{types}', extensionsLabel(this.cvRules?.extensions ?? []));
   }
 
   /**
@@ -95,24 +111,25 @@ export class JobItemComponent extends BasePublicComponent {
   }
 
   /**
-   * @description Handles the file choice of the file input and checks its size against
-   *              MAX_FILE_SIZE_BYTES. A file over the limit is never stored in selectedFile
-   *              (so the form cannot be sent), fileSizeError is set instead for the error
+   * @description Handles the file choice of the file input and checks its type and size against
+   *              the CV rules of the API. A refused file is never stored in selectedFile (so the
+   *              form cannot be sent), fileTypeError / fileSizeError is set instead for the error
    *              message of the template.
    */
   onFileSelected(event: any): void {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (file.size > MAX_FILE_SIZE_BYTES) {
+    this.fileTypeError = !isExtensionAllowed(file.name, this.cvRules?.extensions ?? []);
+    this.fileSizeError = !this.fileTypeError
+      && file.size > (this.cvRules?.max_file_size_mb ?? DEFAULT_MAX_FILE_SIZE_MB) * 1024 * 1024;
+    if (this.fileTypeError || this.fileSizeError) {
       this.selectedFile = null;
-      this.fileSizeError = true;
       event.target.value = '';
       this.cdr.markForCheck();
       return;
     }
 
-    this.fileSizeError = false;
     this.selectedFile = file;
     this.cdr.markForCheck();
   }
@@ -147,7 +164,15 @@ export class JobItemComponent extends BasePublicComponent {
           this.cdr.markForCheck();
         },
         error: (err) => {
-          this.errorMessage = (err?.status === 429 ? this.t?.form_too_many_requests : this.t?.form_error_generic) ?? null;
+          if (isAttachmentRejection(err)) {
+            // The server refused the CV (content of another type than the name says) - show it at
+            // the file field and let the user choose another file.
+            this.fileTypeError = true;
+            this.selectedFile = null;
+            this.errorMessage = null;
+          } else {
+            this.errorMessage = (err?.status === 429 ? this.t?.form_too_many_requests : this.t?.form_error_generic) ?? null;
+          }
           this.loadingService.hide();
           this.cdr.markForCheck();
         }

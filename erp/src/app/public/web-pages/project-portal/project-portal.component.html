@@ -315,7 +315,7 @@
                       <input type="file" multiple hidden (change)="onNewThreadFilesSelected($event)">
                     </label>
                     @if (newThreadFiles.length > 0) {
-                      <span class="pp-file-attach-count">{{ newThreadFiles.length }}/5</span>
+                      <span class="pp-file-attach-count">{{ newThreadFiles.length }}/{{ maxAttachments }}</span>
                     }
                   </div>
                   @if (newThreadFileError) {
@@ -433,7 +433,7 @@
                           <input type="file" multiple hidden (change)="onReplyFilesSelected($event)">
                         </label>
                         @if (replyFiles.length > 0) {
-                          <span class="pp-file-attach-count">{{ replyFiles.length }}/5</span>
+                          <span class="pp-file-attach-count">{{ replyFiles.length }}/{{ maxAttachments }}</span>
                         }
                       </div>
                       @if (replyFileError) {

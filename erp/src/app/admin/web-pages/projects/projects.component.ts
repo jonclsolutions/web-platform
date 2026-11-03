@@ -12,7 +12,7 @@
  * cross-project table) share the same scroll-lock mechanism and the `pm-*` CSS.
  */
 
-import { Component, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ViewChild, ElementRef, ChangeDetectionStrategy, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -24,6 +24,8 @@ import { BaseDataComponent } from '../../components/base-data/base-data.componen
 import { EntityCrudService } from '../../../core/services/entitiy-crud.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import * as Config from './projects.config';
+import { UploadRulesService } from '../../../shared/services/upload-rules.service';
+import { UploadRule, extensionsLabel, fileExtension, isExtensionAllowed } from '../../../shared/utils/upload-rules';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 
@@ -40,7 +42,8 @@ interface ProjectAttachment {
   mime_type: string | null;
   size_bytes: number;
   download_url: string;
-  view_url: string;
+  /** Null for types that are download only (see AttachmentPolicy on the API). */
+  view_url: string | null;
 }
 
 interface ProjectThreadMessage {
@@ -125,12 +128,27 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   checkpointStatusLabels: Record<string, string> = {};
 
   private readonly PASSWORD_STORAGE_PREFIX = 'rpsw_project_pw_';
-  private readonly MAX_THREAD_ATTACHMENTS = 5;
-  private readonly ALLOWED_ATTACHMENT_EXTENSIONS = [
-    'pdf', 'doc', 'docx', 'odt', 'rtf', 'txt', 'xls', 'xlsx', 'ods', 'csv',
-    'ppt', 'pptx', 'odp', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'zip', 'rar', '7z',
-  ];
-  private readonly MAX_ATTACHMENT_SIZE_BYTES = 15 * 1024 * 1024;
+  private uploadRulesService = inject(UploadRulesService);
+
+  /** Attachment rules of the API (profile project_thread, shared with the customer portal). */
+  attachmentRules: UploadRule | null = null;
+
+  /** @description Maximum number of attachments of one reply (fallback 5 while not loaded). */
+  get maxAttachments(): number {
+    return this.attachmentRules?.max_files ?? 5;
+  }
+
+  /** @description Maximum size of one attachment in MB (fallback 15). */
+  get maxAttachmentSizeMb(): number {
+    return this.attachmentRules?.max_file_size_mb ?? 15;
+  }
+
+
+  /** @description "Allowed types: …" appended to a type error ('' while no rules are known). */
+  get attachmentTypesText(): string {
+    const ext = this.attachmentRules?.extensions ?? [];
+    return ext.length ? this.t('attachment_allowed_types').replace('{types}', extensionsLabel(ext)) : '';
+  }
 
   private savedScrollY = 0;
 
@@ -282,6 +300,9 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.initWithAuthCheck(this.router);
     this.checkQueryParamsForPrefill();
     this.loadThreadsTable();
+    this.uploadRulesService.rules('project_thread')
+      .pipe(Core.takeUntil(this.destroy$))
+      .subscribe(rules => { this.attachmentRules = rules; this.cd.markForCheck(); });
   }
 
   private checkQueryParamsForPrefill(): void {
@@ -622,18 +643,19 @@ changeThreadStatus(status: string): void {
     let errorSet = false;
 
     for (const file of Array.from(incoming)) {
-      if (result.length >= this.MAX_THREAD_ATTACHMENTS) {
-        if (!errorSet) { onError(this.t('attachment_error_too_many').replace('{max}', String(this.MAX_THREAD_ATTACHMENTS))); errorSet = true; }
+      if (result.length >= this.maxAttachments) {
+        if (!errorSet) { onError(this.t('attachment_error_too_many').replace('{max}', String(this.maxAttachments))); errorSet = true; }
         break;
       }
-      const dot = file.name.lastIndexOf('.');
-      const ext = dot >= 0 ? file.name.slice(dot + 1).toLowerCase() : '';
-      if (!this.ALLOWED_ATTACHMENT_EXTENSIONS.includes(ext)) {
-        if (!errorSet) { onError(this.t('attachment_error_type').replace('{name}', file.name)); errorSet = true; }
+      if (!isExtensionAllowed(file.name, this.attachmentRules?.extensions ?? [])) {
+        const ext = fileExtension(file.name);
+        // The allowed types are listed only now, together with the refusal (not up front)
+        // (a type error needs a non-empty list, so the types text is never empty here).
+        if (!errorSet) { onError(this.t('attachment_error_type').replace('{name}', file.name).replace('{ext}', ext ? '.' + ext : '?') + ' ' + this.attachmentTypesText); errorSet = true; }
         continue;
       }
-      if (file.size > this.MAX_ATTACHMENT_SIZE_BYTES) {
-        if (!errorSet) { onError(this.t('attachment_error_size').replace('{name}', file.name)); errorSet = true; }
+      if (file.size > this.maxAttachmentSizeMb * 1024 * 1024) {
+        if (!errorSet) { onError(this.t('attachment_error_size').replace('{name}', file.name).replace('{maxMb}', String(this.maxAttachmentSizeMb))); errorSet = true; }
         continue;
       }
       result.push(file);

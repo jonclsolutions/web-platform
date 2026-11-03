@@ -5,14 +5,18 @@
  * @author JS
  * @created 2026
  * @description Universal component for choosing several files (drag&drop and click) with a
- * client-side count / size check - only a UX aid, the real limit is always enforced by the
- * backend (see StoreWebRawRequestCommissionRequest / StoreWebSalesOrderRequest). Reusable in
+ * client-side type / count / size check - only a UX aid, the real limit is always enforced by the
+ * backend (App\Support\Uploads\AttachmentPolicy, published as `GET upload-rules`). Reusable in
  * public and admin forms.
+ * @note The file picker offers every file (no `accept` filter - greyed-out files only confuse
+ * users). With `allowedExtensions` a file of another type is refused right when it is chosen:
+ * the error names the file and its extension and only then lists the allowed types.
  * @usage `<app-multi-file-upload (filesChanged)="onFilesChanged($event)" />`
  */
 
 import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { extensionsLabel, fileExtension, isExtensionAllowed } from '../../utils/upload-rules';
 
 /**
  * @description Minimal shape of an existing attachment needed for display - matches
@@ -35,7 +39,7 @@ export interface ExistingAttachment {
  * ready text (otherwise it would need internal details like `existingCount`).
  */
 export interface MultiFileUploadTexts {
-  /** Hint vedle labelu - {max} = maxFiles, {maxMb} = maxFileSizeMb, {totalMb} = maxTotalSizeMb */
+  /** Hint next to the label - {max} = maxFiles, {maxMb} = maxFileSizeMb, {totalMb} = maxTotalSizeMb */
   limitsHint: string;
   /** "Already uploaded attachments ({count})" - {count} = visibleExistingFiles.length */
   existingSectionTitle: string;
@@ -50,6 +54,10 @@ export interface MultiFileUploadTexts {
   errorMaxFiles: string;
   /** Error of a single file over the limit - {filename}, {maxMb} */
   errorFileTooLarge: string;
+  /** Error of a file of a type that is not allowed - {filename}, {ext} (e.g. ".xml") */
+  errorFileType: string;
+  /** List of the allowed types under the label - {types} (e.g. "PDF, DOCX, PNG") */
+  allowedTypesHint: string;
   /** Error of the total size over the limit - {maxMb} */
   errorTotalSizeExceeded: string;
   /** Counter at the bottom - {count} = combinedCount, {max} = maxFiles */
@@ -70,6 +78,8 @@ export const DEFAULT_MULTI_FILE_UPLOAD_TEXTS: MultiFileUploadTexts = {
   errorMaxFilesWithExisting: 'You can have at most {max} files (including {existing} already uploaded).',
   errorMaxFiles: 'You can upload at most {max} files.',
   errorFileTooLarge: 'The file "{filename}" exceeds the {maxMb} MB limit.',
+  errorFileType: 'The file "{filename}" cannot be uploaded - the type {ext} is not allowed.',
+  allowedTypesHint: 'Allowed types: {types}',
   errorTotalSizeExceeded: 'The attachments must not exceed {maxMb} MB in total.',
   totalLabel: 'Total: {count} / {max} files',
   totalNewSuffix: ' ({size} new)',
@@ -88,6 +98,13 @@ export class MultiFileUploadComponent {
   @Input() maxFileSizeMb = 20;
   @Input() maxTotalSizeMb = 50;
   @Input() label = 'Attachments';
+
+  /**
+   * @description Allowed extensions (lower case, without the dot) - usually
+   * `UploadRule.extensions` of UploadRulesService. Empty = no type check here (the API still
+   * validates).
+   */
+  @Input() allowedExtensions: string[] = [];
 
   /**
    * @description Read-only attachments the record already has (from the API) - the component never
@@ -114,6 +131,8 @@ export class MultiFileUploadComponent {
 
   files: File[] = [];
   errorMessage: string | null = null;
+  /** "Allowed types: …" shown under a type error only (null for every other error). */
+  errorTypesHint: string | null = null;
   isDragging = false;
 
   /** IDs of existing attachments the user removed in the UI - local state only until saving. */
@@ -128,7 +147,14 @@ export class MultiFileUploadComponent {
    * language, see form-builder.component.ts).
    */
   get t(): MultiFileUploadTexts {
-    return { ...DEFAULT_MULTI_FILE_UPLOAD_TEXTS, ...this.textOverrides };
+    // Missing / not yet translated keys (undefined) keep the default text.
+    const overrides = Object.fromEntries(Object.entries(this.textOverrides ?? {}).filter(([, v]) => v != null && v !== ''));
+    return { ...DEFAULT_MULTI_FILE_UPLOAD_TEXTS, ...overrides };
+  }
+
+  /** @description "Allowed types: PDF, DOCX, …" for the type error - empty when no list is known. */
+  get allowedTypesText(): string {
+    return this.allowedExtensions.length ? this.t.allowedTypesHint.replace('{types}', extensionsLabel(this.allowedExtensions)) : '';
   }
 
   /**
@@ -190,6 +216,19 @@ export class MultiFileUploadComponent {
 
   private addFiles(newFiles: File[]): void {
     this.errorMessage = null;
+    this.errorTypesHint = null;
+
+    // Type first: a refused file must never reach the list, whatever its size.
+    const wrongType = newFiles.find(f => !isExtensionAllowed(f.name, this.allowedExtensions));
+    if (wrongType) {
+      const ext = fileExtension(wrongType.name);
+      this.errorMessage = this.t.errorFileType
+        .replace('{filename}', wrongType.name)
+        .replace('{ext}', ext ? '.' + ext : '?');
+      this.errorTypesHint = this.allowedTypesText;
+      this.cd.markForCheck();
+      return;
+    }
     const combined = [...this.files, ...newFiles];
     const existingCount = this.visibleExistingFiles.length;
     const totalCount = existingCount + combined.length;
@@ -226,6 +265,7 @@ export class MultiFileUploadComponent {
   removeFile(index: number): void {
     this.files = this.files.filter((_, i) => i !== index);
     this.errorMessage = null;
+    this.errorTypesHint = null;
     this.filesChanged.emit(this.files);
     this.cd.markForCheck();
   }

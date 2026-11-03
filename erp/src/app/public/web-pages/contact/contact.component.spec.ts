@@ -14,7 +14,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
 
+import { By } from '@angular/platform-browser';
 import { ContactComponent } from './contact.component';
+import { MultiFileUploadComponent } from '../../../shared/components/multi-file-upload/multi-file-upload.component';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 import { PublicPageContext, createPublicPageContext } from '../../../../testing/public-test-helpers';
 
@@ -24,7 +26,7 @@ describe('ContactComponent', () => {
   let component: ContactComponent;
   const contact = {
     buttons: { send: 'Send', sending: 'Sending…' }, errors: { submit_error: 'Failed', submit_error_title: 'Not sent', too_many_requests: 'Slow down' },
-    attachment_uploader: { dropzone_label: 'Drop', error_max_files: 'Max {max}', total_label: 'Total' }
+    attachment_uploader: { limits_hint: '(max. {max} souborů)', dropzone_label: 'Drop', error_max_files: 'Max {max}', total_label: 'Total' }
   };
   const home = { stats_projects_count: '50', stats_projects_text: 'Projects', stats_years_count: '5', stats_years_text: 'Years', stats_solutions_count: '9', stats_solutions_text: 'Solutions' };
 
@@ -46,7 +48,7 @@ describe('ContactComponent', () => {
    */
   it('prepares the texts and validates fields', () => {
     expect(component.stats).toEqual([{ value: '50', label: 'Projects' }, { value: '5', label: 'Years' }, { value: '9', label: 'Solutions' }]);
-    expect(component.attachmentUploaderTexts).toEqual(jasmine.objectContaining({ dropzoneLabel: 'Drop', errorMaxFiles: 'Max {max}', totalLabel: 'Total' }));
+    expect(component.attachmentUploaderTexts).toEqual(jasmine.objectContaining({ limitsHint: '(max. {max} souborů)', dropzoneLabel: 'Drop', errorMaxFiles: 'Max {max}', totalLabel: 'Total' }));
     expect(component.btnText).toBe('Send');
     expect(component.fieldInvalid('email')).toBeFalse();
     component.contactForm.get('email')!.setValue('x');
@@ -127,5 +129,33 @@ describe('ContactComponent', () => {
   it('renders no phone row without a phone', () => {
     expect(fixture.nativeElement.querySelector('a[href^="tel:"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('.info-address')).toBeNull();
+  });
+
+  /**
+   * @description The uploader gets the rules of the API (raw_request_commission): allowed types
+   *   (no svg / xml), counts and sizes. A 422 refusal of an attachment (content does not match the
+   *   name) shows its own translated text, falling back to the general error text.
+   * @input uploader inputs; post 422 { errors: { 'attachments.0' } } with and without errors.attachment_rejected.
+   * @output 10 files / 20 MB / 50 MB, pdf allowed, svg / xml not; limits hint translated; dialog ('Not sent', 'Bad file'); then ('Not sent', 'Failed').
+   */
+  it('passes the upload rules to the uploader and reports a refused attachment', () => {
+    const uploader = fixture.debugElement.query(By.directive(MultiFileUploadComponent)).componentInstance as MultiFileUploadComponent;
+    expect([uploader.maxFiles, uploader.maxFileSizeMb, uploader.maxTotalSizeMb]).toEqual([10, 20, 50]);
+    expect(uploader.allowedExtensions).toContain('pdf');
+    expect(uploader.allowedExtensions).not.toContain('svg');
+    expect(uploader.allowedExtensions).not.toContain('xml');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.mfu-hint').textContent).toBe('(max. 10 souborů)');
+
+    const alertSpy = spyOn(TestBed.inject(AlertDialogService), 'open');
+    const refused = { status: 422, error: { errors: { 'attachments.0': ['This file type is not allowed.'] } } };
+    ctx.publicData.post.and.returnValue(throwError(() => refused));
+    component.t = { ...component.t, errors: { ...component.t.errors, attachment_rejected: 'Bad file' } };
+    fill();
+    component.onSubmit();
+    expect(alertSpy).toHaveBeenCalledWith('Not sent', 'Bad file', 'danger');
+    component.t = { ...component.t, errors: { ...component.t.errors, attachment_rejected: undefined } };
+    component.onSubmit();
+    expect(alertSpy).toHaveBeenCalledWith('Not sent', 'Failed', 'danger');
   });
 });

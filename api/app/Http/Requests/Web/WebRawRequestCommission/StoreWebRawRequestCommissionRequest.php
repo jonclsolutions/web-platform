@@ -11,6 +11,7 @@
 namespace App\Http\Requests\Web\WebRawRequestCommission;
 
 use App\Rules\AttachmentsTotalSize;
+use App\Support\Uploads\AttachmentPolicy;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -20,14 +21,8 @@ class StoreWebRawRequestCommissionRequest extends FormRequest
 {
     use ValidatesAttachmentSecurity;
 
-    /** @var int Maximum number of files in one request (same as the update). */
-    private const MAX_ATTACHMENTS = 10;
-
-    /** @var int Maximum size of one file in KB (20 MB). */
-    private const MAX_FILE_SIZE_KB = 20480;
-
-    /** @var int Maximum size of all files together (50 MB). */
-    private const MAX_TOTAL_SIZE_BYTES = 50 * 1024 * 1024;
+    /** @description Limits and allowed types of the upload profile (AttachmentPolicy - shared with GET upload-rules). */
+    private const LIMITS = AttachmentPolicy::PROFILES[AttachmentPolicy::RAW_REQUEST_COMMISSION];
 
     /**
      * Determine if the user is authorized to make this request.
@@ -55,8 +50,8 @@ class StoreWebRawRequestCommissionRequest extends FormRequest
             'priority'          => ['sometimes', 'string', 'in:low,neutral,high'],
             'note'              => ['nullable', 'string'],
             'lang'              => ['sometimes', 'nullable', 'string', 'max:5'],
-            'attachments'       => ['sometimes', 'nullable', 'array', 'max:' . self::MAX_ATTACHMENTS, new AttachmentsTotalSize(self::MAX_TOTAL_SIZE_BYTES)],
-            'attachments.*'     => ['file', 'max:' . self::MAX_FILE_SIZE_KB, $this->attachmentExtensionRule()],
+            'attachments'       => ['sometimes', 'nullable', 'array', 'max:' . self::LIMITS['max_files'], new AttachmentsTotalSize(self::LIMITS['max_total_bytes'])],
+            'attachments.*'     => AttachmentPolicy::fileRules(AttachmentPolicy::RAW_REQUEST_COMMISSION),
         ];
     }
 
@@ -87,9 +82,11 @@ class StoreWebRawRequestCommissionRequest extends FormRequest
             'contact_email.email'           => 'Please provide a valid email address.',
             'contact_phone.regex'           => 'Please provide a valid phone number.',
             'order_description.required'    => 'The description is required for processing.',
-            'attachments.max'               => 'You can upload a maximum of ' . self::MAX_ATTACHMENTS . ' files at once.',
+            'attachments.max'               => 'You can upload a maximum of ' . self::LIMITS['max_files'] . ' files at once.',
             'attachments.*.max'             => 'Each file may not be greater than 20 MB.',
             'attachments.*.file'            => 'The attachment must be a valid file.',
+            'attachments.*.mimes'                => 'This file type is not allowed for security reasons.',
+            'attachments.*.extensions'           => 'This file type is not allowed for security reasons.',
         ];
     }
 }

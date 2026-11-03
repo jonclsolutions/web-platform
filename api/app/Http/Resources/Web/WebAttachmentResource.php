@@ -10,6 +10,7 @@
 
 namespace App\Http\Resources\Web;
 
+use App\Support\Uploads\AttachmentPolicy;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\URL;
@@ -27,7 +28,10 @@ class WebAttachmentResource extends JsonResource
             'mime_type'         => $this->mime_type,
             'size_bytes'        => $this->size_bytes,
             'download_url'      => $this->path ? $this->signedUrl('attachments.download') : null,
-            'view_url'          => $this->path ? $this->signedUrl('attachments.view') : null,
+            // Only previewable types get a "view" link (AttachmentPolicy) - everything else is
+            // download only; the server decides again from the content when serving.
+            'view_url'          => $this->path && AttachmentPolicy::isInlineFileName($this->original_filename ?: $this->path)
+                ? $this->signedUrl('attachments.view') : null,
             'created_at'        => $this->created_at?->format('Y-m-d H:i:s'),
         ];
     }

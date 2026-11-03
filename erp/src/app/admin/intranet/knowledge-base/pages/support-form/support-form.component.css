@@ -157,3 +157,9 @@ input:focus, select:focus, textarea:focus {
 @media (max-width: 768px) {
   .kb-form-row { flex-direction: column; gap: 0; }
 }
+/* Allowed file types and a refused file under the file field */
+.kb-file-error {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--color-red-600, #dc2626);
+}

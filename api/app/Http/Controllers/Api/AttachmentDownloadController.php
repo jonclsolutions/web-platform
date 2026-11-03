@@ -12,17 +12,37 @@
  *              (`web/raw_request_commissions/...`).
  *              Files are resolved from the polymorphic `web_attachments` table (WebAttachment),
  *              looked up by `path`, disk per row (`$attachment->disk`, private by default).
+ * @security The files are uploaded by the public (inquiries, orders, portal threads) and the API
+ *              runs on the same origin as the admin, so a file the browser renders as a page
+ *              (HTML, SVG, XML) would run its script in the admin. Therefore:
+ *              - only AttachmentPolicy::INLINE_MIME_TYPES (PDF, JPEG, PNG, GIF, WebP) are ever
+ *                served inline - the type is detected from the stored CONTENT, never taken from
+ *                the name or the upload; anything else is sent as a download, also by view();
+ *              - every answer carries `X-Content-Type-Options: nosniff` (the browser must not
+ *                guess another type) and, except PDF, a sandbox CSP (no script, no same-origin
+ *                access even if a file is rendered);
+ *              - Content-Disposition is built by Symfony (RFC 6266, ASCII fallback + filename*).
  */
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Web\WebAttachment;
+use App\Support\Uploads\AttachmentPolicy;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttachmentDownloadController extends Controller
 {
+    /** @description CSP of a served file: nothing may run or load, the document is sandboxed. */
+    private const SANDBOX_CSP = "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox";
+
+    /**
+     * @description CSP of an inline PDF - no sandbox (the browser PDF viewers refuse a sandboxed
+     * document), only no framing by other sites.
+     */
+    private const PDF_CSP = "frame-ancestors 'self'";
+
     /**
      * @description Streams the requested file back to the caller under its
      *              original file name, forcing a browser download.
@@ -33,22 +53,47 @@ class AttachmentDownloadController extends Controller
     {
         [$disk, $relativePath, $displayName] = $this->resolveRequest($path);
 
-        return Storage::disk($disk)->download($relativePath, $displayName);
+        return Storage::disk($disk)->download($relativePath, $displayName, $this->securityHeaders(self::SANDBOX_CSP));
     }
 
     /**
-     * @description Streams the requested file back to the caller for in-browser
-     *              preview (Content-Disposition: inline) instead of forcing a download.
+     * @description Streams the requested file for in-browser preview (Content-Disposition:
+     *              inline) - but ONLY when its content is a previewable type
+     *              (AttachmentPolicy::INLINE_MIME_TYPES); any other file is sent as a download.
      * @param string $path Full storage-relative path.
      * @return StreamedResponse
      */
     public function view(string $path): StreamedResponse
     {
         [$disk, $relativePath, $displayName] = $this->resolveRequest($path);
+        $storage = Storage::disk($disk);
+        $mimeType = strtolower((string) $storage->mimeType($relativePath));
 
-        return Storage::disk($disk)->response($relativePath, $displayName, [
-            'Content-Disposition' => 'inline; filename="' . addslashes($displayName) . '"',
-        ]);
+        if (!AttachmentPolicy::isInlineMimeType($mimeType)) {
+            return $storage->download($relativePath, $displayName, $this->securityHeaders(self::SANDBOX_CSP));
+        }
+
+        $csp = $mimeType === 'application/pdf' ? self::PDF_CSP : self::SANDBOX_CSP;
+
+        return $storage->response(
+            $relativePath,
+            $displayName,
+            ['Content-Type' => $mimeType] + $this->securityHeaders($csp),
+            'inline'
+        );
+    }
+
+    /**
+     * @description Headers sent with every served file.
+     * @param string $csp Content-Security-Policy of the answer.
+     * @return array<string, string>
+     */
+    private function securityHeaders(string $csp): array
+    {
+        return [
+            'X-Content-Type-Options'  => 'nosniff',
+            'Content-Security-Policy' => $csp,
+        ];
     }
 
     /**

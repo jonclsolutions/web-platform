@@ -199,6 +199,30 @@ trait WebFixtures
         return UploadedFile::fake()->create($name, $kilobytes, $mime);
     }
 
+    /** @description SVG with a script - a stored XSS when a browser renders it inline. */
+    protected const SVG_XSS = '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(document.domain)</script></svg>';
+
+    /** @description HTML page with a script. */
+    protected const HTML_XSS = '<!DOCTYPE html><html><body><script>alert(document.domain)</script></body></html>';
+
+    /** @description Smallest valid PNG (1x1 pixel). */
+    protected const PNG_BYTES = "\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc\xf8\x0f\x00\x01\x01\x01\x00\x18\xdd\x8d\xb4\x00\x00\x00\x00IEND\xaeB`\x82";
+
+    /**
+     * @description A real uploaded file with the given content - unlike UploadedFile::fake(), its
+     *   MIME type is detected from the CONTENT (finfo), like on the server.
+     * @param string $name Client file name.
+     * @param string $content File content.
+     * @return UploadedFile
+     */
+    protected function uploadWithContent(string $name, string $content): UploadedFile
+    {
+        $path = tempnam(sys_get_temp_dir(), 'upload');
+        file_put_contents($path, $content);
+
+        return new UploadedFile($path, $name, null, null, true);
+    }
+
     /**
      * @description A fake import file with the given content.
      * @param string $format 'csv', 'txt' or 'json'.

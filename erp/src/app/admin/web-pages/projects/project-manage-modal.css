@@ -253,3 +253,4 @@
 }
 .pm-file-chip button { border: none; background: none; color: var(--text-dim); cursor: pointer; font-size: 0.68rem; }
 .pm-file-chip button:hover { color: var(--danger); }
+/* Allowed attachment types under the attach button */

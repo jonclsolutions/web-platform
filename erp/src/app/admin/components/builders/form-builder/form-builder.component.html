@@ -45,9 +45,10 @@
                   @case ('files') {
                     <app-multi-file-upload
                       [label]="i18n.getValue('file-upload.attachments_label')"
-                      [maxFiles]="10"
-                      [maxFileSizeMb]="20"
-                      [maxTotalSizeMb]="50"
+                      [maxFiles]="rulesFor(input)?.max_files ?? 10"
+                      [maxFileSizeMb]="rulesFor(input)?.max_file_size_mb ?? 20"
+                      [maxTotalSizeMb]="rulesFor(input)?.max_total_size_mb ?? 50"
+                      [allowedExtensions]="rulesFor(input)?.extensions ?? []"
                       [textOverrides]="fileUploadTexts"
                       [existingFiles]="formDataToEdit ? (formDataToEdit[input.column_name] || []) : []"
                       (filesChanged)="onFilesChange($event, input.column_name)"

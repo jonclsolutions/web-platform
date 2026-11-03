@@ -86,8 +86,9 @@ class RawRequestCommissionTest extends TestCase
 
     /**
      * @description The form is validated - also the attachments of the public endpoint
-     *   (forbidden extension, forbidden MIME type, too many files).
-     * @input Invalid thema / e-mail / phone; an .exe; a file reported as application/x-msdownload; 11 files.
+     *   (whitelist of name AND content, forbidden MIME type, too many files).
+     * @input Invalid thema / e-mail / phone; an .exe; a file reported as application/x-msdownload;
+     *        an SVG with a script; an HTML page named .pdf; 11 files.
      * @output 422 with the errors; nothing stored.
      */
     public function test_public_form_validation_and_attachment_security(): void
@@ -101,6 +102,11 @@ class RawRequestCommissionTest extends TestCase
             ->assertStatus(422)->assertJsonPath('errors', fn ($e) => str_contains(json_encode($e), 'not allowed for security reasons'));
         $this->post('/api/raw_request_commissions', $this->payload(['attachments' => [$this->upload('doc.pdf', 1, 'application/x-msdownload')]]), ['Accept' => 'application/json'])
             ->assertStatus(422)->assertJsonPath('errors', fn ($e) => str_contains(json_encode($e), 'unauthorized type'));
+        // VT-02: formats a browser runs as a page are refused by the name AND by the content.
+        foreach ([['logo.svg', self::SVG_XSS], ['offer.pdf', self::HTML_XSS]] as [$name, $content]) {
+            $this->post('/api/raw_request_commissions', $this->payload(['attachments' => [$this->uploadWithContent($name, $content)]]), ['Accept' => 'application/json'])
+                ->assertStatus(422)->assertJsonPath('errors', fn ($e) => str_contains(json_encode($e), 'not allowed for security reasons'));
+        }
         $this->post('/api/raw_request_commissions', $this->payload(['attachments' => array_map(fn ($i) => $this->upload("f{$i}.pdf", 1), range(1, 11))]), ['Accept' => 'application/json'])
             ->assertStatus(422)->assertJsonPath('errors.attachments.0', 'You can upload a maximum of 10 files at once.');
 

@@ -13,6 +13,7 @@
 namespace App\Http\Requests\Web\WebProject;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Uploads\AttachmentPolicy;
 
 class StoreProjectThreadMessageRequest extends FormRequest
 {
@@ -22,12 +23,8 @@ class StoreProjectThreadMessageRequest extends FormRequest
     {
         return [
             'body'           => ['required', 'string'],
-            'attachments'    => ['nullable', 'array', 'max:5'],
-            'attachments.*'  => [
-                'file',
-                'max:15360',
-                'mimes:pdf,doc,docx,odt,rtf,txt,xls,xlsx,ods,csv,ppt,pptx,odp,jpg,jpeg,png,gif,webp,svg,zip,rar,7z',
-            ],
+            'attachments'    => ['nullable', 'array', 'max:' . AttachmentPolicy::PROFILES[AttachmentPolicy::PROJECT_THREAD]['max_files']],
+            'attachments.*'  => AttachmentPolicy::fileRules(AttachmentPolicy::PROJECT_THREAD),
         ];
     }
 
@@ -38,6 +35,7 @@ class StoreProjectThreadMessageRequest extends FormRequest
             'attachments.*.file'   => 'One of the attached files is invalid.',
             'attachments.*.max'    => 'Each file can be at most 15 MB.',
             'attachments.*.mimes'  => 'One of the attached files has an unsupported format.',
+            'attachments.*.extensions' => 'One of the attached files has an unsupported format.',
         ];
     }
 }

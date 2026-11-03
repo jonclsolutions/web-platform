@@ -5,6 +5,8 @@ import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BasePublicComponent } from '../../base-public.component';
 import { MultiFileUploadComponent } from '../../../shared/components/multi-file-upload/multi-file-upload.component';
+import { UploadRulesService } from '../../../shared/services/upload-rules.service';
+import { UploadRule, isAttachmentRejection } from '../../../shared/utils/upload-rules';
 import * as Web from '../../../shared/imports/web-providers';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 
@@ -17,6 +19,10 @@ styleUrls: ['../shared-styles/form-fields.css', './contact.component.css'],
 changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContactComponent extends BasePublicComponent {
+
+  /** Attachment rules of the API (allowed types, limits) - null until loaded / when unavailable. */
+  attachmentRules: UploadRule | null = null;
+  private uploadRules = inject(UploadRulesService);
 protected readonly translationKey = 'contact';
 protected override readonly loadSiteSettings = true;
 
@@ -38,6 +44,9 @@ super();
 
 // Hook called after the initialization in the base class
 protected override onInit(): void {
+    this.uploadRules.rules('raw_request_commission')
+      .pipe(Web.takeUntil(this.destroy$))
+      .subscribe(rules => { this.attachmentRules = rules; this.cdr.markForCheck(); });
 this.initForm();
 this.currentLanguage$
       .pipe(Web.takeUntil(this.destroy$))
@@ -74,6 +83,7 @@ return this.isLoading() ? this.t.buttons.sending : this.t.buttons.send;
     const s = this.t?.attachment_uploader;
     if (!s) return {};
     return {
+      limitsHint: s.limits_hint,
       existingSectionTitle: s.existing_section_title,
       removeExistingTitle: s.remove_existing_title,
       dropzoneLabel: s.dropzone_label,
@@ -83,6 +93,8 @@ return this.isLoading() ? this.t.buttons.sending : this.t.buttons.send;
       errorTotalSizeExceeded: s.error_total_size_exceeded,
       totalLabel: s.total_label,
       totalNewSuffix: s.total_new_suffix,
+      errorFileType: s.error_file_type,
+      allowedTypesHint: s.allowed_types_hint,
     };
   }
 
@@ -131,7 +143,9 @@ this.cdr.markForCheck();
         },
 error: (err) => {
 // Translated text by status, never the (English) API message (findings #45 / #53).
-const msg = err?.status === 429 ? this.t?.errors?.too_many_requests : this.t?.errors?.submit_error;
+const msg = err?.status === 429 ? this.t?.errors?.too_many_requests
+  : isAttachmentRejection(err) ? (this.t?.errors?.attachment_rejected ?? this.t?.errors?.submit_error)
+  : this.t?.errors?.submit_error;
 this.alertDialogService.open(this.t?.errors?.submit_error_title, msg, 'danger');
         },
       });

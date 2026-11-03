@@ -11,6 +11,7 @@
 namespace App\Http\Requests\Web\WebJobApplication;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Uploads\AttachmentPolicy;
 
 /**
  * @description Handles request validation for new job applications from the web frontend.
@@ -32,11 +33,6 @@ class StoreWebJobApplicationRequest extends FormRequest
      */
     public function rules(): array
     {
-        $safeExtensions = [
-            'pdf', 'doc', 'docx', 'odt', 'pages', 'rtf', 'txt',
-            'jpg', 'jpeg', 'png', 'heic', 'heif',
-            'zip', 'rar', '7z'
-        ];
 
         return [
             'first_name'    => 'required|string|max:100',
@@ -46,12 +42,7 @@ class StoreWebJobApplicationRequest extends FormRequest
             'position_name' => 'required|string|max:150',
             'message'       => 'nullable|string',
             
-            'cv_file'       => [
-                'required',
-                'file',
-                'mimes:' . implode(',', $safeExtensions),
-                'max:20480',
-            ],
+            'cv_file'       => ['required', ...AttachmentPolicy::fileRules(AttachmentPolicy::JOB_APPLICATION)],
             'dataProcessingAgreement' => 'required|accepted',
         ];
     }
@@ -66,6 +57,7 @@ class StoreWebJobApplicationRequest extends FormRequest
         return [
             'cv_file.required' => 'Please upload your CV.',
             'cv_file.mimes'    => 'Allowed formats for the CV are PDF, Word, images, or archives.',
+            'cv_file.extensions' => 'Allowed formats for the CV are PDF, Word, images, or archives.',
             'cv_file.max'      => 'The file must not be larger than 20 MB.',
         ];
     }

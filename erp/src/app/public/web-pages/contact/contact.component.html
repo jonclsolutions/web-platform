@@ -10,8 +10,8 @@
 
 <div class="contact-page">
 <aside class="panel-left">
-<span class="side-label" aria-hidden="true">{{ t.side_label }}</span>
 <div class="panel-left-content">
+<span class="side-label" aria-hidden="true">{{ t.side_label }}</span>
 <div class="brand-block">
 <h1 class="brand-headline" [innerHTML]="t.brand_headline"></h1>
 <p class="brand-sub">{{ t.brand_sub }}</p>
@@ -67,11 +67,6 @@
 @if (!isSubmitted()) {
 
 <div class="form-wrapper">
-<div class="form-header">
-<!-- <p class="form-eyebrow">{{ t.form_eyebrow }}</p> -->
-<h2 class="form-title">{{ t.form_title }}</h2>
-</div>
-
 <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" novalidate class="form-body">
 
 <div class="field-group">
@@ -153,9 +148,10 @@ class="field-input textarea"
 <div class="field-group">
 <app-multi-file-upload
   [label]="t.labels?.attachment"
-  [maxFiles]="10"
-  [maxFileSizeMb]="20"
-  [maxTotalSizeMb]="50"
+  [maxFiles]="attachmentRules?.max_files ?? 10"
+  [maxFileSizeMb]="attachmentRules?.max_file_size_mb ?? 20"
+  [maxTotalSizeMb]="attachmentRules?.max_total_size_mb ?? 50"
+  [allowedExtensions]="attachmentRules?.extensions ?? []"
   [textOverrides]="attachmentUploaderTexts"
   (filesChanged)="onFilesChanged($event)">
 </app-multi-file-upload>

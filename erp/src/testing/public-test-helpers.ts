@@ -20,6 +20,7 @@ import { BehaviorSubject, of } from 'rxjs';
 
 import { LocalizationService, LangMeta } from '../app/shared/services/localization.service';
 import { PublicDataService } from '../app/shared/services/public-data.service';
+import { provideUploadRulesStub } from './upload-rules-stub';
 
 /** LocalizationService stub. */
 export interface LocalizationStub {
@@ -105,7 +106,8 @@ export function createPublicPageContext(options: { translations?: any; settings?
       provideHttpClient(),
       provideHttpClientTesting(),
       { provide: LocalizationService, useValue: localization },
-      { provide: PublicDataService, useValue: publicData }
+      { provide: PublicDataService, useValue: publicData },
+      provideUploadRulesStub()
     ]
   };
 }

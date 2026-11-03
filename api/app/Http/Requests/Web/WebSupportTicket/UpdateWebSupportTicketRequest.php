@@ -11,6 +11,7 @@
 namespace App\Http\Requests\Web\WebSupportTicket;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Uploads\AttachmentPolicy;
 
 /**
  * @description Handles request validation for updating existing support ticket data and attachments.
@@ -31,11 +32,6 @@ class UpdateWebSupportTicketRequest extends FormRequest
      */
     public function rules(): array
     {
-        $safeExtensions = [
-            'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic', 'heif',
-            'pdf', 'txt', 'csv', 'doc', 'docx', 'xls', 'xlsx',
-            'zip',
-        ];
 
         return [
             'priority'         => ['sometimes', 'required', 'string', 'max:50', 'in:low,medium,high'],
@@ -45,12 +41,7 @@ class UpdateWebSupportTicketRequest extends FormRequest
             'description'      => ['sometimes', 'required', 'string'],
             'user_name_plain'  => ['sometimes', 'required', 'string', 'max:255'],
             'user_plain'       => ['sometimes', 'required', 'string', 'max:255'],
-            'attachment'       => [
-                'nullable',
-                'file',
-                'mimes:' . implode(',', $safeExtensions),
-                'max:20480'
-            ],
+            'attachment'       => ['nullable', ...AttachmentPolicy::fileRules(AttachmentPolicy::SUPPORT_TICKET)],
         ];
     }
 
@@ -64,6 +55,7 @@ class UpdateWebSupportTicketRequest extends FormRequest
         return [
             'attachment.max'   => 'The file must not be larger than 20 MB.',
             'attachment.mimes' => 'This file type is not allowed. Only images, PDFs, text/spreadsheet files, and ZIP archives are permitted.',
+            'attachment.extensions' => 'This file type is not allowed. Only images, PDFs, text/spreadsheet files, and ZIP archives are permitted.',
         ];
     }
 }

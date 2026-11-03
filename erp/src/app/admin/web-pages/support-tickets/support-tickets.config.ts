@@ -135,6 +135,7 @@ export function createSupportTicketFormFields(i18n: AdminLocalizationService): C
       column_name: 'attachment',
       label: i18n.getValue(`${SECTION}.field_attachment_label`),
       type: 'file',
+      uploadProfile: 'support_ticket',
       required: false,
       show_in_edit: false,
       show_in_create: true,

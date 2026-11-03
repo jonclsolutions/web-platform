@@ -33,6 +33,7 @@ import { ConfirmDialogService } from '../app/core/services/confirm-dialog.servic
 import { TableRefreshBusService } from '../app/core/services/table-refresh-bus.service';
 import { LocalizationService } from '../app/shared/services/localization.service';
 import { PublicDataService } from '../app/shared/services/public-data.service';
+import { provideUploadRulesStub } from './upload-rules-stub';
 
 // The admin formats dates and money with 'cs-CZ' (registered in app.config.ts in the app).
 registerLocaleData(localeCs, 'cs-CZ');
@@ -226,7 +227,8 @@ export function createAdminTestContext(options: { granted?: string[] | 'all'; lo
       { provide: GenericTableService, useValue: genericTable },
       { provide: AlertDialogService, useValue: alert },
       { provide: ConfirmDialogService, useValue: confirm },
-      { provide: TableRefreshBusService, useValue: refreshBus }
+      { provide: TableRefreshBusService, useValue: refreshBus },
+      provideUploadRulesStub()
     ]
   };
 }
@@ -261,7 +263,8 @@ export function createPublicTestContext(translations: any = {}): PublicTestConte
     translations$, localization, publicData,
     providers: [
       { provide: LocalizationService, useValue: localization },
-      { provide: PublicDataService, useValue: publicData }
+      { provide: PublicDataService, useValue: publicData },
+      provideUploadRulesStub()
     ]
   };
 }

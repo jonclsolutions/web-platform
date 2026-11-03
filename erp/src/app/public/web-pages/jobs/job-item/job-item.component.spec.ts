@@ -23,7 +23,7 @@ describe('JobItemComponent', () => {
   let ctx: PublicPageContext;
   let fixture: ComponentFixture<JobItemComponent>;
   let component: JobItemComponent;
-  const jobs = { dev: { title: 'Developer', content: '<p>Code</p>' }, form_error_generic: 'Try again', form_too_many_requests: 'Slow down' };
+  const jobs = { dev: { title: 'Developer', content: '<p>Code</p>' }, form_error_generic: 'Try again', form_too_many_requests: 'Slow down', form_cv_type_error: 'Typ nelze. Povolené: {types}' };
 
   /** Creates the page for the job id in the route. */
   function create(id: string | null = 'dev'): void {
@@ -99,6 +99,59 @@ describe('JobItemComponent', () => {
     component.onFileSelected({ target: { files: [cv()] } });
     expect(component.fileSizeError).toBeFalse();
     expect(component.selectedFile!.name).toBe('cv.pdf');
+  });
+
+  /**
+   * @description CV type: the picker offers every file and no type list is shown up front; xml,
+   *   svg and a name without extension (rules of the API, job_application) are refused right when
+   *   chosen and only then the error lists the allowed types (translated, English default without
+   *   translation); without the rules of the API the browser does not check (the API decides).
+   * @input file input; cv.xml; logo.svg; README; t without form_cv_type_error; cvRules null + tool.exe.
+   * @output no accept, no type list; fileTypeError, selectedFile null, input cleared, error span
+   *   with 'PDF, DOC'; default text; tool.exe kept.
+   */
+  it('checks the CV type against the upload rules', () => {
+    create();
+    expect((fixture.nativeElement.querySelector('input[type="file"]') as HTMLInputElement).hasAttribute('accept')).toBeFalse();
+    expect(fixture.nativeElement.textContent).not.toContain('Povolené');
+
+    for (const name of ['cv.xml', 'logo.svg', 'README']) {
+      const target: any = { files: [new File(['x'], name)], value: 'C:/' + name };
+      component.onFileSelected({ target });
+      expect(component.fileTypeError).withContext(name).toBeTrue();
+      expect(component.fileSizeError).toBeFalse();
+      expect(component.selectedFile).toBeNull();
+      expect(target.value).toBe('');
+    }
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Typ nelze. Povolené: PDF, DOC, DOCX');
+
+    component.t = { ...component.t, form_cv_type_error: undefined };
+    expect(component.cvTypeErrorText).toContain('This file type cannot be uploaded. Allowed types: PDF');
+
+    component.cvRules = null;
+    expect(component.cvTypeErrorText).toBe('This file type cannot be uploaded. Allowed types: ');
+    component.onFileSelected({ target: { files: [new File(['x'], 'tool.exe')] } });
+    expect(component.fileTypeError).toBeFalse();
+    expect(component.selectedFile!.name).toBe('tool.exe');
+  });
+
+  /**
+   * @description The API refused the CV (content of another type than the name says, 422 on
+   *   cv_file): the type error is shown at the file field and another file must be chosen.
+   * @input valid application; post fails 422 { errors: { cv_file } }.
+   * @output fileTypeError, selectedFile null, no general error, not submitted.
+   */
+  it('shows a CV refused by the API at the file field', () => {
+    create();
+    fill();
+    component.onFileSelected({ target: { files: [cv()] } });
+    ctx.publicData.post.and.returnValue(throwError(() => ({ status: 422, error: { errors: { cv_file: ['The file type is not allowed.'] } } })));
+    component.onSubmit();
+    expect(component.fileTypeError).toBeTrue();
+    expect(component.selectedFile).toBeNull();
+    expect(component.errorMessage).toBeNull();
+    expect(component.isSubmitted).toBeFalse();
   });
 
   /**

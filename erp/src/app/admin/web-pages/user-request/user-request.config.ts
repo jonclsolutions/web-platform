@@ -157,6 +157,7 @@ export function createUserRequestFormFields(i18n: AdminLocalizationService): Cor
       column_name: 'attachments',
       label: i18n.getValue(`${SECTION}.field_attachments_label`),
       type: 'files',
+      uploadProfile: 'raw_request_commission',
       required: false,
       show_in_edit: true,
       show_in_create: true

@@ -38,7 +38,12 @@ rel="noopener noreferrer">{{ attachment.original_filename }}</a>
 </div>
 
 @if (errorMessage) {
-<div class="mfu-error">{{ errorMessage }}</div>
+<div class="mfu-error" role="alert">
+{{ errorMessage }}
+@if (errorTypesHint) {
+<span class="mfu-error-types">{{ errorTypesHint }}</span>
+}
+</div>
   }
 
 @if (files.length > 0) {

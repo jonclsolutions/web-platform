@@ -89,6 +89,21 @@ class JobApplicationTest extends TestCase
     }
 
     /**
+     * @description The CV whitelist (AttachmentPolicy::JOB_APPLICATION) checks the name AND the
+     *   content: an XML file and an HTML page named .pdf are refused.
+     * @input POST with cv.xml (XML content); POST with cv.pdf that is an HTML page.
+     * @output 422 cv_file twice, no application stored.
+     */
+    public function test_cv_type_is_checked_by_name_and_content(): void
+    {
+        foreach ([['cv.xml', '<?xml version="1.0"?><cv><name>Eva</name></cv>'], ['cv.pdf', self::HTML_XSS]] as [$name, $content]) {
+            $this->post('/api/job_applications', $this->payload(['cv_file' => $this->uploadWithContent($name, $content)]), ['Accept' => 'application/json'])
+                ->assertStatus(422)->assertJsonValidationErrors(['cv_file']);
+        }
+        $this->assertSame(0, \App\Models\Web\WebJobApplication::count());
+    }
+
+    /**
      * @description A database error answers 500.
      * @input job applications INSERT fails.
      * @output 500 "Creation failed.".

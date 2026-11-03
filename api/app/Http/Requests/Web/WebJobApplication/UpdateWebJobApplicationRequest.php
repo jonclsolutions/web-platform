@@ -11,6 +11,7 @@
 namespace App\Http\Requests\Web\WebJobApplication;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Uploads\AttachmentPolicy;
 
 /**
  * @description Handles request validation for updating existing job applications.
@@ -31,7 +32,6 @@ class UpdateWebJobApplicationRequest extends FormRequest
      */
     public function rules(): array
     {
-        $safeExtensions = ['pdf', 'doc', 'docx', 'odt', 'jpg', 'jpeg', 'png', 'zip', 'rar'];
 
         return [
             'state'         => 'sometimes|required|string|max:50|in:new,interview,selected,rejected,pool',
@@ -42,12 +42,7 @@ class UpdateWebJobApplicationRequest extends FormRequest
             'phone'         => 'nullable|string|max:30',
             'position_name' => 'sometimes|required|string|max:150',
             'message'       => 'nullable|string',
-            'cv_file'       => [
-                'nullable', 
-                'file', 
-                'mimes:' . implode(',', $safeExtensions), 
-                'max:20480'
-            ],
+            'cv_file'       => ['nullable', ...AttachmentPolicy::fileRules(AttachmentPolicy::JOB_APPLICATION)],
         ];
     }
 }

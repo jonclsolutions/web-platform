@@ -21,6 +21,7 @@ import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { ProjectPortalComponent } from './project-portal.component';
 import { ProjectPortalLocalizationService, PROJECT_PORTAL_AVAILABLE_LANGUAGES } from './project-portal-localization.service';
 import { PublicDataService } from '../../../shared/services/public-data.service';
+import { provideUploadRulesStub } from '../../../../testing/upload-rules-stub';
 
 describe('ProjectPortalComponent', () => {
   let fixture: ComponentFixture<ProjectPortalComponent>;
@@ -64,6 +65,7 @@ describe('ProjectPortalComponent', () => {
       providers: [
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap(token ? { token } : {}) } } },
         { provide: PublicDataService, useValue: { get, getWithMeta, post, getSiteSettings } },
+        provideUploadRulesStub(),
         { provide: ProjectPortalLocalizationService, useValue: {
           translations$, currentLanguage$: language$, availableLanguages: PROJECT_PORTAL_AVAILABLE_LANGUAGES,
           getValue: (k: string) => k, getCurrentLanguage: () => language$.value, setLanguage: jasmine.createSpy('setLanguage')
@@ -300,12 +302,12 @@ describe('ProjectPortalComponent', () => {
    * @description Attachments: max 5, allowed extensions, 15 MB limit - first error shown,
    *   valid files kept; removal clears the error; empty selection ignored.
    * @input 1 exe + 1 pdf; 16 MB png; 6 files; remove; empty input.
-   * @output exe refused (type error), pdf kept; size error; too-many error and 5 files; error cleared.
+   * @output exe refused (type error with the allowed types), pdf kept; size error; too-many error and 5 files; error cleared.
    */
   it('validates attachments', fakeAsync(() => {
     loggedIn();
     portal.onReplyFilesSelected(files(file('virus.exe'), file('brief.pdf')));
-    expect(portal.replyFileError).toBe('attachment_error_type');
+    expect(portal.replyFileError).toBe('attachment_error_type attachment_allowed_types');
     expect(portal.replyFiles.map(f => f.name)).toEqual(['brief.pdf']);
     portal.onReplyFilesSelected(files(file('big.png', 16 * 1024 * 1024)));
     expect(portal.replyFileError).toBe('attachment_error_size');
@@ -322,6 +324,38 @@ describe('ProjectPortalComponent', () => {
     expect(portal.newThreadFiles.map(f => f.name)).toEqual(['a.zip']);
     portal.removeNewThreadFile(0);
     expect(portal.newThreadFiles).toEqual([]);
+    fixture.destroy();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description The limits and types come from the rules of the API (project_thread): the
+   *   pickers offer every file and no type list is shown up front; svg / xml files and a name
+   *   without extension are refused when chosen and only that error lists the allowed types.
+   *   Without the rules the fallback limits (5 files, 15 MB) apply and the type is left to the API.
+   * @input pickers / limits; reply logo.svg + feed.xml; new thread README; attachmentRules null + tool.exe.
+   * @output no accept, no type list; type error + 'attachment_allowed_types', nothing kept;
+   *   '' types text, 5 / 15, tool.exe kept.
+   */
+  it('takes the attachment rules from the API', fakeAsync(() => {
+    loggedIn();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('input[type="file"][accept]')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('attachment_allowed_types');
+    expect(portal.attachmentTypesText).toBe('attachment_allowed_types');
+    expect([portal.maxAttachments, portal.maxAttachmentSizeMb]).toEqual([5, 15]);
+    portal.onReplyFilesSelected(files(file('logo.svg'), file('feed.xml')));
+    expect(portal.replyFileError).toBe('attachment_error_type attachment_allowed_types');
+    expect(portal.replyFiles).toEqual([]);
+    portal.onNewThreadFilesSelected(files(file('README')));
+    expect(portal.newThreadFileError).toBe('attachment_error_type attachment_allowed_types');
+    expect(portal.newThreadFiles).toEqual([]);
+
+    portal.attachmentRules = null;
+    expect(portal.attachmentTypesText).toBe('');
+    expect([portal.maxAttachments, portal.maxAttachmentSizeMb]).toEqual([5, 15]);
+    portal.onReplyFilesSelected(files(file('tool.exe')));
+    expect(portal.replyFiles.map(f => f.name)).toEqual(['tool.exe']);
     fixture.destroy();
     discardPeriodicTasks();
   }));

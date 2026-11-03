@@ -4,7 +4,7 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Styles of the contact component.
+    @description: Styles of the contact component - also used by the order form (order-form.component.ts), so both forms look the same.
 */
 
 :host {
@@ -35,6 +35,7 @@
   /* ── Contact split layout ── */
   --panel-w:      420px;  /* left panel content width */
   --panel-pad:    48px;   /* space between panel text and the divider / form */
+  --side-label-gap: 56px; /* free space between the vertical label and the panel text */
 }
 
 /* ── Page grid ───────────────────────────────────────────────────
@@ -77,18 +78,25 @@
   overflow: hidden;
 }
 
-/* Large vertical label – typographic signature */
+/* Large vertical label – typographic signature. Anchored to the LEFT edge of the panel
+   content (right: 100% of .panel-left-content) with a free gap, so it always sits left of the
+   text and never covers it, whatever the length of the word (KONTAKT / OBJEDNÁVKA). The
+   glyph size follows the free space left of the content column (column width = font-size with
+   line-height 1), min. 4rem, max. 7rem; where not even 4rem fits, the label is hidden. */
 .side-label {
   position: absolute;
-  right: -28px;
   top: 50%;
-  transform: translateY(-50%) rotate(90deg);
+  right: calc(100% + var(--side-label-gap));
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
   font-family: var(--ff-display);
-  font-size: 7rem;
+  font-size: clamp(4rem, calc((100vw - var(--max-w)) / 2 - var(--side-label-gap) - 32px), 7rem);
   font-weight: 700;
+  line-height: 1;
   letter-spacing: 0.3em;
   color: rgba(166, 125, 255, 0.045);
   pointer-events: none;
+  user-select: none;
   white-space: nowrap;
   z-index: 0;
 }
@@ -205,24 +213,6 @@
 .form-wrapper {
   width: 100%;
   max-width: 600px;
-}
-
-/* Form header */
-.form-eyebrow {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--clr-accent);
-  margin: 0 0 10px;
-}
-
-.form-title {
-  font-family: var(--ff-display);
-  font-size: 1.9rem;
-  font-weight: 700;
-  color: var(--color-white);
-  margin: 0 0 40px;
 }
 
 .form-body {
@@ -483,6 +473,11 @@
 /* ══════════════════════════════════════════════
    RESPONSIVE
    ══════════════════════════════════════════════ */
+/* Not even the 4rem label fits beside the content column: (100vw - 1200px) / 2 < 4rem + gap + 32px */
+@media (max-width: 1503px) {
+  .side-label { display: none; }
+}
+
 @media (max-width: 1024px) {
   :host {
     --panel-w:   360px;
@@ -492,7 +487,6 @@
   .panel-left-content { gap: 36px; }
 
   .brand-headline { font-size: 2.4rem; }
-  .side-label { font-size: 5rem; }
 }
 
 @media (max-width: 768px) {
@@ -544,5 +538,4 @@
 
 @media (max-width: 480px) {
   .brand-headline { font-size: 1.7rem; }
-  .form-title { font-size: 1.5rem; }
 }

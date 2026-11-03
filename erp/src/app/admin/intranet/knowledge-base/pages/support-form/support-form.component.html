@@ -51,6 +51,9 @@
             <span class="file-info">{{ selectedFile ? selectedFile.name : strings.file_placeholder }}</span>
           </label>
         </div>
+        @if (fileError) {
+          <div class="kb-file-error" role="alert">{{ fileError }}</div>
+        }
       </div>
       <div class="kb-form-actions">
         <button type="submit" class="kb-btn-primary" [disabled]="supportForm.invalid || (loadingService.isLoading$ | async)">

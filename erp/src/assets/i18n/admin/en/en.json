@@ -263,7 +263,10 @@
   "error_total_size_exceeded": "Total attachment size must not exceed {maxMb} MB.",
   "total_label": "Total: {count} / {max} files",
   "total_new_suffix": " ({size} new)",
-  "limits_hint": "(max. {max} files, {maxMb} MB/file, {totalMb} MB total)"
+  "limits_hint": "(max. {max} files, {maxMb} MB/file, {totalMb} MB total)",
+  "error_file_type": "The file \"{filename}\" cannot be uploaded - the type {ext} is not allowed.",
+  "allowed_types_hint": "Allowed types: {types}",
+  "alert_file_refused_title": "The file cannot be uploaded"
 },
 "welcome-page": {
   "subtitle": "Glad to see you in the RPSW administration system.",
@@ -802,7 +805,10 @@
   "submitting_button": "SUBMITTING...",
   "success_title": "Request Submitted",
   "success_message_prefix": "Your ticket has been successfully registered under ID:",
-  "create_another_button": "Create Another Request"
+  "create_another_button": "Create Another Request",
+  "allowed_types_hint": "Allowed types: {types} (max. {maxMb} MB)",
+  "file_type_error": "The file \"{filename}\" cannot be uploaded - the type {ext} is not allowed.",
+  "file_size_error": "The file \"{filename}\" exceeds the {maxMb} MB limit."
 },
 "web-welcome-page": {
   "header": "Web",
@@ -1491,8 +1497,9 @@
   "projects": {
   "load_older_messages": "Load older messages",
   "attachment_error_too_many": "You can attach at most {max} files.",
-  "attachment_error_type": "File \"{name}\" has an unsupported format.",
-  "attachment_error_size": "File \"{name}\" is too large (max 15 MB).",
+  "attachment_error_type": "The file \"{name}\" cannot be uploaded - the type {ext} is not allowed.",
+  "attachment_error_size": "The file \"{name}\" is too large (max {maxMb} MB).",
+  "attachment_allowed_types": "Allowed types: {types}",
   "attach_files_button": "Attach files",
   "field_estimated_from_label": "Est. completion from",
   "field_estimated_to_label": "Est. completion to",

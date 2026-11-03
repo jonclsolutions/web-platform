@@ -89,6 +89,7 @@ export function createSalesOrderFormFields(i18n: AdminLocalizationService): Core
       column_name: 'attachments',
       label: i18n.getValue(`${SECTION}.field_attachments_label`),
       type: 'files',
+      uploadProfile: 'sales_order',
       required: false,
       editable: true, show_in_edit: true, show_in_create: true,
     },

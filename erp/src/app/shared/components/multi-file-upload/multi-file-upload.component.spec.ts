@@ -6,8 +6,8 @@
  * @created 2026
  * @description Unit tests of MultiFileUploadComponent: adding files from the input and by
  *   drag & drop, the three limits (count incl. existing files, size per file, total size) with
- *   their messages, removing new / staged removal of existing files, text overrides and the
- *   rendered labels.
+ *   their messages, the allowed types (picker filter, refusal with the file name and type, hint),
+ *   removing new / staged removal of existing files, text overrides and the rendered labels.
  * @dependencies
  * - Real component (OnPush) rendered via ComponentFixture; File objects created in memory.
  */
@@ -167,5 +167,61 @@ describe('MultiFileUploadComponent', () => {
     expect(component.t.totalLabel).toBe('Total: {count} / {max} files');
     expect(component.formatSize(512)).toBe('1 KB');
     expect(component.formatSize(1.5 * MB)).toBe('1.5 MB');
+  });
+
+  /**
+   * @description With allowedExtensions the picker still offers every file and no type list is
+   *   shown up front; a file of another type is refused with its name and type and only then the
+   *   allowed types are listed (nothing emitted, also when mixed with a good file); the check
+   *   ignores the case of the extension; a name without an extension is refused too; a good file
+   *   or a removal clears the error with its type list.
+   * @input allowedExtensions ['pdf', 'png']; choose(data.xml); choose(a.pdf, data.xml); choose(SCAN.PDF); choose(README); removeFile(0).
+   * @output no accept, no type list; 'The file "data.xml" cannot be uploaded - the type .xml is not
+   *   allowed.' + 'Allowed types: PDF, PNG' twice, nothing emitted; SCAN.PDF emitted, no error;
+   *   README refused with type '?'; error and type list cleared.
+   */
+  it('refuses files of a type that is not allowed', () => {
+    fixture.componentRef.setInput('allowedExtensions', ['pdf', 'png']);
+    fixture.detectChanges();
+    expect((fixture.nativeElement.querySelector('input[type=file]') as HTMLInputElement).hasAttribute('accept')).toBeFalse();
+    expect(fixture.nativeElement.textContent).not.toContain('Allowed types');
+
+    choose(file('data.xml'));
+    expect(text('.mfu-error')).toContain('The file "data.xml" cannot be uploaded - the type .xml is not allowed.');
+    expect(text('.mfu-error-types')).toBe('Allowed types: PDF, PNG');
+    choose(file('a.pdf'), file('data.xml'));
+    expect(text('.mfu-error')).toContain('data.xml');
+    expect(text('.mfu-error-types')).toBe('Allowed types: PDF, PNG');
+    expect(emitted).toEqual([]);
+
+    choose(file('SCAN.PDF'));
+    expect(text('.mfu-error')).toBe('');
+    expect(emitted.length).toBe(1);
+
+    choose(file('README'));
+    expect(text('.mfu-error')).toContain('the type ? is not allowed');
+    component.removeFile(0);
+    fixture.detectChanges();
+    expect(component.errorTypesHint).toBeNull();
+    expect(text('.mfu-error')).toBe('');
+  });
+
+  /**
+   * @description Without allowedExtensions nothing is checked (any type passes);
+   *   an override with an empty / undefined value (a key missing in a translation file) keeps the default.
+   * @input no allowedExtensions; choose(data.xml); textOverrides {errorFileType: undefined, dropzoneLabel: ''}; textOverrides null.
+   * @output no accept attribute; data.xml emitted, no types text; default errorFileType and dropzoneLabel.
+   */
+  it('checks no type without a list and keeps defaults for missing texts', () => {
+    expect((fixture.nativeElement.querySelector('input[type=file]') as HTMLInputElement).hasAttribute('accept')).toBeFalse();
+    choose(file('data.xml'));
+    expect(emitted.length).toBe(1);
+    expect(component.allowedTypesText).toBe('');
+
+    fixture.componentRef.setInput('textOverrides', { errorFileType: undefined, dropzoneLabel: '' } as any);
+    expect(component.t.errorFileType).toContain('cannot be uploaded');
+    expect(component.t.dropzoneLabel).toBe('↑ Choose files or drop them here');
+    fixture.componentRef.setInput('textOverrides', null as any);
+    expect(component.t.errorFileType).toContain('cannot be uploaded');
   });
 });

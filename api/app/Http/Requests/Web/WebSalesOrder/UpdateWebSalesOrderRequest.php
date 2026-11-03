@@ -14,15 +14,15 @@ use App\Rules\AttachmentsTotalSize;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Models\Web\WebSalesLead;
+use App\Support\Uploads\AttachmentPolicy;
 
 /**
  * @description Handles request validation for updating existing sales order data.
  */
 class UpdateWebSalesOrderRequest extends FormRequest
 {
-    private const MAX_ATTACHMENTS = 10;
-    private const MAX_FILE_SIZE_KB = 20480; // 20 MB
-    private const MAX_TOTAL_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
+    /** @description Limits and allowed types of the upload profile (AttachmentPolicy - shared with GET upload-rules). */
+    private const LIMITS = AttachmentPolicy::PROFILES[AttachmentPolicy::SALES_ORDER];
 
     /**
      * Determine if the user is authorized to make this request.
@@ -38,9 +38,6 @@ class UpdateWebSalesOrderRequest extends FormRequest
      */
     public function rules(): array
     {
-        $safeExtensions = [
-            'pdf', 'jpg', 'jpeg', 'png', 'zip', 'docx', 'xlsx', 'dwg', 'dxf', 'stp', 'step'
-        ];
 
         return [
             'lead_id'           => ['sometimes', 'nullable', Rule::exists(WebSalesLead::class, 'id')],
@@ -51,12 +48,8 @@ class UpdateWebSalesOrderRequest extends FormRequest
             'client_phone'      => 'nullable|string|max:255',
             'client_email'      => 'nullable|email|max:255',
             'order_description' => 'nullable|string',
-            'attachments'       => ['sometimes', 'nullable', 'array', 'max:' . self::MAX_ATTACHMENTS, new AttachmentsTotalSize(self::MAX_TOTAL_SIZE_BYTES)],
-            'attachments.*'     => [
-                'file',
-                'mimes:' . implode(',', $safeExtensions),
-                'max:' . self::MAX_FILE_SIZE_KB,
-            ],
+            'attachments'       => ['sometimes', 'nullable', 'array', 'max:' . self::LIMITS['max_files'], new AttachmentsTotalSize(self::LIMITS['max_total_bytes'])],
+            'attachments.*'     => AttachmentPolicy::fileRules(AttachmentPolicy::SALES_ORDER),
         ];
     }
 
@@ -68,8 +61,9 @@ class UpdateWebSalesOrderRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'attachments.max'      => 'You can add a maximum of ' . self::MAX_ATTACHMENTS . ' files at once.',
-            'attachments.*.mimes'  => 'Allowed formats for order attachments are PDF, Word, Excel, CAD formats, or images.',
+            'attachments.max'      => 'You can add a maximum of ' . self::LIMITS['max_files'] . ' files at once.',
+            'attachments.*.mimes'  => 'This file type is not allowed. Please upload a standard document, image, video, or archive.',
+            'attachments.*.extensions' => 'This file type is not allowed. Please upload a standard document, image, video, or archive.',
             'attachments.*.max'    => 'The attachment file must not exceed 20 MB.',
         ];
     }

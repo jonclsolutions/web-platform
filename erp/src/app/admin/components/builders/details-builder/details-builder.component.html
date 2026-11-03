@@ -55,7 +55,9 @@
 <span class="details-file-size">{{ formatFileSize(file.size_bytes) }}</span>
 </div>
 <div class="file-actions">
-<a [href]="file.view_url" target="_blank" class="btn-action view">{{ strings.view }}</a>
+@if (file.view_url) {
+<a [href]="file.view_url" target="_blank" rel="noopener" class="btn-action view">{{ strings.view }}</a>
+}
 <button type="button" (click)="downloadFile(file.download_url)" class="btn-action download">
                                     {{ strings.download }}
 </button>

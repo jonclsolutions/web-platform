@@ -37,6 +37,13 @@
   margin-left: 4px;
 }
 
+/* Allowed file types under the label */
+.mfu-error-types {
+  display: block;
+  margin-top: 4px;
+  opacity: 0.85;
+}
+
 /* ── Dropzone ────────────────────────────────────────────────────────── */
 .mfu-dropzone {
   position: relative;

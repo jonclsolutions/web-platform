@@ -55,6 +55,7 @@ use App\Http\Controllers\Api\Core\CoreExternalLinkController;
 use App\Http\Controllers\Api\Core\CoreLogController;
 use App\Http\Controllers\Api\Web\WebPublicController;
 use App\Http\Controllers\Api\AttachmentDownloadController;
+use App\Http\Controllers\Api\UploadRulesController;
 use App\Models\Core\CoreSecurityEvent;
 use App\Http\Controllers\Api\Core\CoreEmailAccessPolicyController;
 use App\Http\Controllers\Api\Legal\PageTitleController;
@@ -99,6 +100,10 @@ Route::prefix('shop/public')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::get('web/public/status', [WebPublicController::class, 'getStatus']);
+
+// Attachment rules of every upload (allowed types, limits) - the same AttachmentPolicy the
+// requests validate with; the frontend uses it for the file picker and the hints.
+Route::get('upload-rules', [UploadRulesController::class, 'index'])->middleware('throttle:60,1');
 /*
 |--------------------------------------------------------------------------
 | CHECKOUT

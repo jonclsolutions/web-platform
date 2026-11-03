@@ -75,7 +75,8 @@ class AttachmentDownloadTest extends TestCase
      *   name from the record's disk; a missing file or unknown path is 404.
      * @input Attachment 'Offer 2026.pdf' on private disk; public-disk attachment without name;
      *        attachment row whose file is gone; unknown path.
-     * @output download: attachment; filename "Offer 2026.pdf" + content; view: inline;
+     * @output download: attachment; filename "Offer 2026.pdf" + content; view: inline with an
+     *   ASCII fallback name and the UTF-8 name (RFC 6266), Content-Type application/pdf;
      *   public file under its base name; 404; 404.
      */
     public function test_web_attachments(): void
@@ -95,11 +96,62 @@ class AttachmentDownloadTest extends TestCase
         $this->assertSame('content', $download->streamedContent());
 
         $view = $this->get($this->signed('view', 'web/x/abc.pdf'))->assertOk();
-        $this->assertSame('inline; filename="Nabídka 2026.pdf"', $view->headers->get('Content-Disposition'));
+        $this->assertSame('inline; filename="Nabidka 2026.pdf"; filename*=utf-8\'\'Nab%C3%ADdka%202026.pdf', $view->headers->get('Content-Disposition'));
+        $this->assertSame('application/pdf', $view->headers->get('Content-Type'));
 
         $this->assertStringContainsString('pub.pdf', $this->get($this->signed('download', 'web/x/pub.pdf'))->assertOk()->headers->get('Content-Disposition'));
         $this->get($this->signed('download', $gone->path))->assertStatus(404);
         $this->get($this->signed('download', 'web/x/none.pdf'))->assertStatus(404);
+    }
+
+    /**
+     * @description VT-02 (stored XSS): view() serves inline ONLY a PDF or a raster image, decided
+     *   by the stored CONTENT; SVG, HTML and an SVG hidden behind a .png name are always a
+     *   download. Every answer has nosniff, all but the PDF a sandbox CSP.
+     * @input Attachments evil.svg (script), page.html (script), fake.png (SVG content),
+     *        photo.png (real PNG), doc.pdf (real PDF); view of each; download of photo.png.
+     * @output svg / html / fake.png: attachment disposition, sandbox CSP, nosniff;
+     *   photo.png: inline image/png + sandbox CSP; doc.pdf: inline application/pdf, CSP
+     *   frame-ancestors only (no sandbox), nosniff; download: attachment + sandbox CSP + nosniff.
+     */
+    public function test_view_serves_only_safe_types_inline(): void
+    {
+        $owner = $this->rawRequest();
+        $files = [
+            'web/x/evil.svg'  => self::SVG_XSS,
+            'web/x/page.html' => self::HTML_XSS,
+            'web/x/fake.png'  => self::SVG_XSS,
+            'web/x/photo.png' => self::PNG_BYTES,
+            'web/x/doc.pdf'   => "%PDF-1.4\n%\xe2\xe3\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF",
+        ];
+        foreach ($files as $path => $content) {
+            $this->attach($owner, $path);
+            Storage::disk('private')->put($path, $content);
+        }
+        $sandbox = "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox";
+
+        foreach (['web/x/evil.svg', 'web/x/page.html', 'web/x/fake.png'] as $path) {
+            $response = $this->get($this->signed('view', $path))->assertOk();
+            $this->assertStringStartsWith('attachment;', $response->headers->get('Content-Disposition'), $path);
+            $this->assertSame($sandbox, $response->headers->get('Content-Security-Policy'), $path);
+            $this->assertSame('nosniff', $response->headers->get('X-Content-Type-Options'), $path);
+        }
+
+        $png = $this->get($this->signed('view', 'web/x/photo.png'))->assertOk();
+        $this->assertStringStartsWith('inline;', $png->headers->get('Content-Disposition'));
+        $this->assertSame('image/png', $png->headers->get('Content-Type'));
+        $this->assertSame($sandbox, $png->headers->get('Content-Security-Policy'));
+
+        $pdf = $this->get($this->signed('view', 'web/x/doc.pdf'))->assertOk();
+        $this->assertStringStartsWith('inline;', $pdf->headers->get('Content-Disposition'));
+        $this->assertSame('application/pdf', $pdf->headers->get('Content-Type'));
+        $this->assertSame("frame-ancestors 'self'", $pdf->headers->get('Content-Security-Policy'));
+        $this->assertSame('nosniff', $pdf->headers->get('X-Content-Type-Options'));
+
+        $download = $this->get($this->signed('download', 'web/x/photo.png'))->assertOk();
+        $this->assertStringStartsWith('attachment;', $download->headers->get('Content-Disposition'));
+        $this->assertSame($sandbox, $download->headers->get('Content-Security-Policy'));
+        $this->assertSame('nosniff', $download->headers->get('X-Content-Type-Options'));
     }
 
     /**

@@ -5,6 +5,7 @@
  * @author JS
  * @created 2025
  * @description Public order form - optionally prefilled from a sales lead link (public_token).
+ *   Same split layout and field styles as the contact form (contact.component.css).
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -12,6 +13,8 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { BasePublicComponent } from '../../base-public.component';
 import { MultiFileUploadComponent } from '../../../shared/components/multi-file-upload/multi-file-upload.component';
+import { UploadRulesService } from '../../../shared/services/upload-rules.service';
+import { UploadRule, isAttachmentRejection } from '../../../shared/utils/upload-rules';
 import * as Web from '../../../shared/imports/web-providers';
 
 /** State of the link check by public_token - decides what the component shows. */
@@ -31,12 +34,18 @@ interface LeadPrefill {
   standalone: true,
   imports: [ReactiveFormsModule, RouterModule, MultiFileUploadComponent],
   templateUrl: './order-form.component.html',
-  styleUrls: ['../shared-styles/theme.css', '../../../shared/styles/base.css', './order-form.component.css'],
+  styleUrls: ['../shared-styles/form-fields.css', '../contact/contact.component.css', './order-form.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OrderFormComponent extends BasePublicComponent {
 
+  /** Attachment rules of the API (allowed types, limits) - null until loaded / when unavailable. */
+  attachmentRules: UploadRule | null = null;
+  private uploadRules = inject(UploadRulesService);
+
   protected readonly translationKey = 'order_form';
+  /** Contact e-mail / phone and social links of the left panel (like the contact page). */
+  protected override readonly loadSiteSettings = true;
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
 
@@ -54,6 +63,9 @@ export class OrderFormComponent extends BasePublicComponent {
 
   // Hook called after the base initialization in the base class
   protected override onInit(): void {
+    this.uploadRules.rules('sales_order')
+      .pipe(Web.takeUntil(this.destroy$))
+      .subscribe(rules => { this.attachmentRules = rules; this.cdr.markForCheck(); });
     this.initForm();
 
     const token = this.route.snapshot.paramMap.get('token');
@@ -102,6 +114,15 @@ export class OrderFormComponent extends BasePublicComponent {
     });
   }
 
+  /**
+   * @description Whether the field shows its error - only after the user touched or changed it.
+   * @param name Form control name.
+   */
+  fieldInvalid(name: string): boolean {
+    const ctrl = this.orderForm.get(name);
+    return !!(ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched));
+  }
+
   get btnText(): string {
     if (!this.t) return '...';
     return this.isLoading ? this.t.buttons.sending : this.t.buttons.send;
@@ -110,6 +131,7 @@ export class OrderFormComponent extends BasePublicComponent {
     const s = this.t?.attachment_uploader;
     if (!s) return {};
     return {
+      limitsHint: s.limits_hint,
       existingSectionTitle: s.existing_section_title,
       removeExistingTitle: s.remove_existing_title,
       dropzoneLabel: s.dropzone_label,
@@ -119,6 +141,8 @@ export class OrderFormComponent extends BasePublicComponent {
       errorTotalSizeExceeded: s.error_total_size_exceeded,
       totalLabel: s.total_label,
       totalNewSuffix: s.total_new_suffix,
+      errorFileType: s.error_file_type,
+      allowedTypesHint: s.allowed_types_hint,
     };
   }
 
@@ -175,7 +199,9 @@ export class OrderFormComponent extends BasePublicComponent {
           this.errorMessage = null;
         } else {
           // Translated by status, no English fallback (findings #44 / #53).
-          this.errorMessage = (err?.status === 429 ? this.t?.errors?.too_many_requests : this.t?.errors?.submit_error) ?? null;
+          this.errorMessage = (err?.status === 429 ? this.t?.errors?.too_many_requests
+            : isAttachmentRejection(err) ? (this.t?.errors?.attachment_rejected ?? this.t?.errors?.submit_error)
+            : this.t?.errors?.submit_error) ?? null;
         }
         console.error('Submission failed:', err);
         this.cdr.markForCheck();

@@ -99,8 +99,8 @@ class SupportTicketTest extends TestCase
 
     /**
      * @description Validation (category, attachment type) and a database error on create.
-     * @input POST with category 'nope' and an .exe; then the INSERT fails.
-     * @output 422 (category, attachment); 500 "Ticket creation failed.".
+     * @input POST with category 'nope' and an .exe; POST with an .xml attachment; then the INSERT fails.
+     * @output 422 (category, attachment); 422 (attachment); 500 "Ticket creation failed.".
      */
     public function test_store_validation_and_error(): void
     {
@@ -109,6 +109,9 @@ class SupportTicketTest extends TestCase
         $this->post('/api/web/support_tickets', [
             'category' => 'nope', 'subject' => 'S', 'description' => 'D', 'attachment' => $this->upload('tool.exe', 1, 'application/octet-stream'),
         ], ['Accept' => 'application/json'])->assertStatus(422)->assertJsonValidationErrors(['category', 'attachment']);
+        $this->post('/api/web/support_tickets', [
+            'category' => 'it', 'subject' => 'S', 'description' => 'D', 'attachment' => $this->uploadWithContent('export.xml', '<?xml version="1.0"?><a/>'),
+        ], ['Accept' => 'application/json'])->assertStatus(422)->assertJsonValidationErrors(['attachment']);
 
         $this->failOn('web_support_tickets', 'INSERT');
         $this->postJson('/api/web/support_tickets', ['category' => 'it', 'subject' => 'S', 'description' => 'D'])

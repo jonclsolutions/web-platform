@@ -5,7 +5,7 @@
  * @author JS
  * @created 2026
  * @description Unit tests of the intranet SupportFormComponent: default values and validation, optional
- *   attachment, multipart submit to web/support_tickets with the ticket number on success, the
+ *   attachment checked against the support_ticket upload rules, multipart submit to web/support_tickets with the ticket number on success, the
  *   error path and starting a new ticket.
  * @dependencies
  * - createAdminTestContext (DataHandler.upload spy).
@@ -88,5 +88,54 @@ describe('SupportFormComponent', () => {
     expect((upload.calls.mostRecent().args[1] as FormData).has('attachment')).toBeFalse();
     expect(form.isSubmitted).toBeFalse();
     expect(console.error).toHaveBeenCalled();
+  });
+
+  /**
+   * @description The picker offers every file and no type list is shown up front; a refused type
+   *   of the API rules (support_ticket: xml, svg, no extension) is not kept and only its error
+   *   lists the allowed types; a file over 20 MB is refused with the size error.
+   * @input file input; feed.xml; logo.svg; README; big.pdf (21 MB); then ok.png.
+   * @output no accept, no hint; type error + allowed types, selectedFile null, input cleared; size
+   *   error; ok.png kept and the error cleared.
+   */
+  it('checks the attachment against the upload rules', () => {
+    expect(form.allowedTypesText).toBe('kb-support-form.allowed_types_hint');
+    const input = fixture.nativeElement.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(input.hasAttribute('accept')).toBeFalse();
+    expect(fixture.nativeElement.textContent).not.toContain('kb-support-form.allowed_types_hint');
+
+    for (const name of ['feed.xml', 'logo.svg', 'README']) {
+      const event = { target: { files: [new File(['x'], name)], value: 'C:\\fakepath\\' + name } };
+      form.onFileSelected(event);
+      expect(form.fileError).toBe('kb-support-form.file_type_error kb-support-form.allowed_types_hint');
+      expect(form.selectedFile).toBeNull();
+      expect(event.target.value).toBe('');
+    }
+    const big = new File(['x'], 'big.pdf');
+    Object.defineProperty(big, 'size', { value: 21 * 1024 * 1024 });
+    form.onFileSelected({ target: { files: [big], value: 'x' } });
+    expect(form.fileError).toBe('kb-support-form.file_size_error');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.kb-file-error')).not.toBeNull();
+
+    form.onFileSelected({ target: { files: [new File(['x'], 'ok.png')], value: 'x' } });
+    expect(form.fileError).toBeNull();
+    expect(form.selectedFile!.name).toBe('ok.png');
+  });
+
+  /**
+   * @description Without the rules of the API (unreachable) nothing is filtered in the browser -
+   *   the API validates the attachment on submit.
+   * @input attachmentRules null; tool.exe of 30 MB.
+   * @output no type list; the file is kept (no error).
+   */
+  it('leaves the check to the API without rules', () => {
+    form.attachmentRules = null;
+    expect(form.allowedTypesText).toBe('');
+    const exe = new File(['x'], 'tool.exe');
+    Object.defineProperty(exe, 'size', { value: 30 * 1024 * 1024 });
+    form.onFileSelected({ target: { files: [exe], value: 'x' } });
+    expect(form.fileError).toBeNull();
+    expect(form.selectedFile).toBe(exe);
   });
 });

@@ -242,6 +242,31 @@ class ProjectPortalTest extends TestCase
     }
 
     /**
+     * @description VT-02: the customer cannot upload a file a browser would run as a page - SVG is
+     *   off the whitelist, and an HTML page with an image name is refused by its detected content.
+     * @input POST thread with logo.svg (script); POST thread with photo.png that is an HTML page;
+     *        POST message with logo.svg; POST thread with a real PNG.
+     * @output 422 attachments.0 three times, no thread / message stored by them; 201 for the PNG.
+     */
+    public function test_attachments_that_could_run_a_script_are_refused(): void
+    {
+        $thread = $this->thread($this->portal);
+        $send = fn (string $path, array $data) => $this->withToken($this->session)->post('/api/projects/public/portal-token' . $path, $data, ['Accept' => 'application/json']);
+        $threadData = ['subject' => 'Logo', 'priority' => 'high', 'body' => 'See the file'];
+
+        $send('/threads', $threadData + ['attachments' => [$this->uploadWithContent('logo.svg', self::SVG_XSS)]])
+            ->assertStatus(422)->assertJsonValidationErrors(['attachments.0']);
+        $send('/threads', $threadData + ['attachments' => [$this->uploadWithContent('photo.png', self::HTML_XSS)]])
+            ->assertStatus(422)->assertJsonValidationErrors(['attachments.0']);
+        $send("/threads/{$thread->id}/messages", ['body' => 'x', 'attachments' => [$this->uploadWithContent('logo.svg', self::SVG_XSS)]])
+            ->assertStatus(422)->assertJsonValidationErrors(['attachments.0']);
+        $this->assertSame(1, WebProjectThread::count());
+        $this->assertSame(0, $thread->messages()->count());
+
+        $send('/threads', $threadData + ['attachments' => [$this->uploadWithContent('photo.png', self::PNG_BYTES)]])->assertCreated();
+    }
+
+    /**
      * @description New message in an own thread bumps activity and the read marker and
      *   notifies the contact; no contact e-mail → no mail; foreign thread 404; validation.
      * @input Own thread: POST message; contact e-mail removed: POST message; foreign thread; POST {}.

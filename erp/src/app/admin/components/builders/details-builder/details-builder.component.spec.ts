@@ -211,6 +211,28 @@ describe('DetailsBuilderComponent', () => {
   });
 
   /**
+   * @description The "view" link is offered only for previewable files (the API sends view_url
+   *   null for download-only types such as ZIP or DOCX); the download button is always there.
+   * @input  files [{ cv.pdf, view_url 'v' }, { data.zip, view_url null }]
+   * @output first row: view link href 'v' with rel noopener + download button; second row: no view link, download button
+   */
+  it('shows the view link only when the API sends a view_url', () => {
+    component.itemData = { files: [
+      { id: 1, original_filename: 'cv.pdf', size_bytes: 1, view_url: 'v', download_url: 'd1' },
+      { id: 2, original_filename: 'data.zip', size_bytes: 1, view_url: null, download_url: 'd2' }
+    ] };
+    component.itemDetailColumns = [{ key: 'files', displayName: 'Files', type: 'files' }] as any;
+    fixture.detectChanges();
+    const rows = fixture.nativeElement.querySelectorAll('.details-file-row');
+    const view = rows[0].querySelector('a.btn-action.view');
+    expect(view.getAttribute('href')).toBe('v');
+    expect(view.getAttribute('rel')).toBe('noopener');
+    expect(rows[0].querySelector('button.btn-action.download')).not.toBeNull();
+    expect(rows[1].querySelector('a.btn-action.view')).toBeNull();
+    expect(rows[1].querySelector('button.btn-action.download')).not.toBeNull();
+  });
+
+  /**
    * @description getViewUrl never returns undefined.
    * @input  getViewUrl(''), ('https://x')
    * @output '', 'https://x'

@@ -6,7 +6,8 @@
  * @created 2026
  * @description Unit tests of FormBuilderComponent – the generic create / edit popup of the admin
  *   (field visibility, defaults, value normalisation, multiselect, password confirmation, header
- *   text, validation messages and the submitted payload: plain object or FormData with files).
+ *   text, validation messages, the attachment rules of the upload profiles (types / sizes of the
+ *   API) and the submitted payload: plain object or FormData with files).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (i18n stub, AlertDialogService spy), ScrollLockService (spy)
  */
@@ -15,7 +16,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SimpleChange } from '@angular/core';
 import { FormControl, NgForm } from '@angular/forms';
 
+import { By } from '@angular/platform-browser';
 import { FormBuilderComponent } from './form-builder.component';
+import { MultiFileUploadComponent } from '../../../../shared/components/multi-file-upload/multi-file-upload.component';
 import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
 
@@ -418,6 +421,84 @@ describe('FormBuilderComponent', () => {
       const labels = Array.from(fixture.nativeElement.querySelectorAll('.field-label')).map((l: any) => l.textContent.replace(/\s+/g, ' ').trim());
       expect(labels).toContain('Name *');
       expect(labels.some(l => l.startsWith('Note'))).toBeFalse();
+    });
+  });
+
+  describe('upload rules', () => {
+    const uploadDefs: any[] = [
+      { column_name: 'subject', label: 'Subject', type: 'text' },
+      { column_name: 'attachment', label: 'Attachment', type: 'file', uploadProfile: 'support_ticket' },
+      { column_name: 'attachments', label: 'Attachments', type: 'files', uploadProfile: 'raw_request_commission' },
+      { column_name: 'plain', label: 'Plain', type: 'file' }
+    ];
+    const pick = (name: string, size = 10) => {
+      const f = new File(['x'], name);
+      Object.defineProperty(f, 'size', { value: size });
+      return { target: { files: [f], value: 'C:/' + name } };
+    };
+
+    beforeEach(() => {
+      component.inputDefinitions = uploadDefs;
+      fixture.detectChanges();
+    });
+
+    /**
+     * @description Fields with an uploadProfile get the rules of the API (e.g. the user-request
+     *   attachments: raw_request_commission); the file pickers offer every file and no type list
+     *   is shown up front (it comes with a refusal only); a field without a profile has no rules.
+     * @input  definitions above (support_ticket 'file', raw_request_commission 'files', 'file' without profile)
+     * @output no accept, no hint, types text ready for the error; uploader 10 files / 20 / 50 MB without
+     *   svg / xml; plain field: no rules, no types text; a profile not used by any field is not loaded (null)
+     */
+    it('passes the rules of the profile to the file fields', () => {
+      const attachment = uploadDefs[1];
+      expect(component.rulesFor(attachment)!.max_files).toBe(1);
+      expect(component.allowedTypesFor(attachment)).toBe('file-upload.allowed_types_hint');
+      const input = fixture.nativeElement.querySelector('#attachment') as HTMLInputElement;
+      expect(input.hasAttribute('accept')).toBeFalse();
+      expect(fixture.nativeElement.textContent).not.toContain('file-upload.allowed_types_hint');
+
+      const uploader = fixture.debugElement.query(By.directive(MultiFileUploadComponent)).componentInstance as MultiFileUploadComponent;
+      expect([uploader.maxFiles, uploader.maxFileSizeMb, uploader.maxTotalSizeMb]).toEqual([10, 20, 50]);
+      expect(uploader.allowedExtensions).not.toContain('svg');
+      expect(uploader.allowedExtensions).not.toContain('xml');
+
+      const plain = uploadDefs[3];
+      expect(component.rulesFor(plain)).toBeNull();
+      expect(component.allowedTypesFor(plain)).toBe('');
+      expect((fixture.nativeElement.querySelector('#plain') as HTMLInputElement).hasAttribute('accept')).toBeFalse();
+      expect(component.rulesFor({ column_name: 'x', label: 'X', type: 'file', uploadProfile: 'job_application' } as any)).toBeNull();
+    });
+
+    /**
+     * @description A single file of a refused type (xml, svg, no extension) or over the size limit
+     *   is not put into the form data: the input is cleared and a warning dialog says why (a type
+     *   refusal also lists the allowed types). An
+     *   allowed file is kept; a field without a profile leaves the check to the API.
+     * @input  onFileChange feed.xml / logo.svg / README / big.pdf (21 MB) / ok.pdf on 'attachment';
+     *   tool.exe on 'plain'; empty selection
+     * @output 3× type warning with the allowed types + 1× size warning, formData.attachment unset, value ''; ok.pdf kept;
+     *   tool.exe kept; empty selection ignored
+     */
+    it('refuses a single file that breaks the rules', () => {
+      for (const name of ['feed.xml', 'logo.svg', 'README']) {
+        const event = pick(name);
+        component.onFileChange(event, 'attachment');
+        expect(event.target.value).toBe('');
+        expect(component.formData['attachment']).toBeUndefined();
+        expect(ctx.alert.open).toHaveBeenCalledWith('file-upload.alert_file_refused_title', 'file-upload.error_file_type file-upload.allowed_types_hint', 'warning');
+      }
+      component.onFileChange(pick('big.pdf', 21 * 1024 * 1024), 'attachment');
+      expect(ctx.alert.open).toHaveBeenCalledWith('file-upload.alert_file_refused_title', 'file-upload.error_file_too_large', 'warning');
+      expect(ctx.alert.open).toHaveBeenCalledTimes(4);
+
+      component.onFileChange(pick('ok.pdf'), 'attachment');
+      expect((component.formData['attachment'] as File).name).toBe('ok.pdf');
+      component.onFileChange(pick('tool.exe', 30 * 1024 * 1024), 'plain');
+      expect((component.formData['plain'] as File).name).toBe('tool.exe');
+      component.onFileChange({ target: { files: [] } }, 'plain');
+      expect((component.formData['plain'] as File).name).toBe('tool.exe');
+      expect(ctx.alert.open).toHaveBeenCalledTimes(4);
     });
   });
 });

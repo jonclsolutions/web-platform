@@ -117,9 +117,10 @@ class SalesOrderTest extends TestCase
     }
 
     /**
-     * @description Validation: agreements required, attachment type and count.
-     * @input POST without agreements and with an .exe attachment.
-     * @output 422 dataProcessingAgreement, tosAgreement, attachments.0.
+     * @description Validation: agreements required, attachment type and count; SVG (it can carry a
+     *   script) is not accepted any more.
+     * @input POST without agreements and with an .exe attachment; valid POST with an SVG attachment.
+     * @output 422 dataProcessingAgreement, tosAgreement, attachments.0; 422 attachments.0, nothing stored.
      */
     public function test_public_order_validation(): void
     {
@@ -127,6 +128,10 @@ class SalesOrderTest extends TestCase
             'client_name' => 'A', 'client_email' => 'a@b.cz', 'order_description' => 'x', 'attachments' => [$this->upload('x.exe', 1, 'application/octet-stream')],
         ], ['Accept' => 'application/json'])->assertStatus(422)
             ->assertJsonValidationErrors(['dataProcessingAgreement', 'tosAgreement', 'attachments.0']);
+
+        $this->post('/api/sales_orders', $this->payload(['attachments' => [$this->uploadWithContent('logo.svg', self::SVG_XSS)]]), ['Accept' => 'application/json'])
+            ->assertStatus(422)->assertJsonValidationErrors(['attachments.0']);
+        $this->assertSame(0, WebSalesOrder::count());
     }
 
     /**

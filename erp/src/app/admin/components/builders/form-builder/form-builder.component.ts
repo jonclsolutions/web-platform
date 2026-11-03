@@ -25,6 +25,9 @@ import { PasswordPolicyDirective } from '../../../../shared/directives/password-
 import { MultiFileUploadComponent } from '../../../../shared/components/multi-file-upload/multi-file-upload.component';
 import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
+import { UploadRulesService } from '../../../../shared/services/upload-rules.service';
+import { UploadProfile, UploadRule, extensionsLabel, fileExtension, isExtensionAllowed } from '../../../../shared/utils/upload-rules';
+import { Subject, takeUntil } from 'rxjs';
 
 /**
  * @description Renders a dynamic form based on an array of field definitions.
@@ -77,6 +80,12 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
   public get strings(): any { return this.i18n.getMergedSection('form-builder'); }
   public t(key: string): string { return this.i18n.getValue(`form-builder.${key}`); }
 
+  private uploadRulesService = inject(UploadRulesService);
+  private destroy$ = new Subject<void>();
+
+  /** Loaded attachment rules per upload profile of the fields (see `InputDefinition.uploadProfile`). */
+  uploadRules: Partial<Record<UploadProfile, UploadRule | null>> = {};
+
   constructor(
     private cd: ChangeDetectorRef,
     private alertDialogService: AlertDialogService
@@ -87,6 +96,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
    */
   ngOnInit(): void {
     this.scrollLock.lock();
+    this.loadUploadRules();
 
     if (this.formDataToEdit) {
       this.formData = { ...this.formDataToEdit };
@@ -204,6 +214,39 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnDestroy(): void {
     this.scrollLock.unlock();
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  /**
+   * @description Loads the attachment rules of every upload profile used by the fields (the
+   *   service caches them, so this costs one request per session).
+   */
+  private loadUploadRules(): void {
+    const profiles = new Set(this.inputDefinitions.map(i => i.uploadProfile).filter((p): p is UploadProfile => !!p));
+    profiles.forEach(profile => {
+      this.uploadRulesService.rules(profile)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(rules => { this.uploadRules[profile] = rules; this.cd.markForCheck(); });
+    });
+  }
+
+  /**
+   * @description Attachment rules of a field - null when it has no profile or they are not loaded.
+   * @param input Field definition.
+   */
+  rulesFor(input: InputDefinition): UploadRule | null {
+    return input.uploadProfile ? (this.uploadRules[input.uploadProfile] ?? null) : null;
+  }
+
+
+  /**
+   * @description "Allowed types: …" appended to the type error of a single `'file'` field ('' without rules).
+   * @param input Field definition.
+   */
+  allowedTypesFor(input: InputDefinition): string {
+    const rules = this.rulesFor(input);
+    return rules ? this.i18n.getValue('file-upload.allowed_types_hint').replace('{types}', extensionsLabel(rules.extensions)) : '';
   }
 
   /**
@@ -276,10 +319,29 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
    * @description Updates form data with file inputs for multi-part submission.
    */
   onFileChange(event: any, columnName: string): void {
-    const file = event.target.files[0];
-    if (file) {
-      this.formData[columnName] = file;
+    const file: File | undefined = event.target.files[0];
+    if (!file) return;
+
+    // Same rules as the API (uploadProfile) - a refused file is never put into the form data.
+    const input = this.inputDefinitions.find(i => i.column_name === columnName);
+    const rules = input ? this.rulesFor(input) : null;
+    let error: string | null = null;
+    if (!isExtensionAllowed(file.name, rules?.extensions ?? [])) {
+      const ext = fileExtension(file.name);
+      // The allowed types are listed only now, together with the refusal (not up front)
+      // (a type error needs a non-empty list, so the types text is never empty here).
+      error = this.i18n.getValue('file-upload.error_file_type').replace('{filename}', file.name).replace('{ext}', ext ? '.' + ext : '?')
+        + ' ' + this.allowedTypesFor(input!);
+    } else if (rules && file.size > rules.max_file_size_mb * 1024 * 1024) {
+      error = this.i18n.getValue('file-upload.error_file_too_large').replace('{filename}', file.name).replace('{maxMb}', String(rules.max_file_size_mb));
     }
+    if (error) {
+      event.target.value = '';
+      delete this.formData[columnName];
+      this.alertDialogService.open(this.i18n.getValue('file-upload.alert_file_refused_title'), error, 'warning');
+      return;
+    }
+    this.formData[columnName] = file;
   }
 
   onFilesChange(files: File[], columnName: string): void {
@@ -393,6 +455,8 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
       errorTotalSizeExceeded: this.i18n.getValue('file-upload.error_total_size_exceeded'),
       totalLabel: this.i18n.getValue('file-upload.total_label'),
       totalNewSuffix: this.i18n.getValue('file-upload.total_new_suffix'),
+      errorFileType: this.i18n.getValue('file-upload.error_file_type'),
+      allowedTypesHint: this.i18n.getValue('file-upload.allowed_types_hint'),
     };
   }
 }

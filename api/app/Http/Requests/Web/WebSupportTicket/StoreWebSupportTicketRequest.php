@@ -11,6 +11,7 @@
 namespace App\Http\Requests\Web\WebSupportTicket;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Uploads\AttachmentPolicy;
 
 /**
  * @description Handles request validation for new support ticket submissions from web users.
@@ -31,15 +32,6 @@ class StoreWebSupportTicketRequest extends FormRequest
      */
     public function rules(): array
     {
-        // Only screenshots and text / log attachments.
-        $safeExtensions = [
-            // Screenshots
-            'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic', 'heif',
-            // Text logs / exports
-            'pdf', 'txt', 'csv', 'doc', 'docx', 'xls', 'xlsx',
-            // Several log files bundled
-            'zip',
-        ];
 
         return [
             'user_id'          => ['nullable', 'integer', 'exists:users,id'],
@@ -49,12 +41,7 @@ class StoreWebSupportTicketRequest extends FormRequest
             'subject'          => ['required', 'string', 'max:255'],
             'description'      => ['required', 'string'],
             'priority'         => ['nullable', 'string', 'max:50', 'in:low,medium,high'],
-            'attachment'       => [
-                'nullable',
-                'file',
-                'mimes:' . implode(',', $safeExtensions),
-                'max:20480'
-            ],
+            'attachment'       => ['nullable', ...AttachmentPolicy::fileRules(AttachmentPolicy::SUPPORT_TICKET)],
         ];
     }
 }

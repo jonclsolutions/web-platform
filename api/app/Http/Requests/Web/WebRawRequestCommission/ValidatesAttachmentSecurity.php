@@ -5,31 +5,19 @@
  * @project JS web-platform
  * @author JS
  * @created 2025
- * @description Trait providing shared security logic for validating file attachments using a blacklist approach.
+ * @description Second line of defence of the attachment upload: refuses executable / script MIME
+ *   types detected from the file content. The first line is the whitelist of
+ *   App\Support\Uploads\AttachmentPolicy (`mimes:` + `extensions:`).
  */
 
 namespace App\Http\Requests\Web\WebRawRequestCommission;
 
 /**
- * @description Provides helper methods to block dangerous file types, improving security against malicious uploads.
+ * @description Blocks executable / script MIME types (detected from the content) as an extra check
+ * next to the whitelist.
  */
 trait ValidatesAttachmentSecurity
 {
-    /**
-     * Returns a list of forbidden file extensions.
-     *
-     * @return array
-     */
-    public static function forbiddenExtensions(): array
-    {
-        return [
-            'exe', 'bat', 'sh', 'apk', 'cmd', 'com', 'msi', 'msp',
-            'scr', 'vbs', 'vbe', 'js', 'jse', 'wsf', 'wsh', 'ps1',
-            'ps1xml', 'psc1', 'psm1', 'jar', 'app', 'gadget', 'cpl',
-            'dll', 'so', 'dylib', 'bin', 'run', 'phar', 'php', 'phtml',
-        ];
-    }
-
     /**
      * Returns a list of forbidden MIME types.
      *
@@ -49,25 +37,11 @@ trait ValidatesAttachmentSecurity
             'application/java-archive',
             'text/x-php',
             'application/x-httpd-php',
+            // Formats a browser runs as a page (stored XSS when shown inline).
+            'text/html',
+            'application/xhtml+xml',
+            'image/svg+xml',
         ];
-    }
-
-    /**
-     * Validation rule for file extensions - a closure rule on `attachments.*`; Laravel passes one
-     * UploadedFile as `$value`, not the whole array.
-     *
-     * @return \Closure
-     */
-    public function attachmentExtensionRule(): \Closure
-    {
-        return function ($attribute, $value, $fail) {
-            if (!$value) return;
-
-            $ext = strtolower($value->getClientOriginalExtension());
-            if (in_array($ext, self::forbiddenExtensions(), true)) {
-                $fail('This file type is not allowed for security reasons.');
-            }
-        };
     }
 
     /**

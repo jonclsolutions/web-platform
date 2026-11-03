@@ -1,3 +1,5 @@
+import { UploadProfile } from '../utils/upload-rules';
+
 export interface InputDefinition {
   column_name: string;
   label: string;
@@ -19,4 +21,9 @@ export interface InputDefinition {
   hide_in_edit?: boolean;
   disabledOptionValues?: (string | number)[];
   hint?: string;
+  /**
+   * Attachment rules of a `'file'` / `'files'` field - profile of `GET upload-rules`
+   * (App\Support\Uploads\AttachmentPolicy): allowed types, count and size limits.
+   */
+  uploadProfile?: UploadProfile;
 }

@@ -333,14 +333,46 @@
             "admin_text": "Webová a systémová řešení mají vlastní administrační rozhraní. Texty, produkty, objednávky nebo uživatele si spravujete sami, bez programátora.",
             "support_title": "Podpora a údržba",
             "support_text": "Po spuštění nezmizneme. Nabízíme průběžnou technickou podporu, bezpečnostní aktualizace a monitoring. Pokud se cokoliv pokazí, víte na koho se obrátit.",
-            "custom_tags": ["Web", "Desktop", "Mobil"],
-            "auth_tags": ["Přihlášení", "Role", "Oprávnění"],
-            "seo_tags": ["Meta tagy", "Sitemap", "Core Web Vitals"],
-            "hosting_tags": ["Server", "CI/CD", "SSL"],
-            "integrations_tags": ["API", "Platební brána", "ERP"],
-            "security_tags": ["HTTPS", "Šifrování", "GDPR"],
-            "admin_tags": ["CMS", "Dashboard", "Správa obsahu"],
-            "support_tags": ["Údržba", "Aktualizace", "Monitoring"]
+            "custom_tags": [
+                "Web",
+                "Desktop",
+                "Mobil"
+            ],
+            "auth_tags": [
+                "Přihlášení",
+                "Role",
+                "Oprávnění"
+            ],
+            "seo_tags": [
+                "Meta tagy",
+                "Sitemap",
+                "Core Web Vitals"
+            ],
+            "hosting_tags": [
+                "Server",
+                "CI\/CD",
+                "SSL"
+            ],
+            "integrations_tags": [
+                "API",
+                "Platební brána",
+                "ERP"
+            ],
+            "security_tags": [
+                "HTTPS",
+                "Šifrování",
+                "GDPR"
+            ],
+            "admin_tags": [
+                "CMS",
+                "Dashboard",
+                "Správa obsahu"
+            ],
+            "support_tags": [
+                "Údržba",
+                "Aktualizace",
+                "Monitoring"
+            ]
         },
         "pricing": {
             "eyebrow": "Co projekt zahrnuje",
@@ -663,7 +695,11 @@
         }
     },
     "order_form": {
+        "side_label": "OBJEDNÁVKA",
+        "brand_headline": "Dokončeme<br>vaši objednávku.",
+        "brand_sub": "Doplňte údaje a přiložte podklady — technik se vám ozve a domluví další postup.",
         "attachment_uploader": {
+            "limits_hint": "(max. {max} souborů, {maxMb} MB/soubor, {totalMb} MB celkem)",
             "existing_section_title": "Již nahrané přílohy ({count})",
             "remove_existing_title": "Odebrat přílohu",
             "dropzone_label": "↑ Vyberte soubory nebo je přetáhněte sem",
@@ -672,7 +708,9 @@
             "error_file_too_large": "Soubor \"{filename}\" přesahuje limit {maxMb} MB.",
             "error_total_size_exceeded": "Celková velikost příloh nesmí přesáhnout {maxMb} MB.",
             "total_label": "Celkem: {count} \/ {max} souborů",
-            "total_new_suffix": "({size} nových)"
+            "total_new_suffix": "({size} nových)",
+            "error_file_type": "Soubor \"{filename}\" nelze nahrát – typ {ext} není povolen.",
+            "allowed_types_hint": "Povolené typy: {types}"
         },
         "header": "Poptávkový formulář",
         "labels": {
@@ -682,7 +720,7 @@
             "phone": "Telefon klienta",
             "email": "Email klienta",
             "description": "Detailní popis objednávky",
-            "attachment": "Příloha max 10MB (všechny typy souborů)",
+            "attachment": "Příloha",
             "gdpr_consent": "Souhlasím se zpracováním osobních údajů",
             "gdpr_link": "Zásady ochrany osobních údajů",
             "tos_consent": "Souhlasím s obchodními podmínkami",
@@ -698,7 +736,8 @@
             "phone_max": "Maximální délka je 20 znaků.",
             "email_invalid": "Zadejte platný email.",
             "submit_error": "Omlouváme se, objednávku se nepodařilo odeslat.",
-            "too_many_requests": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu."
+            "too_many_requests": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu.",
+            "attachment_rejected": "Některou z příloh server odmítl (nepovolený typ nebo velikost). Zkontrolujte přílohy a odešlete formulář znovu."
         },
         "buttons": {
             "send": "Odeslat poptávku",
@@ -780,10 +819,12 @@
         "form_last_name_pattern_error": "Příjmení nesmí obsahovat čísla ani speciální znaky.",
         "form_phone_pattern_error": "Telefon smí obsahovat jen číslice a běžné oddělovače (+, mezera, závorky, pomlčka).",
         "form_cv_size_error": "Soubor je příliš velký. Maximální velikost je 20 MB.",
+        "form_cv_type_error": "Tento typ souboru nelze nahrát. Povolené typy: {types}",
         "form_too_many_requests": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu."
     },
     "contact": {
         "attachment_uploader": {
+            "limits_hint": "(max. {max} souborů, {maxMb} MB/soubor, {totalMb} MB celkem)",
             "existing_section_title": "Již nahrané přílohy ({count})",
             "remove_existing_title": "Odebrat přílohu",
             "dropzone_label": "↑ Vyberte soubory nebo je přetáhněte sem",
@@ -792,7 +833,9 @@
             "error_file_too_large": "Soubor \"{filename}\" přesahuje limit {maxMb} MB.",
             "error_total_size_exceeded": "Celková velikost příloh nesmí přesáhnout {maxMb} MB.",
             "total_label": "Celkem: {count} \/ {max} souborů",
-            "total_new_suffix": "({size} nových)"
+            "total_new_suffix": "({size} nových)",
+            "error_file_type": "Soubor \"{filename}\" nelze nahrát – typ {ext} není povolen.",
+            "allowed_types_hint": "Povolené typy: {types}"
         },
         "side_label": "KONTAKT",
         "brand_headline": "Pojďme<br>spolupracovat.",
@@ -829,7 +872,8 @@
             "message_maxlength": "Zpráva nesmí mít více než 10 000 znaků.",
             "submit_error": "Odeslání se nezdařilo. Zkuste to prosím znovu.",
             "submit_error_title": "Odeslání se nezdařilo",
-            "too_many_requests": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu."
+            "too_many_requests": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu.",
+            "attachment_rejected": "Některou z příloh server odmítl (nepovolený typ nebo velikost). Zkontrolujte přílohy a odešlete formulář znovu."
         },
         "buttons": {
             "send": "Odeslat poptávku",

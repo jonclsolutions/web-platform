@@ -11,13 +11,16 @@
  * - LoadingService: Observes and propagates global loading states.
  */
 
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { BaseDataComponent } from '../../../../components/base-data/base-data.component';
 import { DataHandler } from '../../../../../core/services/data-handler.service';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { GenericTableService } from '../../../../../core/services/generic-table.service';
+import { UploadRulesService } from '../../../../../shared/services/upload-rules.service';
+import { UploadRule, extensionsLabel, fileExtension, isExtensionAllowed } from '../../../../../shared/utils/upload-rules';
+import { takeUntil } from 'rxjs/operators';
 
 /**
  * @description Handles the creation of support tickets, including multi-part data handling for file uploads.
@@ -44,6 +47,11 @@ export class SupportFormComponent extends BaseDataComponent<any> implements OnIn
   isSubmitted = false;
   selectedFile: File | null = null;
   lastTicketId: number | null = null;
+  /** Attachment rules of the API (profile support_ticket) - null until loaded / when unavailable. */
+  attachmentRules: UploadRule | null = null;
+  /** Error of a refused file (type or size), shown under the file field. */
+  fileError: string | null = null;
+  private uploadRules = inject(UploadRulesService);
 
   constructor(
     protected override dataHandler: DataHandler,
@@ -57,6 +65,16 @@ export class SupportFormComponent extends BaseDataComponent<any> implements OnIn
   override ngOnInit(): void {
     super.ngOnInit();
     this.initForm();
+    this.uploadRules.rules('support_ticket')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(rules => { this.attachmentRules = rules; this.cd.markForCheck(); });
+  }
+
+
+  /** @description "Allowed types: …, max. N MB" appended to a type error ('' while no rules are known). */
+  get allowedTypesText(): string {
+    const r = this.attachmentRules;
+    return r ? this.t('allowed_types_hint').replace('{types}', extensionsLabel(r.extensions)).replace('{maxMb}', String(r.max_file_size_mb)) : '';
   }
 
   /**
@@ -76,12 +94,30 @@ export class SupportFormComponent extends BaseDataComponent<any> implements OnIn
    * @param event Native browser event containing the selected file.
    */
   onFileSelected(event: any): void {
-    const file = event.target.files[0];
-    if (file) {
-      this.selectedFile = file;
-      this.cd.markForCheck();
+    const file: File | undefined = event.target.files[0];
+    this.fileError = null;
+    if (!file) return;
+
+    const rules = this.attachmentRules;
+    if (!isExtensionAllowed(file.name, rules?.extensions ?? [])) {
+      const ext = fileExtension(file.name);
+      // The allowed types are listed only now, together with the refusal (not up front)
+      // (a type error needs a non-empty list, so the types text is never empty here).
+      this.fileError = this.t('file_type_error').replace('{filename}', file.name).replace('{ext}', ext ? '.' + ext : '?')
+        + ' ' + this.allowedTypesText;
+    } else if (rules && file.size > rules.max_file_size_mb * 1024 * 1024) {
+      this.fileError = this.t('file_size_error').replace('{filename}', file.name).replace('{maxMb}', String(rules.max_file_size_mb));
     }
+    if (this.fileError) {
+      // A refused file is never kept - the ticket cannot be sent with it.
+      this.selectedFile = null;
+      event.target.value = '';
+    } else {
+      this.selectedFile = file;
+    }
+    this.cd.markForCheck();
   }
+
 
   /**
    * @description Sanitizes form inputs, packages them into FormData, and dispatches the request to the API.

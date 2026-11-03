@@ -26,6 +26,7 @@ import {
   PROJECT_THREAD_STATUS_VALUES, PROJECT_VISIBILITY_VALUES
 } from './projects.config';
 import { AdminTestContext, createAdminTestContext, paginated } from '../../../../testing/admin-test-helpers';
+import { TEST_UPLOAD_RULES } from '../../../../testing/upload-rules-stub';
 
 describe('ProjectsComponent', () => {
   let ctx: AdminTestContext;
@@ -704,6 +705,52 @@ describe('ProjectsComponent', () => {
   });
 
   describe('attachments', () => {
+    /** The specs call the handlers without ngOnInit - give them the thread rules of the API (stub). */
+    beforeEach(() => { component.attachmentRules = TEST_UPLOAD_RULES.project_thread!; });
+
+    /**
+     * @description The pickers offer every type (no accept) and list no types up front; without
+     *              loaded rules the fallback limits apply; ngOnInit loads the 'project_thread'
+     *              rules of the API (their types text is used only in a type error).
+     * @input  attachmentRules null; then ngOnInit (stub rules)
+     * @output '' types text, 5 files / 15 MB; after init the rules and a types text
+     */
+    it('takes the limits and types from the upload rules of the API', () => {
+      component.attachmentRules = null;
+      expect(component.maxAttachments).toBe(5);
+      expect(component.maxAttachmentSizeMb).toBe(15);
+      expect(component.attachmentTypesText).toBe('');
+      component.ngOnInit();
+      expect(component.attachmentRules as unknown).toEqual(TEST_UPLOAD_RULES.project_thread);
+      expect(component.attachmentTypesText).not.toBe('');
+    });
+
+    /**
+     * @description SVG and XML (formats a browser can run as a page) are refused right when chosen.
+     * @input  onReplyFilesSelected(logo.svg, feed.xml)
+     * @output no file kept; error 'projects.attachment_error_type' + allowed types
+     */
+    it('refuses svg and xml files', () => {
+      component.onReplyFilesSelected(fileEvent(file('logo.svg'), file('feed.xml')));
+      expect(component.replyFiles).toEqual([]);
+      expect(component.replyFileError).toBe('projects.attachment_error_type projects.attachment_allowed_types');
+    });
+
+    /**
+     * @description A file without extension is refused; without loaded rules the browser does not
+     *              filter the type (the server still validates every file).
+     * @input  onReplyFilesSelected(README); then attachmentRules null and tool.exe
+     * @output README refused with 'projects.attachment_error_type' + allowed types; tool.exe kept without rules
+     */
+    it('refuses a file without extension and leaves the type to the server without rules', () => {
+      component.onReplyFilesSelected(fileEvent(file('README')));
+      expect(component.replyFiles).toEqual([]);
+      expect(component.replyFileError).toBe('projects.attachment_error_type projects.attachment_allowed_types');
+      component.attachmentRules = null;
+      component.onReplyFilesSelected(fileEvent(file('tool.exe')));
+      expect(component.replyFiles.map(f => f.name)).toEqual(['tool.exe']);
+    });
+
     /**
      * @description File sizes are shown in KB below 1 MB, otherwise in MB; missing size is empty.
      * @input  formatFileSize(0), (2048), (5 * 1024 * 1024), (undefined)
@@ -719,13 +766,13 @@ describe('ProjectsComponent', () => {
     /**
      * @description Allowed files are added; wrong type, files over 15 MB and files without extension are refused (first error shown).
      * @input  a.PDF, virus.exe, big.zip (16 MB), README
-     * @output replyFiles ['a.PDF']; replyFileError 'projects.attachment_error_type' (first error only); input value cleared
+     * @output replyFiles ['a.PDF']; replyFileError 'projects.attachment_error_type' + allowed types (first error only); input value cleared
      */
     it('validates selected reply files', () => {
       const event = fileEvent(file('a.PDF'), file('virus.exe'), file('big.zip', 16 * 1024 * 1024), file('README'));
       component.onReplyFilesSelected(event);
       expect(component.replyFiles.map(f => f.name)).toEqual(['a.PDF']);
-      expect(component.replyFileError).toBe('projects.attachment_error_type');
+      expect(component.replyFileError).toBe('projects.attachment_error_type projects.attachment_allowed_types');
       expect((event.target as HTMLInputElement).value).toBe('');
       component.onReplyFilesSelected(fileEvent(file('big.zip', 16 * 1024 * 1024)));
       expect(component.replyFileError).toBe('projects.attachment_error_size');
@@ -751,12 +798,12 @@ describe('ProjectsComponent', () => {
     /**
      * @description The thread modal uses the same validation with its own list.
      * @input  onThreadModalReplyFilesSelected(a.png, x.bat); remove; empty selection
-     * @output threadModalReplyFiles ['a.png']; error 'projects.attachment_error_type'; removed and error cleared; empty selection ignored
+     * @output threadModalReplyFiles ['a.png']; error 'projects.attachment_error_type' + allowed types; removed and error cleared; empty selection ignored
      */
     it('validates thread modal reply files', () => {
       component.onThreadModalReplyFilesSelected(fileEvent(file('a.png'), file('x.bat')));
       expect(component.threadModalReplyFiles.map(f => f.name)).toEqual(['a.png']);
-      expect(component.threadModalReplyFileError).toBe('projects.attachment_error_type');
+      expect(component.threadModalReplyFileError).toBe('projects.attachment_error_type projects.attachment_allowed_types');
       component.removeThreadModalReplyFile(0);
       expect(component.threadModalReplyFiles).toEqual([]);
       expect(component.threadModalReplyFileError).toBeNull();

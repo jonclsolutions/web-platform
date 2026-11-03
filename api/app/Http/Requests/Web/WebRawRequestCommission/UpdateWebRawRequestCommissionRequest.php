@@ -11,6 +11,7 @@
 namespace App\Http\Requests\Web\WebRawRequestCommission;
 
 use App\Rules\AttachmentsTotalSize;
+use App\Support\Uploads\AttachmentPolicy;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -20,14 +21,8 @@ class UpdateWebRawRequestCommissionRequest extends FormRequest
 {
 use ValidatesAttachmentSecurity;
 
-/** @description Maximum number of attachments added in ONE update request. */
-private const MAX_ATTACHMENTS = 10;
-
-/** @description Max. velikost jednoho souboru v kB (Laravel `max:` pravidlo je v kB). */
-private const MAX_FILE_SIZE_KB = 20480; // 20 MB
-
-/** @description Maximum total size of all newly uploaded attachments in bytes. */
-private const MAX_TOTAL_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
+/** @description Limits and allowed types of the upload profile (AttachmentPolicy - shared with GET upload-rules). */
+private const LIMITS = AttachmentPolicy::PROFILES[AttachmentPolicy::RAW_REQUEST_COMMISSION];
 
 public function authorize(): bool
     {
@@ -44,8 +39,8 @@ return [
 'status'   => ['sometimes', 'string', 'in:new,in_progress,done,cancelled'],
 'priority' => ['sometimes', 'string', 'in:low,neutral,high'],
 'note'                       => ['sometimes', 'nullable', 'string'],
-'attachments'                => ['sometimes', 'nullable', 'array', 'max:' . self::MAX_ATTACHMENTS, new AttachmentsTotalSize(self::MAX_TOTAL_SIZE_BYTES)],
-'attachments.*'              => ['file', 'max:' . self::MAX_FILE_SIZE_KB, $this->attachmentExtensionRule()],
+'attachments'                => ['sometimes', 'nullable', 'array', 'max:' . self::LIMITS['max_files'], new AttachmentsTotalSize(self::LIMITS['max_total_bytes'])],
+'attachments.*'              => AttachmentPolicy::fileRules(AttachmentPolicy::RAW_REQUEST_COMMISSION),
 'attachments_removed_ids'    => ['sometimes', 'array'],
 'attachments_removed_ids.*'  => ['integer'],
         ];
@@ -71,9 +66,11 @@ return [
 'contact_email.email'                => 'Please provide a valid email address.',
 'contact_phone.regex'                => 'Please provide a valid phone number.',
 'order_description.max'              => 'The request description is too long.',
-'attachments.max'                    => 'You can upload a maximum of ' . self::MAX_ATTACHMENTS . ' files at once.',
+'attachments.max'                    => 'You can upload a maximum of ' . self::LIMITS['max_files'] . ' files at once.',
 'attachments.*.max'                  => 'Each file may not be greater than 20 MB.',
 'attachments.*.file'                 => 'The attachment must be a valid file.',
+'attachments.*.mimes'                => 'This file type is not allowed for security reasons.',
+'attachments.*.extensions'           => 'This file type is not allowed for security reasons.',
 'attachments_removed_ids.array'      => 'Invalid format for the removed attachments list.',
 'attachments_removed_ids.*.integer'  => 'Invalid ID for the removed attachment.',
         ];

@@ -158,11 +158,14 @@
                     tabindex="-1"
                     aria-hidden="true">
                 </label>
-                @if (!selectedFile && applicationForm.touched && !fileSizeError) {
+                @if (!selectedFile && applicationForm.touched && !fileSizeError && !fileTypeError) {
                   <span class="field-error">{{ t?.form_cv_error }}</span>
                 }
                 @if (fileSizeError) {
                   <span class="field-error">{{ t?.form_cv_size_error }}</span>
+                }
+                @if (fileTypeError) {
+                  <span class="field-error">{{ cvTypeErrorText }}</span>
                 }
               </div>
 
