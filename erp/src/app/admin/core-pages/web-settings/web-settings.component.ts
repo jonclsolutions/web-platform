@@ -4,7 +4,8 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Manages global web configuration including company details, localized brand assets, site branding, and social media links.
+ * @description Manages global web configuration including company details, localized brand assets, site branding, and social media links;
+ * the "Data retention" tab hosts RetentionSettingsComponent (GDPR retention periods, VT-10).
  * @dependencies
  * - BaseDataComponent: Provides base CRUD and state management.
  * - ConfirmDialogService: Orchestrates user confirmation for destructive actions (e.g., deleting social links).
@@ -22,6 +23,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { environment } from '../../../../environments/environment';
 import { CompanyOptionalField, LangMeta, SiteSetting, SocialLink } from './'
+import { RetentionSettingsComponent } from './retention-settings/retention-settings.component';
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import {
@@ -31,7 +33,7 @@ import {
 @Component({
   selector: 'app-web-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RetentionSettingsComponent],
   templateUrl: './web-settings.component.html',
   styleUrl: './web-settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -55,8 +57,8 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   languages: LangMeta[] = [];
   currentLang: string = 'cz';
 
-  /** Active page tab: company details (default) or browser tab titles per page. */
-  activeTab: 'company' | 'page_titles' = 'company';
+  /** Active page tab: company details (default), browser tab titles per page or data retention. */
+  activeTab: 'company' | 'page_titles' | 'retention' = 'company';
 
   // ── Page titles tab state (see section "PAGE TITLES") ─────────────
   /** Google shows roughly this many characters, longer titles get cut. */
@@ -151,7 +153,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
    * @description Switches the page tab. Page titles load lazily on first open;
    * unsaved page title edits are kept (state lives in this component).
    */
-  switchTab(tab: 'company' | 'page_titles'): void {
+  switchTab(tab: 'company' | 'page_titles' | 'retention'): void {
     if (this.activeTab === tab) return;
     this.activeTab = tab;
     if (tab === 'page_titles' && !this.ptLoaded && !this.ptLoading) this.ptLoad();

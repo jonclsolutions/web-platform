@@ -407,6 +407,28 @@ describe('WebSettingsComponent', () => {
      * @input languages [en, de inactive] (current cz); then languages error; switchLang / switchTab; getLangName.
      * @output currentLang 'en', ['en']; fallback [cz]; switches applied once; 'English' / 'XX'.
      */
+    /**
+     * @description The "Data retention" tab shows RetentionSettingsComponent (VT-10), which loads
+     *   its own settings; the company tab hides it again.
+     * @input switchTab('retention'); switchTab('company').
+     * @output activeTab 'retention', app-retention-settings rendered (no page titles card), get('core/retention_settings'); then gone.
+     */
+    it('shows the data retention tab', fakeAsync(() => {
+      (ctx.dataHandler as any).get.and.callFake((url: string) => url === 'core/retention_settings' ? of([])
+        : url === 'languages/web' ? of([{ code: 'cz', name: 'Čeština', active: true }]) : of(JSON.parse(JSON.stringify(config))));
+      fixture.detectChanges();
+      component.switchTab('retention');
+      fixture.detectChanges();
+      expect(component.activeTab).toBe('retention');
+      expect(fixture.nativeElement.querySelector('app-retention-settings')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('.pt-card')).toBeNull();
+      expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('core/retention_settings');
+      component.switchTab('company');
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('app-retention-settings')).toBeNull();
+      discardPeriodicTasks();
+    }));
+
     it('handles languages, tabs and names', fakeAsync(() => {
       (ctx.dataHandler as any).get.and.callFake((url: string) => url === 'languages/web'
         ? of([{ code: 'en', name: 'English', active: true }, { code: 'de', name: 'Deutsch', active: false }])

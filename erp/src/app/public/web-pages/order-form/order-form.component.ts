@@ -20,8 +20,13 @@ import { publicFormErrorKey } from '../../../shared/utils/public-form-errors';
 import { switchMap } from 'rxjs';
 import * as Web from '../../../shared/imports/web-providers';
 
-/** State of the link check by public_token - decides what the component shows. */
-type LinkState = 'loading' | 'valid' | 'no-token' | 'invalid' | 'used';
+/** State of the link check by public_token - decides what the component shows ('expired': VT-10 link validity). */
+type LinkState = 'loading' | 'valid' | 'no-token' | 'invalid' | 'used' | 'expired';
+
+/** @description Link state of a 410 answer: an expired link (error_code LINK_EXPIRED) or a used one. */
+function goneState(err: any): LinkState {
+  return err?.error?.error_code === 'LINK_EXPIRED' ? 'expired' : 'used';
+}
 
 /** Safe subset of the lead fields returned by the public showByToken endpoint (no internal id). */
 interface LeadPrefill {
@@ -98,8 +103,8 @@ export class OrderFormComponent extends BasePublicComponent {
           this.cdr.markForCheck();
         },
         error: (err: any) => {
-          // The backend returns 410 for an already used link, 404 for an invalid / unknown one.
-          this.linkState = err?.status === 410 ? 'used' : 'invalid';
+          // The backend returns 410 for an already used or expired link, 404 for an invalid / unknown one.
+          this.linkState = err?.status === 410 ? goneState(err) : 'invalid';
           this.cdr.markForCheck();
         }
       });
@@ -210,7 +215,7 @@ export class OrderFormComponent extends BasePublicComponent {
         // 410 can come here too when the token was used concurrently (two open tabs) -
         // the same message as on load is shown, so the user knows what happened.
         if (err?.status === 410) {
-          this.linkState = 'used';
+          this.linkState = goneState(err);
           this.errorMessage = null;
         } else {
           // Translated by status, no English fallback (findings #44 / #53).

@@ -15,7 +15,7 @@
     </div>
   </div>
 
-  <!-- Page tabs: Company details / Page titles -->
+  <!-- Page tabs: Company details / Page titles / Data retention -->
   <div class="ws-tabs" role="tablist" [attr.aria-label]="strings.tabs_label">
     <button
       type="button"
@@ -48,7 +48,24 @@
         <span class="ws-tab-dot" aria-hidden="true"></span>
       }
     </button>
+    <button
+      type="button"
+      role="tab"
+      class="ws-tab"
+      [class.active]="activeTab === 'retention'"
+      [attr.aria-selected]="activeTab === 'retention'"
+      (click)="switchTab('retention')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      </svg>
+      {{ strings.tab_retention }}
+    </button>
   </div>
+
+  <!-- Data retention tab (GDPR retention periods) - own component, loads when opened -->
+  @if (activeTab === 'retention') {
+    <app-retention-settings />
+  }
 
   @if (activeTab === 'company') {
 
@@ -509,7 +526,7 @@
         </div>
       }
     </div>
-  } @else {
+  } @else if (activeTab === 'page_titles') {
     <!-- Page titles tab (browser <title> per public page) – logic: pt* members in .ts -->
     <div class="pt-card">
 

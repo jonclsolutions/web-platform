@@ -12,7 +12,7 @@
  * cross-project table) share the same scroll-lock mechanism and the `pm-*` CSS.
  */
 
-import { Component, ViewChild, ElementRef, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ViewChild, ElementRef, ChangeDetectionStrategy, HostListener, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -123,11 +123,14 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
 
   revealedPassword: RevealedPassword | null = null;
   private revealedPasswordProjectId: number | null = null;
+  /** Whether the shown one-time password was copied - closing / reloading before that asks first. */
+  passwordCopied = false;
   passwordVisible = false;
 
   checkpointStatusLabels: Record<string, string> = {};
 
-  private readonly PASSWORD_STORAGE_PREFIX = 'rpsw_project_pw_';
+  /** Key prefix under which former versions kept the revealed password in sessionStorage (removed on load, VT-08). */
+  private readonly LEGACY_PASSWORD_STORAGE_PREFIX = 'rpsw_project_pw_';
   private uploadRulesService = inject(UploadRulesService);
 
   /** Attachment rules of the API (profile project_thread, shared with the customer portal). */
@@ -297,6 +300,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
 
   override ngOnInit(): void {
     super.ngOnInit();
+    this.removeLegacyStoredPasswords();
     this.initWithAuthCheck(this.router);
     this.checkQueryParamsForPrefill();
     this.loadThreadsTable();
@@ -364,7 +368,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     ).subscribe({
       next: (result: any) => {
         if (!formData.id && result?.generated_password) {
-          this.storeRevealedPassword(result.id, result.generated_password, result.public_url);
+          this.rememberRevealedPassword(result.id, result.generated_password, result.public_url);
           this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('project_created_message'), 'success');
           this.refreshData();
           this.openManageModal(result);
@@ -400,8 +404,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
       next: (project: any) => {
         this.managingProject = project;
         this.managingCheckpoints = project.checkpoints ?? [];
-        this.revealedPassword = this.loadRevealedPassword(project.id)
-          ?? (this.revealedPasswordProjectId === project.id ? this.revealedPassword : null);
+        this.revealedPassword = this.revealedPasswordProjectId === project.id ? this.revealedPassword : null;
         this.manageLoading = false;
         this.loadManagingThreads(project.id);
         this.cd.markForCheck();
@@ -422,6 +425,35 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
       });
   }
 
+  /**
+   * @description Closes the manage modal from the ✕ button / the backdrop. A one-time password
+   * that was not copied yet would be lost for good (it is stored nowhere), so the admin is asked
+   * first; when it was copied (or there is none) the modal closes at once.
+   */
+  async requestCloseManageModal(): Promise<void> {
+    if (this.revealedPassword && !this.passwordCopied) {
+      const confirmed = await this.confirmDialogService.open(
+        this.t('close_uncopied_password_title'),
+        this.t('close_uncopied_password_message')
+      );
+      if (!confirmed) return;
+    }
+    this.closeManageModal();
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Reloading / leaving the page while an uncopied one-time password is shown asks
+   * the browser to confirm (the password would be lost).
+   * @param event beforeunload event.
+   */
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.revealedPassword && !this.passwordCopied) {
+      event.preventDefault();
+    }
+  }
+
   closeManageModal(): void {
     this.showManageModal = false;
     this.managingProject = null;
@@ -433,22 +465,28 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.unlockBackgroundScroll();
   }
 
-  private storeRevealedPassword(projectId: number, password: string, url: string): void {
-    const entry: RevealedPassword = { password, url, generatedAt: new Date().toISOString() };
-    try {
-      sessionStorage.setItem(`${this.PASSWORD_STORAGE_PREFIX}${projectId}`, JSON.stringify(entry));
-    } catch { /* ignore */ }
-    this.revealedPassword = entry;
+  /**
+   * @description Keeps the one-time password of a project for the open manage modal - in this
+   * component only, never in any browser storage (VT-08: a readable password in sessionStorage
+   * could be read by any script of the page). Closing the modal forgets it; a lost password can
+   * only be regenerated.
+   * @param projectId Project the password belongs to.
+   * @param password Generated password (shown once).
+   * @param url Public URL of the project portal.
+   */
+  private rememberRevealedPassword(projectId: number, password: string, url: string): void {
+    this.revealedPassword = { password, url, generatedAt: new Date().toISOString() };
     this.revealedPasswordProjectId = projectId;
+    this.passwordCopied = false;
   }
 
-  private loadRevealedPassword(projectId: number): RevealedPassword | null {
+  /** @description Deletes the passwords former versions kept in sessionStorage. */
+  private removeLegacyStoredPasswords(): void {
     try {
-      const raw = sessionStorage.getItem(`${this.PASSWORD_STORAGE_PREFIX}${projectId}`);
-      return raw ? JSON.parse(raw) as RevealedPassword : null;
-    } catch {
-      return null;
-    }
+      Object.keys(sessionStorage)
+        .filter(key => key.startsWith(this.LEGACY_PASSWORD_STORAGE_PREFIX))
+        .forEach(key => sessionStorage.removeItem(key));
+    } catch { /* storage unavailable - nothing stored either */ }
   }
 
   togglePasswordVisibility(): void {
@@ -458,6 +496,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   copyPassword(): void {
     if (!this.revealedPassword) return;
     navigator.clipboard?.writeText(this.revealedPassword.password);
+    this.passwordCopied = true;
     this.alertDialogService.open(this.t('copied_title'), this.t('password_copied_message'), 'success');
   }
 
@@ -483,7 +522,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
       .subscribe({
         next: (res) => {
           this.passwordRegenerating = false;
-          this.storeRevealedPassword(this.managingProject.id, res.generated_password, this.managingProject.public_url);
+          this.rememberRevealedPassword(this.managingProject.id, res.generated_password, this.managingProject.public_url);
           this.passwordVisible = true;
           this.alertDialogService.open(this.t('password_regenerated_title'), this.t('password_regenerated_message'), 'success');
           this.cd.markForCheck();

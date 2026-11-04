@@ -494,8 +494,20 @@ the server with the local one. The checksum file does not need to be deployed.
 - **No real personal data in the repository**: `api/database/` contains the schema, migrations
   and seeders only (placeholder data); database dumps (`./dev.sh db-dump` → `temp/`) stay outside git.
 - User uploads (`storage/app/private`) are personal data – never copied into builds or shared.
-- Retention of personal data is enforced by scheduled clean-up jobs (security events,
-  import batches) – keep the production scheduler cron running.
+- Retention of personal data is enforced by scheduled clean-up jobs – keep the production
+  scheduler cron running:
+  - `security:purge-events` (security events, period in Security events), `imports:purge-stale`;
+  - `retention:purge` (03:45) – job applications (default 6 months), inquiries, leads and tickets
+    (2 years), web orders and projects (10 years), cookie consent records (3 years): records not
+    changed for longer than their period are deleted for good with their attachments and files,
+    also from the trash; expired portal sessions always. Periods (or "off") and an immediate run:
+    admin → Web settings → Data retention. E-shop orders / customers are not deleted (accounting).
+- The order form link of a lead is valid 30 days (`WebSalesLead::PUBLIC_TOKEN_TTL_DAYS`); every
+  "generate link" in the admin starts the validity again, an expired link gets a new token.
+- Cookie consent decisions are recorded on the server as the proof of consent
+  (`web_cookie_consents`: random consent id, version, categories, time – no IP address).
+- One-time project portal passwords are shown only in the open admin modal – never stored in
+  the browser; a lost password can only be regenerated.
 - `dev/.env`, `dev/logs/`, `dev/pids/` and `build/` are git-ignored; check with `git status` before every commit.
 - **E-mail access policy** (admin → Account management → E-mail domains) applies to every role,
   sysadmin included: an account outside the allowed domains / exceptions cannot log in, and its

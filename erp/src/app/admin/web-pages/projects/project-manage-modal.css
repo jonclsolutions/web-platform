@@ -144,6 +144,17 @@
   font-size: 0.85rem; color: var(--color-zinc-900); letter-spacing: 0.05em; text-align: center;
 }
 .pm-password-hint { margin: 10px 0 14px; font-size: 0.74rem; color: var(--color-zinc-400); line-height: 1.5; }
+/* One-time password notice - visible enough that the password is copied before the modal closes. */
+.pm-password-warning {
+  margin: 10px 0 4px;
+  padding: 8px 10px;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--color-amber-900, #78350f);
+  background: var(--color-amber-50, #fffbeb);
+  border: 1px solid var(--color-amber-200, #fde68a);
+  border-radius: 10px;
+}
 
 /* ── Common elements (shared by both modes) ──────────────────────── */
 .pm-btn-small {

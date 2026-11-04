@@ -60,12 +60,12 @@
 <p class="success-text">{{ t.link_states?.loading }}</p>
 </div>
 
-} @else if (linkState === 'invalid' || linkState === 'used') {
+} @else if (linkState === 'invalid' || linkState === 'used' || linkState === 'expired') {
 
 <div class="success-panel">
 <div class="success-icon success-icon--error" aria-hidden="true">✕</div>
-<h2 class="success-title">{{ linkState === 'used' ? t.link_states?.used_title : t.link_states?.invalid_title }}</h2>
-<p class="success-text">{{ linkState === 'used' ? t.link_states?.used_text : t.link_states?.invalid_text }}</p>
+<h2 class="success-title">{{ t.link_states?.[linkState + '_title'] }}</h2>
+<p class="success-text">{{ t.link_states?.[linkState + '_text'] }}</p>
 <a routerLink="/home" class="back-btn">{{ t.buttons?.go_home }}</a>
 </div>
 

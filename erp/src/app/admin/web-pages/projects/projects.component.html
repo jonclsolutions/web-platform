@@ -156,12 +156,12 @@
 
 <!-- ═══════════ "Manage" modal - checkpoints + password / URL + threads of ONE project ═══════════ -->
 @if (showManageModal) {
-<div class="pm-overlay" (mousedown)="$event.target === $event.currentTarget && closeManageModal()">
+<div class="pm-overlay" (mousedown)="$event.target === $event.currentTarget && requestCloseManageModal()">
 <div class="pm-card" (mousedown)="$event.stopPropagation()">
 
   <div class="pm-header">
     <h2 class="pm-title">{{ t('manage_modal_title') }}{{ managingProject ? ' — ' + managingProject.name : '' }}</h2>
-    <button type="button" class="pm-close" (click)="closeManageModal()">✕</button>
+    <button type="button" class="pm-close" (click)="requestCloseManageModal()">✕</button>
   </div>
 
   <div class="pm-body">
@@ -183,7 +183,8 @@
             <button type="button" class="pm-btn-small" (click)="togglePasswordVisibility()">{{ passwordVisible ? t('hide_button') : t('show_button') }}</button>
             <button type="button" class="pm-btn-small" (click)="copyPassword()">{{ t('copy_password_button') }}</button>
           </div>
-          <p class="pm-password-hint">{{ t('password_generated_hint') }} {{ revealedPassword.generatedAt | date:'d.M.yyyy HH:mm' }}. {{ t('password_visibility_hint') }}</p>
+          <p class="pm-password-warning" role="note">{{ t('password_visibility_hint') }}</p>
+          <p class="pm-password-hint">{{ t('password_generated_hint') }} {{ revealedPassword.generatedAt | date:'d.M.yyyy HH:mm' }}.</p>
         } @else {
           <p class="pm-password-hint">{{ t('password_not_stored_hint') }}</p>
         }

@@ -16,6 +16,7 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use App\Console\Commands\PurgeImportBatchesCommand;
+use App\Console\Commands\PurgePersonalDataCommand;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -36,5 +37,14 @@ Schedule::command(PurgeSecurityEventsCommand::class)
  */
 Schedule::command(PurgeImportBatchesCommand::class)
     ->dailyAt('03:30')
+    ->withoutOverlapping()
+    ->runInBackground();
+/**
+ * @description Daily GDPR retention clean-up of the personal data (PurgePersonalDataCommand):
+ * applications, inquiries, leads, tickets, web orders, projects and cookie consents older than
+ * their period, with their files, and the expired portal sessions.
+ */
+Schedule::command(PurgePersonalDataCommand::class)
+    ->dailyAt('03:45')
     ->withoutOverlapping()
     ->runInBackground();

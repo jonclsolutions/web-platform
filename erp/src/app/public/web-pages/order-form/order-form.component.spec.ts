@@ -6,7 +6,7 @@
  * @created 2026
  * @description Unit tests of OrderFormComponent (order via a sales-lead link): link states (no token,
  *   valid with prefill, invalid, already used), validation, the multipart submit with the lead
- *   token and the 410 "already used" / generic error handling.
+ *   token and the 410 "already used" / "expired" (VT-10) / generic error handling.
  * @dependencies
  * - createPublicPageContext (get / post spies); ActivatedRoute with paramMap token.
  */
@@ -24,7 +24,7 @@ describe('OrderFormComponent', () => {
   let ctx: PublicPageContext;
   let fixture: ComponentFixture<OrderFormComponent>;
   let component: OrderFormComponent;
-  const order_form = { buttons: { send: 'Order', sending: 'Sending' }, errors: { submit_error: 'Error', captcha_failed: 'Robot?', email_limit: 'Enough for this address' }, attachment_uploader: { limits_hint: '(max. {max} souborů)', dropzone_label: 'Drop' } };
+  const order_form = { link_states: { expired_title: 'Expired', expired_text: 'Ask for a new link', used_title: 'Used' }, buttons: { send: 'Order', sending: 'Sending' }, errors: { submit_error: 'Error', captcha_failed: 'Robot?', email_limit: 'Enough for this address' }, attachment_uploader: { limits_hint: '(max. {max} souborů)', dropzone_label: 'Drop' } };
   const lead = { subject_name: 'ACME', contact_person: null, contact_email: 'a@acme.cz', contact_phone: null };
 
   /** Completes the background captcha check (`solve`) and submits - the widget is reset after every refused submission. */
@@ -46,9 +46,9 @@ describe('OrderFormComponent', () => {
 
   /**
    * @description Link states: no token; valid → prefill (person → company name fallback);
-   *   410 → used; other error → invalid.
-   * @input token null; 'abc' with lead; 410; 404.
-   * @output 'no-token' (no request); 'valid' + client_name 'ACME', email; 'used'; 'invalid'.
+   *   410 → used; 410 LINK_EXPIRED → expired (with its texts); other error → invalid.
+   * @input token null; 'abc' with lead; 410; 410 LINK_EXPIRED; 404.
+   * @output 'no-token' (no request); 'valid' + client_name 'ACME', email; 'used'; 'expired' + 'Expired' / 'Ask for a new link'; 'invalid'.
    */
   it('resolves the order link', () => {
     create(null);
@@ -76,6 +76,12 @@ describe('OrderFormComponent', () => {
     create('used', throwError(() => ({ status: 410 })));
     expect(component.linkState).toBe('used');
     TestBed.resetTestingModule();
+    create('old', throwError(() => ({ status: 410, error: { error_code: 'LINK_EXPIRED' } })));
+    expect(component.linkState).toBe('expired');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.success-title').textContent.trim()).toBe('Expired');
+    expect(fixture.nativeElement.querySelector('.success-text').textContent.trim()).toBe('Ask for a new link');
+    TestBed.resetTestingModule();
     create('bad', throwError(() => ({ status: 404 })));
     expect(component.linkState).toBe('invalid');
   });
@@ -83,8 +89,8 @@ describe('OrderFormComponent', () => {
   /**
    * @description Submit: invalid form ignored; valid order posted with all fields, the lead token
    *   and attachments; success state; 410 → link used; other errors → translated message.
-   * @input Empty form; filled form + 1 file; 410; 500.
-   * @output No post; post sales_orders with client_name / lead_token / attachments[]; isSubmitted; 'used'; 'Error'.
+   * @input Empty form; filled form + 1 file; 410; 410 LINK_EXPIRED; 500.
+   * @output No post; post sales_orders with client_name / lead_token / attachments[]; isSubmitted; 'used'; 'expired'; 'Error'.
    */
   it('submits the order', () => {
     create('abc');
@@ -109,6 +115,9 @@ describe('OrderFormComponent', () => {
     send();
     expect(component.linkState).toBe('used');
     expect(component.errorMessage).toBeNull();
+    ctx.publicData.post.and.returnValue(throwError(() => ({ status: 410, error: { error_code: 'LINK_EXPIRED' } })));
+    send();
+    expect(component.linkState).toBe('expired');
     ctx.publicData.post.and.returnValue(throwError(() => ({ status: 500 })));
     send();
     expect(component.errorMessage).toBe('Error');

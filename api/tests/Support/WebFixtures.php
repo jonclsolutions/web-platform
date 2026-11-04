@@ -89,7 +89,7 @@ trait WebFixtures
             'contact_email' => 'jan@acme.cz', 'contact_phone' => '777123456', 'source_channel' => 'web_form',
             'priority' => 'neutral', 'status' => 'new',
         ], $attributes));
-        foreach (['public_token', 'public_token_used_at'] as $column) {
+        foreach (['public_token', 'public_token_used_at', 'public_token_expires_at'] as $column) {
             if (array_key_exists($column, $attributes)) {
                 $lead->{$column} = $attributes[$column];
             }

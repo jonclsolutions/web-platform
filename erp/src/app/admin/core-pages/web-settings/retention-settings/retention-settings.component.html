@@ -1,0 +1,67 @@
+<!--
+    @file: retention-settings.component.html
+    @path: /src/app/admin/core-pages/web-settings/retention-settings/retention-settings.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: "Data retention" tab - period per kind of personal data, last clean-up, save / run now.
+-->
+
+<div class="rs-card">
+  <div class="rs-card-header">
+    <span class="rs-card-title">{{ t('card_title') }}</span>
+  </div>
+
+  <div class="rs-card-body">
+    <p class="rs-intro">{{ t('intro') }}</p>
+
+    @if (loading) {
+      <div class="rs-skeleton"></div>
+    } @else if (loadError) {
+      <div class="rs-error" role="alert">
+        {{ t('load_error') }}
+        <button type="button" class="rs-btn rs-btn-secondary" (click)="load()">{{ t('retry_button') }}</button>
+      </div>
+    } @else {
+      <div class="rs-rows">
+        @for (setting of settings; track setting.data_key) {
+          <div class="rs-row">
+            <div class="rs-row-text">
+              <span class="rs-row-title">{{ t('key_' + setting.data_key) }}</span>
+              <span class="rs-row-hint">{{ t('hint_' + setting.data_key) }}</span>
+              @if (setting.last_run_at) {
+                <span class="rs-row-last">
+                  {{ t('last_run') }} {{ setting.last_run_at | date:'d.M.yyyy HH:mm' }} · {{ t('last_deleted').replace('{count}', '' + (setting.last_deleted_count ?? 0)) }}
+                </span>
+              }
+            </div>
+            <div class="rs-row-value">
+              @if (canEdit) {
+                <select class="rs-select" [attr.aria-label]="t('key_' + setting.data_key)" [(ngModel)]="setting.retention_days">
+                  @for (days of optionsFor(setting); track days) {
+                    <option [ngValue]="days">{{ periodLabel(days) }}</option>
+                  }
+                </select>
+              } @else {
+                <span class="rs-readonly">{{ periodLabel(setting.retention_days) }}</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <p class="rs-note">{{ t('note') }}</p>
+
+      @if (canEdit) {
+        <div class="rs-actions">
+          <button type="button" class="rs-btn rs-btn-secondary" [disabled]="purging || saving" (click)="purgeNow()">
+            {{ purging ? t('purging') : t('purge_button') }}
+          </button>
+          <button type="button" class="rs-btn rs-btn-primary" [disabled]="saving || purging" (click)="save()">
+            {{ saving ? t('saving') : t('save_button') }}
+          </button>
+        </div>
+      }
+    }
+  </div>
+</div>

@@ -756,7 +756,9 @@
             "invalid_title": "Odkaz je neplatný",
             "invalid_text": "Tento odkaz na objednávkový formulář neexistuje nebo byl odstraněn. Kontaktujte prosím svého obchodního zástupce.",
             "used_title": "Formulář již byl odeslán",
-            "used_text": "Tento odkaz je jednorázový a už byl použit. Pokud potřebujete něco doplnit, kontaktujte prosím svého obchodního zástupce."
+            "used_text": "Tento odkaz je jednorázový a už byl použit. Pokud potřebujete něco doplnit, kontaktujte prosím svého obchodního zástupce.",
+            "expired_title": "Platnost odkazu vypršela",
+            "expired_text": "Odkaz na objednávkový formulář platí 30 dní a jeho platnost už skončila. Požádejte prosím svého obchodního zástupce o nový odkaz."
         }
     },
     "jobs": {

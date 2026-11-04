@@ -206,6 +206,25 @@ final class TestSchema
             $t->dateTime('updated_at')->useCurrent();
         });
 
+        Schema::create('core_retention_settings', function (Blueprint $t) {
+            $t->increments('id');
+            $t->string('data_key', 50)->unique();
+            $t->unsignedInteger('retention_days')->nullable();
+            $t->timestamp('last_run_at')->nullable();
+            $t->unsignedInteger('last_deleted_count')->nullable();
+            $t->timestamps();
+        });
+
+        Schema::create('web_cookie_consents', function (Blueprint $t) {
+            $t->bigIncrements('id');
+            $t->char('consent_id', 36)->index();
+            $t->unsignedSmallInteger('version');
+            $t->boolean('functional');
+            $t->boolean('analytics');
+            $t->boolean('marketing');
+            $t->timestamp('created_at')->useCurrent()->index();
+        });
+
         Schema::create('core_email_access_rules', function (Blueprint $t) {
             $t->increments('id');
             $t->string('type', 10);
@@ -437,6 +456,7 @@ final class TestSchema
             $t->increments('id');
             $t->string('public_token', 64)->nullable()->unique();
             $t->timestamp('public_token_used_at')->nullable();
+            $t->timestamp('public_token_expires_at')->nullable();
             $t->unsignedInteger('user_id')->nullable();
             $t->string('salesman_name');
             $t->date('first_contact_date')->nullable();

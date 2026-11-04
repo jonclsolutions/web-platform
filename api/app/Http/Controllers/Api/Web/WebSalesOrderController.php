@@ -114,6 +114,12 @@ class WebSalesOrderController extends Controller
                         abort(410, 'This form has already been submitted once and the link cannot be used again.');
                     }
 
+                    if ($lead->publicTokenExpired()) {
+                        throw new \Illuminate\Http\Exceptions\HttpResponseException(
+                            response()->json(['message' => 'The link has expired.', 'error_code' => 'LINK_EXPIRED'], 410)
+                        );
+                    }
+
                     $validated['lead_id'] = $lead->id;
                     $validated['salesman_name'] = $lead->salesman_name;
 
@@ -147,6 +153,10 @@ class WebSalesOrderController extends Controller
         } catch (HttpException $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Sales order creation rejected (token): " . $e->getMessage());
             return response()->json(['message' => $e->getMessage()], $e->getStatusCode());
+        } catch (\Illuminate\Http\Exceptions\HttpResponseException $e) {
+            // Expired lead link (410 LINK_EXPIRED) - the prepared answer as it is.
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', 'Sales order creation rejected (token): link expired');
+            return $e->getResponse();
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Error creating sales order: " . $e->getMessage());
             return response()->json(['message' => 'Sales order creation failed.'], 500);

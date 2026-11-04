@@ -413,7 +413,8 @@ class WebSalesLeadController extends Controller
 
     /**
      * @description Generates (or returns existing) public_token for the given lead and builds
-     *              the full public URL for the order form from it.
+     *              the full public URL for the order form from it. Every call starts the validity
+     *              of an unused link again (WebSalesLead::PUBLIC_TOKEN_TTL_DAYS).
      * @note ADMIN endpoint - must remain behind AuthGuard/Sanctum middleware in routes/api.php.
      */
     public function generateLink(Request $request, $id): JsonResponse
@@ -426,8 +427,9 @@ class WebSalesLeadController extends Controller
             $this->logAction($request, WebLog::class, 'generate_link', 'WebSalesLead', "Generated order form link for lead ID: {$lead->id}", $lead->id, 'WebSalesLead');
 
             return $this->respond([
-                    'token' => $token,
-                    'url'   => rtrim(config('app.frontend_url', $request->getSchemeAndHttpHost()), '/') . "/order_form/{$token}",
+                    'token'      => $token,
+                    'url'        => rtrim(config('app.frontend_url', $request->getSchemeAndHttpHost()), '/') . "/order_form/{$token}",
+                    'expires_at' => $lead->public_token_used_at ? null : $lead->public_token_expires_at?->toIso8601String(),
                 ]);
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error generating link for lead ID {$id}: " . $e->getMessage(), (int) $id, 'WebSalesLead');
@@ -440,7 +442,8 @@ class WebSalesLeadController extends Controller
      *              used by OrderFormComponent on the frontend to prefill the order
      *              form. Returns only a narrow, secure subset of fields.
      * @note Must be registered in routes/api.php OUTSIDE the auth middleware group.
-     * @note Returns 410 Gone if the link has already been used once.
+     * @note Returns 410 Gone if the link has already been used once, and 410 with error_code
+     *       LINK_EXPIRED after its validity (WebSalesLead::PUBLIC_TOKEN_TTL_DAYS).
      * @security No internal `id` in the answer (the form is bound to the lead by the token only)
      * and the route is throttled (30 / minute per IP).
      */
@@ -468,6 +471,17 @@ class WebSalesLeadController extends Controller
             );
 
             return response()->json(['message' => 'This form has already been submitted once and the link cannot be used again.'], 410);
+        }
+
+        if ($lead->publicTokenExpired()) {
+            CoreSecurityEvent::record(
+                'sales_lead_token_invalid',
+                'info',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request, ['reason' => 'expired', 'lead_id' => $lead->id])
+            );
+
+            return response()->json(['message' => 'The link has expired.', 'error_code' => 'LINK_EXPIRED'], 410);
         }
 
         return $this->respond([

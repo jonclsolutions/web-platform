@@ -8,13 +8,18 @@
  * application - mainly to the Google Analytics loader (AnalyticsService, driven by
  * `consent$.analytics`) and to `openSettings()`, which reopens the bar in the expanded state.
  *
- * @note Client-side only (localStorage) for now. Server-side logging of the consent (as proof
- * for an inspection by the data protection authority) is not implemented yet - when added, the
- * API call goes into `save()` without changing the public interface of the service.
+ *
+ * @note Every decision is also recorded on the server (GDPR Art. 7(1) - the consent must be
+ * demonstrable, VT-12): `POST /api/cookie-consents` with a random `consentId` (kept with the
+ * decision in the browser, so one visitor's decisions can be matched), the version and the
+ * categories. Anonymous - no IP address or user agent is stored. Sent with `navigator.sendBeacon`
+ * (delivered even when the visitor leaves the page at once; fetch keepalive as the fallback);
+ * a failure never blocks the cookie bar - the decision stays valid in the browser.
  */
 
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface CookieConsentCategories {
   functional: boolean;
@@ -26,6 +31,8 @@ export interface CookieConsentState extends CookieConsentCategories {
   necessary: true;
   timestamp: string;
   version: number;
+  /** Random id of the visitor's consent record on the server (UUID); missing in decisions stored by older versions. */
+  consentId?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -75,6 +82,7 @@ export class CookieConsentService {
       marketing: categories.marketing,
       timestamp: new Date().toISOString(),
       version: this.CONSENT_VERSION,
+      consentId: this.current?.consentId ?? this.newConsentId(),
     };
 
     try {
@@ -85,7 +93,7 @@ export class CookieConsentService {
     }
 
     this.consentSubject.next(state);
-
+    this.record(state);
   }
 
   /** Shortcut for the "Accept all" button. */
@@ -104,6 +112,41 @@ export class CookieConsentService {
    */
   openSettings(): void {
     this.openSettingsSubject.next();
+  }
+
+  /**
+   * @description Sends the decision to the server as the proof of consent - fire and forget.
+   * @param state Stored decision.
+   */
+  private record(state: CookieConsentState): void {
+    const url = `${environment.base_api_url}/cookie-consents`;
+    const body = JSON.stringify({
+      consent_id: state.consentId,
+      version: state.version,
+      functional: state.functional,
+      analytics: state.analytics,
+      marketing: state.marketing,
+    });
+    try {
+      const queued = typeof navigator.sendBeacon === 'function'
+        && navigator.sendBeacon(url, new Blob([body], { type: 'application/json' }));
+      if (!queued) {
+        fetch(url, { method: 'POST', body, keepalive: true, headers: { 'Content-Type': 'application/json', Accept: 'application/json' } })
+          .catch(() => { /* offline / blocked - the decision stays valid in the browser */ });
+      }
+    } catch {
+      // Beacon / fetch unavailable - recording the proof must never break the cookie bar.
+    }
+  }
+
+  /** @description New random UUID of a consent record (crypto.randomUUID or a v4 from random bytes). */
+  private newConsentId(): string {
+    if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    const b = crypto.getRandomValues(new Uint8Array(16));
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    const h = Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+    return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
   }
 
   private readStored(): CookieConsentState | null {

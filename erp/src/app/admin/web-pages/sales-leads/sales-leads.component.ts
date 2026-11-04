@@ -12,6 +12,7 @@
  *   toolbar buttons.
  */
 
+import { formatDate } from '@angular/common';
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as Core from '../../../shared/imports/core-providers';
@@ -133,18 +134,22 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
 
   /**
    * @description Requests (or reuses) the unique public link to the order form of the lead and
-   *              copies it to the clipboard.
+   *              copies it to the clipboard; the message says until when the link is valid (every
+   *              request starts its validity again - VT-10, WebSalesLead::PUBLIC_TOKEN_TTL_DAYS).
    * @param item The sales lead.
    * @note The token is generated / checked by the backend - the frontend never builds the URL itself.
    */
   handleGenerateFormLink(item: any): void {
-    this.dataHandler.post<{ token: string; url: string }>(`web/sales_leads/${item.id}/generate-link`, {})
+    this.dataHandler.post<{ token: string; url: string; expires_at: string | null }>(`web/sales_leads/${item.id}/generate-link`, {})
       .subscribe({
         next: (res) => {
           navigator.clipboard.writeText(res.url).then(() => {
+            const validity = res.expires_at
+              ? ' ' + this.t('link_valid_until').replace('{date}', formatDate(res.expires_at, 'd.M.yyyy', 'en-US'))
+              : '';
             this.alertDialogService.open(
               this.t('link_copied_title'),
-              this.t('link_copied_message').replace('{subject}', item.subject_name),
+              this.t('link_copied_message').replace('{subject}', item.subject_name) + validity,
               'success'
             );
           }).catch(() => {

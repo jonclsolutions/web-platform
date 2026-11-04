@@ -26,6 +26,8 @@ use App\Http\Controllers\Api\Core\CoreRoleController;
 use App\Http\Controllers\Api\Core\CorePermissionController;
 use App\Http\Controllers\Api\Core\CoreSecurityEventController;
 use App\Http\Controllers\Api\Core\CoreSecuritySettingController;
+use App\Http\Controllers\Api\Core\CoreRetentionSettingController;
+use App\Http\Controllers\Api\Web\WebCookieConsentController;
 use App\Http\Controllers\Api\Legal\DocumentSectionController;
 use App\Http\Controllers\Api\Legal\SiteConfigurationController;
 use App\Http\Controllers\Api\Web\WebRawRequestCommissionController;
@@ -224,6 +226,12 @@ Route::post('sales_orders', [WebSalesOrderController::class, 'store'])
 Route::post('job_applications',        [WebJobApplicationController::class, 'store'])
     ->middleware(['web.active', 'throttle:public-form', 'public.form:job_application,email']);
 
+// Cookie consent record (GDPR Art. 7(1), VT-12) - anonymous (random consent id, no IP / user
+// agent stored); sent by the cookie bar on every decision. Not behind web.active: the bar is
+// also shown by the e-shop.
+Route::post('cookie-consents', [WebCookieConsentController::class, 'store'])
+    ->middleware('throttle:20,1,cookie-consent');
+
 /*
 |--------------------------------------------------------------------------
 | ATTACHMENT DOWNLOAD / VIEW — signed URLs only
@@ -308,6 +316,17 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:core-security-view');
             Route::put('/', [CoreSecuritySettingController::class, 'update'])
                 ->middleware('permission:core-security-update');
+        });
+
+        // ── core/retention_settings (GDPR storage limitation, VT-10) ──────────
+        // Periods of the personal data + an immediate run of the daily `retention:purge`.
+        Route::prefix('retention_settings')->group(function () {
+            Route::get('/', [CoreRetentionSettingController::class, 'index'])
+                ->middleware('permission:core-legal-config-view');
+            Route::put('/', [CoreRetentionSettingController::class, 'update'])
+                ->middleware('permission:core-legal-config-update');
+            Route::post('/purge', [CoreRetentionSettingController::class, 'purge'])
+                ->middleware(['throttle:5,1,retention-purge', 'permission:core-legal-config-update']);
         });
 
         // ── core/email-access-policy ────────────────────────────────────────────

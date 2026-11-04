@@ -19,6 +19,7 @@ use App\Models\Core\CoreSecurityEvent;
 use App\Http\Resources\Web\WebSalesLeadResource;
 use App\Models\Web\WebSalesLead;
 use Tests\Support\WebFixtures;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -205,6 +206,51 @@ class SalesLeadTest extends TestCase
             $this->getJson('/api/public/sales-leads/token-t')->assertOk();
         }
         $this->getJson('/api/public/sales-leads/token-t')->assertStatus(429);
+    }
+
+    /**
+     * @description VT-10: the order form link expires after WebSalesLead::PUBLIC_TOKEN_TTL_DAYS.
+     *   Every "generate link" starts the validity again (same token while valid); after the expiry
+     *   the lookup and the order are refused with LINK_EXPIRED (recorded, no contact data), and
+     *   the next "generate link" issues a NEW token; a used link keeps its token without expiry.
+     * @input generate-link; 10 days later again; 31 days later GET / POST sales_orders; generate-link;
+     *        a used lead's generate-link.
+     * @output expires_at now+30d, then moved by 10 days (same token); 410 LINK_EXPIRED ×2, event
+     *   reason expired, no order; a new token valid 30 days; the used token kept, expires_at null.
+     */
+    public function test_public_link_expires(): void
+    {
+        Storage::fake('private');
+        \Illuminate\Support\Facades\Mail::fake();
+        $this->fakeCaptcha();
+        $this->signIn($this->userWith(['web-sales-leads-update']));
+        $lead = $this->lead();
+
+        $first = $this->postJson("/api/web/sales_leads/{$lead->id}/generate-link")->assertOk()->json('data');
+        $this->assertSame(now()->addDays(WebSalesLead::PUBLIC_TOKEN_TTL_DAYS)->toIso8601String(), $first['expires_at']);
+
+        $this->travel(10)->days();
+        $again = $this->postJson("/api/web/sales_leads/{$lead->id}/generate-link")->json('data');
+        $this->assertSame($first['token'], $again['token']);
+        $this->assertSame(now()->addDays(WebSalesLead::PUBLIC_TOKEN_TTL_DAYS)->toIso8601String(), $again['expires_at']);
+
+        $this->travel(WebSalesLead::PUBLIC_TOKEN_TTL_DAYS + 1)->days();
+        $this->getJson("/api/public/sales-leads/{$first['token']}")->assertStatus(410)
+            ->assertJsonPath('error_code', 'LINK_EXPIRED')->assertJsonMissingPath('data');
+        $this->postJson('/api/sales_orders', [
+            'client_name' => 'Acme', 'client_email' => 'jan@acme.cz', 'order_description' => 'Shop',
+            'dataProcessingAgreement' => true, 'tosAgreement' => true, 'lead_token' => $first['token'],
+        ] + $this->captcha())->assertStatus(410)->assertJsonPath('error_code', 'LINK_EXPIRED');
+        $this->assertSame(0, \App\Models\Web\WebSalesOrder::count());
+        $this->assertSame('expired', CoreSecurityEvent::where('event_type', 'sales_lead_token_invalid')->sole()->context_data['reason']);
+
+        $renewed = $this->postJson("/api/web/sales_leads/{$lead->id}/generate-link")->json('data');
+        $this->assertNotSame($first['token'], $renewed['token']);
+        $this->getJson("/api/public/sales-leads/{$renewed['token']}")->assertOk();
+
+        $used = $this->lead(['public_token' => 'used-token', 'public_token_used_at' => now()]);
+        $kept = $this->postJson("/api/web/sales_leads/{$used->id}/generate-link")->json('data');
+        $this->assertSame(['used-token', null], [$kept['token'], $kept['expires_at']]);
     }
 
     /**

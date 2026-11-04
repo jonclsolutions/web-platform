@@ -7,13 +7,13 @@
  * @description Unit tests of ProjectsComponent and projects.config.ts – client projects of the
  *   Web module: translated configuration, toolbars, prefill from a sales order (?order_id) and
  *   opening a project from a link (?open_project), creating a project with a one-time client
- *   password (kept only in sessionStorage), the manage modal (password reveal / copy /
+ *   password (kept only in the component, never in browser storage - VT-08), the manage modal (password reveal / copy /
  *   regenerate, checkpoints add / cycle / delete), project threads (detail, status, replies with
  *   validated attachments, older messages), the global threads table and its modal, and locking
  *   the page scroll behind modals.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (all admin doubles), ActivatedRoute (stub with query
- *   params), navigator.clipboard (spy), sessionStorage
+ *   params), navigator.clipboard (spy), sessionStorage (removal of the legacy stored passwords)
  */
 
 import { ComponentFixture, TestBed, fakeAsync, flush, tick, discardPeriodicTasks } from '@angular/core/testing';
@@ -284,21 +284,27 @@ describe('ProjectsComponent', () => {
     });
 
     /**
-     * @description A new project returns a one-time password: it is kept in sessionStorage and the manage modal opens.
-     * @input  handleFormSubmitted({ name: 'Shop' }); API { id: 7, generated_password: 'S3cret', public_url }
-     * @output post('web/projects', …); sessionStorage rpsw_project_pw_7 with password + url; alert 'projects.project_created_message'; modal open with revealedPassword
+     * @description A new project returns a one-time password: the manage modal opens with it, but it
+     *   is written to no browser storage (VT-08); closing the modal forgets it for good.
+     * @input  handleFormSubmitted({ name: 'Shop' }); API { id: 7, generated_password: 'S3cret', public_url }; close; reopen
+     * @output post('web/projects', …); alert 'projects.project_created_message'; modal open with
+     *   revealedPassword S3cret + url; no sessionStorage / localStorage write; after close + reopen null
      */
     it('creates a project and reveals its password once', () => {
+      const setItem = spyOn(Storage.prototype, 'setItem').and.callThrough();
       dh().post.and.returnValue(of({ id: 7, generated_password: 'S3cret', public_url: 'https://x/p/7' }));
       component.handleFormSubmitted({ name: 'Shop' });
       expect(dh().post).toHaveBeenCalledWith('web/projects', { name: 'Shop' });
-      const stored = JSON.parse(sessionStorage.getItem('rpsw_project_pw_7')!);
-      expect(stored.password).toBe('S3cret');
-      expect(stored.url).toBe('https://x/p/7');
       expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'projects.project_created_message', 'success');
       expect(component.showManageModal).toBeTrue();
-      expect(component.revealedPassword?.password).toBe('S3cret');
+      expect(component.revealedPassword).toEqual(jasmine.objectContaining({ password: 'S3cret', url: 'https://x/p/7' }));
       expect(component.showCreateForm).toBeFalse();
+      expect(setItem.calls.allArgs().some(a => String(a[1]).includes('S3cret'))).toBeFalse();
+      expect(sessionStorage.getItem('rpsw_project_pw_7')).toBeNull();
+
+      component.closeManageModal();
+      component.openManageModal({ id: 7 });
+      expect(component.revealedPassword).toBeNull();
     });
 
     /**
@@ -316,12 +322,18 @@ describe('ProjectsComponent', () => {
     });
 
     /**
-     * @description If sessionStorage refuses the password it is still shown in the manage modal of that project only.
-     * @input  sessionStorage.setItem throws; create project 8 with generated_password; then open project 7
-     * @output revealedPassword.password 'S3cret' for project 8; null for project 7
+     * @description The password belongs to its project only: opening another project shows none;
+     *   passwords former versions left in sessionStorage are deleted when the page loads.
+     * @input  legacy rpsw_project_pw_7 + an unrelated key; ngOnInit; create project 8 with generated_password; then open project 7
+     * @output legacy key removed, unrelated kept; revealedPassword 'S3cret' for project 8; null for project 7
      */
-    it('shows the password even when sessionStorage fails', () => {
-      spyOn(Storage.prototype, 'setItem').and.throwError('quota');
+    it('keeps the password for its project only and removes legacy stored ones', () => {
+      sessionStorage.setItem('rpsw_project_pw_7', JSON.stringify({ password: 'old', url: 'u', generatedAt: 'x' }));
+      sessionStorage.setItem('other_key', '1');
+      fixture.detectChanges();
+      expect(sessionStorage.getItem('rpsw_project_pw_7')).toBeNull();
+      expect(sessionStorage.getItem('other_key')).toBe('1');
+      sessionStorage.removeItem('other_key');
       dh().post.and.returnValue(of({ id: 8, generated_password: 'S3cret', public_url: 'u' }));
       component.handleFormSubmitted({ name: 'Shop' });
       expect(component.managingProject.id).toBe(8);
@@ -333,17 +345,56 @@ describe('ProjectsComponent', () => {
 
   describe('manage modal', () => {
     /**
-     * @description Opening loads the project, its checkpoints, stored password and threads; the page scroll is locked.
-     * @input  stored password for project 7; openManageModal({ id: 7 })
-     * @output managingProject 7; 1 checkpoint; revealedPassword from storage; getCollection('web/project-threads', { project_id: 7, no_pagination }); body position fixed
+     * @description A shown one-time password that was not copied is protected: closing the modal
+     *   (✕ / backdrop) asks first and a cancel keeps it open; reloading the page asks the browser;
+     *   after copying (or without a password) the modal closes at once and nothing is asked.
+     * @input create project 7 (password shown); requestClose → confirm false; true; again with copyPassword(); beforeunload.
+     * @output confirm('projects.close_uncopied_password_title', …); modal open, then closed; after copy no confirm;
+     *   beforeunload prevented only while uncopied.
      */
-    it('opens with project, checkpoints, password and threads', () => {
+    it('asks before closing with an uncopied password', async () => {
+      const unload = () => { const e = new Event('beforeunload', { cancelable: true }); component.onBeforeUnload(e as BeforeUnloadEvent); return e.defaultPrevented; };
+      dh().post.and.returnValue(of({ id: 7, generated_password: 'S3cret', public_url: 'u' }));
+      component.handleFormSubmitted({ name: 'Shop' });
+      expect(unload()).toBeTrue();
+
+      ctx.confirm.open.and.returnValue(Promise.resolve(false));
+      await component.requestCloseManageModal();
+      expect(ctx.confirm.open).toHaveBeenCalledWith('projects.close_uncopied_password_title', 'projects.close_uncopied_password_message');
+      expect(component.showManageModal).toBeTrue();
+      ctx.confirm.open.and.returnValue(Promise.resolve(true));
+      await component.requestCloseManageModal();
+      expect(component.showManageModal).toBeFalse();
+      expect(unload()).toBeFalse();
+
+      ctx.confirm.open.calls.reset();
+      component.handleFormSubmitted({ name: 'Shop' });
+      spyOn(navigator.clipboard, 'writeText').and.returnValue(Promise.resolve());
+      component.copyPassword();
+      expect(unload()).toBeFalse();
+      await component.requestCloseManageModal();
+      expect(ctx.confirm.open).not.toHaveBeenCalled();
+      expect(component.showManageModal).toBeFalse();
+
+      component.openManageModal({ id: 7 });
+      await component.requestCloseManageModal();
+      expect(ctx.confirm.open).not.toHaveBeenCalled();
+      expect(component.showManageModal).toBeFalse();
+    });
+
+    /**
+     * @description Opening loads the project, its checkpoints and threads; a password stored by a
+     *   former version is never shown (VT-08); the page scroll is locked.
+     * @input  legacy stored password for project 7; openManageModal({ id: 7 })
+     * @output managingProject 7; 1 checkpoint; revealedPassword null; getCollection('web/project-threads', { project_id: 7, no_pagination }); body position fixed
+     */
+    it('opens with project, checkpoints and threads', () => {
       sessionStorage.setItem('rpsw_project_pw_7', JSON.stringify({ password: 'pw', url: 'u', generatedAt: 'x' }));
       dh().getCollection.and.returnValue(of([{ id: 3, subject: 'Q' }]));
       component.openManageModal({ id: 7 });
       expect(component.managingProject.name).toBe('Shop');
       expect(component.managingCheckpoints.length).toBe(1);
-      expect(component.revealedPassword?.password).toBe('pw');
+      expect(component.revealedPassword).toBeNull();
       expect(dh().getCollection).toHaveBeenCalledWith('web/project-threads', { project_id: 7, no_pagination: 'true' });
       expect(component.managingThreads).toEqual([{ id: 3, subject: 'Q' }] as any);
       expect(document.body.style.position).toBe('fixed');
@@ -351,12 +402,11 @@ describe('ProjectsComponent', () => {
     });
 
     /**
-     * @description A project without checkpoints / stored password, a broken stored value, and a failed load.
-     * @input  getOne returns { id: 7 } with invalid JSON stored; then getOne fails
+     * @description A project without checkpoints / password, and a failed load.
+     * @input  getOne returns { id: 7 }; then getOne fails
      * @output checkpoints []; revealedPassword null; after failure modal closed and scroll unlocked
      */
     it('handles missing data and a failed load', () => {
-      sessionStorage.setItem('rpsw_project_pw_7', '{broken');
       dh().getOne.and.returnValue(of({ id: 7 }));
       component.openManageModal({ id: 7 });
       expect(component.managingCheckpoints).toEqual([]);
@@ -421,9 +471,9 @@ describe('ProjectsComponent', () => {
     });
 
     /**
-     * @description Regenerating the client password asks first, stores and shows the new one.
+     * @description Regenerating the client password asks first and shows the new one - in the component only.
      * @input  managingProject 7; confirm → true; API { generated_password: 'New1' }
-     * @output post('web/projects/7/regenerate-password', {}); stored 'New1'; passwordVisible true; success alert
+     * @output post('web/projects/7/regenerate-password', {}); revealedPassword 'New1', nothing in sessionStorage; passwordVisible true; success alert
      */
     it('regenerates the client password', async () => {
       component.managingProject = { ...project };
@@ -431,7 +481,8 @@ describe('ProjectsComponent', () => {
       await component.regeneratePassword();
       expect(ctx.confirm.open).toHaveBeenCalledWith('projects.regenerate_password_confirm_title', 'projects.regenerate_password_confirm_message');
       expect(dh().post).toHaveBeenCalledWith('web/projects/7/regenerate-password', {});
-      expect(JSON.parse(sessionStorage.getItem('rpsw_project_pw_7')!).password).toBe('New1');
+      expect(component.revealedPassword?.password).toBe('New1');
+      expect(sessionStorage.getItem('rpsw_project_pw_7')).toBeNull();
       expect(component.passwordVisible).toBeTrue();
       expect(component.passwordRegenerating).toBeFalse();
       expect(ctx.alert.open).toHaveBeenCalledWith('projects.password_regenerated_title', 'projects.password_regenerated_message', 'success');
