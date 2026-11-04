@@ -737,7 +737,10 @@
             "email_invalid": "Zadejte platný email.",
             "submit_error": "Omlouváme se, objednávku se nepodařilo odeslat.",
             "too_many_requests": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu.",
-            "attachment_rejected": "Některou z příloh server odmítl (nepovolený typ nebo velikost). Zkontrolujte přílohy a odešlete formulář znovu."
+            "attachment_rejected": "Některou z příloh server odmítl (nepovolený typ nebo velikost). Zkontrolujte přílohy a odešlete formulář znovu.",
+            "captcha_failed": "Ověření, že nejste robot, se nezdařilo nebo vypršelo. Potvrďte ho prosím znovu a odešlete formulář.",
+            "captcha_load": "Ověření, že nejste robot, se nepodařilo načíst. Obnovte prosím stránku, případně povolte obsah z challenges.cloudflare.com.",
+            "email_limit": "Pro tuto e-mailovou adresu jsme v poslední době přijali už několik objednávek. Další můžete odeslat později, případně nás kontaktujte telefonicky."
         },
         "buttons": {
             "send": "Odeslat poptávku",
@@ -820,7 +823,10 @@
         "form_phone_pattern_error": "Telefon smí obsahovat jen číslice a běžné oddělovače (+, mezera, závorky, pomlčka).",
         "form_cv_size_error": "Soubor je příliš velký. Maximální velikost je 20 MB.",
         "form_cv_type_error": "Tento typ souboru nelze nahrát. Povolené typy: {types}",
-        "form_too_many_requests": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu."
+        "form_too_many_requests": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu.",
+        "form_captcha_failed": "Ověření, že nejste robot, se nezdařilo nebo vypršelo. Potvrďte ho prosím znovu a odešlete formulář.",
+        "form_captcha_load": "Ověření, že nejste robot, se nepodařilo načíst. Obnovte prosím stránku, případně povolte obsah z challenges.cloudflare.com.",
+        "form_email_limit": "Pro tuto e-mailovou adresu jsme v poslední době přijali už několik přihlášek. Další můžete odeslat později, případně nás kontaktujte e-mailem."
     },
     "contact": {
         "attachment_uploader": {
@@ -873,7 +879,10 @@
             "submit_error": "Odeslání se nezdařilo. Zkuste to prosím znovu.",
             "submit_error_title": "Odeslání se nezdařilo",
             "too_many_requests": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu.",
-            "attachment_rejected": "Některou z příloh server odmítl (nepovolený typ nebo velikost). Zkontrolujte přílohy a odešlete formulář znovu."
+            "attachment_rejected": "Některou z příloh server odmítl (nepovolený typ nebo velikost). Zkontrolujte přílohy a odešlete formulář znovu.",
+            "captcha_failed": "Ověření, že nejste robot, se nezdařilo nebo vypršelo. Potvrďte ho prosím znovu a odešlete formulář.",
+            "captcha_load": "Ověření, že nejste robot, se nepodařilo načíst. Obnovte prosím stránku, případně povolte obsah z challenges.cloudflare.com.",
+            "email_limit": "Pro tuto e-mailovou adresu jsme v poslední době přijali už několik zpráv. Další můžete odeslat později, případně nás kontaktujte telefonicky."
         },
         "buttons": {
             "send": "Odeslat poptávku",

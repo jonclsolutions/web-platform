@@ -441,6 +441,8 @@ class WebSalesLeadController extends Controller
      *              form. Returns only a narrow, secure subset of fields.
      * @note Must be registered in routes/api.php OUTSIDE the auth middleware group.
      * @note Returns 410 Gone if the link has already been used once.
+     * @security No internal `id` in the answer (the form is bound to the lead by the token only)
+     * and the route is throttled (30 / minute per IP).
      */
     public function showByToken(Request $request, string $token): JsonResponse
     {
@@ -469,7 +471,6 @@ class WebSalesLeadController extends Controller
         }
 
         return $this->respond([
-            'id'             => $lead->id,
             'subject_name'   => $lead->subject_name,
             'contact_person' => $lead->contact_person,
             'contact_email'  => $lead->contact_email,

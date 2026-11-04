@@ -188,6 +188,29 @@ trait WebFixtures
     }
 
     /**
+     * @description Answers the Cloudflare Turnstile verification of the captcha (no real request).
+     * @param bool $valid Whether Cloudflare accepts the token.
+     * @return void
+     */
+    protected function fakeCaptcha(bool $valid = true): void
+    {
+        // A fresh factory: stubs of an earlier fake would otherwise win over the new answer.
+        \Illuminate\Support\Facades\Http::swap(new \Illuminate\Http\Client\Factory());
+        \Illuminate\Support\Facades\Http::fake([
+            config('services.turnstile.verify_url') => \Illuminate\Support\Facades\Http::response(['success' => $valid, 'error-codes' => $valid ? [] : ['invalid-input-response']]),
+        ]);
+    }
+
+    /**
+     * @description The captcha field of a public form submission (accepted by fakeCaptcha()).
+     * @return array{captcha_token: string}
+     */
+    protected function captcha(): array
+    {
+        return ['captcha_token' => 'test-captcha-token'];
+    }
+
+    /**
      * @description A fake uploaded file.
      * @param string $name File name (the extension matters for the validation).
      * @param int $kilobytes Size in KB.

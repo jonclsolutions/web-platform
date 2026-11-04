@@ -2074,8 +2074,11 @@
     "btn_triage": "Řešit",
     "btn_delete": "Smazat",
 
-    "event_captcha_failed": "Selhání CAPTCHA",
-    "event_captcha_provider_error": "Výpadek captcha služby",
+    "event_login_captcha_failed": "Selhání CAPTCHA",
+    "event_login_captcha_service_error": "Výpadek captcha služby",
+    "event_form_captcha_failed": "Selhání CAPTCHA (veřejný formulář)",
+    "event_form_captcha_service_error": "Výpadek captcha služby (veřejný formulář)",
+    "event_form_honeypot": "Honeypot – zachycený bot (veřejný formulář)",
     "event_throttle_exceeded": "Překročen limit požadavků",
     "event_login_failed": "Neúspěšné přihlášení",
     "event_login_brute_force_suspected": "Podezření na brute-force útok",
@@ -2167,11 +2170,18 @@
     "explain_unknown_endpoint": "neznámý endpoint",
     "explain_unknown_account": "neznámý účet",
 
-    "explain_captcha_failed_what": "Někdo odeslal přihlašovací formulář bez platného ověření CAPTCHA z IP adresy {ip} (endpoint {route}).",
-    "explain_captcha_failed_recommendation": "Pokud počet výskytů rychle roste, jde pravděpodobně o automatizovaný skript zkoušející hesla (běžný bot CAPTCHU nevyřeší). Zvažte dočasné zablokování téhle IP adresy na úrovni firewallu, hostingu nebo CDN (např. Cloudflare).",
+    "explain_login_captcha_failed_what": "Někdo odeslal přihlašovací formulář bez platného ověření CAPTCHA z IP adresy {ip} (endpoint {route}).",
+    "explain_login_captcha_failed_recommendation": "Pokud počet výskytů rychle roste, jde pravděpodobně o automatizovaný skript zkoušející hesla (běžný bot CAPTCHU nevyřeší). Zvažte dočasné zablokování téhle IP adresy na úrovni firewallu, hostingu nebo CDN (např. Cloudflare).",
 
-    "explain_captcha_provider_error_what": "Server se pokusil ověřit CAPTCHA token u Cloudflare Turnstile, ale externí služba neodpověděla nebo vrátila chybu.",
-    "explain_captcha_provider_error_recommendation": "Obvykle nejde o útok, jen o dočasný výpadek třetí strany. Akce není nutná - pokud se to opakuje dlouhodobě, zkontrolujte stav Cloudflare Turnstile.",
+    "explain_login_captcha_service_error_what": "Server se pokusil ověřit CAPTCHA token u Cloudflare Turnstile, ale externí služba neodpověděla nebo vrátila chybu.",
+    "explain_login_captcha_service_error_recommendation": "Obvykle nejde o útok, jen o dočasný výpadek třetí strany. Akce není nutná - pokud se to opakuje dlouhodobě, zkontrolujte stav Cloudflare Turnstile.",
+
+    "explain_form_captcha_failed_what": "Někdo odeslal veřejný formulář webu (kontakt / objednávka / žádost o práci) bez platného ověření CAPTCHA z IP adresy {ip} (endpoint {route}). Záznam se neuložil.",
+    "explain_form_captcha_failed_recommendation": "Jednotlivé výskyty bývají běžní návštěvníci (vypršený token, blokovaný skript). Pokud počet výskytů rychle roste, jde pravděpodobně o spamovacího bota - formulář ho zastavil, akce obvykle není nutná. Při trvalém náporu zvažte blokaci IP adresy na úrovni firewallu, hostingu nebo CDN.",
+    "explain_form_captcha_service_error_what": "Server se pokusil ověřit CAPTCHA token veřejného formuláře u Cloudflare Turnstile, ale služba neodpověděla nebo vrátila chybu. Odeslání bylo z bezpečnostních důvodů odmítnuto.",
+    "explain_form_captcha_service_error_recommendation": "Obvykle nejde o útok, ale o výpadek třetí strany - po dobu výpadku návštěvníci formuláře neodešlou. Pokud se to opakuje, zkontrolujte stav Cloudflare Turnstile a klíč TURNSTILE_SECRET_KEY.",
+    "explain_form_honeypot_what": "Veřejný formulář webu odeslal z IP adresy {ip} bot: vyplnil skryté pole, které člověk nevidí (endpoint {route}). Odeslání bylo tiše zahozeno – nic se neuložilo a neodešel žádný e-mail.",
+    "explain_form_honeypot_recommendation": "Akce není nutná, ochrana zafungovala. Pokud počet výskytů z jedné IP adresy rychle roste, zvažte její zablokování na úrovni firewallu, hostingu nebo CDN.",
 
     "explain_throttle_exceeded_what": "Z IP adresy {ip} přišlo na endpoint {route} víc požadavků, než povoluje nastavený limit, během jedné minuty ({occurrences}× za sledované okno).",
     "explain_throttle_exceeded_recommendation": "U veřejných formulářů (poptávka, reset hesla) může jít o pokus o spam nebo zahlcení. Pokud se opakuje dlouhodobě ze stejné IP, zvažte její zablokování na úrovni firewallu/CDN.",

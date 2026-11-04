@@ -6,7 +6,8 @@
  * @created 2026
  * @description Unit tests of ContactComponent (contact / inquiry form): form validation, stats from the
  *   home texts, attachment texts for the uploader, the multipart submit (language, optional
- *   phone, attachments) with success, error and double-submit protection.
+ *   phone, attachments) with success, error and double-submit protection; the captcha (token
+ *   required, sent, reset after a refusal, own texts of the guard refusals).
  * @dependencies
  * - createPublicPageContext (post spy); AlertDialogService spied (errors are shown in the app dialog).
  */
@@ -25,7 +26,7 @@ describe('ContactComponent', () => {
   let fixture: ComponentFixture<ContactComponent>;
   let component: ContactComponent;
   const contact = {
-    buttons: { send: 'Send', sending: 'Sending…' }, errors: { submit_error: 'Failed', submit_error_title: 'Not sent', too_many_requests: 'Slow down' },
+    buttons: { send: 'Send', sending: 'Sending…' }, errors: { submit_error: 'Failed', submit_error_title: 'Not sent', too_many_requests: 'Slow down', captcha_failed: 'Robot?', captcha_load: 'No captcha', email_limit: 'Enough for this address' },
     attachment_uploader: { limits_hint: '(max. {max} souborů)', dropzone_label: 'Drop', error_max_files: 'Max {max}', total_label: 'Total' }
   };
   const home = { stats_projects_count: '50', stats_projects_text: 'Projects', stats_years_count: '5', stats_years_text: 'Years', stats_solutions_count: '9', stats_solutions_text: 'Solutions' };
@@ -39,17 +40,27 @@ describe('ContactComponent', () => {
   });
 
   const fill = (overrides: any = {}) => component.contactForm.setValue({ subject: 'Web', email: 'a@b.cz', phone: '', message: 'Hello there!', gdpr: true, ...overrides });
+  /** Completes the background captcha check (`solve`) and submits - the widget is reset after every refused submission. */
+  const solve = () => ctx.turnstile.render.calls.mostRecent().args[1]('captcha-token');
+  const send = () => { solve(); component.onSubmit(); };
 
   /**
    * @description Stats and uploader texts come from the translations; button text follows the
-   *   loading state ('...' without texts); fields report invalid only after touch.
-   * @input Translations above; email 'x' touched.
-   * @output 3 stats; uploader texts mapped (missing → undefined); 'Send'; fieldInvalid true; '...' / {} without t.
+   *   loading state ('...' without texts); the subject is preselected to 'new_project' (an empty
+   *   one is invalid); fields report invalid only after touch.
+   * @input Translations above; subject default, then ''; email 'x' touched.
+   * @output 3 stats; uploader texts mapped (missing → undefined); 'Send'; subject 'new_project' (valid,
+   *   select shows it), '' invalid; fieldInvalid true; '...' / {} without t.
    */
   it('prepares the texts and validates fields', () => {
     expect(component.stats).toEqual([{ value: '50', label: 'Projects' }, { value: '5', label: 'Years' }, { value: '9', label: 'Solutions' }]);
     expect(component.attachmentUploaderTexts).toEqual(jasmine.objectContaining({ limitsHint: '(max. {max} souborů)', dropzoneLabel: 'Drop', errorMaxFiles: 'Max {max}', totalLabel: 'Total' }));
     expect(component.btnText).toBe('Send');
+    expect(component.contactForm.get('subject')!.value).toBe('new_project');
+    expect(component.contactForm.get('subject')!.valid).toBeTrue();
+    expect((fixture.nativeElement.querySelector('#subject') as HTMLSelectElement).value).toBe('new_project');
+    component.contactForm.get('subject')!.setValue('');
+    expect(component.contactForm.get('subject')!.valid).toBeFalse();
     expect(component.fieldInvalid('email')).toBeFalse();
     component.contactForm.get('email')!.setValue('x');
     component.contactForm.get('email')!.markAsTouched();
@@ -70,15 +81,16 @@ describe('ContactComponent', () => {
    *   order_description / lang 'en' / 2 attachments; isSubmitted true, isLoading false.
    */
   it('sends the inquiry with attachments', () => {
-    component.onSubmit();
+    send();
     expect(ctx.publicData.post).not.toHaveBeenCalled();
 
     ctx.localization.currentLanguage$.next('en');
     fill({ phone: '+420 777' });
     component.onFilesChanged([new File(['a'], 'a.pdf'), new File(['b'], 'b.png')]);
-    component.onSubmit();
+    send();
     const [endpoint, fd] = ctx.publicData.post.calls.mostRecent().args as [string, FormData];
     expect(endpoint).toBe('raw_request_commissions');
+    expect(fd.get('captcha_token')).toBe('captcha-token');
     expect([fd.get('thema'), fd.get('contact_email'), fd.get('contact_phone'), fd.get('order_description'), fd.get('lang')])
       .toEqual(['Web', 'a@b.cz', '+420 777', 'Hello there!', 'en']);
     expect((fd.getAll('attachments[]') as File[]).map(f => f.name)).toEqual(['a.pdf', 'b.png']);
@@ -97,8 +109,8 @@ describe('ContactComponent', () => {
     const pending = new Subject<any>();
     ctx.publicData.post.and.returnValue(pending);
     fill();
-    component.onSubmit();
-    component.onSubmit();
+    send();
+    send();
     expect(ctx.publicData.post).toHaveBeenCalledTimes(1);
     expect((ctx.publicData.post.calls.mostRecent().args[1] as FormData).has('contact_phone')).toBeFalse();
     expect(component.btnText).toBe('Sending…');
@@ -108,13 +120,13 @@ describe('ContactComponent', () => {
     const nativeAlert = spyOn(window, 'alert');
     const alertSpy = spyOn(TestBed.inject(AlertDialogService), 'open');
     ctx.publicData.post.and.returnValue(throwError(() => ({ error: { message: 'Spam' } })));
-    component.onSubmit();
+    send();
     expect(alertSpy).toHaveBeenCalledWith('Not sent', 'Failed', 'danger');
     ctx.publicData.post.and.returnValue(throwError(() => ({})));
-    component.onSubmit();
+    send();
     expect(alertSpy.calls.count()).toBe(2);
     ctx.publicData.post.and.returnValue(throwError(() => ({ status: 429 })));
-    component.onSubmit();
+    send();
     expect(alertSpy).toHaveBeenCalledWith('Not sent', 'Slow down', 'danger');
     expect(nativeAlert).not.toHaveBeenCalled();
     expect(component.isSubmitted()).toBeFalse();
@@ -152,10 +164,55 @@ describe('ContactComponent', () => {
     ctx.publicData.post.and.returnValue(throwError(() => refused));
     component.t = { ...component.t, errors: { ...component.t.errors, attachment_rejected: 'Bad file' } };
     fill();
-    component.onSubmit();
+    send();
     expect(alertSpy).toHaveBeenCalledWith('Not sent', 'Bad file', 'danger');
     component.t = { ...component.t, errors: { ...component.t.errors, attachment_rejected: undefined } };
+    send();
+    expect(alertSpy).toHaveBeenCalledWith('Not sent', 'Failed', 'danger');
+  });
+
+  /**
+   * @description Invisible captcha (PublicFormGuard): the widget is rendered invisibly
+   *   (interaction-only) and never blocks the button; a submit before the background check is done
+   *   waits for the token, then posts it with the empty honeypot field. A refused captcha (422
+   *   captcha_required) and the quota of the address (429 error_code RECIPIENT_LIMIT) have their
+   *   own texts (general ones without them); after every refusal the widget is reset.
+   * @input Valid form, submit before the token; token; 422; 429; texts removed: 429, 422.
+   * @output render(theme auto, interaction-only); button enabled, no post until the token, then
+   *   captcha_token + website ''; 'Robot?' + reset('widget-1'); 'Enough for this address'; 'Slow down'; 'Failed'.
+   */
+  it('waits for the invisible captcha and reports its refusals', async () => {
+    await fixture.whenStable();
+    expect(ctx.turnstile.render).toHaveBeenCalledTimes(1);
+    expect(ctx.turnstile.render.calls.mostRecent().args[3]).toEqual({ theme: 'auto', appearance: 'interaction-only' });
+
+    fill();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeFalse();
     component.onSubmit();
+    expect(ctx.publicData.post).not.toHaveBeenCalled();
+    expect(component.isLoading()).toBeTrue();
+    solve();
+    const fd = ctx.publicData.post.calls.mostRecent().args[1] as FormData;
+    expect([fd.get('captcha_token'), fd.get('website')]).toEqual(['captcha-token', '']);
+
+    component.isSubmitted.set(false);
+    const alertSpy = spyOn(TestBed.inject(AlertDialogService), 'open');
+    ctx.publicData.post.and.returnValue(throwError(() => ({ status: 422, error: { captcha_required: true } })));
+    send();
+    expect(alertSpy).toHaveBeenCalledWith('Not sent', 'Robot?', 'danger');
+    expect(ctx.turnstile.reset).toHaveBeenCalledWith('widget-1');
+
+    ctx.publicData.post.and.returnValue(throwError(() => ({ status: 429, error: { error_code: 'RECIPIENT_LIMIT' } })));
+    send();
+    expect(alertSpy).toHaveBeenCalledWith('Not sent', 'Enough for this address', 'danger');
+
+    // Without the own texts the general ones are shown.
+    component.t = { ...component.t, errors: { submit_error: 'Failed', submit_error_title: 'Not sent', too_many_requests: 'Slow down' } };
+    send();
+    expect(alertSpy).toHaveBeenCalledWith('Not sent', 'Slow down', 'danger');
+    ctx.publicData.post.and.returnValue(throwError(() => ({ status: 422, error: { captcha_required: true } })));
+    send();
     expect(alertSpy).toHaveBeenCalledWith('Not sent', 'Failed', 'danger');
   });
 });

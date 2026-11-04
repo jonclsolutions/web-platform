@@ -141,7 +141,7 @@ Route::prefix('public/legal')->group(function () {
 | internal `id` here - only by `token`.
 */
 Route::prefix('public')->middleware('web.active')->group(function () {
-    Route::get('sales-leads/{token}', [WebSalesLeadController::class, 'showByToken']);
+    Route::get('sales-leads/{token}', [WebSalesLeadController::class, 'showByToken'])->middleware('throttle:30,1,sales-lead-token');
 });
 
 /*
@@ -214,13 +214,15 @@ Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])
     ->middleware('throttle:10,1,password-reset');
 
-// Public web forms
+// Public web forms - per-IP limit (named limiter `public-form`), then the quota per recipient
+// e-mail and the Turnstile captcha (PublicFormGuard). The admin creates the same records through
+// the authenticated routes below (web/...), which have none of these checks.
 Route::post('raw_request_commissions', [WebRawRequestCommissionController::class, 'store'])
-    ->middleware(['web.active', 'throttle:10,1,raw-request-commissions']);
+    ->middleware(['web.active', 'throttle:public-form', 'public.form:raw_request,contact_email']);
 Route::post('sales_orders', [WebSalesOrderController::class, 'store'])
-    ->middleware(['web.active', 'throttle:10,1,sales-orders']);
+    ->middleware(['web.active', 'throttle:public-form', 'public.form:sales_order,client_email']);
 Route::post('job_applications',        [WebJobApplicationController::class, 'store'])
-    ->middleware(['web.active', 'throttle:10,1,job-applications']);
+    ->middleware(['web.active', 'throttle:public-form', 'public.form:job_application,email']);
 
 /*
 |--------------------------------------------------------------------------

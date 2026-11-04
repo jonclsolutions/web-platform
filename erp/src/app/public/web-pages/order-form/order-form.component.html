@@ -162,6 +162,8 @@
 </label>
 </div>
 
+<app-captcha [loadErrorText]="t.errors?.captcha_load" />
+
 @if (errorMessage) {
 <div class="form-error" role="alert">{{ errorMessage }}</div>
 }

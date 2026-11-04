@@ -8,21 +8,23 @@
  *   Same split layout and field styles as the contact form (contact.component.css).
  */
 
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { BasePublicComponent } from '../../base-public.component';
 import { MultiFileUploadComponent } from '../../../shared/components/multi-file-upload/multi-file-upload.component';
+import { CaptchaComponent } from '../../../shared/components/captcha/captcha.component';
 import { UploadRulesService } from '../../../shared/services/upload-rules.service';
 import { UploadRule, isAttachmentRejection } from '../../../shared/utils/upload-rules';
+import { publicFormErrorKey } from '../../../shared/utils/public-form-errors';
+import { switchMap } from 'rxjs';
 import * as Web from '../../../shared/imports/web-providers';
 
 /** State of the link check by public_token - decides what the component shows. */
 type LinkState = 'loading' | 'valid' | 'no-token' | 'invalid' | 'used';
 
-/** Safe subset of the lead fields returned by the public showByToken endpoint. */
+/** Safe subset of the lead fields returned by the public showByToken endpoint (no internal id). */
 interface LeadPrefill {
-  id: number;
   subject_name: string | null;
   contact_person: string | null;
   contact_email: string | null;
@@ -32,7 +34,7 @@ interface LeadPrefill {
 @Component({
   selector: 'app-order-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterModule, MultiFileUploadComponent],
+  imports: [ReactiveFormsModule, RouterModule, MultiFileUploadComponent, CaptchaComponent],
   templateUrl: './order-form.component.html',
   styleUrls: ['../shared-styles/form-fields.css', '../contact/contact.component.css', './order-form.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -60,6 +62,8 @@ export class OrderFormComponent extends BasePublicComponent {
   isLoading = false;
   selectedFiles: File[] = [];
   errorMessage: string | null = null;
+  /** Invisible bot protection (Turnstile + honeypot) - supplies the token on submit. */
+  @ViewChild(CaptchaComponent) captcha!: CaptchaComponent;
 
   // Hook called after the base initialization in the base class
   protected override onInit(): void {
@@ -155,8 +159,12 @@ export class OrderFormComponent extends BasePublicComponent {
     this.selectedFiles = files;
   }
 
+  /**
+   * @description Sends the order: waits for the token of the background captcha check (usually
+   * ready already), then posts the multipart form with the token and the honeypot value.
+   */
   onSubmit(): void {
-    if (this.orderForm.invalid) return;
+    if (this.orderForm.invalid || this.isLoading) return;
 
     this.isLoading = true;
     this.errorMessage = null;
@@ -180,7 +188,11 @@ export class OrderFormComponent extends BasePublicComponent {
       formData.append('attachments[]', file, file.name);
     });
 
-    this.publicDataService.post("sales_orders", formData).pipe(
+    this.captcha.nextToken().pipe(
+      switchMap(token => {
+        this.captcha.appendTo(formData, token);
+        return this.publicDataService.post("sales_orders", formData);
+      }),
       Web.finalize(() => {
         this.isLoading = false;
         this.cdr.markForCheck();
@@ -192,6 +204,9 @@ export class OrderFormComponent extends BasePublicComponent {
         this.cdr.markForCheck();
       },
       error: (err: any) => {
+        // The token is single-use - the server consumed it, the next attempt needs a new one.
+        this.captcha.reset();
+        const kind = publicFormErrorKey(err);
         // 410 can come here too when the token was used concurrently (two open tabs) -
         // the same message as on load is shown, so the user knows what happened.
         if (err?.status === 410) {
@@ -199,7 +214,9 @@ export class OrderFormComponent extends BasePublicComponent {
           this.errorMessage = null;
         } else {
           // Translated by status, no English fallback (findings #44 / #53).
-          this.errorMessage = (err?.status === 429 ? this.t?.errors?.too_many_requests
+          this.errorMessage = (kind === 'captcha' ? (this.t?.errors?.captcha_failed ?? this.t?.errors?.submit_error)
+            : kind === 'email_limit' ? (this.t?.errors?.email_limit ?? this.t?.errors?.too_many_requests)
+            : err?.status === 429 ? this.t?.errors?.too_many_requests
             : isAttachmentRejection(err) ? (this.t?.errors?.attachment_rejected ?? this.t?.errors?.submit_error)
             : this.t?.errors?.submit_error) ?? null;
         }

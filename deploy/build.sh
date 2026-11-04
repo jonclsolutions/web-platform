@@ -277,6 +277,10 @@ check_production_env() {
     # --- shop ---
     [[ "$(prod_env SHOP_PAYMENT_SIMULATION)" =~ ^(true|1|on|yes)$ ]] && err "SHOP_PAYMENT_SIMULATION is on - anybody could mark orders as paid"
 
+    # --- reverse proxy (per-IP rate limits) ---
+    [[ "$(prod_env TRUSTED_PROXIES)" == '*' ]] \
+        && wrn "TRUSTED_PROXIES is '*' - correct only when the server accepts connections from the proxy alone, otherwise a client can fake its IP and escape every rate limit"
+
     # --- server configuration shipped with the package ---
     grep -q 'deny-internal-files' "$SERVER_CONF_DIR/.htaccess" 2>/dev/null \
         || err "deploy/server/.htaccess does not block /laravel - the shipped .env would be downloadable"

@@ -10,10 +10,11 @@
  * Google reCAPTCHA because of GDPR / EU processing (no tracking cookie, EU data residency).
  * A token from the frontend must NEVER be trusted without this server-side check.
  * @note Every failure is recorded as a security event here (`$context` =
- * CoreSecurityEvent::contextFromRequest()), two types with a different meaning:
- * - `login_captcha_failed` (warning) - empty token or rejected by Cloudflare: usually a bot /
- *   script calling the login without the widget, or an old token.
- * - `login_captcha_service_error` (warning) - an exception talking to the Cloudflare API
+ * CoreSecurityEvent::contextFromRequest()), two types with a different meaning - the prefix is
+ * the place of the captcha (`login` = admin login, `form` = public web forms):
+ * - `{prefix}_captcha_failed` (warning) - empty token or rejected by Cloudflare: usually a bot /
+ *   script calling the endpoint without the widget, or an old token.
+ * - `{prefix}_captcha_service_error` (warning) - an exception talking to the Cloudflare API
  *   (outage, network): a provider / connectivity problem to check, not an attack.
  */
 
@@ -33,13 +34,14 @@ class CaptchaVerificationService
      * @param array $context Request context for `core_security_events` on a failure - usually
      * `CoreSecurityEvent::contextFromRequest()`. An empty array (default) records nothing - for
      * use outside the login, where a captcha failure may not be security relevant.
+     * @param string $eventPrefix Prefix of the recorded event types ('login' | 'form').
      * @return bool True when the token is valid.
      */
-    public function verify(string $token, ?string $remoteIp = null, array $context = []): bool
+    public function verify(string $token, ?string $remoteIp = null, array $context = [], string $eventPrefix = 'login'): bool
     {
         if (empty($token)) {
             if (!empty($context)) {
-                CoreSecurityEvent::record('login_captcha_failed', 'warning', $remoteIp, array_merge($context, [
+                CoreSecurityEvent::record($eventPrefix . '_captcha_failed', 'warning', $remoteIp, array_merge($context, [
                     'reason' => 'empty_token',
                 ]));
             }
@@ -57,7 +59,7 @@ class CaptchaVerificationService
 
             if (!$success && !empty($context)) {
                 $errorCodes = $response->json('error-codes') ?? [];
-                CoreSecurityEvent::record('login_captcha_failed', 'warning', $remoteIp, array_merge($context, [
+                CoreSecurityEvent::record($eventPrefix . '_captcha_failed', 'warning', $remoteIp, array_merge($context, [
                     'reason'       => 'rejected_by_provider',
                     'error_codes'  => is_array($errorCodes) ? implode(',', $errorCodes) : (string) $errorCodes,
                 ]));
@@ -72,7 +74,7 @@ class CaptchaVerificationService
             if (!empty($context)) {
                 // Separate event_type (not 'login_captcha_failed'): many of THESE mean a Cloudflare / network
                 // outage, not an attack.
-                CoreSecurityEvent::record('login_captcha_service_error', 'warning', $remoteIp, array_merge($context, [
+                CoreSecurityEvent::record($eventPrefix . '_captcha_service_error', 'warning', $remoteIp, array_merge($context, [
                     'reason' => 'provider_request_exception',
                 ]));
             }

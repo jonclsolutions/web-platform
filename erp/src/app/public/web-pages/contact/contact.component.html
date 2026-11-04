@@ -168,6 +168,8 @@ class="field-input textarea"
 </label>
 </div>
 
+<app-captcha [loadErrorText]="t.errors?.captcha_load" />
+
 <button
 type="submit"
 class="submit-btn"

@@ -34,13 +34,14 @@ class RawRequestCommissionTest extends TestCase
     private const ALL = ['web-user-requests-view', 'web-user-requests-create', 'web-user-requests-update', 'web-user-requests-delete'];
 
     /**
-     * @description Fake disks for attachments.
+     * @description Fake disks for attachments; the captcha of the public form is accepted.
      * @return void
      */
     protected function setUp(): void
     {
         parent::setUp();
         Storage::fake('private');
+        $this->fakeCaptcha();
     }
 
     /**
@@ -53,7 +54,7 @@ class RawRequestCommissionTest extends TestCase
         return array_merge([
             'thema' => 'New website', 'contact_email' => 'client@example.com', 'contact_phone' => '+420 777 123 456',
             'order_description' => 'Please call me.', 'lang' => 'en',
-        ], $overrides);
+        ] + $this->captcha(), $overrides);
     }
 
     /**
@@ -90,10 +91,12 @@ class RawRequestCommissionTest extends TestCase
      * @input Invalid thema / e-mail / phone; an .exe; a file reported as application/x-msdownload;
      *        an SVG with a script; an HTML page named .pdf; 11 files.
      * @output 422 with the errors; nothing stored.
+     * @note The per-IP limit is switched off here (7 requests in a row); see test_public_form_is_rate_limited.
      */
     public function test_public_form_validation_and_attachment_security(): void
     {
-        $this->postJson('/api/raw_request_commissions', ['thema' => 'x', 'contact_email' => 'bad', 'contact_phone' => 'abc'])
+        $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
+        $this->postJson('/api/raw_request_commissions', ['thema' => 'x', 'contact_email' => 'bad', 'contact_phone' => 'abc'] + $this->captcha())
             ->assertStatus(422)
             ->assertJsonPath('errors.thema.0', 'The subject must be between 3 and 255 characters.')
             ->assertJsonValidationErrors(['contact_email', 'contact_phone', 'order_description']);
@@ -141,18 +144,18 @@ class RawRequestCommissionTest extends TestCase
     }
 
     /**
-     * @description The public form is rate limited per IP (10 / minute).
-     * @input 11 valid POSTs from one IP.
-     * @output The 11th answers 429.
+     * @description The public form is rate limited per IP (5 / minute, named limiter public-form).
+     * @input 6 valid POSTs from one IP, each with another e-mail address.
+     * @output The 6th answers 429.
      */
     public function test_public_form_is_rate_limited(): void
     {
         Mail::fake();
-        foreach (range(1, 10) as $i) {
-            $this->postJson('/api/raw_request_commissions', $this->payload())->assertCreated();
+        foreach (range(1, 5) as $i) {
+            $this->postJson('/api/raw_request_commissions', $this->payload(['contact_email' => "client{$i}@example.com"]))->assertCreated();
         }
 
-        $this->postJson('/api/raw_request_commissions', $this->payload())->assertStatus(429);
+        $this->postJson('/api/raw_request_commissions', $this->payload(['contact_email' => 'client6@example.com']))->assertStatus(429);
     }
 
     /**

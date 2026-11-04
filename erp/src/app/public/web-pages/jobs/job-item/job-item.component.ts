@@ -9,7 +9,7 @@
  * - BasePublicComponent (translations, site settings), PublicDataService (submit), LoadingService.
  */
 
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -18,6 +18,9 @@ import { BasePublicComponent } from '../../../base-public.component';
 import { LoadingService } from '../../../../core/services/loading.service';
 import { UploadRulesService } from '../../../../shared/services/upload-rules.service';
 import { UploadRule, extensionsLabel, isAttachmentRejection, isExtensionAllowed } from '../../../../shared/utils/upload-rules';
+import { publicFormErrorKey } from '../../../../shared/utils/public-form-errors';
+import { CaptchaComponent } from '../../../../shared/components/captcha/captcha.component';
+import { switchMap } from 'rxjs';
 
 /**
  * @description Allowed characters of the first / last name - letters (incl. diacritics through
@@ -45,7 +48,7 @@ const DEFAULT_MAX_FILE_SIZE_MB = 20;
 @Component({
   selector: 'app-job-item',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, CaptchaComponent],
   templateUrl: './job-item.component.html',
   styleUrls: ['../../shared-styles/theme.css', '../../shared-styles/form-fields.css', '../../../../shared/styles/base.css', '../../shared-styles/animations.css', './job-item.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -69,6 +72,8 @@ export class JobItemComponent extends BasePublicComponent {
   cvRules: UploadRule | null = null;
   /** Translated error of a failed submit (null = none). */
   errorMessage: string | null = null;
+  /** Invisible bot protection (Turnstile + honeypot) - supplies the token on submit. */
+  @ViewChild(CaptchaComponent) captcha!: CaptchaComponent;
 
   public loadingService = inject(LoadingService);
   private route = inject(ActivatedRoute);
@@ -155,8 +160,15 @@ export class JobItemComponent extends BasePublicComponent {
     formData.append('cv_file', this.selectedFile, this.selectedFile.name);
 
     this.loadingService.show();
-    this.publicDataService.post<any>(this.apiEndpoint, formData)
-      .pipe(takeUntil(this.destroy$))
+    // The token of the background captcha check is usually ready already; otherwise it is awaited.
+    this.captcha.nextToken()
+      .pipe(
+        switchMap(token => {
+          this.captcha.appendTo(formData, token);
+          return this.publicDataService.post<any>(this.apiEndpoint, formData);
+        }),
+        takeUntil(this.destroy$)
+      )
       .subscribe({
         next: () => {
           this.isSubmitted = true;
@@ -164,6 +176,9 @@ export class JobItemComponent extends BasePublicComponent {
           this.cdr.markForCheck();
         },
         error: (err) => {
+          // The token is single-use - the server consumed it, the next attempt needs a new one.
+          this.captcha.reset();
+          const kind = publicFormErrorKey(err);
           if (isAttachmentRejection(err)) {
             // The server refused the CV (content of another type than the name says) - show it at
             // the file field and let the user choose another file.
@@ -171,7 +186,10 @@ export class JobItemComponent extends BasePublicComponent {
             this.selectedFile = null;
             this.errorMessage = null;
           } else {
-            this.errorMessage = (err?.status === 429 ? this.t?.form_too_many_requests : this.t?.form_error_generic) ?? null;
+            this.errorMessage = (kind === 'captcha' ? (this.t?.form_captcha_failed ?? this.t?.form_error_generic)
+              : kind === 'email_limit' ? (this.t?.form_email_limit ?? this.t?.form_too_many_requests)
+              : err?.status === 429 ? this.t?.form_too_many_requests
+              : this.t?.form_error_generic) ?? null;
           }
           this.loadingService.hide();
           this.cdr.markForCheck();

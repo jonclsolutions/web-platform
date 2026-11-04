@@ -73,7 +73,7 @@ class SupportAndProvidersTest extends TestCase
 
         $login = RateLimiter::limiter('login')($request);
         $this->assertSame(['login-ip:10.0.0.1', 'login-email:eva@x.cz'], array_map(fn (Limit $l) => $l->key, $login));
-        $this->assertSame([5, 5], array_map(fn (Limit $l) => $l->maxAttempts, $login));
+        $this->assertSame([20, 5], array_map(fn (Limit $l) => $l->maxAttempts, $login));
         $this->assertSame('2fa-resend-ip:10.0.0.1', RateLimiter::limiter('login-2fa-resend')($request)[0]->key);
 
         $this->assertNull(RateLimiter::limiter('api'));

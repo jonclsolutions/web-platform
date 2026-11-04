@@ -47,6 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'web.active'   => \App\Http\Middleware\CheckWebActive::class,
             'permission'   => \App\Http\Middleware\CheckPermission::class,
             'project.session' => \App\Http\Middleware\CheckProjectSession::class,
+            'public.form'  => \App\Http\Middleware\PublicFormGuard::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

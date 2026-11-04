@@ -17,7 +17,8 @@ import { AdminLocalizationService } from '../../../core/services/admin-localizat
 const SECTION = 'security-events';
 
 export const EVENT_TYPE_VALUES: string[] = [
-  'captcha_failed', 'captcha_provider_error', 'throttle_exceeded', 'login_failed',
+  'login_captcha_failed', 'login_captcha_service_error', 'form_captcha_failed',
+  'form_captcha_service_error', 'form_honeypot', 'throttle_exceeded', 'login_failed',
   'login_brute_force_suspected', 'login_2fa_invalid', 'login_2fa_exhausted',
   'login_2fa_resend_exhausted', 'refresh_token_invalid', 'scan_probe', 'csp_violation',
   'refresh_token_reuse',
@@ -29,8 +30,11 @@ export const SEVERITY_VALUES: string[] = ['info', 'warning', 'critical'];
 export const STATUS_VALUES: string[] = ['new', 'reviewed', 'false_positive', 'confirmed_attack'];
 
 const EVENT_TYPE_LABEL_KEYS: Record<string, string> = {
-  captcha_failed: 'event_captcha_failed',
-  captcha_provider_error: 'event_captcha_provider_error',
+  login_captcha_failed: 'event_login_captcha_failed',
+  login_captcha_service_error: 'event_login_captcha_service_error',
+  form_captcha_failed: 'event_form_captcha_failed',
+  form_captcha_service_error: 'event_form_captcha_service_error',
+  form_honeypot: 'event_form_honeypot',
   throttle_exceeded: 'event_throttle_exceeded',
   login_failed: 'event_login_failed',
   login_brute_force_suspected: 'event_login_brute_force_suspected',

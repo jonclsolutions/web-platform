@@ -1,19 +1,22 @@
 // public contact
-import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ViewChild, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BasePublicComponent } from '../../base-public.component';
 import { MultiFileUploadComponent } from '../../../shared/components/multi-file-upload/multi-file-upload.component';
+import { CaptchaComponent } from '../../../shared/components/captcha/captcha.component';
 import { UploadRulesService } from '../../../shared/services/upload-rules.service';
 import { UploadRule, isAttachmentRejection } from '../../../shared/utils/upload-rules';
+import { publicFormErrorKey } from '../../../shared/utils/public-form-errors';
+import { switchMap } from 'rxjs';
 import * as Web from '../../../shared/imports/web-providers';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 
 @Component({
 selector: 'app-contact',
 standalone: true,
-imports: [CommonModule, RouterModule, ReactiveFormsModule, MultiFileUploadComponent],
+imports: [CommonModule, RouterModule, ReactiveFormsModule, MultiFileUploadComponent, CaptchaComponent],
 templateUrl: './contact.component.html',
 styleUrls: ['../shared-styles/form-fields.css', './contact.component.css'],
 changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,6 +34,9 @@ isSubmitted = signal(false);
 isLoading   = signal(false);
 selectedFiles: File[] = [];
 stats: { value: string; label: string }[] = [];
+
+/** Invisible bot protection (Turnstile + honeypot) - supplies the token on submit. */
+@ViewChild(CaptchaComponent) captcha!: CaptchaComponent;
 
 /** Current language of the public page when the form was loaded. */
 currentLang = 'cz';
@@ -65,9 +71,13 @@ this.stats = [
       ];
     }
   }
+  /**
+   * @description Builds the form. The subject is preselected to 'new_project' (the most common
+   * reason of a contact) - the visitor can change it, an empty choice stays invalid.
+   */
   private initForm(): void {
 this.contactForm = this.fb.group({
-subject: ['', Validators.required],
+subject: ['new_project', Validators.required],
 email: ['', [Validators.required, Validators.email]],
 phone: ['', [Validators.pattern('^\\+?[0-9 ]*$'), Validators.maxLength(20)]],
 message: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(10000)]],
@@ -107,6 +117,10 @@ onFilesChanged(files: File[]): void {
 this.selectedFiles = files;
   }
 
+/**
+   * @description Sends the inquiry: waits for the token of the background captcha check (usually
+   * ready already), then posts the multipart form with the token and the honeypot value.
+   */
 onSubmit(): void {
 if (this.contactForm.invalid || this.isLoading()) return;
 
@@ -128,8 +142,12 @@ this.selectedFiles.forEach(file => {
 formData.append('attachments[]', file, file.name);
     });
 
-this.publicDataService.post('raw_request_commissions', formData)
+this.captcha.nextToken()
       .pipe(
+switchMap(token => {
+this.captcha.appendTo(formData, token);
+return this.publicDataService.post('raw_request_commissions', formData);
+        }),
 Web.finalize(() => {
 this.isLoading.set(false);
 this.cdr.markForCheck();
@@ -142,8 +160,13 @@ this.isSubmitted.set(true);
 this.cdr.markForCheck();
         },
 error: (err) => {
+// The token is single-use - the server consumed it, the next attempt needs a new one.
+this.captcha.reset();
 // Translated text by status, never the (English) API message (findings #45 / #53).
-const msg = err?.status === 429 ? this.t?.errors?.too_many_requests
+const kind = publicFormErrorKey(err);
+const msg = kind === 'captcha' ? (this.t?.errors?.captcha_failed ?? this.t?.errors?.submit_error)
+  : kind === 'email_limit' ? (this.t?.errors?.email_limit ?? this.t?.errors?.too_many_requests)
+  : err?.status === 429 ? this.t?.errors?.too_many_requests
   : isAttachmentRejection(err) ? (this.t?.errors?.attachment_rejected ?? this.t?.errors?.submit_error)
   : this.t?.errors?.submit_error;
 this.alertDialogService.open(this.t?.errors?.submit_error_title, msg, 'danger');

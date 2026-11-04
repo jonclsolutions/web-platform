@@ -37,7 +37,8 @@ describe('TurnstileService', () => {
 
   /**
    * @description Script injected once for concurrent renders; after load render() gets the site
-   *   key, dark theme and callbacks; expired / error callbacks call onExpired (optional).
+   *   key, dark theme, visible widget and callbacks; expired / error callbacks call onExpired
+   *   (optional); the theme / appearance options are passed on.
    * @input Two render() calls before the script loads; script onload; callbacks invoked.
    * @output 1 async/defer script with the Cloudflare URL; both resolve 'widget-1'; callbacks wired.
    */
@@ -58,6 +59,7 @@ describe('TurnstileService', () => {
     const options = api.render.calls.first().args[1];
     expect(options.sitekey).toBe(environment.turnstileSiteKey);
     expect(options.theme).toBe('dark');
+    expect(options.appearance).toBe('always');
     options.callback('tok');
     options['expired-callback']();
     options['error-callback']();
@@ -65,8 +67,10 @@ describe('TurnstileService', () => {
     expect(onExpired).toHaveBeenCalledTimes(2);
     expect(() => api.render.calls.mostRecent().args[1]['expired-callback']()).not.toThrow();
 
-    await service.render(document.body, onSuccess);
+    await service.render(document.body, onSuccess, undefined, { theme: 'auto', appearance: 'interaction-only' });
     expect(scripts.length).toBe(1);
+    expect(api.render.calls.mostRecent().args[1].theme).toBe('auto');
+    expect(api.render.calls.mostRecent().args[1].appearance).toBe('interaction-only');
   });
 
   /**

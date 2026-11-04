@@ -40,6 +40,7 @@ class SalesOrderTest extends TestCase
     {
         parent::setUp();
         Storage::fake('private');
+        $this->fakeCaptcha();
     }
 
     /**
@@ -52,7 +53,7 @@ class SalesOrderTest extends TestCase
         return array_merge([
             'client_name' => 'Acme s.r.o.', 'client_email' => 'order@acme.cz', 'order_description' => 'An e-shop',
             'dataProcessingAgreement' => '1', 'tosAgreement' => '1',
-        ], $overrides);
+        ] + $this->captcha(), $overrides);
     }
 
     /**
@@ -126,7 +127,7 @@ class SalesOrderTest extends TestCase
     {
         $this->post('/api/sales_orders', [
             'client_name' => 'A', 'client_email' => 'a@b.cz', 'order_description' => 'x', 'attachments' => [$this->upload('x.exe', 1, 'application/octet-stream')],
-        ], ['Accept' => 'application/json'])->assertStatus(422)
+        ] + $this->captcha(), ['Accept' => 'application/json'])->assertStatus(422)
             ->assertJsonValidationErrors(['dataProcessingAgreement', 'tosAgreement', 'attachments.0']);
 
         $this->post('/api/sales_orders', $this->payload(['attachments' => [$this->uploadWithContent('logo.svg', self::SVG_XSS)]]), ['Accept' => 'application/json'])

@@ -23,7 +23,7 @@ describe('JobItemComponent', () => {
   let ctx: PublicPageContext;
   let fixture: ComponentFixture<JobItemComponent>;
   let component: JobItemComponent;
-  const jobs = { dev: { title: 'Developer', content: '<p>Code</p>' }, form_error_generic: 'Try again', form_too_many_requests: 'Slow down', form_cv_type_error: 'Typ nelze. Povolené: {types}' };
+  const jobs = { dev: { title: 'Developer', content: '<p>Code</p>' }, form_error_generic: 'Try again', form_too_many_requests: 'Slow down', form_captcha_failed: 'Robot?', form_email_limit: 'Enough for this address', form_cv_type_error: 'Typ nelze. Povolené: {types}' };
 
   /** Creates the page for the job id in the route. */
   function create(id: string | null = 'dev'): void {
@@ -36,6 +36,10 @@ describe('JobItemComponent', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
   }
+
+  /** Completes the background captcha check (`solve`) and submits - the widget is reset after every refused submission. */
+  const solve = () => ctx.turnstile.render.calls.mostRecent().args[1]('captcha-token');
+  const send = () => { solve(); component.onSubmit(); };
 
   /** Fills a valid application. */
   const fill = () => component.applicationForm.setValue({
@@ -147,7 +151,7 @@ describe('JobItemComponent', () => {
     fill();
     component.onFileSelected({ target: { files: [cv()] } });
     ctx.publicData.post.and.returnValue(throwError(() => ({ status: 422, error: { errors: { cv_file: ['The file type is not allowed.'] } } })));
-    component.onSubmit();
+    send();
     expect(component.fileTypeError).toBeTrue();
     expect(component.selectedFile).toBeNull();
     expect(component.errorMessage).toBeNull();
@@ -163,31 +167,32 @@ describe('JobItemComponent', () => {
    */
   it('submits the application', () => {
     create();
-    component.onSubmit();
+    send();
     expect(ctx.publicData.post).not.toHaveBeenCalled();
     expect(component.applicationForm.touched).toBeTrue();
     fill();
-    component.onSubmit();
+    send();
     expect(ctx.publicData.post).not.toHaveBeenCalled();
 
     component.onFileSelected({ target: { files: [cv()] } });
-    component.onSubmit();
+    send();
     const [endpoint, fd] = ctx.publicData.post.calls.mostRecent().args as [string, FormData];
     expect(endpoint).toBe('job_applications');
     expect(fd.get('first_name')).toBe('Žofie');
     expect(fd.get('dataProcessingAgreement')).toBe('1');
     expect(fd.get('position_name')).toBe('Developer');
     expect((fd.get('cv_file') as File).name).toBe('cv.pdf');
+    expect(fd.get('captcha_token')).toBe('captcha-token');
     expect(component.isSubmitted).toBeTrue();
 
     ctx.publicData.post.and.returnValue(throwError(() => ({ error: { message: 'Bad CV' } })));
-    component.onSubmit();
+    send();
     expect(component.errorMessage).toBe('Try again');
     ctx.publicData.post.and.returnValue(throwError(() => ({})));
-    component.onSubmit();
+    send();
     expect(component.errorMessage).toBe('Try again');
     ctx.publicData.post.and.returnValue(throwError(() => ({ status: 429 })));
-    component.onSubmit();
+    send();
     expect(component.errorMessage).toBe('Slow down');
   });
 
@@ -209,5 +214,45 @@ describe('JobItemComponent', () => {
     fixture.detectChanges();
     expect(el.querySelector('a[href^="tel:"]')?.getAttribute('href')).toBe('tel:+4201');
     expect(el.querySelectorAll('.job-contact-sep').length).toBe(1);
+  });
+
+  /**
+   * @description Invisible captcha (PublicFormGuard): a submit before the background check is
+   *   done waits for the token, then posts it with the empty honeypot field. A refused captcha
+   *   (422 captcha_required) and the quota of the address (429 error_code RECIPIENT_LIMIT) have
+   *   their own texts (general ones without them); after every refusal the widget is reset.
+   * @input Valid application + CV, submit before the token; token; 422; 429; texts removed: 429, 422.
+   * @output No post until the token, then captcha_token + website ''; 'Robot?' + reset('widget-1');
+   *   'Enough for this address'; 'Slow down'; 'Try again'.
+   */
+  it('waits for the invisible captcha and reports its refusals', async () => {
+    create();
+    await fixture.whenStable();
+    fill();
+    component.onFileSelected({ target: { files: [cv()] } });
+    component.onSubmit();
+    expect(ctx.publicData.post).not.toHaveBeenCalled();
+    solve();
+    const fd = ctx.publicData.post.calls.mostRecent().args[1] as FormData;
+    expect([fd.get('captcha_token'), fd.get('website')]).toEqual(['captcha-token', '']);
+
+    component.isSubmitted = false;
+    fixture.detectChanges();
+    ctx.publicData.post.and.returnValue(throwError(() => ({ status: 422, error: { captcha_required: true } })));
+    send();
+    expect(component.errorMessage).toBe('Robot?');
+    expect(ctx.turnstile.reset).toHaveBeenCalledWith('widget-1');
+
+    ctx.publicData.post.and.returnValue(throwError(() => ({ status: 429, error: { error_code: 'RECIPIENT_LIMIT' } })));
+    send();
+    expect(component.errorMessage).toBe('Enough for this address');
+
+    // Without the own texts the general ones are shown.
+    component.t = { ...component.t, form_captcha_failed: undefined, form_email_limit: undefined };
+    send();
+    expect(component.errorMessage).toBe('Slow down');
+    ctx.publicData.post.and.returnValue(throwError(() => ({ status: 422, error: { captcha_required: true } })));
+    send();
+    expect(component.errorMessage).toBe('Try again');
   });
 });

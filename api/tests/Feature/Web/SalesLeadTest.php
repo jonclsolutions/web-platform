@@ -186,20 +186,25 @@ class SalesLeadTest extends TestCase
      * @description The public lookup by token prefills the order form with a few contact
      *   fields only; unknown and already used tokens are refused and recorded.
      * @input Lead with token T; lead with a used token U; GET T, U, 'nope'.
-     * @output 200 {id, subject_name, contact_person, contact_email, contact_phone}; 410; 404;
-     *   two sales_lead_token_invalid events.
+     * @output 200 {subject_name, contact_person, contact_email, contact_phone} - no internal id;
+     *   410; 404; two sales_lead_token_invalid events; the 31st request of a minute answers 429.
      */
     public function test_public_show_by_token(): void
     {
-        $lead = $this->lead(['public_token' => 'token-t']);
+        $this->lead(['public_token' => 'token-t']);
         $this->lead(['public_token' => 'token-u', 'public_token_used_at' => now()]);
 
         $this->getJson('/api/public/sales-leads/token-t')->assertOk()->assertExactJson(['data' => [
-            'id' => $lead->id, 'subject_name' => 'Acme s.r.o.', 'contact_person' => 'Jan Acme', 'contact_email' => 'jan@acme.cz', 'contact_phone' => '777123456',
+            'subject_name' => 'Acme s.r.o.', 'contact_person' => 'Jan Acme', 'contact_email' => 'jan@acme.cz', 'contact_phone' => '777123456',
         ]]);
         $this->getJson('/api/public/sales-leads/token-u')->assertStatus(410);
         $this->getJson('/api/public/sales-leads/nope')->assertStatus(404);
         $this->assertSame(2, (int) CoreSecurityEvent::where('event_type', 'sales_lead_token_invalid')->sum('occurrences'));
+
+        foreach (range(4, 30) as $i) {
+            $this->getJson('/api/public/sales-leads/token-t')->assertOk();
+        }
+        $this->getJson('/api/public/sales-leads/token-t')->assertStatus(429);
     }
 
     /**

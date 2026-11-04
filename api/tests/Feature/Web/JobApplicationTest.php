@@ -38,6 +38,7 @@ class JobApplicationTest extends TestCase
     {
         parent::setUp();
         Storage::fake('private');
+        $this->fakeCaptcha();
     }
 
     /**
@@ -50,7 +51,7 @@ class JobApplicationTest extends TestCase
         return array_merge([
             'first_name' => 'Eva', 'last_name' => 'Kralova', 'email' => 'eva@example.com', 'position_name' => 'Developer',
             'dataProcessingAgreement' => '1', 'cv_file' => $this->upload('cv.pdf'),
-        ], $overrides);
+        ] + $this->captcha(), $overrides);
     }
 
     /**
@@ -72,20 +73,21 @@ class JobApplicationTest extends TestCase
     /**
      * @description Validation (CV required with a safe type, consent required) and the
      *   per-IP rate limit of the public form.
-     * @input POST without CV/consent; POST with cv.exe; 10 valid POSTs then one more.
-     * @output 422 "Please upload your CV." + consent; 422 CV type; 11th answers 429.
+     * @input POST without CV/consent; POST with cv.exe; 3 valid POSTs (other e-mails) then one more.
+     * @output 422 "Please upload your CV." + consent; 422 CV type; the 6th request of the minute
+     *   (the rejected ones count too) answers 429.
      */
     public function test_public_application_validation_and_rate_limit(): void
     {
-        $this->postJson('/api/job_applications', ['first_name' => 'Eva'])->assertStatus(422)
+        $this->postJson('/api/job_applications', ['first_name' => 'Eva'] + $this->captcha())->assertStatus(422)
             ->assertJsonPath('errors.cv_file.0', 'Please upload your CV.')->assertJsonValidationErrors(['dataProcessingAgreement', 'email']);
         $this->post('/api/job_applications', $this->payload(['cv_file' => $this->upload('cv.exe', 1, 'application/octet-stream')]), ['Accept' => 'application/json'])
             ->assertStatus(422)->assertJsonPath('errors.cv_file.0', 'Allowed formats for the CV are PDF, Word, images, or archives.');
 
-        foreach (range(1, 8) as $i) {
-            $this->post('/api/job_applications', $this->payload(), ['Accept' => 'application/json'])->assertCreated();
+        foreach (range(1, 3) as $i) {
+            $this->post('/api/job_applications', $this->payload(['email' => "eva{$i}@example.com"]), ['Accept' => 'application/json'])->assertCreated();
         }
-        $this->post('/api/job_applications', $this->payload(), ['Accept' => 'application/json'])->assertStatus(429);
+        $this->post('/api/job_applications', $this->payload(['email' => 'eva4@example.com']), ['Accept' => 'application/json'])->assertStatus(429);
     }
 
     /**

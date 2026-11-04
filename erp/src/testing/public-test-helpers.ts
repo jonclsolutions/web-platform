@@ -6,8 +6,9 @@
  * @created 2026
  * @description Shared stubs of the public web / e-shop specs: LocalizationService (translations,
  *   language, language list), PublicDataService (settings stream, requests, status endpoints)
- *   plus router and HttpClient testing providers. Every request returns an empty successful
- *   response unless a test overrides the spy.
+ *   plus router and HttpClient testing providers, and a TurnstileService stub (the captcha of the
+ *   public forms never loads the Cloudflare script in a test). Every request returns an empty
+ *   successful response unless a test overrides the spy.
  * @dependencies
  * - jasmine (spies), rxjs, @angular/router (provideRouter), @angular/common/http testing.
  */
@@ -21,6 +22,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { LocalizationService, LangMeta } from '../app/shared/services/localization.service';
 import { PublicDataService } from '../app/shared/services/public-data.service';
 import { provideUploadRulesStub } from './upload-rules-stub';
+import { TurnstileService } from '../app/core/services/turnstile.service';
 
 /** LocalizationService stub. */
 export interface LocalizationStub {
@@ -46,11 +48,19 @@ export interface PublicDataStub {
   setCachedSettings: jasmine.Spy;
 }
 
+/** TurnstileService stub - render() resolves the widget id 'widget-1' without any script. */
+export interface TurnstileStub {
+  render: jasmine.Spy;
+  reset: jasmine.Spy;
+  remove: jasmine.Spy;
+}
+
 /** Everything a public page spec needs. */
 export interface PublicPageContext {
   providers: (Provider | EnvironmentProviders)[];
   localization: LocalizationStub;
   publicData: PublicDataStub;
+  turnstile: TurnstileStub;
   /** Sets translations (as the API would deliver them for the module). */
   setTranslations(translations: any): void;
 }
@@ -97,9 +107,16 @@ export function createPublicPageContext(options: { translations?: any; settings?
     setCachedSettings: jasmine.createSpy('setCachedSettings')
   };
 
+  const turnstile: TurnstileStub = {
+    render: jasmine.createSpy('render').and.resolveTo('widget-1'),
+    reset: jasmine.createSpy('reset'),
+    remove: jasmine.createSpy('remove')
+  };
+
   return {
     localization,
     publicData,
+    turnstile,
     setTranslations: (t: any) => translations$.next(t),
     providers: [
       provideRouter(options.routes ?? []),
@@ -107,6 +124,7 @@ export function createPublicPageContext(options: { translations?: any; settings?
       provideHttpClientTesting(),
       { provide: LocalizationService, useValue: localization },
       { provide: PublicDataService, useValue: publicData },
+      { provide: TurnstileService, useValue: turnstile },
       provideUploadRulesStub()
     ]
   };

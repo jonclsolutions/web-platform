@@ -2074,8 +2074,11 @@
     "btn_triage": "Triage",
     "btn_delete": "Delete",
 
-    "event_captcha_failed": "CAPTCHA failure",
-    "event_captcha_provider_error": "CAPTCHA service outage",
+    "event_login_captcha_failed": "CAPTCHA failure",
+    "event_login_captcha_service_error": "CAPTCHA service outage",
+    "event_form_captcha_failed": "CAPTCHA failure (public form)",
+    "event_form_captcha_service_error": "CAPTCHA service outage (public form)",
+    "event_form_honeypot": "Honeypot – bot caught (public form)",
     "event_throttle_exceeded": "Request rate limit exceeded",
     "event_login_failed": "Failed login attempt",
     "event_login_brute_force_suspected": "Suspected brute-force attack",
@@ -2167,11 +2170,18 @@
     "explain_unknown_endpoint": "unknown endpoint",
     "explain_unknown_account": "unknown account",
 
-    "explain_captcha_failed_what": "Someone submitted the login form without a valid CAPTCHA verification from IP address {ip} (endpoint {route}).",
-    "explain_captcha_failed_recommendation": "If the occurrence count is rapidly increasing, this is likely an automated script trying passwords (a typical bot cannot solve the CAPTCHA). Consider temporarily blocking this IP at the firewall, hosting, or CDN level (e.g. Cloudflare).",
+    "explain_login_captcha_failed_what": "Someone submitted the login form without a valid CAPTCHA verification from IP address {ip} (endpoint {route}).",
+    "explain_login_captcha_failed_recommendation": "If the occurrence count is rapidly increasing, this is likely an automated script trying passwords (a typical bot cannot solve the CAPTCHA). Consider temporarily blocking this IP at the firewall, hosting, or CDN level (e.g. Cloudflare).",
 
-    "explain_captcha_provider_error_what": "The server attempted to verify a CAPTCHA token with Cloudflare Turnstile, but the external service did not respond or returned an error.",
-    "explain_captcha_provider_error_recommendation": "Usually not an attack, just a temporary third-party outage. No action needed - if it persists, check Cloudflare Turnstile status.",
+    "explain_login_captcha_service_error_what": "The server attempted to verify a CAPTCHA token with Cloudflare Turnstile, but the external service did not respond or returned an error.",
+    "explain_login_captcha_service_error_recommendation": "Usually not an attack, just a temporary third-party outage. No action needed - if it persists, check Cloudflare Turnstile status.",
+
+    "explain_form_captcha_failed_what": "Someone submitted a public web form (contact / order / job application) without a valid CAPTCHA verification from IP address {ip} (endpoint {route}). Nothing was stored.",
+    "explain_form_captcha_failed_recommendation": "Single occurrences are usually ordinary visitors (expired token, blocked script). If the occurrence count is rapidly increasing, this is likely a spam bot - the form stopped it, usually no action is needed. Under a lasting flood consider blocking the IP at the firewall, hosting, or CDN level.",
+    "explain_form_captcha_service_error_what": "The server attempted to verify the CAPTCHA token of a public form with Cloudflare Turnstile, but the service did not respond or returned an error. The submission was refused for safety.",
+    "explain_form_captcha_service_error_recommendation": "Usually not an attack but a third-party outage - visitors cannot send the forms while it lasts. If it persists, check the Cloudflare Turnstile status and the TURNSTILE_SECRET_KEY.",
+    "explain_form_honeypot_what": "A bot submitted a public web form from IP address {ip}: it filled the hidden field a person never sees (endpoint {route}). The submission was silently dropped – nothing was stored and no e-mail was sent.",
+    "explain_form_honeypot_recommendation": "No action needed, the protection worked. If the occurrence count from one IP grows rapidly, consider blocking it at the firewall, hosting, or CDN level.",
 
     "explain_throttle_exceeded_what": "IP address {ip} sent more requests to endpoint {route} than the configured limit allows within one minute ({occurrences}x within the monitored window).",
     "explain_throttle_exceeded_recommendation": "On public forms (inquiries, password reset) this may indicate a spam or flooding attempt. If it continues from the same IP over time, consider blocking it at the firewall/CDN level.",

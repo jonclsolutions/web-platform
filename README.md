@@ -511,6 +511,20 @@ the server with the local one. The checksum file does not need to be deployed.
   against a known password (sysadmin 2FA stays forced).
 - **Audit logs never contain secrets**: `LogsActivity` drops every key matching
   `password|token|secret` (also nested) from `context_data`.
+- **Bot protection of the public forms** (contact, order form, job application) – invisible to
+  visitors, nothing to click (`PublicFormGuard`, `CaptchaComponent`):
+  - Cloudflare Turnstile in the `interaction-only` mode – checked in the background, the widget
+    appears only for suspicious traffic; the server verifies the token of every submission
+    (fail closed). Local development uses Cloudflare's test keys, which accept any token.
+  - Honeypot field `website` – a filled one is a bot: dropped silently (204), nothing stored.
+  - Limits, never shared between visitors: 5 / minute and 50 / day per IP and form; 3 / hour and
+    10 / day successful submissions per recipient e-mail (the forms send a confirmation to it).
+  - The admin creates the same records through the signed-in routes – no captcha, no form limits.
+  - Security events: `form_captcha_failed`, `form_captcha_service_error`, `form_honeypot`,
+    `throttle_exceeded`. Reset the limits locally: `./dev.sh artisan cache:clear`.
+  - Behind a proxy / CDN set `TRUSTED_PROXIES` (see deploy/HOW_TO_DEPLOY.md), otherwise every
+    per-IP limit (login, forms) is shared by all visitors.
+  - Cloudflare Turnstile must be named as a processor in the privacy policy (GDPR).
 
 ---
 

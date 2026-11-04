@@ -59,12 +59,20 @@ Fill in (everything else is preset for production):
 | `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | hosting panel → databases |
 | `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS` | hosting panel → e-mail (SMTP) |
 | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Cloudflare → Turnstile → the site |
+| `TRUSTED_PROXIES` | only behind a proxy / CDN (Cloudflare, load balancer): its IP ranges – see below |
 
 What happens with the file:
 - `deploy/build.sh` checks it and ships it in the package as **`laravel/.env`** – the server
   needs no manual editing, and **every deploy overwrites `laravel/.env`** on the server.
   Change settings here and build again, never edit `.env` on the server.
 - `TURNSTILE_SITE_KEY` is built into the Angular app; the secret stays in `laravel/.env`.
+  The captcha protects the admin login and the public forms (contact, order, job application);
+  the privacy policy of the web must name Cloudflare Turnstile as a processor (GDPR).
+- `TRUSTED_PROXIES` – every rate limit is per visitor IP. When the site runs behind a proxy or
+  CDN, the API sees only the proxy's IP unless the proxy is trusted, and the limits would then be
+  shared by all visitors (a few people could block the login or the forms for everybody). Set
+  the proxy's IP ranges (for Cloudflare the published ranges at cloudflare.com/ips), or `*` only
+  when the server accepts connections from the proxy alone. Leave empty without a proxy.
 - The Angular production settings (`erp/src/environments/environment.prod.ts`) need **no
   editing** – the API and files are called relatively (`/api`, `/storage`).
 
