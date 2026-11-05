@@ -51,6 +51,7 @@
 [isFullWidth]="isTableFullWidth"
 [tableCaption]="tableCaption"
 [apiEndpoint]="apiEndpoint"
+[bulkDeleteEnabled]="true"
 [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
 (refreshRequested)="forceFullRefresh(filters)"
 (itemDeleted)="handleItemDeleted()"

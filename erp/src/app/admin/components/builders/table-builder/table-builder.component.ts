@@ -108,13 +108,15 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   @Input() lastUpdatedAt: Date | null = null;
 
   /**
-   * @description Disables "Delete selected" in the bulk-actions dropdown even when the table has
-   * an active `delete_button` with enough permission. Used on tables where BULK deletion is
-   * deliberately not supported by the backend (no `bulkDestroy()`) because of sensitive
-   * per-record business logic - see core/users (UserController, sysadmin protection). Single
-   * deletion (row button) is NOT affected.
+   * @description Offers "Delete selected" in the bulk-actions dropdown (still only with an active
+   * `delete_button` the user has the permission of). OPT-IN: set it only on a table whose API
+   * resource has `POST {apiEndpoint}/bulk-delete` (a controller `bulkDestroy()`) - by default the
+   * action is hidden, so a table without that endpoint never offers an action ending in a 404
+   * (VT-14). Tables without bulk deletion on purpose (core/users - sysadmin protection; shop
+   * orders, customers, products, coupons, shipping methods; security events - purge instead)
+   * leave it off. Single deletion (row button) is NOT affected.
    */
-  @Input() bulkDeleteDisabled: boolean = false;
+  @Input() bulkDeleteEnabled: boolean = false;
 
   @Output() itemDeleted = new EventEmitter<any>();
   @Output() createFormOpened = new EventEmitter<void>();
@@ -388,7 +390,7 @@ get importEnumHints(): ImportEnumHint[] {
   }
 
   get canBulkDelete(): boolean {
-    if (this.bulkDeleteDisabled) return false;
+    if (!this.bulkDeleteEnabled) return false;
     const deleteBtn = this.buttons?.find(b => b.type === 'delete_button' && b.isActive);
     return !!deleteBtn && this.isButtonVisible(deleteBtn);
   }
@@ -453,9 +455,9 @@ get importEnumHints(): ImportEnumHint[] {
    * @description Bulk-deletes all selected rows with ONE HTTP request to
    * `{apiEndpoint}/bulk-delete` (the controller of the table must have a `bulkDestroy()`
    * method), not N parallel single DELETE calls.
-   * @note The endpoint must exist on the resource, otherwise the backend returns 404 (caught in
-   * the `catch` block below) - tables without `bulkDestroy()` get an error message instead of a
-   * silent failure.
+   * @note Offered only with `bulkDeleteEnabled` (tables whose resource has the endpoint); a
+   * failure (e.g. a missing endpoint) is still caught in the `catch` block below and shown as an
+   * error message, never a silent failure.
    */
   async onBulkDeleteClick(): Promise<void> {
     if (!this.canBulkDelete || this.selectedIds.size === 0 || this.bulkDeleting) return;

@@ -199,6 +199,9 @@ describe('TableBuilderComponent', () => {
   });
 
   describe('bulk selection', () => {
+    // Bulk deletion is opt-in (VT-14); the tests below run on a table that has the endpoint.
+    beforeEach(() => { component.bulkDeleteEnabled = true; });
+
     /**
      * @description In the administrators table the logged-in user cannot be selected.
      * @input  isAdminTable true, logged-in user id '2'
@@ -240,9 +243,10 @@ describe('TableBuilderComponent', () => {
     });
 
     /**
-     * @description Bulk delete is available only with an active, permitted delete button and when not disabled.
-     * @input  buttons [deleteButton]; granted 'x-delete' / none; bulkDeleteDisabled true
-     * @output true; false without permission; false when disabled
+     * @description Bulk delete is available only when the table enables it (opt-in, VT-14 - only
+     *   resources with a bulk-delete endpoint) AND has an active, permitted delete button.
+     * @input  buttons [deleteButton]; granted 'x-delete' / none; bulkDeleteEnabled false (the default of a new component)
+     * @output true; false without permission; false when not enabled, also with the permission
      */
     it('canBulkDelete depends on the delete button and permission', () => {
       component.buttons = [deleteButton];
@@ -251,8 +255,9 @@ describe('TableBuilderComponent', () => {
       ctx.permissions.granted = new Set();
       expect(component.canBulkDelete).toBeFalse();
       ctx.permissions.granted = 'all';
-      component.bulkDeleteDisabled = true;
+      component.bulkDeleteEnabled = false;
       expect(component.canBulkDelete).toBeFalse();
+      expect(TestBed.createComponent(TableBuilderComponent).componentInstance.bulkDeleteEnabled).toBeFalse();
     });
 
     /**
