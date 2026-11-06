@@ -38,12 +38,23 @@ if [ -f ".env" ] && head -n1 .env | grep -q '^# Built by deploy/build.sh'; then
 else
     if [ ! -f ".env" ]; then
         cp .env.example .env
-        echo ".env file created. !!! YOU MUST EDIT IT MANUALLY (DB, URL, etc.) NOW !!!"
+        # The example is the LOCAL template - write the production values of the settings whose
+        # mistake would leak data right away instead of only reminding of them (VT-09).
+        set_env() {
+            if grep -q "^$1=" .env; then sed -i "s|^$1=.*|$1=$2|" .env; else echo "$1=$2" >> .env; fi
+        }
+        set_env APP_ENV production
+        set_env APP_DEBUG false
+        set_env SESSION_SECURE_COOKIE true
+        set_env LOG_LEVEL warning
+        chmod 600 .env
+        echo ".env file created with APP_ENV=production, APP_DEBUG=false, SESSION_SECURE_COOKIE=true, LOG_LEVEL=warning."
+        echo "!!! YOU MUST EDIT THE REST MANUALLY (DB, URL, etc.) NOW !!!"
     fi
     echo ""
     echo "!!! This .env was NOT built by deploy/build.sh - nothing checked it. Set at least:"
-    echo "    APP_ENV=production, APP_DEBUG=false, APP_URL (https), DB_*, MAIL_*,"
-    echo "    SESSION_SECURE_COOKIE=true and TURNSTILE_SECRET_KEY (https://dash.cloudflare.com -> Turnstile)."
+    echo "    APP_URL (https), DB_*, MAIL_* and TURNSTILE_SECRET_KEY (https://dash.cloudflare.com -> Turnstile);"
+    echo "    check APP_ENV=production, APP_DEBUG=false and SESSION_SECURE_COOKIE=true."
     echo "    The first sysadmin logs in with a 2FA code sent by e-mail: MAIL_* must work. !!!"
     echo "    Easier: fill in deploy/production.env locally and let deploy/build.sh check and ship it."
     echo ""

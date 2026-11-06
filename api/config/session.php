@@ -170,7 +170,9 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE', false), // true in production (HTTPS); false only for local development over HTTP.
+    // Default safe (VT-09): HTTPS-only in production unless set otherwise; local development over
+    // plain HTTP keeps false. Production forces true anyway (AppServiceProvider::enforceProductionSafety).
+    'secure' => env('SESSION_SECURE_COOKIE', env('APP_ENV', 'production') === 'production'),
     'same_site' => env('SESSION_SAMESITE', 'lax'),
 
     /*

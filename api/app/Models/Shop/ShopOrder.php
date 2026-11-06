@@ -175,6 +175,18 @@ class ShopOrder extends Model
     }
 
     /**
+     * @description Token that authorises the payment simulation of THIS order (VT-16): an HMAC of
+     * the id and the order number with the application key, returned only to the buyer by
+     * create-order. Without it a sequential order id is not enough to "pay" somebody else's order;
+     * it is single-use in effect, because a paid order is no longer payable.
+     * @return string 64 hex characters.
+     */
+    public function paymentSimulationToken(): string
+    {
+        return hash_hmac('sha256', "shop-payment-simulation|{$this->id}|{$this->order_number}", (string) config('app.key'));
+    }
+
+    /**
      * Generates a new unique order number based on the current date sequence.
      */
     public static function generateOrderNumber(): string

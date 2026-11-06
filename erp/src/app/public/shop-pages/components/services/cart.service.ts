@@ -219,7 +219,14 @@ export class CartService {
     return `${productId}_${variantId || 'novariant'}`;
   }
 
-  simulatePayment(orderId: number): Observable<any> {
-    return this.http.post(`${environment.base_api_url}/shop/checkout/simulate-payment`, { order_id: orderId });
+  /**
+   * @description Payment simulation of dev / test systems (VT-16) - needs the `payment_token`
+   * that create-order returned to the buyer (`meta.payment_token`).
+   * @param orderId Order to pay.
+   * @param paymentToken Token of that order.
+   * @returns Answer of the API.
+   */
+  simulatePayment(orderId: number, paymentToken: string): Observable<any> {
+    return this.http.post(`${environment.base_api_url}/shop/checkout/simulate-payment`, { order_id: orderId, payment_token: paymentToken });
   }
 }

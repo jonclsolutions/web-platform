@@ -506,6 +506,11 @@ the server with the local one. The checksum file does not need to be deployed.
   "generate link" in the admin starts the validity again, an expired link gets a new token.
 - Cookie consent decisions are recorded on the server as the proof of consent
   (`web_cookie_consents`: random consent id, version, categories, time – no IP address).
+- Production always runs with `APP_DEBUG` off and an HTTPS-only session cookie, whatever the
+  `.env` says (`AppServiceProvider::enforceProductionSafety`); `deploy/build.sh --check` refuses
+  such a `.env` before that.
+- The shop payment simulation is off unless `SHOP_PAYMENT_SIMULATION=true` (never in production)
+  and needs the `payment_token` that create-order returns to the buyer.
 - One-time project portal passwords are shown only in the open admin modal – never stored in
   the browser; a lost password can only be regenerated.
 - `dev/.env`, `dev/logs/`, `dev/pids/` and `build/` are git-ignored; check with `git status` before every commit.

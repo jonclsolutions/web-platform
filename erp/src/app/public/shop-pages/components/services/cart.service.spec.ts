@@ -161,15 +161,15 @@ describe('CartService', () => {
   }));
 
   /**
-   * @description Payment simulation posts the order id to the checkout endpoint.
-   * @input simulatePayment(7).
-   * @output POST …/shop/checkout/simulate-payment {order_id: 7}.
+   * @description Payment simulation posts the order id and its payment token to the checkout endpoint.
+   * @input simulatePayment(7, 'tok').
+   * @output POST …/shop/checkout/simulate-payment {order_id: 7, payment_token: 'tok'}.
    */
   it('requests the payment simulation', fakeAsync(() => {
     service = create();
-    service.simulatePayment(7).subscribe();
+    service.simulatePayment(7, 'tok').subscribe();
     const req = TestBed.inject(HttpTestingController).expectOne(`${environment.base_api_url}/shop/checkout/simulate-payment`);
-    expect(req.request.body).toEqual({ order_id: 7 });
+    expect(req.request.body).toEqual({ order_id: 7, payment_token: 'tok' });
     req.flush({});
     discardPeriodicTasks();
   }));

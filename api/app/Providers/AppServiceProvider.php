@@ -7,7 +7,8 @@
  * @author JS
  * @created 2026
  * @description Bootstraps the application services; defines the named rate limiters: the login
- * (keyed by IP and by e-mail separately), the 2FA code resend and the public web forms.
+ * (keyed by IP and by e-mail separately), the 2FA code resend and the public web forms; in
+ * production forces the safe values of the settings whose mistake would leak data (VT-09).
  * @note Every limit is keyed per client IP, per e-mail or per account - never one counter shared
  * by everybody - so many people using the application at the same time never block each other;
  * only one client (or one account) repeating itself is stopped. The client IP is correct behind a
@@ -23,6 +24,20 @@ use Illuminate\Support\ServiceProvider;
 class AppServiceProvider extends ServiceProvider
 {
     /**
+     * @description Production can never run with the debug page (it shows the configuration and
+     * stack traces to anybody) or with a session cookie sent over plain HTTP, whatever a
+     * forgotten or copied .env says (VT-09). deploy/build.sh refuses such a .env already; this
+     * covers a .env edited on the server by hand.
+     * @return void
+     */
+    private function enforceProductionSafety(): void
+    {
+        if ($this->app->isProduction()) {
+            config(['app.debug' => false, 'session.secure' => true]);
+        }
+    }
+
+    /**
      * Register any application services.
      */
     public function register(): void
@@ -35,6 +50,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->enforceProductionSafety();
+
         // ── Login rate limiter: 5 attempts / minute, keyed by the IP and by the e-mail separately ──────
         // Per e-mail (= per account): 5 / minute - one account tried again and again is stopped
         // (and from the 3rd failure the captcha is required, AuthController). Per IP: 20 / minute -

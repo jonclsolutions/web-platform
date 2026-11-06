@@ -173,7 +173,10 @@ class ShopCheckoutController extends Controller
 
             $this->logAction($request, ShopLog::class, 'create', 'ShopOrder (Checkout)', "Created order: {$order->order_number}", $order->id, 'ShopOrder');
 
-            return $this->respond(new ShopOrderResource($order), 201);
+            // The buyer's token of the payment simulation (dev / test systems only, VT-16).
+            $meta = config('services.shop.payment_simulation') ? ['payment_token' => $order->paymentSimulationToken()] : [];
+
+            return $this->respond(new ShopOrderResource($order), 201, $meta);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -311,9 +314,11 @@ class ShopCheckoutController extends Controller
 
     /**
      * @description Simulates a payment gateway response (90 % success) - dev / test
-     *   systems only, see config `services.shop.payment_simulation`.
-     * @param Request $request {order_id}.
-     * @return JsonResponse 200 paid | 402 declined | 404 disabled | 409 not payable | 422 | 500.
+     *   systems only, see config `services.shop.payment_simulation` (off by default, never in
+     *   production). Needs the `payment_token` create-order gave the buyer (VT-16): an unknown
+     *   order and a wrong token answer the same 404, so order ids cannot be probed.
+     * @param Request $request {order_id, payment_token}.
+     * @return JsonResponse 200 paid | 402 declined | 404 disabled / unknown / wrong token | 409 not payable | 422 | 500.
      */
     public function simulatePayment(Request $request): JsonResponse
     {
@@ -322,12 +327,16 @@ class ShopCheckoutController extends Controller
         }
 
         $validated = $request->validate([
-            'order_id' => 'required|integer|exists:shop_orders,id'
+            'order_id'      => 'required|integer',
+            'payment_token' => 'required|string|size:64',
         ]);
 
-        try {
-            $order = ShopOrder::findOrFail($validated['order_id']);
+        $order = ShopOrder::find($validated['order_id']);
+        if (!$order || !hash_equals($order->paymentSimulationToken(), $validated['payment_token'])) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
 
+        try {
             if ($order->payment_status !== 'pending' || $order->status !== 'pending') {
                 return response()->json(['message' => 'This order is not waiting for payment.'], 409);
             }

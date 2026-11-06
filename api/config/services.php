@@ -43,7 +43,9 @@ return [
     /*
     */
     'shop' => [
-        'payment_simulation' => (bool) env('SHOP_PAYMENT_SIMULATION', env('APP_ENV', 'production') !== 'production'),
+        // Payment simulation (VT-16): off unless SHOP_PAYMENT_SIMULATION is set explicitly, and
+        // never in production whatever the variable says.
+        'payment_simulation' => (bool) env('SHOP_PAYMENT_SIMULATION', false) && env('APP_ENV', 'production') !== 'production',
     ],
 
 ];

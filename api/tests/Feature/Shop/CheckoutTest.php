@@ -279,59 +279,81 @@ class CheckoutTest extends TestCase
     }
 
     /**
-     * @description Payment simulation: switched off (production default) it does not exist; on
-     *   a dev system it pays a pending order (90 % odds), declines (402), refuses orders that
-     *   are not waiting for payment (409), validates the id and answers 500 on a database error.
-     * @input Simulation off; on + forced win; same order again; forced loss on another; {}; failing UPDATE.
-     * @output 404; 200 paid / confirmed + paid_at + log; 409; 402 (order unchanged); 422; 500.
+     * @description Payment simulation (dev / test systems only): create-order gives the buyer the
+     *   order's payment token (only while the simulation is on); switched off the endpoint does
+     *   not exist; an unknown order and a wrong token answer the same 404 (no probing of
+     *   sequential ids, VT-16); with the token it pays a pending order (90 % odds), declines
+     *   (402), refuses orders not waiting for payment (409), validates and answers 500 on a
+     *   database error.
+     * @input create-order on / off; simulation off; wrong token; unknown id; token + forced win;
+     *        same order again; forced loss on another; {}; failing UPDATE.
+     * @output meta.payment_token = the order's token / no meta; 404 ×3; 200 paid / confirmed +
+     *   paid_at + log; 409; 402 (order unchanged); 422; 500.
      */
     public function test_simulate_payment(): void
     {
+        $p = $this->product();
+        $created = $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 1]]))->assertCreated();
+        $this->assertSame(ShopOrder::find($created->json('data.id'))->paymentSimulationToken(), $created->json('meta.payment_token'));
+        config(['services.shop.payment_simulation' => false]);
+        $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 1]]))->assertCreated()->assertJsonMissingPath('meta');
+
         $paid = $this->order();
         $declined = $this->order();
         $broken = $this->order();
+        $pay = fn (ShopOrder $order, ?string $token = null) => $this->postJson('/api/shop/checkout/simulate-payment', [
+            'order_id' => $order->id, 'payment_token' => $token ?? $order->paymentSimulationToken(),
+        ]);
 
-        config(['services.shop.payment_simulation' => false]);
-        $this->postJson('/api/shop/checkout/simulate-payment', ['order_id' => $paid->id])->assertStatus(404);
+        $pay($paid)->assertStatus(404);
         $this->assertSame('pending', $paid->fresh()->payment_status);
 
         config(['services.shop.payment_simulation' => true]);
         Lottery::alwaysWin();
-        $this->postJson('/api/shop/checkout/simulate-payment', ['order_id' => $paid->id])->assertOk()
-            ->assertJsonPath('data.payment_status', 'paid')->assertJsonPath('data.status', 'confirmed');
+        $pay($paid, $declined->paymentSimulationToken())->assertStatus(404)->assertExactJson(['message' => 'Not found.']);
+        $this->postJson('/api/shop/checkout/simulate-payment', ['order_id' => 999999, 'payment_token' => str_repeat('a', 64)])
+            ->assertStatus(404)->assertExactJson(['message' => 'Not found.']);
+        $this->assertSame('pending', $paid->fresh()->payment_status);
+
+        $pay($paid)->assertOk()->assertJsonPath('data.payment_status', 'paid')->assertJsonPath('data.status', 'confirmed');
         $this->assertNotNull($paid->fresh()->paid_at);
         $this->assertShopLog('payment', 'Payment simulated: ' . $paid->order_number);
-        $this->postJson('/api/shop/checkout/simulate-payment', ['order_id' => $paid->id])->assertStatus(409)->assertExactJson(['message' => 'This order is not waiting for payment.']);
+        $pay($paid)->assertStatus(409)->assertExactJson(['message' => 'This order is not waiting for payment.']);
 
         Lottery::alwaysLose();
-        $this->postJson('/api/shop/checkout/simulate-payment', ['order_id' => $declined->id])->assertStatus(402)->assertExactJson(['message' => 'Payment was declined (simulation).']);
+        $pay($declined)->assertStatus(402)->assertExactJson(['message' => 'Payment was declined (simulation).']);
         $this->assertSame('pending', $declined->fresh()->payment_status);
-        $this->postJson('/api/shop/checkout/simulate-payment', [])->assertStatus(422);
+        $this->postJson('/api/shop/checkout/simulate-payment', [])->assertStatus(422)->assertJsonValidationErrors(['order_id', 'payment_token']);
 
         Lottery::alwaysWin();
         $this->failOn('shop_orders', 'UPDATE');
-        $this->postJson('/api/shop/checkout/simulate-payment', ['order_id' => $broken->id])->assertStatus(500)->assertJson(['message' => 'Error during payment simulation']);
+        $pay($broken)->assertStatus(500)->assertJson(['message' => 'Error during payment simulation']);
     }
 
     /**
-     * @description Without SHOP_PAYMENT_SIMULATION the simulation follows APP_ENV: off in
-     *   production, on elsewhere.
-     * @input config/services.php evaluated with APP_ENV production / local.
-     * @output false / true.
+     * @description The simulation is on only when SHOP_PAYMENT_SIMULATION is set explicitly, and
+     *   never in production (VT-16).
+     * @input config/services.php with APP_ENV local / production × SHOP_PAYMENT_SIMULATION unset / true.
+     * @output local: false / true; production: false / false.
      */
     public function test_payment_simulation_default(): void
     {
-        $evaluate = function (string $env): bool {
+        $evaluate = function (string $env, ?string $flag): bool {
             putenv("APP_ENV={$env}");
             $_ENV['APP_ENV'] = $_SERVER['APP_ENV'] = $env;
+            $flag === null ? putenv('SHOP_PAYMENT_SIMULATION') : putenv("SHOP_PAYMENT_SIMULATION={$flag}");
+            unset($_ENV['SHOP_PAYMENT_SIMULATION'], $_SERVER['SHOP_PAYMENT_SIMULATION']);
             $value = (require base_path('config/services.php'))['shop']['payment_simulation'];
             putenv('APP_ENV=testing');
+            putenv('SHOP_PAYMENT_SIMULATION');
             $_ENV['APP_ENV'] = $_SERVER['APP_ENV'] = 'testing';
 
             return $value;
         };
 
-        $this->assertFalse($evaluate('production'));
-        $this->assertTrue($evaluate('local'));
+        $this->assertFalse($evaluate('local', null));
+        $this->assertTrue($evaluate('local', 'true'));
+        $this->assertFalse($evaluate('production', null));
+        $this->assertFalse($evaluate('production', 'true'));
     }
 }
