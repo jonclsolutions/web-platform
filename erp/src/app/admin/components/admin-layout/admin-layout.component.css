@@ -124,6 +124,16 @@
   border-left: 1px solid var(--border);
 }
 
+/* Own e-mail as the link to the personal info page - looks like the text, underlined on hover. */
+.header-user-link {
+  color: inherit;
+  text-decoration: none;
+}
+.header-user-link:hover,
+.header-user-link:focus-visible {
+  text-decoration: underline;
+}
+
 .header-user-icon {
   color: var(--text-dim);
   display: flex;

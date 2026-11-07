@@ -237,7 +237,7 @@ export const KB_PAGES: KBPage[] = [
     navLabel: { cz: 'Osobní údaje', en: 'Personal Information' },
     navOrder: 18,
     header: { cz: 'Osobní údaje a zabezpečení účtu', en: 'Personal Information and Account Security' },
-    devNote: "PersonalInfoComponent, route 'core/personal-info', permission 'web-view-personal-info'. Self-service 2FA toggle a změna hesla.",
+    devNote: "PersonalInfoComponent, route 'core/personal-info', no permission (every signed-in user; also via the own e-mail in the header). Self-service 2FA toggle a změna hesla.",
     sections: [ { blocks: [ { type: 'lead', content: {
       cz: 'Testovací obsah - správa vlastního profilu, hesla a dvoufaktorového ověření.',
       en: 'Placeholder content - managing your own profile, password, and two-factor authentication.'

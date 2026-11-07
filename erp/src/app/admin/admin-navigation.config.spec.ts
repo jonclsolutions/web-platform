@@ -28,7 +28,7 @@ describe('admin navigation config', () => {
 
   /**
    * @description Every configured page is a route with the same permission; role-only pages use
-   *   the sysadmin guard.
+   *   the sysadmin guard; a page open to every signed-in user (null) has no route permission.
    * @input ADMIN_MODULE_PAGES of web / core / shop; the route table.
    * @output For each page: a route with that path, data.permission equal (none + sysadminGuard
    *   for a role-only page).
@@ -42,7 +42,7 @@ describe('admin navigation config', () => {
           expect(route!.canActivate).withContext(`${module}/${page.path}`).toContain(sysadminGuard);
           expect(route!.data?.['permission']).withContext(`${module}/${page.path}`).toBeUndefined();
         } else {
-          expect(route!.data?.['permission']).withContext(`${module}/${page.path}`).toBe(page.permission);
+          expect(route!.data?.['permission'] ?? null).withContext(`${module}/${page.path}`).toBe(page.permission);
         }
       }
     }

@@ -21,7 +21,7 @@ export type AdminModule = 'web' | 'core' | 'shop';
 export interface AdminNavPage {
   /** Route path below `/admin/<module>/`. */
   path: string;
-  /** Required permission (`a|b` = any of them); null for a page guarded by role only. */
+  /** Required permission (`a|b` = any of them); null = no permission - with `sysadminOnly` the sysadmin role only, otherwise every signed-in user. */
   permission: string | null;
   /** Page open to the sysadmin role only (no permission key - see sysadminGuard). */
   sysadminOnly?: boolean;
@@ -60,7 +60,7 @@ export const ADMIN_MODULE_PAGES: Record<AdminModule, AdminNavPage[]> = {
     { path: 'external-links', permission: 'core-external-links-view' },
     { path: 'administrators', permission: 'core-administrators-view' },
     { path: 'edit-roles', permission: null, sysadminOnly: true },
-    { path: 'personal-info', permission: 'web-view-personal-info' },
+    { path: 'personal-info', permission: null },
     { path: 'logs', permission: 'view-core' },
     { path: 'security-events', permission: 'core-security-view' },
   ],

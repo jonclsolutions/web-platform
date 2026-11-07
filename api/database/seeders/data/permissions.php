@@ -12,7 +12,6 @@
 
 return [
     ['permission_key' => 'web-view-web-logs', 'description' => 'Zobrazit historii logů (auditní záznam akcí) webové sekce', 'module' => 'web'],
-    ['permission_key' => 'web-view-personal-info', 'description' => 'Zobrazit a upravit vlastní osobní údaje přihlášeného uživatele', 'module' => 'web'],
     ['permission_key' => 'web-view-dashboard', 'description' => '[doporučení: vždy zapnuto] Zobrazit úvodní nástěnku webové sekce (výchozí stránka po vstupu do menu Web)', 'module' => 'web'],
     ['permission_key' => 'view-deleted', 'description' => 'Zobrazit softdeleted (smazané) záznamy v koši napříč moduly', 'module' => 'web'],
     ['permission_key' => 'shop-view-reports', 'description' => 'Zobrazit reporty a statistiky e-shopu', 'module' => 'shop'],

@@ -271,14 +271,15 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   /**
    * @description First page of a module the user may open (same rule as the AuthGuard: sysadmin
-   *   opens everything, a role-only page needs the sysadmin role, otherwise one of the keys).
+   *   opens everything, a role-only page needs the sysadmin role, a page without a permission is
+   *   open to everybody, otherwise one of the keys).
    * @param module Module.
    * @returns The page, or null when there is none.
    */
   private firstAccessiblePage(module: AdminModule): AdminNavPage | null {
     const isSysadmin = this.userRole === SYSADMIN_ROLE_NAME;
     return ADMIN_MODULE_PAGES[module].find(page =>
-      isSysadmin || (!page.sysadminOnly && page.permission !== null && this.hasAnyPermission([page.permission]))
+      isSysadmin || (!page.sysadminOnly && (page.permission === null || this.hasAnyPermission([page.permission])))
     ) ?? null;
   }
 
@@ -440,11 +441,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       'core-legal-config-view',
       'core-external-links-view'
     ]);
-  }
-
-  get showCoreUsersGroup(): boolean {
-    return this.hasAnyPermission(['core-administrators-view', 'web-view-personal-info'])
-      || this.userRole === 'sysadmin';
   }
 
   get showCoreSystemGroup(): boolean {

@@ -287,17 +287,32 @@ describe('AdminLayoutComponent', () => {
   });
 
   /**
-   * @description The users group is always visible for the sysadmin role.
-   * @input  no permissions, role 'sysadmin'
-   * @output showCoreUsersGroup true; with role 'admin' false
+   * @description The own personal info page (password, 2FA) is open to every signed-in user
+   *   (VT-13): the header e-mail links to it (desktop and mobile panel), the sidebar item needs no
+   *   permission, and as a page without a permission it counts as accessible for every role.
+   * @input  logged in as admin without any permission; render with the mobile panel open; click the mobile link.
+   * @output header + mobile links to /admin/core/personal-info with the e-mail; sidebar link
+   *   present; firstAccessiblePage('core') = personal-info; the mobile panel closes.
    */
-  it('shows the users group to sysadmin', () => {
-    ctx.auth.session.role = 'sysadmin';
+  it('opens the own personal info page for every user', () => {
+    ctx.permissions.granted = new Set([]);
     component.ngOnInit();
-    expect(component.showCoreUsersGroup).toBeTrue();
-    ctx.auth.session.role = 'admin';
-    ctx.auth.isLoggedIn$.next(true);
-    expect(component.showCoreUsersGroup).toBeFalse();
+    component.currentModule = 'core';
+    component.isMobileActionsOpen = true;
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    const links = Array.from(el.querySelectorAll('a.header-user-link')) as HTMLAnchorElement[];
+    expect(links.length).toBe(2);
+    links.forEach(a => {
+      expect(a.getAttribute('href')).toBe('/admin/core/personal-info');
+      expect(a.textContent!.trim()).toBe('admin@example.test');
+    });
+    expect(el.querySelector('.admin-nav a[href="/admin/core/personal-info"]')).not.toBeNull();
+    expect((component as any).firstAccessiblePage('core').path).toBe('personal-info');
+
+    const close = spyOn(component, 'closeMobileActions');
+    links[1].click();
+    expect(close).toHaveBeenCalled();
   });
 
   /**
@@ -420,7 +435,7 @@ describe('AdminLayoutComponent', () => {
       showWebWelcomeGroup: 'web-welcome-page-view', showShopWelcomeGroup: 'shop-welcome-page-view',
       showWebOverviewGroup: 'web-view-dashboard', showWebBusinessGroup: 'web-projects-view', showWebContentGroup: 'web-news-view',
       showWebPeopleGroup: 'web-support-tickets-view', showWebSystemGroup: 'web-view-web-logs', showCoreOverviewGroup: 'core-view-welcome-page',
-      showCoreLegalGroup: 'core-external-links-view', showCoreUsersGroup: 'core-administrators-view', showShopOverviewGroup: 'shop-view-dashboard',
+      showCoreLegalGroup: 'core-external-links-view', showShopOverviewGroup: 'shop-view-dashboard',
       showShopCatalogGroup: 'shop-suppliers-view', showShopTransactionsGroup: 'shop-coupons-view', showShopCustomersGroup: 'shop-customers-view',
       showShopLogisticsGroup: 'shop-payment-methods-view', showShopContentGroup: 'shop-edit-eshop-view', showShopSystemGroup: 'shop-view-logs'
     };

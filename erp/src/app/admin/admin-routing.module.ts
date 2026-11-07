@@ -105,7 +105,9 @@ export const ADMIN_ROUTES: Routes = [
           { path: 'dashboard', component: CoreDashboardComponent, data: { permission: 'view-core' } },
           { path: 'welcome-page', component: WelcomePageComponent, data: { permission: 'core-view-welcome-page' } },
           { path: 'edit-legal', component: EditLegalComponent, data: { permission: 'core-legal-documents-view|core-legal-config-view' } },
-          { path: 'personal-info', component: PersonalInfoComponent, data: { permission: 'web-view-personal-info' } },
+          // Own account (password, 2FA) - every signed-in user, no permission (VT-13); the API lets
+          // the own account through by `selfParam` (CheckPermission).
+          { path: 'personal-info', component: PersonalInfoComponent },
           { path: 'web-settings', component: WebSettingsComponent, data: { permission: 'core-legal-config-view' } },
           { path: 'external-links', component: ExternalLinksComponent, data: { permission: 'core-external-links-view' } },
           // Restricted to the 'sysadmin' role regardless of the permission system (see sysadminGuard).

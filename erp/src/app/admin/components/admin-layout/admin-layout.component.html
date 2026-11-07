@@ -33,9 +33,12 @@
           <circle cx="12" cy="7" r="4"/>
         </svg>
       </span>
-      <span class="header-user-email user-text-truncate">
-        @if (isLoggedIn) { {{ userEmail }} } @else { {{ strings.not_logged_in }} }
-      </span>
+      <!-- The own e-mail opens the personal info page (password, 2FA) - reachable for every role (VT-13) -->
+      @if (isLoggedIn) {
+        <a class="header-user-email header-user-link user-text-truncate" routerLink="/admin/core/personal-info" [title]="strings.nav_personal_info">{{ userEmail }}</a>
+      } @else {
+        <span class="header-user-email user-text-truncate">{{ strings.not_logged_in }}</span>
+      }
       @if (isLoggedIn && userRole) {
         <span class="header-role-badge">{{ userRole }}</span>
       }
@@ -158,9 +161,11 @@
         </svg>
       </span>
       <div class="map-user-info">
-        <span class="map-user-email">
-          @if (isLoggedIn) { {{ userEmail }} } @else { {{ strings.not_logged_in }} }
-        </span>
+        @if (isLoggedIn) {
+          <a class="map-user-email header-user-link" routerLink="/admin/core/personal-info" [title]="strings.nav_personal_info" (click)="closeMobileActions()">{{ userEmail }}</a>
+        } @else {
+          <span class="map-user-email">{{ strings.not_logged_in }}</span>
+        }
         @if (isLoggedIn && userRole) {
           <span class="map-role-badge">{{ userRole }}</span>
         }
@@ -481,7 +486,7 @@
           </ul>
         </div>
 
-        <div class="nav-group" *ngIf="showCoreUsersGroup">
+        <div class="nav-group">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">{{ strings.nav_group_users }}</div>
           <ul>
             <li *appHasPermission="'core-administrators-view'">
@@ -506,7 +511,7 @@
                 <span class="nav-text">{{ strings.nav_edit_roles_text }}</span>
               </a>
             </li>
-            <li *appHasPermission="'web-view-personal-info'">
+            <li>
               <a routerLink="/admin/core/personal-info" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_personal_info">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

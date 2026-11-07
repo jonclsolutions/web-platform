@@ -390,7 +390,7 @@ class DatabaseSetupTest extends TestCase
      * @description Base data of every installation: all permission keys, the sysadmin role with
      *   all of them, the page titles, document types and the web / e-shop settings rows.
      * @input empty database (test schema); BaseDataSeeder.
-     * @output permissions = data/permissions.php (96 keys incl. view-core, core-administrators-view);
+     * @output permissions = data/permissions.php (95 keys incl. view-core, core-administrators-view);
      *   sysadmin with every permission and protected; 23 titles incl. web.not-found and
      *   admin.panel; types gdpr / tos / cookies; web + shop active; placeholder company details
      *   (English, example.com, no analytics ID - the GA field switched off) with the default logo;
@@ -424,11 +424,11 @@ class DatabaseSetupTest extends TestCase
         Storage::disk('public')->assertExists([BaseDataSeeder::DEFAULT_LOGO_PATH, ...BaseDataSeeder::DEFAULT_FLAG_PATHS]);
 
         $expected = array_column(require database_path('seeders/data/permissions.php'), 'permission_key');
-        $this->assertCount(96, $expected);
+        $this->assertCount(95, $expected);
         $this->assertEqualsCanonicalizing($expected, CorePermission::pluck('permission_key')->all());
         $sysadmin = CoreRole::where('role_name', 'sysadmin')->firstOrFail();
         $this->assertTrue($sysadmin->isProtected());
-        $this->assertSame(96, $sysadmin->permissions()->count());
+        $this->assertSame(95, $sysadmin->permissions()->count());
         $this->assertSame(23, DB::table('legal_page_titles')->count());
         $this->assertTrue(DB::table('legal_page_titles')->where(['area' => 'web', 'page_key' => 'not-found'])->exists());
         $this->assertTrue(DB::table('legal_page_titles')->where(['area' => 'admin', 'page_key' => 'panel'])->exists());
@@ -446,7 +446,7 @@ class DatabaseSetupTest extends TestCase
      *   sections replaced by an own Czech one; logo file replaced, one flag deleted; sysadmin
      *   soft-deleted; one permission row removed; seeded again.
      * @output edits kept (company, own gdpr section only, own logo); deleted flag restored; role
-     *   restored with 96 permissions; 96 permissions, 23 titles, 1 row in each settings table.
+     *   restored with 95 permissions; 95 permissions, 23 titles, 1 row in each settings table.
      */
     public function test_base_data_seeder_only_adds(): void
     {
@@ -470,8 +470,8 @@ class DatabaseSetupTest extends TestCase
         $this->assertSame('edited', CorePermission::where('permission_key', 'view-core')->value('description'));
         $this->assertFalse(ShopSiteSetting::firstOrFail()->is_shop_active);
         $role = CoreRole::where('role_name', 'sysadmin')->firstOrFail();
-        $this->assertSame(96, $role->permissions()->count());
-        $this->assertSame(96, CorePermission::count());
+        $this->assertSame(95, $role->permissions()->count());
+        $this->assertSame(95, CorePermission::count());
         $this->assertSame(23, DB::table('legal_page_titles')->count());
         $this->assertSame(1, WebSiteSetting::count());
         $this->assertSame(1, ShopSiteSetting::count());
