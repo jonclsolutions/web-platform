@@ -62,9 +62,10 @@
 #
 # @note DEPENDENCY AUDIT: every run (also --check) asks npm and Composer for known
 #   vulnerabilities of the PRODUCTION dependencies (`npm audit --omit=dev`, `composer audit
-#   --no-dev`) and prints them as warnings - critical / high ones highlighted. The build never
-#   stops on them (an advisory without a fixed version must not block an urgent release); fix
-#   them with a dependency update. Without network access the audit is skipped with a warning.
+#   --no-dev`, deploy/dependencies.sh) and prints them as warnings - critical / high ones
+#   highlighted. The build never stops on them (an advisory without a fixed version must not
+#   block an urgent release) and never updates anything itself: `./dev.sh deps-fix` does that
+#   before a commit. Without network access the audit is skipped with a warning.
 # =============================================================================
 
 # macOS ships bash 3.2 (too old for this script) - re-run with bash 4+ from Homebrew.
@@ -307,68 +308,12 @@ check_production_env() {
 
 # -----------------------------------------------------------------------------
 # @description Known vulnerabilities of the production dependencies (npm + Composer) as
-# warnings - never stops the build. Critical / high advisories are listed first.
+# warnings - never stops the build. Shared with ./dev.sh deps-audit (deploy/dependencies.sh).
 # -----------------------------------------------------------------------------
 check_dependencies() {
     step "Checking dependency vulnerabilities (npm audit / composer audit)"
-    local out summary found=0
-
-    if command -v npm >/dev/null; then
-        out="$(cd "$ERP_DIR" && npm audit --omit=dev --json 2>/dev/null || true)"
-        summary="$(printf '%s' "$out" | node -e '
-            let d = ""; process.stdin.on("data", c => d += c).on("end", () => {
-              try {
-                const j = JSON.parse(d), v = j.metadata && j.metadata.vulnerabilities;
-                if (!v) { process.stdout.write("ERR"); return; }
-                const top = Object.entries(j.vulnerabilities || {})
-                  .filter(([, x]) => x.severity === "critical" || x.severity === "high")
-                  .map(([n, x]) => n + " (" + x.severity + ")");
-                process.stdout.write([v.critical, v.high, v.moderate, v.low].join(" ") + "|" + top.join(", "));
-              } catch { process.stdout.write("ERR"); }
-            });' 2>/dev/null || echo ERR)"
-        if [[ "$summary" == "ERR" || -z "$summary" ]]; then
-            warn "WARNING: npm audit could not run (no network access?) - production npm packages NOT checked"
-        else
-            local counts="${summary%%|*}" names="${summary#*|}" c h m l
-            read -r c h m l <<< "$counts"
-            if (( c + h + m + l > 0 )); then
-                found=1
-                warn "WARNING: npm (production): $c critical, $h high, $m moderate, $l low vulnerabilities"
-                [[ -n "$names" ]] && warn "         critical / high: $names"
-            else
-                info "npm (production): no known vulnerabilities"
-            fi
-        fi
-    else
-        warn "WARNING: npm is not installed - production npm packages NOT checked"
-    fi
-
-    out="$(cd "$API_DIR" && composer audit --no-dev --locked --format=json --no-interaction 2>/dev/null || true)"
-    summary="$(printf '%s' "$out" | php -r '
-        $j = json_decode(stream_get_contents(STDIN), true);
-        if (!is_array($j) || !array_key_exists("advisories", $j)) { echo "ERR"; exit; }
-        $n = 0; $top = [];
-        foreach ($j["advisories"] as $pkg => $list) {
-            foreach ($list as $a) {
-                $n++;
-                $sev = strtolower($a["severity"] ?? "");
-                if (in_array($sev, ["critical", "high"], true)) { $top[] = "$pkg ($sev)"; }
-            }
-        }
-        echo $n . "|" . implode(", ", array_unique($top));' 2>/dev/null || echo ERR)"
-    if [[ "$summary" == "ERR" || -z "$summary" ]]; then
-        warn "WARNING: composer audit could not run (no network access?) - production Composer packages NOT checked"
-    elif [[ "${summary%%|*}" != "0" ]]; then
-        found=1
-        warn "WARNING: Composer (production): ${summary%%|*} advisories"
-        [[ -n "${summary#*|}" ]] && warn "         critical / high: ${summary#*|}"
-    else
-        info "Composer (production): no known vulnerabilities"
-    fi
-
-    if (( found )); then
-        warn "WARNING: update the affected dependencies (details: npm audit --omit=dev in erp/, composer audit --no-dev in api/) - the build continues"
-    fi
+    bash "$SCRIPT_DIR/dependencies.sh" audit || true
+    info "update: ./dev.sh deps-fix (within the allowed versions; then test and commit)"
 }
 
 # -----------------------------------------------------------------------------

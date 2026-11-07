@@ -229,7 +229,7 @@ its `dev/.env` and its `erp/src/environments/environment.ts`.
 
 ### Without Docker (not supported)
 
-The project is set up and tested only with Docker. Running it directly on the host needs PHP 8.4+
+The project is set up and tested only with Docker. Running it directly on the host needs PHP 8.5+
 (api/composer.lock) with the extensions of `dev/docker/Dockerfile`, Composer, Node.js 24,
 MariaDB, Mailpit and Chromium – the old host-based scripts are in the git history
 (before 2026-10-31); `deploy/build.sh` builds on the host with `BUILD_ON_HOST=1`.
@@ -276,6 +276,8 @@ Project tools run in the dev container – no PHP / Node.js needed on the host:
 ./dev.sh composer require x/y     # composer … in api/
 ./dev.sh npm install x            # npm … in erp/      (./dev.sh npx ng generate …)
 ./dev.sh test                     # all unit tests (erp + api) – tests/unit_tests/run_all.sh
+./dev.sh deps-audit               # known vulnerabilities of the production npm / Composer packages
+./dev.sh deps-fix                 # update only the vulnerable packages within the allowed versions + all tests (no commit)
 ./dev.sh shell                    # bash in the dev container   (./dev.sh shell api – in the running API)
 ./dev.sh rebuild                  # rebuild the image after changing PHP_VERSION / NODE_VERSION in .env
 ./dev.sh help                     # everything else

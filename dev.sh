@@ -43,6 +43,10 @@
 #   ./dev.sh test [args]             all unit tests (tests/unit_tests/run_all.sh) in the container
 #   ./dev.sh build [args]            production build (deploy/build.sh) in the container
 #   ./dev.sh build --check           only check deploy/production.env and the build prerequisites
+#   ./dev.sh deps-audit              known vulnerabilities of the production npm / Composer packages
+#   ./dev.sh deps-fix                update ONLY the vulnerable packages within the allowed versions
+#                                    (no new major version), run all tests, list what still needs a
+#                                    manual update - nothing is committed (deploy/dependencies.sh)
 #   ./dev.sh db-import <file.sql>    import an SQL dump into the app database (DB_DATABASE of api/.env)
 #   ./dev.sh db-dump [file.sql]      dump the app database (default temp/<db>-<date>.sql)
 #   ./dev.sh rebuild                 rebuild the dev image (after changing PHP / Node.js / UID in .env)
@@ -366,6 +370,8 @@ case "$command" in
         if [[ $# -gt 0 ]]; then preflight; dc exec "$1" bash; else dev_run . bash; fi ;;
     test)        dev_run_nodeps . tests/unit_tests/run_all.sh "$@" ;;
     build)       dev_run_nodeps . deploy/build.sh "$@" ;;
+    deps-audit)  dev_run_nodeps . deploy/dependencies.sh audit ;;
+    deps-fix)    dev_run_nodeps . deploy/dependencies.sh fix ;;
     db-import)   cmd_db_import "$@" ;;
     db-dump)     cmd_db_dump "$@" ;;
     rebuild)     preflight; dc build --pull; ok "image rebuilt – ./dev.sh up recreates the containers" ;;
