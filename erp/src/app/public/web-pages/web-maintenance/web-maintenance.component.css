@@ -1,72 +1,26 @@
-/*  
+/*
     @file: web-maintenance.component.css
     @path: /src/app/public/web-pages/web-maintenance/web-maintenance.component.css
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Styles of the web maintenance component.
+    @description: Styles of the web maintenance page - only the accent colour of the module; the layout is shared (shared-styles/maintenance.css).
+    @dependencies: ../../shared-styles/maintenance.css
+*/
+
+/*
+    @module: Module accent
+    @description: Colour variables read by the shared maintenance styles.
+    @usage: :host
 */
 
 :host {
---accent: #a67dff;
---accent-dim: rgba(166, 125, 255, 0.08);
---accent-grid: rgba(166, 125, 255, 0.05);
---text: var(--color-zinc-900);
---text-muted: var(--color-zinc-500);
---text-dim: var(--color-zinc-400);
---surface: var(--color-white);
---border: var(--color-sand-200);
-}
-
-.sub-text {
-color: var(--text-dim);
-margin-bottom: 4px;
-}
-
-.maintenance-social {
-display: flex;
-justify-content: center;
-gap: 10px;
-margin-top: 26px;
-}
-
-.maintenance-admin-link {
-position: fixed;
-right: 20px;
-bottom: 20px;
-z-index: 2;
-width: 34px;
-height: 34px;
-display: flex;
-align-items: center;
-justify-content: center;
-border-radius: 50%;
-color: var(--text-dim);
-background: transparent;
-transition: color 0.15s ease, background 0.15s ease, transform 0.15s ease;
-}
-
-.maintenance-admin-link:hover {
-color: var(--accent);
-background: var(--accent-dim);
-transform: translateY(-2px);
-}
-
-@media (max-width: 480px) {
-.maintenance-content {
-padding: 36px 24px;
-margin: 16px;
-  }
-
-.maintenance-contact-bar {
-flex-direction: column;
-align-items: center;
-bottom: 16px;
-width: calc(100% - 32px);
-  }
-
-.maintenance-admin-link {
-right: 14px;
-bottom: 14px;
-  }
+  --accent: #a67dff;
+  --accent-dim: rgba(166, 125, 255, 0.08);
+  --accent-grid: rgba(166, 125, 255, 0.05);
+  --text: var(--color-zinc-900);
+  --text-muted: var(--color-zinc-500);
+  --text-dim: var(--color-zinc-400);
+  --surface: var(--color-white);
+  --border: var(--color-sand-200);
 }

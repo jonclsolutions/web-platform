@@ -10,6 +10,8 @@
  * - TableBuilderComponent: Handling tabular views and CSV exports.
  * - Config.create* factory functions: Domain-specific, i18n-aware definitions for UI
  *   columns, form fields, and toolbar actions.
+ * - EmailTemplateEditorComponent: modal editor of the order confirmation e-mail (sent in the
+ *   language of the page, VT-15).
  * @note `createProject(item)` is only a navigation to ProjectsComponent with the `order_id` /
  * `open_project` query parameter - no own API call here.
  */
@@ -23,6 +25,7 @@ import * as Config from './sales-orders.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
+import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../components/email-template-editor/email-template-editor.component';
 
 /**
  * @description Manages the lifecycle and administrative view of sales orders.
@@ -32,7 +35,7 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 @Component({
   selector: 'app-sales-orders',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, EmailTemplateEditorComponent],
   templateUrl: './sales-orders.component.html',
   styleUrls: ['../../shared-styles/page.css', '../shared-styles/page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -82,6 +85,39 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
     });
   }
 
+  // ── Confirmation e-mail template (modal, EmailTemplateEditorComponent) ──
+  showEmailTemplateModal = false;
+  /** Rows of the summary table of the order e-mail with the preview sample values. */
+  emailTemplateRows: EmailTemplateRow[] = [];
+
+  /**
+   * @description Opens the template editor of the order confirmation with its summary rows and
+   * a fictional sample order for the preview (never sent or stored; the date in the admin locale).
+   */
+  openEmailTemplateEditor(): void {
+    const date = new Date(2026, 7, 21, 15, 32).toLocaleString(this.i18n.getDateLocale(), {
+      day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+    this.emailTemplateRows = [
+      { key: 'label_name', sample: 'Acme s.r.o.' },
+      { key: 'label_ico', sample: '12345678' },
+      { key: 'label_email', sample: 'customer@example.com' },
+      { key: 'label_phone', sample: '+420 123 456 789' },
+      { key: 'label_address', sample: this.t('email_tpl_preview_address') },
+      { key: 'label_description', sample: this.t('email_tpl_preview_description') },
+      { key: 'label_attachments', sample: 'brief.pdf, logo.png' },
+      { key: 'label_date', sample: date },
+    ];
+    this.showEmailTemplateModal = true;
+    this.cd.markForCheck();
+  }
+
+  /** @description Closes the template editor. */
+  closeEmailTemplateEditor(): void {
+    this.showEmailTemplateModal = false;
+    this.cd.markForCheck();
+  }
+
   get toolbarButtons(): Core.Button[] {
     return Config.createSalesOrderToolbarButtons(this.i18n).map(btn => {
       let updatedBtn = { ...btn };
@@ -119,6 +155,7 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
       toggleFilters: () => this.toggleFilters(),
       exportActiveTable: () => this.exportActiveTable(),
       openGraphBuilder: () => this.openGraphBuilder(),
+      openEmailTemplateEditor: () => this.openEmailTemplateEditor(),
       toggleTable: () => this.toggleTable(),
     };
     if (actions[action]) actions[action]();

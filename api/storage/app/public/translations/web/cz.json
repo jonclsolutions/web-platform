@@ -1,4 +1,12 @@
 {
+    "web_maintenance": {
+        "heading": "Vylepšujeme systém",
+        "text": "Právě probíhá plánovaná údržba, abychom vám mohli nabídnout ještě lepší zážitek.",
+        "sub_text": "Zkuste to prosím za chvíli znovu.",
+        "retry": "Zkusit znovu",
+        "admin_login": "Přihlášení administrátora",
+        "language": "Jazyk"
+    },
     "faq": {
         "header_1": "Často kladené otázky",
         "write_us_prompt": "Nezodpověděli jsme vše? Napište nám",

@@ -4,47 +4,35 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Maintenance page shown while the e-shop is switched off.
+ * @description Maintenance page of the e-shop - the shared page of BaseMaintenanceComponent
+ * (same look and language dropdown as the web one) with a link back to the web; returns to the
+ * catalogue once the e-shop is active.
+ * @dependencies
+ * - BaseMaintenanceComponent: template, languages, status check.
  */
 
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router'; 
-import { BasePublicComponent } from '../../base-public.component';
-import { takeUntil } from 'rxjs/operators';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { UpperCasePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { Observable, map } from 'rxjs';
+import { BaseMaintenanceComponent } from '../../shared/maintenance/base-maintenance.component';
 
 @Component({
   selector: 'app-shop-maintenance',
   standalone: true,
-  imports: [RouterLink],
-  templateUrl: './shop-maintenance.component.html',
+  imports: [RouterLink, UpperCasePipe],
+  templateUrl: '../../shared/maintenance/maintenance-page.component.html',
   styleUrls: ['../../shared-styles/maintenance.css', './shop-maintenance.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ShopMaintenanceComponent extends BasePublicComponent {
+export class ShopMaintenanceComponent extends BaseMaintenanceComponent {
   protected readonly translationKey = 'shop_maintenance';
   protected override readonly translationModule = 'shop';
-  protected override readonly loadSiteSettings = true;
-  private router = inject(Router);
+  protected readonly activeUrl = '/shop/catalog';
+  override readonly homeLink = '/home';
 
-  protected override onInit() {
-    this.checkStatusAndRedirect();
-  }
-
-  /**
-   * @description Queries the backend for shop status; if active, forces navigation.
-   */
-  checkStatusAndRedirect() {
-    this.publicDataService.getShopStatus()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (res) => {
-          if (res.is_shop_active) {
-            this.router.navigate(['/shop/catalog']);
-          }
-        },
-        error: (err) => {
-          console.error('Error checking shop status during maintenance:', err);
-        }
-      });
+  /** @description E-shop status of the API. */
+  protected isSectionActive(): Observable<boolean> {
+    return this.publicDataService.getShopStatus().pipe(map(res => !!res?.is_shop_active));
   }
 }

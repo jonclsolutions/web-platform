@@ -130,6 +130,7 @@ final class TestSchema
             $t->string('token', 64)->unique();
             $t->string('family', 64)->nullable()->index();
             $t->timestamp('expires_at')->nullable();
+            $t->timestamp('session_expires_at')->nullable();
             $t->timestamp('rotated_at')->nullable();
             $t->timestamps();
             $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
@@ -370,6 +371,9 @@ final class TestSchema
             $t->increments('id');
             $t->boolean('is_web_active')->default(true);
             $t->string('web_maintenance_message', 500)->nullable();
+            foreach (['subject', 'title', 'intro', 'outro', 'labels'] as $column) {
+                $t->json("sales_order_email_{$column}_i18n")->nullable();
+            }
             $t->timestamp('created_at')->nullable()->useCurrent();
             $t->timestamp('updated_at')->nullable()->useCurrent();
             foreach (['title', 'intro', 'outro', 'labels', 'subject'] as $part) {
@@ -489,6 +493,7 @@ final class TestSchema
             $t->string('client_address', 500)->nullable();
             $t->string('client_phone')->nullable();
             $t->string('client_email')->nullable();
+            $t->string('lang', 5)->nullable();
             $t->text('order_description')->nullable();
             $t->boolean('data_processing_agreement')->default(false);
             $t->boolean('tos_agreement')->default(false);

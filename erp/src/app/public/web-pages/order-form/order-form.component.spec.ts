@@ -106,6 +106,8 @@ describe('OrderFormComponent', () => {
     const [endpoint, fd] = ctx.publicData.post.calls.mostRecent().args as [string, FormData];
     expect(endpoint).toBe('sales_orders');
     expect([fd.get('client_name'), fd.get('ico'), fd.get('lead_token'), fd.get('captcha_token')]).toEqual(['ACME', '123', 'abc', 'captcha-token']);
+    expect(fd.get('lang')).toBe(ctx.localization.getCurrentLanguage());
+    expect(fd.get('lang')).toBeTruthy();
     expect((fd.get('attachments[]') as File).name).toBe('brief.pdf');
     expect(component.isSubmitted).toBeTrue();
     expect(component.isLoading).toBeFalse();

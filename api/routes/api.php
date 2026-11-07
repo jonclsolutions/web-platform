@@ -620,6 +620,10 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:web-user-requests-update');
             Route::put('/raw-request-email-template', [WebSiteSettingController::class, 'updateRawRequestEmailTemplate'])
                 ->middleware('permission:web-user-requests-update');
+            Route::get('/sales-order-email-template', [WebSiteSettingController::class, 'showSalesOrderEmailTemplate'])
+                ->middleware('permission:web-sales-orders-update');
+            Route::put('/sales-order-email-template', [WebSiteSettingController::class, 'updateSalesOrderEmailTemplate'])
+                ->middleware('permission:web-sales-orders-update');
         });
 
         // ── web/job_applications ─────────────────────────────────────────

@@ -37,6 +37,12 @@ final class AuthCookies
     /** @description Lifetime of the refresh token (days) - the cookie and the database row expire together. */
     public const REFRESH_TTL_DAYS = 7;
 
+    /**
+     * @description Absolute limit of one login (days): however active the session is, no refresh
+     * token lives past this many days after the login - then a new login (with 2FA) is required.
+     */
+    public const SESSION_MAX_DAYS = 30;
+
     /** @description Name of the refresh route - its path is the Path of the refresh cookie. */
     public const REFRESH_ROUTE = 'auth.refresh';
 

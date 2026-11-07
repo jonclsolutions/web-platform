@@ -50,7 +50,8 @@ class LoginTest extends TestCase
      *   last_login_at, clear the failed-attempt counter and write the audit log.
      * @input Activated account (role with one permission), POST /api/login with its password.
      * @output 200 with user, roles, permissions, token and no refreshToken; refresh cookie
-     *   (HttpOnly, SameSite=Strict, Path /api/refresh) whose hash is the refresh_tokens row.
+     *   (HttpOnly, SameSite=Strict, Path /api/refresh) whose hash is the refresh_tokens row;
+     *   the login ends SESSION_MAX_DAYS from now.
      */
     public function test_login_success_issues_tokens(): void
     {
@@ -69,6 +70,8 @@ class LoginTest extends TestCase
         $this->assertArrayNotHasKey('refreshToken', $response->json('data'));
         $refresh = $this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh')->getValue();
         $this->assertSame(hash('sha256', $refresh), RefreshToken::where('user_id', $user->id)->value('token'));
+        $sessionEnd = RefreshToken::where('user_id', $user->id)->sole()->session_expires_at;
+        $this->assertLessThan(5, abs(now()->addDays(AuthCookies::SESSION_MAX_DAYS)->diffInSeconds($sessionEnd)));
         $this->assertNotNull($user->fresh()->last_login_at);
         $this->assertSame(0, RateLimiter::attempts('login-fail:' . $user->user_email));
         $this->assertCoreLog('login_success', $user->user_email);
@@ -490,6 +493,38 @@ class LoginTest extends TestCase
             ->assertOk();
 
         $this->assertNotNull(PersonalAccessToken::findToken($foreign));
+    }
+
+    /**
+     * @description Absolute login limit: a rotation keeps the end of the login and never
+     *   extends the token past it, so after SESSION_MAX_DAYS even an active session needs a new
+     *   login; a token from before the limit existed gets the full limit from now.
+     * @input Token whose login ends in 2 days; refresh; travel 3 days, refresh with the new cookie;
+     *   token without session_expires_at, refresh.
+     * @output 200, new token expires with the login (not in 7 days), same session end; 401 +
+     *   refresh_token_invalid; 200, session end = now + SESSION_MAX_DAYS.
+     */
+    public function test_refresh_respects_the_absolute_login_limit(): void
+    {
+        $this->freezeSecond();
+        $user = $this->user();
+        $end = now()->addDays(2);
+        RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'raw'), 'family' => 'fam-1',
+            'expires_at' => now()->addDay(), 'session_expires_at' => $end]);
+
+        $response = $this->withUnencryptedCookie(AuthCookies::REFRESH, 'raw')->withCredentials()->postJson('/api/refresh')->assertOk();
+        $current = RefreshToken::whereNull('rotated_at')->sole();
+        $this->assertTrue($current->expires_at->eq($end) && $current->session_expires_at->eq($end));
+
+        $this->travel(3)->days();
+        $next = $this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh')->getValue();
+        $this->withUnencryptedCookie(AuthCookies::REFRESH, $next)->withCredentials()->postJson('/api/refresh')->assertStatus(401);
+        $this->assertSecurityEvent('refresh_token_invalid', 'info');
+
+        RefreshToken::query()->delete();
+        RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'legacy'), 'expires_at' => now()->addDay()]);
+        $this->withUnencryptedCookie(AuthCookies::REFRESH, 'legacy')->withCredentials()->postJson('/api/refresh')->assertOk();
+        $this->assertTrue(RefreshToken::whereNull('rotated_at')->sole()->session_expires_at->eq(now()->addDays(AuthCookies::SESSION_MAX_DAYS)));
     }
 
     /**

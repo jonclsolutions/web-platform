@@ -42,6 +42,7 @@ class StoreWebSalesOrderRequest extends FormRequest
             'ico'               => 'nullable|string|max:20',
             'client_address'    => 'nullable|string|max:500',
             'client_phone'      => 'nullable|string|max:20',
+            'lang'              => 'sometimes|nullable|string|max:5',
             'attachments'       => ['nullable', 'array', 'max:' . self::LIMITS['max_files'], new AttachmentsTotalSize(self::LIMITS['max_total_bytes'])],
             'attachments.*'     => AttachmentPolicy::fileRules(AttachmentPolicy::SALES_ORDER),
             'dataProcessingAgreement' => 'required|accepted',

@@ -17,6 +17,7 @@ namespace Tests\Unit\Web;
 use App\Mail\Web\ProjectThreadActivityMail;
 use App\Mail\Web\WebRawRequestCommissionReceived;
 use App\Mail\Web\WebSalesOrderReceived;
+use App\Support\Mail\SalesOrderEmailTemplate;
 use Tests\Support\WebFixtures;
 use Tests\TestCase;
 
@@ -50,9 +51,10 @@ class WebMailsTest extends TestCase
     }
 
     /**
-     * @description The sales order confirmation has a fixed subject and repeats the order data.
-     * @input Sales order of 'Acme s.r.o.'.
-     * @output Subject 'Your inquiry has been received.'; HTML contains client name and e-mail.
+     * @description Without a stored template the sales order confirmation uses the built-in
+     *   default subject and repeats the order data.
+     * @input Sales order of 'Acme s.r.o.', no site settings.
+     * @output Subject SalesOrderEmailTemplate default; HTML contains client name and e-mail.
      */
     public function test_sales_order_confirmation(): void
     {
@@ -61,7 +63,7 @@ class WebMailsTest extends TestCase
         $mail = new WebSalesOrderReceived($order->load('attachments'));
         $html = $mail->render();
 
-        $mail->assertHasSubject('Your inquiry has been received.');
+        $mail->assertHasSubject(SalesOrderEmailTemplate::DEFAULTS['subject']);
         $this->assertStringContainsString('Acme s.r.o.', $html);
         $this->assertStringContainsString($order->client_email, $html);
         $this->assertSame([], $mail->attachments());

@@ -95,16 +95,19 @@ describe('SalesOrdersComponent', () => {
   });
 
   /**
-   * @description Toolbar: report and trash need permissions; export hidden in the trash; labels follow the state.
+   * @description Toolbar: report, e-mail template and trash need permissions; export hidden in the trash; labels follow the state.
    * @input  granted []; then all with trash view and open filters
-   * @output report/trash hidden without permission; trash view: export hidden, 'sales-orders.toolbar_show_active', 'sales-orders.toolbar_hide_filters'
+   * @output report/template/trash hidden without permission; trash view: export hidden, 'sales-orders.toolbar_show_active', 'sales-orders.toolbar_hide_filters'
    */
   it('builds the toolbar by permission and view', () => {
     ctx.permissions.granted = new Set();
     expect(toolbar()['openGraphBuilder'].showIf).toBeFalse();
+    expect(toolbar()['openEmailTemplateEditor'].showIf).toBeFalse();
     expect(toolbar()['toggleTable'].showIf).toBeFalse();
     ctx.permissions.granted = 'all';
     let t = toolbar();
+    expect(t['openEmailTemplateEditor'].showIf).toBeTrue();
+    expect(t['openEmailTemplateEditor'].label).toBe('sales-orders.toolbar_edit_email_template');
     expect(t['exportActiveTable'].showIf).toBeTrue();
     expect(t['toggleTable'].label).toBe('sales-orders.toolbar_show_trash');
     expect(t['toggleFilters'].label).toBe('sales-orders.toolbar_filters');
@@ -120,11 +123,11 @@ describe('SalesOrdersComponent', () => {
 
   /**
    * @description Toolbar actions call their handlers; unknown actions are ignored.
-   * @input  handleToolbarAction(toggleFilters | exportActiveTable | openGraphBuilder | toggleTable | 'unknown')
+   * @input  handleToolbarAction(toggleFilters | exportActiveTable | openGraphBuilder | openEmailTemplateEditor | toggleTable | 'unknown')
    * @output each handler called once; 'unknown' does nothing
    */
   it('dispatches the toolbar actions', () => {
-    const names = ['toggleFilters', 'exportActiveTable', 'openGraphBuilder', 'toggleTable'];
+    const names = ['toggleFilters', 'exportActiveTable', 'openGraphBuilder', 'openEmailTemplateEditor', 'toggleTable'];
     const spies = names.map(n => spyOn(component as any, n));
     names.forEach(a => component.handleToolbarAction(a));
     spies.forEach(s => expect(s).toHaveBeenCalledTimes(1));
@@ -177,12 +180,34 @@ describe('SalesOrdersComponent', () => {
 
   /**
    * @description The page renders its title.
-   * @input  detectChanges()
-   * @output text contains 'sales-orders.table_header'
+   * @input  detectChanges(); then the e-mail template editor opened
+   * @output text contains 'sales-orders.table_header'; the editor loads the order template endpoint
    */
   it('renders the page', fakeAsync(() => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('sales-orders.table_header');
+    component.openEmailTemplateEditor();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-email-template-editor')).not.toBeNull();
+    expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('web/settings/sales-order-email-template');
     discardPeriodicTasks();
   }));
+
+  /**
+   * @description The order e-mail template editor gets the summary rows of the order e-mail
+   *   with sample values (date in the admin locale); closing hides it.
+   * @input  openEmailTemplateEditor(); closeEmailTemplateEditor().
+   * @output modal open; rows name … date; address sample translated; closed.
+   */
+  it('opens and closes the e-mail template editor', () => {
+    component.openEmailTemplateEditor();
+    expect(component.showEmailTemplateModal).toBeTrue();
+    expect(component.emailTemplateRows.map(r => r.key)).toEqual(['label_name', 'label_ico', 'label_email', 'label_phone',
+      'label_address', 'label_description', 'label_attachments', 'label_date']);
+    expect(component.emailTemplateRows[4].sample).toBe('sales-orders.email_tpl_preview_address');
+    expect(component.emailTemplateRows[7].sample).toBe(new Date(2026, 7, 21, 15, 32).toLocaleString('cs-CZ',
+      { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }));
+    component.closeEmailTemplateEditor();
+    expect(component.showEmailTemplateModal).toBeFalse();
+  });
 });

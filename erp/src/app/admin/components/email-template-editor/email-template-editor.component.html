@@ -1,0 +1,141 @@
+<!--
+    @file: email-template-editor.component.html
+    @path: /src/app/admin/components/email-template-editor/email-template-editor.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Modal editor of a confirmation e-mail - language tabs, the texts, the summary labels and a live preview.
+    @dependencies: EmailTemplateEditorComponent
+-->
+<div class="email-tpl-overlay"
+     (mousedown)="$event.target === $event.currentTarget && close()">
+<div class="email-tpl-card" (mousedown)="$event.stopPropagation()">
+
+<div class="email-tpl-header">
+<div>
+<h2 class="email-tpl-title">{{ t('email_tpl_title') }}</h2>
+<p class="email-tpl-subtitle">{{ t('email_tpl_subtitle') }}</p>
+</div>
+<button type="button" class="email-tpl-close" (click)="close()" [disabled]="saving">✕</button>
+</div>
+
+<div class="email-tpl-body">
+
+@if (loading) {
+<p class="email-tpl-loading">{{ t('email_tpl_loading') }}</p>
+} @else {
+
+@if (languages.length > 1) {
+<div class="email-tpl-lang-tabs">
+@for (lang of languages; track lang.code) {
+<button type="button" class="email-tpl-lang-tab" [class.active]="currentLang === lang.code"
+        (click)="switchLang(lang.code)">
+{{ lang.code | uppercase }}
+</button>
+        }
+</div>
+      }
+
+<div class="email-tpl-field">
+<label class="email-tpl-label">{{ t('email_tpl_subject_label') }} <span class="email-tpl-label-hint">{{ t('email_tpl_subject_hint') }}</span></label>
+<input type="text" class="email-tpl-input"
+       [(ngModel)]="template.subject_i18n[currentLang]"
+       [placeholder]="t('email_tpl_placeholder_subject')">
+</div>
+
+<div class="email-tpl-field">
+<label class="email-tpl-label">{{ t('email_tpl_title_label') }}</label>
+<input type="text" class="email-tpl-input"
+       [(ngModel)]="template.title_i18n[currentLang]"
+       [placeholder]="t('email_tpl_placeholder_title')">
+</div>
+
+<div class="email-tpl-field">
+<label class="email-tpl-label">{{ t('email_tpl_greeting_label') }}</label>
+<input type="text" class="email-tpl-input"
+       [(ngModel)]="template.labels_i18n[currentLang]['greeting']"
+       [placeholder]="t('email_tpl_placeholder_greeting')">
+</div>
+
+<div class="email-tpl-field">
+<label class="email-tpl-label">{{ t('email_tpl_intro_label') }}</label>
+<textarea rows="3" class="email-tpl-textarea"
+          [(ngModel)]="template.intro_i18n[currentLang]"
+          [placeholder]="t('email_tpl_placeholder_intro')"></textarea>
+</div>
+
+<div class="email-tpl-section-label">{{ t('email_tpl_summary_section') }}</div>
+
+<div class="email-tpl-field">
+<label class="email-tpl-label">{{ t('email_tpl_summary_header_label') }}</label>
+<input type="text" class="email-tpl-input"
+       [(ngModel)]="template.labels_i18n[currentLang]['summary_header']"
+       [placeholder]="t('email_tpl_placeholder_summary_header')">
+</div>
+
+<div class="email-tpl-labels-grid">
+@for (row of rows; track row.key) {
+<div class="email-tpl-field">
+<label class="email-tpl-label">{{ t('email_tpl_' + row.key) }}</label>
+<input type="text" class="email-tpl-input"
+       [(ngModel)]="template.labels_i18n[currentLang][row.key]"
+       [placeholder]="t(placeholderKey(row.key))">
+</div>
+}
+</div>
+
+<div class="email-tpl-section-label">{{ t('email_tpl_outro_section') }}</div>
+
+<div class="email-tpl-field">
+<label class="email-tpl-label">{{ t('email_tpl_outro_label') }}</label>
+<textarea rows="2" class="email-tpl-textarea"
+          [(ngModel)]="template.outro_i18n[currentLang]"
+          [placeholder]="t('email_tpl_placeholder_outro')"></textarea>
+</div>
+
+<!-- ── Live preview ─────────────────────────────────────────────────────── -->
+<div class="email-tpl-section-label">{{ t('email_tpl_preview_section') }}</div>
+<p class="email-tpl-hint" style="margin-top:0;margin-bottom:10px;">
+{{ t('email_tpl_preview_hint') }}
+</p>
+
+<div class="email-tpl-preview-subject-row">
+<span class="email-tpl-preview-subject-label">{{ t('email_tpl_preview_subject_label') }}</span>
+<span class="email-tpl-preview-subject-value">{{ preview('subject') }}{{ subjectSuffix }}</span>
+</div>
+
+<div class="email-tpl-preview-frame">
+<div class="email-tpl-preview-header">{{ t('email_tpl_preview_company') }}</div>
+<div class="email-tpl-preview-body">
+<h1 class="email-tpl-preview-title">{{ preview('title') }}</h1>
+<p class="email-tpl-preview-text">{{ previewLabel('greeting') }}</p>
+<p class="email-tpl-preview-text">{{ preview('intro') }}</p>
+
+<p class="email-tpl-preview-summary-label">{{ previewLabel('summary_header') }}</p>
+<table class="email-tpl-preview-table">
+@for (row of rows; track row.key) {
+<tr><td class="email-tpl-preview-td-label">{{ previewLabel(row.key) }}</td><td class="email-tpl-preview-td-value">{{ row.sample }}</td></tr>
+}
+</table>
+
+<p class="email-tpl-preview-text email-tpl-preview-outro">{{ preview('outro') }}</p>
+</div>
+</div>
+
+<p class="email-tpl-hint">
+{{ t('email_tpl_lang_fallback_hint') }}
+</p>
+
+    }
+
+</div>
+
+<div class="email-tpl-footer">
+<button type="button" class="email-tpl-btn-cancel" (click)="close()" [disabled]="saving">{{ t('email_tpl_cancel') }}</button>
+<button type="button" class="email-tpl-btn-save" (click)="save()" [disabled]="saving || loading">
+{{ saving ? t('email_tpl_saving') : t('email_tpl_save') }}
+</button>
+</div>
+
+</div>
+</div>

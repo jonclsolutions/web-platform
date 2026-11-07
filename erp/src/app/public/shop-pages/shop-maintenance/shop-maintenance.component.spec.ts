@@ -4,9 +4,10 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Unit tests of ShopMaintenanceComponent and shopMaintenanceGuard: the maintenance page goes
- *   to the catalog once the shop is active (errors logged) and shows the contacts with a valid
- *   tel: link (bugfix 2026-10-23); the guard sends visitors to the maintenance page while the shop
+ * @description Unit tests of ShopMaintenanceComponent (shared BaseMaintenanceComponent page) and
+ *   shopMaintenanceGuard: the maintenance page goes to the catalog once the shop is active (errors
+ *   logged), shows the shop translations, the link back to the web and the contacts with a valid
+ *   tel: link; the guard sends visitors to the maintenance page while the shop
  *   is off, lets everything through on errors and never blocks the maintenance page itself.
  * @dependencies
  * - createPublicPageContext (status spies); Router spied.
@@ -32,10 +33,10 @@ describe('ShopMaintenanceComponent', () => {
   });
 
   /**
-   * @description Active shop → catalog; inactive → contacts with tel: link without spaces;
-   *   error → logged.
+   * @description Active shop → catalog; inactive → contacts with tel: link without spaces, the
+   *   "back to the web" link and the language dropdown; error → logged.
    * @input is_shop_active true; false; error.
-   * @output navigate(['/shop/catalog']); 'tel:+420777123456'; console.error.
+   * @output navigate(['/shop/catalog']); 'tel:+420777123456', href '/home', dropdown; console.error.
    */
   it('redirects to the catalog once the shop is active', () => {
     TestBed.createComponent(ShopMaintenanceComponent).detectChanges();
@@ -49,6 +50,8 @@ describe('ShopMaintenanceComponent', () => {
     expect(router.navigate).not.toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('shop@x.cz');
     expect(fixture.nativeElement.querySelector('a[href^="tel:"]').getAttribute('href')).toBe('tel:+420777123456');
+    expect(fixture.nativeElement.querySelector('.btn-home').getAttribute('href')).toBe('/home');
+    expect(fixture.nativeElement.querySelector('.maintenance-lang')).not.toBeNull();
 
     spyOn(console, 'error');
     ctx.publicData.getShopStatus.and.returnValue(throwError(() => new Error('down')));

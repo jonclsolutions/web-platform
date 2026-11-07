@@ -23,17 +23,17 @@
 set -e
 
 if ! command -v crontab &> /dev/null; then
-    echo "CHYBA: příkaz 'crontab' není na tomhle systému dostupný."
-    echo "Buď nastav zpracování fronty ručně (cron přes admin panel hostingu), nebo"
-    echo "dočasně přepni QUEUE_CONNECTION=sync v .env (synchronní odesílání, bez cronu)."
+    echo "ERROR: the 'crontab' command is not available on this system."
+    echo "Either set up the queue processing by hand (a cron job in the hosting control panel), or"
+    echo "temporarily switch QUEUE_CONNECTION=sync in .env (synchronous sending, no cron)."
     exit 1
 fi
 
 LARAVEL_ABS_PATH="$(pwd)"
 
 if [ ! -f "${LARAVEL_ABS_PATH}/artisan" ]; then
-    echo "CHYBA: soubor 'artisan' nenalezen v ${LARAVEL_ABS_PATH}."
-    echo "Spusť tento skript z kořenového adresáře Laravel projektu (tam, kde je artisan)."
+    echo "ERROR: file 'artisan' not found in ${LARAVEL_ABS_PATH}."
+    echo "Run this script from the root directory of the Laravel project (where artisan is)."
     exit 1
 fi
 
@@ -43,15 +43,15 @@ CRON_LINE="* * * * * cd ${LARAVEL_ABS_PATH} && php artisan queue:work --stop-whe
 EXISTING_CRON=$(crontab -l 2>/dev/null || true)
 
 if echo "$EXISTING_CRON" | grep -qF "$CRON_MARKER"; then
-    echo "Cron záznam už existuje, přeskočeno."
-    echo "Aktuální řádek:"
+    echo "The cron entry already exists, skipped."
+    echo "Current line:"
     echo "$EXISTING_CRON" | grep -F "$CRON_MARKER"
 else
     (echo "$EXISTING_CRON"; echo "$CRON_LINE") | crontab -
-    echo "Cron záznam přidán - fronta se bude zpracovávat každou minutu."
-    echo "Cesta: ${LARAVEL_ABS_PATH}"
+    echo "Cron entry added - the queue is processed every minute."
+    echo "Path: ${LARAVEL_ABS_PATH}"
 fi
 
 echo ""
-echo "Ověření: 'crontab -l' by teď měl obsahovat řádek s markerem '${CRON_MARKER}'."
-echo "Log zpracovaných jobů najdeš v: ${LARAVEL_ABS_PATH}/storage/logs/queue-cron.log"
+echo "Check: 'crontab -l' should now contain a line with the marker '${CRON_MARKER}'."
+echo "The log of the processed jobs is in: ${LARAVEL_ABS_PATH}/storage/logs/queue-cron.log"

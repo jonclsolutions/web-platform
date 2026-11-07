@@ -4,7 +4,7 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Full-screen maintenance notice (grid background, icon, heading, text) shown by the public web and the e-shop while maintenance mode is on.
+    @description: Full-screen maintenance notice of the public web and the e-shop (shared template maintenance-page.component.html): grid background, icon, heading, text, social links, back link, contacts, language dropdown and the admin sign-in link. The accent colour comes from the component (:host variables).
     @dependencies: none
 */
 
@@ -137,4 +137,167 @@ p {
 
 @keyframes spinSlow {
   to { transform: rotate(360deg); }
+}
+
+/*
+    @module: Maintenance extras
+    @description: Sub text, social links row, "back to the web" link / "try again" button and the discreet admin sign-in link - the same on both pages.
+    @usage: .sub-text, .maintenance-social, .actions, .btn-home, .maintenance-admin-link
+*/
+
+.sub-text {
+  color: var(--text-dim);
+  margin-bottom: 26px;
+}
+
+.maintenance-social {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.btn-home {
+  display: inline-block;
+  padding: 12px 28px;
+  background-color: var(--accent);
+  color: white;
+  text-decoration: none;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.15s ease;
+}
+
+.btn-home:hover {
+  filter: brightness(0.92);
+  transform: translateY(-1px);
+}
+
+.maintenance-admin-link {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--text-dim);
+  background: transparent;
+  transition: color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.maintenance-admin-link:hover {
+  color: var(--accent);
+  background: var(--accent-dim);
+  transform: translateY(-2px);
+}
+
+/*
+    @module: Language dropdown
+    @description: Language switcher in the top right corner - the same languages and stored choice as the header of the main pages.
+    @usage: .maintenance-lang, .maintenance-lang-trigger, .maintenance-lang-menu, .maintenance-lang-option, .maintenance-lang-flag
+*/
+
+.maintenance-lang {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 3;
+}
+
+.maintenance-lang-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.maintenance-lang-trigger:hover,
+.maintenance-lang--open .maintenance-lang-trigger {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.maintenance-lang-flag {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.maintenance-lang-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(24, 24, 27, 0.08);
+}
+
+.maintenance-lang-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.maintenance-lang-option:hover,
+.maintenance-lang-option--active {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+/*
+    @module: Maintenance - small screens
+    @description: Narrower card, stacked contacts, corner elements closer to the edge.
+    @usage: @media (max-width: 480px)
+*/
+
+@media (max-width: 480px) {
+  .maintenance-content {
+    padding: 36px 24px;
+    margin: 16px;
+  }
+
+  .maintenance-contact-bar {
+    flex-direction: column;
+    align-items: center;
+    bottom: 16px;
+    width: calc(100% - 32px);
+  }
+
+  .maintenance-admin-link {
+    right: 14px;
+    bottom: 14px;
+  }
+
+  .maintenance-lang {
+    top: 14px;
+    right: 14px;
+  }
 }

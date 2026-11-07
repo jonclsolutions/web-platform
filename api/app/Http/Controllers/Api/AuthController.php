@@ -8,7 +8,8 @@
  * @description Manages user authentication, token-based session lifecycle (Access/Refresh
  * tokens), CAPTCHA-gated brute-force protection, and mandatory/optional 2FA verification.
  * @security The access token (60 min) is returned in the body and kept by the admin only in
- * memory. The refresh token (7 days, rotated on every use) is NEVER in a body: it travels only in
+ * memory. The refresh token (7 days since its last use, at most 30 days since the login, rotated
+ * on every use) is NEVER in a body: it travels only in
  * the HttpOnly / Secure / SameSite=Strict cookie of AuthCookies, limited to POST /api/refresh, so
  * a script (XSS) can neither read it nor keep the account beyond the access token's lifetime.
  */
@@ -412,10 +413,11 @@ class AuthController extends Controller
         // One refresh session per user: a new login replaces the previous family.
         RefreshToken::where('user_id', $user->id)->delete();
         RefreshToken::create([
-            'user_id'    => $user->id,
-            'token'      => hash('sha256', $refreshToken),
-            'family'     => (string) Str::uuid(),
-            'expires_at' => now()->addDays(AuthCookies::REFRESH_TTL_DAYS),
+            'user_id'            => $user->id,
+            'token'              => hash('sha256', $refreshToken),
+            'family'             => (string) Str::uuid(),
+            'expires_at'         => now()->addDays(AuthCookies::REFRESH_TTL_DAYS),
+            'session_expires_at' => now()->addDays(AuthCookies::SESSION_MAX_DAYS),
         ]);
 
         $this->logAction($request, CoreLog::class, 'login_success', 'Auth', "User logged in: {$user->user_email}", $user->id, 'User');
@@ -428,6 +430,9 @@ class AuthController extends Controller
      * @description Refreshes the session with the refresh token of the HttpOnly cookie: rotates it
      * (new cookie) and returns a new access token together with the profile, roles and permissions
      * - the admin also uses this call to restore its session after a page reload.
+     * @note Two limits: the token expires REFRESH_TTL_DAYS after its last use (idle limit), and no
+     * token outlives `session_expires_at` - SESSION_MAX_DAYS after the login (absolute limit). After
+     * either one the token is simply invalid (401, cookie deleted) and the admin asks for a new login.
      * @note Checks `is_blocked` again: an account blocked between issuing the refresh token and
      * using it must not get a new access token. Every refusal deletes the cookie.
      * @note Only the access token sent with the request (and the expired ones) is revoked, not
@@ -513,11 +518,14 @@ class AuthController extends Controller
         $newAccessToken = $user->createToken('access-token', ['*'], now()->addMinutes(60))->plainTextToken;
         $newRefreshToken = Str::random(60);
 
+        // Sliding expiry, but never past the absolute end of the login (then a new login with 2FA).
+        $sessionExpiresAt = $dbRefreshToken->session_expires_at ?? now()->addDays(AuthCookies::SESSION_MAX_DAYS);
         RefreshToken::create([
-            'user_id'    => $user->id,
-            'token'      => hash('sha256', $newRefreshToken),
-            'family'     => $dbRefreshToken->family ?? (string) Str::uuid(),
-            'expires_at' => now()->addDays(AuthCookies::REFRESH_TTL_DAYS),
+            'user_id'            => $user->id,
+            'token'              => hash('sha256', $newRefreshToken),
+            'family'             => $dbRefreshToken->family ?? (string) Str::uuid(),
+            'expires_at'         => now()->addDays(AuthCookies::REFRESH_TTL_DAYS)->min($sessionExpiresAt),
+            'session_expires_at' => $sessionExpiresAt,
         ]);
         // Used tokens are kept for the reuse detection only until they expire.
         RefreshToken::where('user_id', $user->id)->where('expires_at', '<=', now())->delete();

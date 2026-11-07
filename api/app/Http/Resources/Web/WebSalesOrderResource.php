@@ -35,6 +35,7 @@ class WebSalesOrderResource extends JsonResource
             'client_address'             => $this->client_address,
             'client_phone'               => $this->client_phone,
             'client_email'               => $this->client_email,
+            'lang'                       => $this->lang,
             'order_description'          => $this->order_description,
             'data_processing_agreement'  => (bool) $this->data_processing_agreement,
             'tos_agreement'              => (bool) $this->tos_agreement,

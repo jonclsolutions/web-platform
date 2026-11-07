@@ -1,12 +1,12 @@
 /*
-    @file: email-template-modal.component.css
-    @path: /src/app/admin/web-pages/user-request/email-template-modal.component.css
+    @file: email-template-editor.component.css
+    @path: /src/app/admin/components/email-template-editor/email-template-editor.component.css
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description Styles of the "Edit confirmation e-mail" modal - component-scoped (Angular
-    Emulated encapsulation), loaded NEXT TO the shared `../default-style.css` (see styleUrls of
-    user-request.component.ts).
+    @description Styles of the "Edit confirmation e-mail" modal (EmailTemplateEditorComponent) -
+    component-scoped (Angular Emulated encapsulation); used by the inquiry and the order template.
+    @dependencies: none
 */
 
 .email-tpl-overlay {

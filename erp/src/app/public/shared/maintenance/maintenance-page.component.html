@@ -1,13 +1,42 @@
-<!-- 
-    @file: shop-maintenance.component.html
-    @path: /src/app/public/shop-pages/shop-maintenance/shop-maintenance.component.html
+<!--
+    @file: maintenance-page.component.html
+    @path: /src/app/public/shared/maintenance/maintenance-page.component.html
     @project: JS web-platform
     @author: JS
-    @created: 2026 
-    @description: Template of the shop maintenance component.
+    @created: 2026
+    @description: Shared template of the web and e-shop maintenance pages - language dropdown, notice, social links, the back link (e-shop) or the retry button (web), contacts and the admin sign-in link.
+    @dependencies: BaseMaintenanceComponent (WebMaintenanceComponent, ShopMaintenanceComponent)
 -->
 <div class="maintenance-container">
   <div class="maintenance-grid-bg" aria-hidden="true"></div>
+
+  @if (languages.length) {
+    <div class="maintenance-lang" [class.maintenance-lang--open]="isLangOpen">
+      <button type="button" class="maintenance-lang-trigger" (click)="toggleLang()"
+              [attr.aria-expanded]="isLangOpen" aria-haspopup="listbox" [attr.aria-label]="t?.language">
+        @if (activeLang; as lang) {
+          <img [src]="lang.flag" [alt]="lang.code" class="maintenance-lang-flag">
+        }
+        <span class="maintenance-lang-code">{{ currentLang | uppercase }}</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      @if (isLangOpen) {
+        <ul class="maintenance-lang-menu" role="listbox">
+          @for (lang of languages; track lang.code) {
+            <li class="maintenance-lang-option" role="option"
+                [class.maintenance-lang-option--active]="currentLang === lang.code"
+                [attr.aria-selected]="currentLang === lang.code"
+                (click)="selectLanguage(lang.code)">
+              <img [src]="lang.flag" [alt]="lang.code" class="maintenance-lang-flag">
+              <span>{{ lang.label }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
 
   <div class="maintenance-content">
     <div class="maintenance-icon" aria-hidden="true">
@@ -32,7 +61,11 @@
     }
 
     <div class="actions">
-      <a routerLink="/home" class="btn-home">{{ t?.back_home }}</a>
+      @if (homeLink) {
+        <a [routerLink]="homeLink" class="btn-home">{{ t?.back_home }}</a>
+      } @else {
+        <button type="button" class="btn-home" (click)="checkStatusAndRedirect()">{{ t?.retry }}</button>
+      }
     </div>
   </div>
 
@@ -57,4 +90,11 @@
       }
     </div>
   }
+
+  <a routerLink="/auth/login" class="maintenance-admin-link" [title]="t?.admin_login" [attr.aria-label]="t?.admin_login">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+    </svg>
+  </a>
 </div>

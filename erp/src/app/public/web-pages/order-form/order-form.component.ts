@@ -192,6 +192,8 @@ export class OrderFormComponent extends BasePublicComponent {
     this.selectedFiles.forEach(file => {
       formData.append('attachments[]', file, file.name);
     });
+    // Language of the page - the confirmation e-mail is written in it (VT-15).
+    formData.append('lang', this.localizationService.getCurrentLanguage());
 
     this.captcha.nextToken().pipe(
       switchMap(token => {

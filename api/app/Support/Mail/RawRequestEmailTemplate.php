@@ -10,13 +10,14 @@
  * the language of the sender - one place for the fallback logic, like `CompanyContactInfo`.
  * @dependencies
  * - App\Models\Web\WebSiteSetting: singleton row with the editable i18n template.
+ * - I18nEmailTemplate: the shared language fallback.
  */
 
 namespace App\Support\Mail;
 
 use App\Models\Web\WebSiteSetting;
 
-class RawRequestEmailTemplate
+class RawRequestEmailTemplate extends I18nEmailTemplate
 {
     /**
      * @description Default texts used when the admin never filled in anything for the language
@@ -75,26 +76,5 @@ class RawRequestEmailTemplate
             'emailLabelAttachments' => self::resolveLabel($labelsForLang, $labelsForCz, 'label_attachments', self::DEFAULT_LABEL_ATTACHMENTS),
             'emailLabelDate'        => self::resolveLabel($labelsForLang, $labelsForCz, 'label_date', self::DEFAULT_LABEL_DATE),
         ];
-    }
-
-    /**
-     * @description First non-empty value of `$i18n[$lang]`, `$i18n['cz']`, `$default` (title /
-     * intro / outro - flat i18n arrays keyed by the language).
-     */
-    private static function resolve(array $i18n, string $lang, string $default): string
-    {
-        $candidate = $i18n[$lang] ?? $i18n['cz'] ?? null;
-        return ($candidate !== null && trim($candidate) !== '') ? $candidate : $default;
-    }
-
-    /**
-     * @description Same fallback as `resolve()` for the nested
-     * `raw_request_email_labels_i18n[language][key]` - `$forLang` / `$forCz` are the
-     * sub-objects of the language and of 'cz'.
-     */
-    private static function resolveLabel(array $forLang, array $forCz, string $key, string $default): string
-    {
-        $candidate = $forLang[$key] ?? $forCz[$key] ?? null;
-        return ($candidate !== null && trim($candidate) !== '') ? $candidate : $default;
     }
 }

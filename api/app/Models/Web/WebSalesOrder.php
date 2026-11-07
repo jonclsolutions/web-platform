@@ -39,6 +39,7 @@ class WebSalesOrder extends Model
         'client_address',
         'client_phone',
         'client_email',
+        'lang',
         'order_description',
         'salesman_name',
         'data_processing_agreement',

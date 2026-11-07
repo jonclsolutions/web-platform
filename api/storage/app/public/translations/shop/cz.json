@@ -32,7 +32,9 @@
         "heading": "Vylepšujeme systém",
         "text": "Na e-shopu právě pracujeme, aby byl váš zážitek z nákupu ještě lepší.",
         "sub_text": "Zkuste to prosím za chvíli znovu.",
-        "back_home": "Zpět na hlavní web"
+        "back_home": "Zpět na hlavní web",
+        "admin_login": "Přihlášení administrátora",
+        "language": "Jazyk"
     },
     "catalog": {
         "filter_button": "Filtr",

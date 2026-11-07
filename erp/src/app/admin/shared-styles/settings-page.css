@@ -524,7 +524,6 @@
   position: fixed;
   inset: 0;
   background: rgba(24, 24, 27, 0.45);
-  backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -649,7 +648,7 @@
 
 .ew-field-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 14px;
 }
 
@@ -667,6 +666,7 @@
 .ew-hint-text { font-size: 0.73rem; color: var(--text-dim); }
 
 .ew-input {
+  width: 100%;
   padding: 9px 12px;
   border: 1px solid var(--border-mid);
   border-radius: var(--radius);

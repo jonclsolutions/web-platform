@@ -104,6 +104,14 @@
 (closeDetails)="showDetails = false">
 </app-details-builder>
 }
+@if (showEmailTemplateModal) {
+<app-email-template-editor
+  endpoint="web/settings/sales-order-email-template"
+  fieldPrefix="sales_order_email"
+  i18nSection="sales-orders"
+  [rows]="emailTemplateRows"
+  (closed)="closeEmailTemplateEditor()" />
+}
 @if (showGraphBuilder) {
 <app-graph-builder
 [apiEndpoint]="apiEndpoint"
