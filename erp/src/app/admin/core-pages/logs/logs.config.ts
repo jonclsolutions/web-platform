@@ -12,6 +12,7 @@
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { mapLabeledOptions } from '../../components/builders/labeled-options';
 
 const SECTION = 'core-logs';
 
@@ -65,10 +66,6 @@ const MODULE_LABEL_KEYS: Record<string, string> = {
   Core: 'module_core',
 };
 
-function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, i18n: AdminLocalizationService) {
-  return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
-}
-
 export function createButtons(i18n: AdminLocalizationService): Core.TableButtons[] {
   return [
     { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_details`), isActive: true, type: 'info_button', action: 'details', icon: 'search' },
@@ -101,8 +98,8 @@ export function createFilterColumns(i18n: AdminLocalizationService): Core.Filter
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_id_placeholder`), canSort: true },
     { key: 'user_plain', header: i18n.getValue(`${SECTION}.col_user`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_user_placeholder`), canSort: true },
-    { key: 'event_type', header: i18n.getValue(`${SECTION}.filter_event_label`), type: 'select', options: mapLabeledOptions(EVENT_TYPE_VALUES, EVENT_TYPE_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_event_placeholder`), canSort: true },
-    { key: 'module', header: i18n.getValue(`${SECTION}.col_module`), type: 'select', options: mapLabeledOptions(MODULE_VALUES, MODULE_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_module_placeholder`), canSort: true },
+    { key: 'event_type', header: i18n.getValue(`${SECTION}.filter_event_label`), type: 'select', options: mapLabeledOptions(SECTION, EVENT_TYPE_VALUES, EVENT_TYPE_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_event_placeholder`), canSort: true },
+    { key: 'module', header: i18n.getValue(`${SECTION}.col_module`), type: 'select', options: mapLabeledOptions(SECTION, MODULE_VALUES, MODULE_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_module_placeholder`), canSort: true },
     { key: 'origin', header: i18n.getValue(`${SECTION}.col_ip`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_ip_placeholder`), canSort: true },
   ];
 }

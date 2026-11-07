@@ -1,31 +1,35 @@
 -- ═══════════════════════════════════════════════════════════════
--- Funguje na JAKÉKOLI databázi, do které jste v phpMyAdmin/mysql
--- klientovi zrovna přihlášeni - DATABASE() vrátí název aktuálně
--- vybrané DB automaticky, nikde není natvrdo napsaný název.
+-- @file delete_all_db_tables.txt
+-- @path docs/delete_all_db_tables.txt
+-- @project JS web-platform
+-- @author JS
+-- @created 2026
+-- @description Drops every table of the database you are connected to in
+--   phpMyAdmin / the mysql client - DATABASE() returns the name of the
+--   currently selected database, no name is hard-coded.
 --
--- Bez PREPARE/EXECUTE (to dělalo problémy) - jen obyčejný SELECT,
--- který vygeneruje seznam DROP TABLE příkazů. Ty pak zkopírujete
--- a spustíte jako druhý krok. Funguje spolehlivě v jakékoli verzi
--- phpMyAdmin.
+--   Without PREPARE/EXECUTE (unreliable in phpMyAdmin) - a plain SELECT
+--   generates the DROP TABLE statements, which you copy and run as the
+--   second step.
 --
--- POZOR: nevratné. Udělejte si zálohu (Export) PŘED spuštěním.
+--   WARNING: irreversible. Make a backup (Export) BEFORE running it.
+-- @dependencies none
 -- ═══════════════════════════════════════════════════════════════
 
 
--- ── KROK 1: vygenerování DROP příkazů (nic se nesmaže) ───────────
--- ── !!!!!!!!!!!!! ZNENIT NAZEV DB !!!!!!!!!!!!!§
+-- ── STEP 1: generate the DROP statements (nothing is deleted) ─────
 SELECT CONCAT('DROP TABLE IF EXISTS `', TABLE_NAME, '`;') AS drop_statement
 FROM information_schema.TABLES
-WHERE TABLE_SCHEMA = 'f191121'
+WHERE TABLE_SCHEMA = DATABASE()
 ORDER BY TABLE_NAME;
 
 
--- ── KROK 2: skutečné smazání ──────────────────────────────────────
--- Zkopírujte VÝSTUP z KROKU 1 (celý sloupec drop_statement) a vložte
--- ho místo komentáře níže, pak spusťte celý tenhle blok najednou.
+-- ── STEP 2: the actual deletion ───────────────────────────────────
+-- Copy the OUTPUT of STEP 1 (the whole drop_statement column), paste it
+-- in place of the comment below and run the whole block at once.
 
 SET FOREIGN_KEY_CHECKS = 0;
 
--- <<< sem vložte zkopírované DROP TABLE příkazy z KROKU 1 >>>
+-- <<< paste the DROP TABLE statements of STEP 1 here >>>
 
 SET FOREIGN_KEY_CHECKS = 1;

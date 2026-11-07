@@ -189,8 +189,6 @@ Route::prefix('account-activation')->group(function () {
 | Authentication (public)
 |--------------------------------------------------------------------------
 */
-Route::get('/sanctum/csrf-cookie', fn(Request $r) => response()->json([], 204));
-
 Route::post('/login', [AuthController::class, 'login'])
     ->middleware('throttle:login');
 

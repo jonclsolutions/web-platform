@@ -149,7 +149,6 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
   replySendError: string | null = null;
 
   isRefreshing = false;
-  closingThread = false;
 
   isLangMenuOpen = false;
 
@@ -678,36 +677,6 @@ updateThreadStatus(status: string): void {
     this.replyBody = '';
     this.replyFiles = [];
     this.replyFileError = null;
-  }
-
-  /**
-   * @description Closes the thread (one direction only, active -> closed).
-   * @deprecated Replaced by `updateThreadStatus()` (both directions) - not used by the template.
-   */
-  closeThreadAsCustomer(): void {
-    if (!this.selectedThread || this.closingThread) return;
-    this.closingThread = true;
-    this.cdr.markForCheck();
-
-    this.portalPost<ProjectThread>(
-      `projects/public/${this.token}/threads/${this.selectedThread.id}/close`,
-      {}
-    ).pipe(
-      finalize(() => { this.closingThread = false; this.cdr.markForCheck(); }),
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (updated) => {
-        this.selectedThread!.status = updated.status;
-        const inList = this.threads.find(t => t.id === this.selectedThread!.id);
-        if (inList) inList.status = updated.status;
-      },
-      error: (err) => {
-        if (err?.status === 404) {
-          this.closeThread();
-          this.loadThreads();
-        }
-      }
-    });
   }
 
   sendReply(): void {

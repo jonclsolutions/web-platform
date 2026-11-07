@@ -16,7 +16,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractContro
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { EntityCrudService } from '../../../core/services/entitiy-crud.service';
+import { EntityCrudService } from '../../../core/services/entity-crud.service';
 import { DataHandler } from '../../../core/services/data-handler.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';

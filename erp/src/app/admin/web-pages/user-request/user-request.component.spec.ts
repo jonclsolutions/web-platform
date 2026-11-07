@@ -17,10 +17,7 @@ import { ComponentFixture, TestBed, fakeAsync, discardPeriodicTasks } from '@ang
 import { of } from 'rxjs';
 
 import { UserRequestComponent } from './user-request.component';
-import {
-  USER_REQUEST_PRIORITY_OPTIONS, USER_REQUEST_PRIORITY_VALUES, USER_REQUEST_STATUS_OPTIONS, USER_REQUEST_STATUS_VALUES,
-  USER_REQUEST_THEMA_OPTIONS, USER_REQUEST_THEMA_VALUES
-} from './user-request.config';
+import { USER_REQUEST_PRIORITY_VALUES, USER_REQUEST_STATUS_VALUES, USER_REQUEST_THEMA_VALUES } from './user-request.config';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 
 describe('UserRequestComponent', () => {
@@ -68,7 +65,7 @@ describe('UserRequestComponent', () => {
   });
 
   /**
-   * @description Theme, status and priority options with translated labels; the *_OPTIONS aliases equal the values.
+   * @description Theme, status and priority options with translated labels.
    * @input  thema / status / priority fields and filters
    * @output values = exported constants; labels 'user-request.thema_careers', 'user-request.status_cancelled', 'user-request.priority_high'
    */
@@ -80,9 +77,6 @@ describe('UserRequestComponent', () => {
     expect(field('status').options[3].label).toBe('user-request.status_cancelled');
     expect(field('priority').options[2].label).toBe('user-request.priority_high');
     expect(['thema', 'status', 'priority'].map(k => filter(k).options.length)).toEqual([4, 4, 3]);
-    expect(USER_REQUEST_THEMA_OPTIONS).toBe(USER_REQUEST_THEMA_VALUES);
-    expect(USER_REQUEST_STATUS_OPTIONS).toBe(USER_REQUEST_STATUS_VALUES);
-    expect(USER_REQUEST_PRIORITY_OPTIONS).toBe(USER_REQUEST_PRIORITY_VALUES);
   });
 
   /**

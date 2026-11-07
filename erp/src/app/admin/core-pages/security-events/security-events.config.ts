@@ -13,6 +13,7 @@
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { mapLabeledOptions } from '../../components/builders/labeled-options';
 
 const SECTION = 'security-events';
 
@@ -60,10 +61,6 @@ const STATUS_LABEL_KEYS: Record<string, string> = {
   confirmed_attack: 'status_confirmed_attack',
 };
 
-function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, i18n: AdminLocalizationService) {
-  return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
-}
-
 export function createButtons(i18n: AdminLocalizationService): Core.TableButtons[] {
   return [
     { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_details`), isActive: true, type: 'info_button', action: 'details', icon: 'search' },
@@ -87,9 +84,9 @@ export function createToolbarButtons(i18n: AdminLocalizationService): Core.Butto
  */
 export function createFormFields(i18n: AdminLocalizationService): Core.InputDefinition[] {
   return [
-    { column_name: 'event_type', type: 'select', options: mapLabeledOptions(EVENT_TYPE_VALUES, EVENT_TYPE_LABEL_KEYS, i18n) } as unknown as Core.InputDefinition,
-    { column_name: 'severity', type: 'select', options: mapLabeledOptions(SEVERITY_VALUES, SEVERITY_LABEL_KEYS, i18n) } as unknown as Core.InputDefinition,
-    { column_name: 'status', type: 'select', options: mapLabeledOptions(STATUS_VALUES, STATUS_LABEL_KEYS, i18n) } as unknown as Core.InputDefinition,
+    { column_name: 'event_type', type: 'select', options: mapLabeledOptions(SECTION, EVENT_TYPE_VALUES, EVENT_TYPE_LABEL_KEYS, i18n) } as unknown as Core.InputDefinition,
+    { column_name: 'severity', type: 'select', options: mapLabeledOptions(SECTION, SEVERITY_VALUES, SEVERITY_LABEL_KEYS, i18n) } as unknown as Core.InputDefinition,
+    { column_name: 'status', type: 'select', options: mapLabeledOptions(SECTION, STATUS_VALUES, STATUS_LABEL_KEYS, i18n) } as unknown as Core.InputDefinition,
   ];
 }
 
@@ -108,9 +105,9 @@ export function createTableColumns(i18n: AdminLocalizationService): Core.ColumnD
 export function createFilterColumns(i18n: AdminLocalizationService): Core.FilterColumns[] {
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_id_placeholder`), canSort: true },
-    { key: 'event_type', header: i18n.getValue(`${SECTION}.col_event_type`), type: 'select', options: mapLabeledOptions(EVENT_TYPE_VALUES, EVENT_TYPE_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_event_type_placeholder`), canSort: true },
-    { key: 'severity', header: i18n.getValue(`${SECTION}.col_severity`), type: 'select', options: mapLabeledOptions(SEVERITY_VALUES, SEVERITY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_severity_placeholder`), canSort: true },
-    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'select', options: mapLabeledOptions(STATUS_VALUES, STATUS_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_status_placeholder`), canSort: true },
+    { key: 'event_type', header: i18n.getValue(`${SECTION}.col_event_type`), type: 'select', options: mapLabeledOptions(SECTION, EVENT_TYPE_VALUES, EVENT_TYPE_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_event_type_placeholder`), canSort: true },
+    { key: 'severity', header: i18n.getValue(`${SECTION}.col_severity`), type: 'select', options: mapLabeledOptions(SECTION, SEVERITY_VALUES, SEVERITY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_severity_placeholder`), canSort: true },
+    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'select', options: mapLabeledOptions(SECTION, STATUS_VALUES, STATUS_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_status_placeholder`), canSort: true },
     { key: 'ip_address', header: i18n.getValue(`${SECTION}.col_ip`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_ip_placeholder`), canSort: true },
   ];
 }
@@ -139,7 +136,7 @@ export function createDetailsColumns(i18n: AdminLocalizationService): Core.ItemD
  * `STATUS_VALUES` / `STATUS_LABEL_KEYS` pair as FORM_FIELDS / FILTER_COLUMNS.
  */
 export function createStatusOptions(i18n: AdminLocalizationService) {
-  return mapLabeledOptions(STATUS_VALUES, STATUS_LABEL_KEYS, i18n);
+  return mapLabeledOptions(SECTION, STATUS_VALUES, STATUS_LABEL_KEYS, i18n);
 }
 
 /**

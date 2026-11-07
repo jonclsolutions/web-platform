@@ -9,6 +9,7 @@
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { mapLabeledOptions } from '../../components/builders/labeled-options';
 
 const SECTION = 'edit-news';
 
@@ -26,10 +27,6 @@ const THEMA_LABEL_KEYS: Record<string, string> = {
   maintenance: 'thema_maintenance',
   event: 'thema_event',
 };
-
-function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, i18n: AdminLocalizationService) {
-  return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
-}
 
 export function createNewsButtons(i18n: AdminLocalizationService): Core.TableButtons[] {
   return [
@@ -66,7 +63,7 @@ export function createNewsFormFields(i18n: AdminLocalizationService): Core.Input
       column_name: 'thema',
       label: i18n.getValue(`${SECTION}.field_thema_label`),
       type: 'select',
-      options: mapLabeledOptions(NEWS_THEMA_VALUES, THEMA_LABEL_KEYS, i18n),
+      options: mapLabeledOptions(SECTION, NEWS_THEMA_VALUES, THEMA_LABEL_KEYS, i18n),
       required: true,
       errorMessage: i18n.getValue(`${SECTION}.field_thema_error`),
       editable: true, show_in_edit: true, show_in_create: true,
@@ -154,7 +151,7 @@ export function createNewsFilterColumns(i18n: AdminLocalizationService): Core.Fi
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_id_placeholder`), canSort: true },
     { key: 'title', header: i18n.getValue(`${SECTION}.col_title`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_title_placeholder`), canSort: true },
     { key: 'author', header: i18n.getValue(`${SECTION}.col_author`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_author_placeholder`), canSort: true },
-    { key: 'thema', header: i18n.getValue(`${SECTION}.col_thema`), type: 'select', options: mapLabeledOptions(NEWS_THEMA_VALUES, THEMA_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_thema_placeholder`), canSort: true },
+    { key: 'thema', header: i18n.getValue(`${SECTION}.col_thema`), type: 'select', options: mapLabeledOptions(SECTION, NEWS_THEMA_VALUES, THEMA_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_thema_placeholder`), canSort: true },
   ];
 }
 

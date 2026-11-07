@@ -20,7 +20,7 @@
  */
 
 import { Subject, of, throwError, Observable } from 'rxjs';
-import { EntityCrudService, DeleteOptions } from './entitiy-crud.service';
+import { EntityCrudService, DeleteOptions } from './entity-crud.service';
 import { DataHandler } from './data-handler.service';
 
 describe('EntityCrudService', () => {
@@ -56,8 +56,8 @@ describe('EntityCrudService', () => {
   // ---------------------------------------------------------------------
   // Lazy endpointProvider
   // ---------------------------------------------------------------------
-  describe('endpointProvider (lazy vyhodnocení)', () => {
-    it('by mělo endpointProvider zavolat při KAŽDÉM požadavku, ne jen jednou při konstrukci', () => {
+  describe('endpointProvider (lazy evaluation)', () => {
+    it('calls endpointProvider on EVERY request, not only once at construction', () => {
       let currentEndpoint = 'first-endpoint';
       const providerSpy = jasmine.createSpy('endpointProvider').and.callFake(() => currentEndpoint);
       const svc = new EntityCrudService(dataHandlerSpy, providerSpy, destroy$);
@@ -73,7 +73,7 @@ describe('EntityCrudService', () => {
       expect(providerSpy).toHaveBeenCalledTimes(2);
     });
 
-    it('nemělo by selhat, pokud endpointProvider vrátí prázdný string (jen zdokumentované chování)', () => {
+    it('does not fail when endpointProvider returns an empty string (documented behaviour)', () => {
       const svc = new EntityCrudService(dataHandlerSpy, () => '', destroy$);
       dataHandlerSpy.getOne.and.returnValue(of({}));
       svc.getOne(1).subscribe();
@@ -85,7 +85,7 @@ describe('EntityCrudService', () => {
   // getOne
   // ---------------------------------------------------------------------
   describe('getOne', () => {
-    it('by mělo zavolat dataHandler.getOne se správnou URL a vrátit data', () => {
+    it('calls dataHandler.getOne with the right URL and returns the data', () => {
       const mockEntity = { id: 5, name: 'foo' };
       dataHandlerSpy.getOne.and.returnValue(of(mockEntity));
 
@@ -96,7 +96,7 @@ describe('EntityCrudService', () => {
       expect(result).toEqual(mockEntity);
     });
 
-    it('by nemělo zavolat dataHandler.getOne a mělo by emitovat chybu, pokud id je undefined', () => {
+    it('does not call dataHandler.getOne and emits an error when id is undefined', () => {
       let error: Error | undefined;
       service.getOne(undefined).subscribe({
         error: e => (error = e),
@@ -106,7 +106,7 @@ describe('EntityCrudService', () => {
       expect(error?.message).toBe('ID undefined.');
     });
 
-    it('by mělo emitovat chybu i pro id = 0 (edge case: `!id` bere 0 jako neplatné)', () => {
+    it('emits an error for id = 0 too (edge case: `!id` treats 0 as invalid)', () => {
       let error: Error | undefined;
       service.getOne(0).subscribe({
         error: e => (error = e),
@@ -116,25 +116,25 @@ describe('EntityCrudService', () => {
       expect(error?.message).toBe('ID undefined.');
     });
 
-    it('by mělo zavolat onSettled po úspěšném dokončení', () => {
+    it('calls onSettled after a successful completion', () => {
       dataHandlerSpy.getOne.and.returnValue(of({ id: 1 }));
       service.getOne(1).subscribe();
       expect(onSettledSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('by mělo zavolat onSettled i po chybě z HTTP vrstvy (finalize běží i na error cestě)', () => {
+    it('calls onSettled after an HTTP error too (finalize runs on the error path)', () => {
       dataHandlerSpy.getOne.and.returnValue(throwError(() => new Error('network error')));
       service.getOne(1).subscribe({ error: () => {} });
       expect(onSettledSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('by nemělo spadnout, pokud onSettled není poskytnut', () => {
+    it('does not fail when onSettled is not provided', () => {
       const svc = new EntityCrudService(dataHandlerSpy, () => endpoint, destroy$);
       dataHandlerSpy.getOne.and.returnValue(of({ id: 1 }));
       expect(() => svc.getOne(1).subscribe()).not.toThrow();
     });
 
-    it('by se mělo odhlásit z requestu při emitu na destroy$ (takeUntil)', () => {
+    it('unsubscribes from the request when destroy$ emits (takeUntil)', () => {
       const source$ = new Subject<any>();
       dataHandlerSpy.getOne.and.returnValue(source$.asObservable());
 
@@ -157,7 +157,7 @@ describe('EntityCrudService', () => {
   // getCollection
   // ---------------------------------------------------------------------
   describe('getCollection', () => {
-    it('by mělo zavolat dataHandler.getCollection s endpointem a params', () => {
+    it('calls dataHandler.getCollection with the endpoint and params', () => {
       const mockList = [{ id: 1 }, { id: 2 }];
       dataHandlerSpy.getCollection.and.returnValue(of(mockList));
       const params = { active: true };
@@ -169,13 +169,13 @@ describe('EntityCrudService', () => {
       expect(result).toEqual(mockList);
     });
 
-    it('by mělo fungovat i bez params (undefined)', () => {
+    it('works without params (undefined)', () => {
       dataHandlerSpy.getCollection.and.returnValue(of([]));
       service.getCollection().subscribe();
       expect(dataHandlerSpy.getCollection).toHaveBeenCalledWith(endpoint, undefined);
     });
 
-    it('by mělo zavolat onSettled po dokončení', () => {
+    it('calls onSettled after completion', () => {
       dataHandlerSpy.getCollection.and.returnValue(of([]));
       service.getCollection().subscribe();
       expect(onSettledSpy).toHaveBeenCalledTimes(1);
@@ -186,7 +186,7 @@ describe('EntityCrudService', () => {
   // create
   // ---------------------------------------------------------------------
   describe('create', () => {
-    it('by mělo zavolat dataHandler.post se správnou URL a daty', () => {
+    it('calls dataHandler.post with the right URL and data', () => {
       const payload = { name: 'new entity' };
       const created = { id: 10, ...payload };
       dataHandlerSpy.post.and.returnValue(of(created));
@@ -198,7 +198,7 @@ describe('EntityCrudService', () => {
       expect(result).toEqual(created);
     });
 
-    it('by mělo zavolat onSettled i při chybě serveru (např. 422 validace)', () => {
+    it('calls onSettled on a server error too (e.g. 422 validation)', () => {
       dataHandlerSpy.post.and.returnValue(throwError(() => new Error('validation error')));
       let error: any;
       service.create({}).subscribe({ error: e => (error = e) });
@@ -212,7 +212,7 @@ describe('EntityCrudService', () => {
   // update
   // ---------------------------------------------------------------------
   describe('update', () => {
-    it('by mělo zavolat dataHandler.put se správnou URL a daty', () => {
+    it('calls dataHandler.put with the right URL and data', () => {
       const payload = { name: 'updated' };
       dataHandlerSpy.put.and.returnValue(of({ id: 3, ...payload }));
 
@@ -221,7 +221,7 @@ describe('EntityCrudService', () => {
       expect(dataHandlerSpy.put).toHaveBeenCalledWith(`${endpoint}/3`, payload);
     });
 
-    it('by mělo vrátit chybu a nezavolat dataHandler.put, pokud id chybí', () => {
+    it('returns an error and does not call dataHandler.put when id is missing', () => {
       let error: Error | undefined;
       service.update(undefined, { name: 'x' }).subscribe({ error: e => (error = e) });
 
@@ -229,7 +229,7 @@ describe('EntityCrudService', () => {
       expect(error?.message).toBe('ID undefined.');
     });
 
-    it('by mělo vrátit chybu pro id = 0', () => {
+    it('returns an error for id = 0', () => {
       let error: Error | undefined;
       service.update(0, {}).subscribe({ error: e => (error = e) });
       expect(dataHandlerSpy.put).not.toHaveBeenCalled();
@@ -245,7 +245,7 @@ describe('EntityCrudService', () => {
       dataHandlerSpy.delete.and.returnValue(of(undefined));
     });
 
-    it('by mělo vrátit chybu a nezavolat dataHandler.delete, pokud id chybí', () => {
+    it('returns an error and does not call dataHandler.delete when id is missing', () => {
       let error: Error | undefined;
       service.remove(undefined).subscribe({ error: e => (error = e) });
 
@@ -253,71 +253,71 @@ describe('EntityCrudService', () => {
       expect(error?.message).toBe('ID undefined.');
     });
 
-    it('by mělo vrátit chybu pro id = 0', () => {
+    it('returns an error for id = 0', () => {
       let error: Error | undefined;
       service.remove(0).subscribe({ error: e => (error = e) });
       expect(dataHandlerSpy.delete).not.toHaveBeenCalled();
       expect(error?.message).toBe('ID undefined.');
     });
 
-    it('by mělo zavolat DELETE bez query parametru, pokud nejsou zadány žádné options', () => {
+    it('calls DELETE without a query parameter when no options are given', () => {
       service.remove(7).subscribe();
       expect(dataHandlerSpy.delete).toHaveBeenCalledWith(`${endpoint}/7`);
     });
 
-    it('by mělo zavolat DELETE bez force_delete, pokud options.forceDelete === false', () => {
+    it('calls DELETE without force_delete when options.forceDelete === false', () => {
       service.remove(7, { forceDelete: false }).subscribe();
       expect(dataHandlerSpy.delete).toHaveBeenCalledWith(`${endpoint}/7`);
     });
 
-    it('by mělo přidat ?force_delete=true, pokud options.forceDelete === true', () => {
+    it('adds ?force_delete=true when options.forceDelete === true', () => {
       service.remove(7, { forceDelete: true }).subscribe();
       expect(dataHandlerSpy.delete).toHaveBeenCalledWith(`${endpoint}/7?force_delete=true`);
     });
 
-    it('by mělo přidat ?force_delete=true, pokud options.params.force_delete === true (boolean)', () => {
+    it('adds ?force_delete=true when options.params.force_delete === true (boolean)', () => {
       const options: DeleteOptions = { params: { force_delete: true } };
       service.remove(7, options).subscribe();
       expect(dataHandlerSpy.delete).toHaveBeenCalledWith(`${endpoint}/7?force_delete=true`);
     });
 
-    it('by mělo přidat ?force_delete=true, pokud options.params.force_delete === "true" (string)', () => {
+    it('adds ?force_delete=true when options.params.force_delete === "true" (string)', () => {
       const options: DeleteOptions = { params: { force_delete: 'true' } };
       service.remove(7, options).subscribe();
       expect(dataHandlerSpy.delete).toHaveBeenCalledWith(`${endpoint}/7?force_delete=true`);
     });
 
-    it('by NEMĚLO přidat force_delete, pokud options.params.force_delete === "false" (string, jiná hodnota než "true")', () => {
+    it('does NOT add force_delete when options.params.force_delete === "false" (string other than "true")', () => {
       const options: DeleteOptions = { params: { force_delete: 'false' } };
       service.remove(7, options).subscribe();
       expect(dataHandlerSpy.delete).toHaveBeenCalledWith(`${endpoint}/7`);
     });
 
-    it('by NEMĚLO přidat force_delete, pokud options.params.force_delete === false (boolean)', () => {
+    it('does NOT add force_delete when options.params.force_delete === false (boolean)', () => {
       const options: DeleteOptions = { params: { force_delete: false } };
       service.remove(7, options).subscribe();
       expect(dataHandlerSpy.delete).toHaveBeenCalledWith(`${endpoint}/7`);
     });
 
-    it('by mělo přidat force_delete, pokud je splněna ALESPOŇ JEDNA z podmínek (OR logika)', () => {
+    it('adds force_delete when AT LEAST ONE of the conditions holds (OR logic)', () => {
       // params.force_delete is 'false' but the forceDelete flag is true -> it should be forced
       const options: DeleteOptions = { forceDelete: true, params: { force_delete: 'false' } };
       service.remove(7, options).subscribe();
       expect(dataHandlerSpy.delete).toHaveBeenCalledWith(`${endpoint}/7?force_delete=true`);
     });
 
-    it('by mělo ignorovat ostatní klíče v params (force_delete se testuje samostatně, ostatní se do URL nepromítají)', () => {
+    it('ignores the other params keys (only force_delete is checked, the others are not added to the URL)', () => {
       const options: DeleteOptions = { params: { some_other_flag: 'x' } };
       service.remove(7, options).subscribe();
       expect(dataHandlerSpy.delete).toHaveBeenCalledWith(`${endpoint}/7`);
     });
 
-    it('by mělo zavolat onSettled po úspěšném smazání', () => {
+    it('calls onSettled after a successful delete', () => {
       service.remove(7).subscribe();
       expect(onSettledSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('by mělo zavolat onSettled i při chybě mazání (např. entita je stále v poresu jinde)', () => {
+    it('calls onSettled on a delete error too (e.g. the entity is still referenced elsewhere)', () => {
       dataHandlerSpy.delete.and.returnValue(throwError(() => new Error('conflict')));
       service.remove(7).subscribe({ error: () => {} });
       expect(onSettledSpy).toHaveBeenCalledTimes(1);
@@ -328,7 +328,7 @@ describe('EntityCrudService', () => {
   // restore
   // ---------------------------------------------------------------------
   describe('restore', () => {
-    it('by mělo zavolat POST na /{endpoint}/{id}/restore s prázdným tělem', () => {
+    it('calls POST /{endpoint}/{id}/restore with an empty body', () => {
       const restored = { id: 4, name: 'restored' };
       dataHandlerSpy.post.and.returnValue(of(restored));
 
@@ -339,7 +339,7 @@ describe('EntityCrudService', () => {
       expect(result).toEqual(restored);
     });
 
-    it('by mělo zavolat onSettled po dokončení', () => {
+    it('calls onSettled after completion', () => {
       dataHandlerSpy.post.and.returnValue(of({}));
       service.restore(4).subscribe();
       expect(onSettledSpy).toHaveBeenCalledTimes(1);
@@ -349,7 +349,7 @@ describe('EntityCrudService', () => {
     // (the type signature requires `number`, there is no runtime check). The test documents
     // the current behaviour - when a caller sends 0 / undefined through `any`, the request
     // is still sent.
-    it('nemá runtime guard proti id = 0 — request se přesto odešle (dokumentace současného chování)', () => {
+    it('has no runtime guard against id = 0 - the request is sent anyway (documents the current behaviour)', () => {
       dataHandlerSpy.post.and.returnValue(of({}));
       service.restore(0).subscribe();
       expect(dataHandlerSpy.post).toHaveBeenCalledWith(`${endpoint}/0/restore`, {});
@@ -360,7 +360,7 @@ describe('EntityCrudService', () => {
   // upload
   // ---------------------------------------------------------------------
   describe('upload', () => {
-    it('by mělo použít endpoint jako cílovou URL, pokud targetUrl není zadán', () => {
+    it('uses the endpoint as the target URL when targetUrl is not given', () => {
       const formData = new FormData();
       dataHandlerSpy.upload.and.returnValue(of({ ok: true }));
 
@@ -369,7 +369,7 @@ describe('EntityCrudService', () => {
       expect(dataHandlerSpy.upload).toHaveBeenCalledWith(endpoint, formData);
     });
 
-    it('by mělo použít targetUrl místo endpointu, pokud je zadán', () => {
+    it('uses targetUrl instead of the endpoint when given', () => {
       const formData = new FormData();
       const targetUrl = 'custom/upload/path';
       dataHandlerSpy.upload.and.returnValue(of({ ok: true }));
@@ -379,13 +379,13 @@ describe('EntityCrudService', () => {
       expect(dataHandlerSpy.upload).toHaveBeenCalledWith(targetUrl, formData);
     });
 
-    it('by mělo zavolat onSettled po dokončení uploadu', () => {
+    it('calls onSettled after the upload finishes', () => {
       dataHandlerSpy.upload.and.returnValue(of({}));
       service.upload(new FormData()).subscribe();
       expect(onSettledSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('by mělo zavolat onSettled i při chybě uploadu (např. příliš velký soubor)', () => {
+    it('calls onSettled on an upload error too (e.g. a too large file)', () => {
       dataHandlerSpy.upload.and.returnValue(throwError(() => new Error('payload too large')));
       service.upload(new FormData()).subscribe({ error: () => {} });
       expect(onSettledSpy).toHaveBeenCalledTimes(1);
@@ -396,7 +396,7 @@ describe('EntityCrudService', () => {
   // updatePassword
   // ---------------------------------------------------------------------
   describe('updatePassword', () => {
-    it('by mělo zavolat PUT na /{endpoint}/{id}/change-password se správnými daty', () => {
+    it('calls PUT /{endpoint}/{id}/change-password with the right data', () => {
       const payload = { password: 'newSecret123', password_confirmation: 'newSecret123' };
       dataHandlerSpy.put.and.returnValue(of({ success: true }));
 
@@ -405,7 +405,7 @@ describe('EntityCrudService', () => {
       expect(dataHandlerSpy.put).toHaveBeenCalledWith(`${endpoint}/9/change-password`, payload);
     });
 
-    it('by mělo vrátit chybu "User ID undefined." a nezavolat PUT, pokud id chybí', () => {
+    it('returns the error "User ID undefined." and does not call PUT when id is missing', () => {
       let error: Error | undefined;
       service.updatePassword(undefined as any, {}).subscribe({ error: e => (error = e) });
 
@@ -413,14 +413,14 @@ describe('EntityCrudService', () => {
       expect(error?.message).toBe('User ID undefined.');
     });
 
-    it('by mělo vrátit chybu pro id = 0', () => {
+    it('returns an error for id = 0', () => {
       let error: Error | undefined;
       service.updatePassword(0, {}).subscribe({ error: e => (error = e) });
       expect(dataHandlerSpy.put).not.toHaveBeenCalled();
       expect(error?.message).toBe('User ID undefined.');
     });
 
-    it('by mělo zavolat onSettled po dokončení', () => {
+    it('calls onSettled after completion', () => {
       dataHandlerSpy.put.and.returnValue(of({}));
       service.updatePassword(9, {}).subscribe();
       expect(onSettledSpy).toHaveBeenCalledTimes(1);
@@ -431,14 +431,14 @@ describe('EntityCrudService', () => {
   // loadAll - building the query string
   // ---------------------------------------------------------------------
   describe('loadAll', () => {
-    it('by mělo vždy nastavit no_pagination=true, i bez filtrů', () => {
+    it('always sets no_pagination=true, also without filters', () => {
       dataHandlerSpy.getCollection.and.returnValue(of([]));
       service.loadAll().subscribe();
 
       expect(dataHandlerSpy.getCollection).toHaveBeenCalledWith(`${endpoint}?no_pagination=true`);
     });
 
-    it('by mělo připojit zadané filtry do query stringu', () => {
+    it('appends the given filters to the query string', () => {
       dataHandlerSpy.getCollection.and.returnValue(of([]));
       service.loadAll({ status: 'active', page_size: 50 }).subscribe();
 
@@ -451,7 +451,7 @@ describe('EntityCrudService', () => {
       expect(params.get('page_size')).toBe('50');
     });
 
-    it('by mělo vynechat filtry s hodnotou prázdný string, null nebo undefined', () => {
+    it('skips filters whose value is an empty string, null or undefined', () => {
       dataHandlerSpy.getCollection.and.returnValue(of([]));
       service
         .loadAll({
@@ -472,7 +472,7 @@ describe('EntityCrudService', () => {
       expect(params.get('valid')).toBe('keep-me');
     });
 
-    it('by mělo zachovat filtr s hodnotou 0 nebo false (na rozdíl od id-guardů zde `!id` logika není použita)', () => {
+    it('keeps filters with the value 0 or false (unlike the id guards, no `!id` logic here)', () => {
       dataHandlerSpy.getCollection.and.returnValue(of([]));
       service.loadAll({ page: 0, active: false }).subscribe();
 
@@ -484,13 +484,13 @@ describe('EntityCrudService', () => {
       expect(params.get('active')).toBe('false');
     });
 
-    it('NEMÁ finalize/onSettled hook (na rozdíl od ostatních metod) — dokumentujeme asymetrii v API', () => {
+    it('has NO finalize/onSettled hook (unlike the other methods) - documents the API asymmetry', () => {
       dataHandlerSpy.getCollection.and.returnValue(of([]));
       service.loadAll().subscribe();
       expect(onSettledSpy).not.toHaveBeenCalled();
     });
 
-    it('by se mělo odhlásit z requestu při emitu na destroy$ (takeUntil)', () => {
+    it('unsubscribes from the request when destroy$ emits (takeUntil)', () => {
       const source$ = new Subject<any[]>();
       dataHandlerSpy.getCollection.and.returnValue(source$.asObservable());
 
@@ -506,19 +506,19 @@ describe('EntityCrudService', () => {
   // hardDeleteAllTrashed
   // ---------------------------------------------------------------------
   describe('hardDeleteAllTrashed', () => {
-    it('by mělo zavolat DELETE na /{endpoint}/force-delete-all', () => {
+    it('calls DELETE /{endpoint}/force-delete-all', () => {
       dataHandlerSpy.delete.and.returnValue(of(undefined));
       service.hardDeleteAllTrashed().subscribe();
       expect(dataHandlerSpy.delete).toHaveBeenCalledWith(`${endpoint}/force-delete-all`);
     });
 
-    it('by mělo zavolat onSettled po úspěšném dokončení', () => {
+    it('calls onSettled after a successful completion', () => {
       dataHandlerSpy.delete.and.returnValue(of(undefined));
       service.hardDeleteAllTrashed().subscribe();
       expect(onSettledSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('by mělo zavolat onSettled i při chybě (např. cizí klíče brání smazání)', () => {
+    it('calls onSettled on an error too (e.g. foreign keys prevent the delete)', () => {
       dataHandlerSpy.delete.and.returnValue(throwError(() => new Error('FK constraint')));
       service.hardDeleteAllTrashed().subscribe({ error: () => {} });
       expect(onSettledSpy).toHaveBeenCalledTimes(1);

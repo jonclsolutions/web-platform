@@ -38,7 +38,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject, firstValueFrom, takeUntil } from 'rxjs';
 
 import { DataHandler } from '../../../../core/services/data-handler.service';
-import { EntityCrudService } from '../../../../core/services/entitiy-crud.service';
+import { EntityCrudService } from '../../../../core/services/entity-crud.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ScrollLockService } from '../../../../core/services/scroll-lock.service';

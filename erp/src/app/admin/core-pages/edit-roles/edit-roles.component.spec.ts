@@ -114,6 +114,29 @@ describe('EditRolesComponent', () => {
   });
 
   /**
+   * @description Permission descriptions are shown in the admin language (permission-descriptions
+   *   section) and searched in it; a key without a translation shows its stored description,
+   *   none when there is neither.
+   * @input  translations { web-news-delete: 'Smazat novinky' }; render; permissionSearch 'smazat'.
+   * @output 'Smazat novinky' rendered, stored 'View news' for web-news-view, '' for web-news-create;
+   *   search finds web-news-delete.
+   */
+  it('shows and searches the translated permission descriptions', () => {
+    ctx.i18n.getMergedSection.and.callFake((section: string) =>
+      section === 'permission-descriptions' ? { 'web-news-delete': 'Smazat novinky' } : {});
+    component.ngOnInit();
+    component.selectedRole = role(2);
+    fixture.detectChanges();
+    const texts = Array.from(fixture.nativeElement.querySelectorAll('.perm-desc')).map((e: any) => e.textContent.trim());
+    expect(texts).toContain('Smazat novinky');
+    expect(texts).toContain('View news');
+    expect(component.permissionDescription(permissions[2])).toBe('');
+    component.permissionSearch = 'smazat';
+    const keys = component.visiblePermissionGroups.flatMap(g => g.resources.flatMap(r => r.items.map(p => p.permission_key)));
+    expect(keys).toEqual(['web-news-delete']);
+  });
+
+  /**
    * @description System (protected) roles are read-only: no toggling, saving or detail editing.
    * @input  selected sysadmin (is_protected); togglePermission, toggleModuleGroup, startEditingDetails, savePermissions
    * @output currentPermissions stays empty; not dirty; not editing; put not called

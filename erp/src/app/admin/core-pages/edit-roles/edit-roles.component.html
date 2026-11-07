@@ -330,7 +330,7 @@
                 />
                 <span class="permission-row-text">
                   <span class="perm-key">{{ perm.permission_key }}</span>
-                  <span class="perm-desc" *ngIf="perm.description">{{ perm.description }}</span>
+                  <span class="perm-desc" *ngIf="permissionDescription(perm) as desc">{{ desc }}</span>
                 </span>
               </label>
             </div>

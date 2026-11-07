@@ -11,6 +11,7 @@
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { mapLabeledOptions } from '../../components/builders/labeled-options';
 
 const SECTION = 'job-applications';
 
@@ -23,10 +24,6 @@ const STATE_LABEL_KEYS: Record<string, string> = {
   rejected: 'state_rejected',
   pool: 'state_pool',
 };
-
-function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, i18n: AdminLocalizationService) {
-  return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
-}
 
 export function createJobApplicationButtons(i18n: AdminLocalizationService): Core.TableButtons[] {
   return [
@@ -51,7 +48,7 @@ export function createJobApplicationFormFields(i18n: AdminLocalizationService): 
       column_name: 'state',
       label: i18n.getValue(`${SECTION}.field_state_label`),
       type: 'select',
-      options: mapLabeledOptions(JOB_APPLICATION_STATE_VALUES, STATE_LABEL_KEYS, i18n),
+      options: mapLabeledOptions(SECTION, JOB_APPLICATION_STATE_VALUES, STATE_LABEL_KEYS, i18n),
       required: true,
       editable: true, show_in_edit: true, show_in_create: false,
     },
@@ -108,7 +105,7 @@ export function createJobApplicationFilterColumns(i18n: AdminLocalizationService
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_id_placeholder`), canSort: true },
     { key: 'last_name', header: i18n.getValue(`${SECTION}.filter_last_name_label`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_last_name_placeholder`), canSort: true },
     { key: 'position_name', header: i18n.getValue(`${SECTION}.col_position`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_position_placeholder`), canSort: true },
-    { key: 'state', header: i18n.getValue(`${SECTION}.col_state`), type: 'select', options: mapLabeledOptions(JOB_APPLICATION_STATE_VALUES, STATE_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_state_placeholder`), canSort: true },
+    { key: 'state', header: i18n.getValue(`${SECTION}.col_state`), type: 'select', options: mapLabeledOptions(SECTION, JOB_APPLICATION_STATE_VALUES, STATE_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_state_placeholder`), canSort: true },
   ];
 }
 

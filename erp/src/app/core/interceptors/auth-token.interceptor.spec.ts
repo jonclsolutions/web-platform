@@ -92,7 +92,7 @@ describe('AuthTokenInterceptor', () => {
      * @input Token present; GET /api/projects/public/abc answered 401.
      * @output No Authorization header, error passed through, no refresh attempt.
      */
-    it('by mělo public projektové requesty propustit bez tokenu i bez refresh', () => {
+    it('passes public project requests without a token and without a refresh', () => {
       authService.getAccessToken.and.returnValue('test-jwt-token');
       let status = 0;
       http.get('/api/projects/public/abc').subscribe({ error: e => (status = e.status) });
@@ -104,7 +104,7 @@ describe('AuthTokenInterceptor', () => {
       expect(authService.refreshAccessToken).not.toHaveBeenCalled();
     });
 
-    it('by mělo přidat Authorization header, pokud existuje access token', () => {
+    it('adds the Authorization header when an access token exists', () => {
       authService.getAccessToken.and.returnValue('test-jwt-token');
 
       http.get('/api/data').subscribe();
@@ -114,7 +114,7 @@ describe('AuthTokenInterceptor', () => {
       req.flush({});
     });
 
-    it('by mělo použít přesně formát "Bearer <token>"', () => {
+    it('uses exactly the "Bearer <token>" format', () => {
       authService.getAccessToken.and.returnValue('abc.def.ghi');
 
       http.get('/api/data').subscribe();
@@ -124,7 +124,7 @@ describe('AuthTokenInterceptor', () => {
       req.flush({});
     });
 
-    it('by NEMĚLO přidat Authorization header, pokud token neexistuje (null)', () => {
+    it('does NOT add the Authorization header when there is no token (null)', () => {
       authService.getAccessToken.and.returnValue(null);
 
       http.get('/api/public').subscribe();
@@ -134,7 +134,7 @@ describe('AuthTokenInterceptor', () => {
       req.flush({});
     });
 
-    it('by NEMĚLO přidat Authorization header, pokud token je prázdný string', () => {
+    it('does NOT add the Authorization header when the token is an empty string', () => {
       authService.getAccessToken.and.returnValue('');
 
       http.get('/api/public').subscribe();
@@ -144,7 +144,7 @@ describe('AuthTokenInterceptor', () => {
       req.flush({});
     });
 
-    it('by mělo přidat header ke všem metodám (POST, PUT, DELETE)', () => {
+    it('adds the header to every method (POST, PUT, DELETE)', () => {
       authService.getAccessToken.and.returnValue('my-token');
 
       http.post('/api/resource', {}).subscribe();
@@ -158,7 +158,7 @@ describe('AuthTokenInterceptor', () => {
       });
     });
 
-    it('by nemělo mutovat původní request objekt (immutabilita klonu)', () => {
+    it('does not mutate the original request object (immutable clone)', () => {
       authService.getAccessToken.and.returnValue('token-x');
       let capturedRequest: any;
 
@@ -173,7 +173,7 @@ describe('AuthTokenInterceptor', () => {
       req.flush({});
     });
 
-    it('by mělo volat getAccessToken právě jednou na request', () => {
+    it('calls getAccessToken exactly once per request', () => {
       authService.getAccessToken.and.returnValue('t');
 
       http.get('/api/data').subscribe();
@@ -189,7 +189,7 @@ describe('AuthTokenInterceptor', () => {
 
   describe('B) 401 handling — refresh flow', () => {
 
-    it('by mělo zavolat refreshAccessToken při 401 odpovědi', fakeAsync(() => {
+    it('calls refreshAccessToken on a 401 response', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('expired-token');
       authService.refreshAccessToken.and.returnValue(of({ token: 'new-token' } as AuthSessionResponse));
 
@@ -207,7 +207,7 @@ describe('AuthTokenInterceptor', () => {
       retried.flush({ ok: true });
     }));
 
-    it('by mělo po úspěšném refreshi zopakovat původní request s novým tokenem', fakeAsync(() => {
+    it('repeats the original request with the new token after a successful refresh', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('old-token');
       authService.refreshAccessToken.and.returnValue(of({ token: 'refreshed-token' } as AuthSessionResponse));
 
@@ -225,7 +225,7 @@ describe('AuthTokenInterceptor', () => {
       expect(responseData).toEqual({ id: 42 });
     }));
 
-    it('po úspěšném refreshi by mělo nastavit isRefreshing zpět na false', fakeAsync(() => {
+    it('sets isRefreshing back to false after a successful refresh', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('old');
       authService.refreshAccessToken.and.returnValue(of({ token: 'new' } as AuthSessionResponse));
 
@@ -245,7 +245,7 @@ describe('AuthTokenInterceptor', () => {
       expect(authService.refreshAccessToken).toHaveBeenCalledTimes(1);
     }));
 
-    it('by NEMĚLO volat refreshAccessToken při 200 odpovědi', () => {
+    it('does NOT call refreshAccessToken on a 200 response', () => {
       authService.getAccessToken.and.returnValue('valid-token');
 
       http.get('/api/data').subscribe();
@@ -259,9 +259,9 @@ describe('AuthTokenInterceptor', () => {
   // C) REFRESH LOCK - QUEUE (concurrent requests)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  describe('C) Refresh lock — queue souběžných requestů', () => {
+  describe('C) Refresh lock - queue of concurrent requests', () => {
 
-    it('by mělo spustit refreshAccessToken jen jednou i při dvou souběžných 401', fakeAsync(() => {
+    it('starts refreshAccessToken only once for two concurrent 401s', fakeAsync(() => {
       // Simulate two concurrent calls that both get 401
       const refreshSubject = new Subject<any>();
       authService.getAccessToken.and.returnValue('expired');
@@ -296,7 +296,7 @@ describe('AuthTokenInterceptor', () => {
       });
     }));
 
-    it('čekající requesty by měly dostat nový token po dokončení refreshe', fakeAsync(() => {
+    it('gives the waiting requests the new token once the refresh finishes', fakeAsync(() => {
       const refreshSubject = new Subject<any>();
       authService.getAccessToken.and.returnValue('exp');
       authService.refreshAccessToken.and.returnValue(refreshSubject.asObservable());
@@ -330,9 +330,9 @@ describe('AuthTokenInterceptor', () => {
   // D) REFRESH FAILURE - clearAuthData + redirect
   // ═══════════════════════════════════════════════════════════════════════════
 
-  describe('D) Refresh selhání', () => {
+  describe('D) Refresh failure', () => {
 
-    it('by mělo zavolat clearAuthData při selhání refreshe', fakeAsync(() => {
+    it('calls clearAuthData when the refresh fails', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('exp');
       authService.refreshAccessToken.and.returnValue(
         throwError(() => makeError(401))
@@ -348,7 +348,7 @@ describe('AuthTokenInterceptor', () => {
       expect(authService.clearAuthData).toHaveBeenCalledTimes(1);
     }));
 
-    it('by mělo navigovat na /auth/login při selhání refreshe', fakeAsync(() => {
+    it('navigates to /auth/login when the refresh fails', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('exp');
       authService.refreshAccessToken.and.returnValue(
         throwError(() => makeError(401))
@@ -364,7 +364,7 @@ describe('AuthTokenInterceptor', () => {
       expect(router.navigate).toHaveBeenCalledOnceWith(['/auth/login']);
     }));
 
-    it('by mělo nastavit isRefreshing zpět na false po selhání', fakeAsync(() => {
+    it('sets isRefreshing back to false after a failure', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('exp');
       authService.refreshAccessToken.and.returnValue(
         throwError(() => makeError(401))
@@ -395,7 +395,7 @@ describe('AuthTokenInterceptor', () => {
       tick();
     }));
 
-    it('by mělo propagovat error volajícímu po selhání refreshe', fakeAsync(() => {
+    it('propagates the error to the caller after a failed refresh', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('exp');
       const refreshErr = makeError(403);
       authService.refreshAccessToken.and.returnValue(throwError(() => refreshErr));
@@ -418,7 +418,7 @@ describe('AuthTokenInterceptor', () => {
 
   describe('E) Bypass URLs', () => {
 
-    it('by NEMĚLO spustit refresh flow při 401 na /login endpointu', fakeAsync(() => {
+    it('does NOT start the refresh flow on a 401 of the /login endpoint', fakeAsync(() => {
       authService.getAccessToken.and.returnValue(null);
 
       let error: any;
@@ -434,7 +434,7 @@ describe('AuthTokenInterceptor', () => {
       expect(error.status).toBe(401);
     }));
 
-    it('by NEMĚLO spustit refresh flow při 401 na /refresh endpointu', fakeAsync(() => {
+    it('does NOT start the refresh flow on a 401 of the /refresh endpoint', fakeAsync(() => {
       authService.getAccessToken.and.returnValue(null);
 
       let error: any;
@@ -450,7 +450,7 @@ describe('AuthTokenInterceptor', () => {
       expect(error.status).toBe(401);
     }));
 
-it('by mělo demonstrovat chování includes při výskytu /login uvnitř URL', fakeAsync(() => {
+it('documents the includes() behaviour when /login occurs inside the URL', fakeAsync(() => {
       // Checks that the substring match through includes('/login')
       // returns true for this URL and starts the refresh flow (shows the code behaviour).
       authService.getAccessToken.and.returnValue('tok');
@@ -476,9 +476,9 @@ it('by mělo demonstrovat chování includes při výskytu /login uvnitř URL', 
   // F) NON-401 ERRORS
   // ═══════════════════════════════════════════════════════════════════════════
 
-  describe('F) Non-401 chyby', () => {
+  describe('F) Non-401 errors', () => {
 
-    it('by mělo propagovat 403 Forbidden přímo bez refresh', fakeAsync(() => {
+    it('propagates 403 Forbidden directly without a refresh', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('valid');
 
       let caughtError: any;
@@ -493,7 +493,7 @@ it('by mělo demonstrovat chování includes při výskytu /login uvnitř URL', 
       expect(caughtError.status).toBe(403);
     }));
 
-    it('by mělo propagovat 500 Internal Server Error bez refresh', fakeAsync(() => {
+    it('propagates 500 Internal Server Error without a refresh', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('valid');
 
       let caughtError: any;
@@ -508,7 +508,7 @@ it('by mělo demonstrovat chování includes při výskytu /login uvnitř URL', 
       expect(caughtError.status).toBe(500);
     }));
 
-    it('by mělo propagovat 404 Not Found bez refresh', fakeAsync(() => {
+    it('propagates 404 Not Found without a refresh', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('valid');
 
       let caughtError: any;
@@ -523,7 +523,7 @@ it('by mělo demonstrovat chování includes při výskytu /login uvnitř URL', 
       expect(caughtError.status).toBe(404);
     }));
 
-    it('by mělo propagovat 422 Unprocessable Entity bez refresh', fakeAsync(() => {
+    it('propagates 422 Unprocessable Entity without a refresh', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('valid');
 
       let caughtError: any;
@@ -538,7 +538,7 @@ it('by mělo demonstrovat chování includes při výskytu /login uvnitř URL', 
       expect(caughtError.status).toBe(422);
     }));
 
-    it('by NEMĚLO volat clearAuthData při ne-401 chybě', fakeAsync(() => {
+    it('does NOT call clearAuthData on a non-401 error', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('valid');
 
       http.get('/api/err').subscribe({ error: () => {} });
@@ -550,7 +550,7 @@ it('by mělo demonstrovat chování includes při výskytu /login uvnitř URL', 
       expect(authService.clearAuthData).not.toHaveBeenCalled();
     }));
 
-    it('by NEMĚLO navigovat při ne-401 chybě', fakeAsync(() => {
+    it('does NOT navigate on a non-401 error', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('valid');
 
       http.get('/api/err').subscribe({ error: () => {} });
@@ -573,7 +573,7 @@ it('by mělo demonstrovat chování includes při výskytu /login uvnitř URL', 
       expect(interceptorInst).toBeTruthy();
     });
 
-    it('by mělo úspěšně zpracovat request bez tokenu a bez chyby', () => {
+    it('handles a request without a token and without an error', () => {
       authService.getAccessToken.and.returnValue(null);
 
       let responseData: any;

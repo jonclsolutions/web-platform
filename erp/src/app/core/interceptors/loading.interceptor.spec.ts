@@ -64,8 +64,8 @@ describe('LoadingInterceptor', () => {
   // ---------------------------------------------------------------------
   // Fast request (finishes before 500 ms)
   // ---------------------------------------------------------------------
-  describe('rychlý request (< 500ms)', () => {
-    it('NEMĚLO by zavolat loadingService.show(), pokud request skončí před uplynutím 500ms', fakeAsync(() => {
+  describe('fast request (< 500 ms)', () => {
+    it('does NOT call loadingService.show() when the request ends before 500 ms', fakeAsync(() => {
       http.get('/test').subscribe();
       const req = httpMock.expectOne('/test');
 
@@ -79,7 +79,7 @@ describe('LoadingInterceptor', () => {
       expect(loadingServiceSpy.show).not.toHaveBeenCalled();
     }));
 
-    it('by mělo zavolat loadingService.hide() i přesto, že show() nikdy nebyl zavolán (aktuální chování)', fakeAsync(() => {
+    it('calls loadingService.hide() even though show() was never called (current behaviour)', fakeAsync(() => {
       http.get('/test').subscribe();
       const req = httpMock.expectOne('/test');
 
@@ -91,7 +91,7 @@ describe('LoadingInterceptor', () => {
       expect(loadingServiceSpy.hide).toHaveBeenCalledTimes(1);
     }));
 
-    it('by mělo zavolat clearTimeout tak, že pozdější tick už nevyvolá show() ani jednou navíc', fakeAsync(() => {
+    it('clears the timeout so a later tick does not call show() even once more', fakeAsync(() => {
       http.get('/test').subscribe();
       const req = httpMock.expectOne('/test');
       req.flush({});
@@ -104,8 +104,8 @@ describe('LoadingInterceptor', () => {
   // ---------------------------------------------------------------------
   // Slow request (takes longer than 500 ms)
   // ---------------------------------------------------------------------
-  describe('pomalý request (> 500ms)', () => {
-   it('by mělo zavolat loadingService.show() po uplynutí 500ms, pokud request stále běží', fakeAsync(() => {
+  describe('slow request (> 500 ms)', () => {
+   it('calls loadingService.show() after 500 ms while the request is still running', fakeAsync(() => {
       http.get('/test').subscribe();
       const req = httpMock.expectOne('/test'); 
 
@@ -116,7 +116,7 @@ describe('LoadingInterceptor', () => {
       req.flush({});
     }));
 
-    it('by mělo zavolat loadingService.hide() po dokončení pomalého requestu', fakeAsync(() => {
+    it('calls loadingService.hide() when the slow request finishes', fakeAsync(() => {
       http.get('/test').subscribe();
       const req = httpMock.expectOne('/test');
 
@@ -129,7 +129,7 @@ describe('LoadingInterceptor', () => {
       expect(loadingServiceSpy.hide).toHaveBeenCalledTimes(1);
     }));
 
-    it('by se mělo spustit show() přesně na hraně 500ms, ne dřív', fakeAsync(() => {
+    it('starts show() exactly at the 500 ms boundary, not earlier', fakeAsync(() => {
       http.get('/test').subscribe();
       const req = httpMock.expectOne('/test');
 
@@ -146,8 +146,8 @@ describe('LoadingInterceptor', () => {
   // ---------------------------------------------------------------------
   // Concurrent requests - activeRequests counter
   // ---------------------------------------------------------------------
-  describe('souběžné requesty (activeRequests čítač)', () => {
-    it('NEMĚLO by zavolat hide() po dokončení PRVNÍHO ze dvou souběžných requestů — jen po dokončení POSLEDNÍHO', fakeAsync(() => {
+  describe('concurrent requests (activeRequests counter)', () => {
+    it('does NOT call hide() when the FIRST of two concurrent requests finishes - only after the LAST', fakeAsync(() => {
       http.get('/first').subscribe();
       http.get('/second').subscribe();
 
@@ -167,7 +167,7 @@ describe('LoadingInterceptor', () => {
       expect(loadingServiceSpy.hide).toHaveBeenCalledTimes(1);
     }));
 
-    it('by mělo zavolat show() vícekrát u více souběžných POMALÝCH requestů (není globálně deduplikováno)', fakeAsync(() => {
+    it('calls show() more than once for several concurrent SLOW requests (not deduplicated globally)', fakeAsync(() => {
       http.get('/first').subscribe();
       http.get('/second').subscribe();
 
@@ -183,7 +183,7 @@ describe('LoadingInterceptor', () => {
       reqSecond.flush({});
     }));
 
-    it('by mělo správně dekrementovat activeRequests i při třech souběžných requestech dokončených v libovolném pořadí', fakeAsync(() => {
+    it('decrements activeRequests correctly for three concurrent requests finished in any order', fakeAsync(() => {
       http.get('/a').subscribe();
       http.get('/b').subscribe();
       http.get('/c').subscribe();
@@ -206,8 +206,8 @@ describe('LoadingInterceptor', () => {
   // ---------------------------------------------------------------------
   // Error response - finalize must run on the error path too
   // ---------------------------------------------------------------------
-  describe('chybová odpověď', () => {
-    it('by mělo zavolat hide(), i když request skončí chybou (finalize běží i na error cestě)', fakeAsync(() => {
+  describe('error response', () => {
+    it('calls hide() even when the request fails (finalize runs on the error path)', fakeAsync(() => {
       let errored = false;
       http.get('/fails').subscribe({ error: () => (errored = true) });
       const req = httpMock.expectOne('/fails');
@@ -221,7 +221,7 @@ describe('LoadingInterceptor', () => {
       expect(loadingServiceSpy.hide).toHaveBeenCalledTimes(1);
     }));
 
-    it('NEMĚLO by zavolat show(), pokud rychlý request selže před uplynutím 500ms', fakeAsync(() => {
+    it('does NOT call show() when a fast request fails before 500 ms', fakeAsync(() => {
       http.get('/fails-fast').subscribe({ error: () => {} });
       const req = httpMock.expectOne('/fails-fast');
 
@@ -233,7 +233,7 @@ describe('LoadingInterceptor', () => {
       expect(loadingServiceSpy.hide).toHaveBeenCalledTimes(1);
     }));
 
-    it('by mělo správně dekrementovat activeRequests, pokud jeden ze dvou souběžných requestů selže', fakeAsync(() => {
+    it('decrements activeRequests correctly when one of two concurrent requests fails', fakeAsync(() => {
       http.get('/ok').subscribe();
       http.get('/fails').subscribe({ error: () => {} });
 
@@ -251,8 +251,8 @@ describe('LoadingInterceptor', () => {
   // ---------------------------------------------------------------------
   // Sequential requests (one after another, not concurrent)
   // ---------------------------------------------------------------------
-  describe('sekvenční requesty (jeden po druhém)', () => {
-    it('by mělo nezávisle spravovat show/hide pro každý samostatný request', fakeAsync(() => {
+  describe('sequential requests (one after another)', () => {
+    it('manages show/hide independently for every request', fakeAsync(() => {
       http.get('/first').subscribe();
       let req = httpMock.expectOne('/first');
       tick(500);

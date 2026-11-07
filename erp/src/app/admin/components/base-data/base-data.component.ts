@@ -22,7 +22,7 @@ import { timer } from 'rxjs';
 import { filter as rxFilter } from 'rxjs/operators';
 import * as Core from '../../../shared/imports/core-providers';
 import { PaginatedListStore } from './paginated-list-store';
-import { EntityCrudService } from '../../../core/services/entitiy-crud.service';
+import { EntityCrudService } from '../../../core/services/entity-crud.service';
 import { TableRefreshBusService } from '../../../core/services/table-refresh-bus.service';
 import type { TableBuilderComponent } from '../builders/table-builder/table-builder.component';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';

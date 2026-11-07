@@ -19,7 +19,7 @@
 #
 #   # Optional for section [12] (permission_denied) - a real LOW-privilege account
 #   # WITHOUT 'core-security-view' (otherwise the section only reports that access passed):
-#   TEST_USER_EMAIL="nizke-opravneni@example.com" TEST_USER_PASSWORD="Heslo123!" \
+#   TEST_USER_EMAIL="low-privilege@example.com" TEST_USER_PASSWORD="Password123!" \
 #     ./attack_security_monitoring.sh
 #
 # Needs: bash + curl (Linux / macOS / WSL / Git Bash).
@@ -28,7 +28,7 @@
 set -uo pipefail
 
 # ── Configuration - adjust to your local environment ─────────────────────
-API_BASE="http://127.0.0.1:8000/api"   # z local_laravel_.env: APP_URL=http://127.0.0.1:8000
+API_BASE="http://127.0.0.1:8000/api"   # APP_URL of the local api/.env
 FAKE_EMAIL="utok-test@example.com"      # e-mail used for simulating the brute-force login
 SCANNER_UA="Mozilla/5.0 (compatible; SecurityTestBot/1.0)"
 
@@ -47,34 +47,34 @@ MAX_TIME=8          # max seconds for the whole request (connection + response)
 curl_opts=(--connect-timeout "${CONNECT_TIMEOUT}" --max-time "${MAX_TIME}" -s -H "Accept: application/json")
 
 echo "=================================================================="
-echo " Bezpečnostní monitoring - LOKÁLNÍ testovací provoz"
-echo " Cíl: ${API_BASE}"
+echo " Security monitoring - LOCAL test traffic"
+echo " Target: ${API_BASE}"
 echo "=================================================================="
 echo
 
 # ── Preflight: check that the API answers at all, BEFORE the attack ───────────
 # Uses a public endpoint without authentication (web/public/status).
-echo "Ověřuji dostupnost API (${API_BASE}/web/public/status)..."
+echo "Checking that the API answers (${API_BASE}/web/public/status)..."
 preflight_code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" "${API_BASE}/web/public/status" 2>/dev/null)
 preflight_exit=$?
 
 if [ "$preflight_exit" -ne 0 ] || [ "$preflight_code" = "000" ]; then
   echo
-  echo "❌ API neodpovídá na ${API_BASE} (curl exit kód: ${preflight_exit}, HTTP: ${preflight_code})."
+  echo "❌ The API does not answer at ${API_BASE} (curl exit code: ${preflight_exit}, HTTP: ${preflight_code})."
   echo
-  echo "   Nejčastější příčiny:"
-  echo "   1) Laravel server neběží - spusť v adresáři backendu: php artisan serve"
-  echo "      (poslouchá defaultně na http://127.0.0.1:8000)"
-  echo "   2) Server běží na jiném portu/adrese - uprav proměnnou API_BASE nahoře"
-  echo "      v tomto skriptu."
-  echo "   3) Používáš XAMPP/Apache/nginx - zkontroluj, na jaké adrese/portu web"
-  echo "      reálně jede (typicky http://localhost/api nebo http://rp_website.test/api)."
+  echo "   Most common causes:"
+  echo "   1) The Laravel server is not running - start the dev environment: ./dev.sh"
+  echo "      (the API listens on http://127.0.0.1:8000 by default)"
+  echo "   2) The server runs on another port / address - change the API_BASE variable at the top"
+  echo "      of this script."
+  echo "   3) A web server (Apache / nginx) serves the API - check the address / port it really"
+  echo "      uses (typically http://localhost/api)."
   echo
-  echo "Skript se ukončuje - útok proti neběžícímu serveru by stejně nic nezalogoval."
+  echo "Stopping - an attack against a server that is not running would log nothing anyway."
   exit 1
 fi
 
-echo "✅ API odpovědělo (HTTP ${preflight_code}). Spouštím testovací provoz..."
+echo "✅ The API answered (HTTP ${preflight_code}). Starting the test traffic..."
 echo
 
 # ── [1/12] Brute-force login (login_failed, login_brute_force_suspected,    ──
@@ -88,7 +88,7 @@ echo
 # From the 4th attempt (CAPTCHA_THRESHOLD=3 exceeded) the script sends NO captcha_token,
 # so CaptchaVerificationService::verify() gets an empty token and records
 # `login_captcha_failed` (reason: empty_token) - this section tests that hook as well.
-echo "[1/12] Simuluji brute-force login (10 pokusů, email: ${FAKE_EMAIL})..."
+echo "[1/12] Simulating a brute-force login (10 attempts, e-mail: ${FAKE_EMAIL})..."
 for i in $(seq 1 10); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
     -X POST "${API_BASE}/login" \
@@ -104,7 +104,7 @@ echo
 # PasswordResetController (EMAIL_MAX_ATTEMPTS=3/15min) - from the 4th call expect
 # `password_reset_email_rate_limited` (limiter of the mailbox, not the IP) besides
 # `throttle_exceeded` (IP throttle of the route).
-echo "[2/12] Zahlcuji /forgot-password (8 rychlých požadavků, limit je 5/min IP + 3/15min e-mail)..."
+echo "[2/12] Flooding /forgot-password (8 fast requests, the limit is 5/min per IP + 3/15 min per e-mail)..."
 for i in $(seq 1 8); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
     -X POST "${API_BASE}/forgot-password" \
@@ -115,7 +115,7 @@ done
 echo
 
 # ── [3/12] Throttle of the public /sales_orders (throttle:10,1) ────────────────
-echo "[3/12] Zahlcuji /sales_orders (14 rychlých požadavků, limit je 10/min)..."
+echo "[3/12] Flooding /sales_orders (14 fast requests, the limit is 10/min)..."
 for i in $(seq 1 14); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
     -X POST "${API_BASE}/sales_orders" \
@@ -130,7 +130,7 @@ echo
 # /api/... - real bots also try root paths (/.env, /wp-login.php outside
 # /api), ty by v tomhle projektu padly do web.php a NEBYLY by zachyceny (web.php
 # its own fallback) - a possible future extension, not a bug of this script.
-echo "[4/12] Simuluji scanning/probing pod /api/... (typické cesty skenerů zranitelností)..."
+echo "[4/12] Simulating scanning / probing under /api/... (typical paths of vulnerability scanners)..."
 SCAN_PATHS=(
   ".env"
   "wp-login.php"
@@ -154,7 +154,7 @@ echo
 # ── [5/12] Invalid refresh token (refresh_token_invalid) ───────────────────
 # The refresh token is read only from its HttpOnly cookie (rpsw_refresh) - a token in the body
 # is ignored (answer "Refresh token is missing.", no event).
-echo "[5/12] Posílám neplatné refresh tokeny (5x)..."
+echo "[5/12] Sending invalid refresh tokens (5x)..."
 for i in $(seq 1 5); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
     -X POST "${API_BASE}/refresh" \
@@ -168,7 +168,7 @@ echo
 # Caught by the global AuthenticationException handler of bootstrap/app.php
 # (unauthenticated_access_attempt, severity info) - `auth:sanctum` middleware tenhle
 # refuses the request before it reaches CheckPermission.
-echo "[6/12] Volám chráněný endpoint (core/users) BEZ jakéhokoliv tokenu (5x)..."
+echo "[6/12] Calling a protected endpoint (core/users) WITHOUT any token (5x)..."
 for i in $(seq 1 5); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
     -X GET "${API_BASE}/core/users")
@@ -180,7 +180,7 @@ echo
 # Same event_type as [6] (unauthenticated_access_attempt), another path to it - the
 # token LOOKS like a valid Sanctum token, it just does not exist in the database. Tests
 # the hook with an "almost valid" token, not only with none.
-echo "[7/12] Volám chráněný endpoint s NEPLATNÝM Bearer tokenem (5x)..."
+echo "[7/12] Calling a protected endpoint with an INVALID Bearer token (5x)..."
 for i in $(seq 1 5); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
     -X GET "${API_BASE}/core/users" \
@@ -191,7 +191,7 @@ echo
 
 # ── [8/12] Account activation - invalid / unknown token (GET and POST) ─────────
 # account_activation_token_invalid (warning) - AccountActivationController::findValidToken().
-echo "[8/12] Ověřuji + aktivuji přes NEEXISTUJÍCÍ aktivační token (5x GET, 3x POST)..."
+echo "[8/12] Verifying + activating with a NON-EXISTENT activation token (5x GET, 3x POST)..."
 for i in $(seq 1 5); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
     -X GET "${API_BASE}/account-activation/neplatny-aktivacni-token-${i}")
@@ -208,7 +208,7 @@ echo
 
 # ── [9/12] Password reset - invalid / unknown token ────────────────────────
 # password_reset_token_invalid (warning) - PasswordResetController::resetPassword().
-echo "[9/12] Dokončuji reset hesla s NEEXISTUJÍCÍM tokenem (5x)..."
+echo "[9/12] Completing a password reset with a NON-EXISTENT token (5x)..."
 for i in $(seq 1 5); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
     -X POST "${API_BASE}/reset-password" \
@@ -223,7 +223,7 @@ echo
 # Tests guessing the `login_token` (opaque session identifier), NOT guessing the 6-digit OTP
 # code (covered by login_2fa_invalid, not tested here - it would need a real account
 # s vynucenou 2FA a platnou pending session).
-echo "[10/12] Ověřuji + žádám o nový kód s NEEXISTUJÍCÍ 2FA session (3x verify, 3x resend)..."
+echo "[10/12] Verifying + requesting a new code with a NON-EXISTENT 2FA session (3x verify, 3x resend)..."
 for i in $(seq 1 3); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
     -X POST "${API_BASE}/login/verify-2fa" \
@@ -244,7 +244,7 @@ echo
 # sales_lead_token_invalid (warning) - WebSalesLeadController::showByToken().
 # The endpoint returns personal data of the contact, so token enumeration is more sensitive
 # than on purely informational public endpoints - hence its own event_type, not a silent 404.
-echo "[11/12] Načítám objednávkový formulář přes NEEXISTUJÍCÍ lead token (5x)..."
+echo "[11/12] Loading the order form with a NON-EXISTENT lead token (5x)..."
 for i in $(seq 1 5); do
   code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
     -X GET "${API_BASE}/public/sales-leads/neexistujici-lead-token-${i}")
@@ -258,11 +258,11 @@ echo
 # without a real account. Without TEST_USER_EMAIL / TEST_USER_PASSWORD the section
 # is skipped (a missing precondition, not an error).
 if [ -z "$TEST_USER_EMAIL" ] || [ -z "$TEST_USER_PASSWORD" ]; then
-  echo "[12/12] PŘESKOČENO - permission_denied vyžaduje reálný testovací účet."
-  echo "         Spusť skript s TEST_USER_EMAIL a TEST_USER_PASSWORD nastavenými na účet,"
-  echo "         který NEMÁ oprávnění na '${TEST_PROTECTED_ENDPOINT}' (viz komentář v hlavičce)."
+  echo "[12/12] SKIPPED - permission_denied needs a real test account."
+  echo "         Run the script with TEST_USER_EMAIL and TEST_USER_PASSWORD set to an account"
+  echo "         WITHOUT the permission for '${TEST_PROTECTED_ENDPOINT}' (see the header comment)."
 else
-  echo "[12/12] Přihlašuji se jako ${TEST_USER_EMAIL} a volám endpoint bez oprávnění (${TEST_PROTECTED_ENDPOINT})..."
+  echo "[12/12] Logging in as ${TEST_USER_EMAIL} and calling an endpoint without permission (${TEST_PROTECTED_ENDPOINT})..."
 
   login_response=$(curl "${curl_opts[@]}" \
     -X POST "${API_BASE}/login" \
@@ -270,15 +270,15 @@ else
     -d "{\"email\":\"${TEST_USER_EMAIL}\",\"password\":\"${TEST_USER_PASSWORD}\"}")
 
   if echo "$login_response" | grep -q '"requires_2fa"'; then
-    echo "  ⚠️  Účet má vynucenou 2FA - tenhle skript neumí dokončit OTP krok interaktivně."
-    echo "      Použij účet bez vynucené 2FA, nebo otestuj permission_denied ručně přes Postman."
+    echo "  ⚠️  The account has forced 2FA - this script cannot complete the OTP step interactively."
+    echo "      Use an account without forced 2FA, or test permission_denied by hand (e.g. Postman)."
   else
     # No jq (no extra dependency) - a rough extraction of "token":"..." from the JSON.
     test_token=$(echo "$login_response" | grep -o '"token":"[^"]*"' | head -n1 | cut -d'"' -f4)
 
     if [ -z "$test_token" ]; then
-      echo "  ❌ Přihlášení se nezdařilo - zkontroluj TEST_USER_EMAIL/TEST_USER_PASSWORD."
-      echo "     Odpověď serveru: ${login_response}"
+      echo "  ❌ Login failed - check TEST_USER_EMAIL / TEST_USER_PASSWORD."
+      echo "     Server response: ${login_response}"
     else
       code=$(curl "${curl_opts[@]}" -o /dev/null -w "%{http_code}" \
         -X GET "${API_BASE}/${TEST_PROTECTED_ENDPOINT}" \
@@ -287,10 +287,10 @@ else
       printf "  GET /%s -> HTTP %s\n" "$TEST_PROTECTED_ENDPOINT" "$code"
 
       if [ "$code" = "403" ]; then
-        echo "  ✅ Očekávaný výsledek - měl by přibýt záznam 'permission_denied'."
+        echo "  ✅ Expected result - a 'permission_denied' event should appear."
       elif [ "$code" = "200" ]; then
-        echo "  ⚠️  Účet MÁ oprávnění na tenhle endpoint - nic se nezalogovalo (očekávané chování,"
-        echo "      ne bug). Nastav TEST_PROTECTED_ENDPOINT na endpoint, který účet skutečně nesmí."
+        echo "  ⚠️  The account HAS the permission for this endpoint - nothing was logged (expected,"
+        echo "      not a bug). Set TEST_PROTECTED_ENDPOINT to an endpoint the account must not use."
       fi
     fi
   fi
@@ -298,33 +298,33 @@ fi
 echo
 
 echo "=================================================================="
-echo " Hotovo. Zkontroluj admin -> Core -> Bezpečnostní monitoring."
+echo " Done. Check admin -> Core -> Security monitoring."
 echo "=================================================================="
-echo " Očekávané typy eventů ze sekcí [1]-[11]:"
+echo " Expected event types of sections [1]-[11]:"
 echo "   login_failed, login_brute_force_suspected, login_captcha_failed,"
 echo "   throttle_exceeded, password_reset_email_rate_limited, scan_probe,"
 echo "   refresh_token_invalid, unauthenticated_access_attempt,"
 echo "   account_activation_token_invalid, password_reset_token_invalid,"
 echo "   login_2fa_session_invalid, sales_lead_token_invalid"
 echo
-echo " Sekce [12] (volitelná): permission_denied"
+echo " Section [12] (optional): permission_denied"
 echo "=================================================================="
 echo
-echo " NEAUTOMATIZOVANÉ scénáře (vyžadují ruční zásah do .env/DB, skript je"
-echo " záměrně NESPOUŠTÍ, aby nic tiše neměnil):"
+echo " NOT AUTOMATED scenarios (they need a manual change of .env / the database, the script"
+echo " deliberately does NOT run them so it changes nothing silently):"
 echo
 echo " • login_captcha_service_error / captcha 'rejected_by_provider':"
-echo "   TURNSTILE_SECRET_KEY v .env je nastaven na Cloudflare testovací klíč"
-echo "   '1x0000...AA', který VŽDY projde jako platný - proto tenhle skript nemůže"
-echo "   vygenerovat skutečné odmítnutí captchou. Pro ruční test dočasně přepni"
-echo "   TURNSTILE_SECRET_KEY na '2x0000000000000000000000000000000AA' (Cloudflare"
-echo "   dokumentovaný klíč 'vždy zamítne'), spusť 'php artisan config:clear' a zkus"
-echo "   login s libovolným captcha_token po překročení CAPTCHA_THRESHOLD. NEZAPOMEŇ"
-echo "   klíč po testu vrátit zpět."
+echo "   TURNSTILE_SECRET_KEY in .env is the Cloudflare test key"
+echo "   '1x0000...AA', which ALWAYS passes as valid - so this script cannot"
+echo "   produce a real captcha rejection. For a manual test, temporarily switch"
+echo "   TURNSTILE_SECRET_KEY to '2x0000000000000000000000000000000AA' (the Cloudflare"
+echo "   documented 'always fails' key), run 'php artisan config:clear' and try"
+echo "   a login with any captcha_token after CAPTCHA_THRESHOLD is exceeded. DO NOT FORGET"
+echo "   to restore the key after the test."
 echo
 echo " • account_activation_blocked_account:"
-echo "   vyžaduje reálný účet, který (a) má vygenerovaný platný aktivační token"
-echo "   (založ nového uživatele v adminu) A ZÁROVEŇ (b) je is_blocked=1 (zablokuj ho"
-echo "   hned po založení, PŘED aktivací). Pak zkus otevřít aktivační odkaz z mailu -"
-echo "   měl by se objevit záznam 'account_activation_blocked_account'."
+echo "   needs a real account that (a) has a valid activation token"
+echo "   (create a new user in the admin) AND (b) is_blocked=1 (block it"
+echo "   right after creating it, BEFORE activation). Then open the activation link of the e-mail -"
+echo "   an 'account_activation_blocked_account' event should appear."
 echo "=================================================================="

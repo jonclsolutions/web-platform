@@ -11,7 +11,6 @@
 namespace App\Models\Core;
 
 use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -26,7 +25,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class CoreRole extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
     /**
      * @var array<int, string> The attributes that are mass assignable.

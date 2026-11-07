@@ -21,7 +21,7 @@ import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
-import { EntityCrudService } from '../../../core/services/entitiy-crud.service';
+import { EntityCrudService } from '../../../core/services/entity-crud.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import * as Config from './projects.config';
 import { UploadRulesService } from '../../../shared/services/upload-rules.service';

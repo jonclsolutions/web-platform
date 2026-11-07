@@ -9,10 +9,11 @@
  * @note Same recipe as `user-request.config.ts` / `support-tickets.config.ts`:
  * 1) `..._VALUES` - canonical English slug, never translated.
  * 2) `..._LABEL_KEYS` - slug -> i18n key.
- * 3) `mapLabeledOptions()` - `{value,label}` pairs shared by the form and the filter.
+ * 3) `mapLabeledOptions(SECTION, )` - `{value,label}` pairs shared by the form and the filter.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { mapLabeledOptions } from '../../components/builders/labeled-options';
 
 const SECTION = 'sales-leads';
 
@@ -82,10 +83,6 @@ const SOURCE_CHANNEL_LABEL_KEYS: Record<string, string> = {
   other_online: 'source_other_online',
   other_offline: 'source_other_offline',
 };
-
-function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, i18n: AdminLocalizationService) {
-  return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
-}
 
 export function createSalesLeadButtons(i18n: AdminLocalizationService): Core.TableButtons[] {
   return [
@@ -172,7 +169,7 @@ export function createSalesLeadFormFields(i18n: AdminLocalizationService): Core.
       label: i18n.getValue(`${SECTION}.field_source_channel_label`),
       placeholder: i18n.getValue(`${SECTION}.field_source_channel_placeholder`),
       type: 'select',
-      options: mapLabeledOptions(SALES_LEAD_SOURCE_CHANNEL_VALUES, SOURCE_CHANNEL_LABEL_KEYS, i18n),
+      options: mapLabeledOptions(SECTION, SALES_LEAD_SOURCE_CHANNEL_VALUES, SOURCE_CHANNEL_LABEL_KEYS, i18n),
       required: true,
       errorMessage: i18n.getValue(`${SECTION}.field_source_channel_error`),
       editable: true, show_in_edit: true, show_in_create: true,
@@ -182,7 +179,7 @@ export function createSalesLeadFormFields(i18n: AdminLocalizationService): Core.
       label: i18n.getValue(`${SECTION}.field_status_label`),
       placeholder: i18n.getValue(`${SECTION}.field_status_placeholder`),
       type: 'select',
-      options: mapLabeledOptions(SALES_LEAD_STATUS_VALUES, STATUS_LABEL_KEYS, i18n),
+      options: mapLabeledOptions(SECTION, SALES_LEAD_STATUS_VALUES, STATUS_LABEL_KEYS, i18n),
       required: true,
       errorMessage: i18n.getValue(`${SECTION}.field_status_error`),
       editable: true, show_in_edit: true, show_in_create: true,
@@ -192,7 +189,7 @@ export function createSalesLeadFormFields(i18n: AdminLocalizationService): Core.
       label: i18n.getValue(`${SECTION}.field_priority_label`),
       placeholder: i18n.getValue(`${SECTION}.field_priority_placeholder`),
       type: 'select',
-      options: mapLabeledOptions(SALES_LEAD_PRIORITY_VALUES, PRIORITY_LABEL_KEYS, i18n),
+      options: mapLabeledOptions(SECTION, SALES_LEAD_PRIORITY_VALUES, PRIORITY_LABEL_KEYS, i18n),
       required: true,
       errorMessage: i18n.getValue(`${SECTION}.field_priority_error`),
       editable: true, show_in_edit: true, show_in_create: true,
@@ -256,8 +253,8 @@ export function createSalesLeadFilterColumns(i18n: AdminLocalizationService): Co
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_id_placeholder`), canSort: true },
     { key: 'subject_name', header: i18n.getValue(`${SECTION}.col_subject`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_subject_placeholder`), canSort: true },
-    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'select', options: mapLabeledOptions(SALES_LEAD_STATUS_VALUES, STATUS_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_status_placeholder`), canSort: true },
-    { key: 'priority', header: i18n.getValue(`${SECTION}.col_priority`), type: 'select', options: mapLabeledOptions(SALES_LEAD_PRIORITY_VALUES, PRIORITY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_priority_placeholder`), canSort: true },
+    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'select', options: mapLabeledOptions(SECTION, SALES_LEAD_STATUS_VALUES, STATUS_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_status_placeholder`), canSort: true },
+    { key: 'priority', header: i18n.getValue(`${SECTION}.col_priority`), type: 'select', options: mapLabeledOptions(SECTION, SALES_LEAD_PRIORITY_VALUES, PRIORITY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_priority_placeholder`), canSort: true },
     { key: 'salesman_name', header: i18n.getValue(`${SECTION}.col_salesman`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_salesman_placeholder`), canSort: true },
   ];
 }

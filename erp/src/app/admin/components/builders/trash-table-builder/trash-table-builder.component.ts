@@ -25,7 +25,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 
 import { DataHandler } from '../../../../core/services/data-handler.service';
-import { EntityCrudService } from '../../../../core/services/entitiy-crud.service';
+import { EntityCrudService } from '../../../../core/services/entity-crud.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { PermissionService } from '../../../../core/auth/services/permission.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';

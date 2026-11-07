@@ -263,15 +263,15 @@ describe('ProjectPortalComponent', () => {
   }));
 
   /**
-   * @description Status change / closing: same status or no thread ignored; success updates
-   *   detail + list; 404 (thread gone) closes it and reloads the list; other errors keep it.
-   * @input updateThreadStatus('active'); 'closed' ok; 404; closeThreadAsCustomer ok; 404; 500.
-   * @output No post; status closed in list; closed + reloaded; …
+   * @description Status change: same status or no thread ignored; success updates detail +
+   *   list; 404 (thread gone) closes it and reloads the list; other errors keep it.
+   * @input updateThreadStatus('closed') without a thread; 'active' (same); 'closed' ok; 500; 404
+   *   with a failing list reload.
+   * @output No post; status closed in detail and list; thread kept; thread closed, list kept.
    */
-  it('changes and closes threads', fakeAsync(() => {
+  it('changes the thread status', fakeAsync(() => {
     loggedIn();
     portal.updateThreadStatus('closed');
-    portal.closeThreadAsCustomer();
     expect(post).not.toHaveBeenCalled();
     portal.openThread(portal.threads[0]);
     tick();
@@ -288,21 +288,10 @@ describe('ProjectPortalComponent', () => {
     portal.updateThreadStatus('active');
     expect(portal.selectedThread).not.toBeNull();
     replies['/status'] = () => throwError(() => ({ status: 404 }));
+    replies['/tok/threads'] = () => throwError(() => ({ status: 500 }));
     portal.updateThreadStatus('active');
     expect(portal.selectedThread).toBeNull();
-
-    portal.openThread(portal.threads[0]);
-    tick();
-    replies['/close'] = () => of({ status: 'closed' });
-    portal.closeThreadAsCustomer();
-    expect(portal.threads[0].status).toBe('closed');
-    replies['/close'] = () => throwError(() => ({ status: 500 }));
-    portal.closeThreadAsCustomer();
-    expect(portal.selectedThread).not.toBeNull();
-    replies['/close'] = () => throwError(() => ({ status: 404 }));
-    portal.closeThreadAsCustomer();
-    expect(portal.selectedThread).toBeNull();
-    expect(portal.closingThread).toBeFalse();
+    expect(portal.threads.length).toBe(2);
     fixture.destroy();
     discardPeriodicTasks();
   }));

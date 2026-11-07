@@ -76,7 +76,6 @@
               [totalPages]="showTrashTable ? trashTotalPages : totalPages"
               [totalItems]="showTrashTable ? trashTotalItems : totalItems"
               [itemsPerPage]="showTrashTable ? trashItemsPerPage : itemsPerPage"
-              [dataLength]="showTrashTable ? trashData.length : data.length"
               (pageChange)="handlePageChange($event)"
               (itemsPerPageChange)="handleItemsPerPageChange($event)">
             </app-pagination-buttons-builder>

@@ -1,50 +1,54 @@
-# Enum hodnoty a booleany v generických builder komponentách
+# Enum values and booleans in the generic builder components
 
-Tenhle dokument navazuje na `admin-i18n.md` a popisuje, jak se **hodnoty
-uložené v DB** (status/priority/thema/boolean sloupce) technicky promítají do
-přeloženého textu v `TableBuilderComponent`, `FormBuilderComponent` a
-`FilterFormBuilderComponent` — tedy ve sdílených builderech, které
-`AdminLocalizationService` **neinjektují samy** (viz bod 5.3 předchozího
-dokumentu), a přesto musí zobrazovat přeložený text.
+This document follows `src/assets/i18n/admin/AdminI18N_doc.md` and describes
+how **values stored in the database** (status / priority / thema / boolean
+columns) become translated text in `TableBuilderComponent`,
+`FormBuilderComponent` and `FilterFormBuilderComponent` - shared builders that
+**do not inject** `AdminLocalizationService` themselves (see 5.3 of the
+previous document) and still have to show translated text.
 
-## 1. Princip — builder text nikdy nezná, jen ho přeposílá
+## 1. Principle - a builder never knows the text, it only passes it on
 
-Žádný ze tří builderů neřeší **jak** se hodnota přeloží. Vždy jen hledá
-existující `{value, label}` pár, který mu **stránka** (přes `*.config.ts`)
-předala v `InputDefinition.options`/`FilterColumns.options`. Builder je tak
-plně nezávislý na jazyce i na tom, kolik jazyků administrace podporuje —
-stará se o to výhradně stránka, která `AdminLocalizationService` injektuje.
+None of the three builders decides **how** a value is translated. It only
+looks up an existing `{value, label}` pair the **page** (through its
+`*.config.ts`) passed in `InputDefinition.options` / `FilterColumns.options`.
+A builder is therefore independent of the language and of how many languages
+the admin supports - that is the job of the page, which injects
+`AdminLocalizationService`.
 
 ```
-*.config.ts (zná i18n)
-   │  vytvoří {value: 'in_progress', label: 'Zpracovává se'}
+*.config.ts (knows i18n)
+   │  creates {value: 'in_progress', label: 'In progress'}
    ▼
 InputDefinition.options / FilterColumns.options
-   │  (obyčejná data, žádná i18n reference uvnitř)
+   │  (plain data, no i18n reference inside)
    ▼
 FormBuilderComponent / FilterFormBuilderComponent / TableBuilderComponent
-   │  jen hledají: options.find(o => o.value === rawValue)?.label
+   │  only look up: options.find(o => o.value === rawValue)?.label
    ▼
-Zobrazený text
+Displayed text
 ```
 
-## 2. Canonical value vs. label — jediné místo pravdy
+## 2. Canonical value vs. label - one source of truth
 
-Sloupce jako `status`/`priority`/`thema` mají dvě odlišné role:
+Columns such as `status` / `priority` / `thema` have two different roles:
 
-- **`value`** — string, který se posílá na backend a ukládá do DB. **Nikdy
-  se nepřekládá.** Backendová validace (`in:new,in_progress,done,cancelled`)
-  i filtrování v DB (`WHERE status = ?`) pracují výhradně s touto hodnotou.
-- **`label`** — text, který vidí uživatel. Přeložený, jazykově závislý.
+- **`value`** - the string sent to the API and stored in the database. **Never
+  translated.** Backend validation (`in:new,in_progress,done,cancelled`) and
+  database filtering (`WHERE status = ?`) work only with this value.
+- **`label`** - the text the user sees. Translated, language dependent.
 
-Recept z `user-request.config.ts` (referenční implementace pro celý
-projekt):
+The recipe (reference implementation `user-request.config.ts`):
 
 ```typescript
-// 1) Canonical VALUES - anglický slug, nikdy nepřekládat
+import { mapLabeledOptions } from '../../components/builders/labeled-options';
+
+const SECTION = 'user-request';
+
+// 1) Canonical VALUES - English slugs, never translated
 export const USER_REQUEST_STATUS_VALUES: string[] = ['new', 'in_progress', 'done', 'cancelled'];
 
-// 2) slug -> i18n klíč (NE slug -> text přímo)
+// 2) slug -> i18n key (NOT slug -> text)
 const STATUS_LABEL_KEYS: Record<string, string> = {
   new: 'status_new',
   in_progress: 'status_in_progress',
@@ -52,50 +56,38 @@ const STATUS_LABEL_KEYS: Record<string, string> = {
   cancelled: 'status_cancelled',
 };
 
-// 3) Sdílená pomocná funkce - vrací {value, label} páry
-function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, i18n: AdminLocalizationService) {
-  return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
-}
+// 3) The shared helper returns the {value, label} pairs
+options: mapLabeledOptions(SECTION, USER_REQUEST_STATUS_VALUES, STATUS_LABEL_KEYS, i18n)
 ```
 
-Tahle trojice (`_VALUES` + `_LABEL_KEYS` + `mapLabeledOptions()`) je jediné
-místo, kam sahá jak formulář, tak filtr, tak (nepřímo) tabulka — žádná
-duplicitní definice hodnot nikde jinde v komponentě.
+This trio (`_VALUES` + `_LABEL_KEYS` + `mapLabeledOptions()` of
+`labeled-options.ts`) is the only place the form, the filter and (indirectly)
+the table read from - no duplicate definition of the values anywhere else in
+the component.
 
-> **Poznámka k historii:** bod 5.4 v `admin-i18n.md` popisoval tohle jako
-> "plán do budoucna" s tím, že `value` zatím zůstává v češtině. Tenhle plán
-> je od migrace `003_status_slugs_web_raw_request_commissions.sql` **splněný**
-> pro `web_raw_request_commissions` — DB sloupce teď nesou anglické slugy,
-> validace na backendu (`Store/UpdateWebRawRequestCommissionRequest`) je
-> přepsaná zároveň. Pro ostatní tabulky (`web_sales_leads`, `web_job_applications`,
-> `web_support_tickets`, ...) je to práce, která se řeší controller po
-> controlleru stejným receptem, viz sekce 6 níže.
+## 3. How `FormBuilderComponent` reads it
 
-## 3. Jak to čte `FormBuilderComponent`
-
-Formulářové `select` pole dostává `options` přímo v `InputDefinition`:
+A `select` form field gets its `options` directly in the `InputDefinition`:
 
 ```typescript
 {
   column_name: 'status',
   type: 'select',
-  options: mapLabeledOptions(USER_REQUEST_STATUS_VALUES, STATUS_LABEL_KEYS, i18n),
+  options: mapLabeledOptions(SECTION, USER_REQUEST_STATUS_VALUES, STATUS_LABEL_KEYS, i18n),
   ...
 }
 ```
 
-`FormBuilderComponent` páry jen vykreslí jako `<option [value]="opt.value">{{ opt.label }}</option>`
-— žádnou i18n logiku v sobě nemá. `normalizeSelectValues()` navíc při
-otevření formuláře k editaci porovnává uloženou DB hodnotu (`value`) se
-seznamem `options`, ne s labelem — proto musí `value` v `options` **přesně**
-odpovídat tomu, co je v DB (slug, ne text).
+`FormBuilderComponent` only renders the pairs as
+`<option [value]="opt.value">{{ opt.label }}</option>` - no i18n logic inside.
+When a form opens for editing, `normalizeSelectValues()` compares the stored
+database value with the `options` values, not with the labels - so `value`
+in `options` must match the database **exactly** (slug, not text).
 
-## 4. Jak to čte `FilterFormBuilderComponent`
+## 4. How `FilterFormBuilderComponent` reads it
 
-Filtr má stejnou schopnost, ale dřív se u téhle komponenty nevyužívala —
-`FilterColumns.options` byl historicky plochý `string[]` (stejná hodnota
-sloužila jako filtr-hodnota poslaná do API i jako zobrazený text). Šablona
-(`filter-form-builder.component.html`) ale **od začátku** uměla obojí:
+The filter template (`filter-form-builder.component.html`) supports both a
+`{value, label}` pair and a plain string:
 
 ```html
 @for (option of $any(column.options); track option) {
@@ -105,20 +97,17 @@ sloužila jako filtr-hodnota poslaná do API i jako zobrazený text). Šablona
 }
 ```
 
-Pokud `option.value` existuje, použije se `{value,label}` pár (přeložený
-text, anglický slug jako hodnota). Pokud ne, chová se to jako dřív (plochý
-string je zároveň hodnota i text) — zpětně kompatibilní se stránkami, které
-`mapLabeledOptions()` ještě nepoužívají. Migrace na přeložené filtry proto
-**nevyžaduje žádnou úpravu builderu** — jen se ve `*.config.ts` přepne
-`options: USER_REQUEST_STATUS_VALUES` na
-`options: mapLabeledOptions(USER_REQUEST_STATUS_VALUES, STATUS_LABEL_KEYS, i18n)`.
+With `option.value` the pair is used (translated text, English slug as the
+value); without it a plain string is both the value and the text. A filter
+gets translated options without any builder change - the `*.config.ts` just
+passes `mapLabeledOptions(...)` instead of the plain value list.
 
-## 5. Jak to čte `TableBuilderComponent`
+## 5. How `TableBuilderComponent` reads it
 
-`getCellValue()` v `default` větvi (case pro cokoliv, co není
-`currency`/`date`/`boolean`/`image`) hledá stejný pár, ale ne ve vlastní
-konfiguraci — v `InputDefinitions`, které stránka stejně musí builderu
-předat kvůli formuláři (`[inputDefinitions]="formFields"`):
+`getCellValue()` in its `default` branch (anything that is not `currency` /
+`date` / `boolean` / `image`) looks up the same pair - not in its own
+configuration, but in the `InputDefinitions` the page passes anyway for the
+form (`[inputDefinitions]="formFields"`):
 
 ```typescript
 default:
@@ -130,79 +119,68 @@ default:
   return value;
 ```
 
-**Důsledek:** pokud pole v `createUserRequestFormFields()` `options` nemá
-(typicky `type: 'text'` bez pevného seznamu hodnot), tabulka zobrazí syrovou
-DB hodnotu (slug) beze změny — žádná chyba, ale žádný překlad. Tohle byl
-přesně případ `thema` u `user-request` (pole bylo `text` s regex validací
-pro volný vstup z veřejného formuláře, `options` chybělo) — oprava je
-doplnit `options: mapLabeledOptions(...)` i k `text` poli. `type` zůstává
-`'text'` (formulář na `options` u `text` typu nijak nereaguje), jen tabulka
-si `options` z něj přečte.
+**Consequence:** when a field of the form definition has no `options`
+(typically `type: 'text'` without a fixed list), the table shows the raw
+database value (slug) - no error, but no translation either. For a text field
+whose values come from a fixed list (e.g. `thema` of `user-request`, a free
+text input of the public form), add `options: mapLabeledOptions(...)` to the
+`text` field too: the form ignores `options` of a `text` field, the table
+reads them.
 
-`String(opt.value) === String(value)` porovnává jako string — funguje tedy
-stejně pro numerické i textové sluggy, žádná typová konverze navíc není
-potřeba.
+`String(opt.value) === String(value)` compares as strings, so numeric and text
+slugs work the same.
 
-**Volné texty se nerozbijí:** pokud sloupec obsahuje hodnotu mimo pevný
-seznam (např. zákazník napsal vlastní `thema` mimo pět předdefinovaných
-kategorií), `options.find()` vrátí `undefined` a metoda spadne na `return value`
-— zobrazí se syrový text beze změny, ne prázdné pole nebo chyba.
+**Free texts do not break:** a value outside the fixed list makes
+`options.find()` return `undefined` and the method returns the raw value -
+shown unchanged, not as an empty cell or an error.
 
-## 6. Recept pro migraci dalšího sloupce/tabulky
+## 6. Recipe for converting another column / table
 
-Postup je identický napříč celým projektem (Core/Web/Shop), jen se mění
-tabulka a `*.config.ts` soubor:
+The procedure is the same across the project (Core / Web / Shop), only the
+table and the `*.config.ts` change:
 
-1. **Zjisti všechny DISTINCT hodnoty** v produkčních datech
-   (`SELECT DISTINCT status FROM ...`) — ne jen ukázková data z dumpu.
-2. **SQL migrace** — `UPDATE ... SET slug WHERE = 'český text'` pro každou
-   hodnotu + `ALTER ... MODIFY ... DEFAULT 'slug'` na nový default.
-3. **Backend validace** (`Store*Request`/`Update*Request`) — přepiš
-   `in:Český text,Jiný text` na `in:slug_one,slug_two`.
-4. **`*.config.ts`** — přejmenuj `..._VALUES` pole na slugy, překlíčuj
-   `..._LABEL_KEYS` mapu na nové slugy (i18n klíče/JSON hodnoty samotné se
-   typicky NEMĚNÍ, jen jejich klíč v mapě).
-5. **Formulářová i filtrová pole** — obě použij přes `mapLabeledOptions()`.
-6. Zkontroluj, že **žádné** pole se stejným canonical seznamem hodnot
-   (typicky `text` pole s volným vstupem, které náhodou sdílí hodnoty s
-   pevným seznamem, viz `thema` výše) nezůstalo bez `options` — jinak
-   tabulka zobrazí slug místo labelu i přesto, že filtr/formulář fungují
-   správně.
+1. **Find every DISTINCT value** in the production data
+   (`SELECT DISTINCT status FROM ...`), not only in sample data.
+2. **Migration** - `UPDATE ... SET status = 'slug' WHERE status = 'old text'`
+   for every value + the new default.
+3. **Backend validation** (`Store*Request` / `Update*Request`) - change
+   `in:Old text,Other text` to `in:slug_one,slug_two`.
+4. **`*.config.ts`** - slugs in the `..._VALUES` array, `..._LABEL_KEYS` keyed
+   by the new slugs (the i18n keys and JSON texts usually stay the same).
+5. **Form and filter fields** - both through `mapLabeledOptions()`.
+6. Check that **no** field sharing the same value list (typically a free `text`
+   field, see `thema` above) is left without `options` - otherwise the table
+   shows the slug instead of the label although the filter and the form work.
 
-Kroky 2–3 musí proběhnout **současně** s krokem 4 — nikdy odděleně (stará
-DB data by selhala na nové validaci, nebo select pole by nenašlo matching
-option pro starou hodnotu).
+Steps 2-3 must be released **together** with step 4, never separately (old
+data would fail the new validation, or a select would not find a matching
+option for an old value).
 
-## 7. Booleany — `shared.yes`/`shared.no`
+## 7. Booleans - `shared.yes` / `shared.no`
 
-Booleovské sloupce (`type: 'boolean'`) se řeší jinak než enum sloupce —
-nejde o `options` pár, ale o pevnou dvojici klíčů ve `shared` sekci JSONu,
-společnou pro celou administraci:
+Boolean columns (`type: 'boolean'`) are not an `options` pair but a fixed pair
+of keys of the `shared` JSON section, common to the whole admin:
 
 ```typescript
-// DetailsBuilderComponent.getFormattedValue() - referenční implementace
+// TableBuilderComponent.getCellValue() / DetailsBuilderComponent
 case 'boolean':
-  return (value == true || value == 1)
+  return (value == true || value === 'true' || value == 1)
     ? this.i18n.getValue('shared.yes')
     : this.i18n.getValue('shared.no');
 ```
 
-`TableBuilderComponent.getCellValue()` musí používat **stejné** klíče, ne
-vlastní natvrdo psaný text — obě komponenty totiž zobrazují tutéž DB hodnotu
-(`is_active`, `is_featured`, ...), jen v jiném kontextu (řádek tabulky vs.
-detail záznamu), a musí se shodnout na tom, jak vypadá "Ano"/"Yes" napříč
-administrací. Žádná `*.config.ts` úprava tu není potřeba — `shared.yes`/
-`shared.no` existuje jednou, sdílí ho každá komponenta, každý sloupec,
-každá stránka.
+The table and the details use the **same** keys - they show the same database
+value (`is_active`, `is_featured` ...) in a different context and must agree
+on "Yes" across the admin. No `*.config.ts` change is needed.
 
-## 8. Co builder NIKDY neřeší
+## 8. What a builder NEVER does
 
-- **Nezjišťuje aktuální jazyk sám.** Vždy dostává už hotový přeložený
-  `label` zvenku — `AdminLocalizationService` je injektovaná jen ve
-  stránce/`*.config.ts`, ne v builderu (viz bod 5.3 `admin-i18n.md`).
-- **Nerozhoduje o canonical hodnotě.** `value` v `options` musí přesně
-  odpovídat tomu, co je v DB — builder to jen porovná, nikdy nenormalizuje
-  ani nehádá.
-- **Neřeší chybějící `options`.** Pokud pole options nemá, builder tiše
-  vrátí syrovou hodnotu — to není chyba builderu, ale chybějící konfigurace
-  na straně stránky (viz sekce 5–6 výše).
+- **It does not detect the current language.** It always gets a ready,
+  translated `label` from outside - `AdminLocalizationService` is injected
+  only in the page / `*.config.ts`, not in the builder.
+- **It does not decide the canonical value.** `value` in `options` must match
+  the database exactly - the builder only compares, never normalizes or
+  guesses.
+- **It does not handle missing `options`.** Without options the builder
+  returns the raw value - that is missing page configuration, not a builder
+  error (see sections 5-6).

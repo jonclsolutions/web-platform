@@ -81,7 +81,6 @@
               [totalPages]="currentMode === 'trash' ? trashTotalPages : totalPages"
               [totalItems]="currentMode === 'trash' ? trashTotalItems : totalItems"
               [itemsPerPage]="currentMode === 'trash' ? trashItemsPerPage : itemsPerPage"
-              [dataLength]="currentMode === 'trash' ? trashData.length : data.length"
               (pageChange)="handlePageChange($event)"
               (itemsPerPageChange)="handleItemsPerPageChange($event)">
             </app-pagination-buttons-builder>

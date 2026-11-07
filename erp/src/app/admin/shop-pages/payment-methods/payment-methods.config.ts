@@ -10,6 +10,7 @@
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { mapLabeledOptions } from '../../components/builders/labeled-options';
 
 const SECTION = 'shop-payment-methods';
 
@@ -27,10 +28,6 @@ const PROVIDER_LABEL_KEYS: Record<string, string> = {
   stripe: 'provider_stripe',
   paypal: 'provider_paypal',
 };
-
-function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, i18n: AdminLocalizationService) {
-  return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
-}
 
 function yesNoOptions(i18n: AdminLocalizationService) {
   return [
@@ -96,7 +93,7 @@ export function createPaymentFormFields(i18n: AdminLocalizationService): Core.In
       column_name: 'variable_symbol_type',
       label: i18n.getValue(`${SECTION}.field_variable_symbol_type_label`),
       type: 'select',
-      options: mapLabeledOptions(VARIABLE_SYMBOL_TYPE_VALUES, VARIABLE_SYMBOL_TYPE_LABEL_KEYS, i18n),
+      options: mapLabeledOptions(SECTION, VARIABLE_SYMBOL_TYPE_VALUES, VARIABLE_SYMBOL_TYPE_LABEL_KEYS, i18n),
       required: true,
       editable: true, show_in_edit: true, show_in_create: false,
     },
@@ -149,7 +146,7 @@ export function createPaymentFilterColumns(i18n: AdminLocalizationService): Core
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_id_placeholder`), canSort: true },
     { key: 'name', header: i18n.getValue(`${SECTION}.col_name`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_name_placeholder`), canSort: true },
-    { key: 'provider', header: i18n.getValue(`${SECTION}.col_provider`), type: 'select', options: mapLabeledOptions(PROVIDER_VALUES, PROVIDER_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_provider_placeholder`), canSort: true },
+    { key: 'provider', header: i18n.getValue(`${SECTION}.col_provider`), type: 'select', options: mapLabeledOptions(SECTION, PROVIDER_VALUES, PROVIDER_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_provider_placeholder`), canSort: true },
   ];
 }
 

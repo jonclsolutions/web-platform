@@ -31,14 +31,6 @@ export class PaginationButtonsBuilderComponent {
   @Input() totalItems: number = 0;
   @Input() itemsPerPage: number = 15;
 
-  /**
-   * @deprecated Not used for computing the shown range any more (see `rangeStart` / `rangeEnd`
-   * below) - `data.length` differed from `totalItems` in some components. The @Input is kept
-   * only for backward compatibility with the existing bindings in ~20 parent templates; the
-   * logic does not depend on its value.
-   */
-  @Input() dataLength: number = 0;
-
   @Output() pageChange = new EventEmitter<number>();
   @Output() itemsPerPageChange = new EventEmitter<number>();
   public readonly i18n = inject(AdminLocalizationService);

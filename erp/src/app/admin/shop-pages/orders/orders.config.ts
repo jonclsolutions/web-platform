@@ -8,6 +8,7 @@
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { mapLabeledOptions } from '../../components/builders/labeled-options';
 
 const SECTION = 'shop-orders';
 
@@ -34,16 +35,12 @@ const PAYMENT_STATUS_LABEL_KEYS: Record<string, string> = {
   unpaid: 'payment_status_unpaid',
 };
 
-function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, i18n: AdminLocalizationService) {
-  return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
-}
-
 export function createStatusOptions(i18n: AdminLocalizationService) {
-  return mapLabeledOptions(STATUS_VALUES, STATUS_LABEL_KEYS, i18n);
+  return mapLabeledOptions(SECTION, STATUS_VALUES, STATUS_LABEL_KEYS, i18n);
 }
 
 export function createPaymentStatusOptions(i18n: AdminLocalizationService) {
-  return mapLabeledOptions(PAYMENT_STATUS_VALUES, PAYMENT_STATUS_LABEL_KEYS, i18n);
+  return mapLabeledOptions(SECTION, PAYMENT_STATUS_VALUES, PAYMENT_STATUS_LABEL_KEYS, i18n);
 }
 
 export function createToolbarButtons(i18n: AdminLocalizationService): Core.Button[] {

@@ -8,6 +8,7 @@
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { mapLabeledOptions } from '../../components/builders/labeled-options';
 
 const SECTION = 'shop-shipping-methods';
 
@@ -18,10 +19,6 @@ const SHIPPING_TYPE_LABEL_KEYS: Record<string, string> = {
   pickup_point: 'shipping_type_pickup_point',
   store: 'shipping_type_store',
 };
-
-function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, i18n: AdminLocalizationService) {
-  return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
-}
 
 function yesNoOptions(i18n: AdminLocalizationService) {
   return [
@@ -72,7 +69,7 @@ export function createShippingFormFields(i18n: AdminLocalizationService): Core.I
       column_name: 'shipping_type',
       label: i18n.getValue(`${SECTION}.field_shipping_type_label`),
       type: 'select',
-      options: mapLabeledOptions(SHIPPING_TYPE_VALUES, SHIPPING_TYPE_LABEL_KEYS, i18n),
+      options: mapLabeledOptions(SECTION, SHIPPING_TYPE_VALUES, SHIPPING_TYPE_LABEL_KEYS, i18n),
       required: true,
       editable: true, show_in_edit: true, show_in_create: true,
     },
@@ -195,7 +192,7 @@ export function createShippingFilterColumns(i18n: AdminLocalizationService): Cor
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_id_placeholder`), canSort: true },
     { key: 'name', header: i18n.getValue(`${SECTION}.col_name`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_name_placeholder`), canSort: true },
-    { key: 'shipping_type', header: i18n.getValue(`${SECTION}.col_type`), type: 'select', options: mapLabeledOptions(SHIPPING_TYPE_VALUES, SHIPPING_TYPE_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_type_placeholder`), canSort: true },
+    { key: 'shipping_type', header: i18n.getValue(`${SECTION}.col_type`), type: 'select', options: mapLabeledOptions(SECTION, SHIPPING_TYPE_VALUES, SHIPPING_TYPE_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_type_placeholder`), canSort: true },
   ];
 }
 

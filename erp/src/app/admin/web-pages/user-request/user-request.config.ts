@@ -11,7 +11,7 @@
  * 1) The canonical VALUES array (`..._VALUES`) holds the stable English slug - the real value
  *    stored in the database / sent to the backend. NEVER translate the array itself.
  * 2) `..._LABEL_KEYS` maps slug -> i18n key (not slug -> text).
- * 3) `mapLabeledOptions(values, labelKeys, i18n)` returns `{value: slug, label: translated text}`
+ * 3) `mapLabeledOptions(SECTION, values, labelKeys, i18n)` returns `{value: slug, label: translated text}`
  *    pairs - usable both for `InputDefinition.options` (form select) and for
  *    `FilterColumns.options` (filter select); `FormBuilderComponent` and
  *    `FilterFormBuilderComponent` both support the `{value,label}` pair
@@ -28,6 +28,7 @@
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { mapLabeledOptions } from '../../components/builders/labeled-options';
 
 const SECTION = 'user-request';
 
@@ -38,11 +39,6 @@ const SECTION = 'user-request';
 export const USER_REQUEST_STATUS_VALUES: string[] = ['new', 'in_progress', 'done', 'cancelled'];
 export const USER_REQUEST_PRIORITY_VALUES: string[] = ['low', 'neutral', 'high'];
 export const USER_REQUEST_THEMA_VALUES: string[] = ['new_project', 'support', 'careers', 'other'];
-
-/** @deprecated Kept for backward compatibility with possible other imports - use `..._VALUES`. */
-export const USER_REQUEST_STATUS_OPTIONS = USER_REQUEST_STATUS_VALUES;
-export const USER_REQUEST_PRIORITY_OPTIONS = USER_REQUEST_PRIORITY_VALUES;
-export const USER_REQUEST_THEMA_OPTIONS = USER_REQUEST_THEMA_VALUES;
 
 const STATUS_LABEL_KEYS: Record<string, string> = {
   new: 'status_new',
@@ -61,14 +57,6 @@ const THEMA_LABEL_KEYS: Record<string, string> = {
   careers: 'thema_careers',
   other: 'thema_other',
 };
-
-/**
- * @description `value` = canonical slug (see VALUES above), `label` = translated text. Shared by
- * the form-field options and the filter-column options.
- */
-function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, i18n: AdminLocalizationService) {
-  return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
-}
 
 export function createUserRequestButtons(i18n: AdminLocalizationService): Core.TableButtons[] {
   return [
@@ -96,7 +84,7 @@ export function createUserRequestFormFields(i18n: AdminLocalizationService): Cor
       column_name: 'thema',
       label: i18n.getValue(`${SECTION}.field_thema_label`),
       type: 'select',
-      options: mapLabeledOptions(USER_REQUEST_THEMA_VALUES, THEMA_LABEL_KEYS, i18n),
+      options: mapLabeledOptions(SECTION, USER_REQUEST_THEMA_VALUES, THEMA_LABEL_KEYS, i18n),
       required: true,
       errorMessage: i18n.getValue(`${SECTION}.field_thema_error`),
       editable: true, show_in_edit: true, show_in_create: true,
@@ -124,7 +112,7 @@ export function createUserRequestFormFields(i18n: AdminLocalizationService): Cor
       column_name: 'status',
       label: i18n.getValue(`${SECTION}.field_status_label`),
       type: 'select',
-      options: mapLabeledOptions(USER_REQUEST_STATUS_VALUES, STATUS_LABEL_KEYS, i18n),
+      options: mapLabeledOptions(SECTION, USER_REQUEST_STATUS_VALUES, STATUS_LABEL_KEYS, i18n),
       required: true,
       editable: true, show_in_edit: true, show_in_create: true
     },
@@ -132,7 +120,7 @@ export function createUserRequestFormFields(i18n: AdminLocalizationService): Cor
       column_name: 'priority',
       label: i18n.getValue(`${SECTION}.field_priority_label`),
       type: 'select',
-      options: mapLabeledOptions(USER_REQUEST_PRIORITY_VALUES, PRIORITY_LABEL_KEYS, i18n),
+      options: mapLabeledOptions(SECTION, USER_REQUEST_PRIORITY_VALUES, PRIORITY_LABEL_KEYS, i18n),
       required: true,
       editable: true, show_in_edit: true, show_in_create: true
     },
@@ -188,10 +176,10 @@ export function createUserRequestTrashColumns(i18n: AdminLocalizationService): C
 export function createUserRequestFilterColumns(i18n: AdminLocalizationService): Core.FilterColumns[] {
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_id_placeholder`), canSort: true },
-    { key: 'thema', header: i18n.getValue(`${SECTION}.col_thema`), type: 'select', placeholder: i18n.getValue(`${SECTION}.filter_thema_placeholder`), options: mapLabeledOptions(USER_REQUEST_THEMA_VALUES, THEMA_LABEL_KEYS, i18n), canSort: true },
+    { key: 'thema', header: i18n.getValue(`${SECTION}.col_thema`), type: 'select', placeholder: i18n.getValue(`${SECTION}.filter_thema_placeholder`), options: mapLabeledOptions(SECTION, USER_REQUEST_THEMA_VALUES, THEMA_LABEL_KEYS, i18n), canSort: true },
     { key: 'contact_email', header: i18n.getValue(`${SECTION}.col_email`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_email_placeholder`), canSort: true },
-    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'select', options: mapLabeledOptions(USER_REQUEST_STATUS_VALUES, STATUS_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_status_placeholder`), canSort: true },
-    { key: 'priority', header: i18n.getValue(`${SECTION}.col_priority`), type: 'select', options: mapLabeledOptions(USER_REQUEST_PRIORITY_VALUES, PRIORITY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_priority_placeholder`), canSort: true },
+    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'select', options: mapLabeledOptions(SECTION, USER_REQUEST_STATUS_VALUES, STATUS_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_status_placeholder`), canSort: true },
+    { key: 'priority', header: i18n.getValue(`${SECTION}.col_priority`), type: 'select', options: mapLabeledOptions(SECTION, USER_REQUEST_PRIORITY_VALUES, PRIORITY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_priority_placeholder`), canSort: true },
   ];
 }
 

@@ -11,7 +11,7 @@
  * `Store/UpdateWebSupportTicketRequest`. Same recipe as `user-request.config.ts`:
  * 1) `..._VALUES` - canonical English slug, never translated.
  * 2) `..._LABEL_KEYS` - slug -> i18n key (not slug -> text).
- * 3) `mapLabeledOptions()` - `{value,label}` pairs shared by the form field
+ * 3) `mapLabeledOptions(SECTION, )` - `{value,label}` pairs shared by the form field
  *    (`InputDefinition.options`) and the filter (`FilterColumns.options`).
  * @note `TableBuilderComponent.getCellValue()` (default case) looks up `options` in
  * `inputDefinitions` by `column.key` - `category` / `priority` / `state` MUST have `options`
@@ -20,6 +20,7 @@
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { mapLabeledOptions } from '../../components/builders/labeled-options';
 
 const SECTION = 'support-tickets';
 
@@ -46,14 +47,6 @@ const STATE_LABEL_KEYS: Record<string, string> = {
   open: 'state_open',
   closed: 'state_closed',
 };
-
-/**
- * @description `value` = canonical slug, `label` = translated text. Shared by the form-field
- * options and the filter-column options.
- */
-function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, i18n: AdminLocalizationService) {
-  return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
-}
 
 export function createSupportTicketButtons(i18n: AdminLocalizationService): Core.TableButtons[] {
   return [
@@ -105,7 +98,7 @@ export function createSupportTicketFormFields(i18n: AdminLocalizationService): C
       label: i18n.getValue(`${SECTION}.field_category_label`),
       type: 'select',
       required: true,
-      options: mapLabeledOptions(SUPPORT_TICKET_CATEGORY_VALUES, CATEGORY_LABEL_KEYS, i18n),
+      options: mapLabeledOptions(SECTION, SUPPORT_TICKET_CATEGORY_VALUES, CATEGORY_LABEL_KEYS, i18n),
       editable: true, show_in_edit: true, show_in_create: true,
     },
     {
@@ -113,7 +106,7 @@ export function createSupportTicketFormFields(i18n: AdminLocalizationService): C
       label: i18n.getValue(`${SECTION}.field_priority_label`),
       type: 'select',
       required: true,
-      options: mapLabeledOptions(SUPPORT_TICKET_PRIORITY_VALUES, PRIORITY_LABEL_KEYS, i18n),
+      options: mapLabeledOptions(SECTION, SUPPORT_TICKET_PRIORITY_VALUES, PRIORITY_LABEL_KEYS, i18n),
       editable: true, show_in_edit: true, show_in_create: true,
     },
     {
@@ -121,7 +114,7 @@ export function createSupportTicketFormFields(i18n: AdminLocalizationService): C
       label: i18n.getValue(`${SECTION}.field_state_label`),
       type: 'select',
       required: false,
-      options: mapLabeledOptions(SUPPORT_TICKET_STATE_VALUES, STATE_LABEL_KEYS, i18n),
+      options: mapLabeledOptions(SECTION, SUPPORT_TICKET_STATE_VALUES, STATE_LABEL_KEYS, i18n),
       editable: true, show_in_edit: true, show_in_create: false,
     },
     {
@@ -165,7 +158,7 @@ export function createSupportTicketTrashColumns(i18n: AdminLocalizationService):
 }
 
 /**
- * @description `category` / `priority` / `state` use the `mapLabeledOptions()` `{value,label}`
+ * @description `category` / `priority` / `state` use the `mapLabeledOptions(SECTION, )` `{value,label}`
  * pairs - the template of `FilterFormBuilderComponent` supports both
  * (`option?.value !== undefined ? option.value : option`).
  */
@@ -174,9 +167,9 @@ export function createSupportTicketFilterColumns(i18n: AdminLocalizationService)
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_id_placeholder`), canSort: true },
     { key: 'subject', header: i18n.getValue(`${SECTION}.col_subject`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_subject_placeholder`), canSort: true },
     { key: 'user_name_plain', header: i18n.getValue(`${SECTION}.col_requester`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_requester_placeholder`), canSort: true },
-    { key: 'category', header: i18n.getValue(`${SECTION}.col_category`), type: 'select', options: mapLabeledOptions(SUPPORT_TICKET_CATEGORY_VALUES, CATEGORY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_category_placeholder`), canSort: true },
-    { key: 'priority', header: i18n.getValue(`${SECTION}.col_priority`), type: 'select', options: mapLabeledOptions(SUPPORT_TICKET_PRIORITY_VALUES, PRIORITY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_priority_placeholder`), canSort: true },
-    { key: 'state', header: i18n.getValue(`${SECTION}.col_state`), type: 'select', options: mapLabeledOptions(SUPPORT_TICKET_STATE_VALUES, STATE_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_state_placeholder`), canSort: true },
+    { key: 'category', header: i18n.getValue(`${SECTION}.col_category`), type: 'select', options: mapLabeledOptions(SECTION, SUPPORT_TICKET_CATEGORY_VALUES, CATEGORY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_category_placeholder`), canSort: true },
+    { key: 'priority', header: i18n.getValue(`${SECTION}.col_priority`), type: 'select', options: mapLabeledOptions(SECTION, SUPPORT_TICKET_PRIORITY_VALUES, PRIORITY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_priority_placeholder`), canSort: true },
+    { key: 'state', header: i18n.getValue(`${SECTION}.col_state`), type: 'select', options: mapLabeledOptions(SECTION, SUPPORT_TICKET_STATE_VALUES, STATE_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_state_placeholder`), canSort: true },
   ];
 }
 

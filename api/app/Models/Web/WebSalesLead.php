@@ -10,7 +10,6 @@
 
 namespace App\Models\Web;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,7 +27,7 @@ use App\Models\User;
  */
 class WebSalesLead extends Model
 {
-use HasFactory, SoftDeletes;
+use SoftDeletes;
 
     /**
      * @description Validity of the public order form link in days (GDPR / VT-10): a forwarded or

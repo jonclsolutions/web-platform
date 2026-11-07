@@ -9,6 +9,7 @@
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { mapLabeledOptions } from '../../components/builders/labeled-options';
 
 const SECTION = 'projects';
 
@@ -45,10 +46,6 @@ export const CHECKPOINT_STATUS_CYCLE: Record<string, string> = {
   active: 'done',
   done: 'new',
 };
-
-function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, i18n: AdminLocalizationService) {
-  return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
-}
 
 /** @description Shared readable map for the checkpoint badge text in the template (`checkpointStatusLabels[cp.status]`). */
 export function createCheckpointStatusLabels(i18n: AdminLocalizationService): Record<string, string> {
@@ -92,15 +89,15 @@ export function createProjectFormFields(i18n: AdminLocalizationService): Core.In
     },
     { column_name: 'name', label: i18n.getValue(`${SECTION}.field_name_label`), type: 'text', required: true, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'description', label: i18n.getValue(`${SECTION}.field_description_label`), type: 'textarea', required: false, editable: true, show_in_edit: true, show_in_create: true },
-    { column_name: 'platform', label: i18n.getValue(`${SECTION}.field_platform_label`), type: 'select', options: mapLabeledOptions(PROJECT_PLATFORM_VALUES, PLATFORM_LABEL_KEYS, i18n), required: false, editable: true, show_in_edit: true, show_in_create: true },
+    { column_name: 'platform', label: i18n.getValue(`${SECTION}.field_platform_label`), type: 'select', options: mapLabeledOptions(SECTION, PROJECT_PLATFORM_VALUES, PLATFORM_LABEL_KEYS, i18n), required: false, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'project_lead', label: i18n.getValue(`${SECTION}.field_lead_label`), type: 'text', required: false, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'contact_phone', label: i18n.getValue(`${SECTION}.field_phone_label`), type: 'tel', required: false, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'contact_email', label: i18n.getValue(`${SECTION}.field_email_label`), type: 'email', required: false, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'technologies', label: i18n.getValue(`${SECTION}.field_technologies_label`), type: 'textarea', required: false, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'estimated_completion_from', label: i18n.getValue(`${SECTION}.field_estimated_from_label`), type: 'date', required: false, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'estimated_completion_to', label: i18n.getValue(`${SECTION}.field_estimated_to_label`), type: 'date', required: false, editable: true, show_in_edit: true, show_in_create: true },
-    { column_name: 'visibility', label: i18n.getValue(`${SECTION}.field_visibility_label`), type: 'select', options: mapLabeledOptions(PROJECT_VISIBILITY_VALUES, VISIBILITY_LABEL_KEYS, i18n), required: true, editable: true, show_in_edit: true, show_in_create: true },
-    { column_name: 'status', label: i18n.getValue(`${SECTION}.field_status_label`), type: 'select', options: mapLabeledOptions(PROJECT_STATUS_VALUES, STATUS_LABEL_KEYS, i18n), required: false, editable: true, show_in_edit: true, show_in_create: true },
+    { column_name: 'visibility', label: i18n.getValue(`${SECTION}.field_visibility_label`), type: 'select', options: mapLabeledOptions(SECTION, PROJECT_VISIBILITY_VALUES, VISIBILITY_LABEL_KEYS, i18n), required: true, editable: true, show_in_edit: true, show_in_create: true },
+    { column_name: 'status', label: i18n.getValue(`${SECTION}.field_status_label`), type: 'select', options: mapLabeledOptions(SECTION, PROJECT_STATUS_VALUES, STATUS_LABEL_KEYS, i18n), required: false, editable: true, show_in_edit: true, show_in_create: true },
   ];
 }
 
@@ -128,9 +125,9 @@ export function createProjectFilterColumns(i18n: AdminLocalizationService): Core
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_id_placeholder`), canSort: true },
     { key: 'name', header: i18n.getValue(`${SECTION}.col_name`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_name_placeholder`), canSort: true },
-    { key: 'visibility', header: i18n.getValue(`${SECTION}.col_visibility`), type: 'select', options: mapLabeledOptions(PROJECT_VISIBILITY_VALUES, VISIBILITY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_visibility_placeholder`), canSort: true },
-    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'select', options: mapLabeledOptions(PROJECT_STATUS_VALUES, STATUS_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_status_placeholder`), canSort: true },
-    { key: 'platform', header: i18n.getValue(`${SECTION}.col_platform`), type: 'select', options: mapLabeledOptions(PROJECT_PLATFORM_VALUES, PLATFORM_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_platform_placeholder`), canSort: true },
+    { key: 'visibility', header: i18n.getValue(`${SECTION}.col_visibility`), type: 'select', options: mapLabeledOptions(SECTION, PROJECT_VISIBILITY_VALUES, VISIBILITY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_visibility_placeholder`), canSort: true },
+    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'select', options: mapLabeledOptions(SECTION, PROJECT_STATUS_VALUES, STATUS_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_status_placeholder`), canSort: true },
+    { key: 'platform', header: i18n.getValue(`${SECTION}.col_platform`), type: 'select', options: mapLabeledOptions(SECTION, PROJECT_PLATFORM_VALUES, PLATFORM_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_platform_placeholder`), canSort: true },
   ];
 }
 
@@ -181,8 +178,8 @@ export function createProjectThreadToolbarButtons(i18n: AdminLocalizationService
 export function createProjectThreadFilterColumns(i18n: AdminLocalizationService): Core.FilterColumns[] {
   return [
     { key: 'project_id', header: i18n.getValue(`${SECTION}.thread_filter_project_id_label`), type: 'text', placeholder: i18n.getValue(`${SECTION}.thread_filter_project_id_placeholder`), canSort: false },
-    { key: 'priority', header: i18n.getValue(`${SECTION}.thread_col_priority`), type: 'select', options: mapLabeledOptions(PROJECT_THREAD_PRIORITY_VALUES, THREAD_PRIORITY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.thread_filter_priority_placeholder`), canSort: true },
-    { key: 'status', header: i18n.getValue(`${SECTION}.thread_col_status`), type: 'select', options: mapLabeledOptions(PROJECT_THREAD_STATUS_VALUES, THREAD_STATUS_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.thread_filter_status_placeholder`), canSort: true },
+    { key: 'priority', header: i18n.getValue(`${SECTION}.thread_col_priority`), type: 'select', options: mapLabeledOptions(SECTION, PROJECT_THREAD_PRIORITY_VALUES, THREAD_PRIORITY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.thread_filter_priority_placeholder`), canSort: true },
+    { key: 'status', header: i18n.getValue(`${SECTION}.thread_col_status`), type: 'select', options: mapLabeledOptions(SECTION, PROJECT_THREAD_STATUS_VALUES, THREAD_STATUS_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.thread_filter_status_placeholder`), canSort: true },
   ];
 }
 

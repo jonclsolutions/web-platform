@@ -144,6 +144,17 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   }
 
   /**
+   * @description Description of a permission in the admin language - the translation of the
+   *   `permission-descriptions` section, else the stored (English) description.
+   * @param perm Permission row.
+   * @returns The description, '' when there is none.
+   */
+  permissionDescription(perm: CorePermission): string {
+    const translated = this.i18n.getMergedSection('permission-descriptions')[perm.permission_key];
+    return typeof translated === 'string' ? translated : (perm.description ?? '');
+  }
+
+  /**
    * @description Inflects "N user / users" (or the Czech equivalent) by the count - the JSON
    * ALWAYS carries 4 forms (`users_zero/one/few/many`); languages without the Czech 3-form
    * pluralization (e.g. English) simply have identical `few` / `many`.
@@ -194,7 +205,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
             ...resource,
             items: resource.items.filter(p =>
               p.permission_key.toLowerCase().includes(term) ||
-              (p.description ?? '').toLowerCase().includes(term) ||
+              this.permissionDescription(p).toLowerCase().includes(term) ||
               resource.resourceLabel.toLowerCase().includes(term)
             ),
           }))
