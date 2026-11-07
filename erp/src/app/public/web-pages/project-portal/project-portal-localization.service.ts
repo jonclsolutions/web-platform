@@ -7,7 +7,7 @@
  * @description Static (bundled, non-editable-in-admin-UI) multi-language support for the
  * CUSTOMER-facing project portal (`ProjectPortalComponent`) - a THIRD, separate i18n
  * concern in this codebase, distinct from both:
- * - `AdminLocalizationService` (admin UI chrome, `assets/i18n/admin/`, `rpsw_admin_language`
+ * - `AdminLocalizationService` (admin UI chrome, `assets/i18n/admin/`, `jsw_admin_language`
  *   localStorage key) - the project portal is NOT part of the admin.
  * - `LocalizationService` (public website's EDITABLE content, fetched from the backend,
  *   managed via `EditWebsiteComponent`) - the project portal's UI text is static/
@@ -39,8 +39,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { migrateLegacyKey } from '../../../shared/utils/legacy-storage';
 
-const STORAGE_KEY = 'rpsw_project_portal_language';
+const STORAGE_KEY = 'jsw_project_portal_language';
+/** Former key of the language choice - moved to STORAGE_KEY on the first read. */
+const LEGACY_STORAGE_KEY = 'rpsw_project_portal_language';
 const DEFAULT_LANGUAGE = 'cz';
 const FALLBACK_TEXT = 'Cannot load text';
 
@@ -64,8 +67,8 @@ export const PROJECT_PORTAL_AVAILABLE_LANGUAGES: ProjectPortalLanguageMeta[] = [
 
 /**
  * @description Loads and serves the currently selected project-portal language.
- * Selection is persisted in `localStorage` under its OWN key (`rpsw_project_portal_language`)
- * - deliberately independent from `rpsw_admin_language`, since a customer using the
+ * Selection is persisted in `localStorage` under its OWN key (`jsw_project_portal_language`)
+ * - deliberately independent from `jsw_admin_language`, since a customer using the
  * portal has no relationship to (and likely no access to) the admin panel, and an
  * admin previewing the portal shouldn't have their admin-language choice silently
  * bleed into what a customer would see.
@@ -89,6 +92,7 @@ export class ProjectPortalLocalizationService {
 
   private getStoredLanguage(): string {
     if (typeof localStorage === 'undefined') return DEFAULT_LANGUAGE;
+    migrateLegacyKey(localStorage, STORAGE_KEY, LEGACY_STORAGE_KEY);
     return localStorage.getItem(STORAGE_KEY) || DEFAULT_LANGUAGE;
   }
 

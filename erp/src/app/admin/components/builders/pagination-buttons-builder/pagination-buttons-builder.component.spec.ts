@@ -135,4 +135,17 @@ describe('PaginationButtonsBuilderComponent', () => {
     select.dispatchEvent(new Event('change'));
     expect(sizes).toEqual([50]);
   });
+
+  /**
+   * @description A language switch re-renders the texts at once (OnPush), without new inputs.
+   * @input  empty table; section texts changed; translations$.next({})
+   * @output 'Žádné záznamy' shown
+   */
+  it('re-renders after a language switch', () => {
+    set({ totalItems: 0 });
+    ctx.i18n.getMergedSection.and.returnValue({ no_records: 'Žádné záznamy', items_per_page_label: 'Řádky', nav_aria: 'Stránky' });
+    ctx.i18n.translations$.next({});
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Žádné záznamy');
+  });
 });

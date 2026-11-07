@@ -29,7 +29,7 @@ describe('EditEshopComponent', () => {
   const en = { cart: { title: 'Cart', empty: '' } };
 
   const setup = async (granted: string[] | 'all' = 'all') => {
-    localStorage.removeItem('rpsw_languages');
+    localStorage.removeItem('jsw_languages');
     ctx = createAdminTestContext({ granted });
     (ctx.dataHandler as any).get.and.callFake((url: string) => {
       if (url === 'languages/shop') return of(JSON.parse(JSON.stringify(languages)));
@@ -43,7 +43,7 @@ describe('EditEshopComponent', () => {
   };
 
   beforeEach(async () => { await setup(); });
-  afterEach(() => { fixture.destroy(); localStorage.removeItem('rpsw_languages'); });
+  afterEach(() => { fixture.destroy(); localStorage.removeItem('jsw_languages'); });
 
   /**
    * @description The page is configured for the 'shop' module and the 'edit-eshop' texts.

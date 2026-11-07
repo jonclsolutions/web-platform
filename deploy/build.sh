@@ -51,7 +51,7 @@
 #   deploy/build.sh --with-public-storage   also ship storage/app/public (first install)
 #   deploy/build.sh --skip-angular          reuse existing erp/dist (faster rebuild)
 #   deploy/build.sh --no-zip                skip the archive step
-#   deploy/build.sh --check                 only check the configuration (no tests, no build)
+#   deploy/build.sh --check                 only check the configuration and the dependencies (no tests, no build)
 #
 # @note PRODUCTION SETTINGS: deploy/production.env (git-ignored, template
 #   deploy/production.env.example) is checked before anything else and shipped as
@@ -59,6 +59,12 @@
 #   (WARNING) - see check_production_env(). The same check runs alone with --check.
 #   TURNSTILE_SITE_KEY from the same file (or an environment variable of that name) is
 #   injected into the Angular bundle with `ng build --define`.
+#
+# @note DEPENDENCY AUDIT: every run (also --check) asks npm and Composer for known
+#   vulnerabilities of the PRODUCTION dependencies (`npm audit --omit=dev`, `composer audit
+#   --no-dev`) and prints them as warnings - critical / high ones highlighted. The build never
+#   stops on them (an advisory without a fixed version must not block an urgent release); fix
+#   them with a dependency update. Without network access the audit is skipped with a warning.
 # =============================================================================
 
 # macOS ships bash 3.2 (too old for this script) - re-run with bash 4+ from Homebrew.
@@ -114,7 +120,7 @@ CHECK_ONLY=0
 # Output helpers
 # -----------------------------------------------------------------------------
 STEP=0
-TOTAL_STEPS=10
+TOTAL_STEPS=11
 step() { STEP=$((STEP + 1)); printf '\n\e[34m[%d/%d]\e[0m %s\n' "$STEP" "$TOTAL_STEPS" "$*"; }
 info() { printf '   - %s\n' "$*"; }
 warn() { printf '\e[33m   ! %s\e[0m\n' "$*" >&2; }
@@ -230,6 +236,7 @@ check_production_env() {
     front_host="$(prod_env FRONTEND_URL | sed -E 's#^https?://([^/:]+).*#\1#')"
     [[ "$app_host" == "$front_host" ]] || wrn "APP_URL ($app_host) and FRONTEND_URL ($front_host) differ - this deployment serves both from one origin"
     [[ "$(prod_env LOG_LEVEL)" =~ ^(debug)?$ ]] && wrn "LOG_LEVEL is 'debug' or empty - logs grow fast and may contain personal data (use warning)"
+    [[ "$(prod_env LOG_STACK)" =~ ^(daily)?$ ]] || wrn "LOG_STACK is '$(prod_env LOG_STACK)' - only 'daily' deletes old log files (LOG_DAILY_DAYS), a 'single' log grows forever"
 
     # --- database ---
     for v in DB_HOST DB_DATABASE DB_USERNAME; do
@@ -296,6 +303,72 @@ check_production_env() {
         die "${#errors[@]} configuration error(s) - fix them and run deploy/build.sh --check"
     fi
     info "OK (${#warnings[@]} warning(s)) - Turnstile site key: ${TURNSTILE_SITE_KEY:0:6}…"
+}
+
+# -----------------------------------------------------------------------------
+# @description Known vulnerabilities of the production dependencies (npm + Composer) as
+# warnings - never stops the build. Critical / high advisories are listed first.
+# -----------------------------------------------------------------------------
+check_dependencies() {
+    step "Checking dependency vulnerabilities (npm audit / composer audit)"
+    local out summary found=0
+
+    if command -v npm >/dev/null; then
+        out="$(cd "$ERP_DIR" && npm audit --omit=dev --json 2>/dev/null || true)"
+        summary="$(printf '%s' "$out" | node -e '
+            let d = ""; process.stdin.on("data", c => d += c).on("end", () => {
+              try {
+                const j = JSON.parse(d), v = j.metadata && j.metadata.vulnerabilities;
+                if (!v) { process.stdout.write("ERR"); return; }
+                const top = Object.entries(j.vulnerabilities || {})
+                  .filter(([, x]) => x.severity === "critical" || x.severity === "high")
+                  .map(([n, x]) => n + " (" + x.severity + ")");
+                process.stdout.write([v.critical, v.high, v.moderate, v.low].join(" ") + "|" + top.join(", "));
+              } catch { process.stdout.write("ERR"); }
+            });' 2>/dev/null || echo ERR)"
+        if [[ "$summary" == "ERR" || -z "$summary" ]]; then
+            warn "WARNING: npm audit could not run (no network access?) - production npm packages NOT checked"
+        else
+            local counts="${summary%%|*}" names="${summary#*|}" c h m l
+            read -r c h m l <<< "$counts"
+            if (( c + h + m + l > 0 )); then
+                found=1
+                warn "WARNING: npm (production): $c critical, $h high, $m moderate, $l low vulnerabilities"
+                [[ -n "$names" ]] && warn "         critical / high: $names"
+            else
+                info "npm (production): no known vulnerabilities"
+            fi
+        fi
+    else
+        warn "WARNING: npm is not installed - production npm packages NOT checked"
+    fi
+
+    out="$(cd "$API_DIR" && composer audit --no-dev --locked --format=json --no-interaction 2>/dev/null || true)"
+    summary="$(printf '%s' "$out" | php -r '
+        $j = json_decode(stream_get_contents(STDIN), true);
+        if (!is_array($j) || !array_key_exists("advisories", $j)) { echo "ERR"; exit; }
+        $n = 0; $top = [];
+        foreach ($j["advisories"] as $pkg => $list) {
+            foreach ($list as $a) {
+                $n++;
+                $sev = strtolower($a["severity"] ?? "");
+                if (in_array($sev, ["critical", "high"], true)) { $top[] = "$pkg ($sev)"; }
+            }
+        }
+        echo $n . "|" . implode(", ", array_unique($top));' 2>/dev/null || echo ERR)"
+    if [[ "$summary" == "ERR" || -z "$summary" ]]; then
+        warn "WARNING: composer audit could not run (no network access?) - production Composer packages NOT checked"
+    elif [[ "${summary%%|*}" != "0" ]]; then
+        found=1
+        warn "WARNING: Composer (production): ${summary%%|*} advisories"
+        [[ -n "${summary#*|}" ]] && warn "         critical / high: ${summary#*|}"
+    else
+        info "Composer (production): no known vulnerabilities"
+    fi
+
+    if (( found )); then
+        warn "WARNING: update the affected dependencies (details: npm audit --omit=dev in erp/, composer audit --no-dev in api/) - the build continues"
+    fi
 }
 
 # -----------------------------------------------------------------------------
@@ -509,6 +582,7 @@ if [[ "$CHECK_ONLY" == "1" ]]; then echo "START: Configuration check (--check)";
 echo "------------------------------------------"
 preflight
 check_production_env
+check_dependencies
 if [[ "$CHECK_ONLY" == "1" ]]; then
     echo
     echo "------------------------------------------"

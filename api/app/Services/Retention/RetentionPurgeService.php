@@ -8,7 +8,8 @@
  * @description Enforces the retention periods of CoreRetentionSetting (GDPR Art. 5(1)(e)): every
  * record whose last change is older than its period is deleted for good - the row (also from the
  * trash), its attachments and their files on the disk, legacy single-file uploads and, for a
- * project, its portal sessions, checkpoints, threads and messages. Nothing is anonymised and kept.
+ * project, its portal sessions, checkpoints, threads and messages. Audit logs (core / web / e-shop)
+ * and finished import batches are deleted by their creation time. Nothing is anonymised and kept.
  * Expired project portal sessions (IP address, user agent) are always deleted, independent of
  * any setting. Used by the daily `retention:purge` command and the "run now" action of the admin.
  * @note Records are processed in chunks by primary key (chunkById), so a large backlog never
@@ -19,9 +20,13 @@
 
 namespace App\Services\Retention;
 
+use App\Models\Core\CoreImportBatch;
+use App\Models\Core\CoreLog;
 use App\Models\Core\CoreRetentionSetting;
+use App\Models\Shop\ShopLog;
 use App\Models\Web\WebCookieConsent;
 use App\Models\Web\WebJobApplication;
+use App\Models\Web\WebLog;
 use App\Models\Web\WebProject;
 use App\Models\Web\WebProjectSession;
 use App\Models\Web\WebRawRequestCommission;
@@ -50,11 +55,11 @@ class RetentionPurgeService
         'sales_orders'     => WebSalesOrder::class,
     ];
 
-    /** @description Legacy single-file column (public disk) of the models that had one. */
-    private const LEGACY_FILE_COLUMNS = [
-        WebJobApplication::class => 'cv_path',
-        WebSupportTicket::class  => 'attachment_path',
-    ];
+    /** @description Audit log models deleted by the `audit_logs` retention. */
+    private const AUDIT_LOG_MODELS = [CoreLog::class, WebLog::class, ShopLog::class];
+
+    /** @description Rows deleted per statement of a bulk delete (short locks on large tables). */
+    private const DELETE_BATCH = 5000;
 
     /**
      * @description Runs every enabled retention and the clean-up of expired portal sessions.
@@ -95,10 +100,43 @@ class RetentionPurgeService
             'sales_leads'     => $this->purgeRecords(WebSalesLead::withTrashed()->where('updated_at', '<', $cutoff)),
             'projects'        => $this->purgeProjects($cutoff),
             'cookie_consents' => WebCookieConsent::where('created_at', '<', $cutoff)->delete(),
+            'audit_logs'      => $this->purgeAuditLogs($cutoff),
             default           => $this->purgeRecords(
                 self::ATTACHMENT_MODELS[$key]::withTrashed()->with('attachments')->where('updated_at', '<', $cutoff)
             ),
         };
+    }
+
+    /**
+     * @description Deletes the audit log rows of the three modules and the finished import
+     * batches (their temporary file is already gone) created before the cut-off.
+     * @param Carbon $cutoff Rows created before this moment are deleted.
+     * @return int Number of deleted rows.
+     */
+    private function purgeAuditLogs(Carbon $cutoff): int
+    {
+        $count = 0;
+        foreach (self::AUDIT_LOG_MODELS as $model) {
+            $count += $this->deleteInBatches($model::where('created_at', '<', $cutoff));
+        }
+
+        return $count + $this->deleteInBatches(CoreImportBatch::where('status', 'completed')->where('created_at', '<', $cutoff));
+    }
+
+    /**
+     * @description Deletes the rows of the query in statements of DELETE_BATCH rows.
+     * @param Builder $query Query of the rows to delete.
+     * @return int Number of deleted rows.
+     */
+    private function deleteInBatches(Builder $query): int
+    {
+        $count = 0;
+        do {
+            $deleted = (clone $query)->limit(self::DELETE_BATCH)->delete();
+            $count += $deleted;
+        } while ($deleted === self::DELETE_BATCH);
+
+        return $count;
     }
 
     /**
@@ -167,7 +205,7 @@ class RetentionPurgeService
             }
         }
 
-        $legacy = self::LEGACY_FILE_COLUMNS[$record::class] ?? null;
+        $legacy = defined($record::class . '::LEGACY_FILE_COLUMN') ? $record::LEGACY_FILE_COLUMN : null;
         if ($legacy && $record->{$legacy}) {
             Storage::disk('public')->delete($record->{$legacy});
         }

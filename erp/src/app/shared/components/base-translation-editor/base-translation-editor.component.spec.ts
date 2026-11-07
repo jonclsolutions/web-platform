@@ -71,7 +71,7 @@ describe('BaseTranslationEditorComponent', () => {
     } as Record<string, Observable<any>>)[url] ?? throwError(() => new Error('404')));
 
   beforeEach(() => {
-    localStorage.removeItem('rpsw_languages');
+    localStorage.removeItem('jsw_languages');
     shared.cz = { home: { title: 'Domů' } };
     shared.en = { home: { title: 'Home' } };
     ctx = createAdminTestContext();
@@ -83,7 +83,7 @@ describe('BaseTranslationEditorComponent', () => {
   });
   afterEach(() => {
     fixture.destroy();
-    localStorage.removeItem('rpsw_languages');
+    localStorage.removeItem('jsw_languages');
   });
 
   /**

@@ -80,10 +80,10 @@ interface SessionState {
 }
 
 /** localStorage key of the "a session may exist" hint - holds no token and no user data. */
-export const SESSION_HINT_KEY = 'rpsw_session_hint';
+export const SESSION_HINT_KEY = 'jsw_session_hint';
 
 /** Name of the Web Lock that serializes refresh calls of all tabs (they share the refresh cookie). */
-const REFRESH_LOCK_NAME = 'rpsw-auth-refresh';
+const REFRESH_LOCK_NAME = 'jsw-auth-refresh';
 
 /** Minimal shape of the Web Locks API (navigator.locks) used here. */
 export interface RefreshLockManager {
@@ -360,11 +360,13 @@ export class AuthService {
     }
   }
 
-  /** @description Deletes the session keys the former versions kept in sessionStorage. */
+  /** @description Deletes the session keys the former versions kept in sessionStorage and the former session hint. */
   private removeLegacyStorage(): void {
     try {
       ['accessToken', 'refreshToken', 'userId', 'userEmail', 'userRole', 'userPermissions']
         .forEach(key => sessionStorage.removeItem(key));
+      // Session hint under the former brand-specific key (its refresh cookie was renamed too).
+      localStorage.removeItem('rpsw_session_hint');
     } catch {
       // Storage unavailable - nothing to remove.
     }

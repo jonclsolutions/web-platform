@@ -66,6 +66,19 @@ describe('RetentionSettingsComponent', () => {
   });
 
   /**
+   * @description A language switch re-renders the tab at once (OnPush).
+   * @input getValue returns 'EN:<path>'; translations$.next({}).
+   * @output card title 'EN:retention-settings.card_title'.
+   */
+  it('re-renders after a language switch', () => {
+    create();
+    ctx.i18n.getValue.and.callFake((p: string) => `EN:${p}`);
+    ctx.i18n.translations$.next({});
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.rs-card-title').textContent).toContain('EN:retention-settings.card_title');
+  });
+
+  /**
    * @description Without the update permission the periods are read-only and nothing can be
    *   saved or run; a failed load shows the error with a retry; an empty answer gives no rows.
    * @input Granted only the view permission; GET fails, then retry with null.

@@ -24,6 +24,9 @@ class WebJobApplication extends Model
 {
 use SoftDeletes;
 
+    /** @description Column of the legacy single file (public disk) - deleted with the attachments. */
+    public const LEGACY_FILE_COLUMN = 'cv_path';
+
 /**
      * @var array<int, string> The attributes that are mass assignable.
      */

@@ -9,26 +9,6 @@
 
 @if (t) {
 
-  <!--
-    JSON-LD structured data for search engines (Organization schema).
-    Note: injecting it through the Angular Meta / Renderer2 service in .ts is more robust
-    (works reliably with SSR), a static block in the template works as well.
-  -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "RPSW",
-    "url": "https://www.rpsw.cz/",
-    "logo": "https://www.rpsw.cz/assets/images/logos/logo.png",
-    "description": "RPSW je IT společnost zaměřená na vývoj webových, mobilních a desktopových aplikací na míru.",
-    "address": {
-      "@type": "PostalAddress",
-      "addressCountry": "CZ"
-    }
-  }
-  </script>
-
   <div class="main-content">
 
       <!-- Hero Section -->

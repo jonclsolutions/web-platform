@@ -65,7 +65,7 @@ class CoreEmailAccessPolicyController extends Controller
         $validated = $request->validate([
             'primary_email_domain' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i'],
         ], [
-            'primary_email_domain.regex' => 'Please enter a valid domain (e.g. rpsw.cz), without "@" or path.',
+            'primary_email_domain.regex' => 'Please enter a valid domain (e.g. example.com), without "@" or path.',
         ]);
 
         $normalized = $validated['primary_email_domain'] ?? null;

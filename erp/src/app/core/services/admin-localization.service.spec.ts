@@ -8,7 +8,7 @@
  *   loading of the admin JSON (failure → empty object), language switching, key lookup with the
  *   fallback text, merged sections and the date locale.
  * @dependencies
- * - HttpTestingController; real localStorage (key 'rpsw_admin_language' cleared around tests).
+ * - HttpTestingController; real localStorage (key 'jsw_admin_language' cleared around tests).
  */
 
 import { TestBed } from '@angular/core/testing';
@@ -17,7 +17,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 
 import { AdminLocalizationService } from './admin-localization.service';
 
-const KEY = 'rpsw_admin_language';
+const KEY = 'jsw_admin_language';
 
 describe('AdminLocalizationService', () => {
   let http: HttpTestingController;

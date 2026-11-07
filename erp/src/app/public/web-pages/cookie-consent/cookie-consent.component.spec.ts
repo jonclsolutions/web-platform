@@ -32,8 +32,8 @@ describe('CookieConsentComponent', () => {
     fixture.detectChanges();
   }
 
-  beforeEach(() => localStorage.removeItem('rpsw_cookie_consent'));
-  afterEach(() => localStorage.removeItem('rpsw_cookie_consent'));
+  beforeEach(() => localStorage.removeItem('jsw_cookie_consent'));
+  afterEach(() => localStorage.removeItem('jsw_cookie_consent'));
 
   /**
    * @description No consent → banner shown; accept all stores everything and hides it.
@@ -70,7 +70,7 @@ describe('CookieConsentComponent', () => {
    * @output Hidden; visible + showSettings + draft {analytics true}; stored marketing true; panel toggled.
    */
   it('re-opens the settings with the current choice', () => {
-    localStorage.setItem('rpsw_cookie_consent', JSON.stringify({ necessary: true, functional: false, analytics: true, marketing: false, timestamp: new Date().toISOString(), version: 1 }));
+    localStorage.setItem('jsw_cookie_consent', JSON.stringify({ necessary: true, functional: false, analytics: true, marketing: false, timestamp: new Date().toISOString(), version: 1 }));
     create();
     const banner = fixture.componentInstance;
     expect(banner.visible).toBeFalse();

@@ -68,7 +68,7 @@ class RetentionTest extends TestCase
      * @description The settings list every kind of data with its default in a fixed order (rows
      *   created on first use); view and update need the legal config permissions.
      * @input GET as viewer; GET / PUT without permissions.
-     * @output 7 rows = DEFAULTS in order; 403 ×2.
+     * @output 8 rows = DEFAULTS in order; 403 ×2.
      */
     public function test_settings_defaults_and_permissions(): void
     {
@@ -191,7 +191,7 @@ class RetentionTest extends TestCase
 
         $counts = CoreRetentionSetting::pluck('last_deleted_count', 'data_key')->all();
         $this->assertSame(
-            ['job_applications' => 1, 'raw_requests' => 1, 'sales_leads' => 1, 'support_tickets' => null, 'sales_orders' => 1, 'projects' => 1, 'cookie_consents' => 1],
+            ['job_applications' => 1, 'raw_requests' => 1, 'sales_leads' => 1, 'support_tickets' => null, 'sales_orders' => 1, 'projects' => 1, 'cookie_consents' => 1, 'audit_logs' => 0],
             $counts
         );
         $this->assertNotNull(CoreRetentionSetting::where('data_key', 'raw_requests')->value('last_run_at'));

@@ -332,7 +332,7 @@ describe('AuthService', () => {
      *   lock and the lock is released when it finishes (also after an error); a failing lock
      *   request is passed on as an error.
      * @input Fake lock manager; refresh answered 200; refresh answered 500; lock manager rejecting.
-     * @output Lock 'rpsw-auth-refresh' requested twice, each released; the 500 and the lock
+     * @output Lock 'jsw-auth-refresh' requested twice, each released; the 500 and the lock
      *   error reach the subscriber.
      */
     it('runs the refresh under the Web Lock of the tabs', async () => {
@@ -350,7 +350,7 @@ describe('AuthService', () => {
       httpMock.expectOne(`${baseUrl}/refresh`).flush({}, { status: 500, statusText: 'Error' });
       expect(await failed).toBe(500);
       await Promise.resolve();
-      expect(released).toEqual(['rpsw-auth-refresh', 'rpsw-auth-refresh']);
+      expect(released).toEqual(['jsw-auth-refresh', 'jsw-auth-refresh']);
 
       service.lockManager = { request: () => Promise.reject(new Error('lock refused')) };
       const lockError = await new Promise<string>(resolve => service.refreshAccessToken().subscribe({ error: e => resolve(e.message) }));

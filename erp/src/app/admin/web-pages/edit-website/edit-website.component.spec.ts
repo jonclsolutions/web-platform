@@ -41,7 +41,7 @@ describe('EditWebsiteComponent', () => {
   };
 
   const setup = async (granted: string[] | 'all' = 'all') => {
-    localStorage.removeItem('rpsw_languages');
+    localStorage.removeItem('jsw_languages');
     ctx = createAdminTestContext({ granted });
     answer();
     await TestBed.configureTestingModule({ imports: [EditWebsiteComponent], providers: ctx.providers }).compileComponents();
@@ -50,7 +50,7 @@ describe('EditWebsiteComponent', () => {
   };
 
   beforeEach(async () => { await setup(); });
-  afterEach(() => { fixture.destroy(); localStorage.removeItem('rpsw_languages'); });
+  afterEach(() => { fixture.destroy(); localStorage.removeItem('jsw_languages'); });
 
   /**
    * @description The page is configured for the 'web' module and the 'edit-website' texts.
@@ -65,7 +65,7 @@ describe('EditWebsiteComponent', () => {
     expect(component.languages.map(l => l.code)).toEqual(['cz', 'en']);
     expect(component.currentLang).toBe('cz');
     expect(component.totalCount).toBe(3);
-    expect(JSON.parse(localStorage.getItem('rpsw_languages')!)[0].code).toBe('cz');
+    expect(JSON.parse(localStorage.getItem('jsw_languages')!)[0].code).toBe('cz');
     flush();
   }));
 
@@ -185,10 +185,10 @@ describe('EditWebsiteComponent', () => {
   it('falls back to the stored or built-in languages', fakeAsync(() => {
     answer({ 'languages/web': throwError(() => new Error('x')) });
     spyOn(console, 'error');
-    localStorage.setItem('rpsw_languages', JSON.stringify([{ code: 'sk', name: 'Slovenčina', active: true }]));
+    localStorage.setItem('jsw_languages', JSON.stringify([{ code: 'sk', name: 'Slovenčina', active: true }]));
     component.ngOnInit();
     expect(component.languages.map(l => l.code)).toEqual(['sk']);
-    localStorage.removeItem('rpsw_languages');
+    localStorage.removeItem('jsw_languages');
     component.ngOnInit();
     expect(component.languages.map(l => l.code)).toEqual(['cz']);
     flush();

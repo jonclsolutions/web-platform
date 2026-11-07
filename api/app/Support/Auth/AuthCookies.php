@@ -29,10 +29,10 @@ use Symfony\Component\HttpFoundation\Cookie;
 final class AuthCookies
 {
     /** @description Cookie of the admin refresh token. */
-    public const REFRESH = 'rpsw_refresh';
+    public const REFRESH = 'jsw_refresh';
 
     /** @description Cookie of the customer project portal session. */
-    public const PORTAL = 'rpsw_project_session';
+    public const PORTAL = 'jsw_project_session';
 
     /** @description Lifetime of the refresh token (days) - the cookie and the database row expire together. */
     public const REFRESH_TTL_DAYS = 7;

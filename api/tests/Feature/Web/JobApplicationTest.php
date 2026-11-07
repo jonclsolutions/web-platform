@@ -38,6 +38,7 @@ class JobApplicationTest extends TestCase
     {
         parent::setUp();
         Storage::fake('private');
+        Storage::fake('public');
         $this->fakeCaptcha();
     }
 
@@ -176,20 +177,23 @@ class JobApplicationTest extends TestCase
     }
 
     /**
-     * @description Delete (permanent removes the CV), restore, empty trash, 404s, database errors.
-     * @input A, B (CV), C (CV, trashed); actions in sequence; failures.
+     * @description Delete (permanent removes the CV, also a legacy CV of the public disk), restore,
+     *   empty trash, 404s, database errors.
+     * @input A, B (CV + legacy cv_path), C (CV, trashed); actions in sequence; failures.
      * @output As expected; files deleted.
      */
     public function test_delete_restore_and_trash(): void
     {
         $this->signIn($this->userWith(self::ALL));
-        [$a, $b, $c] = [$this->jobApplication(), $this->jobApplication(), $this->jobApplication()];
+        [$a, $b, $c] = [$this->jobApplication(), $this->jobApplication(['cv_path' => 'cv_files/b-legacy.pdf']), $this->jobApplication()];
+        Storage::disk('public')->put('cv_files/b-legacy.pdf', 'cv');
         $this->attach($b, 'web/cv_files/b.pdf');
         $this->attach($c, 'web/cv_files/c.pdf');
 
         $this->deleteJson("/api/web/job_applications/{$a->id}")->assertNoContent();
         $this->deleteJson("/api/web/job_applications/{$b->id}?force_delete=1")->assertNoContent();
         Storage::disk('private')->assertMissing('web/cv_files/b.pdf');
+        Storage::disk('public')->assertMissing('cv_files/b-legacy.pdf');
         $this->deleteJson('/api/web/job_applications/999')->assertStatus(404);
         $this->postJson("/api/web/job_applications/{$a->id}/restore")->assertOk();
         $this->postJson('/api/web/job_applications/999/restore')->assertStatus(404);

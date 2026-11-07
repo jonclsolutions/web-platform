@@ -33,8 +33,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { migrateLegacyKey } from '../../shared/utils/legacy-storage';
 
-const STORAGE_KEY = 'rpsw_admin_language';
+const STORAGE_KEY = 'jsw_admin_language';
+/** Former key of the language choice - moved to STORAGE_KEY on the first read. */
+const LEGACY_STORAGE_KEY = 'rpsw_admin_language';
 const DEFAULT_LANGUAGE = 'cz';
 const FALLBACK_TEXT = 'Cannot load text';
 export interface AdminLanguageMeta {
@@ -100,6 +103,7 @@ public getDateLocale(): string {
 
   private getStoredLanguage(): string {
     if (typeof localStorage === 'undefined') return DEFAULT_LANGUAGE;
+    migrateLegacyKey(localStorage, STORAGE_KEY, LEGACY_STORAGE_KEY);
     return localStorage.getItem(STORAGE_KEY) || DEFAULT_LANGUAGE;
   }
 

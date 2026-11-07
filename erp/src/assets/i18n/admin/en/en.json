@@ -269,7 +269,7 @@
   "alert_file_refused_title": "The file cannot be uploaded"
 },
 "welcome-page": {
-  "subtitle": "Glad to see you in the RPSW administration system.",
+  "subtitle": "Glad to see you in the administration.",
   "profile_card_title": "Your profile",
   "label_email": "E-mail",
   "label_role": "Role",
@@ -297,6 +297,8 @@
     "hint_projects": "With threads, messages and attachments; the last portal message counts too.",
     "key_cookie_consents": "Cookie consent records",
     "hint_cookie_consents": "Anonymous proof of consent (no IP address) – usually 3 years.",
+    "key_audit_logs": "Audit logs (core, web, e-shop)",
+    "hint_audit_logs": "History of changes with the e-mail and IP address of who made them, and the import history – usually 1–2 years.",
     "option_off": "Do not delete automatically",
     "option_30": "30 days",
     "option_90": "3 months",

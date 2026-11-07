@@ -7,9 +7,12 @@
  * @description A dynamic pagination controller that provides page navigation and items-per-page selection.
  * @dependencies
  * - FormsModule: Enables template-driven bindings for the select element.
+ * - AdminLocalizationService: texts of the section `pagination`; a language switch re-renders
+ *   the component (OnPush).
  */
 
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms'; 
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 /**
@@ -34,6 +37,11 @@ export class PaginationButtonsBuilderComponent {
   @Output() pageChange = new EventEmitter<number>();
   @Output() itemsPerPageChange = new EventEmitter<number>();
   public readonly i18n = inject(AdminLocalizationService);
+  private readonly cd = inject(ChangeDetectorRef);
+
+  constructor() {
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
+  }
 
   /**
    * @description Merged `shared` + `pagination` i18n section.

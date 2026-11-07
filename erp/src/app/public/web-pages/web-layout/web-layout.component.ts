@@ -11,6 +11,7 @@
  * - CookieConsentComponent: Global cookie consent bar.
  * - AnalyticsService: Google Analytics 4 + Consent Mode v2 - started here, because this layout
  *   wraps the whole public web regardless of the current subpage.
+ * - SeoService: meta description, canonical, og:* and JSON-LD from the site settings.
  */
 
 import { Component, OnInit, inject } from '@angular/core';
@@ -18,6 +19,7 @@ import { RouterOutlet } from '@angular/router';
 import { PublicHeaderComponent } from '../components/public-header/public-header.component';
 import { PublicFooterComponent } from '../components/public-footer/public-footer.component';
 import { AnalyticsService } from '../../../shared/services/analytics.service';
+import { SeoService } from '../../../shared/services/seo.service';
 import { CookieConsentComponent } from '../cookie-consent/cookie-consent.component';
 /**
  * @description Main layout wrapper for the web application's public pages.
@@ -38,8 +40,10 @@ import { CookieConsentComponent } from '../cookie-consent/cookie-consent.compone
 export class WebLayoutComponent implements OnInit {
 
   private analyticsService = inject(AnalyticsService);
+  private seoService = inject(SeoService);
 
   ngOnInit(): void {
     this.analyticsService.init();
+    this.seoService.init();
   }
 }

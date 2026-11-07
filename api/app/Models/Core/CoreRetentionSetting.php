@@ -28,7 +28,9 @@ class CoreRetentionSetting extends Model
      * - raw_requests / sales_leads / support_tickets 730 (2 years): pre-contractual communication;
      * - sales_orders / projects 3650 (10 years): contractual relationship - accounting and tax
      *   documents may have to be kept that long;
-     * - cookie_consents 1095 (3 years): proof of consent within the general limitation period.
+     * - cookie_consents 1095 (3 years): proof of consent within the general limitation period;
+     * - audit_logs 730 (2 years): core / web / e-shop activity logs (e-mail and IP of the actor)
+     *   and the history of finished imports - long enough to trace a change, then deleted.
      */
     public const DEFAULTS = [
         'job_applications' => 180,
@@ -38,6 +40,7 @@ class CoreRetentionSetting extends Model
         'sales_orders'     => 3650,
         'projects'         => 3650,
         'cookie_consents'  => 1095,
+        'audit_logs'       => 730,
     ];
 
     /** @description Shortest allowed period - a typo must not delete fresh records. */

@@ -9,14 +9,14 @@
  *   non-essential, storage failures, the "open settings" request stream and the server record of
  *   every decision (VT-12: beacon / fetch fallback, one consent id per visitor, never breaking).
  * @dependencies
- * - Real localStorage ('rpsw_cookie_consent' cleared around tests); jasmine.clock() mockDate;
+ * - Real localStorage ('jsw_cookie_consent' cleared around tests); jasmine.clock() mockDate;
  *   navigator.sendBeacon / window.fetch spied (no request leaves the test).
  */
 
 import { TestBed } from '@angular/core/testing';
 import { CookieConsentService, CookieConsentState } from './cookie-consent.service';
 
-const KEY = 'rpsw_cookie_consent';
+const KEY = 'jsw_cookie_consent';
 
 describe('CookieConsentService', () => {
   /** Creates a fresh service (reads the storage in its field initializer). */
@@ -54,6 +54,20 @@ describe('CookieConsentService', () => {
 
     localStorage.setItem(KEY, JSON.stringify({ necessary: true as const, functional: true, analytics: true, marketing: true, timestamp: new Date().toISOString(), version: 0 }));
     expect(create().hasValidConsent()).toBeFalse();
+  });
+
+  /**
+   * @description A consent stored under the former key 'rpsw_cookie_consent' is moved to the
+   *   current key, so the visitor is not asked again.
+   * @input rpsw_cookie_consent = a valid stored consent; new service.
+   * @output current restored (analytics true); stored under KEY; former key removed.
+   */
+  it('keeps a consent stored under the former key', () => {
+    const stored = { necessary: true as const, functional: false, analytics: true, marketing: false, timestamp: new Date().toISOString(), version: 0 };
+    localStorage.setItem('rpsw_cookie_consent', JSON.stringify(stored));
+    expect(create().current?.analytics).toBeTrue();
+    expect(localStorage.getItem(KEY)).not.toBeNull();
+    expect(localStorage.getItem('rpsw_cookie_consent')).toBeNull();
   });
 
   /**

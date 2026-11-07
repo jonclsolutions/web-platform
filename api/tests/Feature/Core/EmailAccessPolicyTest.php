@@ -84,7 +84,7 @@ class EmailAccessPolicyTest extends TestCase
 
         $this->putJson('/api/core/email-access-policy/primary-domain', ['primary_email_domain' => 'not a domain'])
             ->assertStatus(422)
-            ->assertJsonPath('errors.primary_email_domain.0', 'Please enter a valid domain (e.g. rpsw.cz), without "@" or path.');
+            ->assertJsonPath('errors.primary_email_domain.0', 'Please enter a valid domain (e.g. example.com), without "@" or path.');
 
         $this->confirmPassword('email-policy');
         $this->putJson('/api/core/email-access-policy/primary-domain', ['primary_email_domain' => null])

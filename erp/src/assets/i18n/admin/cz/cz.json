@@ -269,7 +269,7 @@
   "alert_file_refused_title": "Soubor nelze nahrát"
 },
 "welcome-page": {
-  "subtitle": "Rádi vás vidíme v administračním systému RPSW.",
+  "subtitle": "Rádi vás vidíme v administraci.",
   "profile_card_title": "Váš profil",
   "label_email": "E-mail",
   "label_role": "Role",
@@ -297,6 +297,8 @@
     "hint_projects": "Včetně vláken, zpráv a příloh; počítá se i poslední zpráva v portálu.",
     "key_cookie_consents": "Záznamy souhlasu s cookies",
     "hint_cookie_consents": "Anonymní doklad souhlasu (bez IP adresy) – obvykle 3 roky.",
+    "key_audit_logs": "Auditní logy (core, web, e-shop)",
+    "hint_audit_logs": "Historie změn s e-mailem a IP adresou toho, kdo je provedl, a historie importů – obvykle 1–2 roky.",
     "option_off": "Nemazat automaticky",
     "option_30": "30 dní",
     "option_90": "3 měsíce",

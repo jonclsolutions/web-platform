@@ -4,7 +4,8 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Host page of the Angular application (meta tags, inline initial loader). The web
+    @description: Host page of the Angular application (neutral meta tags, inline initial loader).
+        Brand-specific SEO data come from the site settings at runtime (SeoService). The web
         fonts are self-hosted (src/fonts.css) - nothing is loaded from Google.
 -->
 
@@ -17,18 +18,10 @@
 <link rel="icon" type="image/png" href="">
 
 <title>Loading</title>
-<meta name="description" content="RPSW je váš partner pro komplexní vývoj softwaru na míru. Tvoříme moderní webové a mobilní aplikace, e-shopy a robustní ERP a CRM systémy.">
-<meta name="keywords" content="vývoj softwaru, webové aplikace, mobilní aplikace, vývoj e-shopů, ERP, CRM, AI, umělá inteligence, web design, desktopové aplikace, programování na míru, software pro firmy">
-<meta name="author" content="RPSW">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://www.rpsw.cz/">
-
-<meta property="og:title" content="RPSW | Vývoj softwaru na míru">
-<meta property="og:description" content="RPSW je váš partner pro komplexní vývoj softwaru. Tvoříme moderní webové a mobilní aplikace, e-shopy a robustní ERP a CRM systémy.">
+<!-- description, author, canonical, og:* and the Organization JSON-LD are set at runtime from
+     the site settings of this installation (SeoService) - nothing brand-specific here. -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://www.rpsw.cz/">
-<meta property="og:image" content="https://www.rpsw.cz/assets/images/logos/logo.png">
-<meta property="og:locale" content="cs_CZ">
 
 <style>
     /* Inline and outside Angular on purpose - the loader must show before anything else

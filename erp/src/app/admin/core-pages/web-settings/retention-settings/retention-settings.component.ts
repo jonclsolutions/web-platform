@@ -13,10 +13,12 @@
  * read-only. A destructive run is always confirmed first.
  * @dependencies
  * - DataHandler: `core/retention_settings` (GET / PUT) and `core/retention_settings/purge` (POST).
- * - AdminLocalizationService: texts of the section `retention-settings`.
+ * - AdminLocalizationService: texts of the section `retention-settings`; a language switch
+ *   re-renders the tab (OnPush).
  */
 
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataHandler } from '../../../../core/services/data-handler.service';
@@ -67,6 +69,10 @@ export class RetentionSettingsComponent implements OnInit {
 
   /** Whether the user may change the periods and run the clean-up. */
   readonly canEdit = this.permissions.hasPermission('core-legal-config-update');
+
+  constructor() {
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
+  }
 
   /** @description Translated text of the section `retention-settings`. */
   t(key: string): string {

@@ -27,6 +27,7 @@ import { Observable } from 'rxjs';
 import * as Core from '../../imports/core-providers';
 import { BaseDataComponent } from '../../../admin/components/base-data/base-data.component';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
+import { migrateLegacyKey } from '../../utils/legacy-storage';
 
 /**
  * @description Language metadata as returned by `languages/{module}`.
@@ -49,7 +50,9 @@ export interface FlatKey {
 }
 
 /** localStorage fallback for the language list (same key for every module, as before). */
-const LS_KEY = 'rpsw_languages';
+const LS_KEY = 'jsw_languages';
+/** Former key of the cached language list - moved to LS_KEY before the first read. */
+const LEGACY_LS_KEY = 'rpsw_languages';
 
 /**
  * @description Abstract base of the translation editor pages (EditWebsiteComponent,
@@ -167,6 +170,7 @@ export abstract class BaseTranslationEditorComponent
         },
         error: (err) => {
           console.error('Language load error:', err);
+          migrateLegacyKey(localStorage, LS_KEY, LEGACY_LS_KEY);
           const cached = localStorage.getItem(LS_KEY);
           this.languages = cached ? JSON.parse(cached) : this.getBuiltInLanguages();
           this.afterLanguagesLoaded();
@@ -188,7 +192,7 @@ export abstract class BaseTranslationEditorComponent
 
   private persistMetaToLocalStorage(): void {
     const stripped = this.languages.map(({ iconUrl, ...rest }) => rest);
-    try { localStorage.setItem(LS_KEY, JSON.stringify(stripped)); } catch {}
+    try { localStorage.setItem(LS_KEY, JSON.stringify(stripped)); localStorage.removeItem(LEGACY_LS_KEY); } catch {}
   }
 
   /**

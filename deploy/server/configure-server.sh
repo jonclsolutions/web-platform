@@ -90,14 +90,17 @@ php artisan storage:link --force
 
 # --- 6b. Queue worker + scheduler (cron, not Supervisor - shared hosting has no sudo /
 # persistent processes) ---
-# Two INDEPENDENT cron entries, both idempotent (own marker, checked before adding):
+# Two INDEPENDENT cron entries, both idempotent (own marker, checked before adding). An entry
+# with the former brand-specific marker (rpsw-…) is replaced, never doubled. Each run OVERWRITES
+# its log (`>`), so the log holds only the last run and never grows - failed jobs are kept in
+# the failed_jobs table and errors in the Laravel log.
 #
 # 1) QUEUE WORKER - "queue:work --stop-when-empty" processes every waiting job
 #    (confirmation e-mails, ImportRowsJob of large imports) and EXITS when the queue is
 #    empty. No permanent process, no sudo.
 #
 # 2) SCHEDULER - "schedule:run" is REQUIRED for every `Schedule::command(...)`:
-#    v routes/console.php (PurgeSecurityEventsCommand, PurgeImportBatchesCommand apod.) -
+#    in routes/console.php (PurgeSecurityEventsCommand, PurgeImportBatchesCommand, ...) -
 #    the Laravel scheduler runs nothing by itself, each "schedule:run" call only checks
 #    what is due this minute. WITHOUT THIS CRON no scheduled job (daily GDPR purge,
 #    clean-up of abandoned imports, ...) EVER runs.
@@ -108,11 +111,15 @@ if command -v crontab &> /dev/null; then
     EXISTING_CRON=$(crontab -l 2>/dev/null || true)
     NEW_CRON="$EXISTING_CRON"
 
-    QUEUE_MARKER="# rpsw-queue-worker"
-    QUEUE_LINE="* * * * * cd ${LARAVEL_ABS_PATH} && php artisan queue:work --stop-when-empty --tries=3 >> ${LARAVEL_ABS_PATH}/storage/logs/queue-cron.log 2>&1 ${QUEUE_MARKER}"
+    QUEUE_MARKER="# web-platform-queue-worker"
+    QUEUE_LINE="* * * * * cd ${LARAVEL_ABS_PATH} && php artisan queue:work --stop-when-empty --tries=3 > ${LARAVEL_ABS_PATH}/storage/logs/queue-cron.log 2>&1 ${QUEUE_MARKER}"
 
-    SCHEDULE_MARKER="# rpsw-scheduler"
-    SCHEDULE_LINE="* * * * * cd ${LARAVEL_ABS_PATH} && php artisan schedule:run >> ${LARAVEL_ABS_PATH}/storage/logs/scheduler-cron.log 2>&1 ${SCHEDULE_MARKER}"
+    SCHEDULE_MARKER="# web-platform-scheduler"
+    SCHEDULE_LINE="* * * * * cd ${LARAVEL_ABS_PATH} && php artisan schedule:run > ${LARAVEL_ABS_PATH}/storage/logs/scheduler-cron.log 2>&1 ${SCHEDULE_MARKER}"
+
+    # Entries with the former markers are removed - the new lines below replace them.
+    EXISTING_CRON=$(echo "$EXISTING_CRON" | grep -vF "# rpsw-queue-worker" | grep -vF "# rpsw-scheduler" || true)
+    NEW_CRON="$EXISTING_CRON"
 
     if echo "$EXISTING_CRON" | grep -qF "$QUEUE_MARKER"; then
         echo "Queue worker cron entry already present, skipping."

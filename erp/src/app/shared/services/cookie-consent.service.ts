@@ -20,6 +20,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { migrateLegacyKey } from '../utils/legacy-storage';
 
 export interface CookieConsentCategories {
   functional: boolean;
@@ -38,7 +39,9 @@ export interface CookieConsentState extends CookieConsentCategories {
 @Injectable({ providedIn: 'root' })
 export class CookieConsentService {
 
-  private readonly STORAGE_KEY = 'rpsw_cookie_consent';
+  private readonly STORAGE_KEY = 'jsw_cookie_consent';
+  /** Former key of the consent - moved to STORAGE_KEY on the first read, so nobody is asked again. */
+  private readonly LEGACY_STORAGE_KEY = 'rpsw_cookie_consent';
   /** Raise on any change of what / how data is collected - forces the bar to show again to
    *  everyone, also to those who accepted an older version. */
   private readonly CONSENT_VERSION = 1;
@@ -151,6 +154,7 @@ export class CookieConsentService {
 
   private readStored(): CookieConsentState | null {
     try {
+      migrateLegacyKey(localStorage, this.STORAGE_KEY, this.LEGACY_STORAGE_KEY);
       const raw = localStorage.getItem(this.STORAGE_KEY);
       return raw ? JSON.parse(raw) as CookieConsentState : null;
     } catch {

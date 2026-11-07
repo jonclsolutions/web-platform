@@ -8,7 +8,7 @@
  *   portal JSON (failure → empty dictionary), language switching and the flat key lookup with
  *   its fallback text.
  * @dependencies
- * - HttpTestingController; real localStorage ('rpsw_project_portal_language' cleared around tests).
+ * - HttpTestingController; real localStorage ('jsw_project_portal_language' cleared around tests).
  */
 
 import { TestBed } from '@angular/core/testing';
@@ -17,7 +17,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 
 import { ProjectPortalLocalizationService } from './project-portal-localization.service';
 
-const KEY = 'rpsw_project_portal_language';
+const KEY = 'jsw_project_portal_language';
 
 describe('ProjectPortalLocalizationService', () => {
   let http: HttpTestingController;

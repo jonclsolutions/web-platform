@@ -16,9 +16,10 @@
 #   bash scripts/setup-queue-cron.sh
 #
 # IDEMPOTENT: running it again (same path) adds no second line - recognized by the
-# marker "# rpsw-queue-worker". After moving the project, the old entry stays orphaned
-# (pointing to a missing folder) - remove it with `crontab -e` and run the script again
-# from the new path.
+# marker "# web-platform-queue-worker"; an entry with the former marker "# rpsw-queue-worker"
+# is replaced. After moving the project, the old entry stays orphaned (pointing to a missing
+# folder) - remove it with `crontab -e` and run the script again from the new path.
+# Each run OVERWRITES storage/logs/queue-cron.log (`>`), so the log holds only the last run.
 
 set -e
 
@@ -37,10 +38,17 @@ if [ ! -f "${LARAVEL_ABS_PATH}/artisan" ]; then
     exit 1
 fi
 
-CRON_MARKER="# rpsw-queue-worker"
-CRON_LINE="* * * * * cd ${LARAVEL_ABS_PATH} && php artisan queue:work --stop-when-empty --tries=3 >> ${LARAVEL_ABS_PATH}/storage/logs/queue-cron.log 2>&1 ${CRON_MARKER}"
+CRON_MARKER="# web-platform-queue-worker"
+LEGACY_CRON_MARKER="# rpsw-queue-worker"
+CRON_LINE="* * * * * cd ${LARAVEL_ABS_PATH} && php artisan queue:work --stop-when-empty --tries=3 > ${LARAVEL_ABS_PATH}/storage/logs/queue-cron.log 2>&1 ${CRON_MARKER}"
 
 EXISTING_CRON=$(crontab -l 2>/dev/null || true)
+
+if echo "$EXISTING_CRON" | grep -qF "$LEGACY_CRON_MARKER"; then
+    EXISTING_CRON=$(echo "$EXISTING_CRON" | grep -vF "$LEGACY_CRON_MARKER" || true)
+    echo "$EXISTING_CRON" | crontab -
+    echo "The entry with the former marker was removed - it is replaced below."
+fi
 
 if echo "$EXISTING_CRON" | grep -qF "$CRON_MARKER"; then
     echo "The cron entry already exists, skipped."

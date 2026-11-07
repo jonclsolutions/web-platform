@@ -91,8 +91,10 @@ trait HandlesAttachments
 
     /**
      * @description Deletes every attachment of the model (file and database row) - used when the
-     * entity is force-deleted. Reads `$attachment->disk` per row, so 'public' and 'private'
-     * attachments both work.
+     * entity is force-deleted or its single file is replaced. Reads `$attachment->disk` per row, so
+     * 'public' and 'private' attachments both work. A model with a legacy single-file column
+     * (`LEGACY_FILE_COLUMN`, e.g. a CV uploaded before web_attachments) loses that file too, so
+     * no file without its record stays on the disk.
      * @param Model $model Model with the morphMany('attachments') relation.
      * @return void
      */
@@ -101,6 +103,12 @@ trait HandlesAttachments
         foreach ($model->attachments as $attachment) {
             \Illuminate\Support\Facades\Storage::disk($attachment->disk)->delete($attachment->path);
             $attachment->delete();
+        }
+
+        $legacy = defined($model::class . '::LEGACY_FILE_COLUMN') ? $model::LEGACY_FILE_COLUMN : null;
+        if ($legacy && $model->{$legacy}) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($model->{$legacy});
+            $model->forceFill([$legacy => null])->saveQuietly();
         }
     }
 
