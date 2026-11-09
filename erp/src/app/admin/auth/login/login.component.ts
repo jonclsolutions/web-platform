@@ -4,7 +4,8 @@
  * @project JS web-platform
  * @author JS
  * @created 2025
- * @description Authentication component: login form, captcha and the 2FA OTP step.
+ * @description Authentication component: login form ("Remember me" included), captcha and the
+ *   2FA OTP step.
  */
 
 import { Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
@@ -36,6 +37,12 @@ export class LoginComponent extends BasePublicComponent implements OnDestroy {
   errorMessage = '';
   showPassword = false;
   isSubmitting = false;
+  /**
+   * "Remember me" (off by default): on = the admin opens without a login in every tab and window,
+   * also after a browser restart (7 days without activity, at most 30 days); off = only the tab of
+   * the login keeps the session (also after its reload) - a new tab or window asks for the login.
+   */
+  rememberMe = false;
 
   captchaRequired = false;
   private captchaToken: string | null = null;
@@ -89,6 +96,7 @@ export class LoginComponent extends BasePublicComponent implements OnDestroy {
       email: this.email,
       password: this.password,
       captcha_token: this.captchaToken ?? undefined,
+      remember: this.rememberMe,
     }).subscribe({
       next: (response: any) => {
         this.isSubmitting = false;
@@ -150,7 +158,7 @@ export class LoginComponent extends BasePublicComponent implements OnDestroy {
     this.isSubmitting = true;
     this.errorMessage = '';
 
-    this.authService.verifyTwoFactor(this.loginToken, this.otpCode).subscribe({
+    this.authService.verifyTwoFactor(this.loginToken, this.otpCode, this.rememberMe).subscribe({
       next: () => {
         this.isSubmitting = false;
         this.loginToken = null;

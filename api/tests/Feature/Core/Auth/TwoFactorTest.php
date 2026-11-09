@@ -184,6 +184,27 @@ class TwoFactorTest extends TestCase
     }
 
     /**
+     * @description "Remember me" travels with the code: remembered = persistent cookie
+     *   (REFRESH_TTL_DAYS) and the long idle limit.
+     * @input Pending session, correct code with remember true.
+     * @output Cookie expires in REFRESH_TTL_DAYS; row remember true, expires_at = now + 7 days.
+     */
+    public function test_verify_with_remember_me_issues_a_persistent_session(): void
+    {
+        $this->freezeSecond();
+        $user = $this->user();
+        $this->pending($user);
+
+        $response = $this->postJson('/api/login/verify-2fa', ['login_token' => self::LOGIN_TOKEN, 'code' => self::CODE, 'remember' => true])->assertOk();
+
+        $cookie = $this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh');
+        $this->assertSame(now()->addDays(AuthCookies::REFRESH_TTL_DAYS)->getTimestamp(), $cookie->getExpiresTime());
+        $row = RefreshToken::where('user_id', $user->id)->sole();
+        $this->assertTrue($row->remember);
+        $this->assertTrue($row->expires_at->eq(now()->addDays(AuthCookies::REFRESH_TTL_DAYS)));
+    }
+
+    /**
      * @description The e-mail policy is checked again in the 2FA step: when it changed while
      *   the code was on its way, no tokens are issued (also for a sysadmin, 2026-10-24).
      * @input Sysadmin root@other.cz with a pending session; then primary domain company.cz; correct code.

@@ -74,6 +74,7 @@ class AuthController extends Controller
             'email'         => 'required|string',
             'password'      => 'required',
             'captcha_token' => 'nullable|string',
+            'remember'      => 'sometimes|boolean',
         ]);
 
         $request->merge(['user_agent' => $request->userAgent()]);
@@ -152,7 +153,7 @@ class AuthController extends Controller
                 return $this->beginTwoFactorChallenge($request, $user);
             }
 
-            return $this->issueTokens($request, $user);
+            return $this->issueTokens($request, $user, $request->boolean('remember'));
         }
 
         // Wrong password - increase the counter, log out any partial auth session.
@@ -324,7 +325,7 @@ class AuthController extends Controller
         $pending->save();
         $pending->delete();
 
-        return $this->issueTokens($request, $user);
+        return $this->issueTokens($request, $user, $request->boolean('remember'));
     }
 
     /**
@@ -402,8 +403,10 @@ class AuthController extends Controller
      * @description Issues the access + refresh token to the authenticated user. Shared by the
      * direct login (no 2FA) and the finished 2FA verification. The access token is in the body,
      * the refresh token only in its HttpOnly cookie.
+     * @param bool $remember "Remember me" of the login form: persistent cookie and a 7-day idle
+     *   limit; otherwise a browser session cookie and a 12-hour idle limit (AuthCookies).
      */
-    private function issueTokens(Request $request, User $user): JsonResponse
+    private function issueTokens(Request $request, User $user, bool $remember = false): JsonResponse
     {
         $user->update(['last_login_at' => now()]);
 
@@ -412,18 +415,21 @@ class AuthController extends Controller
 
         // One refresh session per user: a new login replaces the previous family.
         RefreshToken::where('user_id', $user->id)->delete();
+        $sessionExpiresAt = now()->addDays(AuthCookies::SESSION_MAX_DAYS);
         RefreshToken::create([
             'user_id'            => $user->id,
             'token'              => hash('sha256', $refreshToken),
             'family'             => (string) Str::uuid(),
-            'expires_at'         => now()->addDays(AuthCookies::REFRESH_TTL_DAYS),
-            'session_expires_at' => now()->addDays(AuthCookies::SESSION_MAX_DAYS),
+            'expires_at'         => AuthCookies::refreshExpiry($remember, $sessionExpiresAt),
+            'session_expires_at' => $sessionExpiresAt,
+            'remember'           => $remember,
         ]);
 
         $this->logAction($request, CoreLog::class, 'login_success', 'Auth', "User logged in: {$user->user_email}", $user->id, 'User');
 
-        return $this->respond($this->sessionPayload($user) + ['token' => $accessToken], 200, [], 'Login successful!')
-            ->withCookie(AuthCookies::refresh($request, $refreshToken));
+        // `remember` tells the admin where to keep its session hint (all tabs / this tab only).
+        return $this->respond($this->sessionPayload($user) + ['token' => $accessToken, 'remember' => $remember], 200, [], 'Login successful!')
+            ->withCookie(AuthCookies::refresh($request, $refreshToken, $remember));
     }
 
     /**
@@ -519,21 +525,24 @@ class AuthController extends Controller
         $newRefreshToken = Str::random(60);
 
         // Sliding expiry, but never past the absolute end of the login (then a new login with 2FA).
+        // The "Remember me" choice of the login stays for the whole family.
         $sessionExpiresAt = $dbRefreshToken->session_expires_at ?? now()->addDays(AuthCookies::SESSION_MAX_DAYS);
+        $remember = (bool) ($dbRefreshToken->remember ?? true);
         RefreshToken::create([
             'user_id'            => $user->id,
             'token'              => hash('sha256', $newRefreshToken),
             'family'             => $dbRefreshToken->family ?? (string) Str::uuid(),
-            'expires_at'         => now()->addDays(AuthCookies::REFRESH_TTL_DAYS)->min($sessionExpiresAt),
+            'expires_at'         => AuthCookies::refreshExpiry($remember, $sessionExpiresAt),
             'session_expires_at' => $sessionExpiresAt,
+            'remember'           => $remember,
         ]);
         // Used tokens are kept for the reuse detection only until they expire.
         RefreshToken::where('user_id', $user->id)->where('expires_at', '<=', now())->delete();
 
         $user->load('roles.permissions');
 
-        return $this->respond($this->sessionPayload($user) + ['token' => $newAccessToken], 200)
-            ->withCookie(AuthCookies::refresh($request, $newRefreshToken));
+        return $this->respond($this->sessionPayload($user) + ['token' => $newAccessToken, 'remember' => $remember], 200)
+            ->withCookie(AuthCookies::refresh($request, $newRefreshToken, $remember));
     }
 
     /**

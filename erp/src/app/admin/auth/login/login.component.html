@@ -66,6 +66,11 @@
             </div>
           </div>
 
+          <label class="remember-row">
+            <input type="checkbox" name="rememberMe" [(ngModel)]="rememberMe">
+            <span>{{ t?.labels?.remember_me }}</span>
+          </label>
+
           @if (captchaRequired) {
             <div class="field-group">
               <div #captchaContainer class="captcha-container"></div>

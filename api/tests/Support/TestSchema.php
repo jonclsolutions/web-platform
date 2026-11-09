@@ -131,6 +131,7 @@ final class TestSchema
             $t->string('family', 64)->nullable()->index();
             $t->timestamp('expires_at')->nullable();
             $t->timestamp('session_expires_at')->nullable();
+            $t->boolean('remember')->default(true);
             $t->timestamp('rotated_at')->nullable();
             $t->timestamps();
             $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();

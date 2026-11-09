@@ -230,6 +230,43 @@ describe('AuthService', () => {
     });
 
     /**
+     * @description Without "Remember me" the hint lives only in this tab (sessionStorage): the
+     *   tab restores the session after a reload, a new tab (empty sessionStorage) shows the login
+     *   page without any request; a remembered refresh moves it back to localStorage; a logout
+     *   removes both.
+     * @input Login answer remember false; reload (memory empty); new tab (sessionStorage cleared);
+     *   refresh answer remember true; clearAuthData().
+     * @output Hint only in sessionStorage; checkAuth → one refresh → true; new tab: checkAuth
+     *   false, no request; then hint only in localStorage; finally none.
+     */
+    it('keeps a session without "Remember me" in its own tab only', () => {
+      service.login({ email: 'a@b.cz', password: 'p', remember: false }).subscribe();
+      httpMock.expectOne(`${baseUrl}/login`).flush({ data: session({ remember: false }) });
+      expect(localStorage.getItem(SESSION_HINT_KEY)).toBeNull();
+      expect(sessionStorage.getItem(SESSION_HINT_KEY)).toBe('1');
+
+      let restored: boolean | undefined;
+      (service as any).session = null;
+      service.checkAuth().subscribe(v => (restored = v));
+      httpMock.expectOne(`${baseUrl}/refresh`).flush({ data: session({ remember: true }) });
+      expect(restored).toBeTrue();
+      expect(localStorage.getItem(SESSION_HINT_KEY)).toBe('1');
+      expect(sessionStorage.getItem(SESSION_HINT_KEY)).toBeNull();
+
+      localStorage.removeItem(SESSION_HINT_KEY);
+      sessionStorage.clear();
+      (service as any).session = null;
+      let newTab: boolean | undefined;
+      service.checkAuth().subscribe(v => (newTab = v));
+      httpMock.expectNone(`${baseUrl}/refresh`);
+      expect(newTab).toBeFalse();
+
+      sessionStorage.setItem(SESSION_HINT_KEY, '1');
+      service.clearAuthData();
+      expect([localStorage.getItem(SESSION_HINT_KEY), sessionStorage.getItem(SESSION_HINT_KEY)]).toEqual([null, null]);
+    });
+
+    /**
      * @description After a reload (hint set, memory empty) the session is restored with ONE
      *   refresh call (the cookie), also when several callers ask at once.
      * @input Hint '1'; checkAuth() twice before the answer.
@@ -475,7 +512,7 @@ describe('AuthService', () => {
     /**
      * @description A 2FA challenge starts no session; verifyTwoFactor (with credentials - the API
      *   sets the refresh cookie) starts it; errors map to verification_failed with retry_after.
-     * @input login → {requires_2fa, login_token}; verify-2fa → session; verify 400 {}; resend 429 {retry_after: 30};
+     * @input login → {requires_2fa, login_token}; verify-2fa (remember) → session; verify 400 {}; resend 429 {retry_after: 30};
      *        resend 200.
      * @output No token / hint after step 1; token + user 5 after step 2; key verification_failed;
      *   retryAfter 30; resend response passed through.
@@ -489,9 +526,9 @@ describe('AuthService', () => {
       expect(service.getAccessToken()).toBeNull();
       expect(localStorage.getItem(SESSION_HINT_KEY)).toBeNull();
 
-      service.verifyTwoFactor('lt', '123456').subscribe();
+      service.verifyTwoFactor('lt', '123456', true).subscribe();
       const verify = httpMock.expectOne(`${baseUrl}/login/verify-2fa`);
-      expect(verify.request.body).toEqual({ login_token: 'lt', code: '123456' });
+      expect(verify.request.body).toEqual({ login_token: 'lt', code: '123456', remember: true });
       expect(verify.request.withCredentials).toBeTrue();
       verify.flush({ data: session({ token: 't', user: { user_login_id: 5, user_email: 'a@b.cz' } }) });
       expect<unknown[]>([service.getAccessToken(), service.getUserId()]).toEqual(['t', '5']);

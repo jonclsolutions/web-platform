@@ -11,8 +11,12 @@
  * the browser sends (to POST /api/refresh) - an XSS can therefore not read it and keep the account.
  * After a page reload the session is restored by one refresh call. The role and permissions only
  * shape the UI; the API checks every request itself.
- * @note The only value kept in localStorage is SESSION_HINT_KEY = "a session may exist" (no
- * token, no user data). It spares visitors without a session the refresh call on every page load.
+ * @note The only value kept in the browser is SESSION_HINT_KEY = "a session may exist" (no
+ * token, no user data). It spares visitors without a session the refresh call on every page load,
+ * and it decides where the session is restored automatically: a login with "Remember me" keeps
+ * it in localStorage (every tab and window, also after a browser restart), a login without it in
+ * sessionStorage (only the tab of the login, also after a reload) - a new tab then shows the
+ * login page. A logout removes both.
  * @dependencies
  * - HttpClient: Facilitates API communication for authentication endpoints.
  * - PermissionService: Synchronizes user permissions within the application.
@@ -68,6 +72,8 @@ export interface AuthSessionResponse {
   user: { id?: number | string; user_login_id?: number | string; user_email: string };
   user_roles?: string[];
   user_permissions?: string[];
+  /** "Remember me" of the login (also on every refresh) - where the session hint is kept. */
+  remember?: boolean;
 }
 
 /** In-memory state of the signed-in user. */
@@ -79,7 +85,10 @@ interface SessionState {
   permissions: string[];
 }
 
-/** localStorage key of the "a session may exist" hint - holds no token and no user data. */
+/**
+ * Key of the "a session may exist" hint (localStorage with "Remember me", sessionStorage without)
+ * - holds no token and no user data.
+ */
 export const SESSION_HINT_KEY = 'jsw_session_hint';
 
 /** Name of the Web Lock that serializes refresh calls of all tabs (they share the refresh cookie). */
@@ -133,7 +142,7 @@ export class AuthService {
    * HttpOnly cookie), or a `LoginTwoFactorChallenge` ({ requires_2fa: true, login_token, ... }) -
    * in THAT case no session starts, it is created only after verifyTwoFactor().
    */
-  login(credentials: { email: string; password: string; captcha_token?: string }): Observable<any> {
+  login(credentials: { email: string; password: string; captcha_token?: string; remember?: boolean }): Observable<any> {
     return this.http.post<ApiEnvelope<any>>(`${this.baseUrl}/login`, credentials, { withCredentials: true }).pipe(
       map(res => res.data),
       tap((response: any) => {
@@ -153,9 +162,10 @@ export class AuthService {
    * @param loginToken Opaque token from step 1 - kept ONLY in the memory of the calling
    * component (see login.component.ts).
    * @param code 6-digit numeric code from the e-mail.
+   * @param remember "Remember me" of the login form (sent again with the code).
    */
-  verifyTwoFactor(loginToken: string, code: string): Observable<any> {
-    return this.http.post<ApiEnvelope<any>>(`${this.baseUrl}/login/verify-2fa`, { login_token: loginToken, code }, { withCredentials: true }).pipe(
+  verifyTwoFactor(loginToken: string, code: string, remember = false): Observable<any> {
+    return this.http.post<ApiEnvelope<any>>(`${this.baseUrl}/login/verify-2fa`, { login_token: loginToken, code, remember }, { withCredentials: true }).pipe(
       map(res => res.data),
       tap((response: any) => this.startSession(response)),
       catchError(this.handleTwoFactorError)
@@ -291,7 +301,7 @@ export class AuthService {
       role: response.user_roles?.length ? response.user_roles[0] : null,
       permissions,
     };
-    this.setSessionHint(true);
+    this.setSessionHint(true, response.remember ?? true);
     this.permissionService.setPermissions(permissions);
 
     if (changedUser) {
@@ -338,22 +348,27 @@ export class AuthService {
     });
   }
 
-  /** @description Whether a session may exist (set at its start, removed when it ends). */
+  /** @description Whether a session may exist for THIS tab (remembered one, or this tab's own). */
   private hasSessionHint(): boolean {
     try {
-      return localStorage.getItem(SESSION_HINT_KEY) === '1';
+      return localStorage.getItem(SESSION_HINT_KEY) === '1' || sessionStorage.getItem(SESSION_HINT_KEY) === '1';
     } catch {
       return false;
     }
   }
 
-  /** @description Sets / removes the session hint (storage blocked = no hint, harmless). */
-  private setSessionHint(on: boolean): void {
+  /**
+   * @description Sets / removes the session hint (storage blocked = no hint, harmless).
+   * @param on Session started (true) or ended (false - removed from both storages).
+   * @param remember "Remember me": localStorage (all tabs) instead of sessionStorage (this tab).
+   */
+  private setSessionHint(on: boolean, remember = true): void {
     try {
+      localStorage.removeItem(SESSION_HINT_KEY);
+      sessionStorage.removeItem(SESSION_HINT_KEY);
       if (on) {
-        localStorage.setItem(SESSION_HINT_KEY, '1');
-      } else {
-        localStorage.removeItem(SESSION_HINT_KEY);
+        // "Remember me": every tab and window; otherwise only this tab (survives its reload).
+        (remember ? localStorage : sessionStorage).setItem(SESSION_HINT_KEY, '1');
       }
     } catch {
       // Storage unavailable (private mode) - only the restore after a reload is lost.

@@ -59,17 +59,20 @@ describe('LoginComponent', () => {
   });
 
   /**
-   * @description Successful login without 2FA opens the core welcome page and selects the core module.
-   * @input  email/password; login() returns {}
-   * @output auth.login({ email, password, captcha_token: undefined }); navigate(['/admin/core/welcome-page']); localStorage module 'core'
+   * @description Successful login without 2FA opens the core welcome page and selects the core
+   *   module; "Remember me" is off by default and its checkbox is bound.
+   * @input  email/password; login() returns {}; the rendered checkbox
+   * @output auth.login({ email, password, captcha_token: undefined, remember: false }); navigate(['/admin/core/welcome-page']); localStorage module 'core'; checkbox unchecked
    */
   it('logs in and opens the admin', () => {
     component.email = 'a@b.cz';
     component.password = 'secret';
     component.onLogin();
-    expect(ctx.auth.login).toHaveBeenCalledWith({ email: 'a@b.cz', password: 'secret', captcha_token: undefined });
+    expect(ctx.auth.login).toHaveBeenCalledWith({ email: 'a@b.cz', password: 'secret', captcha_token: undefined, remember: false });
     expect(router.navigate).toHaveBeenCalledWith(['/admin/core/welcome-page']);
     expect(localStorage.getItem('admin_current_module')).toBe('core');
+    fixture.detectChanges();
+    expect((fixture.nativeElement.querySelector('.remember-row input') as HTMLInputElement).checked).toBeFalse();
   });
 
   /**
@@ -133,15 +136,17 @@ describe('LoginComponent', () => {
 
   /**
    * @description A complete OTP is verified with the login token and opens the admin.
-   * @input  OTP step with token 'lt'; otpCode '123456'; onVerifyOtp()
-   * @output verifyTwoFactor('lt', '123456'); navigate(['/admin/core/welcome-page'])
+   * @input  "Remember me" on; OTP step with token 'lt'; otpCode '123456'; onVerifyOtp()
+   * @output login with remember true; verifyTwoFactor('lt', '123456', true); navigate(['/admin/core/welcome-page'])
    */
   it('verifies the OTP', fakeAsync(() => {
     ctx.auth.login.and.returnValue(of({ requires_2fa: true, login_token: 'lt', expires_in: 300 }));
+    component.rememberMe = true;
     component.onLogin();
+    expect(ctx.auth.login.calls.mostRecent().args[0].remember).toBeTrue();
     component.otpCode = '123456';
     component.onVerifyOtp();
-    expect(ctx.auth.verifyTwoFactor).toHaveBeenCalledWith('lt', '123456');
+    expect(ctx.auth.verifyTwoFactor).toHaveBeenCalledWith('lt', '123456', true);
     expect(router.navigate).toHaveBeenCalledWith(['/admin/core/welcome-page']);
     discardPeriodicTasks();
   }));

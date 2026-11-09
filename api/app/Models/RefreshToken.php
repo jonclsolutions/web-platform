@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $family Id shared by all tokens of one login.
  * @property \Illuminate\Support\Carbon|null $expires_at Expiry of the token.
  * @property \Illuminate\Support\Carbon|null $session_expires_at Absolute end of the login (AuthCookies::SESSION_MAX_DAYS).
+ * @property bool $remember "Remember me" of the login - persistent cookie and the long idle limit.
  * @property \Illuminate\Support\Carbon|null $rotated_at When the token was used and replaced (null = current token).
  */
 class RefreshToken extends Model
@@ -38,6 +39,7 @@ class RefreshToken extends Model
         'family',
         'expires_at',
         'session_expires_at',
+        'remember',
         'rotated_at',
     ];
 
@@ -47,6 +49,7 @@ class RefreshToken extends Model
     protected $casts = [
         'expires_at' => 'datetime',
         'session_expires_at' => 'datetime',
+        'remember' => 'boolean',
         'rotated_at' => 'datetime',
     ];
 

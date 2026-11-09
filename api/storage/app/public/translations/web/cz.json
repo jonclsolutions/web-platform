@@ -1231,7 +1231,8 @@
     "login": {
         "labels": {
             "email": "Přihlašovací e-mail",
-            "password": "Heslo"
+            "password": "Heslo",
+            "remember_me": "Zapamatovat přihlášení"
         },
         "placeholders": {
             "email": "jannovak@studio.cz"

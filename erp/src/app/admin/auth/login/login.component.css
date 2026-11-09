@@ -145,6 +145,29 @@
   padding-left: calc(13px + 0.45em); /* optically re-centre the tracked digits */
 }
 
+/*
+    @module: Remember me
+    @description: Checkbox row under the password - off by default (the login ends with the browser).
+    @usage: .remember-row
+*/
+.remember-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.remember-row input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent-dark);
+  cursor: pointer;
+}
+
 .captcha-container {
   display: flex;
   justify-content: center;

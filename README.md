@@ -528,6 +528,20 @@ the server with the local one. The checksum file does not need to be deployed.
   token and the operation, and valid 10 minutes; 5 wrong passwords lock it for 15 minutes. A stolen
   session alone therefore cannot add another sysadmin or remove the others - it does not protect
   against a known password (sysadmin 2FA stays forced).
+- **Admin login session** (`AuthController`, `AuthCookies`): the access token lives 60 minutes in
+  memory only, the refresh token only in an HttpOnly cookie (`jsw_refresh`, path `/api/refresh`).
+  - The admin opens without a login (login page and admin links skipped) ONLY after a login with
+    "Remember me" that was not logged out - in every tab and window, also after a browser restart
+    (session hint in localStorage, persistent cookie, 7 days without activity, `REFRESH_TTL_DAYS`).
+  - "Remember me" off (default): only the tab of the login keeps the session (also after its
+    reload; hint in sessionStorage); a new tab or window asks for the login. Browser-session
+    cookie (no `expires`) and 12 hours without activity on the server (`SESSION_IDLE_HOURS`).
+  - always at most 30 days from the login (`SESSION_MAX_DAYS`), then a new login with 2FA;
+  - a logout ends the session on the server, the next access always needs the full login.
+  - Browsers that restore the previous session ("Continue where you left off" in Chrome / Brave /
+    Edge, "Restore previous session" in Firefox, reopened windows in Safari) or keep running in
+    the background also restore the browser-session cookie - no website can prevent that; the
+    server-side idle limit ends such a session anyway.
 - **Audit logs never contain secrets**: `LogsActivity` drops every key matching
   `password|token|secret` (also nested) from `context_data`.
 - **Bot protection of the public forms** (contact, order form, job application) – invisible to

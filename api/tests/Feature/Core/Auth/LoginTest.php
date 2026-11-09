@@ -528,6 +528,42 @@ class LoginTest extends TestCase
     }
 
     /**
+     * @description Without "Remember me" (the default) the refresh cookie is a browser session
+     *   cookie (no expiry - gone when the browser closes) and the session ends after
+     *   SESSION_IDLE_HOURS without use; a refresh keeps both. With "Remember me" the cookie
+     *   lives REFRESH_TTL_DAYS.
+     * @input Login without remember; refresh; login with remember.
+     * @output Cookie expires 0, row remember false + expires in 12 h, body remember false; after the
+     *   refresh the same; remembered login: cookie expires in 7 days, row and body remember true.
+     */
+    public function test_remember_me_decides_cookie_and_idle_limit(): void
+    {
+        $this->freezeSecond();
+        $user = $this->user();
+
+        $response = $this->postJson('/api/login', ['email' => $user->user_email, 'password' => $this->defaultPassword])
+            ->assertOk()->assertJsonPath('data.remember', false);
+        $cookie = $this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh');
+        $this->assertSame(0, $cookie->getExpiresTime());
+        $row = RefreshToken::where('user_id', $user->id)->sole();
+        $this->assertFalse($row->remember);
+        $this->assertTrue($row->expires_at->eq(now()->addHours(AuthCookies::SESSION_IDLE_HOURS)));
+
+        $refreshed = $this->withUnencryptedCookie(AuthCookies::REFRESH, $cookie->getValue())->withCredentials()->postJson('/api/refresh')
+            ->assertOk()->assertJsonPath('data.remember', false);
+        $this->assertSame(0, $this->credentialCookie($refreshed, AuthCookies::REFRESH, '/api/refresh')->getExpiresTime());
+        $current = RefreshToken::whereNull('rotated_at')->sole();
+        $this->assertFalse($current->remember);
+        $this->assertTrue($current->expires_at->eq(now()->addHours(AuthCookies::SESSION_IDLE_HOURS)));
+
+        $remembered = $this->postJson('/api/login', ['email' => $user->user_email, 'password' => $this->defaultPassword, 'remember' => true])
+            ->assertOk()->assertJsonPath('data.remember', true);
+        $this->assertSame(now()->addDays(AuthCookies::REFRESH_TTL_DAYS)->getTimestamp(),
+            $this->credentialCookie($remembered, AuthCookies::REFRESH, '/api/refresh')->getExpiresTime());
+        $this->assertTrue(RefreshToken::where('user_id', $user->id)->sole()->remember);
+    }
+
+    /**
      * @description The credential cookie is Secure with SESSION_SECURE_COOKIE (production
      *   .env) and the refresh route is rate limited.
      * @input session.secure true, login; 31 refresh calls within a minute.

@@ -9,11 +9,13 @@
  * - shopMaintenanceGuard: Validates e-shop availability status.
  * - webMaintenanceGuard: Validates public web availability status.
  * - LoginComponent: Handles administrative authentication.
+ * - guestGuard: Skips the login page while the session is still valid.
  * - AdminRoutingModule: Loads the protected administrative section.
  */
 
 import { Routes } from '@angular/router';
 import { LoginComponent } from './admin/auth/login/login.component';
+import { guestGuard } from './core/auth/guards/guest.guard';
 import { shopMaintenanceGuard } from './public/shop-pages/components/guards/shop-maintenance.guard';
 import { webMaintenanceGuard } from './public/web-pages/components/guards/web-maintenance.guard';
 import { publicNotFoundRoute } from './public/not-found/public-not-found.config';
@@ -116,7 +118,7 @@ export const routes: Routes = [
   },
 
   // --- 4. ADMIN & AUTH ---
-  { path: 'auth/login', title: 'admin.panel', component: LoginComponent },
+  { path: 'auth/login', title: 'admin.panel', component: LoginComponent, canActivate: [guestGuard] },
   {
     // Public page outside AdminLayoutComponent and AuthGuard - target of the link in the e-mail.
     path: 'auth/reset-password',

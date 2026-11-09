@@ -25,6 +25,8 @@ class VerifyTwoFactorRequest extends FormRequest
         return [
             'login_token' => ['required', 'string'],
             'code'        => ['required', 'string', 'regex:/^[0-9]{6}$/'],
+            // "Remember me" of the login form, sent again with the code.
+            'remember'    => ['sometimes', 'boolean'],
         ];
     }
 }
