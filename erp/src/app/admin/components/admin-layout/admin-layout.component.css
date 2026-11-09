@@ -489,8 +489,9 @@
 /*
     @module: Collapsible section title
     @description: The section title is a button with a chevron - it hides / shows the items of
-      the section (AdminLayoutComponent.toggleGroup); the chevron points right while collapsed.
-    @usage: <button class="nav-group-label" [attr.aria-expanded]> + <ul [class.nav-group-items--collapsed]>
+      the section (AdminLayoutComponent.toggleGroup) with a slide animation; the chevron points
+      right while collapsed.
+    @usage: <button class="nav-group-label" [attr.aria-expanded]> + <div class="nav-group-items" [class.nav-group-items--collapsed]><ul>
 */
 .nav-group-label {
   display: flex;
@@ -532,7 +533,34 @@
 
 .nav-group-label.hidden { opacity: 0; height: 0; padding: 0; }
 
-.nav-group ul.nav-group-items--collapsed { display: none; }
+/* Items of a section: the grid row animates between the full height (1fr) and 0, so the
+   section slides open / shut without knowing its height. Collapsed = also invisible, which takes
+   its links out of the keyboard order (after the closing animation). */
+.nav-group-items {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition: grid-template-rows 0.22s ease, opacity 0.18s ease, visibility 0s linear 0s;
+}
+
+.nav-group-items > ul {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nav-group-items.nav-group-items--collapsed {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition: grid-template-rows 0.22s ease, opacity 0.18s ease, visibility 0s linear 0.22s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-group-items,
+  .nav-group-items.nav-group-items--collapsed,
+  .nav-group-chevron { transition: none; }
+}
 
 .nav-group ul {
   list-style: none;

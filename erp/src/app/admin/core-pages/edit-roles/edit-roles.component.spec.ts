@@ -611,4 +611,42 @@ describe('EditRolesComponent', () => {
     expect(revoke).toHaveBeenCalledWith('blob:roles');
     expect(document.querySelector('a[download="roles.csv"]')).toBeNull();
   });
+
+  /**
+   * @description "New role" and "Export" sit at the right end of the role detail header, after a
+   *   divider when the role has its own buttons; without a selected role they are in the empty
+   *   state; the open new role form hides them; the buttons open the form / the export.
+   * @input  editor selected; protected sysadmin selected; no role; showNewRoleForm true; clicks.
+   * @output page actions inside .detail-header-actions after the edit / delete buttons; also for
+   *   sysadmin; inside .empty-state; none with the form open; openNewRoleForm / openExportPopup called.
+   */
+  it('shows the page actions in the role detail header', async () => {
+    fixture.detectChanges();   // ngOnInit: loads the roles, selects the first one
+    await component.selectRole(role(2));
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    const actions = el.querySelector('.detail-header-actions .page-actions') as HTMLElement;
+    expect(actions).not.toBeNull();
+    expect(actions.previousElementSibling?.classList).toContain('btn-small');
+    expect(el.querySelector('.roles-page-header button')).toBeNull();
+
+    const openForm = spyOn(component, 'openNewRoleForm');
+    const openExport = spyOn(component, 'openExportPopup');
+    (actions.querySelector('.btn-primary') as HTMLButtonElement).click();
+    (actions.querySelector('.btn-secondary') as HTMLButtonElement).click();
+    expect(openForm).toHaveBeenCalled();
+    expect(openExport).toHaveBeenCalled();
+
+    component.selectedRole = role(1);
+    fixture.detectChanges();
+    expect(el.querySelector('.detail-header-actions .page-actions')).not.toBeNull();
+
+    component.selectedRole = null;
+    fixture.detectChanges();
+    expect(el.querySelector('.empty-state .page-actions')).not.toBeNull();
+
+    component.showNewRoleForm = true;
+    fixture.detectChanges();
+    expect(el.querySelector('.page-actions')).toBeNull();
+  });
 });

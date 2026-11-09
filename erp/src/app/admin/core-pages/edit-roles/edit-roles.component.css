@@ -290,7 +290,7 @@
  * @module Role detail (right panel)
  * @description Card with the selected role: header, description, notices and the checklist.
  * @usage .role-detail-panel, .empty-state, .detail-header, .detail-header-main, .detail-name,
- *        .detail-name-input, .detail-header-actions, .detail-desc, .detail-desc-input, .protected-notice,
+ *        .detail-name-input, .detail-header-actions, .page-actions, .detail-desc, .detail-desc-input, .protected-notice,
  *        .detail-field, .detail-field--inline, .detail-field-label, .delete-blocked-note
  * @note The panel must not get `overflow: hidden / auto`: that would turn it into the scroll
  * container of the sticky permission save bar and the bar would stop following the page scroll.
@@ -346,8 +346,29 @@
 
 .detail-header-actions {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
   flex-shrink: 0;
+}
+
+/* "New role" / "Export" - right end of the detail header, divided from the role's own actions. */
+.page-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-header-actions > .btn-small + .page-actions {
+  margin-left: 4px;
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+}
+
+.empty-state .page-actions {
+  justify-content: center;
+  margin-top: 12px;
 }
 
 .detail-desc {
@@ -719,6 +740,15 @@
 @media (max-width: 600px) {
   :host { padding: 0 0 40px; }
   .roles-page-header { flex-direction: column; }
+  .detail-header { flex-wrap: wrap; }
+  .detail-header-actions { justify-content: flex-start; flex-shrink: 1; min-width: 0; }
+  /* "New role" / "Export" get their own line under the role buttons, no divider. */
+  .detail-header-actions > .btn-small + .page-actions {
+    flex-basis: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+  }
   .role-detail-panel { padding: 18px 16px 20px; }
   .permission-resource { margin-left: 8px; padding-left: 9px; }
 
