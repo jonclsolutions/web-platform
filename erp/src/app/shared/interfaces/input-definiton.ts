@@ -4,6 +4,10 @@ export interface InputDefinition {
   column_name: string;
   label: string;
   placeholder?: string;
+  /**
+   * Field type. 'avatar' = profile photo of the edited account (AvatarEditorComponent, edit mode
+   * only - saved at once by its own endpoint, not with the form; `editable: false` shows it only).
+   */
   type: string;
   required?: boolean;
   min?: number;

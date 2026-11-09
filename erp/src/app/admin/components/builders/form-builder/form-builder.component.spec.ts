@@ -411,6 +411,37 @@ describe('FormBuilderComponent', () => {
     });
 
     /**
+     * @description An avatar field renders the photo editor of the edited account (editable or
+     *   read-only) and keeps + reports a saved change.
+     * @input  edit of { id: 5, avatar_url: '/a.webp' } with an editable, then a read-only avatar
+     *   field; onAvatarChange('avatar_url', '/b.webp').
+     * @output editor with userId 5 and the URL, controls shown / hidden; formData updated,
+     *   avatarChanged { columnName: 'avatar_url', value: '/b.webp' }.
+     */
+    it('renders and reports an avatar field', () => {
+      component.inputDefinitions = [{ column_name: 'avatar_url', label: 'Photo', type: 'avatar', editable: true } as any];
+      component.formDataToEdit = { id: 5, avatar_url: '/a.webp' };
+      component.ngOnInit();
+      fixture.detectChanges();
+      const editor = fixture.debugElement.query(By.css('app-avatar-editor'));
+      expect(editor.componentInstance.userId).toBe(5);
+      expect(editor.componentInstance.avatarUrl).toBe('/a.webp');
+      expect(editor.nativeElement.querySelector('.avatar-editor-circle')).not.toBeNull();
+
+      let event: any;
+      component.avatarChanged.subscribe(e => (event = e));
+      component.onAvatarChange('avatar_url', '/b.webp');
+      expect(component.formData['avatar_url']).toBe('/b.webp');
+      expect(event).toEqual({ columnName: 'avatar_url', value: '/b.webp' });
+
+      component.inputDefinitions = [{ column_name: 'avatar_url', label: 'Photo', type: 'avatar', editable: false } as any];
+      component.ngOnChanges({ inputDefinitions: { firstChange: false } as any });
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.avatar-editor-circle')).toBeNull();
+      expect(fixture.nativeElement.querySelector('app-avatar-editor app-user-avatar')).not.toBeNull();
+    });
+
+    /**
      * @description The rendered form shows a label per visible field and the required star.
      * @input  create mode with the definitions above; detectChanges()
      * @output label 'Name' with '*'; no label for hidden 'note'

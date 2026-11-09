@@ -19,6 +19,7 @@
  * - xlsx (SheetJS): Lazy-loaded only when the XLSX export is chosen, see downloadXlsx().
  * - IconComponent: Shared SVG icon set of the row buttons.
  * - AdminLocalizationService: Static i18n of the admin UI (NOT the web / e-shop content).
+ * - UserAvatarComponent: `avatar` columns (profile photo).
  */
 
 import {
@@ -41,6 +42,7 @@ import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.s
 import { TableButtons } from '../../../../shared/interfaces/table-buttons';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 import { ExportFormat } from '../../../../shared/interfaces/export-format';
+import { UserAvatarComponent } from '../../user-avatar/user-avatar.component';
 import { ExportPopupBuilderComponent, ExportColumnOption, ExportSelection } from '../export-popup-builder/export-popup-builder.component';
 import { ImportPopupBuilderComponent } from '../import-popup-builder/import-popup-builder.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
@@ -84,7 +86,7 @@ export interface ImportEnumHint {
 @Component({
   selector: 'app-table-builder',
   standalone: true,
-  imports: [CommonModule, FormsModule, ExportPopupBuilderComponent, ImportPopupBuilderComponent, IconComponent],
+  imports: [CommonModule, FormsModule, ExportPopupBuilderComponent, ImportPopupBuilderComponent, IconComponent, UserAvatarComponent],
   templateUrl: './table-builder.component.html',
   styleUrls: ['../table-style.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -259,6 +261,8 @@ get importEnumHints(): ImportEnumHint[] {
           : this.i18n.getValue('shared.no');
       case 'image':
         return value ? `${this.uploadsBaseUrl}${value}` : '';
+      case 'avatar':
+        return value || null;
       default:
         const fieldDef = this.inputDefinitions.find(i => i.column_name === column.key);
         if (fieldDef?.options) {

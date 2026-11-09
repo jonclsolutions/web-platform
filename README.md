@@ -542,6 +542,13 @@ the server with the local one. The checksum file does not need to be deployed.
     Edge, "Restore previous session" in Firefox, reopened windows in Safari) or keep running in
     the background also restore the browser-session cookie - no website can prevent that; the
     server-side idle limit ends such a session anyway.
+- **Profile photos of admin accounts** (`UserAvatarController`, `UserAvatar`): JPG / PNG / WebP up
+  to 2 MB and 8000 px are re-encoded on the server to a 256×256 WebP (centre crop) - EXIF / GPS
+  metadata and anything else in the file are dropped. Stored on the private disk (`avatars/`),
+  shown only through a signed URL; changed by the account itself (personal info) or with
+  `core-administrators-update`, the photo of a sysadmin only by a sysadmin. Deleted with the
+  account (force delete / emptied trash); a file without its account is removed by
+  `storage:prune-orphans`.
 - **Audit logs never contain secrets**: `LogsActivity` drops every key matching
   `password|token|secret` (also nested) from `context_data`.
 - **Bot protection of the public forms** (contact, order form, job application) – invisible to

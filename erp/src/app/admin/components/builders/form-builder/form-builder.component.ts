@@ -14,6 +14,7 @@
  * - MultiFileUploadComponent: Shared drag&drop multi-file upload, see the `'files'` case.
  * - ScrollLockService: Shared background scroll lock.
  * - AdminLocalizationService: Static i18n of the admin UI.
+ * - AvatarEditorComponent: `avatar` fields (profile photo, saved by its own endpoint).
  */
 
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef, ViewChild, OnInit, OnDestroy, OnChanges, SimpleChanges, inject } from '@angular/core';
@@ -28,6 +29,7 @@ import { AdminLocalizationService } from '../../../../core/services/admin-locali
 import { UploadRulesService } from '../../../../shared/services/upload-rules.service';
 import { UploadProfile, UploadRule, extensionsLabel, fileExtension, isExtensionAllowed } from '../../../../shared/utils/upload-rules';
 import { Subject, takeUntil } from 'rxjs';
+import { AvatarEditorComponent } from '../../avatar-editor/avatar-editor.component';
 
 /**
  * @description Renders a dynamic form based on an array of field definitions.
@@ -37,7 +39,7 @@ import { Subject, takeUntil } from 'rxjs';
 @Component({
   selector: 'app-form-builder',
   standalone: true,
-  imports: [FormsModule, PasswordRequirementsChecklistComponent, MultiFileUploadComponent, PasswordPolicyDirective],
+  imports: [FormsModule, PasswordRequirementsChecklistComponent, MultiFileUploadComponent, PasswordPolicyDirective, AvatarEditorComponent],
   templateUrl: './form-builder.component.html',
   styleUrl: './form-builder.component.css',
 })
@@ -65,6 +67,12 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
    * field changed, it just reports it so a consumer page can react.
    */
   @Output() fieldChanged = new EventEmitter<{ columnName: string; value: any }>();
+  /**
+   * Fires after an `'avatar'` field saved a new photo / removed it (saved at once by its own
+   * endpoint, not by the form) - carries `{columnName, value: new URL | null}`, so the page can
+   * refresh its list even when the form is then cancelled.
+   */
+  @Output() avatarChanged = new EventEmitter<{ columnName: string; value: string | null }>();
 
   @ViewChild('genericForm') genericForm!: NgForm;
 
@@ -288,6 +296,17 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
   isOptionDisabled(input: InputDefinition, optionValue: string | number): boolean {
     const disabledValues = (input as any).disabledOptionValues as (string | number)[] | undefined;
     return Array.isArray(disabledValues) && disabledValues.includes(String(optionValue));
+  }
+
+  /**
+   * @description Keeps the new photo URL of an `'avatar'` field and reports it (avatarChanged).
+   * @param columnName Field of the photo URL (e.g. 'avatar_url').
+   * @param url New signed URL, null after the removal.
+   */
+  onAvatarChange(columnName: string, url: string | null): void {
+    this.formData[columnName] = url;
+    this.avatarChanged.emit({ columnName, value: url });
+    this.cd.markForCheck();
   }
 
   /**

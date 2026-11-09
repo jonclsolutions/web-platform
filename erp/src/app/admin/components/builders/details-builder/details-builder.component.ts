@@ -11,6 +11,7 @@
  * - InputDefinition: Interface for field configuration and options.
  * - ScrollLockService: Shared background scroll lock.
  * - AdminLocalizationService: Static (bundled) localization of the admin UI.
+ * - UserAvatarComponent: `avatar` columns (profile photo).
  */
 
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject } from '@angular/core';
@@ -19,6 +20,7 @@ import { ItemDetailsColumns } from '../../../../shared/interfaces/item-details-c
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
+import { UserAvatarComponent } from '../../user-avatar/user-avatar.component';
 
 /**
  * @description Provides a reusable way to display object details in a modal overlay with automatic formatting based on column metadata.
@@ -28,7 +30,7 @@ import { AdminLocalizationService } from '../../../../core/services/admin-locali
 @Component({
 selector: 'app-details-builder',
 standalone: true,
-imports: [CommonModule],
+imports: [CommonModule, UserAvatarComponent],
 templateUrl: './details-builder.component.html',
 styleUrl: './details-builder.component.css',
 providers: [DatePipe, CurrencyPipe]

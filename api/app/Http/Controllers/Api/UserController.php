@@ -21,6 +21,7 @@ use App\Models\Core\CorePermission;
 use App\Models\Core\CoreRole;
 use App\Models\Core\CoreLog;
 use App\Models\Core\CoreSecurityEvent;
+use App\Support\Images\UserAvatar;
 use App\Traits\LogsActivity;
 use App\Http\Requests\User\{StoreUserRequest, UpdateUserRequest};
 use App\Http\Requests\PasswordChangeRequest;
@@ -572,7 +573,14 @@ class UserController extends Controller
             }
 
             $force = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
-            $force ? $user->forceDelete() : $user->delete();
+            if ($force) {
+                // The profile photo goes with the account; a soft-deleted account keeps it for a restore.
+                $avatar = $user->avatar_path;
+                $user->forceDelete();
+                UserAvatar::deleteFile($avatar);
+            } else {
+                $user->delete();
+            }
 
             $this->logAction($request, CoreLog::class, $force ? 'hard_delete' : 'soft_delete', 'User', "Deleted ID: $id", (int) $id, 'User');
             return response()->json(null, 204);
@@ -604,7 +612,9 @@ class UserController extends Controller
             }
 
             $count = $query->count();
+            $avatars = (clone $query)->whereNotNull('avatar_path')->pluck('avatar_path');
             $query->forceDelete();
+            $avatars->each(fn (string $path) => UserAvatar::deleteFile($path));
 
             $this->logAction(request(), CoreLog::class, 'force_delete_all', 'User', "Trash emptied. Deleted: $count");
             return response()->json(null, 204);

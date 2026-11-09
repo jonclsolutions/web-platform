@@ -18,6 +18,10 @@ export interface UserRole {
 
 export interface UserLogin {
   user_login_id: number;
+  /** Account ID of the API (UserResource). */
+  id?: number;
+  /** Signed URL of the profile photo, null = the default image. */
+  avatar_url?: string | null;
   user_email: string;
   contact_email?: string | null;
   full_name?: string | null;

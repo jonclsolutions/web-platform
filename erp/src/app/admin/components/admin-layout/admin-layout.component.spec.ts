@@ -6,7 +6,8 @@
  * @created 2026
  * @description Unit tests of AdminLayoutComponent – the admin shell: module switch (web / core /
  *   shop) incl. sync from the URL, sidebar open/resize state in localStorage, mobile scroll lock,
- *   admin language switch, logout, and which menu groups the permissions show.
+ *   admin language switch, logout, which menu groups the permissions show, collapsible menu
+ *   sections, the own profile photo in the header and the scroll reset of the content area.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (auth, permission, i18n stubs), ScrollLockService (spy)
  */
@@ -15,7 +16,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { Router } from '@angular/router';
 import { throwError } from 'rxjs';
 
-import { AdminLayoutComponent } from './admin-layout.component';
+import { AdminLayoutComponent, NAV_COLLAPSED_STORAGE_KEY } from './admin-layout.component';
 import { ScrollLockService } from '../../../core/services/scroll-lock.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 
@@ -25,7 +26,7 @@ describe('AdminLayoutComponent', () => {
   let component: AdminLayoutComponent;
   let router: Router;
   let scrollLock: jasmine.SpyObj<ScrollLockService>;
-  const KEYS = ['admin_sidebar_width', 'admin_menu_open', 'admin_current_module'];
+  const KEYS = ['admin_sidebar_width', 'admin_menu_open', 'admin_current_module', NAV_COLLAPSED_STORAGE_KEY];
 
   beforeEach(async () => {
     KEYS.forEach(k => localStorage.removeItem(k));
@@ -448,5 +449,118 @@ describe('AdminLayoutComponent', () => {
     expect([component.showCoreOverviewGroup, component.showCoreSystemGroup]).toEqual([true, true]);
     ctx.permissions.granted = new Set(['core-legal-documents-view']);
     expect(component.showCoreLegalGroup).toBeTrue();
+  });
+
+  /**
+   * @description Menu sections: expanded by default; the chevron collapses / expands a section and
+   *   the choice is stored; a new layout reads it; opening a page of a collapsed section expands
+   *   it; the narrow (closed) desktop menu shows every item.
+   * @input  sysadmin in core; click the "System" title; new instance; onGroupActive('core-system',
+   *         true); collapse again + isMenuOpen false.
+   * @output aria-expanded true -> false, items hidden, storage ["core-system"]; restored collapsed;
+   *         expanded again + storage []; closed menu: items not hidden.
+   */
+  it('collapses and remembers menu sections', () => {
+    ctx.auth.session.role = 'sysadmin';
+    ctx.permissions.granted = new Set(['view-core']);
+    component.ngOnInit();
+    component.currentModule = 'core';
+    component.isMenuOpen = true;
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    const title = () => el.querySelector('button[aria-controls="nav-group-core-system"]') as HTMLButtonElement;
+    const items = () => el.querySelector('#nav-group-core-system') as HTMLElement;
+
+    expect(title().getAttribute('aria-expanded')).toBe('true');
+    expect(items().classList).not.toContain('nav-group-items--collapsed');
+    title().click();
+    fixture.detectChanges();
+    expect(title().getAttribute('aria-expanded')).toBe('false');
+    expect(items().classList).toContain('nav-group-items--collapsed');
+    expect(JSON.parse(localStorage.getItem(NAV_COLLAPSED_STORAGE_KEY)!)).toEqual(['core-system']);
+
+    const second = TestBed.createComponent(AdminLayoutComponent).componentInstance;
+    second.ngOnInit();
+    expect(second.isGroupExpanded('core-system')).toBeFalse();
+    expect(second.isGroupExpanded('core-users')).toBeTrue();
+
+    component.onGroupActive('core-system', true);
+    fixture.detectChanges();
+    expect(component.isGroupExpanded('core-system')).toBeTrue();
+    expect(JSON.parse(localStorage.getItem(NAV_COLLAPSED_STORAGE_KEY)!)).toEqual([]);
+    component.onGroupActive('core-users', false);
+    expect(component.isGroupExpanded('core-users')).toBeTrue();
+
+    component.toggleGroup('core-system');
+    component.isMenuOpen = false;
+    fixture.detectChanges();
+    expect(items().classList).not.toContain('nav-group-items--collapsed');
+    fixture.destroy();
+  });
+
+  /**
+   * @description A broken or unavailable storage never breaks the menu: everything is expanded and
+   *   collapsing still works for the open page.
+   * @input  stored '{"x":1}', then 'not json'; then getItem / setItem throwing; toggleGroup() twice.
+   * @output empty set each time; collapse and expand work without an error.
+   */
+  it('survives a broken storage of the menu sections', () => {
+    localStorage.setItem(NAV_COLLAPSED_STORAGE_KEY, '{"x":1}');
+    component.ngOnInit();
+    expect(component.collapsedGroups.size).toBe(0);
+    localStorage.setItem(NAV_COLLAPSED_STORAGE_KEY, 'not json');
+    component.ngOnInit();
+    expect(component.collapsedGroups.size).toBe(0);
+
+    spyOn(localStorage, 'getItem').and.throwError('blocked');
+    spyOn(localStorage, 'setItem').and.throwError('blocked');
+    expect((component as any).readCollapsedGroups().size).toBe(0);
+    expect(() => component.toggleGroup('web-content')).not.toThrow();
+    expect(component.isGroupExpanded('web-content')).toBeFalse();
+    component.toggleGroup('web-content');
+    expect(component.isGroupExpanded('web-content')).toBeTrue();
+  });
+
+  /**
+   * @description The header shows the own profile photo, the default image without one or when
+   *   logged out.
+   * @input  no photo; avatarUrl$ emits a URL; logged out.
+   * @output default svg; img with the URL in the header and the mobile panel; default svg.
+   */
+  it('shows the own profile photo in the header', () => {
+    component.ngOnInit();
+    component.isMobileActionsOpen = true;
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.header-user-avatar svg.user-avatar--default')).not.toBeNull();
+
+    ctx.auth.avatarUrl$.next('data:image/gif;base64,R0lGODlhAQABAAAAACw=');
+    fixture.detectChanges();
+    expect(component.avatarUrl).toContain('data:image/gif');
+    expect((el.querySelector('.header-user-avatar img') as HTMLImageElement).src).toContain('data:image/gif');
+    expect(el.querySelector('.map-user-icon img')).not.toBeNull();
+
+    ctx.auth.isLoggedIn$.next(false);
+    fixture.detectChanges();
+    expect(el.querySelector('.header-user-avatar img')).toBeNull();
+    fixture.destroy();
+  });
+
+  /**
+   * @description A navigation to another page scrolls the content area back to the top; a change
+   *   of only the query (filter, page number) keeps the position.
+   * @input  scrollContentToTop('/admin/a'), ('/admin/a?page=2'), ('/admin/b#x').
+   * @output scrollTo called for /admin/a and /admin/b only.
+   */
+  it('scrolls the content to the top on a new page', () => {
+    fixture.detectChanges();
+    const main = fixture.nativeElement.querySelector('main.admin-content') as HTMLElement;
+    const scrollTo = spyOn(main, 'scrollTo') as jasmine.Spy;
+    (component as any).scrollContentToTop('/admin/a');
+    (component as any).scrollContentToTop('/admin/a?page=2');
+    (component as any).scrollContentToTop('/admin/b#x');
+    expect(scrollTo).toHaveBeenCalledTimes(2);
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, left: 0 });
+    fixture.destroy();
   });
 });

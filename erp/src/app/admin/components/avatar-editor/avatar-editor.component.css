@@ -1,0 +1,125 @@
+/*
+    @file: avatar-editor.component.css
+    @path: /src/app/admin/components/avatar-editor/avatar-editor.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Photo circle with a camera overlay on hover / focus and the text controls beside it.
+    @dependencies: shared/styles/tokens.css (--color-*)
+*/
+
+/*
+    @module: Layout
+    @description: Circle left, controls right; wraps under each other on a narrow screen.
+    @usage: .avatar-editor
+*/
+.avatar-editor {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+}
+
+/*
+    @module: Circle
+    @description: The photo as a button - the camera overlay shows on hover / keyboard focus,
+      the spinner while the file is uploaded.
+    @usage: .avatar-editor-circle
+*/
+.avatar-editor-circle {
+  position: relative;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 0;
+}
+.avatar-editor-circle:disabled { cursor: progress; }
+.avatar-editor-circle:focus-visible {
+  outline: 2px solid var(--color-zinc-900, #18181b);
+  outline-offset: 3px;
+}
+
+.avatar-editor-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(24, 24, 27, 0.45);
+  color: var(--color-white, #fff);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.avatar-editor-circle:not(:disabled):hover .avatar-editor-overlay,
+.avatar-editor-circle:focus-visible .avatar-editor-overlay { opacity: 1; }
+
+.avatar-editor-spinner {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255, 255, 255, 0.6);
+  border-top-color: var(--color-zinc-900, #18181b);
+  border-radius: 50%;
+  animation: avatar-editor-spin 0.75s linear infinite;
+}
+@keyframes avatar-editor-spin { to { transform: rotate(360deg); } }
+
+/* The native input stays hidden - the circle and "Change photo" open it. */
+.avatar-editor-input { display: none; }
+
+/*
+    @module: Controls
+    @description: "Change photo" / "Remove photo" as round pictogram buttons (same look as the row
+      buttons of the tables) and the limits hint under them.
+    @usage: .avatar-editor-actions
+*/
+.avatar-editor-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.avatar-editor-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.avatar-editor-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--color-zinc-200, #e4e4e7);
+  border-radius: 999px;
+  background: var(--color-white, #fff);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.avatar-editor-btn:hover:not(:disabled) {
+  background: var(--color-zinc-100, #f4f4f5);
+  border-color: var(--color-zinc-300, #d4d4d8);
+}
+.avatar-editor-btn--danger:hover:not(:disabled) {
+  background: var(--color-rose-50, #fff1f2);
+  border-color: var(--color-rose-200, #fecdd3);
+}
+.avatar-editor-btn:focus-visible {
+  outline: 2px solid var(--color-zinc-900, #18181b);
+  outline-offset: 2px;
+}
+.avatar-editor-btn:disabled { opacity: 0.5; cursor: progress; }
+
+.avatar-editor-hint {
+  font-size: 0.75rem;
+  color: var(--color-zinc-500, #71717a);
+}

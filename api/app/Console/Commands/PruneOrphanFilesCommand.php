@@ -7,16 +7,19 @@
  * @created 2026
  * @description Daily check that no uploaded file outlives its record: every file in the upload
  * folders of the private disk (CVs, inquiry, order, ticket and portal attachments) must have
- * its web_attachments row. A file without one - e.g. left by an upload whose database write
+ * its web_attachments row, every profile photo (avatars) its users row. A file without one - e.g. left by an upload whose database write
  * failed, or by a manual change of the database - is personal data without an owner and is
  * deleted (GDPR storage limitation). `--dry-run` only lists the counts.
  * @note Only files older than one day are touched, so an upload in progress (file stored, row
  * not written yet) is never deleted.
+ * @dependencies WebAttachment, User (avatar_path), UserAvatar::FOLDER
  */
 
 namespace App\Console\Commands;
 
+use App\Models\User;
 use App\Models\Web\WebAttachment;
+use App\Support\Images\UserAvatar;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -34,6 +37,7 @@ class PruneOrphanFilesCommand extends Command
         'web/raw_request_commissions',
         'web/sales_orders',
         'web/project_threads',
+        UserAvatar::FOLDER,
     ];
 
     /** @description Minimum age of a file without a record before it is deleted (hours). */
@@ -49,7 +53,7 @@ class PruneOrphanFilesCommand extends Command
      * @description Short description shown by `php artisan list`.
      * @var string
      */
-    protected $description = 'Deletes uploaded files that no web_attachments row refers to (older than one day).';
+    protected $description = 'Deletes uploaded files that no web_attachments / users row refers to (older than one day).';
 
     /**
      * @description Finds and deletes (or with --dry-run reports) the files without a record.
@@ -58,7 +62,10 @@ class PruneOrphanFilesCommand extends Command
     public function handle(): int
     {
         $disk = Storage::disk(self::DISK);
-        $known = WebAttachment::where('disk', self::DISK)->pluck('path')->flip();
+        // Soft-deleted accounts keep their photo (restore) - it is still known.
+        $known = WebAttachment::where('disk', self::DISK)->pluck('path')
+            ->merge(User::withTrashed()->whereNotNull('avatar_path')->pluck('avatar_path'))
+            ->flip();
         $cutoff = Carbon::now()->subHours(self::MIN_AGE_HOURS)->getTimestamp();
         $dryRun = (bool) $this->option('dry-run');
         $orphans = 0;

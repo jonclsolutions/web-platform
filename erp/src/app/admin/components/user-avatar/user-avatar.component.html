@@ -1,0 +1,19 @@
+<!--
+    @file: user-avatar.component.html
+    @path: /src/app/admin/components/user-avatar/user-avatar.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: The photo, or the inline default image (no extra request).
+-->
+@if (src && !failed) {
+  <img class="user-avatar" [src]="src" [alt]="label" [width]="size" [height]="size"
+       [style.width.px]="size" [style.height.px]="size" decoding="async" (error)="onError()">
+} @else {
+  <svg class="user-avatar user-avatar--default" [attr.width]="size" [attr.height]="size" viewBox="0 0 64 64"
+       role="img" [attr.aria-label]="label || null" [attr.aria-hidden]="label ? null : 'true'" focusable="false">
+    <circle class="user-avatar-bg" cx="32" cy="32" r="32"/>
+    <circle class="user-avatar-figure" cx="32" cy="25" r="11"/>
+    <path class="user-avatar-figure" d="M10.5 55.5C13 45 21.5 39 32 39s19 6 21.5 16.5A31.9 31.9 0 0 1 10.5 55.5z"/>
+  </svg>
+}

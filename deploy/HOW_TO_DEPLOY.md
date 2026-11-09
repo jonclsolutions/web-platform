@@ -30,7 +30,7 @@ Contents:
 - all changes committed; the build warns about uncommitted changes in `api/`, `erp/`, `deploy/`
 
 **Hosting**
-- Apache with `mod_rewrite`, `mod_headers` and `.htaccess` (`AllowOverride All`), PHP 8.5+ (the Composer platform of api/composer.json), MySQL / MariaDB
+- Apache with `mod_rewrite`, `mod_headers` and `.htaccess` (`AllowOverride All`), PHP 8.5+ (the Composer platform of api/composer.json) with the GD extension built with WebP (profile photos; `php -r "var_dump(gd_info()['WebP Support']);"`), MySQL / MariaDB
 - SSH access (needed for `configure-server.sh`, `php artisan` and cron) and SFTP / FTPS
 - an empty database + user (hosting panel → databases) and an SMTP mailbox
 - HTTPS certificate for the domain

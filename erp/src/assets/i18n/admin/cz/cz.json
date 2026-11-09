@@ -16,6 +16,7 @@
     "title_note": "Pro změnu jména/e-mailu kontaktujte administrátora",
     "empty_value": "—",
 
+    "photo_heading": "Profilová fotka",
     "basic_info_heading": "Základní údaje",
     "field_full_name": "Celé jméno",
     "field_email": "Přihlašovací e-mail",
@@ -76,6 +77,7 @@
     "nav_group_transactions": "Transakce",
     "nav_group_customers": "Zákazníci",
     "nav_group_logistics": "Logistika",
+    "nav_group_toggle": "Zobrazit / skrýt sekci",
 
     "nav_dashboard": "Dashboard",
     "nav_user_request": "Webový formulář",
@@ -2081,6 +2083,15 @@
     "crud_created_message": "Požadavek byl vytvořen.",
     "graph_date_field_label": "Datum vytvoření"
   },
+  "avatar-editor": {
+    "change": "Změnit fotku",
+    "remove": "Odstranit fotku",
+    "hint": "JPG, PNG nebo WebP, max. 2 MB",
+    "saving": "Nahrávám fotku…",
+    "error_title": "Fotka nebyla nahrána",
+    "error_type": "Vyberte obrázek JPG, PNG nebo WebP.",
+    "error_size": "Fotka je větší než 2 MB – vyberte menší."
+  },
   "administrators": {
     "field_role_own_account_hint": "Vlastní roli nelze změnit. Požádejte jiného administrátora.",
     "field_enable_2fa_forced_by_role_hint": "Dvoufázové ověření vyžaduje role účtu, nelze ho změnit.",
@@ -2104,6 +2115,7 @@
     "btn_activate": "Aktivace",
     "btn_delete": "Smazat",
 
+    "field_avatar_label": "Profilová fotka",
     "field_email_label": "Přihlašovací e-mail",
     "field_email_placeholder": "jmeno@firma.cz",
     "field_email_error": "Zadejte platný přihlašovací e-mail.",
@@ -2124,6 +2136,7 @@
     "reset_new_password_chars_suffix": "znaků",
 
     "col_id": "ID",
+    "col_avatar": "Fotka",
     "col_name": "Jméno",
     "col_email": "E-mail (Login)",
     "col_role": "Role",
@@ -2137,6 +2150,7 @@
     "filter_role_placeholder": "-- Vyberte roli --",
 
     "details_id": "ID uživatele",
+    "details_avatar": "Fotka",
     "details_full_name": "Celé jméno",
     "details_email": "Přihlašovací E-mail",
     "details_role": "Přiřazená role",

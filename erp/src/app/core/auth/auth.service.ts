@@ -26,7 +26,7 @@
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, BehaviorSubject, of, throwError, timer, Subject } from 'rxjs';
+import { Observable, BehaviorSubject, of, throwError, timer, Subject, distinctUntilChanged } from 'rxjs';
 import { tap, catchError, switchMap, takeUntil, map, finalize, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ApiEnvelope } from '../../shared/interfaces/api-envelope';
@@ -69,7 +69,7 @@ function authError(backendMessage: unknown, fallbackKey: AuthErrorKey): AuthErro
 /** Session answer of /login, /login/verify-2fa and /refresh (the refresh token is only in the cookie). */
 export interface AuthSessionResponse {
   token: string;
-  user: { id?: number | string; user_login_id?: number | string; user_email: string };
+  user: { id?: number | string; user_login_id?: number | string; user_email: string; avatar_url?: string | null };
   user_roles?: string[];
   user_permissions?: string[];
   /** "Remember me" of the login (also on every refresh) - where the session hint is kept. */
@@ -111,6 +111,10 @@ export class AuthService {
 
   private _userEmailSubject = new BehaviorSubject<string | null>(null);
   public userEmail$ = this._userEmailSubject.asObservable();
+
+  /** Signed URL of the own profile photo (null = the default image) - shown in the admin header. */
+  private _avatarUrlSubject = new BehaviorSubject<string | null>(null);
+  public avatarUrl$ = this._avatarUrlSubject.pipe(distinctUntilChanged());
 
   private stopTokenRefresh$ = new Subject<void>();
   private readonly REFRESH_INTERVAL = 20 * 60 * 1000;
@@ -259,6 +263,7 @@ export class AuthService {
     this.genericTableService.invalidateAll();
     this._isLoggedIn.next(false);
     this._userEmailSubject.next(null);
+    this._avatarUrlSubject.next(null);
     this.stopTokenRefreshTimer();
   }
 
@@ -266,6 +271,14 @@ export class AuthService {
   public getUserEmail(): string | null { return this.session?.email ?? null; }
   public getUserRole(): string | null { return this.session?.role ?? null; }
   public getAccessToken(): string | null { return this.session?.accessToken ?? null; }
+
+  /**
+   * @description Shows a changed own profile photo at once (the next refresh brings the same URL).
+   * @param url New signed URL, null after the removal.
+   */
+  public setAvatarUrl(url: string | null): void {
+    this._avatarUrlSubject.next(url);
+  }
 
   public getUserPermissions(): string[] {
     return this.session ? [...this.session.permissions] : [];
@@ -310,6 +323,7 @@ export class AuthService {
     this.genericTableService.setCurrentUser(userId);
 
     this._userEmailSubject.next(this.session.email);
+    this._avatarUrlSubject.next(response.user.avatar_url ?? null);
     this._isLoggedIn.next(true);
     this.startTokenRefreshTimer();
   }

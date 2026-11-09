@@ -11,9 +11,13 @@
  * - LoadingService: Observes global loading states for the UI.
  * - AdminLocalizationService: Static i18n of the admin UI + the language switcher in the header.
  * - ScrollLockService: Shared background scroll lock (mobile overlay panels).
+ * - UserAvatarComponent: own profile photo in the header.
+ * @note Layout: the header and the sidebar stay in place, only the page content (`<main>`) and,
+ * independently, a long sidebar menu scroll. A navigation therefore scrolls `<main>` back to the
+ * top itself - the router's scroll restoration only moves the window.
  */
 
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, LOCALE_ID, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ElementRef, HostListener, LOCALE_ID, ViewChild, inject } from '@angular/core';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Subscription, interval, Observable, filter } from 'rxjs';
@@ -27,6 +31,13 @@ import { ScrollLockService } from '../../../core/services/scroll-lock.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { ADMIN_MODULE_PAGES, ADMIN_MODULE_TAB_PERMISSION, AdminModule, AdminNavPage } from '../../admin-navigation.config';
 import { SYSADMIN_ROLE_NAME } from '../../../core/auth/guards/auth.guard';
+import { UserAvatarComponent } from '../user-avatar/user-avatar.component';
+
+/**
+ * @description localStorage key of the menu sections the user collapsed (JSON array of section
+ * keys, e.g. ["web-content"]) - only a layout preference, no personal data.
+ */
+export const NAV_COLLAPSED_STORAGE_KEY = 'jsw_admin_nav_collapsed';
 
 /**
  * @description The layout shell for the administration area, handling sidebar controls and navigation.
@@ -38,13 +49,15 @@ import { SYSADMIN_ROLE_NAME } from '../../../core/auth/guards/auth.guard';
   templateUrl: './admin-layout.component.html',
   styleUrls: ['../../shared-styles/theme.css', '../../../shared/styles/base.css', './admin-layout.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule, DatePipe, HasPermissionDirective],
+  imports: [CommonModule, RouterModule, DatePipe, HasPermissionDirective, UserAvatarComponent],
   providers: [
     { provide: LOCALE_ID, useValue: 'cs-CZ' }
   ]
 })
 export class AdminLayoutComponent implements OnInit, OnDestroy {
   userEmail: string | null = null;
+  /** Signed URL of the own profile photo (null = the default image). */
+  avatarUrl: string | null = null;
   userRole: string | null = null;
   isLoggedIn: boolean = false;
 
@@ -62,6 +75,18 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   isResizing: boolean = false;
 
   private isMobileViewport: boolean = false;
+
+  /**
+   * Menu sections the user collapsed (chevron at the section title). Every section is expanded by
+   * default; the choice is remembered in this browser (NAV_COLLAPSED_STORAGE_KEY).
+   */
+  collapsedGroups = new Set<string>();
+
+  /** Scrolling page area - scrolled back to the top on a navigation. */
+  @ViewChild('content') private contentRef?: ElementRef<HTMLElement>;
+
+  /** Path of the last navigation (without query / fragment) - only a new page scrolls to the top. */
+  private lastPath: string | null = null;
 
   /** Mobile slide-out panel (hamburger top right) - user, role, clock, modules, links. */
   isMobileActionsOpen: boolean = false;
@@ -127,6 +152,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   private maxWidth: number = 500;
   private authSubscription: Subscription | undefined;
   private userEmailSubscription: Subscription | undefined;
+  private avatarSubscription: Subscription | undefined;
   private routerSubscription: Subscription | undefined;
   /** Re-render on admin language change. */
   private i18nSubscription: Subscription | undefined;
@@ -153,7 +179,10 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
     this.routerSubscription = this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
-      .subscribe(event => this.syncModuleFromUrl(event.urlAfterRedirects));
+      .subscribe(event => {
+        this.syncModuleFromUrl(event.urlAfterRedirects);
+        this.scrollContentToTop(event.urlAfterRedirects);
+      });
   }
 
   /**
@@ -179,6 +208,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       }
       this.isMobileViewport = window.innerWidth <= 768;
     }
+    this.collapsedGroups = this.readCollapsedGroups();
 
     // Immediate sync with the REAL current URL - covers the first render
     // (NavigationEnd from the constructor may have fired before this component
@@ -195,6 +225,84 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       this.userEmail = email;
       this.cdr.markForCheck();
     });
+
+    this.avatarSubscription = this.authService.avatarUrl$.subscribe(url => {
+      this.avatarUrl = url;
+      this.cdr.markForCheck();
+    });
+  }
+
+  /**
+   * @description Scrolls the page area to the top when a different page opens (a change of only
+   *   the query, e.g. a filter or a page number, keeps the position).
+   * @param url Router URL after the navigation.
+   */
+  private scrollContentToTop(url: string): void {
+    const path = url.split(/[?#]/)[0];
+    if (path === this.lastPath) return;
+    this.lastPath = path;
+    this.contentRef?.nativeElement.scrollTo?.({ top: 0, left: 0 });
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // COLLAPSIBLE MENU SECTIONS
+  // ══════════════════════════════════════════════════════════════════════
+
+  /**
+   * @description Whether the items of a menu section are shown.
+   * @param key Section key (e.g. 'web-content').
+   */
+  isGroupExpanded(key: string): boolean {
+    return !this.collapsedGroups.has(key);
+  }
+
+  /**
+   * @description Collapses / expands a section and remembers the choice.
+   * @param key Section key.
+   */
+  toggleGroup(key: string): void {
+    if (this.collapsedGroups.has(key)) {
+      this.collapsedGroups.delete(key);
+    } else {
+      this.collapsedGroups.add(key);
+    }
+    this.saveCollapsedGroups();
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * @description The section of the open page is always expanded: opening a page of a collapsed
+   *   section (link, bookmark, module switch) expands it again.
+   * @param key Section key.
+   * @param active Whether a link of the section matches the current URL (RouterLinkActive).
+   */
+  onGroupActive(key: string, active: boolean): void {
+    if (active && this.collapsedGroups.delete(key)) {
+      this.saveCollapsedGroups();
+      this.cdr.markForCheck();
+    }
+  }
+
+  /**
+   * @description Collapsed sections stored in this browser; an empty set when there are none or
+   *   the storage is not available / holds something else.
+   */
+  private readCollapsedGroups(): Set<string> {
+    try {
+      const stored = JSON.parse(localStorage.getItem(NAV_COLLAPSED_STORAGE_KEY) ?? '[]');
+      return new Set(Array.isArray(stored) ? stored.filter((k): k is string => typeof k === 'string') : []);
+    } catch {
+      return new Set();
+    }
+  }
+
+  /** @description Stores the collapsed sections (silently skipped without a storage). */
+  private saveCollapsedGroups(): void {
+    try {
+      localStorage.setItem(NAV_COLLAPSED_STORAGE_KEY, JSON.stringify([...this.collapsedGroups]));
+    } catch {
+      // Private mode / blocked storage - the choice lasts until the page is reloaded.
+    }
   }
 
   /**
@@ -492,6 +600,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.authSubscription?.unsubscribe();
     this.userEmailSubscription?.unsubscribe();
+    this.avatarSubscription?.unsubscribe();
     this.routerSubscription?.unsubscribe();
     this.i18nSubscription?.unsubscribe();
     this.confirmDialog.setDefaultLabels(null);  // leaving the admin: no admin labels on the public web

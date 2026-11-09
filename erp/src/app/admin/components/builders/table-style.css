@@ -93,6 +93,14 @@ tr:hover {
 background-color: var(--color-zinc-100);
 }
 
+/* Profile photo cell: no vertical padding, the 28 px photo fits into the height of a text row,
+   so a table with photos has the same row height as every other table. */
+td.table-cell-avatar {
+padding-top: 0;
+padding-bottom: 0;
+line-height: 0;
+}
+
 .table-cell-image {
 width: 28px;
 height: 28px;

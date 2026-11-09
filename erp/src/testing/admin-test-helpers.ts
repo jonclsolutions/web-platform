@@ -101,11 +101,12 @@ export function createPermissionStub(granted: string[] | 'all' = 'all'): Permiss
 export interface AuthStub {
   isLoggedIn$: BehaviorSubject<boolean>;
   userEmail$: BehaviorSubject<string | null>;
+  avatarUrl$: BehaviorSubject<string | null>;
   session: { userId: string | null; email: string | null; role: string | null; permissions: string[] };
   getUserId: jasmine.Spy; getUserEmail: jasmine.Spy; getUserRole: jasmine.Spy; getUserPermissions: jasmine.Spy;
   getAccessToken: jasmine.Spy; logout: jasmine.Spy; login: jasmine.Spy; verifyTwoFactor: jasmine.Spy;
   resendTwoFactor: jasmine.Spy; requestPasswordReset: jasmine.Spy; resetPassword: jasmine.Spy;
-  checkAuth: jasmine.Spy; clearAuthData: jasmine.Spy;
+  checkAuth: jasmine.Spy; clearAuthData: jasmine.Spy; setAvatarUrl: jasmine.Spy;
 }
 
 /**
@@ -115,9 +116,11 @@ export interface AuthStub {
  */
 export function createAuthStub(loggedIn = true): AuthStub {
   const session = { userId: '1', email: 'admin@example.test', role: 'admin', permissions: [] as string[] };
+  const avatarUrl$ = new BehaviorSubject<string | null>(null);
   return {
     isLoggedIn$: new BehaviorSubject<boolean>(loggedIn),
     userEmail$: new BehaviorSubject<string | null>(session.email),
+    avatarUrl$,
     session,
     getUserId: jasmine.createSpy('getUserId').and.callFake(() => session.userId),
     getUserEmail: jasmine.createSpy('getUserEmail').and.callFake(() => session.email),
@@ -131,7 +134,8 @@ export function createAuthStub(loggedIn = true): AuthStub {
     requestPasswordReset: jasmine.createSpy('requestPasswordReset').and.returnValue(of({ message: '' })),
     resetPassword: jasmine.createSpy('resetPassword').and.returnValue(of({ message: '' })),
     checkAuth: jasmine.createSpy('checkAuth').and.returnValue(of(true)),
-    clearAuthData: jasmine.createSpy('clearAuthData')
+    clearAuthData: jasmine.createSpy('clearAuthData'),
+    setAvatarUrl: jasmine.createSpy('setAvatarUrl').and.callFake((url: string | null) => avatarUrl$.next(url)),
   };
 }
 

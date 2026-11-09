@@ -13,7 +13,7 @@
  *   PermissionOptionsService (stubs), ScrollLockService (spy)
  */
 
-import { ComponentFixture, TestBed, fakeAsync, discardPeriodicTasks } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks, discardPeriodicTasks } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
 import { createResetPasswordFormFields } from './administrators.config';
@@ -355,6 +355,38 @@ describe('AdministratorsComponent', () => {
       expect(body.user_email).toBeUndefined();
       expect(body.is_blocked).toBeUndefined();
       expect(body.full_name).toBe('X');
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description The profile photo: an edit-only field saved by its own endpoint - never sent
+     *   with the account; the photo of a sysadmin account is only shown to a non-sysadmin, the
+     *   own one stays editable; the list shows it next to the ID and it is never exported.
+     * @input  edit account 7 (editor) and submit with avatar_url; edit sysadmin account 9; own
+     *   account 1 with the sysadmin role; create form; table / details columns.
+     * @output avatar editable, not in the PUT body; read-only for 9; editable for 1; hidden in the
+     *   create form (show_in_create false); column 'avatar_url' second, details 'avatar_url' type 'avatar'.
+     */
+    it('handles the profile photo field', fakeAsync(() => {
+      passwordConfirmation.confirm.and.returnValue(Promise.resolve(true));
+      component.ngOnInit();
+      component.handleEditFormOpened({ id: 7, roles: [{ id: 2 }], avatar_url: '/a.webp' });
+      expect(field('avatar_url').type).toBe('avatar');
+      expect(field('avatar_url').editable).toBeTrue();
+      component.handleFormSubmitted({ id: 7, role_id: '2', full_name: 'X', avatar_url: '/a.webp' });
+      expect((ctx.dataHandler as any).put.calls.mostRecent().args[1].avatar_url).toBeUndefined();
+
+      component.handleEditFormOpened({ id: 9, roles: [{ id: 1, role_name: 'sysadmin' }] });
+      flushMicrotasks();
+      expect(field('avatar_url').editable).toBeFalse();
+      component.handleEditFormOpened({ id: 1, roles: [{ id: 1, role_name: 'sysadmin' }] });
+      flushMicrotasks();
+      expect(field('avatar_url').editable).toBeTrue();
+
+      component.handleCreateFormOpened();
+      expect(field('avatar_url').show_in_create).toBeFalse();
+      expect(component.tableColumns[1]).toEqual(jasmine.objectContaining({ key: 'avatar_url', type: 'avatar' }));
+      expect(component.detailsColumns.find(c => c.key === 'avatar_url')?.type).toBe('avatar');
       discardPeriodicTasks();
     }));
 

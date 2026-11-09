@@ -195,6 +195,21 @@ describe('DetailsBuilderComponent', () => {
   });
 
   /**
+   * @description An avatar column shows the photo (72 px), the default image without one.
+   * @input  avatar_url '/p.webp', then null.
+   * @output img src '/p.webp'; default svg.
+   */
+  it('renders the profile photo', () => {
+    component.itemData = { avatar_url: '/p.webp' };
+    component.itemDetailColumns = [{ key: 'avatar_url', displayName: 'Photo', type: 'avatar' }] as any;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.value-cell img').getAttribute('src')).toBe('/p.webp');
+    component.itemData = { avatar_url: null };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.value-cell svg.user-avatar--default')).not.toBeNull();
+  });
+
+  /**
    * @description A 'files' column lists every file with name and size; an empty list shows "no files".
    * @input  files [{ id: 1, original_filename: 'cv.pdf', size_bytes: 2048 }], then []
    * @output one row 'cv.pdf' / '2 KB'; then text 'details-builder.no_files'

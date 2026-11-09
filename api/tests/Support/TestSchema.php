@@ -52,6 +52,7 @@ final class TestSchema
             $t->increments('id');
             $t->string('user_email')->unique();
             $t->string('full_name');
+            $t->string('avatar_path')->nullable();
             $t->integer('dpp_hours_spent')->default(0);
             $t->boolean('enable_2fa')->default(false);
             $t->boolean('is_blocked')->default(false);

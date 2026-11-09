@@ -25,7 +25,7 @@
       <form #genericForm="ngForm" (ngSubmit)="onSubmit(genericForm, $event)" novalidate>
         <div class="form-grid-layout">
           @for (input of visibleInputDefinitions; track input) {
-            <div class="form-row-item" [class.full-width]="input.type === 'textarea' || input.type === 'files' || input.type === 'multiselect'">
+            <div class="form-row-item" [class.full-width]="input.type === 'textarea' || input.type === 'files' || input.type === 'multiselect' || input.type === 'avatar'">
               <label [for]="input.column_name" class="field-label">
                 {{ input.label }}
                 @if (input.required) {
@@ -76,6 +76,11 @@
                         <div class="multiselect-empty">{{ strings.multiselect_empty }}</div>
                       }
                     </div>
+                  }
+                  @case ('avatar') {
+                    <app-avatar-editor [userId]="formData['id']" [avatarUrl]="formData[input.column_name] ?? null"
+                                       [editable]="input.editable !== false" [label]="formData['full_name'] ?? ''"
+                                       (avatarChange)="onAvatarChange(input.column_name, $event)"></app-avatar-editor>
                   }
                   @case ('text') {
                     <input type="text" [id]="input.column_name" [placeholder]="input.placeholder" 

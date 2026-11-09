@@ -5,7 +5,7 @@
  * @author JS
  * @created 2025
  * @description Manages user profile information and security settings, specifically handling
- * password updates and the self-service 2FA toggle.
+ * password updates, the self-service 2FA toggle and the own profile photo (AvatarEditorComponent).
  * @note Three effective 2FA states: (a) the admin / sysadmin role always enforces it; (b) a
  * sysadmin personally enforced `two_fa_forced_by_admin`; (c) the ordinary self-service toggle.
  * The checkbox is disabled in both enforced states (a) + (b).
@@ -26,6 +26,7 @@ import { LoadingService } from '../../../core/services/loading.service';
 import { passwordPolicyValidator } from '../../../shared/constants/password-policy';
 import { PasswordRequirementsChecklistComponent } from '../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { AvatarEditorComponent } from '../../components/avatar-editor/avatar-editor.component';
 
 const FORCED_2FA_ROLES = ['sysadmin'];
 
@@ -36,6 +37,7 @@ const FORCED_2FA_ROLES = ['sysadmin'];
     CommonModule,
     ReactiveFormsModule,
     PasswordRequirementsChecklistComponent,
+    AvatarEditorComponent,
   ],
   templateUrl: './personal-info.component.html',
   styleUrl: './personal-info.component.css'
@@ -120,6 +122,11 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
           console.error('Chyba při načítání dat uživatele:', err);
         }
       });
+  }
+
+  /** @description ID of the signed-in account (target of the photo upload). */
+  get ownUserId(): string | null {
+    return this.authService.getUserId();
   }
 
   get isRoleForced2fa(): boolean {

@@ -10,7 +10,7 @@
  */
 import {
   Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef,
-  HostListener, ElementRef, ViewChild, inject
+  HostListener, ElementRef, ViewChild, DestroyRef, inject
 } from '@angular/core';
 import { Button } from '../../../../shared/interfaces/button';
 
@@ -50,6 +50,21 @@ export class ActionMenuBuilderComponent {
 
   private host = inject(ElementRef<HTMLElement>);
   private cd = inject(ChangeDetectorRef);
+
+  /**
+   * @description Recomputes the position on any scroll while the menu is open. Capture phase on
+   * the document: a scroll event does not bubble, and the admin page scrolls inside the layout's
+   * content area, not the window - only a capturing listener hears it.
+   */
+  private readonly onAnyScroll = (): void => {
+    if (this.isOpen) this.positionMenu();
+  };
+
+  constructor() {
+    if (typeof document === 'undefined') return;
+    document.addEventListener('scroll', this.onAnyScroll, { capture: true, passive: true });
+    inject(DestroyRef).onDestroy(() => document.removeEventListener('scroll', this.onAnyScroll, { capture: true }));
+  }
 
   /** Small gap (px) between the trigger button and the menu, and from the viewport edges. */
   private static readonly GAP = 6;
@@ -116,12 +131,7 @@ export class ActionMenuBuilderComponent {
     }
   }
 
-  /** @description Recomputes the position on scroll (capture - also catches scrolling inside nested containers) and window resize while the menu is open. */
-  @HostListener('window:scroll')
-  onWindowScroll(): void {
-    if (this.isOpen) this.positionMenu();
-  }
-
+  /** @description Recomputes the position on a window resize while the menu is open (scrolling: onAnyScroll). */
   @HostListener('window:resize')
   onWindowResize(): void {
     if (this.isOpen) this.positionMenu();

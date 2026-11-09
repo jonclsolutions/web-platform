@@ -10,10 +10,12 @@
  * calculated effective permission set. `profileOnly()` returns only the profile fields - used
  * by the session answers of AuthController, which send the roles and the effective permissions
  * once at the top level (`user_roles`, `user_permissions`).
+ * @dependencies App\Support\Images\UserAvatar (signed URL of the profile photo).
  */
 
 namespace App\Http\Resources;
 
+use App\Support\Images\UserAvatar;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -44,6 +46,8 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'user_email' => $this->user_email,
             'full_name' => $this->full_name,
+            // Signed URL of the profile photo, null = the default image.
+            'avatar_url' => UserAvatar::url($this->resource),
             'dpp_hours_spent' => $this->dpp_hours_spent,
             'enable_2fa' => (bool) $this->enable_2fa,
             'two_fa_forced_by_admin' => (bool) $this->two_fa_forced_by_admin,

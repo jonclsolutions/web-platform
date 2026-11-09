@@ -118,21 +118,30 @@ describe('ActionMenuBuilderComponent', () => {
     expect(component.menuPosition).toBeNull();
   }));
   /**
-   * @description While open, scrolling and resizing re-position the menu; closed it does nothing.
-   * @input open menu; scroll + resize; close; scroll + resize.
-   * @output positionMenu called twice while open, not after closing.
+   * @description While open, scrolling (of any element - the admin content area scrolls, not the
+   *   window) and resizing re-position the menu; closed or destroyed it does nothing.
+   * @input open menu; scroll of a nested element + resize; close; scroll + resize; reopen,
+   *   destroy, scroll.
+   * @output positionMenu called twice while open, not after closing nor after destroy.
    */
   it('follows scroll and resize while open', fakeAsync(() => {
     fixture.nativeElement.querySelector('.action-menu-trigger').click();
     fixture.detectChanges();
     tick();
     const position = spyOn(component as any, 'positionMenu');
-    window.dispatchEvent(new Event('scroll'));
+    const scroller = document.createElement('div');
+    document.body.appendChild(scroller);
+    scroller.dispatchEvent(new Event('scroll'));
     window.dispatchEvent(new Event('resize'));
     expect(position).toHaveBeenCalledTimes(2);
     component.isOpen = false;
-    window.dispatchEvent(new Event('scroll'));
+    scroller.dispatchEvent(new Event('scroll'));
     window.dispatchEvent(new Event('resize'));
     expect(position).toHaveBeenCalledTimes(2);
+    component.isOpen = true;
+    fixture.destroy();
+    scroller.dispatchEvent(new Event('scroll'));
+    expect(position).toHaveBeenCalledTimes(2);
+    scroller.remove();
   }));
 });

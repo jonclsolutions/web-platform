@@ -4,7 +4,16 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Styles of the admin layout component.
+    @description: Styles of the admin layout component. The layout fills the window: the header
+      and the sidebar stay in place, only the page content and (independently) a long sidebar
+      menu scroll.
+*/
+
+/*
+    @module: Shell
+    @description: The whole admin is a fixed column of the window size - header on top, sidebar +
+      content below it. Fixed (not in the page flow), so the window itself never scrolls.
+    @usage: :host
 */
 
 :host {
@@ -22,6 +31,12 @@
   --radius-md:    16px;
   --radius-lg:    20px;
   --ease:         0.18s ease;
+
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -41,7 +56,7 @@
   padding: 0 20px 0 0;
   gap: 0;
   font-family: var(--ff);
-  margin-top: 22px;
+  flex-shrink: 0;
 }
 /* ── Left group ────────────────────────────────────────────── */
 .header-left {
@@ -134,10 +149,8 @@
   text-decoration: underline;
 }
 
-.header-user-icon {
-  color: var(--text-dim);
+.header-user-avatar {
   display: flex;
-  align-items: center;
   flex-shrink: 0;
 }
 
@@ -310,7 +323,7 @@
   border-bottom: 1px solid var(--border);
 }
 
-.map-user-icon { color: var(--text-dim); flex-shrink: 0; }
+.map-user-icon { flex-shrink: 0; }
 
 .map-user-info {
   display: flex;
@@ -409,7 +422,8 @@
    ═══════════════════════════════════════════════════════════════ */
 .admin-dashboard-wrapper {
   display: flex;
-  min-height: calc(100vh - var(--header-h));
+  flex: 1 1 auto;
+  min-height: 0;                /* lets the sidebar and the content scroll inside the window height */
   background: var(--bg);
   position: relative;
 }
@@ -451,8 +465,9 @@
 
 .resizer-handle:hover { background: rgba(24, 24, 27, 0.12); }
 
-/* Navigace */
+/* Navigation - scrolls on its own when the menu is longer than the window. */
 .admin-nav {
+  flex: 1 1 auto;
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
@@ -471,7 +486,24 @@
   padding-top: 12px;
 }
 
+/*
+    @module: Collapsible section title
+    @description: The section title is a button with a chevron - it hides / shows the items of
+      the section (AdminLayoutComponent.toggleGroup); the chevron points right while collapsed.
+    @usage: <button class="nav-group-label" [attr.aria-expanded]> + <ul [class.nav-group-items--collapsed]>
+*/
 .nav-group-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--ff);
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -480,10 +512,27 @@
   padding: 4px 10px 8px;
   white-space: nowrap;
   overflow: hidden;
-  transition: opacity var(--ease);
+  transition: opacity var(--ease), color var(--ease);
 }
 
+.nav-group-label:hover { color: var(--text); }
+.nav-group-label:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.nav-group-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-group-chevron {
+  flex-shrink: 0;
+  transition: transform var(--ease);
+}
+
+.nav-group-label[aria-expanded="false"] .nav-group-chevron { transform: rotate(-90deg); }
+
 .nav-group-label.hidden { opacity: 0; height: 0; padding: 0; }
+
+.nav-group ul.nav-group-items--collapsed { display: none; }
 
 .nav-group ul {
   list-style: none;
@@ -682,12 +731,13 @@
   .mobile-open .admin-sidebar    { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,0.12); }
   .mobile-open .nav-text         { display: inline-block !important; }
   .mobile-open .nav-icon         { margin-right: 8px !important; }
-  .mobile-open .nav-group-label  { display: block !important; opacity: 1 !important; height: auto !important; }
+  .mobile-open .nav-group-label  { display: flex !important; opacity: 1 !important; height: auto !important; padding: 4px 10px 8px !important; }
 
   .resizer-handle { display: none; }
 
   .admin-content {
     width: 100%;
+    height: 100%;
     padding: 10px;
   }
 }

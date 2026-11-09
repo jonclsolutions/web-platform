@@ -463,6 +463,13 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       fields = fields.filter(f => f.column_name !== 'is_blocked');
     }
 
+    // The photo of a sysadmin account may change only a sysadmin or the account itself
+    // (UserAvatarController) - for anyone else it is only shown.
+    const target = this.selectedItemForEdit;
+    if (target && !this.isSysadmin && this.isSysadminAccount(target) && !this.isOwnAccount(target)) {
+      fields = fields.map(f => f.type === 'avatar' ? { ...f, editable: false } : f);
+    }
+
     return fields;
   }
 
@@ -563,6 +570,8 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     }
 
     this.formFieldOverrides = null;
+    // Set first - computeFieldsForTarget() reads it for the photo rule.
+    this.selectedItemForEdit = itemToEdit;
     this.visibleFormFields = this.computeFieldsForTarget(
       itemToEdit.role_id,
       !!itemToEdit.two_fa_forced_by_admin,
@@ -570,7 +579,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       this.isEmailLocked(itemToEdit),
       this.isOwnAccount(itemToEdit)
     );
-    this.selectedItemForEdit = itemToEdit;
     this.showCreateForm = true;
   }
 
@@ -646,6 +654,9 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       .filter(f => f.editable === false)
       .map(f => f.column_name);
     nonEditableFields.forEach(key => delete payload[key]);
+
+    // The photo is saved by its own endpoint at once (AvatarEditorComponent), never with the account.
+    this.formFields.filter(f => f.type === 'avatar').forEach(f => delete payload[f.column_name]);
 
     // A field hidden from the current user (e.g. "force 2FA" for a non-sysadmin) is never sent.
     // The form still carries its value from the edited record and the API refuses the key itself.

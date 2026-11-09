@@ -95,6 +95,25 @@ describe('TableBuilderComponent', () => {
     });
 
     /**
+     * @description An avatar column renders the photo of its signed URL as is, the default image
+     *   without one.
+     * @input  rows with avatar_url '/p.webp' and null; column type 'avatar'.
+     * @output getCellValue '/p.webp' / null; first row img, second row default svg; the cell has
+     *   the class without vertical padding (same row height as a text row).
+     */
+    it('renders avatar columns', () => {
+      expect(component.getCellValue({ a: '/p.webp' }, { key: 'a', type: 'avatar' } as any)).toBe('/p.webp');
+      expect(component.getCellValue({ a: '' }, { key: 'a', type: 'avatar' } as any)).toBeNull();
+      component.data = [{ id: 1, a: '/p.webp' }, { id: 2, a: null }];
+      component.columnDefinitions = [{ key: 'a', header: 'Photo', type: 'avatar' } as any];
+      fixture.detectChanges();
+      const rows = fixture.nativeElement.querySelectorAll('tbody tr');
+      expect(rows[0].querySelector('app-user-avatar img').getAttribute('src')).toBe('/p.webp');
+      expect(rows[1].querySelector('app-user-avatar svg.user-avatar--default')).not.toBeNull();
+      expect(rows[0].querySelector('app-user-avatar').closest('td').classList).toContain('table-cell-avatar');
+    });
+
+    /**
      * @description Select values show the option label.
      * @input  inputDefinitions role options { 1: 'Admin' }; value 1
      * @output 'Admin'

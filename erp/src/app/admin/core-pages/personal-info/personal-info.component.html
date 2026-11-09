@@ -1,6 +1,6 @@
 <!-- 
     @file: personal-info.component.html
-    @path: /src/app/admin/web-pages/personal-info/personal-info.component.html
+    @path: /src/app/admin/core-pages/personal-info/personal-info.component.html
     @project: JS web-platform
     @author: JS
     @created: 2025
@@ -15,6 +15,14 @@
       <span class="admin-note">{{ strings.title_note }}</span>
     </div>
     <div class="card-content-minimal">
+
+      @if (userData && ownUserId) {
+        <div class="info-group">
+          <h3 class="group-title">{{ strings.photo_heading }}</h3>
+          <app-avatar-editor [userId]="ownUserId" [avatarUrl]="userData.avatar_url ?? null" [label]="userData.full_name ?? ''"
+                             (avatarChange)="userData.avatar_url = $event"></app-avatar-editor>
+        </div>
+      }
 
       @if (userData) {
         <div class="info-group">

@@ -1,0 +1,46 @@
+<!--
+    @file: avatar-editor.component.html
+    @path: /src/app/admin/components/avatar-editor/avatar-editor.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Photo circle (a button when editable) with the "Change photo" / "Remove photo"
+      pictogram buttons (name in title + aria-label).
+-->
+<div class="avatar-editor" [class.avatar-editor--busy]="busy">
+  @if (editable) {
+    <button type="button" class="avatar-editor-circle" [style.width.px]="size" [style.height.px]="size"
+            [disabled]="busy" [title]="strings.change" [attr.aria-label]="strings.change" (click)="pickFile()">
+      <app-user-avatar [src]="avatarUrl" [size]="size" [label]="label"></app-user-avatar>
+      <span class="avatar-editor-overlay" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+      </span>
+      @if (busy) {
+        <span class="avatar-editor-spinner" role="status" [attr.aria-label]="strings.saving"></span>
+      }
+    </button>
+    <input #fileInput type="file" class="avatar-editor-input" [accept]="accept" tabindex="-1" aria-hidden="true"
+           (change)="onFileSelected($event)">
+
+    <div class="avatar-editor-actions">
+      <div class="avatar-editor-buttons">
+        <button type="button" class="avatar-editor-btn" [disabled]="busy" [title]="strings.change" [attr.aria-label]="strings.change"
+                (click)="pickFile()">
+          <app-icon name="image" [size]="16"></app-icon>
+        </button>
+        @if (avatarUrl) {
+          <button type="button" class="avatar-editor-btn avatar-editor-btn--danger" [disabled]="busy" [title]="strings.remove"
+                  [attr.aria-label]="strings.remove" (click)="remove()">
+            <app-icon name="delete" [size]="16"></app-icon>
+          </button>
+        }
+      </div>
+      <span class="avatar-editor-hint">{{ strings.hint }}</span>
+    </div>
+  } @else {
+    <app-user-avatar [src]="avatarUrl" [size]="size" [label]="label"></app-user-avatar>
+  }
+</div>

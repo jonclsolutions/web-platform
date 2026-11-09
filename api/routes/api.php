@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\AccountActivationController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\Auth\PasswordConfirmationController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\UserAvatarController;
 use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\Core\CoreRoleController;
 use App\Http\Controllers\Api\Core\CorePermissionController;
@@ -245,6 +246,12 @@ Route::get('/attachments/view/{path}', [AttachmentDownloadController::class, 'vi
     ->middleware('signed')
     ->name('attachments.view');
 
+// Profile photo of an admin account (UserAvatar::url) - signed URL only, so <img> needs no token;
+// relative signature (the URL is relative, see UserAvatar::url).
+Route::get('/users/{id}/avatar', [UserAvatarController::class, 'show'])
+    ->middleware('signed:relative')
+    ->name('users.avatar');
+
 /*
 |--------------------------------------------------------------------------
 | Protected Routes (auth:sanctum + rate limit)
@@ -359,6 +366,10 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
             Route::patch('/{id}', [UserController::class, 'update'])
                 ->middleware('permission:core-administrators-update,id');
             Route::put('/{id}/change-password', [UserController::class, 'changePassword'])
+                ->middleware('permission:core-administrators-update,id');
+            Route::post('/{id}/avatar', [UserAvatarController::class, 'store'])
+                ->middleware(['permission:core-administrators-update,id', 'throttle:20,1,user-avatar']);
+            Route::delete('/{id}/avatar', [UserAvatarController::class, 'destroy'])
                 ->middleware('permission:core-administrators-update,id');
             Route::post('/{id}/resend-activation', [UserController::class, 'resendActivation'])
                 ->middleware('permission:core-administrators-update');

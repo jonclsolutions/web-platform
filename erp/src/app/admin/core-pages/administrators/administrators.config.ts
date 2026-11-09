@@ -67,6 +67,12 @@ export function createResetPasswordFormFields(i18n: AdminLocalizationService): C
  */
 export function createFormFields(i18n: AdminLocalizationService): Core.InputDefinition[] {
   return [
+    // Profile photo - edit only, saved at once by its own endpoint (never part of the PUT).
+    {
+      column_name: 'avatar_url', label: i18n.getValue(`${SECTION}.field_avatar_label`),
+      type: 'avatar', required: false,
+      editable: true, show_in_edit: true, show_in_create: false,
+    },
     {
       column_name: 'user_email',
       label: i18n.getValue(`${SECTION}.field_email_label`),
@@ -123,6 +129,7 @@ export function createFormFields(i18n: AdminLocalizationService): Core.InputDefi
 export function createTableColumns(i18n: AdminLocalizationService): Core.ColumnDefinition[] {
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
+    { key: 'avatar_url', header: i18n.getValue(`${SECTION}.col_avatar`), type: 'avatar' },
     { key: 'full_name', header: i18n.getValue(`${SECTION}.col_name`), type: 'text' },
     { key: 'user_email', header: i18n.getValue(`${SECTION}.col_email`), type: 'text' },
     { key: 'roles.0.role_name', header: i18n.getValue(`${SECTION}.col_role`), type: 'text' },
@@ -162,6 +169,7 @@ export function createFilterColumns(i18n: AdminLocalizationService): Core.Filter
 export function createDetailsColumns(i18n: AdminLocalizationService): Core.ItemDetailsColumns[] {
   return [
     { key: 'id', displayName: i18n.getValue(`${SECTION}.details_id`), type: 'text' },
+    { key: 'avatar_url', displayName: i18n.getValue(`${SECTION}.details_avatar`), type: 'avatar' },
     { key: 'full_name', displayName: i18n.getValue(`${SECTION}.details_full_name`), type: 'text' },
     { key: 'user_email', displayName: i18n.getValue(`${SECTION}.details_email`), type: 'text' },
     { key: 'roles.0.role_name', displayName: i18n.getValue(`${SECTION}.details_role`), type: 'text' },

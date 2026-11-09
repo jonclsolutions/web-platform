@@ -49,7 +49,7 @@
   [detailsColumns]="detailsColumns"
   [isFullWidth]="isTableFullWidth"
   [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
-  [excludeFromExport]="['roles', 'user_permissions', 'permissions']"
+  [excludeFromExport]="['roles', 'user_permissions', 'permissions', 'avatar_url']"
   (refreshRequested)="forceFullRefresh(filters)"
   [apiEndpoint]="apiEndpoint"
   (itemDeleted)="handleItemDeleted()"
@@ -95,6 +95,7 @@
 [formDataToEdit]="selectedItemForEdit"
 [fieldOverrides]="formFieldOverrides"
 (fieldChanged)="handleFieldChanged($event)"
+(avatarChanged)="refreshData()"
 (formSubmitted)="handleFormSubmitted($event)"
 (formCanceled)="showCreateForm = false">
 </app-form-builder>

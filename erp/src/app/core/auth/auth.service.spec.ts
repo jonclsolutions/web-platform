@@ -399,6 +399,26 @@ describe('AuthService', () => {
     beforeEach(() => createService());
 
     /**
+     * @description The own profile photo of the session: taken from the login answer, replaced at
+     *   once by setAvatarUrl() (photo changed in the admin), the same URL is not emitted twice,
+     *   cleared with the session.
+     * @input Login with avatar_url '/a.webp'; setAvatarUrl('/b.webp') twice; setAvatarUrl(null);
+     *   login again with '/c.webp'; clearAuthData().
+     * @output Emitted null, '/a.webp', '/b.webp', null, '/c.webp', null.
+     */
+    it('keeps the own profile photo of the session', () => {
+      const urls: (string | null)[] = [];
+      service.avatarUrl$.subscribe(url => urls.push(url));
+      logIn(session({ user: { id: 42, user_email: 'a@b.cz', avatar_url: '/a.webp' } }));
+      service.setAvatarUrl('/b.webp');
+      service.setAvatarUrl('/b.webp');
+      service.setAvatarUrl(null);
+      logIn(session({ user: { id: 42, user_email: 'a@b.cz', avatar_url: '/c.webp' } }));
+      service.clearAuthData();
+      expect(urls).toEqual([null, '/a.webp', '/b.webp', null, '/c.webp', null]);
+    });
+
+    /**
      * @description clearAuthData ends the session: memory, hint, permissions, table cache owner,
      *   subjects, timer.
      * @input Logged in; clearAuthData(); tick 20 min.

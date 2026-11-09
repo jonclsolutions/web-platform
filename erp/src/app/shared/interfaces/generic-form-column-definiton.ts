@@ -12,7 +12,8 @@
 export interface ColumnDefinition {
   key: string;
   header: string;
-  type: 'text' | 'number' | 'currency' | 'date' | 'boolean' | 'image' | 'link';
+  /** 'avatar': the value is the signed URL of a profile photo (null = the default image). */
+  type: 'text' | 'number' | 'currency' | 'date' | 'boolean' | 'image' | 'link' | 'avatar';
   format?: string;
   hidden?: boolean;
   currencyCode?: 'CZK' | 'EUR' | 'USD' | 'GBP' | string;

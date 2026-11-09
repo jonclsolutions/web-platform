@@ -1,0 +1,35 @@
+/*
+    @file: user-avatar.component.css
+    @path: /src/app/admin/components/user-avatar/user-avatar.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Round profile photo and the default image.
+    @dependencies: shared/styles/tokens.css (--color-zinc-*, --color-white)
+*/
+
+/*
+    @module: Avatar
+    @description: Inline circle of the size given by the component; the photo covers the circle.
+    @usage: <app-user-avatar>
+*/
+:host {
+  display: inline-flex;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.user-avatar {
+  display: block;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--color-zinc-200, #e4e4e7);
+}
+
+/*
+    @module: Default image
+    @description: Grey circle with a white silhouette.
+    @usage: .user-avatar--default
+*/
+.user-avatar-bg     { fill: var(--color-zinc-400, #a1a1aa); }
+.user-avatar-figure { fill: var(--color-white, #fff); }

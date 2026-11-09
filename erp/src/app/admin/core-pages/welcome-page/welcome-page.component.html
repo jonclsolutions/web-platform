@@ -28,9 +28,6 @@
         <div class="wp-profile-skeleton"></div>
       }
       @if (!isLoadingProfile) {
-        <div class="wp-profile-avatar">
-          {{ (userData?.full_name ?? userEmail ?? 'U').charAt(0).toUpperCase() }}
-        </div>
         <div class="wp-profile-info">
           <div class="wp-profile-name">{{ userData?.full_name ?? strings.empty_value }}</div>
           <div class="wp-profile-row">

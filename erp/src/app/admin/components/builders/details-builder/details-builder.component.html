@@ -27,6 +27,9 @@
 </div>
 <div class="value-cell">
 @switch (column.type) {
+@case ('avatar') {
+<app-user-avatar [src]="getValueByPath(itemData, column.key)" [size]="72"></app-user-avatar>
+                  }
 @case ('file') {
 <div>
 @if (getValueByPath(itemData, column.key); as fileUrl) {
