@@ -5,7 +5,9 @@
  * @author JS
  * @created 2026
  * @description Manages global web configuration including company details, localized brand assets, site branding, and social media links;
- * the "Data retention" tab hosts RetentionSettingsComponent (GDPR retention periods, VT-10).
+ * the "Page titles" tab hosts PageTitlesEditorComponent with the browser title of the administration
+ * (the web / e-shop titles: web/edit-website, shop/edit-eshop), the "Data retention" tab
+ * RetentionSettingsComponent (GDPR retention periods, VT-10).
  * @dependencies
  * - BaseDataComponent: Provides base CRUD and state management.
  * - ConfirmDialogService: Orchestrates user confirmation for destructive actions (e.g., deleting social links).
@@ -24,16 +26,12 @@ import { ResourceCacheService } from '../../../core/services/resource-cache.serv
 import { environment } from '../../../../environments/environment';
 import { CompanyOptionalField, LangMeta, SiteSetting, SocialLink } from './'
 import { RetentionSettingsComponent } from './retention-settings/retention-settings.component';
-import { forkJoin, of, Observable } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-import {
-  PageTitleArea, PageTitleLang, PageTitleRow, PageTitlesUpdatePayload
-} from './page-titles.model';
+import { PageTitlesEditorComponent } from '../../components/page-titles-editor/page-titles-editor.component';
 
 @Component({
   selector: 'app-web-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RetentionSettingsComponent],
+  imports: [CommonModule, FormsModule, RetentionSettingsComponent, PageTitlesEditorComponent],
   templateUrl: './web-settings.component.html',
   styleUrl: './web-settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -60,24 +58,13 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   /** Active page tab: company details (default), browser tab titles per page or data retention. */
   activeTab: 'company' | 'page_titles' | 'retention' = 'company';
 
-  // ── Page titles tab state (see section "PAGE TITLES") ─────────────
-  /** Google shows roughly this many characters, longer titles get cut. */
-  readonly PT_RECOMMENDED_LENGTH = 60;
-  /** Hard limit, same as backend validation (PageTitleController::MAX_LENGTH). */
-  readonly PT_MAX_LENGTH = 120;
-  ptRows: PageTitleRow[] = [];
-  ptAreas: PageTitleArea[] = [];
-  ptActiveArea: PageTitleArea = 'web';
-  ptLanguages: Record<PageTitleArea, PageTitleLang[]> = { web: [], shop: [], admin: [] };
-  ptCurrentLang: Record<PageTitleArea, string> = { web: 'cz', shop: 'cz', admin: 'cz' };
-  ptLoaded    = false;
-  ptLoading   = false;
-  ptSaving    = false;
-  ptLoadError = false;
-  /** Row shown in the browser-tab preview (last focused input). */
-  ptPreviewRowId: number | null = null;
-  /** Original JSON of every row's title_i18n – base for dirty detection. */
-  private ptSnapshot = new Map<number, string>();
+  /**
+   * Unsaved edits in the page titles tab (PageTitlesEditorComponent, area 'admin' - the web /
+   * e-shop titles are managed by web/edit-website and shop/edit-eshop) - dot on the tab.
+   */
+  ptIsDirty = false;
+  /** The page titles tab was opened - its editor stays created (hidden) from then on. */
+  ptOpened = false;
 
   settings: SiteSetting = {
     company_name: '', ico: '', dic: '',
@@ -150,13 +137,13 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   }
 
   /**
-   * @description Switches the page tab. Page titles load lazily on first open;
-   * unsaved page title edits are kept (state lives in this component).
+   * @description Switches the page tab. The page titles editor is created (and loads) on the
+   * first open and only hidden afterwards - unsaved edits are kept.
    */
   switchTab(tab: 'company' | 'page_titles' | 'retention'): void {
     if (this.activeTab === tab) return;
     this.activeTab = tab;
-    if (tab === 'page_titles' && !this.ptLoaded && !this.ptLoading) this.ptLoad();
+    if (tab === 'page_titles') this.ptOpened = true;
     this.cd.markForCheck();
   }
 
@@ -547,200 +534,4 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   }
 
   trackByIndex(index: number): number { return index; }
-
-  // ═══════════════════════════════════════════════════════════════
-  // PAGE TITLES – browser <title> per public page (tab "page_titles")
-  // ═══════════════════════════════════════════════════════════════
-
-  /** @description Loads web + shop languages and all page titles in parallel. */
-  private ptLoad(): void {
-    this.ptLoading   = true;
-    this.ptLoadError = false;
-    this.cd.markForCheck();
-
-    forkJoin({
-      web:  this.ptLoadLanguages('web'),
-      shop: this.ptLoadLanguages('shop'),
-      data: this.dataHandler.get<PageTitleRow[]>('legal/config/page-titles'),  // payload = rows (finding #6)
-    }).subscribe({
-      next: ({ web, shop, data }) => {
-        const fallback: PageTitleLang[] = [{ code: 'cz', name: 'Čeština', active: true, isBuiltIn: true }];
-        this.ptLanguages = {
-          web:   web.length  ? web  : fallback,
-          shop:  shop.length ? shop : (web.length ? web : fallback),
-          admin: web.length  ? web  : fallback,
-        };
-        for (const area of ['web', 'shop', 'admin'] as PageTitleArea[]) {
-          const langs = this.ptLanguages[area];
-          if (!langs.find(l => l.code === this.ptCurrentLang[area])) {
-            this.ptCurrentLang[area] = langs[0].code;
-          }
-        }
-        this.ptSetRows(Array.isArray(data) ? data : []);
-        this.ptLoaded  = true;
-        this.ptLoading = false;
-        this.cd.markForCheck();
-      },
-      error: () => {
-        this.ptLoading   = false;
-        this.ptLoadError = true;
-        this.cd.markForCheck();
-      }
-    });
-  }
-
-  /**
-   * @description Active languages of one public module, cached with the same key/TTL
-   * as loadLanguages(). Failure = empty list (caller falls back to web languages).
-   */
-  private ptLoadLanguages(module: 'web' | 'shop'): Observable<PageTitleLang[]> {
-    return this.resourceCache.get(
-      `web-settings:languages:${module}`,
-      () => this.dataHandler.get<PageTitleLang[]>(`languages/${module}`),
-      this.LANG_TTL_MS
-    ).pipe(
-      map((res: any) => ((Array.isArray(res) ? res : []) as PageTitleLang[]).filter(l => l.active !== false)),
-      catchError(() => of([] as PageTitleLang[]))
-    );
-  }
-
-  /** @description Stores rows, fills missing languages with '' and snapshots them. */
-  private ptSetRows(rows: PageTitleRow[]): void {
-    this.ptRows = rows.map(r => {
-      const titles: Record<string, string> = { ...(r.title_i18n ?? {}) };
-      for (const lang of this.ptLanguages[r.area] ?? []) {
-        if (typeof titles[lang.code] !== 'string') titles[lang.code] = '';
-      }
-      return { ...r, title_i18n: titles };
-    });
-
-    this.ptSnapshot.clear();
-    for (const r of this.ptRows) this.ptSnapshot.set(r.id, JSON.stringify(r.title_i18n));
-
-    this.ptAreas = (['web', 'shop', 'admin'] as PageTitleArea[]).filter(a => this.ptRows.some(r => r.area === a));
-    if (!this.ptAreas.includes(this.ptActiveArea) && this.ptAreas.length) this.ptActiveArea = this.ptAreas[0];
-    this.ptPreviewRowId = null;
-  }
-
-  /** Tab label of an area (Web / E-shop / Administrace). */
-  ptAreaLabel(area: PageTitleArea): string {
-    const key = area === 'web' ? 'pt_area_web' : area === 'shop' ? 'pt_area_shop' : 'pt_area_admin';
-    return this.strings?.[key] || area;
-  }
-
-  get ptCanUpdate(): boolean {
-    return this.hasAnyPermission('core-legal-config-update');
-  }
-
-  get ptVisibleRows(): PageTitleRow[] {
-    return this.ptRows.filter(r => r.area === this.ptActiveArea);
-  }
-
-  get ptActiveLanguages(): PageTitleLang[] {
-    return this.ptLanguages[this.ptActiveArea] ?? [];
-  }
-
-  get ptLang(): string {
-    return this.ptCurrentLang[this.ptActiveArea];
-  }
-
-  get ptDirtyCount(): number {
-    return this.ptRows.filter(r => this.ptIsRowDirty(r)).length;
-  }
-
-  get ptIsDirty(): boolean {
-    return this.ptDirtyCount > 0;
-  }
-
-  /** "Unsaved changes: 3" badge text. */
-  get ptUnsavedLabel(): string {
-    return (this.strings?.pt_unsaved_count ?? '').replace('{count}', String(this.ptDirtyCount));
-  }
-
-  /** Tab preview text: last focused row, otherwise the first visible one. */
-  get ptPreviewText(): string {
-    const rows = this.ptVisibleRows;
-    const row  = rows.find(r => r.id === this.ptPreviewRowId) ?? rows[0];
-    const text = row?.title_i18n[this.ptLang]?.trim();
-    return text || this.strings?.pt_preview_empty || '';
-  }
-
-  /** Human page name from translations ('pt_page_web_about_us'), fallback = URL. */
-  ptLabelFor(row: PageTitleRow): string {
-    const value = this.strings?.[`pt_page_${row.area}_${row.page_key.replace(/-/g, '_')}`];
-    return typeof value === 'string' && value ? value : row.route_path;
-  }
-
-  ptPlaceholderFor(): string {
-    const name = this.ptActiveLanguages.find(l => l.code === this.ptLang)?.name ?? this.ptLang.toUpperCase();
-    return (this.strings?.pt_input_placeholder ?? '').replace('{lang}', name);
-  }
-
-  ptLengthOf(row: PageTitleRow): number {
-    return (row.title_i18n[this.ptLang] ?? '').length;
-  }
-
-  ptIsRowDirty(row: PageTitleRow): boolean {
-    return JSON.stringify(row.title_i18n) !== this.ptSnapshot.get(row.id);
-  }
-
-  ptAreaDirty(area: PageTitleArea): boolean {
-    return this.ptRows.some(r => r.area === area && this.ptIsRowDirty(r));
-  }
-
-  ptSwitchArea(area: PageTitleArea): void {
-    if (this.ptActiveArea === area) return;
-    this.ptActiveArea = area;
-    this.ptPreviewRowId = null;
-    this.cd.markForCheck();
-  }
-
-  ptSwitchLang(code: string): void {
-    this.ptCurrentLang = { ...this.ptCurrentLang, [this.ptActiveArea]: code };
-    this.cd.markForCheck();
-  }
-
-  ptOnFocus(row: PageTitleRow): void {
-    this.ptPreviewRowId = row.id;
-    this.cd.markForCheck();
-  }
-
-  ptOnInput(row: PageTitleRow): void {
-    this.ptPreviewRowId = row.id;
-    this.cd.markForCheck();
-  }
-
-  /** @description Reverts all unsaved page title edits to the last loaded state. */
-  ptDiscard(): void {
-    this.ptRows = this.ptRows.map(r => ({ ...r, title_i18n: JSON.parse(this.ptSnapshot.get(r.id) ?? '{}') }));
-    this.cd.markForCheck();
-  }
-
-  /** @description Sends only changed rows; the API returns the fresh full list. */
-  ptSave(): void {
-    if (!this.ptCanUpdate || this.ptSaving || !this.ptIsDirty) return;
-
-    const payload: PageTitlesUpdatePayload = {
-      titles: this.ptRows
-        .filter(r => this.ptIsRowDirty(r))
-        .map(r => ({ id: r.id, title_i18n: r.title_i18n })),
-    };
-
-    this.ptSaving = true;
-    this.cd.markForCheck();
-
-    this.dataHandler.put<PageTitleRow[]>('legal/config/page-titles', payload as any).subscribe({
-      next: (res: any) => {
-        this.ptSetRows(Array.isArray(res) ? res : this.ptRows);  // payload = the fresh rows
-        this.ptSaving = false;
-        this.alertDialogService.open(this.t('save_success_title'), this.t('pt_saved_message'), 'success');
-        this.cd.markForCheck();
-      },
-      error: () => {
-        // Toast already shown by DataHandler.handleError().
-        this.ptSaving = false;
-        this.cd.markForCheck();
-      }
-    });
-  }
 }

@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
- * @description /api/legal/config/*, /api/public/legal/{config,page-titles}.
+ * @description /api/legal/config/*, /api/{web,shop}/page-titles, /api/public/legal/{config,page-titles}.
  */
 class SiteConfigurationTest extends TestCase
 {
@@ -228,47 +228,71 @@ class SiteConfigurationTest extends TestCase
     }
 
     /**
-     * @description Page titles: admin list ordered web → shop → admin → sort order; bulk update
-     *   merges the sent languages, strips HTML, collapses whitespace (max 120 chars), ignores
-     *   invalid language keys and logs only changed rows; stale ids refused; validation; the
-     *   public map leaves out empty translations.
-     * @input admin.users (0), shop.cart (1), web.home (2) {cz, en Home}, web.about (1).
-     * @output Order [about, home, cart, users]; home cz '<b>…</b>  x' → '… x', en kept, de without <i>;
-     *   1 log; 422 for id 999 / bad body; public {web.home: {cz, en, de}, shop.cart: {}}.
+     * @description Page titles are managed per module, each area on its own endpoint with the
+     *   permissions of its module (web/edit-website, shop/edit-eshop, core/web-settings): a list
+     *   contains only its area (sort order); an update merges the sent languages, strips HTML,
+     *   collapses whitespace (max 120 chars), ignores invalid language keys, logs only changed
+     *   rows into the module's log and refuses ids of another area or stale ids; the public map
+     *   leaves out empty translations.
+     * @input admin.users (0), shop.cart (1), web.home (2) {cz, en Home}, web.about (1); accounts
+     *   without permission, web editor, shop editor, core config editor.
+     * @output 403 without permission and for other modules; web [about, home], shop [cart], admin
+     *   [users]; home cz '<b>…</b>  x' → '… x', en kept, de without <i>; 1 web_logs row; cart id
+     *   on the web endpoint / id 999 → 422; shop_logs / core_logs rows; public map.
      */
     public function test_page_titles(): void
     {
-        $this->signIn($this->user());
-        $this->getJson('/api/legal/config/page-titles')->assertStatus(403);
-
-        $this->signIn($this->userWith(['core-legal-config-view', 'core-legal-config-update']));
         $users = $this->pageTitle('admin', 'users', 0);
         $cart = $this->pageTitle('shop', 'cart', 1, ['cz' => '', 'en' => null]);
         $home = $this->pageTitle('web', 'home', 2, ['cz' => 'Domů', 'en' => 'Home']);
         $about = $this->pageTitle('web', 'about', 1);
 
-        $this->getJson('/api/legal/config/page-titles')->assertOk()->assertJsonPath('data.*.id', [$about->id, $home->id, $cart->id, $users->id]);
+        $this->signIn($this->user());
+        foreach (['/api/web/page-titles', '/api/shop/page-titles', '/api/legal/config/page-titles'] as $url) {
+            $this->getJson($url)->assertStatus(403);
+        }
 
-        $this->putJson('/api/legal/config/page-titles', ['titles' => [
+        // Web module: only web pages, nothing of the other modules.
+        $this->signIn($this->userWith(['web-edit-website-view', 'web-edit-website-update']));
+        $this->getJson('/api/web/page-titles')->assertOk()->assertJsonPath('data.*.id', [$about->id, $home->id]);
+        $this->getJson('/api/shop/page-titles')->assertStatus(403);
+        $this->getJson('/api/legal/config/page-titles')->assertStatus(403);
+
+        $this->putJson('/api/web/page-titles', ['titles' => [
             ['id' => $home->id, 'title_i18n' => ['CZ' => "<b>Úvod</b>\n  x", 'de' => '<i>' . str_repeat('d', 110) . '</i>', 'bad key!' => 'x']],
-            ['id' => $users->id, 'title_i18n' => []],
-        ]])->assertOk()->assertJsonCount(4, 'data');
+            ['id' => $about->id, 'title_i18n' => []],
+        ]])->assertOk()->assertJsonPath('data.*.id', [$about->id, $home->id]);
 
         $titles = $home->fresh()->title_i18n;
         $this->assertSame(['Úvod x', 'Home', str_repeat('d', 110)], [$titles['cz'], $titles['en'], $titles['de']]);
         $this->assertArrayNotHasKey('bad key!', $titles);
-        $this->assertCoreLog('update', 'Updated page title: web.home');
-        $this->assertSame(1, \App\Models\Core\CoreLog::where('description', 'like', 'Updated page title%')->count());
+        $this->assertSame(1, \App\Models\Web\WebLog::where('event_type', 'update')->where('description', 'Updated page title: web.home')->count());
 
-        $this->putJson('/api/legal/config/page-titles', ['titles' => [['id' => 999, 'title_i18n' => []]]])->assertStatus(422)
+        $this->putJson('/api/web/page-titles', ['titles' => [['id' => $cart->id, 'title_i18n' => ['cz' => 'Hack']]]])->assertStatus(422)
             ->assertJson(['message' => 'Some pages do not exist anymore. Reload the page.']);
-        $this->putJson('/api/legal/config/page-titles', ['titles' => [['id' => $home->id, 'title_i18n' => 'x']]])->assertStatus(422);
-        $this->putJson('/api/legal/config/page-titles', [])->assertStatus(422)->assertJsonValidationErrors(['titles']);
+        $this->assertSame('', $cart->fresh()->title_i18n['cz']);
+        $this->putJson('/api/web/page-titles', ['titles' => [['id' => 999, 'title_i18n' => []]]])->assertStatus(422);
+        $this->putJson('/api/web/page-titles', ['titles' => [['id' => $home->id, 'title_i18n' => 'x']]])->assertStatus(422);
+        $this->putJson('/api/web/page-titles', [])->assertStatus(422)->assertJsonValidationErrors(['titles']);
+
+        // E-shop module.
+        $this->signIn($this->userWith(['shop-edit-eshop-view', 'shop-edit-eshop-update']));
+        $this->getJson('/api/shop/page-titles')->assertOk()->assertJsonPath('data.*.id', [$cart->id]);
+        $this->putJson('/api/shop/page-titles', ['titles' => [['id' => $cart->id, 'title_i18n' => ['cz' => 'Košík']]]])->assertOk();
+        $this->assertTrue(\App\Models\Shop\ShopLog::where('description', 'Updated page title: shop.cart')->exists());
+        $this->getJson('/api/web/page-titles')->assertStatus(403);
+
+        // Administration (core web settings).
+        $this->signIn($this->userWith(['core-legal-config-view', 'core-legal-config-update']));
+        $this->getJson('/api/legal/config/page-titles')->assertOk()->assertJsonPath('data.*.id', [$users->id]);
+        $this->putJson('/api/legal/config/page-titles', ['titles' => [['id' => $users->id, 'title_i18n' => ['cz' => 'Správa']]]])->assertOk();
+        $this->assertCoreLog('update', 'Updated page title: admin.users');
+        $this->putJson('/api/legal/config/page-titles', ['titles' => [['id' => $home->id, 'title_i18n' => ['cz' => 'x']]]])->assertStatus(422);
 
         $this->app['auth']->forgetGuards();
         $public = $this->getJson('/api/public/legal/page-titles')->assertOk()->json('data');
         $this->assertSame(['cz' => 'Úvod x', 'en' => 'Home', 'de' => str_repeat('d', 110)], $public['web.home']);
-        $this->assertSame([], $public['shop.cart']);
+        $this->assertSame(['cz' => 'Košík'], $public['shop.cart']);
         $this->assertSame([], $public['web.about']);
     }
 }

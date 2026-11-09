@@ -5,7 +5,8 @@
  * @author JS
  * @created 2026
  * @description Sets the browser tab title (<title>) of public pages from the texts
- *   the client writes in admin (Company details -> "Page titles" tab).
+ *   the client writes in admin - tab "Page titles" of the module that owns the pages
+ *   (web: Edit website, e-shop: Edit e-shop, administration: Web settings).
  * @dependencies
  * - PublicDataService: loads the title map once from `public/legal/page-titles`.
  * - LocalizationService: current language + language changes (title switches

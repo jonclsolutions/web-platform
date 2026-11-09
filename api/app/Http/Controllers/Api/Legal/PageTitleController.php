@@ -6,9 +6,15 @@
  * @author JS
  * @created 2026
  * @description Admin editing and public delivery of browser tab titles per page
- *              (table `legal_page_titles`). Admin: list + bulk update of texts.
- *              Public: map "area.page_key" => { lang: title } for the Angular
- *              PageTitleStrategy.
+ *              (table `legal_page_titles`). Admin: list + bulk update of the texts of
+ *              ONE area, each managed by its own module (route default `area`):
+ *              - web   - web/page-titles   (web/edit-website, web-edit-website-view / -update),
+ *              - shop  - shop/page-titles  (shop/edit-eshop, shop-edit-eshop-view / -update),
+ *              - admin - legal/config/page-titles (core/web-settings, core-legal-config-view / -update).
+ *              Removing a module from a branched application therefore removes its page
+ *              titles with it. Public: map "area.page_key" => { lang: title } for the
+ *              Angular PageTitleStrategy.
+ * @dependencies PageTitle; CoreLog / WebLog / ShopLog (audit log of the area's module).
  */
 
 namespace App\Http\Controllers\Api\Legal;
@@ -16,17 +22,18 @@ namespace App\Http\Controllers\Api\Legal;
 use App\Http\Controllers\Controller;
 use App\Models\Core\CoreLog;
 use App\Models\Legal\PageTitle;
+use App\Models\Shop\ShopLog;
+use App\Models\Web\WebLog;
 use App\Traits\LogsActivity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
- * @description Page titles live next to the other site-wide configuration
- *              (SiteConfigurationController) and share its permissions
- *              (core-legal-config-view / core-legal-config-update).
+ * @description Page titles of one area per route; the permission is checked by the route
+ *              middleware of the module (see the file header).
  * @note Pages themselves (rows) are defined by SQL, never by the admin – the
- *       update endpoint only changes `title_i18n` of existing rows.
+ *       update endpoint only changes `title_i18n` of existing rows of its area.
  */
 class PageTitleController extends Controller
 {
@@ -35,14 +42,18 @@ class PageTitleController extends Controller
     /** @var int Hard limit for one title. Google shows ~60 chars, the rest is cut. */
     private const MAX_LENGTH = 120;
 
+    /** @var array<string, class-string> Audit log of the module that manages the area. */
+    private const LOG_MODELS = ['web' => WebLog::class, 'shop' => ShopLog::class, 'admin' => CoreLog::class];
+
     /**
-     * Lists all pages with their titles for the admin (web, e-shop, administration).
+     * Lists the pages of one area with their titles.
      *
+     * @param string $area Route default: 'web', 'shop' or 'admin'.
      * @return JsonResponse { data: PageTitle[] }
      */
-    public function index(): JsonResponse
+    public function index(string $area): JsonResponse
     {
-        return $this->respond($this->orderedRows());
+        return $this->respond($this->orderedRows($area));
     }
 
     /**
@@ -50,9 +61,10 @@ class PageTitleController extends Controller
      * are changed, other languages already stored stay untouched.
      *
      * @param Request $request { titles: [{ id: int, title_i18n: { lang: string } }] }
-     * @return JsonResponse { data: PageTitle[] } – the fresh full list.
+     * @param string $area Route default: 'web', 'shop' or 'admin' - only its rows can change.
+     * @return JsonResponse { data: PageTitle[] } – the fresh list of the area.
      */
-    public function update(Request $request): JsonResponse
+    public function update(Request $request, string $area): JsonResponse
     {
         $request->validate([
             'titles'                => 'required|array|min:1|max:200',
@@ -62,9 +74,10 @@ class PageTitleController extends Controller
         ]);
 
         $items = collect($request->input('titles'))->keyBy('id');
-        $rows  = PageTitle::whereIn('id', $items->keys())->get()->keyBy('id');
+        $rows  = PageTitle::where('area', $area)->whereIn('id', $items->keys())->get()->keyBy('id');
 
-        // Every sent id must exist – otherwise the client works with stale data.
+        // Every sent id must exist in this area – otherwise the client works with stale data
+        // (or tries to change the titles of another module).
         if ($rows->count() !== $items->count()) {
             return response()->json(['message' => 'Some pages do not exist anymore. Reload the page.'], 422);
         }
@@ -88,7 +101,7 @@ class PageTitleController extends Controller
         foreach ($changed as $row) {
             $this->logAction(
                 $request,
-                CoreLog::class,
+                self::LOG_MODELS[$area],
                 'update',
                 'Legal',
                 "Updated page title: {$row->area}.{$row->page_key}",
@@ -97,7 +110,7 @@ class PageTitleController extends Controller
             );
         }
 
-        return $this->respond($this->orderedRows());
+        return $this->respond($this->orderedRows($area));
     }
 
     /**
@@ -122,14 +135,16 @@ class PageTitleController extends Controller
     }
 
     /**
-     * Rows ordered for the admin list: web, e-shop, administration, then sort_order.
+     * Rows of one area ordered for the admin list (sort_order).
      *
+     * @param string $area 'web', 'shop' or 'admin'.
      * @return \Illuminate\Support\Collection<int, PageTitle>
      */
-    private function orderedRows()
+    private function orderedRows(string $area)
     {
-        return PageTitle::orderByRaw("FIELD(area, 'web', 'shop', 'admin')")
+        return PageTitle::where('area', $area)
             ->orderBy('sort_order')
+            ->orderBy('id')
             ->get(['id', 'area', 'page_key', 'route_path', 'title_i18n', 'sort_order']);
     }
 

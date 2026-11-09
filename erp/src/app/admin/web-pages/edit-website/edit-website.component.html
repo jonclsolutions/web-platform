@@ -4,10 +4,36 @@
     @project: JS web-platform
     @author: JS
     @created: 2025 
-    @description: Template of the edit website component.
+    @description: Template of the edit website component: translations of the web texts and
+        (second tab) the browser page titles of the web pages.
 -->
 
-<div class="ew-root">
+<!-- Page tabs: translations of the website texts / browser page titles of the website pages -->
+<div class="ew-page-tabs" role="tablist" [attr.aria-label]="t('tabs_label')">
+  <button type="button" role="tab" class="ew-page-tab" [class.active]="activeTab === 'translations'"
+          [attr.aria-selected]="activeTab === 'translations'" (click)="switchTab('translations')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>
+    </svg>
+    {{ t('tab_translations') }}
+    @if (isDirty) {
+      <span class="ew-page-tab-dot" aria-hidden="true"></span>
+    }
+  </button>
+  <button type="button" role="tab" class="ew-page-tab" [class.active]="activeTab === 'page_titles'"
+          [attr.aria-selected]="activeTab === 'page_titles'" (click)="switchTab('page_titles')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20"/>
+    </svg>
+    {{ t('tab_page_titles') }}
+    @if (titlesDirty) {
+      <span class="ew-page-tab-dot" aria-hidden="true"></span>
+    }
+  </button>
+</div>
+
+<!-- Both parts stay created once opened and are only hidden - unsaved edits survive a tab switch. -->
+<div class="ew-root" [style.display]="activeTab === 'translations' ? null : 'none'">
   <div class="ew-topbar">
     <div class="ew-topbar-left">
       <h1 class="ew-title">{{ t('page_title') }}</h1>
@@ -192,6 +218,18 @@
   </div>
 
 </div>
+
+@if (titlesOpened) {
+  <div class="ew-titles-wrap" [style.display]="activeTab === 'page_titles' ? null : 'none'">
+    <app-page-titles-editor
+      area="web"
+      endpoint="web/page-titles"
+      updatePermission="web-edit-website-update"
+      labelSection="edit-website"
+      (dirtyChange)="titlesDirty = $event">
+    </app-page-titles-editor>
+  </div>
+}
 
 @if (showAddForm) {
   <div class="ew-modal-overlay" (click)="closeAddForm()">

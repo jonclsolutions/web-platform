@@ -803,7 +803,65 @@
   color: var(--success);
 }
 
+/*
+    @module: Page tabs (edit e-shop / edit website)
+    @description: Pill tabs above the editor - "Translations" and "Page titles" (the browser page
+      titles of the module, PageTitlesEditorComponent in .ew-titles-wrap); the dot marks unsaved
+      changes of a tab. Same look as the tabs of the core web settings.
+    @usage: .ew-page-tabs, .ew-page-tab, .ew-page-tab.active, .ew-page-tab-dot, .ew-titles-wrap
+*/
+.ew-page-tabs {
+  display: flex;
+  width: fit-content;
+  gap: 4px;
+  margin: 0 0 14px;
+  padding: 4px;
+  background: var(--color-zinc-100);
+  border-radius: 999px;
+  font-family: var(--ff);
+}
+
+.ew-page-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--color-zinc-600);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--ease), color var(--ease);
+}
+.ew-page-tab:hover { color: var(--color-zinc-900); }
+.ew-page-tab.active {
+  background: var(--color-white);
+  color: var(--color-zinc-900);
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.08);
+}
+.ew-page-tab:focus-visible {
+  outline: 2px solid var(--color-zinc-900);
+  outline-offset: 2px;
+}
+
+.ew-page-tab-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-amber-600);
+}
+
+.ew-titles-wrap {
+  max-width: 1060px;
+}
+
 @media (max-width: 768px) {
+  .ew-page-tabs { width: auto; }
+  .ew-page-tab  { flex: 1; justify-content: center; padding: 8px 10px; }
   .ew-table-wrap { margin: 0 10px 14px; }
   .ew-controls { padding: 10px; }
   .ew-lang-panel { padding: 10px; }

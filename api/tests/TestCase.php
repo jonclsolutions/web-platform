@@ -52,26 +52,6 @@ abstract class TestCase extends BaseTestCase
         }
 
         TestSchema::create();
-        $this->registerMysqlFunctions($connection->getPdo());
-    }
-
-    /**
-     * @description Adds the MySQL functions the production queries use and SQLite lacks:
-     *   FIELD(value, a, b, …) = 1-based position of value in the list, 0 when missing
-     *   (PageTitleController orders the areas with it).
-     * @param \PDO $pdo SQLite connection.
-     * @return void
-     */
-    private function registerMysqlFunctions(\PDO $pdo): void
-    {
-        $field = static function ($value, ...$list): int {
-            $position = array_search($value, $list, true);
-
-            return $position === false ? 0 : $position + 1;
-        };
-
-        // PHP 8.4+ has Pdo\Sqlite::createFunction(), older versions PDO::sqliteCreateFunction().
-        $pdo instanceof \Pdo\Sqlite ? $pdo->createFunction('FIELD', $field) : $pdo->sqliteCreateFunction('FIELD', $field);
     }
 
     /**

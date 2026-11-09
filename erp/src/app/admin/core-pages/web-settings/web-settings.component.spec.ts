@@ -5,8 +5,8 @@
  * @author JS
  * @created 2026
  * @description Unit tests of WebSettingsComponent – company settings (incl. logo upload and
- *   per-language texts), social links (add / save / delete with icon upload) and the page-titles
- *   tab (load, dirty tracking, save only changed rows, discard, permission).
+ *   per-language texts), social links (add / save / delete with icon upload), the page-titles
+ *   tab hosting PageTitlesEditorComponent of the administration and the data retention tab.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, confirm/alert spies, permission stub),
  *   ResourceCacheService (real)
@@ -17,6 +17,8 @@ import { of, throwError } from 'rxjs';
 
 import { WebSettingsComponent } from './web-settings.component';
 import { environment } from '../../../../environments/environment';
+import { By } from '@angular/platform-browser';
+import { PageTitlesEditorComponent } from '../../components/page-titles-editor/page-titles-editor.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 
 describe('WebSettingsComponent', () => {
@@ -31,11 +33,9 @@ describe('WebSettingsComponent', () => {
     },
     social_links: [{ id: 5, name: 'LinkedIn', url: 'https://l', icon_path: 'li.png', position: 1 }]
   };
-  /** Payload of GET legal/config/page-titles - the rows themselves (finding #6, was {page_titles}). */
+  /** Payload of GET legal/config/page-titles - the administration's rows. */
   const pageTitles = [
-    { id: 1, area: 'web', page_key: 'home', route_path: '/home', title_i18n: { cz: 'Domů' } },
-    { id: 2, area: 'web', page_key: 'faq', route_path: '/faq', title_i18n: { cz: 'FAQ', en: 'FAQ' } },
-    { id: 3, area: 'admin', page_key: 'login', route_path: '/auth/login', title_i18n: { cz: 'Přihlášení' } }
+    { id: 3, area: 'admin', page_key: 'panel', route_path: '/admin', title_i18n: { cz: 'Administrace' } }
   ];
 
   beforeEach(async () => {
@@ -299,89 +299,37 @@ describe('WebSettingsComponent', () => {
     }));
   });
 
-  describe('page titles', () => {
-    const openTab = () => { init(); component.switchTab('page_titles'); };
+  /**
+   * @description The page titles tab shows only the administration's title (the web / e-shop titles
+   *   live in their modules): the editor is created on the first open with area 'admin' and the
+   *   core endpoint, stays created (hidden) on another tab, and its unsaved state sets the tab dot.
+   * @input switchTab('page_titles'); dirtyChange(true); switchTab('company').
+   * @output app-page-titles-editor area admin, endpoint legal/config/page-titles, permission
+   *   core-legal-config-update, labels of web-settings; dot on the tab; editor hidden, not destroyed.
+   */
+  it('hosts the page titles editor of the administration', fakeAsync(() => {
+    fixture.detectChanges();
+    flush();
+    expect(fixture.nativeElement.querySelector('app-page-titles-editor')).toBeNull();
+    component.switchTab('page_titles');
+    fixture.detectChanges();
+    const el = fixture.debugElement.query(By.css('app-page-titles-editor'));
+    const editor = el.componentInstance as PageTitlesEditorComponent;
+    expect([editor.area, editor.endpoint, editor.updatePermission, editor.labelSection])
+      .toEqual(['admin', 'legal/config/page-titles', 'core-legal-config-update', 'web-settings']);
+    expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('legal/config/page-titles');
 
-    /**
-     * @description The page-titles tab loads on first open; every row gets every language.
-     * @input  switchTab('page_titles')
-     * @output get('legal/config/page-titles'); areas ['web', 'admin']; row 1 title_i18n { cz: 'Domů', en: '' }; not dirty
-     */
-    it('loads page titles on first open', fakeAsync(() => {
-      openTab();
-      expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('legal/config/page-titles');
-      expect(component.ptAreas).toEqual(['web', 'admin']);
-      expect(component.ptRows[0].title_i18n).toEqual({ cz: 'Domů', en: '' });
-      expect(component.ptIsDirty).toBeFalse();
-      expect(component.ptVisibleRows.map(r => r.id)).toEqual([1, 2]);
-      discardPeriodicTasks();
-    }));
+    editor.dirtyChange.emit(true);
+    fixture.detectChanges();
+    expect(component.ptIsDirty).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.ws-tab-dot')).not.toBeNull();
 
-    /**
-     * @description Only changed rows are saved; discard restores the loaded values.
-     * @input  change row 1 cz to 'Úvod'; ptSave(); change again; ptDiscard()
-     * @output put('legal/config/page-titles', { titles: [{ id: 1, title_i18n: { cz: 'Úvod', en: '' } }] }); after discard row 1 cz back
-     */
-    it('saves only changed rows and can discard', fakeAsync(() => {
-      openTab();
-      component.ptRows[0].title_i18n['cz'] = 'Úvod';
-      expect(component.ptDirtyCount).toBe(1);
-      expect(component.ptAreaDirty('web')).toBeTrue();
-      component.ptSave();
-      expect((ctx.dataHandler as any).put).toHaveBeenCalledWith('legal/config/page-titles',
-        { titles: [{ id: 1, title_i18n: { cz: 'Úvod', en: '' } }] });
-      component.ptRows[1].title_i18n['cz'] = 'Changed';
-      component.ptDiscard();
-      expect(component.ptRows[1].title_i18n['cz']).toBe('FAQ');
-      discardPeriodicTasks();
-    }));
-
-    /**
-     * @description Without the update permission nothing is saved.
-     * @input  granted []; dirty row; ptSave()
-     * @output ptCanUpdate false; put not called
-     */
-    it('needs core-legal-config-update to save', fakeAsync(() => {
-      openTab();
-      ctx.permissions.granted = new Set();
-      component.ptRows[0].title_i18n['cz'] = 'X';
-      component.ptSave();
-      expect(component.ptCanUpdate).toBeFalse();
-      expect((ctx.dataHandler as any).put).not.toHaveBeenCalled();
-      discardPeriodicTasks();
-    }));
-
-    /**
-     * @description The preview shows the focused row's title in the selected language.
-     * @input  ptOnFocus(row 2); ptSwitchLang('en'); ptSwitchArea('admin')
-     * @output ptPreviewText 'FAQ'; after area switch preview row reset and text 'Přihlášení' for cz
-     */
-    it('previews titles per area and language', fakeAsync(() => {
-      openTab();
-      component.ptOnFocus(component.ptRows[1]);
-      component.ptSwitchLang('en');
-      expect(component.ptPreviewText).toBe('FAQ');
-      component.ptSwitchArea('admin');
-      expect(component.ptPreviewRowId).toBeNull();
-      expect(component.ptPreviewText).toBe('Přihlášení');
-      discardPeriodicTasks();
-    }));
-
-    /**
-     * @description A failed load shows the error state.
-     * @input  GET legal/config/page-titles fails
-     * @output ptLoadError true; ptLoading false
-     */
-    it('reports a failed page-titles load', fakeAsync(() => {
-      init();
-      (ctx.dataHandler as any).get.and.callFake((url: string) =>
-        url === 'legal/config/page-titles' ? throwError(() => new Error('x')) : of([]));
-      component.switchTab('page_titles');
-      expect(component.ptLoadError).toBeTrue();
-      expect(component.ptLoading).toBeFalse();
-      discardPeriodicTasks();
-    }));
-  });
+    component.switchTab('company');
+    fixture.detectChanges();
+    expect(el.nativeElement.style.display).toBe('none');
+    expect(fixture.debugElement.query(By.css('app-page-titles-editor')).componentInstance).toBe(editor);
+    discardPeriodicTasks();
+  }));
 
   /**
    * @description The page renders the company name field value.
@@ -541,51 +489,6 @@ describe('WebSettingsComponent', () => {
       expect((ctx.dataHandler as any).delete).not.toHaveBeenCalled();
       expect(component.trackByIndex(3)).toBe(3);
       flush();
-      discardPeriodicTasks();
-    }));
-
-    /**
-     * @description Page titles: missing language falls back to the first one; area labels,
-     *   placeholder, length, area dirtiness; switching area / language; saving errors; save guarded.
-     * @input Languages without the current 'xx'; edit a title; ptSave failing; ptSave without changes.
-     * @output ptCurrentLang = first code; labels from strings or the area key; dirty area; ptSaving false.
-     */
-    it('edits page titles per area and language', fakeAsync(() => {
-      ctx.i18n.getMergedSection.and.returnValue({ pt_area_web: 'Web', pt_input_placeholder: 'Title ({lang})', pt_unsaved_count: '{count} unsaved', pt_page_web_home: 'Home page' });
-      init();
-      (component as any).ptCurrentLang = { web: 'xx', shop: 'cz', admin: 'cz' };
-      component.switchTab('page_titles');
-      expect(component.ptLang).toBe('cz');
-      expect(component.ptAreaLabel('web')).toBe('Web');
-      expect(component.ptAreaLabel('shop')).toBe('shop');
-      expect(component.ptAreaLabel('admin')).toBe('admin');
-      expect(component.ptPlaceholderFor()).toBe('Title (Čeština)');
-      const home = component.ptVisibleRows[0];
-      expect(component.ptLabelFor(home)).toBe('Home page');
-      expect(component.ptLabelFor(component.ptVisibleRows[1])).toBe('/faq');
-      home.title_i18n['cz'] = 'Úvod';
-      component.ptOnInput(home);
-      expect(component.ptLengthOf(home)).toBe(4);
-      expect(component.ptAreaDirty('web')).toBeTrue();
-      expect(component.ptAreaDirty('admin')).toBeFalse();
-      expect(component.ptUnsavedLabel).toBe('1 unsaved');
-
-      component.ptSwitchArea('web');
-      component.ptSwitchArea('admin');
-      component.ptSwitchLang('en');
-      expect(component.ptLang).toBe('en');
-      component.ptOnFocus(component.ptVisibleRows[0]);
-      expect(component.ptPreviewText).toBe('');
-      component.ptSwitchArea('web');
-
-      (ctx.dataHandler as any).put.and.returnValue(throwError(() => new Error('x')));
-      component.ptSave();
-      expect(component.ptSaving).toBeFalse();
-      expect(component.ptIsDirty).toBeTrue();
-      component.ptDiscard();
-      (ctx.dataHandler as any).put.calls.reset();
-      component.ptSave();
-      expect((ctx.dataHandler as any).put).not.toHaveBeenCalled();
       discardPeriodicTasks();
     }));
   });

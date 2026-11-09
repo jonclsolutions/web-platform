@@ -8,7 +8,8 @@
  *   (module 'web'). The page only configures BaseTranslationEditorComponent, so the tests check
  *   the configuration through the real editor behaviour: languages and translations of the
  *   'web' module, missing keys against the Czech reference, editing and saving, the
- *   'web-edit-website-update' permission, adding / deleting / toggling languages and JSON upload.
+ *   'web-edit-website-update' permission, adding / deleting / toggling languages, JSON upload and
+ *   the "Page titles" tab (PageTitlesEditorComponent of the web pages).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, permission stub, alert spy, i18n stub),
  *   ResourceCacheService (real)
@@ -17,6 +18,8 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, discardPeriodicTasks } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
+import { By } from '@angular/platform-browser';
+import { PageTitlesEditorComponent } from '../../components/page-titles-editor/page-titles-editor.component';
 import { EditWebsiteComponent } from './edit-website.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 
@@ -265,6 +268,44 @@ describe('EditWebsiteComponent', () => {
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('edit-website.page_title');
     expect(text).toContain('English');
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description The page also manages the browser titles of its own pages: the "Page titles" tab
+   *   creates PageTitlesEditorComponent for the 'web' area on the first open; the translations
+   *   are hidden, not destroyed; the editor stays created when switching back; its unsaved state
+   *   puts a dot on the tab.
+   * @input render; click the second tab; dirtyChange(true); click the first tab.
+   * @output no editor at first; editor area 'web', endpoint 'web/page-titles', permission
+   *   'web-edit-website-update', labels 'edit-website'; .ew-root hidden; dot shown; translations visible, editor hidden.
+   */
+  it('manages the page titles of its module in a tab', fakeAsync(() => {
+    fixture.detectChanges();
+    flush();
+    const el: HTMLElement = fixture.nativeElement;
+    const tabs = () => el.querySelectorAll('.ew-page-tab') as NodeListOf<HTMLButtonElement>;
+    expect(tabs().length).toBe(2);
+    expect(el.querySelector('app-page-titles-editor')).toBeNull();
+
+    tabs()[1].click();
+    fixture.detectChanges();
+    const debug = fixture.debugElement.query(By.css('app-page-titles-editor'));
+    const editor = debug.componentInstance as PageTitlesEditorComponent;
+    expect([editor.area, editor.endpoint, editor.updatePermission, editor.labelSection])
+      .toEqual(['web', 'web/page-titles', 'web-edit-website-update', 'edit-website']);
+    expect((el.querySelector('.ew-root') as HTMLElement).style.display).toBe('none');
+    expect(tabs()[1].getAttribute('aria-selected')).toBe('true');
+
+    editor.dirtyChange.emit(true);
+    fixture.detectChanges();
+    expect(tabs()[1].querySelector('.ew-page-tab-dot')).not.toBeNull();
+
+    tabs()[0].click();
+    fixture.detectChanges();
+    expect((el.querySelector('.ew-root') as HTMLElement).style.display).toBe('');
+    expect((el.querySelector('.ew-titles-wrap') as HTMLElement).style.display).toBe('none');
+    expect(fixture.debugElement.query(By.css('app-page-titles-editor')).componentInstance).toBe(editor);
     discardPeriodicTasks();
   }));
 });

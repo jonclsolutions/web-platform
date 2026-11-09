@@ -429,6 +429,14 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
     */
     Route::prefix('shop')->group(function () {
 
+        // Browser titles of the e-shop pages (shop/edit-eshop).
+        Route::get('/page-titles', [PageTitleController::class, 'index'])
+            ->defaults('area', 'shop')
+            ->middleware('permission:shop-edit-eshop-view');
+        Route::put('/page-titles', [PageTitleController::class, 'update'])
+            ->defaults('area', 'shop')
+            ->middleware('permission:shop-edit-eshop-update');
+
         Route::prefix('settings')->group(function () {
             Route::get('/', [ShopSiteSettingController::class, 'show'])
                 ->middleware('permission:shop-set-maintenance-mode');
@@ -619,6 +627,14 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
     |----------------------------------------------------------------------
     */
     Route::prefix('web')->group(function () {
+
+        // Browser titles of the web pages (web/edit-website).
+        Route::get('/page-titles', [PageTitleController::class, 'index'])
+            ->defaults('area', 'web')
+            ->middleware('permission:web-edit-website-view');
+        Route::put('/page-titles', [PageTitleController::class, 'update'])
+            ->defaults('area', 'web')
+            ->middleware('permission:web-edit-website-update');
 
         Route::prefix('settings')->group(function () {
             Route::get('/', [WebSiteSettingController::class, 'show'])
@@ -888,9 +904,12 @@ Route::prefix('legal')->group(function () {
         Route::put('/settings',      [SiteConfigurationController::class, 'updateSettings'])
             ->middleware('permission:core-legal-config-update');
  
+        // Browser titles of the administration; web / shop titles: web/page-titles, shop/page-titles.
         Route::get('/page-titles',   [PageTitleController::class, 'index'])
+            ->defaults('area', 'admin')
             ->middleware('permission:core-legal-config-view');
         Route::put('/page-titles',   [PageTitleController::class, 'update'])
+            ->defaults('area', 'admin')
             ->middleware('permission:core-legal-config-update');
  
         Route::post('/social',       [SiteConfigurationController::class, 'storeSocial'])
