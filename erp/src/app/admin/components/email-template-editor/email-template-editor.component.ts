@@ -7,16 +7,17 @@
  * @description Modal editor of a confirmation e-mail sent to customers in the language of the
  * page (web_site_settings `<prefix>_*_i18n`): subject, title, greeting, intro, the labels of the
  * summary table and the closing text per language, with a live preview. Shared by the inquiry
- * confirmation (Inquiries, `raw_request_email`) and the order confirmation (Web orders,
- * `sales_order_email`, VT-15) - the pages differ only by the endpoint, the prefix, the i18n
- * section with the texts and the rows of the summary table.
+ * confirmation (Inquiries, `raw_request_email`), the order confirmation (Web orders,
+ * `sales_order_email`, VT-15) and the e-shop order confirmation (E-shop orders, `order_email`,
+ * languages of the e-shop) - the pages differ only by the endpoint, the prefix, the i18n section
+ * with the texts, the languages and the rows of the summary table.
  * @note The preview mirrors the language fallback of the backend (I18nEmailTemplate): text of
- * the language → built-in default (the default texts are the `email_tpl_default_*` keys of the
- * section and must match the backend constants).
+ * the language → Czech text → built-in default (the default texts are the `email_tpl_default_*`
+ * keys of the section and must match the backend constants).
  * @usage `<app-email-template-editor endpoint="web/settings/raw-request-email-template"
  *   fieldPrefix="raw_request_email" i18nSection="user-request" [rows]="rows" (closed)="…" />`
  * @dependencies
- * - DataHandler: `languages/web`, GET / PUT of the template endpoint.
+ * - DataHandler: the languages (`languages/web` by default), GET / PUT of the template endpoint.
  * - AdminLocalizationService: texts of the given section; AlertDialogService: saved message.
  */
 
@@ -41,7 +42,10 @@ export interface EmailTemplateLang {
  */
 export interface EmailTemplateRow {
   key: string;
+  /** Sample value of the preview; '' = the label is a text of its own (a paragraph under the table). */
   sample: string;
+  /** A longer text (e.g. the information on the right of withdrawal): textarea, full width. */
+  multiline?: boolean;
 }
 
 /** @description i18n texts of the template being edited. */
@@ -75,6 +79,8 @@ export class EmailTemplateEditorComponent implements OnInit {
   @Input({ required: true }) rows: EmailTemplateRow[] = [];
   /** Text after the subject in the preview (the inquiry adds ' – <topic>'). */
   @Input() subjectSuffix = '';
+  /** Languages offered (`languages/web` - the web; `languages/shop` - the e-shop). */
+  @Input() languagesEndpoint = 'languages/web';
   /** The modal was closed (saved or cancelled). */
   @Output() closed = new EventEmitter<void>();
 
@@ -95,11 +101,11 @@ export class EmailTemplateEditorComponent implements OnInit {
   }
 
   /**
-   * @description Loads the active web languages and the stored texts in parallel - the labels of
+   * @description Loads the active languages and the stored texts in parallel - the labels of
    * a language are prepared whichever answer comes first (the inputs bind to nested properties).
    */
   ngOnInit(): void {
-    this.dataHandler.get<EmailTemplateLang[]>('languages/web').subscribe({
+    this.dataHandler.get<EmailTemplateLang[]>(this.languagesEndpoint).subscribe({
       next: (res) => {
         this.languages = (Array.isArray(res) ? res : []).filter(l => l.active !== false);
         if (this.languages.length > 0 && !this.languages.find(l => l.code === this.currentLang)) {
@@ -189,20 +195,44 @@ export class EmailTemplateEditorComponent implements OnInit {
   }
 
   /**
-   * @description Preview of a flat field: the text of the shown language, otherwise the default.
+   * @description Preview of a flat field: the text of the shown language, otherwise the Czech
+   * text, otherwise the default (as the backend sends it).
    * @param field subject / title / intro / outro.
    */
   preview(field: TextField): string {
-    return this.template[`${field}_i18n`][this.currentLang] || this.t(`email_tpl_default_${field}`);
+    const texts = this.template[`${field}_i18n`];
+    return texts[this.currentLang]?.trim() || texts['cz']?.trim() || this.t(`email_tpl_default_${field}`);
   }
 
   /**
    * @description Preview of a label (greeting, summary_header, label_*): the text of the shown
-   * language, otherwise the default.
+   * language, otherwise the Czech text, otherwise the default (as the backend sends it).
    * @param key Label key.
    */
   previewLabel(key: string): string {
-    return this.template.labels_i18n[this.currentLang]?.[key] || this.t(`email_tpl_default_${key}`);
+    return this.template.labels_i18n[this.currentLang]?.[key]?.trim()
+      || this.template.labels_i18n['cz']?.[key]?.trim()
+      || this.t(`email_tpl_default_${key}`);
+  }
+
+  /**
+   * @description Placeholder of a flat field: what an empty field sends - the Czech text in
+   * another language, otherwise the default wording.
+   * @param field subject / title / intro / outro.
+   */
+  textPlaceholder(field: TextField): string {
+    const cz = this.currentLang !== 'cz' ? this.template[`${field}_i18n`]['cz']?.trim() : '';
+    return cz || this.t(`email_tpl_placeholder_${field}`);
+  }
+
+  /**
+   * @description Placeholder of a label (greeting, summary_header, label_* …): the Czech text in
+   * another language, otherwise the default wording.
+   * @param key Label key.
+   */
+  labelPlaceholder(key: string): string {
+    const cz = this.currentLang !== 'cz' ? this.template.labels_i18n['cz']?.[key]?.trim() : '';
+    return cz || this.t(this.placeholderKey(key));
   }
 
   /** @description i18n key of the placeholder of a summary row ('label_email' → email_tpl_placeholder_email). */

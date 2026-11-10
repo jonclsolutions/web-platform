@@ -14,11 +14,17 @@ namespace App\Models\Shop;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @description Stores the e-shop's global availability state (maintenance mode) and the
- * message shown to customers while it is disabled.
+ * @description Stores the e-shop's global availability state (maintenance mode), the
+ * message shown to customers while it is disabled and the texts of the order confirmation
+ * e-mail (per language, ShopOrderEmailTemplate).
  *
  * @property bool $is_shop_active Whether the e-shop storefront/checkout is enabled.
  * @property string|null $maintenance_message Message displayed to customers when disabled.
+ * @property array|null $order_email_subject_i18n Subject per language.
+ * @property array|null $order_email_title_i18n Title per language.
+ * @property array|null $order_email_intro_i18n Intro per language.
+ * @property array|null $order_email_outro_i18n Closing text per language.
+ * @property array|null $order_email_labels_i18n Labels per language: { lang: { key: text } }.
  */
 class ShopSiteSetting extends Model
 {
@@ -33,6 +39,12 @@ class ShopSiteSetting extends Model
     protected $fillable = [
         'is_shop_active',
         'maintenance_message',
+        // Confirmation e-mail of an order, texts per language (ShopOrderEmailTemplate).
+        'order_email_subject_i18n',
+        'order_email_title_i18n',
+        'order_email_intro_i18n',
+        'order_email_outro_i18n',
+        'order_email_labels_i18n',
     ];
 
     /**
@@ -40,5 +52,10 @@ class ShopSiteSetting extends Model
      */
     protected $casts = [
         'is_shop_active' => 'boolean',
+        'order_email_subject_i18n' => 'array',
+        'order_email_title_i18n' => 'array',
+        'order_email_intro_i18n' => 'array',
+        'order_email_outro_i18n' => 'array',
+        'order_email_labels_i18n' => 'array',
     ];
 }

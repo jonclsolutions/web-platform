@@ -75,17 +75,21 @@ describe('EmailTemplateEditorComponent', () => {
   });
 
   /**
-   * @description Switching the language shows its texts (defaults where empty) and prepares
-   *   its labels; a missing current language selects the first offered one; failed answers
+   * @description Switching the language shows its texts (the Czech ones, then the defaults
+   *   where empty - as the backend sends them) and prepares its labels; a missing current language selects the first offered one; failed answers
    *   keep Czech and end the loading.
    * @input  switchLang('en'), switchLang('sk'); languages en, de + null template; both requests fail.
-   * @output en subject 'Subject', title default; labels sk {}; currentLang 'en' and an empty template;
+   * @output en subject 'Subject', title 'Titulek' (Czech), greeting 'Dobrý den' (Czech), email
+   *   label default - the placeholders the same (Czech / default); labels sk {}; currentLang 'en' and an empty template;
    *   languages [cz], loading false.
    */
   it('switches languages and survives missing data', () => {
     create(of([{ code: 'cz', name: 'Čeština' }, { code: 'en', name: 'English' }]), of(stored));
     component.switchLang('en');
-    expect([component.currentLang, component.preview('subject'), component.preview('title')]).toEqual(['en', 'Subject', 'sales-orders.email_tpl_default_title']);
+    expect([component.currentLang, component.preview('subject'), component.preview('title')]).toEqual(['en', 'Subject', 'Titulek']);
+    expect([component.previewLabel('greeting'), component.previewLabel('label_email')]).toEqual(['Dobrý den', 'sales-orders.email_tpl_default_label_email']);
+    expect([component.textPlaceholder('title'), component.labelPlaceholder('greeting'), component.labelPlaceholder('label_email')])
+      .toEqual(['Titulek', 'Dobrý den', 'sales-orders.email_tpl_placeholder_email']);
     component.switchLang('sk');
     expect(component.template.labels_i18n['sk']).toEqual({});
 
@@ -137,5 +141,33 @@ describe('EmailTemplateEditorComponent', () => {
     expect([closed, component.saving]).toEqual([1, false]);
     component.close();
     expect(closed).toBe(2);
+  });
+
+  /**
+   * @description Another language list (the e-shop) and labels that are texts of their own: a
+   *   multiline row is a full-width textarea, a row without a sample is a paragraph of the
+   *   preview (not a table row).
+   * @input  languagesEndpoint 'languages/shop' (cz, en); rows label_ico (sample) + withdrawal_info
+   *   (multiline, no sample) with a cz text.
+   * @output get('languages/shop'); 1 table row; withdrawal paragraph with the cz text; a textarea
+   *   in a wide field.
+   */
+  it('offers other languages and labels that are texts of their own', () => {
+    ctx = createAdminTestContext();
+    dh().get.and.callFake((url: string) => url === 'languages/shop' ? of([{ code: 'cz', name: 'Čeština' }, { code: 'en', name: 'English' }])
+      : of({ order_email_labels_i18n: { cz: { withdrawal_info: 'Odstoupení do 14 dnů.' } } }));
+    TestBed.configureTestingModule({ imports: [EmailTemplateEditorComponent], providers: ctx.providers });
+    fixture = TestBed.createComponent(EmailTemplateEditorComponent);
+    component = fixture.componentInstance;
+    Object.assign(component, { endpoint: 'shop/settings/order-email-template', fieldPrefix: 'order_email', i18nSection: 'shop-orders', languagesEndpoint: 'languages/shop' });
+    component.rows = [{ key: 'label_ico', sample: '123' }, { key: 'withdrawal_info', sample: '', multiline: true }];
+    fixture.detectChanges();
+
+    expect(dh().get).toHaveBeenCalledWith('languages/shop');
+    expect(dh().get).not.toHaveBeenCalledWith('languages/web');
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelectorAll('.email-tpl-preview-table tr').length).toBe(1);
+    expect(Array.from(el.querySelectorAll('.email-tpl-preview-text')).map(p => p.textContent!.trim())).toContain('Odstoupení do 14 dnů.');
+    expect(el.querySelector('.email-tpl-field--wide textarea')).not.toBeNull();
   });
 });

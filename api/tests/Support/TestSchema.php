@@ -654,6 +654,10 @@ final class TestSchema
             $t->increments('id');
             $t->boolean('is_shop_active')->default(true);
             $t->string('maintenance_message')->nullable();
+            // Confirmation e-mail of an order (migration 2026_11_14_000000_shop_order_confirmation_email).
+            foreach (['subject', 'title', 'intro', 'outro', 'labels'] as $field) {
+                $t->json("order_email_{$field}_i18n")->nullable();
+            }
             $t->timestamps();
         });
 
@@ -870,6 +874,7 @@ final class TestSchema
             $t->string('shipping_postal_code', 10)->nullable();
             $t->string('shipping_country', 50)->nullable();
             $t->text('notes')->nullable();
+            $t->string('lang', 10)->nullable();
             $t->dateTime('paid_at')->nullable();
             $t->dateTime('shipped_at')->nullable();
             $t->dateTime('delivered_at')->nullable();

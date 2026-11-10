@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Log;
  * @property string $order_number Chronological unique order number.
  * @property string $status Current status of the order.
  * @property float $final_amount Total price including taxes and shipping.
+ * @property string|null $lang Language of the storefront the order was placed from (confirmation e-mail; null = cz).
  */
 class ShopOrder extends Model
 {
@@ -58,6 +59,7 @@ class ShopOrder extends Model
         'shipping_postal_code',
         'shipping_country',
         'notes',
+        'lang',
         'paid_at',
         'shipped_at',
         'delivered_at',

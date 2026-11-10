@@ -395,6 +395,8 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
       currency: 'EUR', 
       total_amount: Number(this.orderSummary().finalAmount), 
       notes: null,
+      // Language of the storefront - the confirmation e-mail of the order is sent in it.
+      lang: this.localizationService.getCurrentLanguage(),
       items: formattedItems
     };
 

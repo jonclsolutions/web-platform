@@ -28,6 +28,8 @@ use App\Models\User;
 use App\Models\Legal\DocumentSection;
 use App\Models\Legal\DocumentType;
 use App\Models\Legal\SiteSetting;
+use App\Models\Shop\ShopPaymentMethod;
+use App\Models\Shop\ShopShippingMethod;
 use App\Models\Shop\ShopSiteSetting;
 use App\Models\Web\WebSiteSetting;
 use Database\Seeders\BaseDataSeeder;
@@ -395,7 +397,9 @@ class DatabaseSetupTest extends TestCase
      *   admin.panel; types gdpr / tos / cookies; web + shop active; placeholder company details
      *   (English, example.com, no analytics ID - the GA field switched off) with the default logo;
      *   neutral page titles ("Company name", no brand); English legal templates
-     *   8 / 10 / 7 sections with placeholders; logo + flags on the public disk; no account.
+     *   8 / 10 / 7 sections with placeholders; logo + flags on the public disk; the e-shop row
+     *   with the Czech order e-mail texts; the 8 payment methods (only cash active, fees 0, no
+     *   bank details, default icons on the public disk) and the active store pickup; no account.
      */
     public function test_base_data_seeder(): void
     {
@@ -436,7 +440,48 @@ class DatabaseSetupTest extends TestCase
         $this->assertTrue(WebSiteSetting::firstOrFail()->is_web_active);
         $this->assertSame('Your request has been accepted', WebSiteSetting::firstOrFail()->raw_request_email_title_i18n['en']);
         $this->assertTrue(ShopSiteSetting::firstOrFail()->is_shop_active);
+        $this->assertSame(['cz' => 'Potvrzení objednávky'], ShopSiteSetting::firstOrFail()->order_email_subject_i18n);
+        $this->assertSame('Celkem k úhradě vč. DPH', ShopSiteSetting::firstOrFail()->order_email_labels_i18n['cz']['label_total']);
+
+        $payments = ShopPaymentMethod::orderBy('sort_order')->get();
+        $this->assertSame(['bank_transfer_cz', 'bank_transfer_sepa', 'stripe_card', 'apple_pay', 'google_pay', 'paypal', 'cash_on_delivery', 'cash'], $payments->pluck('code')->all());
+        $this->assertSame(['cash'], $payments->where('is_active', true)->pluck('code')->values()->all());
+        $this->assertSame(0.0, (float) $payments->sum('price'));
+        $this->assertSame([null], $payments->pluck('bank_iban')->unique()->values()->all());
+        $this->assertSame('payment-methods-images/default-cash.svg', $payments->last()->image_path);
+        Storage::disk('public')->assertExists(array_values(array_unique($payments->pluck('image_path')->all())));
+        $shipping = ShopShippingMethod::sole();
+        $this->assertSame(['local_pickup', 'Osobní odběr na prodejně', 'store', 0.0, true], [$shipping->code, $shipping->name, $shipping->shipping_type, (float) $shipping->base_price, (bool) $shipping->is_active]);
         $this->assertSame(0, User::count());
+    }
+
+    /**
+     * @description The e-shop methods are added by code only: edited ones stay, a deleted shipping
+     *   method is not created again, a missing payment method is added; a former logo on the
+     *   public disk is used instead of the default icon.
+     * @input Former logo payment-methods-images/paypal.png on the disk; seeded; cash renamed and
+     *   switched off, store pickup deleted, apple_pay row removed; seeded again.
+     * @output paypal with its former logo; cash edited; no active shipping method (the deleted
+     *   one stays deleted); apple_pay back; still 8 payment methods.
+     */
+    public function test_base_data_seeder_shop_methods_only_add(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('payment-methods-images/paypal.png', 'logo');
+        $this->seed(BaseDataSeeder::class);
+        $this->assertSame('payment-methods-images/paypal.png', ShopPaymentMethod::where('code', 'paypal')->value('image_path'));
+
+        ShopPaymentMethod::where('code', 'cash')->update(['name' => 'Hotově', 'is_active' => false]);
+        ShopShippingMethod::where('code', 'local_pickup')->firstOrFail()->delete();
+        ShopPaymentMethod::where('code', 'apple_pay')->forceDelete();
+
+        $this->seed(BaseDataSeeder::class);
+
+        $this->assertSame(['Hotově', false], [ShopPaymentMethod::where('code', 'cash')->value('name'), (bool) ShopPaymentMethod::where('code', 'cash')->value('is_active')]);
+        $this->assertSame(0, ShopShippingMethod::count());
+        $this->assertSame(1, ShopShippingMethod::withTrashed()->count());
+        $this->assertTrue(ShopPaymentMethod::where('code', 'apple_pay')->exists());
+        $this->assertSame(8, ShopPaymentMethod::count());
     }
 
     /**

@@ -203,7 +203,8 @@ describe('CheckoutComponent', () => {
 
   /**
    * @description Order: incomplete form → warning, no request; complete → payload (EUR prices,
-   *   VAT, coupon code, final amount), success clears the cart and shows step 5; finish → shop.
+   *   VAT, coupon code, final amount, language of the storefront for the confirmation e-mail),
+   *   success clears the cart and shows step 5; finish → shop.
    * @input Empty form; filled form + coupon 'P10'; finishCheckout().
    * @output alert warning; createOrder payload; orderNumber 'O-1', cart empty, step 5; navigate(['/shop']).
    */
@@ -220,7 +221,8 @@ describe('CheckoutComponent', () => {
     const payload = shop.createOrder.calls.mostRecent().args[0];
     expect(payload).toEqual(jasmine.objectContaining({
       email: 'eva@x.cz', first_name: 'Eva', last_name: 'Nová', postal_code: '110 00', country: 'Czechia',
-      payment_method_id: 7, shipping_method_id: 3, coupon_code: 'P10', currency: 'EUR', company: null, notes: null
+      payment_method_id: 7, shipping_method_id: 3, coupon_code: 'P10', currency: 'EUR', company: null, notes: null,
+      lang: 'cz'
     }));
     expect(+payload.total_amount.toFixed(2)).toBe(212.9);
     expect(payload.items).toEqual([

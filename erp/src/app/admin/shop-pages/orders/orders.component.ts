@@ -10,6 +10,8 @@
  * - ConfirmDialogService: Facilitates user confirmation for sensitive deletions.
  * - Core Providers: Handles API communication and dependency injection.
  * - Config.create* factory functions: i18n-aware definitions.
+ * - EmailTemplateEditorComponent: texts of the order confirmation e-mail (toolbar "Edit
+ *   confirmation e-mail", API shop/settings/order-email-template, languages of the e-shop).
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
@@ -25,6 +27,7 @@ import { Order, OrderItem, Product, ProductVariant, PaymentMethod, ShippingMetho
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 import { PageHelpComponent } from '../../components/page-help/page-help.component';
+import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../components/email-template-editor/email-template-editor.component';
 
 interface CouponValidationResult {
   valid: boolean;
@@ -41,7 +44,7 @@ type TableMode = 'all' | 'pending_tasks' | 'trash';
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHelpComponent],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHelpComponent, EmailTemplateEditorComponent],
   templateUrl: './orders.component.html',
   styleUrls: ['../shared-styles/list-page.css', './orders.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -302,11 +305,54 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       openGraphBuilder: () => this.openGraphBuilder(),
+      openEmailTemplateEditor: () => this.openEmailTemplateEditor(),
       exportActiveTable: () => this.exportActiveTable(),
       // The unused `toggleTable` entry was removed (2026-10-22) – the trash is a tab here (setTableMode).
     };
 
     if (actions[action]) actions[action]();
+  }
+
+  // ── Confirmation e-mail template (modal, EmailTemplateEditorComponent) ──
+  showEmailTemplateModal = false;
+  /** Labels of the order confirmation e-mail with the preview sample values. */
+  emailTemplateRows: EmailTemplateRow[] = [];
+
+  /**
+   * @description Opens the template editor of the order confirmation e-mail with its labels and
+   * a fictional sample order for the preview (never sent or stored; the date in the admin locale).
+   */
+  openEmailTemplateEditor(): void {
+    const date = new Date(2026, 10, 11, 9, 41).toLocaleString(this.i18n.getDateLocale(), {
+      day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+    this.emailTemplateRows = [
+      { key: 'label_order_number', sample: '2026000123' },
+      { key: 'label_date', sample: date },
+      { key: 'label_product', sample: this.t('email_tpl_preview_product') },
+      { key: 'label_quantity', sample: '2' },
+      { key: 'label_unit_price', sample: '121.00 €' },
+      { key: 'label_line_total', sample: '242.00 €' },
+      { key: 'label_subtotal', sample: '242.00 €' },
+      { key: 'label_discount', sample: '−24.20 € (SAVE10)' },
+      { key: 'label_shipping', sample: this.t('email_tpl_preview_shipping') },
+      { key: 'label_payment', sample: this.t('email_tpl_preview_payment') },
+      { key: 'label_total', sample: '222.80 €' },
+      { key: 'label_vat', sample: '38.67 €' },
+      { key: 'label_delivery', sample: this.t('email_tpl_preview_address') },
+      { key: 'label_contact', sample: this.t('email_tpl_preview_contact') },
+      { key: 'label_notes', sample: this.t('email_tpl_preview_notes') },
+      { key: 'withdrawal_info', sample: '', multiline: true },
+      { key: 'terms_link', sample: '' },
+    ];
+    this.showEmailTemplateModal = true;
+    this.cd.markForCheck();
+  }
+
+  /** @description Closes the template editor. */
+  closeEmailTemplateEditor(): void {
+    this.showEmailTemplateModal = false;
+    this.cd.markForCheck();
   }
 
   override toggleFilters(): void {

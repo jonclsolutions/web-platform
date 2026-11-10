@@ -186,9 +186,15 @@ The data live in the Docker volume `<app>_db-data` – `./dev.sh stop` / `down` 
   **placeholder company details** ("Company name Ltd.", info@example.com – the footer, contact
   page and FAQ need them) with a neutral default logo, **English templates of the legal documents**
   (privacy policy, terms of service, cookie policy – placeholders like `[Company name]`,
-  `[Contact e-mail]`) and the default files they refer to (logo, flag of the built-in language –
-  `storage/` is not in git). **Before going live:** fill in the company details and replace the
-  placeholders of the legal texts in the admin (and have the texts reviewed).
+  `[Contact e-mail]`), the **e-shop payment methods** (8 fixed methods – the admin edits them
+  but cannot add or delete any; only "Cash on store pickup" is active, the others need bank
+  details / gateway keys first), the **default shipping method "Osobní odběr na prodejně"**
+  (store pickup, free) and the default files they refer to (logo, flag of the built-in language,
+  neutral payment icons – `storage/` is not in git). It runs on every `./dev.sh up` and every
+  release (`db:seed --force`) and only adds what is missing (by code – a shipping method deleted
+  in the admin stays deleted). **Before going live:** fill in the company details and replace the
+  placeholders of the legal texts in the admin (and have the texts reviewed); fill in the bank
+  details / gateway keys of the payment methods you want to offer and switch them on.
 - **Development data** (`DevelopmentSeeder`, only `APP_ENV=local`): see below.
 - All seeders only **add what is missing** – edited texts, changed passwords and edited roles stay.
 - Do not run `php artisan migrate:fresh` / `db:wipe` on a database with data you need.

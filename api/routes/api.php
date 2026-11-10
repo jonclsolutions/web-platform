@@ -466,6 +466,11 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:shop-set-maintenance-mode');
             Route::put('/', [ShopSiteSettingController::class, 'update'])
                 ->middleware('permission:shop-set-maintenance-mode');
+            // Confirmation e-mail of an order (E-shop orders → Edit confirmation e-mail).
+            Route::get('/order-email-template', [ShopSiteSettingController::class, 'showOrderEmailTemplate'])
+                ->middleware('permission:shop-orders-update');
+            Route::put('/order-email-template', [ShopSiteSettingController::class, 'updateOrderEmailTemplate'])
+                ->middleware('permission:shop-orders-update');
         });
 
         // Products

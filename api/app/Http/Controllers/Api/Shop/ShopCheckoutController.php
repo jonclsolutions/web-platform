@@ -5,12 +5,14 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Manages the end-to-end checkout process, including order persistence, atomic inventory stock updates, coupon validation, and payment simulation.
+ * @description Manages the end-to-end checkout process, including order persistence, atomic inventory stock updates, coupon validation, the confirmation e-mail of the order and payment simulation.
  */
 
 namespace App\Http\Controllers\Api\Shop;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\TranslationController;
+use App\Mail\Shop\ShopOrderConfirmation;
 use App\Models\Shop\ShopOrder;
 use App\Models\Shop\ShopOrderItem;
 use App\Models\Shop\ShopProduct;
@@ -26,6 +28,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Lottery;
 
 /**
@@ -38,8 +41,11 @@ class ShopCheckoutController extends Controller
 
     /**
      * @description Orchestrates the order creation process: customer identification,
-     *   catalogue prices, coupon, stock decrement under row locks, tax calculation.
-     * @param Request $request Checkout form (customer, address, methods, coupon_code, items).
+     *   catalogue prices, coupon, stock decrement under row locks, tax calculation; after the
+     *   commit the confirmation e-mail goes to the buyer in the language of the storefront
+     *   (Directive 2011/83/EU, Art. 8(7)) - a failed e-mail never fails the order (logged).
+     * @param Request $request Checkout form (customer, address, methods, coupon_code, items,
+     *   lang = language of the storefront; unknown / missing = cz).
      * @return JsonResponse 201 order | 422 validation / coupon / availability | 500 error.
      */
     public function createOrder(Request $request): JsonResponse
@@ -65,7 +71,8 @@ class ShopCheckoutController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
             // Sent by the storefront, never trusted.
             'items.*.unit_price' => 'nullable|numeric|min:0',
-            'items.*.vat_rate' => 'nullable|integer|between:0,100'
+            'items.*.vat_rate' => 'nullable|integer|between:0,100',
+            'lang' => 'sometimes|nullable|string|max:10',
         ]);
 
         try {
@@ -123,6 +130,7 @@ class ShopCheckoutController extends Controller
                 'shipping_postal_code' => $validated['postal_code'],
                 'shipping_country' => $validated['country'],
                 'notes' => $validated['notes'] ?? null,
+                'lang' => $this->orderLanguage($validated['lang'] ?? null),
             ]);
 
             $discountFactor = $totalAmount > 0 ? ($totalAmount - $discountAmount) / $totalAmount : 1;
@@ -173,6 +181,12 @@ class ShopCheckoutController extends Controller
 
             $this->logAction($request, ShopLog::class, 'create', 'ShopOrder (Checkout)', "Created order: {$order->order_number}", $order->id, 'ShopOrder');
 
+            try {
+                Mail::to($order->customer_email)->queue(new ShopOrderConfirmation($order));
+            } catch (\Throwable $e) {
+                $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Failed to send the order confirmation e-mail: " . $e->getMessage(), $order->id, 'ShopOrder');
+            }
+
             // The buyer's token of the payment simulation (dev / test systems only, VT-16).
             $meta = config('services.shop.payment_simulation') ? ['payment_token' => $order->paymentSimulationToken()] : [];
 
@@ -184,6 +198,19 @@ class ShopCheckoutController extends Controller
             $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Error creating order: " . $e->getMessage());
             return response()->json(['message' => 'Error creating order.'], 500);
         }
+    }
+
+    /**
+     * @description Language of the order: a language of the e-shop (TranslationController
+     *   languages, module shop), otherwise Czech (the built-in language).
+     * @param string|null $lang Language sent by the storefront.
+     * @return string Lower-case language code.
+     */
+    private function orderLanguage(?string $lang): string
+    {
+        $lang = strtolower(trim((string) $lang));
+
+        return in_array($lang, TranslationController::languageCodes('shop'), true) ? $lang : 'cz';
     }
 
     /**

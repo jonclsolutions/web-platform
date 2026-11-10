@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Support\I18n\WebContentLanguages;
+use App\Support\Mail\ShopOrderEmailTemplate;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -221,10 +222,8 @@ class TranslationController extends Controller
         $this->writeLanguagesMeta($finalMeta);
 
         // A language left out of the list is removed - its content of the web goes with it.
-        if ($module === 'web') {
-            foreach (array_diff($currentModuleMeta->keys()->all(), array_column($mergedCurrent, 'code')) as $removed) {
-                WebContentLanguages::forget((string) $removed);
-            }
+        foreach (array_diff($currentModuleMeta->keys()->all(), array_column($mergedCurrent, 'code')) as $removed) {
+            $this->forgetContent($module, (string) $removed);
         }
 
         $this->logAction($request, WebLog::class, 'update', "Languages:{$module}", 'Language list and metadata update', null, 'Translation', ['icon']);
@@ -300,14 +299,29 @@ class TranslationController extends Controller
         array_splice($allMeta, $idx, 1);
         $this->writeLanguagesMeta($allMeta);
 
-        // Content of the module stored per language (FAQ, jobs of the web) loses the language too.
-        if ($module === 'web') {
-            WebContentLanguages::forget($code);
-        }
+        // Content of the module stored per language loses the language too.
+        $this->forgetContent($module, $code);
 
         $this->logAction($request, WebLog::class, 'delete', "Languages:{$module}", "Deleted language: {$code}", null, 'Translation');
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * @description Removes the content of a module stored per language of a deleted language:
+     *   web - FAQ, jobs, references (WebContentLanguages); shop - the texts of the order
+     *   confirmation e-mail (ShopOrderEmailTemplate).
+     * @param string $module Module ('web', 'shop').
+     * @param string $code Deleted language code.
+     * @return void
+     */
+    private function forgetContent(string $module, string $code): void
+    {
+        if ($module === 'web') {
+            WebContentLanguages::forget($code);
+        } elseif ($module === 'shop') {
+            ShopOrderEmailTemplate::forget(strtolower($code));
+        }
     }
 
     /**

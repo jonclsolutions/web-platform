@@ -40,28 +40,28 @@
 <label class="email-tpl-label">{{ t('email_tpl_subject_label') }} <span class="email-tpl-label-hint">{{ t('email_tpl_subject_hint') }}</span></label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="template.subject_i18n[currentLang]"
-       [placeholder]="t('email_tpl_placeholder_subject')">
+       [placeholder]="textPlaceholder('subject')">
 </div>
 
 <div class="email-tpl-field">
 <label class="email-tpl-label">{{ t('email_tpl_title_label') }}</label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="template.title_i18n[currentLang]"
-       [placeholder]="t('email_tpl_placeholder_title')">
+       [placeholder]="textPlaceholder('title')">
 </div>
 
 <div class="email-tpl-field">
 <label class="email-tpl-label">{{ t('email_tpl_greeting_label') }}</label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="template.labels_i18n[currentLang]['greeting']"
-       [placeholder]="t('email_tpl_placeholder_greeting')">
+       [placeholder]="labelPlaceholder('greeting')">
 </div>
 
 <div class="email-tpl-field">
 <label class="email-tpl-label">{{ t('email_tpl_intro_label') }}</label>
 <textarea rows="3" class="email-tpl-textarea"
           [(ngModel)]="template.intro_i18n[currentLang]"
-          [placeholder]="t('email_tpl_placeholder_intro')"></textarea>
+          [placeholder]="textPlaceholder('intro')"></textarea>
 </div>
 
 <div class="email-tpl-section-label">{{ t('email_tpl_summary_section') }}</div>
@@ -70,16 +70,22 @@
 <label class="email-tpl-label">{{ t('email_tpl_summary_header_label') }}</label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="template.labels_i18n[currentLang]['summary_header']"
-       [placeholder]="t('email_tpl_placeholder_summary_header')">
+       [placeholder]="labelPlaceholder('summary_header')">
 </div>
 
 <div class="email-tpl-labels-grid">
 @for (row of rows; track row.key) {
-<div class="email-tpl-field">
+<div class="email-tpl-field" [class.email-tpl-field--wide]="row.multiline">
 <label class="email-tpl-label">{{ t('email_tpl_' + row.key) }}</label>
+@if (row.multiline) {
+<textarea rows="3" class="email-tpl-textarea"
+          [(ngModel)]="template.labels_i18n[currentLang][row.key]"
+          [placeholder]="labelPlaceholder(row.key)"></textarea>
+} @else {
 <input type="text" class="email-tpl-input"
        [(ngModel)]="template.labels_i18n[currentLang][row.key]"
-       [placeholder]="t(placeholderKey(row.key))">
+       [placeholder]="labelPlaceholder(row.key)">
+}
 </div>
 }
 </div>
@@ -90,7 +96,7 @@
 <label class="email-tpl-label">{{ t('email_tpl_outro_label') }}</label>
 <textarea rows="2" class="email-tpl-textarea"
           [(ngModel)]="template.outro_i18n[currentLang]"
-          [placeholder]="t('email_tpl_placeholder_outro')"></textarea>
+          [placeholder]="textPlaceholder('outro')"></textarea>
 </div>
 
 <!-- ── Live preview ─────────────────────────────────────────────────────── -->
@@ -114,9 +120,17 @@
 <p class="email-tpl-preview-summary-label">{{ previewLabel('summary_header') }}</p>
 <table class="email-tpl-preview-table">
 @for (row of rows; track row.key) {
+@if (row.sample !== '') {
 <tr><td class="email-tpl-preview-td-label">{{ previewLabel(row.key) }}</td><td class="email-tpl-preview-td-value">{{ row.sample }}</td></tr>
 }
+}
 </table>
+<!-- Labels without a sample value are texts of their own (e.g. the right of withdrawal) -->
+@for (row of rows; track row.key) {
+@if (row.sample === '') {
+<p class="email-tpl-preview-text">{{ previewLabel(row.key) }}</p>
+}
+}
 
 <p class="email-tpl-preview-text email-tpl-preview-outro">{{ preview('outro') }}</p>
 </div>

@@ -191,6 +191,10 @@
 .email-tpl-labels-grid .email-tpl-field {
   margin-bottom: 12px;
 }
+/* A longer label text (EmailTemplateRow.multiline, e.g. the right of withdrawal) - full width. */
+.email-tpl-labels-grid .email-tpl-field--wide {
+  grid-column: 1 / -1;
+}
 
 .email-tpl-label-hint {
   font-weight: 400;

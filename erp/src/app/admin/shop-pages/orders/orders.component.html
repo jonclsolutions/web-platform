@@ -646,6 +646,15 @@
     </div>
   </div>
 }
+@if (showEmailTemplateModal) {
+<app-email-template-editor
+  endpoint="shop/settings/order-email-template"
+  fieldPrefix="order_email"
+  i18nSection="shop-orders"
+  languagesEndpoint="languages/shop"
+  [rows]="emailTemplateRows"
+  (closed)="closeEmailTemplateEditor()" />
+}
 @if (showGraphBuilder) {
 <app-graph-builder
 [apiEndpoint]="apiEndpoint"

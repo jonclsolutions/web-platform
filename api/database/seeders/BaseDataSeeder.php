@@ -11,21 +11,27 @@
  *     admin (CoreRole::isProtected()) and always requires 2FA (User::FORCED_2FA_ROLE_NAMES),
  *   - the browser tab titles of the pages (data/page_titles.php),
  *   - the legal document types gdpr / tos / cookies (data/document_types.php),
- *   - the default rows of the web and e-shop settings (data/*_site_settings.php),
+ *   - the default rows of the web and e-shop settings (data/*_site_settings.php; the e-shop row
+ *     with the Czech texts of the order confirmation e-mail, data/shop_order_email.php),
+ *   - the payment methods of the e-shop (data/shop_payment_methods.php - the admin can only
+ *     edit them, not create or delete) and the default shipping method "store pickup"
+ *     (data/shop_shipping_methods.php) - so the checkout works from the start,
  *   - neutral placeholder company details (data/legal_site_settings.php) with a default logo -
  *     the public footer, contact page and FAQ render only when they exist,
  *   - English templates of the legal documents (data/document_sections.php) - privacy policy,
  *     terms of service, cookie policy - with placeholders to be replaced by the operator,
- *   - the default media the data refers to (storage/app/public is not in git): the logo and the
- *     flag of the built-in language (storage/app/public/translations/languages.json).
+ *   - the default media the data refers to (storage/app/public is not in git): the logo, the
+ *     flag of the built-in language (storage/app/public/translations/languages.json) and neutral
+ *     icons of the payment methods (assets/payment-methods).
  *   No account is created here: locally DevelopmentSeeder adds the test sysadmin, on the server
  *   `php artisan security:create-sysadmin` asks for the first one.
  * @note Idempotent and never destructive: only missing permissions / titles / types / rows /
- *   files are added; edited texts, descriptions, settings and uploaded files stay. Legal sections
+ *   methods (by code; a deleted shipping method is not created again) / files are added; edited texts, descriptions, settings and uploaded files stay. Legal sections
  *   are added only to a document type without any section. A new permission key added to
  *   data/permissions.php is given to the sysadmin role on the next run.
  * @dependencies
- * - CorePermission, CoreRole, PageTitle, DocumentType, WebSiteSetting, ShopSiteSetting.
+ * - CorePermission, CoreRole, PageTitle, DocumentType, WebSiteSetting, ShopSiteSetting,
+ *   ShopPaymentMethod, ShopShippingMethod.
  */
 
 namespace Database\Seeders;
@@ -35,6 +41,8 @@ use App\Models\Core\CoreRole;
 use App\Models\Legal\DocumentSection;
 use App\Models\Legal\DocumentType;
 use App\Models\Legal\SiteSetting;
+use App\Models\Shop\ShopPaymentMethod;
+use App\Models\Shop\ShopShippingMethod;
 use App\Models\Shop\ShopSiteSetting;
 use App\Models\Web\WebSiteSetting;
 use Illuminate\Database\Seeder;
@@ -52,6 +60,9 @@ class BaseDataSeeder extends Seeder
         'translation_images/shop/czech-republic-default.png',
     ];
 
+    /** Folder of the payment method images on the public disk (former logos and the default icons). */
+    public const PAYMENT_IMAGE_FOLDER = 'payment-methods-images';
+
     /** Language of the legal document templates. */
     private const LEGAL_TEMPLATE_LANG = 'en';
 
@@ -67,6 +78,7 @@ class BaseDataSeeder extends Seeder
             $this->seedPageTitles();
             $this->seedDocumentTypes();
             $this->seedSiteSettings();
+            $this->seedShopMethods();
             $this->seedCompanyDetails();
             $this->seedLegalDocuments();
         });
@@ -148,6 +160,33 @@ class BaseDataSeeder extends Seeder
     }
 
     /**
+     * @description Adds the payment methods and the default shipping method that do not exist
+     *   yet (by code, deleted ones included - a method deleted in the admin stays deleted; edited
+     *   methods stay as they are). A payment method gets its former logo when the file is on the
+     *   public disk, otherwise its default icon (copied by seedDefaultMedia()).
+     * @return void
+     */
+    private function seedShopMethods(): void
+    {
+        $disk = Storage::disk('public');
+        foreach ($this->data('shop_payment_methods') as $method) {
+            if (ShopPaymentMethod::withTrashed()->where('code', $method['code'])->exists()) {
+                continue;
+            }
+            $image = $disk->exists($method['image'])
+                ? $method['image']
+                : self::PAYMENT_IMAGE_FOLDER . '/default-' . $method['default_image'];
+            ShopPaymentMethod::create(array_diff_key($method, ['image' => 1, 'default_image' => 1]) + ['price' => 0, 'image_path' => $image]);
+        }
+
+        foreach ($this->data('shop_shipping_methods') as $method) {
+            if (!ShopShippingMethod::withTrashed()->where('code', $method['code'])->exists()) {
+                ShopShippingMethod::create($method);
+            }
+        }
+    }
+
+    /**
      * @description Creates the placeholder company details with the default logo when no row exists.
      * @return void
      */
@@ -182,8 +221,9 @@ class BaseDataSeeder extends Seeder
     }
 
     /**
-     * @description Copies the default logo and the built-in language flags to the public disk when
-     *   missing (storage is not in git - a new checkout or server has none of them).
+     * @description Copies the default logo, the built-in language flags and the default icons of
+     *   the payment methods to the public disk when missing (storage is not in git - a new
+     *   checkout or server has none of them).
      * @return void
      */
     private function seedDefaultMedia(): void
@@ -192,6 +232,9 @@ class BaseDataSeeder extends Seeder
         $files = [self::DEFAULT_LOGO_PATH => 'default-logo.svg'];
         foreach (self::DEFAULT_FLAG_PATHS as $path) {
             $files[$path] = 'czech-republic-default.png';
+        }
+        foreach (glob(__DIR__ . '/assets/payment-methods/*.svg') ?: [] as $icon) {
+            $files[self::PAYMENT_IMAGE_FOLDER . '/default-' . basename($icon)] = 'payment-methods/' . basename($icon);
         }
         foreach ($files as $target => $source) {
             if (!$disk->exists($target)) {

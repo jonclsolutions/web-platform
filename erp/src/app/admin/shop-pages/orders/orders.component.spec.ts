@@ -89,13 +89,13 @@ describe('OrdersComponent', () => {
     /**
      * @description Toolbar buttons without permission get showIf false; filter columns without status filters stay untouched.
      * @input  granted []; translations$.next({}); then filterColumns without status / payment_status
-     * @output create, reports hidden; no import button (finding #25); export visible; no error without the filters
+     * @output create, reports, e-mail template hidden; no import button (finding #25); export visible; no error without the filters
      */
     it('hides toolbar buttons without permission', () => {
       ctx.permissions.granted = new Set();
       ctx.i18n.translations$.next({});
       const t = Object.fromEntries(component.toolbarButtons.map(b => [b.action, b]));
-      expect([t['handleCreateFormOpened'].showIf, t['openGraphBuilder'].showIf]).toEqual([false, false]);
+      expect([t['handleCreateFormOpened'].showIf, t['openGraphBuilder'].showIf, t['openEmailTemplateEditor'].showIf]).toEqual([false, false, false]);
       expect(t['triggerImport']).toBeUndefined();
       expect(t['exportActiveTable'].showIf).toBeTrue();
       component.filterColumns = [];
@@ -143,15 +143,22 @@ describe('OrdersComponent', () => {
     /**
      * @description Toolbar actions call their handlers; nothing runs while an order is loading.
      * @input  handleToolbarAction(each action) with an activeTable spy; then while processing
-     * @output filter panel toggled; create form open; graph builder open; export on the table; no import; ignored while processing
+     * @output filter panel toggled; create form open; graph builder open; e-mail template editor
+     *   open (17 labels, withdrawal text multiline without sample) and closed; export on the
+     *   table; no import; ignored while processing
      */
     it('dispatches the toolbar actions', () => {
       const table = jasmine.createSpyObj('TableBuilderComponent', ['exportToCSV', 'importData']);
       component.activeTable = table;
-      ['toggleFilters', 'handleCreateFormOpened', 'openGraphBuilder', 'exportActiveTable', 'triggerImport', 'unknown'].forEach(a => component.handleToolbarAction(a));
+      ['toggleFilters', 'handleCreateFormOpened', 'openGraphBuilder', 'openEmailTemplateEditor', 'exportActiveTable', 'triggerImport', 'unknown'].forEach(a => component.handleToolbarAction(a));
       expect(component.showFiltersPanel).toBeTrue();
       expect(component.showOrderForm).toBeTrue();
       expect(component.showGraphBuilder).toBeTrue();
+      expect(component.showEmailTemplateModal).toBeTrue();
+      expect(component.emailTemplateRows.length).toBe(17);
+      expect(component.emailTemplateRows.find(r => r.key === 'withdrawal_info')).toEqual({ key: 'withdrawal_info', sample: '', multiline: true });
+      component.closeEmailTemplateEditor();
+      expect(component.showEmailTemplateModal).toBeFalse();
       expect(table.exportToCSV).toHaveBeenCalled();
       expect(table.importData).not.toHaveBeenCalled();
       component.activeTable = undefined as any;
