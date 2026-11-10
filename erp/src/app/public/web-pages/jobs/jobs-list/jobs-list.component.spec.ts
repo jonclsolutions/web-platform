@@ -4,44 +4,70 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Unit tests of JobsListComponent: open positions are read from the numbered `job_N_*`
- *   translation keys (1-10); incomplete entries are skipped.
+ * @description Unit tests of JobsListComponent: the open positions come from the database
+ *   (public/web/jobs) in the current language; a text missing in it shows 'Cannot load text'; a
+ *   failed request gives an empty list.
  * @dependencies
- * - createPublicPageContext.
+ * - createPublicPageContext (public/web/jobs answered by the PublicDataService stub).
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
 
 import { JobsListComponent } from './jobs-list.component';
-import { createPublicPageContext } from '../../../../../testing/public-test-helpers';
+import { PublicPageContext, createPublicPageContext } from '../../../../../testing/public-test-helpers';
 
 describe('JobsListComponent', () => {
+  let ctx: PublicPageContext;
   let fixture: ComponentFixture<JobsListComponent>;
 
-  /**
-   * @description Complete entries 1 and 10 become jobs, entry 2 without description is skipped,
-   *   entry 11 is outside the range; the list is rendered with settings present.
-   * @input job_1 (complete), job_2 (no short_desc), job_10 (complete), job_11 (complete).
-   * @output [dev, ops] with title + shortDescription; both titles rendered.
-   */
-  it('lists the complete job entries', () => {
-    const jobs = {
-      list_header_1: 'Jobs',
-      job_1_id: 'dev', job_1_title: 'Developer', job_1_short_desc: 'Code',
-      job_2_id: 'pm', job_2_title: 'PM',
-      job_10_id: 'ops', job_10_title: 'Ops', job_10_short_desc: 'Servers',
-      job_11_id: 'x', job_11_title: 'X', job_11_short_desc: 'Y'
-    };
-    const ctx = createPublicPageContext({ translations: { jobs }, settings: { settings: {} } });
+  /** Positions of public/web/jobs. */
+  const JOBS = [
+    { slug: 'dev', title: { cz: 'Vývojář', en: 'Developer' }, summary: { cz: 'Kód', en: 'Code' }, type: {}, location: {}, sections: [] },
+    { slug: 'ops', title: { cz: 'Provoz' }, summary: { cz: 'Servery' }, type: {}, location: {}, sections: [] },
+  ];
+
+  /** Creates the page; `answer` = the response of public/web/jobs. */
+  function create(answer = of(JOBS as unknown)): void {
+    ctx = createPublicPageContext({ translations: { jobs: { list_header_1: 'Jobs' } }, settings: { settings: {} } });
+    ctx.publicData.get.and.returnValue(answer);
     TestBed.configureTestingModule({ imports: [JobsListComponent], providers: ctx.providers });
     fixture = TestBed.createComponent(JobsListComponent);
     fixture.detectChanges();
+  }
 
+  /**
+   * @description The positions are listed in their order in the current language and follow a
+   *   language switch; a missing text shows the placeholder.
+   * @input Two positions (cz complete, en only for the first); switch to en.
+   * @output cz titles / descriptions rendered with their links; en: Developer / Code, then
+   *   'Cannot load text' for the second.
+   */
+  it('lists the positions in the current language', () => {
+    create();
+    expect(ctx.publicData.get).toHaveBeenCalledOnceWith('public/web/jobs');
+    expect(fixture.componentInstance.availableJobs).toEqual([
+      { id: 'dev', title: 'Vývojář', shortDescription: 'Kód' },
+      { id: 'ops', title: 'Provoz', shortDescription: 'Servery' },
+    ]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Servery');
+    expect(fixture.nativeElement.querySelector('a.job-card')?.getAttribute('href')).toBe('/jobs/dev');
+
+    ctx.localization.setLanguage('en');
     expect(fixture.componentInstance.availableJobs).toEqual([
       { id: 'dev', title: 'Developer', shortDescription: 'Code' },
-      { id: 'ops', title: 'Ops', shortDescription: 'Servers' }
+      { id: 'ops', title: 'Cannot load text', shortDescription: 'Cannot load text' },
     ]);
-    expect(fixture.nativeElement.textContent).toContain('Developer');
-    expect(fixture.nativeElement.textContent).toContain('Servers');
+  });
+
+  /**
+   * @description A failed request leaves the list empty (the page still renders).
+   * @input public/web/jobs fails.
+   * @output availableJobs [].
+   */
+  it('shows no positions when they cannot be loaded', () => {
+    create(throwError(() => new Error('down')));
+    expect(fixture.componentInstance.availableJobs).toEqual([]);
   });
 });

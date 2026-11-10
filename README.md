@@ -164,6 +164,12 @@ needed. The same commands work by hand (in the container):
 ./dev.sh db-import <file.sql>           # import a dump (asks first)
 ```
 
+`./dev.sh` / `./dev.sh up` brings an existing database up to date on every start: new migrations
+(`migrate --force`) and missing base data (`db:seed --class=BaseDataSeeder`, e.g. new permission
+keys) – the same as step 6 of a production release. Nothing is dropped or overwritten, and the
+test account is not re-created. After pulling a change while the environment runs, use
+`./dev.sh artisan migrate`.
+
 **Nothing runs in the background after a restart:** the containers have no restart policy, so
 they run only between `./dev.sh` and Ctrl+C / `./dev.sh stop`, and Docker itself starts on demand
 (`docker.socket`) – with many projects the computer starts with none of them running.
@@ -299,6 +305,26 @@ The queue worker (and optionally the scheduler) run only while the environment r
 The scheduler currently contains only nightly GDPR clean-up jobs (see `api/routes/console.php`).
 
 ---
+
+### Content of the public website (FAQ, open positions)
+
+- The FAQ and the open positions (Careers) are content in the database, edited in the admin:
+  **Web → Texty webu**, tabs **FAQ** and **Pracovní pozice** (permissions `web-edit-website-view`
+  / `-update`; API `web/faq`, `web/jobs`, public `public/web/faq`, `public/web/jobs`).
+  - FAQ: categories (the tabs of the page) with questions and answers; jobs: URL (`/jobs/{slug}`),
+    shown / hidden, preview of the list (title, short description), type, place and blocks of the
+    detail (optional heading + text).
+  - Every text per language of the web module; the editor counts the missing translations per
+    language and marks the empty fields - the website shows `Cannot load text` in their place.
+    An optional field (type, place, heading) empty in every language is not shown at all.
+  - Texts are plain text (tags removed by the API), the website keeps their line breaks - no HTML.
+  - Everything of a tab is saved at once; entries left out are deleted.
+- The migration `2026_11_11_000000_create_web_faq_and_jobs` moves the former content of the
+  translation files (`storage/app/public/translations/web/{lang}.json`: `faq.categories`,
+  `faq.items`, `jobs.job_N_*`, `jobs.{slug}`, `jobs.item_meta_*`) of every language into the
+  tables and removes those keys from the files (the HTML of a job detail becomes blocks). Without
+  that content it fills in the former Czech texts. Back up `storage/app/public/translations/`
+  before the release.
 
 ## Production build
 

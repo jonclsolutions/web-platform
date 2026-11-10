@@ -34,133 +34,6 @@
         "section_label": "Časté dotazy",
         "cta_projects_prompt": "Chcete vidět naše projekty?",
         "cta_projects_btn": "Reference",
-        "categories": {
-            "obecne": "Obecné",
-            "vyvoj": "Vývoj",
-            "ceny": "Ceny",
-            "spoluprace": "Spolupráce",
-            "podpora": "Podpora"
-        },
-        "items": {
-            "obecne": [
-                {
-                    "question": "Čím se vaše společnost zabývá?",
-                    "answer": "Jsme softwarová společnost specializující se na vývoj webových, desktopových, mobilních aplikací a AI řešení."
-                },
-                {
-                    "question": "Jak dlouho jste na trhu?",
-                    "answer": "Na trhu působíme 4 roky."
-                },
-                {
-                    "question": "V jakých jazycích komunikujete?",
-                    "answer": "Primárně komunikujeme v češtině a angličtině."
-                },
-                {
-                    "question": "Pracujete i s menšími projekty?",
-                    "answer": "Ano, rádi se ujmeme jak malých, tak rozsáhlých projektů."
-                },
-                {
-                    "question": "Nabízíte bezplatnou konzultaci?",
-                    "answer": "Ano, první konzultaci poskytujeme bezplatně."
-                }
-            ],
-            "vyvoj": [
-                {
-                    "question": "Jaké technologie používáte pro webový vývoj?",
-                    "answer": "Pro frontend pracujeme primárně s Angular a TypeScriptem, pro backend s C#, PHP nebo Node.js."
-                },
-                {
-                    "question": "Vyvíjíte i mobilní aplikace?",
-                    "answer": "Ano, vyvíjíme nativní i cross-platform mobilní aplikace."
-                },
-                {
-                    "question": "Jak probíhá vývoj desktopových aplikací?",
-                    "answer": "Desktopové aplikace vyvíjíme převážně v C# (WPF, WinForms, MAUI), C++ nebo Pythonu."
-                },
-                {
-                    "question": "Nabízíte integraci AI do existujících systémů?",
-                    "answer": "Ano, implementujeme AI řešení jak do nových, tak stávajících systémů."
-                },
-                {
-                    "question": "Jak zajišťujete kvalitu kódu?",
-                    "answer": "Dodržujeme standardy čistého kódu, code review a automatizované testy."
-                },
-                {
-                    "question": "Jak dlouho trvá vývoj typického projektu?",
-                    "answer": "Délka závisí na rozsahu, obvykle 2-6 týdnů pro jednodušší projekty."
-                }
-            ],
-            "ceny": [
-                {
-                    "question": "Jak jsou stanovovány ceny vašich služeb?",
-                    "answer": "Ceny stanovujeme individuálně podle rozsahu a složitosti."
-                },
-                {
-                    "question": "Jaké jsou přibližné ceny webových projektů?",
-                    "answer": "Ceny se pohybují od nižších tisíc až po desítky tisíc korun."
-                },
-                {
-                    "question": "Nabízíte fixní nebo hodinové sazby?",
-                    "answer": "Nabízíme oba modely podle typu spolupráce."
-                },
-                {
-                    "question": "Existují skryté poplatky?",
-                    "answer": "Ne, veškeré náklady transparentně uvádíme v nabídce."
-                },
-                {
-                    "question": "Jaké jsou platební podmínky?",
-                    "answer": "Fakturujeme zálohu při zahájení a zbytek po dokončení projektu."
-                }
-            ],
-            "spoluprace": [
-                {
-                    "question": "Jak probíhá zahájení spolupráce?",
-                    "answer": "Začínáme úvodní konzultací, analýzou a podpisem smlouvy."
-                },
-                {
-                    "question": "Jak komunikujete v průběhu projektu?",
-                    "answer": "Přes e-mail, videohovory nebo jakákoliv služba, která vám vyhovuje."
-                },
-                {
-                    "question": "Mohu sledovat průběh vývoje?",
-                    "answer": "Ano, máte přístup ke sdílenému projektovému prostoru."
-                },
-                {
-                    "question": "Pracujete agilně?",
-                    "answer": "Ano, pracujeme agilní metodikou rozdělenou do sprintů."
-                },
-                {
-                    "question": "Podepíšete NDA?",
-                    "answer": "Samozřejmě, dohodu o mlčenlivosti podepisujeme před zahájením."
-                }
-            ],
-            "podpora": [
-                {
-                    "question": "Nabízíte podporu po dokončení projektu?",
-                    "answer": "Ano, od záruční doby až po dlouhodobé servisní smlouvy."
-                },
-                {
-                    "question": "Jak rychle reagujete na nahlášené problémy?",
-                    "answer": "Kritické problémy do 24h, standardní do 48h."
-                },
-                {
-                    "question": "Zajišťujete aktualizace a údržbu?",
-                    "answer": "Ano, v rámci servisních balíčků."
-                },
-                {
-                    "question": "Co se stane, pokud chci projekt rozšířit?",
-                    "answer": "Provedeme analýzu a připravíme nabídku na rozšíření."
-                },
-                {
-                    "question": "Poskytujete školení?",
-                    "answer": "Ano, ke každému projektu zajistíme dokumentaci a školení."
-                },
-                {
-                    "question": "Jak nahlásím chybu?",
-                    "answer": "E-mailem, přes helpdesk nebo telefonicky."
-                }
-            ]
-        },
         "empty_state_text": "Pro tuto kategorii zatím nemáme žádné otázky. Zkuste jinou kategorii, nebo se nám ozvěte přímo."
     },
     "navigation": {
@@ -782,8 +655,6 @@
         "not_found": "Pozice nebyla nalezena",
         "error_eyebrow": "Chyba",
         "item_hero_eyebrow": "Otevřená pozice",
-        "item_meta_type": "Plný úvazek",
-        "item_meta_location": "Praha \/ Remote",
         "item_desc_label": "O pozici",
         "item_contact_label": "Máte dotaz?",
         "form_eyebrow": "Přihláška",
@@ -814,20 +685,6 @@
         "success_text_before": "Vaše přihláška na pozici",
         "success_text_after": "byla odeslána. Budeme vás kontaktovat co nejdříve.",
         "success_back_btn": "Zpět na výpis pozic",
-        "job_1_id": "ui-designer",
-        "job_1_title": "UI\/UX Designer",
-        "job_1_short_desc": "Tvorba UI designu z domova s prostorem pro kreativitu. Hledáme spolehlivé parťáky se znalostí webové filozofie.",
-        "job_2_id": "sales-rep",
-        "job_2_title": "Obchodní zástupce",
-        "job_2_short_desc": "Sjednávání nabídek s vysokou mírou samostatnosti. Ideální pro komunikativní lidi se znalostí sociálních sítí.",
-        "ui-designer": {
-            "title": "UI\/UX Designer",
-            "content": "Aktuálně otevíráme prostor pro kreativního grafika se zaměřením na UI, který má vášeň pro čistou estetiku a moderní vizuální styl. Tato role je ideální pro studenty (VŠ i SŠ technického směru), kteří hledají maximální flexibilitu a chtějí realizovat své grafické nápady plně v režimu home-office.<br><br><strong>Klíčové odpovědnosti:<\/strong><br>• Kompletní vizuální návrh uživatelských rozhraní v nástrojích jako Figma, Adobe XD nebo Photoshop.<br>• Převádění projektové dokumentace a skic do čistých, moderních a přehledných grafických výstupů.<br>• Práce s barvami, typografií a kompozicí tak, aby byl web nejen krásný, ale i funkční.<br>• Příprava grafických podkladů pro následný vývoj.<br><br><strong>Co od vás vyžadujeme:<\/strong><br>• Věk 18+ a studium nebo absolvování technické SŠ\/VŠ (se zájmem o IT a design).<br>• Pokročilou znalost práce ve Figmě nebo Photoshopu a cit pro detail.<br>• Základní povědomí o webové filozofii (jak se prvky na webu chovají).<br>• Spolehlivost a schopnost samostatně tvořit v domluvených termínech.<br><br><strong>Na co se můžete těšit:<\/strong><br>• Flexibilní spolupráce na DPP s možností plné práce z domova (home-office).<br>• Volný pracovní rozvrh, který si plně přizpůsobíte svým časovým možnostem."
-        },
-        "sales-rep": {
-            "title": "Obchodní zástupce",
-            "content": "Hledáme energického a samostatného kolegu pro Business Development, který nám pomůže identifikovat nové obchodní příležitosti a rozšiřovat naše klientské portfolio. Pokud máte vynikající komunikační dovednosti a baví vás propojovat technická řešení s potřebami klientů, hledáme právě vás.<br><br><strong>Vaše hlavní úkoly:<\/strong><br>• Aktivní vyhledávání nových klientských segmentů a navazování prvotních obchodních kontaktů.<br>• Profesionální sjednávání nabídek a prezentace našich služeb jako moderního technologického partnera.<br>• Budování vztahů s klíčovými klienty a partnery.<br><br><strong>Očekávaný profil kandidáta:<\/strong><br>• Věk 18+ a reprezentativní vystupování v online i osobní komunikaci.<br>• Vysoká míra vnitřní disciplíny, samostatnosti a schopnost efektivního self-managementu.<br>• Znalost prostředí sociálních sítí jako nástroje pro moderní obchod je velkou výhodou.<br>• Schopnost jasně a srozumitelně interpretovat i složitější technická řešení.<br><br><strong>Na co se můžete těšit:<\/strong><br>• Flexibilní spolupráce na DPP s možností plné práce z domova (home-office).<br>• Volný pracovní rozvrh, který si plně přizpůsobíte svým časovým možnostem."
-        },
         "form_first_name_pattern_error": "Jméno nesmí obsahovat čísla ani speciální znaky.",
         "form_last_name_pattern_error": "Příjmení nesmí obsahovat čísla ani speciální znaky.",
         "form_phone_pattern_error": "Telefon smí obsahovat jen číslice a běžné oddělovače (+, mezera, závorky, pomlčka).",

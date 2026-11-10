@@ -8,8 +8,9 @@
  *   (module 'web'). The page only configures BaseTranslationEditorComponent, so the tests check
  *   the configuration through the real editor behaviour: languages and translations of the
  *   'web' module, missing keys against the Czech reference, editing and saving, the
- *   'web-edit-website-update' permission, adding / deleting / toggling languages, JSON upload and
- *   the "Page titles" tab (PageTitlesEditorComponent of the web pages).
+ *   'web-edit-website-update' permission, adding / deleting / toggling languages, JSON upload, the
+ *   "Page titles" tab (PageTitlesEditorComponent of the web pages) and the FAQ / Jobs tabs
+ *   (FaqEditorComponent, JobsEditorComponent - created on the first open, kept when hidden).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, permission stub, alert spy, i18n stub),
  *   ResourceCacheService (real)
@@ -21,6 +22,8 @@ import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { PageTitlesEditorComponent } from '../../components/page-titles-editor/page-titles-editor.component';
 import { EditWebsiteComponent } from './edit-website.component';
+import { FaqEditorComponent } from './content-editors/faq-editor/faq-editor.component';
+import { JobsEditorComponent } from './content-editors/jobs-editor/jobs-editor.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 
 describe('EditWebsiteComponent', () => {
@@ -285,7 +288,7 @@ describe('EditWebsiteComponent', () => {
     flush();
     const el: HTMLElement = fixture.nativeElement;
     const tabs = () => el.querySelectorAll('.ew-page-tab') as NodeListOf<HTMLButtonElement>;
-    expect(tabs().length).toBe(2);
+    expect(tabs().length).toBe(4);
     expect(el.querySelector('app-page-titles-editor')).toBeNull();
 
     tabs()[1].click();
@@ -306,6 +309,42 @@ describe('EditWebsiteComponent', () => {
     expect((el.querySelector('.ew-root') as HTMLElement).style.display).toBe('');
     expect((el.querySelector('.ew-titles-wrap') as HTMLElement).style.display).toBe('none');
     expect(fixture.debugElement.query(By.css('app-page-titles-editor')).componentInstance).toBe(editor);
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description The FAQ and Jobs tabs create their editor on the first open, keep it (hidden)
+   *   when another tab is shown and show a dot for unsaved changes.
+   * @input  click FAQ, Jobs, FAQ again; jobs editor reports unsaved changes.
+   * @output faq editor created once and shown / hidden; jobs editor created; dot on the Jobs tab.
+   */
+  it('manages the FAQ and the jobs in tabs', fakeAsync(() => {
+    answer({ 'web/faq': of([]), 'web/jobs': of([]) });
+    fixture.detectChanges();
+    flush();
+    const el: HTMLElement = fixture.nativeElement;
+    const tabs = () => el.querySelectorAll('.ew-page-tab') as NodeListOf<HTMLButtonElement>;
+    expect(el.querySelector('app-faq-editor')).toBeNull();
+    expect(el.querySelector('app-jobs-editor')).toBeNull();
+
+    tabs()[2].click();
+    fixture.detectChanges();
+    const faq = fixture.debugElement.query(By.directive(FaqEditorComponent)).componentInstance as FaqEditorComponent;
+    expect(component.activeTab).toBe('faq');
+    expect((el.querySelector('.ew-root') as HTMLElement).style.display).toBe('none');
+
+    tabs()[3].click();
+    fixture.detectChanges();
+    const jobs = fixture.debugElement.query(By.directive(JobsEditorComponent)).componentInstance as JobsEditorComponent;
+    jobs.dirtyChange.emit(true);
+    fixture.detectChanges();
+    expect(tabs()[3].querySelector('.ew-page-tab-dot')).not.toBeNull();
+    expect(tabs()[2].querySelector('.ew-page-tab-dot')).toBeNull();
+
+    tabs()[2].click();
+    fixture.detectChanges();
+    expect(fixture.debugElement.query(By.directive(FaqEditorComponent)).componentInstance).toBe(faq);
+    expect((fixture.debugElement.query(By.directive(JobsEditorComponent)).nativeElement.parentElement as HTMLElement).style.display).toBe('none');
     discardPeriodicTasks();
   }));
 });

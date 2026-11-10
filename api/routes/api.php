@@ -36,6 +36,8 @@ use App\Http\Controllers\Api\Web\WebRawRequestCommissionController;
 use App\Http\Controllers\Api\Web\WebLogController;
 use App\Http\Controllers\Api\Web\WebSalesLeadController;
 use App\Http\Controllers\Api\Web\WebNewsController;
+use App\Http\Controllers\Api\Web\WebFaqController;
+use App\Http\Controllers\Api\Web\WebJobController;
 use App\Http\Controllers\Api\Web\WebSalesOrderController;
 use App\Http\Controllers\Api\Web\WebSupportTicketController;
 use App\Http\Controllers\Api\Web\WebJobApplicationController;
@@ -146,6 +148,16 @@ Route::prefix('public/legal')->group(function () {
 */
 Route::prefix('public')->middleware('web.active')->group(function () {
     Route::get('sales-leads/{token}', [WebSalesLeadController::class, 'showByToken'])->middleware('throttle:30,1,sales-lead-token');
+});
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC FAQ AND OPEN POSITIONS — content of the public website (edited in web/edit-website)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('public/web')->middleware(['web.active', 'throttle:60,1,public-web-content'])->group(function () {
+    Route::get('faq',  [WebFaqController::class, 'publicIndex']);
+    Route::get('jobs', [WebJobController::class, 'publicIndex']);
 });
 
 /*
@@ -644,6 +656,16 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
             ->middleware('permission:web-edit-website-view');
         Route::put('/page-titles', [PageTitleController::class, 'update'])
             ->defaults('area', 'web')
+            ->middleware('permission:web-edit-website-update');
+
+        // FAQ and open positions of the public website (web/edit-website, tabs FAQ / Jobs).
+        Route::get('/faq', [WebFaqController::class, 'index'])
+            ->middleware('permission:web-edit-website-view');
+        Route::put('/faq', [WebFaqController::class, 'update'])
+            ->middleware('permission:web-edit-website-update');
+        Route::get('/jobs', [WebJobController::class, 'index'])
+            ->middleware('permission:web-edit-website-view');
+        Route::put('/jobs', [WebJobController::class, 'update'])
             ->middleware('permission:web-edit-website-update');
 
         Route::prefix('settings')->group(function () {

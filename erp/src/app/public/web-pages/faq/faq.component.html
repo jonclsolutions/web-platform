@@ -4,7 +4,8 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Template of the faq component.
+    @description: Template of the faq component (category tabs, accordion of the questions of the
+        database, contact card).
 -->
     
 @if (t && settings) {
@@ -70,14 +71,14 @@
 
       @if (filteredItems.length > 0) {
         <div class="faq-list" role="list">
-          @for (item of filteredItems; track item.question; let i = $index) {
+          @for (item of filteredItems; track item.id; let i = $index) {
             <div class="faq-item" [class.faq-item--open]="item.isActive" [style.animation-delay]="i * 0.06 + 's'" role="listitem">
               <button class="faq-trigger" [attr.aria-expanded]="item.isActive" (click)="toggleFaq(item)">
                 <span class="faq-num" aria-hidden="true">{{ (i + 1).toString().padStart(2, '0') }}</span>
                 <span class="faq-trigger-text">{{ item.question }}</span>
                 <span class="faq-chevron" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
               </button>
-              <div class="faq-body" (click)="toggleFaq(item)"><p class="faq-answer-text" [innerHTML]="item.answer"></p></div>
+              <div class="faq-body" (click)="toggleFaq(item)"><p class="faq-answer-text">{{ item.answer }}</p></div>
             </div>
           }
         </div>

@@ -294,6 +294,8 @@
   font-size: 0.91rem;
   line-height: 1.75;
   color: var(--text-muted);
+  /* Answers are plain text from the admin - their line breaks are kept. */
+  white-space: pre-line;
 }
 
 /* ═══════════════════════════════════════════════════════════════

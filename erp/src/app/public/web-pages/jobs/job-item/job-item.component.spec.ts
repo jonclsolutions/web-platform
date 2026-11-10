@@ -4,12 +4,14 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Unit tests of JobItemComponent (job detail + application form): job content by the route id,
+ * @description Unit tests of JobItemComponent (job detail + application form): the position of the
+ *   route slug from the database (public/web/jobs, texts per language, missing ones 'Cannot load text'),
  *   form validation (Unicode names, e-mail, phone, consent), the CV size limit (20 MB) and the
  *   multipart submit with success / API error; a public page (BasePublicComponent, finding #47) with
  *   translated texts only (finding #44).
  * @dependencies
- * - createPublicPageContext (translations, site settings cache); ActivatedRoute with paramMap id.
+ * - createPublicPageContext (translations, site settings cache, public/web/jobs answered by the
+ *   PublicDataService stub); ActivatedRoute with paramMap id.
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -23,11 +25,17 @@ describe('JobItemComponent', () => {
   let ctx: PublicPageContext;
   let fixture: ComponentFixture<JobItemComponent>;
   let component: JobItemComponent;
-  const jobs = { dev: { title: 'Developer', content: '<p>Code</p>' }, form_error_generic: 'Try again', form_too_many_requests: 'Slow down', form_captcha_failed: 'Robot?', form_email_limit: 'Enough for this address', form_cv_type_error: 'Typ nelze. Povolené: {types}' };
+  /** Positions of public/web/jobs. */
+  const JOBS = [{
+    slug: 'dev', title: { cz: 'Developer', en: 'Developer EN' }, summary: { cz: 'Code' }, type: { cz: 'Full-time' }, location: {},
+    sections: [{ heading: {}, body: { cz: 'Intro\n• one' } }, { heading: { cz: 'Tasks:', en: 'Tasks EN:' }, body: { cz: 'Write code' } }],
+  }];
+  const jobs = { not_found: 'Position not found', form_error_generic: 'Try again', form_too_many_requests: 'Slow down', form_captcha_failed: 'Robot?', form_email_limit: 'Enough for this address', form_cv_type_error: 'Typ nelze. Povolené: {types}' };
 
   /** Creates the page for the job id in the route. */
   function create(id: string | null = 'dev'): void {
     ctx = createPublicPageContext({ translations: { jobs }, settings: { settings: { contact_email: 'hr@x.cz' } } });
+    ctx.publicData.get.and.callFake((endpoint: string) => of(endpoint === 'public/web/jobs' ? JOBS : {}));
     TestBed.configureTestingModule({
       imports: [JobItemComponent],
       providers: [...ctx.providers, { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap(id ? { id } : {}) } } }]
@@ -48,22 +56,40 @@ describe('JobItemComponent', () => {
   const cv = (size = 1000) => { const f = new File(['cv'], 'cv.pdf'); Object.defineProperty(f, 'size', { value: size }); return f; };
 
   /**
-   * @description Job content of the route id and the site settings (startup cache, no own request)
-   *   are loaded; an unknown id leaves the job empty; no admin services / i18n (finding #47).
-   * @input id 'dev'; id 'missing'.
-   * @output job {Developer, <p>Code</p>}, settings from the cache, no GET; web module; job null.
+   * @description The position of the route slug comes from public/web/jobs in the current language
+   *   (an optional field empty everywhere is left out, a missing text = 'Cannot load text'), the
+   *   blocks keep their lines; the site settings come from the startup cache; an unknown slug shows
+   *   "not found"; no admin services / i18n (finding #47).
+   * @input slug 'dev' (cz, then en); slug 'missing'.
+   * @output job in cz (type, no location, 2 blocks); en: English title / heading, other texts
+   *   'Cannot load text'; one GET public/web/jobs; web module; not found text.
    */
-  it('loads the job by the route id', () => {
+  it('loads the job by the route slug', () => {
     create();
-    expect(component.job).toEqual({ title: 'Developer', fullContent: '<p>Code</p>' });
-    expect(ctx.publicData.get).not.toHaveBeenCalled();
+    expect(component.job).toEqual({
+      title: 'Developer', type: 'Full-time', location: null,
+      sections: [{ heading: null, body: 'Intro\n• one' }, { heading: 'Tasks:', body: 'Write code' }],
+    });
+    expect(ctx.publicData.get).toHaveBeenCalledOnceWith('public/web/jobs');
     expect(ctx.localization.setModule).toHaveBeenCalledWith('web');
     expect(component.settings).toEqual({ contact_email: 'hr@x.cz' });
-    expect(fixture.nativeElement.textContent).toContain('Developer');
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('Developer');
+    expect(text).toContain('Full-time');
+    expect(fixture.nativeElement.querySelectorAll('.job-desc-block').length).toBe(2);
+    expect(fixture.nativeElement.querySelector('.job-desc-block strong')?.textContent).toBe('Tasks:');
+
+    ctx.localization.setLanguage('en');
+    expect(component.job).toEqual({
+      title: 'Developer EN', type: 'Cannot load text', location: null,
+      sections: [{ heading: null, body: 'Cannot load text' }, { heading: 'Tasks EN:', body: 'Cannot load text' }],
+    });
 
     TestBed.resetTestingModule();
     create('missing');
     expect(component.job).toBeNull();
+    expect(component.jobsLoaded).toBeTrue();
+    expect(fixture.nativeElement.textContent).toContain('Position not found');
   });
 
   /**

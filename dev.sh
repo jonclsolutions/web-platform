@@ -28,7 +28,8 @@
 #     db container (its environment), it is not passed on the command line of the host.
 #
 # @usage
-#   ./dev.sh                         start everything, follow the logs; Ctrl+C stops everything
+#   ./dev.sh                         start everything (new migrations and missing base data are
+#                                    applied on every start), follow the logs; Ctrl+C stops everything
 #   ./dev.sh up -d                   start in the background (stop with ./dev.sh stop)
 #   ./dev.sh up --with-scheduler     also the scheduler (schedule:work)
 #   ./dev.sh stop                    stop the containers (data stay)
@@ -243,6 +244,7 @@ cmd_up() {
     since="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     dc "${profiles[@]}" up -d --build || die "the containers could not be started – see the output above"
     start_log_writers "$since" "${services[@]}"
+    update_database
     info "logs: dev/logs/<service>.log (${services[*]})"
 
     if [[ "$detach" == "1" ]]; then
@@ -266,6 +268,25 @@ cmd_up() {
     # The log stream ended by itself (every container stopped from elsewhere).
     trap - INT TERM HUP
     stop_log_writers
+}
+
+# -----------------------------------------------------------------------------
+# @description Brings the database up to date with the code on every start - the same two
+# commands as a production release (README → Deployment checklist, step 6): `migrate` runs only
+# the migrations not run yet, the base data seeder adds only missing base data (e.g. new
+# permission keys) and changes nothing else. The test account of DevelopmentSeeder is NOT
+# re-created here (a deleted one stays deleted) - only by init-workspace.sh / ./dev.sh artisan db:seed. Runs in the started api container (the database is healthy by then). A
+# failure is reported, the environment keeps running (fix it, then ./dev.sh artisan migrate).
+# -----------------------------------------------------------------------------
+update_database() {
+    info "database: running new migrations and adding missing base data"
+    if ! dc exec -T api php artisan migrate --force --no-interaction; then
+        warn "migrations failed – see the output above, then ./dev.sh artisan migrate"
+        return 0
+    fi
+    dc exec -T api php artisan db:seed --class=BaseDataSeeder --force --no-interaction >/dev/null \
+        || warn "adding the base data failed – run ./dev.sh artisan db:seed --class=BaseDataSeeder to see why"
+    return 0
 }
 
 cmd_status() {

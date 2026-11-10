@@ -369,6 +369,40 @@ final class TestSchema
      */
     private static function web(): void
     {
+        // FAQ and open positions (migration 2026_11_11_000000_create_web_faq_and_jobs).
+        Schema::create('web_faq_categories', function (Blueprint $t) {
+            $t->id();
+            $t->json('name_i18n')->nullable();
+            $t->unsignedInteger('sort_order')->default(0);
+            $t->timestamps();
+        });
+        Schema::create('web_faq_items', function (Blueprint $t) {
+            $t->id();
+            $t->foreignId('category_id')->constrained('web_faq_categories')->cascadeOnDelete();
+            $t->json('question_i18n')->nullable();
+            $t->json('answer_i18n')->nullable();
+            $t->unsignedInteger('sort_order')->default(0);
+            $t->timestamps();
+        });
+        Schema::create('web_jobs', function (Blueprint $t) {
+            $t->id();
+            $t->string('slug', 80)->unique();
+            foreach (['title', 'summary', 'type', 'location'] as $field) {
+                $t->json("{$field}_i18n")->nullable();
+            }
+            $t->boolean('is_active')->default(true);
+            $t->unsignedInteger('sort_order')->default(0);
+            $t->timestamps();
+        });
+        Schema::create('web_job_sections', function (Blueprint $t) {
+            $t->id();
+            $t->foreignId('job_id')->constrained('web_jobs')->cascadeOnDelete();
+            $t->json('heading_i18n')->nullable();
+            $t->json('body_i18n')->nullable();
+            $t->unsignedInteger('sort_order')->default(0);
+            $t->timestamps();
+        });
+
         Schema::create('web_site_settings', function (Blueprint $t) {
             $t->increments('id');
             $t->boolean('is_web_active')->default(true);

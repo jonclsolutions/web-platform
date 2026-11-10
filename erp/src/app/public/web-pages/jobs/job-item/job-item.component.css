@@ -138,6 +138,14 @@
   color: #b0b0c8;
 }
 
+/* One block of the description (plain text of the admin): line breaks kept, an empty line between
+   the blocks (as the former <br><br>). */
+.job-desc-block {
+  white-space: pre-line;
+  margin-bottom: 1.8em;
+}
+.job-desc-block:last-child { margin-bottom: 0; }
+
 ::ng-deep .job-desc-body p { margin-bottom: 16px; }
 ::ng-deep .job-desc-body strong { color: var(--color-white); font-weight: 600; }
 ::ng-deep .job-desc-body ul { padding-left: 20px; margin-bottom: 16px; }

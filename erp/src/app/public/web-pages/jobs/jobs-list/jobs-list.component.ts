@@ -1,8 +1,25 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+/**
+ * @file jobs-list.component.ts
+ * @path src/app/public/web-pages/jobs/jobs-list/jobs-list.component.ts
+ * @project JS web-platform
+ * @author JS
+ * @created 2025
+ * @description Careers page: the list of the open positions (title, short description) linking
+ * to their detail. The positions come from the database (admin: web/edit-website, tab Jobs) in all
+ * languages; the static texts of the page from the `jobs` translations.
+ * @note A text missing in the current language shows 'Cannot load text' (WebContentService).
+ * @dependencies
+ * - BasePublicComponent (translations, site settings, current language), WebContentService.
+ */
+
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { BasePublicComponent } from '../../../base-public.component';
 import { JobItem } from './';
+import { combineLatest } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { WebContentService, localizedText } from '../../../../shared/services/web-content.service';
 
 @Component({
   selector: 'app-jobs-list',
@@ -19,21 +36,19 @@ export class JobsListComponent extends BasePublicComponent {
 
   availableJobs: JobItem[] = [];
 
-  // Hook called automatically after the translations are loaded
-  protected override onTranslationsLoaded(): void {
-    this.loadJobs();
-  }
+  private readonly webContent = inject(WebContentService);
 
-  private loadJobs(): void {
-    const jobs: JobItem[] = [];
-    for (let i = 1; i <= 10; i++) {
-      const id    = this.t[`job_${i}_id`];
-      const title = this.t[`job_${i}_title`];
-      const desc  = this.t[`job_${i}_short_desc`];
-      if (id && title && desc) {
-        jobs.push({ id, title, shortDescription: desc });
-      }
-    }
-    this.availableJobs = jobs;
+  /** @description Loads the active positions and follows the current language. */
+  protected override onInit(): void {
+    combineLatest([this.webContent.jobs(), this.currentLanguage$])
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(([jobs, lang]) => {
+        this.availableJobs = (Array.isArray(jobs) ? jobs : []).map(job => ({
+          id: job.slug,
+          title: localizedText(job.title, lang),
+          shortDescription: localizedText(job.summary, lang),
+        }));
+        this.cdr.markForCheck();
+      });
   }
 }

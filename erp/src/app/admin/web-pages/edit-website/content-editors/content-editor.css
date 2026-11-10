@@ -1,0 +1,559 @@
+/*
+    @file: content-editor.css
+    @path: /src/app/admin/web-pages/edit-website/content-editors/content-editor.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Shared styles of the content editors of the public website (FAQ, Jobs; ce-*):
+      card, header with save / discard, language bar with the missing translations, collapsible
+      entry cards with sub-entries and the form fields.
+    @dependencies: shared/styles/tokens.css (--color-*)
+*/
+
+/*
+    @module: Card and language bar
+    @description: Same look as the page titles editor (card, header actions, language tabs).
+    @usage: .ce-card, .ce-card-header, .ce-header-actions, .ce-btn, .ce-i18n-bar, .ce-lang-tab
+*/
+:host { display: block; }
+
+/* ── Card ────────────────────────────────────────────────────── */
+.ce-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-sand-200);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  color: var(--color-zinc-900);
+}
+
+.ce-card-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px 10px 18px;
+  min-height: 52px;
+  background: var(--color-zinc-50);
+  border-bottom: 1px solid var(--color-zinc-100);
+}
+
+.ce-card-icon { display: inline-flex; }
+
+.ce-card-title {
+  flex: 1;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.ce-dirty-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-amber-600);
+  background: var(--color-amber-50);
+  border: 1px solid var(--color-amber-200);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.ce-card-body {
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ce-intro {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: var(--color-zinc-600);
+}
+
+.ce-error {
+  background: var(--color-rose-50);
+  border: 1px solid var(--color-rose-200);
+  color: var(--color-rose-800);
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+}
+
+/* ── Skeleton ────────────────────────────────────────────────── */
+.ce-skeleton-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ce-skeleton-row {
+  height: 52px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--color-zinc-100) 25%, var(--color-zinc-200) 50%, var(--color-zinc-100) 75%);
+  background-size: 200% 100%;
+  animation: ce-shimmer 1.3s infinite;
+}
+
+@keyframes ce-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+/* ── Language bar ────────────────────────────────────────────── */
+.ce-i18n-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 9px 13px;
+  background: var(--color-zinc-50);
+  border: 1px solid var(--color-sand-200);
+  border-radius: 12px;
+}
+
+.ce-i18n-bar-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--color-zinc-500);
+  white-space: nowrap;
+}
+
+.ce-lang-tabs {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.ce-lang-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  color: var(--color-zinc-600);
+  background: var(--color-white);
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ce-lang-tab:hover { border-color: var(--color-zinc-400); color: var(--color-zinc-900); }
+
+.ce-lang-tab.active {
+  background: var(--color-zinc-900);
+  border-color: var(--color-zinc-900);
+  color: var(--color-white);
+}
+
+.ce-lang-icon {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+/* ── Save / discard - top right of the card header ─────────── */
+/* Save / discard - top right of the card header. */
+.ce-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.ce-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.ce-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.ce-btn-primary { background: var(--color-zinc-900); color: var(--color-white); }
+.ce-btn-primary:hover:not(:disabled) { background: var(--color-black); }
+
+.ce-btn-ghost {
+  background: transparent;
+  color: var(--color-zinc-500);
+  border-color: var(--color-sand-200);
+}
+
+.ce-btn-ghost:hover:not(:disabled) { background: var(--color-zinc-100); color: var(--color-zinc-900); }
+
+/*
+    @module: Missing translations
+    @description: Count on a language tab / an entry, the warning of the edited language and the
+      marking of an empty field.
+    @usage: .ce-missing-count, .ce-warning, .ce-input--missing, .ce-missing-text
+*/
+.ce-missing-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--color-rose-500, #f43f5e);
+  color: var(--color-white);
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.ce-warning {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--color-amber-200);
+  background: var(--color-amber-50);
+  color: var(--color-amber-800, #92400e);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.ce-input--missing {
+  border-color: var(--color-rose-300, #fda4af) !important;
+  background: var(--color-rose-50, #fff1f2) !important;
+}
+
+.ce-missing-text {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-rose-600, #e11d48);
+}
+
+/*
+    @module: Entries
+    @description: One collapsible card per category / position (header: title, meta, status,
+      reorder / remove pictograms), its sub-entries (questions / blocks) and the add buttons.
+    @usage: .ce-entry, .ce-entry-header, .ce-entry-toggle, .ce-entry-actions, .ce-icon-btn,
+      .ce-subentry, .ce-add-btn
+*/
+.ce-entry {
+  border: 1px solid var(--color-sand-200);
+  border-radius: 14px;
+  background: var(--color-white);
+}
+
+.ce-entry--inactive { background: var(--color-zinc-50); }
+
+.ce-entry-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 8px 6px;
+}
+
+.ce-entry-toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ce-entry-toggle:hover { background: var(--color-zinc-50); }
+
+.ce-chevron {
+  flex-shrink: 0;
+  color: var(--color-zinc-500);
+  transition: transform 0.2s ease;
+}
+
+.ce-chevron--open { transform: rotate(90deg); }
+
+.ce-entry-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ce-entry-meta {
+  font-size: 0.74rem;
+  color: var(--color-zinc-400);
+  white-space: nowrap;
+}
+
+.ce-entry-slug { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+.ce-status {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--color-emerald-700, #047857);
+  background: var(--color-emerald-50, #ecfdf5);
+  border: 1px solid var(--color-emerald-200, #a7f3d0);
+}
+
+.ce-status--off {
+  color: var(--color-zinc-500);
+  background: var(--color-zinc-100);
+  border-color: var(--color-zinc-200);
+}
+
+.ce-entry-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.ce-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 999px;
+  background: var(--color-white);
+  color: var(--color-zinc-700);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.ce-icon-btn:hover:not(:disabled) {
+  background: var(--color-zinc-100);
+  border-color: var(--color-zinc-300);
+}
+
+.ce-icon-btn--danger:hover:not(:disabled) {
+  background: var(--color-rose-50, #fff1f2);
+  border-color: var(--color-rose-200, #fecdd3);
+  color: var(--color-rose-600, #e11d48);
+}
+
+.ce-icon-btn:disabled { opacity: 0.4; cursor: default; }
+
+.ce-icon-btn:focus-visible,
+.ce-entry-toggle:focus-visible,
+.ce-add-btn:focus-visible {
+  outline: 2px solid var(--color-zinc-900);
+  outline-offset: 2px;
+}
+
+.ce-entry-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 16px 16px;
+  border-top: 1px solid var(--color-zinc-100);
+  padding-top: 14px;
+}
+
+.ce-sublist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ce-subentry {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-zinc-100);
+  border-radius: 12px;
+  background: var(--color-zinc-50);
+}
+
+.ce-subentry-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ce-subentry-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--color-zinc-900);
+  color: var(--color-white);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.ce-subentry-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-zinc-600);
+}
+
+.ce-group-title {
+  margin: 4px 0 -4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-zinc-500);
+}
+
+.ce-add-btn {
+  align-self: flex-start;
+  padding: 8px 16px;
+  border: 1px dashed var(--color-zinc-300);
+  border-radius: 999px;
+  background: var(--color-white);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-zinc-700);
+  cursor: pointer;
+}
+
+.ce-add-btn:hover { border-color: var(--color-zinc-500); color: var(--color-zinc-900); }
+
+.ce-add-btn--small { padding: 6px 12px; font-size: 0.78rem; }
+
+.ce-empty,
+.ce-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-zinc-500);
+}
+
+/*
+    @module: Fields
+    @description: Label with the edited language, inputs / text areas, the URL row with the
+      shown / hidden switch and the "move to category" select.
+    @usage: .ce-field, .ce-label, .ce-input, .ce-textarea, .ce-row, .ce-check, .ce-select
+*/
+.ce-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.ce-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--color-zinc-600);
+}
+
+.ce-lang-code,
+.ce-optional {
+  font-size: 0.64rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--color-zinc-100);
+  color: var(--color-zinc-500);
+}
+
+.ce-optional { background: transparent; border: 1px solid var(--color-zinc-200); font-weight: 600; }
+
+.ce-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  color: var(--color-zinc-900);
+  background: var(--color-white);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ce-input:focus {
+  outline: none;
+  border-color: var(--color-zinc-900);
+  box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
+}
+
+.ce-input[readonly] {
+  background: var(--color-zinc-50);
+  color: var(--color-zinc-600);
+}
+
+.ce-input--mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+.ce-textarea {
+  resize: vertical;
+  min-height: 90px;
+  line-height: 1.55;
+}
+
+.ce-field-hint {
+  font-size: 0.72rem;
+  color: var(--color-zinc-400);
+}
+
+.ce-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ce-field--grow { flex: 1 1 220px; min-width: 0; }
+
+.ce-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 26px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ce-select {
+  max-width: 180px;
+  padding: 5px 8px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 8px;
+  background: var(--color-white);
+  font: inherit;
+  font-size: 0.76rem;
+  color: var(--color-zinc-700);
+}
+
+@media (max-width: 640px) {
+  .ce-i18n-bar { flex-direction: column; align-items: flex-start; }
+  .ce-header-actions { margin-left: 0; width: 100%; justify-content: flex-end; }
+  .ce-entry-meta,
+  .ce-status { display: none; }
+  .ce-check { margin-top: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ce-skeleton-row, .ce-chevron { animation: none; transition: none; }
+}

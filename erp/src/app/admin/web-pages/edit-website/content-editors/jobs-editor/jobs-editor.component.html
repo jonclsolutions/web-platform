@@ -1,0 +1,231 @@
+<!--
+    @file: jobs-editor.component.html
+    @path: /src/app/admin/web-pages/edit-website/content-editors/jobs-editor/jobs-editor.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Jobs editor: card header with save / discard, language bar with the number of
+        missing translations, one card per position (URL, shown / hidden, preview of the list, type
+        and place, blocks of the detail). Logic: jobs-editor.component.ts.
+-->
+<div class="ce-card">
+
+  <div class="ce-card-header">
+    <span class="ce-card-icon" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+      </svg>
+    </span>
+    <span class="ce-card-title">{{ strings.jobs_card_title }}</span>
+    @if (isDirty) {
+      <span class="ce-dirty-badge">{{ strings.unsaved_badge }}</span>
+    }
+    @if (!loading && !loadError && canUpdate) {
+      <div class="ce-header-actions">
+        @if (isDirty) {
+          <button type="button" class="ce-btn ce-btn-ghost" (click)="discard()" [disabled]="saving">{{ strings.discard_button }}</button>
+        }
+        <button type="button" class="ce-btn ce-btn-primary" (click)="save()" [disabled]="!isDirty || saving">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+          </svg>
+          {{ saving ? strings.saving_label : strings.save_button }}
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (loading) {
+    <div class="ce-skeleton-body">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="ce-skeleton-row"></div>
+      }
+    </div>
+  } @else if (loadError) {
+    <div class="ce-card-body">
+      <div class="ce-error">{{ strings.load_error }}</div>
+    </div>
+  } @else {
+    <div class="ce-card-body">
+      <p class="ce-intro">{{ strings.jobs_intro }}</p>
+
+      <div class="ce-i18n-bar">
+        <span class="ce-i18n-bar-label">{{ strings.language_label }}</span>
+        <div class="ce-lang-tabs">
+          @for (l of languages; track l.code) {
+            <button type="button" class="ce-lang-tab" [class.active]="lang === l.code" (click)="switchLang(l.code)"
+                    [title]="missingCount(l.code) ? strings.missing_badge_title : ''">
+              @if (l.iconUrl) {
+                <img [src]="l.iconUrl" class="ce-lang-icon" [alt]="l.code">
+              }
+              {{ l.code | uppercase }}
+              @if (missingCount(l.code); as count) {
+                <span class="ce-missing-count">{{ count }}</span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (missingWarning) {
+        <div class="ce-warning" role="status">{{ missingWarning }}</div>
+      }
+
+      @if (!entries.length) {
+        <p class="ce-empty">{{ strings.jobs_empty }}</p>
+      }
+
+      @for (job of entries; track job.key; let ji = $index; let lastJob = $last) {
+        <section class="ce-entry" [class.ce-entry--inactive]="!job.is_active">
+          <div class="ce-entry-header">
+            <button type="button" class="ce-entry-toggle" (click)="toggle(job)" [attr.aria-expanded]="job.open">
+              <svg class="ce-chevron" [class.ce-chevron--open]="job.open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+              <span class="ce-entry-title">{{ titleOf(job) }}</span>
+              <span class="ce-entry-meta ce-entry-slug">/jobs/{{ job.slug || '…' }}</span>
+              <span class="ce-status" [class.ce-status--off]="!job.is_active">{{ job.is_active ? strings.jobs_status_shown : strings.jobs_status_hidden }}</span>
+              @if (missingIn(job); as count) {
+                <span class="ce-missing-count" [title]="strings.missing_badge_title">{{ count }}</span>
+              }
+            </button>
+            @if (canUpdate) {
+              <div class="ce-entry-actions">
+                <button type="button" class="ce-icon-btn" (click)="move(entries, ji, -1)" [disabled]="ji === 0" [title]="strings.move_up" [attr.aria-label]="strings.move_up">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                </button>
+                <button type="button" class="ce-icon-btn" (click)="move(entries, ji, 1)" [disabled]="lastJob" [title]="strings.move_down" [attr.aria-label]="strings.move_down">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <button type="button" class="ce-icon-btn ce-icon-btn--danger" (click)="remove(entries, ji)" [title]="strings.jobs_remove" [attr.aria-label]="strings.jobs_remove">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button>
+              </div>
+            }
+          </div>
+
+          @if (job.open) {
+            <div class="ce-entry-body">
+              <div class="ce-row">
+                <label class="ce-field ce-field--grow">
+                  <span class="ce-label">{{ strings.jobs_slug }}</span>
+                  <input class="ce-input ce-input--mono" type="text" [class.ce-input--missing]="!!slugProblem(job)"
+                         [(ngModel)]="job.slug" (ngModelChange)="changed()" [maxlength]="MAX_SLUG"
+                         [readonly]="!canUpdate" [name]="'job_slug_' + job.key" [placeholder]="strings.jobs_slug_placeholder">
+                  @if (slugProblem(job); as problem) {
+                    <span class="ce-missing-text">{{ problem }}</span>
+                  } @else {
+                    <span class="ce-field-hint">{{ strings.jobs_slug_hint }}</span>
+                  }
+                </label>
+                <label class="ce-check">
+                  <input type="checkbox" [(ngModel)]="job.is_active" (ngModelChange)="changed()" [disabled]="!canUpdate" [name]="'job_active_' + job.key">
+                  {{ strings.jobs_active }}
+                </label>
+              </div>
+
+              <h4 class="ce-group-title">{{ strings.jobs_preview_heading }}</h4>
+              <div class="ce-subentry">
+                    <label class="ce-field">
+                      <span class="ce-label">{{ strings.jobs_title }} <span class="ce-lang-code">{{ lang | uppercase }}</span></span>
+                      <input class="ce-input" type="text" [class.ce-input--missing]="isMissing(job.title_i18n)"
+                             [(ngModel)]="job.title_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_TITLE"
+                             [readonly]="!canUpdate" [name]="'job_title_' + job.key + '_' + lang" (blur)="suggestSlug(job)">
+                      @if (isMissing(job.title_i18n)) {
+                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                      }
+                    </label>
+                    <label class="ce-field">
+                      <span class="ce-label">{{ strings.jobs_summary }} <span class="ce-lang-code">{{ lang | uppercase }}</span></span>
+                      <textarea class="ce-input ce-textarea" rows="5" [class.ce-input--missing]="isMissing(job.summary_i18n)"
+                                [(ngModel)]="job.summary_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_SUMMARY"
+                                [readonly]="!canUpdate" [name]="'job_summary_' + job.key + '_' + lang"></textarea>
+                      @if (isMissing(job.summary_i18n)) {
+                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                      }
+                    </label>
+              </div>
+
+              <h4 class="ce-group-title">{{ strings.jobs_detail_heading }}</h4>
+              <div class="ce-subentry">
+                <div class="ce-row">
+                  <div class="ce-field--grow">
+                    <label class="ce-field">
+                      <span class="ce-label">{{ strings.jobs_type }} <span class="ce-lang-code">{{ lang | uppercase }}</span> <span class="ce-optional">{{ strings.optional_label }}</span></span>
+                      <input class="ce-input" type="text" [class.ce-input--missing]="isMissing(job.type_i18n, true)"
+                             [(ngModel)]="job.type_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_META"
+                             [readonly]="!canUpdate" [name]="'job_type_' + job.key + '_' + lang">
+                      @if (isMissing(job.type_i18n, true)) {
+                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                      }
+                    </label>
+                  </div>
+                  <div class="ce-field--grow">
+                    <label class="ce-field">
+                      <span class="ce-label">{{ strings.jobs_location }} <span class="ce-lang-code">{{ lang | uppercase }}</span> <span class="ce-optional">{{ strings.optional_label }}</span></span>
+                      <input class="ce-input" type="text" [class.ce-input--missing]="isMissing(job.location_i18n, true)"
+                             [(ngModel)]="job.location_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_META"
+                             [readonly]="!canUpdate" [name]="'job_location_' + job.key + '_' + lang">
+                      @if (isMissing(job.location_i18n, true)) {
+                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                      }
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ce-sublist">
+                @for (section of job.sections; track section.key; let si = $index; let lastSection = $last) {
+                  <div class="ce-subentry">
+                    <div class="ce-subentry-header">
+                      <span class="ce-subentry-num">{{ si + 1 }}</span>
+                      <span class="ce-subentry-label">{{ strings.jobs_section }}</span>
+                      @if (canUpdate) {
+                        <div class="ce-entry-actions">
+                          <button type="button" class="ce-icon-btn" (click)="move(job.sections, si, -1)" [disabled]="si === 0" [title]="strings.move_up" [attr.aria-label]="strings.move_up">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                          </button>
+                          <button type="button" class="ce-icon-btn" (click)="move(job.sections, si, 1)" [disabled]="lastSection" [title]="strings.move_down" [attr.aria-label]="strings.move_down">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                          </button>
+                          <button type="button" class="ce-icon-btn ce-icon-btn--danger" (click)="remove(job.sections, si)" [title]="strings.jobs_remove_section" [attr.aria-label]="strings.jobs_remove_section">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                    <label class="ce-field">
+                      <span class="ce-label">{{ strings.jobs_section_heading }} <span class="ce-lang-code">{{ lang | uppercase }}</span> <span class="ce-optional">{{ strings.optional_label }}</span></span>
+                      <input class="ce-input" type="text" [class.ce-input--missing]="isMissing(section.heading_i18n, true)"
+                             [(ngModel)]="section.heading_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_HEADING"
+                             [readonly]="!canUpdate" [name]="'job_heading_' + section.key + '_' + lang">
+                      @if (isMissing(section.heading_i18n, true)) {
+                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                      }
+                    </label>
+                    <label class="ce-field">
+                      <span class="ce-label">{{ strings.jobs_section_body }} <span class="ce-lang-code">{{ lang | uppercase }}</span></span>
+                      <textarea class="ce-input ce-textarea" rows="5" [class.ce-input--missing]="isMissing(section.body_i18n)"
+                                [(ngModel)]="section.body_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_BODY"
+                                [readonly]="!canUpdate" [name]="'job_body_' + section.key + '_' + lang"></textarea>
+                      @if (isMissing(section.body_i18n)) {
+                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                      }
+                    </label>
+                  </div>
+                }
+                @if (canUpdate) {
+                  <button type="button" class="ce-add-btn ce-add-btn--small" (click)="addSection(job)">+ {{ strings.jobs_add_section }}</button>
+                }
+              </div>
+            </div>
+          }
+        </section>
+      }
+
+      @if (canUpdate) {
+        <button type="button" class="ce-add-btn" (click)="addJob()">+ {{ strings.jobs_add }}</button>
+      }
+
+      <p class="ce-hint">{{ strings.text_hint }}</p>
+    </div>
+  }
+</div>

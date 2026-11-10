@@ -1,0 +1,181 @@
+<!--
+    @file: faq-editor.component.html
+    @path: /src/app/admin/web-pages/edit-website/content-editors/faq-editor/faq-editor.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: FAQ editor: card header with save / discard, language bar with the number of
+        missing translations, one card per category with its questions. Logic: faq-editor.component.ts.
+-->
+<div class="ce-card">
+
+  <div class="ce-card-header">
+    <span class="ce-card-icon" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    </span>
+    <span class="ce-card-title">{{ strings.faq_card_title }}</span>
+    @if (isDirty) {
+      <span class="ce-dirty-badge">{{ strings.unsaved_badge }}</span>
+    }
+    @if (!loading && !loadError && canUpdate) {
+      <div class="ce-header-actions">
+        @if (isDirty) {
+          <button type="button" class="ce-btn ce-btn-ghost" (click)="discard()" [disabled]="saving">{{ strings.discard_button }}</button>
+        }
+        <button type="button" class="ce-btn ce-btn-primary" (click)="save()" [disabled]="!isDirty || saving">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+          </svg>
+          {{ saving ? strings.saving_label : strings.save_button }}
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (loading) {
+    <div class="ce-skeleton-body">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="ce-skeleton-row"></div>
+      }
+    </div>
+  } @else if (loadError) {
+    <div class="ce-card-body">
+      <div class="ce-error">{{ strings.load_error }}</div>
+    </div>
+  } @else {
+    <div class="ce-card-body">
+      <p class="ce-intro">{{ strings.faq_intro }}</p>
+
+      <div class="ce-i18n-bar">
+        <span class="ce-i18n-bar-label">{{ strings.language_label }}</span>
+        <div class="ce-lang-tabs">
+          @for (l of languages; track l.code) {
+            <button type="button" class="ce-lang-tab" [class.active]="lang === l.code" (click)="switchLang(l.code)"
+                    [title]="missingCount(l.code) ? strings.missing_badge_title : ''">
+              @if (l.iconUrl) {
+                <img [src]="l.iconUrl" class="ce-lang-icon" [alt]="l.code">
+              }
+              {{ l.code | uppercase }}
+              @if (missingCount(l.code); as count) {
+                <span class="ce-missing-count">{{ count }}</span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (missingWarning) {
+        <div class="ce-warning" role="status">{{ missingWarning }}</div>
+      }
+
+      @if (!entries.length) {
+        <p class="ce-empty">{{ strings.faq_empty }}</p>
+      }
+
+      @for (category of entries; track category.key; let ci = $index; let lastCategory = $last) {
+        <section class="ce-entry">
+          <div class="ce-entry-header">
+            <button type="button" class="ce-entry-toggle" (click)="toggle(category)" [attr.aria-expanded]="category.open">
+              <svg class="ce-chevron" [class.ce-chevron--open]="category.open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+              <span class="ce-entry-title">{{ nameOf(category) }}</span>
+              <span class="ce-entry-meta">{{ questionCount(category) }}</span>
+              @if (missingIn(category); as count) {
+                <span class="ce-missing-count" [title]="strings.missing_badge_title">{{ count }}</span>
+              }
+            </button>
+            @if (canUpdate) {
+              <div class="ce-entry-actions">
+                <button type="button" class="ce-icon-btn" (click)="move(entries, ci, -1)" [disabled]="ci === 0" [title]="strings.move_up" [attr.aria-label]="strings.move_up">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                </button>
+                <button type="button" class="ce-icon-btn" (click)="move(entries, ci, 1)" [disabled]="lastCategory" [title]="strings.move_down" [attr.aria-label]="strings.move_down">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <button type="button" class="ce-icon-btn ce-icon-btn--danger" (click)="remove(entries, ci)" [title]="strings.faq_remove_category" [attr.aria-label]="strings.faq_remove_category">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button>
+              </div>
+            }
+          </div>
+
+          @if (category.open) {
+            <div class="ce-entry-body">
+              <label class="ce-field">
+                <span class="ce-label">{{ strings.faq_category_name }} <span class="ce-lang-code">{{ lang | uppercase }}</span></span>
+                <input class="ce-input" type="text" [class.ce-input--missing]="isMissing(category.name_i18n)"
+                       [(ngModel)]="category.name_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_NAME"
+                       [readonly]="!canUpdate" [name]="'faq_cat_' + category.key + '_' + lang">
+                @if (isMissing(category.name_i18n)) {
+                  <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                }
+              </label>
+
+              <div class="ce-sublist">
+                @for (item of category.items; track item.key; let ii = $index; let lastItem = $last) {
+                  <div class="ce-subentry">
+                    <div class="ce-subentry-header">
+                      <span class="ce-subentry-num">{{ ii + 1 }}</span>
+                      @if (canUpdate) {
+                        <div class="ce-entry-actions">
+                          @if (entries.length > 1) {
+                            <select class="ce-select" [attr.aria-label]="strings.faq_move_to" [title]="strings.faq_move_to"
+                                    (change)="moveItemTo(category, ii, $any($event.target).value); $any($event.target).value = ''">
+                              <option value="">{{ strings.faq_move_to }}</option>
+                              @for (other of entries; track other.key) {
+                                @if (other !== category) {
+                                  <option [value]="other.key">{{ nameOf(other) }}</option>
+                                }
+                              }
+                            </select>
+                          }
+                          <button type="button" class="ce-icon-btn" (click)="move(category.items, ii, -1)" [disabled]="ii === 0" [title]="strings.move_up" [attr.aria-label]="strings.move_up">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                          </button>
+                          <button type="button" class="ce-icon-btn" (click)="move(category.items, ii, 1)" [disabled]="lastItem" [title]="strings.move_down" [attr.aria-label]="strings.move_down">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                          </button>
+                          <button type="button" class="ce-icon-btn ce-icon-btn--danger" (click)="remove(category.items, ii)" [title]="strings.faq_remove_question" [attr.aria-label]="strings.faq_remove_question">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                    <label class="ce-field">
+                      <span class="ce-label">{{ strings.faq_question }} <span class="ce-lang-code">{{ lang | uppercase }}</span></span>
+                      <input class="ce-input" type="text" [class.ce-input--missing]="isMissing(item.question_i18n)"
+                             [(ngModel)]="item.question_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_QUESTION"
+                             [readonly]="!canUpdate" [name]="'faq_q_' + item.key + '_' + lang">
+                      @if (isMissing(item.question_i18n)) {
+                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                      }
+                    </label>
+                    <label class="ce-field">
+                      <span class="ce-label">{{ strings.faq_answer }} <span class="ce-lang-code">{{ lang | uppercase }}</span></span>
+                      <textarea class="ce-input ce-textarea" rows="4" [class.ce-input--missing]="isMissing(item.answer_i18n)"
+                                [(ngModel)]="item.answer_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_ANSWER"
+                                [readonly]="!canUpdate" [name]="'faq_a_' + item.key + '_' + lang"></textarea>
+                      @if (isMissing(item.answer_i18n)) {
+                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                      }
+                    </label>
+                  </div>
+                }
+                @if (canUpdate) {
+                  <button type="button" class="ce-add-btn ce-add-btn--small" (click)="addItem(category)">+ {{ strings.faq_add_question }}</button>
+                }
+              </div>
+            </div>
+          }
+        </section>
+      }
+
+      @if (canUpdate) {
+        <button type="button" class="ce-add-btn" (click)="addCategory()">+ {{ strings.faq_add_category }}</button>
+      }
+
+      <p class="ce-hint">{{ strings.text_hint }}</p>
+    </div>
+  }
+</div>

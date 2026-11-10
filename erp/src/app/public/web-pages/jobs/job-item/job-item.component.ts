@@ -4,9 +4,15 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Job detail page with the public application form (CV upload).
+ * @description Job detail page with the public application form (CV upload). The position
+ *   (title, type, place of work and the blocks of the description) comes from the database
+ *   (admin: web/edit-website, tab Jobs) in all languages; the static texts from `jobs`.
+ * @note A text missing in the current language shows 'Cannot load text'; an optional field (type,
+ *   place, heading of a block) empty in every language is not shown. Texts are plain text - their
+ *   line breaks are kept (CSS `white-space: pre-line`), never HTML.
  * @dependencies
- * - BasePublicComponent (translations, site settings), PublicDataService (submit), LoadingService.
+ * - BasePublicComponent (translations, site settings), PublicDataService (submit), LoadingService,
+ *   WebContentService (the position).
  */
 
 import { Component, ChangeDetectionStrategy, ViewChild, inject } from '@angular/core';
@@ -20,7 +26,18 @@ import { UploadRulesService } from '../../../../shared/services/upload-rules.ser
 import { UploadRule, extensionsLabel, isAttachmentRejection, isExtensionAllowed } from '../../../../shared/utils/upload-rules';
 import { publicFormErrorKey } from '../../../../shared/utils/public-form-errors';
 import { CaptchaComponent } from '../../../../shared/components/captcha/captcha.component';
-import { switchMap } from 'rxjs';
+import { combineLatest, switchMap } from 'rxjs';
+import { WebContentService, localizedText, optionalText } from '../../../../shared/services/web-content.service';
+
+/** One position of the detail page in the current language. */
+export interface JobDetail {
+  title: string;
+  /** Type of the job (null = none in any language - not shown). */
+  type: string | null;
+  /** Place of work (null = none in any language - not shown). */
+  location: string | null;
+  sections: { heading: string | null; body: string }[];
+}
 
 /**
  * @description Allowed characters of the first / last name - letters (incl. diacritics through
@@ -61,7 +78,10 @@ export class JobItemComponent extends BasePublicComponent {
   private readonly apiEndpoint = 'job_applications';
 
   applicationForm!: FormGroup;
-  job: any = null;
+  /** The position of the route (null = not found / not loaded yet). */
+  job: JobDetail | null = null;
+  /** Whether the positions were loaded (the "not found" text waits for them). */
+  jobsLoaded = false;
   isSubmitted = false;
   selectedFile: File | null = null;
   /** Set when the user chooses a file over the size limit. */
@@ -79,12 +99,14 @@ export class JobItemComponent extends BasePublicComponent {
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
   private uploadRules = inject(UploadRulesService);
+  private webContent = inject(WebContentService);
 
   /**
    * @description Builds the form (the base class loads translations and site settings).
    */
   protected override onInit(): void {
     this.initForm();
+    this.loadJobData();
     this.uploadRules.rules('job_application')
       .pipe(takeUntil(this.destroy$))
       .subscribe(rules => { this.cvRules = rules; this.cdr.markForCheck(); });
@@ -95,13 +117,6 @@ export class JobItemComponent extends BasePublicComponent {
   get cvTypeErrorText(): string {
     return (this.t?.form_cv_type_error ?? 'This file type cannot be uploaded. Allowed types: {types}')
       .replace('{types}', extensionsLabel(this.cvRules?.extensions ?? []));
-  }
-
-  /**
-   * @description Resolves the job of the route id from the `jobs` translations.
-   */
-  protected override onTranslationsLoaded(): void {
-    this.loadJobData();
   }
 
   private initForm(): void {
@@ -197,10 +212,26 @@ export class JobItemComponent extends BasePublicComponent {
       });
   }
 
+  /**
+   * @description Resolves the position of the route (slug) and follows the current language.
+   */
   private loadJobData(): void {
-    const jobId = this.route.snapshot.paramMap.get('id');
-    if (jobId && this.t[jobId]) {
-      this.job = { title: this.t[jobId].title, fullContent: this.t[jobId].content };
-    }
+    const slug = this.route.snapshot.paramMap.get('id');
+    combineLatest([this.webContent.jobs(), this.currentLanguage$])
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(([jobs, lang]) => {
+        const job = (Array.isArray(jobs) ? jobs : []).find(j => j.slug === slug);
+        this.job = job ? {
+          title: localizedText(job.title, lang),
+          type: optionalText(job.type, lang),
+          location: optionalText(job.location, lang),
+          sections: job.sections.map(section => ({
+            heading: optionalText(section.heading, lang),
+            body: localizedText(section.body, lang),
+          })),
+        } : null;
+        this.jobsLoaded = true;
+        this.cdr.markForCheck();
+      });
   }
 }
