@@ -316,7 +316,8 @@ describe('EditWebsiteComponent', () => {
    * @description The FAQ and Jobs tabs create their editor on the first open, keep it (hidden)
    *   when another tab is shown and show a dot for unsaved changes.
    * @input  click FAQ, Jobs, FAQ again; jobs editor reports unsaved changes.
-   * @output faq editor created once and shown / hidden; jobs editor created; dot on the Jobs tab.
+   * @output faq editor created once (with the languages of the page) and shown / hidden; jobs
+   *   editor created; dot on the Jobs tab.
    */
   it('manages the FAQ and the jobs in tabs', fakeAsync(() => {
     answer({ 'web/faq': of([]), 'web/jobs': of([]) });
@@ -331,6 +332,7 @@ describe('EditWebsiteComponent', () => {
     fixture.detectChanges();
     const faq = fixture.debugElement.query(By.directive(FaqEditorComponent)).componentInstance as FaqEditorComponent;
     expect(component.activeTab).toBe('faq');
+    expect(faq.languages.map(l => l.code)).toEqual(['cz', 'en']);
     expect((el.querySelector('.ew-root') as HTMLElement).style.display).toBe('none');
 
     tabs()[3].click();

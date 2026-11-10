@@ -21,6 +21,7 @@ use App\Models\Web\WebFaqCategory;
 use App\Models\Web\WebFaqItem;
 use App\Models\Web\WebLog;
 use App\Support\I18n\I18nText;
+use App\Support\I18n\WebContentLanguages;
 use App\Traits\LogsActivity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -87,22 +88,26 @@ class WebFaqController extends Controller
             return response()->json(['message' => 'The FAQ was changed in the meantime. Reload the page.'], 422);
         }
 
-        DB::transaction(function () use ($categories, $categoryIds, $itemIds) {
+        // Only the languages of the web module (a page opened before a language was deleted
+        // must not store it again).
+        $languages = WebContentLanguages::codes();
+
+        DB::transaction(function () use ($languages, $categories, $categoryIds, $itemIds) {
             WebFaqItem::whereNotIn('id', $itemIds)->delete();
             $keptCategoryIds = $categoryIds;
 
             foreach ($categories as $categoryIndex => $data) {
                 $category = WebFaqCategory::findOrNew($data['id'] ?? null);
                 $category->fill([
-                    'name_i18n'  => I18nText::clean($data['name_i18n'] ?? [], self::MAX_NAME),
+                    'name_i18n'  => I18nText::clean($data['name_i18n'] ?? [], self::MAX_NAME, false, $languages),
                     'sort_order' => $categoryIndex,
                 ])->save();
 
                 foreach (array_values($data['items']) as $itemIndex => $itemData) {
                     WebFaqItem::findOrNew($itemData['id'] ?? null)->fill([
                         'category_id'   => $category->id,
-                        'question_i18n' => I18nText::clean($itemData['question_i18n'] ?? [], self::MAX_QUESTION),
-                        'answer_i18n'   => I18nText::clean($itemData['answer_i18n'] ?? [], self::MAX_ANSWER, true),
+                        'question_i18n' => I18nText::clean($itemData['question_i18n'] ?? [], self::MAX_QUESTION, false, $languages),
+                        'answer_i18n'   => I18nText::clean($itemData['answer_i18n'] ?? [], self::MAX_ANSWER, true, $languages),
                         'sort_order'    => $itemIndex,
                     ])->save();
                 }

@@ -8,7 +8,9 @@
  *   languages of the web module, the whole content loaded and saved at once (GET / PUT of the
  *   endpoint), unsaved changes (dot on the tab, save / discard), reordering and removing list
  *   entries and the missing translations - counted per language (badge on the language tab) and
- *   shown at every empty field of the current language. Saving keeps the expanded / collapsed
+ *   shown at every empty field of the current language. Only the languages of the web module are
+ *   offered (from the host page, current also after a language was deleted); texts of other
+ *   languages are dropped by the API. Saving keeps the expanded / collapsed
  *   state of the entries (the API answers them in the saved order).
  * @usage `class FaqEditorComponent extends I18nContentEditorBase<FaqCategoryDraft>` - the subclass
  *   says how the API rows become drafts (fromApi), how drafts are sent (toPayload) and which texts
@@ -22,7 +24,7 @@
  *   `web-content-editor`), AlertDialogService.
  */
 
-import { ChangeDetectorRef, Directive, EventEmitter, OnInit, Output, inject } from '@angular/core';
+import { ChangeDetectorRef, Directive, DoCheck, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { DataHandler } from '../../../../core/services/data-handler.service';
@@ -39,9 +41,25 @@ const FALLBACK_LANGUAGES: ContentLang[] = [{ code: 'cz', name: 'Čeština', acti
 export const CONTENT_UPDATE_PERMISSION = 'web-edit-website-update';
 
 @Directive()
-export abstract class I18nContentEditorBase<T extends { open: boolean }> implements OnInit {
+export abstract class I18nContentEditorBase<T extends { open: boolean }> implements OnInit, DoCheck {
   /** Whether there are unsaved changes (for a dot on the tab of the host page). */
   @Output() dirtyChange = new EventEmitter<boolean>();
+
+  /**
+   * Languages of the host page (web/edit-website keeps them current when a language is added,
+   * deleted or switched off) - used instead of loading them, so the editor never offers a deleted
+   * language. Without it the editor loads `languages/web` itself.
+   */
+  @Input() set hostLanguages(value: ContentLang[] | null | undefined) {
+    const previous = this.host?.map(l => l.code) ?? [];
+    this.host = Array.isArray(value) ? value : null;
+    // A deleted language: the API deleted its texts - drop them here too, otherwise a language
+    // created again with the same code would show (and save) them again.
+    const current = new Set((this.host ?? []).map(l => l.code));
+    const removed = previous.filter(code => !current.has(code));
+    if (removed.length && !this.loading) this.forgetLanguages(removed);
+    this.cd.markForCheck();
+  }
 
   /** API endpoint of the content (GET + PUT). */
   protected abstract readonly endpoint: string;
@@ -50,12 +68,18 @@ export abstract class I18nContentEditorBase<T extends { open: boolean }> impleme
 
   /** Entries of the editor (categories / positions). */
   entries: T[] = [];
-  languages: ContentLang[] = [];
   /** Language edited now. */
   lang = 'cz';
   loading = true;
   saving = false;
   loadError = false;
+
+  /** Languages of the host page (null = loaded by the editor). */
+  private host: ContentLang[] | null = null;
+  /** Languages loaded by the editor itself. */
+  private loadedLanguages: ContentLang[] = [];
+  /** Codes of the offered languages at the last check (redraw when they change). */
+  private languageSignature = '';
 
   /** JSON of the last loaded / saved payload - base of the unsaved state. */
   private snapshot = '';
@@ -91,6 +115,12 @@ export abstract class I18nContentEditorBase<T extends { open: boolean }> impleme
     return this.i18n.getMergedSection('web-content-editor');
   }
 
+  /** Active languages (host page / loaded); the built-in Czech when there are none. */
+  get languages(): ContentLang[] {
+    const active = (this.host ?? this.loadedLanguages).filter(l => l.active !== false);
+    return active.length ? active : FALLBACK_LANGUAGES;
+  }
+
   get canUpdate(): boolean {
     return this.permissionService.hasPermission(CONTENT_UPDATE_PERMISSION);
   }
@@ -108,15 +138,33 @@ export abstract class I18nContentEditorBase<T extends { open: boolean }> impleme
     this.load();
   }
 
+  /**
+   * @description Follows the languages of the host page (also a language switched off in place):
+   *   redraws when they change; a deleted / switched off edited language = the first one instead.
+   */
+  ngDoCheck(): void {
+    const languages = this.languages;
+    const signature = languages.map(l => l.code).join(',');
+    if (signature !== this.languageSignature) {
+      this.languageSignature = signature;
+      this.cd.markForCheck();
+    }
+    if (!languages.some(l => l.code === this.lang)) {
+      this.lang = languages[0].code;
+      this.cd.markForCheck();
+    }
+  }
+
   /** @description Loads the languages of the web module and the content. */
   load(): void {
     this.loading = true;
     this.loadError = false;
     this.cd.markForCheck();
 
-    forkJoin({ langs: this.loadLanguages(), rows: this.dataHandler.get<any[]>(this.endpoint) }).subscribe({
+    const langs$ = this.host ? of([] as ContentLang[]) : this.loadLanguages();
+    forkJoin({ langs: langs$, rows: this.dataHandler.get<any[]>(this.endpoint) }).subscribe({
       next: ({ langs, rows }) => {
-        this.languages = langs.length ? langs : FALLBACK_LANGUAGES;
+        this.loadedLanguages = langs;
         if (!this.languages.some(l => l.code === this.lang)) this.lang = this.languages[0].code;
         this.setEntries(Array.isArray(rows) ? rows : []);
         this.loading = false;
@@ -146,6 +194,27 @@ export abstract class I18nContentEditorBase<T extends { open: boolean }> impleme
   private setEntries(rows: any[]): void {
     this.entries = this.fromApi(rows);
     this.snapshot = JSON.stringify(this.toPayload(this.entries));
+    this.emitDirty();
+  }
+
+  /**
+   * @description Removes the texts of deleted languages from the drafts and from the saved state
+   *   (the API removed them already); unsaved edits of the other languages and the expanded
+   *   entries stay.
+   * @param codes Codes of the deleted languages.
+   */
+  private forgetLanguages(codes: string[]): void {
+    const strip = (rows: unknown[]) => JSON.parse(JSON.stringify(rows), (key, value) =>
+      key.endsWith('_i18n') && value && typeof value === 'object'
+        ? Object.fromEntries(Object.entries(value).filter(([code]) => !codes.includes(code)))
+        : value);
+    const open = this.entries.map(entry => entry.open);
+    const saved = strip(this.snapshotRows());
+    this.entries = this.fromApi(strip(this.toPayload(this.entries)));
+    this.entries.forEach((entry, index) => {
+      if (index < open.length) entry.open = open[index];
+    });
+    this.snapshot = JSON.stringify(this.toPayload(this.fromApi(saved)));
     this.emitDirty();
   }
 

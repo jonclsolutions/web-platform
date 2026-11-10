@@ -318,6 +318,9 @@ The scheduler currently contains only nightly GDPR clean-up jobs (see `api/route
     language and marks the empty fields - the website shows `Cannot load text` in their place.
     An optional field (type, place, heading) empty in every language is not shown at all.
   - Texts are plain text (tags removed by the API), the website keeps their line breaks - no HTML.
+  - Only the languages of the web module are stored (texts of other / deleted languages are dropped
+    on saving). Deleting a web language (or leaving it out of the language list) deletes its FAQ
+    and job texts too - nothing of a language that no longer exists stays on the server.
   - Everything of a tab is saved at once; entries left out are deleted.
 - The migration `2026_11_11_000000_create_web_faq_and_jobs` moves the former content of the
   translation files (`storage/app/public/translations/web/{lang}.json`: `faq.categories`,

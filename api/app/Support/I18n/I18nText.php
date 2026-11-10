@@ -30,9 +30,11 @@ final class I18nText
      * @param mixed $raw Value of the request (expected `{ lang: string }`; anything else = no text).
      * @param int $maxLength Maximum characters per language.
      * @param bool $multiline Keep line breaks (otherwise all whitespace becomes one space).
+     * @param string[]|null $languages Allowed language codes (lower case); null = any valid code.
+     *   Texts of other languages are dropped (e.g. of a language deleted meanwhile).
      * @return array<string, string> Language code (lower case) => text; empty texts left out.
      */
-    public static function clean(mixed $raw, int $maxLength, bool $multiline = false): array
+    public static function clean(mixed $raw, int $maxLength, bool $multiline = false, ?array $languages = null): array
     {
         if (!is_array($raw)) {
             return [];
@@ -40,7 +42,8 @@ final class I18nText
 
         $clean = [];
         foreach (array_slice($raw, 0, self::MAX_LANGUAGES, true) as $lang => $value) {
-            if (!is_string($lang) || !preg_match(self::LANG_PATTERN, $lang) || !is_string($value)) {
+            if (!is_string($lang) || !preg_match(self::LANG_PATTERN, $lang) || !is_string($value)
+                || ($languages !== null && !in_array(strtolower($lang), $languages, true))) {
                 continue;
             }
 

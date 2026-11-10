@@ -195,4 +195,50 @@ describe('FaqEditorComponent', () => {
     expect(component.languages.map(l => l.code)).toEqual(['cz']);
     expect(fixture.nativeElement.querySelector('.ce-empty')).not.toBeNull();
   });
+
+  /**
+   * @description With the languages of the host page the editor loads no languages itself and
+   *   follows them: a deleted language disappears (the edited one falls back to the first) with
+   *   all its texts (also from the saved state - a language created again with the same code
+   *   starts empty), a switched off one is not offered.
+   * @input hostLanguages cz + en; edit en + a cz name; host list without en; en created again;
+   *   en back but inactive.
+   * @output no GET languages/web; languages [cz, en]; then [cz], lang 'cz', no en texts, the cz
+   *   edit kept, not dirty once undone; en again: no texts (all 6 missing); then [cz].
+   */
+  it('follows the languages of the host page', () => {
+    (ctx.dataHandler as any).get.and.callFake((url: string) => of(url === 'languages/web' ? languages : rows()));
+    fixture = TestBed.createComponent(FaqEditorComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('hostLanguages', languages.slice(0, 2));
+    fixture.detectChanges();
+    expect((ctx.dataHandler as any).get).not.toHaveBeenCalledWith('languages/web');
+    expect(component.languages.map(l => l.code)).toEqual(['cz', 'en']);
+
+    component.switchLang('en');
+    component.entries[1].name_i18n['cz'] = 'Ceny 2';
+    component.changed();
+    fixture.componentRef.setInput('hostLanguages', [languages[0]]);
+    fixture.detectChanges();
+    expect(component.languages.map(l => l.code)).toEqual(['cz']);
+    expect(component.lang).toBe('cz');
+    expect(fixture.nativeElement.querySelectorAll('.ce-lang-tab').length).toBe(1);
+    // The texts of the deleted language are gone (also from the saved state), other edits stay.
+    expect(component.entries[0].name_i18n).toEqual({ cz: 'Obecné' });
+    expect(component.entries[0].items[0].answer_i18n).toEqual({ cz: 'A1' });
+    expect(component.entries[1].name_i18n).toEqual({ cz: 'Ceny 2' });
+    expect(component.entries.map(c => c.open)).toEqual([true, false]);
+    component.entries[1].name_i18n['cz'] = 'Ceny';
+    component.changed();
+    expect(component.isDirty).toBeFalse();
+
+    fixture.componentRef.setInput('hostLanguages', languages.slice(0, 2));
+    fixture.detectChanges();
+    expect(component.entries[0].name_i18n['en']).toBeUndefined();
+    expect(component.missingCount('en')).toBe(6);
+
+    fixture.componentRef.setInput('hostLanguages', [languages[0], { ...languages[1], active: false }]);
+    fixture.detectChanges();
+    expect(component.languages.map(l => l.code)).toEqual(['cz']);
+  });
 });

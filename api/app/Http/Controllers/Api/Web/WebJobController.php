@@ -23,6 +23,7 @@ use App\Models\Web\WebJob;
 use App\Models\Web\WebJobSection;
 use App\Models\Web\WebLog;
 use App\Support\I18n\I18nText;
+use App\Support\I18n\WebContentLanguages;
 use App\Traits\LogsActivity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -116,7 +117,11 @@ class WebJobController extends Controller
             return response()->json(['message' => 'The positions were changed in the meantime. Reload the page.'], 422);
         }
 
-        DB::transaction(function () use ($jobs, $jobIds, $sectionIds) {
+        // Only the languages of the web module (a page opened before a language was deleted
+        // must not store it again).
+        $languages = WebContentLanguages::codes();
+
+        DB::transaction(function () use ($languages, $jobs, $jobIds, $sectionIds) {
             WebJobSection::whereNotIn('id', $sectionIds)->delete();
             WebJob::whereNotIn('id', $jobIds)->delete();
 
@@ -130,18 +135,18 @@ class WebJobController extends Controller
                 $job->fill([
                     'slug'          => $data['slug'],
                     'is_active'     => (bool) $data['is_active'],
-                    'title_i18n'    => I18nText::clean($data['title_i18n'] ?? [], self::MAX_TITLE),
-                    'summary_i18n'  => I18nText::clean($data['summary_i18n'] ?? [], self::MAX_SUMMARY),
-                    'type_i18n'     => I18nText::clean($data['type_i18n'] ?? [], self::MAX_META),
-                    'location_i18n' => I18nText::clean($data['location_i18n'] ?? [], self::MAX_META),
+                    'title_i18n'    => I18nText::clean($data['title_i18n'] ?? [], self::MAX_TITLE, false, $languages),
+                    'summary_i18n'  => I18nText::clean($data['summary_i18n'] ?? [], self::MAX_SUMMARY, false, $languages),
+                    'type_i18n'     => I18nText::clean($data['type_i18n'] ?? [], self::MAX_META, false, $languages),
+                    'location_i18n' => I18nText::clean($data['location_i18n'] ?? [], self::MAX_META, false, $languages),
                     'sort_order'    => $jobIndex,
                 ])->save();
 
                 foreach (array_values($data['sections']) as $sectionIndex => $sectionData) {
                     WebJobSection::findOrNew($sectionData['id'] ?? null)->fill([
                         'job_id'       => $job->id,
-                        'heading_i18n' => I18nText::clean($sectionData['heading_i18n'] ?? [], self::MAX_HEADING),
-                        'body_i18n'    => I18nText::clean($sectionData['body_i18n'] ?? [], self::MAX_BODY, true),
+                        'heading_i18n' => I18nText::clean($sectionData['heading_i18n'] ?? [], self::MAX_HEADING, false, $languages),
+                        'body_i18n'    => I18nText::clean($sectionData['body_i18n'] ?? [], self::MAX_BODY, true, $languages),
                         'sort_order'   => $sectionIndex,
                     ])->save();
                 }

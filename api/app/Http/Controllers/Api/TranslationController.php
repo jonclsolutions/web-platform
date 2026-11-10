@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Support\I18n\WebContentLanguages;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -147,7 +148,7 @@ class TranslationController extends Controller
      */
     public function getLanguages(string $module): JsonResponse
     {
-        $allMeta = $this->readLanguagesMeta();
+        $allMeta = self::readLanguagesMeta();
 
         $filtered = array_values(array_filter($allMeta, fn($l) => $this->moduleOf($l) === $module));
 
@@ -185,7 +186,7 @@ class TranslationController extends Controller
         if ($entries->fails()) {
             return response()->json(['message' => 'Invalid language list.', 'errors' => $entries->errors()], 422);
         }
-        $allMeta  = $this->readLanguagesMeta();
+        $allMeta  = self::readLanguagesMeta();
 
         $otherModulesMeta = array_filter($allMeta, fn($l) => $this->moduleOf($l) !== $module);
 
@@ -219,6 +220,13 @@ class TranslationController extends Controller
         $finalMeta = array_merge($otherModulesMeta, $mergedCurrent);
         $this->writeLanguagesMeta($finalMeta);
 
+        // A language left out of the list is removed - its content of the web goes with it.
+        if ($module === 'web') {
+            foreach (array_diff($currentModuleMeta->keys()->all(), array_column($mergedCurrent, 'code')) as $removed) {
+                WebContentLanguages::forget((string) $removed);
+            }
+        }
+
         $this->logAction($request, WebLog::class, 'update', "Languages:{$module}", 'Language list and metadata update', null, 'Translation', ['icon']);
 
         return response()->json(null, 204);
@@ -238,7 +246,7 @@ class TranslationController extends Controller
             'icon' => 'required|file|image|mimes:png,jpg,jpeg,webp|max:512',
         ]);
 
-        $meta = $this->readLanguagesMeta();
+        $meta = self::readLanguagesMeta();
         $idx  = $this->findLangIndex($meta, $code, $module);
 
         if ($idx === null) {
@@ -270,7 +278,7 @@ class TranslationController extends Controller
             return $denied;
         }
 
-        $allMeta = $this->readLanguagesMeta();
+        $allMeta = self::readLanguagesMeta();
         $idx = $this->findLangIndex($allMeta, $code, $module);
 
         if ($idx === null) {
@@ -292,9 +300,32 @@ class TranslationController extends Controller
         array_splice($allMeta, $idx, 1);
         $this->writeLanguagesMeta($allMeta);
 
+        // Content of the module stored per language (FAQ, jobs of the web) loses the language too.
+        if ($module === 'web') {
+            WebContentLanguages::forget($code);
+        }
+
         $this->logAction($request, WebLog::class, 'delete', "Languages:{$module}", "Deleted language: {$code}", null, 'Translation');
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * @description Codes of the languages of a module (active or not) - the languages the content
+     *   of the module may be stored in (e.g. the FAQ and the jobs of the web).
+     * @param string $module Module ('web', 'shop').
+     * @return string[] Lower-case codes.
+     */
+    public static function languageCodes(string $module): array
+    {
+        $codes = [];
+        foreach (self::readLanguagesMeta() as $lang) {
+            if (is_array($lang) && is_string($lang['code'] ?? null) && ($lang['module'] ?? self::DEFAULT_MODULE) === $module) {
+                $codes[] = strtolower($lang['code']);
+            }
+        }
+
+        return array_values(array_unique($codes));
     }
 
     /**
@@ -308,7 +339,7 @@ class TranslationController extends Controller
     /**
      * Returns absolute path to the global languages.json metadata file.
      */
-    private function languagesMetaPath(): string
+    private static function languagesMetaPath(): string
     {
         return storage_path('app/public/translations/languages.json');
     }
@@ -316,9 +347,9 @@ class TranslationController extends Controller
     /**
      * Reads and decodes the global language metadata file.
      */
-    private function readLanguagesMeta(): array
+    private static function readLanguagesMeta(): array
     {
-        $path = $this->languagesMetaPath();
+        $path = self::languagesMetaPath();
         if (File::exists($path)) {
             return json_decode(File::get($path), true) ?? self::DEFAULT_LANGUAGES;
         }
@@ -335,7 +366,7 @@ class TranslationController extends Controller
             File::makeDirectory($dir, 0755, true, true);
         }
         File::put(
-            $this->languagesMetaPath(),
+            self::languagesMetaPath(),
             json_encode(array_values($meta), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
         );
     }

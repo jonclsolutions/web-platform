@@ -253,13 +253,13 @@
 
 @if (faqOpened) {
   <div class="ew-titles-wrap" [style.display]="activeTab === 'faq' ? null : 'none'">
-    <app-faq-editor (dirtyChange)="faqDirty = $event"></app-faq-editor>
+    <app-faq-editor [hostLanguages]="languages" (dirtyChange)="faqDirty = $event"></app-faq-editor>
   </div>
 }
 
 @if (jobsOpened) {
   <div class="ew-titles-wrap" [style.display]="activeTab === 'jobs' ? null : 'none'">
-    <app-jobs-editor (dirtyChange)="jobsDirty = $event"></app-jobs-editor>
+    <app-jobs-editor [hostLanguages]="languages" (dirtyChange)="jobsDirty = $event"></app-jobs-editor>
   </div>
 }
 

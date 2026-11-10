@@ -28,6 +28,19 @@ use Tests\TestCase;
  */
 class FaqAndJobsTest extends TestCase
 {
+    /** @var string Temporary storage directory of the test. */
+    private string $storage;
+
+    /**
+     * @description Removes the temporary storage.
+     * @return void
+     */
+    protected function tearDown(): void
+    {
+        \Illuminate\Support\Facades\File::deleteDirectory($this->storage);
+        parent::tearDown();
+    }
+
     /**
      * @description Fills in the content the migration creates on a new installation: the test
      *   schema has the tables already, so they are dropped and the migration runs again (during
@@ -37,6 +50,17 @@ class FaqAndJobsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // Own storage with the web languages cz + en (never the storage of the repository).
+        $this->storage = sys_get_temp_dir() . '/faq-jobs-test-' . bin2hex(random_bytes(6));
+        mkdir($this->storage . '/app/public/translations/web', 0777, true);
+        file_put_contents($this->storage . '/app/public/translations/languages.json', json_encode([
+            ['code' => 'cz', 'module' => 'web', 'name' => 'Čeština', 'active' => true, 'isBuiltIn' => true],
+            ['code' => 'en', 'module' => 'web', 'name' => 'English', 'active' => true],
+            ['code' => 'de', 'module' => 'shop', 'name' => 'Deutsch', 'active' => true],
+        ]));
+        file_put_contents($this->storage . '/app/public/translations/web/en.json', '{}');
+        $this->app->useStoragePath($this->storage);
+
         $migration = require database_path('migrations/2026_11_11_000000_create_web_faq_and_jobs.php');
         $migration->down();
         $migration->up();
@@ -206,6 +230,58 @@ class FaqAndJobsTest extends TestCase
         $response = $this->getJson('/api/public/web/jobs')->assertOk();
         $this->assertSame([['slug' => 'tester', 'title' => ['cz' => 'Tester'], 'summary' => [], 'type' => [], 'location' => [], 'sections' => []]], $response->json('data'));
         $this->assertStringContainsString('"location":{}', $response->getContent());
+    }
+
+    /**
+     * @description Texts are stored only in the languages of the web module: a language of another
+     *   module or one deleted meanwhile (an admin page opened before) is dropped.
+     * @input Category name in cz, en, de (a shop language) and fr (unknown).
+     * @output name_i18n { cz, en }.
+     */
+    public function test_keeps_only_the_web_languages(): void
+    {
+        $this->signIn($this->userWith(['web-edit-website-update']));
+
+        $data = $this->putJson('/api/web/faq', ['categories' => [
+            ['name_i18n' => ['cz' => 'A', 'en' => 'B', 'de' => 'C', 'fr' => 'D'], 'items' => []],
+        ]])->assertOk()->json('data');
+
+        $this->assertSame(['cz' => 'A', 'en' => 'B'], $data[0]['name_i18n']);
+    }
+
+    /**
+     * @description Deleting a web language deletes its texts of the FAQ and the jobs (nothing of a
+     *   language that no longer exists stays on the server); a language left out of the language
+     *   list too.
+     * @input English texts in a category, a question, a job and a block; DELETE languages/web/en;
+     *   then 'sk' added to the language list, an 'sk' text, the list saved without 'sk'.
+     * @output No 'en' key anywhere, Czech texts kept; then no 'sk' key.
+     */
+    public function test_deleting_a_language_deletes_its_texts(): void
+    {
+        $this->signIn($this->userWith(['web-edit-website-view', 'web-edit-website-update']));
+        $category = WebFaqCategory::first();
+        $category->update(['name_i18n' => ['cz' => 'Obecné', 'en' => 'General']]);
+        $item = $category->items()->first();
+        $item->update(['question_i18n' => ['cz' => 'Q', 'en' => 'Q EN'], 'answer_i18n' => ['en' => 'A EN']]);
+        $job = WebJob::first();
+        $job->update(['title_i18n' => ['cz' => 'Pozice', 'en' => 'Position']]);
+        $section = $job->sections()->first();
+        $section->update(['body_i18n' => ['cz' => 'Text', 'en' => 'Text EN']]);
+
+        $this->deleteJson('/api/languages/web/en')->assertNoContent();
+
+        $this->assertSame(['cz' => 'Obecné'], $category->fresh()->name_i18n);
+        $this->assertSame(['cz' => 'Q'], $item->fresh()->question_i18n);
+        $this->assertSame([], $item->fresh()->answer_i18n);
+        $this->assertSame(['cz' => 'Pozice'], $job->fresh()->title_i18n);
+        $this->assertSame(['cz' => 'Text'], $section->fresh()->body_i18n);
+
+        $list = fn (array $codes) => ['languages' => json_encode(array_map(fn ($code) => ['code' => $code, 'name' => $code, 'active' => true], $codes))];
+        $this->post('/api/languages/web', $list(['cz', 'sk']))->assertNoContent();
+        $category->update(['name_i18n' => ['cz' => 'Obecné', 'sk' => 'Všeobecné']]);
+        $this->post('/api/languages/web', $list(['cz']))->assertNoContent();
+        $this->assertSame(['cz' => 'Obecné'], $category->fresh()->name_i18n);
     }
 
     /**
