@@ -115,12 +115,14 @@ describe('AuthGuard', () => {
    * @description Not logged in → redirect to the login page; logged in without a required
    *   permission → allowed.
    * @input checkAuth false; checkAuth true with a route without data.permission.
-   * @output UrlTree '/auth/login'; true.
+   * @output checkAuth(true) - a tab without its own account may open with a remembered one;
+   *   UrlTree '/auth/login'; true.
    */
   it('redirects anonymous users to the login page and lets logged-in users in', () => {
     let result: any;
     auth.checkAuth.and.returnValue(of(false));
     guard.canActivate(leafSnap('free'), state('/admin/core/free')).subscribe(r => (result = r));
+    expect(auth.checkAuth).toHaveBeenCalledWith(true);
     expect(result).toEqual({ url: '/auth/login' } as any);
 
     auth.checkAuth.and.returnValue(of(true));

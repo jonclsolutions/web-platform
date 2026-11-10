@@ -14,7 +14,13 @@
  * - Secure (SESSION_SECURE_COOKIE, always on in production): sent over HTTPS only;
  * - SameSite=Strict: never sent with a request started by another site (no CSRF);
  * - host-only (no Domain) and limited by Path to the endpoints that need it - the refresh token
- *   goes only to POST /api/refresh, a portal session only to the routes of ITS project.
+ *   goes only to the refresh routes (/api/refresh...), a portal session only to the routes of ITS
+ *   project.
+ * @note Several admin accounts can be signed in in one browser at once: every account has its own
+ * refresh cookie `jsw_refresh_{slot}` (REFRESH_PREFIX). The slot is a keyed hash of the user ID
+ * (no ID in the cookie name, the same account always the same cookie); a tab tells the refresh
+ * route its slot in the X-Session-Slot header. The single cookie `jsw_refresh` of older versions
+ * (REFRESH) is still read once and replaced by the slot cookie.
  * The API routes do not encrypt cookies (no EncryptCookies middleware), so the value is the raw
  * random token; only its SHA-256 hash is stored in the database.
  */
@@ -28,8 +34,14 @@ use Symfony\Component\HttpFoundation\Cookie;
 
 final class AuthCookies
 {
-    /** @description Cookie of the admin refresh token. */
+    /** @description Refresh cookie of older versions (one account per browser) - read once, then replaced. */
     public const REFRESH = 'jsw_refresh';
+
+    /** @description Prefix of the refresh cookie of one account: `jsw_refresh_{slot}`. */
+    public const REFRESH_PREFIX = 'jsw_refresh_';
+
+    /** @description Request header with the slot of the tab's account (refresh route). */
+    public const SLOT_HEADER = 'X-Session-Slot';
 
     /** @description Cookie of the customer project portal session. */
     public const PORTAL = 'jsw_project_session';
@@ -60,16 +72,48 @@ final class AuthCookies
     public const PORTAL_ROUTE = 'projects.public.me';
 
     /**
-     * @description Refresh token cookie (sent only to the refresh route).
+     * @description Slot of an account: 16 hex characters of an HMAC of the user ID with the
+     * application key - stable per account, without revealing the ID.
+     * @param int $userId Account ID.
+     * @return string
+     */
+    public static function slotFor(int $userId): string
+    {
+        return substr(hash_hmac('sha256', 'refresh-slot:' . $userId, (string) config('app.key')), 0, 16);
+    }
+
+    /**
+     * @description Whether a value has the form of a slot (16 lower-case hex characters).
+     * @param string $value Value from a header / cookie name.
+     * @return bool
+     */
+    public static function isSlot(string $value): bool
+    {
+        return preg_match('/^[a-f0-9]{16}$/', $value) === 1;
+    }
+
+    /**
+     * @description Refresh cookie name of a slot; null = the cookie of older versions.
+     * @param string|null $slot Slot of the account.
+     * @return string
+     */
+    public static function refreshName(?string $slot): string
+    {
+        return $slot === null ? self::REFRESH : self::REFRESH_PREFIX . $slot;
+    }
+
+    /**
+     * @description Refresh token cookie of one account (sent only to the refresh routes).
      * @param Request $request Current request (base path of the application).
      * @param string $plainToken Raw refresh token.
      * @param bool $remember "Remember me": persistent cookie for REFRESH_TTL_DAYS; otherwise a
      *   browser session cookie without an expiry.
+     * @param string $slot Slot of the account (slotFor()).
      * @return Cookie
      */
-    public static function refresh(Request $request, string $plainToken, bool $remember = true): Cookie
+    public static function refresh(Request $request, string $plainToken, bool $remember, string $slot): Cookie
     {
-        return self::make(self::REFRESH, $plainToken, $remember ? self::REFRESH_TTL_DAYS * 24 * 60 : null, self::refreshPath($request));
+        return self::make(self::refreshName($slot), $plainToken, $remember ? self::REFRESH_TTL_DAYS * 24 * 60 : null, self::refreshPath($request));
     }
 
     /**
@@ -88,11 +132,12 @@ final class AuthCookies
     /**
      * @description Expired refresh cookie - the browser deletes it.
      * @param Request $request Current request.
+     * @param string|null $slot Slot of the account; null = the cookie of older versions.
      * @return Cookie
      */
-    public static function forgetRefresh(Request $request): Cookie
+    public static function forgetRefresh(Request $request, ?string $slot = null): Cookie
     {
-        return self::make(self::REFRESH, '', -5 * 365 * 24 * 60, self::refreshPath($request));
+        return self::make(self::refreshName($slot), '', -5 * 365 * 24 * 60, self::refreshPath($request));
     }
 
     /**
@@ -121,7 +166,8 @@ final class AuthCookies
     }
 
     /**
-     * @description Path of the refresh route under the base path of the application ("/api/refresh").
+     * @description Path of the refresh route under the base path of the application ("/api/refresh")
+     * - also the prefix of the account list route (/api/refresh/accounts).
      * @param Request $request Current request.
      * @return string
      */

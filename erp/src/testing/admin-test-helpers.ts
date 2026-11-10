@@ -107,6 +107,7 @@ export interface AuthStub {
   getAccessToken: jasmine.Spy; logout: jasmine.Spy; login: jasmine.Spy; verifyTwoFactor: jasmine.Spy;
   resendTwoFactor: jasmine.Spy; requestPasswordReset: jasmine.Spy; resetPassword: jasmine.Spy;
   checkAuth: jasmine.Spy; clearAuthData: jasmine.Spy; setAvatarUrl: jasmine.Spy;
+  rememberedAccounts: jasmine.Spy; resumeAccount: jasmine.Spy; getAvatarUrl: jasmine.Spy;
 }
 
 /**
@@ -136,6 +137,9 @@ export function createAuthStub(loggedIn = true): AuthStub {
     checkAuth: jasmine.createSpy('checkAuth').and.returnValue(of(true)),
     clearAuthData: jasmine.createSpy('clearAuthData'),
     setAvatarUrl: jasmine.createSpy('setAvatarUrl').and.callFake((url: string | null) => avatarUrl$.next(url)),
+    rememberedAccounts: jasmine.createSpy('rememberedAccounts').and.returnValue(of([])),
+    resumeAccount: jasmine.createSpy('resumeAccount').and.returnValue(of({})),
+    getAvatarUrl: jasmine.createSpy('getAvatarUrl').and.callFake(() => avatarUrl$.value),
   };
 }
 

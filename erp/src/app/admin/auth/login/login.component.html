@@ -12,6 +12,35 @@
   <div class="login-center">
     <div class="login-card">
 
+      @if (step === 'credentials' && rememberedAccounts.length) {
+        <div class="account-chooser">
+          <p class="account-chooser-title">{{ t?.accounts?.title }}</p>
+          @for (account of rememberedAccounts; track account.slot ?? account.user_email) {
+            <button
+              type="button"
+              class="account-option"
+              [disabled]="isSubmitting"
+              (click)="onResume(account)"
+              [attr.aria-label]="(t?.accounts?.continue_as || '') + ' ' + account.user_email">
+              <app-user-avatar [src]="account.avatar_url" [size]="36"></app-user-avatar>
+              <span class="account-text">
+                <span class="account-name">{{ account.full_name || account.user_email }}</span>
+                @if (account.full_name) {
+                  <span class="account-email">{{ account.user_email }}</span>
+                }
+                @if (account.current) {
+                  <span class="account-current">{{ t?.accounts?.current }}</span>
+                }
+              </span>
+              <svg class="account-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            </button>
+          }
+          <p class="account-chooser-divider"><span>{{ t?.accounts?.other }}</span></p>
+        </div>
+      }
+
       @if (step === 'credentials') {
         <form (ngSubmit)="onLogin()" class="login-form" novalidate>
 

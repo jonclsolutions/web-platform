@@ -11,12 +11,26 @@
  * the browser sends (to POST /api/refresh) - an XSS can therefore not read it and keep the account.
  * After a page reload the session is restored by one refresh call. The role and permissions only
  * shape the UI; the API checks every request itself.
- * @note The only value kept in the browser is SESSION_HINT_KEY = "a session may exist" (no
- * token, no user data). It spares visitors without a session the refresh call on every page load,
- * and it decides where the session is restored automatically: a login with "Remember me" keeps
- * it in localStorage (every tab and window, also after a browser restart), a login without it in
- * sessionStorage (only the tab of the login, also after a reload) - a new tab then shows the
- * login page. A logout removes both.
+ * @note Several accounts per browser: every account has its own refresh cookie (jsw_refresh_{slot},
+ * the slot is derived from the account by the API). A tab works with ONE account - the slot of that
+ * account is kept in the tab's sessionStorage (SESSION_SLOT_KEY, survives its reload) and sent with
+ * every refresh (header SESSION_SLOT_HEADER); the API refuses a slot of another account. Other tabs
+ * may be signed in as other accounts at the same time - a login, a switch or a logout in one tab
+ * never changes the account of another tab.
+ * @note The login page is never skipped: it offers the account of the tab and the accounts
+ * remembered with "Remember me" ("Continue as ...", one click, no password) next to the form for
+ * another account. Only an ADMIN address opened in a tab without its own account (a new tab, a
+ * pasted link) opens with a remembered account - the last used one (LAST_ACCOUNT_KEY), or the only
+ * one; otherwise the login page is shown.
+ * @note Values kept in the browser (no token, no user data):
+ * - SESSION_SLOT_KEY (sessionStorage): the account of this tab - restored after its reload.
+ * - SESSION_HINT_KEY (localStorage): "accounts remembered with 'Remember me' may exist". Only then
+ *   the API is asked for them (POST /refresh/accounts) - visitors without it make no request.
+ * - LAST_ACCOUNT_KEY (localStorage): slot of the remembered account used last (no user data). A login without "Remember me" is never offered - it belongs to its tab only. The same
+ *   key in sessionStorage is the hint of the former single-cookie version (its cookie is migrated
+ *   on the first refresh).
+ * @note A logout ends the account in every tab signed in as it (BroadcastChannel SESSION_CHANNEL_NAME,
+ * those tabs reload to the login page); tabs of other accounts keep working.
  * @dependencies
  * - HttpClient: Facilitates API communication for authentication endpoints.
  * - PermissionService: Synchronizes user permissions within the application.
@@ -24,9 +38,9 @@
  *   circular dependency, GenericTableService does not depend on AuthService.
  */
 
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, BehaviorSubject, of, throwError, timer, Subject, distinctUntilChanged } from 'rxjs';
+import { Observable, BehaviorSubject, NEVER, of, throwError, timer, Subject, distinctUntilChanged } from 'rxjs';
 import { tap, catchError, switchMap, takeUntil, map, finalize, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ApiEnvelope } from '../../shared/interfaces/api-envelope';
@@ -68,6 +82,8 @@ function authError(backendMessage: unknown, fallbackKey: AuthErrorKey): AuthErro
 
 /** Session answer of /login, /login/verify-2fa and /refresh (the refresh token is only in the cookie). */
 export interface AuthSessionResponse {
+  /** Slot of the account's refresh cookie - this tab sends it with every refresh. */
+  session_slot?: string;
   token: string;
   user: { id?: number | string; user_login_id?: number | string; user_email: string; avatar_url?: string | null };
   user_roles?: string[];
@@ -85,14 +101,48 @@ interface SessionState {
   permissions: string[];
 }
 
+/** Account remembered in this browser (POST /refresh/accounts) - offered on the login page. */
+export interface RememberedAccount {
+  /** Slot of its refresh cookie (null = the single cookie of the former version). */
+  slot: string | null;
+  user_email: string;
+  full_name?: string | null;
+  avatar_url?: string | null;
+}
+
 /**
- * Key of the "a session may exist" hint (localStorage with "Remember me", sessionStorage without)
- * - holds no token and no user data.
+ * Key of the "remembered accounts may exist" hint in localStorage (see the file header) - holds no
+ * token and no user data.
  */
 export const SESSION_HINT_KEY = 'jsw_session_hint';
 
-/** Name of the Web Lock that serializes refresh calls of all tabs (they share the refresh cookie). */
+/** localStorage key of the slot of the remembered account used last - see the file header. */
+export const LAST_ACCOUNT_KEY = 'jsw_last_account';
+
+/** sessionStorage key of the account (refresh cookie slot) of this tab - see the file header. */
+export const SESSION_SLOT_KEY = 'jsw_session_slot';
+
+/** Request header that names the refresh cookie (account) a refresh is for. */
+export const SESSION_SLOT_HEADER = 'X-Session-Slot';
+
+/**
+ * Prefix of the Web Lock that serializes the refresh calls of one account: its tabs share one
+ * refresh cookie, which every refresh rotates.
+ */
 const REFRESH_LOCK_NAME = 'jsw-auth-refresh';
+
+/** Name of the BroadcastChannel that tells the other tabs about a logout in this browser. */
+export const SESSION_CHANNEL_NAME = 'jsw-auth-session';
+
+/** Message of the session channel: the account that logged out. */
+export type SessionMessage = { type: 'logout'; userId: string };
+
+/** Minimal shape of the BroadcastChannel used here (replaceable in the unit tests). */
+export interface SessionChannel {
+  postMessage(message: SessionMessage): void;
+  addEventListener(type: 'message', listener: (event: MessageEvent) => void): void;
+  close(): void;
+}
 
 /** Minimal shape of the Web Locks API (navigator.locks) used here. */
 export interface RefreshLockManager {
@@ -100,7 +150,7 @@ export interface RefreshLockManager {
 }
 
 @Injectable({ providedIn: 'root' })
-export class AuthService {
+export class AuthService implements OnDestroy {
   private baseUrl = environment.base_api_url;
 
   /** Session of the signed-in user - memory only (see the file header). */
@@ -119,16 +169,26 @@ export class AuthService {
   private stopTokenRefresh$ = new Subject<void>();
   private readonly REFRESH_INTERVAL = 20 * 60 * 1000;
 
-  /** Running refresh call - every caller (timer, interceptor, restore) shares one request. */
-  private refreshInFlight$: Observable<AuthSessionResponse> | null = null;
+  /** Running refresh calls per slot - every caller (timer, interceptor, restore) shares one request. */
+  private refreshInFlight = new Map<string, Observable<AuthSessionResponse>>();
 
   /**
-   * Web Locks of the browser: the tabs share one refresh cookie and every refresh rotates it, so
-   * two tabs must never refresh at the same moment (the second would send the already used
-   * token). Null where the API does not exist (and in the unit tests).
+   * Web Locks of the browser: the tabs of one account share its refresh cookie and every refresh
+   * rotates it, so two of them must never refresh at the same moment (the second would send the
+   * already used token). Null where the API does not exist (and in the unit tests).
    */
   public lockManager: RefreshLockManager | null =
     (typeof navigator !== 'undefined' && (navigator as any).locks) ? (navigator as any).locks : null;
+
+  /**
+   * Channel to the other tabs of this browser (see the file header). Null where BroadcastChannel
+   * does not exist - the tabs then rely on the refresh check only.
+   */
+  public sessionChannel: SessionChannel | null =
+    typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(SESSION_CHANNEL_NAME) : null;
+
+  /** Reloads the page - a property so that the unit tests can replace it. */
+  public reloadPage: () => void = () => window.location.reload();
 
   constructor(
     private http: HttpClient,
@@ -137,6 +197,33 @@ export class AuthService {
   ) {
     // Leftovers of the former sessionStorage session (tokens, user data) - removed for good.
     this.removeLegacyStorage();
+    this.sessionChannel?.addEventListener('message', event => this.onSessionMessage(event.data));
+  }
+
+  ngOnDestroy(): void {
+    this.sessionChannel?.close();
+  }
+
+  /**
+   * @description Reacts to a logout in another tab: a tab signed in as THAT account reloads (its
+   *   session no longer exists - it shows the login page). Tabs of other accounts and tabs without
+   *   a session are left alone.
+   * @param message Message of the session channel.
+   */
+  private onSessionMessage(message: SessionMessage | null): void {
+    if (!this.session || message?.type !== 'logout') return;
+    if (message.userId === this.session.userId) {
+      this.reloadPage();
+    }
+  }
+
+  /** @description Tells the other tabs about a logout (no-op without the channel). */
+  private announce(message: SessionMessage): void {
+    try {
+      this.sessionChannel?.postMessage(message);
+    } catch {
+      // A closed channel (page being left) - nothing to tell.
+    }
   }
 
   /**
@@ -171,7 +258,9 @@ export class AuthService {
   verifyTwoFactor(loginToken: string, code: string, remember = false): Observable<any> {
     return this.http.post<ApiEnvelope<any>>(`${this.baseUrl}/login/verify-2fa`, { login_token: loginToken, code, remember }, { withCredentials: true }).pipe(
       map(res => res.data),
-      tap((response: any) => this.startSession(response)),
+      tap((response: any) => {
+        this.startSession(response);
+      }),
       catchError(this.handleTwoFactorError)
     );
   }
@@ -212,52 +301,115 @@ export class AuthService {
   }
 
   /**
-   * @description Whether a user is signed in. After a page reload the memory is empty: when the
-   * session hint says a session may exist, the session is restored with one refresh call (the
-   * refresh cookie); without the hint nobody is signed in and no request is made.
+   * @description Whether a user is signed in. After a page reload the memory is empty: the tab's
+   * own account is restored with one refresh call (its slot). A tab without one - a new tab, or
+   * after a logout / expiry - is not signed in, unless `resumeRemembered` is set (an admin address
+   * was opened): then the last used remembered account is signed in, or the only one; with several
+   * and none used last the answer is false (the login page offers them).
+   * @param resumeRemembered Sign a tab without its own account in with a remembered one (AuthGuard).
    * @returns {Observable<boolean>}
    */
-  checkAuth(): Observable<boolean> {
+  checkAuth(resumeRemembered = false): Observable<boolean> {
     if (this.session) {
       this._isLoggedIn.next(true);
       return of(true);
     }
-    if (!this.hasSessionHint()) {
-      this._isLoggedIn.next(false);
-      return of(false);
+    const slot = this.tabSlot();
+    if (slot !== null || this.hasLegacyTabHint()) {
+      return this.restore(slot);
     }
-    return this.refreshAccessToken().pipe(
-      map(() => true),
-      catchError(() => of(false))
+    if (resumeRemembered && this.hasRememberedHint()) {
+      return this.rememberedAccounts().pipe(
+        switchMap(accounts => {
+          const last = this.readLocal(LAST_ACCOUNT_KEY);
+          const chosen = accounts.find(a => a.slot !== null && a.slot === last) ?? (accounts.length === 1 ? accounts[0] : null);
+          if (chosen) {
+            return this.restore(chosen.slot);
+          }
+          this._isLoggedIn.next(false);
+          return of(false);
+        })
+      );
+    }
+    this._isLoggedIn.next(false);
+    return of(false);
+  }
+
+  /**
+   * @description Accounts remembered in this browser ("Remember me", not logged out) - for the
+   * account chooser of the login page. No request without the hint; an empty answer removes it.
+   * @returns {Observable<RememberedAccount[]>} The accounts ([] also when the call fails).
+   */
+  rememberedAccounts(): Observable<RememberedAccount[]> {
+    if (!this.hasRememberedHint()) {
+      return of([]);
+    }
+    return this.http.post<ApiEnvelope<RememberedAccount[]>>(`${this.baseUrl}/refresh/accounts`, {}, { withCredentials: true }).pipe(
+      map(res => Array.isArray(res.data) ? res.data : []),
+      tap(accounts => {
+        if (!accounts.length) this.setRememberedHint(false);
+      }),
+      catchError(() => of([]))
     );
   }
 
   /**
-   * @description Rotates the refresh cookie and gets a new access token together with the user's
-   * profile, role and permissions (POST /refresh with credentials). Concurrent callers share one
-   * request; the tabs of the browser take turns through a Web Lock.
-   * @returns {Observable<AuthSessionResponse>} The new session; on failure the session is cleared.
+   * @description Signs this tab in as a remembered account (the chooser of the login page) - the
+   * tab's previous account, if any, stays signed in for its other tabs.
+   * @param slot Slot of the account (RememberedAccount.slot).
+   * @returns {Observable<AuthSessionResponse>} The new session (error = the account is no longer remembered).
    */
-  refreshAccessToken(): Observable<AuthSessionResponse> {
-    if (!this.refreshInFlight$) {
-      this.refreshInFlight$ = this.exclusive(() =>
-        this.http.post<ApiEnvelope<AuthSessionResponse>>(`${this.baseUrl}/refresh`, {}, { withCredentials: true }).pipe(map(res => res.data))
-      ).pipe(
-        tap(res => this.startSession(res)),
-        catchError(err => {
-          this.clearAuthData();
-          return throwError(() => err);
-        }),
-        finalize(() => { this.refreshInFlight$ = null; }),
-        shareReplay({ bufferSize: 1, refCount: false })
-      );
-    }
-    return this.refreshInFlight$;
+  resumeAccount(slot: string | null): Observable<AuthSessionResponse> {
+    return this.refreshAccessToken(slot);
   }
 
+  /**
+   * @description Rotates the account's refresh cookie and gets a new access token together with
+   * the user's profile, role and permissions (POST /refresh with credentials and the slot header).
+   * Concurrent callers of one account share one request; its tabs take turns through a Web Lock.
+   * @param slot Account to refresh - this tab's one by default (null = the cookie of the former version).
+   * @returns {Observable<AuthSessionResponse>} The new session; on failure this tab's session is cleared.
+   */
+  refreshAccessToken(slot: string | null = this.tabSlot()): Observable<AuthSessionResponse> {
+    const key = slot ?? '';
+    let inFlight = this.refreshInFlight.get(key);
+    if (!inFlight) {
+      const headers: Record<string, string> = slot ? { [SESSION_SLOT_HEADER]: slot } : {};
+      inFlight = this.exclusive(`${REFRESH_LOCK_NAME}:${slot ?? 'legacy'}`, () =>
+        this.http.post<ApiEnvelope<AuthSessionResponse>>(`${this.baseUrl}/refresh`, {}, { withCredentials: true, headers }).pipe(map(res => res.data))
+      ).pipe(
+        // The former single cookie (no slot) answered for another account than this tab has:
+        // never continue as that account here - reload and show the real state.
+        switchMap(res => {
+          if (!slot && this.session && String(res.user.id ?? res.user.user_login_id) !== this.session.userId) {
+            this.reloadPage();
+            return NEVER;
+          }
+          return of(res);
+        }),
+        tap(res => this.startSession(res)),
+        catchError(err => {
+          // A failed switch to another account leaves this tab's own session alone.
+          if (!this.session || slot === this.tabSlot()) {
+            this.clearAuthData();
+          }
+          return throwError(() => err);
+        }),
+        finalize(() => this.refreshInFlight.delete(key)),
+        shareReplay({ bufferSize: 1, refCount: false })
+      );
+      this.refreshInFlight.set(key, inFlight);
+    }
+    return inFlight;
+  }
+
+  /**
+   * @description Ends the session of THIS tab (memory and its slot). Remembered accounts and other
+   * tabs are not touched.
+   */
   public clearAuthData(): void {
     this.session = null;
-    this.setSessionHint(false);
+    this.setTabSlot(null);
     this.permissionService.clearPermissions();
     this.genericTableService.setCurrentUser(null);
     this.genericTableService.invalidateAll();
@@ -271,6 +423,8 @@ export class AuthService {
   public getUserEmail(): string | null { return this.session?.email ?? null; }
   public getUserRole(): string | null { return this.session?.role ?? null; }
   public getAccessToken(): string | null { return this.session?.accessToken ?? null; }
+  /** Signed URL of the own profile photo (null = the default image). */
+  public getAvatarUrl(): string | null { return this.session ? this._avatarUrlSubject.value : null; }
 
   /**
    * @description Shows a changed own profile photo at once (the next refresh brings the same URL).
@@ -285,12 +439,22 @@ export class AuthService {
   }
 
   /**
-   * @description Ends the session on the server (all tokens of the user, refresh cookie deleted)
-   * and locally - also when the server cannot be reached.
+   * @description Ends the account of this tab on the server (its tokens, its refresh cookie
+   * deleted) and locally - also when the server cannot be reached. After a successful logout the
+   * other tabs of the same account are told (they reload to the login page); other accounts of
+   * this browser stay signed in.
    */
   logout(): Observable<any> {
+    const userId = this.session?.userId;
+    const slot = this.tabSlot();
+    if (slot && this.readLocal(LAST_ACCOUNT_KEY) === slot) {
+      this.writeLocal(LAST_ACCOUNT_KEY, null);
+    }
     return this.http.post<any>(`${this.baseUrl}/logout`, {}, { withCredentials: true }).pipe(
-      tap(() => this.clearAuthData()),
+      tap(() => {
+        this.clearAuthData();
+        if (userId) this.announce({ type: 'logout', userId });
+      }),
       catchError(() => {
         this.clearAuthData();
         return of(null);
@@ -314,7 +478,11 @@ export class AuthService {
       role: response.user_roles?.length ? response.user_roles[0] : null,
       permissions,
     };
-    this.setSessionHint(true, response.remember ?? true);
+    this.setTabSlot(response.session_slot ?? null);
+    if (response.remember ?? true) {
+      this.setRememberedHint(true);
+      if (response.session_slot) this.writeLocal(LAST_ACCOUNT_KEY, response.session_slot);
+    }
     this.permissionService.setPermissions(permissions);
 
     if (changedUser) {
@@ -342,17 +510,18 @@ export class AuthService {
   }
 
   /**
-   * @description Runs the request under the refresh Web Lock when the browser has one.
+   * @description Runs the request under a Web Lock when the browser has one.
+   * @param lockName Name of the lock (one per account).
    * @param work Request to run (subscribed only once the lock is held).
    * @returns {Observable<T>} Result of the request.
    */
-  private exclusive<T>(work: () => Observable<T>): Observable<T> {
+  private exclusive<T>(lockName: string, work: () => Observable<T>): Observable<T> {
     const locks = this.lockManager;
     if (!locks) {
       return work();
     }
     return new Observable<T>(subscriber => {
-      locks.request(REFRESH_LOCK_NAME, () => new Promise<void>(release => {
+      locks.request(lockName, () => new Promise<void>(release => {
         work().subscribe({
           next: value => subscriber.next(value),
           error: err => { release(); subscriber.error(err); },
@@ -362,31 +531,101 @@ export class AuthService {
     });
   }
 
-  /** @description Whether a session may exist for THIS tab (remembered one, or this tab's own). */
-  private hasSessionHint(): boolean {
+  /** @description Slot of this tab's account (null = none). */
+  private tabSlot(): string | null {
     try {
-      return localStorage.getItem(SESSION_HINT_KEY) === '1' || sessionStorage.getItem(SESSION_HINT_KEY) === '1';
+      return sessionStorage.getItem(SESSION_SLOT_KEY) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * @description Stores the account of this tab (storage blocked = harmless, only the restore
+   * after a reload is lost). Also removes the hint of the former single-cookie version.
+   * @param slot Slot of the account; null = none (removed).
+   */
+  private setTabSlot(slot: string | null): void {
+    try {
+      sessionStorage.removeItem(SESSION_HINT_KEY);
+      if (slot === null) {
+        sessionStorage.removeItem(SESSION_SLOT_KEY);
+      } else {
+        sessionStorage.setItem(SESSION_SLOT_KEY, slot);
+      }
+    } catch {
+      // Storage unavailable (private mode).
+    }
+  }
+
+  /** @description Whether this tab has the session hint of the former single-cookie version. */
+  private hasLegacyTabHint(): boolean {
+    try {
+      return sessionStorage.getItem(SESSION_HINT_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  /** @description Whether accounts remembered in this browser may exist. */
+  private hasRememberedHint(): boolean {
+    try {
+      return localStorage.getItem(SESSION_HINT_KEY) === '1';
     } catch {
       return false;
     }
   }
 
   /**
-   * @description Sets / removes the session hint (storage blocked = no hint, harmless).
-   * @param on Session started (true) or ended (false - removed from both storages).
-   * @param remember "Remember me": localStorage (all tabs) instead of sessionStorage (this tab).
+   * @description Sets / removes the "remembered accounts may exist" hint (storage blocked = no hint).
+   * @param on A remembered login happened (true) or none is left (false).
    */
-  private setSessionHint(on: boolean, remember = true): void {
+  private setRememberedHint(on: boolean): void {
+    this.writeLocal(SESSION_HINT_KEY, on ? '1' : null);
+    if (!on) this.writeLocal(LAST_ACCOUNT_KEY, null);
+  }
+
+  /**
+   * @description Reads a localStorage value (storage blocked = null).
+   * @param key Key to read.
+   * @returns {string | null} The value.
+   */
+  private readLocal(key: string): string | null {
     try {
-      localStorage.removeItem(SESSION_HINT_KEY);
-      sessionStorage.removeItem(SESSION_HINT_KEY);
-      if (on) {
-        // "Remember me": every tab and window; otherwise only this tab (survives its reload).
-        (remember ? localStorage : sessionStorage).setItem(SESSION_HINT_KEY, '1');
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * @description Writes / removes a localStorage value (storage blocked = harmless: only the
+   *   chooser of the login page and the remembered sign-in of admin addresses are lost).
+   * @param key Key to write.
+   * @param value Value; null removes the key.
+   */
+  private writeLocal(key: string, value: string | null): void {
+    try {
+      if (value === null) {
+        localStorage.removeItem(key);
+      } else {
+        localStorage.setItem(key, value);
       }
     } catch {
-      // Storage unavailable (private mode) - only the restore after a reload is lost.
+      // Storage unavailable (private mode).
     }
+  }
+
+  /**
+   * @description Restores a session with one refresh call.
+   * @param slot Account to restore (null = the cookie of the former version).
+   * @returns {Observable<boolean>} Whether the tab is now signed in.
+   */
+  private restore(slot: string | null): Observable<boolean> {
+    return this.refreshAccessToken(slot).pipe(
+      map(() => true),
+      catchError(() => of(false))
+    );
   }
 
   /** @description Deletes the session keys the former versions kept in sessionStorage and the former session hint. */

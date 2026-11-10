@@ -4,23 +4,32 @@
  * @project JS web-platform
  * @author JS
  * @created 2025
- * @description Authentication component: login form ("Remember me" included), captcha and the
- *   2FA OTP step.
+ * @description Authentication component: login form ("Remember me" included), captcha, the
+ *   2FA OTP step and the account chooser ("Continue as ...": the account of this tab and the
+ *   accounts remembered in this browser).
+ * @note The page is never skipped and never signs in on its own; the user chooses an account or
+ *   signs in with another one. Several accounts may be signed in in one browser (each tab works
+ *   with one of them, see AuthService) - a login or a chosen account signs in THIS tab only.
  */
 
 import { Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { AuthError, AuthService, LoginError, TwoFactorError } from '../../../core/auth/auth.service';
+import { AuthError, AuthService, LoginError, RememberedAccount, TwoFactorError } from '../../../core/auth/auth.service';
+import { UserAvatarComponent } from '../../components/user-avatar/user-avatar.component';
 import { TurnstileService } from '../../../core/services/turnstile.service';
 import { BasePublicComponent } from '../../../public/base-public.component';
 import { CommonModule } from '@angular/common';
+import { map, switchMap } from 'rxjs/operators';
 type LoginStep = 'credentials' | 'otp';
+
+/** Account of the chooser - `current` = the account this tab is signed in as (opens without a request). */
+export type AccountChoice = RememberedAccount & { current?: boolean };
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, RouterModule, CommonModule],
+  imports: [FormsModule, RouterModule, CommonModule, UserAvatarComponent],
   templateUrl: './login.component.html',
   styleUrls: ['../../shared-styles/theme.css', '../shared-styles/auth.css', '../../../shared/styles/base.css', './login.component.css']
 })
@@ -38,11 +47,14 @@ export class LoginComponent extends BasePublicComponent implements OnDestroy {
   showPassword = false;
   isSubmitting = false;
   /**
-   * "Remember me" (off by default): on = the admin opens without a login in every tab and window,
-   * also after a browser restart (7 days without activity, at most 30 days); off = only the tab of
-   * the login keeps the session (also after its reload) - a new tab or window asks for the login.
+   * "Remember me" (off by default): on = the account is offered ("Continue as ...") on the login
+   * page of every tab and window, also after a browser restart (7 days without activity, at most
+   * 30 days); off = only the tab of the login keeps the session (also after its reload).
    */
   rememberMe = false;
+
+  /** Accounts offered above the form: this tab's one first, then the remembered ones (empty = only the form). */
+  rememberedAccounts: AccountChoice[] = [];
 
   captchaRequired = false;
   private captchaToken: string | null = null;
@@ -68,6 +80,52 @@ export class LoginComponent extends BasePublicComponent implements OnDestroy {
     private turnstile: TurnstileService,
   ) {
     super();
+  }
+
+  /**
+   * @description Loads the chooser: the account of this tab (restored after a reload, also when it
+   *   is not remembered) and the accounts remembered in this browser (no request without a hint).
+   */
+  protected override onInit(): void {
+    this.authService.checkAuth().pipe(
+      switchMap(signedIn => this.authService.rememberedAccounts().pipe(map(accounts => ({ signedIn, accounts }))))
+    ).subscribe(({ signedIn, accounts }) => {
+      const email = signedIn ? this.authService.getUserEmail() : null;
+      const own = accounts.find(a => a.user_email === email);
+      const current: AccountChoice[] = email
+        ? [{ slot: own?.slot ?? null, user_email: email, full_name: own?.full_name ?? null, avatar_url: this.authService.getAvatarUrl(), current: true }]
+        : [];
+      this.rememberedAccounts = [...current, ...accounts.filter(a => a !== own)];
+      this.cdr.markForCheck();
+    });
+  }
+
+  /**
+   * @description Signs this tab in as a remembered account (no password - its refresh cookie is
+   *   the proof). An account that is no longer remembered disappears from the chooser.
+   * @param account Chosen account.
+   */
+  onResume(account: AccountChoice): void {
+    if (this.isSubmitting) return;
+    if (account.current) {
+      this.router.navigate(['/admin/core/welcome-page']);
+      return;
+    }
+    this.isSubmitting = true;
+    this.errorMessage = '';
+    this.authService.resumeAccount(account.slot).subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        this.setInitialAdminModule();
+        this.router.navigate(['/admin/core/welcome-page']);
+      },
+      error: () => {
+        this.isSubmitting = false;
+        this.rememberedAccounts = this.rememberedAccounts.filter(a => a !== account);
+        this.errorMessage = this.t?.accounts?.unavailable || this.t?.errors?.login_failed || '';
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   override ngOnDestroy(): void {

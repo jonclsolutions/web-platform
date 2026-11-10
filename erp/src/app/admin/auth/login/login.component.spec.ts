@@ -5,8 +5,8 @@
  * @author JS
  * @created 2026
  * @description Unit tests of LoginComponent – admin sign-in: credentials, CAPTCHA after failed
- *   attempts, two-factor (OTP) step with countdown and resend limit, forgot-password modal and
- *   clearing secrets on destroy.
+ *   attempts, two-factor (OTP) step with countdown and resend limit, forgot-password modal,
+ *   chooser of the accounts remembered in this browser and clearing secrets on destroy.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (auth stub, public localization stub), TurnstileService (spy)
  */
@@ -32,6 +32,7 @@ describe('LoginComponent', () => {
   beforeEach(async () => {
     localStorage.removeItem('admin_current_module');
     ctx = createAdminTestContext({ loggedIn: false });
+    ctx.auth.checkAuth.and.returnValue(of(false));
     pub = createPublicTestContext({ login: { errors: { captcha_required: 'Confirm captcha', captcha_load: 'Captcha failed' } } });
     turnstile = jasmine.createSpyObj<TurnstileService>('TurnstileService', ['render', 'reset', 'remove']);
     turnstile.render.and.returnValue(Promise.resolve('widget-1'));
@@ -73,6 +74,85 @@ describe('LoginComponent', () => {
     expect(localStorage.getItem('admin_current_module')).toBe('core');
     fixture.detectChanges();
     expect((fixture.nativeElement.querySelector('.remember-row input') as HTMLInputElement).checked).toBeFalse();
+  });
+
+  /**
+   * @description Without an account of this tab and without remembered accounts only the form is
+   *   shown - the page never redirects on its own.
+   * @input  checkAuth() → false; rememberedAccounts() → [] (stub default)
+   * @output both called once; no .account-chooser; no navigation
+   */
+  it('shows no account chooser without accounts', () => {
+    expect(ctx.auth.checkAuth).toHaveBeenCalledTimes(1);
+    expect(ctx.auth.rememberedAccounts).toHaveBeenCalledTimes(1);
+    expect(fixture.nativeElement.querySelector('.account-chooser')).toBeNull();
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  /**
+   * @description A tab signed in already is offered its own account first ("signed in in this
+   *   window", also when not remembered); a remembered copy of it is not listed twice; choosing it
+   *   opens the admin without any request.
+   * @input  checkAuth() → true (admin@example.test, avatar '/me.webp'); remembered: the same account
+   *   (slot s0, full name) and another one (s9)
+   * @output rows [admin (current, full name, slot s0), other]; click on the first → navigate, no
+   *   resumeAccount; no redirect before the click
+   */
+  it('offers the account of this tab first', () => {
+    ctx.auth.checkAuth.and.returnValue(of(true));
+    ctx.auth.avatarUrl$.next('/me.webp');
+    ctx.auth.rememberedAccounts.and.returnValue(of([
+      { slot: 's0', user_email: 'admin@example.test', full_name: 'Admin A', avatar_url: '/old.webp' },
+      { slot: 's9', user_email: 'other@example.test', full_name: null, avatar_url: null },
+    ]));
+    component.ngOnInit();
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(component.rememberedAccounts.map(a => [a.user_email, a.slot, a.full_name, a.avatar_url, !!a.current])).toEqual([
+      ['admin@example.test', 's0', 'Admin A', '/me.webp', true],
+      ['other@example.test', 's9', null, null, false],
+    ]);
+    component.t = { ...component.t, accounts: { current: 'This window' } };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.account-current')?.textContent).toContain('This window');
+
+    component.onResume(component.rememberedAccounts[0]);
+    expect(ctx.auth.resumeAccount).not.toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/admin/core/welcome-page']);
+  });
+
+  /**
+   * @description Remembered accounts are offered above the form ("Continue as ..."); choosing one
+   *   signs this tab in with its slot and opens the admin; an account that is no longer
+   *   remembered disappears with a message.
+   * @input  two accounts (with / without full name); click the first → resumeAccount ok; then the
+   *   second → resumeAccount error
+   * @output two .account-option rows (name + e-mail / e-mail only); resumeAccount('s1'); navigate
+   *   to the welcome page; module 'core'; after the error one row left and errorMessage 'Gone'
+   */
+  it('offers the remembered accounts and signs in with one of them', () => {
+    const accounts = [
+      { slot: 's1', user_email: 'a@b.cz', full_name: 'Anna B', avatar_url: null },
+      { slot: 's2', user_email: 'c@d.cz', full_name: null, avatar_url: null },
+    ];
+    component.rememberedAccounts = accounts;
+    component.t = { ...component.t, accounts: { unavailable: 'Gone' } };
+    fixture.detectChanges();
+    const rows = fixture.nativeElement.querySelectorAll('.account-option') as NodeListOf<HTMLButtonElement>;
+    expect(rows.length).toBe(2);
+    expect(rows[0].textContent).toContain('Anna B');
+    expect(rows[0].textContent).toContain('a@b.cz');
+    expect(rows[1].querySelector('.account-email')).toBeNull();
+
+    rows[0].click();
+    expect(ctx.auth.resumeAccount).toHaveBeenCalledWith('s1');
+    expect(router.navigate).toHaveBeenCalledWith(['/admin/core/welcome-page']);
+    expect(localStorage.getItem('admin_current_module')).toBe('core');
+
+    ctx.auth.resumeAccount.and.returnValue(throwError(() => new Error('401')));
+    component.onResume(accounts[1]);
+    expect(component.rememberedAccounts).toEqual([accounts[0]]);
+    expect(component.errorMessage).toBe('Gone');
+    expect(component.isSubmitting).toBeFalse();
   });
 
   /**

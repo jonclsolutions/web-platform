@@ -21,7 +21,13 @@ import { Router } from '@angular/router';
  * @description Manages secure API communication by injecting access tokens and orchestrating the token refresh flow.
  * @usage Registered in the application configuration to globally secure HTTP traffic.
  * @note Implements a 'refresh lock' using BehaviorSubject to prevent multiple simultaneous refresh requests when multiple components trigger 401 errors at once.
+ *   A failed refresh also fails the requests waiting for it (REFRESH_FAILED) - they never hang.
+ *   A 401 of the logout itself is not refreshed: logging out must never renew a session (and
+ *   with the cookie of another account signed in in another tab, it would log THAT one out).
  */
+/** @description Value of the refresh subject after a failed refresh - the waiting requests fail. */
+const REFRESH_FAILED = Symbol('refresh-failed');
+
 @Injectable()
 export class AuthTokenInterceptor implements HttpInterceptor {
   private isRefreshing = false;
@@ -46,7 +52,7 @@ export class AuthTokenInterceptor implements HttpInterceptor {
 
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
-        if (error.status === 401 && !request.url.includes('/login') && !request.url.includes('/refresh')) {
+        if (error.status === 401 && !request.url.includes('/login') && !request.url.includes('/refresh') && !request.url.endsWith('/logout')) {
           return this.handle401Error(request, next);
         }
         return throwError(() => error);
@@ -86,6 +92,7 @@ export class AuthTokenInterceptor implements HttpInterceptor {
         }),
         catchError((err: any) => {
           this.isRefreshing = false;
+          this.refreshTokenSubject.next(REFRESH_FAILED);
           this.authService.clearAuthData();
           this.router.navigate(['/auth/login']);
           return throwError(() => err);
@@ -95,7 +102,9 @@ export class AuthTokenInterceptor implements HttpInterceptor {
       return this.refreshTokenSubject.pipe(
         filter(token => token !== null),
         take(1),
-        switchMap(token => next.handle(this.addToken(request, token)))
+        switchMap(token => token === REFRESH_FAILED
+          ? throwError(() => new HttpErrorResponse({ status: 401, statusText: 'Unauthorized', url: request.url }))
+          : next.handle(this.addToken(request, token)))
       );
     }
   }

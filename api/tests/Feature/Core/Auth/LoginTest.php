@@ -68,7 +68,7 @@ class LoginTest extends TestCase
 
         $this->assertNotEmpty($response->json('data.token'));
         $this->assertArrayNotHasKey('refreshToken', $response->json('data'));
-        $refresh = $this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh')->getValue();
+        $refresh = $this->credentialCookie($response, $this->refreshCookieName($user), '/api/refresh')->getValue();
         $this->assertSame(hash('sha256', $refresh), RefreshToken::where('user_id', $user->id)->value('token'));
         $sessionEnd = RefreshToken::where('user_id', $user->id)->sole()->session_expires_at;
         $this->assertLessThan(5, abs(now()->addDays(AuthCookies::SESSION_MAX_DAYS)->diffInSeconds($sessionEnd)));
@@ -151,7 +151,7 @@ class LoginTest extends TestCase
 
         $this->postJson('/api/login', [
             'email' => $user->user_email, 'password' => $this->defaultPassword, 'captcha_token' => 'ok-token',
-        ])->assertOk()->assertJsonStructure(['data' => ['token']])->assertCookie(AuthCookies::REFRESH, null, false);
+        ])->assertOk()->assertJsonStructure(['data' => ['token']])->assertCookie($this->refreshCookieName($user), null, false);
     }
 
     /**
@@ -272,7 +272,7 @@ class LoginTest extends TestCase
         $this->assertSame('mixed@example.com', $user->user_email);
 
         $this->postJson('/api/login', ['email' => ' MIXED@example.COM ', 'password' => $this->defaultPassword])
-            ->assertOk()->assertJsonStructure(['data' => ['token']])->assertCookie(AuthCookies::REFRESH, null, false);
+            ->assertOk()->assertJsonStructure(['data' => ['token']])->assertCookie($this->refreshCookieName($user), null, false);
     }
 
     /**
@@ -334,7 +334,9 @@ class LoginTest extends TestCase
         $this->assertSame(0, RefreshToken::where('user_id', $user->id)->count());
         $this->assertSame(1, $other->tokens()->count());
         $this->assertSame(1, RefreshToken::where('user_id', $other->id)->count());
-        $this->assertCredentialCookieCleared($response, AuthCookies::REFRESH, '/api/refresh');
+        // Only the cookie of this account - other accounts of the browser keep theirs.
+        $this->assertCredentialCookieCleared($response, $this->refreshCookieName($user), '/api/refresh');
+        $this->assertNull($response->getCookie($this->refreshCookieName($other), false));
         $this->assertCoreLog('logout', $user->user_email);
     }
 
@@ -463,7 +465,7 @@ class LoginTest extends TestCase
             ->assertJsonPath('data.user_permissions', ['core-administrators-view']);
 
         $this->assertArrayNotHasKey('refreshToken', $response->json('data'));
-        $newRefresh = $this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh')->getValue();
+        $newRefresh = $this->credentialCookie($response, $this->refreshCookieName($user), '/api/refresh')->getValue();
         $this->assertNotSame('raw', $newRefresh);
         $current = RefreshToken::whereNull('rotated_at')->sole();
         $this->assertSame([hash('sha256', $newRefresh), 'fam-1'], [$current->token, $current->family]);
@@ -517,7 +519,7 @@ class LoginTest extends TestCase
         $this->assertTrue($current->expires_at->eq($end) && $current->session_expires_at->eq($end));
 
         $this->travel(3)->days();
-        $next = $this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh')->getValue();
+        $next = $this->credentialCookie($response, $this->refreshCookieName($user), '/api/refresh')->getValue();
         $this->withUnencryptedCookie(AuthCookies::REFRESH, $next)->withCredentials()->postJson('/api/refresh')->assertStatus(401);
         $this->assertSecurityEvent('refresh_token_invalid', 'info');
 
@@ -543,7 +545,7 @@ class LoginTest extends TestCase
 
         $response = $this->postJson('/api/login', ['email' => $user->user_email, 'password' => $this->defaultPassword])
             ->assertOk()->assertJsonPath('data.remember', false);
-        $cookie = $this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh');
+        $cookie = $this->credentialCookie($response, $this->refreshCookieName($user), '/api/refresh');
         $this->assertSame(0, $cookie->getExpiresTime());
         $row = RefreshToken::where('user_id', $user->id)->sole();
         $this->assertFalse($row->remember);
@@ -551,7 +553,7 @@ class LoginTest extends TestCase
 
         $refreshed = $this->withUnencryptedCookie(AuthCookies::REFRESH, $cookie->getValue())->withCredentials()->postJson('/api/refresh')
             ->assertOk()->assertJsonPath('data.remember', false);
-        $this->assertSame(0, $this->credentialCookie($refreshed, AuthCookies::REFRESH, '/api/refresh')->getExpiresTime());
+        $this->assertSame(0, $this->credentialCookie($refreshed, $this->refreshCookieName($user), '/api/refresh')->getExpiresTime());
         $current = RefreshToken::whereNull('rotated_at')->sole();
         $this->assertFalse($current->remember);
         $this->assertTrue($current->expires_at->eq(now()->addHours(AuthCookies::SESSION_IDLE_HOURS)));
@@ -559,7 +561,7 @@ class LoginTest extends TestCase
         $remembered = $this->postJson('/api/login', ['email' => $user->user_email, 'password' => $this->defaultPassword, 'remember' => true])
             ->assertOk()->assertJsonPath('data.remember', true);
         $this->assertSame(now()->addDays(AuthCookies::REFRESH_TTL_DAYS)->getTimestamp(),
-            $this->credentialCookie($remembered, AuthCookies::REFRESH, '/api/refresh')->getExpiresTime());
+            $this->credentialCookie($remembered, $this->refreshCookieName($user), '/api/refresh')->getExpiresTime());
         $this->assertTrue(RefreshToken::where('user_id', $user->id)->sole()->remember);
     }
 
@@ -575,7 +577,7 @@ class LoginTest extends TestCase
         $user = $this->user();
 
         $response = $this->postJson('/api/login', ['email' => $user->user_email, 'password' => $this->defaultPassword])->assertOk();
-        $this->assertTrue($this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh')->isSecure());
+        $this->assertTrue($this->credentialCookie($response, $this->refreshCookieName($user), '/api/refresh')->isSecure());
 
         foreach (range(1, 30) as $i) {
             $this->postJson('/api/refresh')->assertStatus(401);
@@ -598,7 +600,7 @@ class LoginTest extends TestCase
         $response = $this->postJson('/api/login', ['email' => $user->user_email, 'password' => $this->defaultPassword])->assertOk();
 
         $row = RefreshToken::sole();
-        $this->assertSame(hash('sha256', $this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh')->getValue()), $row->token);
+        $this->assertSame(hash('sha256', $this->credentialCookie($response, $this->refreshCookieName($user), '/api/refresh')->getValue()), $row->token);
         $this->assertNotNull($row->family);
         $this->assertNotSame('old', $row->family);
         $this->assertNull($row->rotated_at);
@@ -623,7 +625,7 @@ class LoginTest extends TestCase
         RefreshToken::create(['user_id' => $other->id, 'token' => hash('sha256', 'other'), 'family' => 'fam-other', 'expires_at' => now()->addDay()]);
 
         $first = $this->withUnencryptedCookie(AuthCookies::REFRESH, 'raw')->withCredentials()->postJson('/api/refresh')->assertOk();
-        $rotated = $this->credentialCookie($first, AuthCookies::REFRESH, '/api/refresh')->getValue();
+        $rotated = $this->credentialCookie($first, $this->refreshCookieName($user), '/api/refresh')->getValue();
 
         $this->travel(1)->minutes();
         $reuse = $this->withUnencryptedCookie(AuthCookies::REFRESH, 'raw')->withCredentials()->postJson('/api/refresh')
@@ -654,7 +656,7 @@ class LoginTest extends TestCase
         RefreshToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'raw'), 'family' => 'fam', 'expires_at' => now()->addDay()]);
 
         $first = $this->withUnencryptedCookie(AuthCookies::REFRESH, 'raw')->withCredentials()->postJson('/api/refresh')->assertOk();
-        $rotated = $this->credentialCookie($first, AuthCookies::REFRESH, '/api/refresh')->getValue();
+        $rotated = $this->credentialCookie($first, $this->refreshCookieName($user), '/api/refresh')->getValue();
 
         $this->travel(3)->seconds();
         $race = $this->withUnencryptedCookie(AuthCookies::REFRESH, 'raw')->withCredentials()->postJson('/api/refresh')

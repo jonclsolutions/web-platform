@@ -168,6 +168,115 @@
   cursor: pointer;
 }
 
+/*
+    @module: Account chooser
+    @description: Account of this tab and the accounts remembered in this browser above the form -
+        one row per account (photo, name, e-mail, "signed in in this window" note), then a divider
+        "or sign in with another account".
+    @usage: .account-chooser, .account-chooser-title, .account-option, .account-text,
+        .account-name, .account-email, .account-current, .account-arrow, .account-chooser-divider
+*/
+.account-chooser {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 28px 28px 0;
+}
+
+.account-chooser-title {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.account-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--ease), border-color var(--ease);
+}
+
+.account-option:hover:not(:disabled) {
+  background: var(--accent-dim);
+  border-color: var(--accent-dim-2);
+}
+
+.account-option:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.account-option:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.account-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.account-name,
+.account-email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.account-email {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.account-current {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--success);
+}
+
+.account-arrow {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.account-chooser-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.account-chooser + .login-form {
+  padding-top: 18px;
+}
+
+.account-chooser-divider::before,
+.account-chooser-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
 .captcha-container {
   display: flex;
   justify-content: center;

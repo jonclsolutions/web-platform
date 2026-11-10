@@ -529,15 +529,29 @@ the server with the local one. The checksum file does not need to be deployed.
   session alone therefore cannot add another sysadmin or remove the others - it does not protect
   against a known password (sysadmin 2FA stays forced).
 - **Admin login session** (`AuthController`, `AuthCookies`): the access token lives 60 minutes in
-  memory only, the refresh token only in an HttpOnly cookie (`jsw_refresh`, path `/api/refresh`).
-  - The admin opens without a login (login page and admin links skipped) ONLY after a login with
-    "Remember me" that was not logged out - in every tab and window, also after a browser restart
-    (session hint in localStorage, persistent cookie, 7 days without activity, `REFRESH_TTL_DAYS`).
-  - "Remember me" off (default): only the tab of the login keeps the session (also after its
-    reload; hint in sessionStorage); a new tab or window asks for the login. Browser-session
-    cookie (no `expires`) and 12 hours without activity on the server (`SESSION_IDLE_HOURS`).
+  memory only, the refresh token only in an HttpOnly cookie per account (`jsw_refresh_{slot}`,
+  path `/api/refresh`; the slot is an HMAC of the account id).
+  - Several accounts can be signed in in one browser at the same time. Each tab works with one
+    account (its slot in sessionStorage, sent as the `X-Session-Slot` header on every refresh - the
+    API refuses the slot of another account). A login, a switch or a logout in one tab never
+    changes the account of another tab.
+  - The login page is never skipped: it offers the account of this tab and the accounts remembered
+    in this browser ("Continue as ...", one click, `POST /api/refresh/accounts`) next to the form
+    for another account. A reload keeps the account of its tab.
+  - An admin address opened in a tab without its own account (a new tab, a pasted link) opens with
+    the remembered account used last (or the only one); otherwise - nothing remembered, or several
+    and none used last - the login page is shown. A tab whose account was logged out or expired
+    always shows the login page.
+  - "Remember me": the account is offered on the login page of every tab and window, also after a
+    browser restart (persistent cookie, 7 days without activity, `REFRESH_TTL_DAYS`).
+  - "Remember me" off (default): only the tab of the login keeps the account (also after its
+    reload); it is never offered to other tabs. Browser-session cookie (no `expires`) and 12 hours
+    without activity on the server (`SESSION_IDLE_HOURS`).
   - always at most 30 days from the login (`SESSION_MAX_DAYS`), then a new login with 2FA;
-  - a logout ends the session on the server, the next access always needs the full login.
+  - a logout ends that account on the server and deletes its cookie only - its other tabs reload to
+    the login page, other accounts stay signed in.
+  - The single `jsw_refresh` cookie of older versions keeps working and is moved to its slot cookie
+    on the first refresh.
   - Browsers that restore the previous session ("Continue where you left off" in Chrome / Brave /
     Edge, "Restore previous session" in Firefox, reopened windows in Safari) or keep running in
     the background also restore the browser-session cookie - no website can prevent that; the

@@ -6,9 +6,11 @@
  * @created 2026
  * @description Unit tests of AuthService - the session of the admin lives only in memory, the
  *   refresh token only in the HttpOnly cookie of the API: login / 2FA start the session, nothing
- *   secret reaches sessionStorage / localStorage (only the "session may exist" hint), the session
- *   is restored after a reload by one refresh call, concurrent refreshes share one request and run
- *   under the Web Lock of the tabs, logout ends it; error mapping of login / 2FA / password reset.
+ *   secret reaches sessionStorage / localStorage (only the account slot of the tab and the
+ *   "remembered accounts may exist" hint), the tab's account is restored after a reload by one
+ *   refresh call with its slot, a new tab signs in only to the one remembered account, concurrent
+ *   refreshes share one request and run under the Web Lock of the account, logout ends only the
+ *   account of the tab; error mapping of login / 2FA / password reset.
  * @note `startTokenRefreshTimer()` creates an endless 20-minute `timer(...)`: fakeAsync tests that
  *   start it stop it with `clearAuthData()` and `discardPeriodicTasks()`.
  * @note `lockManager` is set to null (no Web Lock) so the requests start synchronously; one test
@@ -20,7 +22,9 @@
 import { TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { AuthService, AuthSessionResponse, RefreshLockManager, SESSION_HINT_KEY } from './auth.service';
+import {
+  AuthService, AuthSessionResponse, LAST_ACCOUNT_KEY, RefreshLockManager, RememberedAccount, SESSION_HINT_KEY, SESSION_SLOT_HEADER, SESSION_SLOT_KEY, SessionChannel
+} from './auth.service';
 import { PermissionService } from './services/permission.service';
 import { GenericTableService } from '../services/generic-table.service';
 import { environment } from '../../../environments/environment';
@@ -38,13 +42,27 @@ describe('AuthService', () => {
     user: { id: 42, user_email: 'a@b.cz' },
     user_roles: ['admin', 'editor'],
     user_permissions: ['view-web', 'view-eshop'],
+    session_slot: 'slot42',
     ...overrides,
   });
+
+  /** Remembered account of the /refresh/accounts answer. */
+  const account = (slot: string | null, email = 'a@b.cz'): RememberedAccount => ({ slot, user_email: email, full_name: null, avatar_url: null });
+
+  /** Fake session channel of the service (the real one is closed - no message between tests). */
+  let channel: jasmine.SpyObj<SessionChannel>;
+  /** Page reload of the service - never a real reload in the tests. */
+  let reload: jasmine.Spy;
 
   /** Creates the service (after the storage of the test is prepared) without Web Lock. */
   function createService(): void {
     service = TestBed.inject(AuthService);
     service.lockManager = null;
+    service.sessionChannel?.close();
+    channel = jasmine.createSpyObj<SessionChannel>('SessionChannel', ['postMessage', 'addEventListener', 'close']);
+    service.sessionChannel = channel;
+    reload = jasmine.createSpy('reloadPage');
+    service.reloadPage = reload;
     httpMock = TestBed.inject(HttpTestingController);
     tables = TestBed.inject(GenericTableService);
   }
@@ -107,10 +125,12 @@ describe('AuthService', () => {
 
     /**
      * @description Login posts the credentials with credentials (the API sets the refresh
-     *   cookie); the session is kept in memory only - nothing in sessionStorage, only the hint.
+     *   cookie); the session is kept in memory only - sessionStorage holds only the account slot
+     *   of the tab, localStorage only the hint; nothing is announced to the other tabs.
      * @input login({email, password}) answered with the session (role admin, two permissions).
      * @output POST /login, withCredentials; token / id / email / role / permissions from memory;
-     *   sessionStorage empty; localStorage hint '1'; permissions set; table cache bound to user 42.
+     *   sessionStorage only the slot 'slot42'; localStorage hint '1'; permissions set; table cache
+     *   bound to user 42; no channel message.
      */
     it('starts the session in memory only', () => {
       const setUser = spyOn(tables, 'setCurrentUser').and.callThrough();
@@ -128,10 +148,12 @@ describe('AuthService', () => {
       expect(service.getUserEmail()).toBe('a@b.cz');
       expect(service.getUserRole()).toBe('admin');
       expect(service.getUserPermissions()).toEqual(['view-web', 'view-eshop']);
-      expect(sessionStorage.length).toBe(0);
+      expect(sessionStorage.length).toBe(1);
+      expect(sessionStorage.getItem(SESSION_SLOT_KEY)).toBe('slot42');
       expect(localStorage.getItem(SESSION_HINT_KEY)).toBe('1');
       expect(permissionServiceMock.setPermissions).toHaveBeenCalledWith(['view-web', 'view-eshop']);
       expect(setUser).toHaveBeenCalledWith('42');
+      expect(channel.postMessage).not.toHaveBeenCalled();
     });
 
     /**
@@ -180,7 +202,8 @@ describe('AuthService', () => {
      * @description The refresh timer starts with the session and renews it every 20 minutes;
      *   a failed timed refresh ends the session without an unhandled error.
      * @input Login; tick 20 min → refresh answered with a new token; tick 20 min → refresh 401.
-     * @output POST /refresh {} with the new token in memory; after the 401 logged out.
+     * @output POST /refresh {} with the slot header of the tab, the new token in memory; after
+     *   the 401 logged out.
      */
     it('refreshes the session every 20 minutes', fakeAsync(() => {
       logIn();
@@ -189,6 +212,7 @@ describe('AuthService', () => {
       const refresh = httpMock.expectOne(`${baseUrl}/refresh`);
       expect(refresh.request.body).toEqual({});
       expect(refresh.request.withCredentials).toBeTrue();
+      expect(refresh.request.headers.get(SESSION_SLOT_HEADER)).toBe('slot42');
       refresh.flush({ data: session({ token: 'access-2' }) });
       expect(service.getAccessToken()).toBe('access-2');
 
@@ -230,55 +254,53 @@ describe('AuthService', () => {
     });
 
     /**
-     * @description Without "Remember me" the hint lives only in this tab (sessionStorage): the
-     *   tab restores the session after a reload, a new tab (empty sessionStorage) shows the login
-     *   page without any request; a remembered refresh moves it back to localStorage; a logout
-     *   removes both.
-     * @input Login answer remember false; reload (memory empty); new tab (sessionStorage cleared);
-     *   refresh answer remember true; clearAuthData().
-     * @output Hint only in sessionStorage; checkAuth → one refresh → true; new tab: checkAuth
-     *   false, no request; then hint only in localStorage; finally none.
+     * @description Without "Remember me" the account belongs to its tab only: the tab restores it
+     *   after a reload (its slot), a new tab (empty sessionStorage, no remembered hint) shows the
+     *   login page without any request.
+     * @input Login answer remember false; reload (memory empty); new tab (sessionStorage cleared).
+     * @output No localStorage hint, slot in sessionStorage; checkAuth → one refresh with the slot
+     *   header → true; new tab: checkAuth false, no request.
      */
     it('keeps a session without "Remember me" in its own tab only', () => {
       service.login({ email: 'a@b.cz', password: 'p', remember: false }).subscribe();
       httpMock.expectOne(`${baseUrl}/login`).flush({ data: session({ remember: false }) });
       expect(localStorage.getItem(SESSION_HINT_KEY)).toBeNull();
-      expect(sessionStorage.getItem(SESSION_HINT_KEY)).toBe('1');
+      expect(sessionStorage.getItem(SESSION_SLOT_KEY)).toBe('slot42');
 
       let restored: boolean | undefined;
       (service as any).session = null;
       service.checkAuth().subscribe(v => (restored = v));
-      httpMock.expectOne(`${baseUrl}/refresh`).flush({ data: session({ remember: true }) });
+      const refresh = httpMock.expectOne(`${baseUrl}/refresh`);
+      expect(refresh.request.headers.get(SESSION_SLOT_HEADER)).toBe('slot42');
+      refresh.flush({ data: session({ remember: false }) });
       expect(restored).toBeTrue();
-      expect(localStorage.getItem(SESSION_HINT_KEY)).toBe('1');
-      expect(sessionStorage.getItem(SESSION_HINT_KEY)).toBeNull();
+      expect(localStorage.getItem(SESSION_HINT_KEY)).toBeNull();
 
-      localStorage.removeItem(SESSION_HINT_KEY);
       sessionStorage.clear();
       (service as any).session = null;
       let newTab: boolean | undefined;
       service.checkAuth().subscribe(v => (newTab = v));
       httpMock.expectNone(`${baseUrl}/refresh`);
+      httpMock.expectNone(`${baseUrl}/refresh/accounts`);
       expect(newTab).toBeFalse();
-
-      sessionStorage.setItem(SESSION_HINT_KEY, '1');
-      service.clearAuthData();
-      expect([localStorage.getItem(SESSION_HINT_KEY), sessionStorage.getItem(SESSION_HINT_KEY)]).toEqual([null, null]);
     });
 
     /**
-     * @description After a reload (hint set, memory empty) the session is restored with ONE
-     *   refresh call (the cookie), also when several callers ask at once.
-     * @input Hint '1'; checkAuth() twice before the answer.
-     * @output One POST /refresh; both answer true; token, email and permissions restored.
+     * @description After a reload (slot of the tab, memory empty) the account is restored with ONE
+     *   refresh call, also when several callers ask at once.
+     * @input Slot 'slot42' in sessionStorage; checkAuth() twice before the answer.
+     * @output One POST /refresh with the slot header; both answer true; token, email and
+     *   permissions restored.
      */
-    it('restores the session with one refresh call', () => {
-      localStorage.setItem(SESSION_HINT_KEY, '1');
+    it('restores the account of the tab with one refresh call', () => {
+      sessionStorage.setItem(SESSION_SLOT_KEY, 'slot42');
       const results: boolean[] = [];
       service.checkAuth().subscribe(v => results.push(v));
       service.checkAuth().subscribe(v => results.push(v));
 
-      httpMock.expectOne(`${baseUrl}/refresh`).flush({ data: session() });
+      const refresh = httpMock.expectOne(`${baseUrl}/refresh`);
+      expect(refresh.request.headers.get(SESSION_SLOT_HEADER)).toBe('slot42');
+      refresh.flush({ data: session() });
       expect(results).toEqual([true, true]);
       expect<unknown[]>([service.getAccessToken(), service.getUserEmail()]).toEqual(['access-1', 'a@b.cz']);
       expect(permissionServiceMock.setPermissions).toHaveBeenCalledWith(['view-web', 'view-eshop']);
@@ -286,20 +308,152 @@ describe('AuthService', () => {
     });
 
     /**
-     * @description A hint without a valid cookie (expired, logged out in another tab) ends quietly.
-     * @input Hint '1'; refresh answers 401.
-     * @output false (no error), hint removed, permissions cleared.
+     * @description Nothing signs in on its own: a new tab (no slot) with remembered accounts, or a
+     *   tab after a logout, is not signed in and makes no request - the accounts are only offered
+     *   on the login page. The cookie of the former single-cookie version (legacy tab hint) is
+     *   restored without a slot header and the tab then keeps the slot the API answered.
+     * @input Remembered hint, no slot; then legacy sessionStorage hint '1'; then logout.
+     * @output false, no request; refresh without header → true, slot 'slot42', legacy hint
+     *   removed; after the logout checkAuth false without request, remembered hint kept.
      */
-    it('answers false when the restore fails and removes the hint', () => {
+    it('never signs in on its own and restores the former single cookie', () => {
       localStorage.setItem(SESSION_HINT_KEY, '1');
+      let result: boolean | undefined;
+      service.checkAuth().subscribe(v => (result = v));
+      httpMock.expectNone(`${baseUrl}/refresh/accounts`);
+      httpMock.expectNone(`${baseUrl}/refresh`);
+      expect(result).toBeFalse();
+
+      sessionStorage.setItem(SESSION_HINT_KEY, '1');
+      service.checkAuth().subscribe(v => (result = v));
+      const legacy = httpMock.expectOne(`${baseUrl}/refresh`);
+      expect(legacy.request.headers.has(SESSION_SLOT_HEADER)).toBeFalse();
+      legacy.flush({ data: session() });
+      expect(result).toBeTrue();
+      expect(sessionStorage.getItem(SESSION_SLOT_KEY)).toBe('slot42');
+      expect(sessionStorage.getItem(SESSION_HINT_KEY)).toBeNull();
+
+      service.logout().subscribe();
+      httpMock.expectOne(`${baseUrl}/logout`).flush({});
+      service.checkAuth().subscribe(v => (result = v));
+      httpMock.expectNone(`${baseUrl}/refresh`);
+      expect(result).toBeFalse();
+      expect(localStorage.getItem(SESSION_HINT_KEY)).toBe('1');
+    });
+
+    /**
+     * @description An admin address in a tab without its own account (checkAuth(true)) opens with
+     *   a remembered account: the one used last, else the only one; several without a last used
+     *   one, or none, answer false (login page). A tab with its own (gone) account never switches.
+     * @input remembered login slotB (last = slotB); new tab: [slotA, slotB]; last removed:
+     *   [slotA, slotB]; [slotA]; tab with slot 'gone' answered 401.
+     * @output LAST_ACCOUNT_KEY 'slotB'; refresh header slotB → true; false without refresh;
+     *   refresh slotA → true; only the refresh of 'gone' → false, no list request.
+     */
+    it('opens an admin address with the last used remembered account', () => {
+      service.login({ email: 'a@b.cz', password: 'p', remember: true }).subscribe();
+      httpMock.expectOne(`${baseUrl}/login`).flush({ data: session({ session_slot: 'slotB' }) });
+      expect(localStorage.getItem(LAST_ACCOUNT_KEY)).toBe('slotB');
+      const twoAccounts = { data: [account('slotA'), account('slotB', 'b@b.cz')] };
+
+      (service as any).session = null;
+      sessionStorage.clear();
+      let result: boolean | undefined;
+      service.checkAuth(true).subscribe(v => (result = v));
+      httpMock.expectOne(`${baseUrl}/refresh/accounts`).flush(twoAccounts);
+      const last = httpMock.expectOne(`${baseUrl}/refresh`);
+      expect(last.request.headers.get(SESSION_SLOT_HEADER)).toBe('slotB');
+      last.flush({ data: session({ session_slot: 'slotB' }) });
+      expect(result).toBeTrue();
+
+      (service as any).session = null;
+      sessionStorage.clear();
+      localStorage.removeItem(LAST_ACCOUNT_KEY);
+      service.checkAuth(true).subscribe(v => (result = v));
+      httpMock.expectOne(`${baseUrl}/refresh/accounts`).flush(twoAccounts);
+      httpMock.expectNone(`${baseUrl}/refresh`);
+      expect(result).toBeFalse();
+
+      service.checkAuth(true).subscribe(v => (result = v));
+      httpMock.expectOne(`${baseUrl}/refresh/accounts`).flush({ data: [account('slotA')] });
+      const only = httpMock.expectOne(`${baseUrl}/refresh`);
+      expect(only.request.headers.get(SESSION_SLOT_HEADER)).toBe('slotA');
+      only.flush({ data: session({ session_slot: 'slotA', remember: false }) });
+      expect(result).toBeTrue();
+
+      (service as any).session = null;
+      sessionStorage.setItem(SESSION_SLOT_KEY, 'gone');
+      service.checkAuth(true).subscribe(v => (result = v));
+      httpMock.expectOne(`${baseUrl}/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
+      httpMock.expectNone(`${baseUrl}/refresh/accounts`);
+      expect(result).toBeFalse();
+    });
+
+    /**
+     * @description A logout forgets the account as the last used one; the end of all remembered
+     *   accounts removes it too.
+     * @input remembered login slot42 (last), logout; again, then /refresh/accounts answers [].
+     * @output LAST_ACCOUNT_KEY removed after the logout; removed with the hint.
+     */
+    it('forgets the last used account on logout', () => {
+      logIn();
+      expect(localStorage.getItem(LAST_ACCOUNT_KEY)).toBe('slot42');
+      service.logout().subscribe();
+      httpMock.expectOne(`${baseUrl}/logout`).flush({});
+      expect(localStorage.getItem(LAST_ACCOUNT_KEY)).toBeNull();
+
+      logIn();
+      service.rememberedAccounts().subscribe();
+      httpMock.expectOne(`${baseUrl}/refresh/accounts`).flush({ data: [] });
+      expect<unknown[]>([localStorage.getItem(LAST_ACCOUNT_KEY), localStorage.getItem(SESSION_HINT_KEY)]).toEqual([null, null]);
+    });
+
+    /**
+     * @description A tab whose account is gone (expired, logged out in another tab) ends quietly;
+     *   other remembered accounts stay remembered.
+     * @input Slot 'slot42', hint '1'; refresh answers 401.
+     * @output false (no error), slot removed, hint kept, permissions cleared.
+     */
+    it('answers false when the restore fails', () => {
+      localStorage.setItem(SESSION_HINT_KEY, '1');
+      sessionStorage.setItem(SESSION_SLOT_KEY, 'slot42');
       let result: boolean | undefined;
       let failed = false;
       service.checkAuth().subscribe({ next: v => (result = v), error: () => (failed = true) });
 
       httpMock.expectOne(`${baseUrl}/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
       expect<unknown[]>([result, failed]).toEqual([false, false]);
-      expect(localStorage.getItem(SESSION_HINT_KEY)).toBeNull();
+      expect(sessionStorage.getItem(SESSION_SLOT_KEY)).toBeNull();
+      expect(localStorage.getItem(SESSION_HINT_KEY)).toBe('1');
       expect(permissionServiceMock.clearPermissions).toHaveBeenCalled();
+    });
+
+    /**
+     * @description The chooser list: no request without the hint; the answer passed on; an empty
+     *   answer removes the hint; a failing call answers [].
+     * @input No hint; hint + two accounts; []; 500.
+     * @output []; the two accounts; [] and no hint; [].
+     */
+    it('lists the remembered accounts', () => {
+      let accounts: RememberedAccount[] | undefined;
+      service.rememberedAccounts().subscribe(a => (accounts = a));
+      httpMock.expectNone(`${baseUrl}/refresh/accounts`);
+      expect(accounts).toEqual([]);
+
+      localStorage.setItem(SESSION_HINT_KEY, '1');
+      service.rememberedAccounts().subscribe(a => (accounts = a));
+      httpMock.expectOne(`${baseUrl}/refresh/accounts`).flush({ data: [account('s1'), account('s2', 'b@b.cz')] });
+      expect(accounts!.map(a => a.slot)).toEqual(['s1', 's2']);
+
+      service.rememberedAccounts().subscribe(a => (accounts = a));
+      httpMock.expectOne(`${baseUrl}/refresh/accounts`).flush({ data: [] });
+      expect<unknown[]>([accounts, localStorage.getItem(SESSION_HINT_KEY)]).toEqual([[], null]);
+
+      localStorage.setItem(SESSION_HINT_KEY, '1');
+      accounts = undefined;
+      service.rememberedAccounts().subscribe(a => (accounts = a));
+      httpMock.expectOne(`${baseUrl}/refresh/accounts`).flush({}, { status: 500, statusText: 'Error' });
+      expect<unknown>(accounts).toEqual([]);
     });
   });
 
@@ -326,31 +480,97 @@ describe('AuthService', () => {
     });
 
     /**
-     * @description A refresh of the same user keeps the table cache; another user (different
-     *   account in another tab) invalidates it.
-     * @input Login as 42; refresh as 42; refresh as 7.
-     * @output invalidateAll once for the login, not for the same user, once more for user 7.
+     * @description The former single cookie (no slot): a refresh of the same user keeps the table
+     *   cache; a refresh answering for ANOTHER account never continues as that account: the tab
+     *   reloads, the session of this tab stays untouched until then.
+     * @input Login as 42 without slot; refresh as 42; refresh as 7.
+     * @output invalidateAll once (login); same user no change; user 7: reloadPage, user still 42,
+     *   token 'a2', no further invalidation, the refresh does not emit.
      */
-    it('invalidates the table cache only when the user changes', () => {
+    it('reloads instead of continuing as another account', () => {
       const invalidate = spyOn(tables, 'invalidateAll').and.callThrough();
-      logIn();
+      logIn(session({ session_slot: undefined }));
       expect(invalidate).toHaveBeenCalledTimes(1);
 
       service.refreshAccessToken().subscribe();
-      httpMock.expectOne(`${baseUrl}/refresh`).flush({ data: session({ token: 'a2' }) });
+      httpMock.expectOne(`${baseUrl}/refresh`).flush({ data: session({ token: 'a2', session_slot: undefined }) });
       expect(invalidate).toHaveBeenCalledTimes(1);
+      expect(reload).not.toHaveBeenCalled();
 
-      service.refreshAccessToken().subscribe();
-      httpMock.expectOne(`${baseUrl}/refresh`).flush({ data: session({ token: 'b1', user: { id: 7, user_email: 'b@b.cz' } }) });
-      expect(invalidate).toHaveBeenCalledTimes(2);
-      expect(service.getUserId()).toBe('7');
+      const emitted = jasmine.createSpy('emitted');
+      service.refreshAccessToken().subscribe(emitted);
+      httpMock.expectOne(`${baseUrl}/refresh`).flush({ data: session({ token: 'b1', user: { id: 7, user_email: 'b@b.cz' }, session_slot: undefined }) });
+      expect(reload).toHaveBeenCalledTimes(1);
+      expect(emitted).not.toHaveBeenCalled();
+      expect(service.getUserId()).toBe('42');
+      expect(service.getAccessToken()).toBe('a2');
+      expect(invalidate).toHaveBeenCalledTimes(1);
       service.clearAuthData();
     });
 
     /**
-     * @description A failed refresh ends the session and passes the error on.
+     * @description Several accounts per browser: a logout is announced with its account and only
+     *   the tabs of THAT account reload; tabs of other accounts, tabs without a session and
+     *   unknown messages are left alone; the channel is closed with the service.
+     * @input login as 42; messages logout 7 / login / null / logout 42; logout; tab without a
+     *   session receiving logout 42; destroy.
+     * @output reload only for logout 42; postMessage {logout, '42'}; no reload without a session;
+     *   close().
+     */
+    it('ends a logged out account in its tabs only', () => {
+      logIn();
+      const message = (data: any) => (service as any).onSessionMessage(data);
+
+      message({ type: 'logout', userId: '7' });
+      message({ type: 'login', userId: '7' });
+      message(null);
+      expect(reload).not.toHaveBeenCalled();
+      message({ type: 'logout', userId: '42' });
+      expect(reload).toHaveBeenCalledTimes(1);
+
+      service.logout().subscribe();
+      httpMock.expectOne(`${baseUrl}/logout`).flush({});
+      expect(channel.postMessage).toHaveBeenCalledOnceWith({ type: 'logout', userId: '42' });
+
+      reload.calls.reset();
+      message({ type: 'logout', userId: '42' });
+      expect(reload).not.toHaveBeenCalled();
+
+      channel.postMessage.and.throwError('closed');
+      expect(() => (service as any).announce({ type: 'logout', userId: '42' })).not.toThrow();
+      service.clearAuthData();
+      service.ngOnDestroy();
+      expect(channel.close).toHaveBeenCalled();
+    });
+
+    /**
+     * @description A chosen remembered account replaces the account of THIS tab without a reload
+     *   (its slot is sent, the API guarantees the account); a failed switch keeps the tab's own
+     *   session.
+     * @input Logged in as 42 (slot42); resumeAccount('slot7') → 401; resumeAccount('slot7') → user 7.
+     * @output Header slot7; after 401 still 42 / slot42; then user 7, slot 'slot7', no reload.
+     */
+    it('switches the tab to a remembered account', () => {
+      logIn();
+      let failed = false;
+      service.resumeAccount('slot7').subscribe({ error: () => (failed = true) });
+      const refused = httpMock.expectOne(`${baseUrl}/refresh`);
+      expect(refused.request.headers.get(SESSION_SLOT_HEADER)).toBe('slot7');
+      refused.flush({}, { status: 401, statusText: 'Unauthorized' });
+      expect<unknown[]>([failed, service.getUserId(), sessionStorage.getItem(SESSION_SLOT_KEY)]).toEqual([true, '42', 'slot42']);
+
+      service.resumeAccount('slot7').subscribe();
+      httpMock.expectOne(`${baseUrl}/refresh`).flush({ data: session({ user: { id: 7, user_email: 'b@b.cz' }, session_slot: 'slot7' }) });
+      expect<unknown[]>([service.getUserId(), sessionStorage.getItem(SESSION_SLOT_KEY)]).toEqual(['7', 'slot7']);
+      expect(reload).not.toHaveBeenCalled();
+      service.clearAuthData();
+    });
+
+    /**
+     * @description A failed refresh ends the session of the tab and passes the error on.
      * @input Logged in; refresh answers 401.
-     * @output Error to the subscriber; no token; permissions cleared; hint removed.
+     * @output Error to the subscriber; no token; permissions cleared; tab slot removed; the
+     *   remembered hint kept (other accounts).
      */
     it('ends the session when the refresh fails', () => {
       logIn();
@@ -361,16 +581,18 @@ describe('AuthService', () => {
       expect(error.status).toBe(401);
       expect(service.getAccessToken()).toBeNull();
       expect(permissionServiceMock.clearPermissions).toHaveBeenCalled();
-      expect(localStorage.getItem(SESSION_HINT_KEY)).toBeNull();
+      expect(sessionStorage.getItem(SESSION_SLOT_KEY)).toBeNull();
+      expect(localStorage.getItem(SESSION_HINT_KEY)).toBe('1');
     });
 
     /**
      * @description With the Web Locks API the request runs only while the tab holds the refresh
-     *   lock and the lock is released when it finishes (also after an error); a failing lock
-     *   request is passed on as an error.
-     * @input Fake lock manager; refresh answered 200; refresh answered 500; lock manager rejecting.
-     * @output Lock 'jsw-auth-refresh' requested twice, each released; the 500 and the lock
-     *   error reach the subscriber.
+     *   lock of the account and the lock is released when it finishes (also after an error); a
+     *   failing lock request is passed on as an error.
+     * @input Fake lock manager; refresh (former cookie) answered 200 (slot42); refresh of slot42
+     *   answered 500; lock manager rejecting.
+     * @output Locks 'jsw-auth-refresh:legacy' and 'jsw-auth-refresh:slot42', each released; the
+     *   500 and the lock error reach the subscriber.
      */
     it('runs the refresh under the Web Lock of the tabs', async () => {
       const released: string[] = [];
@@ -387,7 +609,7 @@ describe('AuthService', () => {
       httpMock.expectOne(`${baseUrl}/refresh`).flush({}, { status: 500, statusText: 'Error' });
       expect(await failed).toBe(500);
       await Promise.resolve();
-      expect(released).toEqual(['jsw-auth-refresh', 'jsw-auth-refresh']);
+      expect(released).toEqual(['jsw-auth-refresh:legacy', 'jsw-auth-refresh:slot42']);
 
       service.lockManager = { request: () => Promise.reject(new Error('lock refused')) };
       const lockError = await new Promise<string>(resolve => service.refreshAccessToken().subscribe({ error: e => resolve(e.message) }));
@@ -419,10 +641,11 @@ describe('AuthService', () => {
     });
 
     /**
-     * @description clearAuthData ends the session: memory, hint, permissions, table cache owner,
-     *   subjects, timer.
+     * @description clearAuthData ends the session of the tab: memory, tab slot, permissions,
+     *   table cache owner, subjects, timer - the remembered hint stays for the other accounts.
      * @input Logged in; clearAuthData(); tick 20 min.
-     * @output No token / user; no hint; clearPermissions; setCurrentUser(null); false / null; no refresh.
+     * @output No token / user; no slot; hint '1'; clearPermissions; setCurrentUser(null); false /
+     *   null; no refresh.
      */
     it('clears the whole session and stops the timer', fakeAsync(() => {
       logIn();
@@ -435,7 +658,8 @@ describe('AuthService', () => {
       service.clearAuthData();
       expect<unknown[]>([service.getAccessToken(), service.getUserId(), service.getUserEmail(), service.getUserRole()]).toEqual([null, null, null, null]);
       expect(service.getUserPermissions()).toEqual([]);
-      expect(localStorage.getItem(SESSION_HINT_KEY)).toBeNull();
+      expect(sessionStorage.getItem(SESSION_SLOT_KEY)).toBeNull();
+      expect(localStorage.getItem(SESSION_HINT_KEY)).toBe('1');
       expect(permissionServiceMock.clearPermissions).toHaveBeenCalled();
       expect(setUser).toHaveBeenCalledWith(null);
       expect<unknown[]>([loggedIn, email]).toEqual([false, null]);

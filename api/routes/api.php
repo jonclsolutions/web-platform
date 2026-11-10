@@ -200,10 +200,14 @@ Route::post('/login/verify-2fa', [AuthController::class, 'verifyTwoFactor'])
 Route::post('/login/resend-2fa', [AuthController::class, 'resendTwoFactor'])
     ->middleware('throttle:login-2fa-resend');
 
-// The refresh token comes ONLY from its HttpOnly cookie (AuthCookies), whose Path is this route.
+// The refresh token comes ONLY from its HttpOnly cookie (AuthCookies) - one per account signed in
+// in the browser (`jsw_refresh_{slot}`, header X-Session-Slot); their Path is this route.
 Route::post('/refresh', [AuthController::class, 'refresh'])
     ->name(AuthCookies::REFRESH_ROUTE)
     ->middleware('throttle:30,1,auth-refresh');
+// Accounts remembered in this browser (login page: "Continue as ..."), under the cookie Path.
+Route::post('/refresh/accounts', [AuthController::class, 'rememberedAccounts'])
+    ->middleware('throttle:30,1,auth-accounts');
 
 /*
 |--------------------------------------------------------------------------

@@ -103,7 +103,8 @@ describe('ActivateAccountComponent', () => {
   /**
    * @description A valid password is posted; success counts down 4 s and opens the login page.
    * @input  VALID twice; POST answered 200
-   * @output POST body { password, password_confirmation }; state 'success'; navigate(['/auth/login']) after 4 s
+   * @output POST body { password, password_confirmation }; state 'success'; navigate to the login
+   *   page after 4 s
    */
   it('activates the account and redirects to login', fakeAsync(() => {
     setup('tok');
@@ -120,6 +121,27 @@ describe('ActivateAccountComponent', () => {
     expect(router.navigate).not.toHaveBeenCalled();
     tick(1000);
     expect(router.navigate).toHaveBeenCalledWith(['/auth/login']);
+  }));
+
+  /**
+   * @description Leaving the success page earlier (the "go to login" link) stops the countdown -
+   *   it must not pull the user back to the login page later (it did, out of the admin).
+   * @input success; ngOnDestroy after 1 s; 5 s more.
+   * @output navigate never called.
+   */
+  it('stops the redirect when the page is left', fakeAsync(() => {
+    setup('tok');
+    tick();
+    http.expectOne(url('tok')).flush({ data: { email: 'e', full_name: 'n' } });
+    component.password = VALID;
+    component.passwordConfirmation = VALID;
+    component.onSubmit();
+    http.expectOne(r => r.method === 'POST').flush({});
+    tick(1000);
+    component.ngOnDestroy();
+    tick(5000);
+    expect(router.navigate).not.toHaveBeenCalled();
+    component.ngOnDestroy();
   }));
 
   /**

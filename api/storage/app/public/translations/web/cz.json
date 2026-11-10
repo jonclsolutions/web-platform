@@ -1229,6 +1229,13 @@
         }
     },
     "login": {
+        "accounts": {
+            "title": "Vyberte účet",
+            "continue_as": "Pokračovat jako",
+            "current": "Přihlášen v tomto okně",
+            "other": "nebo se přihlaste jiným účtem",
+            "unavailable": "Tento účet už není zapamatovaný. Přihlaste se prosím heslem."
+        },
         "labels": {
             "email": "Přihlašovací e-mail",
             "password": "Heslo",

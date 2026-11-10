@@ -427,9 +427,12 @@ class AuthController extends Controller
 
         $this->logAction($request, CoreLog::class, 'login_success', 'Auth', "User logged in: {$user->user_email}", $user->id, 'User');
 
-        // `remember` tells the admin where to keep its session hint (all tabs / this tab only).
-        return $this->respond($this->sessionPayload($user) + ['token' => $accessToken, 'remember' => $remember], 200, [], 'Login successful!')
-            ->withCookie(AuthCookies::refresh($request, $refreshToken, $remember));
+        // `remember` tells the admin where to keep its session hint (all tabs / this tab only);
+        // `session_slot` is the cookie slot of this account (several accounts per browser).
+        $slot = AuthCookies::slotFor($user->id);
+
+        return $this->respond($this->sessionPayload($user) + ['token' => $accessToken, 'remember' => $remember, 'session_slot' => $slot], 200, [], 'Login successful!')
+            ->withCookie(AuthCookies::refresh($request, $refreshToken, $remember, $slot));
     }
 
     /**
@@ -444,6 +447,9 @@ class AuthController extends Controller
      * @note Only the access token sent with the request (and the expired ones) is revoked, not
      * every token of the user - several tabs of the same browser share the cookie and each keeps
      * its own access token in memory; revoking all of them would log the tabs out in turn.
+     * @note Several accounts per browser: the tab sends the slot of its account (X-Session-Slot)
+     * and the cookie `jsw_refresh_{slot}` is used; without a slot the single cookie of older
+     * versions, which the answer replaces by the slot cookie. The answer carries `session_slot`.
      * @security Reuse detection: a used token is only marked `rotated_at` (kept until it expires)
      * and its successor inherits the `family`. A second use of a used token means two parties hold
      * it - one of them stole it - so the whole family and every access token of the user are
@@ -453,10 +459,16 @@ class AuthController extends Controller
      */
     public function refresh(Request $request): JsonResponse
     {
-        $refreshToken = (string) $request->cookie(AuthCookies::REFRESH);
+        // The account of the tab (several accounts per browser): its slot cookie; without a slot
+        // the cookie of older versions (one account per browser), replaced below.
+        $headerSlot = (string) $request->header(AuthCookies::SLOT_HEADER, '');
+        $slot = AuthCookies::isSlot($headerSlot) ? $headerSlot : null;
+        $forget = AuthCookies::forgetRefresh($request, $slot);
+
+        $refreshToken = (string) $request->cookie(AuthCookies::refreshName($slot));
         if ($refreshToken === '') {
             return response()->json(['message' => 'Refresh token is missing.'], 401)
-                ->withCookie(AuthCookies::forgetRefresh($request));
+                ->withCookie($forget);
         }
 
         $hashedRefreshToken = hash('sha256', $refreshToken);
@@ -466,7 +478,7 @@ class AuthController extends Controller
                                      ->first();
 
         if ($dbRefreshToken && $dbRefreshToken->user && $dbRefreshToken->rotated_at !== null) {
-            return $this->refusedReuse($request, $dbRefreshToken);
+            return $this->refusedReuse($request, $dbRefreshToken, $forget);
         }
 
         if (!$dbRefreshToken || !$dbRefreshToken->user) {
@@ -481,10 +493,15 @@ class AuthController extends Controller
             );
 
             return response()->json(['message' => 'Invalid or expired token.'], 401)
-                ->withCookie(AuthCookies::forgetRefresh($request));
+                ->withCookie($forget);
         }
 
         $user = $dbRefreshToken->user;
+
+        // A slot cookie always belongs to its account (set by the server) - anything else is refused.
+        if ($slot !== null && $slot !== AuthCookies::slotFor($user->id)) {
+            return response()->json(['message' => 'Invalid or expired token.'], 401)->withCookie($forget);
+        }
 
         if ($user->is_blocked) {
             $this->deleteFamily($dbRefreshToken);
@@ -495,7 +512,7 @@ class AuthController extends Controller
                 CoreSecurityEvent::contextFromRequest($request, ['user_id' => $user->id])
             );
             return response()->json(['message' => 'This account has been blocked. Please contact the administrator.'], 403)
-                ->withCookie(AuthCookies::forgetRefresh($request));
+                ->withCookie($forget);
         }
 
         // E-mail access policy.
@@ -509,14 +526,14 @@ class AuthController extends Controller
                 CoreSecurityEvent::contextFromRequest($request, ['user_id' => $user->id])
             );
             return response()->json(['message' => self::LOGIN_NOT_ALLOWED_MESSAGE], 403)
-                ->withCookie(AuthCookies::forgetRefresh($request));
+                ->withCookie($forget);
         }
 
         // Atomic claim: only one request can rotate this token. A parallel request with the same
         // cookie loses the race and is treated like a reuse within the grace period.
         $claimed = RefreshToken::whereKey($dbRefreshToken->id)->whereNull('rotated_at')->update(['rotated_at' => now()]);
         if ($claimed === 0) {
-            return $this->refusedReuse($request, $dbRefreshToken->fresh() ?? $dbRefreshToken);
+            return $this->refusedReuse($request, $dbRefreshToken->fresh() ?? $dbRefreshToken, $forget);
         }
 
         $this->revokeReplacedAccessTokens($request, $user);
@@ -541,8 +558,12 @@ class AuthController extends Controller
 
         $user->load('roles.permissions');
 
-        return $this->respond($this->sessionPayload($user) + ['token' => $newAccessToken, 'remember' => $remember], 200)
-            ->withCookie(AuthCookies::refresh($request, $newRefreshToken, $remember));
+        $userSlot = AuthCookies::slotFor($user->id);
+        $response = $this->respond($this->sessionPayload($user) + ['token' => $newAccessToken, 'remember' => $remember, 'session_slot' => $userSlot], 200)
+            ->withCookie(AuthCookies::refresh($request, $newRefreshToken, $remember, $userSlot));
+
+        // The cookie of older versions moves to the slot cookie of its account.
+        return $slot === null ? $response->withCookie(AuthCookies::forgetRefresh($request)) : $response;
     }
 
     /**
@@ -552,9 +573,10 @@ class AuthController extends Controller
      * revoked, the critical event `refresh_token_reuse` is recorded and the cookie deleted.
      * @param Request $request Refresh request.
      * @param RefreshToken $used The already rotated token (with its user).
+     * @param \Symfony\Component\HttpFoundation\Cookie $forget Deletion of the refresh cookie of the request.
      * @return JsonResponse
      */
-    private function refusedReuse(Request $request, RefreshToken $used): JsonResponse
+    private function refusedReuse(Request $request, RefreshToken $used, \Symfony\Component\HttpFoundation\Cookie $forget): JsonResponse
     {
         if ($used->rotated_at !== null && $used->rotated_at->gt(now()->subSeconds(self::REFRESH_REUSE_GRACE_SECONDS))) {
             return response()->json(['message' => 'Invalid or expired token.'], 401);
@@ -573,7 +595,7 @@ class AuthController extends Controller
         $this->logAction($request, CoreLog::class, 'refresh_token_reuse', 'Auth', "A used refresh token was presented again - all sessions of user_id {$used->user_id} ended", $used->user_id, 'User');
 
         return response()->json(['message' => 'The session was ended for security reasons. Please log in again.'], 401)
-            ->withCookie(AuthCookies::forgetRefresh($request));
+            ->withCookie($forget);
     }
 
     /**
@@ -638,7 +660,73 @@ class AuthController extends Controller
             RefreshToken::where('user_id', $user->id)->delete();
         }
 
-        return response()->json(['message' => 'Logout successful!'], 200)
-            ->withCookie(AuthCookies::forgetRefresh($request));
+        // Only the cookie of THIS account - other accounts signed in in the browser stay.
+        $response = response()->json(['message' => 'Logout successful!'], 200);
+
+        return $user ? $response->withCookie(AuthCookies::forgetRefresh($request, AuthCookies::slotFor($user->id))) : $response;
+    }
+
+    /** @description How many refresh cookies one request of the account list examines at most. */
+    private const MAX_LISTED_ACCOUNTS = 10;
+
+    /**
+     * @description Accounts REMEMBERED in this browser ("Remember me") - the login page offers them
+     * ("Continue as ..."); nothing signs in with them automatically. Read from the
+     * refresh cookies of the request (sent only to the refresh routes, HttpOnly, SameSite=Strict -
+     * only this browser can ask). Nothing is rotated or issued here.
+     * @note Logins without "Remember me" are never listed: they belong to the tab they were made in.
+     *   Invalid / expired / blocked cookies are left out and deleted.
+     * @note A token rotated within REFRESH_REUSE_GRACE_SECONDS is a race with a refresh of another
+     *   tab (this request left before the new cookie arrived): the account is listed and its cookie
+     *   KEPT - deleting it here would remove the new token the browser just received.
+     * @param Request $request Cookies `jsw_refresh_{slot}` (and the single cookie of older versions).
+     * @return JsonResponse { data: [{ slot (null = cookie of older versions), user_email, full_name, avatar_url }] }
+     */
+    public function rememberedAccounts(Request $request): JsonResponse
+    {
+        $accounts = [];
+        $forget = [];
+        $examined = 0;
+
+        foreach ($request->cookies->all() as $name => $value) {
+            $slot = str_starts_with($name, AuthCookies::REFRESH_PREFIX) ? substr($name, strlen(AuthCookies::REFRESH_PREFIX)) : null;
+            if (($slot === null && $name !== AuthCookies::REFRESH) || ($slot !== null && !AuthCookies::isSlot($slot))) {
+                continue;
+            }
+            if (++$examined > self::MAX_LISTED_ACCOUNTS) {
+                break;
+            }
+
+            $token = is_string($value) && $value !== ''
+                ? RefreshToken::with('user')->where('token', hash('sha256', $value))->where('expires_at', '>', now())->first()
+                : null;
+            $racing = $token?->rotated_at !== null && $token->rotated_at->gt(now()->subSeconds(self::REFRESH_REUSE_GRACE_SECONDS));
+            $user = $token?->user;
+            $valid = $user !== null
+                && ($token->rotated_at === null || $racing)
+                && !$user->is_blocked
+                && ($slot === null || $slot === AuthCookies::slotFor($user->id))
+                && $this->emailPolicyAllowsLogin($user);
+
+            if (!$valid) {
+                $forget[] = AuthCookies::forgetRefresh($request, $slot);
+                continue;
+            }
+            if ((bool) ($token->remember ?? true)) {
+                $accounts[$user->id] = [
+                    'slot'       => $slot,
+                    'user_email' => $user->user_email,
+                    'full_name'  => $user->full_name,
+                    'avatar_url' => \App\Support\Images\UserAvatar::url($user),
+                ];
+            }
+        }
+
+        $response = $this->respond(array_values($accounts));
+        foreach ($forget as $cookie) {
+            $response->withCookie($cookie);
+        }
+
+        return $response;
     }
 }

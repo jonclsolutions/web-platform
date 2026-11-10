@@ -8,7 +8,8 @@
  * the whole admin area, including every child page of a guarded layout route. A user refused a
  * page is sent to the 403 page of the admin (`/admin/forbidden`).
  * @dependencies
- * - AuthService: Verifies the session and resolves the user's role.
+ * - AuthService: Verifies the session (a tab without its own account opens with a remembered one)
+ *   and resolves the user's role.
  * - PermissionService: Tells whether the user holds a permission key.
  * - Router: Builds the redirects.
  */
@@ -79,7 +80,8 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean | UrlTree | RedirectCommand> {
-    return this.authService.checkAuth().pipe(
+    // A tab without its own account (a new tab, a pasted admin link) opens with a remembered one.
+    return this.authService.checkAuth(true).pipe(
       take(1),
       map(isLoggedIn => isLoggedIn ? this.authorize(route, state.url) : this.router.createUrlTree([LOGIN_URL]))
     );

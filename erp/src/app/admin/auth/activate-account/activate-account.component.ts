@@ -16,7 +16,7 @@
  *   component as ResetPasswordComponent / admin user creation.
  */
 
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -46,7 +46,7 @@ interface ActivationCheckResponse {
   styleUrls: ['../../shared-styles/theme.css', '../shared-styles/auth.css', '../shared-styles/auth-card.css', './activate-account.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ActivateAccountComponent implements OnInit {
+export class ActivateAccountComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private http = inject(HttpClient);
@@ -76,6 +76,9 @@ export class ActivateAccountComponent implements OnInit {
   redirectCountdown = 4;
 
   private token = '';
+  /** Countdown of the automatic redirect - stopped when the page is left earlier (the "go to
+   * login" link), otherwise it would later pull the user out of wherever they went. */
+  private redirectInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     // OnPush: re-render once the admin translations are (re)loaded.
@@ -94,6 +97,10 @@ export class ActivateAccountComponent implements OnInit {
   /** Placeholder of the password field with the length limits filled in. */
   get lengthPlaceholder(): string {
     return fillPasswordLimits(this.t('placeholder_password'));
+  }
+
+  ngOnDestroy(): void {
+    if (this.redirectInterval) clearInterval(this.redirectInterval);
   }
 
   ngOnInit(): void {
@@ -213,11 +220,12 @@ export class ActivateAccountComponent implements OnInit {
    * is happening.
    */
   private startRedirectCountdown(): void {
-    const interval = setInterval(() => {
+    this.redirectInterval = setInterval(() => {
       this.redirectCountdown -= 1;
       this.cd.markForCheck();
       if (this.redirectCountdown <= 0) {
-        clearInterval(interval);
+        clearInterval(this.redirectInterval!);
+        this.redirectInterval = null;
         this.router.navigate(['/auth/login']);
       }
     }, 1000);

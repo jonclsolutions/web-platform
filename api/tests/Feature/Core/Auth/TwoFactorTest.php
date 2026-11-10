@@ -178,7 +178,7 @@ class TwoFactorTest extends TestCase
             ->assertJsonStructure(['data' => ['token']]);
 
         $this->assertArrayNotHasKey('refreshToken', $response->json('data'));
-        $refresh = $this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh')->getValue();
+        $refresh = $this->credentialCookie($response, $this->refreshCookieName($user), '/api/refresh')->getValue();
         $this->assertSame(0, TwoFactorCode::count());
         $this->assertSame(hash('sha256', $refresh), RefreshToken::where('user_id', $user->id)->sole()->token);
     }
@@ -197,7 +197,7 @@ class TwoFactorTest extends TestCase
 
         $response = $this->postJson('/api/login/verify-2fa', ['login_token' => self::LOGIN_TOKEN, 'code' => self::CODE, 'remember' => true])->assertOk();
 
-        $cookie = $this->credentialCookie($response, AuthCookies::REFRESH, '/api/refresh');
+        $cookie = $this->credentialCookie($response, $this->refreshCookieName($user), '/api/refresh');
         $this->assertSame(now()->addDays(AuthCookies::REFRESH_TTL_DAYS)->getTimestamp(), $cookie->getExpiresTime());
         $row = RefreshToken::where('user_id', $user->id)->sole();
         $this->assertTrue($row->remember);
@@ -248,7 +248,7 @@ class TwoFactorTest extends TestCase
         $this->postJson('/api/login/verify-2fa', ['login_token' => $loginToken, 'code' => $code])
             ->assertOk()
             ->assertJsonStructure(['data' => ['token']])
-            ->assertCookie(AuthCookies::REFRESH, null, false);
+            ->assertCookie($this->refreshCookieName($user), null, false);
     }
 
     /**

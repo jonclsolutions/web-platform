@@ -174,10 +174,21 @@ trait InteractsWithAccounts
     }
 
     /**
+     * @description Name of the refresh cookie of an account (one cookie per account signed in in the
+     *   browser: `jsw_refresh_{slot}`).
+     * @param \App\Models\User $user Account.
+     * @return string
+     */
+    protected function refreshCookieName(\App\Models\User $user): string
+    {
+        return \App\Support\Auth\AuthCookies::refreshName(\App\Support\Auth\AuthCookies::slotFor($user->id));
+    }
+
+    /**
      * @description Returns a credential cookie the answer sets and checks the attributes every
      *   credential cookie must have (HttpOnly, SameSite=Strict, the given Path, host-only).
      * @param TestResponse $response Answer of the API.
-     * @param string $name Cookie name (AuthCookies::REFRESH / AuthCookies::PORTAL).
+     * @param string $name Cookie name (refreshCookieName() / AuthCookies::REFRESH / AuthCookies::PORTAL).
      * @param string $path Expected Path.
      * @return Cookie
      */

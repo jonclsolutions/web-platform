@@ -395,6 +395,30 @@ describe('AuthTokenInterceptor', () => {
       tick();
     }));
 
+    /**
+     * @description A failed refresh fails the requests that waited for it too - they never hang
+     *   (a tab whose session ended elsewhere stayed unresponsive on the next action).
+     * @input Two concurrent 401s; the refresh errors.
+     * @output Both callers get an error; one refresh.
+     */
+    it('fails the waiting requests when the refresh fails', fakeAsync(() => {
+      const refreshSubject = new Subject<any>();
+      authService.getAccessToken.and.returnValue('expired');
+      authService.refreshAccessToken.and.returnValue(refreshSubject.asObservable());
+      const errors: any[] = [];
+      http.get('/api/a').subscribe({ error: e => errors.push(e) });
+      http.get('/api/b').subscribe({ error: e => errors.push(e) });
+      httpMock.expectOne('/api/a').flush({}, { status: 401, statusText: 'Unauthorized' });
+      httpMock.expectOne('/api/b').flush({}, { status: 401, statusText: 'Unauthorized' });
+      tick();
+
+      refreshSubject.error(makeError(401));
+      tick();
+      expect(errors.length).toBe(2);
+      expect(errors.every(e => e.status === 401)).toBeTrue();
+      expect(authService.refreshAccessToken).toHaveBeenCalledTimes(1);
+    }));
+
     it('propagates the error to the caller after a failed refresh', fakeAsync(() => {
       authService.getAccessToken.and.returnValue('exp');
       const refreshErr = makeError(403);
@@ -431,6 +455,22 @@ describe('AuthTokenInterceptor', () => {
 
       expect(authService.refreshAccessToken).not.toHaveBeenCalled();
       expect(router.navigate).not.toHaveBeenCalled();
+      expect(error.status).toBe(401);
+    }));
+
+    /**
+     * @description A 401 of the logout is never refreshed: logging out must not renew a session (with
+     *   the cookie of another account signed in elsewhere it would log that one out).
+     * @input POST /api/logout answering 401.
+     * @output No refresh, the 401 reaches the caller.
+     */
+    it('does NOT start the refresh flow on a 401 of the /logout endpoint', fakeAsync(() => {
+      authService.getAccessToken.and.returnValue('old');
+      let error: any;
+      http.post('/api/logout', {}).subscribe({ error: e => (error = e) });
+      httpMock.expectOne('/api/logout').flush({}, { status: 401, statusText: 'Unauthorized' });
+      tick();
+      expect(authService.refreshAccessToken).not.toHaveBeenCalled();
       expect(error.status).toBe(401);
     }));
 
