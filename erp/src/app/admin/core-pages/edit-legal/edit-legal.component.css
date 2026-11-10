@@ -27,6 +27,13 @@
   flex-wrap: wrap;
 }
 
+/* Warning badge and the help button ("?") at the right end of the header. */
+.legal-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .legal-title {
   margin: 0;
   font-size: 1.4rem;

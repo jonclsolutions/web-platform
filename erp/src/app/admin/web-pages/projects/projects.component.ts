@@ -28,6 +28,7 @@ import { UploadRulesService } from '../../../shared/services/upload-rules.servic
 import { UploadRule, extensionsLabel, fileExtension, isExtensionAllowed } from '../../../shared/utils/upload-rules';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 interface ProjectCheckpoint {
   id: number;
@@ -76,7 +77,7 @@ interface RevealedPassword {
 @Component({
   selector: 'app-projects',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, FormsModule, GraphBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, FormsModule, GraphBuilderComponent, PageHelpComponent],
   templateUrl: './projects.component.html',
   styleUrls: ['../../shared-styles/page.css', '../shared-styles/page.css', './project-manage-modal.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

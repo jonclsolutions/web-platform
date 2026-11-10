@@ -9,6 +9,7 @@
 -->
 
 <!-- Page tabs: translations of the website texts / browser page titles of the website pages -->
+<div class="ew-page-head">
 <div class="ew-page-tabs" role="tablist" [attr.aria-label]="t('tabs_label')">
   <button type="button" role="tab" class="ew-page-tab" [class.active]="activeTab === 'translations'"
           [attr.aria-selected]="activeTab === 'translations'" (click)="switchTab('translations')">
@@ -50,6 +51,8 @@
       <span class="ew-page-tab-dot" aria-hidden="true"></span>
     }
   </button>
+</div>
+<app-page-help></app-page-help>
 </div>
 
 <!-- Both parts stay created once opened and are only hidden - unsaved edits survive a tab switch. -->

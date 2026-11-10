@@ -54,6 +54,9 @@
     "password_change_success_message": "Password has been changed successfully. The other sessions of this account were signed out.",
     "password_change_error": "Error changing password. Please check your current password."
   },
+  "page-help": {
+    "title": "Help for this page"
+  },
     "admin-layout": {
     "brand": "Admin",
     "not_logged_in": "Not logged in",
@@ -67,7 +70,8 @@
     "module_shop": "E-Shop",
 
 
-    "wiki_title": "Help",
+    "wiki_label": "Help",
+    "wiki_title": "Help – knowledge base home",
     "wiki_mobile_label": "Help",
 
 

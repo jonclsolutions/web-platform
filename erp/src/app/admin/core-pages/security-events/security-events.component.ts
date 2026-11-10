@@ -24,6 +24,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 import * as Config from './security-events.config';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 interface SecuritySetting {
   id: number;
@@ -47,7 +48,7 @@ interface ChartDay {
 @Component({
   selector: 'app-core-security-events',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHelpComponent],
   templateUrl: './security-events.component.html',
   styleUrls: ['../../shared-styles/page.css', '../shared-styles/page.css', './security-events.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

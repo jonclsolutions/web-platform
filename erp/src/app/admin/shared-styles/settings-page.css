@@ -810,6 +810,14 @@
       changes of a tab. Same look as the tabs of the core web settings.
     @usage: .ew-page-tabs, .ew-page-tab, .ew-page-tab.active, .ew-page-tab-dot, .ew-titles-wrap
 */
+/* Page tabs and the help button ("?") of the page in one row. */
+.ew-page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .ew-page-tabs {
   display: flex;
   width: fit-content;
@@ -860,6 +868,9 @@
 }
 
 @media (max-width: 768px) {
+  /* The tabs keep the full width, the "?" goes above them to the right. */
+  .ew-page-head { flex-direction: column; align-items: stretch; gap: 8px; }
+  .ew-page-head app-page-help { order: -1; align-self: flex-end; }
   .ew-page-tabs { width: auto; }
   .ew-page-tab  { flex: 1; justify-content: center; padding: 8px 10px; }
   .ew-table-wrap { margin: 0 10px 14px; }

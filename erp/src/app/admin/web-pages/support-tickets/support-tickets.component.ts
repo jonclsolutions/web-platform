@@ -26,6 +26,7 @@ import * as Config from './support-tickets.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 /**
  * @description Manages the lifecycle of support tickets within the web administration module.
@@ -35,7 +36,7 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 @Component({
   selector: 'app-support-tickets',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHelpComponent],
   templateUrl: './support-tickets.component.html',
   styleUrls: ['../../shared-styles/page.css', '../shared-styles/page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

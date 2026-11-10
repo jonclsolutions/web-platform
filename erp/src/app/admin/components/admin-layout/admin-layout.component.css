@@ -267,6 +267,9 @@
   background: var(--surface);
 }
 
+/* "Help" is a text button (the "?" of the current page is in the page header). */
+.header-action-btn--wiki { padding: 6px 12px; }
+
 /* Hamburger of the mobile panel - hidden on desktop, shown by the media query below. */
 .mobile-actions-toggle {
   display: none;

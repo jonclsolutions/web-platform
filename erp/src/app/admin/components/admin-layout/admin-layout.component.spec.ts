@@ -7,7 +7,8 @@
  * @description Unit tests of AdminLayoutComponent – the admin shell: module switch (web / core /
  *   shop) incl. sync from the URL, sidebar open/resize state in localStorage, mobile scroll lock,
  *   admin language switch, logout, which menu groups the permissions show, collapsible menu
- *   sections, the own profile photo in the header and the scroll reset of the content area.
+ *   sections, the own profile photo in the header, the scroll reset of the content area and the
+ *   "Help" link to the knowledge base.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (auth, permission, i18n stubs), ScrollLockService (spy)
  */
@@ -561,6 +562,23 @@ describe('AdminLayoutComponent', () => {
     (component as any).scrollContentToTop('/admin/b#x');
     expect(scrollTo).toHaveBeenCalledTimes(2);
     expect(scrollTo).toHaveBeenCalledWith({ top: 0, left: 0 });
+    fixture.destroy();
+  });
+  /**
+   * @description "Help" of the header (and of the mobile menu) opens the home of the knowledge
+   *   base on every page - the help of one page is the "?" in its own header (PageHelpComponent).
+   * @input Rendered layout; mobile actions open.
+   * @output header link text 'admin-layout.wiki_label', href /admin/intranet/knowledge-base; the
+   *   mobile menu has the same link.
+   */
+  it('opens the knowledge base home from the header', () => {
+    component.isMobileActionsOpen = true;
+    fixture.detectChanges();
+    const header = fixture.nativeElement.querySelector('a.header-action-btn--wiki') as HTMLAnchorElement;
+    expect(header.textContent?.trim()).toBe('admin-layout.wiki_label');
+    expect(header.getAttribute('href')).toBe('/admin/intranet/knowledge-base');
+    const mobile = Array.from(fixture.nativeElement.querySelectorAll('.map-links a')) as HTMLAnchorElement[];
+    expect(mobile.some(a => a.getAttribute('href') === '/admin/intranet/knowledge-base')).toBeTrue();
     fixture.destroy();
   });
 });

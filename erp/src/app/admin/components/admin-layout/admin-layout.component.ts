@@ -32,6 +32,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 import { ADMIN_MODULE_PAGES, ADMIN_MODULE_TAB_PERMISSION, AdminModule, AdminNavPage } from '../../admin-navigation.config';
 import { SYSADMIN_ROLE_NAME } from '../../../core/auth/guards/auth.guard';
 import { UserAvatarComponent } from '../user-avatar/user-avatar.component';
+import { KNOWLEDGE_BASE_URL } from '../page-help/page-help.component';
 
 /**
  * @description localStorage key of the menu sections the user collapsed (JSON array of section
@@ -147,6 +148,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   public get dateLocale(): string {
     return this.i18n.getDateLocale();
   }
+
+  /** "Help" of the header: home of the knowledge base (the help of one page is in its header). */
+  readonly knowledgeBaseUrl = KNOWLEDGE_BASE_URL;
 
   private minWidth: number = 150;
   private maxWidth: number = 500;

@@ -23,6 +23,7 @@ import { BaseTranslationEditorComponent } from '../../../shared/components/base-
 import { PageTitlesEditorComponent } from '../../components/page-titles-editor/page-titles-editor.component';
 import { FaqEditorComponent } from './content-editors/faq-editor/faq-editor.component';
 import { JobsEditorComponent } from './content-editors/jobs-editor/jobs-editor.component';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 /** Page tabs of the editor. */
 export type EditWebsiteTab = 'translations' | 'page_titles' | 'faq' | 'jobs';
@@ -34,7 +35,7 @@ export type EditWebsiteTab = 'translations' | 'page_titles' | 'faq' | 'jobs';
 @Component({
   selector: 'app-edit-website',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, PageTitlesEditorComponent, FaqEditorComponent, JobsEditorComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, PageTitlesEditorComponent, FaqEditorComponent, JobsEditorComponent, PageHelpComponent],
   templateUrl: './edit-website.component.html',
   styleUrls: ['../../shared-styles/theme.css', '../../../shared/styles/base.css', '../../shared-styles/settings-page.css', './edit-website.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

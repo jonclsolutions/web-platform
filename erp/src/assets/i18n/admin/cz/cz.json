@@ -54,6 +54,9 @@
     "password_change_success_message": "Heslo bylo úspěšně změněno. Ostatní přihlášení tohoto účtu byla ukončena.",
     "password_change_error": "Chyba při změně hesla. Zkontrolujte prosím původní heslo."
   },
+  "page-help": {
+    "title": "Nápověda k této stránce"
+  },
     "admin-layout": {
     "brand": "Admin",
     "not_logged_in": "Nepřihlášený",
@@ -67,7 +70,8 @@
     "module_shop": "E-Shop",
 
 
-    "wiki_title": "Help",
+    "wiki_label": "Help",
+    "wiki_title": "Nápověda – úvod knowledge base",
     "wiki_mobile_label": "Help",
 
 

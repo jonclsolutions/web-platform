@@ -24,6 +24,7 @@ import * as Config from './orders.config';
 import { Order, OrderItem, Product, ProductVariant, PaymentMethod, ShippingMethod, Coupon } from './';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 interface CouponValidationResult {
   valid: boolean;
@@ -40,7 +41,7 @@ type TableMode = 'all' | 'pending_tasks' | 'trash';
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHelpComponent],
   templateUrl: './orders.component.html',
   styleUrls: ['../shared-styles/list-page.css', './orders.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

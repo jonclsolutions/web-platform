@@ -47,6 +47,7 @@ import { HasPermissionDirective } from '../../../core/directives/has-permission.
 import { PermissionService } from '../../../core/auth/services/permission.service';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 /** @description Trend badge shown on a KPI card - direction drives the color (success/error/neutral). */
 interface KpiTrend {
@@ -118,7 +119,7 @@ interface RecentOrder {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, HasPermissionDirective],
+  imports: [CommonModule, HasPermissionDirective, PageHelpComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['../../shared-styles/dashboard.css', '../../shared-styles/dashboard-maintenance.css', './dashboard.component.css'],
 })

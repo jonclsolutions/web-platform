@@ -26,6 +26,7 @@ import * as Config from './categories.config';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 /**
  * @description Orchestrates the category management interface, handling recursive tree display, editing, and side-panel product associations.
@@ -35,7 +36,7 @@ import { ResourceCacheService } from '../../../core/services/resource-cache.serv
 @Component({
   selector: 'app-categories',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, PageHelpComponent],
   templateUrl: './categories.component.html',
   styleUrls: ['./categories.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

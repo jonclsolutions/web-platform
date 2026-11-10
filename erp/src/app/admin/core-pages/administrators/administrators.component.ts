@@ -29,6 +29,7 @@ import { GraphBuilderComponent } from '../../components/builders/graph-builder/g
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 import { ScrollLockService } from '../../../core/services/scroll-lock.service';
 import { PasswordConfirmationService } from '../../../core/services/password-confirmation.service';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 /**
  * Name of the role with unrestricted access. Only a sysadmin may assign it; the API refuses it
@@ -63,7 +64,7 @@ interface EmailAccessRule {
 @Component({
   selector: 'app-administrators',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHelpComponent],
   templateUrl: './administrators.component.html',
   styleUrls: ['../../shared-styles/page.css', '../shared-styles/page.css', './email-access-policy-modal.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

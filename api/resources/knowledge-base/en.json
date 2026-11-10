@@ -42,6 +42,20 @@
         }
       ]
     },
+    "web-welcome-page": {
+      "navLabel": "Web Welcome Page",
+      "header": "Web Welcome Page",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "The guide for this page is being prepared."
+            }
+          ]
+        }
+      ]
+    },
     "web-dashboard": {
       "navLabel": "Dashboard",
       "header": "Web - Dashboard",
@@ -1300,6 +1314,20 @@
             {
               "type": "lead",
               "content": "Placeholder content - monitoring of suspicious activity, event triage, and retention period settings."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-welcome-page": {
+      "navLabel": "E-shop Welcome Page",
+      "header": "E-shop Welcome Page",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "The guide for this page is being prepared."
             }
           ]
         }

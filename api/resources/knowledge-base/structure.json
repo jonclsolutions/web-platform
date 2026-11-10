@@ -20,6 +20,13 @@
       "permission": null
     },
     {
+      "id": "web-welcome-page",
+      "group": "web",
+      "order": 4,
+      "permission": "web-welcome-page-view",
+      "devNote": "WebWelcomePageComponent, route 'web/welcome-page', permission 'web-welcome-page-view'. Uvítací stránka záložky Web (rozcestník na stránky modulu)."
+    },
+    {
       "id": "web-dashboard",
       "group": "web",
       "order": 5,
@@ -171,79 +178,86 @@
       "devNote": "SecurityEventsComponent, route 'core/security-events', permission 'core-security-view'. Triage podezřelých eventů, retenční politika (GDPR), ruční purge."
     },
     {
-      "id": "shop-dashboard",
+      "id": "shop-welcome-page",
       "group": "shop",
       "order": 25,
+      "permission": "shop-welcome-page-view",
+      "devNote": "ShopWelcomePageComponent, route 'shop/welcome-page', permission 'shop-welcome-page-view'. Uvítací stránka záložky E-shop (rozcestník na stránky modulu)."
+    },
+    {
+      "id": "shop-dashboard",
+      "group": "shop",
+      "order": 26,
       "permission": "shop-view-dashboard",
       "devNote": "ShopDashboardComponent, route 'shop/dashboard', permission 'shop-view-dashboard'."
     },
     {
       "id": "shop-products",
       "group": "shop",
-      "order": 26,
+      "order": 27,
       "permission": "shop-products-view",
       "devNote": "ProductsComponent, route 'shop/products', permission 'shop-products-view'. Zahrnuje varianty a obrázky produktu (samostatné modaly)."
     },
     {
       "id": "shop-categories",
       "group": "shop",
-      "order": 27,
+      "order": 28,
       "permission": "shop-categories-view",
       "devNote": "CategoriesComponent, route 'shop/categories', permission 'shop-categories-view'. Stromová struktura kategorií + přiřazování produktů."
     },
     {
       "id": "shop-orders",
       "group": "shop",
-      "order": 28,
+      "order": 29,
       "permission": "shop-orders-view",
       "devNote": "OrdersComponent, route 'shop/orders', permission 'shop-orders-view'."
     },
     {
       "id": "shop-customers",
       "group": "shop",
-      "order": 29,
+      "order": 30,
       "permission": "shop-customers-view",
       "devNote": "CustomersComponent, route 'shop/customers', permission 'shop-customers-view'."
     },
     {
       "id": "shop-shipping-methods",
       "group": "shop",
-      "order": 30,
+      "order": 31,
       "permission": "shop-shipping-methods-view",
       "devNote": "ShippingMethodsComponent, route 'shop/shipping-methods', permission 'shop-shipping-methods-view'."
     },
     {
       "id": "shop-payment-methods",
       "group": "shop",
-      "order": 31,
+      "order": 32,
       "permission": "shop-payment-methods-view",
       "devNote": "PaymentMethodsComponent, route 'shop/payment-methods', permission 'shop-payment-methods-view'."
     },
     {
       "id": "shop-suppliers",
       "group": "shop",
-      "order": 32,
+      "order": 33,
       "permission": "shop-suppliers-view",
       "devNote": "SuppliersComponent, route 'shop/suppliers', permission 'shop-suppliers-view'."
     },
     {
       "id": "coupons",
       "group": "shop",
-      "order": 33,
+      "order": 34,
       "permission": "shop-coupons-view",
       "devNote": "CouponsComponent, route 'shop/coupons', permission 'shop-coupons-view'."
     },
     {
       "id": "shop-logs",
       "group": "shop",
-      "order": 34,
+      "order": 35,
       "permission": "shop-view-logs",
       "devNote": "ShopLogsComponent, route 'shop/logs', permission 'shop-view-logs'."
     },
     {
       "id": "edit-eshop",
       "group": "shop",
-      "order": 35,
+      "order": 36,
       "permission": "shop-edit-eshop-view",
       "devNote": "EditEshopComponent, route 'shop/edit-eshop', permission 'shop-edit-eshop-view'."
     }

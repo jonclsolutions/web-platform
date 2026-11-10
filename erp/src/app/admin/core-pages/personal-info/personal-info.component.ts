@@ -38,6 +38,7 @@ import { AvatarEditorComponent } from '../../components/avatar-editor/avatar-edi
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PermissionService } from '../../../core/auth/services/permission.service';
 import { SYSADMIN_ROLE_NAME } from '../../../core/auth/guards/auth.guard';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 /** Permission that lets an account change its own name and login e-mail (and edit accounts). */
 const PROFILE_EDIT_PERMISSION = 'core-administrators-update';
@@ -56,6 +57,7 @@ const FORCED_2FA_ROLES = ['sysadmin'];
     PasswordRequirementsChecklistComponent,
     AvatarEditorComponent,
     IconComponent,
+    PageHelpComponent
   ],
   templateUrl: './personal-info.component.html',
   styleUrl: './personal-info.component.css'

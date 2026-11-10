@@ -50,4 +50,18 @@ hidden page answers 404, like a missing one.
 5. Run the API tests. `KnowledgeBaseTest` checks that the files fit together: every page exists
    in every language, the permission keys are known, and the block types are valid.
 
+## Help button of the admin pages
+
+Every admin page has its own page in the manual. The route in `admin-routing.module.ts` names it
+in `data.help`, e.g. `{ path: 'administrators', ..., data: { help: 'administrators', permission:
+'core-administrators-view' } }`. The help button ("?") at the top right of the page then opens
+`/admin/intranet/knowledge-base/administrators`. The button is `<app-page-help>`
+(`erp/src/app/admin/components/page-help`) - place it at the right end of the header of a new
+page. "Help" in the admin header always opens the manual home.
+
+A new admin page therefore needs a page in the manual too (steps above, the same `permission` as
+the route). Until its guide is written, the page holds a short placeholder text.
+`KnowledgeBaseTest` fails when an admin page has no `help`, the manual page does not exist, or
+it has other readers than the route.
+
 A page missing in the requested language falls back to English, then Czech.

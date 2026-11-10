@@ -19,6 +19,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 /** @description One quick link of a card - `icon` is a key rendered through @switch in the template (shared SVGs in the same visual language as the admin-layout menu). */
 interface QuickLinkCard {
@@ -32,7 +33,7 @@ interface QuickLinkCard {
 @Component({
   selector: 'app-shop-welcome-page',
   standalone: true,
-  imports: [CommonModule, RouterModule, HasPermissionDirective],
+  imports: [CommonModule, RouterModule, HasPermissionDirective, PageHelpComponent],
   templateUrl: './shop-welcome-page.component.html',
   styleUrls: ['../../shared-styles/welcome-page.css', '../../shared-styles/welcome-links.css'],
 })

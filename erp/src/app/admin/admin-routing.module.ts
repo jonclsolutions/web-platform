@@ -61,7 +61,9 @@ import { AdminErrorPageComponent } from './error-pages/admin-error-page.componen
 /**
  * @description Defines the navigation hierarchy and access permissions for the administration interface.
  * @usage Acts as the master route table for the admin module. Adding a page only needs a new
- *        route with `data: { permission: '<key>' }` (several keys separated by `|` mean "any of them").
+ *        route with `data: { permission: '<key>' }` (several keys separated by `|` mean "any of them")
+ *        and `help: '<knowledge base page id>'` - the help button ("?", PageHelpComponent) in the
+ *        page header opens that page of the knowledge base (api/resources/knowledge-base/structure.json).
  * @note Routes are grouped into Web, Core, and E-Shop segments, each under its own path prefix
  *       ('web/', 'core/', 'shop/') for a consistent, predictable URL structure.
  *       AuthGuard is registered twice on purpose: `canActivate` verifies the session when the
@@ -106,17 +108,17 @@ export const ADMIN_ROUTES: Routes = [
         path: 'web',
         children: [
           { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-          { path: 'dashboard', component: DashboardComponent, data: { permission: 'web-view-dashboard' } },
-          { path: 'user-request', component: UserRequestComponent, data: { permission: 'web-user-requests-view' } },
-          { path: 'business-logs', component: BusinessLogsComponent, data: { permission: 'web-view-web-logs' } },
-          { path: 'sales-leads', component: SalesLeadsComponent, data: { permission: 'web-sales-leads-view' } },
-          { path: 'edit-news', component: EditNewsComponent, data: { permission: 'web-news-view' } },
-          { path: 'edit-website', component: EditWebsiteComponent, data: { permission: 'web-edit-website-view' } },
-          { path: 'sales-orders', component: SalesOrdersComponent, data: { permission: 'web-sales-orders-view' } },
-          { path: 'support-tickets', component: SupportTicketsComponent, data: { permission: 'web-support-tickets-view' } },
-          { path: 'job-applications', component: JobApplicationsComponent, data: { permission: 'web-job-applications-view' } },
-          { path: 'projects', component: ProjectsComponent, data: { permission: 'web-projects-view' } },
-          { path: 'welcome-page', component: WebWelcomePageComponent, data: { permission: 'web-welcome-page-view' } },
+          { path: 'dashboard', component: DashboardComponent, data: { help: 'web-dashboard', permission: 'web-view-dashboard' } },
+          { path: 'user-request', component: UserRequestComponent, data: { help: 'user-request', permission: 'web-user-requests-view' } },
+          { path: 'business-logs', component: BusinessLogsComponent, data: { help: 'web-business-logs', permission: 'web-view-web-logs' } },
+          { path: 'sales-leads', component: SalesLeadsComponent, data: { help: 'sales-leads', permission: 'web-sales-leads-view' } },
+          { path: 'edit-news', component: EditNewsComponent, data: { help: 'edit-news', permission: 'web-news-view' } },
+          { path: 'edit-website', component: EditWebsiteComponent, data: { help: 'edit-website', permission: 'web-edit-website-view' } },
+          { path: 'sales-orders', component: SalesOrdersComponent, data: { help: 'sales-orders', permission: 'web-sales-orders-view' } },
+          { path: 'support-tickets', component: SupportTicketsComponent, data: { help: 'support-tickets', permission: 'web-support-tickets-view' } },
+          { path: 'job-applications', component: JobApplicationsComponent, data: { help: 'job-applications', permission: 'web-job-applications-view' } },
+          { path: 'projects', component: ProjectsComponent, data: { help: 'projects', permission: 'web-projects-view' } },
+          { path: 'welcome-page', component: WebWelcomePageComponent, data: { help: 'web-welcome-page', permission: 'web-welcome-page-view' } },
          ]
       },
 
@@ -125,20 +127,20 @@ export const ADMIN_ROUTES: Routes = [
         path: 'core',
         children: [
           { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
-          { path: 'dashboard', component: CoreDashboardComponent, data: { permission: 'view-core' } },
-          { path: 'welcome-page', component: WelcomePageComponent, data: { permission: 'core-view-welcome-page' } },
-          { path: 'edit-legal', component: EditLegalComponent, data: { permission: 'core-legal-documents-view|core-legal-config-view' } },
+          { path: 'dashboard', component: CoreDashboardComponent, data: { help: 'core-dashboard', permission: 'view-core' } },
+          { path: 'welcome-page', component: WelcomePageComponent, data: { help: 'welcome-page', permission: 'core-view-welcome-page' } },
+          { path: 'edit-legal', component: EditLegalComponent, data: { help: 'edit-legal', permission: 'core-legal-documents-view|core-legal-config-view' } },
           // Own account (password, 2FA) - every signed-in user, no permission (VT-13); the API lets
           // the own account through by `selfParam` (CheckPermission).
-          { path: 'personal-info', component: PersonalInfoComponent },
-          { path: 'web-settings', component: WebSettingsComponent, data: { permission: 'core-legal-config-view' } },
-          { path: 'external-links', component: ExternalLinksComponent, data: { permission: 'core-external-links-view' } },
+          { path: 'personal-info', component: PersonalInfoComponent, data: { help: 'personal-info' } },
+          { path: 'web-settings', component: WebSettingsComponent, data: { help: 'web-settings', permission: 'core-legal-config-view' } },
+          { path: 'external-links', component: ExternalLinksComponent, data: { help: 'external-links', permission: 'core-external-links-view' } },
           // Restricted to the 'sysadmin' role regardless of the permission system (see sysadminGuard).
-          { path: 'edit-roles', component: EditRolesComponent, canActivate: [sysadminGuard] },
-          { path: 'administrators', component: AdministratorsComponent, data: { permission: 'core-administrators-view' } },
+          { path: 'edit-roles', component: EditRolesComponent, data: { help: 'edit-roles' }, canActivate: [sysadminGuard] },
+          { path: 'administrators', component: AdministratorsComponent, data: { help: 'administrators', permission: 'core-administrators-view' } },
           // System audit log (core/logs).
-          { path: 'logs', component: CoreLogsComponent, data: { permission: 'view-core' } },
-          { path: 'security-events', component: SecurityEventsComponent, data: { permission: 'core-security-view' } },
+          { path: 'logs', component: CoreLogsComponent, data: { help: 'core-logs', permission: 'view-core' } },
+          { path: 'security-events', component: SecurityEventsComponent, data: { help: 'security-events', permission: 'core-security-view' } },
         ]
       },
 
@@ -147,18 +149,18 @@ export const ADMIN_ROUTES: Routes = [
         path: 'shop',
         children: [
           { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-          { path: 'dashboard', component: ShopDashboardComponent, data: { permission: 'shop-view-dashboard' } },
-          { path: 'products', component: ProductsComponent, data: { permission: 'shop-products-view' } },
-          { path: 'categories', component: CategoriesComponent, data: { permission: 'shop-categories-view' } },
-          { path: 'orders', component: OrdersComponent, data: { permission: 'shop-orders-view' } },
-          { path: 'customers', component: CustomersComponent, data: { permission: 'shop-customers-view' } },
-          { path: 'shipping-methods', component: ShippingMethodsComponent, data: { permission: 'shop-shipping-methods-view' } },
-          { path: 'payment-methods', component: PaymentMethodsComponent, data: { permission: 'shop-payment-methods-view' } },
-          { path: 'suppliers', component: SuppliersComponent, data: { permission: 'shop-suppliers-view' } },
-          { path: 'coupons', component: CouponsComponent, data: { permission: 'shop-coupons-view' } },
-          { path: 'logs', component: ShopLogsComponent, data: { permission: 'shop-view-logs' } },
-          { path: 'edit-eshop', component: EditEshopComponent, data: { permission: 'shop-edit-eshop-view' } },
-          { path: 'welcome-page', component: ShopWelcomePageComponent, data: { permission: 'shop-welcome-page-view' } }
+          { path: 'dashboard', component: ShopDashboardComponent, data: { help: 'shop-dashboard', permission: 'shop-view-dashboard' } },
+          { path: 'products', component: ProductsComponent, data: { help: 'shop-products', permission: 'shop-products-view' } },
+          { path: 'categories', component: CategoriesComponent, data: { help: 'shop-categories', permission: 'shop-categories-view' } },
+          { path: 'orders', component: OrdersComponent, data: { help: 'shop-orders', permission: 'shop-orders-view' } },
+          { path: 'customers', component: CustomersComponent, data: { help: 'shop-customers', permission: 'shop-customers-view' } },
+          { path: 'shipping-methods', component: ShippingMethodsComponent, data: { help: 'shop-shipping-methods', permission: 'shop-shipping-methods-view' } },
+          { path: 'payment-methods', component: PaymentMethodsComponent, data: { help: 'shop-payment-methods', permission: 'shop-payment-methods-view' } },
+          { path: 'suppliers', component: SuppliersComponent, data: { help: 'shop-suppliers', permission: 'shop-suppliers-view' } },
+          { path: 'coupons', component: CouponsComponent, data: { help: 'coupons', permission: 'shop-coupons-view' } },
+          { path: 'logs', component: ShopLogsComponent, data: { help: 'shop-logs', permission: 'shop-view-logs' } },
+          { path: 'edit-eshop', component: EditEshopComponent, data: { help: 'edit-eshop', permission: 'shop-edit-eshop-view' } },
+          { path: 'welcome-page', component: ShopWelcomePageComponent, data: { help: 'shop-welcome-page', permission: 'shop-welcome-page-view' } }
         ]
       },
 

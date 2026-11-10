@@ -27,11 +27,12 @@ import { environment } from '../../../../environments/environment';
 import { CompanyOptionalField, LangMeta, SiteSetting, SocialLink } from './'
 import { RetentionSettingsComponent } from './retention-settings/retention-settings.component';
 import { PageTitlesEditorComponent } from '../../components/page-titles-editor/page-titles-editor.component';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 @Component({
   selector: 'app-web-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RetentionSettingsComponent, PageTitlesEditorComponent],
+  imports: [CommonModule, FormsModule, RetentionSettingsComponent, PageTitlesEditorComponent, PageHelpComponent],
   templateUrl: './web-settings.component.html',
   styleUrl: './web-settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

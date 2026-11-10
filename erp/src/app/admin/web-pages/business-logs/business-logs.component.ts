@@ -21,6 +21,7 @@ import { BaseDataComponent } from '../../components/base-data/base-data.componen
 import * as Config from './business-logs.config';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 /**
  * @description Component for monitoring business logs.
@@ -30,7 +31,7 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 @Component({
   selector: 'app-business-logs',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, GraphBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, GraphBuilderComponent, PageHelpComponent],
   templateUrl: './business-logs.component.html',
   styleUrls: ['../../shared-styles/page.css', '../shared-styles/page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

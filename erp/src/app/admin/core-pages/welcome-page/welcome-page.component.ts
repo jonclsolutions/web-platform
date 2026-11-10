@@ -27,11 +27,12 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { CurrentUserProfileService } from '../../../core/services/current-user-profile.service';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { UserLogin } from '../../../shared/interfaces/user';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 @Component({
   selector: 'app-welcome-page',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, PageHelpComponent],
   templateUrl: './welcome-page.component.html',
   styleUrls: ['../../shared-styles/welcome-page.css', './welcome-page.component.css'],
 })

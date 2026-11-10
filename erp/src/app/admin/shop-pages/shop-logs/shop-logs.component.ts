@@ -19,6 +19,7 @@ import { BaseDataComponent } from '../../components/base-data/base-data.componen
 import * as Config from './shop-logs.config';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 /**
  * @description Component for viewing shop-related logs.
  * @usage Provides administrators with a read-only interface to monitor system events with advanced filtering and export capabilities.
@@ -27,7 +28,7 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 @Component({
   selector: 'app-shop-logs',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS,GraphBuilderComponent],
+  imports: [SHARED_UI_BUILDERS,GraphBuilderComponent, PageHelpComponent],
   templateUrl: './shop-logs.component.html',
   styleUrls: ['../../shared-styles/page.css', '../shared-styles/page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

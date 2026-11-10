@@ -42,6 +42,20 @@
         }
       ]
     },
+    "web-welcome-page": {
+      "navLabel": "Uvítací stránka webu",
+      "header": "Uvítací stránka webu",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Návod k této stránce se připravuje."
+            }
+          ]
+        }
+      ]
+    },
     "web-dashboard": {
       "navLabel": "Dashboard",
       "header": "Web - Dashboard",
@@ -1300,6 +1314,20 @@
             {
               "type": "lead",
               "content": "Testovací obsah - monitoring podezřelé aktivity, triage eventů a nastavení retenční doby."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-welcome-page": {
+      "navLabel": "Uvítací stránka e-shopu",
+      "header": "Uvítací stránka e-shopu",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Návod k této stránce se připravuje."
             }
           ]
         }

@@ -8,9 +8,11 @@
  * @created 2026
  * @description Feature tests of the internal manual (Knowledge Base): the JSON files are
  *   consistent (every page in every language, known permission keys, valid blocks) and every
- *   user gets only the pages / sections of the permissions they hold; languages and fallback.
+ *   user gets only the pages / sections of the permissions they hold; languages and fallback;
+ *   every admin page links its own page of the manual (help button "?" of the page).
  * @dependencies
- * - Tests\TestCase (InteractsWithAccounts); resources/knowledge-base/*.json (the real content).
+ * - Tests\TestCase (InteractsWithAccounts); resources/knowledge-base/*.json (the real content);
+ *   ../erp/src/app/admin/admin-routing.module.ts (the admin routes, `data.help`).
  */
 
 namespace Tests\Feature\Core;
@@ -147,5 +149,49 @@ class KnowledgeBaseTest extends TestCase
             collect($this->getJson('/api/knowledge-base?lang=en')->json('data'))->firstWhere('id', 'introductions')['label']);
         $this->getJson('/api/knowledge-base/pages/nope')->assertNotFound();
         $this->getJson('/api/knowledge-base/pages/Bad_Id')->assertNotFound();
+    }
+
+    /**
+     * @description Every admin page (web / core / shop) has its help topic (`data.help` in
+     *   admin-routing.module.ts) and it is a page of the manual for the same readers: the same
+     *   permission as the route, null for a page without one, 'sysadmin' for a sysadminGuard page.
+     * @input The real admin routes and structure.json.
+     * @output 33 pages (all three modules), each with an existing manual page of its permission;
+     *   no manual page used twice.
+     */
+    public function test_every_admin_page_links_its_manual_page(): void
+    {
+        $routing = base_path('../erp/src/app/admin/admin-routing.module.ts');
+        if (!is_file($routing)) {
+            $this->markTestSkipped('The admin frontend (erp) is not next to the API.');
+        }
+
+        $pages = collect($this->file('structure')['pages'])->keyBy('id');
+        $module = null;
+        $checked = [];
+        foreach (file($routing) as $line) {
+            if (preg_match("/^\\s*path: '(web|core|shop)',/", $line, $match)) {
+                $module = $match[1];
+                continue;
+            }
+            // The error pages (forbidden, 404) after the modules are no admin pages.
+            if ($module === null || str_contains($line, 'AdminErrorPageComponent')
+                || !preg_match("/\\{ path: '([a-z-]+)', component: \\w+/", $line, $match)) {
+                continue;
+            }
+
+            $route = "{$module}/{$match[1]}";
+            $this->assertMatchesRegularExpression("/help: '[a-z0-9-]+'/", $line, "{$route}: missing data.help");
+            preg_match("/help: '([a-z0-9-]+)'/", $line, $help);
+            preg_match("/permission: '([^']+)'/", $line, $permission);
+            $expected = $permission[1] ?? (str_contains($line, 'sysadminGuard') ? 'sysadmin' : null);
+
+            $this->assertTrue($pages->has($help[1]), "{$route}: no manual page '{$help[1]}'");
+            $this->assertSame($expected, $pages[$help[1]]['permission'], "{$route}: other readers than the manual page '{$help[1]}'");
+            $checked[$route] = $help[1];
+        }
+
+        $this->assertCount(33, $checked);
+        $this->assertSame(count($checked), count(array_unique($checked)));
     }
 }

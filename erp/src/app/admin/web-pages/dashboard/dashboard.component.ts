@@ -24,6 +24,7 @@ import { HasPermissionDirective } from '../../../core/directives/has-permission.
 import {
   BaseDashboardComponent, DashboardNavSection, DashboardStatDef, QuickStat
 } from '../../components/base-dashboard/base-dashboard.component';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 /** @description One segment of the full-width module distribution bar. */
 interface DistributionSegment {
@@ -45,7 +46,7 @@ interface DistributionSegment {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterModule, CommonModule, HasPermissionDirective],
+  imports: [RouterModule, CommonModule, HasPermissionDirective, PageHelpComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['../../shared-styles/dashboard.css', '../../shared-styles/dashboard-maintenance.css', '../../shared-styles/dashboard-cards.css', './dashboard.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

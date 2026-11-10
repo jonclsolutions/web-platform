@@ -19,6 +19,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { BaseTranslationEditorComponent } from '../../../shared/components/base-translation-editor/base-translation-editor.component';
 import { PageTitlesEditorComponent } from '../../components/page-titles-editor/page-titles-editor.component';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 /**
  * @description Translation editor of the `shop` module.
@@ -27,7 +28,7 @@ import { PageTitlesEditorComponent } from '../../components/page-titles-editor/p
 @Component({
   selector: 'app-edit-shop',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, PageTitlesEditorComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, PageTitlesEditorComponent, PageHelpComponent],
   templateUrl: './edit-eshop.component.html',
   styleUrls: ['../../shared-styles/theme.css', '../../../shared/styles/base.css', '../../shared-styles/settings-page.css', './edit-eshop.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

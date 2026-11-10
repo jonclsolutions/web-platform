@@ -26,11 +26,12 @@ import { ActionMenuBuilderComponent } from '../../components/builders/action-men
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 import * as Config from './products.config';
+import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHelpComponent],
   templateUrl: './products.component.html',
   styleUrls: ['../shared-styles/list-page.css', './products.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
