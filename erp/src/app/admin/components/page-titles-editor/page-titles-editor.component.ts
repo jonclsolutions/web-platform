@@ -20,12 +20,13 @@
  * - DataHandler: GET / PUT of the endpoint, languages, public configuration.
  * - ResourceCacheService: languages cached 10 minutes.
  * - PermissionService: the update permission.
- * - AdminLocalizationService, AlertDialogService.
+ * - AdminLocalizationService (redrawn on a switch of the admin language), AlertDialogService.
  */
 
 import {
-  ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, inject,
+  ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, EventEmitter, Input, OnInit, Output, inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of, Observable } from 'rxjs';
@@ -90,6 +91,7 @@ export class PageTitlesEditorComponent implements OnInit {
   private readonly permissionService = inject(PermissionService);
   private readonly alertDialog = inject(AlertDialogService);
   private readonly cd = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
   public readonly i18n = inject(AdminLocalizationService);
 
   /** @description Generic texts (section `page-titles` + shared). */
@@ -98,6 +100,9 @@ export class PageTitlesEditorComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // OnPush: redraw the labels at once when the admin language is switched (otherwise they
+    // changed only with the next interaction inside the editor).
+    this.i18n.translations$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.cd.markForCheck());
     this.load();
   }
 

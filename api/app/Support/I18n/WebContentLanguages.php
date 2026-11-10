@@ -7,14 +7,14 @@
  * @author JS
  * @created 2026
  * @description Languages of the content of the public website stored in the database (FAQ, open
- * positions - `*_i18n` JSON columns): the languages a text may be saved in (the languages of the
+ * positions, references - `*_i18n` JSON columns): the languages a text may be saved in (the languages of the
  * web module, languages.json) and the removal of every text of a deleted language, so no text of a
  * language that no longer exists stays on the server.
  * @note Called by TranslationController when a web language is deleted / left out of the list;
- * WebFaqController / WebJobController keep only the codes() when saving (an admin page opened
+ * WebFaqController / WebJobController / WebReferenceController keep only the codes() when saving (an admin page opened
  * before a language was deleted cannot store it again).
  * @dependencies TranslationController::languageCodes(), WebFaqCategory, WebFaqItem, WebJob,
- *   WebJobSection.
+ *   WebJobSection, WebReference, WebReferenceFeature, WebReferenceStack.
  */
 
 namespace App\Support\I18n;
@@ -24,6 +24,9 @@ use App\Models\Web\WebFaqCategory;
 use App\Models\Web\WebFaqItem;
 use App\Models\Web\WebJob;
 use App\Models\Web\WebJobSection;
+use App\Models\Web\WebReference;
+use App\Models\Web\WebReferenceFeature;
+use App\Models\Web\WebReferenceStack;
 use Illuminate\Support\Facades\DB;
 
 final class WebContentLanguages
@@ -34,6 +37,9 @@ final class WebContentLanguages
         WebFaqItem::class     => ['question_i18n', 'answer_i18n'],
         WebJob::class         => ['title_i18n', 'summary_i18n', 'type_i18n', 'location_i18n'],
         WebJobSection::class  => ['heading_i18n', 'body_i18n'],
+        WebReference::class        => ['category_i18n', 'name_i18n', 'size_i18n', 'role_i18n', 'description_i18n', 'result_i18n'],
+        WebReferenceFeature::class => ['text_i18n'],
+        WebReferenceStack::class   => ['label_i18n', 'value_i18n'],
     ];
 
     /**

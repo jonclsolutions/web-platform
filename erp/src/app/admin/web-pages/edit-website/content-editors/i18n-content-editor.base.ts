@@ -4,7 +4,7 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Shared logic of the content editors of the public website (FAQ, Jobs): the
+ * @description Shared logic of the content editors of the public website (FAQ, Jobs, References): the
  *   languages of the web module, the whole content loaded and saved at once (GET / PUT of the
  *   endpoint), unsaved changes (dot on the tab, save / discard), reordering and removing list
  *   entries and the missing translations - counted per language (badge on the language tab) and
@@ -21,10 +21,11 @@
  * @dependencies
  * - DataHandler (GET / PUT, languages), ResourceCacheService (languages, 10 minutes),
  *   PermissionService (web-edit-website-update), AdminLocalizationService (section
- *   `web-content-editor`), AlertDialogService.
+ *   `web-content-editor`, redrawn on a switch of the admin language), AlertDialogService.
  */
 
-import { ChangeDetectorRef, Directive, DoCheck, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { ChangeDetectorRef, DestroyRef, Directive, DoCheck, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { DataHandler } from '../../../../core/services/data-handler.service';
@@ -94,6 +95,7 @@ export abstract class I18nContentEditorBase<T extends { open: boolean }> impleme
   private readonly alertDialog = inject(AlertDialogService);
   protected readonly cd = inject(ChangeDetectorRef);
   public readonly i18n = inject(AdminLocalizationService);
+  private readonly destroyRef = inject(DestroyRef);
 
   /**
    * @description Drafts of the API rows (every language of the module filled with '').
@@ -135,6 +137,9 @@ export abstract class I18nContentEditorBase<T extends { open: boolean }> impleme
   }
 
   ngOnInit(): void {
+    // OnPush: redraw the labels at once when the admin language is switched (otherwise they
+    // changed only with the next interaction inside the editor).
+    this.i18n.translations$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.cd.markForCheck());
     this.load();
   }
 

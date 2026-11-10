@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\Web\WebSalesLeadController;
 use App\Http\Controllers\Api\Web\WebNewsController;
 use App\Http\Controllers\Api\Web\WebFaqController;
 use App\Http\Controllers\Api\Web\WebJobController;
+use App\Http\Controllers\Api\Web\WebReferenceController;
 use App\Http\Controllers\Api\Web\WebSalesOrderController;
 use App\Http\Controllers\Api\Web\WebSupportTicketController;
 use App\Http\Controllers\Api\Web\WebJobApplicationController;
@@ -152,12 +153,13 @@ Route::prefix('public')->middleware('web.active')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC FAQ AND OPEN POSITIONS — content of the public website (edited in web/edit-website)
+| PUBLIC FAQ, OPEN POSITIONS AND REFERENCES — content of the public website (edited in web/edit-website)
 |--------------------------------------------------------------------------
 */
 Route::prefix('public/web')->middleware(['web.active', 'throttle:60,1,public-web-content'])->group(function () {
     Route::get('faq',  [WebFaqController::class, 'publicIndex']);
     Route::get('jobs', [WebJobController::class, 'publicIndex']);
+    Route::get('references', [WebReferenceController::class, 'publicIndex']);
 });
 
 /*
@@ -666,6 +668,15 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         Route::get('/jobs', [WebJobController::class, 'index'])
             ->middleware('permission:web-edit-website-view');
         Route::put('/jobs', [WebJobController::class, 'update'])
+            ->middleware('permission:web-edit-website-update');
+        // References (web/edit-website, tab References); the image of a saved reference on its own.
+        Route::get('/references', [WebReferenceController::class, 'index'])
+            ->middleware('permission:web-edit-website-view');
+        Route::put('/references', [WebReferenceController::class, 'update'])
+            ->middleware('permission:web-edit-website-update');
+        Route::post('/references/{id}/image', [WebReferenceController::class, 'storeImage'])
+            ->middleware(['permission:web-edit-website-update', 'throttle:30,1']);
+        Route::delete('/references/{id}/image', [WebReferenceController::class, 'destroyImage'])
             ->middleware('permission:web-edit-website-update');
 
         Route::prefix('settings')->group(function () {

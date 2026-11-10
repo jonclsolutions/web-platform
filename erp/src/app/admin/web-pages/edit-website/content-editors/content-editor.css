@@ -4,9 +4,10 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Shared styles of the content editors of the public website (FAQ, Jobs; ce-*):
-      card, header with save / discard, language bar with the missing translations, collapsible
-      entry cards with sub-entries and the form fields.
+    @description: Shared styles of the content editors of the public website (FAQ, Jobs,
+      References; ce-*): card, header with save / discard, language bar with the missing
+      translations, collapsible entry cards with sub-entries, one-line list rows, the image of a
+      reference and the form fields.
     @dependencies: shared/styles/tokens.css (--color-*)
 */
 
@@ -546,12 +547,84 @@
   color: var(--color-zinc-700);
 }
 
+/*
+    @module: One-line rows and image
+    @description: A list of short texts edited in one line each (key features, stack rows: number,
+      field(s), actions) and the image of a reference (preview + upload / remove).
+    @usage: .ce-line, .ce-line-field(--label), .ce-image, .ce-image-preview, .ce-image-empty,
+      .ce-image-side, .ce-image-actions, .ce-file-btn, .ce-btn-danger
+*/
+.ce-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.ce-line > .ce-subentry-num { margin-top: 8px; flex-shrink: 0; }
+.ce-line > .ce-entry-actions { margin-top: 3px; }
+.ce-line-field { flex: 1 1 0; min-width: 0; }
+.ce-line-field--label { flex: 0 1 200px; }
+
+.ce-image {
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+
+.ce-image-preview,
+.ce-image-empty {
+  width: 160px;
+  aspect-ratio: 4 / 3;
+  flex-shrink: 0;
+  border-radius: 10px;
+  border: 1px solid var(--color-zinc-200);
+}
+
+.ce-image-preview { object-fit: cover; background: var(--color-white); }
+
+.ce-image-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  text-align: center;
+  font-size: 0.76rem;
+  color: var(--color-zinc-400);
+  background: var(--color-white);
+  border-style: dashed;
+}
+
+.ce-image-side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ce-image-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* The file input stays in the label (keyboard / screen reader), visually hidden. */
+.ce-file-btn { position: relative; background: var(--color-white); }
+.ce-file-btn input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.ce-file-btn:focus-within { outline: 2px solid var(--color-zinc-900); outline-offset: 2px; }
+.ce-file-btn--busy { opacity: 0.6; }
+
+.ce-btn-danger:hover:not(:disabled) {
+  background: var(--color-rose-50, #fff1f2);
+  border-color: var(--color-rose-200, #fecdd3);
+  color: var(--color-rose-600, #e11d48);
+}
+
 @media (max-width: 640px) {
   .ce-i18n-bar { flex-direction: column; align-items: flex-start; }
   .ce-header-actions { margin-left: 0; width: 100%; justify-content: flex-end; }
   .ce-entry-meta,
   .ce-status { display: none; }
   .ce-check { margin-top: 0; }
+  .ce-line { flex-wrap: wrap; }
+  .ce-line-field--label { flex: 1 1 100%; order: 0; }
+  .ce-image { flex-direction: column; align-items: flex-start; }
 }
 
 @media (prefers-reduced-motion: reduce) {

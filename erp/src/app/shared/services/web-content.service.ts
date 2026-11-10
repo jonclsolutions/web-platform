@@ -4,8 +4,9 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Content of the public website managed in the admin (web/edit-website, tabs FAQ and
- * Jobs): the FAQ (`public/web/faq`) and the open positions (`public/web/jobs`). Every text comes
+ * @description Content of the public website managed in the admin (web/edit-website, tabs FAQ,
+ * Jobs and References): the FAQ (`public/web/faq`), the open positions (`public/web/jobs`) and
+ * the references (`public/web/references`). Every text comes
  * in all languages (`{ cz: '...', en: '...' }`, a language without text has no key); the pages
  * pick the current language with `localizedText()` / `optionalText()`. Each list is loaded once
  * per page load and shared by all components.
@@ -43,6 +44,24 @@ export interface PublicJob {
   sections: { heading: I18nText; body: I18nText }[];
 }
 
+/** One reference (delivered project); year and client are the same in every language. */
+export interface PublicReference {
+  id: number;
+  /** Category per language (free text, optional). */
+  category: I18nText;
+  duration: string | null;
+  client: string | null;
+  /** Image on the public storage (`references/….webp`), null = none. */
+  image: string | null;
+  name: I18nText;
+  size: I18nText;
+  role: I18nText;
+  description: I18nText;
+  result: I18nText;
+  features: I18nText[];
+  stack: { label: I18nText; value: I18nText }[];
+}
+
 /**
  * @description Text of the current language.
  * @param text Text per language.
@@ -73,6 +92,7 @@ export class WebContentService {
   /** Shared requests (one per page load; a failed one is tried again next time). */
   private faq$: Observable<PublicFaqCategory[]> | null = null;
   private jobs$: Observable<PublicJob[]> | null = null;
+  private references$: Observable<PublicReference[]> | null = null;
 
   /**
    * @description FAQ categories with their questions in the order of the website.
@@ -94,6 +114,17 @@ export class WebContentService {
       this.jobs$ = this.load<PublicJob[]>('public/web/jobs', () => (this.jobs$ = null));
     }
     return this.jobs$;
+  }
+
+  /**
+   * @description Shown references in the order of the website.
+   * @returns {Observable<PublicReference[]>} [] when they cannot be loaded.
+   */
+  references(): Observable<PublicReference[]> {
+    if (!this.references$) {
+      this.references$ = this.load<PublicReference[]>('public/web/references', () => (this.references$ = null));
+    }
+    return this.references$;
   }
 
   /**

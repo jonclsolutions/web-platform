@@ -4,8 +4,8 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Types of the content editors of the public website (web/edit-website, tabs FAQ and
- *   Jobs; API web/faq, web/jobs). Every text is stored per language (`{ cz: '...', en: '...' }`).
+ * @description Types of the content editors of the public website (web/edit-website, tabs FAQ,
+ *   Jobs and References; API web/faq, web/jobs, web/references). Every text is stored per language (`{ cz: '...', en: '...' }`).
  * @dependencies none
  */
 
@@ -66,5 +66,42 @@ export interface JobDraft {
   type_i18n: I18nText;
   location_i18n: I18nText;
   sections: JobSectionDraft[];
+  open: boolean;
+}
+
+/** One key feature of a reference. */
+export interface ReferenceFeatureDraft {
+  key: number;
+  id: number | null;
+  text_i18n: I18nText;
+}
+
+/** One row of the technology stack of a reference (label + value). */
+export interface ReferenceStackDraft {
+  key: number;
+  id: number | null;
+  label_i18n: I18nText;
+  value_i18n: I18nText;
+}
+
+/**
+ * One reference (delivered project); `open` = expanded in the editor (not sent). Year and client
+ * are the same in every language; the image is uploaded on its own (not part of the draft).
+ */
+export interface ReferenceDraft {
+  key: number;
+  id: number | null;
+  /** Category per language (free text, e.g. "Audit"; optional). */
+  category_i18n: I18nText;
+  duration: string;
+  client: string;
+  is_active: boolean;
+  name_i18n: I18nText;
+  size_i18n: I18nText;
+  role_i18n: I18nText;
+  description_i18n: I18nText;
+  result_i18n: I18nText;
+  features: ReferenceFeatureDraft[];
+  stack: ReferenceStackDraft[];
   open: boolean;
 }

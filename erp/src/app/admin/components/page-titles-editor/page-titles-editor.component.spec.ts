@@ -189,4 +189,16 @@ describe('PageTitlesEditorComponent', () => {
     expect(component.faviconSrc).toBeNull();
     expect(component.rows.length).toBe(2);
   });
+
+  /**
+   * @description A switch of the admin language redraws the editor at once (OnPush).
+   * @input translations$ emits.
+   * @output markForCheck called.
+   */
+  it('redraws when the admin language changes', () => {
+    create();
+    const markForCheck = spyOn((component as any).cd, 'markForCheck');
+    ctx.i18n.translations$.next({});
+    expect(markForCheck).toHaveBeenCalled();
+  });
 });

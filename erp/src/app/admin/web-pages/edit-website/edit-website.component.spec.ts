@@ -24,6 +24,7 @@ import { PageTitlesEditorComponent } from '../../components/page-titles-editor/p
 import { EditWebsiteComponent } from './edit-website.component';
 import { FaqEditorComponent } from './content-editors/faq-editor/faq-editor.component';
 import { JobsEditorComponent } from './content-editors/jobs-editor/jobs-editor.component';
+import { ReferencesEditorComponent } from './content-editors/references-editor/references-editor.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 
 describe('EditWebsiteComponent', () => {
@@ -288,7 +289,7 @@ describe('EditWebsiteComponent', () => {
     flush();
     const el: HTMLElement = fixture.nativeElement;
     const tabs = () => el.querySelectorAll('.ew-page-tab') as NodeListOf<HTMLButtonElement>;
-    expect(tabs().length).toBe(4);
+    expect(tabs().length).toBe(5);
     expect(el.querySelector('app-page-titles-editor')).toBeNull();
 
     tabs()[1].click();
@@ -313,14 +314,16 @@ describe('EditWebsiteComponent', () => {
   }));
 
   /**
-   * @description The FAQ and Jobs tabs create their editor on the first open, keep it (hidden)
-   *   when another tab is shown and show a dot for unsaved changes.
-   * @input  click FAQ, Jobs, FAQ again; jobs editor reports unsaved changes.
+   * @description The FAQ, Jobs and References tabs create their editor on the first open, keep
+   *   it (hidden) when another tab is shown and show a dot for unsaved changes.
+   * @input  click FAQ, Jobs, FAQ again; jobs editor reports unsaved changes; click References,
+   *   its editor reports unsaved changes.
    * @output faq editor created once (with the languages of the page) and shown / hidden; jobs
-   *   editor created; dot on the Jobs tab.
+   *   editor created; dot on the Jobs tab; references editor created with the languages of the
+   *   page, dot on its tab.
    */
-  it('manages the FAQ and the jobs in tabs', fakeAsync(() => {
-    answer({ 'web/faq': of([]), 'web/jobs': of([]) });
+  it('manages the FAQ, the jobs and the references in tabs', fakeAsync(() => {
+    answer({ 'web/faq': of([]), 'web/jobs': of([]), 'web/references': of([]) });
     fixture.detectChanges();
     flush();
     const el: HTMLElement = fixture.nativeElement;
@@ -347,6 +350,16 @@ describe('EditWebsiteComponent', () => {
     fixture.detectChanges();
     expect(fixture.debugElement.query(By.directive(FaqEditorComponent)).componentInstance).toBe(faq);
     expect((fixture.debugElement.query(By.directive(JobsEditorComponent)).nativeElement.parentElement as HTMLElement).style.display).toBe('none');
+
+    expect(el.querySelector('app-references-editor')).toBeNull();
+    tabs()[4].click();
+    fixture.detectChanges();
+    const references = fixture.debugElement.query(By.directive(ReferencesEditorComponent)).componentInstance as ReferencesEditorComponent;
+    expect(component.activeTab).toBe('references');
+    expect(references.languages.map(l => l.code)).toEqual(['cz', 'en']);
+    references.dirtyChange.emit(true);
+    fixture.detectChanges();
+    expect(tabs()[4].querySelector('.ew-page-tab-dot')).not.toBeNull();
     discardPeriodicTasks();
   }));
 });

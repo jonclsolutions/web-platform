@@ -6,8 +6,9 @@
     @created: 2025
     @description Public references page – accordion list of delivered projects.
         Collapsed row: index, name, year, client. Expanded detail: description,
-        key features, fact sheet (category, scope, role, year, client),
-        technology stack and result.
+        key features (one column with the image next to them when the project has
+        one), fact sheet (category, scope, role, year, client), technology stack
+        and result. Texts are plain text (line breaks kept), never HTML.
 -->
 @if (t) {
 <div class="ref-page content-page">
@@ -71,17 +72,26 @@
               <div class="ref-body-clip">
                 <div class="ref-body-inner">
 
-                  <p class="ref-description" [innerHTML]="project.description"></p>
+                  <p class="ref-description">{{ project.description }}</p>
 
-                  <!-- Key features -->
-                  @if (project.features?.length) {
-                    <div class="ref-section">
-                      <h3 class="ref-section-title">{{ t.label_features }}</h3>
-                      <ul class="ref-features">
-                        @for (feature of project.features; track feature) {
-                          <li>{{ feature }}</li>
-                        }
-                      </ul>
+                  <!-- Key features; with an image: one column + the image on the right -->
+                  @if (project.features.length || project.image) {
+                    <div class="ref-showcase" [class.ref-showcase--image]="project.image">
+                      @if (project.features.length) {
+                        <div class="ref-section">
+                          <h3 class="ref-section-title">{{ t.label_features }}</h3>
+                          <ul class="ref-features">
+                            @for (feature of project.features; track $index) {
+                              <li>{{ feature }}</li>
+                            }
+                          </ul>
+                        </div>
+                      }
+                      @if (project.image) {
+                        <figure class="ref-image">
+                          <img [src]="project.image" [alt]="project.name" loading="lazy" decoding="async">
+                        </figure>
+                      }
                     </div>
                   }
 
@@ -94,7 +104,7 @@
                         @if (project.category) {
                           <div class="ref-dl-row">
                             <dt>{{ t.label_category }}</dt>
-                            <dd>{{ getCategoryLabel(project.category) }}</dd>
+                            <dd>{{ project.category }}</dd>
                           </div>
                         }
                         @if (project.size) {
@@ -125,11 +135,11 @@
                     </div>
 
                     <!-- Technology stack -->
-                    @if (project.stack?.length) {
+                    @if (project.stack.length) {
                       <div class="ref-panel">
                         <h3 class="ref-section-title">{{ t.label_stack }}</h3>
                         <dl class="ref-dl">
-                          @for (layer of project.stack; track layer.label) {
+                          @for (layer of project.stack; track $index) {
                             <div class="ref-dl-row">
                               <dt>{{ layer.label }}</dt>
                               <dd>{{ layer.value }}</dd>

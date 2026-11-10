@@ -1,0 +1,308 @@
+<!--
+    @file: references-editor.component.html
+    @path: /src/app/admin/web-pages/edit-website/content-editors/references-editor/references-editor.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: References editor: card header with save / discard, language bar with the number
+        of missing translations, one card per reference (year, client, shown / hidden, name,
+        category, scope, role, description, result, key features, technology stack and the image).
+        Logic: references-editor.component.ts.
+-->
+<div class="ce-card">
+
+  <div class="ce-card-header">
+    <span class="ce-card-icon" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 15l-3.5 2 1-4-3-2.7 4-.3L12 6l1.5 4 4 .3-3 2.7 1 4z"/><circle cx="12" cy="12" r="10"/>
+      </svg>
+    </span>
+    <span class="ce-card-title">{{ strings.refs_card_title }}</span>
+    @if (isDirty) {
+      <span class="ce-dirty-badge">{{ strings.unsaved_badge }}</span>
+    }
+    @if (!loading && !loadError && canUpdate) {
+      <div class="ce-header-actions">
+        @if (isDirty) {
+          <button type="button" class="ce-btn ce-btn-ghost" (click)="discard()" [disabled]="saving">{{ strings.discard_button }}</button>
+        }
+        <button type="button" class="ce-btn ce-btn-primary" (click)="save()" [disabled]="!isDirty || saving">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+          </svg>
+          {{ saving ? strings.saving_label : strings.save_button }}
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (loading) {
+    <div class="ce-skeleton-body">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="ce-skeleton-row"></div>
+      }
+    </div>
+  } @else if (loadError) {
+    <div class="ce-card-body">
+      <div class="ce-error">{{ strings.load_error }}</div>
+    </div>
+  } @else {
+    <div class="ce-card-body">
+      <p class="ce-intro">{{ strings.refs_intro }}</p>
+
+      <div class="ce-i18n-bar">
+        <span class="ce-i18n-bar-label">{{ strings.language_label }}</span>
+        <div class="ce-lang-tabs">
+          @for (l of languages; track l.code) {
+            <button type="button" class="ce-lang-tab" [class.active]="lang === l.code" (click)="switchLang(l.code)"
+                    [title]="missingCount(l.code) ? strings.missing_badge_title : ''">
+              @if (l.iconUrl) {
+                <img [src]="l.iconUrl" class="ce-lang-icon" [alt]="l.code">
+              }
+              {{ l.code | uppercase }}
+              @if (missingCount(l.code); as count) {
+                <span class="ce-missing-count">{{ count }}</span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (missingWarning) {
+        <div class="ce-warning" role="status">{{ missingWarning }}</div>
+      }
+
+      @if (!entries.length) {
+        <p class="ce-empty">{{ strings.refs_empty }}</p>
+      }
+
+      @for (ref of entries; track ref.key; let ri = $index; let lastRef = $last) {
+        <section class="ce-entry" [class.ce-entry--inactive]="!ref.is_active">
+          <div class="ce-entry-header">
+            <button type="button" class="ce-entry-toggle" (click)="toggle(ref)" [attr.aria-expanded]="ref.open">
+              <svg class="ce-chevron" [class.ce-chevron--open]="ref.open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+              <span class="ce-entry-title">{{ titleOf(ref) }}</span>
+              @if (ref.duration || ref.client) {
+                <span class="ce-entry-meta">{{ ref.duration }}@if (ref.duration && ref.client) { · }{{ ref.client }}</span>
+              }
+              <span class="ce-status" [class.ce-status--off]="!ref.is_active">{{ ref.is_active ? strings.refs_status_shown : strings.refs_status_hidden }}</span>
+              @if (missingIn(ref); as count) {
+                <span class="ce-missing-count" [title]="strings.missing_badge_title">{{ count }}</span>
+              }
+            </button>
+            @if (canUpdate) {
+              <div class="ce-entry-actions">
+                <button type="button" class="ce-icon-btn" (click)="move(entries, ri, -1)" [disabled]="ri === 0" [title]="strings.move_up" [attr.aria-label]="strings.move_up">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                </button>
+                <button type="button" class="ce-icon-btn" (click)="move(entries, ri, 1)" [disabled]="lastRef" [title]="strings.move_down" [attr.aria-label]="strings.move_down">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <button type="button" class="ce-icon-btn ce-icon-btn--danger" (click)="remove(entries, ri)" [title]="strings.refs_remove" [attr.aria-label]="strings.refs_remove">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button>
+              </div>
+            }
+          </div>
+
+          @if (ref.open) {
+            <div class="ce-entry-body">
+              <!-- Same in every language: year, client, shown / hidden -->
+              <div class="ce-row">
+                <label class="ce-field ce-field--grow">
+                  <span class="ce-label">{{ strings.refs_duration }} <span class="ce-optional">{{ strings.optional_label }}</span></span>
+                  <input class="ce-input" type="text" [(ngModel)]="ref.duration" (ngModelChange)="changed()" [maxlength]="MAX_DURATION"
+                         [readonly]="!canUpdate" [name]="'ref_duration_' + ref.key" [placeholder]="strings.refs_duration_placeholder">
+                </label>
+                <label class="ce-field ce-field--grow">
+                  <span class="ce-label">{{ strings.refs_client }} <span class="ce-optional">{{ strings.optional_label }}</span></span>
+                  <input class="ce-input" type="text" [(ngModel)]="ref.client" (ngModelChange)="changed()" [maxlength]="MAX_CLIENT"
+                         [readonly]="!canUpdate" [name]="'ref_client_' + ref.key">
+                </label>
+                <label class="ce-check">
+                  <input type="checkbox" [(ngModel)]="ref.is_active" (ngModelChange)="changed()" [disabled]="!canUpdate" [name]="'ref_active_' + ref.key">
+                  {{ strings.refs_active }}
+                </label>
+              </div>
+              <span class="ce-field-hint">{{ strings.refs_neutral_hint }}</span>
+
+              <h4 class="ce-group-title">{{ strings.refs_project_heading }}</h4>
+              <div class="ce-subentry">
+                <label class="ce-field">
+                  <span class="ce-label">{{ strings.refs_name }} <span class="ce-lang-code">{{ lang | uppercase }}</span></span>
+                  <input class="ce-input" type="text" [class.ce-input--missing]="isMissing(ref.name_i18n)"
+                         [(ngModel)]="ref.name_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_NAME"
+                         [readonly]="!canUpdate" [name]="'ref_name_' + ref.key + '_' + lang">
+                  @if (isMissing(ref.name_i18n)) {
+                    <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                  }
+                </label>
+                <label class="ce-field">
+                  <span class="ce-label">{{ strings.refs_category }} <span class="ce-lang-code">{{ lang | uppercase }}</span> <span class="ce-optional">{{ strings.optional_label }}</span></span>
+                  <input class="ce-input" type="text" [class.ce-input--missing]="isMissing(ref.category_i18n, true)"
+                         [(ngModel)]="ref.category_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_CATEGORY"
+                         [readonly]="!canUpdate" [name]="'ref_category_' + ref.key + '_' + lang" [placeholder]="strings.refs_category_placeholder">
+                  @if (isMissing(ref.category_i18n, true)) {
+                    <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                  }
+                </label>
+                <div class="ce-row">
+                  <div class="ce-field--grow">
+                    <label class="ce-field">
+                      <span class="ce-label">{{ strings.refs_size }} <span class="ce-lang-code">{{ lang | uppercase }}</span> <span class="ce-optional">{{ strings.optional_label }}</span></span>
+                      <input class="ce-input" type="text" [class.ce-input--missing]="isMissing(ref.size_i18n, true)"
+                             [(ngModel)]="ref.size_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_META"
+                             [readonly]="!canUpdate" [name]="'ref_size_' + ref.key + '_' + lang">
+                      @if (isMissing(ref.size_i18n, true)) {
+                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                      }
+                    </label>
+                  </div>
+                  <div class="ce-field--grow">
+                    <label class="ce-field">
+                      <span class="ce-label">{{ strings.refs_role }} <span class="ce-lang-code">{{ lang | uppercase }}</span> <span class="ce-optional">{{ strings.optional_label }}</span></span>
+                      <input class="ce-input" type="text" [class.ce-input--missing]="isMissing(ref.role_i18n, true)"
+                             [(ngModel)]="ref.role_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_META"
+                             [readonly]="!canUpdate" [name]="'ref_role_' + ref.key + '_' + lang">
+                      @if (isMissing(ref.role_i18n, true)) {
+                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                      }
+                    </label>
+                  </div>
+                </div>
+                <label class="ce-field">
+                  <span class="ce-label">{{ strings.refs_description }} <span class="ce-lang-code">{{ lang | uppercase }}</span></span>
+                  <textarea class="ce-input ce-textarea" rows="4" [class.ce-input--missing]="isMissing(ref.description_i18n)"
+                            [(ngModel)]="ref.description_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_DESCRIPTION"
+                            [readonly]="!canUpdate" [name]="'ref_description_' + ref.key + '_' + lang"></textarea>
+                  @if (isMissing(ref.description_i18n)) {
+                    <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                  }
+                </label>
+                <label class="ce-field">
+                  <span class="ce-label">{{ strings.refs_result }} <span class="ce-lang-code">{{ lang | uppercase }}</span> <span class="ce-optional">{{ strings.optional_label }}</span></span>
+                  <textarea class="ce-input ce-textarea" rows="3" [class.ce-input--missing]="isMissing(ref.result_i18n, true)"
+                            [(ngModel)]="ref.result_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_RESULT"
+                            [readonly]="!canUpdate" [name]="'ref_result_' + ref.key + '_' + lang"></textarea>
+                  @if (isMissing(ref.result_i18n, true)) {
+                    <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                  }
+                </label>
+              </div>
+
+              <h4 class="ce-group-title">{{ strings.refs_features_heading }}</h4>
+              <div class="ce-sublist">
+                @for (feature of ref.features; track feature.key; let fi = $index; let lastFeature = $last) {
+                  <div class="ce-line">
+                    <span class="ce-subentry-num">{{ fi + 1 }}</span>
+                    <div class="ce-field ce-line-field">
+                      <input class="ce-input" type="text" [class.ce-input--missing]="isMissing(feature.text_i18n)"
+                             [(ngModel)]="feature.text_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_FEATURE"
+                             [readonly]="!canUpdate" [name]="'ref_feature_' + feature.key + '_' + lang"
+                             [attr.aria-label]="strings.refs_feature + ' ' + (fi + 1) + ' ' + (lang | uppercase)">
+                      @if (isMissing(feature.text_i18n)) {
+                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                      }
+                    </div>
+                    @if (canUpdate) {
+                      <div class="ce-entry-actions">
+                        <button type="button" class="ce-icon-btn" (click)="move(ref.features, fi, -1)" [disabled]="fi === 0" [title]="strings.move_up" [attr.aria-label]="strings.move_up">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                        </button>
+                        <button type="button" class="ce-icon-btn" (click)="move(ref.features, fi, 1)" [disabled]="lastFeature" [title]="strings.move_down" [attr.aria-label]="strings.move_down">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                        </button>
+                        <button type="button" class="ce-icon-btn ce-icon-btn--danger" (click)="remove(ref.features, fi)" [title]="strings.refs_remove_feature" [attr.aria-label]="strings.refs_remove_feature">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+                @if (canUpdate) {
+                  <button type="button" class="ce-add-btn ce-add-btn--small" (click)="addFeature(ref)">+ {{ strings.refs_add_feature }}</button>
+                }
+              </div>
+
+              <h4 class="ce-group-title">{{ strings.refs_stack_heading }}</h4>
+              <div class="ce-sublist">
+                @for (layer of ref.stack; track layer.key; let li = $index; let lastLayer = $last) {
+                  <div class="ce-line">
+                    <span class="ce-subentry-num">{{ li + 1 }}</span>
+                    <div class="ce-field ce-line-field ce-line-field--label">
+                      <input class="ce-input" type="text" [class.ce-input--missing]="isMissing(layer.label_i18n)"
+                             [(ngModel)]="layer.label_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_STACK_LABEL"
+                             [readonly]="!canUpdate" [name]="'ref_stack_label_' + layer.key + '_' + lang"
+                             [placeholder]="strings.refs_stack_label" [attr.aria-label]="strings.refs_stack_label + ' ' + (li + 1)">
+                      @if (isMissing(layer.label_i18n)) {
+                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                      }
+                    </div>
+                    <div class="ce-field ce-line-field">
+                      <input class="ce-input" type="text" [class.ce-input--missing]="isMissing(layer.value_i18n)"
+                             [(ngModel)]="layer.value_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_STACK_VALUE"
+                             [readonly]="!canUpdate" [name]="'ref_stack_value_' + layer.key + '_' + lang"
+                             [placeholder]="strings.refs_stack_value" [attr.aria-label]="strings.refs_stack_value + ' ' + (li + 1)">
+                      @if (isMissing(layer.value_i18n)) {
+                        <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                      }
+                    </div>
+                    @if (canUpdate) {
+                      <div class="ce-entry-actions">
+                        <button type="button" class="ce-icon-btn" (click)="move(ref.stack, li, -1)" [disabled]="li === 0" [title]="strings.move_up" [attr.aria-label]="strings.move_up">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                        </button>
+                        <button type="button" class="ce-icon-btn" (click)="move(ref.stack, li, 1)" [disabled]="lastLayer" [title]="strings.move_down" [attr.aria-label]="strings.move_down">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                        </button>
+                        <button type="button" class="ce-icon-btn ce-icon-btn--danger" (click)="remove(ref.stack, li)" [title]="strings.refs_remove_stack" [attr.aria-label]="strings.refs_remove_stack">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+                @if (canUpdate) {
+                  <button type="button" class="ce-add-btn ce-add-btn--small" (click)="addStack(ref)">+ {{ strings.refs_add_stack }}</button>
+                }
+              </div>
+
+              <h4 class="ce-group-title">{{ strings.refs_image_heading }} <span class="ce-optional">{{ strings.optional_label }}</span></h4>
+              <div class="ce-subentry ce-image">
+                @if (ref.id === null) {
+                  <p class="ce-field-hint">{{ strings.refs_image_save_first }}</p>
+                } @else {
+                  @if (imageUrl(ref); as url) {
+                    <img class="ce-image-preview" [src]="url" [alt]="strings.refs_image_alt">
+                  } @else {
+                    <div class="ce-image-empty">{{ strings.refs_image_none }}</div>
+                  }
+                  <div class="ce-image-side">
+                    @if (canUpdate) {
+                      <div class="ce-image-actions">
+                        <label class="ce-btn ce-btn-ghost ce-file-btn" [class.ce-file-btn--busy]="imageBusy === ref.id">
+                          <input type="file" [accept]="imageAccept" (change)="onImageSelected(ref, $event)" [disabled]="imageBusy !== null">
+                          {{ imageBusy === ref.id ? strings.refs_image_busy : (imageUrl(ref) ? strings.refs_image_change : strings.refs_image_upload) }}
+                        </label>
+                        @if (imageUrl(ref)) {
+                          <button type="button" class="ce-btn ce-btn-ghost ce-btn-danger" (click)="removeImage(ref)" [disabled]="imageBusy !== null">{{ strings.refs_image_remove }}</button>
+                        }
+                      </div>
+                    }
+                    <span class="ce-field-hint">{{ strings.refs_image_hint }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </section>
+      }
+
+      @if (canUpdate) {
+        <button type="button" class="ce-add-btn" (click)="addReference()">+ {{ strings.refs_add }}</button>
+      }
+
+      <p class="ce-hint">{{ strings.text_hint }}</p>
+    </div>
+  }
+</div>

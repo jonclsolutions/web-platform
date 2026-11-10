@@ -402,6 +402,36 @@ final class TestSchema
             $t->unsignedInteger('sort_order')->default(0);
             $t->timestamps();
         });
+        // References (migrations 2026_11_12_000000_create_web_references,
+        // 2026_11_13_000000_web_references_category_text).
+        Schema::create('web_references', function (Blueprint $t) {
+            $t->id();
+            $t->json('category_i18n')->nullable();
+            $t->string('duration', 50)->nullable();
+            $t->string('client', 150)->nullable();
+            foreach (['name', 'size', 'role', 'description', 'result'] as $field) {
+                $t->json("{$field}_i18n")->nullable();
+            }
+            $t->string('image_path')->nullable();
+            $t->boolean('is_active')->default(true);
+            $t->unsignedInteger('sort_order')->default(0);
+            $t->timestamps();
+        });
+        Schema::create('web_reference_features', function (Blueprint $t) {
+            $t->id();
+            $t->foreignId('reference_id')->constrained('web_references')->cascadeOnDelete();
+            $t->json('text_i18n')->nullable();
+            $t->unsignedInteger('sort_order')->default(0);
+            $t->timestamps();
+        });
+        Schema::create('web_reference_stack', function (Blueprint $t) {
+            $t->id();
+            $t->foreignId('reference_id')->constrained('web_references')->cascadeOnDelete();
+            $t->json('label_i18n')->nullable();
+            $t->json('value_i18n')->nullable();
+            $t->unsignedInteger('sort_order')->default(0);
+            $t->timestamps();
+        });
 
         Schema::create('web_site_settings', function (Blueprint $t) {
             $t->increments('id');

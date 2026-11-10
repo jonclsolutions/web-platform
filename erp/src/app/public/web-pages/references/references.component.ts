@@ -4,13 +4,46 @@
  * @project JS web-platform
  * @author JS
  * @created 2025
- * @description References page of the public web.
+ * @description References page of the public web: accordion of the delivered projects. The
+ *   projects come from the database (admin: web/edit-website, tab References) in all languages;
+ *   the static texts of the page (headings, labels) from the `projects` translations.
+ * @note A text missing in the current language shows 'Cannot load text'; an optional field
+ *   (category, scope, role, result) empty in every language is not shown. Texts are plain text - their line
+ *   breaks are kept (CSS `white-space: pre-line`), never HTML. A project with an image shows its
+ *   key features in one column with the image next to them (under them on a narrow screen).
+ * @dependencies
+ * - BasePublicComponent (translations, current language), WebContentService (the projects),
+ *   PublicDataService (URL of the image).
  */
 
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { combineLatest } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { RouterModule } from '../../../shared/imports/web-providers';
 import { BasePublicComponent } from '../../base-public.component';
+import { WebContentService, localizedText, optionalText } from '../../../shared/services/web-content.service';
+
+/** One project of the page in the current language. */
+export interface ReferenceView {
+  /** Id of the project (ids of the accordion elements). */
+  id: number;
+  name: string;
+  duration: string | null;
+  client: string | null;
+  /** Optional fields: null = empty in every language (not shown). */
+  category: string | null;
+  size: string | null;
+  role: string | null;
+  result: string | null;
+  description: string;
+  features: string[];
+  stack: { label: string; value: string }[];
+  /** URL of the image, null = none. */
+  image: string | null;
+  /** Expanded in the accordion. */
+  isActive: boolean;
+}
 
 @Component({
   selector: 'app-references',
@@ -23,39 +56,37 @@ import { BasePublicComponent } from '../../base-public.component';
 export class ReferencesComponent extends BasePublicComponent {
 
   protected readonly translationKey = 'projects';
-  projects: any[] = [];
+  projects: ReferenceView[] = [];
 
-  // Hook called automatically after the translations are loaded by the base class
-  protected override onTranslationsLoaded(): void {
-    this.projects = Object.keys(this.t)
-      .filter(key => key.startsWith('project_'))
-      .sort((a, b) => a.localeCompare(b))
-      .map(key => ({
-        ...this.t[key],
-        id: key,
-        isActive: false
-      }));
+  private readonly webContent = inject(WebContentService);
+
+  /** @description Loads the projects and follows the current language (expanded ones stay expanded). */
+  protected override onInit(): void {
+    combineLatest([this.webContent.references(), this.currentLanguage$])
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(([references, lang]) => {
+        const open = new Set(this.projects.filter(p => p.isActive).map(p => p.id));
+        this.projects = (Array.isArray(references) ? references : []).map(reference => ({
+          id: reference.id,
+          name: localizedText(reference.name, lang),
+          category: optionalText(reference.category, lang),
+          duration: reference.duration || null,
+          client: reference.client || null,
+          size: optionalText(reference.size, lang),
+          role: optionalText(reference.role, lang),
+          result: optionalText(reference.result, lang),
+          description: localizedText(reference.description, lang),
+          features: (reference.features ?? []).map(feature => localizedText(feature, lang)),
+          stack: (reference.stack ?? []).map(layer => ({ label: localizedText(layer.label, lang), value: localizedText(layer.value, lang) })),
+          image: reference.image ? this.publicDataService.getStorageUrl(reference.image) : null,
+          isActive: open.has(reference.id),
+        }));
+        this.cdr.markForCheck();
+      });
   }
 
-  toggleProject(project: any): void {
+  toggleProject(project: ReferenceView): void {
     project.isActive = !project.isActive;
     this.cdr.markForCheck();
-  }
-
-  /**
-   * @description Maps a project's category id ('web' | 'desktop' | 'mobile' | 'ai')
-   *   to its human-readable label from the same translation keys the sidebar
-   *   legend already uses (t.legend_web, t.legend_desktop, ...). Falls back to
-   *   the raw category id if no matching translation is found, so a missing
-   *   or unexpected category value never breaks rendering.
-   */
-  getCategoryLabel(category: string): string {
-    const map: Record<string, string | undefined> = {
-      web: this.t?.legend_web,
-      desktop: this.t?.legend_desktop,
-      mobile: this.t?.legend_mobile,
-      ai: this.t?.legend_ai,
-    };
-    return map[category] ?? category;
   }
 }
