@@ -4,22 +4,22 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Generic renderer of ONE Knowledge Base page - takes `id` from the route
- * parameter, finds the matching `KBPage` in `KB_PAGES` (see kb-pages.data.ts) and renders it
- * by `page.sections` / `block.type`. The ONLY component for ALL static manual pages - a new
- * page needs no new component, only a new entry in the data array.
+ * @description Generic renderer of ONE Knowledge Base page - takes `id` from the route parameter,
+ * loads the page in the current admin language from the API (only the sections the user may see)
+ * and renders it by `page.sections` / `block.type`. The ONLY component for ALL static manual
+ * pages - a new page needs no new component, only a new entry in the JSON files of the API.
  * @dependencies
  * - ActivatedRoute: Reads the `:pageId` route parameter.
- * - KB_PAGES: Static data of all manual pages.
- * - AdminLocalizationService: Language for resolving `LocalizedText` fields + breadcrumb prefix.
+ * - KnowledgeBaseService: the page from the API (null = missing / not allowed).
+ * - AdminLocalizationService: current language, breadcrumb texts.
  */
 
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { KB_PAGES } from '../data/kb-pages.data';
-import { KBPage, LocalizedText, resolveLoc } from '../../../../shared/interfaces/kb-content';
+import { Subscription, combineLatest, map, switchMap, tap } from 'rxjs';
+import { KBPage } from '../../../../shared/interfaces/kb-content';
+import { KnowledgeBaseService } from '../knowledge-base.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 
 @Component({
@@ -30,60 +30,51 @@ import { AdminLocalizationService } from '../../../../core/services/admin-locali
   styleUrl: './kb-article.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class KbArticleComponent implements OnInit, OnDestroy {
+export class KbArticleComponent implements OnDestroy {
   page: KBPage | null = null;
+  /** The page is being loaded (no "not found" flash before the answer). */
+  loading = true;
 
   public readonly i18n = inject(AdminLocalizationService);
+  private readonly kb = inject(KnowledgeBaseService);
 
-  private routeSubscription?: Subscription;
-  private langSubscription: Subscription;
+  private readonly subscriptions = new Subscription();
 
-  constructor(
-    private route: ActivatedRoute,
-    private cd: ChangeDetectorRef
-  ) {
-    // After switching the admin language, forces the OnPush component to re-evaluate the
-    // `l()` / breadcrumb output - same pattern as TableBuilderComponent / GraphBuilderComponent.
-    this.langSubscription = this.i18n.translations$.subscribe(() => this.cd.markForCheck());
-  }
-
-  get currentLang(): string {
-    return this.i18n.getCurrentLanguage();
-  }
-
-  /** @description Resolves any `LocalizedText` field by the current language. */
-  l(loc: LocalizedText): string {
-    return resolveLoc(loc, this.currentLang);
+  /**
+   * @description Loads the page of the route parameter in the current language - again after a
+   *   navigation to another page or a language switch.
+   */
+  constructor(private route: ActivatedRoute, private cd: ChangeDetectorRef) {
+    this.subscriptions.add(combineLatest([
+      this.route.paramMap.pipe(map(params => params.get('pageId') ?? '')),
+      this.i18n.currentLanguage$,
+    ]).pipe(
+      tap(() => { this.loading = true; this.cd.markForCheck(); }),
+      switchMap(([id, lang]) => this.kb.page(id, lang)),
+    ).subscribe(page => {
+      this.page = page;
+      this.loading = false;
+      this.cd.markForCheck();
+    }));
+    // Breadcrumb / "not found" texts follow the admin texts.
+    this.subscriptions.add(this.i18n.translations$.subscribe(() => this.cd.markForCheck()));
   }
 
   /**
-   * @description Builds the breadcrumb dynamically from the translated root, the group name and
-   * the navLabel of the page.
+   * @description Breadcrumb from the translated root, the group name and the menu label of the page.
    */
   get breadcrumb(): string {
     if (!this.page) return '';
     const root = this.i18n.getValue('knowledge-base.breadcrumb_root');
-    const group = this.i18n.getValue(`knowledge-base.nav_group_${this.page.navGroup}`);
-    const label = this.l(this.page.navLabel);
-    return `${root} / ${group} / ${label}`;
+    const group = this.i18n.getValue(`knowledge-base.nav_group_${this.page.group}`);
+    return `${root} / ${group} / ${this.page.navLabel}`;
   }
 
   get notFoundText(): string {
     return this.i18n.getValue('knowledge-base.page_not_found');
   }
 
-  ngOnInit(): void {
-    // paramMap subscribe (not snapshot) - the page can change by navigating between two
-    // :pageId routes of the same component, Angular would not recreate it otherwise.
-    this.routeSubscription = this.route.paramMap.subscribe(params => {
-      const id = params.get('pageId');
-      this.page = KB_PAGES.find(p => p.id === id) ?? null;
-      this.cd.markForCheck();
-    });
-  }
-
   ngOnDestroy(): void {
-    this.routeSubscription?.unsubscribe();
-    this.langSubscription?.unsubscribe();
+    this.subscriptions.unsubscribe();
   }
 }

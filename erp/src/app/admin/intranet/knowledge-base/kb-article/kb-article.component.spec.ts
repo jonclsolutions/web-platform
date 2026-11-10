@@ -4,75 +4,116 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Unit tests of KbArticleComponent (one intranet knowledge base page): page found by the route
- *   id, every page of KB_PAGES renders in both languages (all block types), breadcrumb, the
- *   localized texts with English fallback and the not-found state; subscriptions end on destroy.
+ * @description Unit tests of KbArticleComponent: the page of the route parameter loaded in the
+ *   current language (again after a navigation or a language switch), every block type
+ *   rendered, breadcrumb, the not-found state (missing / not allowed page) without a flash while
+ *   loading.
  * @dependencies
- * - createAdminTestContext (i18n stub); ActivatedRoute paramMap Subject; KB_PAGES data.
+ * - createAdminTestContext (i18n stub); ActivatedRoute paramMap subject; KnowledgeBaseService stub.
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, ParamMap } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
+import { ActivatedRoute, ParamMap, convertToParamMap, provideRouter } from '@angular/router';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 
 import { KbArticleComponent } from './kb-article.component';
-import { KB_PAGES } from '../data/kb-pages.data';
+import { KnowledgeBaseService } from '../knowledge-base.service';
+import { KBPage } from '../../../../shared/interfaces/kb-content';
 import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
 
 describe('KbArticleComponent', () => {
   let ctx: AdminTestContext;
   let fixture: ComponentFixture<KbArticleComponent>;
-  let page: KbArticleComponent;
+  let article: KbArticleComponent;
   let params$: BehaviorSubject<ParamMap>;
+  let service: jasmine.SpyObj<KnowledgeBaseService>;
+
+  /** A page using every block type. */
+  const page = (lang: string): KBPage => ({
+    id: 'guide', group: 'core', order: 1, navLabel: `Guide ${lang}`, header: `Header ${lang}`,
+    sections: [
+      { key: 'intro', blocks: [{ type: 'lead', content: 'Lead' }, { type: 'text', content: 'Text' }] },
+      { heading: 'Chapter', blocks: [
+        { type: 'alert', variant: 'info', content: 'Alert' },
+        { type: 'note', highlight: true, content: 'Note' },
+        { type: 'image', path: 'x.png', alt: 'Alt', caption: 'Caption' },
+        { type: 'link', label: 'Inside', url: '/admin' },
+        { type: 'link', label: 'Outside', url: 'https://example.com', external: true },
+        { type: 'list', items: ['One', 'Two'] },
+        { type: 'list', ordered: true, items: ['First'] },
+        { type: 'grid', cards: [{ title: 'Card', text: 'Card text' }] },
+        { type: 'flow', steps: [{ label: 'Step', text: 'Step text', active: true }] },
+      ] },
+    ],
+  });
 
   beforeEach(() => {
     ctx = createAdminTestContext();
-    params$ = new BehaviorSubject(convertToParamMap({ pageId: KB_PAGES[0].id }));
+    service = jasmine.createSpyObj<KnowledgeBaseService>('KnowledgeBaseService', ['menu', 'page']);
+    service.page.and.callFake((id: string, lang: string) => of(id === 'guide' ? page(lang) : null));
+    params$ = new BehaviorSubject(convertToParamMap({ pageId: 'guide' }));
     TestBed.configureTestingModule({
       imports: [KbArticleComponent],
-      providers: [...ctx.providers, { provide: ActivatedRoute, useValue: { paramMap: params$ } }]
+      providers: [...ctx.providers, provideRouter([]), { provide: KnowledgeBaseService, useValue: service },
+        { provide: ActivatedRoute, useValue: { paramMap: params$ } }],
     });
     fixture = TestBed.createComponent(KbArticleComponent);
-    page = fixture.componentInstance;
+    article = fixture.componentInstance;
     fixture.detectChanges();
   });
 
+  afterEach(() => fixture.destroy());
+
   /**
-   * @description Every knowledge base page renders in Czech and English without errors and
-   *   shows its localized heading; the breadcrumb is root / group / page.
-   * @input Each KB_PAGES id, languages cz and en.
-   * @output page set; rendered text contains the localized nav label; breadcrumb parts.
+   * @description The page renders every block type in the current language; a language switch
+   *   loads the page again; the breadcrumb is root / group / page.
+   * @input pageId 'guide' in cz; setLanguage('en').
+   * @output page('guide', 'cz'); all texts rendered, external link target _blank, image under
+   *   /assets/kb/; then page('guide', 'en') and 'Header en'; breadcrumb parts.
    */
-  it('renders every knowledge base page in both languages', () => {
-    for (const lang of ['cz', 'en']) {
-      ctx.i18n.setLanguage(lang);
-      for (const kb of KB_PAGES) {
-        params$.next(convertToParamMap({ pageId: kb.id }));
-        fixture.detectChanges();
-        expect(page.page).withContext(kb.id).toBe(kb);
-        expect(page.breadcrumb).toBe(`knowledge-base.breadcrumb_root / knowledge-base.nav_group_${kb.navGroup} / ${page.l(kb.navLabel)}`);
-        expect(fixture.nativeElement.textContent.length).withContext(kb.id).toBeGreaterThan(50);
-      }
+  it('renders the page of the route in the current language', () => {
+    expect(service.page).toHaveBeenCalledWith('guide', 'cz');
+    const el: HTMLElement = fixture.nativeElement;
+    for (const text of ['Header cz', 'Lead', 'Text', 'Chapter', 'Alert', 'Note', 'Caption', 'Inside', 'Outside', 'One', 'First', 'Card text', 'Step text']) {
+      expect(el.textContent).withContext(text).toContain(text);
     }
+    expect(el.querySelector('a[target="_blank"]')!.getAttribute('href')).toBe('https://example.com');
+    expect(el.querySelector('img')!.getAttribute('src')).toBe('/assets/kb/x.png');
+    expect(el.querySelector('.flow-item.active')).not.toBeNull();
+
+    ctx.i18n.setLanguage('en');
+    fixture.detectChanges();
+    expect(service.page).toHaveBeenCalledWith('guide', 'en');
+    expect(el.querySelector('h1')!.textContent).toBe('Header en');
+    expect(article.breadcrumb).toBe('knowledge-base.breadcrumb_root / knowledge-base.nav_group_core / Guide en');
   });
 
   /**
-   * @description Missing translation for a language falls back to English; unknown page id →
-   *   not-found text and no breadcrumb; destroy ends the subscriptions.
-   * @input l({cz: 'Ahoj', en: 'Hi'}) in 'de'; pageId 'missing'; destroy + new route.
-   * @output 'Hi'; page null, 'knowledge-base.page_not_found' rendered, breadcrumb ''; page stays null.
+   * @description A missing or not allowed page shows "not found" (no breadcrumb); nothing is
+   *   shown while the page is still loading; destroy ends the subscriptions.
+   * @input pageId 'missing'; no pageId; a pending request; destroy + new route.
+   * @output page null + not-found text; loading true without the text; no call after destroy.
    */
-  it('falls back and shows the not-found state', () => {
-    ctx.i18n.setLanguage('de');
-    expect(page.l({ cz: 'Ahoj', en: 'Hi' })).toBe('Hi');
+  it('shows the not-found state only after loading', () => {
     params$.next(convertToParamMap({ pageId: 'missing' }));
     fixture.detectChanges();
-    expect(page.page).toBeNull();
-    expect(page.breadcrumb).toBe('');
+    expect(article.page).toBeNull();
+    expect(article.breadcrumb).toBe('');
     expect(fixture.nativeElement.textContent).toContain('knowledge-base.page_not_found');
 
+    params$.next(convertToParamMap({}));
+    expect(service.page).toHaveBeenCalledWith('', 'cz');
+
+    const pending = new Subject<KBPage | null>();
+    service.page.and.returnValue(pending);
+    params$.next(convertToParamMap({ pageId: 'slow' }));
+    fixture.detectChanges();
+    expect(article.loading).toBeTrue();
+    expect(fixture.nativeElement.textContent).not.toContain('knowledge-base.page_not_found');
+
     fixture.destroy();
-    params$.next(convertToParamMap({ pageId: KB_PAGES[0].id }));
-    expect(page.page).toBeNull();
+    service.page.calls.reset();
+    params$.next(convertToParamMap({ pageId: 'guide' }));
+    expect(service.page).not.toHaveBeenCalled();
   });
 });

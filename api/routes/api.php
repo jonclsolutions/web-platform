@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\Auth\PasswordConfirmationController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserAvatarController;
+use App\Http\Controllers\Api\KnowledgeBaseController;
 use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\Core\CoreRoleController;
 use App\Http\Controllers\Api\Core\CorePermissionController;
@@ -268,6 +269,11 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
     // e-mail access policy) - see App\Traits\RequiresPasswordConfirmation (2026-10-26).
     Route::post('/confirm-password', [PasswordConfirmationController::class, 'confirm'])
         ->middleware('throttle:20,1,password-confirmation');
+
+    // Internal manual (Knowledge Base) - every signed-in user, content filtered by the permissions.
+    Route::get('/knowledge-base', [KnowledgeBaseController::class, 'index']);
+    Route::get('/knowledge-base/pages/{id}', [KnowledgeBaseController::class, 'show'])
+        ->where('id', '[a-z0-9-]{1,80}');
 
         Route::post('/save_translations/{module}', [TranslationController::class, 'save'])
             ->where('module', TranslationController::MODULE_PATTERN)

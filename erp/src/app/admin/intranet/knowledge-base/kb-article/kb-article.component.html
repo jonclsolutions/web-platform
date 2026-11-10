@@ -5,14 +5,15 @@
     @author: JS
     @created: 2026
     @description Generic renderer - iterates page.sections and inside them section.blocks,
-        renders by block.type. See kb-content.ts for the block types.
+        renders by block.type (texts arrive from the API in the current language). See
+        kb-content.ts for the block types.
 -->
 
 @if (page) {
   <div class="kb-article-container">
     <header class="article-header">
       <div class="breadcrumb">{{ breadcrumb }}</div>
-      <h1>{{ l(page.header) }}</h1>
+      <h1>{{ page.header }}</h1>
     </header>
 
     <hr class="section-divider">
@@ -20,50 +21,50 @@
     @for (section of page.sections; track $index) {
       <section class="kb-section">
         @if (section.heading) {
-          <h2>{{ l(section.heading) }}</h2>
+          <h2>{{ section.heading }}</h2>
         }
 
         @for (block of section.blocks; track $index) {
           @switch (block.type) {
             @case ('lead') {
-              <p class="lead-text">{{ l(block.content) }}</p>
+              <p class="lead-text">{{ block.content }}</p>
             }
             @case ('text') {
-              <p>{{ l(block.content) }}</p>
+              <p>{{ block.content }}</p>
             }
             @case ('alert') {
               <div class="alert-box" [class]="'alert-' + block.variant">
-                {{ l(block.content) }}
+                {{ block.content }}
               </div>
             }
             @case ('note') {
               <div class="note-box" [class.highlight-note]="block.highlight">
-                {{ l(block.content) }}
+                {{ block.content }}
               </div>
             }
             @case ('image') {
               <figure class="kb-figure">
-                <img [src]="'/assets/kb/' + block.path" [alt]="block.alt ? l(block.alt) : ''">
+                <img [src]="'/assets/kb/' + block.path" [alt]="block.alt || ''">
                 @if (block.caption) {
-                  <figcaption>{{ l(block.caption) }}</figcaption>
+                  <figcaption>{{ block.caption }}</figcaption>
                 }
               </figure>
             }
             @case ('link') {
               @if (block.external) {
-                <a [href]="block.url" target="_blank" rel="noopener noreferrer" class="kb-link">{{ l(block.label) }}</a>
+                <a [href]="block.url" target="_blank" rel="noopener noreferrer" class="kb-link">{{ block.label }}</a>
               } @else {
-                <a [routerLink]="block.url" class="kb-link">{{ l(block.label) }}</a>
+                <a [routerLink]="block.url" class="kb-link">{{ block.label }}</a>
               }
             }
             @case ('list') {
               @if (block.ordered) {
                 <ol class="kb-list">
-                  @for (item of block.items; track $index) { <li>{{ l(item) }}</li> }
+                  @for (item of block.items; track $index) { <li>{{ item }}</li> }
                 </ol>
               } @else {
                 <ul class="kb-list">
-                  @for (item of block.items; track $index) { <li>{{ l(item) }}</li> }
+                  @for (item of block.items; track $index) { <li>{{ item }}</li> }
                 </ul>
               }
             }
@@ -71,8 +72,8 @@
               <div class="grid-layout">
                 @for (card of block.cards; track $index) {
                   <div class="info-card">
-                    <h3>{{ l(card.title) }}</h3>
-                    <p class="small-text">{{ l(card.text) }}</p>
+                    <h3>{{ card.title }}</h3>
+                    <p class="small-text">{{ card.text }}</p>
                   </div>
                 }
               </div>
@@ -81,8 +82,8 @@
               <div class="process-flow">
                 @for (step of block.steps; track $index) {
                   <div class="flow-item" [class.active]="step.active">
-                    <span class="step">{{ l(step.label) }}</span>
-                    <p>{{ l(step.text) }}</p>
+                    <span class="step">{{ step.label }}</span>
+                    <p>{{ step.text }}</p>
                   </div>
                 }
               </div>
@@ -92,7 +93,7 @@
       </section>
     }
   </div>
-} @else {
+} @else if (!loading) {
   <div class="kb-article-container">
     <p>{{ notFoundText }}</p>
   </div>

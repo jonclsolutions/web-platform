@@ -1,0 +1,251 @@
+{
+  "pages": [
+    {
+      "id": "introductions",
+      "group": "general",
+      "order": 1,
+      "permission": null
+    },
+    {
+      "id": "security",
+      "group": "general",
+      "order": 2,
+      "permission": null,
+      "devNote": "Popisuje obecná bezpečnostní pravidla (2FA, hesla) - viz PersonalInfoComponent a User::FORCED_2FA_ROLE_NAMES pro skutečnou implementaci vynucení."
+    },
+    {
+      "id": "contacts",
+      "group": "general",
+      "order": 3,
+      "permission": null
+    },
+    {
+      "id": "web-dashboard",
+      "group": "web",
+      "order": 5,
+      "permission": "web-view-dashboard",
+      "devNote": "DashboardComponent (web-pages), route 'web/dashboard', permission 'web-view-dashboard'."
+    },
+    {
+      "id": "user-request",
+      "group": "web",
+      "order": 6,
+      "permission": "web-user-requests-view",
+      "devNote": "UserRequestComponent, route 'web/user-request', permission 'web-user-requests-view' (edit/delete vyžadují navíc -update/-delete)."
+    },
+    {
+      "id": "web-business-logs",
+      "group": "web",
+      "order": 7,
+      "permission": "web-view-web-logs",
+      "devNote": "BusinessLogsComponent, route 'web/business-logs', permission 'web-view-web-logs'."
+    },
+    {
+      "id": "sales-leads",
+      "group": "web",
+      "order": 8,
+      "permission": "web-sales-leads-view",
+      "devNote": "SalesLeadsComponent, route 'web/sales-leads', permission 'web-sales-leads-view'."
+    },
+    {
+      "id": "edit-news",
+      "group": "web",
+      "order": 9,
+      "permission": "web-news-view",
+      "devNote": "EditNewsComponent, route 'web/edit-news', permission 'web-news-view'. Nezaměňovat s KB sekcí 'Novinky' (interní ChangeLog) - tohle je editace novinek zobrazovaných na veřejném webu."
+    },
+    {
+      "id": "edit-website",
+      "group": "web",
+      "order": 10,
+      "permission": "web-edit-website-view",
+      "devNote": "EditWebsiteComponent, route 'web/edit-website', permission 'web-edit-website-view'."
+    },
+    {
+      "id": "sales-orders",
+      "group": "web",
+      "order": 11,
+      "permission": "web-sales-orders-view",
+      "devNote": "SalesOrdersComponent, route 'web/sales-orders', permission 'web-sales-orders-view'. Řádková akce 'Projekt' zakládá navazující záznam v Projects."
+    },
+    {
+      "id": "support-tickets",
+      "group": "web",
+      "order": 12,
+      "permission": "web-support-tickets-view",
+      "devNote": "SupportTicketsComponent, route 'web/support-tickets', permission 'web-support-tickets-view'."
+    },
+    {
+      "id": "job-applications",
+      "group": "web",
+      "order": 13,
+      "permission": "web-job-applications-view",
+      "devNote": "JobApplicationsComponent, route 'web/job-applications', permission 'web-job-applications-view'."
+    },
+    {
+      "id": "projects",
+      "group": "web",
+      "order": 14,
+      "permission": "web-projects-view",
+      "devNote": "ProjectsComponent, route 'web/projects', permission 'web-projects-view'. Obsahuje i cross-project tabulku zákaznických vláken (web/project-threads)."
+    },
+    {
+      "id": "core-dashboard",
+      "group": "core",
+      "order": 15,
+      "permission": "view-core",
+      "devNote": "CoreDashboardComponent, route 'core/dashboard', permission 'view-core'."
+    },
+    {
+      "id": "welcome-page",
+      "group": "core",
+      "order": 16,
+      "permission": "core-view-welcome-page",
+      "devNote": "WelcomePageComponent, route 'core/welcome-page' (výchozí route pod core/), permission 'core-view-welcome-page'."
+    },
+    {
+      "id": "edit-legal",
+      "group": "core",
+      "order": 17,
+      "permission": "core-legal-documents-view|core-legal-config-view",
+      "devNote": "EditLegalComponent, route 'core/edit-legal', permission 'core-legal-documents-view|core-legal-config-view'. Vícejazyčný obsah, typy dokumentů se načítají dynamicky z legal/document-types."
+    },
+    {
+      "id": "personal-info",
+      "group": "core",
+      "order": 18,
+      "permission": null,
+      "devNote": "PersonalInfoComponent, route 'core/personal-info', no permission (every signed-in user; also via the own e-mail in the header). Self-service 2FA toggle a změna hesla."
+    },
+    {
+      "id": "web-settings",
+      "group": "core",
+      "order": 19,
+      "permission": "core-legal-config-view",
+      "devNote": "WebSettingsComponent, route 'core/web-settings', permission 'core-legal-config-view'. Firemní údaje, logo, sociální sítě."
+    },
+    {
+      "id": "external-links",
+      "group": "core",
+      "order": 20,
+      "permission": "core-external-links-view",
+      "devNote": "ExternalLinksComponent + CoreExternalLinkController, route 'core/external-links', permission 'core-external-links-view' (create/update/delete zvlášť). Odkazy jsou SOUKROMÉ per-uživatel (scoped na user_id na backendu)."
+    },
+    {
+      "id": "edit-roles",
+      "group": "core",
+      "order": 21,
+      "permission": "sysadmin",
+      "devNote": "EditRolesComponent, route 'core/edit-roles'. Přístup NEZÁVISLE na permission systému natvrdo omezen na roli 'sysadmin' (sysadminGuard) - nemá klasický permission klíč."
+    },
+    {
+      "id": "administrators",
+      "group": "core",
+      "order": 22,
+      "permission": "core-administrators-view",
+      "sections": {
+        "chapter-04": "core-administrators-create",
+        "chapter-05": "core-administrators-create",
+        "chapter-06": "core-administrators-update",
+        "chapter-07": "core-administrators-create|core-administrators-update",
+        "chapter-08": "core-administrators-create|core-administrators-update",
+        "chapter-09": "core-administrators-update",
+        "chapter-10": "sysadmin",
+        "chapter-15": "core-administrators-delete|view-deleted",
+        "chapter-16": "sysadmin"
+      },
+      "devNote": "AdministratorsComponent, route 'core/administrators', permission 'core-administrators-view'. Akce: vytvoření 'core-administrators-create'; úprava, změna hesla a znovuodeslání aktivace 'core-administrators-update'; smazání a trvalé smazání z koše 'core-administrators-delete'; koš 'view-deleted'; reporty 'core-administrators-view'; e-mailové domény jen role sysadmin (bez permission klíče, viz isSysadmin). Text popisuje i navazující veřejné stránky: LoginComponent (2FA krok, zapomenuté heslo), ResetPasswordComponent, ActivateAccountComponent - při změně jejich chování aktualizuj kapitoly 05, 08 a 11. Názvy tlačítek jsou v textu záměrně POPISNÉ (ne doslovné), texty aktivační/reset stránky jsou v admin překladech (sekce reset-password / activate-account), anglické popisky v uvozovkách zůstávají jen v e-mailech. Limit hesla 8-16 znaků vychází z password-policy konstant - při změně politiky uprav kapitoly 05 a 11."
+    },
+    {
+      "id": "core-logs",
+      "group": "core",
+      "order": 23,
+      "permission": "view-core",
+      "devNote": "CoreLogsComponent, route 'core/logs', permission 'view-core'. Poznámka v routing komentáři: dočasně čte ze stejného zdroje jako web/business-logs."
+    },
+    {
+      "id": "security-events",
+      "group": "core",
+      "order": 24,
+      "permission": "core-security-view",
+      "devNote": "SecurityEventsComponent, route 'core/security-events', permission 'core-security-view'. Triage podezřelých eventů, retenční politika (GDPR), ruční purge."
+    },
+    {
+      "id": "shop-dashboard",
+      "group": "shop",
+      "order": 25,
+      "permission": "shop-view-dashboard",
+      "devNote": "ShopDashboardComponent, route 'shop/dashboard', permission 'shop-view-dashboard'."
+    },
+    {
+      "id": "shop-products",
+      "group": "shop",
+      "order": 26,
+      "permission": "shop-products-view",
+      "devNote": "ProductsComponent, route 'shop/products', permission 'shop-products-view'. Zahrnuje varianty a obrázky produktu (samostatné modaly)."
+    },
+    {
+      "id": "shop-categories",
+      "group": "shop",
+      "order": 27,
+      "permission": "shop-categories-view",
+      "devNote": "CategoriesComponent, route 'shop/categories', permission 'shop-categories-view'. Stromová struktura kategorií + přiřazování produktů."
+    },
+    {
+      "id": "shop-orders",
+      "group": "shop",
+      "order": 28,
+      "permission": "shop-orders-view",
+      "devNote": "OrdersComponent, route 'shop/orders', permission 'shop-orders-view'."
+    },
+    {
+      "id": "shop-customers",
+      "group": "shop",
+      "order": 29,
+      "permission": "shop-customers-view",
+      "devNote": "CustomersComponent, route 'shop/customers', permission 'shop-customers-view'."
+    },
+    {
+      "id": "shop-shipping-methods",
+      "group": "shop",
+      "order": 30,
+      "permission": "shop-shipping-methods-view",
+      "devNote": "ShippingMethodsComponent, route 'shop/shipping-methods', permission 'shop-shipping-methods-view'."
+    },
+    {
+      "id": "shop-payment-methods",
+      "group": "shop",
+      "order": 31,
+      "permission": "shop-payment-methods-view",
+      "devNote": "PaymentMethodsComponent, route 'shop/payment-methods', permission 'shop-payment-methods-view'."
+    },
+    {
+      "id": "shop-suppliers",
+      "group": "shop",
+      "order": 32,
+      "permission": "shop-suppliers-view",
+      "devNote": "SuppliersComponent, route 'shop/suppliers', permission 'shop-suppliers-view'."
+    },
+    {
+      "id": "coupons",
+      "group": "shop",
+      "order": 33,
+      "permission": "shop-coupons-view",
+      "devNote": "CouponsComponent, route 'shop/coupons', permission 'shop-coupons-view'."
+    },
+    {
+      "id": "shop-logs",
+      "group": "shop",
+      "order": 34,
+      "permission": "shop-view-logs",
+      "devNote": "ShopLogsComponent, route 'shop/logs', permission 'shop-view-logs'."
+    },
+    {
+      "id": "edit-eshop",
+      "group": "shop",
+      "order": 35,
+      "permission": "shop-edit-eshop-view",
+      "devNote": "EditEshopComponent, route 'shop/edit-eshop', permission 'shop-edit-eshop-view'."
+    }
+  ]
+}

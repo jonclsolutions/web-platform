@@ -4,24 +4,26 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Shell component of the Knowledge Base - layout, responsive menu and GENERATION
- * of the side menu from the `KB_PAGES` data (see kb-pages.data.ts). A new page in KB_PAGES
- * shows in the menu automatically, without changing this component or its template.
+ * @description Shell component of the Knowledge Base - own header (home = back to the
+ * administration, admin language switcher), responsive side menu and the routed pages. The menu
+ * comes from the API (`GET knowledge-base`) - only the pages the signed-in user may open, in the
+ * current admin language; it is reloaded after a language switch.
  * @dependencies
- * - RouterModule: Nested routing (`:pageId` -> KbArticleComponent) + the separate
- *   `support-form` route.
- * - KB_PAGES: Data source of the menu and of the page content.
- * - AdminLocalizationService: Static i18n of the admin UI + language for resolving the
- *   `LocalizedText` fields of KB_PAGES (navLabel).
+ * - KnowledgeBaseService: menu of the allowed pages.
+ * - RouterModule: Nested routing (`:pageId` -> KbArticleComponent, `support-form`, `news`).
+ * - AdminLocalizationService: Static i18n of the admin UI (section `knowledge-base`), current
+ *   language, language switch (the same languages as the admin header).
+ * - PublicDataService: site settings loaded at startup - the logo of the website (top left).
  */
 
 import { Component, ChangeDetectorRef, OnDestroy, inject } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, switchMap } from 'rxjs';
 import { KbFooterComponent } from './substitutions/kb-footer/kb-footer.component';
-import { KB_PAGES } from './data/kb-pages.data';
-import { KBPage, resolveLoc } from '../../../shared/interfaces/kb-content';
-import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { KnowledgeBaseService } from './knowledge-base.service';
+import { KBMenuItem } from '../../../shared/interfaces/kb-content';
+import { AdminLanguageMeta, AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { PublicDataService } from '../../../shared/services/public-data.service';
 
 /** One group of the side menu with its sorted pages. */
 interface NavGroup {
@@ -29,18 +31,16 @@ interface NavGroup {
   key: string;
   /** Translated display name of the group. */
   label: string;
-  pages: KBPage[];
+  pages: KBMenuItem[];
 }
 
 /**
- * @description Layout shell of the internal Knowledge Base: renders the side menu
- * generated from `KB_PAGES` and hosts the routed article / support-form / news pages.
- * @usage Routed at `/admin/intranet/knowledge-base` (admin-routing.module.ts); child
- * routes render inside its `<router-outlet>`.
+ * @description Layout shell of the internal Knowledge Base.
+ * @usage Routed at `/admin/intranet/knowledge-base` (admin-routing.module.ts); child routes render
+ *   inside its `<router-outlet>`.
  * @note Group headings come from the admin i18n JSON (section `knowledge-base`, keys
- * `nav_group_{navGroup}`); page labels come from `KB_PAGES` (`LocalizedText`). Every
- * `navGroup` value used in `KB_PAGES` therefore needs a matching key in EVERY language
- * file, otherwise that heading shows the service fallback text.
+ *   `nav_group_{group}`); page labels from the API. Every group used in the API's structure.json
+ *   therefore needs a matching key in EVERY admin language file.
  */
 @Component({
   selector: 'app-knowledge-base',
@@ -51,73 +51,97 @@ interface NavGroup {
 })
 export class KnowledgeBaseComponent implements OnDestroy {
   isMenuOpen = false;
+  isLangMenuOpen = false;
 
   public readonly i18n = inject(AdminLocalizationService);
+  private readonly kb = inject(KnowledgeBaseService);
+  private readonly publicData = inject(PublicDataService);
   public get strings(): any { return this.i18n.getMergedSection('knowledge-base'); }
   public t(key: string): string { return this.i18n.getValue(`knowledge-base.${key}`); }
 
-  /**
-   * @description Cached menu model (groups + their sorted pages) bound by the template.
-   * Rebuilt in the constructor subscription every time the translation data changes -
-   *.
-   */
+  /** Languages of the switcher - the same as in the admin header. */
+  readonly languages: AdminLanguageMeta[] = this.i18n.availableLanguages;
+
+  /** Logo of the website (site settings), null = the neutral square. */
+  logoUrl: string | null = null;
+
+  /** Menu model (groups + their sorted pages) bound by the template. */
   navGroups: NavGroup[] = [];
+  /** Last loaded menu - regrouped when only the texts of the admin UI change. */
+  private menu: KBMenuItem[] = [];
 
-  /** Subscription to `i18n.translations$` that keeps `navGroups` in sync - released in ngOnDestroy. */
-  private langSubscription: Subscription;
+  private readonly subscriptions = new Subscription();
 
   /**
-   * @description Wires the menu cache to the translation data.
-   * @param router Used by `isRootPath()` to detect the Knowledge Base landing URL.
-   * @param cd Marks the view dirty after the cached menu model is replaced.
-   * @note `translations$` is a BehaviorSubject stream, so the callback runs
-   * synchronously on subscribe (initial build - no separate call needed) and again
-   * whenever a language file finishes loading. Subscribing to `currentLanguage$` here
-   * would rebuild too early.
+   * @description Loads the menu for the current language (again after every language switch) and
+   *   rebuilds the group headings whenever the admin texts change.
    */
   constructor(private router: Router, private cd: ChangeDetectorRef) {
-    this.langSubscription = this.i18n.translations$.subscribe(() => {
+    this.subscriptions.add(this.i18n.currentLanguage$
+      .pipe(switchMap(lang => this.kb.menu(lang)))
+      .subscribe(menu => {
+        this.menu = menu;
+        this.navGroups = this.buildNavGroups();
+        this.cd.markForCheck();
+      }));
+    this.subscriptions.add(this.publicData.siteSettingsValue$.subscribe(data => {
+      const path = data?.settings?.logo_path;
+      this.logoUrl = path ? this.publicData.getStorageUrl(path) : null;
+      this.cd.markForCheck();
+    }));
+    this.subscriptions.add(this.i18n.translations$.subscribe(() => {
       this.navGroups = this.buildNavGroups();
       this.cd.markForCheck();
-    });
+    }));
   }
 
   ngOnDestroy(): void {
-    this.langSubscription?.unsubscribe();
+    this.subscriptions.unsubscribe();
   }
 
-  /**
-   * @description Current language for resolving `LocalizedText` fields (`navLabel`).
-   */
-  get currentLang(): string {
+  get currentLanguageCode(): string {
     return this.i18n.getCurrentLanguage();
   }
 
-  /** @description Exposes `resolveLoc()` to the template for `page.navLabel`. */
-  navLabel(page: KBPage): string {
-    return resolveLoc(page.navLabel, this.currentLang);
+  get currentLanguageMeta(): AdminLanguageMeta | undefined {
+    return this.languages.find(l => l.code === this.currentLanguageCode);
+  }
+
+  toggleLangMenu(): void {
+    this.isLangMenuOpen = !this.isLangMenuOpen;
+  }
+
+  closeLangMenu(): void {
+    this.isLangMenuOpen = false;
   }
 
   /**
-   * @description Groups KB_PAGES by `navGroup`, sorts inside a group by `navOrder` and the groups
-   * by the lowest `navOrder` they contain - so a new page with its own `navOrder` drives the
-   * order without manually reordering the groups. The group name is translated through
-   * `AdminLocalizationService` (key `nav_group_{key}`, section 'knowledge-base').
+   * @description Switches the admin language (the whole administration, as in its header).
+   * @param code Language code.
+   */
+  selectLanguage(code: string): void {
+    this.i18n.setLanguage(code);
+    this.isLangMenuOpen = false;
+  }
+
+  /**
+   * @description Groups the menu by `group`, sorts inside a group by `order` and the groups by
+   *   the lowest `order` they contain. The group name is translated (key `nav_group_{group}`).
    */
   private buildNavGroups(): NavGroup[] {
-    const groups = new Map<string, KBPage[]>();
-    for (const page of KB_PAGES) {
-      if (!groups.has(page.navGroup)) groups.set(page.navGroup, []);
-      groups.get(page.navGroup)!.push(page);
+    const groups = new Map<string, KBMenuItem[]>();
+    for (const page of this.menu) {
+      if (!groups.has(page.group)) groups.set(page.group, []);
+      groups.get(page.group)!.push(page);
     }
 
     return Array.from(groups.entries())
       .map(([key, pages]) => ({
         key,
         label: this.t(`nav_group_${key}`),
-        pages: pages.slice().sort((a, b) => a.navOrder - b.navOrder)
+        pages: pages.slice().sort((a, b) => a.order - b.order)
       }))
-      .sort((a, b) => Math.min(...a.pages.map(p => p.navOrder)) - Math.min(...b.pages.map(p => p.navOrder)));
+      .sort((a, b) => Math.min(...a.pages.map(p => p.order)) - Math.min(...b.pages.map(p => p.order)));
   }
 
   toggleMenu(): void {

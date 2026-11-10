@@ -70,6 +70,29 @@ import { AdminErrorPageComponent } from './error-pages/admin-error-page.componen
  *       of the routes below is therefore also the order of preference for that fallback.
  */
 export const ADMIN_ROUTES: Routes = [
+  // 📘 INTERNAL MANUAL - own full-screen layout (no admin layout). MUST come before the admin
+  // layout route below: its '**' child (404 page) would otherwise catch /admin/intranet/... first.
+  {
+    path: 'intranet',
+    canActivate: [AuthGuard],
+    canActivateChild: [AuthGuard],
+    children: [
+      {
+        path: 'knowledge-base',
+        component: KnowledgeBaseComponent,
+        children: [
+          // Explicit components (real logic, not static text) - MUST
+          // come before ':pageId', otherwise the router would catch them as the parameter.
+          { path: 'support-form', component: SupportFormComponent },
+          { path: 'news', component: NewsComponent },
+          // Generic renderer of ALL other manual pages - the content comes from the API
+          // (api/resources/knowledge-base/*.json; a new page needs no new route).
+          { path: ':pageId', component: KbArticleComponent },
+          { path: '', redirectTo: 'introductions', pathMatch: 'full' }
+        ]
+      }
+    ]
+  },
   {
     path: '',
     component: AdminLayoutComponent,
@@ -144,27 +167,6 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'forbidden', component: AdminErrorPageComponent, data: { [ADMIN_ERROR_PAGE_KEY]: 'forbidden' } },
       // 404: any /admin/... address no route above knows - MUST STAY THE LAST CHILD.
       { path: '**', component: AdminErrorPageComponent, data: { [ADMIN_ERROR_PAGE_KEY]: 'not-found' } }
-    ]
-  },
-  {
-    path: 'intranet',
-    canActivate: [AuthGuard],
-    canActivateChild: [AuthGuard],
-    children: [
-      {
-        path: 'knowledge-base',
-        component: KnowledgeBaseComponent,
-        children: [
-          // Explicit components (real logic, not static text) - MUST
-          // come before ':pageId', otherwise the router would catch them as the parameter.
-          { path: 'support-form', component: SupportFormComponent },
-          { path: 'news', component: NewsComponent },
-          // Generic renderer for ALL other manual pages - see
-          // kb-pages.data.ts for adding a new page (no new route needed).
-          { path: ':pageId', component: KbArticleComponent },
-          { path: '', redirectTo: 'introductions', pathMatch: 'full' }
-        ]
-      }
     ]
   }
 ];

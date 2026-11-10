@@ -1,0 +1,1463 @@
+{
+  "pages": {
+    "introductions": {
+      "navLabel": "Introductions",
+      "header": "Welcome to the Birth of RPSoftware",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - this is placeholder for intro"
+            }
+          ]
+        }
+      ]
+    },
+    "security": {
+      "navLabel": "Access",
+      "header": "Access Credentials and Security",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - this should explain login, 2FA, and password policy."
+            }
+          ]
+        }
+      ]
+    },
+    "contacts": {
+      "navLabel": "Contacts",
+      "header": "Team Contacts",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - this should list contacts for key people on the team."
+            }
+          ]
+        }
+      ]
+    },
+    "web-dashboard": {
+      "navLabel": "Dashboard",
+      "header": "Web - Dashboard",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - the overview page of the Web admin module."
+            }
+          ]
+        }
+      ]
+    },
+    "user-request": {
+      "navLabel": "Web Form",
+      "header": "Web Form (Inquiries)",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - management of inquiries submitted via the public web form."
+            }
+          ]
+        }
+      ]
+    },
+    "web-business-logs": {
+      "navLabel": "Business Logs",
+      "header": "Web - Business Logs",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - an audit log of actions performed in the Web module."
+            }
+          ]
+        }
+      ]
+    },
+    "sales-leads": {
+      "navLabel": "Sales Leads",
+      "header": "Sales Leads",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - tracking and link generation for sales leads."
+            }
+          ]
+        }
+      ]
+    },
+    "edit-news": {
+      "navLabel": "News (Website)",
+      "header": "Website News Management",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - editing news items shown on the public website."
+            }
+          ]
+        }
+      ]
+    },
+    "edit-website": {
+      "navLabel": "Website Editing",
+      "header": "Website Content Editing",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - editing content sections of the public website."
+            }
+          ]
+        }
+      ]
+    },
+    "sales-orders": {
+      "navLabel": "Received Orders",
+      "header": "Received Orders (Fulfillment)",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - overview of received orders/fulfillments and their processing."
+            }
+          ]
+        }
+      ]
+    },
+    "support-tickets": {
+      "navLabel": "Helpdesk Tickets",
+      "header": "Helpdesk Tickets",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - management of helpdesk tickets received from users."
+            }
+          ]
+        }
+      ]
+    },
+    "job-applications": {
+      "navLabel": "Job Applications",
+      "header": "Job Application Form (Candidates)",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - overview of applications submitted via the job form."
+            }
+          ]
+        }
+      ]
+    },
+    "projects": {
+      "navLabel": "Projects",
+      "header": "Projects and Customer Threads",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - management of customer projects, checkpoints, and communication."
+            }
+          ]
+        }
+      ]
+    },
+    "core-dashboard": {
+      "navLabel": "Dashboard",
+      "header": "Core - Dashboard",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - the overview page of the Core (system) module."
+            }
+          ]
+        }
+      ]
+    },
+    "welcome-page": {
+      "navLabel": "Welcome Page",
+      "header": "Welcome Page",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - the landing page shown after logging into the administration."
+            }
+          ]
+        }
+      ]
+    },
+    "edit-legal": {
+      "navLabel": "Legal Documents",
+      "header": "Editing Legal Documents (GDPR, TOS...)",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - editing multilingual content of legal documents (GDPR, terms of service, cookies)."
+            }
+          ]
+        }
+      ]
+    },
+    "personal-info": {
+      "navLabel": "Personal Information",
+      "header": "Personal Information and Account Security",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - managing your own profile, password, and two-factor authentication."
+            }
+          ]
+        }
+      ]
+    },
+    "web-settings": {
+      "navLabel": "Website Settings",
+      "header": "Global Website Settings",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - company details, logo, and social media shown on the website."
+            }
+          ]
+        }
+      ]
+    },
+    "external-links": {
+      "navLabel": "External Links",
+      "header": "External Links (Admin Quick Links)",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - a personal list of quick links to external tools, visible only to you."
+            }
+          ]
+        }
+      ]
+    },
+    "edit-roles": {
+      "navLabel": "Roles and Permissions",
+      "header": "Roles and Permissions Management",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - management of roles and their permissions. Accessible exclusively to the sysadmin."
+            }
+          ]
+        }
+      ]
+    },
+    "administrators": {
+      "navLabel": "Administrators",
+      "header": "User Account Management",
+      "sections": [
+        {
+          "key": "intro",
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "On this page you manage the accounts of everyone who signs in to the administration: you create new accounts, assign roles and permissions, and handle passwords, two-factor authentication, blocking, and deletion. This guide walks you through every function step by step - from creating an account to removing it permanently."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "The most important rule: an administrator never enters or knows the password of a new account. The account is created without a password and the user sets it personally through the link in the activation e-mail."
+            }
+          ]
+        },
+        {
+          "key": "chapter-01",
+          "heading": "01. Who Can See the Page and What They Can Do",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "What you see on the page depends on your permissions. Buttons and menu items you have no permission for are not displayed at all - this is not an error. If a function described in this guide is missing for you, ask the administrator who manages your account to add the permission."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing the page",
+                  "text": "Permission core-administrators-view. You see the accounts table, account details, filters, data export, and reports."
+                },
+                {
+                  "title": "Creating accounts",
+                  "text": "Permission core-administrators-create. The action menu gains the item for creating a new record."
+                },
+                {
+                  "title": "Editing accounts",
+                  "text": "Permission core-administrators-update. Each account row gains the actions for editing, changing the password, and resending the activation."
+                },
+                {
+                  "title": "Deleting accounts",
+                  "text": "Permission core-administrators-delete. Each account row gains the delete action and the trash gains the option to delete permanently."
+                },
+                {
+                  "title": "Trash",
+                  "text": "Permission view-deleted. The action menu gains the switch between active accounts and the trash."
+                },
+                {
+                  "title": "The sysadmin role",
+                  "text": "Only a sysadmin sees the allowed e-mail domain settings, may force two-factor authentication on a specific account, and may work with accounts that have the sysadmin role."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-02",
+          "heading": "02. Finding Your Way Around the Page",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Action menu",
+                  "text": "A drop-down menu above the table. It contains showing and hiding the filters, creating a record, data export, e-mail domains (sysadmin only), reports, and the switch between active accounts and the trash."
+                },
+                {
+                  "title": "Accounts table",
+                  "text": "Each row is one account. Columns: ID, name, e-mail, role, whether the account is blocked, and the date of the last sign-in."
+                },
+                {
+                  "title": "Row actions",
+                  "text": "Icons at the end of the row: magnifier (details), edit, key (password change), envelope (resend activation - only for accounts not yet activated), and delete."
+                },
+                {
+                  "title": "Filter panel",
+                  "text": "A side panel opened from the action menu. It is used to search and sort accounts - see chapter 13."
+                },
+                {
+                  "title": "Pagination",
+                  "text": "Below the table you switch pages and choose the number of records per page. The trash has its own independent pagination."
+                },
+                {
+                  "title": "Refreshing data",
+                  "text": "Next to the table you see the time of the last update and a button for an immediate refresh. The data also refreshes automatically roughly every 15 minutes while the browser tab is open and active. The refresh-all button in the administration header refreshes all tables at once."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "The heading above the table always shows whether you are looking at active accounts or at the trash. Bulk deletion of several accounts at once is intentionally disabled on this page - accounts are always deleted one at a time."
+            }
+          ]
+        },
+        {
+          "key": "chapter-03",
+          "heading": "03. Account Lifecycle",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Every account goes through several states. Once you know which state an account is in, you also know which action to use."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Created, pending activation",
+                  "text": "The account exists but has no password. The user cannot sign in until a password is set through the link in the activation e-mail. The row offers the action for resending the activation.",
+                  "active": true
+                },
+                {
+                  "label": "Active",
+                  "text": "The user has set a password and can sign in. The resend-activation action disappears from the row."
+                },
+                {
+                  "label": "Blocked",
+                  "text": "An optional and reversible state. The user is signed out immediately and cannot sign in until you remove the block. The account stays in the table."
+                },
+                {
+                  "label": "In the trash",
+                  "text": "A deleted account moves to the trash. The user cannot sign in, but the account can be restored with all its settings."
+                },
+                {
+                  "label": "Permanently deleted",
+                  "text": "The account is removed from the trash for good. This step cannot be undone."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-04",
+          "heading": "04. Creating a New Account Step by Step",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Prepare the details",
+                  "text": "Verify the exact e-mail address of the new user - the activation link is sent to it and it also serves as the sign-in name. Decide which role the user should get. If the system restricts e-mail domains (chapter 16), the address must belong to an allowed domain, otherwise the account cannot be created."
+                },
+                {
+                  "label": "2. Open the form",
+                  "text": "In the action menu above the table, choose the item for creating a record. The item is visible only in the active accounts view (not in the trash) and only if you have the permission to create accounts."
+                },
+                {
+                  "label": "3. Read the notice",
+                  "text": "An information banner appears above the form, reminding you that the account is created without a password. You do not enter a password - the form has no field for it."
+                },
+                {
+                  "label": "4. Sign-in e-mail (required)",
+                  "text": "Enter the e-mail in a valid format. Each e-mail can have only one account - if an account with this address already exists (even one lying in the trash), the system refuses to save."
+                },
+                {
+                  "label": "5. Full name (required)",
+                  "text": "The first and last name of the user. It is shown in the table, in the account details, and in the greeting of e-mails."
+                },
+                {
+                  "label": "6. Role (required)",
+                  "text": "Choose a role from the list. The role defines the basic set of permissions. The list shows only roles you are allowed to assign - those whose permissions you all hold yourself. The sysadmin role can be assigned only by a sysadmin."
+                },
+                {
+                  "label": "7. Extra permissions (optional)",
+                  "text": "After you choose a role, the permissions the role already contains are ticked and locked automatically in the permission list. By ticking others you give the user something beyond the role. Always choose the role first - every role change returns the permission selection to the default state of the new role."
+                },
+                {
+                  "label": "8. Two-factor authentication (optional)",
+                  "text": "Ticking it turns on verification by an e-mailed code at every sign-in. For roles that require two-factor authentication (always sysadmin, possibly other roles depending on their settings) the field is locked and the verification is always on for the account - it cannot be turned off."
+                },
+                {
+                  "label": "9. Internal note (optional)",
+                  "text": "Free text for administrators, for example the job position or the reason the account was created. It is visible in the account details. Do not write sensitive personal data into it."
+                },
+                {
+                  "label": "10. Save",
+                  "text": "Confirm the form. A confirmation that the account was created appears, the form closes, and the new account shows up in the table."
+                },
+                {
+                  "label": "11. What happens next",
+                  "text": "The system immediately sends the activation e-mail to the user. The account is created but not yet active: it is not blocked, it just has no password. Tell the user to check the inbox, including the spam folder."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "You cannot set account blocking or forced two-factor authentication for a specific account during creation - these fields are available only when editing an existing account (chapter 09)."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "If saving ends with a message about a disallowed e-mail domain, the address does not belong to the allowed domains. Ask a sysadmin to add an exception and then create the account again."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "If saving ends with a message that you cannot assign a role granting permissions you do not have yourself, choose a different role or ask a sysadmin to create the account."
+            }
+          ]
+        },
+        {
+          "key": "chapter-05",
+          "heading": "05. Account Activation - What the New User Does",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "You can forward this chapter to the new user or guide them through it. Both the activation e-mail and the activation page are in English."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Opening the e-mail",
+                  "text": "The e-mail greets the user by name, announces that an account has been created, and contains the button \"Set password and activate\". If the button does not work, the same link is below it, ready to be copied into the browser."
+                },
+                {
+                  "label": "2. Link validity",
+                  "text": "The link is valid for a limited time (the number of hours is stated in the e-mail) and can be used only once."
+                },
+                {
+                  "label": "3. Link verification",
+                  "text": "After the click the page briefly verifies the link. If it is fine, the form \"Set your password\" appears, with the e-mail of the account shown below the title."
+                },
+                {
+                  "label": "4. Setting the password",
+                  "text": "The user enters a new password and repeats it for confirmation. Below the first field the fulfilled password requirements are ticked off live. The eye icon shows or hides the password. If the two passwords do not match, the page says so and the form cannot be submitted."
+                },
+                {
+                  "label": "5. Submitting",
+                  "text": "The button \"Set password and activate account\" completes the activation. If the password does not meet the requirements, the page shows the reason and the password must be adjusted."
+                },
+                {
+                  "label": "6. Done",
+                  "text": "The page shows \"Account activated\" and redirects the user to the sign-in page after a few seconds (or the user can click \"Go to sign in now\"). The user is not signed in automatically - they sign in with their e-mail and the password they have just set."
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Password length",
+                  "text": "8 to 16 characters."
+                },
+                {
+                  "title": "Letter",
+                  "text": "The password must contain at least one letter."
+                },
+                {
+                  "title": "Digit",
+                  "text": "The password must contain at least one digit."
+                },
+                {
+                  "title": "Special character",
+                  "text": "The password must contain at least one special character (for example an exclamation mark or a hyphen)."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "When the link has expired, has already been used, or is damaged, the page says the link cannot be used. The user cannot request a new link personally - they must ask an administrator, who resends the activation (chapter 06)."
+            },
+            {
+              "type": "note",
+              "content": "If someone received the activation e-mail and was not expecting an account, they can safely ignore the message - without clicking the link and setting a password nobody can sign in to the account."
+            }
+          ]
+        },
+        {
+          "key": "chapter-06",
+          "heading": "06. Resending the Activation E-mail",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The action with the envelope icon in the account row. It is visible only for accounts that have not been activated yet, and only if you have the permission to edit accounts."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "The e-mail did not arrive",
+                  "text": "First have the user check the spam folder. Then verify the e-mail in the account is spelled correctly and resend the activation."
+                },
+                {
+                  "title": "The link expired",
+                  "text": "The user did not manage to set the password while the link was valid. Resend the activation."
+                },
+                {
+                  "title": "The link cannot be used",
+                  "text": "The link has already been opened and used once, or was damaged when copied. Resend the activation."
+                },
+                {
+                  "title": "You corrected the e-mail",
+                  "text": "If the account was created with a typo in the address, first correct the e-mail by editing the account and then resend the activation - it will go to the correct address."
+                }
+              ]
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Find the account",
+                  "text": "Find the account in the table, using the filter by name or e-mail if needed."
+                },
+                {
+                  "label": "2. Click the envelope",
+                  "text": "In the account row, click the resend-activation action."
+                },
+                {
+                  "label": "3. Confirmation",
+                  "text": "The system confirms that the activation e-mail has been resent."
+                },
+                {
+                  "label": "4. The old link stops working",
+                  "text": "The user must use the link from the newest e-mail. All activation links sent earlier are invalid from this moment."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "For an account that is already activated, the system only states that the account is active and sends nothing. A forgotten password of an activated account is covered in chapter 11. If the e-mail fails to send, an error is shown - try again later and contact a sysadmin if the problem persists."
+            }
+          ]
+        },
+        {
+          "key": "chapter-07",
+          "heading": "07. Roles and Extra Permissions",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Every account has exactly one role. A role is a named set of permissions and determines what the user sees and may do in the administration. On top of the role, extra permissions can be added to an individual account - useful when one person exceptionally needs something the role does not contain. Roles themselves are not created or edited on this page; here you only assign them."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Which roles I can assign",
+                  "text": "Only roles whose permissions you all hold yourself. A role that would give someone more than you have is not shown in the list (when editing an account, its current role is shown as well). A sysadmin can assign any role."
+                },
+                {
+                  "title": "The sysadmin role",
+                  "text": "Only a sysadmin may assign it to a new account, promote an existing account to it, or edit an account that has it."
+                },
+                {
+                  "title": "Which extra permissions I can give",
+                  "text": "You may add or remove only permissions you hold yourself. If you tick a permission outside your reach, it is not saved. Permissions that someone with wider rights granted earlier and that you do not hold stay unchanged."
+                },
+                {
+                  "title": "Ticked and locked permissions",
+                  "text": "These are the permissions contained in the role. They cannot be removed individually - they change only when the role changes."
+                },
+                {
+                  "title": "Your own account",
+                  "text": "You cannot change your own role. If you need a different role, ask another authorised administrator."
+                }
+              ]
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Open the account for editing",
+                  "text": "In the account row, click the edit action."
+                },
+                {
+                  "label": "2. Choose the new role",
+                  "text": "The permission list is recalculated immediately: previously selected extra permissions are cleared and only the permissions of the new role stay ticked."
+                },
+                {
+                  "label": "3. Save",
+                  "text": "The system shows a notice that all extra permissions were reset with the role change, and confirms the account update."
+                },
+                {
+                  "label": "4. Add extra permissions if needed",
+                  "text": "If the user needs something extra in the new role as well, open the account for editing again, tick the permissions, and save. This cannot be done in the same step as the role change."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "A role change always removes all extra permissions. This is intentional - the user does not carry exceptions from the old role into the new one."
+            }
+          ]
+        },
+        {
+          "key": "chapter-08",
+          "heading": "08. Two-Factor Authentication (2FA)",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Two-factor authentication adds a second step to the password: after entering the e-mail and password, the user receives a one-time code by e-mail, without which the sign-in cannot be completed. Even if someone guesses or steals the password, they cannot get into the account without access to the mailbox."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Optional",
+                  "text": "The two-factor authentication checkbox in the account form can be turned on and off. This applies to accounts where the verification is not forced."
+                },
+                {
+                  "title": "Forced by the role",
+                  "text": "The sysadmin role always has it on. Other roles may require it as well if a sysadmin configured them so. The field is then locked, the verification is always on for the account, and it cannot be turned off."
+                },
+                {
+                  "title": "Forced for a specific account",
+                  "text": "When editing an account whose role does not require the verification, a sysadmin can tick the force field. The account then has the verification permanently on and only a sysadmin may turn it off again. Only a sysadmin sees this field, only when editing (not when creating), and only for roles that do not force the verification themselves."
+                }
+              ]
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. E-mail and password",
+                  "text": "The user signs in on the sign-in page with e-mail and password as usual."
+                },
+                {
+                  "label": "2. The code arrives by e-mail",
+                  "text": "A message with a six-digit verification code arrives at the e-mail of the account."
+                },
+                {
+                  "label": "3. Entering the code",
+                  "text": "The sign-in page shows a field for the code and a countdown of how long the code remains valid. After entering all six digits the user confirms the sign-in."
+                },
+                {
+                  "label": "4. The code did not arrive or expired",
+                  "text": "With the resend button the user requests a new code. The button becomes active 60 seconds after the last sending - until then a countdown runs next to it."
+                },
+                {
+                  "label": "5. Going back",
+                  "text": "With the back button the user returns to entering the e-mail and password, for example after signing in to the wrong account."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Never share the verification code with anyone. If a user receives a code without trying to sign in, someone knows their password - they should change it immediately."
+            },
+            {
+              "type": "note",
+              "content": "After several failed sign-in attempts the sign-in page may additionally require a check that the visitor is not a robot. This is a standard protection; once the check passes, the sign-in completes normally."
+            }
+          ]
+        },
+        {
+          "key": "chapter-09",
+          "heading": "09. Editing an Existing Account",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Open the edit form",
+                  "text": "In the account row, click the edit action. The action is visible only with the permission to edit accounts."
+                },
+                {
+                  "label": "2. Check the pre-filled data",
+                  "text": "The form opens with the current data of the account. The permission list shows the role permissions ticked (locked) as well as the extra permissions (changeable)."
+                },
+                {
+                  "label": "3. Change what you need",
+                  "text": "Only fields that are not locked can be changed. The meaning of each field is described below."
+                },
+                {
+                  "label": "4. Save",
+                  "text": "After saving, a confirmation of the account update appears, the form closes, and the table refreshes. The cancel button closes the form without changes."
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "E-mail",
+                  "text": "Change of the sign-in e-mail. The address must be unique. The allowed-domain restriction is not checked when editing; it applies only to creating accounts."
+                },
+                {
+                  "title": "Full name",
+                  "text": "Correction or change of the user name."
+                },
+                {
+                  "title": "Role and extra permissions",
+                  "text": "See chapter 07. Remember that a role change removes the extra permissions."
+                },
+                {
+                  "title": "Two-factor authentication",
+                  "text": "See chapter 08. For accounts with forced verification the field is locked."
+                },
+                {
+                  "title": "Forcing two-factor authentication",
+                  "text": "Only a sysadmin sees the field, and only for accounts whose role does not force the verification itself."
+                },
+                {
+                  "title": "Blocking",
+                  "text": "See chapter 10. For accounts with the sysadmin role the field is locked."
+                },
+                {
+                  "title": "Internal note",
+                  "text": "Free text for administrators, visible in the account details."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "An account with the sysadmin role may be edited only by a sysadmin. For everyone else the system refuses the edit and records the attempt."
+            }
+          ]
+        },
+        {
+          "key": "chapter-10",
+          "heading": "10. Blocking and Unblocking an Account",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Blocking is a fast and reversible way to cut off access immediately without deleting the account. The account stays in the table with all its settings."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "When to block",
+                  "text": "When misuse of the account or a password leak is suspected, during a temporary absence of the user, or as the first step when a cooperation ends, before deletion is decided."
+                },
+                {
+                  "title": "What happens",
+                  "text": "The user is signed out immediately on all devices and cannot sign in again while the block lasts."
+                },
+                {
+                  "title": "What cannot be blocked",
+                  "text": "You cannot block your own account. Accounts with the sysadmin role can never be blocked - the field is locked for them."
+                },
+                {
+                  "title": "Unblocking",
+                  "text": "Edit the account, untick the block, and save. The user then signs in with the original password."
+                }
+              ]
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Open the account for editing",
+                  "text": "Blocking is set only when editing an existing account; it is not available during creation."
+                },
+                {
+                  "label": "2. Tick the block",
+                  "text": "Tick the field for blocking the account."
+                },
+                {
+                  "label": "3. Save",
+                  "text": "The block applies immediately after saving."
+                },
+                {
+                  "label": "4. Verify the result",
+                  "text": "The blocked column in the table shows that the account is blocked. Use the blocked filter to list all blocked accounts."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-11",
+          "heading": "11. Passwords - Forgotten Password and Password Change",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "A password can be handled in three ways. Choose according to the situation:"
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "The user forgot the password",
+                  "text": "The user resets the password personally from the sign-in page. This is the recommended way - nobody else knows the new password and the administrator does not need to do anything."
+                },
+                {
+                  "title": "An administrator must change the password",
+                  "text": "Use it when the user cannot reach their mailbox, or when the password must be changed immediately (for example when a leak is suspected). You change the password with the key icon action."
+                },
+                {
+                  "title": "The account was never activated",
+                  "text": "Such an account has no password yet. Do not handle it with a password change - resend the activation e-mail (chapter 06)."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Forgotten password - what the user does:"
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. The link on the sign-in page",
+                  "text": "Next to the password field the user clicks the forgotten-password link. A small window opens."
+                },
+                {
+                  "label": "2. Entering the e-mail",
+                  "text": "The user enters the e-mail of the account and submits the request. The window confirms the sending and closes itself after a moment."
+                },
+                {
+                  "label": "3. The e-mail with the link",
+                  "text": "A message with the button \"Reset your password\" arrives in the mailbox. The link is valid for a limited time (the number of minutes is stated in the e-mail) and can be used only once. If the user did not request the reset, they ignore the message - the password stays unchanged."
+                },
+                {
+                  "label": "4. The new password",
+                  "text": "On the page \"Set a new password\" the user enters the new password and repeats it. The same requirements apply as during activation: 8 to 16 characters, a letter, a digit, and a special character. The button \"Set new password\" becomes active only when the password meets all requirements and both fields match."
+                },
+                {
+                  "label": "5. Confirmation",
+                  "text": "The page shows \"Password changed\" and redirects the user to the sign-in page after a moment."
+                },
+                {
+                  "label": "6. Invalid link",
+                  "text": "If the link has expired or has already been used, the page says so after the form is submitted. The user returns to the sign-in page and requests the reset again."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Password change by an administrator - procedure:"
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Click the key",
+                  "text": "In the account row, click the action with the key icon. The action is visible only with the permission to edit accounts."
+                },
+                {
+                  "label": "2. Check the account",
+                  "text": "The form title contains the e-mail of the account whose password you are changing. Make sure it is the right account."
+                },
+                {
+                  "label": "3. Enter YOUR current password",
+                  "text": "The first field confirms that it is really you making the change. Enter your own sign-in password - not the password of the user whose password you are changing."
+                },
+                {
+                  "label": "4. Enter the new password",
+                  "text": "Enter the new password and repeat it for confirmation. It must have 8 to 16 characters and contain a letter, a digit, and a special character."
+                },
+                {
+                  "label": "5. Save",
+                  "text": "The system confirms that the password has been changed. If you entered your own password in the first field incorrectly, the change is not made and an error is shown."
+                },
+                {
+                  "label": "6. Hand over the password safely",
+                  "text": "Tell the user the new password in a safe way (in person or by phone, not by e-mail) and ask them to change it to their own as soon as possible."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "After every password change the account owner receives an e-mail notification with the date and time of the change. If neither the owner nor an administrator acting on their request made the change, the owner should report it immediately - in that case block the account (chapter 10) and change the password. With many password changes in a short time the system may temporarily stop sending further notifications."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "The password of an account with the sysadmin role may be changed only by its owner or by another sysadmin."
+            }
+          ]
+        },
+        {
+          "key": "chapter-12",
+          "heading": "12. Account Details",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The action with the magnifier icon in the row opens an overview of all data of the account. The details are read-only - nothing can be changed there - and you close them with the close button."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Basic data",
+                  "text": "Account ID, full name, and sign-in e-mail."
+                },
+                {
+                  "title": "Role and extra permissions",
+                  "text": "The assigned role and the list of permissions the account received beyond the role."
+                },
+                {
+                  "title": "Account state",
+                  "text": "Whether the account is blocked and the activation date. An empty activation date means the user has not set a password yet."
+                },
+                {
+                  "title": "Two-factor authentication",
+                  "text": "Whether the verification is on for the account and whether a sysadmin forced it for this account."
+                },
+                {
+                  "title": "Internal note",
+                  "text": "The text administrators wrote for the account."
+                },
+                {
+                  "title": "Created and updated dates",
+                  "text": "When the account was created and when it was last modified."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-13",
+          "heading": "13. Filters, Sorting, and Search",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Open the filters",
+                  "text": "In the action menu choose the filters item. A side panel opens next to the table. The same item (its label changes to hiding the filters) closes the panel again."
+                },
+                {
+                  "label": "2. Enter the conditions",
+                  "text": "You can filter by name and e-mail (a part of the text is enough), by role (chosen from a list), and by whether the account is blocked (yes or no). Conditions can be combined."
+                },
+                {
+                  "label": "3. Choose the sorting",
+                  "text": "In the panel you choose the column to sort the table by and the direction. The default order is from the newest account."
+                },
+                {
+                  "label": "4. Apply the filters",
+                  "text": "After confirming, the table reloads with matching accounts only. The filters stay in effect when you move to another page and when you change the number of records per page."
+                },
+                {
+                  "label": "5. Clear the filters",
+                  "text": "The clear-filters button returns you to the complete list in the default order."
+                }
+              ]
+            },
+            {
+              "type": "note",
+              "content": "Tip: the search above the table looks in the name and the e-mail. It does not search by role - use the role filter for that."
+            }
+          ]
+        },
+        {
+          "key": "chapter-14",
+          "heading": "14. Data Export and Reports",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Data export",
+                  "text": "The export item in the action menu downloads the table of active accounts as a CSV file that you can open in a spreadsheet program. Roles and permissions are not part of the export. The export is available only in the active accounts view, not in the trash."
+                },
+                {
+                  "title": "Handling the export",
+                  "text": "The file contains personal data (names and e-mails). Store it only in places intended for work data, do not send it outside the company, and delete it after use."
+                },
+                {
+                  "title": "Reports",
+                  "text": "The reports item opens the chart builder for accounts. You can see how many accounts are blocked, how many have two-factor authentication turned on, and how many have it forced, by the date the account was created. Close the tool with its close button."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-15",
+          "heading": "15. Deleting an Account, Trash, Restore, and Permanent Deletion",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Deletion has two levels. A regular delete only moves the account to the trash, from which it can be brought back. Only permanent deletion from the trash is final."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Deleting to the trash",
+                  "text": "In the account row, click the delete action (requires the permission to delete accounts). The account disappears from the active accounts table and moves to the trash. The deleted user can no longer sign in."
+                },
+                {
+                  "label": "2. Viewing the trash",
+                  "text": "In the action menu switch to the trash (requires the permission to view deleted records). The heading above the table changes and the table shows the ID, name, e-mail, and deletion date. In the trash view the action menu does not offer creating a record or exporting."
+                },
+                {
+                  "label": "3. Restoring an account",
+                  "text": "The restore action in the trash row returns the account to the active ones with all its original settings. The user can sign in again."
+                },
+                {
+                  "label": "4. Permanent deletion",
+                  "text": "The permanent delete action in the trash removes the account for good (requires the permission to delete accounts). This step cannot be undone."
+                },
+                {
+                  "label": "5. Returning to active accounts",
+                  "text": "The same item in the action menu (its label changes to showing the active ones) takes you back."
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Your own account",
+                  "text": "You cannot delete the account you are currently signed in with."
+                },
+                {
+                  "title": "Sysadmin accounts",
+                  "text": "An account with the sysadmin role may be deleted only by another sysadmin. When the trash is emptied in bulk, sysadmin accounts stay in the trash unless a sysadmin is emptying it."
+                },
+                {
+                  "title": "The e-mail of a trashed account is taken",
+                  "text": "While an account lies in the trash, a new account with the same e-mail cannot be created. Either restore the account from the trash, or permanently delete it first."
+                },
+                {
+                  "title": "Block or delete?",
+                  "text": "If the user may come back or you are not sure, block the account. Use deletion when the account will no longer be needed."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-16",
+          "heading": "16. Allowed E-mail Domains (Sysadmin Only)",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "A sysadmin can define which e-mail addresses new accounts may be created with - typically only the company domain. Open the settings with the e-mail domains item in the action menu; only a sysadmin sees this item."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Primary domain",
+                  "text": "The basic company domain, for example company.com. Once filled in, accounts can be created and can log in only with addresses from this domain or from the exceptions below - for every role, sysadmin included."
+                },
+                {
+                  "title": "No restriction",
+                  "text": "If you leave the primary domain empty and save, the restriction is turned off and an account can be created with any e-mail."
+                },
+                {
+                  "title": "Domain exception",
+                  "text": "Another whole domain accounts may be created with - for example the domain of a partner company."
+                },
+                {
+                  "title": "E-mail exception",
+                  "text": "One specific address outside the allowed domains - for example an external collaborator with a private e-mail."
+                }
+              ]
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Setting the primary domain",
+                  "text": "Type the domain into the primary domain field and click the save button next to the field. The system confirms the save. The primary domain is saved only with this button."
+                },
+                {
+                  "label": "2. Adding an exception",
+                  "text": "In the add-exception part choose the type (domain or e-mail), type the value, and click the add button or press Enter. The exception is saved immediately and appears in the corresponding list. Enter values in lower case."
+                },
+                {
+                  "label": "3. Checking the lists",
+                  "text": "The window shows two lists: allowed domains and allowed e-mails. An empty list is marked with a text saying nothing is in it yet."
+                },
+                {
+                  "label": "4. Removing an exception",
+                  "text": "The cross next to an item removes the exception. The removal applies immediately: accounts that are no longer allowed are logged out at once and cannot log in - this applies to every role, sysadmin included. A change that would block you yourself is not saved; add an exception for your own e-mail first."
+                },
+                {
+                  "label": "5. Closing the window",
+                  "text": "Close the window with the close button, the cross in the corner, or by clicking outside the window. The window cannot be closed while the primary domain is being saved."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "The restriction applies only to creating new accounts. Existing accounts stay unchanged even if their e-mail does not match the allowed domains, and the restriction is not checked when the e-mail of an existing account is edited either. An attempt to create an account with a disallowed address is refused and recorded as a security event."
+            }
+          ]
+        },
+        {
+          "key": "chapter-17",
+          "heading": "17. Fixed Rules That Cannot Be Bypassed",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The following rules protect the system against mistakes and misuse. They always apply, regardless of permissions, and are not an application error."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Sysadmin accounts are managed only by a sysadmin",
+                  "text": "Creating, editing, promoting to sysadmin, changing the password of someone else with the sysadmin role, and deleting such an account are reserved for the sysadmin role."
+                },
+                {
+                  "title": "A sysadmin always has two-factor authentication",
+                  "text": "The verification cannot be turned off for the sysadmin role."
+                },
+                {
+                  "title": "A sysadmin cannot be blocked",
+                  "text": "Nobody can block an account with the sysadmin role, not even another sysadmin."
+                },
+                {
+                  "title": "You cannot block or delete yourself",
+                  "text": "Your own account cannot be blocked or deleted, and you cannot change your own role."
+                },
+                {
+                  "title": "Nobody gives away more than they have",
+                  "text": "A role or an extra permission cannot be assigned if the target account would gain a permission you do not have yourself. The sysadmin is the exception."
+                },
+                {
+                  "title": "One e-mail, one account",
+                  "text": "Two accounts with the same e-mail cannot exist, including accounts in the trash."
+                },
+                {
+                  "title": "Everything is recorded",
+                  "text": "Creations, edits, password changes, blocks, deletions, restores, and refused attempts are stored in the system records, including who performed the action."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-18",
+          "heading": "18. What to Do When...",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "A new user did not receive the activation e-mail",
+                  "text": "Have the spam folder checked, verify the e-mail in the account is correct, and resend the activation (chapter 06)."
+                },
+                {
+                  "title": "The activation link does not work",
+                  "text": "The link has expired or has already been used. Resend the activation and tell the user to use the newest e-mail."
+                },
+                {
+                  "title": "A user forgot the password",
+                  "text": "Point them to the forgotten-password link on the sign-in page. Only if that is not possible, change the password yourself (chapter 11)."
+                },
+                {
+                  "title": "A user is not receiving the verification code",
+                  "text": "Have the spam folder checked and the code requested again after 60 seconds. If the verification is not forced, it can be turned off temporarily by editing the account."
+                },
+                {
+                  "title": "Suspected misuse of an account",
+                  "text": "Block the account immediately - the user is signed out everywhere. Then change the password, investigate the situation, and only then unblock the account."
+                },
+                {
+                  "title": "A user is leaving the company",
+                  "text": "Block the account or delete it to the trash on the day of departure. Once it is certain the account will not be needed again, delete it from the trash permanently."
+                },
+                {
+                  "title": "I cannot see a button or menu item",
+                  "text": "You lack the relevant permission (chapter 01), or the action makes no sense for the account - for example resending the activation for an activated account."
+                },
+                {
+                  "title": "A role is missing from the list",
+                  "text": "The role contains a permission you do not have yourself, so you may not assign it. Ask a sysadmin."
+                },
+                {
+                  "title": "The account cannot be created because of the domain",
+                  "text": "The e-mail does not belong to the allowed domains. Ask a sysadmin for a domain exception or an exception for the specific e-mail (chapter 16)."
+                },
+                {
+                  "title": "An account with this e-mail already exists",
+                  "text": "Look the account up with the e-mail filter among the active accounts. If it is not there, check the trash - either restore the account or delete it permanently."
+                },
+                {
+                  "title": "A field in the form cannot be changed",
+                  "text": "The field is locked by a rule: two-factor authentication on forced accounts, blocking on sysadmin accounts, permissions contained in the role."
+                },
+                {
+                  "title": "An error appeared that I do not understand",
+                  "text": "Try the action again. If the error persists, report it through the support form and describe what you were doing and with which account."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "blocks": [
+            {
+              "type": "note",
+              "highlight": true,
+              "content": "A final word: accounts contain personal data and open access to the whole administration. Create them only for people who really need them, assign the lowest role that is sufficient for the work, block or delete accounts that are no longer needed, and never share passwords or verification codes."
+            }
+          ]
+        }
+      ]
+    },
+    "core-logs": {
+      "navLabel": "System Logs",
+      "header": "Core - System Logs",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - overview of system audit logs."
+            }
+          ]
+        }
+      ]
+    },
+    "security-events": {
+      "navLabel": "Security Monitoring",
+      "header": "Security Monitoring",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - monitoring of suspicious activity, event triage, and retention period settings."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-dashboard": {
+      "navLabel": "Dashboard",
+      "header": "Shop - Dashboard",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - the overview page of the Shop admin module."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-products": {
+      "navLabel": "Products",
+      "header": "Product Management",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - management of the product catalog, variants, and images."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-categories": {
+      "navLabel": "Categories",
+      "header": "Category Management",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - hierarchical management of product categories."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-orders": {
+      "navLabel": "Orders",
+      "header": "Order Management",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - management of e-shop orders, statuses, and payments."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-customers": {
+      "navLabel": "Customers",
+      "header": "Customer Management",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - management of customer accounts and their order history."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-shipping-methods": {
+      "navLabel": "Shipping Methods",
+      "header": "Shipping Methods",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - management of available shipping methods."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-payment-methods": {
+      "navLabel": "Payment Methods",
+      "header": "Payment Methods",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - management of available payment methods."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-suppliers": {
+      "navLabel": "Suppliers",
+      "header": "Supplier Management",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - tracking of product suppliers."
+            }
+          ]
+        }
+      ]
+    },
+    "coupons": {
+      "navLabel": "Discount Coupons",
+      "header": "Discount Coupons",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - management of discount coupons and their conditions."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-logs": {
+      "navLabel": "Logs",
+      "header": "Shop - Logs",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - an audit log of actions performed in the Shop module."
+            }
+          ]
+        }
+      ]
+    },
+    "edit-eshop": {
+      "navLabel": "E-shop Settings",
+      "header": "Global E-shop Settings",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - global e-shop settings."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

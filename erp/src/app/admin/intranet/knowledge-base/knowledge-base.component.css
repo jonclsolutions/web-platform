@@ -40,7 +40,8 @@
 }
 
 .kb-top-bar {
-  height: 48px;
+  height: var(--header-h);      /* the same height as the admin header: 60 px + its 1 px border */
+  box-sizing: content-box;
   padding: 0 20px;
   display: flex;
   justify-content: space-between;
@@ -77,6 +78,13 @@
   transition: 0.3s;
 }
 
+.kb-logo {
+  display: block;
+  height: 32px;
+  max-width: 140px;
+  object-fit: contain;
+}
+
 .logo-square {
   background: var(--accent);
   color: var(--color-white);
@@ -97,11 +105,96 @@
   letter-spacing: 0.3px;
 }
 
-.exit-link {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  text-decoration: none;
+/*
+    @module: Header actions
+    @description: Home (back to the administration) and the admin language switcher, top right.
+    @usage: .kb-header-actions, .kb-home-link, .kb-lang-switcher, .kb-lang-button, .kb-lang-menu,
+      .kb-lang-option, .kb-lang-flag
+*/
+.kb-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+
+.kb-home-link,
+.kb-lang-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: var(--ff);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--ease), color var(--ease), border-color var(--ease);
+}
+.kb-lang-button { padding: 0 8px; }
+
+.kb-home-link:hover,
+.kb-lang-button:hover {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border-mid);
+}
+
+.kb-home-link:focus-visible,
+.kb-lang-button:focus-visible,
+.kb-lang-option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.kb-lang-switcher { position: relative; }
+
+.kb-lang-flag {
+  width: 16px;
+  height: 16px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.kb-lang-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10003;
+}
+
+.kb-lang-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 10004;
+  min-width: 160px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.kb-lang-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--ff);
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+.kb-lang-option:hover { background: var(--surface-2); }
+.kb-lang-option.active { background: var(--color-zinc-100); font-weight: 600; }
 
 .kb-container {
   display: flex;
@@ -175,6 +268,7 @@
 }
 
 @media (max-width: 768px) {
+  .kb-home-label { display: none; }
   .menu-toggle { display: flex; }
 
   .menu-open .menu-toggle .bar:nth-child(1) { transform: translateY(6px) rotate(45deg); }

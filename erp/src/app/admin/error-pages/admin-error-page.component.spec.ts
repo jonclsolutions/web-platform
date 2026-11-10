@@ -130,12 +130,13 @@ describe('AdminErrorPageComponent', () => {
 });
 
 describe('admin routes - error pages', () => {
-  const layoutChildren = ADMIN_ROUTES[0].children!;
+  const layout = ADMIN_ROUTES.find(route => route.path === '')!;
+  const layoutChildren = layout.children!;
 
   /**
    * @description The 403 and 404 routes are the last children of the admin layout (inside the
    *   layout and its guards); the 404 is the very last one.
-   * @input ADMIN_ROUTES[0].children.
+   * @input children of the admin layout route.
    * @output second-to-last: 'forbidden' (kind forbidden); last: '**' (kind not-found); both
    *   AdminErrorPageComponent without a permission.
    */
@@ -145,7 +146,20 @@ describe('admin routes - error pages', () => {
     expect([notFound.path, notFound.data?.['adminErrorPage'], notFound.component]).toEqual(['**', 'not-found', AdminErrorPageComponent]);
     expect(forbidden.data?.['permission']).toBeUndefined();
     expect(notFound.data?.['permission']).toBeUndefined();
+    expect(layout.canActivate?.length).toBe(1);
+    expect(layout.canActivateChild?.length).toBe(1);
+  });
+
+  /**
+   * @description The internal manual has its own layout and must come BEFORE the admin layout,
+   *   otherwise the layout's '**' (404) catches /admin/intranet/knowledge-base (the "?" icon of
+   *   the header opened the 404 page).
+   * @input ADMIN_ROUTES.
+   * @output 'intranet' first, the layout ('') after it; the manual guarded too.
+   */
+  it('matches the knowledge base before the 404 of the admin layout', () => {
+    expect(ADMIN_ROUTES.map(route => route.path)).toEqual(['intranet', '']);
     expect(ADMIN_ROUTES[0].canActivate?.length).toBe(1);
-    expect(ADMIN_ROUTES[0].canActivateChild?.length).toBe(1);
+    expect(ADMIN_ROUTES[0].children![0].path).toBe('knowledge-base');
   });
 });

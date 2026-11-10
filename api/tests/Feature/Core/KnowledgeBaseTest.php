@@ -1,0 +1,151 @@
+<?php
+
+/**
+ * @file KnowledgeBaseTest.php
+ * @path api/tests/Feature/Core/KnowledgeBaseTest.php
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
+ * @description Feature tests of the internal manual (Knowledge Base): the JSON files are
+ *   consistent (every page in every language, known permission keys, valid blocks) and every
+ *   user gets only the pages / sections of the permissions they hold; languages and fallback.
+ * @dependencies
+ * - Tests\TestCase (InteractsWithAccounts); resources/knowledge-base/*.json (the real content).
+ */
+
+namespace Tests\Feature\Core;
+
+use App\Support\KnowledgeBase\KnowledgeBase;
+use Tests\TestCase;
+
+/**
+ * @description /api/knowledge-base, /api/knowledge-base/pages/{id}.
+ */
+class KnowledgeBaseTest extends TestCase
+{
+    /** @var string[] Block types the frontend renders (KbArticleComponent). */
+    private const BLOCK_TYPES = ['text', 'lead', 'alert', 'image', 'link', 'list', 'grid', 'flow', 'note'];
+
+    /**
+     * @description Decodes one file of the manual.
+     * @param string $name File name without .json.
+     * @return array<string, mixed>
+     */
+    private function file(string $name): array
+    {
+        return json_decode((string) file_get_contents(resource_path(KnowledgeBase::DIRECTORY . "/{$name}.json")), true, 64, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * @description The files fit together: unique page ids, every page with texts in every language,
+     *   the section keys of structure.json exist in every language, permissions are seeded keys (or
+     *   'sysadmin'), every text is a plain string and every block type is known.
+     * @input structure.json, cz.json, en.json, database/seeders/data/permissions.php.
+     * @output No inconsistency.
+     */
+    public function test_content_files_are_consistent(): void
+    {
+        $structure = $this->file('structure')['pages'];
+        $ids = array_column($structure, 'id');
+        $this->assertSame($ids, array_unique($ids));
+        $known = array_column(require database_path('seeders/data/permissions.php'), 'permission_key');
+
+        $permissions = array_filter(array_merge(
+            array_column($structure, 'permission'),
+            ...array_map(fn ($p) => array_values($p['sections'] ?? []), $structure)
+        ));
+        foreach ($permissions as $expression) {
+            foreach (explode('|', $expression) as $key) {
+                $this->assertTrue($key === 'sysadmin' || in_array($key, $known, true), "Unknown permission '{$key}'.");
+            }
+        }
+
+        foreach (['cz', 'en'] as $lang) {
+            $pages = $this->file($lang)['pages'];
+            $this->assertEqualsCanonicalizing($ids, array_keys($pages), "{$lang}.json pages");
+            foreach ($structure as $page) {
+                $texts = $pages[$page['id']];
+                $this->assertIsString($texts['navLabel']);
+                $this->assertIsString($texts['header']);
+                $keys = array_column($texts['sections'], 'key');
+                foreach (array_keys($page['sections'] ?? []) as $key) {
+                    $this->assertContains($key, $keys, "{$lang}.json {$page['id']} section {$key}");
+                }
+                foreach ($texts['sections'] as $section) {
+                    foreach ($section['blocks'] as $block) {
+                        $this->assertContains($block['type'], self::BLOCK_TYPES);
+                    }
+                    array_walk_recursive($section, fn ($value) => $this->assertTrue(is_string($value) || is_bool($value), "{$lang}.json {$page['id']}: non-text value"));
+                }
+            }
+        }
+    }
+
+    /**
+     * @description Access follows the permissions: without any only the general pages; the page of
+     *   an admin section with its view permission, its editing chapters only with the matching
+     *   action; sysadmin-only chapters / pages for the sysadmin; the developer note is never sent;
+     *   a hidden page answers like a missing one.
+     * @input Guest; account without permissions; with core-administrators-view; + -update; sysadmin.
+     * @output 401; menu = pages without permission; administrators 404; then visible without the
+     *   create / update / delete / sysadmin chapters; -update adds chapter 06 and 09 only; sysadmin
+     *   every section and edit-roles; no devNote anywhere.
+     */
+    public function test_pages_follow_the_permissions(): void
+    {
+        $this->getJson('/api/knowledge-base')->assertStatus(401);
+        $structure = collect($this->file('structure')['pages']);
+        $sectionKeys = fn ($response) => array_column($response->json('data.sections'), 'key');
+
+        $this->signIn($this->userWith([]));
+        $menu = $this->getJson('/api/knowledge-base')->assertOk()->json('data');
+        $this->assertSame($structure->whereNull('permission')->pluck('id')->values()->all(), array_column($menu, 'id'));
+        $this->getJson('/api/knowledge-base/pages/administrators')->assertNotFound();
+        $this->getJson('/api/knowledge-base/pages/introductions')->assertOk()->assertJsonMissingPath('data.devNote');
+
+        $this->signIn($this->userWith(['core-administrators-view']));
+        $this->assertContains('administrators', array_column($this->getJson('/api/knowledge-base')->json('data'), 'id'));
+        $this->assertNotContains('security-events', array_column($this->getJson('/api/knowledge-base')->json('data'), 'id'));
+        $keys = $sectionKeys($this->getJson('/api/knowledge-base/pages/administrators')->assertOk());
+        $this->assertContains('chapter-01', $keys);
+        foreach (['chapter-04', 'chapter-06', 'chapter-09', 'chapter-10', 'chapter-15', 'chapter-16'] as $hidden) {
+            $this->assertNotContains($hidden, $keys);
+        }
+
+        $this->signIn($this->userWith(['core-administrators-view', 'core-administrators-update']));
+        $keys = $sectionKeys($this->getJson('/api/knowledge-base/pages/administrators'));
+        $this->assertContains('chapter-06', $keys);
+        $this->assertContains('chapter-09', $keys);
+        $this->assertNotContains('chapter-10', $keys);
+        $this->assertNotContains('chapter-04', $keys);
+        $this->getJson('/api/knowledge-base/pages/edit-roles')->assertNotFound();
+
+        $this->signIn($this->sysadmin());
+        $this->assertCount($structure->count(), $this->getJson('/api/knowledge-base')->json('data'));
+        $this->assertCount(count($this->file('cz')['pages']['administrators']['sections']), $this->getJson('/api/knowledge-base/pages/administrators')->json('data.sections'));
+        $this->getJson('/api/knowledge-base/pages/edit-roles')->assertOk();
+        $this->assertStringNotContainsString('devNote', $this->getJson('/api/knowledge-base/pages/administrators')->getContent());
+    }
+
+    /**
+     * @description Languages: the requested one; an unknown one falls back to English; an invalid
+     *   code is Czech; an unknown or malformed page id is 404.
+     * @input sysadmin; lang en / xx / '../x'; page 'nope' and 'Bad_Id'.
+     * @output en header 'User Account Management'; xx the same; invalid code the Czech header;
+     *   404, 404.
+     */
+    public function test_languages_and_unknown_pages(): void
+    {
+        $this->signIn($this->sysadmin());
+        $en = $this->file('en')['pages']['administrators']['header'];
+        $cz = $this->file('cz')['pages']['administrators']['header'];
+
+        $this->getJson('/api/knowledge-base/pages/administrators?lang=en')->assertJsonPath('data.header', $en);
+        $this->getJson('/api/knowledge-base/pages/administrators?lang=xx')->assertJsonPath('data.header', $en);
+        $this->getJson('/api/knowledge-base/pages/administrators?lang=../x')->assertJsonPath('data.header', $cz);
+        $this->assertSame($this->file('en')['pages']['introductions']['navLabel'],
+            collect($this->getJson('/api/knowledge-base?lang=en')->json('data'))->firstWhere('id', 'introductions')['label']);
+        $this->getJson('/api/knowledge-base/pages/nope')->assertNotFound();
+        $this->getJson('/api/knowledge-base/pages/Bad_Id')->assertNotFound();
+    }
+}

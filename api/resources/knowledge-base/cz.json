@@ -1,0 +1,1463 @@
+{
+  "pages": {
+    "introductions": {
+      "navLabel": "Introductions",
+      "header": "Vítejte u zrodu RPSoftware",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - sem patří úvod"
+            }
+          ]
+        }
+      ]
+    },
+    "security": {
+      "navLabel": "Přístup",
+      "header": "Přístupové údaje a bezpečnost",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - sem patří vysvětlení přihlašování, 2FA a politiky hesel."
+            }
+          ]
+        }
+      ]
+    },
+    "contacts": {
+      "navLabel": "Kontakty",
+      "header": "Kontakty na tým",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - sem patří seznam kontaktů na klíčové lidi v týmu."
+            }
+          ]
+        }
+      ]
+    },
+    "web-dashboard": {
+      "navLabel": "Dashboard",
+      "header": "Web - Dashboard",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - přehledová stránka webového modulu administrace."
+            }
+          ]
+        }
+      ]
+    },
+    "user-request": {
+      "navLabel": "Webový formulář",
+      "header": "Webový formulář (poptávky)",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa poptávek odeslaných z veřejného webového formuláře."
+            }
+          ]
+        }
+      ]
+    },
+    "web-business-logs": {
+      "navLabel": "Business logy",
+      "header": "Web - Business logy",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - auditní log akcí provedených ve webovém modulu."
+            }
+          ]
+        }
+      ]
+    },
+    "sales-leads": {
+      "navLabel": "Obchodní leady",
+      "header": "Obchodní leady",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - evidence a generování odkazů pro obchodní leady."
+            }
+          ]
+        }
+      ]
+    },
+    "edit-news": {
+      "navLabel": "Novinky (web)",
+      "header": "Správa novinek na webu",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - editace novinek zobrazovaných na veřejném webu."
+            }
+          ]
+        }
+      ]
+    },
+    "edit-website": {
+      "navLabel": "Editace webu",
+      "header": "Editace obsahu webu",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - editace obsahových částí veřejného webu."
+            }
+          ]
+        }
+      ]
+    },
+    "sales-orders": {
+      "navLabel": "Přijaté objednávky",
+      "header": "Přijaté objednávky (realizace)",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - přehled přijatých objednávek/realizací a jejich zpracování."
+            }
+          ]
+        }
+      ]
+    },
+    "support-tickets": {
+      "navLabel": "Helpdesk tickety",
+      "header": "Helpdesk tickety",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa helpdesk ticketů přijatých od uživatelů."
+            }
+          ]
+        }
+      ]
+    },
+    "job-applications": {
+      "navLabel": "Pracovní nabídky",
+      "header": "Pracovní formulář (uchazeči)",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - přehled odeslaných žádostí z pracovního formuláře."
+            }
+          ]
+        }
+      ]
+    },
+    "projects": {
+      "navLabel": "Projekty",
+      "header": "Projekty a zákaznická vlákna",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa zákaznických projektů, checkpointů a komunikace."
+            }
+          ]
+        }
+      ]
+    },
+    "core-dashboard": {
+      "navLabel": "Dashboard",
+      "header": "Core - Dashboard",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - přehledová stránka systémového (core) modulu."
+            }
+          ]
+        }
+      ]
+    },
+    "welcome-page": {
+      "navLabel": "Uvítací stránka",
+      "header": "Uvítací stránka",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - úvodní stránka po přihlášení do administrace."
+            }
+          ]
+        }
+      ]
+    },
+    "edit-legal": {
+      "navLabel": "Právní dokumenty",
+      "header": "Editace právních dokumentů (GDPR, TOS...)",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - editace vícejazyčného obsahu právních dokumentů (GDPR, obchodní podmínky, cookies)."
+            }
+          ]
+        }
+      ]
+    },
+    "personal-info": {
+      "navLabel": "Osobní údaje",
+      "header": "Osobní údaje a zabezpečení účtu",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa vlastního profilu, hesla a dvoufaktorového ověření."
+            }
+          ]
+        }
+      ]
+    },
+    "web-settings": {
+      "navLabel": "Nastavení webu",
+      "header": "Globální nastavení webu",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - firemní údaje, logo a sociální sítě zobrazované na webu."
+            }
+          ]
+        }
+      ]
+    },
+    "external-links": {
+      "navLabel": "Externí odkazy",
+      "header": "Externí odkazy (rychlé odkazy adminu)",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - osobní seznam rychlých odkazů na externí nástroje, viditelný jen tobě."
+            }
+          ]
+        }
+      ]
+    },
+    "edit-roles": {
+      "navLabel": "Role a oprávnění",
+      "header": "Správa rolí a oprávnění",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa rolí a jejich oprávnění. Přístupné výhradně sysadminovi."
+            }
+          ]
+        }
+      ]
+    },
+    "administrators": {
+      "navLabel": "Administrátoři",
+      "header": "Správa uživatelských účtů",
+      "sections": [
+        {
+          "key": "intro",
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Na této stránce spravujete účty všech lidí, kteří se přihlašují do administrace: zakládáte nové účty, přidělujete role a oprávnění, řešíte hesla, dvoufázové ověření, blokace i mazání. Tento návod vás provede každou funkcí krok za krokem - od založení účtu až po jeho trvalé odstranění."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Nejdůležitější pravidlo: heslo nového účtu nikdy nezadává ani nezná administrátor. Účet se zakládá bez hesla a uživatel si ho nastaví sám přes odkaz v aktivačním e-mailu."
+            }
+          ]
+        },
+        {
+          "key": "chapter-01",
+          "heading": "01. Kdo stránku vidí a co na ní smí",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Co na stránce uvidíte, záleží na vašich oprávněních. Tlačítka a položky, ke kterým oprávnění nemáte, se vůbec nezobrazí - nejde o chybu. Pokud vám některá funkce z tohoto návodu chybí, požádejte o doplnění oprávnění administrátora, který spravuje váš účet."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení stránky",
+                  "text": "Oprávnění core-administrators-view. Vidíte tabulku účtů, detail účtu, filtry, export dat a reporty."
+                },
+                {
+                  "title": "Zakládání účtů",
+                  "text": "Oprávnění core-administrators-create. V nabídce akcí přibude položka pro vytvoření nového záznamu."
+                },
+                {
+                  "title": "Úpravy účtů",
+                  "text": "Oprávnění core-administrators-update. V řádku účtu přibudou akce pro úpravu, změnu hesla a opětovné odeslání aktivace."
+                },
+                {
+                  "title": "Mazání účtů",
+                  "text": "Oprávnění core-administrators-delete. V řádku účtu přibude akce pro smazání a v koši možnost trvalého smazání."
+                },
+                {
+                  "title": "Koš",
+                  "text": "Oprávnění view-deleted. V nabídce akcí přibude přepnutí mezi aktivními účty a košem."
+                },
+                {
+                  "title": "Role sysadmin",
+                  "text": "Jen sysadmin vidí nastavení povolených e-mailových domén, smí vynutit dvoufázové ověření u konkrétního účtu a smí pracovat s účty, které mají roli sysadmin."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-02",
+          "heading": "02. Orientace na stránce",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Nabídka akcí",
+                  "text": "Rozbalovací nabídka nad tabulkou. Obsahuje zobrazení a skrytí filtrů, vytvoření záznamu, export dat, e-mailové domény (jen sysadmin), reporty a přepnutí mezi aktivními účty a košem."
+                },
+                {
+                  "title": "Tabulka účtů",
+                  "text": "Každý řádek je jeden účet. Sloupce: ID, jméno, e-mail, role, zda je účet blokovaný a datum posledního přihlášení."
+                },
+                {
+                  "title": "Akce v řádku",
+                  "text": "Ikony na konci řádku: lupa (detail), úprava, klíč (změna hesla), obálka (opětovné odeslání aktivace - jen u neaktivovaných účtů) a smazání."
+                },
+                {
+                  "title": "Panel filtrů",
+                  "text": "Boční panel, který se otevírá z nabídky akcí. Slouží k hledání a řazení účtů - viz kapitola 13."
+                },
+                {
+                  "title": "Stránkování",
+                  "text": "Pod tabulkou přepínáte stránky a volíte počet záznamů na stránku. Koš má vlastní, nezávislé stránkování."
+                },
+                {
+                  "title": "Aktualizace dat",
+                  "text": "U tabulky vidíte čas poslední aktualizace a tlačítko pro okamžité obnovení. Data se navíc sama obnovují přibližně každých 15 minut, pokud máte kartu prohlížeče otevřenou a aktivní. Tlačítko pro aktualizaci všeho v hlavičce administrace obnoví všechny tabulky najednou."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Nadpis nad tabulkou vždy ukazuje, zda se díváte na aktivní účty, nebo na koš. Hromadné mazání více účtů najednou je na této stránce záměrně vypnuté - účty se mažou vždy po jednom."
+            }
+          ]
+        },
+        {
+          "key": "chapter-03",
+          "heading": "03. Životní cyklus účtu",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Každý účet prochází několika stavy. Když víte, ve kterém stavu účet je, víte i to, kterou akci použít."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Založený, čeká na aktivaci",
+                  "text": "Účet existuje, ale nemá heslo. Uživatel se nemůže přihlásit, dokud přes odkaz v aktivačním e-mailu nenastaví heslo. V řádku účtu je dostupná akce pro opětovné odeslání aktivace.",
+                  "active": true
+                },
+                {
+                  "label": "Aktivní",
+                  "text": "Uživatel si nastavil heslo a může se přihlašovat. Akce pro odeslání aktivace z řádku zmizí."
+                },
+                {
+                  "label": "Blokovaný",
+                  "text": "Volitelný a vratný stav. Uživatel je okamžitě odhlášen a nemůže se přihlásit, dokud blokaci nezrušíte. Účet zůstává v tabulce."
+                },
+                {
+                  "label": "V koši",
+                  "text": "Smazaný účet se přesune do koše. Uživatel se nepřihlásí, ale účet lze obnovit se vším nastavením."
+                },
+                {
+                  "label": "Trvale smazaný",
+                  "text": "Účet je odstraněn z koše natrvalo. Tento krok nelze vrátit."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-04",
+          "heading": "04. Založení nového účtu krok za krokem",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Připravte si údaje",
+                  "text": "Ověřte si přesnou e-mailovou adresu nového uživatele - přijde na ni aktivační odkaz a zároveň slouží jako přihlašovací jméno. Rozmyslete si, jakou roli má uživatel dostat. Pokud systém omezuje e-mailové domény (kapitola 16), musí adresa patřit pod povolenou doménu, jinak účet nepůjde založit."
+                },
+                {
+                  "label": "2. Otevřete formulář",
+                  "text": "V nabídce akcí nad tabulkou zvolte položku pro vytvoření záznamu. Položka je vidět jen v zobrazení aktivních účtů (ne v koši) a jen pokud máte oprávnění zakládat účty."
+                },
+                {
+                  "label": "3. Přečtěte si upozornění",
+                  "text": "Nad formulářem se zobrazí informační pruh, který připomíná, že účet vzniká bez hesla. Heslo do formuláře nezadáváte - žádné pole pro něj ve formuláři není."
+                },
+                {
+                  "label": "4. Přihlašovací e-mail (povinné)",
+                  "text": "Zadejte e-mail ve správném tvaru. Každý e-mail může mít jen jeden účet - pokud už účet s touto adresou existuje (i kdyby ležel v koši), systém uložení odmítne."
+                },
+                {
+                  "label": "5. Celé jméno (povinné)",
+                  "text": "Jméno a příjmení uživatele. Zobrazuje se v tabulce, v detailu účtu a v oslovení v e-mailech."
+                },
+                {
+                  "label": "6. Role (povinné)",
+                  "text": "Vyberte roli ze seznamu. Role určuje základní sadu oprávnění. V seznamu vidíte jen role, které smíte přidělit - tedy ty, jejichž všechna oprávnění sami máte. Roli sysadmin může přidělit pouze sysadmin."
+                },
+                {
+                  "label": "7. Oprávnění navíc (nepovinné)",
+                  "text": "Po výběru role se v seznamu oprávnění automaticky zaškrtnou a uzamknou ta, která role už obsahuje. Zaškrtnutím dalších dáte uživateli něco navíc nad rámec role. Roli vybírejte vždy jako první - při každé změně role se výběr oprávnění vrátí do výchozího stavu nové role."
+                },
+                {
+                  "label": "8. Dvoufázové ověření (nepovinné)",
+                  "text": "Zaškrtnutím zapnete uživateli ověřování kódem z e-mailu při každém přihlášení. U rolí, které dvoufázové ověření vyžadují (vždy sysadmin, případně další role podle jejich nastavení), je pole uzamčené a ověření bude u účtu zapnuté vždy - vypnout ho nejde."
+                },
+                {
+                  "label": "9. Interní poznámka (nepovinné)",
+                  "text": "Volný text pro potřeby správců, například pracovní pozice nebo důvod založení účtu. Je vidět v detailu účtu. Nezapisujte do ní citlivé osobní údaje."
+                },
+                {
+                  "label": "10. Uložte",
+                  "text": "Potvrďte formulář. Zobrazí se potvrzení o vytvoření účtu, formulář se zavře a nový účet se objeví v tabulce."
+                },
+                {
+                  "label": "11. Co se stane potom",
+                  "text": "Systém ihned odešle uživateli aktivační e-mail. Účet je založený, ale zatím neaktivní: není blokovaný, jen nemá heslo. Dejte uživateli vědět, ať zkontroluje poštu včetně složky s nevyžádanou poštou."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Blokaci účtu a vynucení dvoufázového ověření pro konkrétní účet při zakládání nenastavíte - tato pole jsou dostupná až při úpravě existujícího účtu (kapitola 09)."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Pokud uložení skončí hláškou o nepovolené e-mailové doméně, adresa nespadá pod povolené domény. Požádejte sysadmina o přidání výjimky a účet poté založte znovu."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Pokud uložení skončí hláškou, že nemůžete přidělit roli s oprávněními, která sami nemáte, vyberte jinou roli nebo požádejte o založení účtu sysadmina."
+            }
+          ]
+        },
+        {
+          "key": "chapter-05",
+          "heading": "05. Aktivace účtu - co udělá nový uživatel",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Tuto kapitolu můžete novému uživateli přeposlat nebo ho podle ní provést. Aktivační e-mail i aktivační stránka jsou v angličtině, proto jsou názvy tlačítek uvedeny anglicky."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Otevření e-mailu",
+                  "text": "E-mail uživatele osloví jménem, oznámí, že mu byl vytvořen účet, a obsahuje tlačítko „Set password and activate“. Pokud tlačítko nefunguje, je pod ním stejný odkaz k ručnímu zkopírování do prohlížeče."
+                },
+                {
+                  "label": "2. Platnost odkazu",
+                  "text": "Odkaz platí omezenou dobu (počet hodin je uveden přímo v e-mailu) a lze ho použít jen jednou."
+                },
+                {
+                  "label": "3. Ověření odkazu",
+                  "text": "Po kliknutí stránka krátce ověřuje odkaz. Je-li v pořádku, objeví se formulář „Set your password“ a pod nadpisem e-mail účtu, pro který se heslo nastavuje."
+                },
+                {
+                  "label": "4. Nastavení hesla",
+                  "text": "Uživatel zadá nové heslo a pro kontrolu ho zopakuje. Pod prvním polem se průběžně odškrtávají splněné požadavky na heslo. Ikonou oka si může heslo zobrazit nebo skrýt. Pokud se obě hesla neshodují, stránka na to upozorní a formulář nejde odeslat."
+                },
+                {
+                  "label": "5. Odeslání",
+                  "text": "Tlačítkem „Set password and activate account“ uživatel aktivaci dokončí. Pokud heslo nesplňuje požadavky, stránka zobrazí důvod a heslo je potřeba upravit."
+                },
+                {
+                  "label": "6. Hotovo",
+                  "text": "Zobrazí se „Account activated“ a stránka uživatele po několika sekundách sama přesměruje na přihlášení (nebo lze kliknout na „Go to sign in now“). Uživatel není přihlášen automaticky - přihlásí se svým e-mailem a právě nastaveným heslem."
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Délka hesla",
+                  "text": "8 až 16 znaků."
+                },
+                {
+                  "title": "Písmeno",
+                  "text": "Heslo musí obsahovat alespoň jedno písmeno."
+                },
+                {
+                  "title": "Číslice",
+                  "text": "Heslo musí obsahovat alespoň jednu číslici."
+                },
+                {
+                  "title": "Speciální znak",
+                  "text": "Heslo musí obsahovat alespoň jeden speciální znak (například vykřičník nebo pomlčku)."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Když odkaz vypršel, už byl použit nebo je poškozený, stránka oznámí, že odkaz nelze použít. Uživatel si nový odkaz sám vyžádat nemůže - musí požádat administrátora, který mu aktivaci pošle znovu (kapitola 06)."
+            },
+            {
+              "type": "note",
+              "content": "Pokud někdo aktivační e-mail dostal a žádný účet nečekal, může zprávu bez obav ignorovat - bez kliknutí na odkaz a nastavení hesla se k účtu nikdo nepřihlásí."
+            }
+          ]
+        },
+        {
+          "key": "chapter-06",
+          "heading": "06. Opětovné odeslání aktivačního e-mailu",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Akce s ikonou obálky v řádku účtu. Je vidět jen u účtů, které ještě nebyly aktivovány, a jen pokud máte oprávnění upravovat účty."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "E-mail nedorazil",
+                  "text": "Nejprve nechte uživatele zkontrolovat nevyžádanou poštu. Pak ověřte, že je e-mail v účtu napsaný správně, a aktivaci odešlete znovu."
+                },
+                {
+                  "title": "Odkaz vypršel",
+                  "text": "Uživatel nestihl heslo nastavit v době platnosti odkazu. Odešlete aktivaci znovu."
+                },
+                {
+                  "title": "Odkaz nejde použít",
+                  "text": "Odkaz byl už jednou otevřen a použit, nebo se při kopírování poškodil. Odešlete aktivaci znovu."
+                },
+                {
+                  "title": "Opravili jste e-mail",
+                  "text": "Pokud byl účet založen s překlepem v adrese, nejprve e-mail opravte v úpravě účtu a potom odešlete aktivaci znovu - přijde už na správnou adresu."
+                }
+              ]
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Najděte účet",
+                  "text": "Vyhledejte účet v tabulce, případně pomocí filtru podle jména nebo e-mailu."
+                },
+                {
+                  "label": "2. Klikněte na obálku",
+                  "text": "V řádku účtu klikněte na akci pro odeslání aktivace."
+                },
+                {
+                  "label": "3. Potvrzení",
+                  "text": "Systém potvrdí, že byl aktivační e-mail odeslán znovu."
+                },
+                {
+                  "label": "4. Starý odkaz přestává platit",
+                  "text": "Uživatel musí použít odkaz z nejnovějšího e-mailu. Všechny dříve zaslané aktivační odkazy jsou od této chvíle neplatné."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "U účtu, který už aktivovaný je, systém pouze oznámí, že účet je aktivní, a nic neodešle. Zapomenuté heslo aktivovaného účtu řeší kapitola 11. Pokud se e-mail nepodaří odeslat, zobrazí se chyba - zkuste to později, a pokud potíž trvá, kontaktujte sysadmina."
+            }
+          ]
+        },
+        {
+          "key": "chapter-07",
+          "heading": "07. Role a oprávnění navíc",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Každý účet má právě jednu roli. Role je pojmenovaná sada oprávnění a určuje, co uživatel v administraci vidí a smí dělat. K roli lze jednotlivému účtu přidat oprávnění navíc - hodí se, když jeden člověk potřebuje výjimečně něco, co jeho role neobsahuje. Role samotné se na této stránce nevytvářejí ani neupravují, zde je pouze přidělujete."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Které role mohu přidělit",
+                  "text": "Jen role, jejichž všechna oprávnění sami máte. Roli, která by někomu dala víc, než máte vy, v seznamu neuvidíte (při úpravě účtu se navíc zobrazí jeho současná role). Sysadmin může přidělit jakoukoli roli."
+                },
+                {
+                  "title": "Role sysadmin",
+                  "text": "Přidělit ji novému účtu, povýšit na ni existující účet nebo upravit účet, který ji má, smí pouze sysadmin."
+                },
+                {
+                  "title": "Která oprávnění navíc mohu dát",
+                  "text": "Přidat nebo odebrat smíte jen oprávnění, která sami máte. Pokud zaškrtnete oprávnění mimo svůj dosah, neuloží se. Oprávnění, která účtu dříve přidělil někdo s širšími právy a vy je nemáte, zůstanou beze změny."
+                },
+                {
+                  "title": "Zaškrtnutá a uzamčená oprávnění",
+                  "text": "Jsou to oprávnění, která obsahuje role. Jednotlivě je odebrat nelze - změní se jen změnou role."
+                },
+                {
+                  "title": "Vlastní účet",
+                  "text": "Vlastní roli si změnit nemůžete. Potřebujete-li jinou roli, požádejte jiného oprávněného administrátora."
+                }
+              ]
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Otevřete úpravu účtu",
+                  "text": "V řádku účtu klikněte na akci úpravy."
+                },
+                {
+                  "label": "2. Vyberte novou roli",
+                  "text": "Seznam oprávnění se okamžitě přepočítá: dříve vybraná oprávnění navíc se zruší a zaškrtnutá zůstanou jen oprávnění nové role."
+                },
+                {
+                  "label": "3. Uložte",
+                  "text": "Systém zobrazí oznámení, že se změnou role byla všechna oprávnění navíc vynulována, a potvrdí aktualizaci účtu."
+                },
+                {
+                  "label": "4. Případně přidejte oprávnění navíc",
+                  "text": "Potřebuje-li uživatel i v nové roli něco navíc, otevřete úpravu účtu znovu, oprávnění zaškrtněte a uložte. V jednom kroku se změnou role to nejde."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Změna role vždy smaže všechna oprávnění navíc. Je to záměr - uživatel si do nové role nepřenáší výjimky z té staré."
+            }
+          ]
+        },
+        {
+          "key": "chapter-08",
+          "heading": "08. Dvoufázové ověření (2FA)",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Dvoufázové ověření přidává k heslu druhý krok: po zadání e-mailu a hesla přijde uživateli na e-mail jednorázový kód, bez kterého se nepřihlásí. I kdyby někdo heslo uhodl nebo ukradl, bez přístupu k e-mailové schránce se do účtu nedostane."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Dobrovolné",
+                  "text": "Zaškrtávací pole pro dvoufázové ověření ve formuláři účtu lze zapnout i vypnout. Platí pro účty, u kterých ověření není vynucené."
+                },
+                {
+                  "title": "Vynucené rolí",
+                  "text": "Role sysadmin ho má zapnuté vždy. Vyžadovat ho mohou i další role, pokud je tak nastavil sysadmin. Pole je pak uzamčené, ověření je u účtu vždy zapnuté a vypnout ho nelze."
+                },
+                {
+                  "title": "Vynucené pro konkrétní účet",
+                  "text": "Sysadmin může při úpravě účtu, jehož role ověření nevyžaduje, zaškrtnout pole pro vynucení. Účet má pak ověření trvale zapnuté a vypnout ho smí zase jen sysadmin. Toto pole vidí pouze sysadmin, jen při úpravě (ne při zakládání) a jen u rolí, které ověření samy nevynucují."
+                }
+              ]
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. E-mail a heslo",
+                  "text": "Uživatel se na přihlašovací stránce přihlásí e-mailem a heslem jako obvykle."
+                },
+                {
+                  "label": "2. Kód přijde e-mailem",
+                  "text": "Na e-mail účtu dorazí zpráva se šestimístným ověřovacím kódem."
+                },
+                {
+                  "label": "3. Zadání kódu",
+                  "text": "Přihlašovací stránka zobrazí pole pro kód a odpočet, jak dlouho kód ještě platí. Po zadání všech šesti číslic uživatel přihlášení potvrdí."
+                },
+                {
+                  "label": "4. Kód nepřišel nebo vypršel",
+                  "text": "Tlačítkem pro opětovné odeslání si uživatel vyžádá nový kód. Tlačítko je aktivní až po 60 sekundách od posledního odeslání - do té doby u něj běží odpočet."
+                },
+                {
+                  "label": "5. Návrat zpět",
+                  "text": "Tlačítkem zpět se uživatel vrátí k zadání e-mailu a hesla, například když se přihlašoval k nesprávnému účtu."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Ověřovací kód nikdy nikomu nesdělujte. Pokud uživateli přijde kód, aniž by se sám přihlašoval, někdo zná jeho heslo - má si ho ihned změnit."
+            },
+            {
+              "type": "note",
+              "content": "Po několika neúspěšných pokusech o přihlášení může přihlašovací stránka navíc vyžadovat ověření, že se nepřihlašuje robot. Jde o běžnou ochranu, po úspěšném ověření se přihlášení dokončí normálně."
+            }
+          ]
+        },
+        {
+          "key": "chapter-09",
+          "heading": "09. Úprava existujícího účtu",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Otevřete úpravu",
+                  "text": "V řádku účtu klikněte na akci úpravy. Akce je vidět jen s oprávněním upravovat účty."
+                },
+                {
+                  "label": "2. Zkontrolujte předvyplněné údaje",
+                  "text": "Formulář se otevře s aktuálními údaji účtu. V seznamu oprávnění jsou zaškrtnutá oprávnění z role (uzamčená) i oprávnění navíc (lze je měnit)."
+                },
+                {
+                  "label": "3. Upravte, co potřebujete",
+                  "text": "Měnit lze jen pole, která nejsou uzamčená. Význam jednotlivých polí je popsán níže."
+                },
+                {
+                  "label": "4. Uložte",
+                  "text": "Po uložení se zobrazí potvrzení o aktualizaci účtu, formulář se zavře a tabulka se obnoví. Tlačítkem pro zrušení formulář zavřete beze změn."
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "E-mail",
+                  "text": "Změna přihlašovacího e-mailu. Adresa musí být jedinečná. Omezení povolených domén se při úpravě nekontroluje, platí jen pro zakládání účtů."
+                },
+                {
+                  "title": "Celé jméno",
+                  "text": "Oprava nebo změna jména uživatele."
+                },
+                {
+                  "title": "Role a oprávnění navíc",
+                  "text": "Viz kapitola 07. Pamatujte, že změna role smaže oprávnění navíc."
+                },
+                {
+                  "title": "Dvoufázové ověření",
+                  "text": "Viz kapitola 08. U účtů s vynuceným ověřením je pole uzamčené."
+                },
+                {
+                  "title": "Vynucení dvoufázového ověření",
+                  "text": "Pole vidí jen sysadmin a jen u účtů, jejichž role ověření sama nevynucuje."
+                },
+                {
+                  "title": "Blokace",
+                  "text": "Viz kapitola 10. U účtů s rolí sysadmin je pole uzamčené."
+                },
+                {
+                  "title": "Interní poznámka",
+                  "text": "Volný text pro správce, viditelný v detailu účtu."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Účet s rolí sysadmin smí upravovat pouze sysadmin. Ostatním systém úpravu odmítne a pokus zaznamená."
+            }
+          ]
+        },
+        {
+          "key": "chapter-10",
+          "heading": "10. Blokace a odblokování účtu",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Blokace je rychlý a vratný způsob, jak někomu okamžitě zabránit v přístupu, aniž byste účet mazali. Účet zůstává v tabulce se vším nastavením."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Kdy blokovat",
+                  "text": "Při podezření na zneužití účtu nebo únik hesla, při dočasné nepřítomnosti uživatele, nebo jako první krok při ukončení spolupráce, než se rozhodne o smazání."
+                },
+                {
+                  "title": "Co se stane",
+                  "text": "Uživatel je okamžitě odhlášen na všech zařízeních a nemůže se znovu přihlásit, dokud blokace trvá."
+                },
+                {
+                  "title": "Co zablokovat nejde",
+                  "text": "Vlastní účet zablokovat nemůžete. Účty s rolí sysadmin nelze zablokovat nikdy - pole je u nich uzamčené."
+                },
+                {
+                  "title": "Odblokování",
+                  "text": "V úpravě účtu zrušte zaškrtnutí blokace a uložte. Uživatel se pak přihlásí svým původním heslem."
+                }
+              ]
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Otevřete úpravu účtu",
+                  "text": "Blokace se nastavuje pouze v úpravě existujícího účtu, při zakládání ji nenajdete."
+                },
+                {
+                  "label": "2. Zaškrtněte blokaci",
+                  "text": "Zaškrtněte pole pro zablokování účtu."
+                },
+                {
+                  "label": "3. Uložte",
+                  "text": "Blokace platí okamžitě po uložení."
+                },
+                {
+                  "label": "4. Ověřte výsledek",
+                  "text": "Ve sloupci blokace v tabulce uvidíte, že je účet blokovaný. Všechny blokované účty zobrazíte filtrem podle blokace."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-11",
+          "heading": "11. Hesla - zapomenuté heslo a změna hesla",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Heslo lze řešit třemi cestami. Vyberte podle situace:"
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Uživatel zapomněl heslo",
+                  "text": "Uživatel si heslo obnoví sám z přihlašovací stránky. Je to doporučená cesta - nové heslo nezná nikdo jiný a administrátor nemusí nic dělat."
+                },
+                {
+                  "title": "Heslo musí změnit administrátor",
+                  "text": "Použijte, když se uživatel nedostane ke své e-mailové schránce, nebo když je třeba heslo změnit okamžitě (například při podezření na únik). Heslo změníte akcí s ikonou klíče."
+                },
+                {
+                  "title": "Účet nebyl nikdy aktivován",
+                  "text": "Takový účet ještě žádné heslo nemá. Neřešte ho změnou hesla - odešlete znovu aktivační e-mail (kapitola 06)."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Zapomenuté heslo - postup uživatele:"
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Odkaz na přihlašovací stránce",
+                  "text": "U pole pro heslo uživatel klikne na odkaz pro zapomenuté heslo. Otevře se malé okno."
+                },
+                {
+                  "label": "2. Zadání e-mailu",
+                  "text": "Uživatel zadá e-mail svého účtu a žádost odešle. Okno potvrdí odeslání a po chvíli se samo zavře."
+                },
+                {
+                  "label": "3. E-mail s odkazem",
+                  "text": "Do schránky přijde zpráva s tlačítkem „Reset your password“. Odkaz platí omezenou dobu (počet minut je uveden v e-mailu) a lze ho použít jen jednou. Pokud uživatel o obnovu nežádal, zprávu ignoruje - heslo zůstane beze změny."
+                },
+                {
+                  "label": "4. Nové heslo",
+                  "text": "Na stránce „Set a new password“ uživatel zadá nové heslo a zopakuje ho. Platí stejné požadavky jako při aktivaci: 8 až 16 znaků, písmeno, číslice a speciální znak. Tlačítko „Set new password“ je aktivní až ve chvíli, kdy heslo splňuje všechny požadavky a obě pole se shodují."
+                },
+                {
+                  "label": "5. Potvrzení",
+                  "text": "Stránka zobrazí „Password changed“ a po chvíli uživatele přesměruje na přihlášení."
+                },
+                {
+                  "label": "6. Neplatný odkaz",
+                  "text": "Pokud odkaz vypršel nebo už byl použit, stránka to oznámí po odeslání formuláře. Uživatel se vrátí na přihlašovací stránku a o obnovu požádá znovu."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Změna hesla administrátorem - postup:"
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Klikněte na klíč",
+                  "text": "V řádku účtu klikněte na akci s ikonou klíče. Akce je vidět jen s oprávněním upravovat účty."
+                },
+                {
+                  "label": "2. Zkontrolujte účet",
+                  "text": "V nadpisu formuláře je e-mail účtu, kterému heslo měníte. Ujistěte se, že jde o správný účet."
+                },
+                {
+                  "label": "3. Zadejte SVÉ aktuální heslo",
+                  "text": "První pole slouží k potvrzení, že změnu provádíte opravdu vy. Zadejte do něj své vlastní přihlašovací heslo - ne heslo uživatele, kterému heslo měníte."
+                },
+                {
+                  "label": "4. Zadejte nové heslo",
+                  "text": "Nové heslo zadejte a pro kontrolu zopakujte. Musí mít 8 až 16 znaků a obsahovat písmeno, číslici a speciální znak."
+                },
+                {
+                  "label": "5. Uložte",
+                  "text": "Systém potvrdí, že heslo bylo změněno. Pokud jste své heslo v prvním poli zadali špatně, změna se neprovede a zobrazí se chyba."
+                },
+                {
+                  "label": "6. Předejte heslo bezpečně",
+                  "text": "Nové heslo sdělte uživateli bezpečnou cestou (osobně nebo telefonicky, ne e-mailem) a požádejte ho, ať si ho co nejdříve změní na vlastní."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Po každé změně hesla dostane majitel účtu e-mailem oznámení s datem a časem změny. Pokud změnu neprovedl on ani administrátor na jeho žádost, má se ihned ozvat - účet v takovém případě zablokujte (kapitola 10) a heslo změňte. Při mnoha změnách hesla v krátké době může systém další oznámení dočasně neposílat."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Heslo účtu s rolí sysadmin smí změnit jen jeho majitel nebo jiný sysadmin."
+            }
+          ]
+        },
+        {
+          "key": "chapter-12",
+          "heading": "12. Detail účtu",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Akce s ikonou lupy v řádku otevře přehled všech údajů účtu. Detail je pouze ke čtení - nic v něm nelze změnit - a zavřete ho tlačítkem pro zavření."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Základní údaje",
+                  "text": "ID účtu, celé jméno a přihlašovací e-mail."
+                },
+                {
+                  "title": "Role a oprávnění navíc",
+                  "text": "Přidělená role a seznam oprávnění, která účet dostal nad rámec role."
+                },
+                {
+                  "title": "Stav účtu",
+                  "text": "Zda je účet blokovaný a datum aktivace. Prázdné datum aktivace znamená, že si uživatel ještě nenastavil heslo."
+                },
+                {
+                  "title": "Dvoufázové ověření",
+                  "text": "Zda je ověření u účtu zapnuté a zda ho pro tento účet vynutil sysadmin."
+                },
+                {
+                  "title": "Interní poznámka",
+                  "text": "Text, který k účtu zapsali správci."
+                },
+                {
+                  "title": "Data vytvoření a změny",
+                  "text": "Kdy byl účet založen a kdy byl naposledy upraven."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-13",
+          "heading": "13. Filtry, řazení a hledání",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Otevřete filtry",
+                  "text": "V nabídce akcí zvolte položku pro filtry. Vedle tabulky se otevře boční panel. Stejnou položkou (její název se změní na skrytí filtrů) panel zase zavřete."
+                },
+                {
+                  "label": "2. Zadejte podmínky",
+                  "text": "Filtrovat lze podle jména a e-mailu (stačí část textu), podle role (výběr ze seznamu) a podle toho, zda je účet blokovaný (ano nebo ne). Podmínky lze kombinovat."
+                },
+                {
+                  "label": "3. Zvolte řazení",
+                  "text": "V panelu vyberete sloupec, podle kterého se má tabulka seřadit, a směr řazení. Výchozí řazení je od nejnovějšího účtu."
+                },
+                {
+                  "label": "4. Použijte filtry",
+                  "text": "Po potvrzení se tabulka načte znovu jen s odpovídajícími účty. Filtry zůstávají platné i při přechodu na další stránku a při změně počtu záznamů na stránku."
+                },
+                {
+                  "label": "5. Zrušte filtry",
+                  "text": "Tlačítkem pro vymazání filtrů se vrátíte k úplnému seznamu ve výchozím řazení."
+                }
+              ]
+            },
+            {
+              "type": "note",
+              "content": "Tip: hledání nad tabulkou prohledává jméno a e-mail. Podle role nehledá - k tomu použijte filtr podle role."
+            }
+          ]
+        },
+        {
+          "key": "chapter-14",
+          "heading": "14. Export dat a reporty",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Export dat",
+                  "text": "Položka pro export v nabídce akcí stáhne tabulku aktivních účtů jako soubor CSV, který otevřete v tabulkovém programu. Role a oprávnění součástí exportu nejsou. Export je dostupný jen v zobrazení aktivních účtů, ne v koši."
+                },
+                {
+                  "title": "Zacházení s exportem",
+                  "text": "Soubor obsahuje osobní údaje (jména a e-maily). Ukládejte ho jen na místa určená pro pracovní data, neposílejte ho mimo firmu a po použití ho smažte."
+                },
+                {
+                  "title": "Reporty",
+                  "text": "Položka pro reporty otevře nástroj pro tvorbu grafů nad účty. Lze sledovat, kolik účtů je blokovaných, kolik jich má zapnuté dvoufázové ověření a kolik ho má vynucené, a to podle data vytvoření účtu. Nástroj zavřete jeho tlačítkem pro zavření."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-15",
+          "heading": "15. Smazání účtu, koš, obnova a trvalé smazání",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Mazání má dva stupně. Běžné smazání účet jen přesune do koše, odkud ho lze vrátit. Teprve trvalé smazání z koše je konečné."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Smazání do koše",
+                  "text": "V řádku účtu klikněte na akci smazání (vyžaduje oprávnění mazat účty). Účet zmizí z tabulky aktivních účtů a přesune se do koše. Smazaný uživatel se už nepřihlásí."
+                },
+                {
+                  "label": "2. Zobrazení koše",
+                  "text": "V nabídce akcí přepněte na koš (vyžaduje oprávnění zobrazit smazané záznamy). Nadpis nad tabulkou se změní a tabulka ukáže ID, jméno, e-mail a datum smazání. V zobrazení koše v nabídce akcí nejsou položky pro vytvoření záznamu a export."
+                },
+                {
+                  "label": "3. Obnova účtu",
+                  "text": "Akcí pro obnovu v řádku koše vrátíte účet mezi aktivní se vším původním nastavením. Uživatel se může znovu přihlašovat."
+                },
+                {
+                  "label": "4. Trvalé smazání",
+                  "text": "Akcí pro trvalé smazání v koši účet odstraníte natrvalo (vyžaduje oprávnění mazat účty). Tento krok nelze vrátit."
+                },
+                {
+                  "label": "5. Návrat k aktivním účtům",
+                  "text": "Stejnou položkou v nabídce akcí (její název se změní na zobrazení aktivních) se vrátíte zpět."
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Vlastní účet",
+                  "text": "Účet, pod kterým jste právě přihlášeni, smazat nemůžete."
+                },
+                {
+                  "title": "Účty sysadmin",
+                  "text": "Účet s rolí sysadmin smí smazat jen jiný sysadmin. Při hromadném vyprázdnění koše zůstanou účty sysadmin v koši, pokud koš nevyprazdňuje sysadmin."
+                },
+                {
+                  "title": "E-mail účtu v koši je obsazený",
+                  "text": "Dokud účet leží v koši, nelze založit nový účet se stejným e-mailem. Buď účet z koše obnovte, nebo ho nejprve trvale smažte."
+                },
+                {
+                  "title": "Blokovat, nebo smazat?",
+                  "text": "Pokud se uživatel může vrátit nebo si nejste jistí, účet zablokujte. Smazání používejte, když účet už potřeba nebude."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-16",
+          "heading": "16. Povolené e-mailové domény (jen sysadmin)",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Sysadmin může určit, s jakými e-mailovými adresami smějí vznikat nové účty - typicky jen s firemní doménou. Nastavení otevřete položkou pro e-mailové domény v nabídce akcí; tuto položku vidí pouze sysadmin."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Hlavní doména",
+                  "text": "Základní firemní doména, například firma.cz. Jakmile je vyplněná, účty lze zakládat a přihlašovat se jen s adresami z této domény nebo z výjimek níže - platí pro všechny role včetně sysadmina."
+                },
+                {
+                  "title": "Bez omezení",
+                  "text": "Pokud hlavní doménu necháte prázdnou a uložíte, omezení se vypne a účet lze založit s jakýmkoli e-mailem."
+                },
+                {
+                  "title": "Výjimka pro doménu",
+                  "text": "Další celá doména, se kterou smějí účty vznikat - například doména partnerské firmy."
+                },
+                {
+                  "title": "Výjimka pro e-mail",
+                  "text": "Jedna konkrétní adresa mimo povolené domény - například externí spolupracovník se soukromým e-mailem."
+                }
+              ]
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "1. Nastavení hlavní domény",
+                  "text": "Do pole hlavní domény napište doménu a klikněte na tlačítko pro uložení vedle pole. Systém uložení potvrdí. Hlavní doména se ukládá jen tímto tlačítkem."
+                },
+                {
+                  "label": "2. Přidání výjimky",
+                  "text": "V části pro přidání výjimky zvolte typ (doména, nebo e-mail), napište hodnotu a klikněte na tlačítko pro přidání nebo stiskněte Enter. Výjimka se uloží okamžitě a objeví se v příslušném seznamu. Hodnoty zadávejte malými písmeny."
+                },
+                {
+                  "label": "3. Kontrola seznamů",
+                  "text": "Okno ukazuje dva seznamy: povolené domény a povolené e-maily. Prázdný seznam je označen textem, že v něm zatím nic není."
+                },
+                {
+                  "label": "4. Odebrání výjimky",
+                  "text": "Křížkem u položky výjimku odeberete. Odebrání platí okamžitě: účty, které tím přestanou být povolené, jsou hned odhlášené a už se nepřihlásí - týká se to všech rolí, i sysadmina. Změnu, která by zablokovala vás samotné, systém neuloží; nejdřív si přidejte výjimku pro svůj e-mail."
+                },
+                {
+                  "label": "5. Zavření okna",
+                  "text": "Okno zavřete tlačítkem pro zavření, křížkem v rohu nebo kliknutím mimo okno. Během ukládání hlavní domény okno zavřít nelze."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Omezení platí jen pro zakládání nových účtů. Existující účty zůstávají beze změny, i když jejich e-mail povoleným doménám neodpovídá, a omezení se nekontroluje ani při úpravě e-mailu existujícího účtu. Pokus o založení účtu s nepovolenou adresou systém odmítne a zaznamená jako bezpečnostní událost."
+            }
+          ]
+        },
+        {
+          "key": "chapter-17",
+          "heading": "17. Pevná pravidla, která nelze obejít",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Následující pravidla chrání systém před chybou i zneužitím. Platí vždy, bez ohledu na oprávnění, a nejsou chybou aplikace."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Účty sysadmin spravuje jen sysadmin",
+                  "text": "Založení, úprava, povýšení na sysadmina, změna hesla cizího účtu sysadmin i jeho smazání jsou vyhrazeny roli sysadmin."
+                },
+                {
+                  "title": "Sysadmin má vždy dvoufázové ověření",
+                  "text": "U role sysadmin nelze ověření vypnout."
+                },
+                {
+                  "title": "Sysadmina nelze zablokovat",
+                  "text": "Účet s rolí sysadmin nezablokuje nikdo, ani jiný sysadmin."
+                },
+                {
+                  "title": "Sám sebe nezablokujete ani nesmažete",
+                  "text": "Vlastní účet nelze zablokovat ani smazat a vlastní roli si nelze změnit."
+                },
+                {
+                  "title": "Nikdo nerozdá víc, než sám má",
+                  "text": "Roli ani oprávnění navíc nelze přidělit, pokud by tím cílový účet získal oprávnění, které sami nemáte. Výjimkou je sysadmin."
+                },
+                {
+                  "title": "Jeden e-mail, jeden účet",
+                  "text": "Dva účty se stejným e-mailem existovat nemohou, a to včetně účtů v koši."
+                },
+                {
+                  "title": "Vše se zaznamenává",
+                  "text": "Založení, úpravy, změny hesel, blokace, mazání, obnovy i odmítnuté pokusy se ukládají do záznamů systému včetně toho, kdo akci provedl."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-18",
+          "heading": "18. Co dělat, když...",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Novému uživateli nepřišel aktivační e-mail",
+                  "text": "Nechte zkontrolovat nevyžádanou poštu, ověřte správnost e-mailu v účtu a odešlete aktivaci znovu (kapitola 06)."
+                },
+                {
+                  "title": "Aktivační odkaz nefunguje",
+                  "text": "Odkaz vypršel nebo už byl použit. Odešlete aktivaci znovu a upozorněte uživatele, ať použije nejnovější e-mail."
+                },
+                {
+                  "title": "Uživatel zapomněl heslo",
+                  "text": "Odkažte ho na odkaz pro zapomenuté heslo na přihlašovací stránce. Až když to nejde, změňte heslo sami (kapitola 11)."
+                },
+                {
+                  "title": "Uživateli nechodí ověřovací kód",
+                  "text": "Nechte zkontrolovat nevyžádanou poštu a po 60 sekundách vyžádat kód znovu. Pokud ověření není vynucené, lze ho v úpravě účtu dočasně vypnout."
+                },
+                {
+                  "title": "Podezření na zneužití účtu",
+                  "text": "Účet ihned zablokujte - uživatel bude odhlášen všude. Poté změňte heslo, situaci prověřte a teprve pak účet odblokujte."
+                },
+                {
+                  "title": "Uživatel ve firmě končí",
+                  "text": "Účet zablokujte nebo smažte do koše v den odchodu. Jakmile je jisté, že účet už nebude potřeba, smažte ho z koše trvale."
+                },
+                {
+                  "title": "Nevidím tlačítko nebo položku nabídky",
+                  "text": "Chybí vám příslušné oprávnění (kapitola 01), nebo akce pro daný účet nedává smysl - například odeslání aktivace u aktivovaného účtu."
+                },
+                {
+                  "title": "V seznamu chybí role",
+                  "text": "Role obsahuje oprávnění, které sami nemáte, takže ji přidělit nesmíte. Požádejte sysadmina."
+                },
+                {
+                  "title": "Účet nejde založit kvůli doméně",
+                  "text": "E-mail nespadá pod povolené domény. Požádejte sysadmina o výjimku pro doménu nebo pro konkrétní e-mail (kapitola 16)."
+                },
+                {
+                  "title": "Účet s tímto e-mailem už existuje",
+                  "text": "Vyhledejte účet filtrem podle e-mailu mezi aktivními účty. Pokud tam není, podívejte se do koše - účet buď obnovte, nebo trvale smažte."
+                },
+                {
+                  "title": "Pole ve formuláři nejde změnit",
+                  "text": "Pole je uzamčené pravidlem: dvoufázové ověření u vynucených účtů, blokace u účtů sysadmin, oprávnění obsažená v roli."
+                },
+                {
+                  "title": "Zobrazila se chyba, které nerozumím",
+                  "text": "Zkuste akci zopakovat. Pokud chyba trvá, nahlaste ji přes formulář podpory a popište, co jste dělali a u kterého účtu."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "blocks": [
+            {
+              "type": "note",
+              "highlight": true,
+              "content": "Slovo závěrem: účty obsahují osobní údaje a otevírají přístup do celé administrace. Zakládejte je jen lidem, kteří je opravdu potřebují, přidělujte nejnižší roli, která k práci stačí, nepotřebné účty blokujte nebo mažte a hesla ani ověřovací kódy nikdy nesdílejte."
+            }
+          ]
+        }
+      ]
+    },
+    "core-logs": {
+      "navLabel": "Systémové logy",
+      "header": "Core - Systémové logy",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - přehled systémových auditních logů."
+            }
+          ]
+        }
+      ]
+    },
+    "security-events": {
+      "navLabel": "Bezpečnostní monitoring",
+      "header": "Bezpečnostní monitoring",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - monitoring podezřelé aktivity, triage eventů a nastavení retenční doby."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-dashboard": {
+      "navLabel": "Dashboard",
+      "header": "Shop - Dashboard",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - přehledová stránka e-shop modulu administrace."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-products": {
+      "navLabel": "Produkty",
+      "header": "Správa produktů",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa produktového katalogu, variant a obrázků."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-categories": {
+      "navLabel": "Kategorie",
+      "header": "Správa kategorií",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - hierarchická správa kategorií produktů."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-orders": {
+      "navLabel": "Objednávky",
+      "header": "Správa objednávek",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa e-shopových objednávek, stavů a plateb."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-customers": {
+      "navLabel": "Zákazníci",
+      "header": "Správa zákazníků",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa zákaznických účtů a jejich historie objednávek."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-shipping-methods": {
+      "navLabel": "Způsoby dopravy",
+      "header": "Způsoby dopravy",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa dostupných způsobů dopravy."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-payment-methods": {
+      "navLabel": "Platební metody",
+      "header": "Platební metody",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa dostupných platebních metod."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-suppliers": {
+      "navLabel": "Dodavatelé",
+      "header": "Správa dodavatelů",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - evidence dodavatelů produktů."
+            }
+          ]
+        }
+      ]
+    },
+    "coupons": {
+      "navLabel": "Slevové kupóny",
+      "header": "Slevové kupóny",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa slevových kupónů a jejich podmínek."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-logs": {
+      "navLabel": "Logy",
+      "header": "Shop - Logy",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - auditní log akcí provedených v e-shop modulu."
+            }
+          ]
+        }
+      ]
+    },
+    "edit-eshop": {
+      "navLabel": "Nastavení e-shopu",
+      "header": "Globální nastavení e-shopu",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - globální nastavení e-shopu."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

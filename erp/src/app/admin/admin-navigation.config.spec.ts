@@ -24,7 +24,7 @@ describe('admin navigation config', () => {
   const modules: AdminModule[] = ['web', 'core', 'shop'];
   /** Page routes (with a component) of one module of the route table. */
   const routesOf = (module: AdminModule): Route[] =>
-    (ADMIN_ROUTES[0].children!.find(route => route.path === module)!.children ?? []).filter(route => !!route.component);
+    (ADMIN_ROUTES.find(route => route.path === '')!.children!.find(route => route.path === module)!.children ?? []).filter(route => !!route.component);
 
   /**
    * @description Every configured page is a route with the same permission; role-only pages use

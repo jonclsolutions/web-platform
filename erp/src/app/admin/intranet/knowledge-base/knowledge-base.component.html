@@ -4,22 +4,58 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Template of the knowledge base component.
+    @description: Template of the knowledge base component: own header (home, language),
+        side menu of the pages the user may open (from the API), routed content.
 -->
 
 <div class="kb-fullscreen-wrapper" [class.menu-open]="isMenuOpen">
   <header class="kb-top-bar">
     <div class="kb-brand">
-      <button class="menu-toggle" (click)="toggleMenu()">
+      <button class="menu-toggle" (click)="toggleMenu()" [attr.aria-label]="strings.menu_toggle_label">
         <span class="bar"></span>
         <span class="bar"></span>
         <span class="bar"></span>
       </button>
-      <span class="logo-square">R</span>
+      <!-- Logo of the website (site settings); without one a neutral square -->
+      @if (logoUrl) {
+        <img [src]="logoUrl" class="kb-logo" alt="">
+      } @else {
+        <span class="logo-square" aria-hidden="true"></span>
+      }
       <span class="brand-text">{{ strings.brand_text }}</span>
     </div>
     <div class="kb-header-actions">
-      <a routerLink="/admin/core/welcome-page" class="exit-link">{{ strings.exit_label }}</a>
+      <!-- Back to the administration (its start page) -->
+      <a routerLink="/admin" class="kb-home-link" [title]="strings.home_title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span class="kb-home-label">{{ strings.home_label }}</span>
+      </a>
+
+      <!-- Language switcher - the same languages as the admin header -->
+      <div class="kb-lang-switcher">
+        <button type="button" class="kb-lang-button" [title]="strings.language_switcher_title"
+                [attr.aria-expanded]="isLangMenuOpen" (click)="toggleLangMenu()">
+          @if (currentLanguageMeta?.icon) {
+            <img [src]="currentLanguageMeta!.icon" [alt]="currentLanguageMeta!.code" class="kb-lang-flag">
+          }
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        @if (isLangMenuOpen) {
+          <div class="kb-lang-backdrop" (click)="closeLangMenu()"></div>
+          <div class="kb-lang-menu">
+            @for (lang of languages; track lang.code) {
+              <button type="button" class="kb-lang-option" [class.active]="lang.code === currentLanguageCode" (click)="selectLanguage(lang.code)">
+                <img [src]="lang.icon" [alt]="lang.code" class="kb-lang-flag">
+                <span>{{ lang.name }}</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
     </div>
   </header>
 
@@ -33,7 +69,7 @@
               @for (page of group.pages; track page.id) {
                 <li>
                   <a [routerLink]="page.id" (click)="closeMenu()" routerLinkActive="active-kb">
-                    <span class="num">{{ page.navOrder }}.</span> {{ navLabel(page) }}
+                    <span class="num">{{ page.order }}.</span> {{ page.label }}
                   </a>
                 </li>
               }
