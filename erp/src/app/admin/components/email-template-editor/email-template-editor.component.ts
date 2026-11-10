@@ -7,7 +7,7 @@
  * @description Modal editor of a confirmation e-mail sent to customers in the language of the
  * page (web_site_settings `<prefix>_*_i18n`): subject, title, greeting, intro, the labels of the
  * summary table and the closing text per language, with a live preview. Shared by the inquiry
- * confirmation (Web form, `raw_request_email`) and the order confirmation (Received orders,
+ * confirmation (Inquiries, `raw_request_email`) and the order confirmation (Web orders,
  * `sales_order_email`, VT-15) - the pages differ only by the endpoint, the prefix, the i18n
  * section with the texts and the rows of the summary table.
  * @note The preview mirrors the language fallback of the backend (I18nEmailTemplate): text of
