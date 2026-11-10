@@ -330,3 +330,66 @@
   font-weight: 500;
   margin-top: 4px;
 }
+
+/*
+    @module: Profile values
+    @description: Own name / login e-mail with the "change" pictogram button; while editing an
+        input with the save / cancel pictogram buttons (same round look as the photo buttons).
+    @usage: .profile-value, .profile-edit, .profile-edit-input, .profile-edit-btn
+*/
+.profile-value,
+.profile-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.profile-edit-input {
+  flex: 1;
+  min-width: 0;
+  max-width: 340px;
+  padding: 7px 10px;
+  border: 1px solid var(--color-zinc-200, #e4e4e7);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--color-zinc-900);
+  background: var(--color-white);
+}
+
+.profile-edit-input:focus {
+  outline: none;
+  border-color: var(--color-zinc-900);
+}
+
+.profile-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--color-zinc-200, #e4e4e7);
+  border-radius: 999px;
+  background: var(--color-white, #fff);
+  color: var(--color-zinc-900);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.profile-edit-btn:hover:not(:disabled) {
+  background: var(--color-zinc-100, #f4f4f5);
+  border-color: var(--color-zinc-300, #d4d4d8);
+}
+
+.profile-edit-btn:focus-visible {
+  outline: 2px solid var(--color-zinc-900, #18181b);
+  outline-offset: 2px;
+}
+
+.profile-edit-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

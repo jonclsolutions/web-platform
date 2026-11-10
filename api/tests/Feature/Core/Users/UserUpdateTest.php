@@ -134,14 +134,18 @@ class UserUpdateTest extends TestCase
     }
 
     /**
-     * @description Everyone may change their own login e-mail.
-     * @input Editor, PUT {user_email: new} on the own account.
-     * @output 200 with the new e-mail.
+     * @description An account with core-administrators-update may change its own login e-mail -
+     *   after the step-up password confirmation.
+     * @input Editor, PUT {user_email: new} on the own account; confirm 'user:{id}'; PUT again.
+     * @output 403 PASSWORD_CONFIRMATION_REQUIRED; then 200 with the new e-mail.
      */
     public function test_own_login_email_can_change(): void
     {
         $me = $this->editor();
 
+        $this->putJson("/api/core/users/{$me->id}", ['user_email' => 'mine@example.com'])
+            ->assertStatus(403)->assertJsonPath('error_code', 'PASSWORD_CONFIRMATION_REQUIRED');
+        $this->confirmPassword("user:{$me->id}");
         $this->putJson("/api/core/users/{$me->id}", ['user_email' => 'mine@example.com'])
             ->assertOk()->assertJsonPath('data.user_email', 'mine@example.com');
     }

@@ -675,12 +675,21 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       delete payload.is_blocked;
     }
 
+    const ownEmailChanged = !!payload.id && !!payload.user_email && this.isOwnAccount(payload)
+      && String(payload.user_email).toLowerCase() !== String(this.selectedItemForEdit?.user_email ?? '').toLowerCase();
+
     const request$: Core.Observable<any> = payload.id
       ? this.updateData(payload.id, payload)
       : this.dataHandler.postWithMeta(this.apiEndpoint, payload).pipe(Core.takeUntil(this.destroy$));
     request$.pipe(Core.finalize(() => { this.showCreateForm = false; this.formFieldOverrides = null; this.cd.markForCheck(); }))
       .subscribe({
         next: (res: any) => {
+          // Own login e-mail changed: the header shows it at once; the API kept only this session,
+          // the other tabs of this browser signed in as this account are ended as well.
+          if (ownEmailChanged) {
+            this.authService.setUserEmail(res?.data?.user_email ?? res?.user_email ?? payload.user_email);
+            this.authService.endOtherTabs();
+          }
           if (!payload.id && res?.meta?.activation_email_sent === false) {
             this.alertDialogService.open(this.t('activation_email_failed_title'), this.t('activation_email_failed'), 'warning');
           } else {
@@ -707,7 +716,11 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     this.dataHandler.put(`core/users/${formData.id}/change-password`, payload)
       .pipe(Core.finalize(() => { this.showResetPasswordForm = false; this.cd.markForCheck(); }))
       .subscribe({
-        next: () => this.alertDialogService.open(this.t('success_title'), this.t('password_changed'), 'success')
+        next: () => {
+          // Own password: the API ended the other sessions; the other tabs of this browser share this login.
+          if (this.isOwnAccount(formData)) this.authService.endOtherTabs();
+          this.alertDialogService.open(this.t('success_title'), this.t('password_changed'), 'success');
+        }
       });
   }
 

@@ -53,6 +53,8 @@ describe('AuthService', () => {
   let channel: jasmine.SpyObj<SessionChannel>;
   /** Page reload of the service - never a real reload in the tests. */
   let reload: jasmine.Spy;
+  /** Opening of the login page by the service - never real in the tests. */
+  let openLogin: jasmine.Spy;
 
   /** Creates the service (after the storage of the test is prepared) without Web Lock. */
   function createService(): void {
@@ -63,6 +65,8 @@ describe('AuthService', () => {
     service.sessionChannel = channel;
     reload = jasmine.createSpy('reloadPage');
     service.reloadPage = reload;
+    openLogin = jasmine.createSpy('openLoginPage');
+    service.openLoginPage = openLogin;
     httpMock = TestBed.inject(HttpTestingController);
     tables = TestBed.inject(GenericTableService);
   }
@@ -409,10 +413,43 @@ describe('AuthService', () => {
     });
 
     /**
+     * @description A tab that ended its session (logout, expiry, ended from another tab) never
+     *   signs in with a remembered account on its own - not even for an admin address.
+     * @input Remembered hint + last account; slot '' (ended); checkAuth(true).
+     * @output false; no /refresh/accounts, no /refresh.
+     */
+    it('never resumes a remembered account in an ended tab', () => {
+      localStorage.setItem(SESSION_HINT_KEY, '1');
+      localStorage.setItem(LAST_ACCOUNT_KEY, 'slotA');
+      sessionStorage.setItem(SESSION_SLOT_KEY, '');
+      let result: boolean | undefined;
+      service.checkAuth(true).subscribe(v => (result = v));
+      httpMock.expectNone(`${baseUrl}/refresh/accounts`);
+      httpMock.expectNone(`${baseUrl}/refresh`);
+      expect(result).toBeFalse();
+    });
+
+    /**
+     * @description After the own password / e-mail changed the other tabs of the account in this
+     *   browser are told to end (this tab stays); without a session nothing is sent.
+     * @input Logged in as 42; endOtherTabs(); clearAuthData(); endOtherTabs().
+     * @output postMessage {logout, '42'} once; this tab still signed in after the first call.
+     */
+    it('ends the own account in the other tabs only', () => {
+      logIn();
+      service.endOtherTabs();
+      expect(channel.postMessage).toHaveBeenCalledOnceWith({ type: 'logout', userId: '42' });
+      expect(service.getUserId()).toBe('42');
+      service.clearAuthData();
+      service.endOtherTabs();
+      expect(channel.postMessage).toHaveBeenCalledTimes(1);
+    });
+
+    /**
      * @description A tab whose account is gone (expired, logged out in another tab) ends quietly;
      *   other remembered accounts stay remembered.
      * @input Slot 'slot42', hint '1'; refresh answers 401.
-     * @output false (no error), slot removed, hint kept, permissions cleared.
+     * @output false (no error), tab marked ended (slot ''), hint kept, permissions cleared.
      */
     it('answers false when the restore fails', () => {
       localStorage.setItem(SESSION_HINT_KEY, '1');
@@ -423,7 +460,7 @@ describe('AuthService', () => {
 
       httpMock.expectOne(`${baseUrl}/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
       expect<unknown[]>([result, failed]).toEqual([false, false]);
-      expect(sessionStorage.getItem(SESSION_SLOT_KEY)).toBeNull();
+      expect(sessionStorage.getItem(SESSION_SLOT_KEY)).toBe('');
       expect(localStorage.getItem(SESSION_HINT_KEY)).toBe('1');
       expect(permissionServiceMock.clearPermissions).toHaveBeenCalled();
     });
@@ -509,13 +546,14 @@ describe('AuthService', () => {
     });
 
     /**
-     * @description Several accounts per browser: a logout is announced with its account and only
-     *   the tabs of THAT account reload; tabs of other accounts, tabs without a session and
-     *   unknown messages are left alone; the channel is closed with the service.
-     * @input login as 42; messages logout 7 / login / null / logout 42; logout; tab without a
-     *   session receiving logout 42; destroy.
-     * @output reload only for logout 42; postMessage {logout, '42'}; no reload without a session;
-     *   close().
+     * @description Several accounts per browser: the end of an account is announced with the
+     *   account and only the tabs of THAT account end their session (marked ended) and open the
+     *   login page; tabs of other accounts, tabs without a session and unknown messages are left
+     *   alone; the channel is closed with the service.
+     * @input login as 42; messages logout 7 / login / null / logout 42; login again, logout; tab
+     *   without a session receiving logout 42; destroy.
+     * @output after logout 42: no session, slot '', openLoginPage once, no reload; logout posts
+     *   {logout, '42'}; nothing without a session; close().
      */
     it('ends a logged out account in its tabs only', () => {
       logIn();
@@ -524,17 +562,21 @@ describe('AuthService', () => {
       message({ type: 'logout', userId: '7' });
       message({ type: 'login', userId: '7' });
       message(null);
-      expect(reload).not.toHaveBeenCalled();
+      expect(openLogin).not.toHaveBeenCalled();
+      expect(service.getUserId()).toBe('42');
       message({ type: 'logout', userId: '42' });
-      expect(reload).toHaveBeenCalledTimes(1);
+      expect<unknown[]>([service.getUserId(), sessionStorage.getItem(SESSION_SLOT_KEY)]).toEqual([null, '']);
+      expect(openLogin).toHaveBeenCalledTimes(1);
+      expect(reload).not.toHaveBeenCalled();
 
+      logIn();
       service.logout().subscribe();
       httpMock.expectOne(`${baseUrl}/logout`).flush({});
       expect(channel.postMessage).toHaveBeenCalledOnceWith({ type: 'logout', userId: '42' });
 
-      reload.calls.reset();
+      openLogin.calls.reset();
       message({ type: 'logout', userId: '42' });
-      expect(reload).not.toHaveBeenCalled();
+      expect(openLogin).not.toHaveBeenCalled();
 
       channel.postMessage.and.throwError('closed');
       expect(() => (service as any).announce({ type: 'logout', userId: '42' })).not.toThrow();
@@ -567,9 +609,28 @@ describe('AuthService', () => {
     });
 
     /**
+     * @description A changed own login e-mail is shown at once (header subject + getter); without a
+     *   session nothing happens.
+     * @input Logged in a@b.cz; setUserEmail('new@b.cz'); clearAuthData; setUserEmail('x@b.cz').
+     * @output userEmail$ 'new@b.cz', getUserEmail 'new@b.cz'; after the logout still null.
+     */
+    it('shows a changed own e-mail at once', () => {
+      logIn();
+      const emails: (string | null)[] = [];
+      service.userEmail$.subscribe(e => emails.push(e));
+      service.setUserEmail('new@b.cz');
+      expect(service.getUserEmail()).toBe('new@b.cz');
+      expect(emails[emails.length - 1]).toBe('new@b.cz');
+
+      service.clearAuthData();
+      service.setUserEmail('x@b.cz');
+      expect<unknown[]>([service.getUserEmail(), emails[emails.length - 1]]).toEqual([null, null]);
+    });
+
+    /**
      * @description A failed refresh ends the session of the tab and passes the error on.
      * @input Logged in; refresh answers 401.
-     * @output Error to the subscriber; no token; permissions cleared; tab slot removed; the
+     * @output Error to the subscriber; no token; permissions cleared; tab marked ended (slot ''); the
      *   remembered hint kept (other accounts).
      */
     it('ends the session when the refresh fails', () => {
@@ -581,7 +642,7 @@ describe('AuthService', () => {
       expect(error.status).toBe(401);
       expect(service.getAccessToken()).toBeNull();
       expect(permissionServiceMock.clearPermissions).toHaveBeenCalled();
-      expect(sessionStorage.getItem(SESSION_SLOT_KEY)).toBeNull();
+      expect(sessionStorage.getItem(SESSION_SLOT_KEY)).toBe('');
       expect(localStorage.getItem(SESSION_HINT_KEY)).toBe('1');
     });
 
@@ -644,7 +705,7 @@ describe('AuthService', () => {
      * @description clearAuthData ends the session of the tab: memory, tab slot, permissions,
      *   table cache owner, subjects, timer - the remembered hint stays for the other accounts.
      * @input Logged in; clearAuthData(); tick 20 min.
-     * @output No token / user; no slot; hint '1'; clearPermissions; setCurrentUser(null); false /
+     * @output No token / user; slot '' (ended); hint '1'; clearPermissions; setCurrentUser(null); false /
      *   null; no refresh.
      */
     it('clears the whole session and stops the timer', fakeAsync(() => {
@@ -658,7 +719,7 @@ describe('AuthService', () => {
       service.clearAuthData();
       expect<unknown[]>([service.getAccessToken(), service.getUserId(), service.getUserEmail(), service.getUserRole()]).toEqual([null, null, null, null]);
       expect(service.getUserPermissions()).toEqual([]);
-      expect(sessionStorage.getItem(SESSION_SLOT_KEY)).toBeNull();
+      expect(sessionStorage.getItem(SESSION_SLOT_KEY)).toBe('');
       expect(localStorage.getItem(SESSION_HINT_KEY)).toBe('1');
       expect(permissionServiceMock.clearPermissions).toHaveBeenCalled();
       expect(setUser).toHaveBeenCalledWith(null);

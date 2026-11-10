@@ -548,14 +548,40 @@ the server with the local one. The checksum file does not need to be deployed.
     reload); it is never offered to other tabs. Browser-session cookie (no `expires`) and 12 hours
     without activity on the server (`SESSION_IDLE_HOURS`).
   - always at most 30 days from the login (`SESSION_MAX_DAYS`), then a new login with 2FA;
-  - a logout ends that account on the server and deletes its cookie only - its other tabs reload to
-    the login page, other accounts stay signed in.
+  - a logout ends that account on the server and deletes its cookie only - its other tabs open the
+    login page, other accounts stay signed in. A tab whose session ended (logout, expiry, own
+    password / e-mail changed in another tab) never signs in with another remembered account on
+    its own, not even for an admin address - only a NEW tab does.
   - The single `jsw_refresh` cookie of older versions keeps working and is moved to its slot cookie
     on the first refresh.
   - Browsers that restore the previous session ("Continue where you left off" in Chrome / Brave /
     Edge, "Restore previous session" in Firefox, reopened windows in Safari) or keep running in
     the background also restore the browser-session cookie - no website can prevent that; the
     server-side idle limit ends such a session anyway.
+- **Admin accounts - who may do what** (`UserController`, `CheckPermission`; the sysadmin may do
+  everything):
+
+  | Action | Own account | Another account |
+  |---|---|---|
+  | View the detail | everyone (personal info) | `core-administrators-view` |
+  | Name | `core-administrators-update` (also on the personal info page) | `core-administrators-update` |
+  | Login e-mail | `core-administrators-update` + own password (step-up; also on the personal info page) | sysadmin only |
+  | Password | everyone, with the current password | sysadmin only (with the own password) |
+  | 2FA | everyone (unless forced by the role / a sysadmin) | `core-administrators-update`; forcing it: sysadmin |
+  | Role, permissions | nobody | `core-administrators-update`, only within the own permissions |
+  | Block / unblock | nobody | sysadmin only (never a sysadmin account) |
+
+  - An account without `core-administrators-update` changes only its 2FA, photo and password;
+    everything else is refused (403) - the personal info page tells it to contact an administrator.
+  - A changed login e-mail or password ends sessions (`UserSessions`): the own change keeps only the
+    tab it was made in - other browsers / devices are signed out by the API, the other tabs of the
+    same browser (they share its refresh cookie) are told through the session channel
+    (`AuthService.endOtherTabs`) and open the login page; a change by an administrator ends all
+    sessions of the account - it signs in again (2FA codes go to the new address). A changed e-mail is announced to the previous and the new address
+    (`EmailChangedNotification`), a changed password to the account (`PasswordChangedNotification`).
+    The own new e-mail is shown in the header at once.
+  - Access tokens are named `access-token:{family}` (the refresh family of their login) - that is
+    how the API knows the current session.
 - **Profile photos of admin accounts** (`UserAvatarController`, `UserAvatar`): JPG / PNG / WebP up
   to 2 MB and 8000 px are re-encoded on the server to a 256×256 WebP (centre crop) - EXIF / GPS
   metadata and anything else in the file are dropped. Stored on the private disk (`avatars/`),

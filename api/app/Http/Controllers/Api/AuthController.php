@@ -33,6 +33,7 @@ use App\Traits\LogsActivity;
 use Illuminate\Support\Str;
 use App\Http\Resources\UserResource;
 use App\Support\Auth\AuthCookies;
+use App\Support\Auth\UserSessions;
 use Laravel\Sanctum\PersonalAccessToken;
 use Illuminate\Http\JsonResponse;
 
@@ -410,7 +411,9 @@ class AuthController extends Controller
     {
         $user->update(['last_login_at' => now()]);
 
-        $accessToken = $user->createToken('access-token', ['*'], now()->addMinutes(60))->plainTextToken;
+        // The access token carries its session (refresh family) - see UserSessions::endOthers().
+        $family = (string) Str::uuid();
+        $accessToken = $user->createToken(UserSessions::accessTokenName($family), ['*'], now()->addMinutes(60))->plainTextToken;
         $refreshToken = Str::random(60);
 
         // One refresh session per user: a new login replaces the previous family.
@@ -419,7 +422,7 @@ class AuthController extends Controller
         RefreshToken::create([
             'user_id'            => $user->id,
             'token'              => hash('sha256', $refreshToken),
-            'family'             => (string) Str::uuid(),
+            'family'             => $family,
             'expires_at'         => AuthCookies::refreshExpiry($remember, $sessionExpiresAt),
             'session_expires_at' => $sessionExpiresAt,
             'remember'           => $remember,
@@ -538,7 +541,8 @@ class AuthController extends Controller
 
         $this->revokeReplacedAccessTokens($request, $user);
 
-        $newAccessToken = $user->createToken('access-token', ['*'], now()->addMinutes(60))->plainTextToken;
+        $family = $dbRefreshToken->family ?? (string) Str::uuid();
+        $newAccessToken = $user->createToken(UserSessions::accessTokenName($family), ['*'], now()->addMinutes(60))->plainTextToken;
         $newRefreshToken = Str::random(60);
 
         // Sliding expiry, but never past the absolute end of the login (then a new login with 2FA).
@@ -548,7 +552,7 @@ class AuthController extends Controller
         RefreshToken::create([
             'user_id'            => $user->id,
             'token'              => hash('sha256', $newRefreshToken),
-            'family'             => $dbRefreshToken->family ?? (string) Str::uuid(),
+            'family'             => $family,
             'expires_at'         => AuthCookies::refreshExpiry($remember, $sessionExpiresAt),
             'session_expires_at' => $sessionExpiresAt,
             'remember'           => $remember,

@@ -14,6 +14,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Mail\Auth\AccountActivationMail;
+use App\Mail\Auth\EmailChangedNotification;
 use App\Mail\Auth\PasswordChangedNotification;
 use App\Models\{AccountActivationToken, RefreshToken, User};
 use App\Models\Core\CoreEmailAccessRule;
@@ -21,6 +22,7 @@ use App\Models\Core\CorePermission;
 use App\Models\Core\CoreRole;
 use App\Models\Core\CoreLog;
 use App\Models\Core\CoreSecurityEvent;
+use App\Support\Auth\UserSessions;
 use App\Support\Images\UserAvatar;
 use App\Traits\LogsActivity;
 use App\Http\Requests\User\{StoreUserRequest, UpdateUserRequest};
@@ -44,6 +46,12 @@ class UserController extends Controller
      * prohibition that applies even to sysadmin itself (project decision).
      */
     private const NEVER_BLOCK_ROLE_NAMES = ['sysadmin'];
+
+    /** Permission that lets an account edit accounts - and its own name / login e-mail. */
+    private const ADMINISTRATORS_UPDATE_PERMISSION = 'core-administrators-update';
+
+    /** Fields of the OWN account an account without ADMINISTRATORS_UPDATE_PERMISSION may change. */
+    private const SELF_SERVICE_FIELDS = ['enable_2fa'];
 
        /**
      * @note Search does NOT cover `role_name` (the assigned role) - that would
@@ -234,8 +242,7 @@ class UserController extends Controller
      * way (otherwise the override would be pointless - 422). `is_blocked` may only be
      * CHANGED (blocked or unblocked) by a sysadmin (403) and can NEVER be set on a
      * sysadmin account nor on the caller's own account (422). The login e-mail of
-     * ANOTHER account may only be changed by a sysadmin (403); everyone may still
-     * change their own. A password can NOT be set through this method at all - see
+     * ANOTHER account may only be changed by a sysadmin (403). A password can NOT be set through this method at all - see
      * `changePassword()`. Any actual
      * ROLE CHANGE unconditionally wipes all of the target's explicit permission
      * grants BEFORE `permission_ids` (if present) is applied. Transitioning to `is_blocked = true` revokes all
@@ -244,6 +251,13 @@ class UserController extends Controller
      * themselves effectively hold - a hard anti-privilege-escalation guard, not a
      * UX nicety, and cannot be bypassed by the frontend.
      * @note Nobody may change their OWN role, sysadmin included (422).
+     * @note Own account without `core-administrators-update` (and not sysadmin): only the
+     * self-service fields (SELF_SERVICE_FIELDS - 2FA) may change, anything else is refused (403) -
+     * name, login e-mail and the admin fields are changed by an administrator. The own login
+     * e-mail (sysadmin, `core-administrators-update`) needs the step-up password confirmation.
+     * @note A changed login e-mail ends the sessions of the account - all of them when an
+     * administrator changed it, all except the current one when the account changed its own - and
+     * is announced to the previous and the new address (EmailChangedNotification).
      * @note The e-mail access policy (`assertEmailDomainAllowed()`) is checked only
      * when the login e-mail actually CHANGES (422), for every caller including a
      * sysadmin. An account whose stored e-mail is no longer allowed can still be
@@ -275,6 +289,18 @@ class UserController extends Controller
         // sends the whole record back unchanged is not refused.
         $actorIsSysadmin = $this->actorIsSysadmin($request);
         $isSelfEdit = (int) $request->user()->id === (int) $user->id;
+
+        // Own account without the right to edit accounts: self-service fields only.
+        $actorCanAdminister = $actorIsSysadmin
+            || in_array(self::ADMINISTRATORS_UPDATE_PERMISSION, (array) ($request->user()->permissions ?? []), true);
+        if ($isSelfEdit && !$actorCanAdminister && ($field = $this->changedAdminOnlyField($validated, $user)) !== null) {
+            $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Denied self-service change of '{$field}' (no administrators-update permission): {$user->user_email}", (int) $id, 'User');
+            return response()->json(['message' => 'Contact an administrator to change this information.'], 403);
+        }
+
+        $previousEmail = (string) $user->user_email;
+        $emailChanges = array_key_exists('user_email', $validated)
+            && strcasecmp(trim((string) $validated['user_email']), $previousEmail) !== 0;
 
         // Login e-mail: whoever controls it controls the account (password reset and
         // 2FA codes are delivered there), so only a sysadmin may change someone else's.
@@ -390,7 +416,8 @@ class UserController extends Controller
 
         // Editing / demoting a sysadmin or promoting to sysadmin: step-up password confirmation -
         // the last check, so a request refused for another reason does not ask for the password.
-        if (($targetIsSysadmin || $promotingToSysadmin)
+        // The own login e-mail as well: a stolen session must not move the account to another address.
+        if (($targetIsSysadmin || $promotingToSysadmin || ($isSelfEdit && $emailChanges))
             && ($refusal = $this->requirePasswordConfirmation($request, "user:{$user->id}"))) {
             return $refusal;
         }
@@ -448,7 +475,17 @@ class UserController extends Controller
                 $this->logAction($request, CoreLog::class, 'account_blocked', 'User', "Account blocked, active tokens invalidated: {$user->user_email}", $user->id, 'User');
             }
 
+            // New login e-mail: the account signs in with it again - everywhere, or (own change)
+            // everywhere except here.
+            if ($emailChanges) {
+                $isSelfEdit ? UserSessions::endOthers($user, $request) : UserSessions::endAll($user);
+                $this->logAction($request, CoreLog::class, 'email_changed', 'User', "Login e-mail changed from {$previousEmail} to {$user->user_email}" . ($isSelfEdit ? ' (own account, other sessions ended)' : ' (all sessions ended)'), $user->id, 'User');
+            }
+
             DB::commit();
+            if ($emailChanges) {
+                $this->notifyEmailChanged($user, $previousEmail);
+            }
             $this->logAction($request, CoreLog::class, 'update', 'User', "User updated: {$user->user_email}", $user->id, 'User');
             return $this->respond(new UserResource($user->load(['roles.permissions', 'explicitPermissions'])));
 
@@ -466,6 +503,8 @@ class UserController extends Controller
      * ANOTHER account may only be changed by a sysadmin (403 otherwise). In both cases the caller confirms with their own
      * current password. A success notification (PasswordChangedNotification) is ALWAYS
      * sent afterwards, rate-limited.
+     * @note Sessions: the own change ends every other session of the account (this one stays),
+     * a change by a sysadmin ends all sessions of the account.
      */
     public function changePassword(PasswordChangeRequest $request, string $id): JsonResponse
     {
@@ -495,6 +534,8 @@ class UserController extends Controller
             }
 
             $user->update(['user_password_hash' => Hash::make($validated['new_password'])]);
+            // Sessions: the own change keeps only this one, a sysadmin's change ends all of them.
+            $isOwner ? UserSessions::endOthers($user, $request) : UserSessions::endAll($user);
 
             $this->logAction(
                 $request,
@@ -849,6 +890,53 @@ class UserController extends Controller
             );
         } catch (\Throwable $e) {
             Log::error("Password changed notification failed for user {$user->id}: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * @description First field of an own-account update that only an administrator may change.
+     * @param array<string, mixed> $validated Validated request data.
+     * @param User $user The own account (stored values).
+     * @return string|null Name of the field; null = only self-service fields change. Values sent
+     *   back unchanged are not a change.
+     */
+    private function changedAdminOnlyField(array $validated, User $user): ?string
+    {
+        foreach ($validated as $field => $value) {
+            if (in_array($field, self::SELF_SERVICE_FIELDS, true)) {
+                continue;
+            }
+            if ($field === 'permission_ids') {
+                return $field;
+            }
+            $current = $field === 'role_id' ? $user->roles()->first()?->id : $user->getAttribute($field);
+            $changed = $field === 'user_email'
+                ? strcasecmp(trim((string) $value), (string) $current) !== 0
+                : $value != $current;
+            if ($changed) {
+                return $field;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @description Announces a changed login e-mail to the previous and the new address (a failed
+     *   delivery is logged, the change stays).
+     * @param User $user Account with the new e-mail.
+     * @param string $previousEmail Login e-mail before the change.
+     * @return void
+     */
+    private function notifyEmailChanged(User $user, string $previousEmail): void
+    {
+        $changedAt = now()->format('d.m.Y H:i');
+        foreach ([$previousEmail, (string) $user->user_email] as $address) {
+            try {
+                Mail::to($address)->send(new EmailChangedNotification($user, $previousEmail, $changedAt));
+            } catch (\Throwable $e) {
+                Log::error("E-mail changed notification failed for user {$user->id}: " . $e->getMessage());
+            }
         }
     }
 

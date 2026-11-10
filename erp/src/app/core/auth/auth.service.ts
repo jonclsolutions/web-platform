@@ -23,14 +23,19 @@
  * pasted link) opens with a remembered account - the last used one (LAST_ACCOUNT_KEY), or the only
  * one; otherwise the login page is shown.
  * @note Values kept in the browser (no token, no user data):
- * - SESSION_SLOT_KEY (sessionStorage): the account of this tab - restored after its reload.
+ * - SESSION_SLOT_KEY (sessionStorage): the account of this tab - restored after its reload; '' =
+ *   the tab ended its session (logout, expiry, ended from another tab) - it then never signs in
+ *   with a remembered account on its own, it shows the login page.
  * - SESSION_HINT_KEY (localStorage): "accounts remembered with 'Remember me' may exist". Only then
- *   the API is asked for them (POST /refresh/accounts) - visitors without it make no request.
- * - LAST_ACCOUNT_KEY (localStorage): slot of the remembered account used last (no user data). A login without "Remember me" is never offered - it belongs to its tab only. The same
- *   key in sessionStorage is the hint of the former single-cookie version (its cookie is migrated
- *   on the first refresh).
- * @note A logout ends the account in every tab signed in as it (BroadcastChannel SESSION_CHANNEL_NAME,
- * those tabs reload to the login page); tabs of other accounts keep working.
+ *   the API is asked for them (POST /refresh/accounts) - visitors without it make no request. A
+ *   login without "Remember me" is never offered - it belongs to its tab only. The same key in
+ *   sessionStorage is the hint of the former single-cookie version (its cookie is migrated on the
+ *   first refresh).
+ * - LAST_ACCOUNT_KEY (localStorage): slot of the remembered account used last (no user data).
+ * @note A logout, and a change of the own password / login e-mail, ends the account in every OTHER
+ * tab of this browser signed in as it (BroadcastChannel SESSION_CHANNEL_NAME - those tabs open the
+ * login page); tabs of other accounts keep working. The tabs share the refresh cookie of the
+ * account, so the API alone cannot tell them apart.
  * @dependencies
  * - HttpClient: Facilitates API communication for authentication endpoints.
  * - PermissionService: Synchronizes user permissions within the application.
@@ -190,6 +195,9 @@ export class AuthService implements OnDestroy {
   /** Reloads the page - a property so that the unit tests can replace it. */
   public reloadPage: () => void = () => window.location.reload();
 
+  /** Opens the login page (full page load) - a property so that the unit tests can replace it. */
+  public openLoginPage: () => void = () => window.location.assign('/auth/login');
+
   constructor(
     private http: HttpClient,
     private permissionService: PermissionService,
@@ -205,16 +213,27 @@ export class AuthService implements OnDestroy {
   }
 
   /**
-   * @description Reacts to a logout in another tab: a tab signed in as THAT account reloads (its
-   *   session no longer exists - it shows the login page). Tabs of other accounts and tabs without
-   *   a session are left alone.
+   * @description Reacts to the end of an account in another tab (logout, own password / e-mail
+   *   changed there): a tab signed in as THAT account ends its session (marked ended - it never
+   *   signs in with a remembered account on its own) and opens the login page. Tabs of other
+   *   accounts and tabs without a session are left alone.
    * @param message Message of the session channel.
    */
   private onSessionMessage(message: SessionMessage | null): void {
     if (!this.session || message?.type !== 'logout') return;
     if (message.userId === this.session.userId) {
-      this.reloadPage();
+      this.clearAuthData();
+      this.openLoginPage();
     }
+  }
+
+  /**
+   * @description Ends the own account in the OTHER tabs of this browser (after the own password or
+   *   login e-mail changed) - this tab stays signed in. The API ended the other sessions; the tabs
+   *   of this browser share the refresh cookie with this one, so they are told directly.
+   */
+  public endOtherTabs(): void {
+    if (this.session) this.announce({ type: 'logout', userId: this.session.userId });
   }
 
   /** @description Tells the other tabs about a logout (no-op without the channel). */
@@ -302,10 +321,11 @@ export class AuthService implements OnDestroy {
 
   /**
    * @description Whether a user is signed in. After a page reload the memory is empty: the tab's
-   * own account is restored with one refresh call (its slot). A tab without one - a new tab, or
-   * after a logout / expiry - is not signed in, unless `resumeRemembered` is set (an admin address
-   * was opened): then the last used remembered account is signed in, or the only one; with several
-   * and none used last the answer is false (the login page offers them).
+   * own account is restored with one refresh call (its slot). A tab without one is not signed in,
+   * unless `resumeRemembered` is set (an admin address was opened in a NEW tab): then the last used
+   * remembered account is signed in, or the only one; with several and none used last the answer
+   * is false (the login page offers them). A tab that ended its session (logout, expiry, ended from
+   * another tab) never signs in with a remembered account on its own.
    * @param resumeRemembered Sign a tab without its own account in with a remembered one (AuthGuard).
    * @returns {Observable<boolean>}
    */
@@ -318,7 +338,7 @@ export class AuthService implements OnDestroy {
     if (slot !== null || this.hasLegacyTabHint()) {
       return this.restore(slot);
     }
-    if (resumeRemembered && this.hasRememberedHint()) {
+    if (resumeRemembered && !this.tabEnded() && this.hasRememberedHint()) {
       return this.rememberedAccounts().pipe(
         switchMap(accounts => {
           const last = this.readLocal(LAST_ACCOUNT_KEY);
@@ -404,12 +424,13 @@ export class AuthService implements OnDestroy {
   }
 
   /**
-   * @description Ends the session of THIS tab (memory and its slot). Remembered accounts and other
+   * @description Ends the session of THIS tab (memory; the tab is marked ended - it shows the
+   * login page instead of signing in with a remembered account). Remembered accounts and other
    * tabs are not touched.
    */
   public clearAuthData(): void {
     this.session = null;
-    this.setTabSlot(null);
+    this.setTabSlot('');
     this.permissionService.clearPermissions();
     this.genericTableService.setCurrentUser(null);
     this.genericTableService.invalidateAll();
@@ -432,6 +453,17 @@ export class AuthService implements OnDestroy {
    */
   public setAvatarUrl(url: string | null): void {
     this._avatarUrlSubject.next(url);
+  }
+
+  /**
+   * @description Shows a changed own login e-mail at once (header) - the API keeps this session,
+   *   the next refresh brings the same value.
+   * @param email New login e-mail.
+   */
+  public setUserEmail(email: string): void {
+    if (!this.session) return;
+    this.session = { ...this.session, email };
+    this._userEmailSubject.next(email);
   }
 
   public getUserPermissions(): string[] {
@@ -540,10 +572,19 @@ export class AuthService implements OnDestroy {
     }
   }
 
+  /** @description Whether this tab ended its session (see SESSION_SLOT_KEY) - no remembered sign-in then. */
+  private tabEnded(): boolean {
+    try {
+      return sessionStorage.getItem(SESSION_SLOT_KEY) === '';
+    } catch {
+      return false;
+    }
+  }
+
   /**
    * @description Stores the account of this tab (storage blocked = harmless, only the restore
    * after a reload is lost). Also removes the hint of the former single-cookie version.
-   * @param slot Slot of the account; null = none (removed).
+   * @param slot Slot of the account; '' = the tab ended its session; null = nothing known (removed).
    */
   private setTabSlot(slot: string | null): void {
     try {

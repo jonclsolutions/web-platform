@@ -14,6 +14,16 @@
 
     "title": "Osobní profil",
     "title_note": "Pro změnu jména/e-mailu kontaktujte administrátora",
+    "email_edit_button": "Změnit přihlašovací e-mail",
+    "name_edit_button": "Změnit jméno",
+    "edit_save_button": "Uložit",
+    "edit_cancel_button": "Zrušit",
+    "name_invalid": "Zadejte jméno (nejvýše 255 znaků).",
+    "name_change_success_title": "Jméno",
+    "name_change_success_message": "Jméno bylo změněno.",
+    "email_invalid": "Zadejte platný e-mail.",
+    "email_change_success_title": "Přihlašovací e-mail",
+    "email_change_success_message": "Přihlašovací e-mail byl změněn. Ostatní přihlášení tohoto účtu byla ukončena a na starou i novou adresu jsme poslali upozornění.",
     "empty_value": "—",
 
     "photo_heading": "Profilová fotka",
@@ -41,7 +51,7 @@
     "password_submit_button": "Aktualizovat heslo",
     "password_submit_saving": "Ukládání...",
     "password_change_success_title": "Změna hesla",
-    "password_change_success_message": "Heslo bylo úspěšně změněno.",
+    "password_change_success_message": "Heslo bylo úspěšně změněno. Ostatní přihlášení tohoto účtu byla ukončena.",
     "password_change_error": "Chyba při změně hesla. Zkontrolujte prosím původní heslo."
   },
     "admin-layout": {

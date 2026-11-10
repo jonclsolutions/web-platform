@@ -5,7 +5,8 @@
  * @author JS
  * @created 2026
  * @description Unit tests of PersonalInfoComponent – the logged-in admin's profile: 2FA switch
- *   (incl. 2FA forced by role or by an administrator) and the change-password popup.
+ *   (incl. 2FA forced by role or by an administrator), the change-password popup and the own
+ *   name / login e-mail (only for sysadmin / core-administrators-update).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, auth stub, alert spy, i18n stub),
  *   CurrentUserProfileService (real, on top of the DataHandler spy)
@@ -129,7 +130,8 @@ describe('PersonalInfoComponent', () => {
   /**
    * @description A valid password change is sent to change-password and closes the popup.
    * @input  ('old', VALID, VALID); onSubmit()
-   * @output put('core/users/1/change-password', { old_password: 'old', new_password, new_password_confirmation }); popup closed; success alert
+   * @output put('core/users/1/change-password', { old_password: 'old', new_password, new_password_confirmation }); popup closed; success alert;
+   *   the other tabs of the account ended (endOtherTabs)
    */
   it('changes the password', () => {
     component.openPasswordPopup();
@@ -139,6 +141,7 @@ describe('PersonalInfoComponent', () => {
       { old_password: 'old', new_password: VALID, new_password_confirmation: VALID });
     expect(component.showPasswordPopup).toBeFalse();
     expect(ctx.alert.open).toHaveBeenCalledWith('personal-info.password_change_success_title', 'personal-info.password_change_success_message', 'success');
+    expect(ctx.auth.endOtherTabs).toHaveBeenCalledTimes(1);
   });
 
   /**
@@ -179,6 +182,112 @@ describe('PersonalInfoComponent', () => {
     const overlay = {};
     component.onOverlayClick({ target: overlay, currentTarget: overlay } as any);
     expect(component.showPasswordPopup).toBeFalse();
+  });
+
+  /**
+   * @description Only a sysadmin or an account with core-administrators-update may change the
+   *   own name and login e-mail - the others see the "contact an administrator" note and no edit
+   *   buttons; the editors see no note.
+   * @input  role admin + no permissions; + core-administrators-update; role sysadmin + none
+   * @output canEditProfile false / true / true; note only without the right; two edit buttons
+   *   (name, e-mail) only for the editor
+   */
+  it('offers the name and e-mail change to administrators only', () => {
+    ctx.permissions.granted = new Set();
+    (ctx.dataHandler as any).get.and.returnValue(of({ full_name: 'Me', user_email: 'me@b.cz', roles: [] }));
+    fixture.detectChanges();
+    expect(component.canEditProfile).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.admin-note').textContent).toContain('personal-info.title_note');
+    expect(fixture.nativeElement.querySelectorAll('.profile-edit-btn').length).toBe(0);
+
+    ctx.permissions.granted = new Set(['core-administrators-update']);
+    expect(component.canEditProfile).toBeTrue();
+    fixture.componentRef.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.admin-note')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('.profile-edit-btn').length).toBe(2);
+
+    ctx.permissions.granted = new Set();
+    ctx.auth.session.role = 'sysadmin';
+    expect(component.canEditProfile).toBeTrue();
+  });
+
+  /**
+   * @description Saving the own login e-mail: PUT {user_email}; the header and the page show the
+   *   new value at once, the other tabs of the account end, the profile cache is dropped, a
+   *   success dialog; an unchanged value or an invalid one sends nothing; a failed save keeps the
+   *   field open.
+   * @input  profile me@b.cz; edit → same value (other case); edit → 'bad'; edit → 'new@b.cz'
+   *   (error, then OK)
+   * @output no PUT for same / invalid; PUT core/users/1 {user_email:'new@b.cz'}; after the error
+   *   still editing; after OK setUserEmail('new@b.cz'), endOtherTabs, userData updated, field
+   *   closed, invalidate
+   */
+  it('saves the own login e-mail and updates the header', () => {
+    load({ user_email: 'me@b.cz', roles: [] });
+    const invalidate = spyOn(TestBed.inject(CurrentUserProfileService), 'invalidate').and.callThrough();
+    const put = (ctx.dataHandler as any).put;
+    put.calls.reset();
+
+    component.startEdit('user_email');
+    expect(component.editControl.value).toBe('me@b.cz');
+    component.editControl.setValue('ME@b.cz');
+    component.saveEdit();
+    expect(put).not.toHaveBeenCalled();
+    expect(component.editingField).toBeNull();
+
+    component.startEdit('user_email');
+    component.editControl.setValue('bad');
+    component.saveEdit();
+    expect(put).not.toHaveBeenCalled();
+
+    component.editControl.setValue('new@b.cz');
+    put.and.returnValue(throwError(() => new Error('taken')));
+    component.saveEdit();
+    expect(put).toHaveBeenCalledWith('core/users/1', { user_email: 'new@b.cz' });
+    expect<unknown[]>([component.editingField, component.isSavingField]).toEqual(['user_email', false]);
+    expect(ctx.auth.setUserEmail).not.toHaveBeenCalled();
+
+    put.and.returnValue(of({ data: { user_email: 'new@b.cz' } }));
+    component.saveEdit();
+    expect(ctx.auth.setUserEmail).toHaveBeenCalledWith('new@b.cz');
+    expect(ctx.auth.endOtherTabs).toHaveBeenCalledTimes(1);
+    expect(component.userData!.user_email).toBe('new@b.cz');
+    expect(component.editingField).toBeNull();
+    expect(invalidate).toHaveBeenCalled();
+    expect(ctx.alert.open).toHaveBeenCalledWith('personal-info.email_change_success_title', 'personal-info.email_change_success_message', 'success');
+
+    component.startEdit('user_email');
+    component.cancelEdit();
+    expect(component.editingField).toBeNull();
+  });
+
+  /**
+   * @description Saving the own name: PUT {full_name} (trimmed); the page shows it, nothing about
+   *   the header or the other tabs; an empty name is not sent.
+   * @input  profile 'Old Name'; edit → '  '; edit → ' New Name '
+   * @output no PUT for the blank value; PUT core/users/1 {full_name:'New Name'}; userData updated;
+   *   name dialog; no setUserEmail / endOtherTabs
+   */
+  it('saves the own name', () => {
+    load({ full_name: 'Old Name', user_email: 'me@b.cz', roles: [] });
+    const put = (ctx.dataHandler as any).put;
+    put.calls.reset();
+
+    component.startEdit('full_name');
+    expect(component.editControl.value).toBe('Old Name');
+    component.editControl.setValue('  ');
+    component.saveEdit();
+    expect(put).not.toHaveBeenCalled();
+
+    component.editControl.setValue(' New Name ');
+    put.and.returnValue(of({ data: { full_name: 'New Name' } }));
+    component.saveEdit();
+    expect(put).toHaveBeenCalledWith('core/users/1', { full_name: 'New Name' });
+    expect(component.userData!.full_name).toBe('New Name');
+    expect(ctx.alert.open).toHaveBeenCalledWith('personal-info.name_change_success_title', 'personal-info.name_change_success_message', 'success');
+    expect(ctx.auth.setUserEmail).not.toHaveBeenCalled();
+    expect(ctx.auth.endOtherTabs).not.toHaveBeenCalled();
   });
 
   /**

@@ -79,7 +79,7 @@
         <strong style="color:#222222;">{{ $changedAt }}</strong>.
     </p>
     <p style="margin:0 0 28px;font-size:16px;line-height:1.5;color:#484848;">
-        For your security, all active sessions have been signed out.
+        For your security, the other active sessions of the account have been signed out.
     </p>
 </td>
 </tr>

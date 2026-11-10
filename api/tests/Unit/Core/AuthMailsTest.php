@@ -15,6 +15,7 @@
 namespace Tests\Unit\Core;
 
 use App\Mail\Auth\AccountActivationMail;
+use App\Mail\Auth\EmailChangedNotification;
 use App\Mail\Auth\PasswordChangedNotification;
 use App\Mail\Auth\PasswordResetRequested;
 use App\Mail\Auth\TwoFactorCodeMail;
@@ -61,9 +62,9 @@ class AuthMailsTest extends TestCase
     }
 
     /**
-     * @description The 2FA, reset and password-changed e-mails render their data and the
+     * @description The 2FA, reset, password-changed and e-mail-changed e-mails render their data and the
      *   company footer.
-     * @input Company settings; 2FA code 654321 (10 min), reset URL (15 min), change time.
+     * @input Company settings; 2FA code 654321 (10 min), reset URL (15 min), change time; previous e-mail + time of the e-mail change.
      * @output Subjects as defined; HTML contains the code / URL / time and the company name.
      */
     public function test_two_factor_reset_and_changed_mails(): void
@@ -83,6 +84,12 @@ class AuthMailsTest extends TestCase
         $changed = new PasswordChangedNotification($user, '22.10.2026 10:00');
         $changed->assertHasSubject('Your password has been changed');
         $this->assertStringContainsString('22.10.2026 10:00', $changed->render());
+
+        $emailChanged = new EmailChangedNotification($user, 'old@example.com', '10.11.2026 13:00');
+        $emailChanged->assertHasSubject('Your login e-mail has been changed');
+        foreach (['old@example.com', $user->user_email, '10.11.2026 13:00'] as $text) {
+            $this->assertStringContainsString($text, $emailChanged->render());
+        }
     }
 
     /**

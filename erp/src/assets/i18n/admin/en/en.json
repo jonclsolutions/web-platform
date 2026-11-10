@@ -14,6 +14,16 @@
 
     "title": "Personal profile",
     "title_note": "Contact an administrator to change your name/e-mail",
+    "email_edit_button": "Change login e-mail",
+    "name_edit_button": "Change name",
+    "edit_save_button": "Save",
+    "edit_cancel_button": "Cancel",
+    "name_invalid": "Enter a name (at most 255 characters).",
+    "name_change_success_title": "Name",
+    "name_change_success_message": "Your name has been changed.",
+    "email_invalid": "Enter a valid e-mail address.",
+    "email_change_success_title": "Login e-mail",
+    "email_change_success_message": "Your login e-mail has been changed. The other sessions of this account were signed out and both the old and the new address were notified.",
     "empty_value": "—",
 
     "photo_heading": "Profile photo",
@@ -41,7 +51,7 @@
     "password_submit_button": "Update password",
     "password_submit_saving": "Saving...",
     "password_change_success_title": "Password change",
-    "password_change_success_message": "Password has been changed successfully.",
+    "password_change_success_message": "Password has been changed successfully. The other sessions of this account were signed out.",
     "password_change_error": "Error changing password. Please check your current password."
   },
     "admin-layout": {

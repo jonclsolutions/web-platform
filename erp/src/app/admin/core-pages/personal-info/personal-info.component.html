@@ -4,7 +4,8 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Template of the personal info component.
+    @description: Template of the personal info component (photo, basic information with the
+        own name and login e-mail editable for administrators, 2FA and password).
 -->
     
 <div class="personal-info-container">
@@ -12,7 +13,9 @@
   <div class="cd-card info-card">
     <div class="card-header-clean">
       <h2 class="card-title">{{ strings.title }}</h2>
-      <span class="admin-note">{{ strings.title_note }}</span>
+      @if (!canEditProfile) {
+        <span class="admin-note">{{ strings.title_note }}</span>
+      }
     </div>
     <div class="card-content-minimal">
 
@@ -30,11 +33,11 @@
           <div class="info-grid">
             <div class="info-item">
               <label>{{ strings.field_full_name }}</label>
-              <div class="value">{{ userData.full_name || strings.empty_value }}</div>
+              <ng-container *ngTemplateOutlet="editableValue; context: { field: 'full_name', value: userData.full_name, mono: false, label: strings.field_full_name, editLabel: strings.name_edit_button }"></ng-container>
             </div>
             <div class="info-item">
               <label>{{ strings.field_email }}</label>
-              <div class="value muted cd-value-mono">{{ userData.user_email || strings.empty_value }}</div>
+              <ng-container *ngTemplateOutlet="editableValue; context: { field: 'user_email', value: userData.user_email, mono: true, label: strings.field_email, editLabel: strings.email_edit_button }"></ng-container>
             </div>
             <div class="info-item">
               <label>{{ strings.field_role }}</label>
@@ -124,3 +127,34 @@
     </div>
   </div>
 }
+
+<!-- Profile value (name / login e-mail): the value with the "change" pictogram button, or - while
+     editing - the input with the save / cancel pictogram buttons. -->
+<ng-template #editableValue let-field="field" let-value="value" let-mono="mono" let-label="label" let-editLabel="editLabel">
+  @if (editingField === field) {
+    <form class="profile-edit" (submit)="$event.preventDefault(); saveEdit()">
+      <input [type]="field === 'user_email' ? 'email' : 'text'" class="profile-edit-input" [formControl]="editControl" maxlength="255"
+             [attr.autocomplete]="field === 'user_email' ? 'email' : 'name'" [attr.aria-label]="label" [attr.aria-invalid]="editControl.invalid">
+      <button type="submit" class="profile-edit-btn" [disabled]="editControl.invalid || isSavingField"
+              [title]="strings.edit_save_button" [attr.aria-label]="strings.edit_save_button">
+        <app-icon name="check" [size]="16"></app-icon>
+      </button>
+      <button type="button" class="profile-edit-btn" [disabled]="isSavingField" (click)="cancelEdit()"
+              [title]="strings.edit_cancel_button" [attr.aria-label]="strings.edit_cancel_button">
+        <app-icon name="x" [size]="16"></app-icon>
+      </button>
+    </form>
+    @if (editControl.invalid && editControl.dirty) {
+      <div class="error-text">{{ field === 'user_email' ? strings.email_invalid : strings.name_invalid }}</div>
+    }
+  } @else {
+    <div class="profile-value">
+      <div class="value" [class.muted]="mono" [class.cd-value-mono]="mono">{{ value || strings.empty_value }}</div>
+      @if (canEditProfile) {
+        <button type="button" class="profile-edit-btn" (click)="startEdit(field)" [title]="editLabel" [attr.aria-label]="editLabel">
+          <app-icon name="edit" [size]="16"></app-icon>
+        </button>
+      }
+    </div>
+  }
+</ng-template>

@@ -5,14 +5,22 @@
  * @author JS
  * @created 2025
  * @description Manages user profile information and security settings, specifically handling
- * password updates, the self-service 2FA toggle and the own profile photo (AvatarEditorComponent).
+ * password updates, the self-service 2FA toggle, the own profile photo (AvatarEditorComponent)
+ * and - for a sysadmin or an account with `core-administrators-update` - the own name and login
+ * e-mail (inline fields).
+ * @note Login e-mail: the API asks for the password first (step-up, handled by the
+ * password-confirmation interceptor), ends the other sessions of the account and tells the old
+ * and the new address; the header shows the new e-mail at once (AuthService.setUserEmail). Other
+ * accounts may change only 2FA here - name and e-mail are changed by an administrator.
+ * @note A changed password or login e-mail ends the other sessions of the account (API) and the
+ * other tabs of this browser signed in as it (AuthService.endOtherTabs) - this tab stays.
  * @note Three effective 2FA states: (a) the admin / sysadmin role always enforces it; (b) a
  * sysadmin personally enforced `two_fa_forced_by_admin`; (c) the ordinary self-service toggle.
  * The checkbox is disabled in both enforced states (a) + (b).
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -27,6 +35,15 @@ import { passwordPolicyValidator } from '../../../shared/constants/password-poli
 import { PasswordRequirementsChecklistComponent } from '../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { AvatarEditorComponent } from '../../components/avatar-editor/avatar-editor.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { PermissionService } from '../../../core/auth/services/permission.service';
+import { SYSADMIN_ROLE_NAME } from '../../../core/auth/guards/auth.guard';
+
+/** Permission that lets an account change its own name and login e-mail (and edit accounts). */
+const PROFILE_EDIT_PERMISSION = 'core-administrators-update';
+
+/** Profile values editable on this page. */
+export type ProfileField = 'full_name' | 'user_email';
 
 const FORCED_2FA_ROLES = ['sysadmin'];
 
@@ -38,6 +55,7 @@ const FORCED_2FA_ROLES = ['sysadmin'];
     ReactiveFormsModule,
     PasswordRequirementsChecklistComponent,
     AvatarEditorComponent,
+    IconComponent,
   ],
   templateUrl: './personal-info.component.html',
   styleUrl: './personal-info.component.css'
@@ -52,12 +70,18 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
   enable2faValue = false;
   isSaving2fa = false;
 
+  /** Inline edit of the name / login e-mail: the open field (null = none), its value and save state. */
+  editingField: ProfileField | null = null;
+  isSavingField = false;
+  readonly editControl = new FormControl('', { nonNullable: true });
+
   public readonly loadingService = inject(LoadingService);
   public readonly i18n = inject(AdminLocalizationService);
 
   private readonly authService = inject(AuthService);
   public readonly alertDialogService = inject(AlertDialogService);
   private readonly profileService = inject(CurrentUserProfileService);
+  private readonly permissionService = inject(PermissionService);
 
   private destroy$ = new Subject<void>();
 
@@ -127,6 +151,74 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
   /** @description ID of the signed-in account (target of the photo upload). */
   get ownUserId(): string | null {
     return this.authService.getUserId();
+  }
+
+  /** @description Whether this account may change its own name and login e-mail (sysadmin / core-administrators-update). */
+  get canEditProfile(): boolean {
+    return this.authService.getUserRole() === SYSADMIN_ROLE_NAME || this.permissionService.hasPermission(PROFILE_EDIT_PERMISSION);
+  }
+
+  /**
+   * @description Opens the inline field of a profile value with its current value.
+   * @param field 'full_name' or 'user_email'.
+   */
+  startEdit(field: ProfileField): void {
+    this.editControl.setValidators(field === 'user_email'
+      ? [Validators.required, Validators.email, Validators.maxLength(255)]
+      : [Validators.required, Validators.maxLength(255)]);
+    this.editControl.reset(String(this.userData?.[field] ?? ''));
+    this.editingField = field;
+    this.cd.markForCheck();
+  }
+
+  /** @description Closes the inline field without saving. */
+  cancelEdit(): void {
+    this.editingField = null;
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Saves the open profile value (PUT {field}). An unchanged value just closes the
+   *   field. The login e-mail: the API asks for the password first, ends the other sessions of the
+   *   account (the other tabs of this browser are told - AuthService.endOtherTabs) and the header
+   *   shows the new e-mail at once.
+   */
+  saveEdit(): void {
+    const field = this.editingField;
+    const userId = this.authService.getUserId();
+    const value = this.editControl.value.trim();
+    if (!field || !userId || this.editControl.invalid || !value || this.isSavingField) return;
+    const current = String(this.userData?.[field] ?? '');
+    if (field === 'user_email' ? value.toLowerCase() === current.toLowerCase() : value === current) {
+      this.cancelEdit();
+      return;
+    }
+
+    this.isSavingField = true;
+    this.dataHandler.put(`core/users/${userId}`, { [field]: value })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res: any) => {
+          const saved = res?.data?.[field] ?? res?.[field] ?? value;
+          this.isSavingField = false;
+          this.editingField = null;
+          if (this.userData) this.userData = { ...this.userData, [field]: saved };
+          this.profileService.invalidate();
+          if (field === 'user_email') {
+            this.authService.setUserEmail(saved);
+            this.authService.endOtherTabs();
+            this.alertDialogService.open(this.t('email_change_success_title'), this.t('email_change_success_message'), 'success');
+          } else {
+            this.alertDialogService.open(this.t('name_change_success_title'), this.t('name_change_success_message'), 'success');
+          }
+          this.cd.markForCheck();
+        },
+        error: () => {
+          // The DataHandler shows the reason (taken e-mail, domain policy, wrong password).
+          this.isSavingField = false;
+          this.cd.markForCheck();
+        }
+      });
   }
 
   get isRoleForced2fa(): boolean {
@@ -238,6 +330,8 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
           this.passwordForm.reset();
           this.showPasswordPopup = false;
           this.profileService.invalidate();
+          // The API ended the other sessions; the other tabs of this browser share this login.
+          this.authService.endOtherTabs();
           this.alertDialogService.open(this.t('password_change_success_title'), this.t('password_change_success_message'), 'success');
           this.errorMessage = null;
           this.cd.markForCheck();

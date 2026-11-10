@@ -229,6 +229,30 @@ describe('AdministratorsComponent', () => {
     }));
 
     /**
+     * @description A changed login e-mail of the OWN account is shown in the header at once and
+     *   ends the other tabs of the account in this browser; the own e-mail sent back unchanged and
+     *   saving another account touch neither.
+     * @input  edit account 7 with a new e-mail; edit the own account (id 1, me@firma.cz) with the
+     *   same e-mail in other case; then with 'me-new@firma.cz'
+     * @output setUserEmail / endOtherTabs only for the last save, with 'me-new@firma.cz'
+     */
+    it('updates the header after the own e-mail changed', fakeAsync(() => {
+      component.ngOnInit();
+      component.handleEditFormOpened({ id: 7, roles: [{ id: 3 }], user_email: 'other@firma.cz' });
+      component.handleFormSubmitted({ id: 7, role_id: '3', user_email: 'other-new@firma.cz' });
+      component.handleEditFormOpened({ id: 1, roles: [{ id: 3 }], user_email: 'me@firma.cz' });
+      component.handleFormSubmitted({ id: 1, role_id: '3', user_email: 'ME@firma.cz' });
+      expect(ctx.auth.setUserEmail).not.toHaveBeenCalled();
+      expect(ctx.auth.endOtherTabs).not.toHaveBeenCalled();
+
+      component.handleEditFormOpened({ id: 1, roles: [{ id: 3 }], user_email: 'me@firma.cz' });
+      component.handleFormSubmitted({ id: 1, role_id: '3', user_email: 'me-new@firma.cz' });
+      expect(ctx.auth.setUserEmail).toHaveBeenCalledOnceWith('me-new@firma.cz');
+      expect(ctx.auth.endOtherTabs).toHaveBeenCalledTimes(1);
+      discardPeriodicTasks();
+    }));
+
+    /**
      * @description Changing the role of an account resets its explicit permissions and informs the user.
      * @input  edit manager (role 3); submit with role_id '2'
      * @output permission_ids []; info alert 'administrators.role_changed_message'; forced 2FA fields removed from the payload
@@ -426,9 +450,12 @@ describe('AdministratorsComponent', () => {
     });
 
     /**
-     * @description Password reset sends the new password as its own confirmation.
-     * @input  handleResetPasswordFormOpened({ id: 1, user_email: 'a@b.cz' }); submit { id: 1, old_password: 'o', new_password: 'n' }
-     * @output put('core/users/1/change-password', { old_password: 'o', new_password: 'n', new_password_confirmation: 'n' }); alert 'administrators.password_changed'
+     * @description Password reset sends the new password as its own confirmation; the own
+     *   password also ends the other tabs of the account in this browser, another account's not.
+     * @input  handleResetPasswordFormOpened({ id: 1, user_email: 'a@b.cz' }); submit { id: 1, old_password: 'o', new_password: 'n' };
+     *   then submit for account 7
+     * @output put('core/users/1/change-password', { old_password: 'o', new_password: 'n', new_password_confirmation: 'n' });
+     *   endOtherTabs once (own account only)
      */
     it('changes a password', () => {
       ctx.i18n.getValue.and.callFake((p: string) => (p === 'administrators.reset_password_title_with_email' ? 'Reset {email}' : p));
@@ -439,6 +466,9 @@ describe('AdministratorsComponent', () => {
       expect((ctx.dataHandler as any).put).toHaveBeenCalledWith('core/users/1/change-password',
         { old_password: 'o', new_password: 'n', new_password_confirmation: 'n' });
       expect(component.showResetPasswordForm).toBeFalse();
+      expect(ctx.auth.endOtherTabs).toHaveBeenCalledTimes(1);
+      component.handleResetPasswordFormSubmitted({ id: 7, old_password: 'o', new_password: 'n' });
+      expect(ctx.auth.endOtherTabs).toHaveBeenCalledTimes(1);
     });
 
     /**
