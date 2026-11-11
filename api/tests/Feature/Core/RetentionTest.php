@@ -68,14 +68,14 @@ class RetentionTest extends TestCase
      * @description The settings list every kind of data with its default in a fixed order (rows
      *   created on first use); view and update need the legal config permissions.
      * @input GET as viewer; GET / PUT without permissions.
-     * @output 8 rows = DEFAULTS in order; 403 ×2.
+     * @output 8 rows = defaults() (web kinds + audit_logs) in order; 403 ×2.
      */
     public function test_settings_defaults_and_permissions(): void
     {
         $this->signIn($this->userWith(['core-legal-config-view']));
 
         $rows = $this->getJson('/api/core/retention_settings')->assertOk()->json('data');
-        $this->assertSame(CoreRetentionSetting::DEFAULTS, array_column($rows, 'retention_days', 'data_key'));
+        $this->assertSame(CoreRetentionSetting::defaults(), array_column($rows, 'retention_days', 'data_key'));
 
         $this->putJson('/api/core/retention_settings', ['settings' => [['data_key' => 'raw_requests', 'retention_days' => 365]]])->assertForbidden();
         $this->signIn($this->userWith([]));
@@ -213,7 +213,7 @@ class RetentionTest extends TestCase
             ->assertJsonPath('data.deleted.raw_requests', 1)
             ->assertJsonPath('data.deleted.expired_portal_sessions', 0)
             ->assertJsonPath('data.failed', [])
-            ->assertJsonCount(count(CoreRetentionSetting::DEFAULTS), 'data.settings');
+            ->assertJsonCount(count(CoreRetentionSetting::defaults()), 'data.settings');
         $this->assertSame(1, CoreLog::where('event_type', 'retention_purge')->count());
 
         $this->signIn($this->userWith(['core-legal-config-view']));
@@ -251,5 +251,35 @@ class RetentionTest extends TestCase
         $this->postJson('/api/core/retention_settings/purge')->assertOk()
             ->assertJsonPath('data.failed', ['raw_requests'])
             ->assertJsonPath('data.deleted.raw_requests', null);
+    }
+
+    /**
+     * @description VT-18: the core names no module model - only the registered sources take part. A
+     *   source whose class no longer exists (removed module) is skipped: its kinds are not listed
+     *   and not purged, nothing fails, the core audit log is still purged.
+     * @input config retention.sources = [missing class]; old inquiry, old core log, old web log; command.
+     * @output settings = [audit_logs] only; command OK, no FAILED; inquiry kept; core log row
+     *   deleted, web log row kept (web not registered); PUT of a web key 422.
+     */
+    public function test_only_registered_modules_take_part(): void
+    {
+        config(['retention.sources' => ['App\\Services\\Removed\\RemovedRetentionSource']]);
+        $old = $this->rawRequest();
+        $this->age($old, 800);
+        foreach ([CoreLog::class, \App\Models\Web\WebLog::class] as $model) {
+            $log = $model::create(['origin' => '127.0.0.1', 'event_type' => 'update', 'module' => 'X', 'description' => 'old', 'user_id_plain' => '0', 'user_plain' => 'system']);
+            DB::table($log->getTable())->where('id', $log->id)->update(['created_at' => now()->subYears(3)]);
+        }
+
+        $this->assertSame(['audit_logs'], array_column(CoreRetentionSetting::allInOrder(), 'data_key'));
+        $this->artisan('retention:purge')->doesntExpectOutputToContain('FAILED')->assertSuccessful();
+
+        $this->assertTrue(DB::table($old->getTable())->where('id', $old->id)->exists());
+        $this->assertSame(0, CoreLog::count());
+        $this->assertSame(1, \App\Models\Web\WebLog::count());
+
+        $this->signIn($this->userWith(['core-legal-config-view', 'core-legal-config-update']));
+        $this->putJson('/api/core/retention_settings', ['settings' => [['data_key' => 'raw_requests', 'retention_days' => 365]]])
+            ->assertUnprocessable();
     }
 }

@@ -16,31 +16,19 @@
 
 namespace App\Models\Core;
 
+use App\Services\Retention\RetentionPurgeService;
 use Illuminate\Database\Eloquent\Model;
 
 class CoreRetentionSetting extends Model
 {
     /**
-     * @description Kinds of data with their default period in days (null = off). Order = order
-     * in the admin.
-     * - job_applications 180 (~6 months): usual period for applications without a consent to a
-     *   longer evidence of candidates;
-     * - raw_requests / sales_leads / support_tickets 730 (2 years): pre-contractual communication;
-     * - sales_orders / projects 3650 (10 years): contractual relationship - accounting and tax
-     *   documents may have to be kept that long;
-     * - cookie_consents 1095 (3 years): proof of consent within the general limitation period;
-     * - audit_logs 730 (2 years): core / web / e-shop activity logs (e-mail and IP of the actor)
-     *   and the history of finished imports - long enough to trace a change, then deleted.
+     * @description Default period of the core's own kind of data (days): audit_logs 730 (2 years) -
+     * core / web / e-shop activity logs (e-mail and IP of the actor) and the history of finished
+     * imports, long enough to trace a change, then deleted. The kinds of the modules and their
+     * defaults come from their retention sources (see defaults()).
      */
     public const DEFAULTS = [
-        'job_applications' => 180,
-        'raw_requests'     => 730,
-        'sales_leads'      => 730,
-        'support_tickets'  => 730,
-        'sales_orders'     => 3650,
-        'projects'         => 3650,
-        'cookie_consents'  => 1095,
-        'audit_logs'       => 730,
+        RetentionPurgeService::AUDIT_LOGS => 730,
     ];
 
     /** @description Shortest allowed period - a typo must not delete fresh records. */
@@ -63,16 +51,33 @@ class CoreRetentionSetting extends Model
     ];
 
     /**
-     * @description Every setting in the order of DEFAULTS; a missing row is created with its default.
+     * @description Every kind of data with its default period (null = off) in the admin order: the
+     *   kinds of the registered modules (config/retention.php), then the core ones (DEFAULTS).
+     * @return array<string, int|null>
+     */
+    public static function defaults(): array
+    {
+        $defaults = [];
+        foreach (RetentionPurgeService::sources() as $source) {
+            $defaults += $source->defaults();
+        }
+
+        return $defaults + self::DEFAULTS;
+    }
+
+    /**
+     * @description Every setting in the order of defaults(); a missing row is created with its
+     *   default. Rows of a removed module are kept in the table but not listed.
      * @return array<int, self>
      */
     public static function allInOrder(): array
     {
-        $rows = self::query()->get()->keyBy('data_key');
+        $defaults = self::defaults();
+        $rows = self::query()->whereIn('data_key', array_keys($defaults))->get()->keyBy('data_key');
 
         return array_map(
-            fn (string $key) => $rows[$key] ?? self::create(['data_key' => $key, 'retention_days' => self::DEFAULTS[$key]]),
-            array_keys(self::DEFAULTS)
+            fn (string $key) => $rows[$key] ?? self::create(['data_key' => $key, 'retention_days' => $defaults[$key]]),
+            array_keys($defaults)
         );
     }
 }
