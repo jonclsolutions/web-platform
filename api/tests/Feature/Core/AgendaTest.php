@@ -9,7 +9,8 @@
  * @description Feature tests of the admin calendar agenda (CoreAgendaController): the dated
  *   events of a range (coupon start / end, project deadline, lead follow-up, order-form link
  *   expiry, activation link expiry), the reminders of open work with their counts, every source
- *   only with its view permission, range validation and no personal details in the answer.
+ *   only with its view permission and the tab permission of its module, range validation and no
+ *   personal details in the answer.
  * @dependencies
  * - Tests\TestCase (InteractsWithAccounts), Tests\Support\ShopFixtures; the clock frozen at
  *   2026-11-11 10:00.
@@ -121,6 +122,7 @@ class AgendaTest extends TestCase
         $data = $this->getJson(self::RANGE)->assertOk()->json('data');
 
         $this->assertSame('2026-11-11', $data['today']);
+        $this->assertSame(['personal', 'web', 'shop', 'core'], $data['modules']);
         $this->assertSame([
             ['project_deadline', '2026-11-05', 'Portal', 'danger'],
             ['activation_expiry', '2026-11-13', 'new.admin@x.cz', 'warning'],
@@ -144,24 +146,44 @@ class AgendaTest extends TestCase
     }
 
     /**
-     * @description Only the sources of the user's view permissions; nothing personal of the
-     *   sources is returned (no e-mails of applicants / inquiries).
-     * @input Account with shop-coupons-view + web-job-applications-view; account without
-     *   permissions.
-     * @output Events coupon start / end only; reminder job applicants only; no 'a0@x.cz' /
-     *   'c@x.cz' in the answer; the account without permissions gets 200 with nothing.
+     * @description Only the sources of the user's view permissions (with the tab permission of
+     *   the module); nothing personal of the sources is returned (no e-mails of applicants /
+     *   inquiries); `modules` lists the visible modules.
+     * @input Account with view-eshop + shop-coupons-view + view-web + web-job-applications-view;
+     *   account without permissions.
+     * @output Events coupon start / end only; reminder job applicants only (no inquiries);
+     *   modules personal, web, shop; no 'a0@x.cz' / 'c@x.cz' in the answer; the account without
+     *   permissions gets 200 with nothing and only the personal module.
      */
     public function test_sources_follow_the_permissions(): void
     {
-        $this->signIn($this->userWith(['shop-coupons-view', 'web-job-applications-view']));
+        $this->signIn($this->userWith(['view-eshop', 'shop-coupons-view', 'view-web', 'web-job-applications-view']));
         $response = $this->getJson(self::RANGE)->assertOk();
         $this->assertSame(['coupon_start', 'coupon_end'], array_column($response->json('data.events'), 'type'));
         $this->assertSame(['job_applications_new'], array_column($response->json('data.reminders'), 'type'));
+        $this->assertSame(['personal', 'web', 'shop'], $response->json('data.modules'));
         $this->assertStringNotContainsString('a0@x.cz', $response->getContent());
         $this->assertStringNotContainsString('c@x.cz', $response->getContent());
 
         $this->signIn($this->user());
-        $this->getJson(self::RANGE)->assertOk()->assertJsonPath('data.events', [])->assertJsonPath('data.reminders', []);
+        $this->getJson(self::RANGE)->assertOk()->assertJsonPath('data.events', [])->assertJsonPath('data.reminders', [])
+            ->assertJsonPath('data.modules', ['personal']);
+    }
+
+    /**
+     * @description Without the tab permission of a module (the module is hidden in the admin
+     *   menu) none of its sources is returned, even with the page permissions.
+     * @input Account with all page view permissions of web and e-shop + core, but only view-web.
+     * @output Only web events / reminders; modules personal, web.
+     */
+    public function test_module_without_tab_permission_is_hidden(): void
+    {
+        $this->signIn($this->userWith(['view-web', 'web-projects-view', 'web-job-applications-view', 'web-user-requests-view',
+            'shop-coupons-view', 'shop-orders-view', 'shop-products-view', 'core-administrators-view', 'core-security-view']));
+        $data = $this->getJson(self::RANGE)->assertOk()->json('data');
+        $this->assertSame(['web'], array_values(array_unique(array_column($data['events'], 'module'))));
+        $this->assertSame(['web'], array_values(array_unique(array_column($data['reminders'], 'module'))));
+        $this->assertSame(['personal', 'web'], $data['modules']);
     }
 
     /**

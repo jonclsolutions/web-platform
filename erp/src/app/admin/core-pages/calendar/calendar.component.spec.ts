@@ -8,7 +8,8 @@
  *   days of other months), the request of the shown range, events in their days (max 3 chips +
  *   "+N"), overdue items, the panel of open work, module filter, month navigation, the list view,
  *   the day detail, safe links only, the load error, the redraw on a language switch and the
- *   personal events (create, edit, done toggle, delete; no link, open the form).
+ *   personal events (create, edit, done toggle, delete; no link, open the form) and the modules
+ *   the user may see (filter and items).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler / i18n stubs); provideRouter (links of the items).
  */
@@ -38,13 +39,14 @@ describe('CalendarComponent', () => {
     type: 'personal', module: 'personal', subject: 'Call the accountant', link: null, severity: 'info',
     personal: { id: 9, time: '09:30', note: 'Invoices', done: false },
   });
+  const ALL = ['personal', 'web', 'shop', 'core'];
   const REMINDERS: AgendaReminder[] = [
     { type: 'job_applications_new', module: 'web', count: 3, since: '2026-11-08', link: '/admin/web/job-applications' },
     { type: 'shop_orders_open', module: 'shop', count: 2, since: '2026-11-10', link: '/admin/shop/orders' },
   ];
 
   /** Creates the page; `answer` is the API answer of core/agenda. */
-  const create = (answer: any = of({ today: '2026-11-11', events: EVENTS, reminders: REMINDERS })) => {
+  const create = (answer: any = of({ today: '2026-11-11', modules: ALL, events: EVENTS, reminders: REMINDERS })) => {
     (ctx.dataHandler as any).get.and.returnValue(answer);
     fixture = TestBed.createComponent(CalendarComponent);
     component = fixture.componentInstance;
@@ -186,10 +188,10 @@ describe('CalendarComponent', () => {
     expect(fixture.nativeElement.querySelector('.cd-error-banner')).not.toBeNull();
 
     let first: any;
-    (ctx.dataHandler as any).get.and.returnValues({ subscribe: (o: any) => { first = o; } }, of({ today: '2026-11-11', events: [EVENTS[1]], reminders: [] }));
+    (ctx.dataHandler as any).get.and.returnValues({ subscribe: (o: any) => { first = o; } }, of({ today: '2026-11-11', modules: ALL, events: [EVENTS[1]], reminders: [] }));
     component.load();
     component.load();
-    first.next({ today: '2026-11-11', events: EVENTS, reminders: REMINDERS });
+    first.next({ today: '2026-11-11', modules: ALL, events: EVENTS, reminders: REMINDERS });
     expect(component.events.map(e => e.id)).toEqual(['b']);
   });
 
@@ -232,7 +234,7 @@ describe('CalendarComponent', () => {
    *   put {is_done: true}; confirm opened, delete('core/calendar-events/9'); hint "09:30 · Invoices".
    */
   it('edits, completes and deletes a personal event', async () => {
-    create(of({ today: '2026-11-11', events: [...EVENTS, PERSONAL], reminders: [] }));
+    create(of({ today: '2026-11-11', modules: ALL, events: [...EVENTS, PERSONAL], reminders: [] }));
     const el: HTMLElement = fixture.nativeElement;
     expect(component.events.some(e => e.id === 'personal-9')).toBeTrue();
     expect(component.eventHint(PERSONAL)).toBe('09:30 · Invoices');
@@ -267,7 +269,7 @@ describe('CalendarComponent', () => {
    * @output no delete; form stays; form null for a module event.
    */
   it('keeps a personal event when the delete is declined', async () => {
-    create(of({ today: '2026-11-11', events: [PERSONAL], reminders: [] }));
+    create(of({ today: '2026-11-11', modules: ALL, events: [PERSONAL], reminders: [] }));
     ctx.confirm.open.and.returnValue(Promise.resolve(false));
     component.openEditEvent(PERSONAL);
     await component.deleteForm();
@@ -277,6 +279,28 @@ describe('CalendarComponent', () => {
     component.closeForm();
     component.openEditEvent(EVENTS[0]);
     expect(component.form).toBeNull();
+  });
+
+  /**
+   * @description Only the modules of the API answer are offered and shown (a user without the
+   *   e-shop sees no e-shop filter and no e-shop item, even if one came); no `modules` = personal only.
+   * @input modules ['personal', 'web']; then an answer without `modules`.
+   * @output filters personal + web; no shop / core events or reminders; then filter personal only
+   *   and no module item.
+   */
+  it('offers only the modules the user may see', () => {
+    create(of({ today: '2026-11-11', modules: ['personal', 'web', 'evil'], events: [...EVENTS, PERSONAL], reminders: REMINDERS }));
+    const el: HTMLElement = fixture.nativeElement;
+    expect(component.modules).toEqual(['personal', 'web']);
+    expect(Array.from(el.querySelectorAll('.cal-filter')).map(f => f.getAttribute('data-module'))).toEqual(['personal', 'web']);
+    expect(component.events.every(e => ['personal', 'web'].includes(e.module))).toBeTrue();
+    expect(component.reminders.map(r => r.module)).toEqual(['web']);
+
+    (ctx.dataHandler as any).get.and.returnValue(of({ today: '2026-11-11', events: EVENTS, reminders: REMINDERS }));
+    component.load();
+    expect(component.modules).toEqual(['personal']);
+    expect(component.events).toEqual([]);
+    expect(component.reminders).toEqual([]);
   });
 
   /**

@@ -135,7 +135,11 @@ export class CalendarComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly confirmDialog = inject(ConfirmDialogService);
 
-  readonly modules = AGENDA_MODULES;
+  /**
+   * Modules of the filter: only those the user may see (API `modules` - tab + page permissions);
+   * before the first answer only the personal events.
+   */
+  modules: AgendaModule[] = ['personal'];
   readonly dayLimit = DAY_CELL_LIMIT;
 
   /** Shown view. */
@@ -211,12 +215,17 @@ export class CalendarComponent implements OnInit {
     this.loadError = false;
     this.cd.markForCheck();
 
-    this.dataHandler.get<{ today: string; events: AgendaEvent[]; reminders: AgendaReminder[] }>(`core/agenda?from=${isoDate(from)}&to=${isoDate(to)}`).subscribe({
+    this.dataHandler.get<{ today: string; modules?: AgendaModule[]; events: AgendaEvent[]; reminders: AgendaReminder[] }>(`core/agenda?from=${isoDate(from)}&to=${isoDate(to)}`).subscribe({
       next: res => {
         if (request !== this.request) return;
         if (res?.today && /^\d{4}-\d{2}-\d{2}$/.test(res.today)) this.today = res.today;
-        this.events = Array.isArray(res?.events) ? res.events.filter(e => this.isPersonal(e) || this.isSafeLink(e.link)) : [];
-        this.reminders = Array.isArray(res?.reminders) ? res.reminders.filter(r => this.isSafeLink(r.link)) : [];
+        // Known modules only, in the fixed order; events of another module are never shown.
+        const allowed = Array.isArray(res?.modules) ? res.modules : ['personal'];
+        this.modules = AGENDA_MODULES.filter(m => m === 'personal' || allowed.includes(m));
+        this.events = Array.isArray(res?.events)
+          ? res.events.filter(e => this.modules.includes(e.module) && (this.isPersonal(e) || this.isSafeLink(e.link))) : [];
+        this.reminders = Array.isArray(res?.reminders)
+          ? res.reminders.filter(r => this.modules.includes(r.module) && this.isSafeLink(r.link)) : [];
         this.loading = false;
         this.build();
       },

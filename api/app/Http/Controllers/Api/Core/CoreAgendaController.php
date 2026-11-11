@@ -16,8 +16,10 @@
  *     process, products at / below their stock warning level, new security events;
  *   - personal events of the logged-in admin (own reminders / notes, CoreCalendarEventController) -
  *     only the own ones, an open one in the past is overdue.
- * Every source is returned only to a user with the view permission of its admin page (the
- * sysadmin role sees all) - the page itself needs no permission. Only what the calendar shows is
+ * Every source is returned only to a user with the view permission of its admin page AND the tab
+ * permission of its module (view-web / view-eshop / view-core - like the admin menu; the sysadmin
+ * role sees all) - the page itself needs no permission. `modules` lists the modules the user may
+ * see (the page shows the filter only for them). Only what the calendar shows is
  * returned (ids, short names, dates), never personal details such as e-mails of applicants.
  * @note The texts are composed by the admin page (type + subject) in the admin language.
  * @dependencies Models of the sources; App\Models\User (permissions, roles).
@@ -55,6 +57,19 @@ class CoreAgendaController extends Controller
     /** @description Lead states that need no follow-up (won, lost, handed over, paid). */
     public const LEAD_CLOSED_STATES = ['closed_won', 'closed_lost', 'handed_to_dev_team', 'paid_project_started'];
 
+    /**
+     * @description Tab permission of every module (same keys as ADMIN_MODULE_TAB_PERMISSION of
+     *   the admin) - without it no source of the module is returned.
+     */
+    private const MODULE_TAB_PERMISSIONS = ['web' => 'view-web', 'shop' => 'view-eshop', 'core' => 'view-core'];
+
+    /** @description View permissions of the sources of every module (see events() / reminders()). */
+    private const MODULE_SOURCES = [
+        'web'  => ['web-projects-view', 'web-sales-leads-view', 'web-job-applications-view', 'web-support-tickets-view', 'web-user-requests-view', 'web-sales-orders-view'],
+        'shop' => ['shop-coupons-view', 'shop-orders-view', 'shop-products-view'],
+        'core' => ['core-administrators-view', 'core-security-view'],
+    ];
+
     /** @description E-shop order states that still need work. */
     public const SHOP_ORDER_OPEN_STATES = ['pending', 'confirmed', 'processing'];
 
@@ -67,8 +82,9 @@ class CoreAgendaController extends Controller
     /**
      * @description Events of the range and the current reminders the user may see.
      * @param Request $request from, to (YYYY-MM-DD; at most MAX_RANGE_DAYS apart).
-     * @return JsonResponse { data: { today, events: [{ id, type, module, date, subject, link,
-     *   severity, personal? }], reminders: [{ type, module, count, since, link }] } } - personal
+     * @return JsonResponse { data: { today, modules: ['personal', 'web'|'shop'|'core'...],
+     *   events: [{ id, type, module, date, subject, link, severity, personal? }],
+     *   reminders: [{ type, module, count, since, link }] } } - personal
      *   events have module 'personal', link null and `personal` (personalEvent()).
      */
     public function index(Request $request): JsonResponse
@@ -88,6 +104,7 @@ class CoreAgendaController extends Controller
 
         return $this->respond([
             'today'     => now()->toDateString(),
+            'modules'   => $this->modules(),
             'events'    => $this->events($from, $to)
                 ->merge(CoreCalendarEvent::where('user_id', $user->id)->whereBetween('date', [$from->toDateString(), $to->toDateString()])
                     ->orderBy('time')->limit(self::MAX_EVENTS_PER_SOURCE)->get()->map(fn ($event) => self::personalEvent($event)))
@@ -124,13 +141,36 @@ class CoreAgendaController extends Controller
     }
 
     /**
-     * @description May the user see the source (view permission of its admin page)?
-     * @param string $permission Permission key.
+     * @description May the user see the source: the view permission of its admin page AND the
+     *   tab permission of its module (the module = prefix of the key)?
+     * @param string $permission View permission key of the source (`web-…`, `shop-…`, `core-…`).
      * @return bool
      */
     private function can(string $permission): bool
     {
-        return $this->permissions === null || in_array($permission, $this->permissions, true);
+        if ($this->permissions === null) {
+            return true;
+        }
+        $tab = self::MODULE_TAB_PERMISSIONS[strstr($permission, '-', true)] ?? null;
+
+        return $tab !== null && in_array($tab, $this->permissions, true) && in_array($permission, $this->permissions, true);
+    }
+
+    /**
+     * @description Modules the user may see in the calendar: always the own personal events, then
+     *   every module with at least one visible source.
+     * @return array<int, string>
+     */
+    private function modules(): array
+    {
+        $modules = ['personal'];
+        foreach (self::MODULE_SOURCES as $module => $keys) {
+            if (collect($keys)->contains(fn (string $key) => $this->can($key))) {
+                $modules[] = $module;
+            }
+        }
+
+        return $modules;
     }
 
     /**

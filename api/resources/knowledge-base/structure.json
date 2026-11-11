@@ -108,7 +108,7 @@
       "group": "core",
       "order": 16,
       "permission": null,
-      "devNote": "CalendarComponent, route 'core/calendar' (bez oprávnění stránky), API GET core/agenda (CoreAgendaController) - termíny a nevyřízená práce podle oprávnění uživatele (jen pro čtení) + osobní události uživatele (POST/PUT/DELETE core/calendar-events, CoreCalendarEventController, tabulka core_calendar_events; vidí je jen vlastník, texty se nelogují)."
+      "devNote": "CalendarComponent, route 'core/calendar' (bez oprávnění stránky), API GET core/agenda (CoreAgendaController) - termíny a nevyřízená práce podle oprávnění uživatele - oprávnění stránky zdroje + oprávnění záložky modulu view-web / view-eshop / view-core (jen pro čtení) + osobní události uživatele (POST/PUT/DELETE core/calendar-events, CoreCalendarEventController, tabulka core_calendar_events; vidí je jen vlastník, texty se nelogují)."
     },
     {
       "id": "welcome-page",
