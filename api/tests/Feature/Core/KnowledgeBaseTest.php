@@ -42,7 +42,7 @@ class KnowledgeBaseTest extends TestCase
      * @description The files fit together: unique page ids, every page with texts in every language,
      *   the section keys of structure.json exist in every language, permissions are seeded keys (or
      *   'sysadmin'), every text is a plain string and every block type is known.
-     * @input structure.json, cz.json, en.json, database/seeders/data/permissions.php.
+     * @input structure.json, cz.json, en.json, BaseDataSeeder::permissions() (core + module data files).
      * @output No inconsistency.
      */
     public function test_content_files_are_consistent(): void
@@ -50,7 +50,7 @@ class KnowledgeBaseTest extends TestCase
         $structure = $this->file('structure')['pages'];
         $ids = array_column($structure, 'id');
         $this->assertSame($ids, array_unique($ids));
-        $known = array_column(require database_path('seeders/data/permissions.php'), 'permission_key');
+        $known = array_column(\Database\Seeders\BaseDataSeeder::permissions(), 'permission_key');
 
         $permissions = array_filter(array_merge(
             array_column($structure, 'permission'),

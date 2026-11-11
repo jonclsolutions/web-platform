@@ -51,7 +51,7 @@ class PersonalInfoPermissionTest extends TestCase
         $restored = CorePermission::where('permission_key', self::KEY)->sole();
         $this->assertSame(0, DB::table('core_role_permissions')->where('permission_id', $restored->id)->count());
 
-        $this->assertNotContains(self::KEY, array_column(require database_path('seeders/data/permissions.php'), 'permission_key'));
+        $this->assertNotContains(self::KEY, array_column(\Database\Seeders\BaseDataSeeder::permissions(), 'permission_key'));
     }
 
     /**

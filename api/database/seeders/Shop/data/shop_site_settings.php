@@ -1,7 +1,7 @@
 <?php
 /**
  * @file shop_site_settings.php
- * @path api/database/seeders/data/shop_site_settings.php
+ * @path api/database/seeders/Shop/data/shop_site_settings.php
  * @project JS web-platform
  * @author JS
  * @created 2026

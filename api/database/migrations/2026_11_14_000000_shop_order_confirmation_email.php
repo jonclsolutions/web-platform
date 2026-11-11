@@ -12,11 +12,11 @@
  *   - shop_site_settings.order_email_*_i18n - the texts of the e-mail editable per language in
  *     the admin (E-shop orders → Edit confirmation e-mail), as the web orders have them.
  * @note Existing orders keep lang null (= Czech); no e-mail is sent for them afterwards.
- * @note The Czech texts (database/seeders/data/shop_order_email.php) are filled into the existing
+ * @note The Czech texts (database/seeders/Shop/data/shop_order_email.php) are filled into the existing
  *   settings row - the e-mail of the built-in language is Czech from the start and editable; a
  *   language without its own texts uses them (ShopOrderEmailTemplate). A new installation has no
- *   row yet: BaseDataSeeder creates it with the same texts.
- * @dependencies database/seeders/data/shop_order_email.php
+ *   row yet: ShopBaseDataSeeder creates it with the same texts.
+ * @dependencies database/seeders/Shop/data/shop_order_email.php
  */
 
 use Illuminate\Database\Migrations\Migration;
@@ -45,11 +45,13 @@ return new class extends Migration
             }
         });
 
-        // The columns are new - nothing of the admin is overwritten.
-        $texts = array_map(
-            fn (array $value) => json_encode($value, JSON_UNESCAPED_UNICODE),
-            require database_path('seeders/data/shop_order_email.php')
-        );
+        // The columns are new - nothing of the admin is overwritten. Without the e-shop seeder
+        // folder (module removed) the texts are simply not filled.
+        $file = database_path('seeders/Shop/data/shop_order_email.php');
+        if (!is_file($file)) {
+            return;
+        }
+        $texts = array_map(fn (array $value) => json_encode($value, JSON_UNESCAPED_UNICODE), require $file);
         DB::table('shop_site_settings')->update($texts);
     }
 

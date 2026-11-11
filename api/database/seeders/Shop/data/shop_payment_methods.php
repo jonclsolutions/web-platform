@@ -1,11 +1,11 @@
 <?php
 /**
  * @file shop_payment_methods.php
- * @path api/database/seeders/data/shop_payment_methods.php
+ * @path api/database/seeders/Shop/data/shop_payment_methods.php
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Default payment methods of the e-shop (BaseDataSeeder). The admin cannot create or
+ * @description Default payment methods of the e-shop (ShopBaseDataSeeder). The admin cannot create or
  *   delete payment methods (only edit them: name, description, fee, bank details, gateway keys,
  *   active, order), so every installation gets this fixed set - the eight methods of the former
  *   database dump, identified by `code`.
@@ -16,7 +16,7 @@
  * @note Fees are 0 - the e-shop prices in EUR (the former dump had CZK amounts).
  * @note `image` = the former logo on the public disk (used when the file exists there - a server
  *   installed from the dump keeps its logos), `default_image` = a neutral icon of
- *   database/seeders/assets/payment-methods (copied to the public disk otherwise).
+ *   database/seeders/Shop/assets/payment-methods (copied to the public disk otherwise).
  */
 
 return [

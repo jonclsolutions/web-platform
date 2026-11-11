@@ -33,6 +33,8 @@ use App\Models\Shop\ShopShippingMethod;
 use App\Models\Shop\ShopSiteSetting;
 use App\Models\Web\WebSiteSetting;
 use Database\Seeders\BaseDataSeeder;
+use Database\Seeders\Shop\ShopBaseDataSeeder;
+use Database\Seeders\Web\WebBaseDataSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DevelopmentSeeder;
 use Illuminate\Support\Facades\DB;
@@ -392,7 +394,8 @@ class DatabaseSetupTest extends TestCase
      * @description Base data of every installation: all permission keys, the sysadmin role with
      *   all of them, the page titles, document types and the web / e-shop settings rows.
      * @input empty database (test schema); BaseDataSeeder.
-     * @output permissions = data/permissions.php (95 keys incl. view-core, core-administrators-view);
+     * @output permissions = core + web + e-shop data files (95 keys incl. view-core, view-web,
+     *   view-eshop, core-administrators-view);
      *   sysadmin with every permission and protected; 23 titles incl. web.not-found and
      *   admin.panel; types gdpr / tos / cookies; web + shop active; placeholder company details
      *   (English, example.com, no analytics ID - the GA field switched off) with the default logo;
@@ -425,9 +428,9 @@ class DatabaseSetupTest extends TestCase
         }
         $this->assertSame(['gdpr' => 8, 'tos' => 10, 'cookies' => 7], $counts);
         $this->assertStringContainsString('[Company name]', DocumentSection::where('heading', '2. Controller of personal data')->value('content'));
-        Storage::disk('public')->assertExists([BaseDataSeeder::DEFAULT_LOGO_PATH, ...BaseDataSeeder::DEFAULT_FLAG_PATHS]);
+        Storage::disk('public')->assertExists([BaseDataSeeder::DEFAULT_LOGO_PATH, WebBaseDataSeeder::FLAG_PATH, ShopBaseDataSeeder::FLAG_PATH]);
 
-        $expected = array_column(require database_path('seeders/data/permissions.php'), 'permission_key');
+        $expected = array_column(BaseDataSeeder::permissions(), 'permission_key');
         $this->assertCount(95, $expected);
         $this->assertEqualsCanonicalizing($expected, CorePermission::pluck('permission_key')->all());
         $sysadmin = CoreRole::where('role_name', 'sysadmin')->firstOrFail();
@@ -485,6 +488,48 @@ class DatabaseSetupTest extends TestCase
     }
 
     /**
+     * @description VT-17: the core is seeded without any module - a module seeder that is not
+     *   registered or whose class no longer exists (module folder removed) is skipped, the
+     *   sysadmin role gets the core permissions only.
+     * @input config seeders.base_data = [missing class, a non-seeder class]; BaseDataSeeder; then
+     *   only the web module registered.
+     * @output modules() []; 22 core permissions incl. view-core, no web-/shop- key; sysadmin 22;
+     *   1 page title (admin.panel); no web / shop settings rows; logo, no flags; company details
+     *   + legal types; then web only: 57 permissions incl. view-web, web settings row, no shop row.
+     */
+    public function test_base_data_seeder_without_modules(): void
+    {
+        Storage::fake('public');
+        config(['seeders.base_data' => ['Database\\Seeders\\Removed\\RemovedBaseDataSeeder', \stdClass::class]]);
+        $this->assertSame([], BaseDataSeeder::modules());
+
+        $this->seed(BaseDataSeeder::class);
+
+        $keys = CorePermission::pluck('permission_key')->all();
+        $this->assertCount(22, $keys);
+        $this->assertContains('view-core', $keys);
+        $this->assertSame([], array_values(array_filter($keys, fn ($k) => preg_match('/^(web|shop)-|^view-(web|eshop)$/', $k))));
+        $this->assertSame(22, CoreRole::where('role_name', 'sysadmin')->firstOrFail()->permissions()->count());
+        $this->assertSame(['admin'], DB::table('legal_page_titles')->distinct()->pluck('area')->all());
+        $this->assertSame(0, WebSiteSetting::count());
+        $this->assertSame(0, ShopSiteSetting::count());
+        $this->assertSame(0, ShopPaymentMethod::count());
+        Storage::disk('public')->assertExists(BaseDataSeeder::DEFAULT_LOGO_PATH);
+        Storage::disk('public')->assertMissing([WebBaseDataSeeder::FLAG_PATH, ShopBaseDataSeeder::FLAG_PATH]);
+        $this->assertTrue(SiteSetting::query()->exists());
+        $this->assertEqualsCanonicalizing(['gdpr', 'tos', 'cookies'], DocumentType::pluck('slug')->all());
+
+        config(['seeders.base_data' => [WebBaseDataSeeder::class]]);
+        $this->seed(BaseDataSeeder::class);
+
+        $this->assertSame(57, CorePermission::count());
+        $this->assertSame(57, CoreRole::where('role_name', 'sysadmin')->firstOrFail()->permissions()->count());
+        $this->assertTrue(CorePermission::where('permission_key', 'view-web')->exists());
+        $this->assertSame(1, WebSiteSetting::count());
+        $this->assertSame(0, ShopSiteSetting::count());
+    }
+
+    /**
      * @description Running it again only adds: edited texts / settings stay, a deleted sysadmin role
      *   is restored, a new permission key goes to the sysadmin role, nothing is duplicated.
      * @input seeded; title + permission description + shop setting + company name edited; gdpr
@@ -502,7 +547,7 @@ class DatabaseSetupTest extends TestCase
         DocumentSection::where('document_type_id', $gdprId)->delete();
         DocumentSection::create(['document_type_id' => $gdprId, 'position' => 1, 'heading' => 'Mine', 'content' => 'My text', 'lang' => 'cz']);
         Storage::disk('public')->put(BaseDataSeeder::DEFAULT_LOGO_PATH, 'my logo');
-        Storage::disk('public')->delete(BaseDataSeeder::DEFAULT_FLAG_PATHS[0]);
+        Storage::disk('public')->delete(WebBaseDataSeeder::FLAG_PATH);
         DB::table('legal_page_titles')->where(['area' => 'web', 'page_key' => 'home'])->update(['title_i18n' => '{"cz":"Můj titulek"}']);
         CorePermission::where('permission_key', 'view-core')->update(['description' => 'edited']);
         ShopSiteSetting::firstOrFail()->update(['is_shop_active' => false]);
@@ -524,7 +569,7 @@ class DatabaseSetupTest extends TestCase
         $this->assertSame(1, SiteSetting::count());
         $this->assertSame(['Mine'], DocumentSection::where('document_type_id', $gdprId)->pluck('heading')->all());
         $this->assertSame('my logo', Storage::disk('public')->get(BaseDataSeeder::DEFAULT_LOGO_PATH));
-        Storage::disk('public')->assertExists(BaseDataSeeder::DEFAULT_FLAG_PATHS[0]);
+        Storage::disk('public')->assertExists(WebBaseDataSeeder::FLAG_PATH);
     }
 
     /**
