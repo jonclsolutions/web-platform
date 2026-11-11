@@ -35,6 +35,7 @@ import { ProjectsComponent } from './web-pages/projects/projects.component';
 import { CoreDashboardComponent } from './core-pages/dashboard/dashboard.component';
 import { EditLegalComponent } from './core-pages/edit-legal/edit-legal.component';
 import { PersonalInfoComponent } from './core-pages/personal-info/personal-info.component';
+import { CalendarComponent } from './core-pages/calendar/calendar.component';
 import { WebSettingsComponent } from './core-pages/web-settings/web-settings.component';
 import { ExternalLinksComponent } from './core-pages/external-links/external-links.component';
 import { EditRolesComponent } from './core-pages/edit-roles/edit-roles.component';
@@ -133,6 +134,8 @@ export const ADMIN_ROUTES: Routes = [
           // Own account (password, 2FA) - every signed-in user, no permission (VT-13); the API lets
           // the own account through by `selfParam` (CheckPermission).
           { path: 'personal-info', component: PersonalInfoComponent, data: { help: 'personal-info' } },
+          // Calendar: no page permission - the API returns only the items of the user's permissions.
+          { path: 'calendar', component: CalendarComponent, data: { help: 'calendar' } },
           { path: 'web-settings', component: WebSettingsComponent, data: { help: 'web-settings', permission: 'core-legal-config-view' } },
           { path: 'external-links', component: ExternalLinksComponent, data: { help: 'external-links', permission: 'core-external-links-view' } },
           // Restricted to the 'sysadmin' role regardless of the permission system (see sysadminGuard).

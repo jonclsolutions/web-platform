@@ -104,51 +104,58 @@
       "devNote": "CoreDashboardComponent, route 'core/dashboard', permission 'view-core'."
     },
     {
-      "id": "welcome-page",
+      "id": "calendar",
       "group": "core",
       "order": 16,
+      "permission": null,
+      "devNote": "CalendarComponent, route 'core/calendar' (bez oprávnění stránky), API GET core/agenda (CoreAgendaController) - termíny a nevyřízená práce podle oprávnění uživatele (jen pro čtení) + osobní události uživatele (POST/PUT/DELETE core/calendar-events, CoreCalendarEventController, tabulka core_calendar_events; vidí je jen vlastník, texty se nelogují)."
+    },
+    {
+      "id": "welcome-page",
+      "group": "core",
+      "order": 17,
       "permission": "core-view-welcome-page",
       "devNote": "WelcomePageComponent, route 'core/welcome-page' (výchozí route pod core/), permission 'core-view-welcome-page'."
     },
     {
       "id": "edit-legal",
       "group": "core",
-      "order": 17,
+      "order": 18,
       "permission": "core-legal-documents-view|core-legal-config-view",
       "devNote": "EditLegalComponent, route 'core/edit-legal', permission 'core-legal-documents-view|core-legal-config-view'. Vícejazyčný obsah, typy dokumentů se načítají dynamicky z legal/document-types."
     },
     {
       "id": "personal-info",
       "group": "core",
-      "order": 18,
+      "order": 19,
       "permission": null,
       "devNote": "PersonalInfoComponent, route 'core/personal-info', no permission (every signed-in user; also via the own e-mail in the header). Self-service 2FA toggle a změna hesla."
     },
     {
       "id": "web-settings",
       "group": "core",
-      "order": 19,
+      "order": 20,
       "permission": "core-legal-config-view",
       "devNote": "WebSettingsComponent, route 'core/web-settings', permission 'core-legal-config-view'. Firemní údaje, logo, sociální sítě."
     },
     {
       "id": "external-links",
       "group": "core",
-      "order": 20,
+      "order": 21,
       "permission": "core-external-links-view",
       "devNote": "ExternalLinksComponent + CoreExternalLinkController, route 'core/external-links', permission 'core-external-links-view' (create/update/delete zvlášť). Odkazy jsou SOUKROMÉ per-uživatel (scoped na user_id na backendu)."
     },
     {
       "id": "edit-roles",
       "group": "core",
-      "order": 21,
+      "order": 22,
       "permission": "sysadmin",
       "devNote": "EditRolesComponent, route 'core/edit-roles'. Přístup NEZÁVISLE na permission systému natvrdo omezen na roli 'sysadmin' (sysadminGuard) - nemá klasický permission klíč."
     },
     {
       "id": "administrators",
       "group": "core",
-      "order": 22,
+      "order": 23,
       "permission": "core-administrators-view",
       "sections": {
         "chapter-04": "core-administrators-create",
@@ -166,98 +173,98 @@
     {
       "id": "core-logs",
       "group": "core",
-      "order": 23,
+      "order": 24,
       "permission": "view-core",
       "devNote": "CoreLogsComponent, route 'core/logs', permission 'view-core'. Poznámka v routing komentáři: dočasně čte ze stejného zdroje jako web/business-logs."
     },
     {
       "id": "security-events",
       "group": "core",
-      "order": 24,
+      "order": 25,
       "permission": "core-security-view",
       "devNote": "SecurityEventsComponent, route 'core/security-events', permission 'core-security-view'. Triage podezřelých eventů, retenční politika (GDPR), ruční purge."
     },
     {
       "id": "shop-welcome-page",
       "group": "shop",
-      "order": 25,
+      "order": 26,
       "permission": "shop-welcome-page-view",
       "devNote": "ShopWelcomePageComponent, route 'shop/welcome-page', permission 'shop-welcome-page-view'. Uvítací stránka záložky E-shop (rozcestník na stránky modulu)."
     },
     {
       "id": "shop-dashboard",
       "group": "shop",
-      "order": 26,
+      "order": 27,
       "permission": "shop-view-dashboard",
       "devNote": "ShopDashboardComponent, route 'shop/dashboard', permission 'shop-view-dashboard'."
     },
     {
       "id": "shop-products",
       "group": "shop",
-      "order": 27,
+      "order": 28,
       "permission": "shop-products-view",
       "devNote": "ProductsComponent, route 'shop/products', permission 'shop-products-view'. Zahrnuje varianty a obrázky produktu (samostatné modaly)."
     },
     {
       "id": "shop-categories",
       "group": "shop",
-      "order": 28,
+      "order": 29,
       "permission": "shop-categories-view",
       "devNote": "CategoriesComponent, route 'shop/categories', permission 'shop-categories-view'. Stromová struktura kategorií + přiřazování produktů."
     },
     {
       "id": "shop-orders",
       "group": "shop",
-      "order": 29,
+      "order": 30,
       "permission": "shop-orders-view",
       "devNote": "OrdersComponent, route 'shop/orders', permission 'shop-orders-view'."
     },
     {
       "id": "shop-customers",
       "group": "shop",
-      "order": 30,
+      "order": 31,
       "permission": "shop-customers-view",
       "devNote": "CustomersComponent, route 'shop/customers', permission 'shop-customers-view'."
     },
     {
       "id": "shop-shipping-methods",
       "group": "shop",
-      "order": 31,
+      "order": 32,
       "permission": "shop-shipping-methods-view",
       "devNote": "ShippingMethodsComponent, route 'shop/shipping-methods', permission 'shop-shipping-methods-view'."
     },
     {
       "id": "shop-payment-methods",
       "group": "shop",
-      "order": 32,
+      "order": 33,
       "permission": "shop-payment-methods-view",
       "devNote": "PaymentMethodsComponent, route 'shop/payment-methods', permission 'shop-payment-methods-view'."
     },
     {
       "id": "shop-suppliers",
       "group": "shop",
-      "order": 33,
+      "order": 34,
       "permission": "shop-suppliers-view",
       "devNote": "SuppliersComponent, route 'shop/suppliers', permission 'shop-suppliers-view'."
     },
     {
       "id": "coupons",
       "group": "shop",
-      "order": 34,
+      "order": 35,
       "permission": "shop-coupons-view",
       "devNote": "CouponsComponent, route 'shop/coupons', permission 'shop-coupons-view'."
     },
     {
       "id": "shop-logs",
       "group": "shop",
-      "order": 35,
+      "order": 36,
       "permission": "shop-view-logs",
       "devNote": "ShopLogsComponent, route 'shop/logs', permission 'shop-view-logs'."
     },
     {
       "id": "edit-eshop",
       "group": "shop",
-      "order": 36,
+      "order": 37,
       "permission": "shop-edit-eshop-view",
       "devNote": "EditEshopComponent, route 'shop/edit-eshop', permission 'shop-edit-eshop-view'."
     }

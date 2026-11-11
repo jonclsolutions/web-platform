@@ -544,7 +544,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   // ── Core modul ───────────────────────────────────────────────────────
 
   get showCoreOverviewGroup(): boolean {
-    return this.hasAnyPermission(['core-view-welcome-page', 'view-core']);
+    // The calendar (no permission) is in this group - it is shown to everybody in the core tab.
+    return true;
   }
 
   get showCoreLegalGroup(): boolean {

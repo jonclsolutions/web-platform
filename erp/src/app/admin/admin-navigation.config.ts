@@ -55,6 +55,7 @@ export const ADMIN_MODULE_PAGES: Record<AdminModule, AdminNavPage[]> = {
   core: [
     { path: 'welcome-page', permission: 'core-view-welcome-page' },
     { path: 'dashboard', permission: 'view-core' },
+    { path: 'calendar', permission: null },
     { path: 'edit-legal', permission: 'core-legal-documents-view|core-legal-config-view' },
     { path: 'web-settings', permission: 'core-legal-config-view' },
     { path: 'external-links', permission: 'core-external-links-view' },

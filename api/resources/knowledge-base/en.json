@@ -210,6 +210,20 @@
         }
       ]
     },
+    "calendar": {
+      "navLabel": "Calendar",
+      "header": "Calendar",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "The guide for this page is being prepared."
+            }
+          ]
+        }
+      ]
+    },
     "welcome-page": {
       "navLabel": "Welcome Page",
       "header": "Welcome Page",

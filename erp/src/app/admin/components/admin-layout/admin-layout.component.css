@@ -261,6 +261,7 @@
 }
 
 .header-action-btn--wiki,
+.header-action-btn--calendar,
 .header-action-btn--bug {
   color: var(--text-muted);
   border-color: var(--border);
@@ -731,6 +732,7 @@
   .header-user { display: none; }
   .module-switcher { display: none; }
   .header-action-btn--wiki,
+  .header-action-btn--calendar,
   .header-action-btn--bug { display: none; }
 
   .mobile-actions-toggle { display: flex; }

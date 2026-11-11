@@ -156,7 +156,7 @@ class KnowledgeBaseTest extends TestCase
      *   admin-routing.module.ts) and it is a page of the manual for the same readers: the same
      *   permission as the route, null for a page without one, 'sysadmin' for a sysadminGuard page.
      * @input The real admin routes and structure.json.
-     * @output 33 pages (all three modules), each with an existing manual page of its permission;
+     * @output 34 pages (all three modules), each with an existing manual page of its permission;
      *   no manual page used twice.
      */
     public function test_every_admin_page_links_its_manual_page(): void
@@ -191,7 +191,7 @@ class KnowledgeBaseTest extends TestCase
             $checked[$route] = $help[1];
         }
 
-        $this->assertCount(33, $checked);
+        $this->assertCount(34, $checked);
         $this->assertSame(count($checked), count(array_unique($checked)));
     }
 }

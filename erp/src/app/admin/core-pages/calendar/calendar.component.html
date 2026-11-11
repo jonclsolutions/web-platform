@@ -1,0 +1,321 @@
+<!--
+    @file: calendar.component.html
+    @path: /src/app/admin/core-pages/calendar/calendar.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Admin calendar: header with month navigation and view switch, module filter,
+        month grid (or list) of the important dates, panel "Waiting for you" with the open work
+        and the detail of the selected day. Every module item opens its admin page; personal
+        events (visible only to their owner) open the form to edit them.
+    @dependencies: CalendarComponent
+-->
+<div class="cal-page">
+
+  <div class="cd-header-bar">
+    <div>
+      <h1 class="cd-header-title">{{ t('title') }}</h1>
+      <p class="cd-header-sub">{{ t('subtitle') }}</p>
+    </div>
+    <div class="cd-header-actions">
+      <button type="button" class="cal-add-btn" (click)="openNewEvent()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        {{ t('add_event') }}
+      </button>
+      <app-page-help></app-page-help>
+    </div>
+  </div>
+
+  <!-- Toolbar: month navigation, view, module filter -->
+  <div class="cal-toolbar">
+    <div class="cal-nav">
+      <button type="button" class="cal-btn" (click)="goToday()">{{ t('today') }}</button>
+      <div class="cal-arrows">
+        <button type="button" class="cal-icon-btn" (click)="shiftMonth(-1)" [title]="t('previous_month')" [attr.aria-label]="t('previous_month')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button type="button" class="cal-icon-btn" (click)="shiftMonth(1)" [title]="t('next_month')" [attr.aria-label]="t('next_month')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+      <h2 class="cal-month" aria-live="polite">{{ monthLabel }}</h2>
+    </div>
+
+    <div class="cal-toolbar-right">
+      <div class="cal-filters" role="group" [attr.aria-label]="t('filter_label')">
+        @for (module of modules; track module) {
+          <button type="button" class="cal-filter" [class.cal-filter--off]="hidden.has(module)" [attr.data-module]="module"
+                  [attr.aria-pressed]="!hidden.has(module)" (click)="toggleModule(module)">
+            <span class="cal-dot" aria-hidden="true"></span>
+            {{ moduleLabel(module) }}
+            <span class="cal-filter-count">{{ moduleCount(module) }}</span>
+          </button>
+        }
+      </div>
+      <div class="cal-segmented" role="group" [attr.aria-label]="t('view_label')">
+        <button type="button" [class.active]="view === 'month'" [attr.aria-pressed]="view === 'month'" (click)="setView('month')">{{ t('view_month') }}</button>
+        <button type="button" [class.active]="view === 'list'" [attr.aria-pressed]="view === 'list'" (click)="setView('list')">{{ t('view_list') }}</button>
+      </div>
+    </div>
+  </div>
+
+  @if (loadError) {
+    <div class="cd-error-banner" role="alert">{{ t('load_error') }}</div>
+  }
+
+  <div class="cal-layout">
+
+    <!-- Main: month grid or list -->
+    <section class="cal-card cal-main" [class.cal-main--loading]="loading" [attr.aria-busy]="loading">
+      @if (view === 'month') {
+        <div class="cal-grid" role="grid" [attr.aria-label]="monthLabel">
+          <div class="cal-weekdays" role="row">
+            @for (name of weekdays; track $index) {
+              <div class="cal-weekday" role="columnheader">{{ name }}</div>
+            }
+          </div>
+          @for (week of weeks; track $index) {
+            <div class="cal-week" role="row">
+              @for (day of week; track day.date) {
+                <div class="cal-day" role="gridcell" tabindex="0"
+                     [class.cal-day--out]="!day.inMonth" [class.cal-day--today]="day.isToday"
+                     [class.cal-day--weekend]="day.isWeekend" [class.cal-day--selected]="day.date === selectedDate"
+                     [attr.aria-selected]="day.date === selectedDate" [attr.aria-label]="dayLabel(day.date)"
+                     (click)="selectDay(day)" (keydown.enter)="selectDay(day)" (keydown.space)="$event.preventDefault(); selectDay(day)">
+                  <div class="cal-day-head">
+                    <span class="cal-day-num">{{ day.day }}</span>
+                    @if (day.isToday && reminderTotal) {
+                      <span class="cal-today-badge" [title]="t('reminders_title')">{{ reminderTotal }}</span>
+                    }
+                  </div>
+                  <div class="cal-day-events">
+                    @for (event of day.events.slice(0, dayLimit); track event.id) {
+                      @if (isPersonal(event)) {
+                        <!-- Personal event: opens its form -->
+                        <button type="button" class="cal-chip" [attr.data-module]="event.module" [class.cal-chip--overdue]="event.severity === 'danger'"
+                                [class.cal-chip--done]="event.personal!.done" [title]="eventTitle(event)" [attr.aria-label]="eventTitle(event)"
+                                (click)="$event.stopPropagation(); openEditEvent(event)">
+                          <ng-container *ngTemplateOutlet="typeIcon; context: { $implicit: event.type }"></ng-container>
+                          @if (event.personal!.time) { <span class="cal-chip-time">{{ event.personal!.time }}</span> }
+                          <span class="cal-chip-text">{{ event.subject }}</span>
+                        </button>
+                      } @else {
+                        <a class="cal-chip" [attr.data-module]="event.module" [class.cal-chip--overdue]="event.severity === 'danger'"
+                           [routerLink]="linkPath(event.link!)" [queryParams]="linkQuery(event.link!)" [title]="eventTitle(event)"
+                           [attr.aria-label]="eventTitle(event)" (click)="$event.stopPropagation()">
+                          <ng-container *ngTemplateOutlet="typeIcon; context: { $implicit: event.type }"></ng-container>
+                          <span class="cal-chip-text">{{ event.subject }}</span>
+                        </a>
+                      }
+                    }
+                    @if (day.events.length > dayLimit) {
+                      <span class="cal-more">{{ t('more').replace('{count}', '' + (day.events.length - dayLimit)) }}</span>
+                    }
+                  </div>
+                  <!-- Narrow screens: one dot per event instead of the chips -->
+                  @if (day.events.length) {
+                    <div class="cal-dots" aria-hidden="true">
+                      @for (event of day.events.slice(0, 4); track event.id) {
+                        <span class="cal-dot" [attr.data-module]="event.module" [class.cal-dot--overdue]="event.severity === 'danger'"></span>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="cal-list">
+          @for (group of groups; track group.date) {
+            <div class="cal-list-day" [class.cal-list-day--today]="group.isToday">
+              <div class="cal-list-date">
+                <span class="cal-list-weekday">{{ dayLabel(group.date) }}</span>
+                @if (group.isToday) { <span class="cal-today-pill">{{ t('today') }}</span> }
+              </div>
+              @for (event of group.events; track event.id) {
+                <ng-container *ngTemplateOutlet="eventRow; context: { $implicit: event }"></ng-container>
+              }
+            </div>
+          } @empty {
+            @if (!loading) {
+              <p class="cal-empty">{{ t('list_empty') }}</p>
+            }
+          }
+        </div>
+      }
+    </section>
+
+    <!-- Side: open work + selected day -->
+    <aside class="cal-side">
+      <section class="cal-card cal-panel">
+        <h3 class="cal-panel-title">
+          {{ t('reminders_title') }}
+          @if (reminderTotal) { <span class="cal-panel-count">{{ reminderTotal }}</span> }
+        </h3>
+        @for (reminder of visibleReminders; track reminder.type) {
+          <a class="cal-reminder" [attr.data-module]="reminder.module" [routerLink]="linkPath(reminder.link)" [queryParams]="linkQuery(reminder.link)">
+            <span class="cal-reminder-count">{{ reminder.count }}</span>
+            <span class="cal-reminder-body">
+              <span class="cal-reminder-label">{{ t('reminder_' + reminder.type) }}</span>
+              <span class="cal-reminder-meta">
+                <span class="cal-dot" aria-hidden="true"></span>{{ moduleLabel(reminder.module) }}
+                @if (reminder.since) { · {{ sinceLabel(reminder) }} }
+              </span>
+            </span>
+            <svg class="cal-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+          </a>
+        } @empty {
+          @if (!loading) {
+            <p class="cal-all-done">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+              {{ t('reminders_empty') }}
+            </p>
+          }
+        }
+      </section>
+
+      @if (view === 'month') {
+        <section class="cal-card cal-panel cal-panel--day">
+          <h3 class="cal-panel-title cal-panel-title--day">
+            {{ dayLabel(selectedDate) }}
+            @if (selectedDate === today) { <span class="cal-today-pill">{{ t('today') }}</span> }
+            <button type="button" class="cal-day-add" (click)="openNewEvent(selectedDate)" [title]="t('add_event_day')" [attr.aria-label]="t('add_event_day')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+          </h3>
+          @for (event of selectedEvents; track event.id) {
+            <ng-container *ngTemplateOutlet="eventRow; context: { $implicit: event }"></ng-container>
+          } @empty {
+            <p class="cal-empty cal-empty--small">{{ t('day_empty') }}</p>
+          }
+        </section>
+      }
+
+      <p class="cal-note">{{ t('note') }}</p>
+    </aside>
+  </div>
+</div>
+
+<!-- Form of a personal event (new / edit) -->
+@if (form) {
+  <div class="cal-modal-overlay" (click)="closeForm()" (keydown.escape)="closeForm()">
+    <div class="cal-modal" role="dialog" aria-modal="true" aria-labelledby="cal-form-title" (click)="$event.stopPropagation()">
+      <form (ngSubmit)="saveForm()" novalidate autocomplete="off">
+        <div class="cal-modal-head">
+          <h2 class="cal-modal-title" id="cal-form-title">{{ t(form.id === null ? 'form_new_title' : 'form_edit_title') }}</h2>
+          <button type="button" class="cal-icon-btn" (click)="closeForm()" [title]="t('cancel')" [attr.aria-label]="t('cancel')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div class="cal-modal-body">
+          <label class="cal-field">
+            <span class="cal-label">{{ t('field_title') }} *</span>
+            <input class="cal-input" type="text" name="title" maxlength="150" required
+                   [(ngModel)]="form.title" [disabled]="saving" [attr.aria-invalid]="formSubmitted && !form.title.trim() ? 'true' : null">
+            @if (formSubmitted && !form.title.trim()) {
+              <span class="cal-field-error" role="alert">{{ t('title_required') }}</span>
+            }
+          </label>
+
+          <div class="cal-field-row">
+            <label class="cal-field">
+              <span class="cal-label">{{ t('field_date') }} *</span>
+              <input class="cal-input" type="date" name="date" required min="2000-01-01" max="2100-12-31" [(ngModel)]="form.date" [disabled]="saving">
+            </label>
+            <label class="cal-field">
+              <span class="cal-label">{{ t('field_time') }}</span>
+              <input class="cal-input" type="time" name="time" [(ngModel)]="form.time" [disabled]="saving">
+              <span class="cal-field-hint">{{ t('time_hint') }}</span>
+            </label>
+          </div>
+
+          <label class="cal-field">
+            <span class="cal-label">{{ t('field_note') }}</span>
+            <textarea class="cal-input cal-textarea" name="note" rows="4" maxlength="1000" [(ngModel)]="form.note" [disabled]="saving"></textarea>
+          </label>
+
+          @if (form.id !== null) {
+            <label class="cal-check">
+              <input type="checkbox" name="is_done" [(ngModel)]="form.is_done" [disabled]="saving">
+              {{ t('field_done') }}
+            </label>
+          }
+
+          <p class="cal-private">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            {{ t('private_note') }}
+          </p>
+        </div>
+
+        <div class="cal-modal-foot">
+          @if (form.id !== null) {
+            <button type="button" class="cal-btn cal-btn--danger" (click)="deleteForm()" [disabled]="saving">{{ t('delete') }}</button>
+          }
+          <span class="cal-modal-spacer"></span>
+          <button type="button" class="cal-btn" (click)="closeForm()" [disabled]="saving">{{ t('cancel') }}</button>
+          <button type="submit" class="cal-btn cal-btn--primary" [disabled]="saving">{{ t('save') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- One event as a row (list view and day detail); a personal event: done toggle + edit -->
+<ng-template #eventRow let-event>
+  @if (isPersonal(event)) {
+    <div class="cal-row cal-row--personal" [attr.data-module]="event.module" [class.cal-row--overdue]="event.severity === 'danger'" [class.cal-row--done]="event.personal.done">
+      <button type="button" class="cal-row-icon cal-done-toggle" [attr.aria-pressed]="event.personal.done"
+              [title]="t(event.personal.done ? 'mark_open' : 'mark_done')" [attr.aria-label]="t(event.personal.done ? 'mark_open' : 'mark_done')"
+              (click)="toggleDone(event)">
+        @if (event.personal.done) {
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+        } @else {
+          <ng-container *ngTemplateOutlet="typeIcon; context: { $implicit: event.type }"></ng-container>
+        }
+      </button>
+      <button type="button" class="cal-row-main" (click)="openEditEvent(event)">
+        <span class="cal-row-body">
+          <span class="cal-row-title">{{ eventTitle(event) }}</span>
+          <span class="cal-row-hint">{{ eventHint(event) }}</span>
+        </span>
+        <span class="cal-row-tags">
+          @if (event.severity === 'danger') { <span class="cal-tag cal-tag--overdue">{{ t('overdue') }}</span> }
+          <span class="cal-tag">{{ moduleLabel(event.module) }}</span>
+        </span>
+        <svg class="cal-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+      </button>
+    </div>
+  } @else {
+  <a class="cal-row" [attr.data-module]="event.module" [class.cal-row--overdue]="event.severity === 'danger'"
+     [routerLink]="linkPath(event.link)" [queryParams]="linkQuery(event.link)">
+    <span class="cal-row-icon" aria-hidden="true"><ng-container *ngTemplateOutlet="typeIcon; context: { $implicit: event.type }"></ng-container></span>
+    <span class="cal-row-body">
+      <span class="cal-row-title">{{ eventTitle(event) }}</span>
+      <span class="cal-row-hint">{{ eventHint(event) }}</span>
+    </span>
+    <span class="cal-row-tags">
+      @if (event.severity === 'danger') { <span class="cal-tag cal-tag--overdue">{{ t('overdue') }}</span> }
+      <span class="cal-tag">{{ moduleLabel(event.module) }}</span>
+    </span>
+    <svg class="cal-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+  </a>
+  }
+</ng-template>
+
+<!-- Icon of an event type (chips and rows) -->
+<ng-template #typeIcon let-type>
+  <svg class="cal-type-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    @switch (type) {
+      @case ('coupon_start') { <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/> }
+      @case ('coupon_end') { <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/> }
+      @case ('project_deadline') { <path d="M4 22V4"/><path d="M4 4h12l-2 4 2 4H4"/> }
+      @case ('lead_follow_up') { <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/> }
+      @case ('lead_form_expiry') { <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/> }
+      @case ('personal') { <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/> }
+      @case ('activation_expiry') { <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/> }
+      @default { <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/> }
+    }
+  </svg>
+</ng-template>

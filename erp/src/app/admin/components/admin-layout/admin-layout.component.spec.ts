@@ -294,7 +294,8 @@ describe('AdminLayoutComponent', () => {
    *   permission, and as a page without a permission it counts as accessible for every role.
    * @input  logged in as admin without any permission; render with the mobile panel open; click the mobile link.
    * @output header + mobile links to /admin/core/personal-info with the e-mail; sidebar link
-   *   present; firstAccessiblePage('core') = personal-info; the mobile panel closes.
+   *   present; firstAccessiblePage('core') = calendar (no permission, before personal info) with
+   *   its sidebar and header links; the mobile panel closes.
    */
   it('opens the own personal info page for every user', () => {
     ctx.permissions.granted = new Set([]);
@@ -310,7 +311,10 @@ describe('AdminLayoutComponent', () => {
       expect(a.textContent!.trim()).toBe('admin@example.test');
     });
     expect(el.querySelector('.admin-nav a[href="/admin/core/personal-info"]')).not.toBeNull();
-    expect((component as any).firstAccessiblePage('core').path).toBe('personal-info');
+    // Without permissions the first core page is the calendar (no permission either).
+    expect((component as any).firstAccessiblePage('core').path).toBe('calendar');
+    expect(el.querySelector('.admin-nav a[href="/admin/core/calendar"]')).not.toBeNull();
+    expect(el.querySelector('a.header-action-btn--calendar')?.getAttribute('href')).toBe('/admin/core/calendar');
 
     const close = spyOn(component, 'closeMobileActions');
     links[1].click();
@@ -428,15 +432,16 @@ describe('AdminLayoutComponent', () => {
   });
 
   /**
-   * @description Every menu group appears exactly with its permissions.
-   * @input Each group's permission granted alone.
-   * @output That group shown, all others hidden.
+   * @description Every menu group appears exactly with its permissions; the core overview group
+   *   always (it holds the calendar, which needs no permission).
+   * @input Each group's permission granted alone; no permission.
+   * @output That group (+ core overview) shown, all others hidden; core overview without any.
    */
   it('shows every menu group only with its permission', () => {
     const groups: Record<string, string> = {
       showWebWelcomeGroup: 'web-welcome-page-view', showShopWelcomeGroup: 'shop-welcome-page-view',
       showWebOverviewGroup: 'web-view-dashboard', showWebBusinessGroup: 'web-projects-view', showWebContentGroup: 'web-news-view',
-      showWebPeopleGroup: 'web-support-tickets-view', showWebSystemGroup: 'web-view-web-logs', showCoreOverviewGroup: 'core-view-welcome-page',
+      showWebPeopleGroup: 'web-support-tickets-view', showWebSystemGroup: 'web-view-web-logs',
       showCoreLegalGroup: 'core-external-links-view', showShopOverviewGroup: 'shop-view-dashboard',
       showShopCatalogGroup: 'shop-suppliers-view', showShopTransactionsGroup: 'shop-coupons-view', showShopCustomersGroup: 'shop-customers-view',
       showShopLogisticsGroup: 'shop-payment-methods-view', showShopContentGroup: 'shop-edit-eshop-view', showShopSystemGroup: 'shop-view-logs'
@@ -446,6 +451,8 @@ describe('AdminLayoutComponent', () => {
       const shown = Object.keys(groups).filter(g => (component as any)[g]);
       expect(shown).withContext(permission).toEqual([group]);
     }
+    ctx.permissions.granted = new Set();
+    expect(component.showCoreOverviewGroup).toBeTrue();
     ctx.permissions.granted = new Set(['view-core']);
     expect([component.showCoreOverviewGroup, component.showCoreSystemGroup]).toEqual([true, true]);
     ctx.permissions.granted = new Set(['core-legal-documents-view']);

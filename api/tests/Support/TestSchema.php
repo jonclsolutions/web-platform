@@ -257,6 +257,18 @@ final class TestSchema
             $t->foreign('user_id')->references('id')->on('users')->nullOnDelete();
         });
 
+        // Personal events of the calendar (migration 2026_11_15_000000_create_core_calendar_events).
+        Schema::create('core_calendar_events', function (Blueprint $t) {
+            $t->increments('id');
+            $t->unsignedInteger('user_id');
+            $t->date('date');
+            $t->time('time')->nullable();
+            $t->string('title', 150);
+            $t->string('note', 1000)->nullable();
+            $t->boolean('is_done')->default(false);
+            $t->timestamps();
+            $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+        });
         Schema::create('core_external_links', function (Blueprint $t) {
             $t->increments('id');
             $t->unsignedInteger('user_id');

@@ -210,6 +210,20 @@
         }
       ]
     },
+    "calendar": {
+      "navLabel": "Kalendář",
+      "header": "Kalendář",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Návod k této stránce se připravuje."
+            }
+          ]
+        }
+      ]
+    },
     "welcome-page": {
       "navLabel": "Uvítací stránka",
       "header": "Uvítací stránka",
