@@ -11,6 +11,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Core\CoreLog;
+use App\Models\Shop\ShopLog;
 use App\Models\Web\WebLog;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
@@ -51,6 +53,15 @@ class TranslationController extends Controller
         'shop' => 'shop-edit-eshop-update',
     ];
 
+    /**
+     * @var array<string, class-string> Audit log of the changes of a module's translations /
+     *   languages; any other module is logged into the core log (see logModel()).
+     */
+    private const MODULE_LOGS = [
+        'web'  => WebLog::class,
+        'shop' => ShopLog::class,
+    ];
+
     /** @var string Role that passes every permission check (see CheckPermission). */
     private const SYSADMIN_ROLE_NAME = 'sysadmin';
 
@@ -83,7 +94,7 @@ class TranslationController extends Controller
             return null;
         }
 
-        $this->logAction($request, WebLog::class, 'update_denied', "Translation:{$module}", "Denied change of the {$module} translations (missing {$required}).", null, 'Translation');
+        $this->logAction($request, $this->logModel($module), 'update_denied', "Translation:{$module}", "Denied change of the {$module} translations (missing {$required}).", null, 'Translation');
         return response()->json(['message' => 'You do not have permission to edit the translations of this module.'], 403);
     }
 
@@ -121,7 +132,7 @@ class TranslationController extends Controller
                 ? "Update {$lang}.json: " . $this->summarizeDiff($changes)
                 : "Update {$lang}.json (no value changes detected)";
 
-            $this->logAction($request, WebLog::class, 'update', "Translation:{$module}", $description, null, 'Translation');
+            $this->logAction($request, $this->logModel($module), 'update', "Translation:{$module}", $description, null, 'Translation');
 
             return $this->respond(['detected_changes' => count($changes)]);
         } catch (\Exception $e) {
@@ -226,7 +237,7 @@ class TranslationController extends Controller
             $this->forgetContent($module, (string) $removed);
         }
 
-        $this->logAction($request, WebLog::class, 'update', "Languages:{$module}", 'Language list and metadata update', null, 'Translation', ['icon']);
+        $this->logAction($request, $this->logModel($module), 'update', "Languages:{$module}", 'Language list and metadata update', null, 'Translation', ['icon']);
 
         return response()->json(null, 204);
     }
@@ -263,7 +274,7 @@ class TranslationController extends Controller
         $meta[$idx]['icon_path'] = $iconPath;
         $this->writeLanguagesMeta($meta);
 
-        $this->logAction($request, WebLog::class, 'update', "Languages:{$module}", "Icon uploaded: {$code}", null, 'Translation', ['icon']);
+        $this->logAction($request, $this->logModel($module), 'update', "Languages:{$module}", "Icon uploaded: {$code}", null, 'Translation', ['icon']);
 
         return $this->respond(['iconUrl' => Storage::disk(self::ICON_DISK)->url($iconPath)]);
     }
@@ -302,7 +313,7 @@ class TranslationController extends Controller
         // Content of the module stored per language loses the language too.
         $this->forgetContent($module, $code);
 
-        $this->logAction($request, WebLog::class, 'delete', "Languages:{$module}", "Deleted language: {$code}", null, 'Translation');
+        $this->logAction($request, $this->logModel($module), 'delete', "Languages:{$module}", "Deleted language: {$code}", null, 'Translation');
 
         return response()->json(null, 204);
     }
@@ -460,5 +471,16 @@ class TranslationController extends Controller
             $diffString = mb_substr($diffString, 0, 197) . '...';
         }
         return $diffString;
+    }
+
+    /**
+     * @description Audit log of a module: the e-shop translations go to the shop log, the web ones
+     *   to the web log, everything else (e.g. `admin`) to the core log.
+     * @param string $module Translation module.
+     * @return class-string Log model for LogsActivity::logAction().
+     */
+    private function logModel(string $module): string
+    {
+        return self::MODULE_LOGS[$module] ?? CoreLog::class;
     }
 }

@@ -7,7 +7,7 @@
  * @created 2026
  * @description Personal list of external links shown in the admin (analytics dashboard, webmail,
  * Search Console, ...) - plain links, no live statistics. Every query is scoped to the logged-in
- * user. Changes are written to the audit log like every other resource.
+ * user. Changes are written to the core audit log (CoreLog, module CoreExternalLink).
  * @note No import - a personal bookmark list of a few entries does not need a file import.
  */
 
@@ -18,7 +18,7 @@ use App\Http\Requests\Core\CoreExternalLink\StoreCoreExternalLinkRequest;
 use App\Http\Requests\Core\CoreExternalLink\UpdateCoreExternalLinkRequest;
 use App\Http\Resources\Core\CoreExternalLinkResource;
 use App\Models\Core\CoreExternalLink;
-use App\Models\Web\WebLog;
+use App\Models\Core\CoreLog;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -101,7 +101,7 @@ class CoreExternalLinkController extends Controller
             'url'     => $validated['url'],
         ]);
 
-        $this->logAction($request, WebLog::class, 'create', 'Web', "Created external link: {$link->name}", $link->id, 'CoreExternalLink');
+        $this->logAction($request, CoreLog::class, 'create', 'CoreExternalLink', "Created external link: {$link->name}", $link->id, 'CoreExternalLink');
         return $this->respond(new CoreExternalLinkResource($link), 201);
     }
 
@@ -114,7 +114,7 @@ class CoreExternalLinkController extends Controller
 
         $link->update($request->validated());
 
-        $this->logAction($request, WebLog::class, 'update', 'Web', "Updated external link: {$link->name}", $link->id, 'CoreExternalLink');
+        $this->logAction($request, CoreLog::class, 'update', 'CoreExternalLink', "Updated external link: {$link->name}", $link->id, 'CoreExternalLink');
         return $this->respond(new CoreExternalLinkResource($link));
     }
 
@@ -128,7 +128,7 @@ class CoreExternalLinkController extends Controller
         $name = $link->name;
         $link->delete();
 
-        $this->logAction($request, WebLog::class, 'soft_delete', 'Web', "Deleted external link: {$name}", (int) $id, 'CoreExternalLink');
+        $this->logAction($request, CoreLog::class, 'soft_delete', 'CoreExternalLink', "Deleted external link: {$name}", (int) $id, 'CoreExternalLink');
         return response()->json(null, 204);
     }
 
@@ -168,7 +168,7 @@ class CoreExternalLinkController extends Controller
                 }
             });
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'Web', "Error during bulk deletion of external links: " . $e->getMessage());
+            $this->logAction($request, CoreLog::class, 'error', 'CoreExternalLink', "Error during bulk deletion of external links: " . $e->getMessage());
             return response()->json(['message' => 'Bulk deletion failed.'], 500);
         }
 
@@ -177,9 +177,9 @@ class CoreExternalLinkController extends Controller
 
         $this->logAction(
             $request,
-            WebLog::class,
+            CoreLog::class,
             $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk',
-            'Web',
+            'CoreExternalLink',
             'Bulk ' . ($forceDelete ? 'permanent ' : '') . "deletion of {$deletedCount} external links (requested {$requestedCount}, IDs: {$idsPreview}).",
             null,
             'CoreExternalLink'
@@ -203,7 +203,7 @@ class CoreExternalLinkController extends Controller
 
         $link->restore();
 
-        $this->logAction($request, WebLog::class, 'restore', 'Web', "Restored external link: {$link->name}", $link->id, 'CoreExternalLink');
+        $this->logAction($request, CoreLog::class, 'restore', 'CoreExternalLink', "Restored external link: {$link->name}", $link->id, 'CoreExternalLink');
         return $this->respond(new CoreExternalLinkResource($link));
     }
 
@@ -217,7 +217,7 @@ class CoreExternalLinkController extends Controller
         $count = $ownTrashed->count();
         $ownTrashed->forceDelete();
 
-        $this->logAction($request, WebLog::class, 'force_delete_all', 'Web', "Permanently deleted {$count} external links from trash");
+        $this->logAction($request, CoreLog::class, 'force_delete_all', 'CoreExternalLink', "Permanently deleted {$count} external links from trash");
         return response()->json(null, 204);
     }
 }

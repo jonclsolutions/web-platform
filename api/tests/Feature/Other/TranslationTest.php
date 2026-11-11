@@ -15,6 +15,8 @@
 
 namespace Tests\Feature\Other;
 
+use App\Models\Core\CoreLog;
+use App\Models\Shop\ShopLog;
 use App\Models\Web\WebLog;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
@@ -230,7 +232,7 @@ class TranslationTest extends TestCase
         Storage::disk('public')->assertExists($de['icon_path']);
         $this->assertSame(['Česky', true, 'translation_images/web/cz.png'], [$meta->firstWhere('code', 'cz')['name'], $meta->firstWhere('code', 'cz')['isBuiltIn'], $meta->firstWhere('code', 'cz')['icon_path']]);
         $this->assertSame(3, $meta->count());
-        $this->assertTrue(WebLog::where('module', 'Languages:shop')->exists());
+        $this->assertTrue(ShopLog::where('module', 'Languages:shop')->exists());
 
         $this->post('/api/languages/shop', ['languages' => json_encode([['code' => 'en', 'name' => 'English']]), 'icon' => $this->fakeImage('x.png'), 'target_code' => 'xx'], ['Accept' => 'application/json'])->assertNoContent();
         foreach ([[['name' => 'No code']], [['code' => '../x', 'name' => 'X']], [['code' => 'en', 'name' => 'A'], ['code' => 'en', 'name' => 'B']], []] as $invalid) {
@@ -329,7 +331,7 @@ class TranslationTest extends TestCase
      *   is sysadmin-only; the denial is logged.
      * @input Web editor: save shop / save web; shop editor: languages web, icon web, delete web language,
      *        save shop; editor of both: save module 'blog'; sysadmin: save 'blog'.
-     * @output 403 / 200; 403 ×3 / 200; 403 'blog'; 200 for sysadmin; web log 'update_denied'.
+     * @output 403 / 200; 403 ×3 / 200; 403 'blog'; 200 for sysadmin; shop log 'update_denied' (log of the module in the URL).
      */
     public function test_module_permission(): void
     {
@@ -338,7 +340,7 @@ class TranslationTest extends TestCase
             ->assertJson(['message' => 'You do not have permission to edit the translations of this module.']);
         $this->postJson('/api/save_translations/web', ['lang' => 'cz', 'data' => ['a' => 1]])->assertOk();
         $this->assertSame('Denied change of the shop translations (missing shop-edit-eshop-update).',
-            \App\Models\Web\WebLog::where('event_type', 'update_denied')->value('description'));
+            ShopLog::where('event_type', 'update_denied')->value('description'));
 
         $this->signIn($this->userWith(['shop-edit-eshop-update']));
         $this->postJson('/api/languages/web', ['languages' => json_encode([['code' => 'cz', 'name' => 'Čeština']])])->assertStatus(403);
@@ -350,5 +352,25 @@ class TranslationTest extends TestCase
         $this->postJson('/api/save_translations/blog', ['lang' => 'cz', 'data' => ['a' => 1]])->assertStatus(403);
         $this->signIn($this->sysadmin());
         $this->postJson('/api/save_translations/blog', ['lang' => 'cz', 'data' => ['a' => 1]])->assertOk();
+    }
+
+    /**
+     * @description Every change is written into the audit log of its module: the e-shop
+     *   translations / languages into the shop log (not the web log), the web ones into the web log.
+     * @input POST shop cz translations; POST shop languages; POST web cz translations.
+     * @output 2 shop log rows ("Translation:shop", "Languages:shop"), 1 web log row
+     *   ("Translation:web"), no core log row.
+     */
+    public function test_changes_go_to_the_log_of_their_module(): void
+    {
+        $this->signIn($this->userWith(self::EDITOR));
+
+        $this->postJson('/api/save_translations/shop', ['lang' => 'cz', 'data' => ['cart' => ['title' => 'Košík']]])->assertOk();
+        $this->postJson('/api/languages/shop', ['languages' => json_encode([['code' => 'cz', 'name' => 'Čeština']])])->assertNoContent();
+        $this->postJson('/api/save_translations/web', ['lang' => 'cz', 'data' => ['home' => ['title' => 'Domů']]])->assertOk();
+
+        $this->assertSame(['Translation:shop', 'Languages:shop'], ShopLog::orderBy('id')->pluck('module')->all());
+        $this->assertSame(['Translation:web'], WebLog::pluck('module')->all());
+        $this->assertSame(0, CoreLog::count());
     }
 }

@@ -172,4 +172,22 @@ describe('RetentionSettingsComponent', () => {
     expect(ctx.alert.open).toHaveBeenCalledWith('retention-settings.purge_done_title', '0 deleted', 'success');
     expect(component.settings).toEqual([rows[1]]);
   });
+
+  /**
+   * @description A clean-up with a failed kind of data shows a warning with the names of the
+   *   failed kinds (label, else the key) and the count of the rest.
+   * @input confirm true; answer deleted {cookie_consents: 4, raw_requests: null}, failed
+   *   ['raw_requests', 'expired_portal_sessions'].
+   * @output alert warning 'retention-settings.purge_failed_title', "Raw requests, expired_portal_sessions / 4".
+   */
+  it('reports the kinds of data whose clean-up failed', async () => {
+    create();
+    ctx.i18n.getValue.and.callFake((p: string) =>
+      p === 'retention-settings.purge_failed_message' ? '{keys} / {count}'
+        : p === 'retention-settings.key_raw_requests' ? 'Raw requests' : p);
+    ctx.confirm.open.and.returnValue(Promise.resolve(true));
+    dh().post.and.returnValue(of({ deleted: { cookie_consents: 4, raw_requests: null }, failed: ['raw_requests', 'expired_portal_sessions'], settings: rows }));
+    await component.purgeNow();
+    expect(ctx.alert.open).toHaveBeenCalledWith('retention-settings.purge_failed_title', 'Raw requests, expired_portal_sessions / 4', 'warning');
+  });
 });

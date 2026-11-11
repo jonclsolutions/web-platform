@@ -66,17 +66,21 @@ class CoreRetentionSettingController extends Controller
      * @description Runs the retention purge at once (the same as the daily command).
      * @param Request $request Admin request.
      * @param RetentionPurgeService $service The purge.
-     * @return JsonResponse { data: { deleted: {key: count|null}, settings: CoreRetentionSetting[] } }
+     * @return JsonResponse { data: { deleted: {key: count|null}, failed: string[],
+     *   settings: CoreRetentionSetting[] } } - `failed` = kinds of data whose purge failed (details
+     *   in the application log).
      */
     public function purge(Request $request, RetentionPurgeService $service): JsonResponse
     {
         $deleted = $service->purgeAll();
+        $failed = $service->failedKeys();
 
         $this->logAction(
             $request, CoreLog::class, 'retention_purge', 'Core',
-            'Retention purge run by hand: ' . json_encode($deleted), null, 'CoreRetentionSetting'
+            'Retention purge run by hand: ' . json_encode($deleted) . ($failed === [] ? '' : ' - failed: ' . implode(', ', $failed)),
+            null, 'CoreRetentionSetting'
         );
 
-        return $this->respond(['deleted' => $deleted, 'settings' => CoreRetentionSetting::allInOrder()]);
+        return $this->respond(['deleted' => $deleted, 'failed' => $failed, 'settings' => CoreRetentionSetting::allInOrder()]);
     }
 }

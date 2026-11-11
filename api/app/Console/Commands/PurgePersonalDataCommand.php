@@ -32,14 +32,25 @@ class PurgePersonalDataCommand extends Command
     protected $description = 'Deletes personal data older than its retention period (GDPR storage limitation).';
 
     /**
-     * @description Runs the purge and prints the deleted counts per kind of data.
+     * @description Runs the purge and prints the deleted counts per kind of data; a kind that
+     *   failed is printed as FAILED and the command ends with an error code (scheduler output).
      * @param RetentionPurgeService $service The purge.
-     * @return int Exit code (0 = success).
+     * @return int Exit code (0 = success, 1 = at least one kind failed).
      */
     public function handle(RetentionPurgeService $service): int
     {
-        foreach ($service->purgeAll() as $key => $count) {
-            $this->line(sprintf('%-24s %s', $key, $count === null ? 'off' : $count));
+        $result = $service->purgeAll();
+        $failed = $service->failedKeys();
+
+        foreach ($result as $key => $count) {
+            $state = in_array($key, $failed, true) ? 'FAILED' : ($count === null ? 'off' : $count);
+            $this->line(sprintf('%-24s %s', $key, $state));
+        }
+
+        if ($failed !== []) {
+            $this->error('Retention purge failed for: ' . implode(', ', $failed) . ' (see the application log).');
+
+            return self::FAILURE;
         }
 
         return self::SUCCESS;

@@ -61,14 +61,20 @@ class RetentionPurgeService
     /** @description Rows deleted per statement of a bulk delete (short locks on large tables). */
     private const DELETE_BATCH = 5000;
 
+    /** @var array<int, string> Data keys whose purge failed in the last purgeAll() run. */
+    private array $failed = [];
+
     /**
-     * @description Runs every enabled retention and the clean-up of expired portal sessions.
-     * @return array<string, int|null> Deleted records per data key (null = retention off) plus
-     *   `expired_portal_sessions`.
+     * @description Runs every enabled retention and the clean-up of expired portal sessions. Each
+     *   kind of data runs on its own: a failure is logged (Log::error) and the next kinds still run;
+     *   the failed setting keeps its previous `last_run_at`. Failed keys: failedKeys().
+     * @return array<string, int|null> Deleted records per data key (null = retention off or
+     *   failed) plus `expired_portal_sessions`.
      */
     public function purgeAll(): array
     {
         $result = [];
+        $this->failed = [];
 
         foreach (CoreRetentionSetting::allInOrder() as $setting) {
             if ($setting->retention_days === null) {
@@ -76,16 +82,52 @@ class RetentionPurgeService
                 continue;
             }
 
-            $count = $this->purge($setting->data_key, Carbon::now()->subDays($setting->retention_days));
-            $setting->update(['last_run_at' => Carbon::now(), 'last_deleted_count' => $count]);
-            $result[$setting->data_key] = $count;
+            $result[$setting->data_key] = $this->attempt($setting->data_key, function () use ($setting) {
+                $count = $this->purge($setting->data_key, Carbon::now()->subDays($setting->retention_days));
+                $setting->update(['last_run_at' => Carbon::now(), 'last_deleted_count' => $count]);
+
+                return $count;
+            });
         }
 
-        $result['expired_portal_sessions'] = WebProjectSession::where('expires_at', '<', Carbon::now())->delete();
+        $result['expired_portal_sessions'] = $this->attempt('expired_portal_sessions',
+            fn () => WebProjectSession::where('expires_at', '<', Carbon::now())->delete());
 
-        Log::info('Retention purge finished', $result);
+        if ($this->failed === []) {
+            Log::info('Retention purge finished', $result);
+        } else {
+            Log::error('Retention purge finished with failures', ['failed' => $this->failed, 'result' => $result]);
+        }
 
         return $result;
+    }
+
+    /**
+     * @description Data keys whose purge failed in the last purgeAll() run.
+     * @return array<int, string>
+     */
+    public function failedKeys(): array
+    {
+        return $this->failed;
+    }
+
+    /**
+     * @description Runs one kind of the purge; a failure (also a missing class) is logged and
+     *   remembered instead of stopping the whole run.
+     * @param string $key Data key (for the log / failedKeys()).
+     * @param callable(): int $purge The purge of that kind of data.
+     * @return int|null Deleted records, null when it failed.
+     */
+    private function attempt(string $key, callable $purge): ?int
+    {
+        try {
+            return $purge();
+        } catch (\Throwable $e) {
+            $this->failed[] = $key;
+            Log::error('Retention purge failed', ['data_key' => $key, 'error' => get_class($e) . ': ' . $e->getMessage()]);
+
+            return null;
+        }
     }
 
     /**

@@ -32,9 +32,10 @@ class LogsActivityTest extends TestCase
      * @param Request $request Request to log.
      * @param string $description Log text.
      * @param array<int, string> $extraExcluded Extra keys to strip.
+     * @param string $logModel Log model class.
      * @return void
      */
-    private function log(Request $request, string $description = 'Did something', array $extraExcluded = []): void
+    private function log(Request $request, string $description = 'Did something', array $extraExcluded = [], string $logModel = CoreLog::class): void
     {
         $logger = new class {
             use LogsActivity;
@@ -46,7 +47,7 @@ class LogsActivityTest extends TestCase
             }
         };
 
-        $logger->write($request, CoreLog::class, 'update', 'User', $description, 7, 'User', $extraExcluded);
+        $logger->write($request, $logModel, 'update', 'User', $description, 7, 'User', $extraExcluded);
     }
 
     /**
@@ -136,5 +137,20 @@ class LogsActivityTest extends TestCase
 
         Log::shouldHaveReceived('error')->withArgs(fn ($message) => str_starts_with($message, 'Log error (' . CoreLog::class . ')'));
         $this->assertSame(0, CoreLog::count());
+    }
+
+    /**
+     * @description A log model that does not exist (a removed module) is an \Error, not an
+     *   \Exception - it is swallowed too, the calling action never answers 500 because of it.
+     * @input logAction() with the class name 'App\Models\Missing\MissingLog'.
+     * @output No exception; Log::error "Log error (App\Models\Missing\MissingLog)".
+     */
+    public function test_missing_log_model_never_throws(): void
+    {
+        Log::spy();
+
+        $this->log(Request::create('/x', 'POST'), logModel: 'App\\Models\\Missing\\MissingLog');
+
+        Log::shouldHaveReceived('error')->withArgs(fn ($message) => str_starts_with($message, 'Log error (App\\Models\\Missing\\MissingLog)'));
     }
 }

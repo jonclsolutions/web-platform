@@ -201,7 +201,7 @@ class RetentionTest extends TestCase
      * @description "Run now" in the admin runs the same purge, answers the counts and logs the run;
      *   it needs the update permission.
      * @input An inquiry 800 days old; POST purge as editor; as viewer.
-     * @output 200 deleted.raw_requests 1, settings included; core log 'retention_purge'; 403.
+     * @output 200 deleted.raw_requests 1, failed [], settings included; core log 'retention_purge'; 403.
      */
     public function test_manual_purge(): void
     {
@@ -212,10 +212,44 @@ class RetentionTest extends TestCase
         $this->postJson('/api/core/retention_settings/purge')->assertOk()
             ->assertJsonPath('data.deleted.raw_requests', 1)
             ->assertJsonPath('data.deleted.expired_portal_sessions', 0)
+            ->assertJsonPath('data.failed', [])
             ->assertJsonCount(count(CoreRetentionSetting::DEFAULTS), 'data.settings');
         $this->assertSame(1, CoreLog::where('event_type', 'retention_purge')->count());
 
         $this->signIn($this->userWith(['core-legal-config-view']));
         $this->postJson('/api/core/retention_settings/purge')->assertForbidden();
+    }
+
+    /**
+     * @description One kind of data that fails (database error, missing class of a removed module)
+     *   no longer stops the whole purge: the next kinds still run, the failure is logged, the
+     *   failed setting keeps its old `last_run_at`, the command ends with an error code and the
+     *   manual run answers the failed keys.
+     * @input Old inquiry whose DELETE fails (trigger); cookie consent 4 years old; command; manual run.
+     * @output command FAILED raw_requests, exit 1; consent deleted (later kind ran); inquiry kept;
+     *   raw_requests last_run_at null, cookie_consents set; Log::error; manual run 200 failed
+     *   ['raw_requests'].
+     */
+    public function test_one_failing_kind_does_not_stop_the_others(): void
+    {
+        $old = $this->rawRequest();
+        $this->age($old, 800);
+        $this->failOn($old->getTable(), 'DELETE');
+        WebCookieConsent::create(['consent_id' => '33333333-3333-4333-8333-333333333333', 'version' => 1, 'functional' => true, 'analytics' => false, 'marketing' => false]);
+        DB::table('web_cookie_consents')->update(['created_at' => now()->subYears(4)]);
+        \Illuminate\Support\Facades\Log::spy();
+
+        $this->artisan('retention:purge')->expectsOutputToContain('FAILED')->assertFailed();
+
+        $this->assertSame(0, WebCookieConsent::count());
+        $this->assertTrue(DB::table($old->getTable())->where('id', $old->id)->exists());
+        $this->assertNull(CoreRetentionSetting::where('data_key', 'raw_requests')->value('last_run_at'));
+        $this->assertNotNull(CoreRetentionSetting::where('data_key', 'cookie_consents')->value('last_run_at'));
+        \Illuminate\Support\Facades\Log::shouldHaveReceived('error')->withArgs(fn ($message, $context = []) => $message === 'Retention purge failed' && $context['data_key'] === 'raw_requests');
+
+        $this->signIn($this->userWith(['core-legal-config-view', 'core-legal-config-update']));
+        $this->postJson('/api/core/retention_settings/purge')->assertOk()
+            ->assertJsonPath('data.failed', ['raw_requests'])
+            ->assertJsonPath('data.deleted.raw_requests', null);
     }
 }

@@ -232,13 +232,13 @@ describe('GraphBuilderComponent', () => {
   /**
    * @description Every generated report is written to the audit log.
    * @input  generateReport() for 4 rows
-   * @output POST 'web/logs' with event_type 'generate_report', module 'core/orders', user from the session
+   * @output POST 'core/logs' (log of the data's module) with event_type 'generate_report', module 'core/orders', user from the session
    */
   it('logs the generated report', async () => {
     setColumns();
     await generate();
     const [url, body] = (ctx.dataHandler as any).post.calls.mostRecent().args;
-    expect(url).toBe('web/logs');
+    expect(url).toBe('core/logs');
     expect(body).toEqual(jasmine.objectContaining({ event_type: 'generate_report', module: 'core/orders', user_id_plain: '1' }));
   });
 

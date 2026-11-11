@@ -16,7 +16,7 @@ namespace Tests\Feature\Core;
 
 use App\Models\Core\CoreExternalLink;
 use App\Models\User;
-use App\Models\Web\WebLog;
+use App\Models\Core\CoreLog;
 use Tests\TestCase;
 
 /**
@@ -92,7 +92,7 @@ class ExternalLinkTest extends TestCase
     /**
      * @description Creating validates the URL and stores the link for the signed-in account.
      * @input POST {name, url:'not-a-url'}; POST valid.
-     * @output 422; 201 owned by the caller; web log 'create'.
+     * @output 422; 201 owned by the caller; core log 'create'.
      */
     public function test_store(): void
     {
@@ -103,13 +103,13 @@ class ExternalLinkTest extends TestCase
             ->assertCreated()->assertJsonPath('data.name', 'Analytics');
 
         $this->assertSame($me->id, CoreExternalLink::sole()->user_id);
-        $this->assertTrue(WebLog::where('event_type', 'create')->where('description', 'like', '%Analytics%')->exists());
+        $this->assertTrue(CoreLog::where('event_type', 'create')->where('description', 'like', '%Analytics%')->exists());
     }
 
     /**
      * @description Own links can be updated, foreign ones not.
      * @input PUT own link, PUT foreign link.
-     * @output 200 with new name + web log; 404.
+     * @output 200 with new name + core log; 404.
      */
     public function test_update(): void
     {
@@ -119,14 +119,14 @@ class ExternalLinkTest extends TestCase
 
         $this->putJson("/api/core/external_links/{$own->id}", ['name' => 'Renamed', 'url' => 'https://r.example.com'])
             ->assertOk()->assertJsonPath('data.name', 'Renamed');
-        $this->assertTrue(WebLog::where('event_type', 'update')->exists());
+        $this->assertTrue(CoreLog::where('event_type', 'update')->exists());
         $this->putJson("/api/core/external_links/{$foreign->id}", ['name' => 'Hack', 'url' => 'https://h.example.com'])->assertStatus(404);
     }
 
     /**
      * @description Delete moves an own link to the trash; restore brings it back; foreign = 404.
      * @input DELETE own, DELETE foreign, POST restore own.
-     * @output 204; 404; 200 (link active again); web logs soft_delete, restore.
+     * @output 204; 404; 200 (link active again); core logs soft_delete, restore.
      */
     public function test_destroy_and_restore(): void
     {
@@ -140,7 +140,7 @@ class ExternalLinkTest extends TestCase
 
         $this->postJson("/api/core/external_links/{$own->id}/restore")->assertOk();
         $this->assertFalse($own->fresh()->trashed());
-        $this->assertTrue(WebLog::where('event_type', 'restore')->exists());
+        $this->assertTrue(CoreLog::where('event_type', 'restore')->exists());
     }
 
     /**
@@ -159,12 +159,12 @@ class ExternalLinkTest extends TestCase
             ->assertOk()->assertJson(['data' => ['deleted_count' => 1, 'skipped_count' => 1, 'requested' => 2]]);
         $this->assertSoftDeleted($a);
         $this->assertFalse($foreign->fresh()->trashed());
-        $this->assertTrue(WebLog::where('event_type', 'soft_delete_bulk')->exists());
+        $this->assertTrue(CoreLog::where('event_type', 'soft_delete_bulk')->exists());
 
         $this->postJson('/api/core/external_links/bulk-delete', ['ids' => [$b->id], 'force_delete' => true])
             ->assertOk()->assertJsonPath('data.deleted_count', 1);
         $this->assertNull(CoreExternalLink::withTrashed()->find($b->id));
-        $this->assertTrue(WebLog::where('event_type', 'hard_delete_bulk')->exists());
+        $this->assertTrue(CoreLog::where('event_type', 'hard_delete_bulk')->exists());
 
         $this->postJson('/api/core/external_links/bulk-delete', ['ids' => []])->assertStatus(422);
     }
@@ -181,13 +181,13 @@ class ExternalLinkTest extends TestCase
         $this->postJson('/api/core/external_links/bulk-delete', ['ids' => range(1001, 1051)])
             ->assertOk()->assertJsonPath('data.skipped_count', 51);
 
-        $this->assertStringContainsString('1050...', WebLog::where('event_type', 'soft_delete_bulk')->sole()->description);
+        $this->assertStringContainsString('1050...', CoreLog::where('event_type', 'soft_delete_bulk')->sole()->description);
     }
 
     /**
      * @description A database error during bulk delete answers 500.
      * @input Own link, core_external_links UPDATE fails, POST bulk-delete.
-     * @output 500 "Bulk deletion failed."; web log 'error'.
+     * @output 500 "Bulk deletion failed."; core log 'error'.
      */
     public function test_bulk_destroy_database_error(): void
     {
@@ -197,7 +197,7 @@ class ExternalLinkTest extends TestCase
 
         $this->postJson('/api/core/external_links/bulk-delete', ['ids' => [$link->id]])
             ->assertStatus(500)->assertJson(['message' => 'Bulk deletion failed.']);
-        $this->assertTrue(WebLog::where('event_type', 'error')->exists());
+        $this->assertTrue(CoreLog::where('event_type', 'error')->exists());
     }
 
     /**

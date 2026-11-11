@@ -412,13 +412,13 @@ describe('TableBuilderComponent', () => {
     /**
      * @description Every export is written to the audit log.
      * @input  CSV export of 1 row
-     * @output POST 'web/logs' with event_type 'export_csv', module 'core/users', user from the session
+     * @output POST 'core/logs' (log of the data's module) with event_type 'export_csv', module 'core/users', user from the session
      */
     it('logs the export', async () => {
       (ctx.dataHandler as any).getCollection.and.returnValue(of([{ id: 1, name: 'A' }]));
       await component.handleExportFormatSelected({ format: 'csv', columnKeys: null, rawFormat: false });
       const [url, body] = (ctx.dataHandler as any).post.calls.mostRecent().args;
-      expect(url).toBe('web/logs');
+      expect(url).toBe('core/logs');
       expect(body).toEqual(jasmine.objectContaining({ event_type: 'export_csv', module: 'core/users', user_id_plain: '1', user_plain: 'admin@example.test' }));
     });
 

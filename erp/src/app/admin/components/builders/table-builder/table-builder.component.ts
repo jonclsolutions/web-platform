@@ -46,6 +46,7 @@ import { UserAvatarComponent } from '../../user-avatar/user-avatar.component';
 import { ExportPopupBuilderComponent, ExportColumnOption, ExportSelection } from '../export-popup-builder/export-popup-builder.component';
 import { ImportPopupBuilderComponent } from '../import-popup-builder/import-popup-builder.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
+import { exportLogEndpoint } from '../export-log-endpoint';
 const DEFAULT_EXPORT_EXCLUDED_KEYS = [
   'user_password_hash',
   'user_password_salt',
@@ -149,8 +150,6 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
    */
   @Output() importCompleted = new EventEmitter<void>();
 
-  web_logs_endpoint: string = 'web/logs';
-
   showExportPopup = false;
   isExporting = false;
   exportSelectedOnly = false;
@@ -188,7 +187,8 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   private get logCrud(): EntityCrudService<any> {
     if (!this._logCrud) {
       this._logCrud = new EntityCrudService<any>(
-        this.dataHandler, () => this.web_logs_endpoint, this.destroy$
+        // The audit log of the module that owns the data (web / shop / core), not always web/logs.
+        this.dataHandler, () => exportLogEndpoint(this.apiEndpoint), this.destroy$
       );
     }
     return this._logCrud;

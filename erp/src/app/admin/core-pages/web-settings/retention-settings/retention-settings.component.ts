@@ -9,7 +9,7 @@
  * leads, tickets, web orders, projects, cookie consents), the result of the last clean-up and an
  * immediate run of the clean-up that otherwise runs every night (`retention:purge`).
  * @note The period runs from the last change of a record; "off" keeps the records until they are
- * deleted by hand. Editing and running need `core-legal-config-update`, otherwise the values are
+ * deleted by hand (a kind of data that failed is reported, the others are still cleaned). Editing and running need `core-legal-config-update`, otherwise the values are
  * read-only. A destructive run is always confirmed first.
  * @dependencies
  * - DataHandler: `core/retention_settings` (GET / PUT) and `core/retention_settings/purge` (POST).
@@ -40,6 +40,8 @@ export interface RetentionSetting {
 /** @description Answer of the immediate clean-up. */
 interface PurgeResult {
   deleted: Record<string, number | null>;
+  /** Kinds of data whose clean-up failed (details in the server log); the others were cleaned. */
+  failed?: string[];
   settings: RetentionSetting[];
 }
 
@@ -151,11 +153,25 @@ export class RetentionSettingsComponent implements OnInit {
         this.purging = false;
         this.settings = this.copy(res?.settings ?? this.settings);
         const total = Object.values(res?.deleted ?? {}).reduce<number>((sum, n) => sum + (n ?? 0), 0);
-        this.alert.open(this.t('purge_done_title'), this.t('purge_done_message').replace('{count}', String(total)), 'success');
+        const failed = Array.isArray(res?.failed) ? res.failed : [];
+        if (failed.length) {
+          // Some kinds failed: say which (label of the row, else the key) - the rest was cleaned.
+          const names = failed.map(key => this.keyLabel(key)).join(', ');
+          this.alert.open(this.t('purge_failed_title'),
+            this.t('purge_failed_message').replace('{keys}', names).replace('{count}', String(total)), 'warning');
+        } else {
+          this.alert.open(this.t('purge_done_title'), this.t('purge_done_message').replace('{count}', String(total)), 'success');
+        }
         this.cd.markForCheck();
       },
       error: () => { this.purging = false; this.cd.markForCheck(); }
     });
+  }
+
+  /** @description Label of a kind of data; the key itself when it has no label (e.g. portal sessions). */
+  private keyLabel(key: string): string {
+    const label = this.t(`key_${key}`);
+    return label && label !== `retention-settings.key_${key}` ? label : key;
   }
 
   /** @description Copies the rows, so the form edits never change the API answer. */

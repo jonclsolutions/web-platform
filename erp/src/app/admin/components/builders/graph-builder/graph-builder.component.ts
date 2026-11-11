@@ -21,7 +21,7 @@
  *
  * @dependencies
  * - DataHandler: read-only GET against `apiEndpoint` (no_pagination + optional date range).
- * - EntityCrudService: single POST to `web/logs` for audit trail.
+ * - EntityCrudService: single POST to the audit log of the data's module (`exportLogEndpoint`).
  * - chart.js (`chart.js/auto`, dynamic import): renders one <canvas> per section.
  * - jsPDF + html2canvas (dynamic import): client-side PDF snapshot of the report body.
  * - ScrollLockService: Shared background scroll lock.
@@ -43,6 +43,7 @@ import { AlertDialogService } from '../../../../core/services/alert-dialog.servi
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
+import { exportLogEndpoint } from '../export-log-endpoint';
 import {
   GraphColumnOption, ColumnChartMode, MetricChartMode, DistributionChartType,
   ChartModeOption, createColumnChartModeOptions, createMetricChartModeOptions
@@ -299,11 +300,11 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
   public authService = inject(AuthService);
   private scrollLock = inject(ScrollLockService);
 
-  private readonly webLogsEndpoint = 'web/logs';
   private _logCrud?: EntityCrudService<any>;
   private get logCrud(): EntityCrudService<any> {
     if (!this._logCrud) {
-      this._logCrud = new EntityCrudService<any>(this.dataHandler, () => this.webLogsEndpoint, this.destroy$);
+      // The audit log of the module that owns the data (web / shop / core), not always web/logs.
+      this._logCrud = new EntityCrudService<any>(this.dataHandler, () => exportLogEndpoint(this.apiEndpoint), this.destroy$);
     }
     return this._logCrud;
   }

@@ -403,6 +403,8 @@
     "purge_confirm_message": "Trvale se smažou všechny záznamy starší než ULOŽENÉ lhůty, včetně příloh a koše. Akci nelze vrátit.",
     "purge_done_title": "Úklid dokončen",
     "purge_done_message": "Smazáno záznamů: {count}.",
+    "purge_failed_title": "Úklid dokončen s chybou",
+    "purge_failed_message": "Nepodařilo se uklidit: {keys}. Ostatní data byla uklizena (smazáno záznamů: {count}). Podrobnosti jsou v logu serveru.",
     "saved_title": "Uloženo",
     "saved_message": "Lhůty retence byly uloženy.",
     "load_error": "Nastavení retence se nepodařilo načíst.",

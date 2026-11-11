@@ -403,6 +403,8 @@
     "purge_confirm_message": "All records older than the SAVED periods are deleted for good, with attachments and trash. This cannot be undone.",
     "purge_done_title": "Clean-up finished",
     "purge_done_message": "Deleted records: {count}.",
+    "purge_failed_title": "Clean-up finished with an error",
+    "purge_failed_message": "Could not clean up: {keys}. The other data was cleaned (deleted records: {count}). Details are in the server log.",
     "saved_title": "Saved",
     "saved_message": "The retention periods were saved.",
     "load_error": "The retention settings could not be loaded.",

@@ -80,7 +80,9 @@ trait LogsActivity
                 'user_id_plain'        => (string)($user?->id ?? '0'),
                 'user_plain'           => $user?->user_email ?? 'system',
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            // Throwable, not only Exception: a missing log model / table (\Error) must not turn
+            // the already finished action into a 500 either.
             Log::error("Log error ({$logModel}): " . $e->getMessage());
         }
     }
