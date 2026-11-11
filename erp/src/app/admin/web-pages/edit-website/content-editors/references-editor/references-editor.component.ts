@@ -27,6 +27,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs';
 import { FormsModule } from '@angular/forms';
+import { StickyBarDirective } from '../../../../../shared/directives/sticky-bar.directive';
 import { I18nContentEditorBase } from '../i18n-content-editor.base';
 import { CheckedText, ReferenceDraft, ReferenceFeatureDraft, ReferenceStackDraft } from '../content-editor.model';
 import { PublicDataService } from '../../../../../shared/services/public-data.service';
@@ -41,7 +42,7 @@ export const REFERENCE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 @Component({
   selector: 'app-references-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StickyBarDirective],
   templateUrl: './references-editor.component.html',
   styleUrl: '../content-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

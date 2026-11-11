@@ -16,6 +16,7 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { StickyBarDirective } from '../../../shared/directives/sticky-bar.directive';
 import { RouterModule } from '@angular/router';
 import { BaseTranslationEditorComponent } from '../../../shared/components/base-translation-editor/base-translation-editor.component';
 import { PageTitlesEditorComponent } from '../../components/page-titles-editor/page-titles-editor.component';
@@ -28,7 +29,7 @@ import { PageHelpComponent } from '../../components/page-help/page-help.componen
 @Component({
   selector: 'app-edit-shop',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, PageTitlesEditorComponent, PageHelpComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, PageTitlesEditorComponent, PageHelpComponent, StickyBarDirective],
   templateUrl: './edit-eshop.component.html',
   styleUrls: ['../../shared-styles/theme.css', '../../../shared/styles/base.css', '../../shared-styles/settings-page.css', './edit-eshop.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

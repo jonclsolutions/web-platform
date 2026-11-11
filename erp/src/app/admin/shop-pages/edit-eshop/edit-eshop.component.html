@@ -37,7 +37,7 @@
 
 <!-- Both parts stay created once opened and are only hidden - unsaved edits survive a tab switch. -->
 <div class="ew-root" [style.display]="activeTab === 'translations' ? null : 'none'">
-  <div class="ew-topbar">
+  <div class="ew-topbar" appStickyBar>
     <div class="ew-topbar-left">
       <h1 class="ew-title">{{ t('page_title') }}</h1>
       @if (getCurrentLangMeta(); as meta) {

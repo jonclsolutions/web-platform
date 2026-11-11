@@ -29,6 +29,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { StickyBarDirective } from '../../../shared/directives/sticky-bar.directive';
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { DataHandler } from '../../../core/services/data-handler.service';
@@ -45,7 +46,7 @@ const FALLBACK_LANGUAGES: PageTitleLang[] = [{ code: 'cz', name: 'Čeština', ac
 @Component({
   selector: 'app-page-titles-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StickyBarDirective],
   templateUrl: './page-titles-editor.component.html',
   styleUrl: './page-titles-editor.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

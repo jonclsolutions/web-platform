@@ -19,6 +19,7 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { StickyBarDirective } from '../../../shared/directives/sticky-bar.directive';
 import { RouterModule } from '@angular/router';
 import { BaseTranslationEditorComponent } from '../../../shared/components/base-translation-editor/base-translation-editor.component';
 import { PageTitlesEditorComponent } from '../../components/page-titles-editor/page-titles-editor.component';
@@ -37,7 +38,7 @@ export type EditWebsiteTab = 'translations' | 'page_titles' | 'faq' | 'jobs' | '
 @Component({
   selector: 'app-edit-website',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, PageTitlesEditorComponent, FaqEditorComponent, JobsEditorComponent, ReferencesEditorComponent, PageHelpComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, PageTitlesEditorComponent, FaqEditorComponent, JobsEditorComponent, ReferencesEditorComponent, PageHelpComponent, StickyBarDirective],
   templateUrl: './edit-website.component.html',
   styleUrls: ['../../shared-styles/theme.css', '../../../shared/styles/base.css', '../../shared-styles/settings-page.css', './edit-website.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

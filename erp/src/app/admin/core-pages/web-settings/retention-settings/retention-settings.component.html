@@ -53,7 +53,7 @@
       <p class="rs-note">{{ t('note') }}</p>
 
       @if (canEdit) {
-        <div class="rs-actions">
+        <div class="rs-actions" appStickyBar="bottom">
           <button type="button" class="rs-btn rs-btn-secondary" [disabled]="purging || saving" (click)="purgeNow()">
             {{ purging ? t('purging') : t('purge_button') }}
           </button>

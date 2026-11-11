@@ -13,7 +13,7 @@
   background: var(--color-white);
   border: 1px solid var(--color-sand-200);
   border-radius: 18px;
-  overflow: hidden;
+  overflow: clip;
   box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
 }
 .rs-card-header {
@@ -61,6 +61,29 @@
 .rs-readonly { font-size: 0.86rem; font-weight: 600; color: var(--color-zinc-700); }
 
 .rs-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+
+/*
+    @module: Floating save bar
+    @description: The save actions stick to the bottom of the admin content while the card is
+        scrolled; `.is-stuck` (StickyBarDirective) shows them as a floating bar - the white ring
+        is a box-shadow, so the layout never moves.
+    @usage: .rs-actions[appStickyBar="bottom"], .rs-actions.is-stuck
+    @note: The card uses `overflow: clip` (not hidden) - hidden would stop the bar sticking.
+*/
+.rs-actions {
+  position: sticky;
+  bottom: 18px;
+  z-index: 5;
+  transition: box-shadow 0.18s ease;
+}
+
+.rs-actions.is-stuck {
+  background: var(--color-white);
+  border-radius: 10px;
+  border-top-color: transparent;
+  box-shadow: 0 0 0 10px var(--color-white), 0 0 0 11px var(--color-zinc-200), 0 10px 28px 8px rgba(24, 24, 27, 0.12);
+}
+
 .rs-btn {
   display: inline-flex;
   align-items: center;

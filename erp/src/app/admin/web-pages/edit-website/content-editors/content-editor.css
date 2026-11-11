@@ -23,7 +23,7 @@
   background: var(--color-white);
   border: 1px solid var(--color-sand-200);
   border-radius: 18px;
-  overflow: hidden;
+  overflow: clip;
   box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   color: var(--color-zinc-900);
@@ -38,6 +38,26 @@
   min-height: 52px;
   background: var(--color-zinc-50);
   border-bottom: 1px solid var(--color-zinc-100);
+}
+
+/*
+    @module: Floating save bar
+    @description: The header with save / discard sticks to the top of the admin content while the
+        card is scrolled; `.is-stuck` (StickyBarDirective) shows it as a floating bar.
+    @usage: .ce-card-header[appStickyBar], .ce-card-header.is-stuck
+    @note: The card uses `overflow: clip` (not hidden) - hidden would stop the header sticking.
+*/
+.ce-card-header {
+  position: sticky;
+  top: 8px;
+  z-index: 5;
+  transition: border-radius 0.18s ease, box-shadow 0.18s ease;
+}
+
+.ce-card-header.is-stuck {
+  border-radius: 14px;
+  border-bottom-color: transparent;
+  box-shadow: 0 0 0 1px var(--color-zinc-200), 0 8px 20px rgba(24, 24, 27, 0.1);
 }
 
 .ce-card-icon { display: inline-flex; }

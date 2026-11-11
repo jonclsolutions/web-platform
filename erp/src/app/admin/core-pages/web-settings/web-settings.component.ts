@@ -19,6 +19,7 @@
 import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { StickyBarDirective } from '../../../shared/directives/sticky-bar.directive';
 import * as Core from '../../../shared/imports/core-providers';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
@@ -32,7 +33,7 @@ import { PageHelpComponent } from '../../components/page-help/page-help.componen
 @Component({
   selector: 'app-web-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RetentionSettingsComponent, PageTitlesEditorComponent, PageHelpComponent],
+  imports: [CommonModule, FormsModule, RetentionSettingsComponent, PageTitlesEditorComponent, PageHelpComponent, StickyBarDirective],
   templateUrl: './web-settings.component.html',
   styleUrl: './web-settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

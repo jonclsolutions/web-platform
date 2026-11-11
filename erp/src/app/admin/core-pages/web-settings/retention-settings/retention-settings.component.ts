@@ -21,6 +21,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject }
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { StickyBarDirective } from '../../../../shared/directives/sticky-bar.directive';
 import { DataHandler } from '../../../../core/services/data-handler.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
@@ -48,7 +49,7 @@ export const RETENTION_OPTIONS: (number | null)[] = [null, 30, 90, 180, 365, 730
 @Component({
   selector: 'app-retention-settings',
   standalone: true,
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, StickyBarDirective],
   templateUrl: './retention-settings.component.html',
   styleUrl: './retention-settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

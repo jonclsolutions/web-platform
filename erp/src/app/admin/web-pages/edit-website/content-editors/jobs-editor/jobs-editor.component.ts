@@ -19,6 +19,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { StickyBarDirective } from '../../../../../shared/directives/sticky-bar.directive';
 import { I18nContentEditorBase } from '../i18n-content-editor.base';
 import { CheckedText, JobDraft, JobSectionDraft } from '../content-editor.model';
 
@@ -28,7 +29,7 @@ export const JOB_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 @Component({
   selector: 'app-jobs-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StickyBarDirective],
   templateUrl: './jobs-editor.component.html',
   styleUrl: '../content-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

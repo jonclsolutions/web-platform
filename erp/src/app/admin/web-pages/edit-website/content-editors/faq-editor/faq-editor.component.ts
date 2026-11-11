@@ -15,13 +15,14 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { StickyBarDirective } from '../../../../../shared/directives/sticky-bar.directive';
 import { I18nContentEditorBase } from '../i18n-content-editor.base';
 import { CheckedText, FaqCategoryDraft, FaqItemDraft } from '../content-editor.model';
 
 @Component({
   selector: 'app-faq-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StickyBarDirective],
   templateUrl: './faq-editor.component.html',
   styleUrl: '../content-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
