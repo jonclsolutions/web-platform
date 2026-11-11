@@ -133,7 +133,7 @@ class ShopProductController extends Controller
             return $this->respond(new ShopProductResource($product), 201);
 
         } catch (\Exception $e) {
-            Log::error('ShopProduct creation error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Product creation failed: " . $e->getMessage());
             return response()->json(['message' => 'Product creation failed.'], 500);
         }
@@ -212,7 +212,7 @@ class ShopProductController extends Controller
             return $this->respond(new ShopProductResource($product));
 
         } catch (\Exception $e) {
-            Log::error('ShopProduct update error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Update failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
             return response()->json(['message' => 'Update failed.'], 500);
         }
@@ -244,7 +244,7 @@ class ShopProductController extends Controller
             return $this->respond(new ShopProductResource($product));
 
         } catch (\Exception $e) {
-            Log::error('ShopProduct quick category update error: ' . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Quick category update failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
             return response()->json(['message' => 'Category update failed.'], 500);
         }
@@ -280,7 +280,7 @@ class ShopProductController extends Controller
             return response()->json(null, 204);
 
         } catch (\Exception $e) {
-            Log::error('ShopProduct delete error: ' . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Product deletion failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
             return response()->json(['message' => 'Product deletion failed.'], 500);
         }
@@ -299,7 +299,7 @@ class ShopProductController extends Controller
             $this->logAction($request, ShopLog::class, 'restore', 'ShopProduct', "Restored product ID: $id", (int) $id, 'ShopProduct');
             return $this->respond(new ShopProductResource($product));
         } catch (\Exception $e) {
-            Log::error('ShopProduct restore error: ' . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Restore failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
             return response()->json(['message' => 'Product restore failed.'], 500);
         }
@@ -331,7 +331,7 @@ class ShopProductController extends Controller
             $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopProduct', "Emptied product trash. Count: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            Log::error('ShopProduct force delete all error: ' . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Emptying trash failed: " . $e->getMessage());
             return response()->json(['message' => 'Emptying trash failed.'], 500);
         }

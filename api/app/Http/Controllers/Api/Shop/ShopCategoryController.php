@@ -90,6 +90,7 @@ class ShopCategoryController extends Controller
             $this->logAction($request, ShopLog::class, 'create', 'ShopCategory', "Created category: {$category->name}", $category->id, 'ShopCategory');
             return $this->respond(new ShopCategoryResource($category), 201);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopCategory', "Failed to create category: " . $e->getMessage());
             return response()->json(['message' => 'Failed to create category.'], 500);
         }
@@ -116,6 +117,7 @@ class ShopCategoryController extends Controller
             $this->logAction($request, ShopLog::class, 'update', 'ShopCategory', "Updated category ID: {$category->id}", $category->id, 'ShopCategory');
             return $this->respond(new ShopCategoryResource($category));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopCategory', "Failed to update category ID {$id}: " . $e->getMessage(), (int) $id, 'ShopCategory');
             return response()->json(['message' => 'Failed to update category.'], 500);
         }
@@ -145,8 +147,8 @@ class ShopCategoryController extends Controller
             $this->logAction($request, ShopLog::class, 'delete', 'ShopCategory', "Deleted category: {$item->name}", (int) $id, 'ShopCategory');
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopCategory', "Delete error ID {$id}: " . $e->getMessage(), (int) $id, 'ShopCategory');
-            Log::error("Delete error (ShopCategory): " . $e->getMessage());
             return response()->json(['message' => 'Deletion failed.'], 500);
         }
     }

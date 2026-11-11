@@ -42,6 +42,12 @@ class User extends Authenticatable
      */
     public const FORCED_2FA_ROLE_NAMES = ['sysadmin'];
 
+    /**
+     * @description Personal data: the audit log notes that these attributes changed, never their
+     *   values (App\Support\Audit\ModelChanges) - an erased / purged record leaves no copy in the logs.
+     */
+    public const AUDIT_MASKED = ['internal_note'];
+
     protected $fillable = [
         'user_email', 'user_password_hash', 'full_name',
         'dpp_hours_spent', 'internal_note', 'last_login_at',

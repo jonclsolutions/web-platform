@@ -73,7 +73,7 @@ class ShopShippingMethodController extends Controller
             $this->logAction($request, ShopLog::class, 'create', 'ShopShippingMethod', "Created shipping method: {$method->name}", $method->id, 'ShopShippingMethod');
             return $this->respond(new ShopShippingMethodResource($method), 201);
         } catch (\Exception $e) {
-            Log::error("ShopShippingMethod store error: " . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopShippingMethod', "Error creating shipping method: " . $e->getMessage());
             return response()->json(['message' => 'Error creating shipping method.'], 500);
         }
@@ -106,6 +106,7 @@ class ShopShippingMethodController extends Controller
             $this->logAction($request, ShopLog::class, 'update', 'ShopShippingMethod', "Updated shipping method: {$method->name}", $method->id, 'ShopShippingMethod');
             return $this->respond(new ShopShippingMethodResource($method));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopShippingMethod', "Update failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopShippingMethod');
             return response()->json(['message' => 'Update failed.'], 500);
         }
@@ -157,6 +158,7 @@ class ShopShippingMethodController extends Controller
             $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopShippingMethod', "Emptied shipping method trash. Count: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopShippingMethod', "Error emptying shipping method trash: " . $e->getMessage());
             return response()->json(['message' => 'Emptying trash failed.'], 500);
         }

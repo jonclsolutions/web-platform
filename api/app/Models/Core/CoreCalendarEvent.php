@@ -29,6 +29,12 @@ class CoreCalendarEvent extends Model
     /** @var string Table of the model. */
     protected $table = 'core_calendar_events';
 
+    /**
+     * @description Personal data: the audit log notes that these attributes changed, never their
+     *   values (App\Support\Audit\ModelChanges) - an erased / purged record leaves no copy in the logs.
+     */
+    public const AUDIT_MASKED = ['title', 'note'];
+
     /** @var array<int, string> The attributes that are mass assignable (user_id is set by the controller). */
     protected $fillable = ['date', 'time', 'title', 'note', 'is_done'];
 

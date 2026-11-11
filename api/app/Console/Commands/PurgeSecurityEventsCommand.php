@@ -21,6 +21,7 @@ use App\Models\Core\CoreSecurityEvent;
 use App\Models\Core\CoreSecuritySetting;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class PurgeSecurityEventsCommand extends Command
 {
@@ -64,6 +65,7 @@ class PurgeSecurityEventsCommand extends Command
         } while ($deletedInBatch > 0);
 
         $this->info("Done. Total deleted records: {$totalDeleted}.");
+        Log::info('Security events purged', ['deleted' => $totalDeleted, 'retention_days' => $retentionDays]);
 
         return self::SUCCESS;
     }

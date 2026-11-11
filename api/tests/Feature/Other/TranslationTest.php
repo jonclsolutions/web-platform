@@ -19,6 +19,7 @@ use App\Models\Core\CoreLog;
 use App\Models\Shop\ShopLog;
 use App\Models\Web\WebLog;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -155,17 +156,18 @@ class TranslationTest extends TestCase
     /**
      * @description A failing write answers 500 without the server path in the message and is logged.
      * @input A folder exists where web/cz.json should be written.
-     * @output 500 {message 'Saving translations failed.'}; Log::error.
+     * @output 500 {message 'Saving translations failed.'}; the exception reported (core log).
      */
     public function test_save_failure(): void
     {
         $this->signIn($this->userWith(self::EDITOR));
         File::makeDirectory($this->file('web/cz.json'), 0755, true);
-        Log::spy();
+        Exceptions::fake();
 
         $this->postJson('/api/save_translations/web', ['lang' => 'cz', 'data' => ['a' => 'b']])->assertStatus(500)
             ->assertExactJson(['message' => 'Saving translations failed.']);
-        Log::shouldHaveReceived('error')->withArgs(fn ($m) => str_starts_with($m, 'Saving translations web/cz failed'))->once();
+        // Reported with its full detail (class, file, trace) - the database log channel stores it.
+        Exceptions::assertReported(\Illuminate\Contracts\Filesystem\FileNotFoundException::class);
     }
 
     /**

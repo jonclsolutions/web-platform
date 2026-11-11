@@ -90,7 +90,7 @@ class ShopPaymentMethodController extends Controller
             return $this->respond(new ShopPaymentMethodResource($method));
 
         } catch (\Exception $e) {
-            Log::error("Payment method update error: " . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopPaymentMethod', "Update failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopPaymentMethod');
             return response()->json(['message' => 'Update failed.'], 500);
         }

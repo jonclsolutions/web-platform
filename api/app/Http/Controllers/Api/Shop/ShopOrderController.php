@@ -228,7 +228,7 @@ class ShopOrderController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("ShopOrder creation error: " . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Order creation failed: " . $e->getMessage());
             return response()->json(['message' => 'Order creation failed.'], 500);
         }
@@ -288,7 +288,7 @@ class ShopOrderController extends Controller
             return $this->respond(new ShopOrderResource($order));
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("ShopOrder update error: " . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Update failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopOrder');
             return response()->json(['message' => 'Update failed.'], 500);
         }
@@ -341,7 +341,7 @@ class ShopOrderController extends Controller
             return response()->json(null, 204);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("ShopOrder delete error: " . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Deletion failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopOrder');
             return response()->json(['message' => 'Deletion failed.'], 500);
         }
@@ -362,7 +362,7 @@ class ShopOrderController extends Controller
 
             return $this->respond(new ShopOrderResource($order));
         } catch (\Exception $e) {
-            Log::error("ShopOrder restore error: " . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Restoration failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopOrder');
             return response()->json(['message' => 'Order restoration failed.'], 500);
         }
@@ -389,6 +389,7 @@ class ShopOrderController extends Controller
             return response()->json(null, 204);
         } catch (\Exception $e) {
             DB::rollBack();
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Error purging trash: " . $e->getMessage());
             return response()->json(['message' => 'Error purging trash.'], 500);
         }

@@ -34,6 +34,12 @@ class ShopCustomer extends Model
     /**
      * @var array<int, string> The attributes that are mass assignable.
      */
+    /**
+     * @description Personal data: the audit log notes that these attributes changed, never their
+     *   values (App\Support\Audit\ModelChanges) - an erased / purged record leaves no copy in the logs.
+     */
+    public const AUDIT_MASKED = ['email', 'first_name', 'last_name', 'phone', 'company', 'address', 'city', 'postal_code', 'notes'];
+
     protected $fillable = [
         'user_id',
         'email',

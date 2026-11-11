@@ -136,7 +136,7 @@ class TranslationController extends Controller
 
             return $this->respond(['detected_changes' => count($changes)]);
         } catch (\Exception $e) {
-            Log::error("Saving translations {$module}/{$lang} failed: " . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             return response()->json(['message' => 'Saving translations failed.'], 500);
         }
     }

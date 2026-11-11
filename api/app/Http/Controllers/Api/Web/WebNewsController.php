@@ -88,6 +88,7 @@ class WebNewsController extends Controller
 
             return $this->respond(new WebNewsResource($news), 201);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error creating news item: " . $e->getMessage());
             return response()->json(['message' => 'News creation failed.'], 500);
         }
@@ -110,6 +111,7 @@ class WebNewsController extends Controller
 
             return $this->respond(new WebNewsResource($news));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error updating news item ID {$id}: " . $e->getMessage(), (int) $id, 'WebNews');
             return response()->json(['message' => 'News update failed.'], 500);
         }
@@ -129,6 +131,7 @@ class WebNewsController extends Controller
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error deleting news item ID $id: " . $e->getMessage(), (int) $id, 'WebNews');
             return response()->json(['message' => 'News deletion failed.'], 500);
         }
@@ -163,6 +166,7 @@ class WebNewsController extends Controller
                 }
             });
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error during bulk deletion of news items: " . $e->getMessage());
             return response()->json(['message' => 'Bulk deletion failed.'], 500);
         }
@@ -331,6 +335,7 @@ class WebNewsController extends Controller
             if ($e instanceof \RuntimeException && $e->getCode() === 410) {
                 return response()->json(['message' => $e->getMessage()], 410);
             }
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error during import: " . $e->getMessage());
             return response()->json(['message' => 'Import failed.'], 500);
         }
@@ -347,6 +352,7 @@ class WebNewsController extends Controller
 
             return $this->respond(new WebNewsResource($news));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error restoring news item ID $id: " . $e->getMessage(), (int) $id, 'WebNews');
             return response()->json(['message' => 'News restoration failed.'], 500);
         }
@@ -362,6 +368,7 @@ class WebNewsController extends Controller
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error emptying news trash: " . $e->getMessage());
             return response()->json(['message' => 'Emptying trash failed.'], 500);
         }

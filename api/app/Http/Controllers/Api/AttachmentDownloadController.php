@@ -22,11 +22,18 @@
  *                guess another type) and, except PDF, a sandbox CSP (no script, no same-origin
  *                access even if a file is rendered);
  *              - Content-Disposition is built by Symfony (RFC 6266, ASCII fallback + filename*).
+ * @note Every served file is written to the web log (attachment_download / attachment_view:
+ *              attachment id, owner record, type and size - not the file name, it may be personal);
+ *              a path with `..` is a security event (path_traversal_attempt).
  */
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Core\CoreSecurityEvent;
+use App\Models\Web\WebLog;
+use App\Traits\LogsActivity;
+use Illuminate\Http\Request;
 use App\Models\Web\WebAttachment;
 use App\Support\Uploads\AttachmentPolicy;
 use Illuminate\Support\Facades\Storage;
@@ -34,6 +41,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttachmentDownloadController extends Controller
 {
+    use LogsActivity;
+
     /** @description CSP of a served file: nothing may run or load, the document is sandboxed. */
     private const SANDBOX_CSP = "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox";
 
@@ -46,12 +55,13 @@ class AttachmentDownloadController extends Controller
     /**
      * @description Streams the requested file back to the caller under its
      *              original file name, forcing a browser download.
+     * @param Request $request Signed request.
      * @param string $path Full storage-relative path, e.g. "web/raw_request_commissions/abc123.pdf".
      * @return StreamedResponse
      */
-    public function download(string $path): StreamedResponse
+    public function download(Request $request, string $path): StreamedResponse
     {
-        [$disk, $relativePath, $displayName] = $this->resolveRequest($path);
+        [$disk, $relativePath, $displayName] = $this->resolveRequest($request, $path, 'download');
 
         return Storage::disk($disk)->download($relativePath, $displayName, $this->securityHeaders(self::SANDBOX_CSP));
     }
@@ -60,12 +70,13 @@ class AttachmentDownloadController extends Controller
      * @description Streams the requested file for in-browser preview (Content-Disposition:
      *              inline) - but ONLY when its content is a previewable type
      *              (AttachmentPolicy::INLINE_MIME_TYPES); any other file is sent as a download.
+     * @param Request $request Signed request.
      * @param string $path Full storage-relative path.
      * @return StreamedResponse
      */
-    public function view(string $path): StreamedResponse
+    public function view(Request $request, string $path): StreamedResponse
     {
-        [$disk, $relativePath, $displayName] = $this->resolveRequest($path);
+        [$disk, $relativePath, $displayName] = $this->resolveRequest($request, $path, 'view');
         $storage = Storage::disk($disk);
         $mimeType = strtolower((string) $storage->mimeType($relativePath));
 
@@ -98,17 +109,20 @@ class AttachmentDownloadController extends Controller
 
     /**
      * @description Shared validation + original-name resolution used by both
-     *              download() and view().
+     *              download() and view(); logs the access.
+     * @param Request $request Signed request.
      * @param string $path
+     * @param string $action download | view (log event attachment_<action>).
      * @return array{0: string, 1: string, 2: string} [$disk, $relativePath, $displayName]
      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      */
-    private function resolveRequest(string $path): array
+    private function resolveRequest(Request $request, string $path, string $action): array
     {
         // Defensive check - reject anything that looks like a traversal attempt,
         // even though `signed` middleware already guarantees the request wasn't
         // tampered with after URL generation.
         if (str_contains($path, '..')) {
+            CoreSecurityEvent::record('path_traversal_attempt', 'critical', $request->ip(), CoreSecurityEvent::contextFromRequest($request));
             abort(404);
         }
 
@@ -123,6 +137,13 @@ class AttachmentDownloadController extends Controller
         if (!Storage::disk($disk)->exists($path)) {
             abort(404);
         }
+
+        $owner = class_basename((string) $attachment->attachable_type) . ' #' . $attachment->attachable_id;
+        $this->logAction(
+            $request, WebLog::class, "attachment_{$action}", 'WebAttachment',
+            "Attachment #{$attachment->id} of {$owner} served ({$action}, {$attachment->mime_type}, {$attachment->size_bytes} B)",
+            $attachment->id, 'WebAttachment', ['expires', 'signature']
+        );
 
         return [$disk, $path, $attachment->original_filename ?: basename($path)];
     }

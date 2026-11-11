@@ -17,7 +17,11 @@
 
 namespace App\Providers;
 
+use App\Support\Audit\ModelChanges;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Routing\Events\RouteMatched;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -42,7 +46,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // One collector of data changes per request / job (see LogsActivity: `changes` of a log row).
+        $this->app->scoped(ModelChanges::class);
     }
 
     /**
@@ -51,6 +56,19 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->enforceProductionSafety();
+
+        // ── Audit detail: every model created / updated / deleted / restored is noted with its
+        // changed attributes; the next audit log row of the request carries them (`changes`).
+        // Changes made before the request reached its route (none in production; test fixtures)
+        // are not part of its log rows.
+        Event::listen(RouteMatched::class, fn () => $this->app->make(ModelChanges::class)->flush());
+        foreach (['created', 'updated', 'deleted', 'restored'] as $event) {
+            Event::listen("eloquent.{$event}: *", function (string $name, array $payload) use ($event) {
+                if (($payload[0] ?? null) instanceof Model) {
+                    $this->app->make(ModelChanges::class)->record($event, $payload[0]);
+                }
+            });
+        }
 
         // ── Login rate limiter: 5 attempts / minute, keyed by the IP and by the e-mail separately ──────
         // Per e-mail (= per account): 5 / minute - one account tried again and again is stopped

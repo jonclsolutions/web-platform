@@ -26,6 +26,12 @@ use SoftDeletes;
 
 public $timestamps = true;
 
+    /**
+     * @description Personal data: the audit log notes that these attributes changed, never their
+     *   values (App\Support\Audit\ModelChanges) - an erased / purged record leaves no copy in the logs.
+     */
+    public const AUDIT_MASKED = ['contact_email', 'contact_phone', 'order_description', 'note'];
+
 protected $fillable = [
 'thema',
 'contact_email',

@@ -31,6 +31,12 @@ class WebSalesOrder extends Model
 {
     use SoftDeletes;
 
+    /**
+     * @description Personal data: the audit log notes that these attributes changed, never their
+     *   values (App\Support\Audit\ModelChanges) - an erased / purged record leaves no copy in the logs.
+     */
+    public const AUDIT_MASKED = ['client_name', 'client_address', 'client_phone', 'client_email', 'order_description'];
+
     protected $fillable = [
         'lead_id',
         'client_name',

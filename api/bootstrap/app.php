@@ -15,6 +15,8 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use Illuminate\Routing\Exceptions\InvalidSignatureException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Illuminate\Http\Request;
 use App\Models\Core\CoreSecurityEvent;
 
@@ -38,6 +40,10 @@ return Application::configure(basePath: dirname(__DIR__))
          * Security headers (CSP, nosniff, frame protection, HSTS on HTTPS) on every API answer.
          */
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
+        // Data exports are logged by the server (`?export=<format>` on the data GET) - the browser
+        // never writes the audit log.
+        $middleware->appendToGroup('api', \App\Http\Middleware\LogDataExport::class);
 
         /**
          * Register custom middleware aliases for use in route definitions.
@@ -83,14 +89,14 @@ return Application::configure(basePath: dirname(__DIR__))
          * @param Request $request
          */
         $exceptions->render(function (ThrottleRequestsException $e, Request $request) {
-            if ($request->user() === null) {
-                CoreSecurityEvent::record(
-                    'throttle_exceeded',
-                    'warning',
-                    $request->ip(),
-                    CoreSecurityEvent::contextFromRequest($request)
-                );
-            }
+            // Also a signed-in account hitting a limit (a script with a stolen session, a bug
+            // looping in the admin) - the context carries its user_id.
+            CoreSecurityEvent::record(
+                'throttle_exceeded',
+                'warning',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request)
+            );
 
             if ($request->expectsJson()) {
                 $headers = $e->getHeaders();
@@ -99,5 +105,30 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => 'Too many requests. Please try again later.',
                 ], 429, $headers);
             }
+        });
+
+        // A signed URL (attachment, avatar, activation link) that was changed or has expired.
+        $exceptions->render(function (InvalidSignatureException $e, Request $request) {
+            CoreSecurityEvent::record(
+                'invalid_signed_url',
+                'warning',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request)
+            );
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Invalid or expired link.'], 403);
+            }
+        });
+
+        // An existing API path called with a wrong method - typical of probing (unknown paths
+        // are `scan_probe`, routes/api.php fallback).
+        $exceptions->render(function (MethodNotAllowedHttpException $e, Request $request) {
+            CoreSecurityEvent::record(
+                'method_not_allowed',
+                'info',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request)
+            );
         });
     })->create();

@@ -113,7 +113,7 @@ describe('GraphBuilderComponent', () => {
     component.dateTo = '2026-01-31';
     await generate();
     expect((ctx.dataHandler as any).getCollection).toHaveBeenCalledWith('core/orders', {
-      no_pagination: 'true', sort_by: 'created_at', sort_direction: 'asc', date_from: '2026-01-01', date_to: '2026-01-31'
+      no_pagination: 'true', export: 'report', sort_by: 'created_at', sort_direction: 'asc', date_from: '2026-01-01', date_to: '2026-01-31'
     });
     expect(component.reportGenerated).toBeTrue();
     expect(component.lastRowCount).toBe(4);
@@ -230,16 +230,18 @@ describe('GraphBuilderComponent', () => {
   });
 
   /**
-   * @description Every generated report is written to the audit log.
+   * @description Every generated report is audited by the server: the data is loaded with
+   *   `export=report`; the browser writes no log.
    * @input  generateReport() for 4 rows
-   * @output POST 'core/logs' (log of the data's module) with event_type 'generate_report', module 'core/orders', user from the session
+   * @output getCollection('core/orders', {…, export 'report'}); no POST
    */
-  it('logs the generated report', async () => {
+  it('loads the report data with export=report (logged by the server)', async () => {
     setColumns();
     await generate();
-    const [url, body] = (ctx.dataHandler as any).post.calls.mostRecent().args;
-    expect(url).toBe('core/logs');
-    expect(body).toEqual(jasmine.objectContaining({ event_type: 'generate_report', module: 'core/orders', user_id_plain: '1' }));
+    const [url, params] = (ctx.dataHandler as any).getCollection.calls.mostRecent().args;
+    expect(url).toBe('core/orders');
+    expect(params.export).toBe('report');
+    expect((ctx.dataHandler as any).post).not.toHaveBeenCalled();
   });
 
   /**
@@ -434,9 +436,9 @@ describe('GraphBuilderComponent', () => {
 
   /**
    * @description PDF export: nothing before a report; rendered report → html2canvas + jsPDF,
-   *   file name with the range, audit log 'export_report_pdf'; a failure shows the error alert.
+   *   file name with the range; a failure shows the error alert.
    * @input exportToPdf() before generation; after render (save spied); addImage throwing.
-   * @output no save; save('report-orders-2026-01-01_az_….pdf') + log; alert export_error_*.
+   * @output no save; save('report-orders-2026-01-01_az_….pdf'); alert export_error_*.
    */
   it('exports the report as PDF', async () => {
     setColumns();
@@ -454,7 +456,6 @@ describe('GraphBuilderComponent', () => {
     await component.exportToPdf();
     await new Promise(resolve => setTimeout(resolve, 20));  // FileSaver clicks the link in a timeout
     expect(downloads).toEqual(['report-orders-2026-01-01_az_graph-builder.filename_end_fallback.pdf']);
-    expect((ctx.dataHandler as any).post.calls.mostRecent().args[1].event_type).toBe('export_report_pdf');
     expect(component.isExportingPdf).toBeFalse();
 
     spyOn(jsPDF.API as any, 'addImage').and.throwError('canvas');

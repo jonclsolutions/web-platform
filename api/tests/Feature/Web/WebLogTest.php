@@ -86,16 +86,19 @@ class WebLogTest extends TestCase
     }
 
     /**
-     * @description Any signed-in account writes an own entry; the server fills actor and IP.
-     * @input Account without permissions: POST {event_type, module, description}; POST {}.
-     * @output 201 with user_plain = own e-mail; 422.
+     * @description The browser cannot write the web log; an export of web data is logged by the
+     *   server into the web log.
+     * @input POST web/logs; GET web/logs?export=json with web-view-web-logs.
+     * @output 405; web log row export_json "Exported 0 records (JSON) from api/web/logs".
      */
-    public function test_store(): void
+    public function test_browser_cannot_write_and_exports_are_logged_by_the_server(): void
     {
-        $me = $this->signIn($this->user());
+        $this->signIn($this->userWith(['web-view-web-logs']));
 
-        $this->postJson('/api/web/logs', ['event_type' => 'export_csv', 'module' => 'web/news', 'description' => 'Exported'])
-            ->assertCreated()->assertJsonPath('data.user_plain', $me->user_email)->assertJsonPath('data.origin', '127.0.0.1');
-        $this->postJson('/api/web/logs', [])->assertStatus(422)->assertJsonValidationErrors(['event_type', 'module', 'description']);
+        $this->postJson('/api/web/logs', ['event_type' => 'export_csv', 'module' => 'web/news', 'description' => 'Exported'])->assertStatus(405);
+        $this->getJson('/api/web/logs?export=json&no_pagination=true')->assertOk();
+
+        $this->assertSame(['export_json'], WebLog::pluck('event_type')->all());
+        $this->assertSame('Exported 0 records (JSON) from api/web/logs', WebLog::sole()->description);
     }
 }

@@ -184,6 +184,7 @@ class ShopCheckoutController extends Controller
             try {
                 Mail::to($order->customer_email)->queue(new ShopOrderConfirmation($order));
             } catch (\Throwable $e) {
+                report($e); // full detail (class, file, trace) to the core log
                 $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Failed to send the order confirmation e-mail: " . $e->getMessage(), $order->id, 'ShopOrder');
             }
 
@@ -194,7 +195,7 @@ class ShopCheckoutController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Checkout createOrder error: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Error creating order: " . $e->getMessage());
             return response()->json(['message' => 'Error creating order.'], 500);
         }
@@ -382,7 +383,7 @@ class ShopCheckoutController extends Controller
 
             return $this->respond(new ShopOrderResource($order), 200, [], 'Payment was successfully processed.');
         } catch (\Exception $e) {
-            Log::error("Payment simulation error: " . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Error during payment simulation: " . $e->getMessage());
             return response()->json(['message' => 'Error during payment simulation'], 500);
         }

@@ -93,6 +93,7 @@ class WebProjectController extends Controller
 
             return $this->respond($response, 201);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebProject', "Error creating project: " . $e->getMessage());
             return response()->json(['message' => 'Project creation failed.'], 500);
         }
@@ -116,6 +117,7 @@ class WebProjectController extends Controller
             $fresh = $project->fresh()->load(['lead', 'order', 'checkpoints']);
             return $this->respond((new WebProjectResource($fresh))->resolve());
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebProject', "Error updating project ID {$id}: " . $e->getMessage(), (int) $id, 'WebProject');
             return response()->json(['message' => 'Project update failed.'], 500);
         }
@@ -138,6 +140,7 @@ class WebProjectController extends Controller
             $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebProject', "Deleted project ID: $id", (int) $id, 'WebProject');
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebProject', "Error deleting project ID $id: " . $e->getMessage(), (int) $id, 'WebProject');
             return response()->json(['message' => 'Project deletion failed.'], 500);
         }

@@ -36,6 +36,12 @@ use SoftDeletes;
      */
     public const PUBLIC_TOKEN_TTL_DAYS = 30;
 
+    /**
+     * @description Personal data: the audit log notes that these attributes changed, never their
+     *   values (App\Support\Audit\ModelChanges) - an erased / purged record leaves no copy in the logs.
+     */
+    public const AUDIT_MASKED = ['contact_person', 'contact_email', 'contact_phone', 'contact_other', 'description', 'next_step', 'rejection_reason'];
+
 /**
      * @var array<int, string> The attributes that are mass assignable.
      */

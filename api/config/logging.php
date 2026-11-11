@@ -52,10 +52,23 @@ return [
 
     'channels' => [
 
+        // The `database` channel is always part of the stack (also with an older LOG_STACK of a
+        // server): in production Core → Logs is the one place to trace what happened.
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', (string) env('LOG_STACK', 'single')),
+            'channels' => array_values(array_unique(array_filter([
+                ...explode(',', (string) env('LOG_STACK', 'single')),
+                env('LOG_DATABASE_ENABLED', true) ? 'database' : null,
+            ]))),
             'ignore_exceptions' => false,
+        ],
+
+        // Application log records (default info and higher, exceptions with details) also written
+        // to the core audit log (core_logs, module "Application") - App\Logging\DatabaseLogHandler.
+        'database' => [
+            'driver' => 'monolog',
+            'handler' => App\Logging\DatabaseLogHandler::class,
+            'level' => env('LOG_DATABASE_LEVEL', 'info'),
         ],
 
         'single' => [

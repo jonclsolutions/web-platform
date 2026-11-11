@@ -16,6 +16,9 @@
 namespace Tests\Unit\Core;
 
 use App\Models\Core\CoreLog;
+use App\Models\Core\CoreCalendarEvent;
+use App\Models\Core\CoreRole;
+use App\Support\Audit\ModelChanges;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -64,6 +67,7 @@ class LogsActivityTest extends TestCase
             'name' => 'Jo', 'password' => 'p', 'token' => 't', 'refreshToken' => 'r', 'new_password' => 'n', 'logo_file' => 'f',
         ]);
         $request->setUserResolver(fn () => $actor);
+        app(ModelChanges::class)->flush(); // the fixture account is not part of this row
 
         $this->log($request, 'Did something', ['logo_file']);
 
@@ -152,5 +156,106 @@ class LogsActivityTest extends TestCase
         $this->log(Request::create('/x', 'POST'), logModel: 'App\\Models\\Missing\\MissingLog');
 
         Log::shouldHaveReceived('error')->withArgs(fn ($message) => str_starts_with($message, 'Log error (App\\Models\\Missing\\MissingLog)'));
+    }
+
+    /**
+     * @description A row carries the data changes since the previous row: created values, updated
+     *   [old, new], soft delete / restore; personal data (AUDIT_MASKED) and the per-call private
+     *   keys only as [masked]; timestamps and hidden / secret attributes never; the next row starts
+     *   empty.
+     * @input Calendar event created (title, note masked); updated title + date + time + is_done with
+     *   the private key 'time'; role soft-deleted and restored; second log call.
+     * @output changes: created (title [masked], date), updated title [masked, masked], date
+     *   [old, new], time [masked, masked] (private key), is_done [false, true]; role soft_deleted,
+     *   updated (deleted_at → null) + restored; no updated_at; no title text anywhere; second row without changes.
+     */
+    public function test_rows_carry_the_data_changes(): void
+    {
+        $owner = $this->user();
+        $role = CoreRole::create(['role_name' => 'temp']);
+        app(ModelChanges::class)->flush();
+        $event = new CoreCalendarEvent(['date' => '2026-11-20', 'title' => 'Doctor', 'note' => 'private', 'is_done' => false]);
+        $event->user_id = $owner->id;
+        $event->save();
+        $event->update(['title' => 'Dentist', 'date' => '2026-11-21', 'time' => '09:30', 'is_done' => true]);
+        $role->delete();
+        $role->restore();
+
+        $this->log(Request::create('/x', 'POST'), 'Changed', ['time']);
+        $this->log(Request::create('/x', 'POST'), 'Nothing');
+
+        [$first, $second] = CoreLog::orderBy('id')->get()->all();
+        $changes = $first->context_data['changes'];
+        $this->assertSame(['created', 'updated', 'soft_deleted', 'updated', 'restored'], array_column($changes, 'event'));
+        $this->assertNull($changes[3]['changes']['deleted_at'][1]);
+        $this->assertSame([ModelChanges::MASK, ModelChanges::MASK, '2026-11-20'], [$changes[0]['values']['title'], $changes[0]['values']['note'], $changes[0]['values']['date']]);
+        $this->assertSame([ModelChanges::MASK, ModelChanges::MASK], $changes[1]['changes']['title']);
+        $this->assertSame([ModelChanges::MASK, ModelChanges::MASK], $changes[1]['changes']['time']);
+        $this->assertSame(['2026-11-20', '2026-11-21'], $changes[1]['changes']['date']);
+        $this->assertEquals([false, true], $changes[1]['changes']['is_done']);
+        $this->assertArrayNotHasKey('updated_at', $changes[1]['changes']);
+        $this->assertSame(['CoreRole', $role->id], [$changes[2]['model'], $changes[2]['id']]);
+        $this->assertStringNotContainsString('Dentist', json_encode($first->context_data));
+        $this->assertStringNotContainsString('Doctor', json_encode($first->context_data));
+        $this->assertSame([], $second->context_data);
+    }
+
+    /**
+     * @description At most MAX_ENTRIES changes are kept per row, the rest is counted; the log
+     *   models themselves are never collected.
+     * @input MAX_ENTRIES + 3 roles created; a core log row created.
+     * @output MAX_ENTRIES entries + {_more: 3}; no CoreLog entry.
+     */
+    public function test_changes_are_capped(): void
+    {
+        app(ModelChanges::class)->flush();
+        for ($i = 0; $i < ModelChanges::MAX_ENTRIES + 3; $i++) {
+            CoreRole::create(['role_name' => "role-cap-{$i}"]);
+        }
+        CoreLog::create(['event_type' => 'x', 'module' => 'x', 'description' => 'x']);
+
+        $changes = app(ModelChanges::class)->flush();
+        $this->assertCount(ModelChanges::MAX_ENTRIES + 1, $changes);
+        $this->assertSame(['_more' => 3], end($changes));
+    }
+
+    /**
+     * @description Edge cases of the collector: an update changing only skipped attributes (a
+     *   touch) is not noted; non-string values are stored as JSON / formatted dates.
+     * @input Role touched (updated_at only); record('created') of a model whose raw attributes are an
+     *   array and a DateTime.
+     * @output no entry for the touch; values meta '{"a":1}', when '2026-01-02 03:04:05'.
+     */
+    public function test_collector_edge_cases(): void
+    {
+        $role = CoreRole::create(['role_name' => 'touch-me']);
+        $collector = app(ModelChanges::class);
+        $collector->flush();
+        $this->travel(1)->minutes();
+        $role->touch();
+        $this->assertSame([], $collector->flush());
+
+        $model = new CoreRole();
+        $model->setRawAttributes(['meta' => ['a' => 1], 'when' => new \DateTime('2026-01-02 03:04:05')]);
+        $collector->record('created', $model);
+        $this->assertSame(['meta' => '{"a":1}', 'when' => '2026-01-02 03:04:05'], $collector->flush()[0]['values']);
+    }
+
+    /**
+     * @description Changes too large for the row (> 40 000 bytes) are replaced by a note with their
+     *   count - the row itself is still written.
+     * @input 100 roles with a 480-character description; log call.
+     * @output changes {_omitted: true, count: 100}.
+     */
+    public function test_too_large_changes_are_omitted(): void
+    {
+        app(ModelChanges::class)->flush();
+        for ($i = 0; $i < 100; $i++) {
+            CoreRole::create(['role_name' => "big-{$i}", 'description' => str_repeat('d', 480)]);
+        }
+
+        $this->log(Request::create('/x', 'POST'));
+
+        $this->assertSame(['_omitted' => true, 'count' => 100], CoreLog::sole()->context_data['changes']);
     }
 }

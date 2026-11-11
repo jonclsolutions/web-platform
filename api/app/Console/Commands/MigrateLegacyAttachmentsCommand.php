@@ -29,6 +29,7 @@ use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class MigrateLegacyAttachmentsCommand extends Command
 {
@@ -73,6 +74,7 @@ class MigrateLegacyAttachmentsCommand extends Command
 
         $prefix = $dryRun ? '[dry-run] would move' : 'Moved';
         $this->info("{$prefix} {$moved} file(s); missing {$missing}; failed {$failed}.");
+        Log::log($failed > 0 ? 'warning' : 'info', 'Legacy attachments migration', ['result' => $prefix, 'moved' => $moved, 'missing' => $missing, 'failed' => $failed]);
 
         return $failed > 0 ? self::FAILURE : self::SUCCESS;
     }

@@ -25,6 +25,12 @@ use Illuminate\Support\Str;
 
 class WebProjectSession extends Model
 {
+    /**
+     * @description Personal data: the audit log notes that these attributes changed, never their
+     *   values (App\Support\Audit\ModelChanges) - an erased / purged record leaves no copy in the logs.
+     */
+    public const AUDIT_MASKED = ['ip_address', 'user_agent'];
+
     protected $fillable = [
         'project_id',
         'session_token_hash',

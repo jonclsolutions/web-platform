@@ -9,7 +9,8 @@
  * localized formatting.
  *
  * @dependencies
- * - EntityCrudService: CRUD calls (row delete, POST of the export log).
+ * - EntityCrudService: CRUD calls (row delete). Exports are audited by the server: the export
+ *   loads its data with `?export=<format>` (api LogDataExport) - the browser writes no log.
  * - ConfirmDialogService: Facilitates safe delete operations (single and bulk).
  * - ExportPopupBuilderComponent: Format picker popup of the data export, incl. the column choice.
  * - ImportPopupBuilderComponent: Append-only import popup (template, upload, dry-run, commit).
@@ -46,7 +47,6 @@ import { UserAvatarComponent } from '../../user-avatar/user-avatar.component';
 import { ExportPopupBuilderComponent, ExportColumnOption, ExportSelection } from '../export-popup-builder/export-popup-builder.component';
 import { ImportPopupBuilderComponent } from '../import-popup-builder/import-popup-builder.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
-import { exportLogEndpoint } from '../export-log-endpoint';
 const DEFAULT_EXPORT_EXCLUDED_KEYS = [
   'user_password_hash',
   'user_password_salt',
@@ -173,7 +173,6 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
 
   private _crud?: EntityCrudService<any>;
-  private _logCrud?: EntityCrudService<any>;
 
   private get crud(): EntityCrudService<any> {
     if (!this._crud) {
@@ -184,15 +183,6 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
     return this._crud;
   }
 
-  private get logCrud(): EntityCrudService<any> {
-    if (!this._logCrud) {
-      this._logCrud = new EntityCrudService<any>(
-        // The audit log of the module that owns the data (web / shop / core), not always web/logs.
-        this.dataHandler, () => exportLogEndpoint(this.apiEndpoint), this.destroy$
-      );
-    }
-    return this._logCrud;
-  }
   /**
  * @description Derives the allowed-values hint of the import - only the columns that are
  * `importable: true` (see `detailsColumns`) AND have an `options` list on the matching
@@ -591,12 +581,15 @@ get importEnumHints(): ImportEnumHint[] {
       .map(col => ({ key: col.key, label: col.key }));
   }
 
-  private async resolveExportData(): Promise<any[]> {
-    if (this.exportSelectedOnly) {
-      return (this.data || []).filter(item => this.selectedIds.has(item.id));
-    }
-    const responseData = await firstValueFrom(this.loadDataAsCollection());
-    return Array.isArray(responseData) ? responseData : [];
+  /**
+   * @description Data of an export, always loaded from the API with `export` (the server logs the
+   *   export it serves - LogDataExport); "selected only" keeps the selected rows of that answer.
+   * @param exportParam `<format>` or `raw_<format>`.
+   */
+  private async resolveExportData(exportParam: string): Promise<any[]> {
+    const responseData = await firstValueFrom(this.loadDataAsCollection(exportParam));
+    const rows = Array.isArray(responseData) ? responseData : [];
+    return this.exportSelectedOnly ? rows.filter(item => this.selectedIds.has(item.id)) : rows;
   }
 
   async handleExportFormatSelected(selection: ExportSelection): Promise<void> {
@@ -608,7 +601,7 @@ get importEnumHints(): ImportEnumHint[] {
     const { format, columnKeys, rawFormat } = selection;
 
     try {
-      const allData = await this.resolveExportData();
+      const allData = await this.resolveExportData(rawFormat ? `raw_${format}` : format);
 
       if (allData.length === 0) {
         this.alertDialogService.open(this.t('export_no_data_title'), this.t('export_no_data_message'), 'warning');
@@ -631,7 +624,6 @@ get importEnumHints(): ImportEnumHint[] {
         case 'txt':  this.downloadTxt(rows, filename); break;
       }
 
-      this.logExportActivity(allData.length, format, selectedOnly, rawFormat);
     } catch (error) {
       if (!(error instanceof HttpErrorResponse)) {
         console.error('Export error:', error);
@@ -789,25 +781,11 @@ get importEnumHints(): ImportEnumHint[] {
     XLSX.writeFile(workbook, `${filename}.xlsx`);
   }
 
-  private loadDataAsCollection() {
-    const params = { ...this.currentFilters, no_pagination: 'true' };
+  private loadDataAsCollection(exportParam: string) {
+    const params = { ...this.currentFilters, no_pagination: 'true', export: exportParam };
     if (!params.sort_by) params.sort_by = 'id';
     if (!params.sort_direction) params.sort_direction = 'desc';
     return this.dataHandler.getCollection<any>(this.apiEndpoint, params);
-  }
-
-  private logExportActivity(rowCount: number, format: ExportFormat, selectedOnly: boolean = false, rawFormat: boolean = false): void {
-    const logData = {
-      event_type: rawFormat ? `export_raw_${format}` : `export_${format}`,
-      module: this.apiEndpoint,
-      description: `User exported ${rowCount}${selectedOnly ? ' selected' : ''} records (${format.toUpperCase()}${rawFormat ? ', RAW/import-compatible' : ''}) from table: ${this.tableCaption || this.apiEndpoint}.`,
-      affected_entity_type: 'collection',
-      user_id_plain: this.authService.getUserId()?.toString(),
-      user_plain: this.authService.getUserEmail()
-    };
-    this.logCrud.create(logData).subscribe({
-      error: (err) => console.error('Failed to log export:', err)
-    });
   }
 
   // ── Import (append-only) ─────────────────────────────────────────────────

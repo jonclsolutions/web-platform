@@ -21,7 +21,8 @@
  *
  * @dependencies
  * - DataHandler: read-only GET against `apiEndpoint` (no_pagination + optional date range).
- * - EntityCrudService: single POST to the audit log of the data's module (`exportLogEndpoint`).
+ * - Audit: the report data is loaded with `?export=report` - the server logs it (api LogDataExport);
+ *   the browser writes no log.
  * - chart.js (`chart.js/auto`, dynamic import): renders one <canvas> per section.
  * - jsPDF + html2canvas (dynamic import): client-side PDF snapshot of the report body.
  * - ScrollLockService: Shared background scroll lock.
@@ -38,12 +39,10 @@ import { FormsModule } from '@angular/forms';
 import { Subject, firstValueFrom, takeUntil } from 'rxjs';
 
 import { DataHandler } from '../../../../core/services/data-handler.service';
-import { EntityCrudService } from '../../../../core/services/entity-crud.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
-import { exportLogEndpoint } from '../export-log-endpoint';
 import {
   GraphColumnOption, ColumnChartMode, MetricChartMode, DistributionChartType,
   ChartModeOption, createColumnChartModeOptions, createMetricChartModeOptions
@@ -300,15 +299,6 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
   public authService = inject(AuthService);
   private scrollLock = inject(ScrollLockService);
 
-  private _logCrud?: EntityCrudService<any>;
-  private get logCrud(): EntityCrudService<any> {
-    if (!this._logCrud) {
-      // The audit log of the module that owns the data (web / shop / core), not always web/logs.
-      this._logCrud = new EntityCrudService<any>(this.dataHandler, () => exportLogEndpoint(this.apiEndpoint), this.destroy$);
-    }
-    return this._logCrud;
-  }
-
   constructor(private dataHandler: DataHandler, private cd: ChangeDetectorRef) {
     // After switching the admin language, forces the OnPush component to re-evaluate
     // `strings` / getters - same pattern as TableBuilderComponent. Also rebuilds the
@@ -447,6 +437,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
     try {
       const params: Record<string, string> = {
         no_pagination: 'true',
+        export: 'report',
         sort_by: this.dateField,
         sort_direction: 'asc',
       };
@@ -463,7 +454,6 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
       this.buildReportFromRows(Array.isArray(rows) ? rows : []);
       this.reportGenerated = true;
       this.reportGeneratedAt = new Date();
-      this.logReportActivity(this.lastRowCount, false);
        } catch {
       // DataHandler.handleError() already showed a toast for this HTTP error.
     } finally {
@@ -1143,7 +1133,6 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
       });
 
       pdf.save(`${this.reportFilename}.pdf`);
-      this.logReportActivity(this.lastRowCount, true);
     } catch {
       this.alertDialogService.open(this.t('export_error_title'), this.t('export_error_message'), 'danger');
     } finally {
@@ -1164,25 +1153,6 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
     pdf.setFontSize(8);
     pdf.setTextColor(113, 113, 122);
     pdf.text(this.t('pdf_page_label').replace('{current}', String(pageNum)).replace('{total}', String(totalPages)), pageWidth - margin, pageHeight - 12, { align: 'right' });
-  }
-
-  /**
-   * @note Audit log labels stay in English ON PURPOSE regardless of the admin language - same
-   * convention as TableBuilderComponent.logExportActivity().
-   */
-  private logReportActivity(rowCount: number, pdfExported: boolean): void {
-    const caption = this.tableCaption || this.apiEndpoint;
-    const logData = {
-      event_type: pdfExported ? 'export_report_pdf' : 'generate_report',
-      module: this.apiEndpoint,
-      description: pdfExported
-        ? `User exported a PDF report (${this.periodLabel}, ${rowCount} records) for table: ${caption}.`
-        : `User generated a graph report (${this.periodLabel}, ${rowCount} records) for table: ${caption}.`,
-      affected_entity_type: 'collection',
-      user_id_plain: this.authService.getUserId()?.toString(),
-      user_plain: this.authService.getUserEmail(),
-    };
-    this.logCrud.create(logData).subscribe({ error: (err) => console.error('Failed to log report activity:', err) });
   }
 
   // ── Overlay / closing ─────────────────────────────────────────────────

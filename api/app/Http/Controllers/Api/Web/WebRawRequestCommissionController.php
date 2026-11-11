@@ -123,11 +123,13 @@ class WebRawRequestCommissionController extends Controller
                 Mail::to($commission->contact_email)
                     ->queue(new WebRawRequestCommissionReceived($commission));
             } catch (\Throwable $e) {
+                report($e); // full detail (class, file, trace) to the core log
                 $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Failed to send confirmation email: " . $e->getMessage(), $commission->id, 'WebRawRequestCommission');
             }
 
             return $this->respond(new WebRawRequestCommissionResource($commission->load('attachments')), 201);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error creating request: " . $e->getMessage());
             return response()->json(['message' => 'Request creation failed.'], 500);
         }
@@ -165,6 +167,7 @@ class WebRawRequestCommissionController extends Controller
 
             return $this->respond(new WebRawRequestCommissionResource($rawRequestCommission->fresh()->load('attachments')));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error updating request ID {$id}: " . $e->getMessage(), (int) $id, 'WebRawRequestCommission');
             return response()->json(['message' => 'Request update failed.'], 500);
         }
@@ -192,6 +195,7 @@ class WebRawRequestCommissionController extends Controller
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error deleting request ID $id: " . $e->getMessage(), (int) $id, 'WebRawRequestCommission');
             return response()->json(['message' => 'Request deletion failed.'], 500);
         }
@@ -233,6 +237,7 @@ class WebRawRequestCommissionController extends Controller
                 }
             });
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error during bulk deletion of requests: " . $e->getMessage());
             return response()->json(['message' => 'Bulk deletion failed.'], 500);
         }
@@ -409,6 +414,7 @@ class WebRawRequestCommissionController extends Controller
             if ($e instanceof \RuntimeException && $e->getCode() === 410) {
                 return response()->json(['message' => $e->getMessage()], 410);
             }
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error during import: " . $e->getMessage());
             return response()->json(['message' => 'Import failed.'], 500);
         }
@@ -428,6 +434,7 @@ class WebRawRequestCommissionController extends Controller
 
             return $this->respond(new WebRawRequestCommissionResource($item->load('attachments')));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error restoring request ID $id: " . $e->getMessage(), (int) $id, 'WebRawRequestCommission');
             return response()->json(['message' => 'Request restoration failed.'], 500);
         }
@@ -451,6 +458,7 @@ class WebRawRequestCommissionController extends Controller
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error emptying commission trash: " . $e->getMessage());
             return response()->json(['message' => 'Emptying trash failed.'], 500);
         }

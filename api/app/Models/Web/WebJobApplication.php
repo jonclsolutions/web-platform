@@ -27,6 +27,12 @@ use SoftDeletes;
     /** @description Column of the legacy single file (public disk) - deleted with the attachments. */
     public const LEGACY_FILE_COLUMN = 'cv_path';
 
+    /**
+     * @description Personal data: the audit log notes that these attributes changed, never their
+     *   values (App\Support\Audit\ModelChanges) - an erased / purged record leaves no copy in the logs.
+     */
+    public const AUDIT_MASKED = ['first_name', 'last_name', 'email', 'phone', 'message', 'cv_path', 'internal_note'];
+
 /**
      * @var array<int, string> The attributes that are mass assignable.
      */

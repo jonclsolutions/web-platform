@@ -113,21 +113,34 @@ class CoreLogTest extends TestCase
     }
 
     /**
-     * @description Any signed-in account writes an own entry; actor and IP are filled in by
-     *   the server, the payload is validated.
-     * @input Account without permissions, POST {event_type, module, description}; POST {}.
-     * @output 201 with user_plain = the account's e-mail, origin 127.0.0.1; 422.
+     * @description The browser cannot write the audit log; a data export is logged by the server
+     *   when it serves the data (`?export=`): format, record count, path, filters; an unknown
+     *   `export` value or a failed request is not logged.
+     * @input POST core/logs; GET core/logs?export=csv&search=x, ?export=raw_xlsx, ?export=report,
+     *   ?export=<script>; GET without permission with ?export=csv.
+     * @output 405, no row written by it; rows export_csv "Exported 0 records (CSV) from api/core/logs"
+     *   with the filter search=x, export_raw_xlsx, generate_report; nothing for the unknown value
+     *   and the 403.
      */
-    public function test_store(): void
+    public function test_browser_cannot_write_and_exports_are_logged_by_the_server(): void
     {
-        $me = $this->signIn($this->user());
+        $this->signIn($this->userWith(['view-core']));
 
-        $this->postJson('/api/core/logs', ['event_type' => 'export_csv', 'module' => 'core/users', 'description' => 'Exported'])
-            ->assertCreated()
-            ->assertJsonPath('data.user_plain', $me->user_email)
-            ->assertJsonPath('data.user_id', $me->id)
-            ->assertJsonPath('data.origin', '127.0.0.1');
+        $this->postJson('/api/core/logs', ['event_type' => 'export_csv', 'module' => 'core/users', 'description' => 'Exported'])->assertStatus(405);
+        $this->assertSame(0, CoreLog::count());
 
-        $this->postJson('/api/core/logs', [])->assertStatus(422)->assertJsonValidationErrors(['event_type', 'module', 'description']);
+        $this->getJson('/api/core/logs?export=csv&search=x&no_pagination=true')->assertOk();
+        $this->getJson('/api/core/logs?export=raw_xlsx&no_pagination=true')->assertOk();
+        $this->getJson('/api/core/logs?export=report&no_pagination=true')->assertOk();
+        $this->getJson('/api/core/logs?export=' . urlencode('<script>'))->assertOk();
+        $this->signIn($this->user());
+        $this->getJson('/api/core/logs?export=csv')->assertForbidden();
+
+        $rows = CoreLog::orderBy('id')->get();
+        $this->assertSame(['export_csv', 'export_raw_xlsx', 'generate_report'], $rows->pluck('event_type')->all());
+        $this->assertSame('Exported 0 records (CSV) from api/core/logs', $rows[0]->description);
+        $this->assertSame(['api/core/logs', 'collection'], [$rows[0]->module, $rows[0]->affected_entity_type]);
+        $this->assertSame('x', $rows[0]->context_data['search']);
+        $this->assertSame('Exported 1 records (RAW XLSX) from api/core/logs', $rows[1]->description);
     }
 }

@@ -64,8 +64,8 @@ class DocumentSectionController extends Controller
             $this->logAction($request, CoreLog::class, 'create', 'Legal', "Created section: {$section->heading} ({$section->lang})", $section->id, 'DocumentSection');
             return $this->respond(new DocumentSectionResource($section), 201);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, CoreLog::class, 'error', 'Legal', "Error creating section: " . $e->getMessage(), null, 'DocumentSection');
-            Log::error("Legal Store Error: " . $e->getMessage());
             return response()->json(['message' => 'Error creating section.'], 500);
         }
     }
@@ -99,8 +99,8 @@ class DocumentSectionController extends Controller
             $this->logAction($request, CoreLog::class, 'update', 'Legal', "Updated section: {$section->heading} ({$section->lang})", $section->id, 'DocumentSection');
             return $this->respond(new DocumentSectionResource($section));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, CoreLog::class, 'error', 'Legal', "Error updating section ID {$id}: " . $e->getMessage(), (int)$id, 'DocumentSection');
-            Log::error("Legal Update Error: " . $e->getMessage());
             return response()->json(['message' => 'Update failed.'], 500);
         }
     }
@@ -178,8 +178,8 @@ class DocumentSectionController extends Controller
             $this->logAction($request, CoreLog::class, 'delete', 'Legal', "Deleted section: {$heading}", (int)$id, 'DocumentSection');
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, CoreLog::class, 'error', 'Legal', "Error deleting section ID {$id}: " . $e->getMessage(), (int)$id, 'DocumentSection');
-            Log::error("Legal Delete Error: " . $e->getMessage());
             return response()->json(['message' => 'Error deleting section.'], 500);
         }
     }

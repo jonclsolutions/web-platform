@@ -231,6 +231,7 @@ class CoreRoleController extends Controller
             $this->logAction($request, CoreLog::class, 'force_delete_all', 'CoreRole', "Emptied roles trash. Deleted: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, CoreLog::class, 'error', 'CoreRole', "Error emptying roles trash: " . $e->getMessage());
             return response()->json(['message' => 'Emptying trash failed.'], 500);
         }

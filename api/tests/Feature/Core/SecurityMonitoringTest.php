@@ -226,4 +226,28 @@ class SecurityMonitoringTest extends TestCase
         $this->assertCoreLog('security_retention_updated', 'from 90 to 30 days');
         $this->putJson('/api/core/security_settings', ['retention_days' => 3])->assertStatus(422);
     }
+
+    /**
+     * @description Server-side detections: a signed-in account over a rate limit, an existing API
+     *   path called with a wrong method.
+     * @input Signed-in user: DELETE core/calendar-events/999 until the limit answers 429; PUT of the
+     *   POST-only route api/login (an unknown GET path is scan_probe).
+     * @output throttle_exceeded with the user's id; method_not_allowed (info).
+     */
+    public function test_rate_limit_of_signed_in_user_and_wrong_method(): void
+    {
+        $user = $this->user();
+        $this->signIn($user);
+        $status = 0;
+        for ($i = 0; $i < 70 && $status !== 429; $i++) {
+            $status = $this->deleteJson('/api/core/calendar-events/999')->status();
+        }
+        $this->assertSame(429, $status);
+
+        $throttle = CoreSecurityEvent::where('event_type', 'throttle_exceeded')->sole();
+        $this->assertSame($user->id, (int) $throttle->user_id);
+
+        $this->putJson('/api/login')->assertStatus(405);
+        $this->assertSame('info', CoreSecurityEvent::where('event_type', 'method_not_allowed')->value('severity'));
+    }
 }

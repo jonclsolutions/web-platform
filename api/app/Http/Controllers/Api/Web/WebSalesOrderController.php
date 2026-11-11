@@ -146,6 +146,7 @@ class WebSalesOrderController extends Controller
                 Mail::to($order->client_email)
                     ->queue(new WebSalesOrderReceived($order));
             } catch (\Throwable $e) {
+                report($e); // full detail (class, file, trace) to the core log
                 $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Failed to send confirmation email: " . $e->getMessage(), $order->id, 'WebSalesOrder');
             }
 
@@ -155,9 +156,11 @@ class WebSalesOrderController extends Controller
             return response()->json(['message' => $e->getMessage()], $e->getStatusCode());
         } catch (\Illuminate\Http\Exceptions\HttpResponseException $e) {
             // Expired lead link (410 LINK_EXPIRED) - the prepared answer as it is.
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', 'Sales order creation rejected (token): link expired');
             return $e->getResponse();
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Error creating sales order: " . $e->getMessage());
             return response()->json(['message' => 'Sales order creation failed.'], 500);
         }
@@ -192,6 +195,7 @@ class WebSalesOrderController extends Controller
             $this->logAction($request, WebLog::class, 'update', 'WebSalesOrder', "Updated sales order ID: {$order->id}", $order->id, 'WebSalesOrder');
             return $this->respond(new WebSalesOrderResource($order->fresh()->load(['lead', 'attachments'])));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Error updating sales order ID {$id}: " . $e->getMessage(), (int) $id, 'WebSalesOrder');
             return response()->json(['message' => 'Sales order update failed.'], 500);
         }
@@ -217,6 +221,7 @@ class WebSalesOrderController extends Controller
             $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebSalesOrder', "Deleted sales order ID: $id", (int) $id, 'WebSalesOrder');
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Error deleting sales order ID $id: " . $e->getMessage(), (int) $id, 'WebSalesOrder');
             return response()->json(['message' => 'Sales order deletion failed.'], 500);
         }
@@ -258,6 +263,7 @@ class WebSalesOrderController extends Controller
                 }
             });
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Error during bulk deletion of sales orders: " . $e->getMessage());
             return response()->json(['message' => 'Bulk deletion failed.'], 500);
         }
@@ -294,6 +300,7 @@ class WebSalesOrderController extends Controller
             $this->logAction($request, WebLog::class, 'restore', 'WebSalesOrder', "Restored sales order ID: $id", (int) $id, 'WebSalesOrder');
             return $this->respond(new WebSalesOrderResource($item->load(['lead', 'attachments'])));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Error restoring sales order ID $id: " . $e->getMessage(), (int) $id, 'WebSalesOrder');
             return response()->json(['message' => 'Sales order restoration failed.'], 500);
         }
@@ -316,6 +323,7 @@ class WebSalesOrderController extends Controller
             $this->logAction($request, WebLog::class, 'force_delete_all', 'WebSalesOrder', "Emptied sales order trash. Count: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Error emptying sales order trash: " . $e->getMessage());
             return response()->json(['message' => 'Emptying trash failed.'], 500);
         }

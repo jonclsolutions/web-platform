@@ -5,10 +5,11 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Shared read/write endpoints of the three audit logs (core_logs, web_logs,
- * shop_logs) - list with filters, full-text search, safe sorting and optional pagination,
- * manual entry and detail. The tables have the same columns, so a module controller only
- * names its model and API resource.
+ * @description Shared read endpoints of the three audit logs (core_logs, web_logs, shop_logs) -
+ * list with filters, full-text search, safe sorting and optional pagination, and detail. The
+ * tables have the same columns, so a module controller only names its model and API resource.
+ * @note Read only: every row is written by the server itself (LogsActivity, the database log
+ *   channel, LogDataExport) - the browser cannot write the audit log.
  * @dependencies
  * - App\Traits\AppliesSafeSorting: whitelisted sort column / direction.
  * - Controller::respond() / respondPaginated(): the API envelope.
@@ -91,32 +92,6 @@ abstract class AuditLogController extends Controller
         }
 
         return $this->respondPaginated($query->paginate($perPage), $this->resource());
-    }
-
-    /**
-     * @description Stores a manual audit event. Most rows are written internally by the
-     * LogsActivity trait, not through this endpoint.
-     * @param Request $request event_type, module, description.
-     * @return JsonResponse 201 with the stored row.
-     */
-    public function store(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'event_type'  => ['required', 'string', 'max:50'],
-            'module'      => ['required', 'string', 'max:100'],
-            'description' => ['required', 'string', 'max:1000'],
-        ]);
-
-        $log = $this->model()::create([
-            ...$validated,
-            'origin'        => $request->ip(),
-            'user_id'       => $request->user()?->id,
-            'user_id_plain' => (string)($request->user()?->id ?? '0'),
-            'user_plain'    => $request->user()?->user_email ?? 'system',
-        ]);
-
-        $resource = $this->resource();
-        return $this->respond(new $resource($log), 201);
     }
 
     /**

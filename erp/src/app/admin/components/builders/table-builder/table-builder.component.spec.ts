@@ -372,7 +372,7 @@ describe('TableBuilderComponent', () => {
     it('exports CSV with redacted JSON and escaped quotes', async () => {
       (ctx.dataHandler as any).getCollection.and.returnValue(of([{ id: 1, name: 'A"x', password: 's', meta: { token: 't', ok: 1 } }]));
       await component.handleExportFormatSelected({ format: 'csv', columnKeys: ['id', 'name', 'meta'], rawFormat: false });
-      expect((ctx.dataHandler as any).getCollection).toHaveBeenCalledWith('core/users', { no_pagination: 'true', sort_by: 'id', sort_direction: 'desc' });
+      expect((ctx.dataHandler as any).getCollection).toHaveBeenCalledWith('core/users', { no_pagination: 'true', export: 'csv', sort_by: 'id', sort_direction: 'desc' });
       expect(downloads[0].name).toBe('users.csv');
       const csv = await downloads[0].blob.text();
       expect(csv.split('\n')[0]).toBe('ID;Name;Meta');
@@ -382,17 +382,19 @@ describe('TableBuilderComponent', () => {
     });
 
     /**
-     * @description Exporting selected rows uses only the loaded selected rows (no API call) and adds the
-     *   translated suffix `table-builder.export_selected_suffix` (finding #50 - was always '-vybrane').
-     * @input  selection [2]; suffix 'vybrane'; onBulkExportClick(); JSON export
-     * @output getCollection not called; file 'users-vybrane.json' with 1 row (Name 'B')
+     * @description Exporting selected rows loads the data from the API with `export` (the server
+     *   logs the export), keeps only the selected rows and adds the translated suffix
+     *   `table-builder.export_selected_suffix` (finding #50 - was always '-vybrane').
+     * @input  selection [2]; API rows A (1), B (2); suffix 'vybrane'; onBulkExportClick(); JSON export
+     * @output getCollection with export 'json'; file 'users-vybrane.json' with 1 row (Name 'B')
      */
     it('exports only the selected rows', async () => {
       ctx.i18n.getValue.and.callFake((p: string) => (p === 'table-builder.export_selected_suffix' ? 'vybrane' : p));
+      (ctx.dataHandler as any).getCollection.and.returnValue(of([{ id: 1, name: 'A' }, { id: 2, name: 'B' }]));
       component.selectedIds = new Set([2]);
       component.onBulkExportClick();
       await component.handleExportFormatSelected({ format: 'json', columnKeys: ['name'], rawFormat: false });
-      expect((ctx.dataHandler as any).getCollection).not.toHaveBeenCalled();
+      expect((ctx.dataHandler as any).getCollection.calls.mostRecent().args[1].export).toBe('json');
       expect(downloads[0].name).toBe('users-vybrane.json');
       expect(JSON.parse(await downloads[0].blob.text())).toEqual([{ Name: 'B' }]);
     });
@@ -410,16 +412,20 @@ describe('TableBuilderComponent', () => {
     });
 
     /**
-     * @description Every export is written to the audit log.
-     * @input  CSV export of 1 row
-     * @output POST 'core/logs' (log of the data's module) with event_type 'export_csv', module 'core/users', user from the session
+     * @description Every export is audited by the server: the data is loaded with `export`
+     *   (`raw_<format>` for the import-compatible variant); the browser writes no log.
+     * @input  CSV export; raw TXT export
+     * @output getCollection('core/users', {…, no_pagination, export 'csv'}), then export 'raw_txt'; no POST
      */
-    it('logs the export', async () => {
+    it('loads the export data with the export parameter (logged by the server)', async () => {
       (ctx.dataHandler as any).getCollection.and.returnValue(of([{ id: 1, name: 'A' }]));
       await component.handleExportFormatSelected({ format: 'csv', columnKeys: null, rawFormat: false });
-      const [url, body] = (ctx.dataHandler as any).post.calls.mostRecent().args;
-      expect(url).toBe('core/logs');
-      expect(body).toEqual(jasmine.objectContaining({ event_type: 'export_csv', module: 'core/users', user_id_plain: '1', user_plain: 'admin@example.test' }));
+      const [url, params] = (ctx.dataHandler as any).getCollection.calls.mostRecent().args;
+      expect(url).toBe('core/users');
+      expect(params).toEqual(jasmine.objectContaining({ no_pagination: 'true', export: 'csv' }));
+      await component.handleExportFormatSelected({ format: 'txt', columnKeys: null, rawFormat: true });
+      expect((ctx.dataHandler as any).getCollection.calls.mostRecent().args[1].export).toBe('raw_txt');
+      expect((ctx.dataHandler as any).post).not.toHaveBeenCalled();
     });
 
     /**
@@ -613,10 +619,10 @@ describe('TableBuilderComponent', () => {
     });
 
     /**
-     * @description XLSX export writes a workbook download named after the table; a failing
-     *   audit log is only logged; popup close / import popup state.
-     * @input XLSX export (anchor download captured); log POST failing; closeExportPopup; importData / closeImportPopup.
-     * @output a download 'users.xlsx'; console.error; popup closed; import popup open → closed; hasImportableColumns true.
+     * @description XLSX export writes a workbook download named after the table; popup close /
+     *   import popup state.
+     * @input XLSX export (anchor download captured); closeExportPopup; importData / closeImportPopup.
+     * @output a download 'users.xlsx'; popup closed; import popup open → closed; hasImportableColumns true.
      */
     it('exports XLSX and handles the popups', async () => {
       component.tableCaption = 'users';
@@ -625,13 +631,10 @@ describe('TableBuilderComponent', () => {
       spyOn(HTMLAnchorElement.prototype, 'click').and.callFake(function (this: HTMLAnchorElement) { names.push(this.download); });
       spyOn(HTMLAnchorElement.prototype, 'dispatchEvent').and.callFake(function (this: HTMLAnchorElement) { names.push(this.download); return true; });
       spyOn(URL, 'createObjectURL').and.returnValue('blob:x');
-      spyOn(console, 'error');
       (ctx.dataHandler as any).getCollection.and.returnValue(of([{ id: 1, name: 'A' }]));
-      (ctx.dataHandler as any).post.and.returnValue(throwError(() => new Error('log down')));
       await component.handleExportFormatSelected({ format: 'xlsx', columnKeys: null, rawFormat: false });
       await new Promise(resolve => setTimeout(resolve, 20));
       expect(names).toContain('users.xlsx');
-      expect(console.error).toHaveBeenCalledWith('Failed to log export:', jasmine.anything());
 
       component.showExportPopup = true;
       component.exportSelectedOnly = true;

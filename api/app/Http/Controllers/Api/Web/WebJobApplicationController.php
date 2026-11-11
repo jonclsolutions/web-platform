@@ -100,6 +100,7 @@ class WebJobApplicationController extends Controller
 
             return $this->respond(new WebJobApplicationResource($application->load('attachments')), 201);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Error creating job application: " . $e->getMessage());
             return response()->json(['message' => 'Creation failed.'], 500);
         }
@@ -141,6 +142,7 @@ class WebJobApplicationController extends Controller
 
             return $this->respond(new WebJobApplicationResource($jobApplication->fresh()->load('attachments')));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction(
                 $request,
                 WebLog::class,
@@ -175,6 +177,7 @@ class WebJobApplicationController extends Controller
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Error deleting job application ID: $id. Error: " . $e->getMessage(), (int) $id, 'WebJobApplication');
             return response()->json(['message' => 'Deletion failed.'], 500);
         }
@@ -216,6 +219,7 @@ class WebJobApplicationController extends Controller
                 }
             });
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Error during bulk deletion of job applications: " . $e->getMessage());
             return response()->json(['message' => 'Bulk deletion failed.'], 500);
         }
@@ -254,6 +258,7 @@ class WebJobApplicationController extends Controller
 
             return $this->respond(new WebJobApplicationResource($item->load('attachments')));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Error restoring job application ID: $id. Error: " . $e->getMessage(), (int) $id, 'WebJobApplication');
             return response()->json(['message' => 'Restoration failed.'], 500);
         }
@@ -277,6 +282,7 @@ class WebJobApplicationController extends Controller
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Error emptying job application trash. Error: " . $e->getMessage());
             return response()->json(['message' => 'Emptying trash failed.'], 500);
         }

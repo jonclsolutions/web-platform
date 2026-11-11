@@ -756,7 +756,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
         case 'xlsx': this.downloadXlsx(rows, labels, filename); break;
       }
 
-      this.logExport(rows.length, selection.format);
+      this.logExport(selection.format);
       this.showExportPopup = false;
     } catch {
       this.alertDialogService.open(this.t('error_title'), this.t('export_generic_error'), 'danger');
@@ -767,17 +767,14 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   }
 
   /**
-   * @description Writes the export to the core audit log, like the table exports do (open finding
-   *   #49 - exporting the roles left no trace). A failed log write only goes to the console.
-   * @param rowCount Number of exported roles.
+   * @description Lets the server audit the export (finding #49 - exporting the roles left no
+   *   trace): the role list is requested with `export=<format>`, the server logs what it served
+   *   (api LogDataExport) - the browser writes no log. A failed request only goes to the console.
    * @param format Export format.
    */
-  private logExport(rowCount: number, format: string): void {
-    this.dataHandler.post<any>('core/logs', {
-      event_type: `export_${format}`,
-      module: 'core/roles',
-      description: `User exported ${rowCount} roles (${format.toUpperCase()}).`,
-    }).subscribe({ error: (err) => console.error('Failed to log export:', err) });
+  private logExport(format: string): void {
+    this.dataHandler.getCollection<CoreRole>(this.apiEndpoint, { no_pagination: 'true', export: format })
+      .subscribe({ error: (err) => console.error('Failed to log export:', err) });
   }
 
   /** @description Returns an array of rows (arrays of strings in the order of `keys`) - one item = one role. */

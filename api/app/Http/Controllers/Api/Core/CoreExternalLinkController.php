@@ -168,6 +168,7 @@ class CoreExternalLinkController extends Controller
                 }
             });
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, CoreLog::class, 'error', 'CoreExternalLink', "Error during bulk deletion of external links: " . $e->getMessage());
             return response()->json(['message' => 'Bulk deletion failed.'], 500);
         }

@@ -72,6 +72,7 @@ class ShopCouponController extends Controller
             $this->logAction($request, ShopLog::class, 'create', 'ShopCoupon', "Created coupon: {$coupon->code}", $coupon->id, 'ShopCoupon');
             return $this->respond(new ShopCouponResource($coupon), 201);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopCoupon', "Error creating coupon: " . $e->getMessage());
             return response()->json(['message' => 'Error creating coupon.'], 500);
         }
@@ -98,6 +99,7 @@ class ShopCouponController extends Controller
             $this->logAction($request, ShopLog::class, 'update', 'ShopCoupon', "Updated coupon: {$coupon->code}", $coupon->id, 'ShopCoupon');
             return $this->respond(new ShopCouponResource($coupon));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopCoupon', "Update failed ID {$id}: " . $e->getMessage(), (int) $id, 'ShopCoupon');
             return response()->json(['message' => 'Update failed.'], 500);
         }
@@ -125,7 +127,7 @@ class ShopCouponController extends Controller
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            Log::error("ShopCoupon forceDeleteAll error: " . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopCoupon', "Error clearing coupon trash: " . $e->getMessage());
             return response()->json(['message' => 'Error clearing coupon trash.'], 500);
         }

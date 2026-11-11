@@ -114,6 +114,7 @@ class WebSupportTicketController extends Controller
 
             return $this->respond(new WebSupportTicketResource($ticket->load('attachments')), 201);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error creating ticket: " . $e->getMessage());
             return response()->json(['message' => 'Ticket creation failed.'], 500);
         }
@@ -147,6 +148,7 @@ class WebSupportTicketController extends Controller
 
             return $this->respond(new WebSupportTicketResource($ticket->fresh()->load('attachments')));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error updating ticket ID {$id}: " . $e->getMessage(), (int) $id, 'WebSupportTicket');
             return response()->json(['message' => 'Ticket update failed.'], 500);
         }
@@ -172,6 +174,7 @@ class WebSupportTicketController extends Controller
             $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebSupportTicket', "Delete ticket ID: $id", (int) $id, 'WebSupportTicket');
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error deleting ticket ID $id: " . $e->getMessage(), (int) $id, 'WebSupportTicket');
             return response()->json(['message' => 'Ticket deletion failed.'], 500);
         }
@@ -212,6 +215,7 @@ class WebSupportTicketController extends Controller
                 }
             });
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error during bulk deletion of tickets: " . $e->getMessage());
             return response()->json(['message' => 'Bulk deletion failed.'], 500);
         }
@@ -402,6 +406,7 @@ class WebSupportTicketController extends Controller
             if ($e instanceof \RuntimeException && $e->getCode() === 410) {
                 return response()->json(['message' => $e->getMessage()], 410);
             }
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error during import: " . $e->getMessage());
             return response()->json(['message' => 'Import failed.'], 500);
         }
@@ -420,6 +425,7 @@ class WebSupportTicketController extends Controller
             $this->logAction($request, WebLog::class, 'restore', 'WebSupportTicket', "Restore ticket ID: $id", (int) $id, 'WebSupportTicket');
             return $this->respond(new WebSupportTicketResource($item->load('attachments')));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error restoring ticket ID $id: " . $e->getMessage(), (int) $id, 'WebSupportTicket');
             return response()->json(['message' => 'Ticket restoration failed.'], 500);
         }
@@ -442,6 +448,7 @@ class WebSupportTicketController extends Controller
             $this->logAction($request, WebLog::class, 'force_delete_all', 'WebSupportTicket', "Bulk delete of ticket trash. Count: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error emptying ticket trash: " . $e->getMessage());
             return response()->json(['message' => 'Emptying trash failed.'], 500);
         }

@@ -211,6 +211,7 @@ class UserController extends Controller
             );
         } catch (\Exception $e) {
             DB::rollBack();
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, CoreLog::class, 'error', 'User', "Error creating user: " . $e->getMessage());
             return response()->json(['message' => 'Error creating user.'], 500);
         }
@@ -491,6 +492,7 @@ class UserController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, CoreLog::class, 'error', 'User', "Error updating user ID {$id}: " . $e->getMessage(), (int) $id, 'User');
             return response()->json(['message' => 'Server error while saving.'], 500);
         }
@@ -551,6 +553,7 @@ class UserController extends Controller
 
             return response()->json(['message' => 'Password changed successfully.']);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, CoreLog::class, 'error', 'User', "Error changing password for ID {$id}: " . $e->getMessage(), (int) $id, 'User');
             return response()->json(['message' => 'Password change failed.'], 500);
         }
@@ -579,6 +582,7 @@ class UserController extends Controller
             $this->logAction(request(), CoreLog::class, 'restore', 'User', "Restored user: {$user->user_email}", $user->id, 'User');
             return $this->respond(new UserResource($user->load(['roles.permissions', 'explicitPermissions'])));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction(request(), CoreLog::class, 'error', 'User', "Error restoring user ID {$id}: " . $e->getMessage(), (int) $id, 'User');
             return response()->json(['message' => 'Restoring user failed.'], 500);
         }
@@ -626,6 +630,7 @@ class UserController extends Controller
             $this->logAction($request, CoreLog::class, $force ? 'hard_delete' : 'soft_delete', 'User', "Deleted ID: $id", (int) $id, 'User');
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, CoreLog::class, 'error', 'User', "Error deleting user ID {$id}: " . $e->getMessage(), (int) $id, 'User');
             return response()->json(['message' => 'Deleting user failed.'], 500);
         }
@@ -660,6 +665,7 @@ class UserController extends Controller
             $this->logAction(request(), CoreLog::class, 'force_delete_all', 'User', "Trash emptied. Deleted: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction(request(), CoreLog::class, 'error', 'User', "Error emptying user trash: " . $e->getMessage());
             return response()->json(['message' => 'Emptying trash failed.'], 500);
         }

@@ -326,7 +326,6 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         Route::prefix('logs')->group(function () {
             Route::get('/',     [CoreLogController::class, 'index'])
                 ->middleware('permission:view-core');
-            Route::post('/',    [CoreLogController::class, 'store']);
             Route::get('/{id}', [CoreLogController::class, 'show'])
                 ->middleware('permission:view-core');
         });
@@ -583,7 +582,6 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         Route::prefix('logs')->group(function () {
             Route::get('/',     [ShopLogController::class, 'index'])
                 ->middleware('permission:shop-view-logs');
-            Route::post('/',    [ShopLogController::class, 'store']);
             Route::get('/{id}', [ShopLogController::class, 'show'])
                 ->middleware('permission:shop-view-logs');
         });
@@ -735,7 +733,6 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         Route::prefix('logs')->group(function () {
             Route::get('/',     [WebLogController::class, 'index'])
                 ->middleware('permission:web-view-web-logs');
-            Route::post('/',    [WebLogController::class, 'store']);
             Route::get('/{id}', [WebLogController::class, 'show'])
                 ->middleware('permission:web-view-web-logs');
         });

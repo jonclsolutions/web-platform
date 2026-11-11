@@ -7,6 +7,8 @@
  * @created 2026
  * @description Customer-facing endpoints. `login()` is the ONLY unauthenticated
  * action - everything else sits behind `project.session` middleware.
+ * Every change of the client (sign-in / out, new thread, message, thread status) is written to
+ * the web log (module WebProjectPortal; message texts never).
  * @security The portal session travels only in the HttpOnly / Secure / SameSite=Strict cookie of
  * AuthCookies (Path = the routes of this project) - it is never in a body or in JavaScript.
  */
@@ -18,9 +20,10 @@ use App\Http\Requests\Web\WebProject\{ProjectLoginRequest, StoreProjectThreadReq
 use App\Http\Resources\Web\{WebProjectPublicResource, WebProjectThreadResource, WebProjectThreadMessageResource};
 use App\Mail\Web\ProjectThreadActivityMail;
 use App\Models\Core\CoreSecurityEvent;
-use App\Models\Web\{WebProject, WebProjectSession, WebProjectThread};
+use App\Models\Web\{WebLog, WebProject, WebProjectSession, WebProjectThread};
 use App\Support\Auth\AuthCookies;
 use App\Traits\HandlesAttachments;
+use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -29,6 +32,13 @@ use Illuminate\Support\Facades\Mail;
 class WebProjectPublicController extends Controller
 {
     use HandlesAttachments;
+    use LogsActivity;
+
+    /** Module of the web log rows of the client portal. */
+    private const LOG_MODULE = 'WebProjectPortal';
+
+    /** Request keys never written to the log (the client's message texts). */
+    private const PRIVATE_KEYS = ['body', 'attachments'];
 
     /** Storage folder for thread message attachments within the private disk - shared with WebProjectThreadController. */
     private const ATTACHMENT_FOLDER = 'web/project_threads';
@@ -58,6 +68,7 @@ class WebProjectPublicController extends Controller
         }
 
         $sessionToken = WebProjectSession::issueFor($project, $request->ip(), $request->userAgent());
+        $this->logAction($request, WebLog::class, 'portal_login', self::LOG_MODULE, "Client signed in to the portal of project #{$project->id}", $project->id, 'WebProject');
 
         return $this->respond([
             'expires_in' => WebProjectSession::LIFETIME_MINUTES * 60,
@@ -75,6 +86,8 @@ class WebProjectPublicController extends Controller
     {
         $session = $request->attributes->get('current_project_session');
         $session?->delete();
+        $project = $request->attributes->get('current_project');
+        $this->logAction($request, WebLog::class, 'portal_logout', self::LOG_MODULE, 'Client signed out of the portal of project #' . ($project?->id ?? '?'), $project?->id, 'WebProject');
 
         // The middleware re-issues the session cookie on every request - replace it with the
         // expired one so the browser deletes it.
@@ -178,6 +191,8 @@ public function newMessages(Request $request): JsonResponse
         ]);
 
         $this->storeAttachments($request, $message, self::ATTACHMENT_FOLDER);
+        $this->logAction($request, WebLog::class, 'portal_thread_create', self::LOG_MODULE,
+            "Client opened thread #{$thread->id} in project #{$project->id} (" . count($message->attachments()->get()) . ' attachments)', $thread->id, 'WebProjectThread', self::PRIVATE_KEYS);
 
         $this->notifyProjectContact($project, $thread, isNewThread: true);
 
@@ -203,6 +218,8 @@ public function newMessages(Request $request): JsonResponse
         $this->storeAttachments($request, $message, self::ATTACHMENT_FOLDER);
 
         $thread->update(['last_message_at' => now(), 'customer_last_read_at' => now()]);
+        $this->logAction($request, WebLog::class, 'portal_message_create', self::LOG_MODULE,
+            "Client wrote message #{$message->id} in thread #{$thread->id} of project #{$project->id} (" . count($message->attachments()->get()) . ' attachments)', $thread->id, 'WebProjectThread', self::PRIVATE_KEYS);
 
         $this->notifyProjectContact($project, $thread, isNewThread: false);
 
@@ -231,6 +248,8 @@ public function updateStatus(Request $request): JsonResponse
     ]);
 
     $thread->update(['status' => $validated['status']]);
+    $this->logAction($request, WebLog::class, 'portal_thread_status', self::LOG_MODULE,
+        "Client set thread #{$thread->id} of project #{$project->id} to {$validated['status']}", $thread->id, 'WebProjectThread');
 
     return $this->respond(new WebProjectThreadResource($thread->fresh()));
 }

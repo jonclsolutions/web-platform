@@ -19,6 +19,7 @@ use App\Models\Core\CoreImportBatch;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class PurgeImportBatchesCommand extends Command
 {
@@ -43,6 +44,7 @@ class PurgeImportBatchesCommand extends Command
         }
 
         $this->info("Deleted {$stale->count()} uncollected import batches.");
+        Log::info('Stale import batches purged', ['deleted' => $stale->count()]);
 
         return self::SUCCESS;
     }

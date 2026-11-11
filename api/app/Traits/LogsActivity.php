@@ -9,11 +9,13 @@
  * whichever log model is passed in (CoreLog::class, WebLog::class, ShopLog::class - all
  * three share an identical column structure and an `'array'` cast on `context_data` by
  * design). Centralizes truncation safety so an oversized description/context_data can
- * never itself throw and mask the original error.
+ * never itself throw and mask the original error. Each row also carries the data changes of the
+ * request since the previous row (`changes`, App\Support\Audit\ModelChanges).
  */
 
 namespace App\Traits;
 
+use App\Support\Audit\ModelChanges;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
@@ -76,7 +78,7 @@ trait LogsActivity
                 'affected_entity_type' => $affectedType,
                 'affected_entity_id'   => $affectedId,
                 'user_id'              => $user?->id,
-                'context_data'         => $this->safeContextData($request, $extraExcludedKeys),
+                'context_data'         => $this->withChanges($this->safeContextData($request, $extraExcludedKeys), $extraExcludedKeys),
                 'user_id_plain'        => (string)($user?->id ?? '0'),
                 'user_plain'           => $user?->user_email ?? 'system',
             ]);
@@ -110,6 +112,28 @@ trait LogsActivity
         }
 
         return $data;
+    }
+
+    /**
+     * @description Adds the data changes of the request since the last log row (ModelChanges:
+     *   created values, updated `[old, new]`, deleted / restored) as `changes`, so the row shows
+     *   what really changed in the database. Too large changes are dropped with a note.
+     * @param array $context Safe request payload.
+     * @param array $maskedKeys Per-call excluded keys - their values are masked in the changes too.
+     * @return array
+     */
+    private function withChanges(array $context, array $maskedKeys = []): array
+    {
+        $changes = app(ModelChanges::class)->flush($maskedKeys);
+        if ($changes === []) {
+            return $context;
+        }
+        $encoded = json_encode($changes, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
+        $context['changes'] = $encoded !== false && strlen($encoded) <= 40000
+            ? $changes
+            : ['_omitted' => true, 'count' => count($changes)];
+
+        return $context;
     }
 
     /**

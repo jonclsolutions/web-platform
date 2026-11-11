@@ -16,6 +16,8 @@
 
 namespace Tests\Feature\Other;
 
+use App\Models\Core\CoreSecurityEvent;
+use App\Models\Web\WebLog;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Tests\Support\WebFixtures;
@@ -233,5 +235,33 @@ class AttachmentDownloadTest extends TestCase
         Storage::disk('public')->assertExists('cv_files/x.pdf');
         Storage::disk('private')->assertMissing('web/cv_files/x.pdf');
         $this->assertSame('cv_files/x.pdf', $application->fresh()->cv_path);
+    }
+
+    /**
+     * @description Every served file is logged (web log, id / owner / type / size - not the file
+     *   name); a changed or expired signature and a path with '..' are security events.
+     * @input Attachment 'CV Jan Novak.pdf' of an inquiry: download, view; unsigned URL; signed '../.env'.
+     * @output web log attachment_download + attachment_view (WebAttachment #id of
+     *   WebRawRequestCommission #id), no 'Novak' and no signature in the log; security events
+     *   invalid_signed_url, path_traversal_attempt (critical).
+     */
+    public function test_access_is_logged(): void
+    {
+        $owner = $this->rawRequest();
+        $attachment = $this->attach($owner, 'web/x/cv.pdf');
+        $attachment->update(['original_filename' => 'CV Jan Novak.pdf']);
+
+        $this->get($this->signed('download', 'web/x/cv.pdf'))->assertOk();
+        $this->get($this->signed('view', 'web/x/cv.pdf'))->assertOk();
+        $this->get('/api/attachments/download/web/x/cv.pdf')->assertStatus(403);
+        $this->get($this->signed('download', 'web/../.env'))->assertStatus(404);
+
+        $rows = WebLog::orderBy('id')->get();
+        $this->assertSame(['attachment_download', 'attachment_view'], $rows->pluck('event_type')->all());
+        $this->assertStringContainsString("Attachment #{$attachment->id} of WebRawRequestCommission #{$owner->id}", $rows[0]->description);
+        $this->assertStringNotContainsString('Novak', $rows->toJson());
+        $this->assertStringNotContainsString('signature', $rows->toJson());
+        $this->assertTrue(CoreSecurityEvent::where('event_type', 'invalid_signed_url')->exists());
+        $this->assertSame('critical', CoreSecurityEvent::where('event_type', 'path_traversal_attempt')->value('severity'));
     }
 }

@@ -18,6 +18,7 @@ namespace Tests\Feature\Web;
 
 use App\Mail\Web\ProjectThreadActivityMail;
 use App\Models\Core\CoreSecurityEvent;
+use App\Models\Web\WebLog;
 use App\Models\Web\WebProject;
 use App\Models\Web\WebProjectSession;
 use App\Models\Web\WebProjectThread;
@@ -351,5 +352,32 @@ class ProjectPortalTest extends TestCase
         $this->portal('POST', "/threads/{$thread->id}/status", ['status' => 'x'])->assertStatus(422);
         $this->portal('POST', "/threads/{$foreign->id}/status", ['status' => 'closed'])->assertStatus(404);
         $this->assertSame('active', $foreign->fresh()->status);
+    }
+
+    /**
+     * @description Every change of the client is written to the web log (module WebProjectPortal):
+     *   sign-in, new thread, message, thread status, sign-out - never the message text or the
+     *   password; a stored message shows its body only as [masked] in the data changes.
+     * @input Login; POST thread (body 'Secret plan'); POST message (body 'Secret reply'); status
+     *   closed; logout.
+     * @output web log events portal_login, portal_thread_create, portal_message_create,
+     *   portal_thread_status, portal_logout; no 'Secret' / password anywhere in the log.
+     */
+    public function test_client_actions_are_logged(): void
+    {
+        $this->postJson('/api/projects/public/portal-token/login', ['password' => $this->projectPassword])->assertOk();
+        $this->portal('POST', '/threads', ['subject' => 'Logo', 'priority' => 'high', 'body' => 'Secret plan'])->assertCreated();
+        $thread = WebProjectThread::sole();
+        $this->portal('POST', "/threads/{$thread->id}/messages", ['body' => 'Secret reply'])->assertCreated();
+        $this->portal('POST', "/threads/{$thread->id}/status", ['status' => 'closed'])->assertOk();
+        $this->portal('POST', '/logout')->assertOk();
+
+        $rows = WebLog::orderBy('id')->get();
+        $this->assertSame(['portal_login', 'portal_thread_create', 'portal_message_create', 'portal_thread_status', 'portal_logout'], $rows->pluck('event_type')->all());
+        $this->assertSame(['WebProjectPortal'], $rows->pluck('module')->unique()->values()->all());
+        $all = $rows->toJson();
+        $this->assertStringNotContainsString('Secret', $all);
+        $this->assertStringNotContainsString($this->projectPassword, $all);
+        $this->assertStringContainsString('[masked]', $all);
     }
 }

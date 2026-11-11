@@ -117,6 +117,7 @@ class WebSalesLeadController extends Controller
 
             return $this->respond(new WebSalesLeadResource($lead), 201);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error creating lead: " . $e->getMessage());
             return response()->json(['message' => 'Lead creation failed.'], 500);
         }
@@ -145,6 +146,7 @@ class WebSalesLeadController extends Controller
 
             return $this->respond(new WebSalesLeadResource($lead));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error updating lead ID {$id}: " . $e->getMessage(), (int) $id, 'WebSalesLead');
             return response()->json(['message' => 'Lead update failed.'], 500);
         }
@@ -166,6 +168,7 @@ class WebSalesLeadController extends Controller
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error deleting lead ID $id: " . $e->getMessage(), (int) $id, 'WebSalesLead');
             return response()->json(['message' => 'Lead deletion failed.'], 500);
         }
@@ -198,6 +201,7 @@ class WebSalesLeadController extends Controller
                 }
             });
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error during bulk deletion of leads: " . $e->getMessage());
             return response()->json(['message' => 'Bulk deletion failed.'], 500);
         }
@@ -369,6 +373,7 @@ class WebSalesLeadController extends Controller
             if ($e instanceof \RuntimeException && $e->getCode() === 410) {
                 return response()->json(['message' => $e->getMessage()], 410);
             }
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error during import: " . $e->getMessage());
             return response()->json(['message' => 'Import failed.'], 500);
         }
@@ -388,6 +393,7 @@ class WebSalesLeadController extends Controller
 
             return $this->respond(new WebSalesLeadResource($item));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error restoring lead ID $id: " . $e->getMessage(), (int) $id, 'WebSalesLead');
             return response()->json(['message' => 'Lead restoration failed.'], 500);
         }
@@ -406,6 +412,7 @@ class WebSalesLeadController extends Controller
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error emptying lead trash: " . $e->getMessage());
             return response()->json(['message' => 'Emptying trash failed.'], 500);
         }
@@ -432,6 +439,7 @@ class WebSalesLeadController extends Controller
                     'expires_at' => $lead->public_token_used_at ? null : $lead->public_token_expires_at?->toIso8601String(),
                 ]);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error generating link for lead ID {$id}: " . $e->getMessage(), (int) $id, 'WebSalesLead');
             return response()->json(['message' => 'Link generation failed.'], 500);
         }

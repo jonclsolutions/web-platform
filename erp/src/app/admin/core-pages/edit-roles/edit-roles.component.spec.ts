@@ -454,11 +454,12 @@ describe('EditRolesComponent', () => {
 
   /**
    * @description Export with no roles shows an error; a CSV export downloads a file, closes the popup and is
-   *   written to the core audit log (finding #49); a failing log write only goes to the console.
+   *   audited by the server (finding #49 - roles requested with export=csv); a failing request only goes
+   *   to the console; the browser writes no log.
    * @input  roles []; openExportPopup(); then roles loaded; handleExportFormatSelected({ format: 'csv', columnKeys: ['role_name'] });
-   *         log post fails
+   *         the request fails
    * @output alert 'edit-roles.export_empty_error'; triggerDownload called with 'edit-roles.export_filename_prefix-<date>.csv'; popup closed;
-   *   post('core/logs', { event_type 'export_csv', module 'core/roles', description with the role count }); console.error
+   *   getCollection('core/roles', { no_pagination 'true', export 'csv' }); no POST; console.error
    */
   it('exports the roles', () => {
     component.roles = [];
@@ -473,11 +474,10 @@ describe('EditRolesComponent', () => {
     expect(download).toHaveBeenCalledWith(jasmine.any(Blob), `edit-roles.export_filename_prefix-${new Date().toISOString().slice(0, 10)}.csv`);
     expect(component.showExportPopup).toBeFalse();
     expect(component.isExporting).toBeFalse();
-    expect((ctx.dataHandler as any).post).toHaveBeenCalledWith('core/logs', {
-      event_type: 'export_csv', module: 'core/roles', description: `User exported ${component.roles.length} roles (CSV).`
-    });
+    expect((ctx.dataHandler as any).getCollection).toHaveBeenCalledWith('core/roles', { no_pagination: 'true', export: 'csv' });
+    expect((ctx.dataHandler as any).post).not.toHaveBeenCalled();
     const err = spyOn(console, 'error');
-    (ctx.dataHandler as any).post.and.returnValue(throwError(() => new Error('x')));
+    (ctx.dataHandler as any).getCollection.and.returnValue(throwError(() => new Error('x')));
     component.handleExportFormatSelected({ format: 'csv', columnKeys: ['role_name'] } as any);
     expect(err).toHaveBeenCalledWith('Failed to log export:', jasmine.any(Error));
   });

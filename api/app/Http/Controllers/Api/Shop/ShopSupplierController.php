@@ -101,6 +101,7 @@ class ShopSupplierController extends Controller
             $this->logAction($request, ShopLog::class, 'create', 'ShopSupplier', "Created supplier: {$supplier->name}", $supplier->id, 'ShopSupplier');
             return $this->respond(new ShopSupplierResource($supplier), 201);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Error creating supplier: " . $e->getMessage());
             return response()->json(['message' => 'Supplier creation failed.'], 500);
         }
@@ -127,6 +128,7 @@ class ShopSupplierController extends Controller
             $this->logAction($request, ShopLog::class, 'update', 'ShopSupplier', "Updated supplier ID: {$supplier->id}", $supplier->id, 'ShopSupplier');
             return $this->respond(new ShopSupplierResource($supplier));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Error updating supplier ID {$id}: " . $e->getMessage(), (int) $id, 'ShopSupplier');
             return response()->json(['message' => 'Supplier update failed.'], 500);
         }
@@ -146,6 +148,7 @@ class ShopSupplierController extends Controller
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Error deleting supplier ID $id: " . $e->getMessage(), (int) $id, 'ShopSupplier');
             return response()->json(['message' => 'Supplier deletion failed.'], 500);
         }
@@ -163,6 +166,7 @@ class ShopSupplierController extends Controller
             $this->logAction($request, ShopLog::class, 'restore', 'ShopSupplier', "Restored supplier ID: $id", (int) $id, 'ShopSupplier');
             return $this->respond(new ShopSupplierResource($item));
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Error restoring supplier ID $id: " . $e->getMessage(), (int) $id, 'ShopSupplier');
             return response()->json(['message' => 'Supplier restoration failed.'], 500);
         }
@@ -179,6 +183,7 @@ class ShopSupplierController extends Controller
             $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopSupplier', "Bulk deleted supplier trash. Count: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Error emptying supplier trash: " . $e->getMessage());
             return response()->json(['message' => 'Emptying trash failed.'], 500);
         }
@@ -211,6 +216,7 @@ class ShopSupplierController extends Controller
                 }
             });
         } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Error during bulk deletion of suppliers: " . $e->getMessage());
             return response()->json(['message' => 'Bulk deletion failed.'], 500);
         }
@@ -368,6 +374,7 @@ class ShopSupplierController extends Controller
             if ($e instanceof \RuntimeException && $e->getCode() === 410) {
                 return response()->json(['message' => $e->getMessage()], 410);
             }
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Error during import: " . $e->getMessage());
             return response()->json(['message' => 'Import failed.'], 500);
         }

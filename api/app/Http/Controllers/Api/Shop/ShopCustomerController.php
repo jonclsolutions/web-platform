@@ -77,7 +77,7 @@ class ShopCustomerController extends Controller
             $this->logAction($request, ShopLog::class, 'create', 'ShopCustomer', "Created customer: {$customer->getFullName()}", $customer->id, 'ShopCustomer');
             return $this->respond(new ShopCustomerResource($customer), 201);
         } catch (\Exception $e) {
-            Log::error("ShopCustomer creation error: " . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopCustomer', "Customer creation failed: " . $e->getMessage());
             return response()->json(['message' => 'Customer creation failed.'], 500);
         }
@@ -105,7 +105,7 @@ class ShopCustomerController extends Controller
             $this->logAction($request, ShopLog::class, 'update', 'ShopCustomer', "Updated customer: {$customer->getFullName()}", $customer->id, 'ShopCustomer');
             return $this->respond(new ShopCustomerResource($customer));
         } catch (\Exception $e) {
-            Log::error("ShopCustomer update error: " . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopCustomer', "Update failed ID {$id}: " . $e->getMessage(), (int) $id, 'ShopCustomer');
             return response()->json(['message' => 'Update failed.'], 500);
         }
@@ -132,7 +132,7 @@ class ShopCustomerController extends Controller
             $this->logAction($request, ShopLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'ShopCustomer', "Deleted customer ID: $id", (int) $id, 'ShopCustomer');
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            Log::error("ShopCustomer delete error: " . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopCustomer', "Deletion failed ID {$id}: " . $e->getMessage(), (int) $id, 'ShopCustomer');
             return response()->json(['message' => 'Deletion failed.'], 500);
         }
@@ -151,7 +151,7 @@ class ShopCustomerController extends Controller
             $this->logAction($request, ShopLog::class, 'restore', 'ShopCustomer', "Restored customer ID: $id", (int) $id, 'ShopCustomer');
             return $this->respond(new ShopCustomerResource($customer));
         } catch (\Exception $e) {
-            Log::error("ShopCustomer restore error: " . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopCustomer', "Restoration failed ID {$id}: " . $e->getMessage(), (int) $id, 'ShopCustomer');
             return response()->json(['message' => 'Restoration failed.'], 500);
         }
@@ -179,7 +179,7 @@ class ShopCustomerController extends Controller
             $this->logAction($request, ShopLog::class, 'anonymize', 'ShopCustomer', "Anonymised customer ID: $id (GDPR erasure, orders kept).", (int) $id, 'ShopCustomer', ['first_name', 'last_name', 'email', 'phone']);
             return $this->respond(new ShopCustomerResource($customer->fresh()));
         } catch (\Exception $e) {
-            Log::error("ShopCustomer anonymize error: " . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopCustomer', "Anonymisation failed ID {$id}: " . $e->getMessage(), (int) $id, 'ShopCustomer');
             return response()->json(['message' => 'Anonymisation failed.'], 500);
         }
@@ -214,7 +214,7 @@ class ShopCustomerController extends Controller
             }
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            Log::error("ShopCustomer force delete all error: " . $e->getMessage());
+            report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, ShopLog::class, 'error', 'ShopCustomer', "Cleanup failed: " . $e->getMessage());
             return response()->json(['message' => 'Cleanup failed.'], 500);
         }
