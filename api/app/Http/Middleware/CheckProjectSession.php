@@ -19,7 +19,10 @@
  *    THIS SAME project - a session issued for project A can never be replayed
  *    against project B's routes, even if somehow guessed (IDOR guard).
  *
- * On success, both the resolved project and session are attached to the request via
+ * 3) The session belongs to a client account (WebProjectAccount) of the project - removing the
+ *    account (or resetting its password) deletes its sessions, so the client is signed out at once.
+ *
+ * On success, the resolved project, session and account are attached to the request via
  * `$request->attributes` so controllers never need to re-resolve/re-validate them,
  * and the session's expiry is SLID FORWARD (not just checked) - see
  * WebProjectSession::slideExpiry(), the concrete implementation of consultation
@@ -70,7 +73,9 @@ class CheckProjectSession
 
         $session = WebProjectSession::findValidByPlaintextToken($plainSession);
 
-        if (!$session || (int) $session->project_id !== (int) $project->id) {
+        $account = $session?->account;
+        if (!$session || (int) $session->project_id !== (int) $project->id
+            || !$account || (int) $account->project_id !== (int) $project->id) {
             CoreSecurityEvent::record(
                 'project_session_invalid',
                 'warning',
@@ -86,6 +91,7 @@ class CheckProjectSession
 
         $request->attributes->set('current_project', $project);
         $request->attributes->set('current_project_session', $session);
+        $request->attributes->set('current_project_account', $account);
 
         $response = $next($request);
 

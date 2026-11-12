@@ -94,7 +94,7 @@
       "group": "web",
       "order": 14,
       "permission": "web-projects-view",
-      "devNote": "ProjectsComponent (seznam, sloupec/filtr nepřečtených zpráv), route 'web/projects'; ProjectDetailComponent (stránka projektu: nastavení, přístup, checkpointy, konverzace projektu), route 'web/projects/:id'; obě permission 'web-projects-view', úpravy 'web-projects-update'. Nepřečtené = web_project_threads.admin_last_read_at."
+      "devNote": "ProjectsComponent (seznam: sloupce řešitel / nepřečtené / čeká na nás, filtry nepřečtené a moje projekty), route 'web/projects'; ProjectDetailComponent (stránka projektu: nastavení s řešitelem, uživatelé portálu WebProjectAccountController, checkpointy s termínem / interní poznámkou / pořadím, soubory, konverzace s interními poznámkami a přečtením), route 'web/projects/:id'; obě permission 'web-projects-view', úpravy 'web-projects-update'. Klientský portál ProjectPortalComponent (/projects/:token, přihlášení účtem). Nepřečtené = web_project_threads.admin_last_read_at, čeká na = last_public_author, přečteno klientem = customer_last_read_at. E-maily: ProjectNotifier (řešiteli ProjectThreadActivityMail, klientům ProjectClientUpdateMail podle přepínačů notify_replies / notify_checkpoint_status / notify_checkpoint_dates, které si klient nastavuje v portálu – POST projects/public/{token}/account)."
     },
     {
       "id": "core-dashboard",

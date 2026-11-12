@@ -5,10 +5,10 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Notification to `web_projects.contact_email` (the e-mail of the project, not a
- * field of the customer) on EVERY customer activity in a thread - a new thread and every reply,
- * no debounce. Without `contact_email` on the project no e-mail is created (see
- * WebProjectPublicController).
+ * @description Notification to the team on EVERY customer activity in a thread - a new thread and
+ * every reply, no debounce: to the administrator responsible for the project (`assignee`), else
+ * to `web_projects.contact_email` (the supplier's contact of the project); without either no
+ * e-mail is created (ProjectNotifier::notifyTeam()). The button opens the project page.
  * @note Contains only the thread subject and a link to the admin, NOT the message text - a
  * sensitive message is not copied into a mailbox.
  */
@@ -50,7 +50,8 @@ class ProjectThreadActivityMail extends Mailable
                 'projectName'  => $this->project->name,
                 'threadSubject' => $this->thread->subject,
                 'isNewThread'  => $this->isNewThread,
-                'adminUrl'     => rtrim(config('app.frontend_url', ''), '/') . '/admin/web/project-threads',
+                // The project page of the administration (its conversations).
+                'adminUrl'     => rtrim(config('app.frontend_url', ''), '/') . '/admin/web/projects/' . $this->project->id,
             ],
         );
     }

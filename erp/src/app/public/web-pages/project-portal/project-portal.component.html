@@ -1,38 +1,67 @@
-<!-- 
+<!--
     @file: project-portal.component.html
     @path: src/app/public/web-pages/project-portal/project-portal.component.html
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Template of the project portal component.
+    @description: Client project portal laid out like the administration. Login (login name +
+        password), then: header (menu button, signed-in account, refresh, language), left menu
+        (Overview, Progress, Communication, Files, Contacts; My account, Help and logout at the bottom) that
+        collapses on desktop and slides in on mobile, and the content of the picked section.
 -->
-<div class="pp-page">
-
-  <!-- ── Language switcher: top-right corner (flag + chevron, like the administration) ── -->
-  @if (state === 'login' || state === 'portal') {
-    <div class="pp-lang-switcher">
-      <button type="button" class="pp-lang-btn" [title]="t('language_switcher_title')" [attr.aria-label]="t('language_switcher_title')"
-              aria-haspopup="menu" [attr.aria-expanded]="isLangMenuOpen" (click)="toggleLangMenu()">
-        @if (currentLanguageMeta?.icon) {
-          <img [src]="currentLanguageMeta!.icon" [alt]="currentLanguageMeta!.code" class="pp-lang-btn-flag">
-        }
-        <svg class="pp-lang-chevron" [class.pp-lang-chevron-open]="isLangMenuOpen" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </button>
-      @if (isLangMenuOpen) {
-        <div class="pp-lang-menu-backdrop" (click)="closeLangMenu()"></div>
-        <div class="pp-lang-menu" role="menu">
-          @for (lang of portalI18n.availableLanguages; track lang.code) {
-            <button type="button" role="menuitem" class="pp-lang-menu-item" [class.pp-lang-menu-item-active]="lang.code === portalI18n.getCurrentLanguage()" (click)="selectLanguage(lang.code)">
-              <img [src]="lang.icon" [alt]="lang.code" class="pp-lang-flag-img">
-              <span>{{ lang.name }}</span>
-            </button>
-          }
-        </div>
+<ng-template #langSwitcher>
+  <div class="pp-lang-switcher">
+    <button type="button" class="pp-header-btn pp-lang-btn" [title]="t('language_switcher_title')" [attr.aria-label]="t('language_switcher_title')"
+            aria-haspopup="menu" [attr.aria-expanded]="isLangMenuOpen" (click)="toggleLangMenu()">
+      @if (currentLanguageMeta?.icon) {
+        <img [src]="currentLanguageMeta!.icon" [alt]="currentLanguageMeta!.code" class="pp-lang-btn-flag">
       }
-    </div>
+      <svg class="pp-lang-chevron" [class.pp-lang-chevron-open]="isLangMenuOpen" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </button>
+    @if (isLangMenuOpen) {
+      <div class="pp-lang-menu-backdrop" (click)="closeLangMenu()"></div>
+      <div class="pp-lang-menu" role="menu">
+        @for (lang of portalI18n.availableLanguages; track lang.code) {
+          <button type="button" role="menuitem" class="pp-lang-menu-item" [class.pp-lang-menu-item-active]="lang.code === portalI18n.getCurrentLanguage()" (click)="selectLanguage(lang.code)">
+            <img [src]="lang.icon" [alt]="lang.code" class="pp-lang-flag-img">
+            <span>{{ lang.name }}</span>
+          </button>
+        }
+      </div>
+    }
+  </div>
+</ng-template>
+
+<!-- Icons of the menu sections (one place, used by the menu and the section titles). -->
+<ng-template #sectionIcon let-section>
+  @switch (section) {
+    @case ('overview') {
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+    }
+    @case ('checkpoints') {
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    }
+    @case ('threads') {
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    }
+    @case ('files') {
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    }
+    @case ('contacts') {
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+    }
+    @case ('account') {
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+    }
+    @case ('help') {
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    }
   }
+</ng-template>
+
+<div class="pp-page">
 
   @if (state === 'loading') {
     <div class="pp-center">
@@ -43,7 +72,7 @@
   @if (state === 'invalid') {
     <div class="pp-center">
       <div class="pp-invalid-card">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
         <p class="pp-error-text">{{ t('project_not_found') }}</p>
@@ -52,554 +81,591 @@
   }
 
   @if (state === 'login') {
+    <div class="pp-login-lang"><ng-container [ngTemplateOutlet]="langSwitcher"></ng-container></div>
     <div class="pp-center">
-      <div class="pp-login-card">
-
-
+      <form class="pp-login-card" (ngSubmit)="login()" autocomplete="on">
         <div class="pp-login-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
         </div>
         <h1 class="pp-login-title">{{ t('login_title') }}</h1>
         <p class="pp-login-lead">{{ t('login_lead') }}</p>
 
-        <input type="password" class="pp-input" [placeholder]="t('login_password_placeholder')" [(ngModel)]="loginPassword"
-               (keyup.enter)="login()" [disabled]="loginLoading">
+        <label class="pp-login-field">
+          <span>{{ t('login_username_label') }}</span>
+          <input type="text" class="pp-input" name="username" autocomplete="username" autocapitalize="none" spellcheck="false"
+                 [(ngModel)]="loginUsername" [disabled]="loginLoading">
+        </label>
+        <label class="pp-login-field">
+          <span>{{ t('login_password_label') }}</span>
+          <input type="password" class="pp-input" name="password" autocomplete="current-password"
+                 [(ngModel)]="loginPassword" [disabled]="loginLoading">
+        </label>
 
         @if (loginError) {
-          <p class="pp-login-error">{{ t(loginError) }}</p>
+          <p class="pp-login-error" role="alert">{{ t(loginError) }}</p>
         }
 
-        <button type="button" class="pp-btn-primary" [disabled]="loginLoading || !loginPassword.trim()" (click)="login()">
+        <button type="submit" class="pp-btn-primary" [disabled]="loginLoading || !loginUsername.trim() || !loginPassword.trim()">
           {{ loginLoading ? t('login_loading') : t('login_button') }}
         </button>
-      </div>
+        <p class="pp-login-hint">{{ t('login_forgotten_hint') }}</p>
+      </form>
     </div>
   }
 
   @if (state === 'portal' && project) {
-    <div class="pp-shell">
+    <div class="pp-app" [class.pp-app--collapsed]="sidebarCollapsed" [class.pp-app--mobile-open]="mobileNavOpen">
 
-      <!-- ═══════════ LEFT PANEL - project info + actions ═══════════ -->
-      <aside class="pp-sidebar">
-
-        <div class="pp-sidebar-top">
-          <h2 class="pp-sidebar-project-name">{{ project.name }}</h2>
-        </div>
-
-        <div class="pp-sidebar-divider"></div>
-        <div class="sidebar-header">
-          {{ t('supplier_contact_title') }}
-        </div>
-        <div class="pp-sidebar-info-list">
-          @if (project.project_lead) {
-            <div class="pp-sidebar-info-row">
-              <span class="pp-sidebar-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
-                </svg>
-              </span>
-              <span>{{ project.project_lead }}</span>
+      <!-- ═══════════ HEADER ═══════════ -->
+      <header class="pp-header">
+        <div class="pp-header-left">
+          <button type="button" class="pp-menu-btn" (click)="toggleSidebar()" [title]="t('menu_toggle')" [attr.aria-label]="t('menu_toggle')"
+                  [attr.aria-expanded]="mobileNavOpen || !sidebarCollapsed" aria-controls="pp-sidebar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <div class="pp-header-user">
+            <span class="pp-avatar" aria-hidden="true">{{ accountInitials || '?' }}</span>
+            <div class="pp-header-user-text">
+              <span class="pp-header-user-name">{{ accountName }}</span>
+              <span class="pp-header-project">{{ project.name }}</span>
             </div>
-          }
-          @if (project.contact_phone) {
-            <div class="pp-sidebar-info-row">
-              <span class="pp-sidebar-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>
-                </svg>
-              </span>
-              <span>{{ project.contact_phone }}</span>
-            </div>
-          }
-          @if (project.contact_email) {
-            <div class="pp-sidebar-info-row">
-              <span class="pp-sidebar-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/>
-                </svg>
-              </span>
-              <span class="pp-sidebar-info-email">{{ project.contact_email }}</span>
-            </div>
-          }
+          </div>
         </div>
-
-        <div class="pp-sidebar-spacer"></div>
-
-        <div class="pp-sidebar-actions">
-          <button type="button" class="pp-sidebar-action-btn" [disabled]="isRefreshing" (click)="refresh()">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [class.pp-spin-icon]="isRefreshing">
+        <div class="pp-header-right">
+          <button type="button" class="pp-header-btn" [disabled]="isRefreshing" (click)="refresh()" [title]="t('refresh_data')" [attr.aria-label]="t('refresh_data')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" [class.pp-spin-icon]="isRefreshing">
               <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
             </svg>
-            {{ isRefreshing ? t('refreshing') : t('refresh_data') }}
           </button>
-          <button type="button" class="pp-sidebar-action-btn" (click)="logout()">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            {{ t('logout') }}
-          </button>
+          <ng-container [ngTemplateOutlet]="langSwitcher"></ng-container>
         </div>
+      </header>
 
-      </aside>
+      <div class="pp-body">
+        <div class="pp-sidebar-overlay" (click)="closeMobileNav()"></div>
 
-      <!-- ═══════════ RIGHT CONTENT - tabs ═══════════ -->
-      <main class="pp-main">
-        <div class="pp-main-inner">
-
-          <!-- ── Tabs ── -->
-          <div class="pp-tabs" role="tablist">
-            <button type="button" class="pp-tab-btn" role="tab" [class.pp-tab-btn-active]="activeTab === 'description'" (click)="setActiveTab('description')">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-              </svg>
-              {{ t('tab_description') }}
-            </button>
-            <button type="button" class="pp-tab-btn" role="tab" [class.pp-tab-btn-active]="activeTab === 'checkpoints'" (click)="setActiveTab('checkpoints')">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-              </svg>
-              {{ t('tab_checkpoints') }}
-              <span class="pp-tab-count">{{ project.checkpoints.length }}</span>
-            </button>
-            <button type="button" class="pp-tab-btn" role="tab" [class.pp-tab-btn-active]="activeTab === 'threads'" (click)="setActiveTab('threads')">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-              {{ t('tab_threads') }}
-              @if (totalUnreadCount > 0) {
-                <span class="pp-tab-unread-badge">{{ totalUnreadCount }}</span>
-              } @else {
-                <span class="pp-tab-count">{{ threads.length }}</span>
-              }
-            </button>
-            <button type="button" class="pp-tab-btn" role="tab" [class.pp-tab-btn-active]="activeTab === 'contacts'" (click)="setActiveTab('contacts')">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-              </svg>
-              {{ t('tab_contacts') }}
-            </button>
-            <button type="button" class="pp-tab-btn" role="tab" [class.pp-tab-btn-active]="activeTab === 'help'" (click)="setActiveTab('help')">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-              {{ t('tab_help') }}
-            </button>
-          </div>
-
-          <!-- ══════════ DESCRIPTION ══════════ -->
-          @if (activeTab === 'description') {
-            <section class="pp-tab-panel">
-
-              @if (estimatedCompletionLabel) {
-                <div class="pp-estimate-banner">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  <div>
-                    <div class="pp-estimate-label">{{ t('estimated_completion_label') }}</div>
-                    <div class="pp-estimate-value">{{ estimatedCompletionLabel }}</div>
-                  </div>
-                </div>
-              }
-
-              @if (project.description) {
-                <div class="pp-description-block">
-                  <div class="pp-description-block-title">{{ t('description_label') }}</div>
-                  <p class="pp-project-desc">{{ project.description }}</p>
-                </div>
-              }
-              @if (project.technologies) {
-                <div class="pp-description-block">
-                  <div class="pp-description-block-title">{{ t('technologies_label') }}</div>
-                  <p class="pp-project-desc">{{ project.technologies }}</p>
-                </div>
-              }
-              @if (!project.description && !project.technologies) {
-                <p class="pp-empty">{{ t('description_empty') }}</p>
-              }
-            </section>
-          }
-
-          <!-- ══════════ CHECKPOINTS ══════════ -->
-          @if (activeTab === 'checkpoints') {
-            <section class="pp-tab-panel">
-
-              <div class="pp-progress-block">
-                <div class="pp-progress-header">
-                  <span class="pp-progress-label">{{ t('progress_label') }}</span>
-                  <span class="pp-progress-fraction">{{ checkpointProgress.done }} / {{ checkpointProgress.total }}</span>
-                </div>
-                <div class="pp-progress-track">
-                  <div class="pp-progress-fill" [style.width.%]="checkpointProgress.percent"></div>
-                </div>
-              </div>
-
-              <div class="pp-checkpoint-list">
-                @for (cp of project.checkpoints; track cp.id) {
-                  <ng-template #cpSummary>
-                    <span class="pp-checkpoint-status-icon">
-                      @if (cp.status === 'done') {
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                      } @else if (cp.status === 'active') {
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                      } @else {
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/></svg>
-                      }
-                    </span>
-                    <span class="pp-checkpoint-label">{{ cp.label }}</span>
-                    <span class="pp-checkpoint-badge" [class]="'pp-checkpoint-badge status-' + cp.status">{{ checkpointStatusLabels[cp.status] }}</span>
-                  </ng-template>
-
-                  <div class="pp-checkpoint-item" [class]="'pp-checkpoint-item status-' + cp.status" [class.pp-checkpoint-item-open]="expandedCheckpointIds.has(cp.id)">
-                    @if (cp.description) {
-                      <!-- A checkpoint with a description expands on click to show what it covers. -->
-                      <button type="button" class="pp-checkpoint-head pp-checkpoint-toggle" [attr.aria-expanded]="expandedCheckpointIds.has(cp.id)"
-                              [attr.aria-controls]="'pp-cp-desc-' + cp.id" (click)="toggleCheckpoint(cp.id)">
-                        <ng-container [ngTemplateOutlet]="cpSummary"></ng-container>
-                        <svg class="pp-checkpoint-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-                      </button>
-                      @if (expandedCheckpointIds.has(cp.id)) {
-                        <div class="pp-checkpoint-description" [id]="'pp-cp-desc-' + cp.id">{{ cp.description }}</div>
-                      }
-                    } @else {
-                      <div class="pp-checkpoint-head">
-                        <ng-container [ngTemplateOutlet]="cpSummary"></ng-container>
-                      </div>
+        <!-- ═══════════ LEFT MENU ═══════════ -->
+        <aside class="pp-sidebar" id="pp-sidebar">
+          <nav class="pp-nav" [attr.aria-label]="t('menu_label')">
+            <div class="pp-nav-label">{{ t('menu_label') }}</div>
+            <ul>
+              @for (section of sections; track section) {
+                <li>
+                  <button type="button" class="pp-nav-item" [class.active]="activeTab === section" [attr.aria-current]="activeTab === section ? 'page' : null"
+                          [title]="t('tab_' + section)" (click)="setActiveTab(section)">
+                    <span class="pp-nav-icon"><ng-container [ngTemplateOutlet]="sectionIcon" [ngTemplateOutletContext]="{ $implicit: section }"></ng-container></span>
+                    <span class="pp-nav-text">{{ t('tab_' + section) }}</span>
+                    @if (section === 'threads' && totalUnreadCount > 0) {
+                      <span class="pp-nav-badge" [attr.aria-label]="t('unread_badge').replace('{count}', '' + totalUnreadCount)">{{ totalUnreadCount }}</span>
                     }
+                    @if (section === 'checkpoints' && checkpointProgress.total > 0) {
+                      <span class="pp-nav-count">{{ checkpointProgress.done }}/{{ checkpointProgress.total }}</span>
+                    }
+                  </button>
+                </li>
+              }
+            </ul>
+          </nav>
+          <div class="pp-nav pp-nav--bottom">
+            <ul>
+              <li>
+                <button type="button" class="pp-nav-item" [class.active]="activeTab === 'account'" [title]="t('tab_account')" (click)="setActiveTab('account')">
+                  <span class="pp-nav-icon"><ng-container [ngTemplateOutlet]="sectionIcon" [ngTemplateOutletContext]="{ $implicit: 'account' }"></ng-container></span>
+                  <span class="pp-nav-text">{{ t('tab_account') }}</span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="pp-nav-item" [class.active]="activeTab === 'help'" [title]="t('tab_help')" (click)="setActiveTab('help')">
+                  <span class="pp-nav-icon"><ng-container [ngTemplateOutlet]="sectionIcon" [ngTemplateOutletContext]="{ $implicit: 'help' }"></ng-container></span>
+                  <span class="pp-nav-text">{{ t('tab_help') }}</span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="pp-nav-item pp-nav-item--logout" [title]="t('logout')" (click)="logout()">
+                  <span class="pp-nav-icon">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  </span>
+                  <span class="pp-nav-text">{{ t('logout') }}</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+        </aside>
+
+        <!-- ═══════════ CONTENT ═══════════ -->
+        <main class="pp-main">
+          <div class="pp-main-inner">
+            <div class="pp-page-head">
+              <span class="pp-page-icon"><ng-container [ngTemplateOutlet]="sectionIcon" [ngTemplateOutletContext]="{ $implicit: activeTab }"></ng-container></span>
+              <h1 class="pp-page-title">{{ t('tab_' + activeTab) }}</h1>
+            </div>
+
+            <!-- ══════════ OVERVIEW ══════════ -->
+            @if (activeTab === 'overview') {
+              <section class="pp-tab-panel">
+                <div class="pp-stats">
+                  <button type="button" class="pp-stat" (click)="setActiveTab('checkpoints')">
+                    <span class="pp-stat-label">{{ t('progress_label') }}</span>
+                    <span class="pp-stat-value">{{ checkpointProgress.percent }} %</span>
+                    <span class="pp-stat-track"><span [style.width.%]="checkpointProgress.percent"></span></span>
+                    <span class="pp-stat-sub">{{ t('overview_steps_done').replace('{done}', '' + checkpointProgress.done).replace('{total}', '' + checkpointProgress.total) }}</span>
+                  </button>
+                  <button type="button" class="pp-stat" [class.pp-stat--attention]="waitingOnYouCount > 0" (click)="setActiveTab('threads')">
+                    <span class="pp-stat-label">{{ t('overview_waiting_on_you') }}</span>
+                    <span class="pp-stat-value">{{ waitingOnYouCount }}</span>
+                    <span class="pp-stat-sub">{{ waitingOnYouCount > 0 ? t('overview_waiting_on_you_hint') : t('overview_nothing_waiting') }}</span>
+                  </button>
+                  <button type="button" class="pp-stat" [class.pp-stat--unread]="totalUnreadCount > 0" (click)="setActiveTab('threads')">
+                    <span class="pp-stat-label">{{ t('overview_unread') }}</span>
+                    <span class="pp-stat-value">{{ totalUnreadCount }}</span>
+                    <span class="pp-stat-sub">{{ t('overview_threads_count').replace('{count}', '' + threads.length) }}</span>
+                  </button>
+                  @if (estimatedCompletionLabel) {
+                    <div class="pp-stat pp-stat--static">
+                      <span class="pp-stat-label">{{ t('estimated_completion_label') }}</span>
+                      <span class="pp-stat-value pp-stat-value--text">{{ estimatedCompletionLabel }}</span>
+                    </div>
+                  }
+                </div>
+
+                @if (currentCheckpoint) {
+                  <div class="pp-card pp-current-step">
+                    <div class="pp-card-title">{{ t('overview_current_step') }}</div>
+                    <div class="pp-current-step-row">
+                      <span class="pp-checkpoint-badge" [class]="'pp-checkpoint-badge status-' + currentCheckpoint.status">{{ checkpointStatusLabels[currentCheckpoint.status] }}</span>
+                      <strong>{{ currentCheckpoint.label }}</strong>
+                      @if (currentCheckpoint.due_date) { <span class="pp-due">{{ t('due_date_prefix') }} {{ formatDate(currentCheckpoint.due_date) }}</span> }
+                    </div>
+                    @if (currentCheckpoint.description) { <p class="pp-project-desc">{{ currentCheckpoint.description }}</p> }
                   </div>
                 }
+
+                <div class="pp-card">
+                  <div class="pp-card-title">{{ t('description_label') }}</div>
+                  @if (project.description) {
+                    <p class="pp-project-desc">{{ project.description }}</p>
+                  } @else {
+                    <p class="pp-empty">{{ t('description_empty') }}</p>
+                  }
+                </div>
+                @if (project.technologies) {
+                  <div class="pp-card">
+                    <div class="pp-card-title">{{ t('technologies_label') }}</div>
+                    <p class="pp-project-desc">{{ project.technologies }}</p>
+                  </div>
+                }
+              </section>
+            }
+
+            <!-- ══════════ PROGRESS ══════════ -->
+            @if (activeTab === 'checkpoints') {
+              <section class="pp-tab-panel">
+                <div class="pp-progress-block">
+                  <div class="pp-progress-header">
+                    <span class="pp-progress-label">{{ t('progress_label') }}</span>
+                    <span class="pp-progress-fraction">{{ checkpointProgress.done }} / {{ checkpointProgress.total }}</span>
+                  </div>
+                  <div class="pp-progress-track">
+                    <div class="pp-progress-fill" [style.width.%]="checkpointProgress.percent"></div>
+                  </div>
+                </div>
+
+                <ol class="pp-checkpoint-list">
+                  @for (cp of project.checkpoints; track cp.id; let i = $index) {
+                    <ng-template #cpSummary>
+                      <span class="pp-checkpoint-index" aria-hidden="true">
+                        @if (cp.status === 'done') {
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        } @else { {{ i + 1 }} }
+                      </span>
+                      <span class="pp-checkpoint-main">
+                        <span class="pp-checkpoint-label">{{ cp.label }}</span>
+                        @if (cp.due_date) { <span class="pp-due">{{ t('due_date_prefix') }} {{ formatDate(cp.due_date) }}</span> }
+                      </span>
+                      <span class="pp-checkpoint-badge" [class]="'pp-checkpoint-badge status-' + cp.status">{{ checkpointStatusLabels[cp.status] }}</span>
+                    </ng-template>
+
+                    <li class="pp-checkpoint-item" [class]="'pp-checkpoint-item status-' + cp.status" [class.pp-checkpoint-item-open]="expandedCheckpointIds.has(cp.id)">
+                      @if (cp.description) {
+                        <!-- A checkpoint with a description expands on click to show what it covers. -->
+                        <button type="button" class="pp-checkpoint-head pp-checkpoint-toggle" [attr.aria-expanded]="expandedCheckpointIds.has(cp.id)"
+                                [attr.aria-controls]="'pp-cp-desc-' + cp.id" (click)="toggleCheckpoint(cp.id)">
+                          <ng-container [ngTemplateOutlet]="cpSummary"></ng-container>
+                          <svg class="pp-checkpoint-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                        @if (expandedCheckpointIds.has(cp.id)) {
+                          <div class="pp-checkpoint-description" [id]="'pp-cp-desc-' + cp.id">{{ cp.description }}</div>
+                        }
+                      } @else {
+                        <div class="pp-checkpoint-head">
+                          <ng-container [ngTemplateOutlet]="cpSummary"></ng-container>
+                        </div>
+                      }
+                    </li>
+                  }
+                </ol>
                 @if (project.checkpoints.length === 0) {
                   <p class="pp-empty">{{ t('no_checkpoints') }}</p>
                 }
-              </div>
-            </section>
-          }
+              </section>
+            }
 
-          <!-- ══════════ THREADS ══════════ -->
-          @if (activeTab === 'threads') {
-            <section class="pp-tab-panel">
+            <!-- ══════════ COMMUNICATION ══════════ -->
+            @if (activeTab === 'threads') {
+              <section class="pp-tab-panel">
 
-              @if (!newThreadMode && !selectedThread) {
-                <div class="pp-threads-toolbar">
-                  <div class="pp-search-wrap">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pp-search-icon">
-                      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                    </svg>
-                    <input type="text" class="pp-search-input" [placeholder]="t('search_threads_placeholder')" [(ngModel)]="threadSearch">
-                  </div>
-                  <button type="button" class="pp-btn-small pp-btn-primary-small" (click)="openNewThreadForm()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    {{ t('new_thread_button') }}
-                  </button>
-                </div>
-              }
-
-              @if (newThreadMode) {
-                <div class="pp-new-thread-form">
-                  <input type="text" class="pp-input" [placeholder]="t('subject_placeholder')" [(ngModel)]="newThreadSubject">
-                  <select class="pp-input" [(ngModel)]="newThreadPriority">
-                    <option value="low">{{ t('priority_low') }}</option>
-                    <option value="medium">{{ t('priority_medium') }}</option>
-                    <option value="high">{{ t('priority_high') }}</option>
-                    <option value="critic">{{ t('priority_critic') }}</option>
-                  </select>
-                  <textarea class="pp-textarea" rows="3" [placeholder]="t('describe_request_placeholder')" [(ngModel)]="newThreadBody"></textarea>
-
-                  <div class="pp-file-attach-row">
-                    <label class="pp-file-attach-btn">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                @if (!newThreadMode && !selectedThread) {
+                  <div class="pp-threads-toolbar">
+                    <div class="pp-search-wrap">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pp-search-icon" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                       </svg>
-                      {{ t('attach_files_button') }}
-                      <input type="file" multiple hidden (change)="onNewThreadFilesSelected($event)">
-                    </label>
-                    @if (newThreadFiles.length > 0) {
-                      <span class="pp-file-attach-count">{{ newThreadFiles.length }}/{{ maxAttachments }}</span>
-                    }
+                      <input type="text" class="pp-search-input" [placeholder]="t('search_threads_placeholder')" [attr.aria-label]="t('search_threads_placeholder')" [(ngModel)]="threadSearch">
+                    </div>
+                    <button type="button" class="pp-btn-primary-small" (click)="openNewThreadForm()">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      {{ t('new_thread_button') }}
+                    </button>
                   </div>
-                  @if (newThreadFileError) {
-                    <p class="pp-file-error">{{ newThreadFileError }}</p>
-                  }
-                  @if (newThreadSendError) {
-                    <p class="pp-file-error pp-send-error">{{ newThreadSendError }}</p>
-                  }
+                }
 
-                  @if (newThreadFiles.length > 0) {
-                    <div class="pp-file-chip-list">
-                      @for (file of newThreadFiles; track file.name; let i = $index) {
-                        <span class="pp-file-chip">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                          </svg>
-                          <span class="pp-file-chip-name">{{ file.name }}</span>
-                          <button type="button" class="pp-file-chip-remove" (click)="removeNewThreadFile(i)">✕</button>
-                        </span>
+                @if (newThreadMode) {
+                  <div class="pp-card pp-new-thread-form">
+                    <div class="pp-card-title">{{ t('new_thread_button') }}</div>
+                    <input type="text" class="pp-input" [placeholder]="t('subject_placeholder')" [attr.aria-label]="t('subject_placeholder')" [(ngModel)]="newThreadSubject">
+                    <select class="pp-input" [(ngModel)]="newThreadPriority" [attr.aria-label]="t('priority_label')">
+                      <option value="low">{{ t('priority_low') }}</option>
+                      <option value="medium">{{ t('priority_medium') }}</option>
+                      <option value="high">{{ t('priority_high') }}</option>
+                      <option value="critic">{{ t('priority_critic') }}</option>
+                    </select>
+                    <textarea class="pp-textarea" rows="4" [placeholder]="t('describe_request_placeholder')" [attr.aria-label]="t('describe_request_placeholder')" [(ngModel)]="newThreadBody"></textarea>
+
+                    <div class="pp-file-attach-row">
+                      <label class="pp-file-attach-btn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                        </svg>
+                        {{ t('attach_files_button') }}
+                        <input type="file" multiple hidden (change)="onNewThreadFilesSelected($event)">
+                      </label>
+                      @if (newThreadFiles.length > 0) {
+                        <span class="pp-file-attach-count">{{ newThreadFiles.length }}/{{ maxAttachments }}</span>
                       }
                     </div>
+                    @if (newThreadFileError) {
+                      <p class="pp-file-error">{{ newThreadFileError }}</p>
+                    }
+                    @if (newThreadSendError) {
+                      <p class="pp-file-error pp-send-error">{{ newThreadSendError }}</p>
+                    }
+
+                    @if (newThreadFiles.length > 0) {
+                      <div class="pp-file-chip-list">
+                        @for (file of newThreadFiles; track file.name; let i = $index) {
+                          <span class="pp-file-chip">
+                            <span class="pp-file-chip-name">{{ file.name }}</span>
+                            <button type="button" class="pp-file-chip-remove" [attr.aria-label]="file.name" (click)="removeNewThreadFile(i)">✕</button>
+                          </span>
+                        }
+                      </div>
+                    }
+
+                    <div class="pp-form-actions">
+                      <button type="button" class="pp-btn-small" (click)="cancelNewThread()">{{ t('cancel') }}</button>
+                      <button type="button" class="pp-btn-primary-small" [disabled]="newThreadSending" (click)="submitNewThread()">
+                        {{ newThreadSending ? t('sending') : t('send') }}
+                      </button>
+                    </div>
+                  </div>
+                }
+
+                @if (!selectedThread && !newThreadMode) {
+                  <div class="pp-thread-list">
+                    @for (thread of filteredThreads; track thread.id) {
+                      <button type="button" class="pp-thread-item" [class.pp-thread-item--unread]="!!thread.unread_count" (click)="openThread(thread)">
+                        <span class="pp-thread-item-main">
+                          <span class="pp-thread-item-subject">{{ thread.subject }}</span>
+                          <span class="pp-thread-item-meta">
+                            <span class="pp-dot" [attr.data-priority]="thread.priority"></span>{{ priorityLabel(thread.priority) }}
+                            @if (thread.last_message_at) { · {{ thread.last_message_at | date:'d. M. yyyy HH:mm' }} }
+                          </span>
+                        </span>
+                        @if (thread.waiting_on) {
+                          <span class="pp-waiting" [attr.data-waiting]="thread.waiting_on">{{ waitingLabel(thread) }}</span>
+                        }
+                        @if (thread.unread_count) {
+                          <span class="pp-thread-unread-badge" [attr.aria-label]="t('unread_badge').replace('{count}', '' + thread.unread_count)">{{ thread.unread_count }}</span>
+                        }
+                        <span class="pp-status-chip" [class.pp-status-closed]="thread.status === 'closed'">{{ thread.status === 'closed' ? t('status_closed') : t('status_active') }}</span>
+                      </button>
+                    }
+                    @if (threads.length === 0) {
+                      <p class="pp-empty">{{ t('no_threads') }}</p>
+                    }
+                    @if (threads.length > 0 && filteredThreads.length === 0) {
+                      <p class="pp-empty">{{ t('no_threads_match_search') }}</p>
+                    }
+                  </div>
+                }
+
+                @if (selectedThread) {
+                  <div class="pp-card pp-thread-detail">
+                    <button type="button" class="pp-back-btn" (click)="closeThread()">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                      {{ t('back_to_list') }}
+                    </button>
+                    <div class="pp-thread-detail-head">
+                      <h2 class="pp-thread-detail-subject">{{ selectedThread.subject }}</h2>
+                      @if (selectedThread.waiting_on) {
+                        <span class="pp-waiting" [attr.data-waiting]="selectedThread.waiting_on">{{ waitingLabel(selectedThread) }}</span>
+                      }
+                    </div>
+
+                    @if (threadDetailLoading) {
+                      <p class="pp-empty">{{ t('loading') }}</p>
+                    } @else {
+                      <div class="pp-thread-status-row">
+                        <label class="pp-thread-status-label" for="pp-thread-status">{{ t('thread_status_label') }}</label>
+                        <select id="pp-thread-status" class="pp-input pp-thread-status-select" [ngModel]="selectedThread.status" (ngModelChange)="updateThreadStatus($event)" [disabled]="threadStatusChanging">
+                          <option value="active">{{ t('status_active') }}</option>
+                          <option value="closed">{{ t('status_closed') }}</option>
+                        </select>
+                      </div>
+
+                      <div class="pp-message-list" #ppMessageListEl>
+                        @if (selectedThread.has_more_older_messages) {
+                          <button type="button" class="pp-load-older-btn" [disabled]="olderMessagesLoading" (click)="loadOlderMessages()">
+                            {{ olderMessagesLoading ? t('loading') : t('load_older_messages') }}
+                          </button>
+                        }
+                        @for (msg of selectedThread.messages; track msg.id) {
+                          <div class="pp-message" [class.pp-message-mine]="isMine(msg)" [class.pp-message-supplier]="msg.author_type === 'admin'">
+                            <div class="pp-message-meta">{{ authorName(msg) }}@if (msg.created_at) { · {{ msg.created_at | date:'d. M. yyyy HH:mm' }} }</div>
+                            <div class="pp-message-body">{{ msg.body }}</div>
+                            @if (msg.attachments && msg.attachments.length > 0) {
+                              <div class="pp-message-attachments">
+                                @for (att of msg.attachments; track att.id) {
+                                  <a [href]="att.download_url" class="pp-attachment-link" target="_blank" rel="noopener">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                      <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                                    </svg>
+                                    <span class="pp-attachment-name">{{ att.original_filename }}</span>
+                                    <span class="pp-attachment-size">{{ formatFileSize(att.size_bytes) }}</span>
+                                  </a>
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+
+                      <div class="pp-reply-box">
+                        <textarea class="pp-textarea" rows="3" [placeholder]="t('write_reply_placeholder')" [attr.aria-label]="t('write_reply_placeholder')" [(ngModel)]="replyBody"></textarea>
+
+                        <div class="pp-reply-actions">
+                          <label class="pp-file-attach-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                            </svg>
+                            {{ t('attach_files_button') }}
+                            @if (replyFiles.length > 0) { <span class="pp-file-attach-count">{{ replyFiles.length }}/{{ maxAttachments }}</span> }
+                            <input type="file" multiple hidden (change)="onReplyFilesSelected($event)">
+                          </label>
+                          <button type="button" class="pp-btn-primary-small pp-send-btn" [disabled]="replySending || !replyBody.trim()" (click)="sendReply()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            {{ replySending ? t('sending') : t('send') }}
+                          </button>
+                        </div>
+                        @if (replyFileError) {
+                          <p class="pp-file-error">{{ replyFileError }}</p>
+                        }
+                        @if (replySendError) {
+                          <p class="pp-file-error pp-send-error">{{ replySendError }}</p>
+                        }
+
+                        @if (replyFiles.length > 0) {
+                          <div class="pp-file-chip-list">
+                            @for (file of replyFiles; track file.name; let i = $index) {
+                              <span class="pp-file-chip">
+                                <span class="pp-file-chip-name">{{ file.name }}</span>
+                                <button type="button" class="pp-file-chip-remove" [attr.aria-label]="file.name" (click)="removeReplyFile(i)">✕</button>
+                              </span>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+
+              </section>
+            }
+
+            <!-- ══════════ FILES ══════════ -->
+            @if (activeTab === 'files') {
+              <section class="pp-tab-panel">
+                <p class="pp-section-lead">{{ t('files_lead') }}</p>
+                @if (filesLoading && files.length === 0) {
+                  <p class="pp-empty">{{ t('loading') }}</p>
+                } @else if (filesError) {
+                  <p class="pp-empty">{{ t('files_error') }}</p>
+                } @else {
+                  <ul class="pp-card pp-files">
+                    @for (file of files; track file.id) {
+                      <li class="pp-file-row">
+                        <svg class="pp-file-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <div class="pp-file-main">
+                          <a [href]="file.download_url" class="pp-file-name" target="_blank" rel="noopener">{{ file.original_filename }}</a>
+                          <span class="pp-file-meta">
+                            {{ formatFileSize(file.size_bytes) }} · {{ file.created_at | date:'d. M. yyyy' }} ·
+                            {{ file.author_type === 'admin' ? (file.author_label || t('author_supplier')) : (file.author_label || t('author_client')) }} ·
+                            <button type="button" class="pp-link" (click)="openFileThread(file)">{{ file.thread_subject }}</button>
+                          </span>
+                        </div>
+                      </li>
+                    } @empty {
+                      <li class="pp-empty pp-file-empty">{{ t('files_empty') }}</li>
+                    }
+                  </ul>
+                }
+              </section>
+            }
+
+            <!-- ══════════ CONTACTS ══════════ -->
+            @if (activeTab === 'contacts') {
+              <section class="pp-tab-panel pp-contacts-grid">
+                <div class="pp-card">
+                  <div class="pp-card-title">{{ t('supplier_contact_title') }}</div>
+                  @if (project.project_lead || project.contact_phone || project.contact_email) {
+                    @if (project.project_lead) {
+                      <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('contacts_person') }}</span><span class="pp-contacts-value">{{ project.project_lead }}</span></div>
+                    }
+                    @if (project.contact_phone) {
+                      <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('contacts_phone') }}</span><a class="pp-contacts-value" [href]="'tel:' + project.contact_phone">{{ project.contact_phone }}</a></div>
+                    }
+                    @if (project.contact_email) {
+                      <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('contacts_email') }}</span><a class="pp-contacts-value" [href]="'mailto:' + project.contact_email">{{ project.contact_email }}</a></div>
+                    }
+                  } @else {
+                    <p class="pp-empty">{{ t('supplier_contact_empty') }}</p>
+                  }
+                </div>
+                <div class="pp-card">
+                  <div class="pp-card-title">{{ t('company_title') }}</div>
+                  @if (companySettingsLoading) {
+                    <p class="pp-empty">{{ t('loading') }}</p>
+                  } @else if (companySettings) {
+                    @if (companySettings.company_name) {
+                      <div class="pp-contacts-company-name">{{ companySettings.company_name }}</div>
+                    }
+                    @if (companySettings.address) {
+                      <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('contacts_address') }}</span><span class="pp-contacts-value">{{ companySettings.address }}</span></div>
+                    }
+                    @if (companySettings.ico) {
+                      <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('contacts_ico') }}</span><span class="pp-contacts-value">{{ companySettings.ico }}</span></div>
+                    }
+                    @if (companySettings.dic) {
+                      <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('contacts_dic') }}</span><span class="pp-contacts-value">{{ companySettings.dic }}</span></div>
+                    }
+                    @if (companySettings.contact_email) {
+                      <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('contacts_email') }}</span><span class="pp-contacts-value">{{ companySettings.contact_email }}</span></div>
+                    }
+                    @if (companySettings.contact_phone) {
+                      <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('contacts_phone') }}</span><span class="pp-contacts-value">{{ companySettings.contact_phone }}</span></div>
+                    }
+                  } @else {
+                    <p class="pp-empty">{{ t('contacts_empty') }}</p>
+                  }
+                </div>
+              </section>
+            }
+
+            <!-- ══════════ MY ACCOUNT ══════════ -->
+            @if (activeTab === 'account') {
+              <section class="pp-tab-panel">
+                <div class="pp-card">
+                  <div class="pp-card-title">{{ t('account_title') }}</div>
+                  <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('account_name') }}</span><span class="pp-contacts-value">{{ project.account?.display_name }}</span></div>
+                  <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('login_username_label') }}</span><span class="pp-contacts-value">{{ project.account?.username }}</span></div>
+                  <p class="pp-account-note">{{ t('account_managed_by_supplier') }}</p>
+                </div>
+
+                <form class="pp-card pp-account-form" (ngSubmit)="saveAccountSettings()" autocomplete="on">
+                  <div class="pp-card-title">{{ t('notifications_title') }}</div>
+                  <p class="pp-section-lead">{{ t('notifications_lead') }}</p>
+
+                  <label class="pp-login-field">
+                    <span>{{ t('notifications_email_label') }}</span>
+                    <input type="email" class="pp-input" name="email" autocomplete="email" maxlength="255"
+                           [(ngModel)]="accountSettings.email" (ngModelChange)="onAccountEmailChange()">
+                  </label>
+                  <label class="pp-login-field">
+                    <span>{{ t('notifications_language_label') }}</span>
+                    <select class="pp-input" name="language" [(ngModel)]="accountSettings.language">
+                      <option value="cz">{{ t('language_cz') }}</option>
+                      <option value="en">{{ t('language_en') }}</option>
+                    </select>
+                  </label>
+
+                  <fieldset class="pp-switches" [disabled]="!accountSettings.email.trim()">
+                    <legend class="pp-switches-legend">{{ t('notifications_kinds_label') }}</legend>
+                    @for (kind of notificationKinds; track kind) {
+                      <label class="pp-switch">
+                        <input type="checkbox" [name]="kind" [(ngModel)]="accountSettings[kind]" (ngModelChange)="accountSaveResult = null">
+                        <span class="pp-switch-text">
+                          <span class="pp-switch-title">{{ t(kind + '_title') }}</span>
+                          <span class="pp-switch-hint">{{ t(kind + '_hint') }}</span>
+                        </span>
+                      </label>
+                    }
+                    @if (!accountSettings.email.trim()) {
+                      <p class="pp-account-note">{{ t('notifications_need_email') }}</p>
+                    }
+                  </fieldset>
+
+                  @if (accountSaveResult === 'saved') {
+                    <p class="pp-account-saved" role="status">{{ t('notifications_saved') }}</p>
+                  } @else if (accountSaveResult === 'error') {
+                    <p class="pp-file-error" role="alert">{{ t('notifications_save_failed') }}</p>
+                  } @else if (accountSaveResult === 'email_required') {
+                    <p class="pp-file-error" role="alert">{{ t('notifications_need_email') }}</p>
                   }
 
                   <div class="pp-form-actions">
-                    <button type="button" class="pp-btn-small" (click)="cancelNewThread()">{{ t('cancel') }}</button>
-                    <button type="button" class="pp-btn-primary-small" [disabled]="newThreadSending" (click)="submitNewThread()">
-                      {{ newThreadSending ? t('sending') : t('send') }}
+                    <button type="button" class="pp-btn-small" [disabled]="!accountSettingsDirty || accountSaving" (click)="resetAccountSettings()">{{ t('cancel') }}</button>
+                    <button type="submit" class="pp-btn-primary-small" [disabled]="!accountSettingsDirty || accountSaving">
+                      {{ accountSaving ? t('saving') : t('save') }}
                     </button>
                   </div>
+                </form>
+              </section>
+            }
+
+            <!-- ══════════ HELP ══════════ -->
+            @if (activeTab === 'help') {
+              <section class="pp-tab-panel">
+                <p class="pp-section-lead">{{ t('help_intro_text') }}</p>
+                @for (topic of ['login', 'overview', 'checkpoints', 'threads', 'waiting', 'attachments', 'files', 'contacts', 'layout', 'notifications']; track topic) {
+                  <div class="pp-card pp-help-item">
+                    <div class="pp-card-title">{{ t('help_' + topic + '_title') }}</div>
+                    <p class="pp-project-desc">{{ t('help_' + topic + '_text') }}</p>
+                  </div>
+                }
+                <div class="pp-help-support-box">
+                  <div class="pp-card-title">{{ t('help_support_title') }}</div>
+                  <p class="pp-project-desc">{{ t('help_support_text') }}</p>
                 </div>
-              }
-
-              @if (!selectedThread && !newThreadMode) {
-                <div class="pp-thread-list">
-                  @for (thread of filteredThreads; track thread.id) {
-                    <button type="button" class="pp-thread-item" (click)="openThread(thread)">
-                      <span class="pp-thread-item-icon">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                        </svg>
-                      </span>
-                      <span class="pp-thread-item-subject">{{ thread.subject }}</span>
-                      @if (thread.unread_count) {
-                        <span class="pp-thread-unread-badge">{{ thread.unread_count }}</span>
-                      }
-                      <span class="pp-status-chip" [class.pp-status-closed]="thread.status === 'closed'">{{ thread.status === 'closed' ? t('status_closed') : t('status_active') }}</span>
-                      <span class="pp-priority-chip" [class]="'priority-' + thread.priority">{{ thread.priority }}</span>
-                    </button>
-                  }
-                  @if (threads.length === 0) {
-                    <p class="pp-empty">{{ t('no_threads') }}</p>
-                  }
-                  @if (threads.length > 0 && filteredThreads.length === 0) {
-                    <p class="pp-empty">{{ t('no_threads_match_search') }}</p>
-                  }
-                </div>
-              }
-
-              @if (selectedThread) {
-                <div class="pp-thread-detail">
-                  <button type="button" class="pp-back-btn" (click)="closeThread()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                    {{ t('back_to_list') }}
-                  </button>
-                  <h4 class="pp-thread-detail-subject">{{ selectedThread.subject }}</h4>
-
-                  @if (threadDetailLoading) {
-                    <p class="pp-empty">{{ t('loading') }}</p>
-                  } @else {
-
-                    <div class="pp-thread-status-row">
-                      <span class="pp-thread-status-label">{{ t('thread_status_label') }}</span>
-                      <select class="pp-input pp-thread-status-select" [ngModel]="selectedThread.status" (ngModelChange)="updateThreadStatus($event)" [disabled]="threadStatusChanging">
-                        <option value="active">{{ t('status_active') }}</option>
-                        <option value="closed">{{ t('status_closed') }}</option>
-                      </select>
-                    </div>
-
-                    <div class="pp-message-list" #ppMessageListEl>
-                      @if (selectedThread.has_more_older_messages) {
-                        <button type="button" class="pp-load-older-btn" [disabled]="olderMessagesLoading" (click)="loadOlderMessages()">
-                          {{ olderMessagesLoading ? t('loading') : t('load_older_messages') }}
-                        </button>
-                      }
-                      @for (msg of selectedThread.messages; track msg.id) {
-                        <div class="pp-message" [class.pp-message-mine]="msg.author_type === 'customer'">
-                          <div class="pp-message-meta">{{ msg.author_type === 'admin' ? (msg.author_label || t('author_supplier')) : t('author_you') }}</div>
-                          <div class="pp-message-body">{{ msg.body }}</div>
-                          @if (msg.attachments && msg.attachments.length > 0) {
-                            <div class="pp-message-attachments">
-                              @for (att of msg.attachments; track att.id) {
-                                <a [href]="att.download_url" class="pp-attachment-link" target="_blank" rel="noopener">
-                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                                  </svg>
-                                  <span class="pp-attachment-name">{{ att.original_filename }}</span>
-                                  <span class="pp-attachment-size">{{ formatFileSize(att.size_bytes) }}</span>
-                                </a>
-                              }
-                            </div>
-                          }
-                        </div>
-                      }
-                    </div>
-
-                    <div class="pp-reply-box">
-                      <textarea class="pp-textarea" rows="2" [placeholder]="t('write_reply_placeholder')" [(ngModel)]="replyBody"></textarea>
-
-                      <div class="pp-file-attach-row">
-                        <label class="pp-file-attach-btn">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                          </svg>
-                          {{ t('attach_files_button') }}
-                          <input type="file" multiple hidden (change)="onReplyFilesSelected($event)">
-                        </label>
-                        @if (replyFiles.length > 0) {
-                          <span class="pp-file-attach-count">{{ replyFiles.length }}/{{ maxAttachments }}</span>
-                        }
-                      </div>
-                      @if (replyFileError) {
-                        <p class="pp-file-error">{{ replyFileError }}</p>
-                      }
-                      @if (replySendError) {
-                        <p class="pp-file-error pp-send-error">{{ replySendError }}</p>
-                      }
-
-                      @if (replyFiles.length > 0) {
-                        <div class="pp-file-chip-list">
-                          @for (file of replyFiles; track file.name; let i = $index) {
-                            <span class="pp-file-chip">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                              </svg>
-                              <span class="pp-file-chip-name">{{ file.name }}</span>
-                              <button type="button" class="pp-file-chip-remove" (click)="removeReplyFile(i)">✕</button>
-                            </span>
-                          }
-                        </div>
-                      }
-
-                      <button type="button" class="pp-btn-primary-small pp-send-btn" [disabled]="replySending || !replyBody.trim()" (click)="sendReply()">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                        {{ replySending ? t('sending') : t('send') }}
-                      </button>
-                    </div>
-                  }
-                </div>
-              }
-
-            </section>
-          }
-
-          <!-- ══════════ CONTACTS & BILLING ══════════ -->
-          @if (activeTab === 'contacts') {
-            <section class="pp-tab-panel">
-              @if (companySettingsLoading) {
-                <p class="pp-empty">{{ t('loading') }}</p>
-              } @else if (companySettings) {
-                <div class="pp-contacts-card">
-                  @if (companySettings.company_name) {
-                    <div class="pp-contacts-row pp-contacts-row-main">
-                      <span class="pp-contacts-company-name">{{ companySettings.company_name }}</span>
-                    </div>
-                  }
-                  @if (companySettings.address) {
-                    <div class="pp-contacts-row">
-                      <span class="pp-contacts-label">{{ t('contacts_address') }}</span>
-                      <span class="pp-contacts-value">{{ companySettings.address }}</span>
-                    </div>
-                  }
-                  @if (companySettings.ico) {
-                    <div class="pp-contacts-row">
-                      <span class="pp-contacts-label">{{ t('contacts_ico') }}</span>
-                      <span class="pp-contacts-value">{{ companySettings.ico }}</span>
-                    </div>
-                  }
-                  @if (companySettings.dic) {
-                    <div class="pp-contacts-row">
-                      <span class="pp-contacts-label">{{ t('contacts_dic') }}</span>
-                      <span class="pp-contacts-value">{{ companySettings.dic }}</span>
-                    </div>
-                  }
-                  @if (companySettings.contact_email) {
-                    <div class="pp-contacts-row">
-                      <span class="pp-contacts-label">{{ t('contacts_email') }}</span>
-                      <span class="pp-contacts-value">{{ companySettings.contact_email }}</span>
-                    </div>
-                  }
-                  @if (companySettings.contact_phone) {
-                    <div class="pp-contacts-row">
-                      <span class="pp-contacts-label">{{ t('contacts_phone') }}</span>
-                      <span class="pp-contacts-value">{{ companySettings.contact_phone }}</span>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <p class="pp-empty">{{ t('contacts_empty') }}</p>
-              }
-            </section>
-          }
-
-          <!-- ══════════ HELP ══════════ -->
-          @if (activeTab === 'help') {
-            <section class="pp-tab-panel">
-
-              <p class="pp-help-intro">{{ t('help_intro_text') }}</p>
-
-              <div class="pp-description-block">
-                <div class="pp-description-block-title">{{ t('help_description_title') }}</div>
-                <p class="pp-project-desc">{{ t('help_description_text') }}</p>
-              </div>
-
-              <div class="pp-description-block">
-                <div class="pp-description-block-title">{{ t('help_checkpoints_title') }}</div>
-                <p class="pp-project-desc">{{ t('help_checkpoints_text') }}</p>
-              </div>
-
-              <div class="pp-description-block">
-                <div class="pp-description-block-title">{{ t('help_threads_title') }}</div>
-                <p class="pp-project-desc">{{ t('help_threads_text') }}</p>
-              </div>
-
-              <div class="pp-description-block pp-help-sub">
-                <div class="pp-description-block-title">{{ t('help_threads_new_title') }}</div>
-                <p class="pp-project-desc">{{ t('help_threads_new_text') }}</p>
-              </div>
-
-              <div class="pp-description-block pp-help-sub">
-                <div class="pp-description-block-title">{{ t('help_threads_reply_title') }}</div>
-                <p class="pp-project-desc">{{ t('help_threads_reply_text') }}</p>
-              </div>
-
-              <div class="pp-description-block pp-help-sub">
-                <div class="pp-description-block-title">{{ t('help_threads_status_title') }}</div>
-                <p class="pp-project-desc">{{ t('help_threads_status_text') }}</p>
-              </div>
-
-              <div class="pp-description-block pp-help-sub">
-                <div class="pp-description-block-title">{{ t('help_attachments_title') }}</div>
-                <p class="pp-project-desc">{{ t('help_attachments_text') }}</p>
-              </div>
-
-              <div class="pp-description-block pp-help-sub">
-                <div class="pp-description-block-title">{{ t('help_unread_title') }}</div>
-                <p class="pp-project-desc">{{ t('help_unread_text') }}</p>
-              </div>
-
-              <div class="pp-description-block pp-help-sub">
-                <div class="pp-description-block-title">{{ t('help_search_title') }}</div>
-                <p class="pp-project-desc">{{ t('help_search_text') }}</p>
-              </div>
-
-              <div class="pp-description-block">
-                <div class="pp-description-block-title">{{ t('help_contacts_title') }}</div>
-                <p class="pp-project-desc">{{ t('help_contacts_text') }}</p>
-              </div>
-
-              <div class="pp-description-block">
-                <div class="pp-description-block-title">{{ t('help_actions_title') }}</div>
-                <p class="pp-project-desc">{{ t('help_actions_text') }}</p>
-              </div>
-
-              <div class="pp-description-block pp-help-sub">
-                <div class="pp-description-block-title">{{ t('help_language_title') }}</div>
-                <p class="pp-project-desc">{{ t('help_language_text') }}</p>
-              </div>
-
-              <div class="pp-help-support-box">
-                <div class="pp-description-block-title">{{ t('help_support_title') }}</div>
-                <p class="pp-project-desc">{{ t('help_support_text') }}</p>
-              </div>
-
-            </section>
-          }
-
-        </div>
-      </main>
-
+              </section>
+            }
+          </div>
+        </main>
+      </div>
     </div>
   }
 

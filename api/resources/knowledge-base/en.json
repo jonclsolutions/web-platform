@@ -184,13 +184,13 @@
     },
     "projects": {
       "navLabel": "Projects",
-      "header": "Projects and customer conversations",
+      "header": "Projects, client portal and conversations",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "The project list shows all customer projects and, for each, the number of new messages from the customer. A project opens on its own page with its settings, access to the client portal, checkpoints and the conversations with the customer."
+              "content": "The project list shows all client projects, their assignees and how many client messages wait to be read or answered. A project opens on its own page: settings, users of the client portal, checkpoints, files and the conversations with the client. The client sees the project in the client portal, signing in with an account you create."
             }
           ]
         },
@@ -203,15 +203,19 @@
               "cards": [
                 {
                   "title": "Open a project",
-                  "text": "The folder icon in a row opens the project page (address web/projects/ID). The pencil icon offers a quick edit in a dialog."
+                  "text": "The folder icon of a row opens the project page (address web/projects/ID). The pencil icon offers a quick edit in a dialog."
                 },
                 {
-                  "title": "New messages",
-                  "text": "The New messages column shows customer messages nobody in the administration has read yet. The Unread messages filter shows only projects that have some."
+                  "title": "Assignee",
+                  "text": "The Assignee column shows the administrator responsible for the project. The My projects filter keeps only your projects. Only an active administrator who may edit projects can be the assignee."
+                },
+                {
+                  "title": "New messages and Waiting on us",
+                  "text": "New messages = client messages nobody in the administration has read yet (filter Unread messages). Waiting on us = open threads where the client wrote last and waits for an answer."
                 },
                 {
                   "title": "New project",
-                  "text": "After creating it, the project page opens with the one-time password for the customer. The password is stored nowhere - copy it before you leave the page."
+                  "text": "After creating it the project page opens. The project has no user yet - add the client users in the Access panel, otherwise nobody can sign in to the portal."
                 }
               ]
             }
@@ -219,20 +223,151 @@
         },
         {
           "key": "chapter-02",
-          "heading": "02. Project page",
+          "heading": "02. Project page and settings",
           "blocks": [
             {
               "type": "text",
-              "content": "The Back button returns to the project list. The project settings (name, lead, contacts, dates, visibility, status) are edited right in the form - a floating bar with Save changes and Discard changes appears once something changes. Leaving with unsaved changes or an uncopied password asks first. The administration texts follow the selected administration language; the project data is in one language."
+              "content": "Back leads to the project list. The header shows the status, visibility, assignee and unread messages. The project settings (name, assignee, lead, contacts, dates, visibility, status) are edited right in the form - a floating bar with Save changes and Discard changes appears at the bottom. Leaving with unsaved changes or an uncopied password asks first. The administration texts follow the administration language, the project data is in one language."
             },
             {
               "type": "text",
-              "content": "Conversations show only the threads of this project, split into Active, Closed and All. A thread with unread messages shows their number; opening it marks it read for the whole administration. The list refreshes itself every minute. Checkpoints have a title and an optional description (pencil icon); the status is picked from a dropdown. The customer sees the description in the portal when expanding the checkpoint."
+              "content": "The assignee gets an e-mail when the client starts a thread or writes a message. A project without an assignee sends these notifications to the contact e-mail of the project."
+            }
+          ]
+        },
+        {
+          "key": "chapter-03",
+          "heading": "03. Users of the client portal",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The Access panel holds the link to the project portal (Copy link) and the list of client users. Every person on the client's side has their own account: name (shown with their messages), login name (3-64 characters: lower-case letters, digits, dot, hyphen, underscore; unique within the project), optional e-mail and the e-mail language (only prefilled). The client cannot change the name, login name or password; in the portal it sets only its own e-mail and notifications."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Add user",
+                  "text": "Fill in the name and the login name. Either type a password (at least 10 characters with letters and digits) or leave the field empty and a password is generated.",
+                  "active": true
+                },
+                {
+                  "label": "Hand over the access",
+                  "text": "The password is shown only once. Copy sign-in details copies the link, the login name and the password at once - paste them into a message for the client. The password is stored nowhere (only its hash)."
+                },
+                {
+                  "label": "Forgotten password",
+                  "text": "The key icon resets the password: a new one is generated, the old one stops working and the user is signed out on all devices. Hand the new password over to the client again."
+                },
+                {
+                  "label": "Removal",
+                  "text": "The bin icon removes the user and signs them out. Their messages stay in the threads under their name."
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "E-mail notifications",
+                  "text": "The client turns them on in the portal under My account, separately for a reply in a thread (not an internal note), a checkpoint status change and a checkpoint due date change. Everything is off by default and the administration cannot turn them on - the user row only shows what the client chose. Changing or removing the e-mail in the administration turns them off."
+                },
+                {
+                  "title": "What the e-mail contains",
+                  "text": "Only the project name, the thread subject or checkpoint title and a link to the portal - never the message text (sensitive content is not copied into mailboxes)."
+                },
+                {
+                  "title": "Account overview",
+                  "text": "Each user shows which notifications they turned on, when they last signed in and on how many devices they are signed in right now."
+                }
+              ]
+            },
+            {
+              "type": "note",
+              "content": "With the move to users, the former shared password of every project became a user with the login name klient (the password stayed the same). All existing sign-ins ended - the client signs in again with klient and their password. You can rename the user klient or create personal accounts instead."
+            }
+          ]
+        },
+        {
+          "key": "chapter-04",
+          "heading": "04. Conversations with the client",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Conversations show only the threads of this project, split into Active, Closed and All. A thread with unread messages shows their number; opening it marks it read for the whole administration. An open thread is tagged Waiting on us (the client wrote last) or Waiting on the client (one of you wrote last). The list refreshes itself every minute."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Reply to the client",
+                  "text": "The message is signed with your name, the client sees it in the portal and users who turned on reply notifications get an e-mail."
+                },
+                {
+                  "title": "Internal note",
+                  "text": "The Internal note switch above the message box: only the team in the administration sees the note (attachments included), it is marked yellow, the client never sees it, gets no e-mail and the note does not change Waiting on us / on the client."
+                },
+                {
+                  "title": "Read by the client",
+                  "text": "Your messages show Not read yet or Read by the client - depending on whether the client opened the thread in the portal after the message was sent."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-05",
+          "heading": "05. Checkpoints",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Checkpoints are the steps of the project the client sees in the portal under Progress. Each has a title, an optional description (the client expands it), an optional due date and an optional internal note the client never sees. The status is picked from a dropdown (Not started, In progress, Done); a status change e-mails the users who turned on status notifications, setting, moving or removing the due date e-mails those who turned on date notifications. The up and down arrows change the order. A checkpoint past its due date and not done is marked overdue."
+            }
+          ]
+        },
+        {
+          "key": "chapter-06",
+          "heading": "06. Files",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The Files panel collects the attachments of all threads of the project, newest first, with size, date, author and a link to the thread. Attachments of internal notes are tagged Internal - the client does not see them in the portal. Download links expire after a while; the refresh button loads them again."
+            }
+          ]
+        },
+        {
+          "key": "chapter-07",
+          "heading": "07. What the client sees in the portal",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The client signs in with the project link, the login name and the password (a sign-in lasts 24 hours from the last activity). The portal looks like the administration: the signed-in user, a refresh button and the language choice on top; a menu on the left that the three-line button narrows to icons (on a phone it slides in)."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Overview",
+                  "text": "Progress in percent, the number of threads waiting on the client, unread messages, the estimated completion, the current step and the project description."
+                },
+                {
+                  "title": "Progress and Communication",
+                  "text": "Checkpoints with due dates and descriptions; threads with priority, Waiting on you / Supplier is answering and the authors of messages (You, colleagues' names, your name)."
+                },
+                {
+                  "title": "Files, Contacts, Help",
+                  "text": "All attachments (no internal ones), the contact of the project lead and the company details of the supplier, a guide to the portal."
+                },
+                {
+                  "title": "My account",
+                  "text": "Name and login name (read-only), e-mail, e-mail language and the notification switches: supplier reply, step status change, step date change. All off by default and they cannot be turned on without an e-mail."
+                }
+              ]
             },
             {
               "type": "alert",
               "variant": "info",
-              "content": "Without the web-projects-update permission the page is read-only - settings, checkpoints and the password cannot be changed and replies cannot be sent."
+              "content": "Without the web-projects-update permission the project page is read-only - settings, users and checkpoints cannot be changed and replies cannot be sent. The audit log records changes of the project, its users (by id only, without names and e-mails), checkpoints and closing / reopening of threads; messages and passwords are never written to the log."
             }
           ]
         }

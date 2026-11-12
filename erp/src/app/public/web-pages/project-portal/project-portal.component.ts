@@ -4,8 +4,16 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Customer-facing project portal - login (permanent access_token URL +
- * admin-generated password) followed by a 24h-sliding session (CheckProjectSession middleware).
+ * @description Customer-facing project portal - login (permanent access_token URL + login name
+ *   and password of a client account created by the supplier) followed by a 24h-sliding session
+ *   (CheckProjectSession middleware). Laid out like the administration: header (menu button,
+ *   signed-in name, refresh, language), a left menu that collapses (desktop) or slides in (mobile)
+ *   and the sections Overview, Progress, Communication (unread badge, "waiting on you"), Files,
+ *   Contacts, My account (the client's own e-mail and which e-mail notifications it wants - all
+ *   off by default) and Help.
+ * @note The client sees only what the supplier made public: no internal notes, no internal
+ *   checkpoint notes (the API leaves them out). Several accounts of one client share the
+ *   conversations - messages show who wrote them ("You" for the own ones).
  *
  * @security The portal session is NOT handled by JavaScript at all: the API sets it as an
  *   HttpOnly / Secure / SameSite=Strict cookie limited to the routes of this project and the
@@ -26,7 +34,30 @@ import { UploadRulesService } from '../../../shared/services/upload-rules.servic
 import { UploadRule, extensionsLabel, fileExtension, isExtensionAllowed } from '../../../shared/utils/upload-rules';
 
 type PortalState = 'loading' | 'login' | 'portal' | 'invalid';
-type PortalTab = 'description' | 'checkpoints' | 'threads' | 'contacts' | 'help';
+/** Sections of the left menu. */
+export type PortalTab = 'overview' | 'checkpoints' | 'threads' | 'files' | 'contacts' | 'account' | 'help';
+
+/** Notification switches the client sets in "My account" (all off by default). */
+export const PORTAL_NOTIFICATIONS = ['notify_replies', 'notify_checkpoint_status', 'notify_checkpoint_dates'] as const;
+export type PortalNotification = typeof PORTAL_NOTIFICATIONS[number];
+
+/** Settings of the own account the client may change. */
+export interface PortalAccountSettings {
+  email: string;
+  language: 'cz' | 'en';
+  notify_replies: boolean;
+  notify_checkpoint_status: boolean;
+  notify_checkpoint_dates: boolean;
+}
+
+/** Items of the left menu in their order (Help and logout are at the bottom). */
+export const PORTAL_SECTIONS: PortalTab[] = ['overview', 'checkpoints', 'threads', 'files', 'contacts'];
+
+/** localStorage key of the collapsed menu (a per-browser convenience only). */
+export const PORTAL_SIDEBAR_STORAGE_KEY = 'pp_sidebar_collapsed';
+
+/** Window width up to which the menu slides in over the content instead of collapsing. */
+const MOBILE_MAX_WIDTH = 768;
 
 /** Fallback limits of the thread attachments while the rules of the API (`GET upload-rules`, profile project_thread) are not loaded. */
 const DEFAULT_MAX_ATTACHMENTS = 5;
@@ -38,6 +69,8 @@ interface ProjectCheckpoint {
   label: string;
   /** What the checkpoint covers (written by the supplier) - shown when the item is expanded. */
   description?: string | null;
+  /** Planned date (Y-m-d). */
+  due_date?: string | null;
   status: 'new' | 'active' | 'done';
 }
 
@@ -55,6 +88,8 @@ interface ProjectThreadMessage {
   id: number;
   author_type: 'customer' | 'admin';
   author_label: string | null;
+  /** Client account that wrote the message (null for the supplier). */
+  author_account_id?: number | null;
   body: string;
   attachments?: ProjectAttachment[];
   created_at: string;
@@ -67,6 +102,8 @@ interface ProjectThread {
   status: string;
   last_message_at: string | null;
   unread_count?: number;
+  /** Whose turn it is in an active thread: 'customer' (you) | 'supplier' | null (closed). */
+  waiting_on?: 'customer' | 'supplier' | null;
   has_more_older_messages?: boolean;
   messages?: ProjectThreadMessage[];
 }
@@ -83,6 +120,30 @@ interface PublicProject {
   estimated_completion_from: string | null;
   estimated_completion_to: string | null;
   checkpoints: ProjectCheckpoint[];
+  /** The signed-in client account with the settings it may change itself. */
+  account?: {
+    id: number;
+    username: string;
+    display_name: string;
+    email?: string | null;
+    language?: 'cz' | 'en';
+    notify_replies?: boolean;
+    notify_checkpoint_status?: boolean;
+    notify_checkpoint_dates?: boolean;
+  };
+}
+
+/** File of a conversation (Files section). */
+interface PortalFile {
+  id: number;
+  original_filename: string;
+  size_bytes: number;
+  download_url: string;
+  thread_id: number;
+  thread_subject: string;
+  author_type: 'customer' | 'admin';
+  author_label: string | null;
+  created_at: string;
 }
 
 interface CompanySettings {
@@ -121,6 +182,7 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
   token: string | null = null;
   state: PortalState = 'loading';
 
+  loginUsername = '';
   loginPassword = '';
   loginError: string | null = null;
   loginLoading = false;
@@ -131,7 +193,25 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
   threadDetailLoading = false;
   olderMessagesLoading = false;
 
-  activeTab: PortalTab = 'description';
+  activeTab: PortalTab = 'overview';
+  /** Items of the left menu. */
+  readonly sections = PORTAL_SECTIONS;
+  /** Desktop: the left menu shows icons only. */
+  sidebarCollapsed = false;
+  /** Mobile: the left menu slid in over the content. */
+  mobileNavOpen = false;
+
+  files: PortalFile[] = [];
+  filesLoading = false;
+  filesError = false;
+
+  /** Kinds of notifications offered in "My account". */
+  readonly notificationKinds = PORTAL_NOTIFICATIONS;
+  /** Draft of "My account" (filled from the account when the section opens). */
+  accountSettings: PortalAccountSettings = ProjectPortalComponent.settingsOf(undefined);
+  accountSaving = false;
+  /** Result of the last save: 'saved' | 'error' | 'email_required' | null. */
+  accountSaveResult: 'saved' | 'error' | 'email_required' | null = null;
   threadSearch = '';
   /** Checkpoints whose description is expanded. */
   expandedCheckpointIds = new Set<number>();
@@ -249,6 +329,7 @@ updateThreadStatus(status: string): void {
     }
 
     this.removeLegacySessionToken();
+    this.sidebarCollapsed = this.readSidebarCollapsed();
     // The cookie (if any) is unreadable here - the API answers whether the session is valid.
     this.loadProject();
   }
@@ -269,6 +350,129 @@ updateThreadStatus(status: string): void {
     this.stopPolling$.complete();
     this.stopGlobalPolling$.next();
     this.stopGlobalPolling$.complete();
+  }
+
+  // ── Layout: menu button, collapsed / slid-in menu ─────────────────────
+
+  /** @description The window is narrow - the menu slides in over the content. */
+  private isMobileWidth(): boolean {
+    try {
+      return window.matchMedia(`(max-width: ${MOBILE_MAX_WIDTH}px)`).matches;
+    } catch {
+      return false;
+    }
+  }
+
+  /** @description Menu button: slides the menu in / out on mobile, collapses it on desktop (remembered). */
+  toggleSidebar(): void {
+    if (this.isMobileWidth()) {
+      this.mobileNavOpen = !this.mobileNavOpen;
+    } else {
+      this.sidebarCollapsed = !this.sidebarCollapsed;
+      this.storeSidebarCollapsed(this.sidebarCollapsed);
+    }
+    this.cdr.markForCheck();
+  }
+
+  /** @description Closes the slid-in menu (overlay click, item picked). */
+  closeMobileNav(): void {
+    this.mobileNavOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  /** @description Remembered state of the collapsed menu (false when the storage is unavailable). */
+  private readSidebarCollapsed(): boolean {
+    try {
+      return localStorage.getItem(PORTAL_SIDEBAR_STORAGE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * @description Remembers the collapsed menu in this browser (nothing personal is stored).
+   * @param collapsed New state.
+   */
+  private storeSidebarCollapsed(collapsed: boolean): void {
+    try {
+      localStorage.setItem(PORTAL_SIDEBAR_STORAGE_KEY, collapsed ? '1' : '0');
+    } catch {
+      // Storage unavailable - the menu simply starts expanded next time.
+    }
+  }
+
+  // ── My account: e-mail and notifications ─────────────────────────────
+
+  /**
+   * @description Settings draft of an account (empty e-mail, Czech, all notifications off when unknown).
+   * @param account Account of the API.
+   */
+  static settingsOf(account: PublicProject['account']): PortalAccountSettings {
+    return {
+      email: account?.email ?? '',
+      language: account?.language ?? 'cz',
+      notify_replies: !!account?.notify_replies,
+      notify_checkpoint_status: !!account?.notify_checkpoint_status,
+      notify_checkpoint_dates: !!account?.notify_checkpoint_dates,
+    };
+  }
+
+  /** @description Puts the saved settings of the account into the form. */
+  resetAccountSettings(): void {
+    this.accountSettings = ProjectPortalComponent.settingsOf(this.project?.account);
+    this.accountSaveResult = null;
+    this.cdr.markForCheck();
+  }
+
+  /** @description The form differs from the saved settings. */
+  get accountSettingsDirty(): boolean {
+    return JSON.stringify(this.accountSettings) !== JSON.stringify(ProjectPortalComponent.settingsOf(this.project?.account));
+  }
+
+  /** @description Notifications need an e-mail - clearing it turns them all off in the form. */
+  onAccountEmailChange(): void {
+    if (!this.accountSettings.email.trim()) {
+      for (const kind of PORTAL_NOTIFICATIONS) this.accountSettings[kind] = false;
+    }
+    this.accountSaveResult = null;
+  }
+
+  /**
+   * @description Saves the own settings; the answer (project with the account) replaces the
+   *   loaded one. A notification without an e-mail is refused already here.
+   */
+  saveAccountSettings(): void {
+    if (!this.hasSession || this.accountSaving || !this.accountSettingsDirty) return;
+    const settings = { ...this.accountSettings, email: this.accountSettings.email.trim() };
+    if (!settings.email && PORTAL_NOTIFICATIONS.some(kind => settings[kind])) {
+      this.accountSaveResult = 'email_required';
+      this.cdr.markForCheck();
+      return;
+    }
+    this.accountSaving = true;
+    this.accountSaveResult = null;
+    this.cdr.markForCheck();
+    this.portalPost<PublicProject>(`projects/public/${this.token}/account`, settings)
+      .pipe(finalize(() => { this.accountSaving = false; this.cdr.markForCheck(); }), takeUntil(this.destroy$))
+      .subscribe({
+        next: (project) => {
+          if (project) this.project = project;
+          this.accountSettings = ProjectPortalComponent.settingsOf(this.project?.account);
+          this.accountSaveResult = 'saved';
+        },
+        error: () => { this.accountSaveResult = 'error'; },
+      });
+  }
+
+  /** @description Name of the signed-in account (header). */
+  get accountName(): string {
+    return this.project?.account?.display_name || this.project?.account?.username || '';
+  }
+
+  /** @description Initials of the signed-in account (avatar of the header). */
+  get accountInitials(): string {
+    const parts = this.accountName.trim().split(/\s+/).filter(Boolean);
+    return parts.slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('');
   }
 
   // ── Language dropdown (minimalist - flag only) ──────────────────────
@@ -298,12 +502,51 @@ updateThreadStatus(status: string): void {
 
   // ── Tabs ──────────────────────────────────────────────────────────────
 
+  /**
+   * @description Opens a section of the left menu: Contacts loads the company data once, Files
+   *   loads the files fresh every time (their download links are signed and expire); on mobile the
+   *   slid-in menu closes.
+   * @param tab Section.
+   */
   setActiveTab(tab: PortalTab): void {
     this.activeTab = tab;
+    this.mobileNavOpen = false;
     if (tab === 'contacts' && !this.companySettings && !this.companySettingsLoading) {
       this.loadCompanySettings();
     }
+    if (tab === 'files') {
+      this.loadFiles();
+    }
+    if (tab === 'account') {
+      this.resetAccountSettings();
+    }
     this.cdr.markForCheck();
+  }
+
+  /** @description Loads the files of all conversations (newest first, fresh signed links). */
+  loadFiles(): void {
+    if (!this.hasSession) return;
+    this.filesLoading = true;
+    this.filesError = false;
+    this.cdr.markForCheck();
+    this.portalGet<PortalFile[]>(`projects/public/${this.token}/files`)
+      .pipe(finalize(() => { this.filesLoading = false; this.cdr.markForCheck(); }), takeUntil(this.destroy$))
+      .subscribe({
+        next: (files) => { this.files = Array.isArray(files) ? files : []; },
+        error: () => { this.filesError = true; },
+      });
+  }
+
+  /**
+   * @description Opens the conversation of a file in the Communication section.
+   * @param file File of the Files section.
+   */
+  openFileThread(file: PortalFile): void {
+    const thread = this.threads.find(t => t.id === file.thread_id)
+      ?? { id: file.thread_id, subject: file.thread_subject, priority: 'medium', status: 'active', last_message_at: null };
+    this.setActiveTab('threads');
+    this.newThreadMode = false;
+    this.openThread(thread);
   }
 
   private loadCompanySettings(): void {
@@ -347,6 +590,69 @@ updateThreadStatus(status: string): void {
 
   get totalUnreadCount(): number {
     return this.threads.reduce((sum, t) => sum + (t.unread_count ?? 0), 0);
+  }
+
+  /** @description Active threads where the supplier waits for the client's answer. */
+  get waitingOnYouCount(): number {
+    return this.threads.filter(t => t.waiting_on === 'customer').length;
+  }
+
+  /** @description The step being worked on: the first one not done (null when all are done / none). */
+  get currentCheckpoint(): ProjectCheckpoint | null {
+    return this.project?.checkpoints?.find(c => c.status === 'active')
+      ?? this.project?.checkpoints?.find(c => c.status !== 'done')
+      ?? null;
+  }
+
+  // ── Labels of messages and threads ────────────────────────────────────
+
+  /**
+   * @description The message was written by the signed-in account.
+   * @param msg Message.
+   */
+  isMine(msg: ProjectThreadMessage): boolean {
+    const me = this.project?.account?.id;
+    return msg.author_type === 'customer' && !!me && msg.author_account_id === me;
+  }
+
+  /**
+   * @description Author shown above a message: "You", a colleague's name, the supplier's name.
+   * @param msg Message.
+   */
+  authorName(msg: ProjectThreadMessage): string {
+    if (msg.author_type === 'admin') return msg.author_label || this.t('author_supplier');
+    if (this.isMine(msg)) return this.t('author_you');
+    return msg.author_label || this.t('author_client');
+  }
+
+  /**
+   * @description Translated priority of a thread.
+   * @param priority low | medium | high | critic.
+   */
+  priorityLabel(priority: string): string {
+    return this.t(`priority_${priority}`);
+  }
+
+  /**
+   * @description "Waiting on you / on the supplier" of an active thread ('' when closed).
+   * @param thread Thread.
+   */
+  waitingLabel(thread: ProjectThread): string {
+    if (thread.waiting_on === 'customer') return this.t('waiting_on_you');
+    if (thread.waiting_on === 'supplier') return this.t('waiting_on_supplier');
+    return '';
+  }
+
+  /**
+   * @description Date (Y-m-d) in the portal language, e.g. "24. prosince 2026" / "December 24, 2026".
+   * @param iso Date.
+   */
+  formatDate(iso: string | null | undefined): string {
+    if (!iso) return '';
+    return new Date(iso.slice(0, 10) + 'T00:00:00').toLocaleDateString(
+      this.portalI18n.getCurrentLanguage() === 'en' ? 'en-US' : 'cs-CZ',
+      { day: 'numeric', month: 'long', year: 'numeric' }
+    );
   }
 
   // ── Search in threads ──────────────────────────────────────────────
@@ -472,7 +778,7 @@ updateThreadStatus(status: string): void {
   }
 
   login(): void {
-    if (!this.loginPassword.trim() || this.loginLoading) return;
+    if (!this.loginUsername.trim() || !this.loginPassword.trim() || this.loginLoading) return;
 
     this.loginLoading = true;
     this.loginError = null;
@@ -480,7 +786,7 @@ updateThreadStatus(status: string): void {
 
     this.portalPost<{ project: PublicProject }>(
       `projects/public/${this.token}/login`,
-      { password: this.loginPassword }
+      { username: this.loginUsername.trim(), password: this.loginPassword }
     ).pipe(
       finalize(() => { this.loginLoading = false; this.cdr.markForCheck(); }),
       takeUntil(this.destroy$)
@@ -489,13 +795,14 @@ updateThreadStatus(status: string): void {
         this.hasSession = true;
         this.project = res.project;
         this.state = 'portal';
+        this.loginPassword = '';
         this.loadThreads();
         this.startGlobalThreadsPolling();
       },
       error: (err: any) => {
         this.loginError = err?.status === 404
           ? 'error_project_not_found'
-          : 'error_invalid_password';
+          : err?.status === 429 ? 'error_too_many_attempts' : 'error_invalid_login';
       }
     });
   }
@@ -517,9 +824,11 @@ updateThreadStatus(status: string): void {
     this.selectedThread = null;
     this.state = 'login';
     this.loginPassword = '';
-    this.activeTab = 'description';
+    this.activeTab = 'overview';
+    this.mobileNavOpen = false;
     this.expandedCheckpointIds.clear();
     this.companySettings = null;
+    this.files = [];
     this.cdr.markForCheck();
   }
 
@@ -578,6 +887,7 @@ updateThreadStatus(status: string): void {
         next: (project) => {
           this.project = project;
           this.loadThreads();
+          if (this.activeTab === 'files') this.loadFiles();
           if (this.selectedThread) {
             this.openThread(this.selectedThread);
           }
@@ -628,7 +938,7 @@ updateThreadStatus(status: string): void {
       filter(() => !!this.selectedThread),
       switchMap(() => {
         const lastId = this.selectedThread?.messages?.[this.selectedThread.messages.length - 1]?.id ?? 0;
-        return this.portalGetWithMeta<ProjectThreadMessage[], { status: string }>(
+        return this.portalGetWithMeta<ProjectThreadMessage[], { status: string; waiting_on?: ProjectThread['waiting_on'] }>(
           `projects/public/${this.token}/threads/${this.selectedThread!.id}/new-messages?after_id=${lastId}`
         );
       }),
@@ -639,6 +949,7 @@ updateThreadStatus(status: string): void {
         if (!this.selectedThread || res.data.length === 0) return;
         this.selectedThread.messages = [...this.selectedThread.messages!, ...res.data];
         this.selectedThread.status = res.meta?.status ?? this.selectedThread.status;
+        if (res.meta && 'waiting_on' in res.meta) this.selectedThread.waiting_on = res.meta.waiting_on;
         this.cdr.markForCheck();
         this.scrollMessagesToBottom();
       },

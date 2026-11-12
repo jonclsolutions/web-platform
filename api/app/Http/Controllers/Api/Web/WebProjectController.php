@@ -5,22 +5,25 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Admin CRUD for customer projects, plus password regeneration and
- * nested checkpoint management.
+ * @description Admin CRUD for customer projects (with the responsible administrator), the list
+ * of assignable administrators, the files of a project's conversations and nested checkpoint
+ * management (title, description, due date, internal note, status, order). A checkpoint status
+ * change notifies the client accounts that want it (ProjectNotifier). The client accounts of the
+ * portal are managed by WebProjectAccountController.
  *
- * @note SECURITY (consultation note 3): regeneratePassword() invalidates ALL existing
- * customer sessions for the project and returns the new PLAINTEXT password exactly
- * once - it is never recoverable again after this response.
  * @note SECURITY (consultation note 2): checkpoint mutations verify
  * `$checkpoint->project_id === $project->id` explicitly (IDOR guard).
+ * @dependencies ProjectNotifier, LogsActivity, AppliesSafeSorting, HandlesAttachments
  */
 
 namespace App\Http\Controllers\Api\Web;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Web\WebProject\{StoreWebProjectRequest, UpdateWebProjectRequest, StoreProjectCheckpointRequest, UpdateProjectCheckpointRequest};
-use App\Http\Resources\Web\{WebProjectResource, WebProjectCheckpointResource};
-use App\Models\Web\{WebProject, WebProjectCheckpoint, WebProjectSession, WebProjectThread};
+use App\Http\Requests\Web\WebProject\{ReorderProjectCheckpointsRequest, StoreWebProjectRequest, UpdateWebProjectRequest, StoreProjectCheckpointRequest, UpdateProjectCheckpointRequest};
+use App\Http\Resources\Web\{WebProjectFileResource, WebProjectResource, WebProjectCheckpointResource};
+use App\Mail\Web\ProjectClientUpdateMail;
+use App\Models\Web\{WebAttachment, WebProject, WebProjectCheckpoint, WebProjectSession, WebProjectThread, WebProjectThreadMessage};
+use App\Services\Web\ProjectNotifier;
 use App\Models\Web\WebLog;
 use App\Traits\HandlesAttachments;
 use App\Traits\LogsActivity;
@@ -38,15 +41,18 @@ class WebProjectController extends Controller
      *   (short, no personal data). Other changed fields are listed by name only - their values
      *   are in the row's `changes` (personal contacts masked, WebProject::AUDIT_MASKED).
      */
-    private const LOGGED_VALUE_FIELDS = ['name', 'platform', 'visibility', 'status'];
+    private const LOGGED_VALUE_FIELDS = ['name', 'platform', 'visibility', 'status', 'assignee_id'];
     use HandlesAttachments;
+
+    public function __construct(private readonly ProjectNotifier $notifier) {}
 
     public function index(Request $request): JsonResponse
     {
         $perPage = $request->input('per_page', 15);
         $onlyTrashed = filter_var($request->input('only_trashed', false), FILTER_VALIDATE_BOOLEAN);
 
-        $query = WebProject::query()->withCount('checkpoints')->withUnreadMessagesCount()->with(['lead', 'order']);
+        $query = WebProject::query()->withCount('checkpoints')->withUnreadMessagesCount()->withWaitingThreadsCount()
+            ->with(['lead', 'order', 'assignee:id,full_name']);
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
         if ($s = $request->input('search')) {
@@ -66,6 +72,11 @@ class WebProjectController extends Controller
             $query->whereHas('threadMessages', WebProjectThread::unreadByAdmin());
         }
 
+        // Only the projects of the signed-in administrator ("my projects").
+        if (filter_var($request->input('assigned_to_me', false), FILTER_VALIDATE_BOOLEAN)) {
+            $query->where('assignee_id', $request->user()?->id);
+        }
+
         $this->applySorting($query, $request, 'id', 'desc');
 
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
@@ -79,31 +90,33 @@ class WebProjectController extends Controller
     }
 
     /**
+     * @description Administrators who can be responsible for a project (WebProject::assignableUsers()).
+     * @return JsonResponse [{id, full_name}]
+     */
+    public function assignees(): JsonResponse
+    {
+        return $this->respond(WebProject::assignableUsers()->get(['id', 'full_name'])
+            ->map(fn ($user) => ['id' => $user->id, 'full_name' => $user->full_name])->values());
+    }
+
+    /**
      * @description Creates a project - from a sales order (`order_id` present) or standalone
-     * (both fields absent). Generates the permanent access token AND the initial password in
-     * one step and returns the plaintext password exactly once.
+     * (both fields absent) - with its permanent access token. The client accounts (login name +
+     * password) are added afterwards on the project page (WebProjectAccountController).
      */
     public function store(StoreWebProjectRequest $request): JsonResponse
     {
         try {
             $validated = $request->validated();
-            $validated['access_token'] = WebProject::generateAccessToken();
-            $validated['access_password_hash'] = 'pending'; // overwritten right below by regeneratePassword()
 
             $project = new WebProject($validated);
             $project->status = $validated['status'] ?? 'new';
-            $project->access_token = $validated['access_token'];
-            $project->access_password_hash = $validated['access_password_hash'];
+            $project->access_token = WebProject::generateAccessToken();
             $project->save();
 
-            $plaintextPassword = $project->regeneratePassword();
+            $this->logAction($request, WebLog::class, 'create', 'WebProject', "Project created: {$project->name}", $project->id, 'WebProject');
 
-            $this->logAction($request, WebLog::class, 'create', 'WebProject', "Project created: {$project->name} (client portal password generated)", $project->id, 'WebProject');
-
-            $response = (new WebProjectResource($project))->resolve();
-            $response['generated_password'] = $plaintextPassword;
-
-            return $this->respond($response, 201);
+            return $this->respond((new WebProjectResource($project))->resolve(), 201);
         } catch (\Exception $e) {
             report($e); // full detail (class, file, trace) to the core log
             $this->logAction($request, WebLog::class, 'error', 'WebProject', "Error creating project: " . $e->getMessage());
@@ -113,7 +126,8 @@ class WebProjectController extends Controller
 
     public function show($id): JsonResponse
     {
-        $project = WebProject::withTrashed()->withUnreadMessagesCount()->with(['lead', 'order', 'checkpoints'])->findOrFail($id);
+        $project = WebProject::withTrashed()->withUnreadMessagesCount()->withWaitingThreadsCount()->withCount('accounts')
+            ->with(['lead', 'order', 'checkpoints', 'assignee:id,full_name'])->findOrFail($id);
         return $this->respond((new WebProjectResource($project))->resolve());
     }
 
@@ -127,7 +141,7 @@ class WebProjectController extends Controller
 
             $this->logAction($request, WebLog::class, 'update', 'WebProject', $this->describeProjectUpdate($project, $before), $project->id, 'WebProject');
 
-            $fresh = $project->fresh()->load(['lead', 'order', 'checkpoints']);
+            $fresh = $project->fresh()->load(['lead', 'order', 'checkpoints', 'assignee:id,full_name']);
             return $this->respond((new WebProjectResource($fresh))->resolve());
         } catch (\Exception $e) {
             report($e); // full detail (class, file, trace) to the core log
@@ -211,28 +225,23 @@ class WebProjectController extends Controller
     }
 
     /**
-     * @description Generates a new password (overwriting the old one, which expires
-     * immediately) and invalidates ALL active sessions for the given project. Returns the plaintext
-     * password exactly once.
+     * @description Every file of the project's conversations for the administration - also the
+     *   attachments of internal notes (flagged) - newest first, with thread and author.
+     * @param int|string $id Project id.
+     * @return JsonResponse
      */
-    public function regeneratePassword(Request $request, $id): JsonResponse
+    public function files($id): JsonResponse
     {
-        $project = WebProject::findOrFail($id);
+        $project = WebProject::withTrashed()->findOrFail($id);
+        $messageIds = WebProjectThreadMessage::whereIn('thread_id', $project->threads()->select('id'))->pluck('id');
 
-        $plaintext = $project->regeneratePassword();
-        $invalidatedSessions = WebProjectSession::where('project_id', $project->id)->delete();
+        $files = WebAttachment::where('attachable_type', WebProjectThreadMessage::class)
+            ->whereIn('attachable_id', $messageIds)
+            ->with('attachable.thread')
+            ->orderByDesc('id')
+            ->get();
 
-        $this->logAction(
-            $request,
-            WebLog::class,
-            'regenerate_password',
-            'WebProject',
-            "Generated new password for project ID: {$project->id} (invalidated {$invalidatedSessions} active sessions).",
-            $project->id,
-            'WebProject'
-        );
-
-        return $this->respond(['generated_password' => $plaintext]);
+        return $this->respond(WebProjectFileResource::collection($files));
     }
 
     // ── Checkpoints (nested under project) ───────────────────────────────────
@@ -263,7 +272,7 @@ class WebProjectController extends Controller
         $validated = $request->validated();
         $oldStatus = $checkpoint->status;
         $oldLabel = $checkpoint->label;
-        $oldDescription = $checkpoint->description;
+        $before = $checkpoint->only(['description', 'due_date', 'internal_note']);
         $statusChanged = isset($validated['status']) && $validated['status'] !== $oldStatus;
         if ($statusChanged) {
             $checkpoint->setStatus($validated['status']);
@@ -273,16 +282,31 @@ class WebProjectController extends Controller
             $checkpoint->update($validated);
         }
 
-        // Only a real change is worth a log row; the status change says from what to what.
+        // Only a real change is worth a log row; the status change says from what to what and the
+        // client accounts that want it get an e-mail.
         if ($statusChanged) {
-            $this->logAction($request, WebLog::class, 'checkpoint_status', 'WebProjectCheckpoint', "Checkpoint '{$checkpoint->label}' of project #{$projectId}: status {$oldStatus} → {$checkpoint->status}", (int) $projectId, 'WebProject');
+            $project = $checkpoint->project;
+            $notified = $project ? $this->notifier->notifyClients($project, ProjectClientUpdateMail::KIND_CHECKPOINT, $checkpoint->label, $checkpoint->status) : 0;
+            $this->logAction($request, WebLog::class, 'checkpoint_status', 'WebProjectCheckpoint', "Checkpoint '{$checkpoint->label}' of project #{$projectId}: status {$oldStatus} → {$checkpoint->status}"
+                . ($notified ? " ({$notified} client e-mails)" : ''), (int) $projectId, 'WebProject');
         }
         $edits = [];
         if ($checkpoint->label !== $oldLabel) {
             $edits[] = "renamed to '{$checkpoint->label}'";
         }
-        if ($checkpoint->description !== $oldDescription) {
-            $edits[] = 'description changed';
+        $after = $checkpoint->only(['description', 'due_date', 'internal_note']);
+        foreach (['description' => 'description', 'due_date' => 'due date', 'internal_note' => 'internal note'] as $field => $name) {
+            if ($this->differs($before[$field], $after[$field])) {
+                $edits[] = "{$name} changed";
+            }
+        }
+        // A new / changed / removed due date → the client accounts that want it get an e-mail.
+        if ($this->differs($before['due_date'], $after['due_date']) && ($project = $checkpoint->project)) {
+            $notified = $this->notifier->notifyClients($project, ProjectClientUpdateMail::KIND_CHECKPOINT_DATE, $checkpoint->label,
+                null, $after['due_date']?->format('Y-m-d'));
+            if ($notified) {
+                $edits[] = "{$notified} client e-mails about the due date";
+            }
         }
         if ($edits !== []) {
             $this->logAction($request, WebLog::class, 'update', 'WebProjectCheckpoint', "Checkpoint '{$oldLabel}' of project #{$projectId}: " . implode(', ', $edits), (int) $projectId, 'WebProject');
@@ -304,6 +328,50 @@ class WebProjectController extends Controller
         $this->logAction($request, WebLog::class, 'hard_delete', 'WebProjectCheckpoint', "Deleted checkpoint ID: {$checkpointId} '{$checkpoint->label}' (project #{$projectId})", (int) $projectId, 'WebProject');
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * @description New order of the checkpoints: `ids` must be exactly the project's checkpoints
+     *   (each once) - their positions become 0, 1, 2, … in that order.
+     * @param ReorderProjectCheckpointsRequest $request
+     * @param int|string $projectId
+     * @return JsonResponse The checkpoints in the new order; 422 when the ids do not match.
+     */
+    public function reorderCheckpoints(ReorderProjectCheckpointsRequest $request, $projectId): JsonResponse
+    {
+        $project = WebProject::findOrFail($projectId);
+        $ids = array_map('intval', $request->validated()['ids']);
+        $existing = $project->checkpoints()->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        if (count($ids) !== count($existing) || array_diff($ids, $existing) !== []) {
+            return response()->json([
+                'message' => 'The order must list every checkpoint of the project exactly once.',
+                'errors'  => ['ids' => ['The order must list every checkpoint of the project exactly once.']],
+            ], 422);
+        }
+
+        DB::transaction(function () use ($project, $ids) {
+            foreach ($ids as $position => $id) {
+                $project->checkpoints()->whereKey($id)->update(['sort_order' => $position]);
+            }
+        });
+
+        $this->logAction($request, WebLog::class, 'checkpoint_order', 'WebProjectCheckpoint', "Checkpoints of project #{$project->id} reordered", $project->id, 'WebProject');
+
+        return $this->respond(WebProjectCheckpointResource::collection($project->checkpoints()->get()));
+    }
+
+    /**
+     * @description Whether two stored values differ (dates compared as Y-m-d).
+     * @param mixed $old
+     * @param mixed $new
+     * @return bool
+     */
+    private function differs(mixed $old, mixed $new): bool
+    {
+        $normalize = fn ($value) => $value instanceof \DateTimeInterface ? $value->format('Y-m-d') : $value;
+
+        return $normalize($old) !== $normalize($new);
     }
 
     /**
@@ -334,7 +402,7 @@ class WebProjectController extends Controller
 
     /**
      * @description Cleans up EVERYTHING that a permanently-deleted project leaves
-     * behind: active customer sessions, checkpoints, and threads - each thread's
+     * behind: active customer sessions, client accounts, checkpoints, and threads - each thread's
      * messages, and each message's file attachments (both the DB record AND the
      * physical file on disk, via `HandlesAttachments::deleteAllAttachments()`).
      * Called EXCLUSIVELY from the `forceDelete()` code path (see
@@ -346,6 +414,7 @@ class WebProjectController extends Controller
     private function cascadeDeleteProjectRelations(WebProject $project): void
     {
         WebProjectSession::where('project_id', $project->id)->delete();
+        $project->accounts()->delete();
 
         $project->checkpoints()->delete();
 

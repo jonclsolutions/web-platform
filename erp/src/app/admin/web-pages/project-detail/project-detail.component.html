@@ -4,9 +4,11 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Page of one client project: header (back, name, status, new messages), project
-        settings form with a floating save bar, conversations with the client (thread list with
-        unread badges + messages + reply), access to the client portal and checkpoints.
+    @description: Page of one client project: header (back, name, status, assignee, new messages),
+        conversations with the client (thread list with unread badges and "waiting on us / on the
+        client", messages with "read by the client", reply or internal note), checkpoints (due
+        date, internal note, order), project settings with a floating save bar; side column:
+        access to the client portal (link + client accounts) and the files of all conversations.
 -->
 <div class="pd-page">
 
@@ -29,7 +31,8 @@
         }
       </div>
       @if (project) {
-        <p class="pd-subtitle">#{{ project.id }} · {{ t('detail_created') }} {{ project.created_at | date:'d. M. yyyy' }}</p>
+        <p class="pd-subtitle">#{{ project.id }} · {{ t('detail_created') }} {{ project.created_at | date:'d. M. yyyy' }}
+          · {{ t('detail_assignee') }}: <strong>{{ project.assignee_name || t('detail_no_assignee') }}</strong></p>
       }
     </div>
     <div class="pd-header-actions">
@@ -86,6 +89,9 @@
                   · {{ threadStatusLabel(thread.status) }}
                   @if (thread.last_message_at) { · {{ thread.last_message_at | date:'d. M. HH:mm' }} }
                 </span>
+                @if (thread.waiting_on) {
+                  <span class="pd-waiting" [attr.data-waiting]="thread.waiting_on">{{ waitingLabel(thread) }}</span>
+                }
               </button>
             } @empty {
               <p class="pd-empty">{{ threads.length === 0 ? t('threads_empty') : t('detail_threads_empty_filter') }}</p>
@@ -124,8 +130,11 @@
                     </button>
                   }
                   @for (msg of selectedThread.messages; track msg.id) {
-                    <div class="pd-msg" [class.pd-msg--admin]="msg.author_type === 'admin'">
-                      <div class="pd-msg-meta">{{ msg.author_label || threadAuthorLabel(msg.author_type) }} · {{ msg.created_at | date:'d. M. yyyy HH:mm' }}</div>
+                    <div class="pd-msg" [class.pd-msg--admin]="msg.author_type === 'admin'" [class.pd-msg--internal]="msg.is_internal">
+                      <div class="pd-msg-meta">
+                        @if (msg.is_internal) { <span class="pd-internal-tag">{{ t('message_internal_tag') }}</span> }
+                        {{ msg.author_label || threadAuthorLabel(msg.author_type) }} · {{ msg.created_at | date:'d. M. yyyy HH:mm' }}
+                      </div>
                       <div class="pd-msg-body">{{ msg.body }}</div>
                       @if (msg.attachments?.length) {
                         <div class="pd-msg-files">
@@ -138,13 +147,23 @@
                           }
                         </div>
                       }
+                      @if (msg.author_type === 'admin' && !msg.is_internal) {
+                        <div class="pd-msg-receipt" [class.pd-msg-receipt--read]="isReadByClient(msg)">
+                          {{ isReadByClient(msg) ? '✓✓ ' + t('message_read_by_client') : '✓ ' + t('message_not_read_yet') }}
+                        </div>
+                      }
                     </div>
                   }
                 </div>
 
                 @if (canEdit) {
-                  <div class="pd-reply">
-                    <textarea class="pd-input pd-textarea" rows="3" [placeholder]="t('reply_placeholder')" [(ngModel)]="replyBody" [attr.aria-label]="t('reply_placeholder')"></textarea>
+                  <div class="pd-reply" [class.pd-reply--internal]="replyInternal">
+                    <div class="pd-reply-mode" role="group" [attr.aria-label]="t('reply_mode_label')">
+                      <button type="button" [class.active]="!replyInternal" [attr.aria-pressed]="!replyInternal" (click)="replyInternal = false">{{ t('reply_mode_client') }}</button>
+                      <button type="button" [class.active]="replyInternal" [attr.aria-pressed]="replyInternal" (click)="replyInternal = true">{{ t('reply_mode_internal') }}</button>
+                    </div>
+                    @if (replyInternal) { <p class="pd-hint pd-hint--internal">{{ t('reply_internal_hint') }}</p> }
+                    <textarea class="pd-input pd-textarea" rows="3" [placeholder]="replyInternal ? t('reply_internal_placeholder') : t('reply_placeholder')" [(ngModel)]="replyBody" [attr.aria-label]="t('reply_placeholder')"></textarea>
                     @if (replyFileError) { <p class="pd-error" role="alert">{{ replyFileError }}</p> }
                     @if (replyFiles.length > 0) {
                       <div class="pd-chips">
@@ -163,7 +182,7 @@
                         <input type="file" multiple hidden (change)="onReplyFilesSelected($event)">
                       </label>
                       <button type="button" class="pd-btn pd-btn--primary" [disabled]="replySending || !replyBody.trim()" (click)="sendReply()">
-                        {{ replySending ? t('sending') : t('send_reply_button') }}
+                        {{ replySending ? t('sending') : (replyInternal ? t('send_internal_button') : t('send_reply_button')) }}
                       </button>
                     </div>
                   </div>
@@ -198,7 +217,7 @@
         <div class="pd-card-body">
           <ol class="pd-checkpoints">
             @for (cp of checkpoints; track cp.id; let i = $index) {
-              <li class="pd-checkpoint" [attr.data-status]="cp.status" [class.pd-checkpoint--editing]="editingCheckpointId === cp.id">
+              <li class="pd-checkpoint" [attr.data-status]="cp.status" [class.pd-checkpoint--editing]="editingCheckpointId === cp.id" [class.pd-checkpoint--overdue]="isOverdue(cp)">
                 <span class="pd-cp-index" aria-hidden="true">
                   @if (cp.status === 'done') { ✓ } @else { {{ i + 1 }} }
                 </span>
@@ -215,6 +234,15 @@
                                 [placeholder]="t('checkpoint_description_placeholder')" (keyup.escape)="cancelEditCheckpoint()"></textarea>
                     </label>
                     <p class="pd-hint">{{ t('checkpoint_description_hint') }}</p>
+                    <label class="pd-cp-field pd-cp-field--date">
+                      <span>{{ t('checkpoint_due_date_label') }}</span>
+                      <input type="date" class="pd-input" [(ngModel)]="checkpointDraft.due_date">
+                    </label>
+                    <label class="pd-cp-field">
+                      <span>{{ t('checkpoint_internal_note_label') }}</span>
+                      <textarea class="pd-input pd-textarea pd-textarea--internal" rows="2" maxlength="5000" [(ngModel)]="checkpointDraft.internal_note"
+                                [placeholder]="t('checkpoint_internal_note_placeholder')" (keyup.escape)="cancelEditCheckpoint()"></textarea>
+                    </label>
                     <div class="pd-cp-editor-actions">
                       <button type="button" class="pd-btn" (click)="cancelEditCheckpoint()">{{ t('cancel_button') }}</button>
                       <button type="button" class="pd-btn pd-btn--primary" [disabled]="!checkpointDraft.label.trim() || checkpointBusyIds.has(cp.id)" (click)="saveCheckpoint(cp)">{{ t('checkpoint_save') }}</button>
@@ -223,13 +251,33 @@
                 } @else {
                   <div class="pd-cp-body">
                     <div class="pd-cp-label">{{ cp.label }}</div>
+                    @if (cp.due_date) {
+                      <span class="pd-cp-due" [class.pd-cp-due--overdue]="isOverdue(cp)">
+                        {{ t('checkpoint_due_prefix') }} {{ cp.due_date | date:'d. M. yyyy' }}@if (isOverdue(cp)) { · {{ t('checkpoint_overdue') }} }
+                      </span>
+                    }
                     @if (cp.description) {
                       <p class="pd-cp-description">{{ cp.description }}</p>
                     } @else if (canEdit) {
                       <p class="pd-cp-description pd-cp-description--empty">{{ t('checkpoint_no_description') }}</p>
                     }
+                    @if (cp.internal_note) {
+                      <p class="pd-cp-note"><span class="pd-internal-tag">{{ t('message_internal_tag') }}</span> {{ cp.internal_note }}</p>
+                    }
                   </div>
                   <div class="pd-cp-controls">
+                    @if (canEdit && checkpoints.length > 1) {
+                      <span class="pd-cp-move">
+                        <button type="button" class="pd-icon-btn pd-cp-action" [disabled]="i === 0 || checkpointsReordering"
+                                [title]="t('checkpoint_move_up')" [attr.aria-label]="t('checkpoint_move_up') + ': ' + cp.label" (click)="moveCheckpoint(i, -1)">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>
+                        </button>
+                        <button type="button" class="pd-icon-btn pd-cp-action" [disabled]="i === checkpoints.length - 1 || checkpointsReordering"
+                                [title]="t('checkpoint_move_down')" [attr.aria-label]="t('checkpoint_move_down') + ': ' + cp.label" (click)="moveCheckpoint(i, 1)">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                        </button>
+                      </span>
+                    }
                     <select class="pd-cp-status" [attr.data-status]="cp.status" [value]="cp.status"
                             [disabled]="!canEdit || checkpointBusyIds.has(cp.id)"
                             [attr.aria-label]="t('checkpoint_status_label') + ': ' + cp.label"
@@ -268,6 +316,15 @@
                           [placeholder]="t('checkpoint_description_placeholder')" (keyup.escape)="cancelAddCheckpoint()"></textarea>
               </label>
               <p class="pd-hint">{{ t('checkpoint_description_hint') }}</p>
+              <label class="pd-cp-field pd-cp-field--date">
+                <span>{{ t('checkpoint_due_date_label') }}</span>
+                <input type="date" class="pd-input" [(ngModel)]="newCheckpointDueDate">
+              </label>
+              <label class="pd-cp-field">
+                <span>{{ t('checkpoint_internal_note_label') }}</span>
+                <textarea class="pd-input pd-textarea pd-textarea--internal" rows="2" maxlength="5000" [(ngModel)]="newCheckpointNote"
+                          [placeholder]="t('checkpoint_internal_note_placeholder')" (keyup.escape)="cancelAddCheckpoint()"></textarea>
+              </label>
               <div class="pd-cp-editor-actions">
                 <button type="button" class="pd-btn" (click)="cancelAddCheckpoint()">{{ t('cancel_button') }}</button>
                 <button type="button" class="pd-btn pd-btn--primary" [disabled]="!newCheckpointLabel.trim()" (click)="addCheckpoint()">{{ t('add_button') }}</button>
@@ -317,32 +374,153 @@
     </div>
 
     <aside class="pd-side">
-      <!-- ── Access to the client portal ── -->
+      <!-- ── Access to the client portal: link + client accounts ── -->
       <section class="pd-card" aria-labelledby="pd-access-title">
-        <div class="pd-card-head"><h2 class="pd-card-title" id="pd-access-title">{{ t('access_section_title') }}</h2></div>
+        <div class="pd-card-head">
+          <h2 class="pd-card-title" id="pd-access-title">{{ t('access_section_title') }}</h2>
+          @if (canEdit && accountFormMode !== 'add') {
+            <div class="pd-card-head-actions">
+              <button type="button" class="pd-btn" (click)="openAddAccount()"><app-icon name="plus" [size]="14"></app-icon>{{ t('account_add_button') }}</button>
+            </div>
+          }
+        </div>
         <div class="pd-card-body">
           <div class="pd-url-row">
             <code class="pd-url">{{ project?.public_url }}</code>
             <button type="button" class="pd-btn pd-btn--ghost" (click)="copyPublicUrl()">{{ t('copy_link_button') }}</button>
           </div>
+
           @if (revealedPassword) {
-            <div class="pd-password">
-              <span class="pd-label">{{ t('password_label') }}</span>
+            <div class="pd-password" role="status">
+              <div class="pd-password-head">
+                <span class="pd-label">{{ t('account_new_password_label').replace('{username}', revealedPassword.username) }}</span>
+                <button type="button" class="pd-icon-btn" [attr.aria-label]="t('account_password_dismiss')" [title]="t('account_password_dismiss')" (click)="dismissPassword()">✕</button>
+              </div>
               <code class="pd-password-value">{{ passwordVisible ? revealedPassword.password : '••••••••••••' }}</code>
               <div class="pd-password-actions">
                 <button type="button" class="pd-btn pd-btn--ghost" (click)="togglePasswordVisibility()">{{ passwordVisible ? t('hide_button') : t('show_button') }}</button>
-                <button type="button" class="pd-btn pd-btn--primary" (click)="copyPassword()">{{ t('copy_password_button') }}</button>
+                <button type="button" class="pd-btn pd-btn--ghost" (click)="copyPassword()">{{ t('copy_password_button') }}</button>
+                <button type="button" class="pd-btn pd-btn--primary" (click)="copyAccessDetails()">{{ t('copy_access_details_button') }}</button>
               </div>
               <p class="pd-warning" role="note">{{ t('password_visibility_hint') }}</p>
             </div>
-          } @else {
-            <p class="pd-muted">{{ t('password_not_stored_hint') }}</p>
           }
-          @if (canEdit) {
-            <button type="button" class="pd-btn pd-btn--warn" [disabled]="passwordRegenerating" (click)="regeneratePassword()">
-              {{ passwordRegenerating ? t('regenerating') : t('regenerate_password_button') }}
+
+          <ul class="pd-accounts">
+            @for (account of accounts; track account.id) {
+              <li class="pd-account" [class.pd-account--editing]="editingAccountId === account.id">
+                <span class="pd-avatar" aria-hidden="true">{{ (account.display_name || account.username).charAt(0).toUpperCase() }}</span>
+                <div class="pd-account-main">
+                  <div class="pd-account-name">{{ account.display_name }}</div>
+                  <div class="pd-account-meta">
+                    <code>{{ account.username }}</code>
+                    @if (account.email) { · {{ account.email }} }
+                  </div>
+                  <div class="pd-account-meta">
+                    @if (accountNotifications(account).length > 0) {
+                      <span class="pd-tag pd-tag--on" [title]="t('account_notify_hint')">{{ t('account_notify_on') }}: {{ accountNotifications(account).join(', ') }} ({{ account.language | uppercase }})</span>
+                    } @else {
+                      <span class="pd-tag" [title]="t('account_notify_hint')">{{ t('account_notify_off') }}</span>
+                    }
+                    · {{ account.last_login_at ? (t('account_last_login') + ' ' + (account.last_login_at | date:'d. M. yyyy HH:mm')) : t('account_never_logged_in') }}
+                    @if ((account.active_sessions ?? 0) > 0) { · {{ t('account_devices').replace('{count}', '' + account.active_sessions) }} }
+                  </div>
+                </div>
+                @if (canEdit) {
+                  <div class="pd-account-actions">
+                    <button type="button" class="pd-icon-btn" [title]="t('account_edit')" [attr.aria-label]="t('account_edit') + ': ' + account.display_name" (click)="openEditAccount(account)">
+                      <app-icon name="edit" [size]="14"></app-icon>
+                    </button>
+                    <button type="button" class="pd-icon-btn" [title]="t('account_reset_password')" [attr.aria-label]="t('account_reset_password') + ': ' + account.display_name"
+                            [disabled]="accountBusyId !== null" (click)="resetAccountPassword(account)">
+                      <app-icon name="key" [size]="14"></app-icon>
+                    </button>
+                    <button type="button" class="pd-icon-btn pd-cp-action--delete" [title]="t('account_remove')" [attr.aria-label]="t('account_remove') + ': ' + account.display_name"
+                            [disabled]="accountBusyId !== null" (click)="removeAccount(account)">
+                      <app-icon name="delete" [size]="14"></app-icon>
+                    </button>
+                  </div>
+                }
+              </li>
+            } @empty {
+              @if (!accountsLoading && accountFormMode !== 'add') { <li class="pd-empty">{{ t('accounts_empty') }}</li> }
+            }
+          </ul>
+
+          @if (canEdit && accountFormMode) {
+            <form class="pd-account-form" (ngSubmit)="saveAccount()" autocomplete="off">
+              <div class="pd-cp-new-title">{{ accountFormMode === 'add' ? t('account_add_button') : t('account_edit') }}</div>
+              <label class="pd-cp-field">
+                <span>{{ t('account_display_name_label') }} *</span>
+                <input type="text" class="pd-input" name="display_name" maxlength="120" required [(ngModel)]="accountDraft.display_name" [placeholder]="t('account_display_name_placeholder')">
+              </label>
+              <label class="pd-cp-field">
+                <span>{{ t('account_username_label') }} *</span>
+                <input type="text" class="pd-input" name="username" maxlength="64" required autocapitalize="none" spellcheck="false"
+                       [(ngModel)]="accountDraft.username" [placeholder]="t('account_username_placeholder')">
+                <small class="pd-hint">{{ t('account_username_hint') }}</small>
+              </label>
+              <label class="pd-cp-field">
+                <span>{{ t('account_email_label') }}</span>
+                <input type="email" class="pd-input" name="email" maxlength="255" [(ngModel)]="accountDraft.email">
+                <small class="pd-hint">{{ t('account_email_hint') }}</small>
+              </label>
+              <label class="pd-cp-field">
+                <span>{{ t('account_language_label') }}</span>
+                <select class="pd-input" name="language" [(ngModel)]="accountDraft.language">
+                  @for (language of accountLanguages; track language) {
+                    <option [value]="language">{{ t('account_language_' + language) }}</option>
+                  }
+                </select>
+              </label>
+              @if (accountFormMode === 'add') {
+                <label class="pd-cp-field">
+                  <span>{{ t('account_password_label') }}</span>
+                  <input type="text" class="pd-input" name="password" maxlength="255" autocomplete="new-password" spellcheck="false"
+                         [(ngModel)]="accountDraft.password" [placeholder]="t('account_password_placeholder')">
+                  <small class="pd-hint">{{ t('account_password_hint') }}</small>
+                </label>
+              }
+              <div class="pd-cp-editor-actions">
+                <button type="button" class="pd-btn" (click)="cancelAccountForm()">{{ t('cancel_button') }}</button>
+                <button type="submit" class="pd-btn pd-btn--primary" [disabled]="!accountDraftValid || accountSaving">
+                  {{ accountSaving ? t('detail_saving') : (accountFormMode === 'add' ? t('add_button') : t('checkpoint_save')) }}
+                </button>
+              </div>
+            </form>
+          }
+        </div>
+      </section>
+
+      <!-- ── Files of all conversations ── -->
+      <section class="pd-card" aria-labelledby="pd-files-title">
+        <div class="pd-card-head">
+          <div class="pd-card-head-title">
+            <h2 class="pd-card-title" id="pd-files-title">{{ t('files_section_title') }}</h2>
+            @if (files.length > 0) { <span class="pd-count">{{ files.length }}</span> }
+          </div>
+          <div class="pd-card-head-actions">
+            <button type="button" class="pd-icon-btn" [title]="t('detail_refresh')" [attr.aria-label]="t('detail_refresh')" [disabled]="filesLoading" (click)="loadFiles()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" [class.pd-spin]="filesLoading"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
             </button>
-          }
+          </div>
+        </div>
+        <div class="pd-card-body">
+          <ul class="pd-files">
+            @for (file of files; track file.id) {
+              <li class="pd-files-row" [class.pd-files-row--internal]="file.is_internal">
+                <a [href]="file.download_url" class="pd-files-name" target="_blank" rel="noopener">{{ file.original_filename }}</a>
+                <span class="pd-files-meta">
+                  @if (file.is_internal) { <span class="pd-internal-tag">{{ t('message_internal_tag') }}</span> }
+                  {{ formatFileSize(file.size_bytes) }} · {{ file.created_at | date:'d. M. yyyy' }} ·
+                  {{ file.author_label || threadAuthorLabel(file.author_type) }} ·
+                  <button type="button" class="pd-link" (click)="openFileThread(file)">{{ file.thread_subject }}</button>
+                </span>
+              </li>
+            } @empty {
+              <li class="pd-empty">{{ filesLoading ? t('loading') : t('files_empty') }}</li>
+            }
+          </ul>
         </div>
       </section>
 

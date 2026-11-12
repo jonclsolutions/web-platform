@@ -5,8 +5,10 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Freeform per-project checklist item (e.g. "UI design", "Deploy") -
- * toggled by an admin, visible read-only to the customer on the public project page.
+ * @description Freeform per-project checklist item (e.g. "UI design", "Deploy") with a title,
+ * a description and an optional due date - managed by an admin (status, order), visible
+ * read-only to the client in the portal. `internal_note` is for the team only (never returned
+ * by the client portal - WebProjectCheckpointPublicResource).
  */
 
 namespace App\Models\Web;
@@ -22,6 +24,8 @@ class WebProjectCheckpoint extends Model
         'project_id',
         'label',
         'description',
+        'due_date',
+        'internal_note',
         'status',
         'status_changed_at',
         'sort_order',
@@ -29,6 +33,7 @@ class WebProjectCheckpoint extends Model
 
     protected $casts = [
         'status_changed_at' => 'datetime',
+        'due_date' => 'date',
         'sort_order' => 'integer',
     ];
 

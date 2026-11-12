@@ -5,7 +5,11 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Admin view of customer conversation threads.
+ * @description Admin view of customer conversation threads: list (with unread counts and whose
+ * turn it is), detail with ALL messages including the team's internal notes, replies (a reply
+ * notifies the client accounts that want it; an internal note never reaches the client and does
+ * not change whose turn it is), status changes.
+ * @dependencies ProjectNotifier, HandlesAttachments, LogsActivity, AppliesSafeSorting
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -13,7 +17,9 @@ namespace App\Http\Controllers\Api\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\WebProject\StoreProjectThreadMessageRequest;
 use App\Http\Resources\Web\{WebProjectThreadResource, WebProjectThreadMessageResource};
+use App\Mail\Web\ProjectClientUpdateMail;
 use App\Models\Web\{WebProjectThread, WebProjectThreadMessage};
+use App\Services\Web\ProjectNotifier;
 use App\Models\Web\WebLog;
 use App\Traits\HandlesAttachments;
 use App\Traits\LogsActivity;
@@ -28,6 +34,8 @@ class WebProjectThreadController extends Controller
 
     /** Storage folder for thread message attachments within the private disk. */
     private const ATTACHMENT_FOLDER = 'web/project_threads';
+
+    public function __construct(private readonly ProjectNotifier $notifier) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -56,7 +64,7 @@ class WebProjectThreadController extends Controller
         // An admin opened it: the client's messages are no longer new for the administration.
         $thread->markReadByAdmin();
 
-        [$messages, $hasMore] = $thread->pagedMessages(null);
+        [$messages, $hasMore] = $thread->pagedMessages(null, withInternal: true);
         $thread->setRelation('messages', $messages);
 
         return $this->respond(new WebProjectThreadResource($thread), 200, ['has_more_older_messages' => $hasMore]);
@@ -72,34 +80,45 @@ class WebProjectThreadController extends Controller
         $beforeId = $request->input('before_message_id');
         $limit = min((int) $request->input('limit', WebProjectThread::DEFAULT_MESSAGE_PAGE_SIZE), 100);
 
-        [$messages, $hasMore] = $thread->pagedMessages($beforeId ? (int) $beforeId : null, $limit);
+        [$messages, $hasMore] = $thread->pagedMessages($beforeId ? (int) $beforeId : null, $limit, withInternal: true);
 
         return $this->respond(WebProjectThreadMessageResource::collection($messages), 200, ['has_more_older_messages' => $hasMore]);
     }
 
     /**
-     * @note `author_label` fallback here ("Administrator") is intentionally
-     * hardcoded and NOT translated dynamically like the customer-side label - it's
-     * only ever used when `$request->user()->user_email` is somehow unavailable
-     * (should not normally happen for an authenticated admin action), a genuine
-     * edge case rather than the everyday display path. The normal path stores the
-     * admin's real e-mail, which is data, not a generic label, and is never
-     * translated regardless of admin UI language - see
-     * `WebProjectPublicController` header for the customer-side contrast.
+     * @description Reply of an administrator, or an internal note of the team (`is_internal`).
+     *   The author's full name is stored as the message's name snapshot (the client sees the name,
+     *   never an e-mail). A reply moves the thread (last activity, the client's turn) and notifies
+     *   the client accounts that want it; an internal note changes neither and is never shown to
+     *   the client.
+     * @param StoreProjectThreadMessageRequest $request body, attachments[], is_internal
+     * @param int|string $threadId
+     * @return JsonResponse 201 message
      */
     public function reply(StoreProjectThreadMessageRequest $request, $threadId): JsonResponse
     {
-        $thread = WebProjectThread::findOrFail($threadId);
+        $thread = WebProjectThread::with('project')->findOrFail($threadId);
+        $user = $request->user();
+        $internal = $request->boolean('is_internal');
 
         $message = $thread->messages()->create([
             'author_type'  => 'admin',
-            'author_label' => $request->user()->user_email ?? 'Administrator',
+            'author_label' => $user->full_name ?: 'Administrator',
+            'user_id'      => $user->id,
+            'is_internal'  => $internal,
             'body'         => $request->validated()['body'],
         ]);
 
         $this->storeAttachments($request, $message, self::ATTACHMENT_FOLDER);
 
-        $thread->update(['last_message_at' => now(), 'admin_last_read_at' => now()]);
+        if ($internal) {
+            $thread->markReadByAdmin();
+        } else {
+            $thread->update(['last_message_at' => now(), 'admin_last_read_at' => now(), 'last_public_author' => 'admin']);
+            if ($thread->project) {
+                $this->notifier->notifyClients($thread->project, ProjectClientUpdateMail::KIND_REPLY, $thread->subject);
+            }
+        }
         // Not logged: who wrote which message is the conversation itself (kept in the thread),
         // the audit log keeps the decisions - thread closed / reopened, project changes.
 

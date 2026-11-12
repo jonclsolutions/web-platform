@@ -63,6 +63,11 @@ export function createNoOrderOptionLabel(i18n: AdminLocalizationService): string
   return i18n.getValue(`${SECTION}.field_order_none_option`);
 }
 
+/** @description `— Nobody —` option of the assignee select (project without a responsible administrator). */
+export function createNoAssigneeOptionLabel(i18n: AdminLocalizationService): string {
+  return i18n.getValue(`${SECTION}.field_assignee_none_option`);
+}
+
 export function createProjectFormFields(i18n: AdminLocalizationService): Core.InputDefinition[] {
   return [
     {
@@ -76,6 +81,14 @@ export function createProjectFormFields(i18n: AdminLocalizationService): Core.In
     { column_name: 'name', label: i18n.getValue(`${SECTION}.field_name_label`), type: 'text', required: true, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'description', label: i18n.getValue(`${SECTION}.field_description_label`), type: 'textarea', required: false, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'platform', label: i18n.getValue(`${SECTION}.field_platform_label`), type: 'select', options: mapLabeledOptions(SECTION, PROJECT_PLATFORM_VALUES, PLATFORM_LABEL_KEYS, i18n), required: false, editable: true, show_in_edit: true, show_in_create: true },
+    {
+      column_name: 'assignee_id',
+      label: i18n.getValue(`${SECTION}.field_assignee_label`),
+      type: 'select',
+      // Filled by the component from GET web/projects/assignees (applyAssigneeOptions).
+      options: [{ value: '', label: createNoAssigneeOptionLabel(i18n) }],
+      required: false, editable: true, show_in_edit: true, show_in_create: true,
+    },
     { column_name: 'project_lead', label: i18n.getValue(`${SECTION}.field_lead_label`), type: 'text', required: false, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'contact_phone', label: i18n.getValue(`${SECTION}.field_phone_label`), type: 'tel', required: false, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'contact_email', label: i18n.getValue(`${SECTION}.field_email_label`), type: 'email', required: false, editable: true, show_in_edit: true, show_in_create: true },
@@ -95,7 +108,9 @@ export function createProjectColumns(i18n: AdminLocalizationService): Core.Colum
     { key: 'visibility', header: i18n.getValue(`${SECTION}.col_visibility`), type: 'text' },
     { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'text' },
     { key: 'project_lead', header: i18n.getValue(`${SECTION}.col_lead`), type: 'text' },
+    { key: 'assignee_name', header: i18n.getValue(`${SECTION}.col_assignee`), type: 'text' },
     { key: 'unread_messages_count', header: i18n.getValue(`${SECTION}.col_unread`), type: 'count' },
+    { key: 'waiting_threads_count', header: i18n.getValue(`${SECTION}.col_waiting`), type: 'count' },
     { key: 'created_at', header: i18n.getValue(`${SECTION}.col_created`), type: 'date', format: 'short' },
   ];
 }
@@ -116,6 +131,7 @@ export function createProjectFilterColumns(i18n: AdminLocalizationService): Core
     { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'select', options: mapLabeledOptions(SECTION, PROJECT_STATUS_VALUES, STATUS_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_status_placeholder`), canSort: true },
     { key: 'platform', header: i18n.getValue(`${SECTION}.col_platform`), type: 'select', options: mapLabeledOptions(SECTION, PROJECT_PLATFORM_VALUES, PLATFORM_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_platform_placeholder`), canSort: true },
     { key: 'unread', header: i18n.getValue(`${SECTION}.filter_unread_label`), type: 'select', options: [{ value: '1', label: i18n.getValue(`${SECTION}.filter_unread_yes`) }], placeholder: i18n.getValue(`${SECTION}.filter_unread_placeholder`), canSort: false },
+    { key: 'assigned_to_me', header: i18n.getValue(`${SECTION}.filter_mine_label`), type: 'select', options: [{ value: '1', label: i18n.getValue(`${SECTION}.filter_mine_yes`) }], placeholder: i18n.getValue(`${SECTION}.filter_mine_placeholder`), canSort: false },
   ];
 }
 
@@ -125,6 +141,7 @@ export function createProjectDetailsColumns(i18n: AdminLocalizationService): Cor
     { key: 'name', displayName: i18n.getValue(`${SECTION}.details_name`), type: 'text' },
     { key: 'description', displayName: i18n.getValue(`${SECTION}.details_description`), type: 'text' },
     { key: 'platform', displayName: i18n.getValue(`${SECTION}.details_platform`), type: 'text', chartable: true, chartPossibleValues: PROJECT_PLATFORM_VALUES },
+    { key: 'assignee_name', displayName: i18n.getValue(`${SECTION}.details_assignee`), type: 'text' },
     { key: 'project_lead', displayName: i18n.getValue(`${SECTION}.details_lead`), type: 'text' },
     { key: 'contact_phone', displayName: i18n.getValue(`${SECTION}.details_phone`), type: 'text' },
     { key: 'contact_email', displayName: i18n.getValue(`${SECTION}.details_email`), type: 'text' },

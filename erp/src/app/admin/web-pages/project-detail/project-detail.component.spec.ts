@@ -6,13 +6,16 @@
  * @created 2026
  * @description Unit tests of ProjectDetailComponent – the page of one client project
  *   (web/projects/:id): loading / not found, the settings form (dirty state, saving only the
- *   changed fields, discard, read-only without permission), leaving with unsaved changes or an
- *   uncopied one-time password, the password handed over from the list (memory only, VT-08),
- *   copy / regenerate, checkpoints (status dropdown), the conversations of the project (filters, unread counts,
- *   opening marks read, status, replies with validated attachments, older messages, periodic refresh).
+ *   changed fields, discard, read-only without permission, assignee options), leaving with unsaved
+ *   changes or an uncopied password, the client accounts (add with a typed-in / generated password
+ *   shown once in memory only - VT-08, edit, notifications need an e-mail, password reset, removal,
+ *   copy of the sign-in details), the files of the conversations, checkpoints (status dropdown,
+ *   due date, internal note, overdue, order), the conversations of the project (filters, unread
+ *   counts, "waiting on", "read by the client", opening marks read, status, replies and internal
+ *   notes with validated attachments, older messages, periodic refresh).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (all admin doubles), ActivatedRoute (stub with the id),
- *   Router.navigate (spy), ProjectPasswordHandoffService, navigator.clipboard (spy)
+ *   Router.navigate (spy), navigator.clipboard (spy)
  */
 
 import { ComponentFixture, TestBed, fakeAsync, tick, flush, discardPeriodicTasks } from '@angular/core/testing';
@@ -20,7 +23,6 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { ProjectDetailComponent, THREAD_REFRESH_SECONDS } from './project-detail.component';
-import { ProjectPasswordHandoffService } from '../projects/project-password-handoff.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 import { TEST_UPLOAD_RULES } from '../../../../testing/upload-rules-stub';
 
@@ -36,12 +38,29 @@ describe('ProjectDetailComponent', () => {
     id: 7, name: 'Shop', description: null, platform: 'web', project_lead: 'Jan', contact_phone: null, contact_email: null,
     technologies: null, estimated_completion_from: '2026-12-01', estimated_completion_to: null, visibility: 'private',
     status: 'development', public_url: 'https://x/p/7', created_at: '2026-11-01 10:00:00', unread_messages_count: 3,
+    assignee_id: 3, assignee_name: 'Jana', accounts_count: 2,
     checkpoints: [{ id: 1, label: 'Design', status: 'new', sort_order: 1 }]
   });
+  const accounts = () => [
+    { id: 11, username: 'klient', display_name: 'Klient', email: null, notify_replies: false, notify_checkpoint_status: false, notify_checkpoint_dates: false, language: 'cz', password_set_at: null, last_login_at: '2026-11-10 08:00:00', active_sessions: 1 },
+    { id: 12, username: 'anna', display_name: 'Anna Malá', email: 'anna@client.cz', notify_replies: true, notify_checkpoint_status: false, notify_checkpoint_dates: true, language: 'en', password_set_at: null, last_login_at: null, active_sessions: 0 }
+  ];
+  const projectFiles = () => [
+    { id: 21, original_filename: 'note.pdf', size_bytes: 2048, download_url: 'https://x/f/21', thread_id: 5, thread_subject: 'Logo', author_type: 'admin', author_label: 'Jana', is_internal: true, created_at: '2026-11-10 10:00:00' },
+    { id: 20, original_filename: 'brief.pdf', size_bytes: 1024, download_url: 'https://x/f/20', thread_id: 4, thread_subject: 'Hosting', author_type: 'customer', author_label: 'Anna Malá', is_internal: false, created_at: '2026-11-09 10:00:00' }
+  ];
+  const assignees = () => [{ id: 3, full_name: 'Jana' }, { id: 5, full_name: 'Petr' }];
+  /** getCollection answers by endpoint. */
+  const collections = (endpoint: string) => {
+    if (endpoint === 'web/projects/7/accounts') return of(accounts());
+    if (endpoint === 'web/projects/7/files') return of(projectFiles());
+    if (endpoint === 'web/projects/assignees') return of(assignees());
+    return of(threads());
+  };
   const threads = () => [
-    { id: 3, subject: 'Launch', priority: 'high', status: 'active', last_message_at: '2026-11-10 09:00:00', admin_unread_count: 2 },
-    { id: 4, subject: 'Hosting', priority: 'low', status: 'closed', last_message_at: null, admin_unread_count: 1 },
-    { id: 5, subject: 'Logo', priority: 'medium', status: 'active', last_message_at: null, admin_unread_count: 0 }
+    { id: 3, subject: 'Launch', priority: 'high', status: 'active', last_message_at: '2026-11-10 09:00:00', admin_unread_count: 2, waiting_on: 'supplier' as const },
+    { id: 4, subject: 'Hosting', priority: 'low', status: 'closed', last_message_at: null, admin_unread_count: 1, waiting_on: null },
+    { id: 5, subject: 'Logo', priority: 'medium', status: 'active', last_message_at: null, admin_unread_count: 0, waiting_on: 'customer' as const }
   ];
   const file = (name: string, size = 10) => {
     const f = new File(['x'], name);
@@ -71,7 +90,7 @@ describe('ProjectDetailComponent', () => {
     routeId = '7';
     ctx = createAdminTestContext();
     dh().get.and.callFake(() => of(project()));
-    dh().getCollection.and.callFake(() => of(threads()));
+    dh().getCollection.and.callFake(collections);
     await TestBed.configureTestingModule({
       imports: [ProjectDetailComponent],
       // The id is read when ngOnInit runs, so a test can change routeId before init().
@@ -90,22 +109,31 @@ describe('ProjectDetailComponent', () => {
   describe('loading', () => {
     /**
      * @description The page loads the project, its settings form (edit fields without the order
-     *   link), checkpoints and the threads of THIS project with their unread counts.
+     *   link, with the assignee), checkpoints, the client accounts, the files, the assignees and
+     *   the threads of THIS project with their unread counts.
      * @input  route id 7
-     * @output get('web/projects/7'); getCollection('web/project-threads', { project_id: 7, no_pagination });
-     *   form name 'Shop' / description ''; fields without order_id; 1 checkpoint; unreadTotal 3; not dirty
+     * @output get('web/projects/7'); getCollection threads / accounts / files / assignees;
+     *   form name 'Shop' / description '' / assignee '3'; 12 fields without order_id; assignee
+     *   options Jana, Petr; 1 checkpoint; 2 accounts; 2 files; unreadTotal 3; not dirty
      */
     it('loads the project and its conversations', fakeAsync(() => {
       init();
       expect(dh().get).toHaveBeenCalledWith('web/projects/7');
       expect(dh().getCollection).toHaveBeenCalledWith('web/project-threads', { project_id: 7, no_pagination: 'true' });
+      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/7/accounts');
+      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/7/files');
+      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/assignees');
       expect(component.loading).toBeFalse();
       expect(component.notFound).toBeFalse();
       expect(component.form['name']).toBe('Shop');
       expect(component.form['description']).toBe('');
       expect(component.fields.map(f => f.column_name)).not.toContain('order_id');
-      expect(component.fields.length).toBe(11);
+      expect(component.fields.length).toBe(12);
+      expect(component.form['assignee_id']).toBe('3');
+      expect(component.fields.find(f => f.column_name === 'assignee_id')!.options).toEqual([{ value: '3', label: 'Jana' }, { value: '5', label: 'Petr' }]);
       expect(component.checkpoints.length).toBe(1);
+      expect(component.accounts.map(a => a.username)).toEqual(['klient', 'anna']);
+      expect(component.files.length).toBe(2);
       expect(component.checkpointStatusLabels['done']).toBe('projects.checkpoint_status_done');
       expect(component.unreadTotal).toBe(3);
       expect(component.dirty).toBeFalse();
@@ -257,7 +285,7 @@ describe('ProjectDetailComponent', () => {
       component.form['name'] = 'Other';
       expect(unload()).toBeTrue();
       component.discardChanges();
-      component.revealedPassword = { password: 'pw', url: 'u', generatedAt: 'x' };
+      component.revealedPassword = { accountId: 11, username: 'klient', password: 'pw' };
       expect(unload()).toBeTrue();
       spyOn(navigator.clipboard, 'writeText').and.returnValue(Promise.resolve());
       component.copyPassword();
@@ -268,65 +296,198 @@ describe('ProjectDetailComponent', () => {
 
   describe('access', () => {
     /**
-     * @description The password of a just created project comes from the list in memory, once, for
-     *   this project only; leaving without copying it asks first.
-     * @input  handoff.put(7, 'S3cret', 'u'); page of project 7; goBack with confirm false, then true
-     * @output revealedPassword S3cret visible; handoff empty; confirm('projects.close_uncopied_password_title', …);
-     *   navigation only after confirm; revealedPassword cleared
+     * @description A saved assignee who cannot be picked any more stays in the select under the
+     *   stored name; saving the settings keeps the options; a failed assignee load leaves the
+     *   select empty (the template adds "—").
+     * @input  project assignee #9 'Old' not among [Jana, Petr]; then the assignees request fails
+     * @output options Jana, Petr, Old (#9); after the failure []
      */
-    it('shows the handed over password and asks before leaving it uncopied', fakeAsync(async () => {
-      TestBed.inject(ProjectPasswordHandoffService).put(7, 'S3cret', 'u');
+    it('keeps a saved assignee that cannot be picked any more', fakeAsync(() => {
+      dh().get.and.returnValue(of({ ...project(), assignee_id: 9, assignee_name: 'Old' }));
       init();
-      expect(component.revealedPassword?.password).toBe('S3cret');
+      expect(component.fields.find(f => f.column_name === 'assignee_id')!.options!.map(o => o.label)).toEqual(['Jana', 'Petr', 'Old']);
+      expect(component.form['assignee_id']).toBe('9');
+      fixture.destroy();
+
+      dh().getCollection.and.callFake((endpoint: string) => endpoint === 'web/projects/assignees' ? throwError(() => new Error('x')) : collections(endpoint));
+      dh().get.and.returnValue(of({ ...project(), assignee_id: null, assignee_name: null }));
+      fixture = TestBed.createComponent(ProjectDetailComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      expect(component.fields.find(f => f.column_name === 'assignee_id')!.options).toEqual([]);
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description A new account: the form opens empty (Czech), needs a login name (3+) and a
+     *   display name; the e-mail is optional (only prefilled - the notifications are the client's
+     *   choice and never sent from here); saving sends the trimmed / lower-cased fields (+ a
+     *   typed-in password only) and shows the password of the answer once, visible and not copied.
+     * @input  openAddAccount; draft ' Petr.N ', ' Petr ', email 'p@x.cz'; password ''; post → meta.password 'Gen12345abcd'
+     * @output invalid until filled; postWithMeta('web/projects/7/accounts', {username 'petr.n', display_name 'Petr',
+     *   email 'p@x.cz', language 'cz'}) without notify fields; account appended; revealed {13, 'petr.n', 'Gen12345abcd'}; form closed
+     */
+    it('adds a client account and shows its password once', fakeAsync(() => {
+      init();
+      component.openAddAccount();
+      expect(component.accountFormMode).toBe('add');
+      expect(component.accountDraft).toEqual({ username: '', display_name: '', email: '', language: 'cz', password: '' });
+      expect(component.accountDraftValid).toBeFalse();
+      component.accountDraft.username = ' Pe ';
+      component.accountDraft.display_name = ' Petr ';
+      expect(component.accountDraftValid).toBeFalse();
+      component.accountDraft.username = ' Petr.N ';
+      expect(component.accountDraftValid).toBeTrue();
+      component.accountDraft.email = 'p@x.cz';
+
+      dh().postWithMeta.and.returnValue(of({ data: { id: 13, username: 'petr.n', display_name: 'Petr', email: 'p@x.cz', notify_replies: false, notify_checkpoint_status: false, notify_checkpoint_dates: false, language: 'cz' }, meta: { password: 'Gen12345abcd' } }));
+      component.saveAccount();
+      expect(dh().postWithMeta).toHaveBeenCalledWith('web/projects/7/accounts', {
+        username: 'petr.n', display_name: 'Petr', email: 'p@x.cz', language: 'cz',
+      });
+      expect(component.accounts.map(a => a.id)).toEqual([11, 12, 13]);
+      expect(component.revealedPassword).toEqual({ accountId: 13, username: 'petr.n', password: 'Gen12345abcd' });
       expect(component.passwordVisible).toBeTrue();
-      expect(TestBed.inject(ProjectPasswordHandoffService).take(7)).toBeNull();
-      ctx.confirm.open.and.returnValue(Promise.resolve(false));
-      await component.goBack();
-      expect(ctx.confirm.open).toHaveBeenCalledWith('projects.close_uncopied_password_title', 'projects.close_uncopied_password_message');
-      expect(navigate).not.toHaveBeenCalled();
-      ctx.confirm.open.and.returnValue(Promise.resolve(true));
-      await component.goBack();
-      expect(navigate).toHaveBeenCalledWith(['/admin/web/projects']);
-      expect(component.revealedPassword).toBeNull();
+      expect(component.passwordCopied).toBeFalse();
+      expect(component.accountFormMode).toBeNull();
+
+      component.openAddAccount();
+      component.accountDraft = { username: 'eva', display_name: 'Eva', email: '', language: 'en', password: 'Typed12345' };
+      dh().postWithMeta.and.returnValue(throwError(() => new Error('422')));
+      component.saveAccount();
+      expect(dh().postWithMeta).toHaveBeenCalledWith('web/projects/7/accounts', jasmine.objectContaining({ password: 'Typed12345', email: null, language: 'en' }));
+      expect(component.accountFormMode).toBe('add');
+      expect(component.accountSaving).toBeFalse();
       discardPeriodicTasks();
     }));
 
     /**
-     * @description A password handed over for another project is not shown (and stays for it).
-     * @input  handoff.put(8, …); page of project 7
-     * @output revealedPassword null; take(8) still returns it
+     * @description Editing an account sends only the changed fields; no change closes without a
+     *   request; no permission opens nothing; a failure keeps the form.
+     * @input  edit anna: display_name 'Anna Veliká', email cleared; then unchanged; then failure
+     * @output put('web/projects/7/accounts/12', { display_name, email: null }); list updated (the API
+     *   turned the client's notifications off with the e-mail)
      */
-    it('ignores the password of another project', fakeAsync(() => {
-      const handoff = TestBed.inject(ProjectPasswordHandoffService);
-      handoff.put(8, 'pw', 'u');
+    it('edits a client account', fakeAsync(() => {
       init();
-      expect(component.revealedPassword).toBeNull();
-      expect(handoff.take(8)?.password).toBe('pw');
+      const anna = component.accounts[1];
+      component.openEditAccount(anna);
+      expect(component.accountDraft).toEqual({ username: 'anna', display_name: 'Anna Malá', email: 'anna@client.cz', language: 'en', password: '' });
+      expect(component.accountNotifications(anna)).toEqual(['projects.account_notify_replies', 'projects.account_notify_checkpoint_dates']);
+      component.accountDraft.display_name = 'Anna Veliká';
+      component.accountDraft.email = '';
+      dh().put.and.returnValue(of({ ...anna, display_name: 'Anna Veliká', email: null, notify_replies: false, notify_checkpoint_dates: false }));
+      component.saveAccount();
+      expect(dh().put).toHaveBeenCalledWith('web/projects/7/accounts/12', { display_name: 'Anna Veliká', email: null });
+      expect(component.accounts[1].display_name).toBe('Anna Veliká');
+      expect(component.accountNotifications(component.accounts[1])).toEqual([]);
+      expect(component.accountFormMode).toBeNull();
+
+      dh().put.calls.reset();
+      component.openEditAccount(component.accounts[1]);
+      component.saveAccount();
+      expect(dh().put).not.toHaveBeenCalled();
+      expect(component.accountFormMode).toBeNull();
+
+      component.openEditAccount(component.accounts[0]);
+      component.accountDraft.username = 'firma';
+      dh().put.and.returnValue(throwError(() => new Error('422')));
+      component.saveAccount();
+      expect(component.accountFormMode).toBe('edit');
+      component.cancelAccountForm();
+      expect(component.editingAccountId).toBeNull();
+
+      ctx.permissions.granted = new Set();
+      component.openEditAccount(component.accounts[0]);
+      component.openAddAccount();
+      expect(component.accountFormMode).toBeNull();
       discardPeriodicTasks();
     }));
 
     /**
-     * @description The password can be shown / hidden and copied; the URL falls back to the project URL;
-     *   copying works without the Clipboard API too.
-     * @input  no password: copyPassword; password { pw, u }: toggle, copy both; then no password; then no clipboard
-     * @output clipboard 'pw', 'u', then 'https://x/p/7'; success alerts; no error without clipboard
+     * @description Reset asks first, then shows the new password once (devices signed out);
+     *   removal asks first and drops the account (and its shown password); cancelled / busy /
+     *   no permission send nothing; failures clear the busy flag.
+     * @input  reset klient confirm true → meta.password 'New12345abcd'; remove klient confirm false, then true; guards; failures
      */
-    it('reveals and copies the password and URL', fakeAsync(() => {
+    it('resets the password of an account and removes an account', fakeAsync(async () => {
+      init();
+      const klient = component.accounts[0];
+      dh().postWithMeta.and.returnValue(of({ data: { ...klient }, meta: { password: 'New12345abcd', ended_sessions: 1 } }));
+      await component.resetAccountPassword(klient);
+      expect(ctx.confirm.open).toHaveBeenCalledWith('projects.account_reset_confirm_title', 'projects.account_reset_confirm_message');
+      expect(dh().postWithMeta).toHaveBeenCalledWith('web/projects/7/accounts/11/password', {});
+      expect(component.revealedPassword).toEqual({ accountId: 11, username: 'klient', password: 'New12345abcd' });
+      expect(component.accounts[0].active_sessions).toBe(0);
+      expect(component.accountBusyId).toBeNull();
+
+      ctx.confirm.open.and.returnValue(Promise.resolve(false));
+      await component.removeAccount(klient);
+      expect(dh().delete).not.toHaveBeenCalled();
+      ctx.confirm.open.and.returnValue(Promise.resolve(true));
+      dh().delete.and.returnValue(of(null));
+      await component.removeAccount(klient);
+      expect(dh().delete).toHaveBeenCalledWith('web/projects/7/accounts/11');
+      expect(component.accounts.map(a => a.id)).toEqual([12]);
+      expect(component.revealedPassword).toBeNull();
+
+      dh().postWithMeta.calls.reset();
+      component.accountBusyId = 99;
+      await component.resetAccountPassword(component.accounts[0]);
+      await component.removeAccount(component.accounts[0]);
+      component.accountBusyId = null;
+      ctx.permissions.granted = new Set();
+      await component.resetAccountPassword(component.accounts[0]);
+      expect(dh().postWithMeta).not.toHaveBeenCalled();
+      ctx.permissions.granted = 'all';
+      dh().postWithMeta.and.returnValue(throwError(() => new Error('x')));
+      await component.resetAccountPassword(component.accounts[0]);
+      expect(component.accountBusyId).toBeNull();
+      dh().delete.and.returnValue(throwError(() => new Error('x')));
+      await component.removeAccount(component.accounts[0]);
+      expect(component.accountBusyId).toBeNull();
+      expect(component.accounts.length).toBe(1);
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description The shown password can be hidden / shown and copied alone or with the link and
+     *   login name; leaving or dismissing it uncopied asks first; the URL is copied from the project.
+     * @input  revealed {11, klient, pw}; toggle; copy; copy details; dismiss; goBack with an uncopied one (cancel / confirm)
+     * @output clipboard 'pw', details text with url/username/password replaced, 'https://x/p/7'; dismiss after copy
+     *   does not ask; uncopied: confirm('projects.close_uncopied_password_title', …)
+     */
+    it('copies the password and the sign-in details and asks before losing them', fakeAsync(async () => {
+      ctx.i18n.getValue.and.callFake((key: string) => key === 'projects.access_details_text' ? '{url} | {username} | {password}' : key);
       init();
       const write = spyOn(navigator.clipboard, 'writeText').and.returnValue(Promise.resolve());
       component.copyPassword();
+      component.copyAccessDetails();
       expect(write).not.toHaveBeenCalled();
-      component.revealedPassword = { password: 'pw', url: 'u', generatedAt: 'x' };
+      component.revealedPassword = { accountId: 11, username: 'klient', password: 'pw' };
       component.togglePasswordVisibility();
       expect(component.passwordVisible).toBeTrue();
       component.copyPassword();
+      component.copyAccessDetails();
       component.copyPublicUrl();
-      expect(write.calls.allArgs()).toEqual([['pw'], ['u']]);
-      expect(ctx.alert.open).toHaveBeenCalledWith('projects.copied_title', 'projects.password_copied_message', 'success');
-      expect(ctx.alert.open).toHaveBeenCalledWith('projects.copied_title', 'projects.url_copied_message', 'success');
-      component.revealedPassword = null;
-      component.copyPublicUrl();
-      expect(write).toHaveBeenCalledWith('https://x/p/7');
+      expect(write.calls.allArgs()).toEqual([['pw'], ['https://x/p/7 | klient | pw'], ['https://x/p/7']]);
+      expect(ctx.alert.open).toHaveBeenCalledWith('projects.copied_title', 'projects.access_details_copied_message', 'success');
+      await component.dismissPassword();
+      expect(ctx.confirm.open).not.toHaveBeenCalled();
+      expect(component.revealedPassword).toBeNull();
+
+      component.revealedPassword = { accountId: 11, username: 'klient', password: 'pw2' };
+      component.passwordCopied = false;
+      ctx.confirm.open.and.returnValue(Promise.resolve(false));
+      await component.dismissPassword();
+      await component.goBack();
+      expect(ctx.confirm.open).toHaveBeenCalledWith('projects.close_uncopied_password_title', 'projects.close_uncopied_password_message');
+      expect(navigate).not.toHaveBeenCalled();
+      expect(component.revealedPassword).not.toBeNull();
+      ctx.confirm.open.and.returnValue(Promise.resolve(true));
+      await component.goBack();
+      expect(navigate).toHaveBeenCalledWith(['/admin/web/projects']);
+
       component.project = null;
       write.calls.reset();
       component.copyPublicUrl();
@@ -335,47 +496,36 @@ describe('ProjectDetailComponent', () => {
     }));
 
     /**
-     * @description Regenerating asks first and shows the new password - in the component only.
-     * @input  confirm → true; API { generated_password: 'New1' }; then guards (busy, cancelled, no permission, failure)
-     * @output post('web/projects/7/regenerate-password', {}); revealedPassword 'New1' visible, not copied;
-     *   success alert; guards send nothing; failure resets the flag
+     * @description The files card reloads on demand, opens the thread of a file (switching the
+     *   filter to "all" for a closed thread) and keeps the list on a failure.
+     * @input  openFileThread(brief.pdf of closed thread 4); unknown thread; loadFiles failing
+     * @output threadFilter 'all'; getWithMeta('web/project-threads/4'); unknown → nothing; files kept, not loading
      */
-    it('regenerates the client password', fakeAsync(async () => {
+    it('lists the files and opens their threads', fakeAsync(() => {
       init();
-      dh().post.and.returnValue(of({ generated_password: 'New1' }));
-      await component.regeneratePassword();
-      expect(ctx.confirm.open).toHaveBeenCalledWith('projects.regenerate_password_confirm_title', 'projects.regenerate_password_confirm_message');
-      expect(dh().post).toHaveBeenCalledWith('web/projects/7/regenerate-password', {});
-      expect(component.revealedPassword).toEqual(jasmine.objectContaining({ password: 'New1', url: 'https://x/p/7' }));
-      expect(component.passwordVisible).toBeTrue();
-      expect(component.passwordCopied).toBeFalse();
-      expect(ctx.alert.open).toHaveBeenCalledWith('projects.password_regenerated_title', 'projects.password_regenerated_message', 'success');
-
-      dh().post.calls.reset();
-      component.passwordRegenerating = true;
-      await component.regeneratePassword();
-      component.passwordRegenerating = false;
-      ctx.confirm.open.and.returnValue(Promise.resolve(false));
-      await component.regeneratePassword();
-      ctx.permissions.granted = new Set();
-      ctx.confirm.open.and.returnValue(Promise.resolve(true));
-      await component.regeneratePassword();
-      expect(dh().post).not.toHaveBeenCalled();
-      ctx.permissions.granted = 'all';
-      dh().post.and.returnValue(throwError(() => new Error('x')));
-      await component.regeneratePassword();
-      expect(component.passwordRegenerating).toBeFalse();
+      dh().getWithMeta.and.returnValue(of({ data: { ...threads()[1], messages: [] }, meta: { has_more_older_messages: false } }));
+      component.openFileThread(component.files[1]);
+      expect(component.threadFilter).toBe('all');
+      expect(dh().getWithMeta).toHaveBeenCalledWith('web/project-threads/4');
+      dh().getWithMeta.calls.reset();
+      component.openFileThread({ ...component.files[0], thread_id: 999 });
+      expect(dh().getWithMeta).not.toHaveBeenCalled();
+      dh().getCollection.and.returnValue(throwError(() => new Error('x')));
+      component.loadFiles();
+      expect(component.files.length).toBe(2);
+      expect(component.filesLoading).toBeFalse();
+      flush();
       discardPeriodicTasks();
     }));
   });
 
   describe('checkpoints', () => {
     /**
-     * @description A checkpoint is added with the trimmed title and description (empty description
-     *   = none); empty titles or no permission send nothing.
-     * @input  '  '; then '  Launch ' with description '  Go live  '; then 'Docs' without description; then no permission
-     * @output post(…, { label: 'Launch', description: 'Go live' }), post(…, { label: 'Docs', description: null });
-     *   inputs cleared
+     * @description A checkpoint is added with the trimmed title, description, due date and internal
+     *   note (empty = none); empty titles or no permission send nothing.
+     * @input  '  '; then '  Launch ' with description '  Go live  '; then 'Docs' with due date and note; then no permission
+     * @output post(…, { label 'Launch', description 'Go live', due_date null, internal_note null }),
+     *   post(…, { label 'Docs', description null, due_date '2026-12-24', internal_note 'Ask hosting' }); inputs cleared
      */
     it('adds checkpoints', fakeAsync(() => {
       init();
@@ -386,13 +536,16 @@ describe('ProjectDetailComponent', () => {
       component.newCheckpointLabel = '  Launch ';
       component.newCheckpointDescription = '  Go live  ';
       component.addCheckpoint();
-      expect(dh().post).toHaveBeenCalledWith('web/projects/7/checkpoints', { label: 'Launch', description: 'Go live' });
+      expect(dh().post).toHaveBeenCalledWith('web/projects/7/checkpoints', { label: 'Launch', description: 'Go live', due_date: null, internal_note: null });
       expect(component.checkpoints.length).toBe(2);
       expect(component.newCheckpointLabel).toBe('');
       expect(component.newCheckpointDescription).toBe('');
       component.newCheckpointLabel = 'Docs';
+      component.newCheckpointDueDate = '2026-12-24';
+      component.newCheckpointNote = '  Ask hosting  ';
       component.addCheckpoint();
-      expect(dh().post).toHaveBeenCalledWith('web/projects/7/checkpoints', { label: 'Docs', description: null });
+      expect(dh().post).toHaveBeenCalledWith('web/projects/7/checkpoints', { label: 'Docs', description: null, due_date: '2026-12-24', internal_note: 'Ask hosting' });
+      expect([component.newCheckpointDueDate, component.newCheckpointNote]).toEqual(['', '']);
       dh().post.calls.reset();
       ctx.permissions.granted = new Set();
       component.newCheckpointLabel = 'X';
@@ -492,7 +645,7 @@ describe('ProjectDetailComponent', () => {
       const cp = component.checkpoints[0];
       component.startEditCheckpoint(cp);
       expect(component.editingCheckpointId).toBe(1);
-      expect(component.checkpointDraft).toEqual({ label: 'Design', description: '' });
+      expect(component.checkpointDraft).toEqual({ label: 'Design', description: '', due_date: '', internal_note: '' });
       component.checkpointDraft.description = '  Wireframes ';
       dh().put.and.returnValue(of({ ...cp, description: 'Wireframes' }));
       component.saveCheckpoint(cp);
@@ -509,7 +662,7 @@ describe('ProjectDetailComponent', () => {
       component.saveCheckpoint(saved);
       expect(dh().put).toHaveBeenCalledTimes(1);
 
-      component.checkpointDraft = { label: 'UX', description: '' };
+      component.checkpointDraft = { label: 'UX', description: '', due_date: '', internal_note: '' };
       dh().put.and.returnValue(throwError(() => new Error('x')));
       component.saveCheckpoint(saved);
       expect(dh().put).toHaveBeenCalledWith('web/projects/7/checkpoints/1', { label: 'UX', description: null });
@@ -521,6 +674,70 @@ describe('ProjectDetailComponent', () => {
       ctx.permissions.granted = new Set();
       component.startEditCheckpoint(saved);
       expect(component.editingCheckpointId).toBeNull();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Due date and internal note are edited with the title (only changes sent); a
+     *   checkpoint is overdue when its date passed and it is not done.
+     * @input  Design: due '2026-12-01', note ' Hosting '; isOverdue with today 2026-12-02 / 2026-11-30; done
+     * @output put(…/checkpoints/1, { due_date, internal_note: 'Hosting' }); stored; overdue true / false / false
+     */
+    it('edits the due date and internal note and marks overdue checkpoints', fakeAsync(() => {
+      init();
+      const cp = component.checkpoints[0];
+      component.startEditCheckpoint(cp);
+      component.checkpointDraft.due_date = '2026-12-01';
+      component.checkpointDraft.internal_note = ' Hosting ';
+      dh().put.and.returnValue(of({ ...cp, due_date: '2026-12-01', internal_note: 'Hosting' }));
+      component.saveCheckpoint(cp);
+      expect(dh().put).toHaveBeenCalledWith('web/projects/7/checkpoints/1', { due_date: '2026-12-01', internal_note: 'Hosting' });
+      const saved = component.checkpoints[0];
+      expect([saved.due_date, saved.internal_note]).toEqual(['2026-12-01', 'Hosting']);
+      expect(component.isOverdue(saved, '2026-12-02')).toBeTrue();
+      expect(component.isOverdue(saved, '2026-11-30')).toBeFalse();
+      expect(component.isOverdue({ ...saved, status: 'done' }, '2026-12-02')).toBeFalse();
+      expect(component.isOverdue({ ...saved, due_date: null }, '2026-12-02')).toBeFalse();
+      expect(ProjectDetailComponent.localToday()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Up / down moves a checkpoint at once and saves the whole order; the ends, a
+     *   running save and no permission do nothing; a failure restores the previous order.
+     * @input  checkpoints A(1), B(2), C(3); move B up; move A up (first); failure moving C up
+     * @output put('web/projects/7/checkpoints/order', { ids: [2, 1, 3] }); order B, A, C with sort 0..2;
+     *   ends ignored; failure → B, A, C again
+     */
+    it('reorders the checkpoints', fakeAsync(() => {
+      dh().get.and.returnValue(of({ ...project(), checkpoints: [
+        { id: 1, label: 'A', status: 'new', sort_order: 0 }, { id: 2, label: 'B', status: 'new', sort_order: 1 }, { id: 3, label: 'C', status: 'new', sort_order: 2 },
+      ] }));
+      init();
+      dh().put.and.returnValue(of([]));
+      component.moveCheckpoint(1, -1);
+      expect(dh().put).toHaveBeenCalledWith('web/projects/7/checkpoints/order', { ids: [2, 1, 3] });
+      expect(component.checkpoints.map(c => [c.label, c.sort_order])).toEqual([['B', 0], ['A', 1], ['C', 2]]);
+      expect(component.checkpointsReordering).toBeFalse();
+      dh().put.calls.reset();
+      component.moveCheckpoint(0, -1);
+      component.moveCheckpoint(2, 1);
+      component.checkpointsReordering = true;
+      component.moveCheckpoint(1, 1);
+      component.checkpointsReordering = false;
+      ctx.permissions.granted = new Set();
+      component.moveCheckpoint(1, 1);
+      expect(dh().put).not.toHaveBeenCalled();
+      ctx.permissions.granted = 'all';
+      dh().put.and.returnValue(throwError(() => new Error('x')));
+      component.moveCheckpoint(2, -1);
+      expect(component.checkpoints.map(c => c.label)).toEqual(['B', 'A', 'C']);
+      expect(component.checkpointsReordering).toBeFalse();
+
+      fixture.detectChanges();
+      const moves = (fixture.nativeElement as HTMLElement).querySelectorAll('.pd-cp-move');
+      expect(moves.length).toBe(3);
+      expect((moves[0].querySelector('button') as HTMLButtonElement).disabled).toBeTrue();
       discardPeriodicTasks();
     }));
 
@@ -651,7 +868,7 @@ describe('ProjectDetailComponent', () => {
     /**
      * @description A text reply is posted as JSON, then the thread and the list reload.
      * @input  thread 3 open; replyBody '  Hello '
-     * @output post('web/project-threads/3/reply', { body: 'Hello' }); thread reloaded; threads reloaded; reply cleared
+     * @output post('web/project-threads/3/reply', { body: 'Hello', is_internal: false }); thread reloaded; threads reloaded; reply cleared
      */
     it('sends a text reply', fakeAsync(async () => {
       init();
@@ -659,7 +876,7 @@ describe('ProjectDetailComponent', () => {
       component.replyBody = '  Hello ';
       dh().getCollection.calls.reset();
       await component.sendReply();
-      expect(dh().post).toHaveBeenCalledWith('web/project-threads/3/reply', { body: 'Hello' });
+      expect(dh().post).toHaveBeenCalledWith('web/project-threads/3/reply', { body: 'Hello', is_internal: false });
       expect(dh().getWithMeta).toHaveBeenCalledWith('web/project-threads/3');
       expect(dh().getCollection).toHaveBeenCalledWith('web/project-threads', { project_id: 7, no_pagination: 'true' });
       expect(component.replyBody).toBe('');
@@ -671,7 +888,7 @@ describe('ProjectDetailComponent', () => {
     /**
      * @description A reply with files is sent as multipart FormData (body + attachments[]).
      * @input  replyFiles [a.pdf]; replyBody 'See file'
-     * @output FormData body 'See file' with one attachments[]; files cleared
+     * @output FormData body 'See file', is_internal '0', one attachments[]; files cleared; files card reloaded
      */
     it('sends a reply with attachments as FormData', fakeAsync(async () => {
       init();
@@ -681,8 +898,10 @@ describe('ProjectDetailComponent', () => {
       await component.sendReply();
       const body = dh().post.calls.mostRecent().args[1] as FormData;
       expect(body.get('body')).toBe('See file');
+      expect(body.get('is_internal')).toBe('0');
       expect(body.getAll('attachments[]').length).toBe(1);
       expect(component.replyFiles).toEqual([]);
+      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/7/files');
       flush();
       discardPeriodicTasks();
     }));
@@ -764,6 +983,63 @@ describe('ProjectDetailComponent', () => {
       expect(component.threadPriorityLabel('high')).toBe('projects.thread_priority_high');
       expect(component.threadAuthorLabel('admin')).toBe('projects.thread_author_admin');
       expect(component.threadAuthorLabel('customer')).toBe('projects.thread_author_customer');
+      expect(component.waitingLabel(threads()[0])).toBe('projects.thread_waiting_on_us');
+      expect(component.waitingLabel(threads()[2])).toBe('projects.thread_waiting_on_client');
+      expect(component.waitingLabel(threads()[1])).toBe('');
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description "Read by the client": our public messages written before the client last opened
+     *   the thread; never internal notes or client messages; nothing without a read time.
+     * @input  thread read at 10:00; admin 09:00, admin 11:00, internal 09:00, customer 09:00; rendered
+     * @output true, false, false, false; the open thread renders one read and one unread receipt and
+     *   the internal note with its tag; without a read time false
+     */
+    it('shows which of our messages the client read', fakeAsync(() => {
+      init();
+      const messages = [
+        { id: 1, author_type: 'admin' as const, author_label: 'Jana', body: 'A', created_at: '2026-11-10T09:00:00' },
+        { id: 2, author_type: 'admin' as const, author_label: 'Jana', body: 'B', created_at: '2026-11-10T11:00:00' },
+        { id: 3, author_type: 'admin' as const, author_label: 'Jana', body: 'N', is_internal: true, created_at: '2026-11-10T09:00:00' },
+        { id: 4, author_type: 'customer' as const, author_label: 'Anna', body: 'C', created_at: '2026-11-10T09:00:00' },
+      ];
+      component.selectedThread = { ...threads()[0], customer_last_read_at: '2026-11-10T10:00:00', messages };
+      expect(messages.map(m => component.isReadByClient(m))).toEqual([true, false, false, false]);
+      (component as any).cd.markForCheck();
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelectorAll('.pd-msg-receipt').length).toBe(2);
+      expect(el.querySelectorAll('.pd-msg-receipt--read').length).toBe(1);
+      expect(el.querySelector('.pd-msg--internal .pd-internal-tag')!.textContent).toContain('projects.message_internal_tag');
+      component.selectedThread = { ...threads()[0], customer_last_read_at: null, messages };
+      expect(component.isReadByClient(messages[0])).toBeFalse();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description An internal note is sent with is_internal (JSON and FormData); opening another
+     *   thread switches back to a reply to the client; the switch is rendered.
+     * @input  thread 3; replyInternal true; body 'Check DNS'; then with a file; then openThread
+     * @output post({ body, is_internal: true }); FormData is_internal '1'; replyInternal false after opening; .pd-reply--internal
+     */
+    it('sends internal notes', fakeAsync(async () => {
+      init();
+      component.selectedThread = { ...threads()[0], messages: [] };
+      component.replyInternal = true;
+      (component as any).cd.markForCheck();
+      fixture.detectChanges();
+      expect((fixture.nativeElement as HTMLElement).querySelector('.pd-reply--internal')).not.toBeNull();
+      component.replyBody = 'Check DNS';
+      await component.sendReply();
+      expect(dh().post).toHaveBeenCalledWith('web/project-threads/3/reply', { body: 'Check DNS', is_internal: true });
+      expect(component.replyInternal).toBeFalse();
+      component.replyInternal = true;
+      component.replyFiles = [file('dns.txt')];
+      component.replyBody = 'Log';
+      await component.sendReply();
+      expect((dh().post.calls.mostRecent().args[1] as FormData).get('is_internal')).toBe('1');
+      flush();
       discardPeriodicTasks();
     }));
   });
@@ -830,16 +1106,22 @@ describe('ProjectDetailComponent', () => {
       expect(el.querySelector('.pd-chip--unread')).not.toBeNull();
       expect(el.querySelectorAll('.pd-thread').length).toBe(2);
       expect(el.querySelectorAll('.pd-thread .pd-count--unread').length).toBe(1);
-      expect(el.querySelectorAll('.pd-form .pd-input').length).toBe(11);
+      expect(el.querySelectorAll('.pd-form .pd-input').length).toBe(12);
+      expect(el.querySelectorAll('.pd-account').length).toBe(2);
+      expect(el.querySelector('.pd-subtitle')!.textContent).toContain('Jana');
+      expect(el.querySelectorAll('.pd-files-row').length).toBe(2);
+      expect(el.querySelectorAll('.pd-files-row--internal').length).toBe(1);
+      expect(el.querySelector('.pd-waiting[data-waiting="supplier"]')!.textContent).toContain('projects.thread_waiting_on_us');
       expect(el.querySelector('.pd-savebar')).not.toBeNull();
       expect(el.textContent).toContain('Design');
       discardPeriodicTasks();
     }));
 
     /**
-     * @description Without the update permission everything is read-only: no save bar, no reply, no regenerate, inputs disabled.
+     * @description Without the update permission everything is read-only: no save bar, no reply,
+     *   no account actions, inputs disabled.
      * @input  granted only web-projects-view
-     * @output read-only note; no .pd-savebar / .pd-reply / .pd-btn--warn; first input disabled
+     * @output read-only note; no .pd-savebar / .pd-reply / .pd-account-actions; accounts listed; first input disabled
      */
     it('renders read-only without the update permission', fakeAsync(() => {
       ctx.permissions.granted = new Set(['web-projects-view']);
@@ -849,7 +1131,9 @@ describe('ProjectDetailComponent', () => {
       const el = fixture.nativeElement as HTMLElement;
       expect(el.textContent).toContain('projects.detail_readonly');
       expect(el.querySelector('.pd-savebar')).toBeNull();
-      expect(el.querySelector('.pd-btn--warn')).toBeNull();
+      expect(el.querySelector('.pd-reply')).toBeNull();
+      expect(el.querySelector('.pd-account-actions')).toBeNull();
+      expect(el.querySelectorAll('.pd-account').length).toBe(2);
       expect((el.querySelector('.pd-form .pd-input') as HTMLInputElement).disabled).toBeTrue();
       discardPeriodicTasks();
     }));

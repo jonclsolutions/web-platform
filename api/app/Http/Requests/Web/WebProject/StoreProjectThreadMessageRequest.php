@@ -7,7 +7,8 @@
  * @created 2026
  * @description Validation for a single reply within an existing thread - used by
  * BOTH the customer's public reply endpoint and the admin's reply endpoint (shared
- * request class, same allowed attachment types on both sides).
+ * request class, same allowed attachment types on both sides). `is_internal` (an internal note
+ * of the team) is read only by the admin endpoint - the portal ignores it.
  */
 
 namespace App\Http\Requests\Web\WebProject;
@@ -22,7 +23,8 @@ class StoreProjectThreadMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'body'           => ['required', 'string'],
+            'body'           => ['required', 'string', 'max:20000'],
+            'is_internal'    => ['sometimes', 'boolean'],
             'attachments'    => ['nullable', 'array', 'max:' . AttachmentPolicy::PROFILES[AttachmentPolicy::PROJECT_THREAD]['max_files']],
             'attachments.*'  => AttachmentPolicy::fileRules(AttachmentPolicy::PROJECT_THREAD),
         ];

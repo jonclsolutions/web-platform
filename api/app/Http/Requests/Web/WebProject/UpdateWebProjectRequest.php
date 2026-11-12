@@ -5,10 +5,9 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Same field set as Store, but nothing is required (partial update) -
- * `access_token`/`access_password_hash`/`visibility` (via update()) can be changed
- * here; the actual PASSWORD VALUE can only change through
- * WebProjectController::regeneratePassword(), never through this generic update.
+ * @description Same field set as Store, but nothing is required (partial update). The access
+ * token never changes here; the client passwords belong to the client accounts
+ * (WebProjectAccountController).
  */
 
 namespace App\Http\Requests\Web\WebProject;
@@ -40,6 +39,8 @@ class UpdateWebProjectRequest extends FormRequest
             'estimated_completion_to'    => ['nullable', 'date', 'after_or_equal:estimated_completion_from'],
             'visibility'                 => ['sometimes', 'required', 'in:public,private'],
             'status'                     => ['sometimes', 'in:' . implode(',', WebProject::STATUSES)],
+            // Responsible administrator - only someone who can answer the client (WebProject::assignableUsers()).
+            'assignee_id'                => ['nullable', 'integer', Rule::in(WebProject::assignableUsers()->pluck('id')->all())],
         ];
     }
 }

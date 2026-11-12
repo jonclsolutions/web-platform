@@ -4,9 +4,9 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description Internal notification (ProjectThreadActivityMail) to the project's contact
-    e-mail about customer activity in a project thread - only the thread subject and a link to
-    the administration, never the message text.
+    @description Internal notification (ProjectThreadActivityMail) to the responsible
+    administrator / the project's contact e-mail about customer activity in a project thread - only
+    the thread subject and a link to the project page of the administration, never the message text.
 --}}
 <!DOCTYPE html>
 <html lang="en">

@@ -9,11 +9,12 @@
  * `WebSalesOrder` (or its originating `WebSalesLead`) or be created standalone by an
  * admin; both paths result in an identical row here.
  * @property string $access_token Permanent, plaintext, unguessable public URL id -
- * see migration for the security rationale (mirrors `WebSalesLead::public_token`).
- * @property string $access_password_hash Bcrypt hash - the actual secret. Never
- * customer-changeable; regenerated exclusively by an admin.
+ * see migration for the security rationale (mirrors `WebSalesLead::public_token`). The secret of
+ * a sign-in is the password of a client account (WebProjectAccount), set by the administration.
  * @property string $visibility 'public' | 'private' - checked on EVERY public
  * request by `WebProjectPublicController`, not just at login.
+ * @property int|null $assignee_id Administrator responsible for the project - gets the e-mails
+ * about client activity (else the project's contact e-mail).
  */
 
 namespace App\Models\Web;
@@ -23,7 +24,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Eloquent\Builder;
+use App\Models\User;
 use Illuminate\Support\Str;
 
 class WebProject extends Model
@@ -50,14 +52,10 @@ class WebProject extends Model
         'estimated_completion_to',
         'visibility',
         'status',
-    ];
-
-    protected $hidden = [
-        'access_password_hash',
+        'assignee_id',
     ];
 
     protected $casts = [
-        'password_generated_at'     => 'datetime',
         'estimated_completion_from' => 'date',
         'estimated_completion_to'   => 'date',
         'created_at'                => 'datetime',
@@ -66,6 +64,9 @@ class WebProject extends Model
     ];
 
     public const STATUSES = ['new', 'development', 'finished'];
+
+    /** @description Permission an administrator needs to be assignable to a project. */
+    public const ASSIGNEE_PERMISSION = 'web-projects-update';
 
     public function lead(): BelongsTo
     {
@@ -113,6 +114,53 @@ class WebProject extends Model
     }
 
     /**
+     * @description Client accounts of the portal (oldest first).
+     * @return HasMany
+     */
+    public function accounts(): HasMany
+    {
+        return $this->hasMany(WebProjectAccount::class, 'project_id')->orderBy('id');
+    }
+
+    /**
+     * @description Administrator responsible for the project.
+     * @return BelongsTo
+     */
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assignee_id');
+    }
+
+    /**
+     * @description Administrators who can be responsible for a project: active (not blocked)
+     *   accounts of the sysadmin role or with the update permission of projects (from a role or
+     *   granted directly) - the people who can answer the client.
+     * @return Builder<User>
+     */
+    public static function assignableUsers(): Builder
+    {
+        $hasPermission = fn (Builder $q) => $q->where('permission_key', self::ASSIGNEE_PERMISSION);
+
+        return User::query()
+            ->where('is_blocked', false)
+            ->where(fn (Builder $q) => $q
+                ->whereHas('roles', fn (Builder $r) => $r->where(fn (Builder $w) => $w->where('role_name', 'sysadmin')->orWhereHas('permissions', $hasPermission)))
+                ->orWhereHas('explicitPermissions', $hasPermission))
+            ->orderBy('full_name');
+    }
+
+    /**
+     * @description Adds `waiting_threads_count`: open threads whose last visible message is the
+     *   client's - the administration owes an answer.
+     * @param Builder $query Project query.
+     * @return void
+     */
+    public function scopeWithWaitingThreadsCount($query): void
+    {
+        $query->withCount(['threads as waiting_threads_count' => fn ($q) => $q->where('status', 'active')->where('last_public_author', 'customer')]);
+    }
+
+    /**
      * @description Generates a fresh, unguessable permanent access token for the
      * public URL. Called exactly once at project creation - see
      * WebProjectController::store() in a later phase. Loops on the (astronomically
@@ -125,26 +173,5 @@ class WebProject extends Model
         } while (self::withTrashed()->where('access_token', $token)->exists());
 
         return $token;
-    }
-
-    /**
-     * @description Sets a brand-new access password (bcrypt-hashed) and returns the
-     * PLAINTEXT value so the caller (admin controller) can display/relay it to the
-     * customer exactly once - it is never recoverable again afterwards, consistent
-     * with how real user passwords are handled everywhere else in the app.
-     */
-    public function regeneratePassword(): string
-    {
-        $plaintext = Str::password(14, symbols: false);
-        $this->access_password_hash = Hash::make($plaintext);
-        $this->password_generated_at = now();
-        $this->save();
-
-        return $plaintext;
-    }
-
-    public function verifyPassword(string $plaintext): bool
-    {
-        return Hash::check($plaintext, $this->access_password_hash);
     }
 }

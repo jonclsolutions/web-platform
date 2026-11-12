@@ -28,11 +28,15 @@ class WebProjectThreadResource extends JsonResource
             'priority'               => $this->priority,
             'status'                 => $this->status,
             'opened_by'              => $this->opened_by,
+            // 'supplier' | 'customer' | null - whose turn it is (WebProjectThread::waitingOn()).
+            'waiting_on'             => $this->waitingOn(),
             'last_message_at'        => $this->last_message_at?->format('Y-m-d H:i:s'),
+            // Until when the client has read the thread - "read by the client" of admin replies.
+            'customer_last_read_at'  => $this->customer_last_read_at?->format('Y-m-d H:i:s'),
             // Client messages the administration has not read yet (admin list only).
             'admin_unread_count'     => $this->when(isset($this->admin_unread_count), fn () => (int) $this->admin_unread_count),
             'unread_count'           => $this->when($this->relationLoaded('messages'), function () {
-                $adminMessages = $this->messages->where('author_type', 'admin');
+                $adminMessages = $this->messages->where('author_type', 'admin')->where('is_internal', false);
                 if (!$this->customer_last_read_at) {
                     return $adminMessages->count();
                 }

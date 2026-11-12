@@ -6,13 +6,12 @@
  * @created 2026
  * @description Unit tests of ProjectsComponent and projects.config.ts – the list of client
  *   projects of the Web module: translated configuration (with the unread messages column and
- *   filter), toolbars, prefill from a sales order (?order_id), old links ?open_project → project
- *   page, creating a project (its one-time password handed to the project page in memory only,
- *   never in browser storage - VT-08) and opening the project page from the table.
+ *   filter, the assignee and the threads waiting on the team, the "my projects" filter), the
+ *   assignee options, toolbars, prefill from a sales order (?order_id), old links ?open_project →
+ *   project page, creating a project (opens its page) and opening the project page from the table.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (all admin doubles), ActivatedRoute (stub with query
- *   params), Router.navigate (spy), ProjectPasswordHandoffService, sessionStorage (removal of
- *   the legacy stored passwords)
+ *   params), Router.navigate (spy), sessionStorage (removal of the legacy stored passwords)
  */
 
 import { ComponentFixture, TestBed, fakeAsync, discardPeriodicTasks } from '@angular/core/testing';
@@ -24,7 +23,6 @@ import {
   CHECKPOINT_STATUS_VALUES, PROJECT_PLATFORM_VALUES, PROJECT_STATUS_VALUES, PROJECT_VISIBILITY_VALUES,
   createCheckpointStatusLabels
 } from './projects.config';
-import { ProjectPasswordHandoffService } from './project-password-handoff.service';
 import { AdminTestContext, createAdminTestContext, paginated } from '../../../../testing/admin-test-helpers';
 
 describe('ProjectsComponent', () => {
@@ -59,23 +57,29 @@ describe('ProjectsComponent', () => {
   describe('configuration', () => {
     /**
      * @description The list is configured from the 'projects' translations: the "open project"
-     *   button, the unread messages column (count pill) and the "only with unread" filter.
+     *   button, the assignee column, the unread messages and waiting threads columns (count pills)
+     *   and the "only with unread" / "my projects" filters.
      * @input  component created
-     * @output caption; row buttons open / edit / delete; 8 + 3 columns with unread_messages_count
-     *   of type 'count'; 6 filters ending with unread (one option '1'); 13 details
+     * @output caption; row buttons open / edit / delete; 10 + 3 columns with assignee_name,
+     *   unread_messages_count and waiting_threads_count; 7 filters ending with unread and
+     *   assigned_to_me (one option '1' each); 14 details
      */
     it('builds the configuration from translations', () => {
       expect(component.tableCaption).toBe('projects.table_header');
       expect(component.buttons.map(b => [b.action, b.permission, b.icon])).toEqual([
         ['generate_form', undefined, 'folder-open'], ['edit', 'web-projects-update', 'edit'], ['delete', 'web-projects-delete', 'delete']
       ]);
-      expect(component.projectColumns.length).toBe(8);
+      expect(component.projectColumns.length).toBe(10);
       expect(component.projectColumns.find(c => c.key === 'unread_messages_count')).toEqual(
         { key: 'unread_messages_count', header: 'projects.col_unread', type: 'count' });
+      expect(component.projectColumns.find(c => c.key === 'waiting_threads_count')).toEqual(
+        { key: 'waiting_threads_count', header: 'projects.col_waiting', type: 'count' });
+      expect(component.projectColumns.find(c => c.key === 'assignee_name')?.header).toBe('projects.col_assignee');
       expect(component.trashProjectColumns.map(c => c.key)).toEqual(['id', 'name', 'deleted_at']);
-      expect(component.filterColumns.map(c => c.key)).toEqual(['id', 'name', 'visibility', 'status', 'platform', 'unread']);
+      expect(component.filterColumns.map(c => c.key)).toEqual(['id', 'name', 'visibility', 'status', 'platform', 'unread', 'assigned_to_me']);
       expect((component.filterColumns[5] as any).options).toEqual([{ value: '1', label: 'projects.filter_unread_yes' }]);
-      expect(component.detailsColumns.length).toBe(13);
+      expect((component.filterColumns[6] as any).options).toEqual([{ value: '1', label: 'projects.filter_mine_yes' }]);
+      expect(component.detailsColumns.length).toBe(14);
       expect(component.t('btn_manage')).toBe('projects.btn_manage');
     });
 
@@ -230,28 +234,52 @@ describe('ProjectsComponent', () => {
     });
 
     /**
-     * @description A new project returns a one-time password: it is handed to the project page in
-     *   memory only (written to no browser storage - VT-08) and the project page opens.
-     * @input  handleFormSubmitted({ name: 'Shop' }); API { id: 7, generated_password: 'S3cret', public_url }
+     * @description A new project opens its page (the client accounts are added there); no password
+     *   is expected from the API any more and nothing is written to browser storage.
+     * @input  handleFormSubmitted({ name: 'Shop' }); API { id: 7, public_url }
      * @output post('web/projects', …); alert 'projects.project_created_message'; navigate to
-     *   ['/admin/web/projects', 7]; handoff.take(7) → S3cret + url once; no storage write
+     *   ['/admin/web/projects', 7]; form closed; no storage write
      */
-    it('creates a project and opens its page with the password', () => {
+    it('creates a project and opens its page', () => {
       const setItem = spyOn(Storage.prototype, 'setItem').and.callThrough();
-      dh().post.and.returnValue(of({ id: 7, generated_password: 'S3cret', public_url: 'https://x/p/7' }));
+      dh().post.and.returnValue(of({ id: 7, public_url: 'https://x/p/7' }));
       component.handleFormSubmitted({ name: 'Shop' });
       expect(dh().post).toHaveBeenCalledWith('web/projects', { name: 'Shop' });
       expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'projects.project_created_message', 'success');
       expect(navigate).toHaveBeenCalledWith(['/admin/web/projects', 7]);
       expect(component.showCreateForm).toBeFalse();
-      const handoff = TestBed.inject(ProjectPasswordHandoffService);
-      expect(handoff.take(7)).toEqual(jasmine.objectContaining({ password: 'S3cret', url: 'https://x/p/7' }));
-      expect(handoff.take(7)).toBeNull();
-      expect(setItem.calls.allArgs().some(a => String(a[1]).includes('S3cret'))).toBeFalse();
+      expect(setItem).not.toHaveBeenCalled();
     });
 
     /**
-     * @description Updating, or creating without a password in the answer, only shows "updated" and reloads.
+     * @description The assignee select offers "Nobody" and the administrators of
+     *   GET web/projects/assignees (loaded once on init, kept after a language change); a failed
+     *   load keeps only "Nobody".
+     * @input  getCollection('web/projects/assignees') → [Jana #3, Petr #5]; detectChanges; translations$.next;
+     *         then a new component whose load fails
+     * @output options ['' Nobody, '3' Jana, '5' Petr] before and after the rebuild; failure → ['']
+     */
+    it('loads the assignee options', () => {
+      dh().getCollection.and.callFake((endpoint: string) =>
+        endpoint === 'web/projects/assignees' ? of([{ id: 3, full_name: 'Jana' }, { id: 5, full_name: 'Petr' }]) : of([]));
+      fixture.detectChanges();
+      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/assignees');
+      const expected = [
+        { value: '', label: 'projects.field_assignee_none_option' }, { value: '3', label: 'Jana' }, { value: '5', label: 'Petr' }
+      ];
+      expect(field('assignee_id').options).toEqual(expected);
+      ctx.i18n.translations$.next({});
+      expect(field('assignee_id').options).toEqual(expected);
+
+      const other = TestBed.createComponent(ProjectsComponent);
+      dh().getCollection.and.returnValue(throwError(() => new Error('x')));
+      other.detectChanges();
+      expect((other.componentInstance.formFields.find(f => f.column_name === 'assignee_id') as any).options.map((o: any) => o.value)).toEqual(['']);
+      other.destroy();
+    });
+
+    /**
+     * @description Updating, or an answer without a project id, only shows "updated" and reloads.
      * @input  handleFormSubmitted({ id: 7, name: 'X' }); handleFormSubmitted({ name: 'Y' }) with API {}
      * @output put('web/projects/7', …); alerts 'projects.project_updated_message'; no navigation
      */

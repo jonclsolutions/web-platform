@@ -598,10 +598,11 @@ final class TestSchema
             $t->string('visibility', 20)->default('private');
             $t->string('status', 20)->default('new');
             $t->string('access_token', 64)->unique();
-            $t->string('access_password_hash');
-            $t->timestamp('password_generated_at')->nullable();
+            // Responsible administrator (migration 2026_11_18_000000_web_project_portal_accounts).
+            $t->unsignedInteger('assignee_id')->nullable();
             $t->timestamps();
             $t->timestamp('deleted_at')->nullable();
+            $t->foreign('assignee_id')->references('id')->on('users')->nullOnDelete();
             $t->foreign('lead_id')->references('id')->on('web_sales_leads')->nullOnDelete();
             $t->foreign('order_id')->references('id')->on('web_sales_orders')->nullOnDelete();
         });
@@ -611,6 +612,8 @@ final class TestSchema
             $t->unsignedInteger('project_id');
             $t->string('label');
             $t->text('description')->nullable();
+            $t->date('due_date')->nullable();
+            $t->text('internal_note')->nullable();
             $t->string('status', 20)->default('new');
             $t->timestamp('status_changed_at')->nullable();
             $t->integer('sort_order')->default(0);
@@ -618,9 +621,30 @@ final class TestSchema
             $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
         });
 
+        // Client accounts of the portal (migration 2026_11_18_000000_web_project_portal_accounts).
+        Schema::create('web_project_accounts', function (Blueprint $t) {
+            $t->increments('id');
+            $t->unsignedInteger('project_id');
+            $t->string('username', 64);
+            $t->string('display_name', 120);
+            $t->string('email')->nullable();
+            // Notification switches of migration 2026_11_19_000000_web_project_account_notifications.
+            $t->boolean('notify_replies')->default(false);
+            $t->boolean('notify_checkpoint_status')->default(false);
+            $t->boolean('notify_checkpoint_dates')->default(false);
+            $t->string('language', 5)->default('cz');
+            $t->string('password_hash');
+            $t->timestamp('password_set_at')->nullable();
+            $t->timestamp('last_login_at')->nullable();
+            $t->timestamps();
+            $t->unique(['project_id', 'username']);
+            $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
+        });
+
         Schema::create('web_project_sessions', function (Blueprint $t) {
             $t->id();
             $t->unsignedInteger('project_id');
+            $t->unsignedInteger('account_id');
             $t->string('session_token_hash', 64)->unique();
             $t->timestamp('expires_at');
             $t->timestamp('last_used_at')->nullable();
@@ -628,6 +652,7 @@ final class TestSchema
             $t->string('user_agent')->nullable();
             $t->timestamps();
             $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
+            $t->foreign('account_id')->references('id')->on('web_project_accounts')->cascadeOnDelete();
         });
 
         Schema::create('web_project_threads', function (Blueprint $t) {
@@ -637,6 +662,7 @@ final class TestSchema
             $t->string('priority', 20);
             $t->string('status', 20)->default('active');
             $t->string('opened_by', 20);
+            $t->string('last_public_author', 20)->nullable();
             $t->timestamp('last_message_at')->nullable();
             $t->timestamp('customer_last_read_at')->nullable();
             $t->timestamp('admin_last_read_at')->nullable();
@@ -649,9 +675,14 @@ final class TestSchema
             $t->unsignedInteger('thread_id');
             $t->string('author_type', 20);
             $t->string('author_label')->nullable();
+            $t->unsignedInteger('account_id')->nullable();
+            $t->unsignedInteger('user_id')->nullable();
+            $t->boolean('is_internal')->default(false);
             $t->text('body');
             $t->timestamps();
             $t->foreign('thread_id')->references('id')->on('web_project_threads')->cascadeOnDelete();
+            $t->foreign('account_id')->references('id')->on('web_project_accounts')->nullOnDelete();
+            $t->foreign('user_id')->references('id')->on('users')->nullOnDelete();
         });
     }
 

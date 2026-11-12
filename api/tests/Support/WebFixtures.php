@@ -20,6 +20,7 @@ use App\Models\Web\WebJobApplication;
 use App\Models\Web\WebLog;
 use App\Models\Web\WebNews;
 use App\Models\Web\WebProject;
+use App\Models\Web\WebProjectAccount;
 use App\Models\Web\WebProjectSession;
 use App\Models\Web\WebProjectThread;
 use App\Models\Web\WebRawRequestCommission;
@@ -28,7 +29,6 @@ use App\Models\Web\WebSalesOrder;
 use App\Models\Web\WebSupportTicket;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -126,8 +126,8 @@ trait WebFixtures
     }
 
     /**
-     * @description Creates a customer project with an access token and the password
-     *   $projectPassword.
+     * @description Creates a customer project with an access token and one client account
+     *   "klient" (display name "Klient") with the password $projectPassword.
      * @param array<string, mixed> $attributes Column overrides.
      * @return WebProject
      */
@@ -136,24 +136,44 @@ trait WebFixtures
         $project = new WebProject(array_merge(['name' => 'Client portal', 'visibility' => 'public', 'contact_email' => 'pm@example.com'], $attributes));
         $project->status = $attributes['status'] ?? 'new';
         $project->access_token = $attributes['access_token'] ?? WebProject::generateAccessToken();
-        $project->access_password_hash = Hash::make($this->projectPassword);
         $project->save();
+        $this->portalAccount($project, 'klient', 'Klient');
 
         return $project;
     }
 
     /**
-     * @description Opens a portal session for the project and returns the raw session token.
-     * @param WebProject $project Project to sign in to.
-     * @return string Raw session token (Bearer).
+     * @description Adds a client account to the project (password $projectPassword).
+     * @param WebProject $project Owner project.
+     * @param string $username Login name.
+     * @param string $displayName Display name.
+     * @param array<string, mixed> $attributes Other columns (email, notify_*, language).
+     * @return WebProjectAccount
      */
-    protected function portalSession(WebProject $project): string
+    protected function portalAccount(WebProject $project, string $username, string $displayName, array $attributes = []): WebProjectAccount
     {
-        return WebProjectSession::issueFor($project, '127.0.0.1', 'UA');
+        $account = new WebProjectAccount(array_merge(['project_id' => $project->id, 'username' => $username, 'display_name' => $displayName], $attributes));
+        $account->setPassword($this->projectPassword);
+        $account->save();
+
+        return $account;
     }
 
     /**
-     * @description Creates a thread of the project, optionally with messages.
+     * @description Opens a portal session (of the given account, else the project's first account)
+     *   and returns the raw session token.
+     * @param WebProject $project Project to sign in to.
+     * @param WebProjectAccount|null $account Signed-in account.
+     * @return string Raw session token (Bearer).
+     */
+    protected function portalSession(WebProject $project, ?WebProjectAccount $account = null): string
+    {
+        return WebProjectSession::issueFor($account ?? $project->accounts()->firstOrFail(), '127.0.0.1', 'UA');
+    }
+
+    /**
+     * @description Creates a thread of the project, optionally with messages (the last one decides
+     *   whose turn it is).
      * @param WebProject $project Owner project.
      * @param array<string, mixed> $attributes Column overrides.
      * @param array<int, array{0: string, 1: string}> $messages [author_type, body] pairs.
@@ -166,6 +186,10 @@ trait WebFixtures
         ], $attributes));
         foreach ($messages as [$author, $body]) {
             $thread->messages()->create(['author_type' => $author, 'author_label' => $author === 'admin' ? 'admin@example.com' : null, 'body' => $body]);
+        }
+        // Whose turn it is follows the last message, unless the test sets it.
+        if ($messages !== [] && !array_key_exists('last_public_author', $attributes)) {
+            $thread->update(['last_public_author' => end($messages)[0]]);
         }
 
         return $thread;

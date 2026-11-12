@@ -8,15 +8,18 @@
  * @created 2026
  * @description Feature tests of the admin view of customer conversation threads
  *   (WebProjectThreadController): list across projects, detail with the latest messages
- *   only, "load older messages", admin reply with attachments and the status change.
+ *   only, "load older messages", admin reply with attachments, internal notes of the team,
+ *   client e-mail notifications and the status change.
  * @dependencies
  * - Tests\TestCase, Tests\Support\WebFixtures; Storage fake.
  */
 
 namespace Tests\Feature\Web;
 
+use App\Mail\Web\ProjectClientUpdateMail;
 use App\Models\Web\WebLog;
 use App\Models\Web\WebProjectThread;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\WebFixtures;
 use Tests\TestCase;
@@ -94,12 +97,13 @@ class ProjectThreadTest extends TestCase
     }
 
     /**
-     * @description Admin reply: stored as 'admin' with the admin's e-mail, attachments in
-     *   web/project_threads, thread activity bumped; validation; permission; 404.
-     * @input Admin admin@firm.cz; POST reply {body, attachments: [a.pdf]}; POST {} ; POST 6 files;
+     * @description Admin reply: stored as 'admin' under the admin's full name (and user id),
+     *   attachments in web/project_threads, thread activity bumped, now waiting on the client;
+     *   validation; permission; 404.
+     * @input Admin "Jana Nová"; POST reply {body, attachments: [a.pdf]}; POST {} ; POST 6 files;
      *        viewer without update; /999.
-     * @output 201 {author_type admin, author_label admin@firm.cz, 1 attachment}; last_message_at moved;
-     *   422 body; 422 "You can attach at most 5 files."; 403; 404.
+     * @output 201 {author_type admin, author_label "Jana Nová", is_internal false, 1 attachment};
+     *   last_message_at moved; waiting_on customer; 422 body; 422 "You can attach at most 5 files."; 403; 404.
      */
     public function test_reply(): void
     {
@@ -107,16 +111,20 @@ class ProjectThreadTest extends TestCase
         $this->signIn($this->userWith(['web-projects-view']));
         $this->postJson("/api/web/project-threads/{$thread->id}/reply", ['body' => 'x'])->assertStatus(403);
 
-        $this->signIn($this->userWith(['web-projects-update'], ['user_email' => 'admin@firm.cz']));
+        $admin = $this->userWith(['web-projects-update'], ['full_name' => 'Jana Nová']);
+        $this->signIn($admin);
         $this->post("/api/web/project-threads/{$thread->id}/reply", ['body' => 'Here you go', 'attachments' => [$this->upload('a.pdf')]], ['Accept' => 'application/json'])
             ->assertCreated()
             ->assertJsonPath('data.author_type', 'admin')
-            ->assertJsonPath('data.author_label', 'admin@firm.cz')
+            ->assertJsonPath('data.author_label', 'Jana Nová')
+            ->assertJsonPath('data.is_internal', false)
             ->assertJsonPath('data.attachments.0.original_filename', 'a.pdf');
 
         $message = $thread->messages()->sole();
+        $this->assertSame($admin->id, (int) $message->user_id);
         $this->assertStringStartsWith('web/project_threads/', $message->attachments->sole()->path);
         $this->assertTrue($thread->fresh()->last_message_at->isToday());
+        $this->assertSame('customer', $thread->fresh()->waitingOn());
         // Messages are the conversation itself - a reply writes no audit log row.
         $this->assertSame(0, WebLog::count());
 
@@ -125,6 +133,42 @@ class ProjectThreadTest extends TestCase
         $this->post("/api/web/project-threads/{$thread->id}/reply", ['body' => 'Many', 'attachments' => $six], ['Accept' => 'application/json'])
             ->assertStatus(422)->assertJsonPath('errors.attachments.0', 'You can attach at most 5 files.');
         $this->postJson('/api/web/project-threads/999/reply', ['body' => 'x'])->assertStatus(404);
+    }
+
+    /**
+     * @description Internal note of the team: stored as internal, does not move the thread's
+     *   activity nor "whose turn", e-mails no client; a public reply e-mails only the opted-in
+     *   accounts that have an e-mail, in their language, without the message text.
+     * @input Thread waiting on the supplier, accounts: klient (no e-mail), anna (e-mail,
+     *   en, reply e-mails on), petr (e-mail, only checkpoint e-mails on); POST internal note; POST public reply.
+     * @output Note: is_internal true, last_message_at / waiting_on unchanged, no mail. Reply: one
+     *   ProjectClientUpdateMail to anna, kind reply, item = thread subject, waiting on the client.
+     */
+    public function test_internal_note_and_client_notification(): void
+    {
+        Mail::fake();
+        $project = $this->project();
+        $this->portalAccount($project, 'anna', 'Anna', ['email' => 'anna@client.cz', 'notify_replies' => true, 'language' => 'en']);
+        $this->portalAccount($project, 'petr', 'Petr', ['email' => 'petr@client.cz', 'notify_checkpoint_status' => true, 'notify_checkpoint_dates' => true]);
+        $thread = $this->thread($project, ['last_message_at' => now()->subDay()], [['customer', 'Question']]);
+        $this->signIn($this->userWith(['web-projects-update']));
+
+        $this->postJson("/api/web/project-threads/{$thread->id}/reply", ['body' => 'Ask Petr first', 'is_internal' => true])
+            ->assertCreated()->assertJsonPath('data.is_internal', true);
+        $fresh = $thread->fresh();
+        $this->assertFalse($fresh->last_message_at->isToday());
+        $this->assertSame('supplier', $fresh->waitingOn());
+        $this->assertNotNull($fresh->admin_last_read_at);
+        Mail::assertNothingQueued();
+        Mail::assertNothingSent();
+
+        $this->postJson("/api/web/project-threads/{$thread->id}/reply", ['body' => 'Secret detail'])->assertCreated();
+        $this->assertSame('customer', $thread->fresh()->waitingOn());
+        Mail::assertQueued(ProjectClientUpdateMail::class, 1);
+        Mail::assertQueued(ProjectClientUpdateMail::class, function (ProjectClientUpdateMail $mail) use ($thread) {
+            return $mail->hasTo('anna@client.cz') && $mail->kind === ProjectClientUpdateMail::KIND_REPLY
+                && $mail->itemTitle === $thread->subject && !str_contains($mail->render(), 'Secret detail');
+        });
     }
 
     /**

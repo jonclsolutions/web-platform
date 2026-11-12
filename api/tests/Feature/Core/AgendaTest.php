@@ -101,7 +101,7 @@ class AgendaTest extends TestCase
      */
     private function project(string $name, string $deadline, string $status, ?int $orderId = null): WebProject
     {
-        return WebProject::forceCreate(['name' => $name, 'access_token' => Str::random(40), 'access_password_hash' => 'x',
+        return WebProject::forceCreate(['name' => $name, 'access_token' => Str::random(40),
             'estimated_completion_to' => $deadline, 'status' => $status, 'order_id' => $orderId]);
     }
 

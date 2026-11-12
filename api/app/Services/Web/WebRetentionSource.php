@@ -109,6 +109,7 @@ final class WebRetentionSource implements RetentionSource
         $query->chunkById($this->purgeChunk, function ($projects) use (&$count) {
             foreach ($projects as $project) {
                 WebProjectSession::where('project_id', $project->id)->delete();
+                $project->accounts()->delete();
                 $project->checkpoints()->delete();
                 foreach ($project->threads as $thread) {
                     foreach ($thread->messages as $message) {

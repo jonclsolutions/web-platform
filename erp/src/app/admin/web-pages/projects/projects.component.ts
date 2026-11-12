@@ -6,10 +6,12 @@
  * @created 2026
  * @description Administrative list of the client projects: table with quick create / edit /
  * delete, trash, filters (also "only with new messages"), export and reports. A project is managed
- * on its own page (web/projects/:id - ProjectDetailComponent): settings, access, checkpoints and the
- * conversations with the client. The table shows the number of new client messages per project.
- * @note After creating a project its one-time password is handed to its page in memory only
- * (ProjectPasswordHandoffService, VT-08). Old links `?open_project=<id>` open the project page.
+ * on its own page (web/projects/:id - ProjectDetailComponent): settings, client accounts, checkpoints,
+ * files and the conversations with the client. The table shows the responsible administrator
+ * (assignee), the number of new client messages and of the threads waiting on the team per project;
+ * the filter "My projects" keeps the projects of the signed-in administrator.
+ * @note A new project opens its page, where the client accounts are added. Old links
+ * `?open_project=<id>` open the project page.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -22,7 +24,6 @@ import * as Config from './projects.config';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 import { PageHelpComponent } from '../../components/page-help/page-help.component';
-import { ProjectPasswordHandoffService } from './project-password-handoff.service';
 
 @Component({
   selector: 'app-projects',
@@ -51,6 +52,9 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   /** Key prefix under which former versions kept the revealed password in sessionStorage (removed on load, VT-08). */
   private readonly LEGACY_PASSWORD_STORAGE_PREFIX = 'rpsw_project_pw_';
 
+  /** @description Administrators who can be responsible for a project (GET web/projects/assignees). */
+  private assignees: { id: number; full_name: string }[] = [];
+
   graphColumns: GraphColumnOption[] = [];
 
   constructor(
@@ -58,8 +62,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     protected override cd: Core.ChangeDetectorRef,
     protected override genericTableService: Core.GenericTableService,
     private router: Core.Router,
-    private activatedRoute: ActivatedRoute,
-    private passwordHandoff: ProjectPasswordHandoffService
+    private activatedRoute: ActivatedRoute
   ) {
     super(dataHandler, cd, genericTableService);
 
@@ -67,6 +70,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
       this.tableCaption = this.t('table_header');
       this.buttons = Config.createProjectButtons(this.i18n);
       this.formFields = Config.createProjectFormFields(this.i18n);
+      this.applyAssigneeOptions();
       this.projectColumns = Config.createProjectColumns(this.i18n);
       this.trashProjectColumns = Config.createProjectTrashColumns(this.i18n);
       this.filterColumns = Config.createProjectFilterColumns(this.i18n);
@@ -123,6 +127,29 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.removeLegacyStoredPasswords();
     this.initWithAuthCheck(this.router);
     this.checkQueryParamsForPrefill();
+    this.loadAssignees();
+  }
+
+  /** @description Loads the possible assignees once for the create / edit form. */
+  private loadAssignees(): void {
+    this.dataHandler.getCollection<{ id: number; full_name: string }>('web/projects/assignees').subscribe({
+      next: (users) => {
+        this.assignees = users ?? [];
+        this.applyAssigneeOptions();
+        this.cd.markForCheck();
+      },
+      error: () => { /* the select keeps only "Nobody" */ },
+    });
+  }
+
+  /** @description Puts the loaded assignees into the assignee select of the form ("Nobody" first). */
+  private applyAssigneeOptions(): void {
+    const field = this.formFields.find(f => f.column_name === 'assignee_id');
+    if (!field) return;
+    field.options = [
+      { value: '', label: Config.createNoAssigneeOptionLabel(this.i18n) },
+      ...this.assignees.map(user => ({ value: String(user.id), label: user.full_name })),
+    ];
   }
 
   private checkQueryParamsForPrefill(): void {
@@ -184,9 +211,8 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
       })
     ).subscribe({
       next: (result: any) => {
-        if (!formData.id && result?.generated_password) {
-          // The one-time password goes to the project page in memory only (VT-08).
-          this.passwordHandoff.put(result.id, result.generated_password, result.public_url);
+        if (!formData.id && result?.id) {
+          // The client accounts are added on the page of the new project.
           this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('project_created_message'), 'success');
           this.openProject(result);
         } else {

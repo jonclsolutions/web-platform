@@ -6,8 +6,10 @@
  * @author JS
  * @created 2026
  * @description Individual message within a WebProjectThread conversation.
- * `author_label` is a display-only snapshot, deliberately not a live FK - see
- * migration for rationale (audit-trail integrity if an admin account later changes).
+ * `author_label` is a display-only snapshot of the author's name (client account display name /
+ * administrator's full name), kept when the account is removed later; `account_id` / `user_id`
+ * link the author while the account exists. An internal note (`is_internal`) is written by the
+ * administration for the team only - the client portal never returns it.
  */
 
 namespace App\Models\Web;
@@ -28,7 +30,14 @@ class WebProjectThreadMessage extends Model
         'thread_id',
         'author_type',
         'author_label',
+        'account_id',
+        'user_id',
+        'is_internal',
         'body',
+    ];
+
+    protected $casts = [
+        'is_internal' => 'boolean',
     ];
 
     public function thread(): BelongsTo
@@ -39,5 +48,15 @@ class WebProjectThreadMessage extends Model
     public function attachments(): MorphMany
     {
         return $this->morphMany(WebAttachment::class, 'attachable');
+    }
+
+    /**
+     * @description Messages the client may see (no internal notes).
+     * @param \Illuminate\Database\Eloquent\Builder $query Message query.
+     * @return void
+     */
+    public function scopeVisibleToClient($query): void
+    {
+        $query->where('is_internal', false);
     }
 }

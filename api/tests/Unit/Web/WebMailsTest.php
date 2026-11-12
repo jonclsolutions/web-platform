@@ -7,13 +7,15 @@
  * @author JS
  * @created 2026
  * @description Unit tests of the web e-mails: subject and rendered content of the raw
- *   request confirmation, the sales order confirmation and the project thread notification.
+ *   request confirmation, the sales order confirmation, the project thread notification of the
+ *   team and the update notification of a client account (cz / en).
  * @dependencies
  * - Tests\TestCase, Tests\Support\WebFixtures; resources/views/emails/web.
  */
 
 namespace Tests\Unit\Web;
 
+use App\Mail\Web\ProjectClientUpdateMail;
 use App\Mail\Web\ProjectThreadActivityMail;
 use App\Mail\Web\WebRawRequestCommissionReceived;
 use App\Mail\Web\WebSalesOrderReceived;
@@ -74,7 +76,7 @@ class WebMailsTest extends TestCase
      *   links to the admin thread list on the frontend.
      * @input Project 'Eshop', thread 'Logo colours'; frontend https://admin.example.com/.
      * @output Subjects 'New request — Eshop: Logo colours' / 'New message — …'; HTML contains
-     *   https://admin.example.com/admin/web/project-threads, the subject and the English texts
+     *   https://admin.example.com/admin/web/projects/{id}, the subject and the English texts
      *   (no Czech leftovers, finding #10).
      */
     public function test_project_thread_notification(): void
@@ -86,7 +88,7 @@ class WebMailsTest extends TestCase
         $new = new ProjectThreadActivityMail($project, $thread, true);
         $new->assertHasSubject('New request — Eshop: Logo colours');
         $html = $new->render();
-        $this->assertStringContainsString('https://admin.example.com/admin/web/project-threads', $html);
+        $this->assertStringContainsString("https://admin.example.com/admin/web/projects/{$project->id}", $html);
         $this->assertStringContainsString('Logo colours', $html);
         $this->assertStringContainsString('The customer started a new thread:', $html);
         $this->assertStringContainsString('Open in the administration', $html);
@@ -95,5 +97,35 @@ class WebMailsTest extends TestCase
         $reply = new ProjectThreadActivityMail($project, $thread, false);
         $reply->assertHasSubject('New message — Eshop: Logo colours');
         $this->assertStringContainsString('The customer wrote a new message in the thread:', $reply->render());
+    }
+
+    /**
+     * @description Client notification in the account's language: reply / checkpoint subject and
+     *   texts, the portal link with the project token, the item title - never a message text.
+     * @input Project 'Eshop'; account cz: reply 'Logo colours'; account en: checkpoint 'Launch' → done.
+     * @output 'Nová odpověď v projektu Eshop' + "Dodavatel odpověděl" + /projects/{token};
+     *   'Progress update in the project Eshop' + 'changed its status to "Done"' + 'Launch', lang en.
+     */
+    public function test_project_client_update(): void
+    {
+        config(['app.frontend_url' => 'https://www.example.com/']);
+        $project = $this->project(['name' => 'Eshop']);
+        $cz = $project->accounts()->sole();
+        $en = $this->portalAccount($project, 'anna', 'Anna', ['language' => 'en']);
+
+        $reply = new ProjectClientUpdateMail($project, $cz, ProjectClientUpdateMail::KIND_REPLY, 'Logo colours');
+        $reply->assertHasSubject('Nová odpověď v projektu Eshop');
+        $html = $reply->render();
+        $this->assertStringContainsString('Dodavatel odpověděl ve vlákně:', $html);
+        $this->assertStringContainsString('Logo colours', $html);
+        $this->assertStringContainsString("https://www.example.com/projects/{$project->access_token}", $html);
+
+        $step = new ProjectClientUpdateMail($project, $en, ProjectClientUpdateMail::KIND_CHECKPOINT, 'Launch', 'done');
+        $step->assertHasSubject('Progress update in the project Eshop');
+        $html = $step->render();
+        $this->assertStringContainsString('A project step changed its status to &quot;Done&quot;:', $html);
+        $this->assertStringContainsString('Launch', $html);
+        $this->assertStringContainsString('lang="en"', $html);
+        $this->assertStringNotContainsString('Dodavatel', $html);
     }
 }

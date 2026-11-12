@@ -1,0 +1,54 @@
+<?php
+/**
+ * @file UpdatePortalAccountRequest.php
+ * @path app/Http/Requests/Web/WebProject/UpdatePortalAccountRequest.php
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
+ * @description Settings the client changes for its own account in the project portal ("My
+ *   account"): its e-mail, the language of the e-mails and which notifications it wants (a new
+ *   reply, a checkpoint status change, a checkpoint due date change). Everything else of the
+ *   account (login name, name, password) only the administration changes. A notification turned
+ *   on needs an e-mail - checked in WebProjectPublicController::updateAccount() after the merge
+ *   with the stored values.
+ * @dependencies WebProjectPublicController::updateAccount(), App\Models\Web\WebProjectAccount
+ */
+
+namespace App\Http\Requests\Web\WebProject;
+
+use App\Models\Web\WebProjectAccount;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class UpdatePortalAccountRequest extends FormRequest
+{
+    public function authorize(): bool { return true; }
+
+    /**
+     * @description E-mail is trimmed (an empty one = none).
+     * @return void
+     */
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('email'))) {
+            $this->merge(['email' => trim($this->input('email')) ?: null]);
+        }
+    }
+
+    /**
+     * @description Fields of the client's own settings (partial).
+     * @return array<string, mixed>
+     */
+    public function rules(): array
+    {
+        $rules = [
+            'email'    => ['sometimes', 'nullable', 'email', 'max:255'],
+            'language' => ['sometimes', Rule::in(WebProjectAccount::LANGUAGES)],
+        ];
+        foreach (WebProjectAccount::NOTIFICATIONS as $column) {
+            $rules[$column] = ['sometimes', 'boolean'];
+        }
+
+        return $rules;
+    }
+}

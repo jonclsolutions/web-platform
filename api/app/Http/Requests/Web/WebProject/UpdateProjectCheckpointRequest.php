@@ -1,4 +1,15 @@
 <?php
+/**
+ * @file UpdateProjectCheckpointRequest.php
+ * @path app/Http/Requests/Web/WebProject/UpdateProjectCheckpointRequest.php
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
+ * @description Partial change of a checkpoint: title, description (client-visible), due date,
+ *   internal note (team only), status, position.
+ * @dependencies WebProjectController::updateCheckpoint()
+ */
+
 namespace App\Http\Requests\Web\WebProject;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -13,6 +24,8 @@ class UpdateProjectCheckpointRequest extends FormRequest
         return [
             'label'       => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
+            'due_date'    => ['sometimes', 'nullable', 'date_format:Y-m-d'],
+            'internal_note' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'status'     => ['sometimes', 'in:' . implode(',', WebProjectCheckpoint::STATUSES)],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
         ];

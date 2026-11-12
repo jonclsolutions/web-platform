@@ -43,6 +43,7 @@ use App\Http\Controllers\Api\Web\WebSalesOrderController;
 use App\Http\Controllers\Api\Web\WebSupportTicketController;
 use App\Http\Controllers\Api\Web\WebJobApplicationController;
 use App\Http\Controllers\Api\Web\WebSiteSettingController;
+use App\Http\Controllers\Api\Web\WebProjectAccountController;
 use App\Http\Controllers\Api\Web\WebProjectController;
 use App\Http\Controllers\Api\Web\WebProjectThreadController;
 use App\Http\Controllers\Api\Web\WebProjectPublicController;
@@ -188,6 +189,9 @@ Route::prefix('projects/public/{token}')
             ->middleware('throttle:30,1,project-message-create');
         Route::post('threads/{threadId}/status', [WebProjectPublicController::class, 'updateStatus']);
         Route::get('threads/{threadId}/new-messages', [WebProjectPublicController::class, 'newMessages']);
+        Route::get('files', [WebProjectPublicController::class, 'files']);
+        Route::post('account', [WebProjectPublicController::class, 'updateAccount'])
+            ->middleware('throttle:20,1,project-account-settings');
     });
 
 /*
@@ -887,6 +891,9 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
 
             Route::get('/',      [WebProjectController::class, 'index'])
                 ->middleware('permission:web-projects-view');
+            // Administrators who can be responsible for a project (select of the project form).
+            Route::get('/assignees', [WebProjectController::class, 'assignees'])
+                ->middleware('permission:web-projects-view');
             Route::post('/',     [WebProjectController::class, 'store'])
                 ->middleware('permission:web-projects-create');
             Route::get('/{id}',  [WebProjectController::class, 'show'])
@@ -900,14 +907,28 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
             Route::delete('/{id}', [WebProjectController::class, 'destroy'])
                 ->middleware('permission:web-projects-delete');
 
-            // Regenerating the password is security sensitive (it ends every active customer session -
-            // WebProjectController::regeneratePassword()), but whoever may edit a project may reset its
-            // access: the same permission as update(), no extra key.
-            Route::post('/{id}/regenerate-password', [WebProjectController::class, 'regeneratePassword'])
+            // Files of the project's conversations (also those of internal notes, flagged).
+            Route::get('/{id}/files', [WebProjectController::class, 'files'])
+                ->middleware('permission:web-projects-view');
+
+            // ── Client accounts of the portal ─────────────────────────
+            // A password reset is security sensitive (it ends the account's sessions), but whoever
+            // may edit a project may manage its access: the same permission as update(), no extra key.
+            Route::get('/{projectId}/accounts', [WebProjectAccountController::class, 'index'])
+                ->middleware('permission:web-projects-view');
+            Route::post('/{projectId}/accounts', [WebProjectAccountController::class, 'store'])
+                ->middleware('permission:web-projects-update');
+            Route::put('/{projectId}/accounts/{accountId}', [WebProjectAccountController::class, 'update'])
+                ->middleware('permission:web-projects-update');
+            Route::post('/{projectId}/accounts/{accountId}/password', [WebProjectAccountController::class, 'resetPassword'])
+                ->middleware('permission:web-projects-update');
+            Route::delete('/{projectId}/accounts/{accountId}', [WebProjectAccountController::class, 'destroy'])
                 ->middleware('permission:web-projects-update');
 
             // ── Checkpoints (nested under a project) ──────────────────
             Route::post('/{projectId}/checkpoints', [WebProjectController::class, 'storeCheckpoint'])
+                ->middleware('permission:web-projects-update');
+            Route::put('/{projectId}/checkpoints/order', [WebProjectController::class, 'reorderCheckpoints'])
                 ->middleware('permission:web-projects-update');
             Route::put('/{projectId}/checkpoints/{checkpointId}', [WebProjectController::class, 'updateCheckpoint'])
                 ->middleware('permission:web-projects-update');

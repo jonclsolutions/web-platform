@@ -8,7 +8,9 @@
  * @description One conversation thread within a project - bidirectional (customer
  * and admin can both post multiple messages) per consultation. `last_message_at` is
  * denormalized for cheap sorting in both the admin's cross-project table and the
- * customer's per-project thread list.
+ * customer's per-project thread list. `last_public_author` (author of the last message the client
+ * can see) gives `waitingOn()`: whose turn it is in an open thread. Internal notes of the
+ * administration (`is_internal` messages) never change it and never reach the client.
  */
 
 namespace App\Models\Web;
@@ -22,6 +24,10 @@ class WebProjectThread extends Model
 {
     public const STATUSES = ['active', 'closed'];
 
+    /** @description Who owes the next answer in an open thread - see `waitingOn()`. */
+    public const WAITING_ON_SUPPLIER = 'supplier';
+    public const WAITING_ON_CUSTOMER = 'customer';
+
     /** @description Default number of messages loaded when a thread is opened - see `pagedMessages()`. */
     public const DEFAULT_MESSAGE_PAGE_SIZE = 50;
 
@@ -31,6 +37,7 @@ class WebProjectThread extends Model
         'priority',
         'status',
         'opened_by',
+        'last_public_author',
         'last_message_at',
         'customer_last_read_at',
         'admin_last_read_at',
@@ -90,16 +97,48 @@ class WebProjectThread extends Model
     }
 
     /**
+     * @description Messages the client may see (no internal notes) - the only messages the client
+     *   portal loads.
+     * @return HasMany
+     */
+    public function clientMessages(): HasMany
+    {
+        return $this->messages()->visibleToClient();
+    }
+
+    /**
+     * @description Whose turn it is: 'supplier' when the client wrote last (the administration owes
+     *   an answer), 'customer' when the administration did; null for a closed thread or a thread
+     *   without a visible message.
+     * @return string|null
+     */
+    public function waitingOn(): ?string
+    {
+        if ($this->status !== 'active') {
+            return null;
+        }
+
+        return match ($this->last_public_author) {
+            'customer' => self::WAITING_ON_SUPPLIER,
+            'admin'    => self::WAITING_ON_CUSTOMER,
+            default    => null,
+        };
+    }
+
+    /**
      * @description Returns a page of messages, oldest-first (ready for display) -
      * either the LATEST `$limit` messages (when `$beforeId` is null - the normal
      * "open thread" case), or the `$limit` messages immediately older than
      * `$beforeId` (the "load older messages" case, `$beforeId` = id of the currently
-     * oldest-loaded message on the frontend).
+     * oldest-loaded message on the frontend). Internal notes only for the administration.
+     * @param int|null $beforeId Id of the oldest loaded message (null = the newest page).
+     * @param int $limit Page size.
+     * @param bool $withInternal Include internal notes (administration only - never the portal).
      * @return array{0: Collection<int, WebProjectThreadMessage>, 1: bool} [$messages, $hasMoreOlder]
      */
-    public function pagedMessages(?int $beforeId, int $limit = self::DEFAULT_MESSAGE_PAGE_SIZE): array
+    public function pagedMessages(?int $beforeId, int $limit = self::DEFAULT_MESSAGE_PAGE_SIZE, bool $withInternal = false): array
     {
-        $query = $this->messages()->with('attachments')->reorder()->orderByDesc('id');
+        $query = ($withInternal ? $this->messages() : $this->clientMessages())->with('attachments')->reorder()->orderByDesc('id');
 
         if ($beforeId) {
             $query->where('id', '<', $beforeId);
@@ -115,10 +154,11 @@ class WebProjectThread extends Model
  * @description Returns messages STRICTLY NEWER than `$afterId`, oldest-first -
  * used by the customer portal's live-update polling (see
  * `WebProjectPublicController::newMessages()`). Deliberately NOT paginated/limited -
- * in practice this returns 0-2 messages per poll (15s interval), never a large batch.
+ * in practice this returns 0-2 messages per poll (15s interval), never a large batch. Client
+ * messages only (no internal notes).
  */
 public function newerMessages(int $afterId): \Illuminate\Support\Collection
 {
-    return $this->messages()->with('attachments')->where('id', '>', $afterId)->orderBy('id')->get();
+    return $this->clientMessages()->with('attachments')->where('id', '>', $afterId)->reorder()->orderBy('id')->get();
 }
 }

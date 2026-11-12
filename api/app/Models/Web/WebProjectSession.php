@@ -5,8 +5,9 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description The customer's authenticated 24h-sliding session, issued after
- * successful password verification (see WebProjectPublicController::login()).
+ * @description The authenticated 24h-sliding session of a client account (WebProjectAccount),
+ * issued after a successful sign-in (see WebProjectPublicController::login()). Deleted with its
+ * account and when the administration resets the account's password.
  * Separate from `web_projects.access_token` (the permanent URL) - this is the
  * actual post-password credential, expiring after 24h of INACTIVITY (sliding
  * window, extended on every authenticated request by CheckProjectSession
@@ -33,6 +34,7 @@ class WebProjectSession extends Model
 
     protected $fillable = [
         'project_id',
+        'account_id',
         'session_token_hash',
         'expires_at',
         'last_used_at',
@@ -53,16 +55,26 @@ class WebProjectSession extends Model
         return $this->belongsTo(WebProject::class, 'project_id');
     }
 
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(WebProjectAccount::class, 'account_id');
+    }
+
     /**
-     * @description Creates a new session and returns the PLAINTEXT bearer token - available only
-     * at this moment, never again (only its hash is stored).
+     * @description Creates a new session of the account and returns the PLAINTEXT bearer token -
+     * available only at this moment, never again (only its hash is stored).
+     * @param WebProjectAccount $account Signed-in client account (its project owns the session).
+     * @param string|null $ip Client IP address.
+     * @param string|null $userAgent Browser of the client.
+     * @return string Plaintext session token.
      */
-    public static function issueFor(WebProject $project, ?string $ip, ?string $userAgent): string
+    public static function issueFor(WebProjectAccount $account, ?string $ip, ?string $userAgent): string
     {
         $plaintext = Str::random(64);
 
         self::create([
-            'project_id'         => $project->id,
+            'project_id'         => $account->project_id,
+            'account_id'         => $account->id,
             'session_token_hash' => hash('sha256', $plaintext),
             'expires_at'         => now()->addMinutes(self::LIFETIME_MINUTES),
             'last_used_at'       => now(),
