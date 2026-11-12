@@ -117,6 +117,16 @@ class WebProject extends Model
      * @description Client accounts of the portal (oldest first).
      * @return HasMany
      */
+    public function updates(): HasMany
+    {
+        return $this->hasMany(WebProjectUpdate::class, 'project_id')->orderByDesc('id');
+    }
+
+    public function approvals(): HasMany
+    {
+        return $this->hasMany(WebProjectApproval::class, 'project_id')->orderByDesc('id');
+    }
+
     public function accounts(): HasMany
     {
         return $this->hasMany(WebProjectAccount::class, 'project_id')->orderBy('id');

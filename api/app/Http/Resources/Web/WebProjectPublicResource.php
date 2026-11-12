@@ -45,6 +45,10 @@ class WebProjectPublicResource extends JsonResource
                     'notify_replies'           => (bool) $account->notify_replies,
                     'notify_checkpoint_status' => (bool) $account->notify_checkpoint_status,
                     'notify_checkpoint_dates'  => (bool) $account->notify_checkpoint_dates,
+                    'notify_updates'           => (bool) $account->notify_updates,
+                    'notify_approvals'         => (bool) $account->notify_approvals,
+                    'email_verified'           => $account->email_verified_at !== null,
+                    'has_password'             => $account->hasPassword(),
                 ];
             }),
         ];

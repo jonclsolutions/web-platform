@@ -152,13 +152,15 @@ describe('ProjectsComponent', () => {
     /**
      * @description Project toolbar actions call their handlers; unknown actions are ignored.
      * @input  handleToolbarAction(each action), 'unknown'
-     * @output each handler called once
+     * @output each handler called once; 'openTemplates' navigates to /admin/web/projects/templates
      */
     it('dispatches the project toolbar actions', () => {
       const names = ['toggleFilters', 'handleCreateFormOpened', 'exportActiveTable', 'toggleTable', 'openGraphBuilder'];
       const spies = names.map(n => spyOn(component as any, n));
       names.forEach(a => component.handleToolbarAction(a));
       spies.forEach(s => expect(s).toHaveBeenCalledTimes(1));
+      component.handleToolbarAction('openTemplates');
+      expect(navigate).toHaveBeenCalledWith(['/admin/web/projects/templates']);
       expect(() => component.handleToolbarAction('unknown')).not.toThrow();
     });
   });
@@ -217,6 +219,25 @@ describe('ProjectsComponent', () => {
     }));
 
     /**
+     * @description Opening the create form offers the project templates ("No template" first, with
+     *   the number of checkpoints); a failed load keeps the field as it is.
+     * @input  getCollection('web/projects/templates') → [Web #1 (2 checkpoints)]; then failure
+     * @output template_id options ['' none, '1' 'Web (2)']; form open both times
+     */
+    it('offers the project templates in the create form', () => {
+      dh().getCollection.and.callFake((endpoint: string) =>
+        endpoint === 'web/projects/templates' ? of([{ id: 1, name: 'Web', checkpoints: [{}, {}] }]) : of([]));
+      component.handleCreateFormOpened();
+      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/templates');
+      expect(field('template_id').options).toEqual([{ value: '', label: 'projects.field_template_none_option' }, { value: '1', label: 'Web (2)' }]);
+      expect(component.showCreateForm).toBeTrue();
+      dh().getCollection.and.callFake((endpoint: string) =>
+        endpoint === 'web/projects/templates' ? throwError(() => new Error('x')) : of([]));
+      component.handleCreateFormOpened();
+      expect(field('template_id').options!.length).toBe(2);
+    });
+
+    /**
      * @description The create form opens even when the orders cannot be loaded or the order field is missing.
      * @input  getCollection fails; then formFields without order_id
      * @output showCreateForm true both times; selectedItemForEdit null
@@ -238,7 +259,7 @@ describe('ProjectsComponent', () => {
      *   is expected from the API any more and nothing is written to browser storage.
      * @input  handleFormSubmitted({ name: 'Shop' }); API { id: 7, public_url }
      * @output post('web/projects', …); alert 'projects.project_created_message'; navigate to
-     *   ['/admin/web/projects', 7]; form closed; no storage write
+     *   ['/admin/web/projects', 7, 'access'] (the accounts sub-page); form closed; no storage write
      */
     it('creates a project and opens its page', () => {
       const setItem = spyOn(Storage.prototype, 'setItem').and.callThrough();
@@ -246,7 +267,7 @@ describe('ProjectsComponent', () => {
       component.handleFormSubmitted({ name: 'Shop' });
       expect(dh().post).toHaveBeenCalledWith('web/projects', { name: 'Shop' });
       expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'projects.project_created_message', 'success');
-      expect(navigate).toHaveBeenCalledWith(['/admin/web/projects', 7]);
+      expect(navigate).toHaveBeenCalledWith(['/admin/web/projects', 7, 'access']);
       expect(component.showCreateForm).toBeFalse();
       expect(setItem).not.toHaveBeenCalled();
     });

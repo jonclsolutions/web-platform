@@ -8,14 +8,17 @@
  * @created 2026
  * @description Unit tests of the web e-mails: subject and rendered content of the raw
  *   request confirmation, the sales order confirmation, the project thread notification of the
- *   team and the update notification of a client account (cz / en).
+ *   team and the update notification of a client account (cz / en), the access e-mail of a
+ *   client account (invitation / sign-in code) and the team notification (assigned thread / decision).
  * @dependencies
  * - Tests\TestCase, Tests\Support\WebFixtures; resources/views/emails/web.
  */
 
 namespace Tests\Unit\Web;
 
+use App\Mail\Web\ProjectAccessMail;
 use App\Mail\Web\ProjectClientUpdateMail;
+use App\Mail\Web\ProjectTeamNotificationMail;
 use App\Mail\Web\ProjectThreadActivityMail;
 use App\Mail\Web\WebRawRequestCommissionReceived;
 use App\Mail\Web\WebSalesOrderReceived;
@@ -127,5 +130,61 @@ class WebMailsTest extends TestCase
         $this->assertStringContainsString('Launch', $html);
         $this->assertStringContainsString('lang="en"', $html);
         $this->assertStringNotContainsString('Dodavatel', $html);
+    }
+
+    /**
+     * @description Access e-mails: an invitation (cz, link valid 7 days, login name, no code) and a
+     *   sign-in code (en, code shown big, one-time link valid 15 minutes), both with the warning.
+     * @input Project 'Eshop' (token t0k); account klient (cz) invite link L1; account anna (en)
+     *   code 123456, link L2.
+     * @output Subjects 'Pozvánka do portálu projektu Eshop' / 'Sign-in code for the portal of the
+     *   project Eshop'; links /projects/t0k?access=L1|L2; '7 dní', 'klient'; '123456', '15 minutes'.
+     */
+    public function test_project_access_mail(): void
+    {
+        config(['app.frontend_url' => 'https://www.example.com']);
+        $project = $this->project(['name' => 'Eshop', 'access_token' => 't0k']);
+        $klient = $project->accounts()->sole();
+        $anna = $this->portalAccount($project, 'anna', 'Anna', ['language' => 'en']);
+
+        $invite = new ProjectAccessMail($project, $klient, ProjectAccessMail::KIND_INVITE, 'L1', null, 7 * 24 * 60);
+        $invite->assertHasSubject('Pozvánka do portálu projektu Eshop');
+        $html = $invite->render();
+        $this->assertStringContainsString('https://www.example.com/projects/t0k?access=L1', $html);
+        $this->assertStringContainsString('7 dní', $html);
+        $this->assertStringContainsString('klient', $html);
+        $this->assertStringContainsString('e-mail ignorujte', $html);
+
+        $login = new ProjectAccessMail($project, $anna, ProjectAccessMail::KIND_LOGIN, 'L2', '123456', 15);
+        $login->assertHasSubject('Sign-in code for the portal of the project Eshop');
+        $html = $login->render();
+        $this->assertStringContainsString('123456', $html);
+        $this->assertStringContainsString('?access=L2', $html);
+        $this->assertStringContainsString('15 minutes', $html);
+        $this->assertStringContainsString('lang="en"', $html);
+    }
+
+    /**
+     * @description Team notifications: an assigned thread and both client decisions, each linking
+     *   to its section of the project in the administration.
+     * @input Project 'Eshop'; thread 'Hosting' assigned by 'Jana'; approval 'Logo' approved / changes.
+     * @output Subjects 'Thread assigned to you — Eshop' / 'Approved — Eshop: Logo' / 'Changes requested — Eshop: Logo';
+     *   links …/conversations and …/approvals.
+     */
+    public function test_project_team_notification(): void
+    {
+        config(['app.frontend_url' => 'https://admin.example.com']);
+        $project = $this->project(['name' => 'Eshop']);
+
+        $assigned = new ProjectTeamNotificationMail($project, ProjectTeamNotificationMail::KIND_THREAD_ASSIGNED, 'Hosting', 'Jana');
+        $assigned->assertHasSubject('Thread assigned to you — Eshop');
+        $this->assertStringContainsString("https://admin.example.com/admin/web/projects/{$project->id}/conversations", $assigned->render());
+        $this->assertStringContainsString('Jana assigned you this thread:', $assigned->render());
+
+        (new ProjectTeamNotificationMail($project, ProjectTeamNotificationMail::KIND_APPROVAL_DECIDED, 'Logo', 'approved'))->assertHasSubject('Approved — Eshop: Logo');
+        $changes = new ProjectTeamNotificationMail($project, ProjectTeamNotificationMail::KIND_APPROVAL_DECIDED, 'Logo', 'changes_requested');
+        $changes->assertHasSubject('Changes requested — Eshop: Logo');
+        $this->assertStringContainsString("/admin/web/projects/{$project->id}/approvals", $changes->render());
+        $this->assertStringContainsString('The client requested changes to:', $changes->render());
     }
 }

@@ -28,6 +28,9 @@ class WebProjectThreadResource extends JsonResource
             'priority'               => $this->priority,
             'status'                 => $this->status,
             'opened_by'              => $this->opened_by,
+            // The team's assignee - only where the administration loads it (never in the portal).
+            'assignee_id'            => $this->when($this->relationLoaded('assignee'), fn () => $this->assignee_id),
+            'assignee_name'          => $this->when($this->relationLoaded('assignee'), fn () => $this->assignee?->full_name),
             // 'supplier' | 'customer' | null - whose turn it is (WebProjectThread::waitingOn()).
             'waiting_on'             => $this->waitingOn(),
             'last_message_at'        => $this->last_message_at?->format('Y-m-d H:i:s'),

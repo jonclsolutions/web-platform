@@ -36,6 +36,7 @@ class WebProjectThread extends Model
         'subject',
         'priority',
         'status',
+        'assignee_id',
         'opened_by',
         'last_public_author',
         'last_message_at',
@@ -84,6 +85,15 @@ class WebProjectThread extends Model
         $this->timestamps = false;
         $this->update(['admin_last_read_at' => now()]);
         $this->timestamps = true;
+    }
+
+    /**
+     * @description Administrator responsible for the thread (notifications about it go to them).
+     * @return BelongsTo
+     */
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'assignee_id');
     }
 
     public function project(): BelongsTo

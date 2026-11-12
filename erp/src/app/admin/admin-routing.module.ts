@@ -31,6 +31,7 @@ import { NewsComponent } from './intranet/knowledge-base/pages/news/news.compone
 import { SupportFormComponent } from './intranet/knowledge-base/pages/support-form/support-form.component';
 import { ProjectsComponent } from './web-pages/projects/projects.component';
 import { ProjectDetailComponent } from './web-pages/project-detail/project-detail.component';
+import { ProjectTemplatesComponent } from './web-pages/project-templates/project-templates.component';
 
 // Core module components
 import { CoreDashboardComponent } from './core-pages/dashboard/dashboard.component';
@@ -120,7 +121,11 @@ export const ADMIN_ROUTES: Routes = [
           { path: 'support-tickets', component: SupportTicketsComponent, data: { help: 'support-tickets', permission: 'web-support-tickets-view' } },
           { path: 'job-applications', component: JobApplicationsComponent, data: { help: 'job-applications', permission: 'web-job-applications-view' } },
           { path: 'projects', component: ProjectsComponent, data: { help: 'projects', permission: 'web-projects-view' } },
-          { path: 'projects/:id', component: ProjectDetailComponent, data: { help: 'projects', permission: 'web-projects-view' } },
+          { path: 'projects/templates', component: ProjectTemplatesComponent, data: { help: 'projects', permission: 'web-projects-view' } },
+          // The project page has sub-pages (overview, conversations, …); one route keeps the page
+          // (and its unsaved settings) alive while switching between them.
+          { path: 'projects/:id', redirectTo: 'projects/:id/overview', pathMatch: 'full' },
+          { path: 'projects/:id/:section', component: ProjectDetailComponent, data: { help: 'projects', permission: 'web-projects-view' } },
           { path: 'welcome-page', component: WebWelcomePageComponent, data: { help: 'web-welcome-page', permission: 'web-welcome-page-view' } },
          ]
       },

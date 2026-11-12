@@ -40,6 +40,8 @@ class StoreWebProjectRequest extends FormRequest
             'status'                     => ['nullable', 'in:' . implode(',', WebProject::STATUSES)],
             // Responsible administrator - only someone who can answer the client (WebProject::assignableUsers()).
             'assignee_id'                => ['nullable', 'integer', Rule::in(WebProject::assignableUsers()->pluck('id')->all())],
+            // Optional template whose checkpoints the new project gets (due dates from today).
+            'template_id' => ['nullable', 'integer', 'exists:web_project_templates,id'],
         ];
     }
 }

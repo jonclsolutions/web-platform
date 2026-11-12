@@ -190,20 +190,20 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Na seznamu projektů vidíte všechny zákaznické projekty, jejich řešitele a kolik zpráv od klienta čeká na přečtení nebo na odpověď. Projekt otevřete na samostatné stránce: nastavení, uživatelé klientského portálu, checkpointy, soubory a konverzace s klientem. Klient vidí svůj projekt v klientském portálu, kam se přihlašuje účtem, který mu založíte."
+              "content": "Na seznamu projektů vidíte všechny zákaznické projekty, jejich řešitele a kolik zpráv od klienta čeká na přečtení nebo na odpověď. Každý projekt má vlastní stránku rozdělenou na podstránky (Přehled, Konverzace, Postup, Ke schválení, Aktuality, Přístupy, Soubory, Nastavení). Klient vidí svůj projekt v klientském portálu, kam se přihlašuje osobním účtem – heslem, nebo jednorázovým kódem či odkazem z e-mailu."
             }
           ]
         },
         {
           "key": "chapter-01",
-          "heading": "01. Seznam projektů",
+          "heading": "01. Seznam projektů a šablony",
           "blocks": [
             {
               "type": "grid",
               "cards": [
                 {
                   "title": "Otevřít projekt",
-                  "text": "Ikona složky v řádku otevře stránku projektu (adresa web/projects/ID). Rychlou úpravu v okně nabízí ikona tužky."
+                  "text": "Ikona složky v řádku otevře stránku projektu na podstránce Přehled (adresa web/projects/ID/overview). Rychlou úpravu v okně nabízí ikona tužky."
                 },
                 {
                   "title": "Řešitel",
@@ -215,7 +215,11 @@
                 },
                 {
                   "title": "Nový projekt",
-                  "text": "Po vytvoření se otevře stránka projektu. Projekt zatím nemá žádného uživatele - v panelu Přístup přidejte uživatele klienta, jinak se do portálu nikdo nepřihlásí."
+                  "text": "Ve formuláři můžete vybrat šablonu – projekt pak rovnou dostane její checkpointy s termíny počítanými od dneška. Po vytvoření se otevře podstránka Přístupy: projekt zatím nemá žádného uživatele, bez něj se do portálu nikdo nepřihlásí."
+                },
+                {
+                  "title": "Šablony projektů",
+                  "text": "Tlačítko Šablony v nástrojové liště otevře správu šablon (web/projects/templates). Šablona má název, popis a seznam checkpointů; u každého nadpis, popis a nepovinný termín jako počet dní od začátku (0–3650). Řádky přidáte, přesunete šipkami a odeberete. Smazání šablony nemění projekty, které z ní vznikly."
                 }
               ]
             }
@@ -223,45 +227,62 @@
         },
         {
           "key": "chapter-02",
-          "heading": "02. Stránka projektu a nastavení",
+          "heading": "02. Stránka projektu a podstránky",
           "blocks": [
             {
               "type": "text",
-              "content": "Tlačítko Zpět vede na seznam projektů. V záhlaví je stav, viditelnost, řešitel a počet nepřečtených zpráv. Nastavení projektu (název, řešitel, vedoucí, kontakty, termíny, viditelnost, stav) upravíte přímo ve formuláři - při změně se dole objeví plovoucí lišta s tlačítky Uložit změny a Zahodit změny. Odchod s neuloženými změnami nebo s nezkopírovaným heslem stránka nejdřív potvrdí. Texty administrace se řídí zvoleným jazykem administrace, data projektu jsou v jednom jazyce."
+              "content": "V záhlaví je název, stav, viditelnost, řešitel a počet nepřečtených zpráv, pod ním záložky podstránek. Každá podstránka má vlastní adresu (např. web/projects/7/conversations), takže ji jde poslat kolegovi nebo otevřít z e-mailu; přepínání záložek neztratí rozepsané nastavení. Záložka Konverzace ukazuje počet nepřečtených zpráv, záložka Ke schválení počet žádostí, které čekají na klienta."
             },
             {
-              "type": "text",
-              "content": "Řešitel dostává e-mail, když klient založí vlákno nebo napíše zprávu. Projekt bez řešitele posílá tato upozornění na kontaktní e-mail projektu."
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Přehled",
+                  "text": "Rychlá čísla (čeká na nás, ke schválení, postup, uživatelé, aktuality) – kliknutím přejdete na podstránku – a seznam toho, co se v projektu za posledních 90 dní stalo: zprávy klienta, rozhodnutí o schválení, změny kroků, zveřejněné aktuality. Položka otevře své místo, zpráva přímo vlákno."
+                },
+                {
+                  "title": "Nastavení",
+                  "text": "Název, řešitel, vedoucí, kontakty, termíny, viditelnost a stav upravíte ve formuláři – při změně se dole objeví lišta Uložit změny / Zahodit změny. Odchod s neuloženými změnami nebo s nezkopírovaným heslem stránka nejdřív potvrdí."
+                },
+                {
+                  "title": "Kdo dostává e-maily týmu",
+                  "text": "Zprávu klienta dostane řešitel vlákna, není-li, řešitel projektu, jinak kontaktní e-mail projektu. Stejně se doručuje upozornění na rozhodnutí klienta o schválení."
+                }
+              ]
             }
           ]
         },
         {
           "key": "chapter-03",
-          "heading": "03. Uživatelé klientského portálu",
+          "heading": "03. Přístupy klienta – účty, pozvánky, přihlášení",
           "blocks": [
             {
               "type": "text",
-              "content": "Panel Přístup obsahuje odkaz na portál projektu (tlačítko Kopírovat odkaz) a seznam uživatelů klienta. Každý člověk na straně klienta má vlastní účet: jméno (zobrazuje se u jeho zpráv), přihlašovací jméno (3-64 znaků: malá písmena, číslice, tečka, pomlčka, podtržítko; v projektu jedinečné), nepovinný e-mail a jazyk e-mailů (jen předvyplnění). Jméno, přihlašovací jméno ani heslo si klient změnit nemůže; sám si v portálu nastavuje jen svůj e-mail a upozornění."
+              "content": "Podstránka Přístupy obsahuje odkaz na portál projektu (Kopírovat odkaz) a seznam uživatelů klienta. Každý člověk na straně klienta má vlastní účet: jméno (zobrazuje se u jeho zpráv), přihlašovací jméno (3-64 znaků: malá písmena, číslice, tečka, pomlčka, podtržítko; v projektu jedinečné), nepovinný e-mail a jazyk e-mailů (jen předvyplnění). Jméno, přihlašovací jméno ani heslo si klient změnit nemůže; sám si v portálu nastavuje jen svůj e-mail a upozornění."
             },
             {
               "type": "flow",
               "steps": [
                 {
                   "label": "Přidat uživatele",
-                  "text": "Vyplňte jméno a přihlašovací jméno. Heslo buď zadejte (aspoň 10 znaků, písmena i číslice), nebo nechte pole prázdné a heslo se vygeneruje.",
+                  "text": "Vyplňte jméno a přihlašovací jméno a zvolte způsob přístupu: s heslem (zadané, aspoň 10 znaků s písmeny i číslicemi, nebo vygenerované), poslat pozvánku e-mailem, nebo obojí. Účet bez hesla musí mít e-mail a pozvánku.",
                   "active": true
                 },
                 {
-                  "label": "Předat přístup",
-                  "text": "Heslo se zobrazí jen jednou. Tlačítko Kopírovat přihlašovací údaje zkopíruje odkaz, přihlašovací jméno i heslo najednou - vložte je do zprávy pro klienta. Heslo se nikam neukládá (jen jeho otisk)."
+                  "label": "Pozvánka",
+                  "text": "E-mail s odkazem, který klienta jedním kliknutím přihlásí (platí 7 dní, jen jednou). Pozvánku jde kdykoli poslat znovu ikonou obálky u účtu – starší odkazy tím přestanou platit."
+                },
+                {
+                  "label": "Předání hesla",
+                  "text": "Heslo se zobrazí jen jednou. Kopírovat přihlašovací údaje zkopíruje odkaz, jméno i heslo najednou. Heslo se nikam neukládá (jen jeho otisk)."
                 },
                 {
                   "label": "Zapomenuté heslo",
-                  "text": "Ikona klíče resetuje heslo: vygeneruje nové, staré přestane platit a uživatel se odhlásí na všech zařízeních. Nové heslo opět předáte klientovi."
+                  "text": "Klient se může přihlásit kódem z e-mailu. Ikona klíče heslo resetuje: vygeneruje nové, staré přestane platit a uživatel se odhlásí na všech zařízeních."
                 },
                 {
                   "label": "Odebrání",
-                  "text": "Ikona koše odebere uživatele a odhlásí ho. Jeho zprávy ve vláknech zůstávají pod jeho jménem."
+                  "text": "Ikona koše odebere uživatele a odhlásí ho. Jeho zprávy a rozhodnutí zůstávají pod jeho jménem."
                 }
               ]
             },
@@ -269,16 +290,20 @@
               "type": "grid",
               "cards": [
                 {
+                  "title": "Přihlášení kódem",
+                  "text": "Na přihlašovací stránce portálu klient zvolí Kód e-mailem a zadá přihlašovací jméno nebo e-mail. Pokud účet e-mail má, přijde šestimístný kód (platí 15 minut, 5 pokusů, nejvýše 5 kódů za hodinu). Odpověď je vždy stejná, takže z ní nejde zjistit, zda účet existuje."
+                },
+                {
+                  "title": "Ověřený e-mail",
+                  "text": "Použitím kódu nebo odkazu se e-mail účtu ověří. Změní-li se e-mail, ověření se zruší a upozornění se vypnou. U účtu vidíte štítky S heslem / Bez hesla, Pozván a E-mail ověřen."
+                },
+                {
                   "title": "Upozornění e-mailem",
-                  "text": "Zapíná si je sám klient v portálu v části Můj účet, zvlášť pro odpověď ve vlákně (ne interní poznámku), změnu stavu checkpointu a změnu termínu checkpointu. Ve výchozím stavu je vše vypnuté a v administraci je zapnout nejde - u uživatele jen vidíte, co si zvolil. Když v administraci e-mail změníte nebo smažete, upozornění se mu vypnou."
+                  "text": "Zapíná si je sám klient v portálu (Můj účet), zvlášť pro: odpověď ve vlákně, změnu stavu kroku, změnu termínu kroku, novou aktualitu a žádost o schválení. Ve výchozím stavu je vše vypnuté; v administraci jen vidíte, co si zvolil."
                 },
                 {
                   "title": "Co e-mail obsahuje",
-                  "text": "Jen název projektu, předmět vlákna nebo název checkpointu a odkaz do portálu - nikdy text zprávy (citlivý obsah se tak nekopíruje do e-mailových schránek)."
-                },
-                {
-                  "title": "Přehled účtu",
-                  "text": "U uživatele vidíte, která upozornění si zapnul, kdy se naposledy přihlásil a na kolika zařízeních je právě přihlášen."
+                  "text": "Jen název projektu, předmět vlákna / kroku / aktuality / žádosti a odkaz do portálu – nikdy text zprávy. Odkaz otevře rovnou příslušnou část portálu."
                 }
               ]
             },
@@ -290,26 +315,30 @@
         },
         {
           "key": "chapter-04",
-          "heading": "04. Konverzace s klientem",
+          "heading": "04. Konverzace a přiřazení vláken",
           "blocks": [
             {
               "type": "text",
-              "content": "Konverzace ukazují jen vlákna tohoto projektu, rozdělená na Aktivní, Uzavřené a Vše. Vlákno s nepřečtenými zprávami má u sebe počet; otevřením se označí jako přečtené pro celou administraci. U otevřeného vlákna je štítek Čeká na nás (poslední psal klient) nebo Čeká na klienta (poslední psal někdo z vás). Seznam se sám obnovuje každou minutu."
+              "content": "Konverzace ukazují vlákna tohoto projektu, rozdělená na Moje, Aktivní, Uzavřené a Vše. Vlákno s nepřečtenými zprávami má u sebe počet; otevřením se označí jako přečtené pro celou administraci. U otevřeného vlákna je štítek Čeká na nás nebo Čeká na klienta a jméno řešitele vlákna. Seznam se sám obnovuje každou minutu."
             },
             {
               "type": "grid",
               "cards": [
+                {
+                  "title": "Řešitel vlákna",
+                  "text": "V otevřeném vláknu vyberete administrátora, který ho má na starosti; dostane o tom e-mail a od té chvíle mu chodí zprávy klienta z tohoto vlákna. Filtr Moje ukazuje vlákna přiřazená vám."
+                },
                 {
                   "title": "Odpověď klientovi",
                   "text": "Zpráva se podepíše vaším jménem, klient ji uvidí v portálu a uživatelé, kteří si zapnuli upozornění na odpovědi, dostanou e-mail."
                 },
                 {
                   "title": "Interní poznámka",
-                  "text": "Přepínač Interní poznámka nad polem zprávy: poznámku (i s přílohami) vidí jen tým v administraci, je žlutě označená, klient ji nikdy neuvidí, nepřijde mu e-mail a nemění stav Čeká na nás / na klienta."
+                  "text": "Přepínač Interní poznámka nad polem zprávy: poznámku (i s přílohami) vidí jen tým, je žlutě označená, klient ji nikdy neuvidí a nemění stav Čeká na nás / na klienta."
                 },
                 {
                   "title": "Přečteno klientem",
-                  "text": "Pod vašimi zprávami je stav Zatím nepřečteno nebo Přečteno klientem - podle toho, zda klient vlákno v portálu otevřel po odeslání zprávy."
+                  "text": "Pod vašimi zprávami je stav Zatím nepřečteno nebo Přečteno klientem."
                 }
               ]
             }
@@ -317,57 +346,116 @@
         },
         {
           "key": "chapter-05",
-          "heading": "05. Checkpointy",
+          "heading": "05. Postup (checkpointy)",
           "blocks": [
             {
               "type": "text",
-              "content": "Checkpointy jsou kroky projektu, které klient vidí v portálu v části Postup. Každý má nadpis, nepovinný popis (klient ho rozbalí), nepovinný termín a nepovinnou interní poznámku, kterou klient nevidí. Stav vyberete z rozbalovacího menu (Nezahájeno, Rozpracováno, Hotovo); při změně stavu dostanou e-mail uživatelé, kteří si zapnuli upozornění na stav, při nastavení, posunutí nebo zrušení termínu ti, kdo si zapnuli upozornění na termíny. Šipkami nahoru a dolů měníte pořadí. Checkpoint, jehož termín minul a není hotový, je označený jako po termínu."
+              "content": "Checkpointy jsou kroky projektu, které klient vidí v portálu v části Postup. Každý má nadpis, nepovinný popis, termín a interní poznámku, kterou klient nevidí. Stav vyberete z menu (Nezahájeno, Rozpracováno, Hotovo); při změně stavu nebo termínu dostanou e-mail uživatelé, kteří si to zapnuli. Šipkami měníte pořadí; krok po termínu je označený."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Použít šablonu",
+                  "text": "Přidá checkpointy šablony za stávající; termíny se spočítají od zvoleného data začátku."
+                },
+                {
+                  "title": "Uložit jako šablonu",
+                  "text": "Z checkpointů projektu vytvoří novou šablonu (termíny se převedou na počet dní od prvního termínu)."
+                }
+              ]
             }
           ]
         },
         {
           "key": "chapter-06",
-          "heading": "06. Soubory",
+          "heading": "06. Ke schválení",
           "blocks": [
             {
               "type": "text",
-              "content": "Panel Soubory shromažďuje přílohy ze všech vláken projektu, od nejnovějších, s velikostí, datem, autorem a odkazem na vlákno. Přílohy interních poznámek jsou označené jako Interní - klient je v portálu nevidí. Odkazy ke stažení jsou časově omezené; tlačítko obnovit je načte znovu."
+              "content": "Žádost o schválení použijete, když potřebujete od klienta závazný souhlas – s návrhem, texty nebo předáním hotové části. Žádost má nadpis, popis, přílohy, nepovinně krok projektu a termín, do kdy se má klient vyjádřit. Uživatelé se zapnutým upozorněním dostanou e-mail."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Požádat o schválení",
+                  "text": "Tlačítko Nová žádost. Dokud klient nerozhodl, jde žádost upravit (i přílohy).",
+                  "active": true
+                },
+                {
+                  "label": "Klient rozhodne",
+                  "text": "V portálu zvolí Schválit, nebo Vyžádat změny s povinným komentářem. Rozhodnutí se uloží s účtem a časem a nejde změnit; řešiteli přijde e-mail."
+                },
+                {
+                  "label": "Po změnách",
+                  "text": "U žádosti se stavem Vyžádány změny zvolte Požádat znovu – žádost se vrátí klientovi, historie rozhodnutí zůstane."
+                },
+                {
+                  "label": "Zrušení a smazání",
+                  "text": "Zrušenou žádost klient nevidí. Smazat jde jen žádost bez rozhodnutí; ostatní slouží jako záznam."
+                }
+              ]
             }
           ]
         },
         {
           "key": "chapter-07",
-          "heading": "07. Co vidí klient v portálu",
+          "heading": "07. Aktuality",
           "blocks": [
             {
               "type": "text",
-              "content": "Klient se přihlásí odkazem projektu, přihlašovacím jménem a heslem (přihlášení vydrží 24 hodin od poslední aktivity). Portál vypadá jako administrace: nahoře jméno přihlášeného uživatele, tlačítko obnovit a volba jazyka; vlevo menu, které jde tlačítkem se třemi čárkami zúžit na ikony (na mobilu se vysouvá)."
+              "content": "Aktuality jsou zprávy o průběhu projektu (co je hotové, co se děje, co bude dál), případně s přílohami. Napíšete je jako koncept a zveřejníte, nebo zveřejníte rovnou. Klient vidí jen zveřejněné; e-mail se pošle jen při prvním zveřejnění, ne po úpravě nebo opětovném zveřejnění. Zveřejněnou aktualitu jde vrátit do konceptu nebo smazat."
+            }
+          ]
+        },
+        {
+          "key": "chapter-08",
+          "heading": "08. Soubory",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Podstránka Soubory shromažďuje přílohy ze všech vláken, aktualit a žádostí o schválení, od nejnovějších, s velikostí, datem, autorem a odkazem na místo, odkud pocházejí. Přílohy interních poznámek jsou označené jako Interní a klient je nevidí, stejně jako přílohy konceptů aktualit a zrušených žádostí. Odkazy ke stažení jsou časově omezené."
+            }
+          ]
+        },
+        {
+          "key": "chapter-09",
+          "heading": "09. Co vidí klient v portálu",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Klient se přihlásí odkazem projektu – heslem, kódem z e-mailu nebo odkazem z pozvánky (přihlášení vydrží 24 hodin od poslední aktivity). Portál vypadá jako administrace: nahoře jméno uživatele, obnovení a jazyk; vlevo menu s počty (novinky, ke schválení, nepřečtené zprávy, postup)."
             },
             {
               "type": "grid",
               "cards": [
                 {
                   "title": "Přehled",
-                  "text": "Postup v procentech, počet vláken, která čekají na odpověď klienta, nepřečtené zprávy, odhadovaný termín dokončení, aktuální krok a popis projektu."
+                  "text": "Co je nového od poslední návštěvy (nové položky jsou zvýrazněné), upozornění na žádosti ke schválení, postup v procentech, vlákna čekající na klienta, odhadovaný termín a aktuální krok."
                 },
                 {
                   "title": "Postup a Komunikace",
-                  "text": "Checkpointy s termíny a popisy; vlákna s prioritou, stavem Čeká na vás / Odpovídá dodavatel a autory zpráv (Vy, jména kolegů, vaše jméno)."
+                  "text": "Checkpointy s termíny a popisy; vlákna s prioritou, stavem Čeká na vás / Odpovídá dodavatel a autory zpráv."
+                },
+                {
+                  "title": "Ke schválení a Aktuality",
+                  "text": "Žádosti s popisem, soubory, krokem, termínem a historií rozhodnutí, tlačítka Schválit / Vyžádat změny; zveřejněné aktuality s přílohami."
                 },
                 {
                   "title": "Soubory, Kontakty, Nápověda",
-                  "text": "Všechny přílohy (bez interních), kontakt na vedoucího projektu a firemní údaje dodavatele, návod k portálu."
+                  "text": "Všechny veřejné přílohy s odkazem na zdroj, kontakt na vedoucího projektu a firemní údaje dodavatele, návod k portálu."
                 },
                 {
                   "title": "Můj účet",
-                  "text": "Jméno a přihlašovací jméno (jen pro čtení), e-mail, jazyk e-mailů a přepínače upozornění: odpověď dodavatele, změna stavu kroku, změna termínu kroku. Vše je ve výchozím stavu vypnuté a bez e-mailu nejde zapnout."
+                  "text": "Jméno a přihlašovací jméno (jen pro čtení), způsob přihlášení a stav ověření e-mailu, e-mail, jazyk e-mailů a pět přepínačů upozornění (vše výchozím stavem vypnuté, bez e-mailu nejdou zapnout)."
                 }
               ]
             },
             {
               "type": "alert",
               "variant": "info",
-              "content": "Bez oprávnění web-projects-update je stránka projektu jen pro čtení - nelze měnit nastavení, uživatele, checkpointy ani odpovídat. Auditní log zapisuje změny projektu, uživatelů (jen podle ID, bez jmen a e-mailů), checkpointů a uzavření / otevření vláken; samotné zprávy ani hesla se do logu nezapisují."
+              "content": "Bez oprávnění web-projects-update je stránka projektu i správa šablon jen pro čtení. Auditní log zapisuje změny projektu, uživatelů (jen podle ID), pozvánky a přihlášení kódem / odkazem (bez kódu a e-mailu), checkpointy, přiřazení vláken, žádosti o schválení s rozhodnutími (bez komentáře) a aktuality (bez textu); zprávy, kódy ani hesla se do logu nezapisují. Nepoužité a prošlé přihlašovací kódy se automaticky mažou."
             }
           ]
         }

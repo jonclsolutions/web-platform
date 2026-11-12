@@ -11,7 +11,9 @@
  *   replies and new threads incl. attachment validation and send errors (bugfix 2026-10-23),
  *   refresh, the admin-like layout (menu button collapsing / sliding in the menu, remembered in
  *   localStorage), the sections (overview, files, lazily loaded contacts, my account with the
- *   client's own e-mail notifications), message authors,
+ *   client's own e-mail notifications), message authors, sign-in by an e-mailed code and by the
+ *   one-time link of an e-mail, "what is new", approvals (approve / request changes), updates,
+ *   the sources of files,
  *   "waiting on you", derived labels and the language menu.
  * @dependencies
  * - PublicDataService stub routing GET / POST by URL; ProjectPortalLocalizationService stub
@@ -19,7 +21,7 @@
  */
 
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 
 import { ProjectPortalComponent } from './project-portal.component';
@@ -37,6 +39,9 @@ describe('ProjectPortalComponent', () => {
   let replies: Record<string, () => Observable<any>>;
   let language$: BehaviorSubject<string>;
   let translations$: BehaviorSubject<any>;
+  /** Query parameters of the address (`?section=`, `?access=`) for the next create(). */
+  let query: Record<string, string>;
+  let navigate: jasmine.Spy;
 
   /** localStorage key of the session token of the former portal versions (removed on load). */
   const LEGACY_SESSION = 'project_session_tok';
@@ -72,7 +77,7 @@ describe('ProjectPortalComponent', () => {
     TestBed.configureTestingModule({
       imports: [ProjectPortalComponent],
       providers: [
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap(token ? { token } : {}) } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap(token ? { token } : {}), queryParamMap: convertToParamMap(query) } } },
         { provide: PublicDataService, useValue: { get, getWithMeta, post, getSiteSettings } },
         provideUploadRulesStub(),
         { provide: ProjectPortalLocalizationService, useValue: {
@@ -81,6 +86,7 @@ describe('ProjectPortalComponent', () => {
         } }
       ]
     });
+    navigate = spyOn(TestBed.inject(Router), 'navigate').and.returnValue(Promise.resolve(true));
     fixture = TestBed.createComponent(ProjectPortalComponent);
     portal = fixture.componentInstance;
     fixture.detectChanges();
@@ -91,6 +97,7 @@ describe('ProjectPortalComponent', () => {
 
   beforeEach(() => {
     localStorage.removeItem(LEGACY_SESSION);
+    query = {};
     replies = {
       // A copy per answer - a test changing the loaded project must not change the next test's one.
       '/tok': () => cookie ? of(structuredClone(project)) : throwError(() => ({ status: 401 })),
@@ -661,7 +668,7 @@ describe('ProjectPortalComponent', () => {
    *   account and the project; the menu lists the sections (unread badge of Communication, done /
    *   total of Progress) with Help and logout at the bottom; a menu item opens its section.
    * @input Logged-in portal (account Jana Nová, 3 unread, 1 of 3 steps done); click on "Progress".
-   * @output 'JN', 'Jana Nová', 'Web'; 5 + 3 items (My account, Help, logout); badge 3; '1/3'; active section checkpoints.
+   * @output 'JN', 'Jana Nová', 'Web'; 7 + 3 items (My account, Help, logout); badge 3; '1/3'; active section checkpoints.
    */
   it('renders the header and the menu like the administration', fakeAsync(() => {
     loggedIn();
@@ -670,7 +677,7 @@ describe('ProjectPortalComponent', () => {
     expect(el.querySelector('.pp-avatar')!.textContent!.trim()).toBe('JN');
     expect(el.querySelector('.pp-header-user-name')!.textContent).toContain('Jana Nová');
     expect(el.querySelector('.pp-header-project')!.textContent).toContain('Web');
-    expect(el.querySelectorAll('.pp-sidebar .pp-nav-item').length).toBe(8);
+    expect(el.querySelectorAll('.pp-sidebar .pp-nav-item').length).toBe(10);
     expect(el.querySelector('.pp-nav-badge')!.textContent!.trim()).toBe('3');
     expect(el.querySelector('.pp-nav-count')!.textContent!.trim()).toBe('1/3');
     expect(el.querySelector('.pp-nav-item.active')!.textContent).toContain('tab_overview');
@@ -851,19 +858,19 @@ describe('ProjectPortalComponent', () => {
   it('lets the client choose its e-mail notifications', fakeAsync(() => {
     loggedIn();
     portal.setActiveTab('account');
-    expect(portal.accountSettings).toEqual({ email: '', language: 'cz', notify_replies: false, notify_checkpoint_status: false, notify_checkpoint_dates: false });
+    expect(portal.accountSettings).toEqual({ email: '', language: 'cz', notify_replies: false, notify_checkpoint_status: false, notify_checkpoint_dates: false, notify_updates: false, notify_approvals: false });
     expect(portal.accountSettingsDirty).toBeFalse();
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelectorAll('.pp-switch').length).toBe(3);
+    expect(el.querySelectorAll('.pp-switch').length).toBe(5);
     expect((el.querySelector('fieldset.pp-switches') as HTMLFieldSetElement).disabled).toBeTrue();
 
-    portal.accountSettings = { email: ' jana@client.cz ', language: 'en', notify_replies: true, notify_checkpoint_status: false, notify_checkpoint_dates: true };
-    const saved = { ...project.account, email: 'jana@client.cz', language: 'en', notify_replies: true, notify_checkpoint_status: false, notify_checkpoint_dates: true };
+    portal.accountSettings = { email: ' jana@client.cz ', language: 'en', notify_replies: true, notify_checkpoint_status: false, notify_checkpoint_dates: true, notify_updates: true, notify_approvals: false };
+    const saved = { ...project.account, email: 'jana@client.cz', language: 'en', notify_replies: true, notify_checkpoint_status: false, notify_checkpoint_dates: true, notify_updates: true, notify_approvals: false };
     replies['/tok/account'] = () => of({ ...project, account: saved });
     portal.saveAccountSettings();
     expect(post).toHaveBeenCalledWith('projects/public/tok/account', {
-      email: 'jana@client.cz', language: 'en', notify_replies: true, notify_checkpoint_status: false, notify_checkpoint_dates: true,
+      email: 'jana@client.cz', language: 'en', notify_replies: true, notify_checkpoint_status: false, notify_checkpoint_dates: true, notify_updates: true, notify_approvals: false,
     });
     expect(portal.accountSaveResult).toBe('saved');
     expect(portal.project!.account!.notify_replies).toBeTrue();
@@ -891,4 +898,252 @@ describe('ProjectPortalComponent', () => {
     fixture.destroy();
     discardPeriodicTasks();
   }));
+
+  describe('phase 2', () => {
+    const activity = () => [
+      { type: 'approval_requested', title: 'Homepage', detail: null, at: '2026-11-12 09:00:00', is_new: true, target: { section: 'approvals', id: 4 } },
+      { type: 'checkpoint', title: 'B', detail: 'active', at: '2026-11-11 09:00:00', is_new: false, target: { section: 'checkpoints', id: 2 } },
+      { type: 'reply', title: 'Design', detail: null, at: '2026-11-10 09:00:00', is_new: false, target: { section: 'threads', id: 1 } },
+      { type: 'approval_decided', title: 'Texts', detail: 'changes_requested', at: '2026-11-09 09:00:00', is_new: false, target: { section: 'approvals', id: 3 } },
+    ];
+    const approvals = () => [
+      { id: 4, title: 'Homepage', description: 'Final design', status: 'pending', due_date: '2026-11-20', checkpoint_label: 'B', requested_by_label: 'Petr', requested_at: '2026-11-12 09:00:00',
+        attachments: [{ id: 30, original_filename: 'home.png', mime_type: 'image/png', size_bytes: 4096, download_url: 'https://x/a/30' }], decisions: [] },
+      { id: 3, title: 'Texts', description: null, status: 'changes_requested', due_date: null, requested_by_label: null, requested_at: '2026-11-08 09:00:00',
+        decisions: [{ id: 1, decision: 'changes_requested', comment: 'Shorter', author_label: 'Jana Nová', account_id: 5, created_at: '2026-11-09 09:00:00' }] },
+    ];
+    const updates = () => [
+      { id: 2, title: 'Week 2', body: 'Design done', author_label: 'Petr', published_at: '2026-11-11 09:00:00', attachments: [] },
+    ];
+    beforeEach(() => {
+      replies['/tok/activity'] = () => of({ data: activity(), meta: { unseen: 1 } });
+      replies['/tok/approvals'] = () => of(approvals());
+      replies['/tok/updates'] = () => of(updates());
+      replies['/activity/seen'] = () => of({});
+    });
+
+    /**
+     * @description Sign-in by an e-mailed code: the mode switch clears the state; step 1 asks for
+     *   a code (always the same answer - no account enumeration), step 2 signs in with it and
+     *   opens the portal; a wrong code / too many attempts / a failed request show their reason.
+     * @input  no session; setLoginMode('code'); identifier 'jana'; requestCode (ok, then 429, then 500);
+     *   code '12 34 56' wrong (422), then right; rendered login card
+     * @output post('…/login/code-request', { identifier: 'jana' }); codeRequested + 'login_code_sent';
+     *   'error_too_many_attempts' / 'error_code_request_failed'; post('…/login/code', { identifier, code: '123456' });
+     *   'error_code_invalid'; state 'portal'; two mode buttons and the one-time-code input rendered
+     */
+    it('signs in with a code sent by e-mail', fakeAsync(() => {
+      create();
+      portal.loginError = 'error_invalid_credentials';
+      portal.setLoginMode('code');
+      expect(portal.loginMode).toBe('code');
+      expect(portal.loginError).toBeNull();
+      expect(portal.codeRequested).toBeFalse();
+      portal.requestCode();
+      expect(post).not.toHaveBeenCalled();
+      portal.loginUsername = ' jana ';
+      replies['/login/code-request'] = () => of({});
+      portal.requestCode();
+      expect(post).toHaveBeenCalledWith('projects/public/tok/login/code-request', { identifier: 'jana' });
+      expect([portal.codeRequested, portal.loginInfo]).toEqual([true, 'login_code_sent']);
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelectorAll('.pp-login-modes button').length).toBe(2);
+      expect(el.querySelector('input[autocomplete="one-time-code"]')).not.toBeNull();
+      expect(el.querySelector('.pp-login-info')!.textContent).toContain('login_code_sent');
+
+      portal.loginCode = '12 34 5';
+      portal.loginWithCode();
+      expect(post).not.toHaveBeenCalledWith('projects/public/tok/login/code', jasmine.anything());
+      portal.loginCode = '12 34 56';
+      replies['/login/code'] = () => throwError(() => ({ status: 422 }));
+      portal.loginWithCode();
+      expect(post).toHaveBeenCalledWith('projects/public/tok/login/code', { identifier: 'jana', code: '123456' });
+      expect(portal.loginError).toBe('error_code_invalid');
+      cookie = true;
+      replies['/login/code'] = () => of({ project: structuredClone(project) });
+      portal.loginWithCode();
+      expect(portal.state).toBe('portal');
+      expect(portal.loginInfo).toBeNull();
+
+      replies['/login/code-request'] = () => throwError(() => ({ status: 429 }));
+      portal.loginUsername = 'jana';
+      portal.requestCode();
+      expect(portal.loginError).toBe('error_too_many_attempts');
+      replies['/login/code-request'] = () => throwError(() => ({ status: 500 }));
+      portal.requestCode();
+      expect(portal.loginError).toBe('error_code_request_failed');
+      fixture.destroy();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description A one-time link of an e-mail (`?access=`) signs in once and is dropped from the
+     *   address; a spent link falls back to an existing session, otherwise to the code login with
+     *   the reason; `?section=` opens that section after the sign-in.
+     * @input  ?access=L1&section=approvals (ok); ?access=L2 failing without / with a session cookie
+     * @output post('…/login/link', { link: 'L1' }); navigate removing `access` with replaceUrl;
+     *   portal on 'approvals'; then login in code mode with 'error_link_invalid'; then portal
+     */
+    it('signs in with the link of an e-mail and opens the requested section', fakeAsync(() => {
+      query = { access: 'L1', section: 'approvals' };
+      replies['/login/link'] = () => of({ project: structuredClone(project) });
+      cookie = true;
+      create('tok', true);
+      expect(post).toHaveBeenCalledWith('projects/public/tok/login/link', { link: 'L1' });
+      expect(navigate).toHaveBeenCalledWith([], jasmine.objectContaining({ queryParams: { access: null }, replaceUrl: true }));
+      expect(portal.state).toBe('portal');
+      expect(portal.activeTab).toBe('approvals');
+      expect(portal.approvals.length).toBe(2);
+      fixture.destroy();
+      discardPeriodicTasks();
+
+      TestBed.resetTestingModule();
+      query = { access: 'L2' };
+      replies['/login/link'] = () => throwError(() => ({ status: 422 }));
+      create('tok', false);
+      expect(portal.state).toBe('login');
+      expect(portal.loginMode).toBe('code');
+      expect(portal.loginError).toBe('error_link_invalid');
+      fixture.destroy();
+      discardPeriodicTasks();
+
+      TestBed.resetTestingModule();
+      create('tok', true);
+      expect(portal.state).toBe('portal');
+      fixture.destroy();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description "What is new": loaded with the portal, marked seen at once on the overview
+     *   (badge gone, new items still highlighted), labelled per type and opening its section;
+     *   pending approvals show a banner and a menu badge.
+     * @input  logged in on the overview; activity (1 unseen); approvals (1 pending)
+     * @output post('…/activity/seen'); activityUnseen 0; 4 news items, 1 highlighted; a click on
+     *   an item drops the highlight at once (no reload); labels; banner; openActivity → approvals /
+     *   checkpoints / thread 1
+     */
+    it('shows what is new and opens it', fakeAsync(() => {
+      loggedIn();
+      expect(portal.activity.length).toBe(4);
+      expect(post).toHaveBeenCalledWith('projects/public/tok/activity/seen', {});
+      expect(portal.activityUnseen).toBe(0);
+      expect(portal.pendingApprovalsCount).toBe(1);
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelectorAll('.pp-news-item').length).toBe(4);
+      expect(el.querySelectorAll('.pp-news-item--new').length).toBe(1);
+      expect(el.querySelector('.pp-banner')).not.toBeNull();
+      expect(el.querySelector('.pp-nav-badge--attention')!.textContent!.trim()).toBe('1');
+
+      const [requested, checkpoint, reply, decided] = portal.activity;
+      portal.openActivity(requested);
+      expect(portal.activity.filter(i => i.is_new).length).toBe(0);
+      portal.setActiveTab('overview');
+      fixture.detectChanges();
+      expect(el.querySelectorAll('.pp-news-item--new').length).toBe(0);
+      expect(portal.activityLabel(requested)).toBe('news_approval_requested');
+      expect(portal.activityLabel(checkpoint)).toBe('news_checkpoint'.replace('{status}', ''));
+      expect(portal.activityLabel(decided)).toBe('news_approval_changes_requested');
+      portal.openActivity(requested);
+      expect(portal.activeTab).toBe('approvals');
+      portal.openActivity(checkpoint);
+      expect(portal.activeTab).toBe('checkpoints');
+      portal.openActivity(reply);
+      expect(portal.activeTab).toBe('threads');
+      expect(portal.selectedThread?.id).toBe(1);
+      fixture.destroy();
+      discardPeriodicTasks();
+      flush();
+    }));
+
+    /**
+     * @description Approvals: approve at once; "request changes" needs a comment; the answer
+     *   replaces the request; a failure (e.g. already decided) shows the reason and reloads; a
+     *   decided request has no buttons and shows its history.
+     * @input  approvals section; decide(4, approved); request changes without / with comment; failure
+     * @output post('…/approvals/4/decision', { decision: 'approved' }); 'approval_comment_required' without
+     *   request; { decision: 'changes_requested', comment: 'Bigger logo' }; 'approval_decision_failed' + reload;
+     *   rendered: 2 cards, 1 action row, 1 history entry
+     */
+    it('lets the client approve or request changes', fakeAsync(() => {
+      loggedIn();
+      portal.setActiveTab('approvals');
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelectorAll('.pp-approval').length).toBe(2);
+      expect(el.querySelectorAll('.pp-approval-actions').length).toBe(1);
+      expect(el.querySelectorAll('.pp-decisions li').length).toBe(1);
+      expect(el.querySelector('.pp-approval .pp-attachment-name')!.textContent).toContain('home.png');
+
+      replies['/approvals/4/decision'] = () => of({ ...approvals()[0], status: 'approved' });
+      portal.decide(portal.approvals[0], 'approved');
+      expect(post).toHaveBeenCalledWith('projects/public/tok/approvals/4/decision', { decision: 'approved' });
+      expect(portal.approvals[0].status).toBe('approved');
+      expect(portal.pendingApprovalsCount).toBe(0);
+      post.calls.reset();
+      portal.decide(portal.approvals[0], 'approved');
+      expect(post).not.toHaveBeenCalled();
+
+      portal.approvals = approvals() as any;
+      portal.toggleChangesForm(portal.approvals[0]);
+      expect(portal.changesFormId).toBe(4);
+      portal.decide(portal.approvals[0], 'changes_requested');
+      expect(portal.decisionError).toBe('approval_comment_required');
+      expect(post).not.toHaveBeenCalled();
+      portal.changesComment = ' Bigger logo ';
+      replies['/approvals/4/decision'] = () => of({ ...approvals()[0], status: 'changes_requested' });
+      portal.decide(portal.approvals[0], 'changes_requested');
+      expect(post).toHaveBeenCalledWith('projects/public/tok/approvals/4/decision', { decision: 'changes_requested', comment: 'Bigger logo' });
+      expect([portal.changesFormId, portal.changesComment]).toEqual([null, '']);
+
+      portal.approvals = approvals() as any;
+      get.calls.reset();
+      replies['/approvals/4/decision'] = () => throwError(() => ({ status: 422 }));
+      portal.decide(portal.approvals[0], 'approved');
+      expect(portal.decisionError).toBe('approval_decision_failed');
+      expect(get).toHaveBeenCalledWith('projects/public/tok/approvals');
+      expect(portal.decidingId).toBeNull();
+      expect(portal.approvalStatusLabel('approved')).toBe('approval_status_approved');
+      fixture.destroy();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Updates load when the section opens; files of updates / approvals name their
+     *   source and open their section; the account shows how it signs in.
+     * @input  setActiveTab('updates'); files with source update / approval / thread; account without password
+     * @output get('…/updates'); 1 card 'Week 2'; labels 'file_source_update: Week 2' / 'file_source_approval: Homepage' / 'Hosting';
+     *   openFileThread → updates / approvals; account text 'account_signin_code'
+     */
+    it('shows the updates, the sources of files and the sign-in of the account', fakeAsync(() => {
+      loggedIn();
+      portal.setActiveTab('updates');
+      expect(get).toHaveBeenCalledWith('projects/public/tok/updates');
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelectorAll('.pp-update').length).toBe(1);
+      expect(el.querySelector('.pp-update')!.textContent).toContain('Week 2');
+
+      const base = portalFiles()[0] as any;
+      const fromUpdate = { ...base, source: 'update', source_title: 'Week 2', thread_id: null, thread_subject: null };
+      const fromApproval = { ...base, source: 'approval', source_title: 'Homepage', thread_id: null, thread_subject: null };
+      expect(portal.fileSourceLabel(fromUpdate)).toBe('file_source_update: Week 2');
+      expect(portal.fileSourceLabel(fromApproval)).toBe('file_source_approval: Homepage');
+      expect(portal.fileSourceLabel(base)).toBe('Hosting');
+      portal.openFileThread(fromApproval);
+      expect(portal.activeTab).toBe('approvals');
+      portal.openFileThread(fromUpdate);
+      expect(portal.activeTab).toBe('updates');
+
+      portal.project = { ...portal.project!, account: { ...portal.project!.account!, has_password: false, email: 'jana@client.cz', email_verified: true } };
+      portal.setActiveTab('account');
+      fixture.detectChanges();
+      expect(el.textContent).toContain('account_signin_code');
+      expect(el.textContent).toContain('account_email_verified');
+      fixture.destroy();
+      discardPeriodicTasks();
+    }));
+  });
 });

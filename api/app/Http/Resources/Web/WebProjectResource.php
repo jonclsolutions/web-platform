@@ -37,6 +37,9 @@ class WebProjectResource extends JsonResource
             'access_token'               => $this->access_token,
             'public_url'                 => rtrim(config('app.frontend_url', $request->getSchemeAndHttpHost()), '/') . "/projects/{$this->access_token}",
             'accounts_count'             => $this->whenCounted('accounts'),
+            'pending_approvals_count' => $this->when(isset($this->pending_approvals_count), fn () => (int) $this->pending_approvals_count),
+            'published_updates_count' => $this->when(isset($this->published_updates_count), fn () => (int) $this->published_updates_count),
+            'open_threads_count'      => $this->when(isset($this->open_threads_count), fn () => (int) $this->open_threads_count),
             'checkpoints_total'          => $this->whenCounted('checkpoints'),
             'unread_messages_count'      => $this->when(isset($this->unread_messages_count), fn () => (int) $this->unread_messages_count),
             // Open threads where the client wrote last - an answer is owed.

@@ -50,8 +50,8 @@ class ProjectThreadActivityMail extends Mailable
                 'projectName'  => $this->project->name,
                 'threadSubject' => $this->thread->subject,
                 'isNewThread'  => $this->isNewThread,
-                // The project page of the administration (its conversations).
-                'adminUrl'     => rtrim(config('app.frontend_url', ''), '/') . '/admin/web/projects/' . $this->project->id,
+                // The conversations of the project in the administration.
+                'adminUrl'     => rtrim(config('app.frontend_url', ''), '/') . '/admin/web/projects/' . $this->project->id . '/conversations',
             ],
         );
     }

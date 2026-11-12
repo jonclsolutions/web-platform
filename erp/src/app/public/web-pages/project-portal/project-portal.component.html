@@ -5,8 +5,9 @@
     @author: JS
     @created: 2026
     @description: Client project portal laid out like the administration. Login (login name +
-        password), then: header (menu button, signed-in account, refresh, language), left menu
-        (Overview, Progress, Communication, Files, Contacts; My account, Help and logout at the bottom) that
+        password, or a code e-mailed to the account), then: header (menu button, signed-in account, refresh, language), left menu
+        (Overview with "What is new", Progress, Communication, Approvals, Updates, Files, Contacts;
+        My account, Help and logout at the bottom) that
         collapses on desktop and slides in on mobile, and the content of the picked section.
 -->
 <ng-template #langSwitcher>
@@ -46,6 +47,12 @@
     @case ('threads') {
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
     }
+    @case ('approvals') {
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+    }
+    @case ('updates') {
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><line x1="10" y1="7" x2="18" y2="7"/><line x1="10" y1="11" x2="18" y2="11"/><line x1="10" y1="15" x2="14" y2="15"/></svg>
+    }
     @case ('files') {
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
     }
@@ -83,34 +90,62 @@
   @if (state === 'login') {
     <div class="pp-login-lang"><ng-container [ngTemplateOutlet]="langSwitcher"></ng-container></div>
     <div class="pp-center">
-      <form class="pp-login-card" (ngSubmit)="login()" autocomplete="on">
+      <form class="pp-login-card" (ngSubmit)="loginMode === 'password' ? login() : (codeRequested ? loginWithCode() : requestCode())" autocomplete="on">
         <div class="pp-login-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
         </div>
         <h1 class="pp-login-title">{{ t('login_title') }}</h1>
-        <p class="pp-login-lead">{{ t('login_lead') }}</p>
+        <p class="pp-login-lead">{{ loginMode === 'password' ? t('login_lead') : t('login_code_lead') }}</p>
+
+        <div class="pp-login-modes" role="tablist" [attr.aria-label]="t('login_mode_label')">
+          <button type="button" role="tab" [class.active]="loginMode === 'password'" [attr.aria-selected]="loginMode === 'password'" (click)="setLoginMode('password')">{{ t('login_mode_password') }}</button>
+          <button type="button" role="tab" [class.active]="loginMode === 'code'" [attr.aria-selected]="loginMode === 'code'" (click)="setLoginMode('code')">{{ t('login_mode_code') }}</button>
+        </div>
 
         <label class="pp-login-field">
-          <span>{{ t('login_username_label') }}</span>
+          <span>{{ loginMode === 'password' ? t('login_username_label') : t('login_identifier_label') }}</span>
           <input type="text" class="pp-input" name="username" autocomplete="username" autocapitalize="none" spellcheck="false"
-                 [(ngModel)]="loginUsername" [disabled]="loginLoading">
+                 [(ngModel)]="loginUsername" [disabled]="loginLoading || (loginMode === 'code' && codeRequested)">
         </label>
-        <label class="pp-login-field">
-          <span>{{ t('login_password_label') }}</span>
-          <input type="password" class="pp-input" name="password" autocomplete="current-password"
-                 [(ngModel)]="loginPassword" [disabled]="loginLoading">
-        </label>
+        @if (loginMode === 'password') {
+          <label class="pp-login-field">
+            <span>{{ t('login_password_label') }}</span>
+            <input type="password" class="pp-input" name="password" autocomplete="current-password"
+                   [(ngModel)]="loginPassword" [disabled]="loginLoading">
+          </label>
+        } @else if (codeRequested) {
+          <label class="pp-login-field">
+            <span>{{ t('login_code_label') }}</span>
+            <input type="text" class="pp-input pp-code-input" name="code" autocomplete="one-time-code" inputmode="numeric" maxlength="7"
+                   [(ngModel)]="loginCode" [disabled]="loginLoading" placeholder="000000">
+          </label>
+        }
 
+        @if (loginInfo) {
+          <p class="pp-login-info" role="status">{{ t(loginInfo) }}</p>
+        }
         @if (loginError) {
           <p class="pp-login-error" role="alert">{{ t(loginError) }}</p>
         }
 
-        <button type="submit" class="pp-btn-primary" [disabled]="loginLoading || !loginUsername.trim() || !loginPassword.trim()">
-          {{ loginLoading ? t('login_loading') : t('login_button') }}
-        </button>
-        <p class="pp-login-hint">{{ t('login_forgotten_hint') }}</p>
+        @if (loginMode === 'password') {
+          <button type="submit" class="pp-btn-primary" [disabled]="loginLoading || !loginUsername.trim() || !loginPassword.trim()">
+            {{ loginLoading ? t('login_loading') : t('login_button') }}
+          </button>
+          <p class="pp-login-hint">{{ t('login_forgotten_hint') }}</p>
+        } @else if (!codeRequested) {
+          <button type="submit" class="pp-btn-primary" [disabled]="loginLoading || !loginUsername.trim()">
+            {{ loginLoading ? t('login_loading') : t('login_send_code') }}
+          </button>
+          <p class="pp-login-hint">{{ t('login_code_hint') }}</p>
+        } @else {
+          <button type="submit" class="pp-btn-primary" [disabled]="loginLoading || loginCode.replace(' ', '').length < 6">
+            {{ loginLoading ? t('login_loading') : t('login_button') }}
+          </button>
+          <button type="button" class="pp-link pp-login-again" [disabled]="loginLoading" (click)="setLoginMode('code')">{{ t('login_code_again') }}</button>
+        }
       </form>
     </div>
   }
@@ -162,6 +197,12 @@
                     <span class="pp-nav-text">{{ t('tab_' + section) }}</span>
                     @if (section === 'threads' && totalUnreadCount > 0) {
                       <span class="pp-nav-badge" [attr.aria-label]="t('unread_badge').replace('{count}', '' + totalUnreadCount)">{{ totalUnreadCount }}</span>
+                    }
+                    @if (section === 'overview' && activityUnseen > 0) {
+                      <span class="pp-nav-badge" [attr.aria-label]="t('news_badge').replace('{count}', '' + activityUnseen)">{{ activityUnseen }}</span>
+                    }
+                    @if (section === 'approvals' && pendingApprovalsCount > 0) {
+                      <span class="pp-nav-badge pp-nav-badge--attention" [attr.aria-label]="t('approvals_badge').replace('{count}', '' + pendingApprovalsCount)">{{ pendingApprovalsCount }}</span>
                     }
                     @if (section === 'checkpoints' && checkpointProgress.total > 0) {
                       <span class="pp-nav-count">{{ checkpointProgress.done }}/{{ checkpointProgress.total }}</span>
@@ -231,6 +272,33 @@
                       <span class="pp-stat-value pp-stat-value--text">{{ estimatedCompletionLabel }}</span>
                     </div>
                   }
+                </div>
+
+                @if (pendingApprovalsCount > 0) {
+                  <button type="button" class="pp-banner" (click)="setActiveTab('approvals')">
+                    <strong>{{ t('overview_approvals_banner').replace('{count}', '' + pendingApprovalsCount) }}</strong>
+                    <span>{{ t('overview_approvals_banner_action') }} →</span>
+                  </button>
+                }
+
+                <div class="pp-card">
+                  <div class="pp-card-title">{{ t('news_title') }}</div>
+                  <ul class="pp-news">
+                    @for (item of activity.slice(0, 8); track $index) {
+                      <li>
+                        <button type="button" class="pp-news-item" [class.pp-news-item--new]="item.is_new" (click)="openActivity(item)">
+                          <span class="pp-news-dot" [attr.data-type]="item.type" aria-hidden="true"></span>
+                          <span class="pp-news-text">
+                            <span class="pp-news-label">{{ activityLabel(item) }}@if (item.is_new) { <span class="pp-news-new">{{ t('news_new') }}</span> }</span>
+                            <span class="pp-news-title">{{ item.title }}</span>
+                          </span>
+                          <span class="pp-news-time">{{ item.at | date:'d. M. HH:mm' }}</span>
+                        </button>
+                      </li>
+                    } @empty {
+                      <li class="pp-empty">{{ activityLoading ? t('loading') : t('news_empty') }}</li>
+                    }
+                  </ul>
                 </div>
 
                 @if (currentCheckpoint) {
@@ -507,6 +575,101 @@
               </section>
             }
 
+            <!-- ══════════ APPROVALS ══════════ -->
+            @if (activeTab === 'approvals') {
+              <section class="pp-tab-panel">
+                <p class="pp-section-lead">{{ t('approvals_lead') }}</p>
+                @if (decisionError) { <p class="pp-file-error" role="alert">{{ t(decisionError) }}</p> }
+                @for (approval of approvals; track approval.id) {
+                  <article class="pp-card pp-approval" [attr.data-status]="approval.status">
+                    <div class="pp-approval-head">
+                      <span class="pp-approval-status" [attr.data-status]="approval.status">{{ approvalStatusLabel(approval.status) }}</span>
+                      <h2 class="pp-approval-title">{{ approval.title }}</h2>
+                    </div>
+                    <div class="pp-approval-meta">
+                      {{ t('approval_requested') }} {{ approval.requested_at | date:'d. M. yyyy' }}@if (approval.requested_by_label) { · {{ approval.requested_by_label }} }
+                      @if (approval.checkpoint_label) { · {{ t('approval_step') }}: {{ approval.checkpoint_label }} }
+                      @if (approval.due_date) { · <strong>{{ t('approval_due') }} {{ formatDate(approval.due_date) }}</strong> }
+                    </div>
+                    @if (approval.description) { <p class="pp-project-desc">{{ approval.description }}</p> }
+                    @if (approval.attachments?.length) {
+                      <div class="pp-message-attachments">
+                        @for (att of approval.attachments!; track att.id) {
+                          <a [href]="att.download_url" class="pp-attachment-link" target="_blank" rel="noopener">
+                            <span class="pp-attachment-name">{{ att.original_filename }}</span>
+                            <span class="pp-attachment-size">{{ formatFileSize(att.size_bytes) }}</span>
+                          </a>
+                        }
+                      </div>
+                    }
+                    @if (approval.status === 'pending') {
+                      @if (changesFormId === approval.id) {
+                        <div class="pp-approval-changes">
+                          <label class="pp-login-field">
+                            <span>{{ t('approval_changes_label') }}</span>
+                            <textarea class="pp-textarea" rows="4" maxlength="5000" [(ngModel)]="changesComment" [placeholder]="t('approval_changes_placeholder')"></textarea>
+                          </label>
+                          <div class="pp-form-actions">
+                            <button type="button" class="pp-btn-small" (click)="toggleChangesForm(approval)">{{ t('cancel') }}</button>
+                            <button type="button" class="pp-btn-primary-small" [disabled]="decidingId !== null || !changesComment.trim()" (click)="decide(approval, 'changes_requested')">
+                              {{ decidingId === approval.id ? t('sending') : t('approval_send_changes') }}
+                            </button>
+                          </div>
+                        </div>
+                      } @else {
+                        <div class="pp-form-actions pp-approval-actions">
+                          <button type="button" class="pp-btn-small" [disabled]="decidingId !== null" (click)="toggleChangesForm(approval)">{{ t('approval_request_changes') }}</button>
+                          <button type="button" class="pp-btn-primary-small pp-btn-approve" [disabled]="decidingId !== null" (click)="decide(approval, 'approved')">
+                            {{ decidingId === approval.id ? t('sending') : t('approval_approve') }}
+                          </button>
+                        </div>
+                        <p class="pp-account-note">{{ t('approval_record_note') }}</p>
+                      }
+                    }
+                    @if (approval.decisions?.length) {
+                      <ol class="pp-decisions" [attr.aria-label]="t('approval_history')">
+                        @for (decision of approval.decisions!; track decision.id) {
+                          <li [attr.data-decision]="decision.decision">
+                            <strong>{{ approvalStatusLabel(decision.decision) }}</strong> · {{ decision.account_id === project.account?.id ? t('author_you') : decision.author_label }}
+                            · {{ decision.created_at | date:'d. M. yyyy HH:mm' }}
+                            @if (decision.comment) { <p class="pp-project-desc">{{ decision.comment }}</p> }
+                          </li>
+                        }
+                      </ol>
+                    }
+                  </article>
+                } @empty {
+                  <p class="pp-empty">{{ approvalsLoading ? t('loading') : t('approvals_empty') }}</p>
+                }
+              </section>
+            }
+
+            <!-- ══════════ UPDATES ══════════ -->
+            @if (activeTab === 'updates') {
+              <section class="pp-tab-panel">
+                <p class="pp-section-lead">{{ t('updates_lead') }}</p>
+                @for (update of updates; track update.id) {
+                  <article class="pp-card pp-update">
+                    <div class="pp-approval-meta">{{ update.published_at | date:'d. M. yyyy' }}@if (update.author_label) { · {{ update.author_label }} }</div>
+                    <h2 class="pp-approval-title">{{ update.title }}</h2>
+                    <p class="pp-project-desc">{{ update.body }}</p>
+                    @if (update.attachments?.length) {
+                      <div class="pp-message-attachments">
+                        @for (att of update.attachments!; track att.id) {
+                          <a [href]="att.download_url" class="pp-attachment-link" target="_blank" rel="noopener">
+                            <span class="pp-attachment-name">{{ att.original_filename }}</span>
+                            <span class="pp-attachment-size">{{ formatFileSize(att.size_bytes) }}</span>
+                          </a>
+                        }
+                      </div>
+                    }
+                  </article>
+                } @empty {
+                  <p class="pp-empty">{{ updatesLoading ? t('loading') : t('updates_empty') }}</p>
+                }
+              </section>
+            }
+
             <!-- ══════════ FILES ══════════ -->
             @if (activeTab === 'files') {
               <section class="pp-tab-panel">
@@ -525,7 +688,7 @@
                           <span class="pp-file-meta">
                             {{ formatFileSize(file.size_bytes) }} · {{ file.created_at | date:'d. M. yyyy' }} ·
                             {{ file.author_type === 'admin' ? (file.author_label || t('author_supplier')) : (file.author_label || t('author_client')) }} ·
-                            <button type="button" class="pp-link" (click)="openFileThread(file)">{{ file.thread_subject }}</button>
+                            <button type="button" class="pp-link" (click)="openFileThread(file)">{{ fileSourceLabel(file) }}</button>
                           </span>
                         </div>
                       </li>
@@ -593,6 +756,11 @@
                   <div class="pp-card-title">{{ t('account_title') }}</div>
                   <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('account_name') }}</span><span class="pp-contacts-value">{{ project.account?.display_name }}</span></div>
                   <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('login_username_label') }}</span><span class="pp-contacts-value">{{ project.account?.username }}</span></div>
+                  <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('account_signin') }}</span><span class="pp-contacts-value">{{ project.account?.has_password ? t('account_signin_password_code') : t('account_signin_code') }}</span></div>
+                  @if (project.account?.email) {
+                    <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('notifications_email_label') }}</span>
+                      <span class="pp-contacts-value">{{ project.account?.email }} · {{ project.account?.email_verified ? t('account_email_verified') : t('account_email_unverified') }}</span></div>
+                  }
                   <p class="pp-account-note">{{ t('account_managed_by_supplier') }}</p>
                 </div>
 
@@ -651,7 +819,7 @@
             @if (activeTab === 'help') {
               <section class="pp-tab-panel">
                 <p class="pp-section-lead">{{ t('help_intro_text') }}</p>
-                @for (topic of ['login', 'overview', 'checkpoints', 'threads', 'waiting', 'attachments', 'files', 'contacts', 'layout', 'notifications']; track topic) {
+                @for (topic of ['login', 'login_code', 'overview', 'checkpoints', 'threads', 'waiting', 'approvals', 'updates', 'attachments', 'files', 'contacts', 'layout', 'notifications']; track topic) {
                   <div class="pp-card pp-help-item">
                     <div class="pp-card-title">{{ t('help_' + topic + '_title') }}</div>
                     <p class="pp-project-desc">{{ t('help_' + topic + '_text') }}</p>

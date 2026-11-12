@@ -52,6 +52,7 @@ export function createProjectToolbarButtons(i18n: AdminLocalizationService): Cor
   return [
     { action: 'toggleFilters', label: i18n.getValue(`${SECTION}.toolbar_filters`), icon: '', class: 'btn-filter', isActive: false },
     { action: 'handleCreateFormOpened', label: i18n.getValue(`${SECTION}.toolbar_create_record`), icon: '', class: 'btn-create', showIf: true, permission: 'web-projects-create' },
+    { action: 'openTemplates', label: i18n.getValue(`${SECTION}.toolbar_templates`), icon: '', class: 'btn-neutral', showIf: true, permission: 'web-projects-view' },
     { action: 'exportActiveTable', label: i18n.getValue(`${SECTION}.toolbar_export_data`), icon: '', class: 'btn-export', showIf: true },
     { action: 'openGraphBuilder', label: i18n.getValue(`${SECTION}.toolbar_generate_reports`), icon: '', class: 'btn-neutral', showIf: true, permission: 'web-projects-view' },
     { action: 'toggleTable', label: i18n.getValue(`${SECTION}.toolbar_show_trash`), icon: '', class: 'btn-trash', permission: 'view-deleted' },
@@ -75,6 +76,15 @@ export function createProjectFormFields(i18n: AdminLocalizationService): Core.In
       label: i18n.getValue(`${SECTION}.field_order_label`),
       type: 'select',
       options: [{ value: '', label: createNoOrderOptionLabel(i18n) }],
+      required: false,
+      editable: true, show_in_edit: false, show_in_create: true,
+    },
+    {
+      column_name: 'template_id',
+      label: i18n.getValue(`${SECTION}.field_template_label`),
+      type: 'select',
+      // Filled by the component from GET web/projects/templates (create only - its checkpoints are copied).
+      options: [{ value: '', label: i18n.getValue(`${SECTION}.field_template_none_option`) }],
       required: false,
       editable: true, show_in_edit: false, show_in_create: true,
     },

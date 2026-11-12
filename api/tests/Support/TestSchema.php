@@ -628,14 +628,20 @@ final class TestSchema
             $t->string('username', 64);
             $t->string('display_name', 120);
             $t->string('email')->nullable();
-            // Notification switches of migration 2026_11_19_000000_web_project_account_notifications.
+            $t->timestamp('email_verified_at')->nullable();
+            // Notification switches of migrations 2026_11_19_000000_web_project_account_notifications
+            // and 2026_11_20_000000_web_project_portal_phase2.
             $t->boolean('notify_replies')->default(false);
             $t->boolean('notify_checkpoint_status')->default(false);
             $t->boolean('notify_checkpoint_dates')->default(false);
+            $t->boolean('notify_updates')->default(false);
+            $t->boolean('notify_approvals')->default(false);
             $t->string('language', 5)->default('cz');
-            $t->string('password_hash');
+            $t->string('password_hash')->nullable();
             $t->timestamp('password_set_at')->nullable();
+            $t->timestamp('invited_at')->nullable();
             $t->timestamp('last_login_at')->nullable();
+            $t->timestamp('news_seen_at')->nullable();
             $t->timestamps();
             $t->unique(['project_id', 'username']);
             $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
@@ -661,6 +667,7 @@ final class TestSchema
             $t->string('subject');
             $t->string('priority', 20);
             $t->string('status', 20)->default('active');
+            $t->unsignedInteger('assignee_id')->nullable();
             $t->string('opened_by', 20);
             $t->string('last_public_author', 20)->nullable();
             $t->timestamp('last_message_at')->nullable();
@@ -683,6 +690,83 @@ final class TestSchema
             $t->foreign('thread_id')->references('id')->on('web_project_threads')->cascadeOnDelete();
             $t->foreign('account_id')->references('id')->on('web_project_accounts')->nullOnDelete();
             $t->foreign('user_id')->references('id')->on('users')->nullOnDelete();
+        });
+
+        // Phase 2 of the client portal (migration 2026_11_20_000000_web_project_portal_phase2).
+        Schema::create('web_project_login_codes', function (Blueprint $t) {
+            $t->id();
+            $t->unsignedInteger('account_id');
+            $t->string('purpose', 16);
+            $t->string('code_hash', 64)->nullable();
+            $t->string('link_hash', 64)->unique();
+            $t->unsignedTinyInteger('attempts')->default(0);
+            $t->timestamp('expires_at');
+            $t->timestamp('used_at')->nullable();
+            $t->string('created_ip', 45)->nullable();
+            $t->timestamps();
+            $t->foreign('account_id')->references('id')->on('web_project_accounts')->cascadeOnDelete();
+        });
+
+        Schema::create('web_project_updates', function (Blueprint $t) {
+            $t->increments('id');
+            $t->unsignedInteger('project_id');
+            $t->string('title', 200);
+            $t->text('body');
+            $t->unsignedInteger('author_id')->nullable();
+            $t->string('author_label', 120)->nullable();
+            $t->timestamp('published_at')->nullable();
+            $t->timestamp('first_published_at')->nullable();
+            $t->timestamps();
+            $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
+            $t->foreign('author_id')->references('id')->on('users')->nullOnDelete();
+        });
+
+        Schema::create('web_project_approvals', function (Blueprint $t) {
+            $t->increments('id');
+            $t->unsignedInteger('project_id');
+            $t->unsignedInteger('checkpoint_id')->nullable();
+            $t->string('title', 200);
+            $t->text('description')->nullable();
+            $t->string('status', 20)->default('pending');
+            $t->date('due_date')->nullable();
+            $t->unsignedInteger('requested_by')->nullable();
+            $t->string('requested_by_label', 120)->nullable();
+            $t->timestamp('requested_at')->nullable();
+            $t->timestamp('decided_at')->nullable();
+            $t->timestamps();
+            $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
+            $t->foreign('checkpoint_id')->references('id')->on('web_project_checkpoints')->nullOnDelete();
+            $t->foreign('requested_by')->references('id')->on('users')->nullOnDelete();
+        });
+
+        Schema::create('web_project_approval_decisions', function (Blueprint $t) {
+            $t->increments('id');
+            $t->unsignedInteger('approval_id');
+            $t->string('decision', 20);
+            $t->text('comment')->nullable();
+            $t->unsignedInteger('account_id')->nullable();
+            $t->string('author_label', 120)->nullable();
+            $t->timestamp('created_at')->nullable();
+            $t->foreign('approval_id')->references('id')->on('web_project_approvals')->cascadeOnDelete();
+            $t->foreign('account_id')->references('id')->on('web_project_accounts')->nullOnDelete();
+        });
+
+        Schema::create('web_project_templates', function (Blueprint $t) {
+            $t->increments('id');
+            $t->string('name', 160);
+            $t->text('description')->nullable();
+            $t->timestamps();
+        });
+
+        Schema::create('web_project_template_checkpoints', function (Blueprint $t) {
+            $t->increments('id');
+            $t->unsignedInteger('template_id');
+            $t->string('label');
+            $t->text('description')->nullable();
+            $t->unsignedSmallInteger('offset_days')->nullable();
+            $t->unsignedSmallInteger('sort_order')->default(0);
+            $t->timestamps();
+            $t->foreign('template_id')->references('id')->on('web_project_templates')->cascadeOnDelete();
         });
     }
 

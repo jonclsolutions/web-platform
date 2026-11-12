@@ -87,18 +87,10 @@
 .pd-state--error { display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--color-rose-600); }
 
 /*
-    @module: Grid and cards
-    @description: Main column (conversations, settings) + side column (access, checkpoints).
-    @usage: .pd-grid, .pd-main, .pd-side, .pd-card, .pd-card-head, .pd-card-title, .pd-card-body
+    @module: Cards
+    @description: Cards of the sub-pages (one column, .pd-section).
+    @usage: .pd-card, .pd-card-head, .pd-card-title, .pd-card-body
 */
-.pd-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 16px;
-  align-items: start;
-}
-
-.pd-main, .pd-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
 .pd-card {
   background: var(--surface, var(--color-white));
@@ -621,12 +613,21 @@
 .pd-cp-field--date { max-width: 220px; }
 
 /*
+    @module: Thread tags and the sub-page container
+    @description: "Waiting on" and assignee tags of a thread row; the single column of a sub-page.
+    @usage: .pd-thread-tags > .pd-waiting + .pd-assignee-tag; .pd-section
+*/
+.pd-thread-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.pd-assignee-tag { padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; background: var(--color-indigo-50); color: var(--color-indigo-700); }
+.pd-section { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/*
     @module: Client accounts
     @description: Accounts of the client portal (avatar, name, login name, e-mail, notifications,
         last sign-in) with edit / reset password / remove, the account form and the one-time
         password panel.
     @usage: .pd-accounts > .pd-account(--editing), .pd-avatar, .pd-account-*, .pd-tag(--on),
-        .pd-account-form, .pd-password-head
+        .pd-account-form, .pd-password-head, .pd-account-access, fieldset.pd-access-choice > .pd-access-option
 */
 .pd-accounts { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .pd-account {
@@ -661,6 +662,13 @@
 .pd-tag--on { white-space: normal; background: var(--color-emerald-50); color: var(--color-emerald-700); }
 .pd-account-form { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px dashed var(--color-zinc-300); border-radius: 12px; background: var(--color-zinc-50); }
 .pd-password-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pd-account-access { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.pd-access-choice { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 10px 12px; border: 1px solid var(--color-zinc-200, var(--color-zinc-100)); border-radius: 10px; background: var(--color-white); }
+.pd-access-choice legend { padding: 0 4px; font-size: 0.76rem; font-weight: 700; color: var(--color-zinc-600); }
+.pd-access-option { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.82rem; }
+.pd-access-option input { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--color-zinc-900); }
+.pd-access-option span { display: flex; flex-direction: column; gap: 2px; }
+.pd-access-option small { color: var(--color-zinc-500); font-size: 0.74rem; line-height: 1.4; }
 
 /*
     @module: Files
@@ -678,12 +686,9 @@
 
 /*
     @module: Responsive
-    @description: One column below 1100 px; below 720 px the conversation shows either the list
-        or the open thread (back arrow), the form one column.
+    @description: Below 720 px the conversation shows either the list or the open thread (back
+        arrow), the form one column.
 */
-@media (max-width: 1100px) {
-  .pd-grid { grid-template-columns: minmax(0, 1fr); }
-}
 
 @media (max-width: 720px) {
   .pd-page { padding: 12px; }

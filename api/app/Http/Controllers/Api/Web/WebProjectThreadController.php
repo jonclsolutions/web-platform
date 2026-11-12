@@ -18,7 +18,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\WebProject\StoreProjectThreadMessageRequest;
 use App\Http\Resources\Web\{WebProjectThreadResource, WebProjectThreadMessageResource};
 use App\Mail\Web\ProjectClientUpdateMail;
-use App\Models\Web\{WebProjectThread, WebProjectThreadMessage};
+use App\Models\Web\{WebProject, WebProjectThread, WebProjectThreadMessage};
 use App\Services\Web\ProjectNotifier;
 use App\Models\Web\WebLog;
 use App\Traits\HandlesAttachments;
@@ -40,9 +40,13 @@ class WebProjectThreadController extends Controller
     public function index(Request $request): JsonResponse
     {
         $perPage = $request->input('per_page', 15);
-        $query = WebProjectThread::query()->with('project:id,name')->withAdminUnreadCount();
+        $query = WebProjectThread::query()->with(['project:id,name', 'assignee:id,full_name'])->withAdminUnreadCount();
 
         if ($request->filled('project_id')) $query->where('project_id', $request->input('project_id'));
+        // Only the threads assigned to the signed-in administrator ("my threads").
+        if (filter_var($request->input('assigned_to_me', false), FILTER_VALIDATE_BOOLEAN)) {
+            $query->where('assignee_id', $request->user()?->id);
+        }
         if ($request->filled('priority')) $query->where('priority', $request->input('priority'));
         if ($request->filled('status')) $query->where('status', $request->input('status'));
 
@@ -60,7 +64,7 @@ class WebProjectThreadController extends Controller
 
     public function show($id): JsonResponse
     {
-        $thread = WebProjectThread::with('project:id,name')->findOrFail($id);
+        $thread = WebProjectThread::with(['project:id,name', 'assignee:id,full_name'])->findOrFail($id);
         // An admin opened it: the client's messages are no longer new for the administration.
         $thread->markReadByAdmin();
 
@@ -146,5 +150,35 @@ class WebProjectThreadController extends Controller
         }
 
         return $this->respond((new WebProjectThreadResource($thread->fresh()))->resolve());
+    }
+
+    /**
+     * @description Assigns the thread to an administrator who may edit projects (or nobody);
+     *   the new assignee is e-mailed (not when assigning to oneself). Client notifications of the
+     *   thread then go to them.
+     * @param Request $request {assignee_id: int|null}
+     * @param int|string $threadId
+     * @return JsonResponse The thread (assignee_id, assignee_name).
+     */
+    public function assign(Request $request, $threadId): JsonResponse
+    {
+        $validated = $request->validate([
+            'assignee_id' => ['present', 'nullable', 'integer', \Illuminate\Validation\Rule::in(WebProject::assignableUsers()->pluck('id')->all())],
+        ]);
+        $thread = WebProjectThread::with(['project', 'assignee:id,full_name'])->findOrFail($threadId);
+        $before = $thread->assignee_id;
+        $thread->update(['assignee_id' => $validated['assignee_id']]);
+        $thread->load('assignee:id,full_name,user_email,is_blocked');
+
+        if ((int) $before !== (int) $thread->assignee_id) {
+            $this->logAction($request, WebLog::class, 'thread_assign', 'WebProjectThread',
+                "Thread #{$thread->id} of project #{$thread->project_id} assigned to " . ($thread->assignee_id ? "user #{$thread->assignee_id}" : 'nobody'),
+                $thread->project_id, 'WebProject');
+            if ($thread->assignee && $thread->project) {
+                $this->notifier->notifyThreadAssigned($thread->project, $thread, $thread->assignee, $request->user());
+            }
+        }
+
+        return $this->respond((new WebProjectThreadResource($thread->fresh(['assignee:id,full_name'])))->resolve());
     }
 }

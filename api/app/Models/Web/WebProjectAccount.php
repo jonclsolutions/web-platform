@@ -11,13 +11,19 @@
  *   administration (which ends the account's sessions). Signs in with the project's link + login
  *   name + password; every message, sign-in and session of the client belongs to an account. The
  *   only things the client sets itself (portal, "My account") are its e-mail, the language of the
- *   e-mails and which notifications it wants - all off by default.
+ *   e-mails and which notifications it wants - all off by default. An account signs in with its
+ *   password (optional - an invited account may have none) or with a one-time code / link sent to
+ *   its e-mail (WebProjectLoginCode: invitation, "send me a code").
  * @property string $username Login name - unique within the project, lower case.
  * @property string $password_hash Bcrypt hash (never returned by the API).
  * @property bool $notify_replies E-mail about a new reply of the supplier (opt-in by the client).
  * @property bool $notify_checkpoint_status E-mail about a checkpoint status change (opt-in by the client).
  * @property bool $notify_checkpoint_dates E-mail about a new / changed checkpoint due date (opt-in by the client).
+ * @property bool $notify_updates E-mail about a published update of the supplier (opt-in by the client).
+ * @property bool $notify_approvals E-mail about a new approval request (opt-in by the client).
  * @property string $language Language of those e-mails ('cz' | 'en').
+ * @property \Illuminate\Support\Carbon|null $email_verified_at The e-mail was proven by a code / link.
+ * @property \Illuminate\Support\Carbon|null $news_seen_at Until when the client has seen the news.
  * @dependencies WebProject, WebProjectSession
  */
 
@@ -48,6 +54,8 @@ class WebProjectAccount extends Model
         'reply'           => 'notify_replies',
         'checkpoint'      => 'notify_checkpoint_status',
         'checkpoint_date' => 'notify_checkpoint_dates',
+        'update'          => 'notify_updates',
+        'approval'        => 'notify_approvals',
     ];
 
     /** @description Length of a generated password. */
@@ -61,6 +69,8 @@ class WebProjectAccount extends Model
         'notify_replies',
         'notify_checkpoint_status',
         'notify_checkpoint_dates',
+        'notify_updates',
+        'notify_approvals',
         'language',
     ];
 
@@ -72,9 +82,27 @@ class WebProjectAccount extends Model
         'notify_replies'           => 'boolean',
         'notify_checkpoint_status' => 'boolean',
         'notify_checkpoint_dates'  => 'boolean',
+        'notify_updates'           => 'boolean',
+        'notify_approvals'         => 'boolean',
+        'email_verified_at'        => 'datetime',
+        'invited_at'               => 'datetime',
+        'news_seen_at'             => 'datetime',
         'password_set_at' => 'datetime',
         'last_login_at'   => 'datetime',
     ];
+
+    /**
+     * @description A changed e-mail is not proven any more (a code / link proves it again).
+     * @return void
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $account) {
+            if ($account->exists && $account->isDirty('email') && !$account->isDirty('email_verified_at')) {
+                $account->email_verified_at = null;
+            }
+        });
+    }
 
     public function project(): BelongsTo
     {
@@ -84,6 +112,29 @@ class WebProjectAccount extends Model
     public function sessions(): HasMany
     {
         return $this->hasMany(WebProjectSession::class, 'account_id');
+    }
+
+    public function loginCodes(): HasMany
+    {
+        return $this->hasMany(WebProjectLoginCode::class, 'account_id');
+    }
+
+    /**
+     * @description The account has a password (else it signs in by a code / link only).
+     * @return bool
+     */
+    public function hasPassword(): bool
+    {
+        return !empty($this->password_hash);
+    }
+
+    /**
+     * @description The account has an e-mail a code / invitation can be sent to.
+     * @return bool
+     */
+    public function hasEmail(): bool
+    {
+        return !empty($this->email);
     }
 
     /**
@@ -138,6 +189,9 @@ class WebProjectAccount extends Model
      */
     public function verifyPassword(string $plaintext): bool
     {
+        if (!$this->hasPassword()) {
+            return false;
+        }
         try {
             return Hash::check($plaintext, (string) $this->password_hash);
         } catch (\RuntimeException) {

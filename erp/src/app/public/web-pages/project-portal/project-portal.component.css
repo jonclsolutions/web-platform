@@ -492,6 +492,92 @@ a.pp-contacts-value:hover { text-decoration: underline; }
 .pp-switch-hint { font-size: 0.76rem; color: var(--text-muted); line-height: 1.45; }
 
 /*
+    @module: Sign-in modes
+    @description: Switch between the password and the e-mailed one-time code on the login card,
+        the code input and the info line ("we have sent a code").
+    @usage: .pp-login-modes > button(.active); input.pp-code-input; p.pp-login-info; button.pp-login-again
+*/
+.pp-login-modes {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin: 0 0 16px;
+  background: var(--surface-2); border-radius: 10px;
+}
+.pp-login-modes button {
+  padding: 8px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--text-muted);
+  font: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background var(--ease), color var(--ease);
+}
+.pp-login-modes button.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+.pp-login-modes button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pp-code-input { font-size: 1.3rem; letter-spacing: 0.35em; text-align: center; font-variant-numeric: tabular-nums; }
+.pp-login-info { color: var(--info); background: var(--info-dim); border-radius: 8px; padding: 8px 10px; font-size: 0.82rem; margin: 0 0 10px; }
+.pp-login-again { display: block; margin: 12px auto 0; font-size: 0.8rem; }
+
+/*
+    @module: What is new
+    @description: Banner of the approvals waiting on the client and the activity list of the
+        overview; a new item (since the last visit) is highlighted.
+    @usage: button.pp-banner; ul.pp-news > li > button.pp-news-item(.pp-news-item--new) > .pp-news-dot[data-type] + .pp-news-text + .pp-news-time
+*/
+.pp-nav-badge--attention { background: var(--warning); }
+.pp-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;
+  padding: 14px 18px; border: 1px solid var(--color-amber-200); border-radius: 14px;
+  background: var(--warning-dim); color: var(--warning); font: inherit; font-size: 0.9rem; text-align: left; cursor: pointer;
+}
+.pp-banner:hover { filter: brightness(0.98); }
+.pp-banner:focus-visible { outline: 2px solid var(--warning); outline-offset: 2px; }
+.pp-news { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.pp-news-item {
+  display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 10px 8px; border: 0;
+  border-bottom: 1px solid var(--border); background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.pp-news li:last-child .pp-news-item { border-bottom: 0; }
+.pp-news-item:hover { background: var(--surface-2); }
+.pp-news-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.pp-news-item--new { background: var(--info-dim); }
+.pp-news-dot { width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; flex-shrink: 0; background: var(--text-dim); }
+.pp-news-dot[data-type="update"] { background: var(--info); }
+.pp-news-dot[data-type="approval_requested"] { background: var(--warning); }
+.pp-news-dot[data-type="approval_decided"], .pp-news-dot[data-type="checkpoint"] { background: var(--color-emerald-600); }
+.pp-news-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pp-news-label { font-size: 0.75rem; color: var(--text-muted); }
+.pp-news-title { font-size: 0.88rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-news-new {
+  margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: var(--info); color: var(--color-white);
+  font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.pp-news-time { font-size: 0.72rem; color: var(--text-dim); white-space: nowrap; }
+
+/*
+    @module: Approvals and updates
+    @description: Cards of the approval requests (state chip, meta line, files, Approve / Request
+        changes, history of decisions) and of the published updates.
+    @usage: article.pp-card.pp-approval[data-status] > .pp-approval-head > .pp-approval-status + h2.pp-approval-title;
+        .pp-approval-meta; .pp-approval-changes; ol.pp-decisions > li[data-decision]; article.pp-card.pp-update
+*/
+.pp-approval, .pp-update { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.pp-approval[data-status="pending"] { border-left: 4px solid var(--warning); }
+.pp-approval-head { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.pp-approval-title { margin: 0; font-size: 1.02rem; font-weight: 700; color: var(--text); }
+.pp-approval-status {
+  padding: 2px 9px; border-radius: 999px; font-size: 0.7rem; font-weight: 700;
+  background: var(--surface-2); color: var(--text-muted);
+}
+.pp-approval-status[data-status="pending"] { background: var(--warning-dim); color: var(--warning); }
+.pp-approval-status[data-status="approved"] { background: var(--color-emerald-50); color: var(--color-emerald-700); }
+.pp-approval-status[data-status="changes_requested"] { background: var(--danger-dim); color: var(--danger); }
+.pp-approval-meta { font-size: 0.78rem; color: var(--text-muted); }
+.pp-approval-actions { justify-content: flex-start; flex-wrap: wrap; }
+.pp-btn-approve { background: var(--color-emerald-700); }
+.pp-btn-approve:hover:not(:disabled) { background: var(--color-emerald-600); }
+.pp-approval-changes { display: flex; flex-direction: column; gap: 8px; }
+.pp-decisions { list-style: none; margin: 4px 0 0; padding: 10px 0 0; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; font-size: 0.8rem; color: var(--text-muted); }
+.pp-decisions li { padding-left: 10px; border-left: 3px solid var(--border); }
+.pp-decisions li[data-decision="approved"] { border-left-color: var(--color-emerald-600); }
+.pp-decisions li[data-decision="changes_requested"] { border-left-color: var(--danger); }
+.pp-decisions .pp-project-desc { margin: 4px 0 0; color: var(--text); white-space: pre-line; }
+.pp-update .pp-project-desc { white-space: pre-line; }
+
+/*
     @module: Mobile
     @description: Up to 768 px the menu slides in over the content (260 px) with a dark overlay;
         the project name in the header and the long labels are dropped, cards get tighter.

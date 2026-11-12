@@ -12,15 +12,18 @@
  *   copy of the sign-in details), the files of the conversations, checkpoints (status dropdown,
  *   due date, internal note, overdue, order), the conversations of the project (filters, unread
  *   counts, "waiting on", "read by the client", opening marks read, status, replies and internal
- *   notes with validated attachments, older messages, periodic refresh).
+ *   notes with validated attachments, older messages, periodic refresh), the sub-pages with their
+ *   own address (tabs, badges, activity of the overview), thread assignment and "Mine", invitations
+ *   and the access of an account, project templates in Progress, files of updates / approvals.
  * @dependencies
- * - src/testing/admin-test-helpers.ts (all admin doubles), ActivatedRoute (stub with the id),
+ * - src/testing/admin-test-helpers.ts (all admin doubles), ActivatedRoute (stub with the id and
+ *   the sub-page as an observable paramMap),
  *   Router.navigate (spy), navigator.clipboard (spy)
  */
 
 import { ComponentFixture, TestBed, fakeAsync, tick, flush, discardPeriodicTasks } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 
 import { ProjectDetailComponent, THREAD_REFRESH_SECONDS } from './project-detail.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
@@ -32,6 +35,13 @@ describe('ProjectDetailComponent', () => {
   let component: ProjectDetailComponent;
   let navigate: jasmine.Spy;
   let routeId: string | null;
+  /** Parameters of the address: the id and the sub-page (`section`), changed by a test with go(). */
+  let params$: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+  /** Switches the sub-page like a click on a tab (same component, new `section` parameter). */
+  const go = (section: string) => {
+    params$.next(convertToParamMap({ id: routeId ?? '', section }));
+    fixture.detectChanges();
+  };
 
   const dh = () => ctx.dataHandler as any;
   const project = () => ({
@@ -51,12 +61,20 @@ describe('ProjectDetailComponent', () => {
   ];
   const assignees = () => [{ id: 3, full_name: 'Jana' }, { id: 5, full_name: 'Petr' }];
   /** getCollection answers by endpoint. */
-  const collections = (endpoint: string) => {
+  const collections = (endpoint: string, params?: Record<string, string>) => {
+    if (params?.['assigned_to_me']) return of([threads()[0]]);
+    if (endpoint === 'web/projects/7/activity') return of(activity());
+    if (endpoint === 'web/projects/templates') return of(templates());
     if (endpoint === 'web/projects/7/accounts') return of(accounts());
     if (endpoint === 'web/projects/7/files') return of(projectFiles());
     if (endpoint === 'web/projects/assignees') return of(assignees());
     return of(threads());
   };
+  const activity = () => [
+    { type: 'client_message', title: 'Launch', detail: null, at: '2026-11-10 09:00:00', target: { section: 'threads', id: 3 } },
+    { type: 'approval_decided', title: 'Homepage', detail: 'approved', at: '2026-11-09 09:00:00', target: { section: 'approvals', id: 2 } }
+  ];
+  const templates = () => [{ id: 1, name: 'Web', description: null, checkpoints: [{ label: 'Design' }, { label: 'Launch' }] }];
   const threads = () => [
     { id: 3, subject: 'Launch', priority: 'high', status: 'active', last_message_at: '2026-11-10 09:00:00', admin_unread_count: 2, waiting_on: 'supplier' as const },
     { id: 4, subject: 'Hosting', priority: 'low', status: 'closed', last_message_at: null, admin_unread_count: 1, waiting_on: null },
@@ -88,6 +106,7 @@ describe('ProjectDetailComponent', () => {
 
   beforeEach(async () => {
     routeId = '7';
+    params$ = new BehaviorSubject(convertToParamMap({ id: '7' }));
     ctx = createAdminTestContext();
     dh().get.and.callFake(() => of(project()));
     dh().getCollection.and.callFake(collections);
@@ -96,7 +115,10 @@ describe('ProjectDetailComponent', () => {
       // The id is read when ngOnInit runs, so a test can change routeId before init().
       providers: [...ctx.providers, {
         provide: ActivatedRoute,
-        useValue: { snapshot: { get paramMap() { return convertToParamMap(routeId ? { id: routeId } : {}); } } }
+        useValue: {
+          snapshot: { get paramMap() { return convertToParamMap(routeId ? { id: routeId } : {}); } },
+          get paramMap() { return params$; }
+        }
       }]
     }).compileComponents();
     fixture = TestBed.createComponent(ProjectDetailComponent);
@@ -319,19 +341,24 @@ describe('ProjectDetailComponent', () => {
     }));
 
     /**
-     * @description A new account: the form opens empty (Czech), needs a login name (3+) and a
-     *   display name; the e-mail is optional (only prefilled - the notifications are the client's
-     *   choice and never sent from here); saving sends the trimmed / lower-cased fields (+ a
-     *   typed-in password only) and shows the password of the answer once, visible and not copied.
-     * @input  openAddAccount; draft ' Petr.N ', ' Petr ', email 'p@x.cz'; password ''; post → meta.password 'Gen12345abcd'
+     * @description A new account: the form opens empty (Czech, with a password, no invitation),
+     *   needs a login name (3+), a display name and an access method; the e-mail is optional
+     *   (only prefilled - the notifications are the client's choice); saving sends the trimmed /
+     *   lower-cased fields with the access method (+ a typed-in password only) and shows the
+     *   password of the answer once, visible and not copied. Without a password the account needs
+     *   an invitation, which needs an e-mail; a sent invitation is confirmed, a failed one reported.
+     * @input  openAddAccount; draft ' Petr.N ', ' Petr ', email 'p@x.cz'; post → meta.password 'Gen12345abcd';
+     *   then 'eva' with a typed password failing; then 'ota' invitation only (meta.invited true / false)
      * @output invalid until filled; postWithMeta('web/projects/7/accounts', {username 'petr.n', display_name 'Petr',
-     *   email 'p@x.cz', language 'cz'}) without notify fields; account appended; revealed {13, 'petr.n', 'Gen12345abcd'}; form closed
+     *   email 'p@x.cz', language 'cz', with_password true, send_invitation false}); account appended;
+     *   revealed {13, 'petr.n', 'Gen12345abcd'}; form closed; invitation without e-mail invalid and
+     *   switched off when the e-mail is cleared; success / danger alert after an invitation
      */
     it('adds a client account and shows its password once', fakeAsync(() => {
       init();
       component.openAddAccount();
       expect(component.accountFormMode).toBe('add');
-      expect(component.accountDraft).toEqual({ username: '', display_name: '', email: '', language: 'cz', password: '' });
+      expect(component.accountDraft).toEqual({ username: '', display_name: '', email: '', language: 'cz', password: '', with_password: true, send_invitation: false });
       expect(component.accountDraftValid).toBeFalse();
       component.accountDraft.username = ' Pe ';
       component.accountDraft.display_name = ' Petr ';
@@ -340,10 +367,10 @@ describe('ProjectDetailComponent', () => {
       expect(component.accountDraftValid).toBeTrue();
       component.accountDraft.email = 'p@x.cz';
 
-      dh().postWithMeta.and.returnValue(of({ data: { id: 13, username: 'petr.n', display_name: 'Petr', email: 'p@x.cz', notify_replies: false, notify_checkpoint_status: false, notify_checkpoint_dates: false, language: 'cz' }, meta: { password: 'Gen12345abcd' } }));
+      dh().postWithMeta.and.returnValue(of({ data: { id: 13, username: 'petr.n', display_name: 'Petr', email: 'p@x.cz', notify_replies: false, notify_checkpoint_status: false, notify_checkpoint_dates: false, language: 'cz' }, meta: { password: 'Gen12345abcd', invited: false } }));
       component.saveAccount();
       expect(dh().postWithMeta).toHaveBeenCalledWith('web/projects/7/accounts', {
-        username: 'petr.n', display_name: 'Petr', email: 'p@x.cz', language: 'cz',
+        username: 'petr.n', display_name: 'Petr', email: 'p@x.cz', language: 'cz', with_password: true, send_invitation: false,
       });
       expect(component.accounts.map(a => a.id)).toEqual([11, 12, 13]);
       expect(component.revealedPassword).toEqual({ accountId: 13, username: 'petr.n', password: 'Gen12345abcd' });
@@ -352,12 +379,34 @@ describe('ProjectDetailComponent', () => {
       expect(component.accountFormMode).toBeNull();
 
       component.openAddAccount();
-      component.accountDraft = { username: 'eva', display_name: 'Eva', email: '', language: 'en', password: 'Typed12345' };
+      component.accountDraft = { username: 'eva', display_name: 'Eva', email: '', language: 'en', password: 'Typed12345', with_password: true, send_invitation: false };
       dh().postWithMeta.and.returnValue(throwError(() => new Error('422')));
       component.saveAccount();
       expect(dh().postWithMeta).toHaveBeenCalledWith('web/projects/7/accounts', jasmine.objectContaining({ password: 'Typed12345', email: null, language: 'en' }));
       expect(component.accountFormMode).toBe('add');
       expect(component.accountSaving).toBeFalse();
+
+      // Invitation only: needs the e-mail; clearing the e-mail switches the invitation off.
+      component.accountDraft = { username: 'ota', display_name: 'Ota', email: 'ota@x.cz', language: 'cz', password: 'ignored', with_password: false, send_invitation: true };
+      expect(component.accountDraftValid).toBeTrue();
+      component.accountDraft.email = ' ';
+      component.onAccountEmailChange();
+      expect(component.accountDraft.send_invitation).toBeFalse();
+      expect(component.accountDraftValid).toBeFalse();
+      component.accountDraft.email = 'ota@x.cz';
+      component.accountDraft.send_invitation = true;
+      ctx.alert.open.calls.reset();
+      dh().postWithMeta.and.returnValue(of({ data: { id: 14, username: 'ota', display_name: 'Ota', email: 'ota@x.cz', has_password: false, language: 'cz' }, meta: { password: null, invited: true } }));
+      component.saveAccount();
+      expect(dh().postWithMeta.calls.mostRecent().args[1]).toEqual({ username: 'ota', display_name: 'Ota', email: 'ota@x.cz', language: 'cz', with_password: false, send_invitation: true });
+      expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'projects.account_invite_sent', 'success');
+      expect(component.revealedPassword?.accountId).not.toBe(14);
+
+      component.openAddAccount();
+      component.accountDraft = { username: 'iva', display_name: 'Iva', email: 'iva@x.cz', language: 'cz', password: '', with_password: true, send_invitation: true };
+      dh().postWithMeta.and.returnValue(of({ data: { id: 15, username: 'iva', display_name: 'Iva', email: 'iva@x.cz', language: 'cz' }, meta: { password: 'Gen98765abcd', invited: false } }));
+      component.saveAccount();
+      expect(ctx.alert.open).toHaveBeenCalledWith('projects.account_invite_failed_title', 'projects.account_invite_failed_message', 'danger');
       discardPeriodicTasks();
     }));
 
@@ -611,8 +660,8 @@ describe('ProjectDetailComponent', () => {
       expect([component.addingCheckpoint, component.newCheckpointLabel, component.newCheckpointDescription]).toEqual([false, '', '']);
 
       const el = fixture.nativeElement as HTMLElement;
-      fixture.detectChanges();
-      (el.querySelector('#pd-cp-title')!.closest('.pd-card')!.querySelector('.pd-card-head-actions .pd-btn') as HTMLButtonElement).click();
+      go('progress');
+      (el.querySelector('#pd-cp-title')!.closest('.pd-card')!.querySelector('.pd-card-head-actions .pd-btn:last-child') as HTMLButtonElement).click();
       fixture.detectChanges();
       expect(el.querySelector('.pd-cp-new input')).not.toBeNull();
       expect(el.querySelector('.pd-cp-new textarea')).not.toBeNull();
@@ -734,7 +783,7 @@ describe('ProjectDetailComponent', () => {
       expect(component.checkpoints.map(c => c.label)).toEqual(['B', 'A', 'C']);
       expect(component.checkpointsReordering).toBeFalse();
 
-      fixture.detectChanges();
+      go('progress');
       const moves = (fixture.nativeElement as HTMLElement).querySelectorAll('.pd-cp-move');
       expect(moves.length).toBe(3);
       expect((moves[0].querySelector('button') as HTMLButtonElement).disabled).toBeTrue();
@@ -749,7 +798,7 @@ describe('ProjectDetailComponent', () => {
     it('renders the description preview and the editor', fakeAsync(() => {
       dh().get.and.callFake(() => of({ ...project(), checkpoints: [{ id: 1, label: 'Design', description: 'Wireframes', status: 'new', sort_order: 1 }] }));
       init();
-      fixture.detectChanges();
+      go('progress');
       const el = fixture.nativeElement as HTMLElement;
       expect(el.querySelector('.pd-cp-description')!.textContent).toContain('Wireframes');
       (el.querySelector('.pd-cp-action') as HTMLButtonElement).click();
@@ -768,7 +817,7 @@ describe('ProjectDetailComponent', () => {
      */
     it('renders the checkpoint status as a dropdown', fakeAsync(() => {
       init();
-      fixture.detectChanges();
+      go('progress');
       const select = (fixture.nativeElement as HTMLElement).querySelector('select.pd-cp-status') as HTMLSelectElement;
       expect(select.options.length).toBe(3);
       expect(select.value).toBe('new');
@@ -1007,7 +1056,7 @@ describe('ProjectDetailComponent', () => {
       component.selectedThread = { ...threads()[0], customer_last_read_at: '2026-11-10T10:00:00', messages };
       expect(messages.map(m => component.isReadByClient(m))).toEqual([true, false, false, false]);
       (component as any).cd.markForCheck();
-      fixture.detectChanges();
+      go('conversations');
       const el = fixture.nativeElement as HTMLElement;
       expect(el.querySelectorAll('.pd-msg-receipt').length).toBe(2);
       expect(el.querySelectorAll('.pd-msg-receipt--read').length).toBe(1);
@@ -1028,7 +1077,7 @@ describe('ProjectDetailComponent', () => {
       component.selectedThread = { ...threads()[0], messages: [] };
       component.replyInternal = true;
       (component as any).cd.markForCheck();
-      fixture.detectChanges();
+      go('conversations');
       expect((fixture.nativeElement as HTMLElement).querySelector('.pd-reply--internal')).not.toBeNull();
       component.replyBody = 'Check DNS';
       await component.sendReply();
@@ -1091,12 +1140,201 @@ describe('ProjectDetailComponent', () => {
     }));
   });
 
+  describe('sub-pages and phase 2', () => {
+    /**
+     * @description The address decides the sub-page (unknown = overview); the overview loads the
+     *   activity of the team, Progress the templates (once), Files the files again.
+     * @input  sections: none, 'progress', 'progress' again, 'files', 'nonsense'
+     * @output section overview + activity loaded (2 items); progress + templates loaded once;
+     *   files reloaded; 'nonsense' → overview
+     */
+    it('follows the sub-page of the address and loads what it needs', fakeAsync(() => {
+      init();
+      expect(component.section).toBe('overview');
+      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/7/activity');
+      expect(component.activity.length).toBe(2);
+      go('progress');
+      go('progress');
+      expect(component.section).toBe('progress');
+      expect(dh().getCollection.calls.allArgs().filter((a: unknown[]) => a[0] === 'web/projects/templates').length).toBe(1);
+      expect(component.templates.map(t => t.name)).toEqual(['Web']);
+      dh().getCollection.calls.reset();
+      go('files');
+      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/7/files');
+      go('nonsense');
+      expect(component.section).toBe('overview');
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Activity items have a label per type and open their sub-page (a thread directly);
+     *   the tab badges show unread messages and pending approvals.
+     * @input  client_message (thread 3), approval_decided 'approved'; project with 2 pending approvals
+     * @output labels 'projects.activity_client_message' / 'projects.activity_approval_approved';
+     *   navigate to conversations + thread 3 opened; to approvals; badges 3 / 2 / 0
+     */
+    it('labels and opens the activity and shows the tab badges', fakeAsync(() => {
+      dh().get.and.callFake(() => of({ ...project(), pending_approvals_count: 2 }));
+      init();
+      const [message, decision] = component.activity;
+      expect(component.activityLabel(message)).toBe('projects.activity_client_message');
+      expect(component.activityLabel(decision)).toBe('projects.activity_approval_approved');
+      const openThread = spyOn(component, 'openThread');
+      component.openActivity(message);
+      expect(navigate).toHaveBeenCalledWith(['/admin/web/projects', 7, 'conversations']);
+      expect(openThread.calls.mostRecent().args[0].id).toBe(3);
+      component.openActivity(decision);
+      expect(navigate).toHaveBeenCalledWith(['/admin/web/projects', 7, 'approvals']);
+      expect([component.sectionBadge('conversations'), component.sectionBadge('approvals'), component.sectionBadge('access')]).toEqual([3, 2, 0]);
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description "Mine" lists the threads assigned to the signed-in administrator; assigning a
+     *   thread saves it, updates the list and reloads "Mine".
+     * @input  assigned_to_me → thread 3; open thread 5; assignThread('5'), then ''
+     * @output threadCount('mine') 1; put('web/project-threads/5/assignee', { assignee_id: 5 }) then null;
+     *   thread 5 assignee 5 / 'Petr'; my threads reloaded
+     */
+    it('filters my threads and assigns a thread', fakeAsync(() => {
+      init();
+      expect(dh().getCollection).toHaveBeenCalledWith('web/project-threads', { project_id: 7, no_pagination: 'true', assigned_to_me: '1' });
+      component.threadFilter = 'mine';
+      expect(component.visibleThreads.map(t => t.id)).toEqual([3]);
+      expect(component.threadCount('mine')).toBe(1);
+      expect(component.assigneeOptions.map(a => a.full_name)).toEqual(['Jana', 'Petr']);
+
+      component.selectedThread = { ...threads()[2], messages: [] };
+      dh().put.and.returnValue(of({ id: 5, assignee_id: 5, assignee_name: 'Petr' }));
+      dh().getCollection.calls.reset();
+      component.assignThread('5');
+      expect(dh().put).toHaveBeenCalledWith('web/project-threads/5/assignee', { assignee_id: 5 });
+      expect(component.selectedThread!.assignee_name).toBe('Petr');
+      expect(component.threads.find(t => t.id === 5)!.assignee_id).toBe(5);
+      expect(dh().getCollection).toHaveBeenCalledWith('web/project-threads', jasmine.objectContaining({ assigned_to_me: '1' }));
+      dh().put.and.returnValue(of({ id: 5, assignee_id: null, assignee_name: null }));
+      component.assignThread('');
+      expect(dh().put).toHaveBeenCalledWith('web/project-threads/5/assignee', { assignee_id: null });
+      ctx.permissions.granted = new Set();
+      dh().put.calls.reset();
+      component.assignThread('3');
+      expect(dh().put).not.toHaveBeenCalled();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Sending an invitation to an existing account asks first, needs an e-mail and
+     *   updates the row; the access chips describe how the account signs in.
+     * @input  anna (e-mail) - confirm false, then true; klient (no e-mail); accounts with / without password
+     * @output no request when declined or without e-mail; post('web/projects/7/accounts/12/invite', {});
+     *   invited_at set; success alert; chips 'account_no_password' + 'account_email_verified'
+     */
+    it('invites an account and describes its access', fakeAsync(async () => {
+      init();
+      const anna = component.accounts[1];
+      ctx.confirm.open.and.returnValue(Promise.resolve(false));
+      await component.inviteAccount(anna);
+      expect(dh().post).not.toHaveBeenCalled();
+      await component.inviteAccount(component.accounts[0]);
+      expect(ctx.confirm.open).toHaveBeenCalledTimes(1);
+
+      ctx.confirm.open.and.returnValue(Promise.resolve(true));
+      dh().post.and.returnValue(of({ ...anna, invited_at: '2026-11-12 10:00:00' }));
+      await component.inviteAccount(anna);
+      expect(dh().post).toHaveBeenCalledWith('web/projects/7/accounts/12/invite', {});
+      expect(component.accounts[1].invited_at).toBe('2026-11-12 10:00:00');
+      expect(component.invitingAccountId).toBeNull();
+      expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'projects.account_invite_sent', 'success');
+
+      const chips = component.accountAccess({ ...anna, has_password: false, email_verified_at: '2026-11-12 10:00:00' });
+      expect(chips).toContain('projects.account_no_password');
+      expect(chips).toContain('projects.account_email_verified');
+      expect(component.accountAccess({ ...anna, has_password: true })).toContain('projects.account_with_password');
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Progress applies a template (checkpoints with dates from the start) and saves
+     *   the checkpoints as a new template; both need a choice / name and the update permission.
+     * @input  apply template 1 from 2026-12-01 → 2 checkpoints, meta.added 2; save as 'Shop flow'
+     * @output postWithMeta('web/projects/7/apply-template', { template_id: 1, start_date: '2026-12-01' });
+     *   checkpoints replaced, form closed; post('web/projects/7/template', { name: 'Shop flow' });
+     *   template added; nothing without a choice or name
+     */
+    it('applies a template and saves the checkpoints as a template', fakeAsync(() => {
+      init();
+      go('progress');
+      component.openTemplateAction('apply');
+      expect(component.templateAction).toBe('apply');
+      component.applyTemplate();
+      expect(dh().postWithMeta).not.toHaveBeenCalled();
+      component.templateDraft.template_id = '1';
+      component.templateDraft.start_date = '2026-12-01';
+      dh().postWithMeta.and.returnValue(of({ data: [
+        { id: 1, label: 'Design', status: 'new', sort_order: 1 }, { id: 9, label: 'Launch', status: 'new', sort_order: 2, due_date: '2026-12-15' },
+      ], meta: { added: 1 } }));
+      component.applyTemplate();
+      expect(dh().postWithMeta).toHaveBeenCalledWith('web/projects/7/apply-template', { template_id: 1, start_date: '2026-12-01' });
+      expect(component.checkpoints.map(c => c.label)).toEqual(['Design', 'Launch']);
+      expect(component.templateAction).toBeNull();
+
+      component.openTemplateAction('save');
+      expect(component.templateDraft.name).toBe('Shop');
+      component.templateDraft.name = ' ';
+      component.saveAsTemplate();
+      expect(dh().post).not.toHaveBeenCalled();
+      component.templateDraft.name = 'Shop flow';
+      dh().post.and.returnValue(of({ id: 2, name: 'Shop flow', description: null, checkpoints: [{}, {}] }));
+      component.saveAsTemplate();
+      expect(dh().post).toHaveBeenCalledWith('web/projects/7/template', { name: 'Shop flow' });
+      expect(component.templates.map(t => t.name)).toEqual(['Web', 'Shop flow']);
+
+      ctx.permissions.granted = new Set(['web-projects-view']);
+      component.openTemplateAction('apply');
+      expect(component.templateAction).toBeNull();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Files of updates and approvals name their source and open their sub-page; a
+     *   change in a child section reloads the counts and the files.
+     * @input  file of update 'Week 1'; file of approval 'Homepage'; onChildChanged
+     * @output 'projects.file_source_update: Week 1'; navigate to updates / approvals;
+     *   get('web/projects/7') + getCollection files again
+     */
+    it('labels the files of updates and approvals and refreshes after child changes', fakeAsync(() => {
+      init();
+      const base = { ...projectFiles()[1], author_type: 'customer' as const };
+      const update = { ...base, source: 'update' as const, source_id: 4, source_title: 'Week 1', thread_id: null, thread_subject: null };
+      const approval = { ...base, source: 'approval' as const, source_id: 2, source_title: 'Homepage', thread_id: null, thread_subject: null };
+      expect(component.fileSourceLabel(update)).toBe('projects.file_source_update: Week 1');
+      expect(component.fileSourceLabel(approval)).toBe('projects.file_source_approval: Homepage');
+      expect(component.fileSourceLabel(base)).toBe('Hosting');
+      component.openFileThread(update);
+      expect(navigate).toHaveBeenCalledWith(['/admin/web/projects', 7, 'updates']);
+      component.openFileThread(approval);
+      expect(navigate).toHaveBeenCalledWith(['/admin/web/projects', 7, 'approvals']);
+
+      dh().get.calls.reset();
+      dh().getCollection.calls.reset();
+      dh().get.and.returnValue(of({ ...project(), pending_approvals_count: 1, published_updates_count: 4 }));
+      component.onChildChanged();
+      expect(dh().get).toHaveBeenCalledWith('web/projects/7');
+      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/7/files');
+      expect(component.project!.pending_approvals_count).toBe(1);
+      discardPeriodicTasks();
+    }));
+  });
+
   describe('rendering', () => {
     /**
-     * @description The page renders the header (name, unread badge), the thread list with unread
-     *   counts, the settings form with the save bar and the access / checkpoint cards.
-     * @input  project 7 with threads (2 + 1 unread)
-     * @output name 'Shop'; unread chip; 2 active threads listed, 1 with a count; settings inputs; save bar; 'Design'
+     * @description The page renders the header (name, unread badge, assignee) and the tabs with
+     *   their own address; each sub-page shows its part: the thread list with unread counts and
+     *   "waiting on", the checkpoints, the accounts, the files and the settings with the save bar.
+     * @input  project 7 with threads (2 + 1 unread); sub-pages overview → conversations → progress → access → files → settings
+     * @output name 'Shop'; unread chip; 8 tabs linking to /admin/web/projects/7/<section>, overview
+     *   current, conversations badge 3; 2 activity items; 2 active threads, 1 with a count; 'Design';
+     *   2 accounts; 2 file rows, 1 internal; 12 settings inputs and the save bar
      */
     it('renders the project page', fakeAsync(() => {
       init();
@@ -1104,37 +1342,53 @@ describe('ProjectDetailComponent', () => {
       const el = fixture.nativeElement as HTMLElement;
       expect(el.querySelector('.pd-title')!.textContent).toContain('Shop');
       expect(el.querySelector('.pd-chip--unread')).not.toBeNull();
+      expect(el.querySelector('.pd-subtitle')!.textContent).toContain('Jana');
+      const tabs = Array.from(el.querySelectorAll('.pd-tab')) as HTMLAnchorElement[];
+      expect(tabs.length).toBe(8);
+      expect(tabs[1].getAttribute('href')).toBe('/admin/web/projects/7/conversations');
+      expect(tabs[0].getAttribute('aria-current')).toBe('page');
+      expect(tabs[1].querySelector('.pd-tab-badge')!.textContent).toContain('3');
+      expect(el.querySelectorAll('.pd-activity-item').length).toBe(2);
+
+      go('conversations');
       expect(el.querySelectorAll('.pd-thread').length).toBe(2);
       expect(el.querySelectorAll('.pd-thread .pd-count--unread').length).toBe(1);
-      expect(el.querySelectorAll('.pd-form .pd-input').length).toBe(12);
+      expect(el.querySelector('.pd-waiting[data-waiting="supplier"]')!.textContent).toContain('projects.thread_waiting_on_us');
+      go('progress');
+      expect(el.textContent).toContain('Design');
+      go('access');
       expect(el.querySelectorAll('.pd-account').length).toBe(2);
-      expect(el.querySelector('.pd-subtitle')!.textContent).toContain('Jana');
+      go('files');
       expect(el.querySelectorAll('.pd-files-row').length).toBe(2);
       expect(el.querySelectorAll('.pd-files-row--internal').length).toBe(1);
-      expect(el.querySelector('.pd-waiting[data-waiting="supplier"]')!.textContent).toContain('projects.thread_waiting_on_us');
+      go('settings');
+      expect(el.querySelectorAll('.pd-form .pd-input').length).toBe(12);
       expect(el.querySelector('.pd-savebar')).not.toBeNull();
-      expect(el.textContent).toContain('Design');
       discardPeriodicTasks();
     }));
 
     /**
      * @description Without the update permission everything is read-only: no save bar, no reply,
      *   no account actions, inputs disabled.
-     * @input  granted only web-projects-view
+     * @input  granted only web-projects-view; sub-pages settings, conversations (open thread), access
      * @output read-only note; no .pd-savebar / .pd-reply / .pd-account-actions; accounts listed; first input disabled
      */
     it('renders read-only without the update permission', fakeAsync(() => {
       ctx.permissions.granted = new Set(['web-projects-view']);
       init();
+      go('settings');
       tick();
       fixture.detectChanges();
       const el = fixture.nativeElement as HTMLElement;
       expect(el.textContent).toContain('projects.detail_readonly');
       expect(el.querySelector('.pd-savebar')).toBeNull();
+      expect((el.querySelector('.pd-form .pd-input') as HTMLInputElement).disabled).toBeTrue();
+      component.selectedThread = { ...threads()[0], messages: [] };
+      go('conversations');
       expect(el.querySelector('.pd-reply')).toBeNull();
+      go('access');
       expect(el.querySelector('.pd-account-actions')).toBeNull();
       expect(el.querySelectorAll('.pd-account').length).toBe(2);
-      expect((el.querySelector('.pd-form .pd-input') as HTMLInputElement).disabled).toBeTrue();
       discardPeriodicTasks();
     }));
 

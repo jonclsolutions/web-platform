@@ -7,7 +7,8 @@
  * @created 2026
  * @description New client account of a project portal (administration). The login name is
  *   unique within the project (lower case letters, digits, . _ -); without a password the API
- *   generates one. The e-mail and its language are only prefilled for the client - which
+ *   generates one (`with_password` false = no password - then an invitation e-mail is needed,
+ *   `send_invitation`, which needs an e-mail). The e-mail and its language are only prefilled for the client - which
  *   notifications it gets, the client decides itself in the portal (all off by default).
  * @dependencies WebProjectAccountController::store(), App\Models\Web\WebProjectAccount
  */
@@ -45,9 +46,12 @@ class StoreProjectAccountRequest extends FormRequest
             'username'     => ['required', 'string', 'min:3', 'max:64', 'regex:/^[a-z0-9._-]+$/',
                 Rule::unique('web_project_accounts', 'username')->where('project_id', (int) $this->route('projectId'))],
             'display_name' => ['required', 'string', 'max:120'],
-            'email'        => ['nullable', 'email', 'max:255'],
+            'email'        => ['nullable', 'email', 'max:255', 'required_if_accepted:send_invitation'],
             'language'     => ['sometimes', Rule::in(WebProjectAccount::LANGUAGES)],
             'password'     => ['nullable', 'string', 'max:255', Password::min(10)->letters()->numbers()],
+            // Access: a password (typed in above, or generated) and / or an invitation e-mail.
+            'with_password'   => ['sometimes', 'boolean'],
+            'send_invitation' => ['sometimes', 'boolean'],
         ];
     }
 }

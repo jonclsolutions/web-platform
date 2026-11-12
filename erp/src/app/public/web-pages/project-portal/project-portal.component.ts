@@ -8,9 +8,12 @@
  *   and password of a client account created by the supplier) followed by a 24h-sliding session
  *   (CheckProjectSession middleware). Laid out like the administration: header (menu button,
  *   signed-in name, refresh, language), a left menu that collapses (desktop) or slides in (mobile)
- *   and the sections Overview, Progress, Communication (unread badge, "waiting on you"), Files,
- *   Contacts, My account (the client's own e-mail and which e-mail notifications it wants - all
- *   off by default) and Help.
+ *   and the sections Overview (key numbers + "What is new since your last visit"), Progress,
+ *   Communication (unread badge, "waiting on you"), Approvals (approve / request changes),
+ *   Updates of the supplier, Files, Contacts, My account (own e-mail and e-mail notifications -
+ *   all off by default) and Help. Sign-in: login name + password, or a one-time code / link sent
+ *   to the account's e-mail (also the invitation link `?access=`); `?section=` of an e-mail opens
+ *   its section after the sign-in.
  * @note The client sees only what the supplier made public: no internal notes, no internal
  *   checkpoint notes (the API leaves them out). Several accounts of one client share the
  *   conversations - messages show who wrote them ("You" for the own ones).
@@ -25,7 +28,7 @@
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef, ElementRef, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, Subject, takeUntil, finalize, timer, switchMap, filter } from 'rxjs';
 import { PublicDataService } from '../../../shared/services/public-data.service';
 import { ApiEnvelope } from '../../../shared/interfaces/api-envelope';
@@ -35,10 +38,10 @@ import { UploadRule, extensionsLabel, fileExtension, isExtensionAllowed } from '
 
 type PortalState = 'loading' | 'login' | 'portal' | 'invalid';
 /** Sections of the left menu. */
-export type PortalTab = 'overview' | 'checkpoints' | 'threads' | 'files' | 'contacts' | 'account' | 'help';
+export type PortalTab = 'overview' | 'checkpoints' | 'threads' | 'approvals' | 'updates' | 'files' | 'contacts' | 'account' | 'help';
 
 /** Notification switches the client sets in "My account" (all off by default). */
-export const PORTAL_NOTIFICATIONS = ['notify_replies', 'notify_checkpoint_status', 'notify_checkpoint_dates'] as const;
+export const PORTAL_NOTIFICATIONS = ['notify_replies', 'notify_checkpoint_status', 'notify_checkpoint_dates', 'notify_updates', 'notify_approvals'] as const;
 export type PortalNotification = typeof PORTAL_NOTIFICATIONS[number];
 
 /** Settings of the own account the client may change. */
@@ -48,10 +51,50 @@ export interface PortalAccountSettings {
   notify_replies: boolean;
   notify_checkpoint_status: boolean;
   notify_checkpoint_dates: boolean;
+  notify_updates: boolean;
+  notify_approvals: boolean;
 }
 
 /** Items of the left menu in their order (Help and logout are at the bottom). */
-export const PORTAL_SECTIONS: PortalTab[] = ['overview', 'checkpoints', 'threads', 'files', 'contacts'];
+export const PORTAL_SECTIONS: PortalTab[] = ['overview', 'checkpoints', 'threads', 'approvals', 'updates', 'files', 'contacts'];
+
+/** How the login screen signs in: password, or a code e-mailed to the account. */
+export type PortalLoginMode = 'password' | 'code';
+
+/** Item of "What is new" (API ProjectActivityFeed, client audience). */
+export interface PortalActivityItem {
+  type: 'update' | 'checkpoint' | 'approval_requested' | 'approval_decided' | 'reply';
+  at: string;
+  title: string;
+  detail: string | null;
+  actor?: string | null;
+  target: { section: string; id: number | null };
+  is_new: boolean;
+}
+
+/** Update of the supplier. */
+export interface PortalUpdate {
+  id: number;
+  title: string;
+  body: string;
+  author_label: string | null;
+  published_at: string | null;
+  attachments?: ProjectAttachment[];
+}
+
+/** Approval request. */
+export interface PortalApproval {
+  id: number;
+  title: string;
+  description: string | null;
+  status: 'pending' | 'approved' | 'changes_requested';
+  due_date: string | null;
+  checkpoint_label?: string | null;
+  requested_by_label: string | null;
+  requested_at: string | null;
+  attachments?: ProjectAttachment[];
+  decisions?: { id: number; decision: 'approved' | 'changes_requested'; comment: string | null; author_label: string | null; account_id: number | null; created_at: string }[];
+}
 
 /** localStorage key of the collapsed menu (a per-browser convenience only). */
 export const PORTAL_SIDEBAR_STORAGE_KEY = 'pp_sidebar_collapsed';
@@ -130,6 +173,12 @@ interface PublicProject {
     notify_replies?: boolean;
     notify_checkpoint_status?: boolean;
     notify_checkpoint_dates?: boolean;
+    notify_updates?: boolean;
+    notify_approvals?: boolean;
+    /** The e-mail was proven by a code / link. */
+    email_verified?: boolean;
+    /** The account can sign in with a password. */
+    has_password?: boolean;
   };
 }
 
@@ -139,8 +188,12 @@ interface PortalFile {
   original_filename: string;
   size_bytes: number;
   download_url: string;
-  thread_id: number;
-  thread_subject: string;
+  /** Where the file comes from: a thread, an update, an approval request. */
+  source?: 'thread' | 'update' | 'approval';
+  source_id?: number | null;
+  source_title?: string | null;
+  thread_id: number | null;
+  thread_subject: string | null;
   author_type: 'customer' | 'admin';
   author_label: string | null;
   created_at: string;
@@ -165,6 +218,7 @@ interface CompanySettings {
 })
 export class ProjectPortalComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
   private publicDataService = inject(PublicDataService);
   private destroy$ = new Subject<void>();
@@ -184,6 +238,30 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
 
   loginUsername = '';
   loginPassword = '';
+  /** Password, or a code e-mailed to the account. */
+  loginMode: PortalLoginMode = 'password';
+  /** Code mode: the code was requested (second step - enter it). */
+  codeRequested = false;
+  loginCode = '';
+  /** Neutral confirmation after a code request (never says whether the account exists). */
+  loginInfo: string | null = null;
+  /** Section asked for by the address (`?section=` of an e-mail) - opened after the sign-in. */
+  private requestedSection: PortalTab | null = null;
+
+  /** "What is new" (overview). */
+  activity: PortalActivityItem[] = [];
+  activityUnseen = 0;
+  activityLoading = false;
+  updates: PortalUpdate[] = [];
+  updatesLoading = false;
+  approvals: PortalApproval[] = [];
+  approvalsLoading = false;
+  /** Approval with an open "request changes" form, its comment. */
+  changesFormId: number | null = null;
+  changesComment = '';
+  /** Approval whose decision is being sent. */
+  decidingId: number | null = null;
+  decisionError: string | null = null;
   loginError: string | null = null;
   loginLoading = false;
 
@@ -330,6 +408,15 @@ updateThreadStatus(status: string): void {
 
     this.removeLegacySessionToken();
     this.sidebarCollapsed = this.readSidebarCollapsed();
+    const query = this.route.snapshot.queryParamMap;
+    const section = query.get('section') as PortalTab | null;
+    this.requestedSection = section && (PORTAL_SECTIONS as string[]).concat(['account', 'help']).includes(section) ? section : null;
+    const accessLink = query.get('access');
+    if (accessLink) {
+      // One-time link of an e-mail (sign-in code / invitation) - used once, then dropped from the address.
+      this.loginWithLink(accessLink);
+      return;
+    }
     // The cookie (if any) is unreadable here - the API answers whether the session is valid.
     this.loadProject();
   }
@@ -414,6 +501,8 @@ updateThreadStatus(status: string): void {
       notify_replies: !!account?.notify_replies,
       notify_checkpoint_status: !!account?.notify_checkpoint_status,
       notify_checkpoint_dates: !!account?.notify_checkpoint_dates,
+      notify_updates: !!account?.notify_updates,
+      notify_approvals: !!account?.notify_approvals,
     };
   }
 
@@ -509,6 +598,8 @@ updateThreadStatus(status: string): void {
    * @param tab Section.
    */
   setActiveTab(tab: PortalTab): void {
+    // Leaving the overview: its news have been seen (stored on the server), drop the highlight.
+    if (this.activeTab === 'overview' && tab !== 'overview') this.clearNewHighlight();
     this.activeTab = tab;
     this.mobileNavOpen = false;
     if (tab === 'contacts' && !this.companySettings && !this.companySettingsLoading) {
@@ -519,6 +610,15 @@ updateThreadStatus(status: string): void {
     }
     if (tab === 'account') {
       this.resetAccountSettings();
+    }
+    if (tab === 'updates') {
+      this.loadUpdates();
+    }
+    if (tab === 'approvals') {
+      this.loadApprovals();
+    }
+    if (tab === 'overview') {
+      this.markActivitySeen();
     }
     this.cdr.markForCheck();
   }
@@ -541,9 +641,24 @@ updateThreadStatus(status: string): void {
    * @description Opens the conversation of a file in the Communication section.
    * @param file File of the Files section.
    */
+  /**
+   * @description Text of the "where it comes from" link of a file in the Files section.
+   * @param file File of the project.
+   * @returns E.g. "Update: Design ready" or the subject of the thread.
+   */
+  fileSourceLabel(file: PortalFile): string {
+    if (file.source === 'update') return `${this.t('file_source_update')}: ${file.source_title ?? ''}`;
+    if (file.source === 'approval') return `${this.t('file_source_approval')}: ${file.source_title ?? ''}`;
+    return file.thread_subject ?? file.source_title ?? '';
+  }
+
   openFileThread(file: PortalFile): void {
+    if (file.source === 'update' || file.source === 'approval') {
+      this.setActiveTab(file.source === 'update' ? 'updates' : 'approvals');
+      return;
+    }
     const thread = this.threads.find(t => t.id === file.thread_id)
-      ?? { id: file.thread_id, subject: file.thread_subject, priority: 'medium', status: 'active', last_message_at: null };
+      ?? { id: file.thread_id ?? 0, subject: file.thread_subject ?? '', priority: 'medium', status: 'active', last_message_at: null };
     this.setActiveTab('threads');
     this.newThreadMode = false;
     this.openThread(thread);
@@ -761,20 +876,245 @@ updateThreadStatus(status: string): void {
     this.portalGet<PublicProject>(`projects/public/${this.token}`)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (project) => {
-          this.hasSession = true;
-          this.project = project;
-          this.state = 'portal';
-          this.loadThreads();
-          this.startGlobalThreadsPolling();
-          this.cdr.markForCheck();
-        },
+        next: (project) => this.enterPortal(project),
         error: () => {
           this.clearSession();
           this.state = 'login';
           this.cdr.markForCheck();
         }
       });
+  }
+
+  /**
+   * @description Shows the portal of a signed-in account: threads, news and approvals load, the
+   *   thread list polling starts, a section asked for by the address opens.
+   * @param project Project of the API (with the account).
+   */
+  private enterPortal(project: PublicProject): void {
+    this.hasSession = true;
+    this.project = project;
+    this.state = 'portal';
+    this.loginPassword = '';
+    this.loginCode = '';
+    this.loadThreads();
+    this.loadActivity();
+    this.loadApprovals();
+    this.startGlobalThreadsPolling();
+    if (this.requestedSection) {
+      const section = this.requestedSection;
+      this.requestedSection = null;
+      this.setActiveTab(section);
+    }
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * @description Switches the login screen between password and e-mailed code.
+   * @param mode Login mode.
+   */
+  setLoginMode(mode: PortalLoginMode): void {
+    this.loginMode = mode;
+    this.loginError = null;
+    this.loginInfo = null;
+    this.codeRequested = false;
+    this.loginCode = '';
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * @description Asks for a sign-in code to the e-mail of the login name / e-mail. The answer is
+   *   the same whether the account exists or not.
+   */
+  requestCode(): void {
+    if (!this.loginUsername.trim() || this.loginLoading) return;
+    this.loginLoading = true;
+    this.loginError = null;
+    this.cdr.markForCheck();
+    this.portalPost(`projects/public/${this.token}/login/code-request`, { identifier: this.loginUsername.trim() })
+      .pipe(finalize(() => { this.loginLoading = false; this.cdr.markForCheck(); }), takeUntil(this.destroy$))
+      .subscribe({
+        next: () => { this.codeRequested = true; this.loginInfo = 'login_code_sent'; },
+        error: (err: any) => {
+          this.loginError = err?.status === 404 ? 'error_project_not_found' : err?.status === 429 ? 'error_too_many_attempts' : 'error_code_request_failed';
+        },
+      });
+  }
+
+  /** @description Signs in with the code from the e-mail. */
+  loginWithCode(): void {
+    const code = this.loginCode.replace(/\s/g, '');
+    if (!this.loginUsername.trim() || code.length < 6 || this.loginLoading) return;
+    this.loginLoading = true;
+    this.loginError = null;
+    this.cdr.markForCheck();
+    this.portalPost<{ project: PublicProject }>(`projects/public/${this.token}/login/code`, { identifier: this.loginUsername.trim(), code })
+      .pipe(finalize(() => { this.loginLoading = false; this.cdr.markForCheck(); }), takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => { this.loginInfo = null; this.enterPortal(res.project); },
+        error: (err: any) => { this.loginError = err?.status === 429 ? 'error_too_many_attempts' : 'error_code_invalid'; },
+      });
+  }
+
+  /**
+   * @description Signs in with the one-time link of an e-mail and removes it from the address
+   *   (it works once; a reload must not try it again).
+   * @param link Link token of `?access=`.
+   */
+  private loginWithLink(link: string): void {
+    this.state = 'loading';
+    this.router.navigate([], { relativeTo: this.route, queryParams: { access: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    this.portalPost<{ project: PublicProject }>(`projects/public/${this.token}/login/link`, { link })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => this.enterPortal(res.project),
+        error: (err: any) => {
+          if (err?.status === 404) { this.state = 'invalid'; this.cdr.markForCheck(); return; }
+          // A spent / expired link: an existing session still opens the portal, else the login with the reason.
+          this.portalGet<PublicProject>(`projects/public/${this.token}`).pipe(takeUntil(this.destroy$)).subscribe({
+            next: (project) => this.enterPortal(project),
+            error: () => {
+              this.clearSession();
+              this.state = 'login';
+              this.loginMode = 'code';
+              this.loginError = 'error_link_invalid';
+              this.cdr.markForCheck();
+            },
+          });
+        },
+      });
+  }
+
+  // ── What is new, updates, approvals ──────────────────────────────────
+
+  /** @description Loads "What is new" with the number of unseen items. */
+  loadActivity(): void {
+    if (!this.hasSession) return;
+    this.activityLoading = true;
+    this.portalGetWithMeta<PortalActivityItem[], { unseen: number }>(`projects/public/${this.token}/activity`)
+      .pipe(finalize(() => { this.activityLoading = false; this.cdr.markForCheck(); }), takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.activity = Array.isArray(res.data) ? res.data : [];
+          this.activityUnseen = res.meta?.unseen ?? 0;
+          if (this.activeTab === 'overview' && this.activityUnseen > 0) this.markActivitySeen();
+        },
+        error: () => { /* the overview shows no news */ },
+      });
+  }
+
+  /**
+   * @description The client has seen the news (the overview is open): the badge goes away, the
+   *   items stay highlighted while the overview stays open (a clicked one / leaving it clears them).
+   */
+  markActivitySeen(): void {
+    if (!this.hasSession || this.activityUnseen === 0) return;
+    this.activityUnseen = 0;
+    this.portalPost(`projects/public/${this.token}/activity/seen`, {}).pipe(takeUntil(this.destroy$)).subscribe({ error: () => {} });
+  }
+
+  /** @description Removes the "new" highlight of all news items (new array - OnPush). */
+  private clearNewHighlight(): void {
+    if (!this.activity.some(item => item.is_new)) return;
+    this.activity = this.activity.map(item => item.is_new ? { ...item, is_new: false } : item);
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * @description Text of a news item ("New update", "Step changed to Done", …).
+   * @param item News item.
+   */
+  activityLabel(item: PortalActivityItem): string {
+    if (item.type === 'checkpoint') return this.t('news_checkpoint').replace('{status}', this.checkpointStatusLabels[item.detail ?? ''] ?? item.detail ?? '');
+    if (item.type === 'approval_decided') return this.t('news_approval_' + item.detail);
+    return this.t('news_' + item.type);
+  }
+
+  /**
+   * @description Opens the section of a news item (a thread directly); the news count as seen and
+   *   lose the "new" highlight right away, without a reload.
+   * @param item News item.
+   */
+  openActivity(item: PortalActivityItem): void {
+    this.markActivitySeen();
+    const section = (['checkpoints', 'threads', 'approvals', 'updates'] as PortalTab[]).find(s => s === item.target.section) ?? 'overview';
+    this.setActiveTab(section);
+    if (section === 'threads' && item.target.id) {
+      const thread = this.threads.find(t => t.id === item.target.id)
+        ?? { id: item.target.id, subject: item.title, priority: 'medium', status: 'active', last_message_at: null };
+      this.newThreadMode = false;
+      this.openThread(thread);
+    }
+  }
+
+  /** @description Loads the published updates of the supplier. */
+  loadUpdates(): void {
+    if (!this.hasSession) return;
+    this.updatesLoading = true;
+    this.cdr.markForCheck();
+    this.portalGet<PortalUpdate[]>(`projects/public/${this.token}/updates`)
+      .pipe(finalize(() => { this.updatesLoading = false; this.cdr.markForCheck(); }), takeUntil(this.destroy$))
+      .subscribe({ next: (rows) => { this.updates = Array.isArray(rows) ? rows : []; }, error: () => {} });
+  }
+
+  /** @description Loads the approval requests (pending first). */
+  loadApprovals(): void {
+    if (!this.hasSession) return;
+    this.approvalsLoading = true;
+    this.portalGet<PortalApproval[]>(`projects/public/${this.token}/approvals`)
+      .pipe(finalize(() => { this.approvalsLoading = false; this.cdr.markForCheck(); }), takeUntil(this.destroy$))
+      .subscribe({ next: (rows) => { this.approvals = Array.isArray(rows) ? rows : []; }, error: () => {} });
+  }
+
+  /** @description Approval requests waiting for the client's decision (menu badge). */
+  get pendingApprovalsCount(): number {
+    return this.approvals.filter(a => a.status === 'pending').length;
+  }
+
+  /**
+   * @description Opens / closes the "request changes" form of an approval.
+   * @param approval Approval.
+   */
+  toggleChangesForm(approval: PortalApproval): void {
+    this.changesFormId = this.changesFormId === approval.id ? null : approval.id;
+    this.changesComment = '';
+    this.decisionError = null;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * @description Sends the client's decision: approve, or request changes (a comment is required).
+   * @param approval Pending approval.
+   * @param decision approved | changes_requested
+   */
+  decide(approval: PortalApproval, decision: 'approved' | 'changes_requested'): void {
+    if (!this.hasSession || this.decidingId !== null || approval.status !== 'pending') return;
+    const comment = this.changesComment.trim();
+    if (decision === 'changes_requested' && !comment) {
+      this.decisionError = 'approval_comment_required';
+      this.cdr.markForCheck();
+      return;
+    }
+    this.decidingId = approval.id;
+    this.decisionError = null;
+    this.cdr.markForCheck();
+    this.portalPost<PortalApproval>(`projects/public/${this.token}/approvals/${approval.id}/decision`, decision === 'approved' ? { decision } : { decision, comment })
+      .pipe(finalize(() => { this.decidingId = null; this.cdr.markForCheck(); }), takeUntil(this.destroy$))
+      .subscribe({
+        next: (saved) => {
+          this.approvals = this.approvals.map(a => (a.id === approval.id ? saved : a));
+          this.changesFormId = null;
+          this.changesComment = '';
+        },
+        error: () => {
+          this.decisionError = 'approval_decision_failed';
+          this.loadApprovals();
+        },
+      });
+  }
+
+  /** @description Translated state of an approval. */
+  approvalStatusLabel(status: string): string {
+    return this.t('approval_status_' + status);
   }
 
   login(): void {
@@ -791,14 +1131,7 @@ updateThreadStatus(status: string): void {
       finalize(() => { this.loginLoading = false; this.cdr.markForCheck(); }),
       takeUntil(this.destroy$)
     ).subscribe({
-      next: (res) => {
-        this.hasSession = true;
-        this.project = res.project;
-        this.state = 'portal';
-        this.loginPassword = '';
-        this.loadThreads();
-        this.startGlobalThreadsPolling();
-      },
+      next: (res) => this.enterPortal(res.project),
       error: (err: any) => {
         this.loginError = err?.status === 404
           ? 'error_project_not_found'
@@ -829,6 +1162,12 @@ updateThreadStatus(status: string): void {
     this.expandedCheckpointIds.clear();
     this.companySettings = null;
     this.files = [];
+    this.activity = [];
+    this.activityUnseen = 0;
+    this.updates = [];
+    this.approvals = [];
+    this.loginMode = 'password';
+    this.codeRequested = false;
     this.cdr.markForCheck();
   }
 
@@ -887,7 +1226,10 @@ updateThreadStatus(status: string): void {
         next: (project) => {
           this.project = project;
           this.loadThreads();
+          this.loadActivity();
+          this.loadApprovals();
           if (this.activeTab === 'files') this.loadFiles();
+          if (this.activeTab === 'updates') this.loadUpdates();
           if (this.selectedThread) {
             this.openThread(this.selectedThread);
           }

@@ -6,11 +6,12 @@
  * @created 2026
  * @description Administrative list of the client projects: table with quick create / edit /
  * delete, trash, filters (also "only with new messages"), export and reports. A project is managed
- * on its own page (web/projects/:id - ProjectDetailComponent): settings, client accounts, checkpoints,
- * files and the conversations with the client. The table shows the responsible administrator
+ * on its own page with sub-pages (web/projects/:id/:section - ProjectDetailComponent): overview,
+ * conversations, progress, approvals, updates, access, files and settings; the toolbar opens the
+ * project templates (web/projects/templates), the create form can start from a template. The table shows the responsible administrator
  * (assignee), the number of new client messages and of the threads waiting on the team per project;
  * the filter "My projects" keeps the projects of the signed-in administrator.
- * @note A new project opens its page, where the client accounts are added. Old links
+ * @note A new project opens its Access sub-page, where the client accounts are added. Old links
  * `?open_project=<id>` open the project page.
  */
 
@@ -118,6 +119,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
       exportActiveTable: () => this.exportActiveTable(),
       toggleTable: () => this.toggleTable(),
       openGraphBuilder: () => this.openGraphBuilder(),
+      openTemplates: () => this.router.navigate(['/admin/web/projects/templates']),
     };
     if (actions[action]) actions[action]();
   }
@@ -164,6 +166,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     if (!orderId) return;
 
     this.prefillOrderId = orderId;
+    this.loadTemplateOptions();
     this.loadOrderOptions(() => {
       this.selectedItemForEdit = { order_id: orderId };
       this.showCreateForm = true;
@@ -192,7 +195,24 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
       });
   }
 
+  /** @description Puts the project templates into the template select of the create form. */
+  private loadTemplateOptions(): void {
+    this.dataHandler.getCollection<{ id: number; name: string; checkpoints: unknown[] }>('web/projects/templates').subscribe({
+      next: (templates) => {
+        const field = this.formFields.find(f => f.column_name === 'template_id');
+        if (!field) return;
+        field.options = [
+          { value: '', label: this.t('field_template_none_option') },
+          ...(templates ?? []).map(t => ({ value: String(t.id), label: `${t.name} (${t.checkpoints?.length ?? 0})` })),
+        ];
+        this.cd.markForCheck();
+      },
+      error: () => { /* the select offers only "no template" */ },
+    });
+  }
+
   override handleCreateFormOpened(): void {
+    this.loadTemplateOptions();
     this.loadOrderOptions(() => {
       this.selectedItemForEdit = this.prefillOrderId ? { order_id: this.prefillOrderId } : null;
       this.showCreateForm = true;
@@ -214,7 +234,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
         if (!formData.id && result?.id) {
           // The client accounts are added on the page of the new project.
           this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('project_created_message'), 'success');
-          this.openProject(result);
+          this.router.navigate(['/admin/web/projects', result.id, 'access']);
         } else {
           this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('project_updated_message'), 'success');
           this.refreshData();

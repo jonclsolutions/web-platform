@@ -1,0 +1,136 @@
+/*
+    @file: project-sections.css
+    @path: src/app/admin/web-pages/project-detail/project-sections.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Styles shared by the sub-pages of the project page (tabs, overview, approvals,
+        updates, templates) on top of project-detail.component.css (pd-*): ps-* lists of items with a
+        state, forms, decisions; tabs; overview statistics and activity.
+    @dependencies: project-detail.component.css, admin colour tokens
+*/
+
+/*
+    @module: Tabs of the project page
+    @description: Horizontal tabs (own address per sub-page) with a badge; scrolls on narrow screens.
+    @usage: nav.pd-tabs > a.pd-tab(.active) > .pd-tab-badge
+*/
+.pd-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  margin: 0 0 16px;
+  padding: 4px;
+  border: 1px solid var(--color-zinc-100);
+  border-radius: 12px;
+  background: var(--color-white);
+  scrollbar-width: thin;
+}
+.pd-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 9px;
+  color: var(--color-zinc-600);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.pd-tab:hover { background: var(--color-zinc-50); color: var(--color-zinc-900); }
+.pd-tab.active { background: var(--color-zinc-900); color: var(--color-white); }
+.pd-tab:focus-visible { outline: 2px solid var(--color-zinc-900); outline-offset: 2px; }
+.pd-tab-badge {
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--color-rose-600); color: var(--color-white); font-size: 0.66rem; font-weight: 700;
+}
+
+/*
+    @module: Overview
+    @description: Key numbers of the project (cards linking to their sub-page) and the activity list.
+    @usage: .pd-stats > a.pd-stat(--attention); ul.pd-activity > li > button.pd-activity-item
+*/
+.pd-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.pd-stat {
+  display: flex; flex-direction: column; gap: 4px; padding: 14px 16px;
+  border: 1px solid var(--color-zinc-100); border-radius: 14px; background: var(--color-white);
+  color: var(--color-zinc-900); text-decoration: none; transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.pd-stat:hover { border-color: var(--color-zinc-300); box-shadow: 0 2px 8px rgba(24, 24, 27, 0.05); }
+.pd-stat-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-zinc-500); }
+.pd-stat-value { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
+.pd-stat-sub { font-size: 0.74rem; color: var(--color-zinc-500); }
+.pd-stat--attention { border-color: var(--color-amber-200); background: var(--color-amber-50); }
+.pd-stat--attention .pd-stat-value { color: var(--color-amber-700); }
+
+.pd-activity { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.pd-activity li { border-bottom: 1px solid var(--color-zinc-100); }
+.pd-activity li:last-child { border-bottom: 0; }
+.pd-activity-item {
+  display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 10px; align-items: baseline;
+  width: 100%; padding: 10px 2px; border: 0; background: none; text-align: left; font: inherit; color: inherit; cursor: pointer;
+}
+.pd-activity-item:hover .pd-activity-title { text-decoration: underline; }
+.pd-activity-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--color-zinc-400); }
+.pd-activity-dot[data-type="client_message"] { background: var(--color-indigo-600); }
+.pd-activity-dot[data-type="approval_decided"] { background: var(--color-emerald-600); }
+.pd-activity-dot[data-type="update"] { background: var(--color-amber-500); }
+.pd-activity-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 0.84rem; }
+.pd-activity-title { font-weight: 600; overflow-wrap: anywhere; }
+.pd-activity-time { font-size: 0.72rem; color: var(--color-zinc-500); white-space: nowrap; }
+
+/*
+    @module: Items with a state (approvals, updates, templates)
+    @description: List of cards with a state chip, title, actions, meta line, text, files and the
+        history of decisions; the form of a new / edited item.
+    @usage: ul.ps-list > li.ps-item[data-status] > .ps-item-head (.ps-status, .ps-item-title) + .ps-meta + .ps-body + ol.ps-decisions;
+        form.ps-form (.ps-form-row, .ps-saved-files)
+*/
+.ps-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.ps-item { padding: 14px 16px; border: 1px solid var(--color-zinc-100); border-radius: 12px; background: var(--color-white); }
+.ps-item[data-status="cancelled"] { opacity: 0.65; }
+.ps-item[data-status="draft"] { border-style: dashed; }
+.ps-item-head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.ps-item-title { flex: 1; min-width: 160px; margin: 0; font-size: 0.95rem; font-weight: 700; overflow-wrap: anywhere; }
+.ps-status {
+  flex-shrink: 0; padding: 2px 9px; border-radius: 999px; font-size: 0.66rem; font-weight: 700; text-transform: uppercase;
+  background: var(--color-zinc-100); color: var(--color-zinc-600);
+}
+.ps-status[data-status="pending"] { background: var(--color-amber-50); color: var(--color-amber-700); }
+.ps-status[data-status="approved"] { background: var(--color-emerald-50); color: var(--color-emerald-700); }
+.ps-status[data-status="changes_requested"] { background: var(--color-rose-50); color: var(--color-rose-700); }
+.ps-meta { margin-top: 4px; font-size: 0.74rem; color: var(--color-zinc-500); }
+.ps-body { margin: 8px 0 0; font-size: 0.86rem; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ps-decisions { margin: 10px 0 0; padding: 10px 12px; list-style: none; border-radius: 10px; background: var(--color-zinc-50); display: flex; flex-direction: column; gap: 8px; font-size: 0.78rem; }
+.ps-decision[data-decision="approved"] strong { color: var(--color-emerald-700); }
+.ps-decision[data-decision="changes_requested"] strong { color: var(--color-rose-700); }
+.ps-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; padding: 14px; border: 1px dashed var(--color-zinc-300); border-radius: 12px; background: var(--color-zinc-50); }
+.ps-form-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.ps-form-row > * { flex: 1 1 200px; }
+.ps-attach { align-self: flex-start; }
+.ps-saved-files { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; }
+.ps-saved-file { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.ps-saved-file--removed span { text-decoration: line-through; color: var(--color-rose-700); }
+
+/*
+    @module: Project templates
+    @description: Rows of the template form (number, fields, move / remove) and the checkpoint
+        summary of a template.
+    @usage: ol.tpl-rows > li.tpl-row (.tpl-index, .tpl-fields > .tpl-offset, .tpl-row-actions); ol.tpl-summary
+*/
+.tpl-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.tpl-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 10px; border: 1px solid var(--color-zinc-100); border-radius: 10px; background: var(--color-white); }
+.tpl-index { width: 26px; height: 26px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: var(--color-zinc-100); font-size: 0.76rem; font-weight: 700; }
+.tpl-fields { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tpl-offset { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--color-zinc-600); }
+.tpl-offset input { max-width: 110px; }
+.tpl-row-actions { display: flex; gap: 2px; }
+.tpl-summary { margin: 8px 0 0; padding-left: 20px; font-size: 0.82rem; display: flex; flex-direction: column; gap: 3px; }
+@media (max-width: 640px) {
+  .tpl-row { grid-template-columns: minmax(0, 1fr); }
+  .tpl-index { display: none; }
+}

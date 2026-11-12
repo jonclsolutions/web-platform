@@ -1,0 +1,104 @@
+<!--
+    @file: project-updates-section.component.html
+    @path: src/app/admin/web-pages/project-detail/project-updates-section.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Sub-page "Updates": new update, the form (title, text, files; save as a draft /
+        publish) and the updates with state (draft / published), files and actions (edit,
+        publish / back to a draft, delete).
+-->
+<section class="pd-card" aria-labelledby="pd-updates-title">
+  <div class="pd-card-head">
+    <h2 class="pd-card-title" id="pd-updates-title">{{ t('section_updates') }}</h2>
+    @if (canEdit && formMode !== 'add') {
+      <div class="pd-card-head-actions">
+        <button type="button" class="pd-btn pd-btn--primary" (click)="openAdd()"><app-icon name="plus" [size]="14"></app-icon>{{ t('update_add_button') }}</button>
+      </div>
+    }
+  </div>
+  <div class="pd-card-body">
+    <p class="pd-hint">{{ t('updates_lead') }}</p>
+
+    @if (canEdit && formMode) {
+      <form class="ps-form" (ngSubmit)="save(true)">
+        <div class="pd-cp-new-title">{{ formMode === 'add' ? t('update_add_button') : t('update_edit') }}</div>
+        <label class="pd-cp-field">
+          <span>{{ t('update_title_label') }} *</span>
+          <input type="text" class="pd-input" name="title" maxlength="200" required [(ngModel)]="draft.title" [placeholder]="t('update_title_placeholder')">
+        </label>
+        <label class="pd-cp-field">
+          <span>{{ t('update_body_label') }} *</span>
+          <textarea class="pd-input pd-textarea" name="body" rows="7" maxlength="20000" required [(ngModel)]="draft.body" [placeholder]="t('update_body_placeholder')"></textarea>
+        </label>
+        @if (formMode === 'edit' && editing?.attachments?.length) {
+          <div class="ps-saved-files">
+            @for (file of editing!.attachments!; track file.id) {
+              <label class="ps-saved-file" [class.ps-saved-file--removed]="removeIds.has(file.id)">
+                <input type="checkbox" [checked]="removeIds.has(file.id)" (change)="toggleRemove(file.id)">
+                <span>{{ t('file_remove') }}: {{ file.original_filename }}</span>
+              </label>
+            }
+          </div>
+        }
+        <label class="pd-btn pd-btn--ghost pd-attach ps-attach">
+          <app-icon name="link" [size]="14"></app-icon>{{ t('attach_files_button') }}
+          <input type="file" multiple hidden (change)="onFilesSelected($event)">
+        </label>
+        @if (files.length > 0) {
+          <div class="pd-chips">
+            @for (file of files; track file.name; let i = $index) {
+              <span class="pd-file-chip">{{ file.name }} <button type="button" [attr.aria-label]="file.name" (click)="removeFile(i)">✕</button></span>
+            }
+          </div>
+        }
+        @if (fileError) { <p class="pd-error" role="alert">{{ fileError }}</p> }
+        <p class="pd-hint">{{ t('update_publish_hint') }}</p>
+        <div class="pd-cp-editor-actions">
+          <button type="button" class="pd-btn" (click)="cancelForm()">{{ t('cancel_button') }}</button>
+          @if (formMode === 'add' || !editing?.is_published) {
+            <button type="button" class="pd-btn" [disabled]="!draft.title.trim() || !draft.body.trim() || saving" (click)="save(false)">{{ t('update_save_draft') }}</button>
+          }
+          <button type="submit" class="pd-btn pd-btn--primary" [disabled]="!draft.title.trim() || !draft.body.trim() || saving">
+            {{ saving ? t('detail_saving') : (editing?.is_published ? t('checkpoint_save') : t('update_publish_button')) }}
+          </button>
+        </div>
+      </form>
+    }
+
+    <ul class="ps-list">
+      @for (update of updates; track update.id) {
+        <li class="ps-item" [attr.data-status]="update.is_published ? 'published' : 'draft'">
+          <div class="ps-item-head">
+            <span class="ps-status" [attr.data-status]="update.is_published ? 'approved' : 'draft'">{{ update.is_published ? t('update_published') : t('update_draft') }}</span>
+            <h3 class="ps-item-title">{{ update.title }}</h3>
+            @if (canEdit) {
+              <div class="pd-account-actions">
+                <button type="button" class="pd-icon-btn" [title]="t('update_edit')" [attr.aria-label]="t('update_edit') + ': ' + update.title" (click)="openEdit(update)"><app-icon name="edit" [size]="14"></app-icon></button>
+                <button type="button" class="pd-btn pd-btn--ghost" [disabled]="busyId !== null" (click)="setPublished(update, !update.is_published)">
+                  {{ update.is_published ? t('update_unpublish') : t('update_publish_button') }}
+                </button>
+                <button type="button" class="pd-icon-btn pd-cp-action--delete" [title]="t('update_delete')" [attr.aria-label]="t('update_delete') + ': ' + update.title"
+                        [disabled]="busyId !== null" (click)="remove(update)"><app-icon name="delete" [size]="14"></app-icon></button>
+              </div>
+            }
+          </div>
+          <div class="ps-meta">
+            {{ update.is_published ? (t('update_published_at') + ' ' + (update.published_at | date:'d. M. yyyy HH:mm')) : (t('update_created_at') + ' ' + (update.created_at | date:'d. M. yyyy HH:mm')) }}
+            @if (update.author_label) { · {{ update.author_label }} }
+          </div>
+          <p class="ps-body">{{ update.body }}</p>
+          @if (update.attachments?.length) {
+            <div class="pd-msg-files">
+              @for (att of update.attachments!; track att.id) {
+                <a [href]="att.download_url" class="pd-file" target="_blank" rel="noopener"><span>{{ att.original_filename }}</span> <span class="pd-file-size">{{ formatFileSize(att.size_bytes) }}</span></a>
+              }
+            </div>
+          }
+        </li>
+      } @empty {
+        <li class="pd-empty">{{ loading ? t('loading') : t('updates_empty') }}</li>
+      }
+    </ul>
+  </div>
+</section>

@@ -26,11 +26,11 @@ namespace App\Http\Controllers\Api\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\WebProject\{ProjectLoginRequest, StoreProjectThreadRequest, StoreProjectThreadMessageRequest, UpdatePortalAccountRequest};
 use App\Http\Resources\Web\{WebProjectFileResource, WebProjectPublicResource, WebProjectThreadResource, WebProjectThreadMessageResource};
-use App\Models\Core\CoreSecurityEvent;
-use App\Models\Web\{WebAttachment, WebLog, WebProject, WebProjectAccount, WebProjectSession, WebProjectThread, WebProjectThreadMessage};
+use App\Models\Web\{WebAttachment, WebLog, WebProject, WebProjectAccount, WebProjectThread, WebProjectThreadMessage};
 use App\Services\Web\ProjectNotifier;
 use App\Support\Auth\AuthCookies;
 use App\Traits\HandlesAttachments;
+use App\Http\Controllers\Api\Web\Concerns\StartsPortalSession;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -40,6 +40,7 @@ class WebProjectPublicController extends Controller
 {
     use HandlesAttachments;
     use LogsActivity;
+    use StartsPortalSession;
 
     /** Module of the web log rows of the client portal. */
     private const LOG_MODULE = 'WebProjectPortal';
@@ -67,16 +68,9 @@ class WebProjectPublicController extends Controller
      */
     public function login(ProjectLoginRequest $request, string $token): JsonResponse
     {
-        $project = WebProject::where('access_token', $token)->first();
-
-        if (!$project || $project->visibility !== 'public') {
-            CoreSecurityEvent::record(
-                'project_login_invalid_token',
-                'warning',
-                $request->ip(),
-                CoreSecurityEvent::contextFromRequest($request, ['reason' => 'project_unavailable'])
-            );
-            return response()->json(['message' => 'Project not found or unavailable.'], 404);
+        $project = $this->portalProject($request, $token);
+        if (!$project) {
+            return $this->projectUnavailable();
         }
 
         $validated = $request->validated();
@@ -89,25 +83,11 @@ class WebProjectPublicController extends Controller
         $valid = $account !== null && $account->verifyPassword($validated['password']);
 
         if (!$valid) {
-            CoreSecurityEvent::record(
-                'project_login_failed',
-                'warning',
-                $request->ip(),
-                CoreSecurityEvent::contextFromRequest($request, ['project_id' => $project->id])
-            );
+            $this->recordFailedSignIn($request, $project, 'password');
             return response()->json(['message' => 'Invalid login name or password.'], 401);
         }
 
-        $sessionToken = WebProjectSession::issueFor($account, $request->ip(), $request->userAgent());
-        $account->forceFill(['last_login_at' => now()])->save();
-        $request->attributes->set('current_project_account', $account);
-        $this->logAction($request, WebLog::class, 'portal_login', self::LOG_MODULE,
-            "Client account #{$account->id} signed in to the portal of project #{$project->id}", $project->id, 'WebProject');
-
-        return $this->respond([
-            'expires_in' => WebProjectSession::LIFETIME_MINUTES * 60,
-            'project'    => (new WebProjectPublicResource($project->load('checkpoints')))->resolve($request),
-        ])->withCookie(AuthCookies::portal($request, $token, $sessionToken));
+        return $this->startPortalSession($request, $project, $account, $token, 'password');
     }
 
     /**
@@ -197,17 +177,8 @@ class WebProjectPublicController extends Controller
     public function files(Request $request): JsonResponse
     {
         $project = $request->attributes->get('current_project');
-        $messageIds = WebProjectThreadMessage::visibleToClient()
-            ->whereIn('thread_id', $project->threads()->select('id'))
-            ->pluck('id');
 
-        $files = WebAttachment::where('attachable_type', WebProjectThreadMessage::class)
-            ->whereIn('attachable_id', $messageIds)
-            ->with('attachable.thread')
-            ->orderByDesc('id')
-            ->get();
-
-        return $this->respond(WebProjectFileResource::collection($files));
+        return $this->respond(WebProjectFileResource::collection(app(\App\Services\Web\ProjectFiles::class)->of($project, forClient: true)));
     }
 
     public function threadShow(Request $request): JsonResponse

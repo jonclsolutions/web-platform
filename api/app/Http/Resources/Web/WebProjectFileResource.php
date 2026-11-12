@@ -6,13 +6,15 @@
  * @author JS
  * @created 2026
  * @description One file of the project's "Files" overview: the attachment (short-lived signed
- *   download / view links of WebAttachmentResource) with the message it came with - thread,
- *   author, time and whether it belongs to an internal note (administration only).
- * @dependencies WebAttachmentResource; the attachment must be loaded with `attachable.thread`.
+ *   download / view links of WebAttachmentResource) with where it came from - `source` thread
+ *   (message: thread, author, internal note - administration only), update or approval - its id,
+ *   title and author.
+ * @dependencies WebAttachmentResource; loaded by ProjectFiles (`attachable`, a message with its thread).
  */
 
 namespace App\Http\Resources\Web;
 
+use App\Models\Web\{WebProjectApproval, WebProjectUpdate};
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -25,15 +27,35 @@ class WebProjectFileResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $message = $this->attachable;
+        $source = $this->attachable;
+        $base = (new WebAttachmentResource($this->resource))->toArray($request);
 
-        return array_merge((new WebAttachmentResource($this->resource))->toArray($request), [
-            'thread_id'      => $message?->thread_id,
-            'thread_subject' => $message?->thread?->subject,
-            'author_type'    => $message?->author_type,
-            'author_label'   => $message?->author_label,
-            'is_internal'    => (bool) ($message?->is_internal ?? false),
-            'message_id'     => $message?->id,
+        if ($source instanceof WebProjectUpdate || $source instanceof WebProjectApproval) {
+            $isUpdate = $source instanceof WebProjectUpdate;
+
+            return array_merge($base, [
+                'source'         => $isUpdate ? 'update' : 'approval',
+                'source_id'      => $source->id,
+                'source_title'   => $source->title,
+                'thread_id'      => null,
+                'thread_subject' => null,
+                'author_type'    => 'admin',
+                'author_label'   => $isUpdate ? $source->author_label : $source->requested_by_label,
+                'is_internal'    => false,
+                'message_id'     => null,
+            ]);
+        }
+
+        return array_merge($base, [
+            'source'         => 'thread',
+            'source_id'      => $source?->thread_id,
+            'source_title'   => $source?->thread?->subject,
+            'thread_id'      => $source?->thread_id,
+            'thread_subject' => $source?->thread?->subject,
+            'author_type'    => $source?->author_type,
+            'author_label'   => $source?->author_label,
+            'is_internal'    => (bool) ($source?->is_internal ?? false),
+            'message_id'     => $source?->id,
         ]);
     }
 }

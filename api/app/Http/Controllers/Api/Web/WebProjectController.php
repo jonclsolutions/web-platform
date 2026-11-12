@@ -24,6 +24,9 @@ use App\Http\Resources\Web\{WebProjectFileResource, WebProjectResource, WebProje
 use App\Mail\Web\ProjectClientUpdateMail;
 use App\Models\Web\{WebAttachment, WebProject, WebProjectCheckpoint, WebProjectSession, WebProjectThread, WebProjectThreadMessage};
 use App\Services\Web\ProjectNotifier;
+use App\Services\Web\ProjectActivityFeed;
+use App\Models\Web\WebProjectApproval;
+use App\Models\Web\WebProjectTemplate;
 use App\Models\Web\WebLog;
 use App\Traits\HandlesAttachments;
 use App\Traits\LogsActivity;
@@ -109,12 +112,21 @@ class WebProjectController extends Controller
         try {
             $validated = $request->validated();
 
-            $project = new WebProject($validated);
-            $project->status = $validated['status'] ?? 'new';
-            $project->access_token = WebProject::generateAccessToken();
-            $project->save();
+            $project = DB::transaction(function () use ($validated) {
+                $project = new WebProject(array_diff_key($validated, ['template_id' => true]));
+                $project->status = $validated['status'] ?? 'new';
+                $project->access_token = WebProject::generateAccessToken();
+                $project->save();
+                // A template fills the checkpoints (due dates from today).
+                if (!empty($validated['template_id'])) {
+                    WebProjectTemplate::with('checkpoints')->find($validated['template_id'])?->applyTo($project);
+                }
 
-            $this->logAction($request, WebLog::class, 'create', 'WebProject', "Project created: {$project->name}", $project->id, 'WebProject');
+                return $project;
+            });
+
+            $this->logAction($request, WebLog::class, 'create', 'WebProject', "Project created: {$project->name}"
+                . (!empty($validated['template_id']) ? " from template #{$validated['template_id']}" : ''), $project->id, 'WebProject');
 
             return $this->respond((new WebProjectResource($project))->resolve(), 201);
         } catch (\Exception $e) {
@@ -126,9 +138,28 @@ class WebProjectController extends Controller
 
     public function show($id): JsonResponse
     {
-        $project = WebProject::withTrashed()->withUnreadMessagesCount()->withWaitingThreadsCount()->withCount('accounts')
+        $project = WebProject::withTrashed()->withUnreadMessagesCount()->withWaitingThreadsCount()
+            ->withCount([
+                'accounts',
+                'approvals as pending_approvals_count' => fn ($q) => $q->where('status', WebProjectApproval::STATUS_PENDING),
+                'updates as published_updates_count'   => fn ($q) => $q->whereNotNull('published_at'),
+                'threads as open_threads_count'        => fn ($q) => $q->where('status', 'active'),
+            ])
             ->with(['lead', 'order', 'checkpoints', 'assignee:id,full_name'])->findOrFail($id);
         return $this->respond((new WebProjectResource($project))->resolve());
+    }
+
+    /**
+     * @description What happened in the project lately for the team: client messages, approval
+     *   decisions, updates, checkpoint changes (ProjectActivityFeed, team audience).
+     * @param int|string $id Project id.
+     * @return JsonResponse
+     */
+    public function activity($id): JsonResponse
+    {
+        $project = WebProject::withTrashed()->findOrFail($id);
+
+        return $this->respond(app(ProjectActivityFeed::class)->build($project, ProjectActivityFeed::AUDIENCE_TEAM, 40)->values());
     }
 
     public function update(UpdateWebProjectRequest $request, $id): JsonResponse
@@ -233,15 +264,8 @@ class WebProjectController extends Controller
     public function files($id): JsonResponse
     {
         $project = WebProject::withTrashed()->findOrFail($id);
-        $messageIds = WebProjectThreadMessage::whereIn('thread_id', $project->threads()->select('id'))->pluck('id');
 
-        $files = WebAttachment::where('attachable_type', WebProjectThreadMessage::class)
-            ->whereIn('attachable_id', $messageIds)
-            ->with('attachable.thread')
-            ->orderByDesc('id')
-            ->get();
-
-        return $this->respond(WebProjectFileResource::collection($files));
+        return $this->respond(WebProjectFileResource::collection(app(\App\Services\Web\ProjectFiles::class)->of($project, forClient: false)));
     }
 
     // ── Checkpoints (nested under project) ───────────────────────────────────
@@ -415,6 +439,16 @@ class WebProjectController extends Controller
     {
         WebProjectSession::where('project_id', $project->id)->delete();
         $project->accounts()->delete();
+
+        // Approvals and updates carry files (decisions go with their approval by FK cascade).
+        foreach ($project->approvals()->with('attachments')->get() as $approval) {
+            $this->deleteAllAttachments($approval);
+            $approval->delete();
+        }
+        foreach ($project->updates()->with('attachments')->get() as $update) {
+            $this->deleteAllAttachments($update);
+            $update->delete();
+        }
 
         $project->checkpoints()->delete();
 

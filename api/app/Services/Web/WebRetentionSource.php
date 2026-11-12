@@ -27,6 +27,7 @@ use App\Models\Web\WebCookieConsent;
 use App\Models\Web\WebJobApplication;
 use App\Models\Web\WebLog;
 use App\Models\Web\WebProject;
+use App\Models\Web\WebProjectLoginCode;
 use App\Models\Web\WebProjectSession;
 use App\Models\Web\WebRawRequestCommission;
 use App\Models\Web\WebSalesLead;
@@ -89,7 +90,14 @@ final class WebRetentionSource implements RetentionSource
     /** @description See RetentionSource::cleanUp(). */
     public function cleanUp(): array
     {
-        return ['expired_portal_sessions' => WebProjectSession::where('expires_at', '<', Carbon::now())->delete()];
+        return [
+            'expired_portal_sessions' => WebProjectSession::where('expires_at', '<', Carbon::now())->delete(),
+            // One-time sign-in codes / invitation links: used or expired ones are kept a day (audit of
+            // a just finished sign-in), then removed.
+            'portal_login_codes'      => WebProjectLoginCode::where(fn (Builder $q) => $q
+                ->where('expires_at', '<', Carbon::now()->subDay())
+                ->orWhere('used_at', '<', Carbon::now()->subDay()))->delete(),
+        ];
     }
 
     /**
@@ -110,6 +118,14 @@ final class WebRetentionSource implements RetentionSource
             foreach ($projects as $project) {
                 WebProjectSession::where('project_id', $project->id)->delete();
                 $project->accounts()->delete();
+                foreach ($project->approvals()->with('attachments')->get() as $approval) {
+                    $this->deleteFiles($approval);
+                    $approval->delete();
+                }
+                foreach ($project->updates()->with('attachments')->get() as $update) {
+                    $this->deleteFiles($update);
+                    $update->delete();
+                }
                 $project->checkpoints()->delete();
                 foreach ($project->threads as $thread) {
                     foreach ($thread->messages as $message) {

@@ -8,7 +8,8 @@
  * @description Client accounts of a project portal, managed by the administration (the client can
  *   change nothing but its e-mail and notifications in the portal): list, add (login name, display
  *   name, password typed in or generated, optional prefilled e-mail and its language), change,
- *   password reset, remove. The notifications are never turned on here.
+ *   password reset, invitation e-mail (one-time sign-in link, also resent), remove. The
+ *   notifications are never turned on here.
  *   A password is returned in plaintext exactly once (meta `password`) - only its hash is stored.
  *   A reset and a removal end every session of the account at once.
  * @security Every account action checks that the account belongs to the project of the URL (IDOR
@@ -23,7 +24,9 @@ namespace App\Http\Controllers\Api\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\WebProject\{ResetProjectAccountPasswordRequest, StoreProjectAccountRequest, UpdateProjectAccountRequest};
 use App\Http\Resources\Web\WebProjectAccountResource;
-use App\Models\Web\{WebLog, WebProject, WebProjectAccount};
+use App\Mail\Web\ProjectAccessMail;
+use App\Models\Web\{WebLog, WebProject, WebProjectAccount, WebProjectLoginCode};
+use App\Services\Web\ProjectNotifier;
 use App\Traits\LogsActivity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -37,6 +40,8 @@ class WebProjectAccountController extends Controller
      *   the personal data of the client (the log names the account by id only).
      */
     private const LOG_EXCLUDED = ['password', 'display_name', 'email'];
+
+    public function __construct(private readonly ProjectNotifier $notifier) {}
 
     /**
      * @description Accounts of the project (oldest first) with the number of signed-in devices.
@@ -54,17 +59,27 @@ class WebProjectAccountController extends Controller
     }
 
     /**
-     * @description Adds an account; without a password one is generated. The plaintext password
-     *   is in meta `password` of this answer only.
+     * @description Adds an account. Access: a password (typed in or generated; `with_password`
+     *   false = none) and / or an invitation e-mail with a one-time sign-in link (`send_invitation`).
+     *   At least one of them is needed (422). The plaintext password is in meta `password` of this
+     *   answer only; meta `invited` says whether the invitation went out.
      * @param StoreProjectAccountRequest $request
      * @param int|string $projectId
-     * @return JsonResponse 201 {data: account, meta: {password}}
+     * @return JsonResponse 201 {data: account, meta: {password, invited}}
      */
     public function store(StoreProjectAccountRequest $request, $projectId): JsonResponse
     {
         $project = WebProject::findOrFail($projectId);
         $validated = $request->validated();
-        $password = $validated['password'] ?? null ?: WebProjectAccount::generatePassword();
+        $invite = $request->boolean('send_invitation');
+        $withPassword = $request->boolean('with_password', true) || !empty($validated['password']);
+        if (!$withPassword && !$invite) {
+            return response()->json([
+                'message' => 'The account needs a password or an invitation e-mail.',
+                'errors'  => ['with_password' => ['The account needs a password or an invitation e-mail.']],
+            ], 422);
+        }
+        $password = $withPassword ? ($validated['password'] ?? null ?: WebProjectAccount::generatePassword()) : null;
 
         $account = new WebProjectAccount([
             'project_id'   => $project->id,
@@ -73,13 +88,59 @@ class WebProjectAccountController extends Controller
             'email'        => $validated['email'] ?? null,
             'language'     => $validated['language'] ?? 'cz',
         ]);
-        $account->setPassword($password);
+        if ($password !== null) {
+            $account->setPassword($password);
+        }
         $account->save();
+        $invited = $invite && $this->sendInvitation($request, $project, $account);
 
         $this->logAction($request, WebLog::class, 'account_create', 'WebProjectAccount',
-            "Portal account #{$account->id} added to project #{$project->id}", $project->id, 'WebProject', self::LOG_EXCLUDED);
+            "Portal account #{$account->id} added to project #{$project->id}" . ($password ? ' with a password' : '') . ($invited ? ', invitation sent' : ''),
+            $project->id, 'WebProject', self::LOG_EXCLUDED);
 
-        return $this->respond(new WebProjectAccountResource($account), 201, ['password' => $password]);
+        return $this->respond(new WebProjectAccountResource($account->fresh()), 201, ['password' => $password, 'invited' => $invited]);
+    }
+
+    /**
+     * @description (Re)sends the invitation: a new one-time sign-in link valid 7 days (the older
+     *   unused one stops working). 422 without an e-mail, 503 when the e-mail could not be sent.
+     * @param Request $request
+     * @param int|string $projectId
+     * @param int|string $accountId
+     * @return JsonResponse The account (invited_at).
+     */
+    public function invite(Request $request, $projectId, $accountId): JsonResponse
+    {
+        $account = $this->accountOf($projectId, $accountId);
+        if (!$account->hasEmail()) {
+            return response()->json(['message' => 'The account has no e-mail.', 'errors' => ['email' => ['The account has no e-mail.']]], 422);
+        }
+        $project = WebProject::findOrFail($projectId);
+        if (!$this->sendInvitation($request, $project, $account)) {
+            return response()->json(['message' => 'The invitation could not be sent. Try again later.'], 503);
+        }
+        $this->logAction($request, WebLog::class, 'account_invite', 'WebProjectAccount',
+            "Invitation sent to portal account #{$account->id} of project #{$project->id}", $project->id, 'WebProject');
+
+        return $this->respond(new WebProjectAccountResource($account->fresh()));
+    }
+
+    /**
+     * @description Issues the invitation link and e-mails it; stamps invited_at when sent.
+     * @param Request $request
+     * @param WebProject $project
+     * @param WebProjectAccount $account
+     * @return bool Sent.
+     */
+    private function sendInvitation(Request $request, WebProject $project, WebProjectAccount $account): bool
+    {
+        $issued = WebProjectLoginCode::issue($account, WebProjectLoginCode::PURPOSE_INVITE, $request->ip());
+        $sent = $this->notifier->sendAccess($project, $account, ProjectAccessMail::KIND_INVITE, $issued, WebProjectLoginCode::INVITE_TTL_MINUTES);
+        if ($sent) {
+            $account->forceFill(['invited_at' => now()])->save();
+        }
+
+        return $sent;
     }
 
     /**

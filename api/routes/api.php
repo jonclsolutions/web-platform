@@ -44,6 +44,11 @@ use App\Http\Controllers\Api\Web\WebSupportTicketController;
 use App\Http\Controllers\Api\Web\WebJobApplicationController;
 use App\Http\Controllers\Api\Web\WebSiteSettingController;
 use App\Http\Controllers\Api\Web\WebProjectAccountController;
+use App\Http\Controllers\Api\Web\WebProjectApprovalController;
+use App\Http\Controllers\Api\Web\WebProjectPortalAccessController;
+use App\Http\Controllers\Api\Web\WebProjectPortalController;
+use App\Http\Controllers\Api\Web\WebProjectTemplateController;
+use App\Http\Controllers\Api\Web\WebProjectUpdateController;
 use App\Http\Controllers\Api\Web\WebProjectController;
 use App\Http\Controllers\Api\Web\WebProjectThreadController;
 use App\Http\Controllers\Api\Web\WebProjectPublicController;
@@ -173,6 +178,13 @@ Route::prefix('public/web')->middleware(['web.active', 'throttle:60,1,public-web
 */
 Route::post('projects/public/{token}/login', [WebProjectPublicController::class, 'login'])
     ->middleware('throttle:10,1,project-login');
+// Password-less sign-in: a one-time code / link sent to the account's e-mail (also invitations).
+Route::post('projects/public/{token}/login/code-request', [WebProjectPortalAccessController::class, 'requestCode'])
+    ->middleware('throttle:5,1,project-code-request');
+Route::post('projects/public/{token}/login/code', [WebProjectPortalAccessController::class, 'loginWithCode'])
+    ->middleware('throttle:10,1,project-login');
+Route::post('projects/public/{token}/login/link', [WebProjectPortalAccessController::class, 'loginWithLink'])
+    ->middleware('throttle:10,1,project-login');
 
 Route::prefix('projects/public/{token}')
     ->middleware(['project.session', 'throttle:120,1,project-session'])
@@ -192,6 +204,12 @@ Route::prefix('projects/public/{token}')
         Route::get('files', [WebProjectPublicController::class, 'files']);
         Route::post('account', [WebProjectPublicController::class, 'updateAccount'])
             ->middleware('throttle:20,1,project-account-settings');
+        Route::get('activity', [WebProjectPortalController::class, 'activity']);
+        Route::post('activity/seen', [WebProjectPortalController::class, 'markActivitySeen']);
+        Route::get('updates', [WebProjectPortalController::class, 'updates']);
+        Route::get('approvals', [WebProjectPortalController::class, 'approvals']);
+        Route::post('approvals/{approvalId}/decision', [WebProjectPortalController::class, 'decide'])
+            ->middleware('throttle:20,1,project-approval-decision');
     });
 
 /*
@@ -894,6 +912,18 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
             // Administrators who can be responsible for a project (select of the project form).
             Route::get('/assignees', [WebProjectController::class, 'assignees'])
                 ->middleware('permission:web-projects-view');
+
+            // ── Project templates (before /{id}) ──────────────────────
+            Route::get('/templates', [WebProjectTemplateController::class, 'index'])
+                ->middleware('permission:web-projects-view');
+            Route::post('/templates', [WebProjectTemplateController::class, 'store'])
+                ->middleware('permission:web-projects-update');
+            Route::get('/templates/{templateId}', [WebProjectTemplateController::class, 'show'])
+                ->middleware('permission:web-projects-view');
+            Route::put('/templates/{templateId}', [WebProjectTemplateController::class, 'update'])
+                ->middleware('permission:web-projects-update');
+            Route::delete('/templates/{templateId}', [WebProjectTemplateController::class, 'destroy'])
+                ->middleware('permission:web-projects-update');
             Route::post('/',     [WebProjectController::class, 'store'])
                 ->middleware('permission:web-projects-create');
             Route::get('/{id}',  [WebProjectController::class, 'show'])
@@ -907,9 +937,42 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
             Route::delete('/{id}', [WebProjectController::class, 'destroy'])
                 ->middleware('permission:web-projects-delete');
 
-            // Files of the project's conversations (also those of internal notes, flagged).
+            // Files of the project (threads - also internal notes, flagged - updates, approvals).
             Route::get('/{id}/files', [WebProjectController::class, 'files'])
                 ->middleware('permission:web-projects-view');
+            // What happened lately (client messages, approval decisions, updates, checkpoints).
+            Route::get('/{id}/activity', [WebProjectController::class, 'activity'])
+                ->middleware('permission:web-projects-view');
+            // Templates: save the checkpoints as a template / add a template's checkpoints.
+            Route::post('/{projectId}/template', [WebProjectTemplateController::class, 'storeFromProject'])
+                ->middleware('permission:web-projects-update');
+            Route::post('/{projectId}/apply-template', [WebProjectTemplateController::class, 'applyToProject'])
+                ->middleware('permission:web-projects-update');
+
+            // ── Updates for the client ────────────────────────────────
+            Route::get('/{projectId}/updates', [WebProjectUpdateController::class, 'index'])
+                ->middleware('permission:web-projects-view');
+            Route::post('/{projectId}/updates', [WebProjectUpdateController::class, 'store'])
+                ->middleware('permission:web-projects-update');
+            // POST (multipart: files) for a change.
+            Route::post('/{projectId}/updates/{updateId}', [WebProjectUpdateController::class, 'update'])
+                ->middleware('permission:web-projects-update');
+            Route::delete('/{projectId}/updates/{updateId}', [WebProjectUpdateController::class, 'destroy'])
+                ->middleware('permission:web-projects-update');
+
+            // ── Approval requests ─────────────────────────────────────
+            Route::get('/{projectId}/approvals', [WebProjectApprovalController::class, 'index'])
+                ->middleware('permission:web-projects-view');
+            Route::post('/{projectId}/approvals', [WebProjectApprovalController::class, 'store'])
+                ->middleware('permission:web-projects-update');
+            Route::post('/{projectId}/approvals/{approvalId}', [WebProjectApprovalController::class, 'update'])
+                ->middleware('permission:web-projects-update');
+            Route::post('/{projectId}/approvals/{approvalId}/reopen', [WebProjectApprovalController::class, 'reopen'])
+                ->middleware('permission:web-projects-update');
+            Route::post('/{projectId}/approvals/{approvalId}/cancel', [WebProjectApprovalController::class, 'cancel'])
+                ->middleware('permission:web-projects-update');
+            Route::delete('/{projectId}/approvals/{approvalId}', [WebProjectApprovalController::class, 'destroy'])
+                ->middleware('permission:web-projects-update');
 
             // ── Client accounts of the portal ─────────────────────────
             // A password reset is security sensitive (it ends the account's sessions), but whoever
@@ -921,6 +984,8 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
             Route::put('/{projectId}/accounts/{accountId}', [WebProjectAccountController::class, 'update'])
                 ->middleware('permission:web-projects-update');
             Route::post('/{projectId}/accounts/{accountId}/password', [WebProjectAccountController::class, 'resetPassword'])
+                ->middleware('permission:web-projects-update');
+            Route::post('/{projectId}/accounts/{accountId}/invite', [WebProjectAccountController::class, 'invite'])
                 ->middleware('permission:web-projects-update');
             Route::delete('/{projectId}/accounts/{accountId}', [WebProjectAccountController::class, 'destroy'])
                 ->middleware('permission:web-projects-update');
@@ -945,6 +1010,8 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
             Route::post('/{threadId}/reply', [WebProjectThreadController::class, 'reply'])
                 ->middleware('permission:web-projects-update');
             Route::put('/{threadId}/status', [WebProjectThreadController::class, 'updateStatus'])
+                ->middleware('permission:web-projects-update');
+            Route::put('/{threadId}/assignee', [WebProjectThreadController::class, 'assign'])
                 ->middleware('permission:web-projects-update');
             Route::get('/{threadId}/messages', [WebProjectThreadController::class, 'olderMessages'])
                 ->middleware('permission:web-projects-view');
