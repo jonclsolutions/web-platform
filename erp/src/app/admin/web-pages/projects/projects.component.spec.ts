@@ -4,123 +4,97 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Unit tests of ProjectsComponent and projects.config.ts – client projects of the
- *   Web module: translated configuration, toolbars, prefill from a sales order (?order_id) and
- *   opening a project from a link (?open_project), creating a project with a one-time client
- *   password (kept only in the component, never in browser storage - VT-08), the manage modal (password reveal / copy /
- *   regenerate, checkpoints add / cycle / delete), project threads (detail, status, replies with
- *   validated attachments, older messages), the global threads table and its modal, and locking
- *   the page scroll behind modals.
+ * @description Unit tests of ProjectsComponent and projects.config.ts – the list of client
+ *   projects of the Web module: translated configuration (with the unread messages column and
+ *   filter), toolbars, prefill from a sales order (?order_id), old links ?open_project → project
+ *   page, creating a project (its one-time password handed to the project page in memory only,
+ *   never in browser storage - VT-08) and opening the project page from the table.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (all admin doubles), ActivatedRoute (stub with query
- *   params), navigator.clipboard (spy), sessionStorage (removal of the legacy stored passwords)
+ *   params), Router.navigate (spy), ProjectPasswordHandoffService, sessionStorage (removal of
+ *   the legacy stored passwords)
  */
 
-import { ComponentFixture, TestBed, fakeAsync, flush, tick, discardPeriodicTasks } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { Subject, of, throwError } from 'rxjs';
+import { ComponentFixture, TestBed, fakeAsync, discardPeriodicTasks } from '@angular/core/testing';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { of, throwError } from 'rxjs';
 
 import { ProjectsComponent } from './projects.component';
 import {
-  CHECKPOINT_STATUS_CYCLE, PROJECT_PLATFORM_VALUES, PROJECT_STATUS_VALUES, PROJECT_THREAD_PRIORITY_VALUES,
-  PROJECT_THREAD_STATUS_VALUES, PROJECT_VISIBILITY_VALUES
+  CHECKPOINT_STATUS_VALUES, PROJECT_PLATFORM_VALUES, PROJECT_STATUS_VALUES, PROJECT_VISIBILITY_VALUES,
+  createCheckpointStatusLabels
 } from './projects.config';
+import { ProjectPasswordHandoffService } from './project-password-handoff.service';
 import { AdminTestContext, createAdminTestContext, paginated } from '../../../../testing/admin-test-helpers';
-import { TEST_UPLOAD_RULES } from '../../../../testing/upload-rules-stub';
 
 describe('ProjectsComponent', () => {
   let ctx: AdminTestContext;
   let fixture: ComponentFixture<ProjectsComponent>;
   let component: ProjectsComponent;
   let route: { snapshot: { queryParamMap: ReturnType<typeof convertToParamMap> } };
+  let navigate: jasmine.Spy;
 
   const dh = () => ctx.dataHandler as any;
   const toolbar = () => Object.fromEntries(component.toolbarButtons.map(b => [b.action, b]));
   const field = (name: string) => component.formFields.find(f => f.column_name === name) as any;
-  const project = { id: 7, name: 'Shop', public_url: 'https://x/p/7', checkpoints: [{ id: 1, label: 'Design', status: 'new', sort_order: 1 }] };
-  const file = (name: string, size = 10) => {
-    const f = new File(['x'], name);
-    Object.defineProperty(f, 'size', { value: size });
-    return f;
-  };
-  /** Message list element whose scrollTop assignments are recorded. */
-  const scrollList = (scrollHeight: number) => {
-    const el = document.createElement('div');
-    const sets: number[] = [];
-    Object.defineProperty(el, 'scrollHeight', { value: scrollHeight });
-    Object.defineProperty(el, 'scrollTop', { get: () => sets[sets.length - 1] ?? 0, set: (v: number) => sets.push(v) });
-    return { el, sets };
-  };
-  const fileEvent = (...files: File[]) => {
-    const dt = new DataTransfer();
-    files.forEach(f => dt.items.add(f));
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.files = dt.files;
-    return { target: input } as unknown as Event;
-  };
 
   beforeEach(async () => {
     sessionStorage.removeItem('rpsw_project_pw_7');
     ctx = createAdminTestContext();
     route = { snapshot: { queryParamMap: convertToParamMap({}) } };
-    dh().getOne.and.callFake((url: string) => of(url === 'web/projects/7' ? JSON.parse(JSON.stringify(project)) : { id: +url.split('/').pop()!, messages: [] }));
     await TestBed.configureTestingModule({
       imports: [ProjectsComponent],
       providers: [...ctx.providers, { provide: ActivatedRoute, useValue: route }]
     }).compileComponents();
     fixture = TestBed.createComponent(ProjectsComponent);
     component = fixture.componentInstance;
+    navigate = spyOn(TestBed.inject(Router), 'navigate').and.returnValue(Promise.resolve(true));
   });
 
   afterEach(() => {
     fixture.destroy();
     sessionStorage.removeItem('rpsw_project_pw_7');
-    document.body.removeAttribute('style');
   });
 
   describe('configuration', () => {
     /**
-     * @description The page and the threads table are configured from the 'projects' translations.
+     * @description The list is configured from the 'projects' translations: the "open project"
+     *   button, the unread messages column (count pill) and the "only with unread" filter.
      * @input  component created
-     * @output captions; row buttons manage / edit / delete; 7 + 3 columns; 5 filters; 13 details; thread table 6 columns, 1 button, 3 filters, 5 details
+     * @output caption; row buttons open / edit / delete; 8 + 3 columns with unread_messages_count
+     *   of type 'count'; 6 filters ending with unread (one option '1'); 13 details
      */
     it('builds the configuration from translations', () => {
       expect(component.tableCaption).toBe('projects.table_header');
-      expect(component.threadsTableCaption).toBe('projects.thread_table_header');
-      expect(component.buttons.map(b => [b.action, b.permission])).toEqual([
-        ['generate_form', undefined], ['edit', 'web-projects-update'], ['delete', 'web-projects-delete']
+      expect(component.buttons.map(b => [b.action, b.permission, b.icon])).toEqual([
+        ['generate_form', undefined, 'folder-open'], ['edit', 'web-projects-update', 'edit'], ['delete', 'web-projects-delete', 'delete']
       ]);
-      expect(component.projectColumns.length).toBe(7);
+      expect(component.projectColumns.length).toBe(8);
+      expect(component.projectColumns.find(c => c.key === 'unread_messages_count')).toEqual(
+        { key: 'unread_messages_count', header: 'projects.col_unread', type: 'count' });
       expect(component.trashProjectColumns.map(c => c.key)).toEqual(['id', 'name', 'deleted_at']);
-      expect(component.filterColumns.map(c => c.key)).toEqual(['id', 'name', 'visibility', 'status', 'platform']);
+      expect(component.filterColumns.map(c => c.key)).toEqual(['id', 'name', 'visibility', 'status', 'platform', 'unread']);
+      expect((component.filterColumns[5] as any).options).toEqual([{ value: '1', label: 'projects.filter_unread_yes' }]);
       expect(component.detailsColumns.length).toBe(13);
-      expect(component.threadColumns.map(c => c.key)).toEqual(['id', 'project_name', 'subject', 'priority', 'status', 'last_message_at']);
-      expect(component.threadButtons.map(b => b.action)).toEqual(['details']);
-      expect(component.threadFilterColumns.map(c => c.key)).toEqual(['project_id', 'priority', 'status']);
-      expect(component.threadDetailsColumns.length).toBe(5);
       expect(component.t('btn_manage')).toBe('projects.btn_manage');
     });
 
     /**
-     * @description Select options and checkpoint labels are translated; the status cycle is new → active → done → new.
-     * @input  platform / visibility / status fields; thread filters; checkpointStatusLabels; CHECKPOINT_STATUS_CYCLE
-     * @output values = exported constants; 'projects.platform_ai'; labels for new/active/done; cycle closed
+     * @description Select options and checkpoint labels are translated; checkpoint statuses in order new, active, done.
+     * @input  platform / visibility / status / order fields; createCheckpointStatusLabels; CHECKPOINT_STATUS_VALUES
+     * @output values = exported constants; 'projects.platform_ai'; labels for new/active/done
      */
-    it('offers translated options and the checkpoint cycle', () => {
+    it('offers translated options and the checkpoint statuses', () => {
       expect(field('platform').options.map((o: any) => o.value)).toEqual(PROJECT_PLATFORM_VALUES);
       expect(field('platform').options[3].label).toBe('projects.platform_ai');
       expect(field('visibility').options.map((o: any) => o.value)).toEqual(PROJECT_VISIBILITY_VALUES);
       expect(field('status').options.map((o: any) => o.value)).toEqual(PROJECT_STATUS_VALUES);
       expect(field('order_id').options).toEqual([{ value: '', label: 'projects.field_order_none_option' }]);
       expect(field('order_id').show_in_edit).toBeFalse();
-      const tf = (k: string) => component.threadFilterColumns.find(c => c.key === k) as any;
-      expect(tf('priority').options.map((o: any) => o.value)).toEqual(PROJECT_THREAD_PRIORITY_VALUES);
-      expect(tf('status').options.map((o: any) => o.value)).toEqual(PROJECT_THREAD_STATUS_VALUES);
-      expect(component.checkpointStatusLabels).toEqual({
+      expect(createCheckpointStatusLabels(ctx.i18n as any)).toEqual({
         new: 'projects.checkpoint_status_new', active: 'projects.checkpoint_status_active', done: 'projects.checkpoint_status_done'
       });
-      expect(CHECKPOINT_STATUS_CYCLE).toEqual({ new: 'active', active: 'done', done: 'new' });
+      expect(CHECKPOINT_STATUS_VALUES).toEqual(['new', 'active', 'done']);
       expect(component.formFields.filter(f => f.required).map(f => f.column_name)).toEqual(['name', 'visibility']);
     });
 
@@ -144,11 +118,10 @@ describe('ProjectsComponent', () => {
       ctx.i18n.getValue.and.callFake((p: string) => `EN:${p}`);
       ctx.i18n.translations$.next({});
       expect(component.tableCaption).toBe('EN:projects.table_header');
-      expect(component.threadsTableCaption).toBe('EN:projects.thread_table_header');
     });
   });
 
-  describe('toolbars', () => {
+  describe('toolbar', () => {
     /**
      * @description Project toolbar by permission and view.
      * @input  granted []; then all; then trash view with open filters
@@ -184,63 +157,36 @@ describe('ProjectsComponent', () => {
       spies.forEach(s => expect(s).toHaveBeenCalledTimes(1));
       expect(() => component.handleToolbarAction('unknown')).not.toThrow();
     });
-
-    /**
-     * @description Threads toolbar: filter toggle (label follows), export through the threads table.
-     * @input  handleThreadsToolbarAction('toggleThreadsFilters'), ('exportThreadsTable') with / without a table, 'unknown'
-     * @output isThreadsFilterVisible true and label 'projects.toolbar_hide_filters'; exportToCSV() once; no error without a table
-     */
-    it('handles the threads toolbar', () => {
-      expect(component.threadsToolbarButtons[0].label).toBe('projects.toolbar_filters');
-      expect(component.threadsToolbarButtons[1].label).toBe('projects.thread_toolbar_export');
-      component.handleThreadsToolbarAction('toggleThreadsFilters');
-      expect(component.isThreadsFilterVisible).toBeTrue();
-      expect(component.threadsToolbarButtons[0].label).toBe('projects.toolbar_hide_filters');
-      expect(component.threadsToolbarButtons[0].isActive).toBeTrue();
-      const table = jasmine.createSpyObj('TableBuilderComponent', ['exportToCSV']);
-      component.threadsTable = table;
-      component.handleThreadsToolbarAction('exportThreadsTable');
-      expect(table.exportToCSV).toHaveBeenCalledTimes(1);
-      component.threadsTable = undefined as any;
-      expect(() => { component.handleThreadsToolbarAction('exportThreadsTable'); component.handleThreadsToolbarAction('unknown'); }).not.toThrow();
-    });
   });
 
   describe('init and project form', () => {
     /**
-     * @description Init loads projects (active + trash) and the active threads, newest message first.
+     * @description Init loads only the projects (active + trash) - the conversations are on the project pages.
      * @input  ngOnInit() without query params
-     * @output getPaginatedData('web/projects', …) twice and ('web/project-threads', 1, 15, { last_message_at desc, status active }); no form, no modal
+     * @output getPaginatedData('web/projects', …) twice, nothing else; no form; no navigation
      */
-    it('loads projects and threads', fakeAsync(() => {
-      ctx.genericTable.getPaginatedData.and.callFake((url: string) =>
-        of(url === 'web/project-threads' ? { data: [{ id: 3 }], meta: { total: 30, last_page: 2, per_page: 15, current_page: 1 } } as any : paginated([])));
+    it('loads the projects', fakeAsync(() => {
+      ctx.genericTable.getPaginatedData.and.returnValue(of(paginated([])));
       component.ngOnInit();
-      const calls = ctx.genericTable.getPaginatedData.calls.allArgs();
-      expect(calls.filter(a => a[0] === 'web/projects').length).toBe(2);
-      expect(calls.find(a => a[0] === 'web/project-threads')).toEqual(['web/project-threads', 1, 15,
-        { sort_by: 'last_message_at', sort_direction: 'desc', status: 'active' }]);
-      expect(component.threadsData).toEqual([{ id: 3 }]);
-      expect(component.threadsTotalItems).toBe(30);
-      expect(component.threadsTotalPages).toBe(2);
+      const urls = ctx.genericTable.getPaginatedData.calls.allArgs().map(a => a[0]);
+      expect(urls).toEqual(['web/projects', 'web/projects']);
       expect(component.showCreateForm).toBeFalse();
-      expect(component.showManageModal).toBeFalse();
+      expect(navigate).not.toHaveBeenCalled();
       component.refreshData();
       expect(ctx.genericTable.getPaginatedData.calls.mostRecent().args[0]).toBe('web/projects');
       discardPeriodicTasks();
     }));
 
     /**
-     * @description ?open_project=7 opens the manage modal of that project.
+     * @description An old link ?open_project=7 (calendar, bookmarks) opens the project page instead of the list.
      * @input  query { open_project: '7' }; ngOnInit()
-     * @output getOne('web/projects/7'); showManageModal true; managingProject.id 7
+     * @output navigate(['/admin/web/projects', '7'], { replaceUrl: true }); no create form
      */
-    it('opens a project from the link', fakeAsync(() => {
+    it('opens the project page from an old link', fakeAsync(() => {
       route.snapshot.queryParamMap = convertToParamMap({ open_project: '7' });
       component.ngOnInit();
-      expect(dh().getOne).toHaveBeenCalledWith('web/projects/7');
-      expect(component.showManageModal).toBeTrue();
-      expect(component.managingProject.id).toBe(7);
+      expect(navigate).toHaveBeenCalledWith(['/admin/web/projects', '7'], { replaceUrl: true });
+      expect(component.showCreateForm).toBeFalse();
       discardPeriodicTasks();
     }));
 
@@ -284,33 +230,30 @@ describe('ProjectsComponent', () => {
     });
 
     /**
-     * @description A new project returns a one-time password: the manage modal opens with it, but it
-     *   is written to no browser storage (VT-08); closing the modal forgets it for good.
-     * @input  handleFormSubmitted({ name: 'Shop' }); API { id: 7, generated_password: 'S3cret', public_url }; close; reopen
-     * @output post('web/projects', …); alert 'projects.project_created_message'; modal open with
-     *   revealedPassword S3cret + url; no sessionStorage / localStorage write; after close + reopen null
+     * @description A new project returns a one-time password: it is handed to the project page in
+     *   memory only (written to no browser storage - VT-08) and the project page opens.
+     * @input  handleFormSubmitted({ name: 'Shop' }); API { id: 7, generated_password: 'S3cret', public_url }
+     * @output post('web/projects', …); alert 'projects.project_created_message'; navigate to
+     *   ['/admin/web/projects', 7]; handoff.take(7) → S3cret + url once; no storage write
      */
-    it('creates a project and reveals its password once', () => {
+    it('creates a project and opens its page with the password', () => {
       const setItem = spyOn(Storage.prototype, 'setItem').and.callThrough();
       dh().post.and.returnValue(of({ id: 7, generated_password: 'S3cret', public_url: 'https://x/p/7' }));
       component.handleFormSubmitted({ name: 'Shop' });
       expect(dh().post).toHaveBeenCalledWith('web/projects', { name: 'Shop' });
       expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'projects.project_created_message', 'success');
-      expect(component.showManageModal).toBeTrue();
-      expect(component.revealedPassword).toEqual(jasmine.objectContaining({ password: 'S3cret', url: 'https://x/p/7' }));
+      expect(navigate).toHaveBeenCalledWith(['/admin/web/projects', 7]);
       expect(component.showCreateForm).toBeFalse();
+      const handoff = TestBed.inject(ProjectPasswordHandoffService);
+      expect(handoff.take(7)).toEqual(jasmine.objectContaining({ password: 'S3cret', url: 'https://x/p/7' }));
+      expect(handoff.take(7)).toBeNull();
       expect(setItem.calls.allArgs().some(a => String(a[1]).includes('S3cret'))).toBeFalse();
-      expect(sessionStorage.getItem('rpsw_project_pw_7')).toBeNull();
-
-      component.closeManageModal();
-      component.openManageModal({ id: 7 });
-      expect(component.revealedPassword).toBeNull();
     });
 
     /**
      * @description Updating, or creating without a password in the answer, only shows "updated" and reloads.
      * @input  handleFormSubmitted({ id: 7, name: 'X' }); handleFormSubmitted({ name: 'Y' }) with API {}
-     * @output put('web/projects/7', …); alerts 'projects.project_updated_message'; no modal
+     * @output put('web/projects/7', …); alerts 'projects.project_updated_message'; no navigation
      */
     it('updates a project', () => {
       component.handleFormSubmitted({ id: 7, name: 'X' });
@@ -318,714 +261,40 @@ describe('ProjectsComponent', () => {
       dh().post.and.returnValue(of({}));
       component.handleFormSubmitted({ name: 'Y' });
       expect(ctx.alert.open.calls.allArgs().every((a: any[]) => a[1] === 'projects.project_updated_message')).toBeTrue();
-      expect(component.showManageModal).toBeFalse();
+      expect(navigate).not.toHaveBeenCalled();
     });
 
     /**
-     * @description The password belongs to its project only: opening another project shows none;
-     *   passwords former versions left in sessionStorage are deleted when the page loads.
-     * @input  legacy rpsw_project_pw_7 + an unrelated key; ngOnInit; create project 8 with generated_password; then open project 7
-     * @output legacy key removed, unrelated kept; revealedPassword 'S3cret' for project 8; null for project 7
+     * @description The row button opens the project page; a row without id does nothing; passwords
+     *   former versions left in sessionStorage are deleted when the page loads.
+     * @input  legacy rpsw_project_pw_7 + an unrelated key; detectChanges; openProject({ id: 9 }), ({}), (null)
+     * @output legacy key removed, unrelated kept; navigate(['/admin/web/projects', 9]) once
      */
-    it('keeps the password for its project only and removes legacy stored ones', () => {
+    it('opens a project page and removes legacy stored passwords', () => {
       sessionStorage.setItem('rpsw_project_pw_7', JSON.stringify({ password: 'old', url: 'u', generatedAt: 'x' }));
       sessionStorage.setItem('other_key', '1');
       fixture.detectChanges();
       expect(sessionStorage.getItem('rpsw_project_pw_7')).toBeNull();
       expect(sessionStorage.getItem('other_key')).toBe('1');
       sessionStorage.removeItem('other_key');
-      dh().post.and.returnValue(of({ id: 8, generated_password: 'S3cret', public_url: 'u' }));
-      component.handleFormSubmitted({ name: 'Shop' });
-      expect(component.managingProject.id).toBe(8);
-      expect(component.revealedPassword).toEqual(jasmine.objectContaining({ password: 'S3cret', url: 'u' }));
-      component.openManageModal({ id: 7 });
-      expect(component.revealedPassword).toBeNull();
+      component.openProject({ id: 9 });
+      component.openProject({});
+      component.openProject(null);
+      expect(navigate.calls.allArgs()).toEqual([[['/admin/web/projects', 9]]]);
     });
-  });
-
-  describe('manage modal', () => {
-    /**
-     * @description A shown one-time password that was not copied is protected: closing the modal
-     *   (✕ / backdrop) asks first and a cancel keeps it open; reloading the page asks the browser;
-     *   after copying (or without a password) the modal closes at once and nothing is asked.
-     * @input create project 7 (password shown); requestClose → confirm false; true; again with copyPassword(); beforeunload.
-     * @output confirm('projects.close_uncopied_password_title', …); modal open, then closed; after copy no confirm;
-     *   beforeunload prevented only while uncopied.
-     */
-    it('asks before closing with an uncopied password', async () => {
-      const unload = () => { const e = new Event('beforeunload', { cancelable: true }); component.onBeforeUnload(e as BeforeUnloadEvent); return e.defaultPrevented; };
-      dh().post.and.returnValue(of({ id: 7, generated_password: 'S3cret', public_url: 'u' }));
-      component.handleFormSubmitted({ name: 'Shop' });
-      expect(unload()).toBeTrue();
-
-      ctx.confirm.open.and.returnValue(Promise.resolve(false));
-      await component.requestCloseManageModal();
-      expect(ctx.confirm.open).toHaveBeenCalledWith('projects.close_uncopied_password_title', 'projects.close_uncopied_password_message');
-      expect(component.showManageModal).toBeTrue();
-      ctx.confirm.open.and.returnValue(Promise.resolve(true));
-      await component.requestCloseManageModal();
-      expect(component.showManageModal).toBeFalse();
-      expect(unload()).toBeFalse();
-
-      ctx.confirm.open.calls.reset();
-      component.handleFormSubmitted({ name: 'Shop' });
-      spyOn(navigator.clipboard, 'writeText').and.returnValue(Promise.resolve());
-      component.copyPassword();
-      expect(unload()).toBeFalse();
-      await component.requestCloseManageModal();
-      expect(ctx.confirm.open).not.toHaveBeenCalled();
-      expect(component.showManageModal).toBeFalse();
-
-      component.openManageModal({ id: 7 });
-      await component.requestCloseManageModal();
-      expect(ctx.confirm.open).not.toHaveBeenCalled();
-      expect(component.showManageModal).toBeFalse();
-    });
-
-    /**
-     * @description Opening loads the project, its checkpoints and threads; a password stored by a
-     *   former version is never shown (VT-08); the page scroll is locked.
-     * @input  legacy stored password for project 7; openManageModal({ id: 7 })
-     * @output managingProject 7; 1 checkpoint; revealedPassword null; getCollection('web/project-threads', { project_id: 7, no_pagination }); body position fixed
-     */
-    it('opens with project, checkpoints and threads', () => {
-      sessionStorage.setItem('rpsw_project_pw_7', JSON.stringify({ password: 'pw', url: 'u', generatedAt: 'x' }));
-      dh().getCollection.and.returnValue(of([{ id: 3, subject: 'Q' }]));
-      component.openManageModal({ id: 7 });
-      expect(component.managingProject.name).toBe('Shop');
-      expect(component.managingCheckpoints.length).toBe(1);
-      expect(component.revealedPassword).toBeNull();
-      expect(dh().getCollection).toHaveBeenCalledWith('web/project-threads', { project_id: 7, no_pagination: 'true' });
-      expect(component.managingThreads).toEqual([{ id: 3, subject: 'Q' }] as any);
-      expect(document.body.style.position).toBe('fixed');
-      expect(component.manageLoading).toBeFalse();
-    });
-
-    /**
-     * @description A project without checkpoints / password, and a failed load.
-     * @input  getOne returns { id: 7 }; then getOne fails
-     * @output checkpoints []; revealedPassword null; after failure modal closed and scroll unlocked
-     */
-    it('handles missing data and a failed load', () => {
-      dh().getOne.and.returnValue(of({ id: 7 }));
-      component.openManageModal({ id: 7 });
-      expect(component.managingCheckpoints).toEqual([]);
-      expect(component.revealedPassword).toBeNull();
-      dh().getOne.and.returnValue(throwError(() => new Error('x')));
-      component.openManageModal({ id: 7 });
-      expect(component.showManageModal).toBeFalse();
-      expect(component.manageLoading).toBeFalse();
-      expect(document.body.style.position).toBe('');
-    });
-
-    /**
-     * @description Closing clears the modal state and unlocks the scroll.
-     * @input  modal open; closeManageModal()
-     * @output showManageModal false; managingProject null; lists empty; revealedPassword null; body position ''
-     */
-    it('closes and clears the modal', () => {
-      component.openManageModal({ id: 7 });
-      component.closeManageModal();
-      expect(component.showManageModal).toBeFalse();
-      expect(component.managingProject).toBeNull();
-      expect(component.managingCheckpoints).toEqual([]);
-      expect(component.managingThreads).toEqual([]);
-      expect(component.revealedPassword).toBeNull();
-      expect(document.body.style.position).toBe('');
-    });
-
-    /**
-     * @description The password can be shown / hidden and copied; the public URL falls back to the project URL.
-     * @input  revealedPassword { pw, url 'u' }; copy; then no password: copyPublicUrl() with project URL; then nothing
-     * @output clipboard 'pw', then 'u', then 'https://x/p/7'; alerts 'projects.password_copied_message', 'projects.url_copied_message'; nothing without data
-     */
-    it('reveals and copies the password and URL', () => {
-      const write = spyOn(navigator.clipboard, 'writeText').and.returnValue(Promise.resolve());
-      component.copyPassword();
-      component.copyPublicUrl();
-      expect(write).not.toHaveBeenCalled();
-      component.revealedPassword = { password: 'pw', url: 'u', generatedAt: 'x' };
-      component.togglePasswordVisibility();
-      expect(component.passwordVisible).toBeTrue();
-      component.copyPassword();
-      component.copyPublicUrl();
-      expect(write.calls.allArgs()).toEqual([['pw'], ['u']]);
-      expect(ctx.alert.open).toHaveBeenCalledWith('projects.copied_title', 'projects.password_copied_message', 'success');
-      expect(ctx.alert.open).toHaveBeenCalledWith('projects.copied_title', 'projects.url_copied_message', 'success');
-      component.revealedPassword = null;
-      component.managingProject = { id: 7, public_url: 'https://x/p/7' };
-      component.copyPublicUrl();
-      expect(write).toHaveBeenCalledWith('https://x/p/7');
-    });
-
-    /**
-     * @description Copying still informs the user where the Clipboard API is missing (non-secure context).
-     * @input  navigator.clipboard undefined; copyPassword()
-     * @output no error; alert 'projects.password_copied_message'
-     */
-    it('copes without the Clipboard API', () => {
-      spyOnProperty(navigator, 'clipboard', 'get').and.returnValue(undefined as any);
-      component.revealedPassword = { password: 'pw', url: 'u', generatedAt: 'x' };
-      expect(() => { component.copyPassword(); component.copyPublicUrl(); }).not.toThrow();
-      expect(ctx.alert.open).toHaveBeenCalledWith('projects.copied_title', 'projects.password_copied_message', 'success');
-    });
-
-    /**
-     * @description Regenerating the client password asks first and shows the new one - in the component only.
-     * @input  managingProject 7; confirm → true; API { generated_password: 'New1' }
-     * @output post('web/projects/7/regenerate-password', {}); revealedPassword 'New1', nothing in sessionStorage; passwordVisible true; success alert
-     */
-    it('regenerates the client password', async () => {
-      component.managingProject = { ...project };
-      dh().post.and.returnValue(of({ generated_password: 'New1' }));
-      await component.regeneratePassword();
-      expect(ctx.confirm.open).toHaveBeenCalledWith('projects.regenerate_password_confirm_title', 'projects.regenerate_password_confirm_message');
-      expect(dh().post).toHaveBeenCalledWith('web/projects/7/regenerate-password', {});
-      expect(component.revealedPassword?.password).toBe('New1');
-      expect(sessionStorage.getItem('rpsw_project_pw_7')).toBeNull();
-      expect(component.passwordVisible).toBeTrue();
-      expect(component.passwordRegenerating).toBeFalse();
-      expect(ctx.alert.open).toHaveBeenCalledWith('projects.password_regenerated_title', 'projects.password_regenerated_message', 'success');
-    });
-
-    /**
-     * @description Regeneration does nothing without a project, while running, when cancelled; a failure resets the flag.
-     * @input  no project; busy; confirm → false; then post fails
-     * @output confirm asked only for the cancelled / failed case; post once (failure); passwordRegenerating false
-     */
-    it('guards password regeneration', async () => {
-      await component.regeneratePassword();
-      component.managingProject = { ...project };
-      component.passwordRegenerating = true;
-      await component.regeneratePassword();
-      expect(ctx.confirm.open).not.toHaveBeenCalled();
-      component.passwordRegenerating = false;
-      ctx.confirm.open.and.returnValue(Promise.resolve(false));
-      await component.regeneratePassword();
-      expect(dh().post).not.toHaveBeenCalled();
-      ctx.confirm.open.and.returnValue(Promise.resolve(true));
-      dh().post.and.returnValue(throwError(() => new Error('x')));
-      await component.regeneratePassword();
-      expect(dh().post).toHaveBeenCalledTimes(1);
-      expect(component.passwordRegenerating).toBeFalse();
-    });
-  });
-
-  describe('checkpoints', () => {
-    beforeEach(() => component.openManageModal({ id: 7 }));
-
-    /**
-     * @description A checkpoint is added with the trimmed label; empty labels are ignored.
-     * @input  newCheckpointLabel '  '; then '  Launch '; API { id: 2, label: 'Launch' }
-     * @output first nothing; post('web/projects/7/checkpoints', { label: 'Launch' }); list length 2; input cleared
-     */
-    it('adds checkpoints', () => {
-      component.newCheckpointLabel = '  ';
-      component.addCheckpoint();
-      expect(dh().post).not.toHaveBeenCalled();
-      dh().post.and.returnValue(of({ id: 2, label: 'Launch', status: 'new', sort_order: 2 }));
-      component.newCheckpointLabel = '  Launch ';
-      component.addCheckpoint();
-      expect(dh().post).toHaveBeenCalledWith('web/projects/7/checkpoints', { label: 'Launch' });
-      expect(component.managingCheckpoints.length).toBe(2);
-      expect(component.newCheckpointLabel).toBe('');
-      component.managingProject = null;
-      component.newCheckpointLabel = 'X';
-      component.addCheckpoint();
-      expect(dh().post).toHaveBeenCalledTimes(1);
-    });
-
-    /**
-     * @description Clicking a checkpoint moves it to the next status; a busy checkpoint is not sent twice.
-     * @input  checkpoint 1 (new); API { status: 'active' }; then while busy; then a failure
-     * @output put('web/projects/7/checkpoints/1', { status: 'active' }); status 'active'; busy request ignored; busy flag cleared after failure
-     */
-    it('cycles the checkpoint status', () => {
-      const cp = component.managingCheckpoints[0];
-      dh().put.and.returnValue(of({ ...cp, status: 'active' }));
-      component.cycleCheckpointStatus(cp);
-      expect(dh().put).toHaveBeenCalledWith('web/projects/7/checkpoints/1', { status: 'active' });
-      expect(cp.status).toBe('active');
-      expect(component.checkpointBusyIds.size).toBe(0);
-      component.checkpointBusyIds.add(1);
-      component.cycleCheckpointStatus(cp);
-      expect(dh().put).toHaveBeenCalledTimes(1);
-      component.checkpointBusyIds.clear();
-      dh().put.and.returnValue(throwError(() => new Error('x')));
-      component.cycleCheckpointStatus(cp);
-      expect(component.checkpointBusyIds.has(1)).toBeFalse();
-      component.managingProject = null;
-      component.cycleCheckpointStatus(cp);
-      expect(dh().put).toHaveBeenCalledTimes(2);
-    });
-
-    /**
-     * @description Deleting a checkpoint asks with its label first.
-     * @input  delete_checkpoint_confirm_message '{label}?'; confirm → false, then true
-     * @output confirm ('…title', 'Design?'); nothing deleted after cancel; delete('web/projects/7/checkpoints/1') and removed after confirm
-     */
-    it('deletes a checkpoint after confirmation', async () => {
-      ctx.i18n.getValue.and.callFake((p: string) => (p === 'projects.delete_checkpoint_confirm_message' ? '{label}?' : p));
-      const cp = component.managingCheckpoints[0];
-      ctx.confirm.open.and.returnValue(Promise.resolve(false));
-      await component.deleteCheckpoint(cp);
-      expect(ctx.confirm.open).toHaveBeenCalledWith('projects.delete_checkpoint_confirm_title', 'Design?');
-      expect(dh().delete).not.toHaveBeenCalled();
-      ctx.confirm.open.and.returnValue(Promise.resolve(true));
-      await component.deleteCheckpoint(cp);
-      expect(dh().delete).toHaveBeenCalledWith('web/projects/7/checkpoints/1');
-      expect(component.managingCheckpoints).toEqual([]);
-      component.managingProject = null;
-      await component.deleteCheckpoint(cp);
-      expect(dh().delete).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('project threads in the manage modal', () => {
-    const thread = { id: 3, subject: 'Q', priority: 'low', status: 'active', last_message_at: null };
-
-    beforeEach(() => {
-      dh().getCollection.and.returnValue(of([{ ...thread }]));
-      component.openManageModal({ id: 7 });
-    });
-
-    /**
-     * @description Opening a thread loads its messages and scrolls the message list to the bottom.
-     * @input  openThread(thread); full thread { id: 3, messages: [...] }; message list element 100 px high content
-     * @output getWithMeta('web/project-threads/3'); selectedThread replaced (has_more from meta); loading false; scrollTop set to 100 (bottom)
-     */
-    it('opens a thread and scrolls to the newest message', fakeAsync(() => {
-      const list = scrollList(100);
-      component.pmMessageListEl = { nativeElement: list.el };
-      dh().getWithMeta.and.returnValue(of({ data: { ...thread, messages: [{ id: 10, author_type: 'customer', body: 'Hi' }] }, meta: { has_more_older_messages: true } }));
-      component.openThread(thread as any);
-      expect(dh().getWithMeta).toHaveBeenCalledWith('web/project-threads/3');
-      expect(component.selectedThread?.has_more_older_messages).toBeTrue();  // from meta (finding #6)
-      expect(component.selectedThread?.messages?.length).toBe(1);
-      expect(component.threadDetailLoading).toBeFalse();
-      tick();
-      expect(list.sets).toEqual([100]);
-      component.pmMessageListEl = undefined;
-      component.openThread(thread as any);
-      flush();
-      dh().getWithMeta.and.returnValue(throwError(() => new Error('x')));
-      component.openThread(thread as any);
-      expect(component.threadDetailLoading).toBeFalse();
-      component.closeThread();
-      expect(component.selectedThread).toBeNull();
-    }));
-
-    /**
-     * @description Changing the status updates the thread everywhere it is shown.
-     * @input  selectedThread 3 (also in managingThreads and threadsData); changeThreadStatus('closed')
-     * @output put('web/project-threads/3/status', { status: 'closed' }); all three copies 'closed'; nothing without a selected thread
-     */
-    it('changes the thread status everywhere', () => {
-      component.selectedThread = { ...thread } as any;
-      component.threadsData = [{ ...thread }];
-      dh().put.and.returnValue(of({ ...thread, status: 'closed' }));
-      component.changeThreadStatus('closed');
-      expect(dh().put).toHaveBeenCalledWith('web/project-threads/3/status', { status: 'closed' });
-      expect(component.selectedThread!.status).toBe('closed');
-      expect(component.managingThreads[0].status).toBe('closed');
-      expect(component.threadsData[0].status).toBe('closed');
-      component.managingThreads = [];
-      component.threadsData = [];
-      component.changeThreadStatus('active');
-      expect(component.selectedThread!.status).toBe('closed');
-      component.selectedThread = null;
-      component.changeThreadStatus('closed');
-      expect(dh().put).toHaveBeenCalledTimes(2);
-    });
-
-    /**
-     * @description A text reply is posted as JSON, then the thread, project threads and threads table reload.
-     * @input  selectedThread 3; replyBody '  Hello '; threadsData row 3; sendReply()
-     * @output post('web/project-threads/3/reply', { body: 'Hello' }); last_message_at patched; reply cleared; threads reloaded
-     */
-    it('sends a text reply', async () => {
-      component.selectedThread = { ...thread } as any;
-      const rows = [{ id: 3, last_message_at: null }, { id: 4, last_message_at: null }];
-      component.threadsData = rows;
-      component.replyBody = '  Hello ';
-      dh().getCollection.calls.reset();
-      await component.sendReply();
-      expect(dh().post).toHaveBeenCalledWith('web/project-threads/3/reply', { body: 'Hello' });
-      expect(rows[0].last_message_at as any).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
-      expect(rows[1].last_message_at).toBeNull();
-      expect(component.replyBody).toBe('');
-      expect(component.replySending).toBeFalse();
-      expect(dh().getCollection).toHaveBeenCalledWith('web/project-threads', { project_id: 7, no_pagination: 'true' });
-      expect(ctx.genericTable.getPaginatedData.calls.mostRecent().args[0]).toBe('web/project-threads');
-    });
-
-    /**
-     * @description A reply with files is sent as multipart FormData (body + attachments[]); outside the modal no project reload.
-     * @input  replyFiles [a.pdf]; replyBody 'See file'; managingProject null
-     * @output post body FormData with body 'See file' and one attachments[]; project threads not reloaded
-     */
-    it('sends a reply with attachments as FormData', async () => {
-      component.selectedThread = { ...thread } as any;
-      component.managingProject = null;
-      component.replyFiles = [file('a.pdf')];
-      component.replyBody = 'See file';
-      dh().getCollection.calls.reset();
-      await component.sendReply();
-      const body = dh().post.calls.mostRecent().args[1] as FormData;
-      expect(body.get('body')).toBe('See file');
-      expect(body.getAll('attachments[]').length).toBe(1);
-      expect(component.replyFiles).toEqual([]);
-      expect(dh().getCollection).not.toHaveBeenCalled();
-    });
-
-    /**
-     * @description Empty replies, no thread or a running send do nothing; a failed send keeps the text.
-     * @input  body '  '; no thread; sending; then post fails
-     * @output post not called for the guards; after failure replyBody kept and replySending false
-     */
-    it('guards and recovers reply sending', async () => {
-      component.replyBody = '  ';
-      component.selectedThread = { ...thread } as any;
-      await component.sendReply();
-      component.replyBody = 'x';
-      component.selectedThread = null;
-      await component.sendReply();
-      component.selectedThread = { ...thread } as any;
-      component.replySending = true;
-      await component.sendReply();
-      expect(dh().post).not.toHaveBeenCalled();
-      component.replySending = false;
-      dh().post.and.returnValue(throwError(() => new Error('x')));
-      await component.sendReply();
-      expect(component.replyBody).toBe('x');
-      expect(component.replySending).toBeFalse();
-    });
-
-    /**
-     * @description Older messages are prepended and the scroll position is kept.
-     * @input  thread with messages [id 20], has_more true; list scrollHeight 100; API { data: [id 10], meta: {has_more false} }
-     * @output get('…/messages?before_message_id=20'); messages [10, 20]; has_more false; loading false; scrollTop = new height − old height (0 here)
-     */
-    it('loads older messages', fakeAsync(() => {
-      const list = scrollList(100);
-      component.pmMessageListEl = { nativeElement: list.el };
-      component.selectedThread = { ...thread, has_more_older_messages: true, messages: [{ id: 20 } as any] } as any;
-      dh().getWithMeta.and.returnValue(of({ data: [{ id: 10 }], meta: { has_more_older_messages: false } }));
-      component.loadOlderMessages();
-      expect(dh().getWithMeta).toHaveBeenCalledWith('web/project-threads/3/messages?before_message_id=20');
-      expect(component.selectedThread!.messages!.map(m => m.id)).toEqual([10, 20]);
-      expect(component.selectedThread!.has_more_older_messages).toBeFalse();
-      expect(component.olderMessagesLoading).toBeFalse();
-      tick();
-      expect(list.sets).toEqual([0]);
-    }));
-
-    /**
-     * @description Older messages are not requested without a thread, while loading, without more messages or without a first message.
-     * @input  the four guard states; then a failing request; then a response after the messages were cleared
-     * @output get not called for the guards; loading false after failure; response prepended to an empty list
-     */
-    it('guards loading of older messages', fakeAsync(() => {
-      component.selectedThread = null;
-      component.loadOlderMessages();
-      component.selectedThread = { ...thread, has_more_older_messages: true, messages: [{ id: 20 } as any] } as any;
-      component.olderMessagesLoading = true;
-      component.loadOlderMessages();
-      component.olderMessagesLoading = false;
-      component.selectedThread!.has_more_older_messages = false;
-      component.loadOlderMessages();
-      component.selectedThread!.has_more_older_messages = true;
-      component.selectedThread!.messages = [];
-      component.loadOlderMessages();
-      component.selectedThread!.messages = undefined;
-      component.loadOlderMessages();
-      expect(dh().getWithMeta).not.toHaveBeenCalled();
-      component.selectedThread!.messages = [{ id: 20 } as any];
-      dh().getWithMeta.and.returnValue(throwError(() => new Error('x')));
-      component.loadOlderMessages();
-      expect(component.olderMessagesLoading).toBeFalse();
-      const response$ = new Subject<any>();
-      dh().getWithMeta.and.returnValue(response$);
-      component.pmMessageListEl = undefined;
-      component.loadOlderMessages();
-      component.selectedThread!.messages = undefined;
-      response$.next({ data: [{ id: 5 }], meta: { has_more_older_messages: false } });
-      expect(component.selectedThread!.messages!.map(m => m.id)).toEqual([5]);
-      flush();
-    }));
-  });
-
-  describe('attachments', () => {
-    /** The specs call the handlers without ngOnInit - give them the thread rules of the API (stub). */
-    beforeEach(() => { component.attachmentRules = TEST_UPLOAD_RULES.project_thread!; });
-
-    /**
-     * @description The pickers offer every type (no accept) and list no types up front; without
-     *              loaded rules the fallback limits apply; ngOnInit loads the 'project_thread'
-     *              rules of the API (their types text is used only in a type error).
-     * @input  attachmentRules null; then ngOnInit (stub rules)
-     * @output '' types text, 5 files / 15 MB; after init the rules and a types text
-     */
-    it('takes the limits and types from the upload rules of the API', () => {
-      component.attachmentRules = null;
-      expect(component.maxAttachments).toBe(5);
-      expect(component.maxAttachmentSizeMb).toBe(15);
-      expect(component.attachmentTypesText).toBe('');
-      component.ngOnInit();
-      expect(component.attachmentRules as unknown).toEqual(TEST_UPLOAD_RULES.project_thread);
-      expect(component.attachmentTypesText).not.toBe('');
-    });
-
-    /**
-     * @description SVG and XML (formats a browser can run as a page) are refused right when chosen.
-     * @input  onReplyFilesSelected(logo.svg, feed.xml)
-     * @output no file kept; error 'projects.attachment_error_type' + allowed types
-     */
-    it('refuses svg and xml files', () => {
-      component.onReplyFilesSelected(fileEvent(file('logo.svg'), file('feed.xml')));
-      expect(component.replyFiles).toEqual([]);
-      expect(component.replyFileError).toBe('projects.attachment_error_type projects.attachment_allowed_types');
-    });
-
-    /**
-     * @description A file without extension is refused; without loaded rules the browser does not
-     *              filter the type (the server still validates every file).
-     * @input  onReplyFilesSelected(README); then attachmentRules null and tool.exe
-     * @output README refused with 'projects.attachment_error_type' + allowed types; tool.exe kept without rules
-     */
-    it('refuses a file without extension and leaves the type to the server without rules', () => {
-      component.onReplyFilesSelected(fileEvent(file('README')));
-      expect(component.replyFiles).toEqual([]);
-      expect(component.replyFileError).toBe('projects.attachment_error_type projects.attachment_allowed_types');
-      component.attachmentRules = null;
-      component.onReplyFilesSelected(fileEvent(file('tool.exe')));
-      expect(component.replyFiles.map(f => f.name)).toEqual(['tool.exe']);
-    });
-
-    /**
-     * @description File sizes are shown in KB below 1 MB, otherwise in MB; missing size is empty.
-     * @input  formatFileSize(0), (2048), (5 * 1024 * 1024), (undefined)
-     * @output '0 KB', '2 KB', '5.0 MB', ''
-     */
-    it('formats file sizes', () => {
-      expect(component.formatFileSize(0)).toBe('0 KB');
-      expect(component.formatFileSize(2048)).toBe('2 KB');
-      expect(component.formatFileSize(5 * 1024 * 1024)).toBe('5.0 MB');
-      expect(component.formatFileSize(undefined as any)).toBe('');
-    });
-
-    /**
-     * @description Allowed files are added; wrong type, files over 15 MB and files without extension are refused (first error shown).
-     * @input  a.PDF, virus.exe, big.zip (16 MB), README
-     * @output replyFiles ['a.PDF']; replyFileError 'projects.attachment_error_type' + allowed types (first error only); input value cleared
-     */
-    it('validates selected reply files', () => {
-      const event = fileEvent(file('a.PDF'), file('virus.exe'), file('big.zip', 16 * 1024 * 1024), file('README'));
-      component.onReplyFilesSelected(event);
-      expect(component.replyFiles.map(f => f.name)).toEqual(['a.PDF']);
-      expect(component.replyFileError).toBe('projects.attachment_error_type projects.attachment_allowed_types');
-      expect((event.target as HTMLInputElement).value).toBe('');
-      component.onReplyFilesSelected(fileEvent(file('big.zip', 16 * 1024 * 1024)));
-      expect(component.replyFileError).toBe('projects.attachment_error_size');
-      component.removeReplyFile(0);
-      expect(component.replyFiles).toEqual([]);
-      expect(component.replyFileError).toBeNull();
-    });
-
-    /**
-     * @description At most 5 attachments; an empty selection changes nothing.
-     * @input  6 pdf files; then an empty selection
-     * @output 5 files kept; error 'projects.attachment_error_too_many'; empty selection ignored
-     */
-    it('limits the number of attachments', () => {
-      component.onReplyFilesSelected(fileEvent(...[1, 2, 3, 4, 5, 6].map(i => file(`f${i}.pdf`))));
-      expect(component.replyFiles.length).toBe(5);
-      expect(component.replyFileError).toBe('projects.attachment_error_too_many');
-      component.onReplyFilesSelected(fileEvent());
-      component.onReplyFilesSelected({ target: {} } as any);
-      expect(component.replyFiles.length).toBe(5);
-    });
-
-    /**
-     * @description The thread modal uses the same validation with its own list.
-     * @input  onThreadModalReplyFilesSelected(a.png, x.bat); remove; empty selection
-     * @output threadModalReplyFiles ['a.png']; error 'projects.attachment_error_type' + allowed types; removed and error cleared; empty selection ignored
-     */
-    it('validates thread modal reply files', () => {
-      component.onThreadModalReplyFilesSelected(fileEvent(file('a.png'), file('x.bat')));
-      expect(component.threadModalReplyFiles.map(f => f.name)).toEqual(['a.png']);
-      expect(component.threadModalReplyFileError).toBe('projects.attachment_error_type projects.attachment_allowed_types');
-      component.removeThreadModalReplyFile(0);
-      expect(component.threadModalReplyFiles).toEqual([]);
-      expect(component.threadModalReplyFileError).toBeNull();
-      component.onThreadModalReplyFilesSelected(fileEvent());
-      expect(component.threadModalReplyFiles).toEqual([]);
-    });
-  });
-
-  describe('threads table and thread modal', () => {
-    /**
-     * @description Filters, clearing and paging reload the threads table.
-     * @input  applyThreadsFilters({ priority: 'high' }) on page 3; clearThreadsFilters(); page change 2; page size 50
-     * @output filters merged and page 1; defaults restored; page 2; size 50 and page 1; each step reloads
-     */
-    it('filters and pages the threads table', () => {
-      component.threadsCurrentPage = 3;
-      component.applyThreadsFilters({ priority: 'high' });
-      expect(component.threadsFilters).toEqual({ sort_by: 'last_message_at', sort_direction: 'desc', status: 'active', priority: 'high' });
-      expect(component.threadsCurrentPage).toBe(1);
-      component.clearThreadsFilters();
-      expect(component.threadsFilters).toEqual({ sort_by: 'last_message_at', sort_direction: 'desc', status: 'active' });
-      component.handleThreadsPageChange(2);
-      expect(ctx.genericTable.getPaginatedData.calls.mostRecent().args[1]).toBe(2);
-      component.handleThreadsItemsPerPageChange(50);
-      expect(ctx.genericTable.getPaginatedData.calls.mostRecent().args.slice(1, 3)).toEqual([1, 50]);
-      expect(ctx.genericTable.getPaginatedData).toHaveBeenCalledTimes(4);
-    });
-
-    /**
-     * @description The thread modal loads the full thread, locks the scroll and scrolls to the newest message; it can be closed.
-     * @input  openThreadModal({ id: 3 }); then a failing load; closeThreadModal()
-     * @output get('web/project-threads/3'); activeThread replaced; loading false; body fixed; scrolled to 80; after close activeThread null and body ''
-     */
-    it('opens and closes the thread modal', fakeAsync(() => {
-      const list = scrollList(80);
-      component.threadModalMessageListEl = { nativeElement: list.el };
-      dh().getWithMeta.and.returnValue(of({ data: { id: 3, subject: 'Q', messages: [{ id: 1 }] }, meta: { has_more_older_messages: false } }));
-      component.openThreadModal({ id: 3 });
-      expect(dh().getWithMeta).toHaveBeenCalledWith('web/project-threads/3');
-      expect(component.activeThread.messages.length).toBe(1);
-      expect(component.threadModalLoading).toBeFalse();
-      expect(document.body.style.position).toBe('fixed');
-      tick();
-      expect(list.sets).toEqual([80]);
-      dh().getWithMeta.and.returnValue(throwError(() => new Error('x')));
-      component.openThreadModal({ id: 3 });
-      expect(component.threadModalLoading).toBeFalse();
-      component.closeThreadModal();
-      expect(component.showThreadModal).toBeFalse();
-      expect(component.activeThread).toBeNull();
-      expect(document.body.style.position).toBe('');
-    }));
-
-    /**
-     * @description A reply from the thread modal (text or with files) reloads the thread and the table.
-     * @input  activeThread 3; text reply; then reply with a file; then a failure
-     * @output post('web/project-threads/3/reply', { body: 'Hi' }); second post FormData; reply cleared; failure keeps the text
-     */
-    it('sends replies from the thread modal', async () => {
-      dh().getWithMeta.and.returnValue(of({ data: { id: 3, messages: [] }, meta: { has_more_older_messages: false } }));
-      component.activeThread = { id: 3 };
-      component.threadModalReplyBody = ' Hi ';
-      await component.sendThreadModalReply();
-      expect(dh().post).toHaveBeenCalledWith('web/project-threads/3/reply', { body: 'Hi' });
-      expect(component.threadModalReplyBody).toBe('');
-      expect(dh().getWithMeta).toHaveBeenCalledWith('web/project-threads/3');
-      component.threadModalReplyFiles = [file('a.pdf')];
-      component.threadModalReplyBody = 'With file';
-      await component.sendThreadModalReply();
-      expect(dh().post.calls.mostRecent().args[1]).toEqual(jasmine.any(FormData));
-      dh().post.and.returnValue(throwError(() => new Error('x')));
-      component.threadModalReplyBody = 'Keep';
-      await component.sendThreadModalReply();
-      expect(component.threadModalReplyBody).toBe('Keep');
-      expect(component.threadModalReplySending).toBeFalse();
-    });
-
-    /**
-     * @description Empty text, no thread or a running send do nothing in the thread modal.
-     * @input  body '  '; no activeThread; sending true
-     * @output post not called
-     */
-    it('guards thread modal replies', async () => {
-      component.activeThread = { id: 3 };
-      component.threadModalReplyBody = '  ';
-      await component.sendThreadModalReply();
-      component.threadModalReplyBody = 'x';
-      component.activeThread = null;
-      await component.sendThreadModalReply();
-      component.activeThread = { id: 3 };
-      component.threadModalReplySending = true;
-      await component.sendThreadModalReply();
-      expect(dh().post).not.toHaveBeenCalled();
-    });
-
-    /**
-     * @description Older messages in the thread modal are prepended; guards and failures are handled.
-     * @input  activeThread with messages [20], more true; API { data: [10] }; guard states; failure; late response
-     * @output get('…/messages?before_message_id=20'); messages [10, 20]; guards no request; loading false after failure
-     */
-    it('loads older messages in the thread modal', fakeAsync(() => {
-      const list = scrollList(60);
-      component.threadModalMessageListEl = { nativeElement: list.el };
-      component.activeThread = { id: 3, has_more_older_messages: true, messages: [{ id: 20 }] };
-      dh().getWithMeta.and.returnValue(of({ data: [{ id: 10 }], meta: { has_more_older_messages: false } }));
-      component.loadOlderThreadModalMessages();
-      expect(dh().getWithMeta).toHaveBeenCalledWith('web/project-threads/3/messages?before_message_id=20');
-      expect(component.activeThread.messages.map((m: any) => m.id)).toEqual([10, 20]);
-      tick();
-      expect(list.sets).toEqual([0]);
-      dh().getWithMeta.calls.reset();
-      component.activeThread = null;
-      component.loadOlderThreadModalMessages();
-      component.activeThread = { id: 3, has_more_older_messages: true, messages: [{ id: 20 }] };
-      component.threadModalOlderMessagesLoading = true;
-      component.loadOlderThreadModalMessages();
-      component.threadModalOlderMessagesLoading = false;
-      component.activeThread.has_more_older_messages = false;
-      component.loadOlderThreadModalMessages();
-      component.activeThread.has_more_older_messages = true;
-      component.activeThread.messages = [];
-      component.loadOlderThreadModalMessages();
-      expect(dh().getWithMeta).not.toHaveBeenCalled();
-      component.activeThread.messages = [{ id: 20 }];
-      dh().getWithMeta.and.returnValue(throwError(() => new Error('x')));
-      component.loadOlderThreadModalMessages();
-      expect(component.threadModalOlderMessagesLoading).toBeFalse();
-      const response$ = new Subject<any>();
-      dh().getWithMeta.and.returnValue(response$);
-      component.threadModalMessageListEl = undefined;
-      component.loadOlderThreadModalMessages();
-      component.activeThread.messages = undefined;
-      response$.next({ data: [{ id: 5 }], meta: { has_more_older_messages: false } });
-      expect(component.activeThread.messages.map((m: any) => m.id)).toEqual([5]);
-      flush();
-    }));
   });
 
   /**
-   * @description Thread status and author labels are translated.
-   * @input  threadStatusLabel('closed'), ('active'); threadAuthorLabel('admin'), ('customer')
-   * @output 'projects.thread_status_closed', '…_active'; 'projects.thread_author_admin', '…_customer'
+   * @description The list page renders its table caption and has no popups or thread table any more.
+   * @input  detectChanges()
+   * @output text 'projects.table_header'; no .modal-overlay; no thread_table_header text
    */
-  it('translates thread status and author', () => {
-    expect(component.threadStatusLabel('closed')).toBe('projects.thread_status_closed');
-    expect(component.threadStatusLabel('active')).toBe('projects.thread_status_active');
-    expect(component.threadAuthorLabel('admin')).toBe('projects.thread_author_admin');
-    expect(component.threadAuthorLabel('customer')).toBe('projects.thread_author_customer');
-  });
-
-  /**
-   * @description The page, the manage modal and the thread modal render.
-   * @input  detectChanges(); open manage modal (with a thread); open thread modal
-   * @output texts 'projects.table_header', 'Shop' and the thread subject rendered
-   */
-  it('renders the page and both modals', fakeAsync(() => {
+  it('renders the list page', fakeAsync(() => {
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('projects.table_header');
-    dh().getCollection.and.returnValue(of([{ id: 3, subject: 'Question about launch', priority: 'low', status: 'active', last_message_at: null }]));
-    component.openManageModal({ id: 7 });
-    fixture.componentRef.changeDetectorRef.markForCheck();
-    fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Shop');
-    expect(fixture.nativeElement.textContent).toContain('Question about launch');
-    component.closeManageModal();
-    dh().getWithMeta.and.returnValue(of({ data: { id: 3, subject: 'Question about launch', messages: [{ id: 1, author_type: 'admin', body: 'Hello', created_at: '2026-01-01' }] }, meta: { has_more_older_messages: false } }));
-    component.openThreadModal({ id: 3 });
-    fixture.componentRef.changeDetectorRef.markForCheck();
-    fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Hello');
-    flush();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('projects.table_header');
+    expect(el.querySelector('.modal-overlay')).toBeNull();
+    expect(el.textContent).not.toContain('thread_table_header');
     discardPeriodicTasks();
   }));
 });

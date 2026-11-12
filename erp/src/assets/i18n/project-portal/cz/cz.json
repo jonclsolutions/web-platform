@@ -70,7 +70,7 @@
   "help_description_title": "Záložka Popis",
   "help_description_text": "Zde najdete základní informace o projektu — jeho popis, použité technologie a odhadovaný termín dokončení (pokud ho dodavatel zadal). Termín je uveden jako rozmezí, protože se v průběhu vývoje může mírně posunout.",
   "help_checkpoints_title": "Záložka Postup",
-  "help_checkpoints_text": "Zde vidíte jednotlivé kroky (checkpointy) projektu a jejich aktuální stav: Nezahájeno, Probíhá nebo Hotovo. Ukazatel nahoře zobrazuje, kolik kroků je již dokončeno z celkového počtu. Stav checkpointů upravuje dodavatel, vy je zde jen sledujete.",
+  "help_checkpoints_text": "Zde vidíte jednotlivé kroky (checkpointy) projektu a jejich aktuální stav: Nezahájeno, Probíhá nebo Hotovo. Ukazatel nahoře zobrazuje, kolik kroků je již dokončeno z celkového počtu. Stav checkpointů upravuje dodavatel, vy je zde jen sledujete. Krok se šipkou můžete rozkliknout a přečíst si, co obsahuje.",
   "help_threads_title": "Záložka Komunikace",
   "help_threads_text": "Zde probíhá veškerá písemná komunikace s dodavatelem, rozdělená do jednotlivých vláken (konverzací) podle tématu — podobně jako e-mailová vlákna.",
   "help_threads_new_title": "Založení nového vlákna",
@@ -90,7 +90,7 @@
   "help_actions_title": "Obnovit data a odhlášení",
   "help_actions_text": "Tlačítko „Obnovit data“ v levém panelu ručně načte nejnovější stav projektu, i když se většina dat aktualizuje automaticky na pozadí. Tlačítkem „Odhlásit se“ ukončíte svou aktuální relaci — přihlásíte se znovu stejným heslem, které vám poskytl dodavatel.",
   "help_language_title": "Změna jazyka",
-  "help_language_text": "Jazyk portálu můžete kdykoliv přepnout klepnutím na vlaječku v levém panelu.",
+  "help_language_text": "Jazyk portálu můžete kdykoliv přepnout vlaječkou vpravo nahoře.",
   "help_support_title": "Potřebujete pomoc?",
   "help_support_text": "Pokud si s něčím nevíte rady, napište novou zprávu do záložky Komunikace, nebo použijte kontaktní údaje dodavatele uvedené v levém panelu."
 }

@@ -15,6 +15,7 @@
 
 namespace Tests\Feature\Web;
 
+use App\Models\Web\WebLog;
 use App\Models\Web\WebProjectThread;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\WebFixtures;
@@ -116,7 +117,8 @@ class ProjectThreadTest extends TestCase
         $message = $thread->messages()->sole();
         $this->assertStringStartsWith('web/project_threads/', $message->attachments->sole()->path);
         $this->assertTrue($thread->fresh()->last_message_at->isToday());
-        $this->assertWebLog('create', "Admin reply in thread ID: {$thread->id}");
+        // Messages are the conversation itself - a reply writes no audit log row.
+        $this->assertSame(0, WebLog::count());
 
         $this->postJson("/api/web/project-threads/{$thread->id}/reply", [])->assertStatus(422)->assertJsonValidationErrors(['body']);
         $six = array_map(fn ($i) => $this->upload("f{$i}.pdf"), range(1, 6));
@@ -126,9 +128,10 @@ class ProjectThreadTest extends TestCase
     }
 
     /**
-     * @description Status change without a reply; only known statuses; 404.
-     * @input PUT status closed; PUT status 'archived'; PUT /999.
-     * @output 200 {data.status closed}; 422; 404.
+     * @description Status change without a reply, logged as closing / reopening (an unchanged
+     *   status writes no row); only known statuses; 404.
+     * @input PUT status closed (twice); PUT active; PUT status 'archived'; PUT /999.
+     * @output 200 {data.status closed}; logs thread_close once, thread_reopen; 422; 404.
      */
     public function test_update_status(): void
     {
@@ -137,8 +140,49 @@ class ProjectThreadTest extends TestCase
 
         $this->putJson("/api/web/project-threads/{$thread->id}/status", ['status' => 'closed'])->assertOk()->assertJsonPath('data.status', 'closed');
         $this->assertSame('closed', WebProjectThread::find($thread->id)->status);
-        $this->assertWebLog('update', "to 'closed'");
+        $this->assertWebLog('thread_close', "Closed thread #{$thread->id} of project #{$thread->project_id}");
+        $this->putJson("/api/web/project-threads/{$thread->id}/status", ['status' => 'closed'])->assertOk();
+        $this->assertSame(1, WebLog::count(), 'an unchanged status writes no row');
+        $this->putJson("/api/web/project-threads/{$thread->id}/status", ['status' => 'active'])->assertOk();
+        $this->assertWebLog('thread_reopen', "Reopened thread #{$thread->id}");
         $this->putJson("/api/web/project-threads/{$thread->id}/status", ['status' => 'archived'])->assertStatus(422);
         $this->putJson('/api/web/project-threads/999/status', ['status' => 'closed'])->assertStatus(404);
+    }
+
+    /**
+     * @description New client messages for the administration: counted per thread and per project
+     *   (projects filter `unread`), cleared when an admin opens the thread; an admin reply marks it
+     *   read too; admin messages never count; a message older than the last read is not new.
+     * @input Project P: thread A (2 customer messages + 1 admin), thread B read 1 hour ago with one
+     *   older and one newer customer message; project Q without messages.
+     * @output threads: A 2, B 1; projects: P 3, Q 0; ?unread=1 → [P]; GET A → A 0, P 1; reply in
+     *   B → P 0; ?unread=1 → [].
+     */
+    public function test_unread_messages_for_the_administration(): void
+    {
+        $this->signIn($this->userWith(['web-projects-view', 'web-projects-update']));
+        $p = $this->project(['name' => 'P']);
+        $q = $this->project(['name' => 'Q']);
+        $a = $this->thread($p, [], [['customer', 'hi'], ['customer', 'are you there?'], ['admin', 'yes']]);
+        $b = $this->thread($p, ['admin_last_read_at' => now()->subHour()]);
+        $b->messages()->create(['author_type' => 'customer', 'body' => 'old'])->forceFill(['created_at' => now()->subHours(2)])->saveQuietly();
+        $b->messages()->create(['author_type' => 'customer', 'body' => 'new']);
+
+        $threadCounts = fn () => array_column($this->getJson("/api/web/project-threads?project_id={$p->id}&no_pagination=1")->json('data'), 'admin_unread_count', 'id');
+        $projectCounts = fn () => array_column($this->getJson('/api/web/projects?no_pagination=1')->json('data'), 'unread_messages_count', 'name');
+        $unreadProjects = fn () => array_column($this->getJson('/api/web/projects?no_pagination=1&unread=1')->json('data'), 'name');
+
+        $this->assertSame([$a->id => 2, $b->id => 1], $threadCounts() + []);
+        $this->assertEquals(['P' => 3, 'Q' => 0], $projectCounts());
+        $this->assertSame(['P'], $unreadProjects());
+        $this->getJson("/api/web/projects/{$p->id}")->assertJsonPath('data.unread_messages_count', 3);
+
+        $this->getJson("/api/web/project-threads/{$a->id}")->assertOk();
+        $this->assertSame(0, $threadCounts()[$a->id]);
+        $this->assertSame(1, $projectCounts()['P']);
+
+        $this->postJson("/api/web/project-threads/{$b->id}/reply", ['body' => 'on it'])->assertCreated();
+        $this->assertSame(0, $projectCounts()['P']);
+        $this->assertSame([], $unreadProjects());
     }
 }

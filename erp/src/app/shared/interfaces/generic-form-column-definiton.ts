@@ -12,8 +12,11 @@
 export interface ColumnDefinition {
   key: string;
   header: string;
-  /** 'avatar': the value is the signed URL of a profile photo (null = the default image). */
-  type: 'text' | 'number' | 'currency' | 'date' | 'boolean' | 'image' | 'link' | 'avatar';
+  /**
+   * 'avatar': the value is the signed URL of a profile photo (null = the default image).
+   * 'count': a number shown as a highlighted pill when above zero, empty otherwise (e.g. unread messages).
+   */
+  type: 'text' | 'number' | 'currency' | 'date' | 'boolean' | 'image' | 'link' | 'avatar' | 'count';
   format?: string;
   hidden?: boolean;
   currencyCode?: 'CZK' | 'EUR' | 'USD' | 'GBP' | string;

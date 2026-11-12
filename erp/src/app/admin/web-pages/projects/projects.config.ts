@@ -5,7 +5,7 @@
  * @author JS
  * @created 2026
  * @description Static-turned-dynamic configuration for the customer Project management
- * page, including the cross-project customer threads sub-table.
+ * list (table, filters, form). The project page itself lives in ../project-detail.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -17,8 +17,6 @@ export const PROJECT_PLATFORM_VALUES: string[] = ['web', 'mobile', 'desktop', 'a
 export const PROJECT_STATUS_VALUES: string[] = ['new', 'development', 'finished'];
 export const PROJECT_VISIBILITY_VALUES: string[] = ['private', 'public'];
 export const CHECKPOINT_STATUS_VALUES: string[] = ['new', 'active', 'done'];
-export const PROJECT_THREAD_STATUS_VALUES: string[] = ['active', 'closed'];
-export const PROJECT_THREAD_PRIORITY_VALUES: string[] = ['low', 'medium', 'high', 'critic'];
 
 const PLATFORM_LABEL_KEYS: Record<string, string> = {
   web: 'platform_web', mobile: 'platform_mobile', desktop: 'platform_desktop',
@@ -33,19 +31,7 @@ const VISIBILITY_LABEL_KEYS: Record<string, string> = {
 export const CHECKPOINT_STATUS_LABEL_KEYS: Record<string, string> = {
   new: 'checkpoint_status_new', active: 'checkpoint_status_active', done: 'checkpoint_status_done',
 };
-const THREAD_STATUS_LABEL_KEYS: Record<string, string> = {
-  active: 'thread_status_active', closed: 'thread_status_closed',
-};
-const THREAD_PRIORITY_LABEL_KEYS: Record<string, string> = {
-  low: 'thread_priority_low', medium: 'thread_priority_medium', high: 'thread_priority_high', critic: 'thread_priority_critic',
-};
 
-/** @description The checkpoint state cycles on click - canonical slugs. */
-export const CHECKPOINT_STATUS_CYCLE: Record<string, string> = {
-  new: 'active',
-  active: 'done',
-  done: 'new',
-};
 
 /** @description Shared readable map for the checkpoint badge text in the template (`checkpointStatusLabels[cp.status]`). */
 export function createCheckpointStatusLabels(i18n: AdminLocalizationService): Record<string, string> {
@@ -56,7 +42,7 @@ export function createCheckpointStatusLabels(i18n: AdminLocalizationService): Re
 
 export function createProjectButtons(i18n: AdminLocalizationService): Core.TableButtons[] {
   return [
-    { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_manage`), isActive: true, type: 'neutral_button', action: 'generate_form', icon: 'settings' },
+    { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_manage`), isActive: true, type: 'neutral_button', action: 'generate_form', icon: 'folder-open' },
     { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_edit`), isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-projects-update', icon: 'edit' },
     { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_delete`), isActive: true, type: 'delete_button', action: 'delete', permission: 'web-projects-delete', icon: 'delete' },
   ];
@@ -109,6 +95,7 @@ export function createProjectColumns(i18n: AdminLocalizationService): Core.Colum
     { key: 'visibility', header: i18n.getValue(`${SECTION}.col_visibility`), type: 'text' },
     { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'text' },
     { key: 'project_lead', header: i18n.getValue(`${SECTION}.col_lead`), type: 'text' },
+    { key: 'unread_messages_count', header: i18n.getValue(`${SECTION}.col_unread`), type: 'count' },
     { key: 'created_at', header: i18n.getValue(`${SECTION}.col_created`), type: 'date', format: 'short' },
   ];
 }
@@ -128,6 +115,7 @@ export function createProjectFilterColumns(i18n: AdminLocalizationService): Core
     { key: 'visibility', header: i18n.getValue(`${SECTION}.col_visibility`), type: 'select', options: mapLabeledOptions(SECTION, PROJECT_VISIBILITY_VALUES, VISIBILITY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_visibility_placeholder`), canSort: true },
     { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'select', options: mapLabeledOptions(SECTION, PROJECT_STATUS_VALUES, STATUS_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_status_placeholder`), canSort: true },
     { key: 'platform', header: i18n.getValue(`${SECTION}.col_platform`), type: 'select', options: mapLabeledOptions(SECTION, PROJECT_PLATFORM_VALUES, PLATFORM_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_platform_placeholder`), canSort: true },
+    { key: 'unread', header: i18n.getValue(`${SECTION}.filter_unread_label`), type: 'select', options: [{ value: '1', label: i18n.getValue(`${SECTION}.filter_unread_yes`) }], placeholder: i18n.getValue(`${SECTION}.filter_unread_placeholder`), canSort: false },
   ];
 }
 
@@ -146,49 +134,5 @@ export function createProjectDetailsColumns(i18n: AdminLocalizationService): Cor
     { key: 'visibility', displayName: i18n.getValue(`${SECTION}.details_visibility`), type: 'text', chartable: true, chartPossibleValues: PROJECT_VISIBILITY_VALUES },
     { key: 'status', displayName: i18n.getValue(`${SECTION}.details_status`), type: 'text', chartable: true, chartPossibleValues: PROJECT_STATUS_VALUES },
     { key: 'created_at', displayName: i18n.getValue(`${SECTION}.details_created`), type: 'date', format: 'medium' },
-  ];
-}
-
-// ── Cross-project table of requests ──────────────────────────────────────
-
-export function createProjectThreadColumns(i18n: AdminLocalizationService): Core.ColumnDefinition[] {
-  return [
-    { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
-    { key: 'project_name', header: i18n.getValue(`${SECTION}.thread_col_project`), type: 'text' },
-    { key: 'subject', header: i18n.getValue(`${SECTION}.thread_col_subject`), type: 'text' },
-    { key: 'priority', header: i18n.getValue(`${SECTION}.thread_col_priority`), type: 'text' },
-    { key: 'status', header: i18n.getValue(`${SECTION}.thread_col_status`), type: 'text' },
-    { key: 'last_message_at', header: i18n.getValue(`${SECTION}.thread_col_last_message`), type: 'date', format: 'short' },
-  ];
-}
-
-export function createProjectThreadButtons(i18n: AdminLocalizationService): Core.TableButtons[] {
-  return [
-    { display_name: '', header_name: i18n.getValue(`${SECTION}.thread_btn_open`), isActive: true, type: 'info_button', action: 'details', icon: 'chat' },
-  ];
-}
-
-export function createProjectThreadToolbarButtons(i18n: AdminLocalizationService): Core.Button[] {
-  return [
-    { action: 'toggleThreadsFilters', label: i18n.getValue(`${SECTION}.toolbar_filters`), icon: '', class: 'btn-filter', isActive: false },
-    { action: 'exportThreadsTable', label: i18n.getValue(`${SECTION}.thread_toolbar_export`), icon: '', class: 'btn-export', showIf: true },
-  ];
-}
-
-export function createProjectThreadFilterColumns(i18n: AdminLocalizationService): Core.FilterColumns[] {
-  return [
-    { key: 'project_id', header: i18n.getValue(`${SECTION}.thread_filter_project_id_label`), type: 'text', placeholder: i18n.getValue(`${SECTION}.thread_filter_project_id_placeholder`), canSort: false },
-    { key: 'priority', header: i18n.getValue(`${SECTION}.thread_col_priority`), type: 'select', options: mapLabeledOptions(SECTION, PROJECT_THREAD_PRIORITY_VALUES, THREAD_PRIORITY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.thread_filter_priority_placeholder`), canSort: true },
-    { key: 'status', header: i18n.getValue(`${SECTION}.thread_col_status`), type: 'select', options: mapLabeledOptions(SECTION, PROJECT_THREAD_STATUS_VALUES, THREAD_STATUS_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.thread_filter_status_placeholder`), canSort: true },
-  ];
-}
-
-export function createProjectThreadDetailsColumns(i18n: AdminLocalizationService): Core.ItemDetailsColumns[] {
-  return [
-    { key: 'id', displayName: i18n.getValue(`${SECTION}.details_id`), type: 'text' },
-    { key: 'project_name', displayName: i18n.getValue(`${SECTION}.thread_col_project`), type: 'text', chartable: true },
-    { key: 'subject', displayName: i18n.getValue(`${SECTION}.thread_col_subject`), type: 'text' },
-    { key: 'priority', displayName: i18n.getValue(`${SECTION}.thread_col_priority`), type: 'text', chartable: true, chartPossibleValues: PROJECT_THREAD_PRIORITY_VALUES },
-    { key: 'status', displayName: i18n.getValue(`${SECTION}.thread_col_status`), type: 'text', chartable: true, chartPossibleValues: PROJECT_THREAD_STATUS_VALUES },
   ];
 }

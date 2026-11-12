@@ -11,6 +11,7 @@ class WebProjectCheckpointResource extends JsonResource
         return [
             'id'                => $this->id,
             'label'             => $this->label,
+            'description'       => $this->description,
             'status'            => $this->status,
             'status_changed_at' => $this->status_changed_at?->format('Y-m-d H:i:s'),
             'sort_order'        => $this->sort_order,

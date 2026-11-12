@@ -17,6 +17,7 @@ namespace Tests\Feature\Web;
 
 use App\Models\Web\WebAttachment;
 use App\Models\Web\WebProject;
+use App\Models\Web\WebLog;
 use App\Models\Web\WebProjectCheckpoint;
 use App\Models\Web\WebProjectSession;
 use App\Models\Web\WebProjectThread;
@@ -100,7 +101,7 @@ class ProjectTest extends TestCase
         $this->assertTrue($project->verifyPassword($data['generated_password']));
         $this->assertNotNull($project->password_generated_at);
         $this->assertArrayNotHasKey('access_password_hash', $project->toArray());
-        $this->assertWebLog('create', 'Project created: Portal');
+        $this->assertWebLog('create', 'Project created: Portal (client portal password generated)');
 
         $this->postJson('/api/web/projects', ['visibility' => 'hidden', 'order_id' => 999, 'estimated_completion_from' => '2026-12-01', 'estimated_completion_to' => '2026-11-01'])
             ->assertStatus(422)->assertJsonValidationErrors(['name', 'visibility', 'order_id', 'estimated_completion_to']);
@@ -127,7 +128,8 @@ class ProjectTest extends TestCase
         $this->getJson('/api/web/projects/999')->assertStatus(404);
         $this->putJson("/api/web/projects/{$project->id}", ['status' => 'finished', 'name' => 'Done'])
             ->assertOk()->assertJsonPath('data.status', 'finished')->assertJsonPath('data.name', 'Done');
-        $this->assertWebLog('update', "Updated project ID: {$project->id}");
+        $this->assertWebLog('update', "Updated project #{$project->id} 'Done': name ");
+        $this->assertWebLog('update', 'status new → finished');
         $this->putJson("/api/web/projects/{$project->id}", ['order_id' => $order->id])->assertStatus(422)->assertJsonValidationErrors(['order_id']);
         $this->putJson("/api/web/projects/{$taken->id}", ['order_id' => $order->id])->assertOk();
         $this->putJson('/api/web/projects/999', ['name' => 'x'])->assertStatus(404);
@@ -215,11 +217,13 @@ class ProjectTest extends TestCase
     }
 
     /**
-     * @description Checkpoints: added at the end (or at a given position), status change stamps
-     *   status_changed_at, other fields update, only checkpoints of the project in the URL (IDOR guard).
-     * @input Project P with checkpoint (sort 0); POST {label}; POST {label, sort_order: 7, status: done};
-     *        PUT status active; PUT label; PUT/DELETE through another project; DELETE.
-     * @output sort_order 1 / 7; status_changed_at set; label changed; 404 for the wrong project; 204.
+     * @description Checkpoints: a title (label) and an optional description for the client portal,
+     *   added at the end (or at a given position), status change stamps status_changed_at, other
+     *   fields update, only checkpoints of the project in the URL (IDOR guard).
+     * @input Project P with checkpoint (sort 0); POST {label, description}; POST {label, sort_order: 7, status: done};
+     *        PUT status; PUT label; PUT description (set, too long, cleared); PUT/DELETE through another project; DELETE.
+     * @output sort_order 1 / 7; description stored; status_changed_at set; label changed; description
+     *   max 5000 chars; 404 for the wrong project; 204; log rows name what changed.
      */
     public function test_checkpoints(): void
     {
@@ -228,25 +232,37 @@ class ProjectTest extends TestCase
         $other = $this->project();
         $project->checkpoints()->create(['label' => 'First', 'sort_order' => 0]);
 
-        $second = $this->postJson("/api/web/projects/{$project->id}/checkpoints", ['label' => 'Second'])
-            ->assertCreated()->assertJsonPath('data.sort_order', 1)->assertJsonPath('data.status', 'new')->json('data');
+        $second = $this->postJson("/api/web/projects/{$project->id}/checkpoints", ['label' => 'Second', 'description' => 'What is in it'])
+            ->assertCreated()->assertJsonPath('data.sort_order', 1)->assertJsonPath('data.status', 'new')
+            ->assertJsonPath('data.description', 'What is in it')->json('data');
         $this->postJson("/api/web/projects/{$project->id}/checkpoints", ['label' => 'Later', 'sort_order' => 7, 'status' => 'done'])
             ->assertCreated()->assertJsonPath('data.sort_order', 7);
         $this->postJson("/api/web/projects/{$other->id}/checkpoints", ['label' => 'Own'])->assertCreated()->assertJsonPath('data.sort_order', 0);
         $this->postJson("/api/web/projects/{$project->id}/checkpoints", ['status' => 'weird'])->assertStatus(422);
         $this->assertWebLog('create', "Added checkpoint 'Second'");
 
-        $this->putJson("/api/web/projects/{$project->id}/checkpoints/{$second['id']}", ['status' => 'active'])
-            ->assertOk()->assertJsonPath('data.status', 'active')->assertJsonPath('data.status_changed_at', fn ($v) => $v !== null);
-        $this->putJson("/api/web/projects/{$project->id}/checkpoints/{$second['id']}", ['status' => 'active', 'label' => 'Renamed'])
+        $this->putJson("/api/web/projects/{$project->id}/checkpoints/{$second['id']}", ['status' => 'done'])
+            ->assertOk()->assertJsonPath('data.status', 'done')->assertJsonPath('data.status_changed_at', fn ($v) => $v !== null);
+        $this->assertWebLog('checkpoint_status', "Checkpoint 'Second' of project #{$project->id}: status new → done");
+        $this->putJson("/api/web/projects/{$project->id}/checkpoints/{$second['id']}", ['status' => 'done', 'label' => 'Renamed'])
             ->assertOk()->assertJsonPath('data.label', 'Renamed');
+        $this->assertWebLog('update', "Checkpoint 'Second' of project #{$project->id}: renamed to 'Renamed'");
+        $this->putJson("/api/web/projects/{$project->id}/checkpoints/{$second['id']}", ['description' => 'Launch on the production server.'])
+            ->assertOk()->assertJsonPath('data.description', 'Launch on the production server.');
+        $this->assertWebLog('update', "Checkpoint 'Renamed' of project #{$project->id}: description changed");
+        $this->putJson("/api/web/projects/{$project->id}/checkpoints/{$second['id']}", ['description' => str_repeat('x', 5001)])
+            ->assertStatus(422)->assertJsonValidationErrors(['description']);
+        $this->putJson("/api/web/projects/{$project->id}/checkpoints/{$second['id']}", ['description' => null])
+            ->assertOk()->assertJsonPath('data.description', null);
+        $rows = WebLog::count();
         $this->putJson("/api/web/projects/{$project->id}/checkpoints/{$second['id']}", [])->assertOk();
+        $this->assertSame($rows, WebLog::count(), 'no change, no log row');
         $this->putJson("/api/web/projects/{$other->id}/checkpoints/{$second['id']}", ['label' => 'Hijack'])->assertStatus(404);
         $this->deleteJson("/api/web/projects/{$other->id}/checkpoints/{$second['id']}")->assertStatus(404);
         $this->putJson("/api/web/projects/{$project->id}/checkpoints/999", ['label' => 'x'])->assertStatus(404);
 
         $this->deleteJson("/api/web/projects/{$project->id}/checkpoints/{$second['id']}")->assertNoContent();
         $this->assertNull(WebProjectCheckpoint::find($second['id']));
-        $this->assertWebLog('hard_delete', "Deleted checkpoint ID: {$second['id']}");
+        $this->assertWebLog('hard_delete', "Deleted checkpoint ID: {$second['id']} 'Renamed'");
     }
 }

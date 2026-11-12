@@ -218,8 +218,8 @@ public function newMessages(Request $request): JsonResponse
         $this->storeAttachments($request, $message, self::ATTACHMENT_FOLDER);
 
         $thread->update(['last_message_at' => now(), 'customer_last_read_at' => now()]);
-        $this->logAction($request, WebLog::class, 'portal_message_create', self::LOG_MODULE,
-            "Client wrote message #{$message->id} in thread #{$thread->id} of project #{$project->id} (" . count($message->attachments()->get()) . ' attachments)', $thread->id, 'WebProjectThread', self::PRIVATE_KEYS);
+        // Not logged: single messages are the conversation itself; the log keeps the client's
+        // sign-ins, new requests (threads) and closing / reopening them.
 
         $this->notifyProjectContact($project, $thread, isNewThread: false);
 
@@ -247,9 +247,12 @@ public function updateStatus(Request $request): JsonResponse
         'status' => ['required', 'in:' . implode(',', WebProjectThread::STATUSES)],
     ]);
 
+    $oldStatus = $thread->status;
     $thread->update(['status' => $validated['status']]);
-    $this->logAction($request, WebLog::class, 'portal_thread_status', self::LOG_MODULE,
-        "Client set thread #{$thread->id} of project #{$project->id} to {$validated['status']}", $thread->id, 'WebProjectThread');
+    if ($oldStatus !== $thread->status) {
+        $this->logAction($request, WebLog::class, 'portal_thread_status', self::LOG_MODULE,
+            'Client ' . ($thread->status === 'closed' ? 'closed' : 'reopened') . " thread #{$thread->id} of project #{$project->id}", $thread->id, 'WebProjectThread');
+    }
 
     return $this->respond(new WebProjectThreadResource($thread->fresh()));
 }

@@ -32,7 +32,7 @@ class WebProjectThreadController extends Controller
     public function index(Request $request): JsonResponse
     {
         $perPage = $request->input('per_page', 15);
-        $query = WebProjectThread::query()->with('project:id,name');
+        $query = WebProjectThread::query()->with('project:id,name')->withAdminUnreadCount();
 
         if ($request->filled('project_id')) $query->where('project_id', $request->input('project_id'));
         if ($request->filled('priority')) $query->where('priority', $request->input('priority'));
@@ -53,6 +53,8 @@ class WebProjectThreadController extends Controller
     public function show($id): JsonResponse
     {
         $thread = WebProjectThread::with('project:id,name')->findOrFail($id);
+        // An admin opened it: the client's messages are no longer new for the administration.
+        $thread->markReadByAdmin();
 
         [$messages, $hasMore] = $thread->pagedMessages(null);
         $thread->setRelation('messages', $messages);
@@ -97,9 +99,9 @@ class WebProjectThreadController extends Controller
 
         $this->storeAttachments($request, $message, self::ATTACHMENT_FOLDER);
 
-        $thread->update(['last_message_at' => now()]);
-
-        $this->logAction($request, WebLog::class, 'create', 'WebProjectThreadMessage', "Admin reply in thread ID: {$thread->id} (project ID: {$thread->project_id})", $thread->project_id, 'WebProject');
+        $thread->update(['last_message_at' => now(), 'admin_last_read_at' => now()]);
+        // Not logged: who wrote which message is the conversation itself (kept in the thread),
+        // the audit log keeps the decisions - thread closed / reopened, project changes.
 
         return $this->respond(new WebProjectThreadMessageResource($message->load('attachments')), 201);
     }
@@ -115,9 +117,14 @@ class WebProjectThreadController extends Controller
         ]);
 
         $thread = WebProjectThread::findOrFail($threadId);
+        $oldStatus = $thread->status;
         $thread->update(['status' => $validated['status']]);
 
-        $this->logAction($request, WebLog::class, 'update', 'WebProjectThreadMessage', "Thread status changed ID: {$thread->id} to '{$validated['status']}' (project ID: {$thread->project_id})", $thread->project_id, 'WebProject');
+        if ($oldStatus !== $thread->status) {
+            $closed = $thread->status === 'closed';
+            $this->logAction($request, WebLog::class, $closed ? 'thread_close' : 'thread_reopen', 'WebProjectThread',
+                ($closed ? 'Closed' : 'Reopened') . " thread #{$thread->id} of project #{$thread->project_id}", $thread->project_id, 'WebProject');
+        }
 
         return $this->respond((new WebProjectThreadResource($thread->fresh()))->resolve());
     }

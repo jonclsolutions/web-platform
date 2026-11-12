@@ -34,7 +34,10 @@ const DEFAULT_MAX_ATTACHMENT_SIZE_MB = 15;
 
 interface ProjectCheckpoint {
   id: number;
+  /** Title of the checkpoint. */
   label: string;
+  /** What the checkpoint covers (written by the supplier) - shown when the item is expanded. */
+  description?: string | null;
   status: 'new' | 'active' | 'done';
 }
 
@@ -130,6 +133,8 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
 
   activeTab: PortalTab = 'description';
   threadSearch = '';
+  /** Checkpoints whose description is expanded. */
+  expandedCheckpointIds = new Set<number>();
 
   newThreadMode = false;
   newThreadSubject = '';
@@ -277,6 +282,18 @@ updateThreadStatus(status: string): void {
   selectLanguage(code: string): void {
     this.portalI18n.setLanguage(code);
     this.isLangMenuOpen = false;
+  }
+
+  // ── Checkpoints ───────────────────────────────────────────────────────
+
+  /**
+   * @description Expands / collapses the description of a checkpoint.
+   * @param id Checkpoint id.
+   */
+  toggleCheckpoint(id: number): void {
+    if (this.expandedCheckpointIds.has(id)) this.expandedCheckpointIds.delete(id);
+    else this.expandedCheckpointIds.add(id);
+    this.cdr.markForCheck();
   }
 
   // ── Tabs ──────────────────────────────────────────────────────────────
@@ -501,6 +518,7 @@ updateThreadStatus(status: string): void {
     this.state = 'login';
     this.loginPassword = '';
     this.activeTab = 'description';
+    this.expandedCheckpointIds.clear();
     this.companySettings = null;
     this.cdr.markForCheck();
   }

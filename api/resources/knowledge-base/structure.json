@@ -94,7 +94,7 @@
       "group": "web",
       "order": 14,
       "permission": "web-projects-view",
-      "devNote": "ProjectsComponent, route 'web/projects', permission 'web-projects-view'. Obsahuje i cross-project tabulku zákaznických vláken (web/project-threads)."
+      "devNote": "ProjectsComponent (seznam, sloupec/filtr nepřečtených zpráv), route 'web/projects'; ProjectDetailComponent (stránka projektu: nastavení, přístup, checkpointy, konverzace projektu), route 'web/projects/:id'; obě permission 'web-projects-view', úpravy 'web-projects-update'. Nepřečtené = web_project_threads.admin_last_read_at."
     },
     {
       "id": "core-dashboard",

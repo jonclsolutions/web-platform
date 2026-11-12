@@ -36,6 +36,7 @@ class WebProjectResource extends JsonResource
             'public_url'                 => rtrim(config('app.frontend_url', $request->getSchemeAndHttpHost()), '/') . "/projects/{$this->access_token}",
             'password_generated_at'      => $this->password_generated_at?->format('Y-m-d H:i:s'),
             'checkpoints_total'          => $this->whenCounted('checkpoints'),
+            'unread_messages_count'      => $this->when(isset($this->unread_messages_count), fn () => (int) $this->unread_messages_count),
             'checkpoints_done'           => $this->when(isset($this->checkpoints_done_count), $this->checkpoints_done_count),
             'checkpoints'                => WebProjectCheckpointResource::collection($this->whenLoaded('checkpoints')),
             'created_at'                 => $this->created_at?->format('Y-m-d H:i:s'),

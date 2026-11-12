@@ -21,6 +21,7 @@ class WebProjectCheckpoint extends Model
     protected $fillable = [
         'project_id',
         'label',
+        'description',
         'status',
         'status_changed_at',
         'sort_order',

@@ -184,13 +184,55 @@
     },
     "projects": {
       "navLabel": "Projekty",
-      "header": "Projekty a zákaznická vlákna",
+      "header": "Projekty a konverzace se zákazníky",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - správa zákaznických projektů, checkpointů a komunikace."
+              "content": "Na seznamu projektů vidíte všechny zákaznické projekty a u každého počet nových zpráv od zákazníka. Projekt otevřete na samostatné stránce, kde najdete jeho nastavení, přístup do klientského portálu, checkpointy a konverzace se zákazníkem."
+            }
+          ]
+        },
+        {
+          "key": "chapter-01",
+          "heading": "01. Seznam projektů",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Otevřít projekt",
+                  "text": "Ikona složky v řádku otevře stránku projektu (adresa web/projects/ID). Rychlou úpravu v okně nabízí ikona tužky."
+                },
+                {
+                  "title": "Nové zprávy",
+                  "text": "Sloupec Nové zprávy ukazuje počet zpráv od zákazníka, které ještě nikdo z administrace nečetl. Filtr Nepřečtené zprávy zobrazí jen projekty, kde nějaké jsou."
+                },
+                {
+                  "title": "Nový projekt",
+                  "text": "Po vytvoření se rovnou otevře stránka projektu s jednorázovým heslem pro zákazníka. Heslo se nikam neukládá - zkopírujte ho dřív, než stránku opustíte."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-02",
+          "heading": "02. Stránka projektu",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Tlačítko Zpět vede na seznam projektů. Nastavení projektu (název, vedoucí, kontakty, termíny, viditelnost, stav) upravíte přímo ve formuláři - při změně se dole objeví plovoucí lišta s tlačítky Uložit změny a Zahodit změny. Odchod s neuloženými změnami nebo s nezkopírovaným heslem stránka nejdřív potvrdí. Texty administrace se řídí zvoleným jazykem administrace, data projektu jsou v jednom jazyce."
+            },
+            {
+              "type": "text",
+              "content": "Konverzace ukazují jen vlákna tohoto projektu, rozdělená na Aktivní, Uzavřené a Vše. Vlákno s nepřečtenými zprávami má u sebe počet; otevřením se označí jako přečtené pro celou administraci. Seznam se sám obnovuje každou minutu. Checkpointy mají nadpis a nepovinný popis (ikona tužky); stav vyberete z rozbalovacího menu. Popis uvidí zákazník v portálu po rozkliknutí checkpointu."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Bez oprávnění web-projects-update je stránka jen pro čtení - nelze měnit nastavení, checkpointy ani heslo a nelze odpovídat."
             }
           ]
         }

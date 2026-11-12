@@ -610,6 +610,7 @@ final class TestSchema
             $t->increments('id');
             $t->unsignedInteger('project_id');
             $t->string('label');
+            $t->text('description')->nullable();
             $t->string('status', 20)->default('new');
             $t->timestamp('status_changed_at')->nullable();
             $t->integer('sort_order')->default(0);
@@ -638,6 +639,7 @@ final class TestSchema
             $t->string('opened_by', 20);
             $t->timestamp('last_message_at')->nullable();
             $t->timestamp('customer_last_read_at')->nullable();
+            $t->timestamp('admin_last_read_at')->nullable();
             $t->timestamps();
             $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
         });

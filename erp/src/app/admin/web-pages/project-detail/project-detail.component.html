@@ -1,0 +1,352 @@
+<!--
+    @file: project-detail.component.html
+    @path: /src/app/admin/web-pages/project-detail/project-detail.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Page of one client project: header (back, name, status, new messages), project
+        settings form with a floating save bar, conversations with the client (thread list with
+        unread badges + messages + reply), access to the client portal and checkpoints.
+-->
+<div class="pd-page">
+
+  <header class="pd-header">
+    <button type="button" class="pd-back" (click)="goBack()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      {{ t('detail_back') }}
+    </button>
+    <div class="pd-header-main">
+      <div class="pd-title-row">
+        <h1 class="pd-title">{{ project?.name || t('manage_modal_title') }}</h1>
+        @if (project) {
+          <span class="pd-chip" [attr.data-status]="project.status">{{ t('status_' + project.status) }}</span>
+          <span class="pd-chip pd-chip--visibility" [class.pd-chip--public]="project.visibility === 'public'">
+            {{ t(project.visibility === 'public' ? 'detail_visibility_public' : 'detail_visibility_private') }}
+          </span>
+        }
+        @if (unreadTotal > 0) {
+          <span class="pd-chip pd-chip--unread" role="status">{{ t('detail_unread_badge').replace('{count}', '' + unreadTotal) }}</span>
+        }
+      </div>
+      @if (project) {
+        <p class="pd-subtitle">#{{ project.id }} · {{ t('detail_created') }} {{ project.created_at | date:'d. M. yyyy' }}</p>
+      }
+    </div>
+    <div class="pd-header-actions">
+      <app-page-help></app-page-help>
+    </div>
+  </header>
+
+  @if (loading) {
+    <p class="pd-state">{{ t('loading') }}</p>
+  } @else if (notFound) {
+    <div class="pd-state pd-state--error" role="alert">
+      <p>{{ t('detail_not_found') }}</p>
+      <a class="pd-btn" routerLink="/admin/web/projects">{{ t('detail_back') }}</a>
+    </div>
+  } @else {
+  <div class="pd-grid">
+
+    <div class="pd-main">
+      <!-- ── Conversations with the client ── -->
+      <section class="pd-card pd-conv" aria-labelledby="pd-conv-title">
+        <div class="pd-card-head">
+          <div class="pd-card-head-title">
+            <h2 class="pd-card-title" id="pd-conv-title">{{ t('conversation_section_title') }}</h2>
+            @if (unreadTotal > 0) { <span class="pd-count pd-count--unread">{{ unreadTotal }}</span> }
+          </div>
+          <div class="pd-card-head-actions">
+            <div class="pd-segment" role="group" [attr.aria-label]="t('conversation_section_title')">
+              @for (filter of ['active', 'closed', 'all']; track filter) {
+                <button type="button" [class.active]="threadFilter === filter" [attr.aria-pressed]="threadFilter === filter" (click)="setThreadFilter($any(filter))">
+                  {{ t('detail_threads_' + filter) }} <span class="pd-segment-count">{{ threadCount($any(filter)) }}</span>
+                </button>
+              }
+            </div>
+            <button type="button" class="pd-icon-btn" [title]="t('detail_refresh')" [attr.aria-label]="t('detail_refresh')" [disabled]="threadsLoading" (click)="loadThreads()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" [class.pd-spin]="threadsLoading"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="pd-conv-body" [class.pd-conv-body--open]="!!selectedThread">
+          <!-- Thread list -->
+          <div class="pd-thread-list" role="list">
+            @for (thread of visibleThreads; track thread.id) {
+              <button type="button" role="listitem" class="pd-thread" [class.active]="selectedThread?.id === thread.id"
+                      [class.pd-thread--unread]="(thread.admin_unread_count ?? 0) > 0" (click)="openThread(thread)">
+                <span class="pd-thread-top">
+                  <span class="pd-thread-subject">{{ thread.subject }}</span>
+                  @if ((thread.admin_unread_count ?? 0) > 0) {
+                    <span class="pd-count pd-count--unread" [attr.aria-label]="t('detail_unread_badge').replace('{count}', '' + thread.admin_unread_count)">{{ thread.admin_unread_count }}</span>
+                  }
+                </span>
+                <span class="pd-thread-meta">
+                  <span class="pd-dot" [attr.data-priority]="thread.priority"></span>{{ threadPriorityLabel(thread.priority) }}
+                  · {{ threadStatusLabel(thread.status) }}
+                  @if (thread.last_message_at) { · {{ thread.last_message_at | date:'d. M. HH:mm' }} }
+                </span>
+              </button>
+            } @empty {
+              <p class="pd-empty">{{ threads.length === 0 ? t('threads_empty') : t('detail_threads_empty_filter') }}</p>
+            }
+          </div>
+
+          <!-- Messages of the open thread -->
+          <div class="pd-thread-detail">
+            @if (!selectedThread) {
+              <div class="pd-thread-placeholder">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <p>{{ t('detail_select_thread') }}</p>
+              </div>
+            } @else {
+              <div class="pd-thread-head">
+                <button type="button" class="pd-icon-btn pd-thread-close" (click)="closeThread()" [attr.aria-label]="t('back_to_list')">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <h3 class="pd-thread-title">{{ selectedThread.subject }}</h3>
+                <label class="pd-thread-status">
+                  <span class="pd-sr">{{ t('thread_status_label') }}</span>
+                  <select class="pd-input pd-input--sm" [ngModel]="selectedThread.status" (ngModelChange)="changeThreadStatus($event)" [disabled]="!canEdit">
+                    <option value="active">{{ t('thread_status_active') }}</option>
+                    <option value="closed">{{ t('thread_status_closed') }}</option>
+                  </select>
+                </label>
+              </div>
+
+              @if (threadLoading) {
+                <p class="pd-state">{{ t('loading') }}</p>
+              } @else {
+                <div class="pd-messages" #messageList>
+                  @if (selectedThread.has_more_older_messages) {
+                    <button type="button" class="pd-btn pd-btn--ghost pd-older" [disabled]="olderMessagesLoading" (click)="loadOlderMessages()">
+                      {{ olderMessagesLoading ? t('loading') : t('load_older_messages') }}
+                    </button>
+                  }
+                  @for (msg of selectedThread.messages; track msg.id) {
+                    <div class="pd-msg" [class.pd-msg--admin]="msg.author_type === 'admin'">
+                      <div class="pd-msg-meta">{{ msg.author_label || threadAuthorLabel(msg.author_type) }} · {{ msg.created_at | date:'d. M. yyyy HH:mm' }}</div>
+                      <div class="pd-msg-body">{{ msg.body }}</div>
+                      @if (msg.attachments?.length) {
+                        <div class="pd-msg-files">
+                          @for (att of msg.attachments; track att.id) {
+                            <a [href]="att.download_url" class="pd-file" target="_blank" rel="noopener">
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                              <span>{{ att.original_filename }}</span>
+                              <span class="pd-file-size">{{ formatFileSize(att.size_bytes) }}</span>
+                            </a>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+
+                @if (canEdit) {
+                  <div class="pd-reply">
+                    <textarea class="pd-input pd-textarea" rows="3" [placeholder]="t('reply_placeholder')" [(ngModel)]="replyBody" [attr.aria-label]="t('reply_placeholder')"></textarea>
+                    @if (replyFileError) { <p class="pd-error" role="alert">{{ replyFileError }}</p> }
+                    @if (replyFiles.length > 0) {
+                      <div class="pd-chips">
+                        @for (file of replyFiles; track file.name; let i = $index) {
+                          <span class="pd-file-chip">{{ file.name }}
+                            <button type="button" (click)="removeReplyFile(i)" [attr.aria-label]="file.name">✕</button>
+                          </span>
+                        }
+                      </div>
+                    }
+                    <div class="pd-reply-actions">
+                      <label class="pd-btn pd-btn--ghost pd-attach">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                        {{ t('attach_files_button') }}
+                        @if (replyFiles.length > 0) { ({{ replyFiles.length }}/{{ maxAttachments }}) }
+                        <input type="file" multiple hidden (change)="onReplyFilesSelected($event)">
+                      </label>
+                      <button type="button" class="pd-btn pd-btn--primary" [disabled]="replySending || !replyBody.trim()" (click)="sendReply()">
+                        {{ replySending ? t('sending') : t('send_reply_button') }}
+                      </button>
+                    </div>
+                  </div>
+                }
+              }
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Checkpoints: the project steps the client sees in the portal ── -->
+      <section class="pd-card" aria-labelledby="pd-cp-title">
+        <div class="pd-card-head">
+          <div class="pd-card-head-title">
+            <h2 class="pd-card-title" id="pd-cp-title">{{ t('checkpoints_section_title') }}</h2>
+            @if (checkpoints.length > 0) {
+              <span class="pd-cp-progress-label">{{ checkpointsDone }} / {{ checkpoints.length }} {{ t('checkpoint_status_done') | lowercase }}</span>
+            }
+          </div>
+          @if (canEdit && !addingCheckpoint) {
+            <div class="pd-card-head-actions">
+              <button type="button" class="pd-btn" (click)="openAddCheckpoint()"><app-icon name="plus" [size]="14"></app-icon>{{ t('checkpoint_add_button') }}</button>
+            </div>
+          }
+        </div>
+        @if (checkpoints.length > 0) {
+          <div class="pd-cp-progress" role="progressbar" [attr.aria-valuenow]="checkpointsDone" aria-valuemin="0" [attr.aria-valuemax]="checkpoints.length"
+               [attr.aria-label]="t('checkpoints_section_title')">
+            <span [style.width.%]="checkpoints.length ? (checkpointsDone / checkpoints.length) * 100 : 0"></span>
+          </div>
+        }
+        <div class="pd-card-body">
+          <ol class="pd-checkpoints">
+            @for (cp of checkpoints; track cp.id; let i = $index) {
+              <li class="pd-checkpoint" [attr.data-status]="cp.status" [class.pd-checkpoint--editing]="editingCheckpointId === cp.id">
+                <span class="pd-cp-index" aria-hidden="true">
+                  @if (cp.status === 'done') { ✓ } @else { {{ i + 1 }} }
+                </span>
+
+                @if (editingCheckpointId === cp.id) {
+                  <div class="pd-cp-editor">
+                    <label class="pd-cp-field">
+                      <span>{{ t('checkpoint_title_placeholder') }}</span>
+                      <input type="text" class="pd-input" maxlength="255" [(ngModel)]="checkpointDraft.label" (keyup.escape)="cancelEditCheckpoint()">
+                    </label>
+                    <label class="pd-cp-field">
+                      <span>{{ t('checkpoint_description_label') }}</span>
+                      <textarea class="pd-input pd-textarea" rows="5" maxlength="5000" [(ngModel)]="checkpointDraft.description"
+                                [placeholder]="t('checkpoint_description_placeholder')" (keyup.escape)="cancelEditCheckpoint()"></textarea>
+                    </label>
+                    <p class="pd-hint">{{ t('checkpoint_description_hint') }}</p>
+                    <div class="pd-cp-editor-actions">
+                      <button type="button" class="pd-btn" (click)="cancelEditCheckpoint()">{{ t('cancel_button') }}</button>
+                      <button type="button" class="pd-btn pd-btn--primary" [disabled]="!checkpointDraft.label.trim() || checkpointBusyIds.has(cp.id)" (click)="saveCheckpoint(cp)">{{ t('checkpoint_save') }}</button>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="pd-cp-body">
+                    <div class="pd-cp-label">{{ cp.label }}</div>
+                    @if (cp.description) {
+                      <p class="pd-cp-description">{{ cp.description }}</p>
+                    } @else if (canEdit) {
+                      <p class="pd-cp-description pd-cp-description--empty">{{ t('checkpoint_no_description') }}</p>
+                    }
+                  </div>
+                  <div class="pd-cp-controls">
+                    <select class="pd-cp-status" [attr.data-status]="cp.status" [value]="cp.status"
+                            [disabled]="!canEdit || checkpointBusyIds.has(cp.id)"
+                            [attr.aria-label]="t('checkpoint_status_label') + ': ' + cp.label"
+                            (change)="setCheckpointStatus(cp, $any($event.target))">
+                      @for (status of checkpointStatuses; track status) {
+                        <option [value]="status" [selected]="status === cp.status">{{ checkpointStatusLabels[status] }}</option>
+                      }
+                    </select>
+                    @if (canEdit) {
+                      <button type="button" class="pd-icon-btn pd-cp-action" [title]="t('checkpoint_edit')" [attr.aria-label]="t('checkpoint_edit') + ': ' + cp.label" (click)="startEditCheckpoint(cp)">
+                        <app-icon name="edit" [size]="14"></app-icon>
+                      </button>
+                      <button type="button" class="pd-icon-btn pd-cp-action pd-cp-action--delete" [title]="t('delete_checkpoint_confirm_title')" [attr.aria-label]="t('delete_checkpoint_confirm_title') + ': ' + cp.label" (click)="deleteCheckpoint(cp)">
+                        <app-icon name="delete" [size]="14"></app-icon>
+                      </button>
+                    }
+                  </div>
+                }
+              </li>
+            } @empty {
+              @if (!addingCheckpoint) { <li class="pd-empty pd-cp-empty">{{ t('checkpoints_empty') }}</li> }
+            }
+          </ol>
+
+          @if (canEdit && addingCheckpoint) {
+            <div class="pd-cp-new">
+              <div class="pd-cp-new-title">{{ t('checkpoint_add_button') }}</div>
+              <label class="pd-cp-field">
+                <span>{{ t('checkpoint_title_placeholder') }}</span>
+                <input type="text" class="pd-input" maxlength="255" [placeholder]="t('checkpoint_add_placeholder')" [(ngModel)]="newCheckpointLabel"
+                       (keyup.escape)="cancelAddCheckpoint()">
+              </label>
+              <label class="pd-cp-field">
+                <span>{{ t('checkpoint_description_label') }}</span>
+                <textarea class="pd-input pd-textarea" rows="4" maxlength="5000" [(ngModel)]="newCheckpointDescription"
+                          [placeholder]="t('checkpoint_description_placeholder')" (keyup.escape)="cancelAddCheckpoint()"></textarea>
+              </label>
+              <p class="pd-hint">{{ t('checkpoint_description_hint') }}</p>
+              <div class="pd-cp-editor-actions">
+                <button type="button" class="pd-btn" (click)="cancelAddCheckpoint()">{{ t('cancel_button') }}</button>
+                <button type="button" class="pd-btn pd-btn--primary" [disabled]="!newCheckpointLabel.trim()" (click)="addCheckpoint()">{{ t('add_button') }}</button>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- ── Project settings ── -->
+      <section class="pd-card" aria-labelledby="pd-settings-title">
+        <div class="pd-card-head">
+          <h2 class="pd-card-title" id="pd-settings-title">{{ t('detail_settings_title') }}</h2>
+          @if (!canEdit) { <span class="pd-muted">{{ t('detail_readonly') }}</span> }
+        </div>
+        <form class="pd-form" #settingsForm="ngForm" (ngSubmit)="saveSettings()" autocomplete="off">
+          @for (field of fields; track field.column_name) {
+            <label class="pd-field" [class.pd-field--wide]="field.type === 'textarea'">
+              <span class="pd-label">{{ field.label }}@if (field.required) { * }</span>
+              @switch (field.type) {
+                @case ('textarea') {
+                  <textarea class="pd-input pd-textarea" rows="3" [name]="field.column_name" [(ngModel)]="form[field.column_name]" [disabled]="!canEdit || saving"></textarea>
+                }
+                @case ('select') {
+                  <select class="pd-input" [name]="field.column_name" [(ngModel)]="form[field.column_name]" [disabled]="!canEdit || saving">
+                    @if (!field.required) { <option value="">—</option> }
+                    @for (option of field.options; track option.value) {
+                      <option [value]="option.value">{{ option.label }}</option>
+                    }
+                  </select>
+                }
+                @default {
+                  <input class="pd-input" [type]="field.type" [name]="field.column_name" [(ngModel)]="form[field.column_name]" [required]="!!field.required" [disabled]="!canEdit || saving">
+                }
+              }
+            </label>
+          }
+          @if (canEdit) {
+            <div class="pd-savebar" [class.pd-savebar--dirty]="dirty" appStickyBar="bottom">
+              <span class="pd-savebar-text">{{ dirty ? t('detail_unsaved_hint') : t('detail_saved_hint') }}</span>
+              <button type="button" class="pd-btn pd-btn--ghost" [disabled]="!dirty || saving" (click)="discardChanges()">{{ t('detail_discard') }}</button>
+              <button type="submit" class="pd-btn pd-btn--primary" [disabled]="!dirty || saving || !!settingsForm.invalid">{{ saving ? t('detail_saving') : t('detail_save') }}</button>
+            </div>
+          }
+        </form>
+      </section>
+    </div>
+
+    <aside class="pd-side">
+      <!-- ── Access to the client portal ── -->
+      <section class="pd-card" aria-labelledby="pd-access-title">
+        <div class="pd-card-head"><h2 class="pd-card-title" id="pd-access-title">{{ t('access_section_title') }}</h2></div>
+        <div class="pd-card-body">
+          <div class="pd-url-row">
+            <code class="pd-url">{{ project?.public_url }}</code>
+            <button type="button" class="pd-btn pd-btn--ghost" (click)="copyPublicUrl()">{{ t('copy_link_button') }}</button>
+          </div>
+          @if (revealedPassword) {
+            <div class="pd-password">
+              <span class="pd-label">{{ t('password_label') }}</span>
+              <code class="pd-password-value">{{ passwordVisible ? revealedPassword.password : '••••••••••••' }}</code>
+              <div class="pd-password-actions">
+                <button type="button" class="pd-btn pd-btn--ghost" (click)="togglePasswordVisibility()">{{ passwordVisible ? t('hide_button') : t('show_button') }}</button>
+                <button type="button" class="pd-btn pd-btn--primary" (click)="copyPassword()">{{ t('copy_password_button') }}</button>
+              </div>
+              <p class="pd-warning" role="note">{{ t('password_visibility_hint') }}</p>
+            </div>
+          } @else {
+            <p class="pd-muted">{{ t('password_not_stored_hint') }}</p>
+          }
+          @if (canEdit) {
+            <button type="button" class="pd-btn pd-btn--warn" [disabled]="passwordRegenerating" (click)="regeneratePassword()">
+              {{ passwordRegenerating ? t('regenerating') : t('regenerate_password_button') }}
+            </button>
+          }
+        </div>
+      </section>
+
+    </aside>
+  </div>
+  }
+</div>

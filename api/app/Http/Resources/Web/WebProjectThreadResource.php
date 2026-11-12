@@ -29,6 +29,8 @@ class WebProjectThreadResource extends JsonResource
             'status'                 => $this->status,
             'opened_by'              => $this->opened_by,
             'last_message_at'        => $this->last_message_at?->format('Y-m-d H:i:s'),
+            // Client messages the administration has not read yet (admin list only).
+            'admin_unread_count'     => $this->when(isset($this->admin_unread_count), fn () => (int) $this->admin_unread_count),
             'unread_count'           => $this->when($this->relationLoaded('messages'), function () {
                 $adminMessages = $this->messages->where('author_type', 'admin');
                 if (!$this->customer_last_read_at) {

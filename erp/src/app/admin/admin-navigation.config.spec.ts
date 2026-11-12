@@ -9,7 +9,8 @@
  *   permission (or the sysadmin guard for a role-only page), and every page route of the table is
  *   listed - so a tab / menu item never leads to a page the router refuses, and a renamed key
  *   (`shop-manage-products` → `shop-products-view`) cannot drift apart again. Each module starts
- *   with its welcome page.
+ *   with its welcome page. A detail sub-page with a parameter (`projects/:id`) is no menu item -
+ *   it requires the permission of its parent page.
  * @dependencies
  * - ADMIN_ROUTES (admin-routing.module.ts), ADMIN_MODULE_PAGES (admin-navigation.config.ts).
  */
@@ -56,11 +57,31 @@ describe('admin navigation config', () => {
    */
   it('lists every page route once, welcome page first', () => {
     for (const module of modules) {
-      const routePaths = routesOf(module).map(r => r.path!).sort();
+      const routePaths = routesOf(module).map(r => r.path!).filter(path => !path.includes(':')).sort();
       const pagePaths = ADMIN_MODULE_PAGES[module].map(p => p.path).sort();
       expect(pagePaths).withContext(module).toEqual(routePaths);
       expect(new Set(routePaths).size).withContext(`${module} duplicates`).toBe(routePaths.length);
       expect(ADMIN_MODULE_PAGES[module][0].path).withContext(module).toBe('welcome-page');
     }
+  });
+
+  /**
+   * @description A detail sub-page (path with a parameter) belongs to a listed page and requires
+   *   the same permission (e.g. web/projects/:id = web/projects).
+   * @input Routes with ':' in the path of web / core / shop.
+   * @output The parent path is a configured page with the same permission; web/projects/:id exists.
+   */
+  it('protects detail sub-pages like their parent page', () => {
+    const detailPaths: string[] = [];
+    for (const module of modules) {
+      for (const route of routesOf(module).filter(r => r.path!.includes(':') && r.path!.includes('/'))) {
+        const parentPath = route.path!.split('/')[0];
+        const parent = ADMIN_MODULE_PAGES[module].find(page => page.path === parentPath);
+        expect(parent).withContext(`${module}/${route.path} parent`).toBeDefined();
+        expect(route.data?.['permission'] ?? null).withContext(`${module}/${route.path}`).toBe(parent!.permission);
+        detailPaths.push(`${module}/${route.path}`);
+      }
+    }
+    expect(detailPaths).toContain('web/projects/:id');
   });
 });

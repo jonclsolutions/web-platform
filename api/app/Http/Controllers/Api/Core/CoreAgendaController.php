@@ -202,7 +202,7 @@ class CoreAgendaController extends Controller
                 ->limit(self::MAX_EVENTS_PER_SOURCE)->get(['id', 'name', 'estimated_completion_to']);
             foreach ($projects as $project) {
                 $date = Carbon::parse($project->estimated_completion_to);
-                $events->push($event('project_deadline', 'web', (string) $project->id, $date, $project->name, "/admin/web/projects?open_project={$project->id}", $date->lt($today) ? 'danger' : 'warning'));
+                $events->push($event('project_deadline', 'web', (string) $project->id, $date, $project->name, "/admin/web/projects/{$project->id}", $date->lt($today) ? 'danger' : 'warning'));
             }
         }
 

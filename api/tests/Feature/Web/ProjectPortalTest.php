@@ -187,13 +187,13 @@ class ProjectPortalTest extends TestCase
     /**
      * @description Project detail and logout (the session is gone afterwards, the cookie deleted).
      * @input GET /; POST logout; GET / again.
-     * @output 200 {name, checkpoints}; 200 "Logout successful." + expired cookie; 401.
+     * @output 200 {name, checkpoints with title + description}; 200 "Logout successful." + expired cookie; 401.
      */
     public function test_me_and_logout(): void
     {
-        $this->portal->checkpoints()->create(['label' => 'Build']);
+        $this->portal->checkpoints()->create(['label' => 'Build', 'description' => 'Templates and pages']);
 
-        $this->portal('GET')->assertOk()->assertJsonPath('data.name', 'Eshop')->assertJsonPath('data.checkpoints.0.label', 'Build')->assertJsonMissingPath('data.access_token');
+        $this->portal('GET')->assertOk()->assertJsonPath('data.name', 'Eshop')->assertJsonPath('data.checkpoints.0.label', 'Build')->assertJsonPath('data.checkpoints.0.description', 'Templates and pages')->assertJsonMissingPath('data.access_token');
         $logout = $this->portal('POST', '/logout')->assertOk()->assertJson(['message' => 'Logout successful.']);
         $this->assertCredentialCookieCleared($logout, AuthCookies::PORTAL, '/api/projects/public/portal-token');
         $this->assertSame(0, WebProjectSession::count());
@@ -355,13 +355,14 @@ class ProjectPortalTest extends TestCase
     }
 
     /**
-     * @description Every change of the client is written to the web log (module WebProjectPortal):
-     *   sign-in, new thread, message, thread status, sign-out - never the message text or the
-     *   password; a stored message shows its body only as [masked] in the data changes.
+     * @description The client's actions are written to the web log (module WebProjectPortal):
+     *   sign-in, new thread (request), closing / reopening it, sign-out - single messages are not
+     *   logged (they are the conversation itself); never the message text or the password; a
+     *   stored message shows its body only as [masked] in the data changes.
      * @input Login; POST thread (body 'Secret plan'); POST message (body 'Secret reply'); status
      *   closed; logout.
-     * @output web log events portal_login, portal_thread_create, portal_message_create,
-     *   portal_thread_status, portal_logout; no 'Secret' / password anywhere in the log.
+     * @output web log events portal_login, portal_thread_create, portal_thread_status ('closed'),
+     *   portal_logout; no 'Secret' / password anywhere in the log.
      */
     public function test_client_actions_are_logged(): void
     {
@@ -373,7 +374,8 @@ class ProjectPortalTest extends TestCase
         $this->portal('POST', '/logout')->assertOk();
 
         $rows = WebLog::orderBy('id')->get();
-        $this->assertSame(['portal_login', 'portal_thread_create', 'portal_message_create', 'portal_thread_status', 'portal_logout'], $rows->pluck('event_type')->all());
+        $this->assertSame(['portal_login', 'portal_thread_create', 'portal_thread_status', 'portal_logout'], $rows->pluck('event_type')->all());
+        $this->assertStringContainsString("Client closed thread #{$thread->id}", $rows[2]->description);
         $this->assertSame(['WebProjectPortal'], $rows->pluck('module')->unique()->values()->all());
         $all = $rows->toJson();
         $this->assertStringNotContainsString('Secret', $all);

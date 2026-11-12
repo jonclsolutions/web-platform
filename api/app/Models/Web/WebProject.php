@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -84,6 +85,26 @@ class WebProject extends Model
     public function threads(): HasMany
     {
         return $this->hasMany(WebProjectThread::class, 'project_id')->orderByDesc('last_message_at');
+    }
+
+    /**
+     * @description Messages of all threads of the project (for the unread counts).
+     * @return HasManyThrough
+     */
+    public function threadMessages(): HasManyThrough
+    {
+        return $this->hasManyThrough(WebProjectThreadMessage::class, WebProjectThread::class, 'project_id', 'thread_id');
+    }
+
+    /**
+     * @description Adds `unread_messages_count`: client messages in the project's threads the
+     *   administration has not read yet (WebProjectThread::unreadByAdmin()).
+     * @param \Illuminate\Database\Eloquent\Builder $query Project query.
+     * @return void
+     */
+    public function scopeWithUnreadMessagesCount($query): void
+    {
+        $query->withCount(['threadMessages as unread_messages_count' => WebProjectThread::unreadByAdmin()]);
     }
 
     public function sessions(): HasMany

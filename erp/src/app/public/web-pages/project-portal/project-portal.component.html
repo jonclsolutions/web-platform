@@ -8,6 +8,32 @@
 -->
 <div class="pp-page">
 
+  <!-- ── Language switcher: top-right corner (flag + chevron, like the administration) ── -->
+  @if (state === 'login' || state === 'portal') {
+    <div class="pp-lang-switcher">
+      <button type="button" class="pp-lang-btn" [title]="t('language_switcher_title')" [attr.aria-label]="t('language_switcher_title')"
+              aria-haspopup="menu" [attr.aria-expanded]="isLangMenuOpen" (click)="toggleLangMenu()">
+        @if (currentLanguageMeta?.icon) {
+          <img [src]="currentLanguageMeta!.icon" [alt]="currentLanguageMeta!.code" class="pp-lang-btn-flag">
+        }
+        <svg class="pp-lang-chevron" [class.pp-lang-chevron-open]="isLangMenuOpen" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      @if (isLangMenuOpen) {
+        <div class="pp-lang-menu-backdrop" (click)="closeLangMenu()"></div>
+        <div class="pp-lang-menu" role="menu">
+          @for (lang of portalI18n.availableLanguages; track lang.code) {
+            <button type="button" role="menuitem" class="pp-lang-menu-item" [class.pp-lang-menu-item-active]="lang.code === portalI18n.getCurrentLanguage()" (click)="selectLanguage(lang.code)">
+              <img [src]="lang.icon" [alt]="lang.code" class="pp-lang-flag-img">
+              <span>{{ lang.name }}</span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+
   @if (state === 'loading') {
     <div class="pp-center">
       <div class="pp-spinner"></div>
@@ -29,25 +55,6 @@
     <div class="pp-center">
       <div class="pp-login-card">
 
-        <!-- ── Language switcher - flag only ── -->
-        <div class="pp-lang-flag-dropdown pp-lang-flag-dropdown-login">
-          <button type="button" class="pp-lang-flag-btn" [attr.aria-label]="t('language_switcher_title')" (click)="toggleLangMenu()">
-            @if (currentLanguageMeta?.icon) {
-              <img [src]="currentLanguageMeta!.icon" [alt]="currentLanguageMeta!.code" class="pp-lang-flag-img">
-            }
-          </button>
-          @if (isLangMenuOpen) {
-            <div class="pp-lang-menu-backdrop" (click)="closeLangMenu()"></div>
-            <div class="pp-lang-menu pp-lang-menu-centered">
-              @for (lang of portalI18n.availableLanguages; track lang.code) {
-                <button type="button" class="pp-lang-menu-item" [class.pp-lang-menu-item-active]="lang.code === portalI18n.getCurrentLanguage()" (click)="selectLanguage(lang.code)">
-                  <img [src]="lang.icon" [alt]="lang.code" class="pp-lang-flag-img">
-                  <span>{{ lang.name }}</span>
-                </button>
-              }
-            </div>
-          }
-        </div>
 
         <div class="pp-login-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
@@ -119,26 +126,6 @@
         </div>
 
         <div class="pp-sidebar-spacer"></div>
-
-        <!-- ── Language switcher - flag only ── -->
-        <div class="pp-lang-flag-dropdown">
-          <button type="button" class="pp-lang-flag-btn" [attr.aria-label]="t('language_switcher_title')" (click)="toggleLangMenu()">
-            @if (currentLanguageMeta?.icon) {
-              <img [src]="currentLanguageMeta!.icon" [alt]="currentLanguageMeta!.code" class="pp-lang-flag-img">
-            }
-          </button>
-          @if (isLangMenuOpen) {
-            <div class="pp-lang-menu-backdrop" (click)="closeLangMenu()"></div>
-            <div class="pp-lang-menu">
-              @for (lang of portalI18n.availableLanguages; track lang.code) {
-                <button type="button" class="pp-lang-menu-item" [class.pp-lang-menu-item-active]="lang.code === portalI18n.getCurrentLanguage()" (click)="selectLanguage(lang.code)">
-                  <img [src]="lang.icon" [alt]="lang.code" class="pp-lang-flag-img">
-                  <span>{{ lang.name }}</span>
-                </button>
-              }
-            </div>
-          }
-        </div>
 
         <div class="pp-sidebar-actions">
           <button type="button" class="pp-sidebar-action-btn" [disabled]="isRefreshing" (click)="refresh()">
@@ -255,18 +242,36 @@
 
               <div class="pp-checkpoint-list">
                 @for (cp of project.checkpoints; track cp.id) {
-                  <div class="pp-checkpoint-item" [class]="'status-' + cp.status">
+                  <ng-template #cpSummary>
                     <span class="pp-checkpoint-status-icon">
                       @if (cp.status === 'done') {
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                       } @else if (cp.status === 'active') {
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                       } @else {
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/></svg>
                       }
                     </span>
                     <span class="pp-checkpoint-label">{{ cp.label }}</span>
-                    <span class="pp-checkpoint-badge" [class]="'status-' + cp.status">{{ checkpointStatusLabels[cp.status] }}</span>
+                    <span class="pp-checkpoint-badge" [class]="'pp-checkpoint-badge status-' + cp.status">{{ checkpointStatusLabels[cp.status] }}</span>
+                  </ng-template>
+
+                  <div class="pp-checkpoint-item" [class]="'pp-checkpoint-item status-' + cp.status" [class.pp-checkpoint-item-open]="expandedCheckpointIds.has(cp.id)">
+                    @if (cp.description) {
+                      <!-- A checkpoint with a description expands on click to show what it covers. -->
+                      <button type="button" class="pp-checkpoint-head pp-checkpoint-toggle" [attr.aria-expanded]="expandedCheckpointIds.has(cp.id)"
+                              [attr.aria-controls]="'pp-cp-desc-' + cp.id" (click)="toggleCheckpoint(cp.id)">
+                        <ng-container [ngTemplateOutlet]="cpSummary"></ng-container>
+                        <svg class="pp-checkpoint-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                      </button>
+                      @if (expandedCheckpointIds.has(cp.id)) {
+                        <div class="pp-checkpoint-description" [id]="'pp-cp-desc-' + cp.id">{{ cp.description }}</div>
+                      }
+                    } @else {
+                      <div class="pp-checkpoint-head">
+                        <ng-container [ngTemplateOutlet]="cpSummary"></ng-container>
+                      </div>
+                    }
                   </div>
                 }
                 @if (project.checkpoints.length === 0) {

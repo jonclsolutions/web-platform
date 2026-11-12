@@ -174,7 +174,7 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
   createProject(item: any): void {
     if (!item?.id) return;
     if (item.project_id) {
-      this.router.navigate(['/admin/web/projects'], { queryParams: { open_project: item.project_id } });
+      this.router.navigate(['/admin/web/projects', item.project_id]);
     } else {
       this.router.navigate(['/admin/web/projects'], { queryParams: { order_id: item.id } });
     }

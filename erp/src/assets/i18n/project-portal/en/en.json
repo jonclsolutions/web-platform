@@ -70,7 +70,7 @@
   "help_description_title": "Description tab",
   "help_description_text": "Here you'll find the basic information about the project — its description, the technologies used, and the estimated completion date (if the supplier has set one). The date is shown as a range, since it may shift slightly as work progresses.",
   "help_checkpoints_title": "Progress tab",
-  "help_checkpoints_text": "Here you can see the project's individual steps (checkpoints) and their current status: Not started, In progress, or Done. The bar at the top shows how many steps are complete out of the total. Checkpoint status is updated by the supplier — you can only view it here.",
+  "help_checkpoints_text": "Here you can see the project's individual steps (checkpoints) and their current status: Not started, In progress, or Done. The bar at the top shows how many steps are complete out of the total. Checkpoint status is updated by the supplier — you can only view it here. A step with an arrow can be expanded to read what it covers.",
   "help_threads_title": "Communication tab",
   "help_threads_text": "All written communication with the supplier happens here, organized into separate threads (conversations) by topic — similar to email threads.",
   "help_threads_new_title": "Starting a new thread",
@@ -90,7 +90,7 @@
   "help_actions_title": "Refreshing data and logging out",
   "help_actions_text": "The \"Refresh data\" button in the left panel manually pulls the latest project state, even though most data updates automatically in the background. The \"Log out\" button ends your current session — you can log in again using the same password the supplier gave you.",
   "help_language_title": "Changing the language",
-  "help_language_text": "You can switch the portal's language at any time by clicking the flag in the left panel.",
+  "help_language_text": "You can switch the portal language at any time with the flag in the top-right corner.",
   "help_support_title": "Need help?",
   "help_support_text": "If you're not sure how to do something, send a new message in the Communication tab, or use the supplier's contact details shown in the left panel."
 }

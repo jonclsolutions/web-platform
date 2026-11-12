@@ -115,6 +115,11 @@
 @case ('avatar') {
 <app-user-avatar [src]="getCellValue(item, col)" [size]="28"></app-user-avatar>
                     }
+@case ('count') {
+@if (+getCellValue(item, col) > 0) {
+<span class="table-cell-count">{{ getCellValue(item, col) }}</span>
+                      }
+                    }
 @case ('link') {
 @if (getCellValue(item, col)) {
 <a [href]="getCellValue(item, col)" target="_blank" rel="noopener noreferrer">{{ getCellValue(item, col) }}</a>

@@ -42,7 +42,7 @@ describe('ProjectPortalComponent', () => {
   const project = {
     id: 1, name: 'Web', description: 'Desc', platform: null, project_lead: null, contact_phone: null, contact_email: null, technologies: null,
     estimated_completion_from: null, estimated_completion_to: null,
-    checkpoints: [{ id: 1, label: 'A', status: 'done' }, { id: 2, label: 'B', status: 'active' }, { id: 3, label: 'C', status: 'new' }]
+    checkpoints: [{ id: 1, label: 'A', status: 'done', description: 'Design of all pages' }, { id: 2, label: 'B', status: 'active' }, { id: 3, label: 'C', status: 'new' }]
   };
   const threads = () => [
     { id: 1, subject: 'Design', priority: 'medium', status: 'active', last_message_at: null, unread_count: 2, messages: [{ id: 1, body: 'logo colours', author_type: 'admin', author_label: null, created_at: '' }] },
@@ -513,6 +513,68 @@ describe('ProjectPortalComponent', () => {
     portal.setActiveTab('contacts');
     expect(portal.companySettings).toBeNull();
     expect(portal.companySettingsLoading).toBeFalse();
+    fixture.destroy();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description The language switcher sits once in the top-right corner of the page (not inside
+   *   the login card or the sidebar): flag + chevron, the menu opens on click with all languages.
+   * @input Login screen; click on the switcher; then the logged-in portal.
+   * @output One .pp-lang-switcher outside the card, aria-expanded true and one item per language;
+   *   in the portal one switcher and none in the sidebar.
+   */
+  it('shows one language switcher in the top-right corner', fakeAsync(() => {
+    create();
+    fixture.detectChanges();
+    let el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelectorAll('.pp-lang-switcher').length).toBe(1);
+    expect(el.querySelector('.pp-login-card .pp-lang-btn')).toBeNull();
+    const btn = el.querySelector('.pp-lang-switcher .pp-lang-btn') as HTMLButtonElement;
+    expect(btn.querySelector('.pp-lang-chevron')).not.toBeNull();
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+    btn.click();
+    fixture.detectChanges();
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+    expect(el.querySelectorAll('.pp-lang-menu-item').length).toBe(PROJECT_PORTAL_AVAILABLE_LANGUAGES.length);
+    fixture.destroy();
+
+    TestBed.resetTestingModule();
+    loggedIn();
+    fixture.detectChanges();
+    el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelectorAll('.pp-lang-switcher').length).toBe(1);
+    expect(el.querySelector('.pp-sidebar .pp-lang-btn')).toBeNull();
+    fixture.destroy();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description A checkpoint with a description is a button that expands it (aria-expanded);
+   *   one without stays plain; logout collapses everything.
+   * @input Logged-in portal, tab checkpoints; click on checkpoint A (with description) twice; logout.
+   * @output 1 toggle button; description 'Design of all pages' shown after the first click and
+   *   hidden after the second; expanded set empty after logout.
+   */
+  it('expands the description of a checkpoint', fakeAsync(() => {
+    loggedIn();
+    portal.setActiveTab('checkpoints');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const toggles = el.querySelectorAll<HTMLButtonElement>('.pp-checkpoint-toggle');
+    expect(toggles.length).toBe(1);
+    expect(el.querySelectorAll('.pp-checkpoint-item').length).toBe(3);
+    expect(toggles[0].getAttribute('aria-expanded')).toBe('false');
+    toggles[0].click();
+    fixture.detectChanges();
+    expect(toggles[0].getAttribute('aria-expanded')).toBe('true');
+    expect(el.querySelector('#pp-cp-desc-1')!.textContent).toContain('Design of all pages');
+    toggles[0].click();
+    fixture.detectChanges();
+    expect(el.querySelector('#pp-cp-desc-1')).toBeNull();
+    portal.toggleCheckpoint(1);
+    portal.logout();
+    expect(portal.expandedCheckpointIds.size).toBe(0);
     fixture.destroy();
     discardPeriodicTasks();
   }));

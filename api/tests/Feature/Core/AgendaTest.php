@@ -132,7 +132,7 @@ class AgendaTest extends TestCase
             ['lead_form_expiry', '2026-11-25', 'Lead Link', 'warning'],
             ['coupon_end', '2026-11-30', 'XMAS', 'warning'],
         ], array_map(fn ($e) => [$e['type'], $e['date'], $e['subject'], $e['severity']], $data['events']));
-        $this->assertStringStartsWith('/admin/web/projects?open_project=', $data['events'][0]['link']);
+        $this->assertMatchesRegularExpression('#^/admin/web/projects/\d+$#', $data['events'][0]['link']);
         $this->assertSame('/admin/shop/coupons', $data['events'][6]['link']);
 
         $reminders = array_column($data['reminders'], 'count', 'type');

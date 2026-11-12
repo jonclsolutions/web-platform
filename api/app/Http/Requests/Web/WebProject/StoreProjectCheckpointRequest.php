@@ -11,7 +11,8 @@ class StoreProjectCheckpointRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'label'      => ['required', 'string', 'max:255'],
+            'label'       => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:5000'],
             'status'     => ['nullable', 'in:' . implode(',', WebProjectCheckpoint::STATUSES)],
             'sort_order' => ['nullable', 'integer', 'min:0'],
         ];

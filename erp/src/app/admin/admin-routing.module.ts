@@ -30,6 +30,7 @@ import { KbArticleComponent } from './intranet/knowledge-base/kb-article/kb-arti
 import { NewsComponent } from './intranet/knowledge-base/pages/news/news.component';
 import { SupportFormComponent } from './intranet/knowledge-base/pages/support-form/support-form.component';
 import { ProjectsComponent } from './web-pages/projects/projects.component';
+import { ProjectDetailComponent } from './web-pages/project-detail/project-detail.component';
 
 // Core module components
 import { CoreDashboardComponent } from './core-pages/dashboard/dashboard.component';
@@ -119,6 +120,7 @@ export const ADMIN_ROUTES: Routes = [
           { path: 'support-tickets', component: SupportTicketsComponent, data: { help: 'support-tickets', permission: 'web-support-tickets-view' } },
           { path: 'job-applications', component: JobApplicationsComponent, data: { help: 'job-applications', permission: 'web-job-applications-view' } },
           { path: 'projects', component: ProjectsComponent, data: { help: 'projects', permission: 'web-projects-view' } },
+          { path: 'projects/:id', component: ProjectDetailComponent, data: { help: 'projects', permission: 'web-projects-view' } },
           { path: 'welcome-page', component: WebWelcomePageComponent, data: { help: 'web-welcome-page', permission: 'web-welcome-page-view' } },
          ]
       },

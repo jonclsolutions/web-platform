@@ -184,13 +184,55 @@
     },
     "projects": {
       "navLabel": "Projects",
-      "header": "Projects and Customer Threads",
+      "header": "Projects and customer conversations",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - management of customer projects, checkpoints, and communication."
+              "content": "The project list shows all customer projects and, for each, the number of new messages from the customer. A project opens on its own page with its settings, access to the client portal, checkpoints and the conversations with the customer."
+            }
+          ]
+        },
+        {
+          "key": "chapter-01",
+          "heading": "01. Project list",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Open a project",
+                  "text": "The folder icon in a row opens the project page (address web/projects/ID). The pencil icon offers a quick edit in a dialog."
+                },
+                {
+                  "title": "New messages",
+                  "text": "The New messages column shows customer messages nobody in the administration has read yet. The Unread messages filter shows only projects that have some."
+                },
+                {
+                  "title": "New project",
+                  "text": "After creating it, the project page opens with the one-time password for the customer. The password is stored nowhere - copy it before you leave the page."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-02",
+          "heading": "02. Project page",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The Back button returns to the project list. The project settings (name, lead, contacts, dates, visibility, status) are edited right in the form - a floating bar with Save changes and Discard changes appears once something changes. Leaving with unsaved changes or an uncopied password asks first. The administration texts follow the selected administration language; the project data is in one language."
+            },
+            {
+              "type": "text",
+              "content": "Conversations show only the threads of this project, split into Active, Closed and All. A thread with unread messages shows their number; opening it marks it read for the whole administration. The list refreshes itself every minute. Checkpoints have a title and an optional description (pencil icon); the status is picked from a dropdown. The customer sees the description in the portal when expanding the checkpoint."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Without the web-projects-update permission the page is read-only - settings, checkpoints and the password cannot be changed and replies cannot be sent."
             }
           ]
         }

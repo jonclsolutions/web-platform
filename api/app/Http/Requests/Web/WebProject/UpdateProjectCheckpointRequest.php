@@ -11,7 +11,8 @@ class UpdateProjectCheckpointRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'label'      => ['sometimes', 'required', 'string', 'max:255'],
+            'label'       => ['sometimes', 'required', 'string', 'max:255'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'status'     => ['sometimes', 'in:' . implode(',', WebProjectCheckpoint::STATUSES)],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
         ];

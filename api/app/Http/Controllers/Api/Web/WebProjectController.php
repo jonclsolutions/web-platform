@@ -20,7 +20,7 @@ namespace App\Http\Controllers\Api\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\WebProject\{StoreWebProjectRequest, UpdateWebProjectRequest, StoreProjectCheckpointRequest, UpdateProjectCheckpointRequest};
 use App\Http\Resources\Web\{WebProjectResource, WebProjectCheckpointResource};
-use App\Models\Web\{WebProject, WebProjectCheckpoint, WebProjectSession};
+use App\Models\Web\{WebProject, WebProjectCheckpoint, WebProjectSession, WebProjectThread};
 use App\Models\Web\WebLog;
 use App\Traits\HandlesAttachments;
 use App\Traits\LogsActivity;
@@ -32,6 +32,13 @@ use App\Traits\AppliesSafeSorting;
 class WebProjectController extends Controller
 {
     use LogsActivity, AppliesSafeSorting;
+
+    /**
+     * @description Fields whose old → new value the update log row names in its description
+     *   (short, no personal data). Other changed fields are listed by name only - their values
+     *   are in the row's `changes` (personal contacts masked, WebProject::AUDIT_MASKED).
+     */
+    private const LOGGED_VALUE_FIELDS = ['name', 'platform', 'visibility', 'status'];
     use HandlesAttachments;
 
     public function index(Request $request): JsonResponse
@@ -39,7 +46,7 @@ class WebProjectController extends Controller
         $perPage = $request->input('per_page', 15);
         $onlyTrashed = filter_var($request->input('only_trashed', false), FILTER_VALIDATE_BOOLEAN);
 
-        $query = WebProject::query()->withCount('checkpoints')->with(['lead', 'order']);
+        $query = WebProject::query()->withCount('checkpoints')->withUnreadMessagesCount()->with(['lead', 'order']);
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
         if ($s = $request->input('search')) {
@@ -53,6 +60,11 @@ class WebProjectController extends Controller
         }
 
         if ($request->filled('created_at')) $query->whereDate('created_at', $request->created_at);
+
+        // Only projects with client messages the administration has not read yet.
+        if (filter_var($request->input('unread', false), FILTER_VALIDATE_BOOLEAN)) {
+            $query->whereHas('threadMessages', WebProjectThread::unreadByAdmin());
+        }
 
         $this->applySorting($query, $request, 'id', 'desc');
 
@@ -86,7 +98,7 @@ class WebProjectController extends Controller
 
             $plaintextPassword = $project->regeneratePassword();
 
-            $this->logAction($request, WebLog::class, 'create', 'WebProject', "Project created: {$project->name}", $project->id, 'WebProject');
+            $this->logAction($request, WebLog::class, 'create', 'WebProject', "Project created: {$project->name} (client portal password generated)", $project->id, 'WebProject');
 
             $response = (new WebProjectResource($project))->resolve();
             $response['generated_password'] = $plaintextPassword;
@@ -101,7 +113,7 @@ class WebProjectController extends Controller
 
     public function show($id): JsonResponse
     {
-        $project = WebProject::withTrashed()->with(['lead', 'order', 'checkpoints'])->findOrFail($id);
+        $project = WebProject::withTrashed()->withUnreadMessagesCount()->with(['lead', 'order', 'checkpoints'])->findOrFail($id);
         return $this->respond((new WebProjectResource($project))->resolve());
     }
 
@@ -110,9 +122,10 @@ class WebProjectController extends Controller
         $project = WebProject::findOrFail($id);
 
         try {
+            $before = $project->only(self::LOGGED_VALUE_FIELDS);
             $project->update($request->validated());
 
-            $this->logAction($request, WebLog::class, 'update', 'WebProject', "Updated project ID: {$project->id}", $project->id, 'WebProject');
+            $this->logAction($request, WebLog::class, 'update', 'WebProject', $this->describeProjectUpdate($project, $before), $project->id, 'WebProject');
 
             $fresh = $project->fresh()->load(['lead', 'order', 'checkpoints']);
             return $this->respond((new WebProjectResource($fresh))->resolve());
@@ -248,15 +261,32 @@ class WebProjectController extends Controller
         }
 
         $validated = $request->validated();
-        if (isset($validated['status']) && $validated['status'] !== $checkpoint->status) {
+        $oldStatus = $checkpoint->status;
+        $oldLabel = $checkpoint->label;
+        $oldDescription = $checkpoint->description;
+        $statusChanged = isset($validated['status']) && $validated['status'] !== $oldStatus;
+        if ($statusChanged) {
             $checkpoint->setStatus($validated['status']);
-            unset($validated['status']);
         }
+        unset($validated['status']);
         if (!empty($validated)) {
             $checkpoint->update($validated);
         }
 
-        $this->logAction($request, WebLog::class, 'update', 'WebProjectCheckpoint', "Updated checkpoint ID: {$checkpoint->id} (project ID: {$projectId})", (int) $projectId, 'WebProject');
+        // Only a real change is worth a log row; the status change says from what to what.
+        if ($statusChanged) {
+            $this->logAction($request, WebLog::class, 'checkpoint_status', 'WebProjectCheckpoint', "Checkpoint '{$checkpoint->label}' of project #{$projectId}: status {$oldStatus} → {$checkpoint->status}", (int) $projectId, 'WebProject');
+        }
+        $edits = [];
+        if ($checkpoint->label !== $oldLabel) {
+            $edits[] = "renamed to '{$checkpoint->label}'";
+        }
+        if ($checkpoint->description !== $oldDescription) {
+            $edits[] = 'description changed';
+        }
+        if ($edits !== []) {
+            $this->logAction($request, WebLog::class, 'update', 'WebProjectCheckpoint', "Checkpoint '{$oldLabel}' of project #{$projectId}: " . implode(', ', $edits), (int) $projectId, 'WebProject');
+        }
 
         return $this->respond((new WebProjectCheckpointResource($checkpoint->fresh()))->resolve());
     }
@@ -271,9 +301,35 @@ class WebProjectController extends Controller
 
         $checkpoint->delete();
 
-        $this->logAction($request, WebLog::class, 'hard_delete', 'WebProjectCheckpoint', "Deleted checkpoint ID: {$checkpointId} (project ID: {$projectId})", (int) $projectId, 'WebProject');
+        $this->logAction($request, WebLog::class, 'hard_delete', 'WebProjectCheckpoint', "Deleted checkpoint ID: {$checkpointId} '{$checkpoint->label}' (project #{$projectId})", (int) $projectId, 'WebProject');
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * @description Readable summary of a project update for the log, e.g.
+     *   "Updated project #3 'Shop': status development → finished; changed: project_lead".
+     * @param WebProject $project The updated project.
+     * @param array $before Values of LOGGED_VALUE_FIELDS before the update.
+     * @return string
+     */
+    private function describeProjectUpdate(WebProject $project, array $before): string
+    {
+        $changed = array_keys(array_diff_key($project->getChanges(), array_flip(['updated_at'])));
+        if ($changed === []) {
+            return "Updated project #{$project->id} '{$project->name}': no changes";
+        }
+
+        $parts = [];
+        foreach (array_intersect(self::LOGGED_VALUE_FIELDS, $changed) as $field) {
+            $parts[] = "{$field} {$before[$field]} → {$project->{$field}}";
+        }
+        $others = array_values(array_diff($changed, self::LOGGED_VALUE_FIELDS));
+        if ($others !== []) {
+            $parts[] = 'changed: ' . implode(', ', $others);
+        }
+
+        return "Updated project #{$project->id} '{$project->name}': " . implode('; ', $parts);
     }
 
     /**

@@ -33,12 +33,51 @@ class WebProjectThread extends Model
         'opened_by',
         'last_message_at',
         'customer_last_read_at',
+        'admin_last_read_at',
     ];
 
     protected $casts = [
         'last_message_at'       => 'datetime',
         'customer_last_read_at' => 'datetime',
+        'admin_last_read_at'    => 'datetime',
     ];
+
+    /**
+     * @description Condition of a client message the administration has not read yet: written by
+     *   the customer after the thread's `admin_last_read_at` (any, when never read). For queries on
+     *   web_project_thread_messages joined with / nested in web_project_threads.
+     * @return \Closure(\Illuminate\Database\Eloquent\Builder): void
+     */
+    public static function unreadByAdmin(): \Closure
+    {
+        return function ($query): void {
+            $query->where('web_project_thread_messages.author_type', 'customer')
+                ->where(fn ($w) => $w->whereNull('web_project_threads.admin_last_read_at')
+                    ->orWhereColumn('web_project_thread_messages.created_at', '>', 'web_project_threads.admin_last_read_at'));
+        };
+    }
+
+    /**
+     * @description Adds `admin_unread_count` (client messages the administration has not read).
+     * @param \Illuminate\Database\Eloquent\Builder $query Thread query.
+     * @return void
+     */
+    public function scopeWithAdminUnreadCount($query): void
+    {
+        $query->withCount(['messages as admin_unread_count' => self::unreadByAdmin()]);
+    }
+
+    /**
+     * @description Marks the thread read by the administration (opened or answered by an admin);
+     *   no change of `updated_at`.
+     * @return void
+     */
+    public function markReadByAdmin(): void
+    {
+        $this->timestamps = false;
+        $this->update(['admin_last_read_at' => now()]);
+        $this->timestamps = true;
+    }
 
     public function project(): BelongsTo
     {
