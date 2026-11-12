@@ -10,6 +10,7 @@
 
 namespace App\Http\Resources\Web;
 
+use App\Http\Resources\Core\CoreAttachmentResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -39,7 +40,7 @@ class WebSalesOrderResource extends JsonResource
             'order_description'          => $this->order_description,
             'data_processing_agreement'  => (bool) $this->data_processing_agreement,
             'tos_agreement'              => (bool) $this->tos_agreement,
-            'attachments'                => WebAttachmentResource::collection($this->whenLoaded('attachments')),
+            'attachments'                => CoreAttachmentResource::collection($this->whenLoaded('attachments')),
             'project_id'                 => $this->whenLoaded('project', fn() => $this->project?->id, null),
             'created_at'                 => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at'                 => $this->updated_at?->format('Y-m-d H:i:s'),

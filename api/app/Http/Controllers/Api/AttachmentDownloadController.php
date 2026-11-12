@@ -10,7 +10,7 @@
  *              original human-readable file name from the owning DB record.
  *              The route takes ONE wildcard `{path}` - module paths contain slashes
  *              (`web/raw_request_commissions/...`).
- *              Files are resolved from the polymorphic `web_attachments` table (WebAttachment),
+ *              Files are resolved from the polymorphic `web_attachments` table (CoreAttachment),
  *              looked up by `path`, disk per row (`$attachment->disk`, private by default).
  * @security The files are uploaded by the public (inquiries, orders, portal threads) and the API
  *              runs on the same origin as the admin, so a file the browser renders as a page
@@ -22,8 +22,10 @@
  *                guess another type) and, except PDF, a sandbox CSP (no script, no same-origin
  *                access even if a file is rendered);
  *              - Content-Disposition is built by Symfony (RFC 6266, ASCII fallback + filename*).
- * @note Every served file is written to the web log (attachment_download / attachment_view:
- *              attachment id, owner record, type and size - not the file name, it may be personal);
+ * @note Every served file is written to the audit log of the application owning the record
+ *              (AppRegistry::ownerOfMorph(); the core log for anything else) - attachment_download /
+ *              attachment_view: attachment id, owner record, type and size - not the file name, it
+ *              may be personal);
  *              a path with `..` is a security event (path_traversal_attempt).
  */
 
@@ -31,11 +33,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Core\CoreSecurityEvent;
-use App\Models\Web\WebLog;
+use App\Models\Core\CoreLog;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
-use App\Models\Web\WebAttachment;
+use App\Models\Core\CoreAttachment;
+use App\Support\Apps\AppRegistry;
 use App\Support\Uploads\AttachmentPolicy;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -126,7 +130,7 @@ class AttachmentDownloadController extends Controller
             abort(404);
         }
 
-        $attachment = WebAttachment::where('path', $path)->first();
+        $attachment = CoreAttachment::where('path', $path)->first();
 
         if ($attachment === null) {
             abort(404);
@@ -138,11 +142,12 @@ class AttachmentDownloadController extends Controller
             abort(404);
         }
 
-        $owner = class_basename((string) $attachment->attachable_type) . ' #' . $attachment->attachable_id;
+        $type = (string) $attachment->attachable_type;
+        $owner = class_basename(Relation::getMorphedModel($type) ?? $type) . ' #' . $attachment->attachable_id;
         $this->logAction(
-            $request, WebLog::class, "attachment_{$action}", 'WebAttachment',
+            $request, AppRegistry::ownerOfMorph($type)?->logModel() ?? CoreLog::class, "attachment_{$action}", 'Attachment',
             "Attachment #{$attachment->id} of {$owner} served ({$action}, {$attachment->mime_type}, {$attachment->size_bytes} B)",
-            $attachment->id, 'WebAttachment', ['expires', 'signature']
+            $attachment->id, 'Attachment', ['expires', 'signature']
         );
 
         return [$disk, $path, $attachment->original_filename ?: basename($path)];

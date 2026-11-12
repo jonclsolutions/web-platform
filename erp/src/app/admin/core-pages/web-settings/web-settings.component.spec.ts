@@ -41,7 +41,7 @@ describe('WebSettingsComponent', () => {
   beforeEach(async () => {
     ctx = createAdminTestContext();
     (ctx.dataHandler as any).get.and.callFake((url: string) => {
-      if (url === 'languages/web') return of([{ code: 'cz', name: 'Čeština', active: true }, { code: 'en', name: 'English', active: true }]);
+      if (url === 'languages') return of([{ code: 'cz', name: 'Čeština', active: true }, { code: 'en', name: 'English', active: true }]);
       if (url === 'languages/shop') return of([]);
       if (url === 'legal/config') return of(JSON.parse(JSON.stringify(config)));
       if (url === 'legal/config/page-titles') return of(JSON.parse(JSON.stringify(pageTitles)));
@@ -363,7 +363,7 @@ describe('WebSettingsComponent', () => {
      */
     it('shows the data retention tab', fakeAsync(() => {
       (ctx.dataHandler as any).get.and.callFake((url: string) => url === 'core/retention_settings' ? of([])
-        : url === 'languages/web' ? of([{ code: 'cz', name: 'Čeština', active: true }]) : of(JSON.parse(JSON.stringify(config))));
+        : url === 'languages' ? of([{ code: 'cz', name: 'Čeština', active: true }]) : of(JSON.parse(JSON.stringify(config))));
       fixture.detectChanges();
       component.switchTab('retention');
       fixture.detectChanges();
@@ -378,7 +378,7 @@ describe('WebSettingsComponent', () => {
     }));
 
     it('handles languages, tabs and names', fakeAsync(() => {
-      (ctx.dataHandler as any).get.and.callFake((url: string) => url === 'languages/web'
+      (ctx.dataHandler as any).get.and.callFake((url: string) => url === 'languages'
         ? of([{ code: 'en', name: 'English', active: true }, { code: 'de', name: 'Deutsch', active: false }])
         : of(JSON.parse(JSON.stringify(config))));
       init();
@@ -392,8 +392,8 @@ describe('WebSettingsComponent', () => {
       component.switchTab('company');
       expect(component.activeTab).toBe('company');
 
-      (component as any).resourceCache.invalidate('web-settings:languages:web');
-      (ctx.dataHandler as any).get.and.callFake((url: string) => url === 'languages/web' ? throwError(() => new Error('x')) : of({}));
+      (component as any).resourceCache.invalidate('web-settings:languages');
+      (ctx.dataHandler as any).get.and.callFake((url: string) => url === 'languages' ? throwError(() => new Error('x')) : of({}));
       (component as any).loadLanguages();
       expect(component.languages.map(l => l.code)).toEqual(['cz']);
       expect(component.settings.brand_tagline_i18n).toEqual({ cz: 'Tag' });

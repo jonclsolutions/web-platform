@@ -126,6 +126,29 @@ class TranslationTest extends TestCase
     }
 
     /**
+     * @description The languages of all applications together (core pages such as the legal
+     *   documents): one entry per code, the first one wins, with icon URLs; public.
+     * @input languages.json: cz (web, no module = web), EN (web), en (shop), de (shop, with icon).
+     * @output GET /api/languages: codes [cz, EN, de], the first `en` entry (web), de iconUrl set.
+     */
+    public function test_languages_of_all_applications(): void
+    {
+        $this->languages([
+            ['code' => 'cz', 'name' => 'Čeština', 'active' => true],
+            ['code' => 'EN', 'name' => 'English (web)', 'active' => true, 'module' => 'web'],
+            ['code' => 'en', 'name' => 'English (shop)', 'active' => true, 'module' => 'shop'],
+            ['code' => 'de', 'name' => 'Deutsch', 'active' => false, 'module' => 'shop', 'icon_path' => 'translation_images/de.png'],
+        ]);
+
+        $data = $this->getJson('/api/languages')->assertOk()->json('data');
+
+        $this->assertSame(['cz', 'EN', 'de'], array_column($data, 'code'));
+        $this->assertSame('English (web)', $data[1]['name']);
+        $this->assertNotNull($data[2]['iconUrl']);
+        $this->assertArrayNotHasKey('icon_path', $data[2]);
+    }
+
+    /**
      * @description SECURITY: module / language codes cannot leave the translations folder - a
      *   module or code with dots never matches a route.
      * @input File storage/app/public/secret.json; '..' plain and URL-encoded (%2E%2E) as module / language

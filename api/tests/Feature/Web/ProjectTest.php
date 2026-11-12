@@ -18,7 +18,7 @@
 namespace Tests\Feature\Web;
 
 use App\Mail\Web\ProjectClientUpdateMail;
-use App\Models\Web\WebAttachment;
+use App\Models\Core\CoreAttachment;
 use App\Models\Web\WebProject;
 use App\Models\Web\WebLog;
 use App\Models\Web\WebProjectAccount;
@@ -162,7 +162,7 @@ class ProjectTest extends TestCase
 
         $this->deleteJson("/api/web/projects/{$project->id}?force_delete=true")->assertNoContent();
         $this->assertNull(WebProject::withTrashed()->find($project->id));
-        $this->assertSame(0, WebProjectSession::count() + WebProjectCheckpoint::count() + WebProjectThread::count() + WebAttachment::count() + WebProjectAccount::count());
+        $this->assertSame(0, WebProjectSession::count() + WebProjectCheckpoint::count() + WebProjectThread::count() + CoreAttachment::count() + WebProjectAccount::count());
         Storage::disk('private')->assertMissing('web/project_threads/m.pdf');
         $this->assertWebLog('hard_delete');
         $this->deleteJson('/api/web/projects/999')->assertStatus(404);

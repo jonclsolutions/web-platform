@@ -47,9 +47,7 @@ export const ADMIN_MODULE_PAGES: Record<AdminModule, AdminNavPage[]> = {
     { path: 'sales-orders', permission: 'web-sales-orders-view' },
     { path: 'projects', permission: 'web-projects-view' },
     { path: 'edit-website', permission: 'web-edit-website-view' },
-    { path: 'edit-news', permission: 'web-news-view' },
     { path: 'job-applications', permission: 'web-job-applications-view' },
-    { path: 'support-tickets', permission: 'web-support-tickets-view' },
     { path: 'business-logs', permission: 'web-view-web-logs' },
   ],
   core: [

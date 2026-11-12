@@ -10,6 +10,7 @@
 
 namespace App\Http\Resources\Web;
 
+use App\Http\Resources\Core\CoreAttachmentResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -35,7 +36,7 @@ return [
 'phone'         => $this->phone,
 'position_name' => $this->position_name,
 'message'       => $this->message,
-'attachments'   => WebAttachmentResource::collection($this->whenLoaded('attachments')),
+'attachments'   => CoreAttachmentResource::collection($this->whenLoaded('attachments')),
 'state'         => $this->state,
 'internal_note' => $this->internal_note,
 'created_at'    => $this->created_at?->format('Y-m-d H:i:s'),

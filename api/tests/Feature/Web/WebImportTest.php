@@ -7,8 +7,8 @@
  * @author JS
  * @created 2026
  * @description Feature tests of the bulk import of the web section - template download,
- *   validation (dry run) and commit - for commission requests, support tickets, news and
- *   sales leads. The same flow is tested once per resource with its own columns.
+ *   validation (dry run) and commit - for commission requests and sales
+ *   leads. The same flow is tested once per resource with its own columns.
  * @dependencies
  * - Tests\TestCase, Tests\Support\WebFixtures; Storage fake ('local' = temporary import files).
  */
@@ -16,17 +16,15 @@
 namespace Tests\Feature\Web;
 
 use App\Models\Core\CoreImportBatch;
-use App\Models\Web\WebNews;
 use App\Models\Web\WebRawRequestCommission;
 use App\Models\Web\WebSalesLead;
-use App\Models\Web\WebSupportTicket;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\WebFixtures;
 use Tests\TestCase;
 
 /**
- * @description /api/web/{raw_request_commissions,support_tickets,news,sales_leads}/import/*.
+ * @description /api/web/{raw_request_commissions,sales_leads}/import/*.
  */
 class WebImportTest extends TestCase
 {
@@ -56,20 +54,6 @@ class WebImportTest extends TestCase
                 ['thema' => 'Imported request', 'contact_email' => 'a@b.cz', 'contact_phone' => '', 'order_description' => 'Text', 'status' => 'new', 'priority' => 'low', 'note' => ''],
                 ['thema' => 'x', 'contact_email' => 'bad', 'contact_phone' => '', 'order_description' => '', 'status' => 'new', 'priority' => 'low', 'note' => ''],
                 WebRawRequestCommission::class, 'import-template-web-raw_request_commissions',
-            ],
-            'support tickets' => [
-                'web/support_tickets', 'web-support-tickets-create',
-                ['user_name_plain', 'user_plain', 'category', 'subject', 'description', 'priority', 'state'],
-                ['user_name_plain' => 'Jana', 'user_plain' => 'jana@x.cz', 'category' => 'it', 'subject' => 'Imported ticket', 'description' => 'Text', 'priority' => 'low', 'state' => ''],
-                ['user_name_plain' => 'Jana', 'user_plain' => 'jana@x.cz', 'category' => 'nope', 'subject' => 'S', 'description' => 'Text', 'priority' => 'low', 'state' => 'weird'],
-                WebSupportTicket::class, 'import-template-web-support_tickets',
-            ],
-            'news' => [
-                'web/news', 'web-news-create',
-                ['title', 'thema', 'author', 'message', 'bullet_1', 'bullet_2', 'bullet_3', 'bullet_4'],
-                ['title' => 'Imported news', 'thema' => 'info', 'author' => 'Team', 'message' => 'Text', 'bullet_1' => '', 'bullet_2' => '', 'bullet_3' => '', 'bullet_4' => ''],
-                ['title' => 'No', 'thema' => 'bogus', 'author' => '', 'message' => '', 'bullet_1' => '', 'bullet_2' => '', 'bullet_3' => '', 'bullet_4' => ''],
-                WebNews::class, 'import-template-web-news',
             ],
             'sales leads' => [
                 'web/sales_leads', 'web-sales-leads-create',

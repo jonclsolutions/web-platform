@@ -32,10 +32,6 @@ export const TEST_UPLOAD_RULES: Record<UploadProfile, UploadRule> = {
     extensions: ['pdf', 'doc', 'docx', 'odt', 'pages', 'rtf', 'txt', 'jpg', 'jpeg', 'png', 'heic', 'heif', 'zip', 'rar', '7z'],
     max_files: 1, max_file_size_mb: 20, max_total_size_mb: null,
   },
-  support_ticket: {
-    extensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic', 'heif', 'pdf', 'txt', 'csv', 'doc', 'docx', 'xls', 'xlsx', 'zip'],
-    max_files: 1, max_file_size_mb: 20, max_total_size_mb: null,
-  },
   project_thread: {
     extensions: ['pdf', 'doc', 'docx', 'odt', 'rtf', 'txt', 'xls', 'xlsx', 'ods', 'csv', 'ppt', 'pptx', 'odp', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'zip', 'rar', '7z'],
     max_files: 5, max_file_size_mb: 15, max_total_size_mb: null,

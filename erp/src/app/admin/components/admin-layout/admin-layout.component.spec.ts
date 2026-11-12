@@ -101,7 +101,7 @@ describe('AdminLayoutComponent', () => {
    * @description A module tab is shown only with its tab permission AND at least one page of the
    *   module (bugfix 2026-10-27: `view-web` alone showed Web with every web permission removed);
    *   a role-only page (edit roles) counts for the sysadmin only; the sysadmin sees every tab.
-   * @input  view-web alone; view-web + web-news-view; web-news-view without view-web;
+   * @input  view-web alone; view-web + web-edit-website-view; web-edit-website-view without view-web;
    *         view-core + nothing else; view-core role admin vs sysadmin for edit-roles only;
    *         view-eshop + shop-coupons-view; sysadmin without any permission.
    * @output false; true; false; core true (view-core opens the core dashboard); shop true;
@@ -110,9 +110,9 @@ describe('AdminLayoutComponent', () => {
   it('shows a module tab only when the module has a page for the user', () => {
     ctx.permissions.granted = new Set(['view-web']);
     expect(component.isModuleAvailable('web')).toBeFalse();
-    ctx.permissions.granted = new Set(['view-web', 'web-news-view']);
+    ctx.permissions.granted = new Set(['view-web', 'web-edit-website-view']);
     expect(component.isModuleAvailable('web')).toBeTrue();
-    ctx.permissions.granted = new Set(['web-news-view']);
+    ctx.permissions.granted = new Set(['web-edit-website-view']);
     expect(component.isModuleAvailable('web')).toBeFalse();
 
     ctx.permissions.granted = new Set(['view-core']);
@@ -276,11 +276,11 @@ describe('AdminLayoutComponent', () => {
 
   /**
    * @description Menu groups follow the permissions ("a|b" = any of them).
-   * @input  granted ['web-news-view', 'shop-orders-view', 'core-legal-config-view']
+   * @input  granted ['web-edit-website-view', 'shop-orders-view', 'core-legal-config-view']
    * @output web content, shop transactions, core legal groups visible; web business, shop catalog hidden
    */
   it('shows menu groups by permission', () => {
-    ctx.permissions.granted = new Set(['web-news-view', 'shop-orders-view', 'core-legal-config-view']);
+    ctx.permissions.granted = new Set(['web-edit-website-view', 'shop-orders-view', 'core-legal-config-view']);
     expect(component.showWebContentGroup).toBeTrue();
     expect(component.showShopTransactionsGroup).toBeTrue();
     expect(component.showCoreLegalGroup).toBeTrue();
@@ -440,8 +440,8 @@ describe('AdminLayoutComponent', () => {
   it('shows every menu group only with its permission', () => {
     const groups: Record<string, string> = {
       showWebWelcomeGroup: 'web-welcome-page-view', showShopWelcomeGroup: 'shop-welcome-page-view',
-      showWebOverviewGroup: 'web-view-dashboard', showWebBusinessGroup: 'web-projects-view', showWebContentGroup: 'web-news-view',
-      showWebPeopleGroup: 'web-support-tickets-view', showWebSystemGroup: 'web-view-web-logs',
+      showWebOverviewGroup: 'web-view-dashboard', showWebBusinessGroup: 'web-projects-view', showWebContentGroup: 'web-edit-website-view',
+      showWebPeopleGroup: 'web-job-applications-view', showWebSystemGroup: 'web-view-web-logs',
       showCoreLegalGroup: 'core-external-links-view', showShopOverviewGroup: 'shop-view-dashboard',
       showShopCatalogGroup: 'shop-suppliers-view', showShopTransactionsGroup: 'shop-coupons-view', showShopCustomersGroup: 'shop-customers-view',
       showShopLogisticsGroup: 'shop-payment-methods-view', showShopContentGroup: 'shop-edit-eshop-view', showShopSystemGroup: 'shop-view-logs'

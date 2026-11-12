@@ -16,6 +16,7 @@ namespace App\Http\Requests\Web\WebSalesOrder;
 
 use App\Rules\AttachmentsTotalSize;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Services\Web\WebApp;
 use App\Support\Uploads\AttachmentPolicy;
 
 /**
@@ -25,7 +26,7 @@ use App\Support\Uploads\AttachmentPolicy;
 class StoreWebSalesOrderRequest extends FormRequest
 {
     /** @description Limits and allowed types of the upload profile (AttachmentPolicy - shared with GET upload-rules). */
-    private const LIMITS = AttachmentPolicy::PROFILES[AttachmentPolicy::SALES_ORDER];
+    private const LIMITS = WebApp::UPLOAD_PROFILES[WebApp::UPLOAD_SALES_ORDER];
 
     public function authorize(): bool
     {
@@ -44,7 +45,7 @@ class StoreWebSalesOrderRequest extends FormRequest
             'client_phone'      => 'nullable|string|max:20',
             'lang'              => 'sometimes|nullable|string|max:5',
             'attachments'       => ['nullable', 'array', 'max:' . self::LIMITS['max_files'], new AttachmentsTotalSize(self::LIMITS['max_total_bytes'])],
-            'attachments.*'     => AttachmentPolicy::fileRules(AttachmentPolicy::SALES_ORDER),
+            'attachments.*'     => AttachmentPolicy::fileRules(WebApp::UPLOAD_SALES_ORDER),
             'dataProcessingAgreement' => 'required|accepted',
             'tosAgreement'            => 'required|accepted',
         ];

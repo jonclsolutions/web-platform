@@ -22,13 +22,16 @@ use Illuminate\Database\Eloquent\Model;
 class CoreRetentionSetting extends Model
 {
     /**
-     * @description Default period of the core's own kind of data (days): audit_logs 730 (2 years) -
-     * core / web / e-shop activity logs (e-mail and IP of the actor) and the history of finished
-     * imports, long enough to trace a change, then deleted. The kinds of the modules and their
-     * defaults come from their retention sources (see defaults()).
+     * @description Default periods of the core's own kinds of data (days): cookie_consents 1095
+     * (3 years) - proof of the visitors' cookie consents within the general limitation period
+     * (counted from their creation); audit_logs 730 (2 years) - core and application activity logs
+     * (e-mail and IP of the actor) and the history of finished imports, long enough to trace a
+     * change, then deleted. The kinds of the applications and their defaults come from their
+     * retention sources (see defaults()).
      */
     public const DEFAULTS = [
-        RetentionPurgeService::AUDIT_LOGS => 730,
+        RetentionPurgeService::COOKIE_CONSENTS => 1095,
+        RetentionPurgeService::AUDIT_LOGS      => 730,
     ];
 
     /** @description Shortest allowed period - a typo must not delete fresh records. */
@@ -52,7 +55,7 @@ class CoreRetentionSetting extends Model
 
     /**
      * @description Every kind of data with its default period (null = off) in the admin order: the
-     *   kinds of the registered modules (config/retention.php), then the core ones (DEFAULTS).
+     *   kinds of the registered applications (AppManifest::retentionSources()), then the core ones (DEFAULTS).
      * @return array<string, int|null>
      */
     public static function defaults(): array

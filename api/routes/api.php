@@ -24,23 +24,22 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserAvatarController;
 use App\Http\Controllers\Api\KnowledgeBaseController;
 use App\Http\Controllers\Api\TranslationController;
+use App\Support\Apps\AppRegistry;
 use App\Http\Controllers\Api\Core\CoreRoleController;
 use App\Http\Controllers\Api\Core\CorePermissionController;
 use App\Http\Controllers\Api\Core\CoreSecurityEventController;
 use App\Http\Controllers\Api\Core\CoreSecuritySettingController;
 use App\Http\Controllers\Api\Core\CoreRetentionSettingController;
-use App\Http\Controllers\Api\Web\WebCookieConsentController;
+use App\Http\Controllers\Api\Legal\CookieConsentController;
 use App\Http\Controllers\Api\Legal\DocumentSectionController;
 use App\Http\Controllers\Api\Legal\SiteConfigurationController;
 use App\Http\Controllers\Api\Web\WebRawRequestCommissionController;
 use App\Http\Controllers\Api\Web\WebLogController;
 use App\Http\Controllers\Api\Web\WebSalesLeadController;
-use App\Http\Controllers\Api\Web\WebNewsController;
 use App\Http\Controllers\Api\Web\WebFaqController;
 use App\Http\Controllers\Api\Web\WebJobController;
 use App\Http\Controllers\Api\Web\WebReferenceController;
 use App\Http\Controllers\Api\Web\WebSalesOrderController;
-use App\Http\Controllers\Api\Web\WebSupportTicketController;
 use App\Http\Controllers\Api\Web\WebJobApplicationController;
 use App\Http\Controllers\Api\Web\WebSiteSettingController;
 use App\Http\Controllers\Api\Web\WebProjectAccountController;
@@ -84,6 +83,7 @@ use App\Http\Controllers\Api\Legal\PageTitleController;
 |--------------------------------------------------------------------------
 | Only GET for language lists and translations — no mutations without authorization.
 */
+Route::get('languages', [TranslationController::class, 'getAllLanguages']);
 Route::get('languages/{module}', [TranslationController::class, 'getLanguages'])
     ->where('module', TranslationController::MODULE_PATTERN);
 Route::get('translations/{module}/{lang}', [TranslationController::class, 'show'])
@@ -271,7 +271,7 @@ Route::post('job_applications',        [WebJobApplicationController::class, 'sto
 // Cookie consent record (GDPR Art. 7(1), VT-12) - anonymous (random consent id, no IP / user
 // agent stored); sent by the cookie bar on every decision. Not behind web.active: the bar is
 // also shown by the e-shop.
-Route::post('cookie-consents', [WebCookieConsentController::class, 'store'])
+Route::post('cookie-consents', [CookieConsentController::class, 'store'])
     ->middleware('throttle:20,1,cookie-consent');
 
 /*
@@ -317,11 +317,14 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
     Route::get('/knowledge-base/pages/{id}', [KnowledgeBaseController::class, 'show'])
         ->where('id', '[a-z0-9-]{1,80}');
 
+        // Any application's translation permission lets the request in; TranslationController then
+        // checks the permission of the module of the URL (only the sysadmin when none is registered).
+        $translationPermission = 'permission:' . (implode('|', AppRegistry::translationPermissions()) ?: 'sysadmin-only');
         Route::post('/save_translations/{module}', [TranslationController::class, 'save'])
             ->where('module', TranslationController::MODULE_PATTERN)
-            ->middleware('permission:web-edit-website-update|shop-edit-eshop-update');
+            ->middleware($translationPermission);
 
-    Route::prefix('languages')->middleware('permission:web-edit-website-update|shop-edit-eshop-update')
+    Route::prefix('languages')->middleware($translationPermission)
         ->where(['module' => TranslationController::MODULE_PATTERN, 'code' => TranslationController::LANG_PATTERN])
         ->group(function () {
             Route::post('/{module}',     [TranslationController::class, 'saveLanguages']);
@@ -759,34 +762,6 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:web-view-web-logs');
         });
 
-        // ── web/support_tickets ────────────────────────────────────────────
-        Route::prefix('support_tickets')->group(function () {
-            Route::post('/bulk-delete', [WebSupportTicketController::class, 'bulkDestroy'])
-                ->middleware('permission:web-support-tickets-delete');
-            Route::delete('/force-delete-all', [WebSupportTicketController::class, 'forceDeleteAllTrashed'])
-                ->middleware('permission:web-support-tickets-delete');
-                Route::get('/import/template', [WebSupportTicketController::class, 'importTemplate'])
-        ->middleware('permission:web-support-tickets-create');
-    Route::post('/import/validate', [WebSupportTicketController::class, 'importValidate'])
-        ->middleware(['throttle:30,1,import-support-tickets-validate', 'permission:web-support-tickets-create']);
-    Route::post('/import/commit', [WebSupportTicketController::class, 'importCommit'])
-        ->middleware(['throttle:30,1,import-support-tickets-commit', 'permission:web-support-tickets-create']);
-            Route::get('/',      [WebSupportTicketController::class, 'index'])
-                ->middleware('permission:web-support-tickets-view');
-            Route::post('/',     [WebSupportTicketController::class, 'store'])
-                ->middleware('permission:web-support-tickets-create');
-            Route::get('/{id}',  [WebSupportTicketController::class, 'show'])
-                ->middleware('permission:web-support-tickets-view');
-            Route::put('/{id}',  [WebSupportTicketController::class, 'update'])
-                ->middleware('permission:web-support-tickets-update');
-            Route::patch('/{id}', [WebSupportTicketController::class, 'update'])
-                ->middleware('permission:web-support-tickets-update');
-            Route::post('/{id}/restore', [WebSupportTicketController::class, 'restore'])
-                ->middleware('permission:web-support-tickets-delete');
-            Route::delete('/{id}', [WebSupportTicketController::class, 'destroy'])
-                ->middleware('permission:web-support-tickets-delete');
-        });
-
         // ── web/raw_request_commissions ────────────────────────────────────
         // Bulk delete and import (the import sends no confirmation e-mail - see the header of
         // WebRawRequestCommissionController).
@@ -839,34 +814,6 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:web-sales-orders-delete');
             Route::delete('/{id}', [WebSalesOrderController::class, 'destroy'])
                 ->middleware('permission:web-sales-orders-delete');
-        });
-
-        // ── web/news ────────────────────────────────────────────────────────
-        Route::prefix('news')->group(function () {
-            Route::post('/bulk-delete', [WebNewsController::class, 'bulkDestroy'])
-                ->middleware('permission:web-news-delete');
-            Route::delete('/force-delete-all', [WebNewsController::class, 'forceDeleteAllTrashed'])
-                ->middleware('permission:web-news-delete');
-                  Route::get('/import/template', [WebNewsController::class, 'importTemplate'])
-        ->middleware('permission:web-news-create');
-    Route::post('/import/validate', [WebNewsController::class, 'importValidate'])
-        ->middleware(['throttle:30,1,import-news-validate', 'permission:web-news-create']);
-    Route::post('/import/commit', [WebNewsController::class, 'importCommit'])
-        ->middleware(['throttle:30,1,import-news-commit', 'permission:web-news-create']);
-            Route::get('/',      [WebNewsController::class, 'index'])
-                ->middleware('permission:web-news-view');
-            Route::post('/',     [WebNewsController::class, 'store'])
-                ->middleware('permission:web-news-create');
-            Route::get('/{id}',  [WebNewsController::class, 'show'])
-                ->middleware('permission:web-news-view');
-            Route::put('/{id}',  [WebNewsController::class, 'update'])
-                ->middleware('permission:web-news-update');
-            Route::patch('/{id}', [WebNewsController::class, 'update'])
-                ->middleware('permission:web-news-update');
-            Route::post('/{id}/restore', [WebNewsController::class, 'restore'])
-                ->middleware('permission:web-news-delete');
-            Route::delete('/{id}', [WebNewsController::class, 'destroy'])
-                ->middleware('permission:web-news-delete');
         });
 
         // ── web/sales_leads ────────────────────────────────────────────────

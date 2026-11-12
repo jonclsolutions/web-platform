@@ -18,11 +18,12 @@
 
 namespace App\Http\Controllers\Api\Web;
 
+use App\Models\Core\CoreAttachment;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\WebProject\{ReorderProjectCheckpointsRequest, StoreWebProjectRequest, UpdateWebProjectRequest, StoreProjectCheckpointRequest, UpdateProjectCheckpointRequest};
 use App\Http\Resources\Web\{WebProjectFileResource, WebProjectResource, WebProjectCheckpointResource};
 use App\Mail\Web\ProjectClientUpdateMail;
-use App\Models\Web\{WebAttachment, WebProject, WebProjectCheckpoint, WebProjectSession, WebProjectThread, WebProjectThreadMessage};
+use App\Models\Web\{WebProject, WebProjectCheckpoint, WebProjectSession, WebProjectThread, WebProjectThreadMessage};
 use App\Services\Web\ProjectNotifier;
 use App\Services\Web\ProjectActivityFeed;
 use App\Models\Web\WebProjectApproval;

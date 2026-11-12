@@ -7,86 +7,29 @@
  * @author JS
  * @created 2026
  * @description SINGLE source of the attachment rules (allowed types, count and size limits) of every
- * upload of the web module - the public forms, the customer portal and the admin forms. The
- * FormRequests validate with it and `GET upload-rules` (UploadRulesController) publishes the same
- * values to the frontend, so the browser can refuse a wrong file right when it is chosen and show
- * the allowed types. The two never drift apart.
+ * upload - the profiles come from the registered applications (AppManifest::uploadProfiles()), e.g.
+ * the public forms, the customer portal and the admin forms of the web. The FormRequests validate
+ * with it and `GET upload-rules` (UploadRulesController) publishes the same values to the
+ * frontend, so the browser can refuse a wrong file right when it is chosen and show the allowed
+ * types. The two never drift apart.
  * @security Uploads use a WHITELIST checked twice: `mimes:` (type detected from the file
  * CONTENT) and `extensions:` (extension of the file NAME) - both must be allowed. SVG, HTML,
  * XML and other formats that a browser can execute as a page are never on a list. Only
  * INLINE_MIME_TYPES are ever served inline (AttachmentDownloadController::view()); everything
- * else is always a download. The checks in the browser are only a convenience - the server
- * always validates again.
+ * else is always a download; an extension of BLOCKED_EXTENSIONS in a profile of an application is
+ * dropped here. The checks in the browser are only a convenience - the server always validates
+ * again.
  */
 
 namespace App\Support\Uploads;
 
+use App\Support\Apps\AppRegistry;
 use InvalidArgumentException;
 
 final class AttachmentPolicy
 {
-    /** @description Inquiries (WebRawRequestCommission) - public contact form and the admin. */
-    public const RAW_REQUEST_COMMISSION = 'raw_request_commission';
-
-    /** @description Orders (WebSalesOrder) - public order form and the admin. */
-    public const SALES_ORDER = 'sales_order';
-
-    /** @description CV of a job application (WebJobApplication) - one file. */
-    public const JOB_APPLICATION = 'job_application';
-
-    /** @description Attachment of a helpdesk ticket (WebSupportTicket) - one file. */
-    public const SUPPORT_TICKET = 'support_ticket';
-
-    /** @description Attachments of the project portal threads (customer and admin). */
-    public const PROJECT_THREAD = 'project_thread';
-
-    /**
-     * @description Allowed attachments of the inquiry / order forms - documents, images, archives,
-     * audio / video, CAD.
-     */
-    public const COMMISSION_EXTENSIONS = [
-        'pdf', 'doc', 'docx', 'dotx', 'odt', 'pages', 'rtf', 'txt', 'csv',
-        'xls', 'xlsx', 'xlsm', 'xltx', 'ods', 'numbers', 'ppt', 'pptx', 'key',
-        'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'tif', 'heic', 'heif', 'psd', 'ai', 'eps',
-        'zip', 'rar', '7z', 'tar', 'gz',
-        'mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac',
-        'mp4', 'mov', 'avi', 'wmv', 'mkv', 'webm',
-        'dwg', 'dxf', 'stp', 'step', 'stl', 'obj',
-    ];
-
-    /**
-     * @description Upload profiles. `max_file_kb` is the Laravel `max:` value (kilobytes),
-     * `max_total_bytes` the AttachmentsTotalSize limit (null = no total limit).
-     * @var array<string, array{extensions: list<string>, max_files: int, max_file_kb: int, max_total_bytes: int|null}>
-     */
-    public const PROFILES = [
-        self::RAW_REQUEST_COMMISSION => [
-            'extensions' => self::COMMISSION_EXTENSIONS, 'max_files' => 10, 'max_file_kb' => 20480, 'max_total_bytes' => 50 * 1024 * 1024,
-        ],
-        self::SALES_ORDER => [
-            'extensions' => self::COMMISSION_EXTENSIONS, 'max_files' => 10, 'max_file_kb' => 20480, 'max_total_bytes' => 50 * 1024 * 1024,
-        ],
-        self::JOB_APPLICATION => [
-            'extensions' => ['pdf', 'doc', 'docx', 'odt', 'pages', 'rtf', 'txt', 'jpg', 'jpeg', 'png', 'heic', 'heif', 'zip', 'rar', '7z'],
-            'max_files' => 1, 'max_file_kb' => 20480, 'max_total_bytes' => null,
-        ],
-        self::SUPPORT_TICKET => [
-            'extensions' => [
-                'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic', 'heif',
-                'pdf', 'txt', 'csv', 'doc', 'docx', 'xls', 'xlsx',
-                'zip',
-            ],
-            'max_files' => 1, 'max_file_kb' => 20480, 'max_total_bytes' => null,
-        ],
-        self::PROJECT_THREAD => [
-            'extensions' => [
-                'pdf', 'doc', 'docx', 'odt', 'rtf', 'txt', 'xls', 'xlsx', 'ods', 'csv', 'ppt', 'pptx', 'odp',
-                'jpg', 'jpeg', 'png', 'gif', 'webp',
-                'zip', 'rar', '7z',
-            ],
-            'max_files' => 5, 'max_file_kb' => 15360, 'max_total_bytes' => null,
-        ],
-    ];
+    /** @description Extensions never allowed in any profile (formats a browser runs as a page). */
+    public const BLOCKED_EXTENSIONS = ['svg', 'svgz', 'html', 'htm', 'xhtml', 'xml', 'js', 'mjs', 'php', 'phtml'];
 
     /**
      * @description Types the browser may show inline - none of them can run a script in the
@@ -94,28 +37,43 @@ final class AttachmentPolicy
      */
     public const INLINE_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
-    /** @description File name extensions offered with a "view" link (WebAttachmentResource). */
+    /** @description File name extensions offered with a "view" link (CoreAttachmentResource). */
     public const INLINE_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
 
     /**
+     * @description Upload profiles of all applications, without BLOCKED_EXTENSIONS. `max_file_kb`
+     * is the Laravel `max:` value (kilobytes), `max_total_bytes` the AttachmentsTotalSize limit
+     * (null = no total limit).
+     * @return array<string, array{extensions: list<string>, max_files: int, max_file_kb: int, max_total_bytes: int|null}>
+     */
+    public static function profiles(): array
+    {
+        return array_map(
+            fn (array $rules) => ['extensions' => array_values(array_diff($rules['extensions'], self::BLOCKED_EXTENSIONS))] + $rules,
+            AppRegistry::uploadProfiles()
+        );
+    }
+
+    /**
      * @description Returns one upload profile.
-     * @param string $profile One of the profile constants (e.g. self::SALES_ORDER).
+     * @param string $profile Profile name (e.g. WebApp::UPLOAD_SALES_ORDER).
      * @return array{extensions: list<string>, max_files: int, max_file_kb: int, max_total_bytes: int|null}
      * @throws InvalidArgumentException For an unknown profile (a programming error).
      */
     public static function profile(string $profile): array
     {
-        if (!isset(self::PROFILES[$profile])) {
+        $profiles = self::profiles();
+        if (!isset($profiles[$profile])) {
             throw new InvalidArgumentException("Unknown upload profile: {$profile}");
         }
 
-        return self::PROFILES[$profile];
+        return $profiles[$profile];
     }
 
     /**
      * @description Validation rules of ONE uploaded file of the profile: the detected content type
      * AND the name extension must both be on the whitelist, and the size within the limit.
-     * @param string $profile Profile constant.
+     * @param string $profile Profile name.
      * @return array<int, string>
      */
     public static function fileRules(string $profile): array
@@ -134,7 +92,7 @@ final class AttachmentPolicy
     public static function publicRules(): array
     {
         $out = [];
-        foreach (self::PROFILES as $name => $rules) {
+        foreach (self::profiles() as $name => $rules) {
             $out[$name] = [
                 'extensions'        => $rules['extensions'],
                 'max_files'         => $rules['max_files'],

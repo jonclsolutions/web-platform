@@ -22,12 +22,12 @@ namespace App\Http\Controllers\Api\Legal;
 use App\Http\Controllers\Controller;
 use App\Models\Core\CoreLog;
 use App\Models\Legal\PageTitle;
-use App\Models\Shop\ShopLog;
-use App\Models\Web\WebLog;
+use App\Support\Apps\AppRegistry;
 use App\Traits\LogsActivity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+
 
 /**
  * @description Page titles of one area per route; the permission is checked by the route
@@ -42,8 +42,6 @@ class PageTitleController extends Controller
     /** @var int Hard limit for one title. Google shows ~60 chars, the rest is cut. */
     private const MAX_LENGTH = 120;
 
-    /** @var array<string, class-string> Audit log of the module that manages the area. */
-    private const LOG_MODELS = ['web' => WebLog::class, 'shop' => ShopLog::class, 'admin' => CoreLog::class];
 
     /**
      * Lists the pages of one area with their titles.
@@ -101,7 +99,7 @@ class PageTitleController extends Controller
         foreach ($changed as $row) {
             $this->logAction(
                 $request,
-                self::LOG_MODELS[$area],
+                AppRegistry::logModel($area) ?? CoreLog::class,
                 'update',
                 'Legal',
                 "Updated page title: {$row->area}.{$row->page_key}",

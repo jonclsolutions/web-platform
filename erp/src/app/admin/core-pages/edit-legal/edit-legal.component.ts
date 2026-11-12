@@ -57,7 +57,6 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
   override apiEndpoint: string = 'legal/document-sections';
   override usesPaginatedList = false;
 protected override translationSection: string = 'edit-legal';
-  private readonly LANG_MODULE = 'web';
   private readonly META_TTL_MS = 10 * 60 * 1000;
   private readonly SECTIONS_TTL_MS = 2 * 60 * 1000;
 
@@ -129,13 +128,14 @@ protected override translationSection: string = 'edit-legal';
   }
 
   /**
-   * @description Retrieves supported languages for the 'web' module and initializes the
-   * active language state. Cached for 10 min.
+   * @description Retrieves the languages of all applications (GET languages - the legal
+   * documents serve every public application) and initializes the active language state.
+   * Cached for 10 min.
    */
   private loadLanguages(): void {
     this.resourceCache.get(
-      `edit-legal:languages:${this.LANG_MODULE}`,
-      () => this.dataHandler.getCollection<any>(`languages/${this.LANG_MODULE}`),
+      'edit-legal:languages',
+      () => this.dataHandler.getCollection<any>('languages'),
       this.META_TTL_MS
     )
       .pipe(catchError(() => of({ languages: [] })))

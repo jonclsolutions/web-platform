@@ -55,13 +55,6 @@
       "devNote": "SalesLeadsComponent, route 'web/sales-leads', permission 'web-sales-leads-view'."
     },
     {
-      "id": "edit-news",
-      "group": "web",
-      "order": 9,
-      "permission": "web-news-view",
-      "devNote": "EditNewsComponent, route 'web/edit-news', permission 'web-news-view'. Nezaměňovat s KB sekcí 'Novinky' (interní ChangeLog) - tohle je editace novinek zobrazovaných na veřejném webu."
-    },
-    {
       "id": "edit-website",
       "group": "web",
       "order": 10,
@@ -74,13 +67,6 @@
       "order": 11,
       "permission": "web-sales-orders-view",
       "devNote": "SalesOrdersComponent, route 'web/sales-orders', permission 'web-sales-orders-view'. Řádková akce 'Projekt' zakládá navazující záznam v Projects."
-    },
-    {
-      "id": "support-tickets",
-      "group": "web",
-      "order": 12,
-      "permission": "web-support-tickets-view",
-      "devNote": "SupportTicketsComponent, route 'web/support-tickets', permission 'web-support-tickets-view'."
     },
     {
       "id": "job-applications",
@@ -108,7 +94,7 @@
       "group": "core",
       "order": 16,
       "permission": null,
-      "devNote": "CalendarComponent, route 'core/calendar' (bez oprávnění stránky), API GET core/agenda (CoreAgendaController) - termíny a nevyřízená práce podle oprávnění uživatele - oprávnění stránky zdroje + oprávnění záložky modulu view-web / view-eshop / view-core (jen pro čtení) + osobní události uživatele (POST/PUT/DELETE core/calendar-events, CoreCalendarEventController, tabulka core_calendar_events; vidí je jen vlastník, texty se nelogují)."
+      "devNote": "CalendarComponent, route 'core/calendar' (bez oprávnění stránky), API GET core/agenda (CoreAgendaController) - termíny a nevyřízená práce ze zdrojů AgendaSource (CoreAgendaSource + zdroje registrovaných aplikací, AppManifest::agendaSources(), config/apps.php) podle oprávnění uživatele - oprávnění stránky zdroje + oprávnění záložky modulu view-web / view-eshop / view-core (jen pro čtení) + osobní události uživatele (POST/PUT/DELETE core/calendar-events, CoreCalendarEventController, tabulka core_calendar_events; vidí je jen vlastník, texty se nelogují)."
     },
     {
       "id": "welcome-page",
@@ -122,7 +108,7 @@
       "group": "core",
       "order": 18,
       "permission": "core-legal-documents-view|core-legal-config-view",
-      "devNote": "EditLegalComponent, route 'core/edit-legal', permission 'core-legal-documents-view|core-legal-config-view'. Vícejazyčný obsah, typy dokumentů se načítají dynamicky z legal/document-types."
+      "devNote": "EditLegalComponent, route 'core/edit-legal', permission 'core-legal-documents-view|core-legal-config-view'. Vícejazyčný obsah, typy dokumentů se načítají dynamicky z legal/document-types. Jazyky = jazyky všech aplikací dohromady (GET languages); stránky obchodních podmínek a ochrany OÚ (public/legal) ukazuje web i e-shop (/shop/tos, /shop/privacy-policy)."
     },
     {
       "id": "personal-info",
@@ -136,7 +122,7 @@
       "group": "core",
       "order": 20,
       "permission": "core-legal-config-view",
-      "devNote": "WebSettingsComponent, route 'core/web-settings', permission 'core-legal-config-view'. Firemní údaje, logo, sociální sítě."
+      "devNote": "WebSettingsComponent, route 'core/web-settings', permission 'core-legal-config-view'. Firemní údaje, logo, sociální sítě. Jazyky = jazyky všech aplikací dohromady (GET languages)."
     },
     {
       "id": "external-links",

@@ -10,11 +10,12 @@
  *   publishing shows it in the portal (section Updates, news feed) and e-mails the client
  *   accounts that turned update notifications on - only at the first publication
  *   (first_published_at), not again after it was taken back to a draft and published again.
- * @dependencies WebProject, User, WebAttachment
+ * @dependencies WebProject, User, CoreAttachment
  */
 
 namespace App\Models\Web;
 
+use App\Models\Core\CoreAttachment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -38,7 +39,7 @@ class WebProjectUpdate extends Model
 
     public function attachments(): MorphMany
     {
-        return $this->morphMany(WebAttachment::class, 'attachable');
+        return $this->morphMany(CoreAttachment::class, 'attachable');
     }
 
     /**

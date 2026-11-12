@@ -18,6 +18,7 @@ import { LocalizationService } from '../../../../shared/services/localization.se
 import { PublicDataService } from '../../../../shared/services/public-data.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { hasApp } from '../../../../apps/apps.registry';
 
 /** Data structure for internal/external navigation links */
 interface FooterNavLink { route: string; text: string; external: boolean; }
@@ -132,10 +133,11 @@ export class ShopFooterComponent implements OnInit, OnDestroy {
    * @description Generates the main navigation links based on current localization.
    */
   private loadFooterNavLinks(): void {
-    const navLinkKeys = [
+    // Links to the public web only when it is part of this build (apps.registry).
+    const navLinkKeys = hasApp('web') ? [
       { route: '/home', key: 'navigation.home', ext: false },
       { route: '/faq', key: 'navigation.faq_full', ext: false }
-    ];
+    ] : [];
     this.footerNavLinks = navLinkKeys.map(link => ({ 
       route: link.route, 
       text: this.localizationService.getText(link.key), 
@@ -148,8 +150,8 @@ export class ShopFooterComponent implements OnInit, OnDestroy {
    */
   private loadFooterLegalLinks(): void {
     const legalLinkKeys = [
-      { route: '/tos', key: 'legal.terms_of_service' },
-      { route: '/privacy-policy', key: 'legal.privacy_policy' }
+      { route: '/shop/tos', key: 'legal.terms_of_service' },
+      { route: '/shop/privacy-policy', key: 'legal.privacy_policy' }
     ];
     this.footerLegalLinks = legalLinkKeys.map(link => ({ 
       route: link.route, 

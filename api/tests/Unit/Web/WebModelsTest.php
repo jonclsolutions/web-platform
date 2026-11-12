@@ -14,7 +14,7 @@
 
 namespace Tests\Unit\Web;
 
-use App\Models\Web\WebAttachment;
+use App\Models\Core\CoreAttachment;
 use App\Models\Web\WebProjectCheckpoint;
 use App\Models\Web\WebProjectSession;
 use Illuminate\Support\Facades\Storage;
@@ -31,9 +31,9 @@ class WebModelsTest extends TestCase
     /**
      * @description Relations resolve to the owning / owned records.
      * @input Project with checkpoint, session and thread with a message; lead of user U with an
-     *        order; ticket of user U.
+     *        order.
      * @output checkpoint/session → project, message → thread, project → sessions, lead → user /
-     *   orders, ticket → user, attachment → its owner (morph).
+     *   orders, attachment → its owner (morph).
      */
     public function test_relations(): void
     {
@@ -45,7 +45,6 @@ class WebModelsTest extends TestCase
         $message = $this->thread($project, [], [['customer', 'Hi']])->messages()->sole();
         $lead = $this->lead(['user_id' => $owner->id]);
         $order = $this->salesOrder(['lead_id' => $lead->id]);
-        $ticket = $this->ticket(['user_id' => $owner->id]);
 
         $this->assertTrue($checkpoint->project->is($project));
         $this->assertTrue(WebProjectSession::sole()->project->is($project));
@@ -53,7 +52,6 @@ class WebModelsTest extends TestCase
         $this->assertSame('Logo colours', $message->thread->subject);
         $this->assertTrue($lead->user->is($owner));
         $this->assertTrue($lead->orders->sole()->is($order));
-        $this->assertTrue($ticket->user->is($owner));
         $this->assertTrue($this->attach($message)->attachable->is($message));
     }
 
@@ -83,27 +81,27 @@ class WebModelsTest extends TestCase
      * @description Attachments are reachable only through signed links (open finding #9): the
      *   model no longer has the dead `url` storage accessor and the resource does not expose it.
      *   A "view" link is offered only for previewable types (VT-02).
-     * @input Attachment with path web/x/a.pdf; WebAttachmentResource of it; attachments data.zip,
+     * @input Attachment with path web/x/a.pdf; CoreAttachmentResource of it; attachments data.zip,
      *        logo.svg, photo.PNG (by name, also without a name: stored path).
      * @output Model url null; resource without `url`, download_url / view_url signed (signature query);
      *   zip / svg: view_url null, download_url signed; PNG and the nameless .webp: view_url signed.
      */
     public function test_attachment_has_signed_links_only(): void
     {
-        $attachment = new WebAttachment(['disk' => 'private', 'path' => 'web/x/a.pdf', 'original_filename' => 'a.pdf']);
+        $attachment = new CoreAttachment(['disk' => 'private', 'path' => 'web/x/a.pdf', 'original_filename' => 'a.pdf']);
         $this->assertNull($attachment->url);
 
-        $json = (new \App\Http\Resources\Web\WebAttachmentResource($attachment))->toArray(request());
+        $json = (new \App\Http\Resources\Core\CoreAttachmentResource($attachment))->toArray(request());
         $this->assertArrayNotHasKey('url', $json);
         $this->assertStringContainsString('signature=', $json['download_url']);
         $this->assertStringContainsString('signature=', $json['view_url']);
 
         foreach (['data.zip' => false, 'logo.svg' => false, 'photo.PNG' => true] as $name => $previewable) {
-            $json = (new \App\Http\Resources\Web\WebAttachmentResource(new WebAttachment(['path' => 'web/x/f', 'original_filename' => $name])))->toArray(request());
+            $json = (new \App\Http\Resources\Core\CoreAttachmentResource(new CoreAttachment(['path' => 'web/x/f', 'original_filename' => $name])))->toArray(request());
             $this->assertStringContainsString('signature=', $json['download_url']);
             $previewable ? $this->assertStringContainsString('signature=', $json['view_url']) : $this->assertNull($json['view_url'], $name);
         }
-        $json = (new \App\Http\Resources\Web\WebAttachmentResource(new WebAttachment(['path' => 'web/x/a.webp', 'original_filename' => ''])))->toArray(request());
+        $json = (new \App\Http\Resources\Core\CoreAttachmentResource(new CoreAttachment(['path' => 'web/x/a.webp', 'original_filename' => ''])))->toArray(request());
         $this->assertNotNull($json['view_url']);
     }
 

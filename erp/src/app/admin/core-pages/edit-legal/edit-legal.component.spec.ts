@@ -44,7 +44,7 @@ describe('EditLegalComponent', () => {
     });
     (ctx.dataHandler as any).getCollection.and.callFake((url: string) => {
       if (url === 'legal/document-types') return of(types);
-      if (url === 'languages/web') return of(languages);
+      if (url === 'languages') return of(languages);
       const m = /document_type_id=(\d+)&lang=(\w+)/.exec(url);
       return of(m ? (sections[+m[1]]?.[m[2]] ?? []) : []);
     });
@@ -248,7 +248,7 @@ describe('EditLegalComponent', () => {
   it('handles failing requests', fakeAsync(async () => {
     (ctx.dataHandler as any).getCollection.and.callFake((url: string) => {
       if (url === 'legal/document-types') return throwError(() => new Error('x'));
-      if (url === 'languages/web') return of([{ code: 'en', name: 'English', active: true }]);
+      if (url === 'languages') return of([{ code: 'en', name: 'English', active: true }]);
       return throwError(() => new Error('x'));
     });
     init();

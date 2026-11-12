@@ -11,6 +11,7 @@
 namespace App\Http\Requests\Web\WebRawRequestCommission;
 
 use App\Rules\AttachmentsTotalSize;
+use App\Services\Web\WebApp;
 use App\Support\Uploads\AttachmentPolicy;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -22,7 +23,7 @@ class UpdateWebRawRequestCommissionRequest extends FormRequest
 use ValidatesAttachmentSecurity;
 
 /** @description Limits and allowed types of the upload profile (AttachmentPolicy - shared with GET upload-rules). */
-private const LIMITS = AttachmentPolicy::PROFILES[AttachmentPolicy::RAW_REQUEST_COMMISSION];
+private const LIMITS = WebApp::UPLOAD_PROFILES[WebApp::UPLOAD_RAW_REQUEST_COMMISSION];
 
 public function authorize(): bool
     {
@@ -40,7 +41,7 @@ return [
 'priority' => ['sometimes', 'string', 'in:low,neutral,high'],
 'note'                       => ['sometimes', 'nullable', 'string'],
 'attachments'                => ['sometimes', 'nullable', 'array', 'max:' . self::LIMITS['max_files'], new AttachmentsTotalSize(self::LIMITS['max_total_bytes'])],
-'attachments.*'              => AttachmentPolicy::fileRules(AttachmentPolicy::RAW_REQUEST_COMMISSION),
+'attachments.*'              => AttachmentPolicy::fileRules(WebApp::UPLOAD_RAW_REQUEST_COMMISSION),
 'attachments_removed_ids'    => ['sometimes', 'array'],
 'attachments_removed_ids.*'  => ['integer'],
         ];

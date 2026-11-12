@@ -16,7 +16,7 @@
 namespace Tests\Unit\Web;
 
 use App\Http\Middleware\CheckWebActive;
-use App\Models\Web\WebAttachment;
+use App\Models\Core\CoreAttachment;
 use App\Models\Web\WebSiteSetting;
 use App\Rules\AttachmentsTotalSize;
 use App\Traits\HandlesAttachments;
@@ -102,12 +102,12 @@ class WebSupportTest extends TestCase
         $handler->storeAttachments($request, $record, 'web/test');
         $this->assertSame(['ok.pdf'], $record->attachments()->pluck('original_filename')->all());
 
-        $ticket = $this->ticket();
-        $handler->storeSingleAttachment($request, $ticket, 'web/test', 'attachment');
-        $this->assertSame(0, $ticket->attachments()->count());
+        $application = $this->jobApplication();
+        $handler->storeSingleAttachment($request, $application, 'web/test', 'attachment');
+        $this->assertSame(0, $application->attachments()->count());
 
         $handler->deleteAttachmentsByIds($record, []);
-        $this->assertSame(1, WebAttachment::count());
+        $this->assertSame(1, CoreAttachment::count());
     }
 
     /**

@@ -23,6 +23,7 @@ namespace App\Support\Audit;
 
 use App\Models\AccountActivationToken;
 use App\Models\Core\CoreLog;
+use App\Support\Apps\AppRegistry;
 use App\Models\Core\CoreSecurityEvent;
 use App\Models\PasswordResetToken;
 use App\Models\RefreshToken;
@@ -46,15 +47,13 @@ class ModelChanges
     /** @description Stored instead of a personal value. */
     public const MASK = '[masked]';
 
-    /** @description Models whose changes are not collected (logs, auth tokens). */
+    /** @description Models whose changes are not collected (logs, auth tokens) - plus the audit logs of the applications (AppRegistry::logModels()). */
     private const SKIPPED_MODELS = [
         CoreLog::class,
         CoreSecurityEvent::class,
         RefreshToken::class,
         AccountActivationToken::class,
         PasswordResetToken::class,
-        'App\\Models\\Web\\WebLog',
-        'App\\Models\\Shop\\ShopLog',
         'Laravel\\Sanctum\\PersonalAccessToken',
     ];
 
@@ -72,7 +71,7 @@ class ModelChanges
      */
     public function record(string $event, Model $model): void
     {
-        if (in_array($model::class, self::SKIPPED_MODELS, true)) {
+        if (in_array($model::class, self::SKIPPED_MODELS, true) || in_array($model::class, AppRegistry::logModels(), true)) {
             return;
         }
 

@@ -7,11 +7,12 @@
  * @created 2026
  * @description Approval request with its files, checkpoint and the history of the client's
  *   decisions (administration and portal - the portal never gets cancelled ones).
- * @dependencies App\Models\Web\WebProjectApproval, WebAttachmentResource
+ * @dependencies App\Models\Web\WebProjectApproval, CoreAttachmentResource
  */
 
 namespace App\Http\Resources\Web;
 
+use App\Http\Resources\Core\CoreAttachmentResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -35,7 +36,7 @@ class WebProjectApprovalResource extends JsonResource
             'requested_by_label' => $this->requested_by_label,
             'requested_at'       => $this->requested_at?->format('Y-m-d H:i:s'),
             'decided_at'         => $this->decided_at?->format('Y-m-d H:i:s'),
-            'attachments'        => WebAttachmentResource::collection($this->whenLoaded('attachments')),
+            'attachments'        => CoreAttachmentResource::collection($this->whenLoaded('attachments')),
             'decisions'          => $this->whenLoaded('decisions', fn () => $this->decisions->map(fn ($decision) => [
                 'id'           => $decision->id,
                 'decision'     => $decision->decision,

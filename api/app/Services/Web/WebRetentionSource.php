@@ -6,24 +6,21 @@
  * @author JS
  * @created 2026
  * @description Retention of the web module (GDPR Art. 5(1)(e)): job applications, inquiries,
- * leads, support tickets, web orders, client projects and cookie consents - each deleted for good
+ * leads, web orders and client projects - each deleted for good
  * with its attachments and files - plus the web audit log and the always-run clean-up of expired
- * project portal sessions (IP address, user agent). Registered in config/retention.php.
+ * project portal sessions (IP address, user agent). Registered in WebApp::retentionSources().
  * @note Default periods (days):
  * - job_applications 180 (~6 months): usual period for applications without a consent to a
  *   longer evidence of candidates;
- * - raw_requests / sales_leads / support_tickets 730 (2 years): pre-contractual communication;
+ * - raw_requests / sales_leads 730 (2 years): pre-contractual communication;
  * - sales_orders / projects 3650 (10 years): contractual relationship - accounting and tax
  *   documents may have to be kept that long;
- * - cookie_consents 1095 (3 years): proof of consent within the general limitation period.
- * The period runs from the LAST CHANGE of a record (projects: also their last message), cookie
- * consents from their creation (they never change).
+ * The period runs from the LAST CHANGE of a record (projects: also their last message).
  * @dependencies Web models, PurgesRecords.
  */
 
 namespace App\Services\Web;
 
-use App\Models\Web\WebCookieConsent;
 use App\Models\Web\WebJobApplication;
 use App\Models\Web\WebLog;
 use App\Models\Web\WebProject;
@@ -32,7 +29,6 @@ use App\Models\Web\WebProjectSession;
 use App\Models\Web\WebRawRequestCommission;
 use App\Models\Web\WebSalesLead;
 use App\Models\Web\WebSalesOrder;
-use App\Models\Web\WebSupportTicket;
 use App\Services\Retention\PurgesRecords;
 use App\Services\Retention\RetentionSource;
 use Illuminate\Database\Eloquent\Builder;
@@ -50,7 +46,6 @@ final class WebRetentionSource implements RetentionSource
     private const ATTACHMENT_MODELS = [
         'job_applications' => WebJobApplication::class,
         'raw_requests'     => WebRawRequestCommission::class,
-        'support_tickets'  => WebSupportTicket::class,
         'sales_orders'     => WebSalesOrder::class,
     ];
 
@@ -61,10 +56,8 @@ final class WebRetentionSource implements RetentionSource
             'job_applications' => 180,
             'raw_requests'     => 730,
             'sales_leads'      => 730,
-            'support_tickets'  => 730,
             'sales_orders'     => 3650,
             'projects'         => 3650,
-            'cookie_consents'  => 1095,
         ];
     }
 
@@ -74,7 +67,6 @@ final class WebRetentionSource implements RetentionSource
         return match ($key) {
             'sales_leads'     => $this->purgeRecords(WebSalesLead::withTrashed()->where('updated_at', '<', $cutoff)),
             'projects'        => $this->purgeProjects($cutoff),
-            'cookie_consents' => WebCookieConsent::where('created_at', '<', $cutoff)->delete(),
             default           => isset(self::ATTACHMENT_MODELS[$key])
                 ? $this->purgeRecords(self::ATTACHMENT_MODELS[$key]::withTrashed()->with('attachments')->where('updated_at', '<', $cutoff))
                 : throw new InvalidArgumentException("Unknown web retention key: {$key}"),

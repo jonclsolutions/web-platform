@@ -44,7 +44,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   override usesPaginatedList = false;
   protected override translationSection: string = 'web-settings';
 
-  private readonly LANG_MODULE = 'web';
   private readonly LANG_TTL_MS = 10 * 60 * 1000;
   private readonly SETTINGS_TTL_MS = 2 * 60 * 1000;
   private readonly SETTINGS_CACHE_KEY = 'web-settings:all';
@@ -118,8 +117,8 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
   private loadLanguages(): void {
     this.resourceCache.get(
-      `web-settings:languages:${this.LANG_MODULE}`,
-      () => this.dataHandler.get<LangMeta[]>(`languages/${this.LANG_MODULE}`),
+      'web-settings:languages',
+      () => this.dataHandler.get<LangMeta[]>('languages'),
       this.LANG_TTL_MS
     ).subscribe({
       next: (res) => {

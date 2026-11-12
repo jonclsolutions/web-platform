@@ -49,12 +49,12 @@ describe('UploadRulesService', () => {
 
   /**
    * @description A profile missing from the answer and an answer without data give null.
-   * @input answer { data: { sales_order } } and rules('support_ticket'); a fresh service answered with {}.
+   * @input answer { data: { sales_order } } and rules('job_application'); a fresh service answered with {}.
    * @output null; null.
    */
   it('answers null for a missing profile or empty answer', () => {
     let got: any = 'unset';
-    service.rules('support_ticket').subscribe(r => (got = r));
+    service.rules('job_application').subscribe(r => (got = r));
     http.expectOne(url).flush({ data: { sales_order: TEST_UPLOAD_RULES.sales_order } });
     expect(got).toBeNull();
 

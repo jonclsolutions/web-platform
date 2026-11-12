@@ -16,10 +16,6 @@
  * it renders any page by `page.sections`, switching on `block.type` (`@switch` in the
  * template). A new manual page = a new entry in the JSON files of the API, NO new component /
  * route / file.
- *
- * @note The only exception is `support-form` - it stays an explicit component / route (real
- * logic - reactive form, file upload, POST to `web/support_tickets`), not static text, so it
- * does not belong to this block model.
  */
 
 /** @description Stable, NOT translated identifier of a left menu section. Lower case on

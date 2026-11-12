@@ -39,7 +39,7 @@ trait HandlesImportBatches
      * @description Stores the uploaded file under `imports/` on `importTempDisk()` and creates
      * the `CoreImportBatch` row in state `'validated'`.
      * @param Request $request Current request (user_id and the uploaded file).
-     * @param string $resource Resource key (e.g. 'web/news') - descriptive only, stored.
+     * @param string $resource Resource key (e.g. 'web/sales_leads') - descriptive only, stored.
      * @param string $format 'csv'|'json'|'txt'.
      * @param int $totalRows
      * @param int $validRows

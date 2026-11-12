@@ -7,7 +7,7 @@
  * @created 2026
  * @description Base of the base data seeder of one module (web, e-shop, …). A module seeder lives
  *   in the module's own folder (database/seeders/<Module>/ with its data/ and assets/) and is
- *   registered in config/seeders.php (`base_data`); BaseDataSeeder runs the registered ones after
+ *   listed in the module's manifest (AppManifest::baseDataSeeders(), config/apps.php); BaseDataSeeder runs the registered ones after
  *   the core data and then gives the sysadmin role every permission. A removed module (folder
  *   deleted, class gone) is skipped - the core is seeded without it.
  * @note The helpers only ADD what is missing (idempotent, never destructive): permissions by key,

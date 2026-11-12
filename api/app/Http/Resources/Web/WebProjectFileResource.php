@@ -6,14 +6,15 @@
  * @author JS
  * @created 2026
  * @description One file of the project's "Files" overview: the attachment (short-lived signed
- *   download / view links of WebAttachmentResource) with where it came from - `source` thread
+ *   download / view links of CoreAttachmentResource) with where it came from - `source` thread
  *   (message: thread, author, internal note - administration only), update or approval - its id,
  *   title and author.
- * @dependencies WebAttachmentResource; loaded by ProjectFiles (`attachable`, a message with its thread).
+ * @dependencies CoreAttachmentResource; loaded by ProjectFiles (`attachable`, a message with its thread).
  */
 
 namespace App\Http\Resources\Web;
 
+use App\Http\Resources\Core\CoreAttachmentResource;
 use App\Models\Web\{WebProjectApproval, WebProjectUpdate};
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -28,7 +29,7 @@ class WebProjectFileResource extends JsonResource
     public function toArray(Request $request): array
     {
         $source = $this->attachable;
-        $base = (new WebAttachmentResource($this->resource))->toArray($request);
+        $base = (new CoreAttachmentResource($this->resource))->toArray($request);
 
         if ($source instanceof WebProjectUpdate || $source instanceof WebProjectApproval) {
             $isUpdate = $source instanceof WebProjectUpdate;

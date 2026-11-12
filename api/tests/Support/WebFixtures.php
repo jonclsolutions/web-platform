@@ -6,8 +6,8 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Test helpers of the Web section: creates the web records (requests, tickets,
- *   news, leads, orders, job applications, projects with sessions / threads / messages),
+ * @description Test helpers of the Web section: creates the web records (requests, leads,
+ *   orders, job applications, projects with sessions / threads / messages),
  *   upload files, import files, a broken mailer, and asserts on the web audit log.
  * @dependencies
  * - App\Models\Web\*; Illuminate\Http\UploadedFile (fake files).
@@ -15,10 +15,9 @@
 
 namespace Tests\Support;
 
-use App\Models\Web\WebAttachment;
+use App\Models\Core\CoreAttachment;
 use App\Models\Web\WebJobApplication;
 use App\Models\Web\WebLog;
-use App\Models\Web\WebNews;
 use App\Models\Web\WebProject;
 use App\Models\Web\WebProjectAccount;
 use App\Models\Web\WebProjectSession;
@@ -26,7 +25,6 @@ use App\Models\Web\WebProjectThread;
 use App\Models\Web\WebRawRequestCommission;
 use App\Models\Web\WebSalesLead;
 use App\Models\Web\WebSalesOrder;
-use App\Models\Web\WebSupportTicket;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -49,31 +47,6 @@ trait WebFixtures
         return WebRawRequestCommission::create(array_merge([
             'thema' => 'Website redesign', 'contact_email' => 'client@example.com', 'contact_phone' => '+420 777 123 456',
             'order_description' => 'We need a new website.', 'status' => 'new', 'priority' => 'neutral', 'lang' => 'cz',
-        ], $attributes));
-    }
-
-    /**
-     * @description Creates a support ticket.
-     * @param array<string, mixed> $attributes Column overrides.
-     * @return WebSupportTicket
-     */
-    protected function ticket(array $attributes = []): WebSupportTicket
-    {
-        return WebSupportTicket::create(array_merge([
-            'user_name_plain' => 'Jana Nova', 'user_plain' => 'jana@example.com', 'category' => 'it',
-            'priority' => 'medium', 'subject' => 'Printer', 'description' => 'It does not print.',
-        ], $attributes));
-    }
-
-    /**
-     * @description Creates a news item.
-     * @param array<string, mixed> $attributes Column overrides.
-     * @return WebNews
-     */
-    protected function news(array $attributes = []): WebNews
-    {
-        return WebNews::create(array_merge([
-            'title' => 'Release 2.0', 'message' => 'A new version is out.', 'author' => 'Team', 'thema' => 'update',
         ], $attributes));
     }
 
@@ -200,9 +173,9 @@ trait WebFixtures
      * @param Model $model Model with an attachments() relation.
      * @param string $path Path on the disk.
      * @param string $disk Disk name.
-     * @return WebAttachment
+     * @return CoreAttachment
      */
-    protected function attach(Model $model, string $path = 'web/x/file.pdf', string $disk = 'private'): WebAttachment
+    protected function attach(Model $model, string $path = 'web/x/file.pdf', string $disk = 'private'): CoreAttachment
     {
         Storage::disk($disk)->put($path, 'content');
 

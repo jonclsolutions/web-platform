@@ -22,7 +22,7 @@ use App\Mail\Web\ProjectAccessMail;
 use App\Mail\Web\ProjectClientUpdateMail;
 use App\Mail\Web\ProjectTeamNotificationMail;
 use App\Mail\Web\ProjectThreadActivityMail;
-use App\Models\Web\WebAttachment;
+use App\Models\Core\CoreAttachment;
 use App\Models\Web\WebLog;
 use App\Models\Web\WebProject;
 use App\Models\Web\WebProjectApproval;
@@ -130,7 +130,7 @@ class ProjectPhase2AdminTest extends TestCase
         Mail::assertQueued(ProjectClientUpdateMail::class, 1);
         $this->assertWebLog('update_update', 'back to a draft');
 
-        $file = WebAttachment::sole();
+        $file = CoreAttachment::sole();
         $this->postJson("{$base}/{$update['id']}", ['title' => 'Week 1 (final)', 'remove_attachment_ids' => [$file->id]])->assertOk()
             ->assertJsonPath('data.title', 'Week 1 (final)')->assertJsonCount(0, 'data.attachments');
         Storage::disk('private')->assertMissing($file->path);
@@ -139,7 +139,7 @@ class ProjectPhase2AdminTest extends TestCase
 
         $second = $this->post($base, ['title' => 'Now', 'body' => 'Live', 'publish' => '1', 'attachments' => [$this->upload('b.pdf')]], ['Accept' => 'application/json'])
             ->assertCreated()->assertJsonPath('data.is_published', true)->assertJsonPath('meta.notified', 1)->json('data');
-        $path = WebAttachment::sole()->path;
+        $path = CoreAttachment::sole()->path;
         $this->deleteJson("{$base}/{$second['id']}")->assertNoContent();
         Storage::disk('private')->assertMissing($path);
         $this->assertNull(WebProjectUpdate::find($second['id']));
@@ -320,7 +320,7 @@ class ProjectPhase2AdminTest extends TestCase
             ->assertJsonPath('data.0.source', 'update')->assertJsonPath('data.0.source_title', 'Draft');
 
         $this->deleteJson("/api/web/projects/{$this->project->id}?force_delete=true")->assertNoContent();
-        $this->assertSame(0, WebProjectUpdate::count() + WebProjectApproval::count() + WebAttachment::count());
+        $this->assertSame(0, WebProjectUpdate::count() + WebProjectApproval::count() + CoreAttachment::count());
         Storage::disk('private')->assertMissing('web/project_updates/d.pdf');
     }
 }

@@ -19,8 +19,8 @@ namespace Tests\Feature\Core;
 
 use App\Models\Core\CoreLog;
 use App\Models\Core\CoreRetentionSetting;
-use App\Models\Web\WebAttachment;
-use App\Models\Web\WebCookieConsent;
+use App\Models\Core\CoreAttachment;
+use App\Models\Legal\CookieConsent;
 use App\Models\Web\WebJobApplication;
 use App\Models\Web\WebProject;
 use App\Models\Web\WebProjectSession;
@@ -28,7 +28,6 @@ use App\Models\Web\WebProjectThreadMessage;
 use App\Models\Web\WebRawRequestCommission;
 use App\Models\Web\WebSalesLead;
 use App\Models\Web\WebSalesOrder;
-use App\Models\Web\WebSupportTicket;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -117,15 +116,16 @@ class RetentionTest extends TestCase
      *   keeps a project with a recent message, deletes old consents and expired portal sessions,
      *   and stores the result on the settings.
      * @input Per kind one record older and one younger than the default; a trashed old inquiry;
-     *        tickets off; an old project with a message 10 days ago; consents 4 years / 1 day old;
-     *        an expired portal session; `artisan retention:purge`.
-     * @output Old records, their attachment rows and files gone; young ones, tickets and the
-     *   active project kept; last_deleted_count per kind; expired session gone.
+     *        an old project with a message 10 days ago; consents 4 years / 1 day old;
+     *        an expired portal session; `artisan retention:purge`; then leads off, a lead
+     *        5000 days old, purge again.
+     * @output Old records, their attachment rows and files gone; young ones and the
+     *   active project kept; last_deleted_count per kind; expired session gone; a kind switched
+     *   off afterwards (leads) keeps even a very old record.
      */
     public function test_purge_deletes_expired_records_and_files(): void
     {
         CoreRetentionSetting::allInOrder();
-        CoreRetentionSetting::where('data_key', 'support_tickets')->update(['retention_days' => null]);
 
         $oldCv = $this->jobApplication(['cv_path' => 'cv_files/legacy.pdf']);
         Storage::disk('public')->put('cv_files/legacy.pdf', 'cv');
@@ -143,9 +143,6 @@ class RetentionTest extends TestCase
         $oldLead = $this->lead();
         $this->age($oldLead, 731);
         $this->lead();
-
-        $oldTicket = $this->ticket();
-        $this->age($oldTicket, 5000);
 
         $oldOrder = $this->salesOrder();
         $this->attach($oldOrder, 'web/sales_orders/old.pdf');
@@ -166,9 +163,9 @@ class RetentionTest extends TestCase
         $this->portalSession($activeProject);
         DB::table('web_project_sessions')->where('project_id', $activeProject->id)->update(['expires_at' => now()->subMinute()]);
 
-        WebCookieConsent::create(['consent_id' => '11111111-1111-4111-8111-111111111111', 'version' => 1, 'functional' => true, 'analytics' => false, 'marketing' => false]);
+        CookieConsent::create(['consent_id' => '11111111-1111-4111-8111-111111111111', 'version' => 1, 'functional' => true, 'analytics' => false, 'marketing' => false]);
         DB::table('web_cookie_consents')->update(['created_at' => now()->subYears(4)]);
-        WebCookieConsent::create(['consent_id' => '22222222-2222-4222-8222-222222222222', 'version' => 1, 'functional' => true, 'analytics' => true, 'marketing' => false]);
+        CookieConsent::create(['consent_id' => '22222222-2222-4222-8222-222222222222', 'version' => 1, 'functional' => true, 'analytics' => true, 'marketing' => false]);
 
         $this->artisan('retention:purge')->assertSuccessful();
 
@@ -176,14 +173,13 @@ class RetentionTest extends TestCase
         $this->assertSame([$freshRequest->id], WebRawRequestCommission::withTrashed()->pluck('id')->all());
         $this->assertSame(1, WebSalesLead::withTrashed()->count());
         $this->assertFalse(WebSalesLead::withTrashed()->whereKey($oldLead->id)->exists());
-        $this->assertSame(1, WebSupportTicket::count());
         $this->assertSame(1, WebSalesOrder::count());
         $this->assertSame([$activeProject->id], WebProject::withTrashed()->pluck('id')->all());
         $this->assertSame(1, WebProjectThreadMessage::count());
         $this->assertSame(0, WebProjectSession::count());
-        $this->assertSame(['22222222-2222-4222-8222-222222222222'], WebCookieConsent::pluck('consent_id')->all());
+        $this->assertSame(['22222222-2222-4222-8222-222222222222'], CookieConsent::pluck('consent_id')->all());
 
-        $this->assertSame(0, WebAttachment::count());
+        $this->assertSame(0, CoreAttachment::count());
         foreach (['web/cv_files/old.pdf', 'web/raw_request_commissions/old.pdf', 'web/sales_orders/old.pdf', 'web/project_threads/old.png'] as $path) {
             Storage::disk('private')->assertMissing($path);
         }
@@ -191,10 +187,16 @@ class RetentionTest extends TestCase
 
         $counts = CoreRetentionSetting::pluck('last_deleted_count', 'data_key')->all();
         $this->assertSame(
-            ['job_applications' => 1, 'raw_requests' => 1, 'sales_leads' => 1, 'support_tickets' => null, 'sales_orders' => 1, 'projects' => 1, 'cookie_consents' => 1, 'audit_logs' => 0],
+            ['job_applications' => 1, 'raw_requests' => 1, 'sales_leads' => 1, 'sales_orders' => 1, 'projects' => 1, 'cookie_consents' => 1, 'audit_logs' => 0],
             $counts
         );
         $this->assertNotNull(CoreRetentionSetting::where('data_key', 'raw_requests')->value('last_run_at'));
+
+        CoreRetentionSetting::where('data_key', 'sales_leads')->update(['retention_days' => null]);
+        $keptLead = $this->lead();
+        $this->age($keptLead, 5000);
+        $this->artisan('retention:purge')->assertSuccessful();
+        $this->assertTrue(WebSalesLead::whereKey($keptLead->id)->exists());
     }
 
     /**
@@ -235,13 +237,13 @@ class RetentionTest extends TestCase
         $old = $this->rawRequest();
         $this->age($old, 800);
         $this->failOn($old->getTable(), 'DELETE');
-        WebCookieConsent::create(['consent_id' => '33333333-3333-4333-8333-333333333333', 'version' => 1, 'functional' => true, 'analytics' => false, 'marketing' => false]);
+        CookieConsent::create(['consent_id' => '33333333-3333-4333-8333-333333333333', 'version' => 1, 'functional' => true, 'analytics' => false, 'marketing' => false]);
         DB::table('web_cookie_consents')->update(['created_at' => now()->subYears(4)]);
         \Illuminate\Support\Facades\Log::spy();
 
         $this->artisan('retention:purge')->expectsOutputToContain('FAILED')->assertFailed();
 
-        $this->assertSame(0, WebCookieConsent::count());
+        $this->assertSame(0, CookieConsent::count());
         $this->assertTrue(DB::table($old->getTable())->where('id', $old->id)->exists());
         $this->assertNull(CoreRetentionSetting::where('data_key', 'raw_requests')->value('last_run_at'));
         $this->assertNotNull(CoreRetentionSetting::where('data_key', 'cookie_consents')->value('last_run_at'));
@@ -257,13 +259,13 @@ class RetentionTest extends TestCase
      * @description VT-18: the core names no module model - only the registered sources take part. A
      *   source whose class no longer exists (removed module) is skipped: its kinds are not listed
      *   and not purged, nothing fails, the core audit log is still purged.
-     * @input config retention.sources = [missing class]; old inquiry, old core log, old web log; command.
-     * @output settings = [audit_logs] only; command OK, no FAILED; inquiry kept; core log row
+     * @input config apps.apps = [missing manifest]; old inquiry, old core log, old web log; command.
+     * @output settings = the core ones only [cookie_consents, audit_logs]; command OK, no FAILED; inquiry kept; core log row
      *   deleted, web log row kept (web not registered); PUT of a web key 422.
      */
     public function test_only_registered_modules_take_part(): void
     {
-        config(['retention.sources' => ['App\\Services\\Removed\\RemovedRetentionSource']]);
+        config(['apps.apps' => ['App\\Services\\Removed\\RemovedApp']]);
         $old = $this->rawRequest();
         $this->age($old, 800);
         foreach ([CoreLog::class, \App\Models\Web\WebLog::class] as $model) {
@@ -271,7 +273,7 @@ class RetentionTest extends TestCase
             DB::table($log->getTable())->where('id', $log->id)->update(['created_at' => now()->subYears(3)]);
         }
 
-        $this->assertSame(['audit_logs'], array_column(CoreRetentionSetting::allInOrder(), 'data_key'));
+        $this->assertSame(['cookie_consents', 'audit_logs'], array_column(CoreRetentionSetting::allInOrder(), 'data_key'));
         $this->artisan('retention:purge')->doesntExpectOutputToContain('FAILED')->assertSuccessful();
 
         $this->assertTrue(DB::table($old->getTable())->where('id', $old->id)->exists());

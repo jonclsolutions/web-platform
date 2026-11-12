@@ -6,10 +6,10 @@
  * @author JS
  * @created 2026
  * @description Enforces the retention periods of CoreRetentionSetting (GDPR Art. 5(1)(e)): every
- * record whose period is over is deleted for good. The kinds of data come from the modules
- * registered in config/retention.php (RetentionSource - web, e-shop, …); the core itself owns only
- * `audit_logs`: the core log, the logs of the registered modules and finished import batches,
- * deleted by their creation time. The always-run clean-ups of the modules (e.g. expired portal
+ * record whose period is over is deleted for good. The kinds of data come from the registered
+ * applications (AppManifest::retentionSources() - web, e-shop, …); the core itself owns
+ * `cookie_consents` (the visitors' cookie consent records) and `audit_logs` (the core log, the logs
+ * of the registered applications and finished import batches), both deleted by their creation time. The always-run clean-ups of the modules (e.g. expired portal
  * sessions) run on every purge. Used by the daily `retention:purge` command and the "run now"
  * action of the admin.
  * @note The core names no module model: a removed module (its source class no longer exists) is
@@ -23,6 +23,8 @@ namespace App\Services\Retention;
 use App\Models\Core\CoreImportBatch;
 use App\Models\Core\CoreLog;
 use App\Models\Core\CoreRetentionSetting;
+use App\Models\Legal\CookieConsent;
+use App\Support\Apps\AppRegistry;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
@@ -34,23 +36,20 @@ class RetentionPurgeService
     /** @description Data key of the core retention (audit logs of all modules + import batches). */
     public const AUDIT_LOGS = 'audit_logs';
 
+    /** @description Data key of the cookie consent records (core - shown by every public application). */
+    public const COOKIE_CONSENTS = 'cookie_consents';
+
     /** @var array<int, string> Data keys whose purge failed in the last purgeAll() run. */
     private array $failed = [];
 
     /**
-     * @description The registered module sources whose class exists (config/retention.php).
+     * @description The retention sources of the registered applications whose class exists
+     *   (AppManifest::retentionSources()).
      * @return array<int, RetentionSource>
      */
     public static function sources(): array
     {
-        $sources = [];
-        foreach ((array) config('retention.sources', []) as $class) {
-            if (is_string($class) && class_exists($class) && is_subclass_of($class, RetentionSource::class)) {
-                $sources[] = app($class);
-            }
-        }
-
-        return $sources;
+        return AppRegistry::retentionSources();
     }
 
     /**
@@ -119,6 +118,9 @@ class RetentionPurgeService
     {
         if ($key === self::AUDIT_LOGS) {
             return $this->purgeAuditLogs($cutoff);
+        }
+        if ($key === self::COOKIE_CONSENTS) {
+            return $this->deleteInBatches(CookieConsent::where('created_at', '<', $cutoff));
         }
 
         foreach (self::sources() as $source) {

@@ -13,6 +13,7 @@
 
 namespace App\Http\Requests\Web\WebProject;
 
+use App\Services\Web\WebApp;
 use App\Support\Uploads\AttachmentPolicy;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -35,8 +36,8 @@ class SaveProjectApprovalRequest extends FormRequest
             'checkpoint_id'           => ['nullable', 'integer',
                 Rule::exists('web_project_checkpoints', 'id')->where('project_id', (int) $this->route('projectId'))],
             'due_date'                => ['nullable', 'date_format:Y-m-d'],
-            'attachments'             => ['nullable', 'array', 'max:' . AttachmentPolicy::PROFILES[AttachmentPolicy::PROJECT_THREAD]['max_files']],
-            'attachments.*'           => AttachmentPolicy::fileRules(AttachmentPolicy::PROJECT_THREAD),
+            'attachments'             => ['nullable', 'array', 'max:' . WebApp::UPLOAD_PROFILES[WebApp::UPLOAD_PROJECT_THREAD]['max_files']],
+            'attachments.*'           => AttachmentPolicy::fileRules(WebApp::UPLOAD_PROJECT_THREAD),
             'remove_attachment_ids'   => ['sometimes', 'array'],
             'remove_attachment_ids.*' => ['integer'],
         ];

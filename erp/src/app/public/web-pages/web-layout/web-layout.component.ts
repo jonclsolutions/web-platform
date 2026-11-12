@@ -20,7 +20,7 @@ import { PublicHeaderComponent } from '../components/public-header/public-header
 import { PublicFooterComponent } from '../components/public-footer/public-footer.component';
 import { AnalyticsService } from '../../../shared/services/analytics.service';
 import { SeoService } from '../../../shared/services/seo.service';
-import { CookieConsentComponent } from '../cookie-consent/cookie-consent.component';
+import { CookieConsentComponent } from '../../legal/cookie-consent/cookie-consent.component';
 /**
  * @description Main layout wrapper for the web application's public pages.
  * @usage Used in app.routes.ts to define the structure for all children routes under the root path.

@@ -48,6 +48,20 @@ return [
     ],
     [
         'area' => 'shop',
+        'page_key' => 'tos',
+        'route_path' => '/shop/tos',
+        'title_i18n' => ['cz' => 'Obchodní podmínky | Company name', 'en' => 'Terms of service | Company name'],
+        'sort_order' => 60,
+    ],
+    [
+        'area' => 'shop',
+        'page_key' => 'privacy-policy',
+        'route_path' => '/shop/privacy-policy',
+        'title_i18n' => ['cz' => 'Ochrana osobních údajů | Company name', 'en' => 'Privacy policy | Company name'],
+        'sort_order' => 70,
+    ],
+    [
+        'area' => 'shop',
         'page_key' => 'not-found',
         'route_path' => '/shop/<unknown address>',
         'title_i18n' => ['cz' => 'Stránka nenalezena', 'en' => 'Page not found'],

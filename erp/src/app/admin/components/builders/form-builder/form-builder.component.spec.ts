@@ -458,7 +458,7 @@ describe('FormBuilderComponent', () => {
   describe('upload rules', () => {
     const uploadDefs: any[] = [
       { column_name: 'subject', label: 'Subject', type: 'text' },
-      { column_name: 'attachment', label: 'Attachment', type: 'file', uploadProfile: 'support_ticket' },
+      { column_name: 'attachment', label: 'Attachment', type: 'file', uploadProfile: 'job_application' },
       { column_name: 'attachments', label: 'Attachments', type: 'files', uploadProfile: 'raw_request_commission' },
       { column_name: 'plain', label: 'Plain', type: 'file' }
     ];
@@ -477,7 +477,7 @@ describe('FormBuilderComponent', () => {
      * @description Fields with an uploadProfile get the rules of the API (e.g. the user-request
      *   attachments: raw_request_commission); the file pickers offer every file and no type list
      *   is shown up front (it comes with a refusal only); a field without a profile has no rules.
-     * @input  definitions above (support_ticket 'file', raw_request_commission 'files', 'file' without profile)
+     * @input  definitions above (job_application 'file', raw_request_commission 'files', 'file' without profile)
      * @output no accept, no hint, types text ready for the error; uploader 10 files / 20 / 50 MB without
      *   svg / xml; plain field: no rules, no types text; a profile not used by any field is not loaded (null)
      */
@@ -498,7 +498,7 @@ describe('FormBuilderComponent', () => {
       expect(component.rulesFor(plain)).toBeNull();
       expect(component.allowedTypesFor(plain)).toBe('');
       expect((fixture.nativeElement.querySelector('#plain') as HTMLInputElement).hasAttribute('accept')).toBeFalse();
-      expect(component.rulesFor({ column_name: 'x', label: 'X', type: 'file', uploadProfile: 'job_application' } as any)).toBeNull();
+      expect(component.rulesFor({ column_name: 'x', label: 'X', type: 'file', uploadProfile: 'sales_order' } as any)).toBeNull();
     });
 
     /**

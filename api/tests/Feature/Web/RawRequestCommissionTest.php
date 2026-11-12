@@ -16,7 +16,7 @@
 namespace Tests\Feature\Web;
 
 use App\Mail\Web\WebRawRequestCommissionReceived;
-use App\Models\Web\WebAttachment;
+use App\Models\Core\CoreAttachment;
 use App\Models\Web\WebRawRequestCommission;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -242,7 +242,7 @@ class RawRequestCommissionTest extends TestCase
         ], ['Accept' => 'application/json'])->assertOk()
             ->assertJsonPath('data.thema', 'Renamed')->assertJsonPath('data.attachments.0.original_filename', 'new.pdf');
 
-        $this->assertNull(WebAttachment::find($old->id));
+        $this->assertNull(CoreAttachment::find($old->id));
         Storage::disk('private')->assertMissing('web/raw_request_commissions/old.pdf');
         $this->assertWebLog('update', "Updated request ID: {$request->id}");
 

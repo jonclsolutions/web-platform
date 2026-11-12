@@ -11,6 +11,7 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { BasePublicComponent } from '../../../base-public.component';
+import { hasApp } from '../../../../apps/apps.registry';
 
 /** Single footer link after translation. */
 interface FooterNavLink {
@@ -62,7 +63,8 @@ export class PublicFooterComponent extends BasePublicComponent {
       links: [
         { route: '/services',   key: 'navigation.services',        ext: false },
         { route: '/references', key: 'navigation.references_full', ext: false },
-        { route: '/shop',       key: 'navigation.shop',            ext: true  },
+        // The e-shop only when it is part of this build (apps.registry).
+        ...(hasApp('shop') ? [{ route: '/shop', key: 'navigation.shop', ext: true }] : []),
       ],
     },
     {

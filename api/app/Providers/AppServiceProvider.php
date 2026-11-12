@@ -8,7 +8,9 @@
  * @created 2026
  * @description Bootstraps the application services; defines the named rate limiters: the login
  * (keyed by IP and by e-mail separately), the 2FA code resend and the public web forms; in
- * production forces the safe values of the settings whose mistake would leak data (VT-09).
+ * production forces the safe values of the settings whose mistake would leak data (VT-09); maps the
+ * models of the registered applications that own attachments to their morph aliases
+ * (AppManifest::morphMap()), so `attachable_type` stores an alias and the classes may move.
  * @note Every limit is keyed per client IP, per e-mail or per account - never one counter shared
  * by everybody - so many people using the application at the same time never block each other;
  * only one client (or one account) repeating itself is stopped. The client IP is correct behind a
@@ -17,9 +19,11 @@
 
 namespace App\Providers;
 
+use App\Support\Apps\AppRegistry;
 use App\Support\Audit\ModelChanges;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
@@ -56,6 +60,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->enforceProductionSafety();
+        Relation::morphMap(AppRegistry::morphMap());
 
         // ── Audit detail: every model created / updated / deleted / restored is noted with its
         // changed attributes; the next audit log row of the request carries them (`changes`).

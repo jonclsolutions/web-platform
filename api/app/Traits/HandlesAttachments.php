@@ -6,19 +6,19 @@
  * @author JS
  * @created 2026
  * @description Storing and deleting file attachments, reusable for any model with a
- * `morphMany(WebAttachment::class, 'attachable')` relation.
+ * `morphMany(CoreAttachment::class, 'attachable')` relation.
  */
 
 namespace App\Traits;
 
-use App\Models\Web\WebAttachment;
+use App\Models\Core\CoreAttachment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 trait HandlesAttachments
 {
     /**
-     * @description Stores every uploaded file of the request field as a WebAttachment of $model.
+     * @description Stores every uploaded file of the request field as a CoreAttachment of $model.
      * @param Request $request
      * @param Model $model Model with the morphMany('attachments') relation.
      * @param string $folder Subfolder in `storage/app/{$disk}/{folder}`.
@@ -51,10 +51,9 @@ trait HandlesAttachments
     }
 
     /**
-     * @description Stores EXACTLY ONE uploaded file as a WebAttachment of $model and replaces
+     * @description Stores EXACTLY ONE uploaded file as a CoreAttachment of $model and replaces
      *              any earlier attachment (deleted from the disk and the database) - for
-     *              entities with at most one file (WebJobApplication::cv_file,
-     *              WebSupportTicket::attachment).
+     *              entities with at most one file (WebJobApplication::cv_file).
      * @param Request $request
      * @param Model $model Model with the morphMany('attachments') relation.
      * @param string $folder Subfolder in `storage/app/{$disk}/{folder}`.

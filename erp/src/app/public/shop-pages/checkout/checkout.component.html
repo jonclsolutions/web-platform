@@ -276,7 +276,7 @@
                 [class.is-invalid]="errors['agreeToTerms']"
                 >
               <span class="terms-text" [class.text-error]="errors['agreeToTerms']">
-                {{ t?.terms?.prefix }} <a routerLink="/tos" target="_blank">{{ t?.terms?.tos_link }}</a> {{ t?.terms?.middle }} <a routerLink="/privacy-policy" target="_blank">{{ t?.terms?.privacy_link }}</a>{{ t?.terms?.suffix }}
+                {{ t?.terms?.prefix }} <a routerLink="/shop/tos" target="_blank">{{ t?.terms?.tos_link }}</a> {{ t?.terms?.middle }} <a routerLink="/shop/privacy-policy" target="_blank">{{ t?.terms?.privacy_link }}</a>{{ t?.terms?.suffix }}
               </span>
             </label>
             @if (errors['agreeToTerms']) {

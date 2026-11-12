@@ -6,7 +6,7 @@
  * @author JS
  * @created 2026
  * @description Read/write access to the web-domain audit log (web_logs) - business content
- * activity across news, support tickets, job applications, sales leads/orders, raw request
+ * activity across job applications, sales leads/orders, raw request
  * commissions and external links. The endpoints are shared by AuditLogController; this class only
  * names the model and the resource.
  * @dependencies

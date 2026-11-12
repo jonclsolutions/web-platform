@@ -137,7 +137,7 @@ class HousekeepingTest extends TestCase
             }
         }
         foreach (['completed', 'validated'] as $status) {
-            $batch = CoreImportBatch::create(['resource' => 'web_news', 'format' => 'csv', 'status' => $status]);
+            $batch = CoreImportBatch::create(['resource' => 'web_sales_leads', 'format' => 'csv', 'status' => $status]);
             DB::table('core_import_batches')->where('id', $batch->id)->update(['created_at' => Carbon::now()->subDays(800)]);
         }
 

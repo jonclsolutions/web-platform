@@ -1,0 +1,190 @@
+/*
+    @file: legal-document.css
+    @path: /src/app/public/legal/legal-document.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Shared look for all legal document pages (GDPR, TOS, Cookies, ...) of every
+        public application: the three legal page components use it as their stylesheet
+        (styleUrl), so a change here applies to all of them. Dark look of the public web by
+        default, the light look of the e-shop with the host class `legal--light`.
+    @dependencies: none (defines its own spacing and colour tokens on :host)
+*/
+
+:host {
+  --read-w:     860px;  /* long-form text column (readability) */
+
+  /* ── Unified spacing (same values on every public page) ── */
+  --gutter:     24px;   /* side padding of every container */
+  --section-y:  96px;   /* page bottom spacing */
+  --hero-top:   180px;  /* navbar height + air above page title */
+
+  /* ── Colours: dark look of the public web ── */
+  --legal-heading: var(--color-white);
+  --legal-text:    #a0a0b0;
+  --legal-body:    #8a8a9c;
+  --legal-strong:  #b0b0c0;
+  --legal-em:      #9090a8;
+  --legal-link:    #a67dff;
+  --legal-link-hover: #c09fff;
+  --legal-muted:   #55556a;
+  --legal-line:    rgba(166, 125, 255, 0.2);
+  --legal-grid:    rgba(166, 125, 255, 0.03);
+}
+
+/*
+    @module: Light legal look
+    @description: Colours of the legal pages in the light layout of the e-shop.
+    @usage: host class `legal--light` (set by the component when the route belongs to the e-shop)
+*/
+:host(.legal--light) {
+  --hero-top:      64px;
+  --legal-heading: var(--color-black);
+  --legal-text:    #3a3a3a;
+  --legal-body:    #4a4a4a;
+  --legal-strong:  var(--color-black);
+  --legal-em:      #555555;
+  --legal-link:    var(--color-black);
+  --legal-link-hover: #555555;
+  --legal-muted:   #707070;
+  --legal-line:    #e5e5e5;
+  --legal-grid:    transparent;
+}
+.container::before{
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--legal-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--legal-grid) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  max-width: calc(var(--read-w) + var(--gutter) * 2);
+  margin: 0 auto;
+  padding: var(--hero-top) var(--gutter) var(--section-y);
+  color: var(--legal-text);
+  font-family: "Source Sans Pro", sans-serif;
+  line-height: 1.7;
+}
+
+/* Page title – identical to .about-hero-title / .svc-hero-title / ... */
+h1 {
+  font-family: 'Source Sans Pro', 'Segoe UI', sans-serif;
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-weight: 700;
+  color: var(--legal-heading);
+  line-height: 1.15;
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 16px;
+}
+
+/* Section heading – white like .svc-panel-title / .milestones-heading */
+h2 {
+  color: var(--legal-heading);
+  margin-top: 40px;
+  margin-bottom: 12px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: "Source Sans Pro", sans-serif;
+  border-bottom: 1px solid var(--legal-line);
+  padding-bottom: 8px;
+  letter-spacing: 0.01em;
+}
+
+/* Sub-heading – white like .milestone-title / .feature-card-title */
+h3 {
+  color: var(--legal-heading);
+  margin-top: 22px;
+  margin-bottom: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: "Source Sans Pro", sans-serif;
+}
+
+p {
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+  color: var(--legal-body);
+}
+
+ul, ol {
+  margin-left: 20px;
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+
+ul { list-style: disc; }
+ol { list-style: decimal; }
+
+li {
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 0.95rem;
+  color: var(--legal-body);
+  margin-bottom: 6px;
+  line-height: 1.65;
+}
+
+strong {
+  font-weight: 700;
+  color: var(--legal-strong);
+}
+
+em {
+  font-style: italic;
+  color: var(--legal-em);
+}
+
+a {
+  color: var(--legal-link);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--legal-link-hover);
+  text-decoration: underline;
+}
+
+.last-update {
+  text-align: right;
+  font-size: 0.8rem;
+  color: var(--legal-muted);
+  font-family: "Source Sans Pro", sans-serif;
+  margin-top: 40px;
+  border-top: 1px solid var(--legal-line);
+  padding-top: 14px;
+}
+
+.policy-section {
+  margin-bottom: 8px;
+}
+
+.subsection {
+  margin-top: 4px;
+  padding-left: 16px;
+  border-left: 2px solid var(--legal-line);
+}
+
+@media (max-width: 600px) {
+  /* Mobile spacing tokens – container follows automatically */
+  :host {
+    --gutter:     16px;
+    --section-y:  64px;
+    --hero-top:   120px;
+  }
+  :host(.legal--light) { --hero-top: 40px; }
+
+  /* Same mobile title size as other public pages */
+  h1 { font-size: 2rem; }
+}
+
+@media (max-width: 480px) {
+  h2 {
+    font-size: 1.1rem;
+  }
+}

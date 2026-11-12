@@ -73,8 +73,6 @@ export class DashboardComponent extends BaseDashboardComponent {
    * requested.
    */
   protected readonly statDefs: DashboardStatDef[] = [
-    { key: 'news', isAllowed: () => this.can('web-news-view'), labelKey: 'stat_news_label', icon: 'newspaper', endpoint: 'web/news?per_page=1' },
-    { key: 'openTickets', isAllowed: () => this.can('web-support-tickets-view'), labelKey: 'stat_open_tickets_label', icon: 'ticket', endpoint: 'web/support_tickets?status=open&per_page=1' },
     { key: 'jobApps', isAllowed: () => this.can('web-job-applications-view'), labelKey: 'stat_job_apps_label', icon: 'file', endpoint: 'web/job_applications?per_page=1' },
     { key: 'leads', isAllowed: () => this.can('web-sales-leads-view'), labelKey: 'stat_leads_label', icon: 'briefcase', endpoint: 'web/sales_leads?per_page=1' },
     { key: 'salesOrders', isAllowed: () => this.can('web-sales-orders-view'), labelKey: 'stat_sales_orders_label', icon: 'inbox', endpoint: 'web/sales_orders?per_page=1' },
@@ -90,12 +88,10 @@ export class DashboardComponent extends BaseDashboardComponent {
   pendingWebTargetState = true;
 
   readonly navSections: DashboardNavSection[] = [
-    { titleKey: 'nav_news_title', icon: 'newspaper', route: '/admin/web/edit-news', descriptionKey: 'nav_news_desc', isAllowed: () => this.can('web-news-view') },
     { titleKey: 'nav_website_title', icon: 'globe', route: '/admin/web/edit-website', descriptionKey: 'nav_website_desc', isAllowed: () => this.can('web-edit-website-view') },
     { titleKey: 'nav_requests_title', icon: 'mail', route: '/admin/web/user-request', descriptionKey: 'nav_requests_desc', isAllowed: () => this.can('web-user-requests-view') },
     { titleKey: 'nav_sales_orders_title', icon: 'inbox', route: '/admin/web/sales-orders', descriptionKey: 'nav_sales_orders_desc', isAllowed: () => this.can('web-sales-orders-view') },
     { titleKey: 'nav_leads_title', icon: 'briefcase', route: '/admin/web/sales-leads', descriptionKey: 'nav_leads_desc', isAllowed: () => this.can('web-sales-leads-view') },
-    { titleKey: 'nav_tickets_title', icon: 'ticket', route: '/admin/web/support-tickets', descriptionKey: 'nav_tickets_desc', isAllowed: () => this.can('web-support-tickets-view') },
     { titleKey: 'nav_job_apps_title', icon: 'file', route: '/admin/web/job-applications', descriptionKey: 'nav_job_apps_desc', isAllowed: () => this.can('web-job-applications-view') },
     { titleKey: 'nav_business_logs_title', icon: 'logs', route: '/admin/web/business-logs', descriptionKey: 'nav_business_logs_desc', isAllowed: () => this.can(this.logsPermission) },
   ];
@@ -159,14 +155,6 @@ export class DashboardComponent extends BaseDashboardComponent {
   /** @description Synchronous permission check of the stat / nav guards. */
   private can(permission: string): boolean {
     return this.permissionService.hasPermission(permission);
-  }
-
-  /** @description Open tickets above zero are the one actionable metric - highlighted. */
-  protected override toQuickStat(def: DashboardStatDef, total: number | string): QuickStat {
-    return {
-      ...super.toQuickStat(def, total),
-      urgent: def.key === 'openTickets' && typeof total === 'number' && total > 0,
-    };
   }
 
   /** @description The manual refresh reloads the maintenance state too (bypassing its cache). */

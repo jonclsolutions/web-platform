@@ -12,15 +12,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Core\CoreLog;
-use App\Models\Shop\ShopLog;
-use App\Models\Web\WebLog;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use App\Support\I18n\WebContentLanguages;
-use App\Support\Mail\ShopOrderEmailTemplate;
+use App\Support\Apps\AppRegistry;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -46,21 +43,6 @@ class TranslationController extends Controller
 
     /** @var string Route / input pattern of a language code ('cz', 'en', 'en-gb', …). */
     public const LANG_PATTERN = '[a-zA-Z]{2}(?:[-_][a-zA-Z0-9]{2,3})?';
-
-    /** @var array<string, string> Permission needed to change the translations / languages of a module. */
-    private const MODULE_PERMISSIONS = [
-        'web'  => 'web-edit-website-update',
-        'shop' => 'shop-edit-eshop-update',
-    ];
-
-    /**
-     * @var array<string, class-string> Audit log of the changes of a module's translations /
-     *   languages; any other module is logged into the core log (see logModel()).
-     */
-    private const MODULE_LOGS = [
-        'web'  => WebLog::class,
-        'shop' => ShopLog::class,
-    ];
 
     /** @var string Role that passes every permission check (see CheckPermission). */
     private const SYSADMIN_ROLE_NAME = 'sysadmin';
@@ -89,7 +71,7 @@ class TranslationController extends Controller
             return null;
         }
 
-        $required = self::MODULE_PERMISSIONS[$module] ?? null;
+        $required = AppRegistry::translationPermission($module);
         if ($required !== null && in_array($required, $user->permissions ?? [], true)) {
             return null;
         }
@@ -164,12 +146,40 @@ class TranslationController extends Controller
 
         $filtered = array_values(array_filter($allMeta, fn($l) => $this->moduleOf($l) === $module));
 
-        foreach ($filtered as &$lang) {
+        return $this->respond($this->withIconUrls($filtered));
+    }
+
+    /**
+     * @description Languages of all applications together (one entry per code, the first one
+     *   wins) - the languages of the content the core manages for every application, e.g. the
+     *   legal documents and the company details.
+     * @return JsonResponse { data: language[] } with icon URLs.
+     */
+    public function getAllLanguages(): JsonResponse
+    {
+        $byCode = [];
+        foreach (self::readLanguagesMeta() as $lang) {
+            if (is_array($lang) && is_string($lang['code'] ?? null)) {
+                $byCode[strtolower($lang['code'])] ??= $lang;
+            }
+        }
+
+        return $this->respond($this->withIconUrls(array_values($byCode)));
+    }
+
+    /**
+     * @description Replaces the stored icon path of every language by its public URL.
+     * @param array<int, array<string, mixed>> $languages Language entries.
+     * @return array<int, array<string, mixed>>
+     */
+    private function withIconUrls(array $languages): array
+    {
+        foreach ($languages as &$lang) {
             $lang['iconUrl'] = !empty($lang['icon_path']) ? Storage::disk(self::ICON_DISK)->url($lang['icon_path']) : null;
             unset($lang['icon_path']);
         }
 
-        return $this->respond($filtered);
+        return $languages;
     }
 
     /**
@@ -319,20 +329,16 @@ class TranslationController extends Controller
     }
 
     /**
-     * @description Removes the content of a module stored per language of a deleted language:
-     *   web - FAQ, jobs, references (WebContentLanguages); shop - the texts of the order
-     *   confirmation e-mail (ShopOrderEmailTemplate).
-     * @param string $module Module ('web', 'shop').
+     * @description Removes the content of the application stored per language of a deleted
+     *   language (AppManifest::languageDeleted(), e.g. the FAQ of the web, the order e-mail texts
+     *   of the e-shop).
+     * @param string $module Translation module (= application id).
      * @param string $code Deleted language code.
      * @return void
      */
     private function forgetContent(string $module, string $code): void
     {
-        if ($module === 'web') {
-            WebContentLanguages::forget($code);
-        } elseif ($module === 'shop') {
-            ShopOrderEmailTemplate::forget(strtolower($code));
-        }
+        AppRegistry::app($module)?->languageDeleted($code);
     }
 
     /**
@@ -474,13 +480,13 @@ class TranslationController extends Controller
     }
 
     /**
-     * @description Audit log of a module: the e-shop translations go to the shop log, the web ones
-     *   to the web log, everything else (e.g. `admin`) to the core log.
+     * @description Audit log of a module: an application's translations go to its log
+     *   (AppManifest::logModel()), everything else (e.g. `admin`) to the core log.
      * @param string $module Translation module.
      * @return class-string Log model for LogsActivity::logAction().
      */
     private function logModel(string $module): string
     {
-        return self::MODULE_LOGS[$module] ?? CoreLog::class;
+        return AppRegistry::logModel($module) ?? CoreLog::class;
     }
 }

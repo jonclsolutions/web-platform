@@ -8,10 +8,10 @@
  * @description Retention contribution of one module (web, e-shop, …) to the core retention purge
  * (RetentionPurgeService): its kinds of personal data with their default periods, how to delete
  * them, its audit log model and its always-run clean-ups. The core never names a module's models -
- * a module is registered in `config/retention.php` (`sources`); when its folder is removed, the
- * class no longer exists and it is skipped.
+ * a module lists its sources in its manifest (AppManifest::retentionSources(), config/apps.php);
+ * when its folder is removed, the class no longer exists and it is skipped.
  * @usage `final class WebRetentionSource implements RetentionSource { … }` + an entry in
- *   config/retention.php.
+ *   WebApp::retentionSources().
  */
 
 namespace App\Services\Retention;

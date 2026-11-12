@@ -13,6 +13,7 @@
 
 namespace App\Http\Requests\Web\WebProject;
 
+use App\Services\Web\WebApp;
 use App\Support\Uploads\AttachmentPolicy;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -32,8 +33,8 @@ class SaveProjectUpdateRequest extends FormRequest
             'title'                   => [$required, 'string', 'max:200'],
             'body'                    => [$required, 'string', 'max:20000'],
             'publish'                 => ['sometimes', 'boolean'],
-            'attachments'             => ['nullable', 'array', 'max:' . AttachmentPolicy::PROFILES[AttachmentPolicy::PROJECT_THREAD]['max_files']],
-            'attachments.*'           => AttachmentPolicy::fileRules(AttachmentPolicy::PROJECT_THREAD),
+            'attachments'             => ['nullable', 'array', 'max:' . WebApp::UPLOAD_PROFILES[WebApp::UPLOAD_PROJECT_THREAD]['max_files']],
+            'attachments.*'           => AttachmentPolicy::fileRules(WebApp::UPLOAD_PROJECT_THREAD),
             'remove_attachment_ids'   => ['sometimes', 'array'],
             'remove_attachment_ids.*' => ['integer'],
         ];

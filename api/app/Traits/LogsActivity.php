@@ -47,7 +47,7 @@ trait LogsActivity
      * @param Request $request Current request instance (source of IP/user/payload).
      * @param string $logModel Fully-qualified log model class, e.g. CoreLog::class.
      * @param string $eventType Action type (create, update, delete, error, etc.).
-     * @param string $module Domain module context (e.g. "WebNews", "CoreRole").
+     * @param string $module Domain module context (e.g. "WebSalesLead", "CoreRole").
      * @param string $description Human-readable audit message.
      * @param int|null $affectedId Entity identifier.
      * @param string|null $affectedType Entity class/type name.

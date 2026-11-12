@@ -6,7 +6,7 @@
  * @created 2025
  * @description Configuration (buttons, form fields, table / filter / detail columns) of the
  * Sales Leads (CRM) management page.
- * @note Same recipe as `user-request.config.ts` / `support-tickets.config.ts`:
+ * @note Same recipe as `user-request.config.ts`:
  * 1) `..._VALUES` - canonical English slug, never translated.
  * 2) `..._LABEL_KEYS` - slug -> i18n key.
  * 3) `mapLabeledOptions(SECTION, )` - `{value,label}` pairs shared by the form and the filter.

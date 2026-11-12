@@ -23,10 +23,11 @@
 
 namespace App\Http\Controllers\Api\Web;
 
+use App\Models\Core\CoreAttachment;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\WebProject\{ProjectLoginRequest, StoreProjectThreadRequest, StoreProjectThreadMessageRequest, UpdatePortalAccountRequest};
 use App\Http\Resources\Web\{WebProjectFileResource, WebProjectPublicResource, WebProjectThreadResource, WebProjectThreadMessageResource};
-use App\Models\Web\{WebAttachment, WebLog, WebProject, WebProjectAccount, WebProjectThread, WebProjectThreadMessage};
+use App\Models\Web\{WebLog, WebProject, WebProjectAccount, WebProjectThread, WebProjectThreadMessage};
 use App\Services\Web\ProjectNotifier;
 use App\Support\Auth\AuthCookies;
 use App\Traits\HandlesAttachments;

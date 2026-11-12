@@ -299,7 +299,7 @@ class DatabaseSetupTest extends TestCase
         $keys = [
             'view-core', 'view-web', 'view-eshop', 'core-view-welcome-page',
             'core-administrators-view', 'core-administrators-update', 'core-security-view', 'core-external-links-view',
-            'core-external-links-create', 'web-news-view', 'web-news-create', 'web-news-update', 'web-news-delete',
+            'core-external-links-create', 'web-sales-leads-view', 'web-sales-leads-create', 'web-sales-leads-update', 'web-sales-leads-delete',
             'web-view-dashboard', 'web-set-maintenance-mode', 'shop-products-view', 'shop-products-update', 'shop-products-delete',
         ];
         foreach ($keys as $key) {
@@ -317,10 +317,10 @@ class DatabaseSetupTest extends TestCase
 
         $roleKeys = fn (string $name) => CoreRole::where('role_name', $name)->firstOrFail()->permissions()->pluck('permission_key')->sort()->values()->all();
         $this->assertSame(['core-administrators-view', 'core-external-links-view', 'core-security-view', 'core-view-welcome-page', 'view-core'], $roleKeys('read-only-core'));
-        $this->assertSame(['view-web', 'web-news-view', 'web-view-dashboard'], $roleKeys('read-only-web'));
+        $this->assertSame(['view-web', 'web-sales-leads-view', 'web-view-dashboard'], $roleKeys('read-only-web'));
         $this->assertSame(['shop-products-view', 'view-eshop'], $roleKeys('read-only-shop'));
         $core = ['core-administrators-update', 'core-administrators-view', 'core-external-links-create', 'core-external-links-view', 'core-security-view', 'core-view-welcome-page', 'view-core'];
-        $this->assertSame([...$core, 'view-web', 'web-news-create', 'web-news-delete', 'web-news-update', 'web-news-view', 'web-set-maintenance-mode', 'web-view-dashboard'], $roleKeys('full-web-core'));
+        $this->assertSame([...$core, 'view-web', 'web-sales-leads-create', 'web-sales-leads-delete', 'web-sales-leads-update', 'web-sales-leads-view', 'web-set-maintenance-mode', 'web-view-dashboard'], $roleKeys('full-web-core'));
         $this->assertSame([...array_slice($core, 0, 6), 'shop-products-delete', 'shop-products-update', 'shop-products-view', 'view-core', 'view-eshop'], $roleKeys('full-shop-core'));
         $this->assertSame(collect($keys)->sort()->values()->all(), $roleKeys('all-permissions'));
         $this->assertStringContainsString('Test role (local development).', CoreRole::where('role_name', 'all-permissions')->value('description'));
@@ -359,7 +359,7 @@ class DatabaseSetupTest extends TestCase
     {
         $this->app['env'] = 'local';
         $this->role('sysadmin');
-        CorePermission::create(['permission_key' => 'web-news-view', 'module' => 'web']);
+        CorePermission::create(['permission_key' => 'web-sales-leads-view', 'module' => 'web']);
         $this->seed(DevelopmentSeeder::class);
 
         User::where('user_email', DevelopmentSeeder::TEST_EMAIL)->update(['user_password_hash' => Hash::make('Changed1!')]);
@@ -431,12 +431,12 @@ class DatabaseSetupTest extends TestCase
         Storage::disk('public')->assertExists([BaseDataSeeder::DEFAULT_LOGO_PATH, WebBaseDataSeeder::FLAG_PATH, ShopBaseDataSeeder::FLAG_PATH]);
 
         $expected = array_column(BaseDataSeeder::permissions(), 'permission_key');
-        $this->assertCount(95, $expected);
+        $this->assertCount(87, $expected);
         $this->assertEqualsCanonicalizing($expected, CorePermission::pluck('permission_key')->all());
         $sysadmin = CoreRole::where('role_name', 'sysadmin')->firstOrFail();
         $this->assertTrue($sysadmin->isProtected());
-        $this->assertSame(95, $sysadmin->permissions()->count());
-        $this->assertSame(23, DB::table('legal_page_titles')->count());
+        $this->assertSame(87, $sysadmin->permissions()->count());
+        $this->assertSame(25, DB::table('legal_page_titles')->count());
         $this->assertTrue(DB::table('legal_page_titles')->where(['area' => 'web', 'page_key' => 'not-found'])->exists());
         $this->assertTrue(DB::table('legal_page_titles')->where(['area' => 'admin', 'page_key' => 'panel'])->exists());
         $this->assertEqualsCanonicalizing(['gdpr', 'tos', 'cookies'], DocumentType::pluck('slug')->all());
@@ -491,8 +491,8 @@ class DatabaseSetupTest extends TestCase
      * @description VT-17: the core is seeded without any module - a module seeder that is not
      *   registered or whose class no longer exists (module folder removed) is skipped, the
      *   sysadmin role gets the core permissions only.
-     * @input config seeders.base_data = [missing class, a non-seeder class]; BaseDataSeeder; then
-     *   only the web module registered.
+     * @input config apps.apps = [missing manifest, a non-manifest class]; BaseDataSeeder; then
+     *   only the web application registered.
      * @output modules() []; 22 core permissions incl. view-core, no web-/shop- key; sysadmin 22;
      *   1 page title (admin.panel); no web / shop settings rows; logo, no flags; company details
      *   + legal types; then web only: 57 permissions incl. view-web, web settings row, no shop row.
@@ -500,7 +500,7 @@ class DatabaseSetupTest extends TestCase
     public function test_base_data_seeder_without_modules(): void
     {
         Storage::fake('public');
-        config(['seeders.base_data' => ['Database\\Seeders\\Removed\\RemovedBaseDataSeeder', \stdClass::class]]);
+        config(['apps.apps' => ['App\\Services\\Removed\\RemovedApp', \stdClass::class]]);
         $this->assertSame([], BaseDataSeeder::modules());
 
         $this->seed(BaseDataSeeder::class);
@@ -519,11 +519,11 @@ class DatabaseSetupTest extends TestCase
         $this->assertTrue(SiteSetting::query()->exists());
         $this->assertEqualsCanonicalizing(['gdpr', 'tos', 'cookies'], DocumentType::pluck('slug')->all());
 
-        config(['seeders.base_data' => [WebBaseDataSeeder::class]]);
+        config(['apps.apps' => [\App\Services\Web\WebApp::class]]);
         $this->seed(BaseDataSeeder::class);
 
-        $this->assertSame(57, CorePermission::count());
-        $this->assertSame(57, CoreRole::where('role_name', 'sysadmin')->firstOrFail()->permissions()->count());
+        $this->assertSame(49, CorePermission::count());
+        $this->assertSame(49, CoreRole::where('role_name', 'sysadmin')->firstOrFail()->permissions()->count());
         $this->assertTrue(CorePermission::where('permission_key', 'view-web')->exists());
         $this->assertSame(1, WebSiteSetting::count());
         $this->assertSame(0, ShopSiteSetting::count());
@@ -536,7 +536,7 @@ class DatabaseSetupTest extends TestCase
      *   sections replaced by an own Czech one; logo file replaced, one flag deleted; sysadmin
      *   soft-deleted; one permission row removed; seeded again.
      * @output edits kept (company, own gdpr section only, own logo); deleted flag restored; role
-     *   restored with 95 permissions; 95 permissions, 23 titles, 1 row in each settings table.
+     *   restored with 87 permissions; 87 permissions, 25 titles, 1 row in each settings table.
      */
     public function test_base_data_seeder_only_adds(): void
     {
@@ -552,7 +552,7 @@ class DatabaseSetupTest extends TestCase
         CorePermission::where('permission_key', 'view-core')->update(['description' => 'edited']);
         ShopSiteSetting::firstOrFail()->update(['is_shop_active' => false]);
         CoreRole::where('role_name', 'sysadmin')->firstOrFail()->delete();
-        CorePermission::where('permission_key', 'web-news-delete')->delete();
+        CorePermission::where('permission_key', 'web-sales-leads-delete')->delete();
 
         $this->seed(BaseDataSeeder::class);
 
@@ -560,9 +560,9 @@ class DatabaseSetupTest extends TestCase
         $this->assertSame('edited', CorePermission::where('permission_key', 'view-core')->value('description'));
         $this->assertFalse(ShopSiteSetting::firstOrFail()->is_shop_active);
         $role = CoreRole::where('role_name', 'sysadmin')->firstOrFail();
-        $this->assertSame(95, $role->permissions()->count());
-        $this->assertSame(95, CorePermission::count());
-        $this->assertSame(23, DB::table('legal_page_titles')->count());
+        $this->assertSame(87, $role->permissions()->count());
+        $this->assertSame(87, CorePermission::count());
+        $this->assertSame(25, DB::table('legal_page_titles')->count());
         $this->assertSame(1, WebSiteSetting::count());
         $this->assertSame(1, ShopSiteSetting::count());
         $this->assertSame('My company', SiteSetting::firstOrFail()->company_name);

@@ -92,7 +92,7 @@ class JobApplicationTest extends TestCase
     }
 
     /**
-     * @description The CV whitelist (AttachmentPolicy::JOB_APPLICATION) checks the name AND the
+     * @description The CV whitelist (WebApp::UPLOAD_JOB_APPLICATION) checks the name AND the
      *   content: an XML file and an HTML page named .pdf are refused.
      * @input POST with cv.xml (XML content); POST with cv.pdf that is an HTML page.
      * @output 422 cv_file twice, no application stored.

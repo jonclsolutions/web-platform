@@ -15,7 +15,7 @@
  *   - English templates of the legal documents (data/document_sections.php) - privacy policy,
  *     terms of service, cookie policy - with placeholders to be replaced by the operator,
  *   - the default logo on the public disk (storage/app/public is not in git).
- *   Then the base data of every module registered in config/seeders.php (`base_data` -
+ *   Then the base data of every registered application (AppManifest::baseDataSeeders() -
  *   Web\WebBaseDataSeeder, Shop\ShopBaseDataSeeder: their permissions, page titles, settings
  *   rows, e-shop methods, flags, icons); a module whose seeder class no longer exists is skipped.
  *   Last, the role `sysadmin` gets every permission of the core and the modules - it cannot be
@@ -29,7 +29,7 @@
  *   permissions data file is given to the sysadmin role on the next run.
  * @dependencies
  * - CorePermission, CoreRole, DocumentType, DocumentSection, SiteSetting, ModuleBaseDataSeeder,
- *   config/seeders.php.
+ *   AppRegistry (config/apps.php).
  */
 
 namespace Database\Seeders;
@@ -39,6 +39,7 @@ use App\Models\Core\CoreRole;
 use App\Models\Legal\DocumentSection;
 use App\Models\Legal\DocumentType;
 use App\Models\Legal\SiteSetting;
+use App\Support\Apps\AppRegistry;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -73,15 +74,13 @@ class BaseDataSeeder extends Seeder
     }
 
     /**
-     * @description Base data seeders of the registered modules whose class exists (config/seeders.php).
+     * @description Base data seeders of the registered applications whose class exists
+     *   (AppManifest::baseDataSeeders()).
      * @return array<int, class-string<ModuleBaseDataSeeder>>
      */
     public static function modules(): array
     {
-        return array_values(array_filter(
-            (array) config('seeders.base_data', []),
-            fn ($class) => is_string($class) && class_exists($class) && is_subclass_of($class, ModuleBaseDataSeeder::class)
-        ));
+        return AppRegistry::baseDataSeeders();
     }
 
     /**

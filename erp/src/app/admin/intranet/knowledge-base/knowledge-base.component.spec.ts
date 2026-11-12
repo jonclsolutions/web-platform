@@ -112,7 +112,7 @@ describe('KnowledgeBaseComponent (intranet)', () => {
 
     const url = spyOnProperty(TestBed.inject(Router), 'url', 'get').and.returnValue('/admin/intranet/knowledge-base');
     expect(kb.isRootPath()).toBeTrue();
-    url.and.returnValue('/admin/intranet/knowledge-base/news');
+    url.and.returnValue('/admin/intranet/knowledge-base/introductions');
     expect(kb.isRootPath()).toBeFalse();
 
     fixture.destroy();

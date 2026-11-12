@@ -11,11 +11,12 @@
  *   and time - the record of what the client agreed to. The supplier can ask again after changes
  *   (pending again) or cancel the request.
  * @property string $status pending | approved | changes_requested | cancelled
- * @dependencies WebProject, WebProjectCheckpoint, WebProjectApprovalDecision, WebAttachment, User
+ * @dependencies WebProject, WebProjectCheckpoint, WebProjectApprovalDecision, CoreAttachment, User
  */
 
 namespace App\Models\Web;
 
+use App\Models\Core\CoreAttachment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -66,7 +67,7 @@ class WebProjectApproval extends Model
 
     public function attachments(): MorphMany
     {
-        return $this->morphMany(WebAttachment::class, 'attachable');
+        return $this->morphMany(CoreAttachment::class, 'attachable');
     }
 
     /**

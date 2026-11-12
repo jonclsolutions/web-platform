@@ -10,6 +10,7 @@
 
 namespace App\Models\Web;
 
+use App\Models\Core\CoreAttachment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -66,7 +67,7 @@ class WebSalesOrder extends Model
 
     public function attachments(): MorphMany
     {
-        return $this->morphMany(WebAttachment::class, 'attachable');
+        return $this->morphMany(CoreAttachment::class, 'attachable');
     }
 
     /**

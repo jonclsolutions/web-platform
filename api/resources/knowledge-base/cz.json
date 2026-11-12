@@ -112,20 +112,6 @@
         }
       ]
     },
-    "edit-news": {
-      "navLabel": "Novinky (web)",
-      "header": "Správa novinek na webu",
-      "sections": [
-        {
-          "blocks": [
-            {
-              "type": "lead",
-              "content": "Testovací obsah - editace novinek zobrazovaných na veřejném webu."
-            }
-          ]
-        }
-      ]
-    },
     "edit-website": {
       "navLabel": "Editace webu",
       "header": "Editace obsahu webu",
@@ -149,20 +135,6 @@
             {
               "type": "lead",
               "content": "Testovací obsah - přehled přijatých objednávek/realizací a jejich zpracování."
-            }
-          ]
-        }
-      ]
-    },
-    "support-tickets": {
-      "navLabel": "Helpdesk tickety",
-      "header": "Helpdesk tickety",
-      "sections": [
-        {
-          "blocks": [
-            {
-              "type": "lead",
-              "content": "Testovací obsah - správa helpdesk ticketů přijatých od uživatelů."
             }
           ]
         }
@@ -511,7 +483,7 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - editace vícejazyčného obsahu právních dokumentů (GDPR, obchodní podmínky, cookies)."
+              "content": "Testovací obsah - editace vícejazyčného obsahu právních dokumentů (GDPR, obchodní podmínky, cookies). Dokumenty platí pro všechny veřejné aplikace: obchodní podmínky a zásady ochrany osobních údajů zobrazuje web i e-shop (ve svém vzhledu), jazyky jsou jazyky všech aplikací dohromady."
             }
           ]
         }
@@ -1553,7 +1525,7 @@
                 },
                 {
                   "title": "Zobrazila se chyba, které nerozumím",
-                  "text": "Zkuste akci zopakovat. Pokud chyba trvá, nahlaste ji přes formulář podpory a popište, co jste dělali a u kterého účtu."
+                  "text": "Zkuste akci zopakovat. Pokud chyba trvá, nahlaste ji správci systému a popište, co jste dělali a u kterého účtu."
                 }
               ]
             }

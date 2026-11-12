@@ -370,17 +370,6 @@
                   <span class="nav-text">{{ strings.nav_edit_website }}</span>
                 </a>
               </li>
-              <li *appHasPermission="'web-news-view'">
-                <a routerLink="/admin/web/edit-news" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_edit_news">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
-                      <path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_edit_news }}</span>
-                </a>
-              </li>
             </ul>
           </div>
         </div>
@@ -403,18 +392,6 @@
                     </svg>
                   </span>
                   <span class="nav-text">{{ strings.nav_job_applications }}</span>
-                </a>
-              </li>
-              <li *appHasPermission="'web-support-tickets-view'">
-                <a routerLink="/admin/web/support-tickets" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_support_tickets">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/>
-                      <path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
-                      <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_support_tickets }}</span>
                 </a>
               </li>
             </ul>

@@ -73,23 +73,9 @@
                   </a>
                 </li>
               }
-              @if (group.key === 'general') {
-                <li>
-                  <a routerLink="news" (click)="closeMenu()" routerLinkActive="active-kb">
-                    <span class="num">4.</span> {{ strings.kb_news_label }}
-                  </a>
-                </li>
-              }
             </ul>
           </div>
         }
-
-        <div class="nav-group">
-          <span class="group-title">{{ strings.nav_group_support }}</span>
-          <ul>
-            <li><a routerLink="support-form" (click)="closeMenu()" routerLinkActive="active-kb"><span class="num">INT.</span> {{ strings.kb_support_form_label }}</a></li>
-          </ul>
-        </div>
       </nav>
     </aside>
 

@@ -7,7 +7,7 @@
  * @created 2026
  * @description Retention of the e-shop module: only its audit log (deleted by the core
  * `audit_logs` retention). Orders and customers are NOT deleted automatically - accounting periods
- * apply; a customer is anonymised by hand (GDPR erasure). Registered in config/retention.php.
+ * apply; a customer is anonymised by hand (GDPR erasure). Registered in ShopApp::retentionSources().
  * @dependencies ShopLog.
  */
 

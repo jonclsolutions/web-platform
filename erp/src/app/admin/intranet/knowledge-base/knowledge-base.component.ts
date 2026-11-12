@@ -10,7 +10,7 @@
  * current admin language; it is reloaded after a language switch.
  * @dependencies
  * - KnowledgeBaseService: menu of the allowed pages.
- * - RouterModule: Nested routing (`:pageId` -> KbArticleComponent, `support-form`, `news`).
+ * - RouterModule: Nested routing (`:pageId` -> KbArticleComponent).
  * - AdminLocalizationService: Static i18n of the admin UI (section `knowledge-base`), current
  *   language, language switch (the same languages as the admin header).
  * - PublicDataService: site settings loaded at startup - the logo of the website (top left).

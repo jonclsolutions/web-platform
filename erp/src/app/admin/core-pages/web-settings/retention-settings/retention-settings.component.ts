@@ -6,7 +6,7 @@
  * @created 2026
  * @description "Data retention" tab of the web settings (GDPR Art. 5(1)(e) storage limitation,
  * VT-10): the retention period of every kind of personal data (job applications, inquiries,
- * leads, tickets, web orders, projects, cookie consents), the result of the last clean-up and an
+ * leads, web orders, projects, cookie consents), the result of the last clean-up and an
  * immediate run of the clean-up that otherwise runs every night (`retention:purge`).
  * @note The period runs from the last change of a record; "off" keeps the records until they are
  * deleted by hand (a kind of data that failed is reported, the others are still cleaned). Editing and running need `core-legal-config-update`, otherwise the values are

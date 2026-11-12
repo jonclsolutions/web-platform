@@ -530,11 +530,11 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   get showWebContentGroup(): boolean {
-    return this.hasAnyPermission(['web-edit-website-view', 'web-news-view']);
+    return this.hasAnyPermission(['web-edit-website-view']);
   }
 
   get showWebPeopleGroup(): boolean {
-    return this.hasAnyPermission(['web-job-applications-view', 'web-support-tickets-view']);
+    return this.hasAnyPermission(['web-job-applications-view']);
   }
 
   get showWebSystemGroup(): boolean {

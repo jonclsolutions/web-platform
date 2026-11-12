@@ -14,6 +14,7 @@
 namespace App\Http\Requests\Web\WebProject;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Services\Web\WebApp;
 use App\Support\Uploads\AttachmentPolicy;
 
 class StoreProjectThreadMessageRequest extends FormRequest
@@ -25,8 +26,8 @@ class StoreProjectThreadMessageRequest extends FormRequest
         return [
             'body'           => ['required', 'string', 'max:20000'],
             'is_internal'    => ['sometimes', 'boolean'],
-            'attachments'    => ['nullable', 'array', 'max:' . AttachmentPolicy::PROFILES[AttachmentPolicy::PROJECT_THREAD]['max_files']],
-            'attachments.*'  => AttachmentPolicy::fileRules(AttachmentPolicy::PROJECT_THREAD),
+            'attachments'    => ['nullable', 'array', 'max:' . WebApp::UPLOAD_PROFILES[WebApp::UPLOAD_PROJECT_THREAD]['max_files']],
+            'attachments.*'  => AttachmentPolicy::fileRules(WebApp::UPLOAD_PROJECT_THREAD),
         ];
     }
 

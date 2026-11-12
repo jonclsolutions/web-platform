@@ -7,7 +7,7 @@
  * @description Calendar of the admin (core/calendar) - read only. Shows the important dates the
  *   admin already holds (coupon start / end, project deadlines, follow-ups of sales leads, expiring
  *   order-form and activation links) in a month view or as a list, and the open work of the
- *   modules (new job applicants, unresolved tickets, e-shop orders to process …) in the panel
+ *   modules (new job applicants, new inquiries, e-shop orders to process …) in the panel
  *   "Waiting for you". Every item opens its admin page. The API (GET core/agenda) returns only
  *   what the user's permissions allow; the page itself needs no permission.
  *   Personal events: every admin adds own reminders / notes (date, optional time, title, note,

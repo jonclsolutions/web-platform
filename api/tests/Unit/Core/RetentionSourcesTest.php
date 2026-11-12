@@ -19,7 +19,9 @@ use App\Models\Shop\ShopLog;
 use App\Services\Retention\RetentionPurgeService;
 use App\Services\Retention\RetentionSource;
 use App\Services\Shop\ShopRetentionSource;
+use App\Services\Web\WebApp;
 use App\Services\Web\WebRetentionSource;
+use App\Support\Apps\AppManifest;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
@@ -61,13 +63,15 @@ class RetentionSourcesTest extends TestCase
     }
 
     /**
-     * @description Only existing RetentionSource classes are used; other config entries are skipped.
-     * @input sources = [web source, missing class, a non-source class, a number].
+     * @description Only existing RetentionSource classes of existing manifests are used; other
+     *   entries are skipped.
+     * @input apps = [missing manifest, a non-manifest class, a number, test manifest listing
+     *   web source + missing class + a non-source class].
      * @output one source (the web source).
      */
     public function test_invalid_config_entries_are_skipped(): void
     {
-        config(['retention.sources' => [WebRetentionSource::class, 'App\\Missing\\Gone', \stdClass::class, 5]]);
+        config(['apps.apps' => ['App\\Missing\\GoneApp', \stdClass::class, 5, MixedSourcesApp::class]]);
 
         $sources = RetentionPurgeService::sources();
         $this->assertCount(1, $sources);
@@ -76,13 +80,13 @@ class RetentionSourcesTest extends TestCase
 
     /**
      * @description A module whose clean-up fails is reported, the others still run.
-     * @input sources = [failing test source, web source].
+     * @input apps = [manifest of the failing test source, web].
      * @output failedKeys ['FailingRetentionSource:clean_up']; result has expired_portal_sessions 0;
      *   Log::error 'Retention purge failed'.
      */
     public function test_failing_clean_up_is_isolated(): void
     {
-        config(['retention.sources' => [FailingRetentionSource::class, WebRetentionSource::class]]);
+        config(['apps.apps' => [FailingApp::class, WebApp::class]]);
         Log::spy();
 
         $service = app(RetentionPurgeService::class);
@@ -121,5 +125,65 @@ final class FailingRetentionSource implements RetentionSource
     public function cleanUp(): array
     {
         throw new \RuntimeException('clean-up failed');
+    }
+}
+
+/**
+ * @description Test manifest: the failing source only.
+ */
+final class FailingApp extends AppManifest
+{
+    /** @description Test id. */
+    public function id(): string
+    {
+        return 'failing';
+    }
+
+    /** @description Test tab permission. */
+    public function tabPermission(): string
+    {
+        return 'view-failing';
+    }
+
+    /** @description Any log model (not used). */
+    public function logModel(): string
+    {
+        return ShopLog::class;
+    }
+
+    /** @description The failing source. */
+    public function retentionSources(): array
+    {
+        return [FailingRetentionSource::class];
+    }
+}
+
+/**
+ * @description Test manifest listing a valid source next to invalid entries.
+ */
+final class MixedSourcesApp extends AppManifest
+{
+    /** @description Test id. */
+    public function id(): string
+    {
+        return 'mixed';
+    }
+
+    /** @description Test tab permission. */
+    public function tabPermission(): string
+    {
+        return 'view-mixed';
+    }
+
+    /** @description Any log model (not used). */
+    public function logModel(): string
+    {
+        return ShopLog::class;
+    }
+
+    /** @description Web source, a missing class and a class that is no source. */
+    public function retentionSources(): array
+    {
+        return [WebRetentionSource::class, 'App\\Missing\\Gone', \stdClass::class];
     }
 }

@@ -44,28 +44,28 @@ describe('WebWelcomePageComponent', () => {
   });
 
   /**
-   * @description With all permissions every one of the 9 cards is shown, in menu order.
+   * @description With all permissions every one of the 7 cards is shown, in menu order.
    * @input  granted 'all'
-   * @output 9 links, first '/admin/web/edit-website', last '/admin/web/business-logs'
+   * @output 7 links, first '/admin/web/edit-website', last '/admin/web/business-logs'
    */
   it('shows every card to a user with all permissions', async () => {
     await setup('all');
     const links = cardLinks();
-    expect(links.length).toBe(9);
+    expect(links.length).toBe(7);
     expect(links[0]).toBe('/admin/web/edit-website');
-    expect(links[8]).toBe('/admin/web/business-logs');
-    expect(component.quickLinks.map(l => l.icon)).toEqual(['edit-website', 'edit-news', 'user-request', 'sales-leads',
-      'sales-orders', 'projects', 'job-applications', 'support-tickets', 'logs']);
+    expect(links[6]).toBe('/admin/web/business-logs');
+    expect(component.quickLinks.map(l => l.icon)).toEqual(['edit-website', 'user-request', 'sales-leads',
+      'sales-orders', 'projects', 'job-applications', 'logs']);
   });
 
   /**
    * @description Cards are gated by the same permission keys as the left menu.
-   * @input  granted ['web-news-view', 'web-projects-view']
-   * @output only '/admin/web/edit-news' and '/admin/web/projects'
+   * @input  granted ['web-sales-leads-view', 'web-projects-view']
+   * @output only '/admin/web/sales-leads' and '/admin/web/projects'
    */
   it('shows only the cards the user may open', async () => {
-    await setup(['web-news-view', 'web-projects-view']);
-    expect(cardLinks()).toEqual(['/admin/web/edit-news', '/admin/web/projects']);
+    await setup(['web-sales-leads-view', 'web-projects-view']);
+    expect(cardLinks()).toEqual(['/admin/web/sales-leads', '/admin/web/projects']);
   });
 
   /**

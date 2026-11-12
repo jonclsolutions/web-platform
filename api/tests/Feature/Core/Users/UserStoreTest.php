@@ -108,7 +108,7 @@ class UserStoreTest extends TestCase
         Mail::fake();
         config(['app.frontend_url' => 'https://admin.example.com']);
         $this->signIn($this->sysadmin());
-        $role = $this->role('editor', ['web-news-view']);
+        $role = $this->role('editor', ['web-sales-leads-view']);
 
         $response = $this->postJson('/api/core/users', [
             'user_email' => 'new@example.com', 'full_name' => 'New Person', 'role_id' => $role->id, 'dpp_hours_spent' => 3,
@@ -197,14 +197,14 @@ class UserStoreTest extends TestCase
     /**
      * @description A role within the creator's own permissions may be assigned; a
      *   soft-deleted role counts as unknown and is refused by the validation (finding #4).
-     * @input Creator with create + web-news-view; role 'reader' (web-news-view); trashed role.
+     * @input Creator with create + web-sales-leads-view; role 'reader' (web-sales-leads-view); trashed role.
      * @output 201 for 'reader'; 422 for the trashed role.
      */
     public function test_can_assign_role_within_own_permissions(): void
     {
         Mail::fake();
-        $this->signIn($this->userWith(['core-administrators-create', 'web-news-view']));
-        $reader = $this->role('reader', ['web-news-view']);
+        $this->signIn($this->userWith(['core-administrators-create', 'web-sales-leads-view']));
+        $reader = $this->role('reader', ['web-sales-leads-view']);
         $trashed = $this->role('old-role');
         $trashed->delete();
 
@@ -235,21 +235,21 @@ class UserStoreTest extends TestCase
     /**
      * @description Explicit permissions are limited to what the creator holds and are not
      *   stored when the role already grants them; ids are normalized (non-numeric dropped).
-     * @input Creator with create + web-news-view + web-news-update; role grants web-news-view;
+     * @input Creator with create + web-sales-leads-view + web-sales-leads-update; role grants web-sales-leads-view;
      *        permission_ids [view, update, core-security-delete, 'x'].
-     * @output 201; only web-news-update stored as explicit grant (granted_by = creator).
+     * @output 201; only web-sales-leads-update stored as explicit grant (granted_by = creator).
      */
     public function test_explicit_permissions_are_bounded(): void
     {
         Mail::fake();
-        $creator = $this->signIn($this->userWith(['core-administrators-create', 'web-news-view', 'web-news-update']));
-        $role = $this->role('reader', ['web-news-view']);
+        $creator = $this->signIn($this->userWith(['core-administrators-create', 'web-sales-leads-view', 'web-sales-leads-update']));
+        $role = $this->role('reader', ['web-sales-leads-view']);
         $foreign = $this->permission('core-security-delete');
 
         $this->postJson('/api/core/users', [
             'user_email' => 'e@example.com', 'full_name' => 'E', 'role_id' => $role->id,
-            'permission_ids' => [$this->permission('web-news-view')->id, (string) $this->permission('web-news-update')->id, $foreign->id, 'x'],
-        ])->assertCreated()->assertJsonPath('data.user_permissions', ['web-news-update']);
+            'permission_ids' => [$this->permission('web-sales-leads-view')->id, (string) $this->permission('web-sales-leads-update')->id, $foreign->id, 'x'],
+        ])->assertCreated()->assertJsonPath('data.user_permissions', ['web-sales-leads-update']);
 
         $user = User::where('user_email', 'e@example.com')->sole();
         $this->assertSame($creator->id, (int) $user->explicitPermissions()->sole()->pivot->granted_by);

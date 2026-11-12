@@ -26,7 +26,6 @@ use App\Models\Web\WebProject;
 use App\Models\Web\WebRawRequestCommission;
 use App\Models\Web\WebSalesLead;
 use App\Models\Web\WebSalesOrder;
-use App\Models\Web\WebSupportTicket;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Tests\Support\ShopFixtures;
@@ -67,9 +66,6 @@ class AgendaTest extends TestCase
         $link->forceFill(['public_token' => Str::random(40), 'public_token_expires_at' => '2026-11-25 12:00:00'])->save();
         foreach (['new', 'new', 'new', 'interview'] as $index => $state) {
             WebJobApplication::forceCreate(['first_name' => 'A', 'last_name' => "B{$index}", 'email' => "a{$index}@x.cz", 'position_name' => 'Dev', 'state' => $state]);
-        }
-        foreach (['new', 'open', 'closed'] as $state) {
-            WebSupportTicket::forceCreate(['user_name_plain' => 'U', 'user_plain' => 'u', 'category' => 'it', 'subject' => 'S', 'description' => 'D', 'priority' => 'low', 'state' => $state]);
         }
         WebRawRequestCommission::forceCreate(['thema' => 'other', 'contact_email' => 'c@x.cz', 'order_description' => 'x', 'status' => 'new']);
         $this->product(['name' => 'Mug', 'stock_quantity' => 2, 'stock_warning_level' => 5]);
@@ -112,7 +108,7 @@ class AgendaTest extends TestCase
      * @output today 2026-11-11; events project Portal (11-05, overdue = danger, deep link),
      *   activation (11-13), lead follow-up Lead A (11-15), coupon start (11-20), Lead Link
      *   follow-up (11-24) + form expiry (11-25), coupon end (11-30); no inactive coupon, finished
-     *   or later project, closed lead; reminders job applicants 3, tickets 2, inquiries 1, web
+     *   or later project, closed lead; reminders job applicants 3, inquiries 1, web
      *   order without project 1 (Beta), leads without contact 1 (Lead Old), e-shop orders 1, low
      *   stock 1, security events 1.
      */
@@ -137,7 +133,7 @@ class AgendaTest extends TestCase
 
         $reminders = array_column($data['reminders'], 'count', 'type');
         $this->assertSame([
-            'job_applications_new' => 3, 'support_tickets_open' => 2, 'inquiries_new' => 1, 'web_orders_without_project' => 1,
+            'job_applications_new' => 3, 'inquiries_new' => 1, 'web_orders_without_project' => 1,
             'leads_without_contact' => 1, 'shop_orders_open' => 1, 'products_low_stock' => 1, 'security_events_new' => 1,
         ], $reminders);
         $this->assertSame('2026-11-11', $data['reminders'][0]['since']);

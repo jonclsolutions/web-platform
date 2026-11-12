@@ -10,6 +10,7 @@
 
 namespace App\Http\Resources\Web;
 
+use App\Http\Resources\Core\CoreAttachmentResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -35,7 +36,7 @@ class WebRawRequestCommissionResource extends JsonResource
             'status'            => $this->status,
             'priority'          => $this->priority,
             'note'              => $this->note,
-            'attachments'       => WebAttachmentResource::collection($this->whenLoaded('attachments')),
+            'attachments'       => CoreAttachmentResource::collection($this->whenLoaded('attachments')),
             'created_at'        => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at'        => $this->updated_at?->format('Y-m-d H:i:s'),
             'deleted_at'        => $this->deleted_at?->format('Y-m-d H:i:s'),

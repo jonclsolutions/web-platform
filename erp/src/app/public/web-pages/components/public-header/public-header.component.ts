@@ -27,6 +27,7 @@ import { LocalizationService, LangMeta } from '../../../../shared/services/local
 import { PublicDataService } from '../../../../shared/services/public-data.service';
 import { Observable } from 'rxjs';
 import * as Web from '../../../../shared/imports/web-providers';
+import { hasApp } from '../../../../apps/apps.registry';
 
 /**
  * @description Component for the main navigation header.
@@ -45,6 +46,8 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   navLinks!: QueryList<ElementRef<HTMLAnchorElement>>;
 isDrawerLangOpen: boolean = false;
   t: any = null;
+  /** Link to the e-shop only when it is part of this build (apps.registry). */
+  readonly showShopLink = hasApp('shop');
   indicatorStyle: any = {};
   scrolled: boolean = false;
   private resizeObserver: ResizeObserver | undefined;

@@ -30,7 +30,7 @@ class WebLogTest extends TestCase
     private function log(array $attributes = []): WebLog
     {
         return WebLog::forceCreate(array_merge([
-            'event_type' => 'update', 'module' => 'WebNews', 'description' => 'Changed', 'origin' => '127.0.0.1',
+            'event_type' => 'update', 'module' => 'WebJobApplication', 'description' => 'Changed', 'origin' => '127.0.0.1',
             'user_plain' => 'system', 'user_id_plain' => '0',
         ], $attributes));
     }

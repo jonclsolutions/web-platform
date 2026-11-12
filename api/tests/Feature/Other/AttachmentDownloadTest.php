@@ -8,7 +8,7 @@
  * @created 2026
  * @description Feature tests of the attachment download / preview (AttachmentDownloadController):
  *   only signed, unexpired URLs work; files of web_attachments (any disk) are served under their
- *   original name; legacy public files (CVs, ticket attachments) are no longer served and the
+ *   original name; legacy public files (CVs) are no longer served and the
  *   command `attachments:migrate-legacy` moves them to the private disk (finding #31).
  * @dependencies
  * - Tests\TestCase, Tests\Support\WebFixtures; Storage fakes (private, public).
@@ -42,7 +42,7 @@ class AttachmentDownloadTest extends TestCase
     }
 
     /**
-     * @description Signed URL of an attachment route (10 minutes, like WebAttachmentResource).
+     * @description Signed URL of an attachment route (10 minutes, like CoreAttachmentResource).
      * @param string $route 'download' or 'view'.
      * @param string $path Stored path.
      * @return string
@@ -172,18 +172,18 @@ class AttachmentDownloadTest extends TestCase
     }
 
     /**
-     * @description `attachments:migrate-legacy` moves legacy CVs / ticket attachments to the private
+     * @description `attachments:migrate-legacy` moves legacy CVs to the private
      *   disk as web_attachments (also of trashed records); --dry-run changes nothing; a missing file
      *   only clears the columns; a second run finds nothing; the migrated file is served signed.
      * @input Trashed application cv_files/a.pdf 'Eva CV.pdf'; application web/cv_files/b.pdf without name;
-     *        ticket tickets/t.png 'Screen.png'; ticket with tickets/none.png (no file); dry-run, run, run.
-     * @output dry-run: nothing moved, files still public; run: 3 moved, 1 missing, exit 0; private files
-     *   web/cv_files/a.pdf, web/cv_files/b.pdf, web/tickets/t.png with names 'Eva CV.pdf', 'b.pdf', 'Screen.png';
+     *        application with cv_files/none.pdf (no file); dry-run, run, run.
+     * @output dry-run: nothing moved, files still public; run: 2 moved, 1 missing, exit 0; private files
+     *   web/cv_files/a.pdf, web/cv_files/b.pdf with names 'Eva CV.pdf', 'b.pdf';
      *   public files gone; legacy columns null; second run 0 moved; view of the migrated CV 'Eva CV.pdf'.
      */
     public function test_migrate_legacy_command(): void
     {
-        foreach (['cv_files/a.pdf', 'web/cv_files/b.pdf', 'tickets/t.png'] as $path) {
+        foreach (['cv_files/a.pdf', 'web/cv_files/b.pdf'] as $path) {
             Storage::disk('public')->put($path, 'data-' . $path);
         }
         $a = $this->jobApplication();
@@ -191,27 +191,24 @@ class AttachmentDownloadTest extends TestCase
         $a->delete();
         $b = $this->jobApplication();
         $b->forceFill(['cv_path' => 'web/cv_files/b.pdf', 'cv_original_name' => ''])->save();
-        $t = $this->ticket();
-        $t->forceFill(['attachment_path' => 'tickets/t.png', 'attachment_original_name' => 'Screen.png'])->save();
-        $gone = $this->ticket();
-        $gone->forceFill(['attachment_path' => 'tickets/none.png', 'attachment_original_name' => 'None.png'])->save();
+        $gone = $this->jobApplication();
+        $gone->forceFill(['cv_path' => 'cv_files/none.pdf', 'cv_original_name' => 'None.pdf'])->save();
 
         $this->artisan('attachments:migrate-legacy', ['--dry-run' => true])
-            ->expectsOutputToContain('[dry-run] would move 3 file(s); missing 1; failed 0.')->assertSuccessful();
+            ->expectsOutputToContain('[dry-run] would move 2 file(s); missing 1; failed 0.')->assertSuccessful();
         Storage::disk('public')->assertExists('cv_files/a.pdf');
-        $this->assertSame(0, \App\Models\Web\WebAttachment::count());
-        $this->assertSame('tickets/none.png', $gone->fresh()->attachment_path);
+        $this->assertSame(0, \App\Models\Core\CoreAttachment::count());
+        $this->assertSame('cv_files/none.pdf', $gone->fresh()->cv_path);
 
-        $this->artisan('attachments:migrate-legacy')->expectsOutputToContain('Moved 3 file(s); missing 1; failed 0.')->assertSuccessful();
-        foreach (['web/cv_files/a.pdf' => 'Eva CV.pdf', 'web/cv_files/b.pdf' => 'b.pdf', 'web/tickets/t.png' => 'Screen.png'] as $path => $name) {
+        $this->artisan('attachments:migrate-legacy')->expectsOutputToContain('Moved 2 file(s); missing 1; failed 0.')->assertSuccessful();
+        foreach (['web/cv_files/a.pdf' => 'Eva CV.pdf', 'web/cv_files/b.pdf' => 'b.pdf'] as $path => $name) {
             Storage::disk('private')->assertExists($path);
-            $this->assertSame($name, \App\Models\Web\WebAttachment::where('path', $path)->value('original_filename'));
+            $this->assertSame($name, \App\Models\Core\CoreAttachment::where('path', $path)->value('original_filename'));
         }
         $this->assertSame('data-cv_files/a.pdf', Storage::disk('private')->get('web/cv_files/a.pdf'));
         Storage::disk('public')->assertMissing('cv_files/a.pdf');
-        Storage::disk('public')->assertMissing('tickets/t.png');
         $this->assertNull(\App\Models\Web\WebJobApplication::withTrashed()->find($a->id)->cv_path);
-        $this->assertNull($gone->fresh()->attachment_path);
+        $this->assertNull($gone->fresh()->cv_path);
         $this->assertSame(1, \App\Models\Web\WebJobApplication::withTrashed()->find($a->id)->attachments()->count());
 
         $this->artisan('attachments:migrate-legacy')->expectsOutputToContain('Moved 0 file(s); missing 0; failed 0.')->assertSuccessful();
@@ -241,7 +238,7 @@ class AttachmentDownloadTest extends TestCase
      * @description Every served file is logged (web log, id / owner / type / size - not the file
      *   name); a changed or expired signature and a path with '..' are security events.
      * @input Attachment 'CV Jan Novak.pdf' of an inquiry: download, view; unsigned URL; signed '../.env'.
-     * @output web log attachment_download + attachment_view (WebAttachment #id of
+     * @output web log attachment_download + attachment_view (CoreAttachment #id of
      *   WebRawRequestCommission #id), no 'Novak' and no signature in the log; security events
      *   invalid_signed_url, path_traversal_attempt (critical).
      */

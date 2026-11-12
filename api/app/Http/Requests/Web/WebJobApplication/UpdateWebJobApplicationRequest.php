@@ -11,6 +11,7 @@
 namespace App\Http\Requests\Web\WebJobApplication;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Services\Web\WebApp;
 use App\Support\Uploads\AttachmentPolicy;
 
 /**
@@ -42,7 +43,7 @@ class UpdateWebJobApplicationRequest extends FormRequest
             'phone'         => 'nullable|string|max:30',
             'position_name' => 'sometimes|required|string|max:150',
             'message'       => 'nullable|string',
-            'cv_file'       => ['nullable', ...AttachmentPolicy::fileRules(AttachmentPolicy::JOB_APPLICATION)],
+            'cv_file'       => ['nullable', ...AttachmentPolicy::fileRules(WebApp::UPLOAD_JOB_APPLICATION)],
         ];
     }
 }

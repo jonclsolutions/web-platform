@@ -46,12 +46,12 @@ export const routes: Routes = [
       },
       { path: 'services', title: 'web.services', loadComponent: () => import('./public/web-pages/services/services.component').then(m => m.ServicesComponent) },
       { path: 'contact', title: 'web.contact', loadComponent: () => import('./public/web-pages/contact/contact.component').then(m => m.ContactComponent) },
-      { path: 'tos', title: 'web.tos', loadComponent: () => import('./public/web-pages/tos/tos.component').then(m => m.TosComponent) },
-      { path: 'privacy-policy', title: 'web.privacy-policy', loadComponent: () => import('./public/web-pages/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent) },
+      { path: 'tos', title: 'web.tos', loadComponent: () => import('./public/legal/tos/tos.component').then(m => m.TosComponent) },
+      { path: 'privacy-policy', title: 'web.privacy-policy', loadComponent: () => import('./public/legal/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent) },
       { path: 'references', title: 'web.references', loadComponent: () => import('./public/web-pages/references/references.component').then(m => m.ReferencesComponent) },
       { path: 'faq', title: 'web.faq', loadComponent: () => import('./public/web-pages/faq/faq.component').then(m => m.FaqComponent) },
       { path: 'knowledge-base', title: 'web.knowledge-base', loadComponent: () => import('./public/web-pages/knowledge-base/knowledge-base.component').then(m => m.KnowledgeBaseComponent) },
-      { path: 'cookies-policy', title: 'web.cookies-policy', loadComponent: () => import('./public/web-pages/cookies-policy/cookies-policy.component').then(m => m.CookiesPolicyComponent) },
+      { path: 'cookies-policy', title: 'web.cookies-policy', loadComponent: () => import('./public/legal/cookies-policy/cookies-policy.component').then(m => m.CookiesPolicyComponent) },
       { path: 'about-us', title: 'web.about-us', loadComponent: () => import('./public/web-pages/about-us/about-us.component').then(m => m.AboutUsComponent) },
       { path: 'jobs', title: 'web.jobs', loadComponent: () => import('./public/web-pages/jobs/jobs-list/jobs-list.component').then(m => m.JobsListComponent) },
       { path: 'jobs/:id', title: 'web.job-detail', loadComponent: () => import('./public/web-pages/jobs/job-item/job-item.component').then(m => m.JobItemComponent) },
@@ -91,6 +91,9 @@ export const routes: Routes = [
         canActivate: [shopMaintenanceGuard],
         loadComponent: () => import('./public/shop-pages/checkout/checkout.component').then(m => m.CheckoutComponent)
       },
+      // Legal pages shared with the web (public/legal), in the e-shop layout and translations.
+      { path: 'tos', title: 'shop.tos', data: { translationModule: 'shop' }, loadComponent: () => import('./public/legal/tos/tos.component').then(m => m.TosComponent) },
+      { path: 'privacy-policy', title: 'shop.privacy-policy', data: { translationModule: 'shop' }, loadComponent: () => import('./public/legal/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent) },
       // Unknown /shop/... URL - LAST child of the e-shop (404 in the e-shop layout and language).
       publicNotFoundRoute('shop', { canActivate: [shopMaintenanceGuard] })
     ]

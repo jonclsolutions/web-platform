@@ -6,11 +6,10 @@
  * @author JS
  * @created 2026
  * @description One-time GDPR migration (open finding #31): CVs of job applications
- *   (`web_job_applications.cv_path`) and ticket attachments (`web_support_tickets.attachment_path`)
- *   uploaded before the `web_attachments` refactor lie on the PUBLIC disk - with the `storage`
+ *   (`web_job_applications.cv_path`) uploaded before the `web_attachments` refactor lie on the PUBLIC disk - with the `storage`
  *   symlink they are reachable by anyone who knows / guesses the URL (`/storage/cv_files/…`),
  *   without a signed link, and no admin screen lists them any more. This command moves every
- *   such file to the PRIVATE disk (`web/cv_files/…`, `web/tickets/…` like new uploads), creates
+ *   such file to the PRIVATE disk (`web/cv_files/…` like new uploads), creates
  *   its `web_attachments` row (signed download / preview as for every other attachment) and
  *   clears the legacy columns.
  * @note Run once after the deploy: `php artisan attachments:migrate-legacy --dry-run`, then without
@@ -18,13 +17,12 @@
  *   reported and its legacy columns are cleared (nothing to protect any more). Soft-deleted
  *   records are migrated too (the file is personal data either way).
  * @dependencies
- * - WebJobApplication / WebSupportTicket (`attachments()` morph relation), Storage disks public + private.
+ * - WebJobApplication (`attachments()` morph relation), Storage disks public + private.
  */
 
 namespace App\Console\Commands;
 
 use App\Models\Web\WebJobApplication;
-use App\Models\Web\WebSupportTicket;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +35,7 @@ class MigrateLegacyAttachmentsCommand extends Command
     protected $signature = 'attachments:migrate-legacy {--dry-run : Only report what would be moved}';
 
     /** @var string */
-    protected $description = 'Moves legacy CVs / ticket attachments from the public to the private disk and registers them as web_attachments (GDPR).';
+    protected $description = 'Moves legacy CVs from the public to the private disk and registers them as web_attachments (GDPR).';
 
     /**
      * @var array<int, array{model: class-string<Model>, path: string, name: string, folder: string}>
@@ -45,7 +43,6 @@ class MigrateLegacyAttachmentsCommand extends Command
      */
     private const SOURCES = [
         ['model' => WebJobApplication::class, 'path' => 'cv_path', 'name' => 'cv_original_name', 'folder' => 'web/cv_files'],
-        ['model' => WebSupportTicket::class, 'path' => 'attachment_path', 'name' => 'attachment_original_name', 'folder' => 'web/tickets'],
     ];
 
     /**
@@ -81,7 +78,7 @@ class MigrateLegacyAttachmentsCommand extends Command
 
     /**
      * @description Moves the file of one record and registers it as an attachment.
-     * @param Model $record Job application or ticket with a legacy path.
+     * @param Model $record Job application with a legacy path.
      * @param array{model: class-string<Model>, path: string, name: string, folder: string} $source
      * @param bool $dryRun Only report.
      * @return string 'moved' | 'missing' | 'failed'
@@ -133,7 +130,7 @@ class MigrateLegacyAttachmentsCommand extends Command
 
     /**
      * @description Clears the legacy path / name columns of a record (without touching updated_at).
-     * @param Model $record Job application or ticket.
+     * @param Model $record Job application.
      * @param array{model: class-string<Model>, path: string, name: string, folder: string} $source
      * @return void
      */

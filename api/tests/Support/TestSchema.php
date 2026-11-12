@@ -376,7 +376,7 @@ final class TestSchema
 
     /**
      * @description Web section: site settings, public form records (requests, orders, job
-     *   applications, tickets), sales leads, news, attachments and the project portal.
+     *   applications), sales leads, attachments and the project portal.
      * @return void
      */
     private static function web(): void
@@ -485,36 +485,6 @@ final class TestSchema
             $t->timestamp('deleted_at')->nullable();
             $t->text('note')->nullable();
             $t->string('lang', 5)->default('cz');
-        });
-
-        Schema::create('web_support_tickets', function (Blueprint $t) {
-            $t->id();
-            $t->unsignedInteger('user_id')->nullable();
-            $t->string('user_name_plain');
-            $t->string('user_plain');
-            $t->string('category', 100);
-            $t->string('priority', 50)->nullable()->default('medium');
-            $t->string('state', 50)->nullable()->default('new');
-            $t->string('subject');
-            $t->text('description');
-            $t->string('attachment_path')->nullable();
-            $t->string('attachment_original_name')->nullable();
-            $t->timestamps();
-            $t->timestamp('deleted_at')->nullable();
-            $t->foreign('user_id')->references('id')->on('users')->nullOnDelete();
-        });
-
-        Schema::create('web_news', function (Blueprint $t) {
-            $t->increments('id');
-            $t->string('title');
-            $t->string('message', 10000);
-            $t->string('author');
-            $t->string('thema');
-            foreach ([1, 2, 3, 4] as $n) {
-                $t->string("bullet_{$n}")->nullable();
-            }
-            $t->timestamps();
-            $t->timestamp('deleted_at')->nullable();
         });
 
         Schema::create('web_job_applications', function (Blueprint $t) {

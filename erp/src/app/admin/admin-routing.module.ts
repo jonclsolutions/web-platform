@@ -20,15 +20,11 @@ import { ADMIN_ERROR_PAGE_KEY, AuthGuard } from '../core/auth/guards/auth.guard'
 import { sysadminGuard } from '../core/auth/guards/sysadmin.guard';
 import { BusinessLogsComponent } from './web-pages/business-logs/business-logs.component';
 import { SalesLeadsComponent } from './web-pages/sales-leads/sales-leads.component';
-import { EditNewsComponent } from './web-pages/edit-news/edit-news.component';
 import { EditWebsiteComponent } from './web-pages/edit-website/edit-website.component';
 import { SalesOrdersComponent } from './web-pages/sales-orders/sales-orders.component';
-import { SupportTicketsComponent } from './web-pages/support-tickets/support-tickets.component';
 import { JobApplicationsComponent } from './web-pages/job-applications/job-applications.component';
 import { KnowledgeBaseComponent } from './intranet/knowledge-base/knowledge-base.component';
 import { KbArticleComponent } from './intranet/knowledge-base/kb-article/kb-article.component';
-import { NewsComponent } from './intranet/knowledge-base/pages/news/news.component';
-import { SupportFormComponent } from './intranet/knowledge-base/pages/support-form/support-form.component';
 import { ProjectsComponent } from './web-pages/projects/projects.component';
 import { ProjectDetailComponent } from './web-pages/project-detail/project-detail.component';
 import { ProjectTemplatesComponent } from './web-pages/project-templates/project-templates.component';
@@ -88,8 +84,6 @@ export const ADMIN_ROUTES: Routes = [
         children: [
           // Explicit components (real logic, not static text) - MUST
           // come before ':pageId', otherwise the router would catch them as the parameter.
-          { path: 'support-form', component: SupportFormComponent },
-          { path: 'news', component: NewsComponent },
           // Generic renderer of ALL other manual pages - the content comes from the API
           // (api/resources/knowledge-base/*.json; a new page needs no new route).
           { path: ':pageId', component: KbArticleComponent },
@@ -115,10 +109,8 @@ export const ADMIN_ROUTES: Routes = [
           { path: 'user-request', component: UserRequestComponent, data: { help: 'user-request', permission: 'web-user-requests-view' } },
           { path: 'business-logs', component: BusinessLogsComponent, data: { help: 'web-business-logs', permission: 'web-view-web-logs' } },
           { path: 'sales-leads', component: SalesLeadsComponent, data: { help: 'sales-leads', permission: 'web-sales-leads-view' } },
-          { path: 'edit-news', component: EditNewsComponent, data: { help: 'edit-news', permission: 'web-news-view' } },
           { path: 'edit-website', component: EditWebsiteComponent, data: { help: 'edit-website', permission: 'web-edit-website-view' } },
           { path: 'sales-orders', component: SalesOrdersComponent, data: { help: 'sales-orders', permission: 'web-sales-orders-view' } },
-          { path: 'support-tickets', component: SupportTicketsComponent, data: { help: 'support-tickets', permission: 'web-support-tickets-view' } },
           { path: 'job-applications', component: JobApplicationsComponent, data: { help: 'job-applications', permission: 'web-job-applications-view' } },
           { path: 'projects', component: ProjectsComponent, data: { help: 'projects', permission: 'web-projects-view' } },
           { path: 'projects/templates', component: ProjectTemplatesComponent, data: { help: 'projects', permission: 'web-projects-view' } },

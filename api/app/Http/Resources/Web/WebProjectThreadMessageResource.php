@@ -12,6 +12,7 @@
 
 namespace App\Http\Resources\Web;
 
+use App\Http\Resources\Core\CoreAttachmentResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -27,7 +28,7 @@ class WebProjectThreadMessageResource extends JsonResource
             'author_account_id' => $this->account_id,
             'is_internal'  => (bool) $this->is_internal,
             'body'         => $this->body,
-            'attachments'  => WebAttachmentResource::collection($this->whenLoaded('attachments')),
+            'attachments'  => CoreAttachmentResource::collection($this->whenLoaded('attachments')),
             'created_at'   => $this->created_at?->format('Y-m-d H:i:s'),
         ];
     }

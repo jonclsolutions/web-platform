@@ -8,19 +8,18 @@
  * @description Audit log of data exports, written by the server: the admin loads the data of an
  * export / report with the query parameter `export` (`csv`, `xlsx`, `json`, `txt`, `raw_<format>`
  * for the import-compatible variant, `report` for a graph report). When such a GET of a signed-in
- * user succeeds, one row is written to the log of the module owning the data (api/web/… → web log,
- * api/shop/… → shop log, anything else → core log): event `export_<format>` / `generate_report`,
+ * user succeeds, one row is written to the log of the module owning the data (api/<application>/…
+ * → the log of that application, AppManifest::logModel(); anything else → core log): event `export_<format>` / `generate_report`,
  * the path, the number of records served and the filters (request payload of LogsActivity).
  * @note An unknown `export` value is not logged (no free text from the browser in the log). The
  *   browser never writes the log itself - only what the server really served is recorded.
- * @dependencies LogsActivity, CoreLog / WebLog / ShopLog.
+ * @dependencies LogsActivity, CoreLog, AppRegistry.
  */
 
 namespace App\Http\Middleware;
 
 use App\Models\Core\CoreLog;
-use App\Models\Shop\ShopLog;
-use App\Models\Web\WebLog;
+use App\Support\Apps\AppRegistry;
 use App\Traits\LogsActivity;
 use Closure;
 use Illuminate\Http\JsonResponse;
@@ -33,12 +32,6 @@ class LogDataExport
 
     /** @description Accepted values of the `export` parameter. */
     private const FORMAT_PATTERN = '/^(?:(raw_)?(csv|xlsx|json|txt)|report)$/';
-
-    /** @description Log model per first path segment after `api/`; others → core log. */
-    private const MODULE_LOGS = [
-        'web'  => WebLog::class,
-        'shop' => ShopLog::class,
-    ];
 
     /**
      * @description Passes the request on and logs a successful export GET.
@@ -79,6 +72,6 @@ class LogDataExport
             ? ['generate_report', "Generated a report of {$count} records from {$path}"]
             : ["export_{$format}", "Exported {$count} records (" . strtoupper(str_replace('raw_', 'raw ', $format)) . ") from {$path}"];
 
-        $this->logAction($request, self::MODULE_LOGS[$segment] ?? CoreLog::class, $event, $path, $description, null, 'collection');
+        $this->logAction($request, AppRegistry::logModel($segment) ?? CoreLog::class, $event, $path, $description, null, 'collection');
     }
 }

@@ -196,5 +196,17 @@
         "quantity_unavailable": "Požadované množství není dostupné.",
         "server": "Chyba na straně serveru.",
         "too_many_requests": "Příliš mnoho požadavků. Zkuste to prosím za chvíli znovu."
+    },
+    "tos": {
+        "header_main": "Obchodní podmínky",
+        "last_update_text": "Poslední aktualizace:",
+        "more_info_text": "Více informací naleznete v",
+        "more_info_link_text": "Zásadách ochrany osobních údajů",
+        "effective_from_text": "Tyto podmínky jsou účinné od {date}."
+    },
+    "privacy_policy": {
+        "header_main": "Zásady Ochrany Osobních Údajů",
+        "last_update_text": "Poslední aktualizace:",
+        "effective_from_text": "Tyto zásady jsou účinné od {date}."
     }
 }
