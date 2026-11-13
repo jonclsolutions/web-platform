@@ -13,7 +13,9 @@
  * @dependencies
  * - Tests\TestCase (InteractsWithAccounts); resources/knowledge-base/*.json + the knowledge-base
  *   files of the registered applications (the real content);
- *   ../erp/src/app/admin/admin-routing.module.ts (the admin routes, `data.help`).
+ *   ../erp/src/app/admin/admin-routing.module.ts + the admin route file of every application
+ *   (erp/src/app/apps/<app>/admin/<app>-admin.routes.ts)
+ *   (the admin routes, `data.help`).
  */
 
 namespace Tests\Feature\Core;
@@ -163,12 +165,13 @@ class KnowledgeBaseTest extends TestCase
     }
 
     /**
-     * @description Every admin page (web / core / shop) has its help topic (`data.help` in
-     *   admin-routing.module.ts) and it is a page of the manual for the same readers: the same
-     *   permission as the route, null for a page without one, 'sysadmin' for a sysadminGuard page.
-     * @input The real admin routes and structure.json.
-     * @output 32 pages (all three modules), each with an existing manual page of its permission;
-     *   no manual page used twice.
+     * @description Every admin page (the core in admin-routing.module.ts, every application in
+     *   apps/<app>/admin/*-admin.routes.ts) has its help topic (`data.help`) and it is a page of the
+     *   manual for the same readers: the same permission as the route, null for a page without one,
+     *   'sysadmin' for a sysadminGuard page.
+     * @input The real admin routes of the core and the applications, the merged structure.json.
+     * @output 34 pages (core 12, web 8, e-shop 12, project portal 2), each with an existing manual
+     *   page of its permission; no manual page used twice.
      */
     public function test_every_admin_page_links_its_manual_page(): void
     {
@@ -178,19 +181,11 @@ class KnowledgeBaseTest extends TestCase
         }
 
         $pages = collect($this->file('structure')['pages'])->keyBy('id');
-        $module = null;
         $checked = [];
-        foreach (file($routing) as $line) {
-            if (preg_match("/^\\s*path: '(web|core|shop)',/", $line, $match)) {
-                $module = $match[1];
-                continue;
+        $check = function (string $module, string $line) use ($pages, &$checked): void {
+            if (!preg_match("/\\{ path: '([a-z-]+)', (?:component: \\w+|loadComponent: )/", $line, $match)) {
+                return;
             }
-            // The error pages (forbidden, 404) after the modules are no admin pages.
-            if ($module === null || str_contains($line, 'AdminErrorPageComponent')
-                || !preg_match("/\\{ path: '([a-z-]+)', component: \\w+/", $line, $match)) {
-                continue;
-            }
-
             $route = "{$module}/{$match[1]}";
             $this->assertMatchesRegularExpression("/help: '[a-z0-9-]+'/", $line, "{$route}: missing data.help");
             preg_match("/help: '([a-z0-9-]+)'/", $line, $help);
@@ -200,9 +195,27 @@ class KnowledgeBaseTest extends TestCase
             $this->assertTrue($pages->has($help[1]), "{$route}: no manual page '{$help[1]}'");
             $this->assertSame($expected, $pages[$help[1]]['permission'], "{$route}: other readers than the manual page '{$help[1]}'");
             $checked[$route] = $help[1];
+        };
+
+        $inCore = false;
+        foreach (file($routing) as $line) {
+            if (preg_match("/^\\s*path: '(\\w+)',/", $line, $match)) {
+                $inCore = $match[1] === 'core';
+                continue;
+            }
+            // The error pages (forbidden, 404) after the modules are no admin pages.
+            if ($inCore && !str_contains($line, 'AdminErrorPageComponent')) {
+                $check('core', $line);
+            }
+        }
+        foreach (glob(base_path('../erp/src/app/apps/*/admin/*-admin.routes.ts')) as $file) {
+            $app = basename(dirname($file, 2));
+            foreach (file($file) as $line) {
+                $check($app, $line);
+            }
         }
 
-        $this->assertCount(32, $checked);
+        $this->assertCount(34, $checked);
         $this->assertSame(count($checked), count(array_unique($checked)));
     }
 }

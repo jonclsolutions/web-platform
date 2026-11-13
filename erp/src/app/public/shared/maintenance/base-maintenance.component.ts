@@ -12,7 +12,7 @@
  * it polls nothing - one status check on load sends the visitor back as soon as the section is
  * active again.
  * @usage `class WebMaintenanceComponent extends BaseMaintenanceComponent` with
- *   `templateUrl: '../../shared/maintenance/maintenance-page.component.html'`, the translation
+ *   `templateUrl` = public/shared/maintenance/maintenance-page.component.html, the translation
  *   key / module and `isSectionActive()` + `activeUrl`.
  * @dependencies
  * - BasePublicComponent: translations, site settings, social links.

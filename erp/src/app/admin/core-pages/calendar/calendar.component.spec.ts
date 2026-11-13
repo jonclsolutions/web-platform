@@ -32,7 +32,7 @@ describe('CalendarComponent', () => {
     id, type: 'coupon_end', module: 'shop', date, subject: id.toUpperCase(), link: '/admin/shop/coupons', severity: 'warning', ...overrides,
   });
   const EVENTS: AgendaEvent[] = [
-    event('a', '2026-11-05', { type: 'project_deadline', module: 'project-portal', link: '/admin/web/projects/7', severity: 'danger' }),
+    event('a', '2026-11-05', { type: 'project_deadline', module: 'project-portal', link: '/admin/project-portal/projects/7', severity: 'danger' }),
     event('b', '2026-11-20'), event('c', '2026-11-20'), event('d', '2026-11-20'), event('e', '2026-11-20'),
     event('f', '2026-11-13', { type: 'activation_expiry', module: 'core', link: '/admin/core/administrators' }),
     event('evil', '2026-11-14', { link: 'https://evil.example.com' }),
@@ -104,7 +104,7 @@ describe('CalendarComponent', () => {
    *   chip links to the admin page with its query.
    * @input 4 events on 20 November, overdue project on 5 November.
    * @output 20 Nov: 3 chips + 'calendar.more'; 5 Nov chip overdue with href
-   *   /admin/web/projects/7, the name as text and the full title as label.
+   *   /admin/project-portal/projects/7, the name as text and the full title as label.
    */
   it('shows the events in their days', () => {
     create();
@@ -114,7 +114,7 @@ describe('CalendarComponent', () => {
     expect(day('2026-11-20').querySelector('.cal-more')?.textContent?.trim()).toBe('calendar.more');
     const overdue = day('2026-11-05').querySelector('.cal-chip') as HTMLAnchorElement;
     expect(overdue.classList).toContain('cal-chip--overdue');
-    expect(overdue.getAttribute('href')).toBe('/admin/web/projects/7');
+    expect(overdue.getAttribute('href')).toBe('/admin/project-portal/projects/7');
     expect(overdue.textContent?.trim()).toBe('A');
     expect(overdue.getAttribute('aria-label')).toBe('calendar.event_project_deadline');
     expect(component.eventTitle(EVENTS[0])).toBe('calendar.event_project_deadline');

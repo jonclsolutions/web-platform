@@ -28,6 +28,21 @@ src/assets/i18n/admin/en/en.json
 ```
 with its flag next to it (`cz.png`, `en.png`).
 
+Every application with its own admin (`adminI18n` in its manifest, `src/app/apps/apps.registry.ts`)
+keeps its texts next to its code:
+```
+src/app/apps/<app>/admin/i18n/cz.json
+src/app/apps/<app>/admin/i18n/en.json
+```
+(copied by `angular.json` to `assets/i18n/apps/<app>/admin/i18n/`). They hold the sections of its
+pages (`sales-orders`, `shop-products`, `projects` …) and its keys of shared sections: the names of
+its menu items and sections and its name / description (`admin-layout`), its calendar entries
+(`calendar`), its permission descriptions (`permission-descriptions`), its retention kinds
+(`retention-settings`), its group of the manual (`knowledge-base`) and of the role editor
+(`edit-roles`). `AdminLocalizationService` loads the core file with the files of every application
+and merges them section by section, so a removed application takes its texts with it. A new
+language therefore needs its file in the core AND in every application.
+
 ### JSON structure
 A flat map **section -> keys**:
 ```json
@@ -188,7 +203,8 @@ options: mapLabeledOptions(SECTION, ['new', 'in_progress', 'done'], STATUS_LABEL
 ## 6. Adding a new language
 
 1. Create `src/assets/i18n/admin/{code}/{code}.json` (copy the structure of
-   `en.json`, translate the values) and `{code}.png` (flag).
+   `en.json`, translate the values) and `{code}.png` (flag), and
+   `src/app/apps/<app>/admin/i18n/{code}.json` of every application.
 2. Add an entry to `ADMIN_AVAILABLE_LANGUAGES` in `admin-localization.service.ts`.
 3. Add the locale mapping to `DATE_LOCALE_MAP` in the same file
    (e.g. `de: 'de-DE'`).
@@ -206,7 +222,8 @@ dynamically.
 - [ ] Find every hard-coded text in `.html` and `.ts` (also error messages,
       `aria-label`, `title`, placeholders).
 - [ ] Add the keys to **both** JSON files (`cz.json`, `en.json`) under the
-      same section.
+      same section - of the core, or of the application the page belongs to
+      (`src/app/apps/<app>/admin/i18n/`).
 - [ ] Set `translationSection` (Pattern A) or inject the service (Pattern B).
 - [ ] When it extends `BaseDataComponent`, add the `t()` override (5.1).
 - [ ] With `OnPush` and without `BaseDataComponent`, add

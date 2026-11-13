@@ -1,0 +1,709 @@
+/*
+    @file: project-detail.component.css
+    @path: /src/app/apps/project-portal/admin/project-detail/project-detail.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Styles of the project page (pd-*): header, two-column grid (main: conversations,
+        checkpoints and settings; side: access with the client accounts and the files), cards, the
+        chat-like conversation pane, the settings form with the floating save bar. Colours from the
+        admin tokens; client messages light, admin messages dark, internal notes amber and dashed;
+        unread = indigo; waiting on us = amber.
+    @usage: .pd-page
+*/
+
+/*
+    @module: Page and header
+    @description: Back button, project name with status / visibility / unread chips, help.
+    @usage: .pd-page, .pd-header, .pd-back, .pd-title, .pd-chip(--unread|--visibility|--public)
+*/
+.pd-page {
+  font-family: var(--ff, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  color: var(--text, var(--color-zinc-900));
+}
+
+.pd-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.pd-header-main { flex: 1; min-width: 0; }
+.pd-header-actions { display: flex; align-items: center; gap: 8px; }
+
+.pd-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 14px 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-mid, var(--color-sand-300));
+  background: var(--surface, var(--color-white));
+  color: var(--text, var(--color-zinc-900));
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pd-back:hover { background: var(--surface-2, var(--color-zinc-50)); }
+
+.pd-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+.pd-title {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.pd-subtitle { margin: 4px 0 0; font-size: 0.8rem; color: var(--text-muted, var(--color-zinc-500)); }
+
+.pd-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--color-zinc-100);
+  color: var(--color-zinc-700);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pd-chip[data-status="development"] { background: var(--color-amber-50); color: var(--color-amber-700); }
+.pd-chip[data-status="finished"] { background: var(--color-emerald-50); color: var(--color-emerald-600); }
+.pd-chip--public { background: var(--color-emerald-50); color: var(--color-emerald-600); }
+.pd-chip--unread { background: var(--color-indigo-600); color: var(--color-white); }
+
+.pd-state { padding: 24px; text-align: center; color: var(--text-muted, var(--color-zinc-500)); }
+.pd-state--error { display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--color-rose-600); }
+
+/*
+    @module: Cards
+    @description: Cards of the sub-pages (one column, .pd-section).
+    @usage: .pd-card, .pd-card-head, .pd-card-title, .pd-card-body
+*/
+
+.pd-card {
+  background: var(--surface, var(--color-white));
+  border: 1px solid var(--border, var(--color-sand-200));
+  border-radius: 16px;
+  overflow: clip;
+}
+
+.pd-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border, var(--color-sand-200));
+}
+
+.pd-card-head-title, .pd-card-head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.pd-card-title {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--color-zinc-500));
+}
+
+.pd-card-body { display: flex; flex-direction: column; gap: 12px; padding: 16px 18px; }
+
+.pd-muted { margin: 0; font-size: 0.8rem; color: var(--text-muted, var(--color-zinc-500)); }
+.pd-empty { margin: 0; padding: 16px; font-size: 0.82rem; color: var(--text-muted, var(--color-zinc-500)); list-style: none; }
+
+.pd-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--color-zinc-100);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.pd-count--unread { background: var(--color-indigo-600); color: var(--color-white); }
+
+/*
+    @module: Buttons and inputs
+    @usage: .pd-btn(--primary|--ghost|--warn), .pd-icon-btn, .pd-segment, .pd-input(--sm), .pd-textarea, .pd-label
+*/
+.pd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-mid, var(--color-sand-300));
+  background: var(--surface, var(--color-white));
+  color: var(--text, var(--color-zinc-900));
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pd-btn:hover:not(:disabled) { background: var(--surface-2, var(--color-zinc-50)); }
+.pd-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.pd-btn--primary { background: var(--color-zinc-900); border-color: var(--color-zinc-900); color: var(--color-white); }
+.pd-btn--primary:hover:not(:disabled) { background: var(--color-zinc-800); }
+
+.pd-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--border-mid, var(--color-sand-300));
+  background: var(--surface, var(--color-white));
+  color: var(--text, var(--color-zinc-900));
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.pd-icon-btn:disabled { opacity: 0.5; }
+
+.pd-segment {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--color-zinc-100);
+}
+
+.pd-segment button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted, var(--color-zinc-600));
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pd-segment button.active { background: var(--surface, var(--color-white)); color: var(--text, var(--color-zinc-900)); box-shadow: 0 1px 2px rgba(24, 24, 27, 0.08); }
+.pd-segment-count { font-size: 0.7rem; opacity: 0.7; }
+
+.pd-label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted, var(--color-zinc-600)); }
+
+.pd-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1px solid var(--border-mid, var(--color-sand-300));
+  border-radius: 8px;
+  background: var(--surface, var(--color-white));
+  color: var(--text, var(--color-zinc-900));
+  font-family: inherit;
+  font-size: 0.88rem;
+}
+
+.pd-input:focus { outline: 2px solid var(--color-zinc-900); outline-offset: 0; border-color: transparent; }
+.pd-input:disabled { background: var(--color-zinc-50); color: var(--color-zinc-600); }
+.pd-input--sm { width: auto; padding: 5px 8px; font-size: 0.8rem; }
+.pd-textarea { resize: vertical; min-height: 72px; line-height: 1.45; }
+
+.pd-btn:focus-visible, .pd-icon-btn:focus-visible, .pd-back:focus-visible, .pd-thread:focus-visible, .pd-segment button:focus-visible, .pd-cp-status:focus-visible,
+.pd-reply-mode button:focus-visible, .pd-link:focus-visible {
+  outline: 2px solid var(--color-zinc-900);
+  outline-offset: 2px;
+}
+
+.pd-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.pd-spin { animation: pd-spin 0.8s linear infinite; }
+@keyframes pd-spin { to { transform: rotate(360deg); } }
+
+/*
+    @module: Conversations
+    @description: Thread list (unread bold + badge) beside the messages of the open thread; on a
+        narrow screen one of them at a time.
+    @usage: .pd-conv-body(--open), .pd-thread-list, .pd-thread(--unread), .pd-thread-detail, .pd-messages, .pd-msg(--admin), .pd-reply
+*/
+.pd-conv-body {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: 420px;
+}
+
+.pd-thread-list {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border, var(--color-sand-200));
+  max-height: 620px;
+  overflow-y: auto;
+}
+
+.pd-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--color-zinc-100);
+  border-left: 3px solid transparent;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pd-thread:hover { background: var(--surface-2, var(--color-zinc-50)); }
+.pd-thread.active { background: var(--color-zinc-100); border-left-color: var(--color-zinc-900); }
+.pd-thread--unread { border-left-color: var(--color-indigo-600); }
+.pd-thread-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pd-thread-subject { font-size: 0.88rem; font-weight: 600; overflow-wrap: anywhere; }
+.pd-thread--unread .pd-thread-subject { font-weight: 800; }
+.pd-thread-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; font-size: 0.74rem; color: var(--text-muted, var(--color-zinc-500)); }
+
+.pd-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--color-zinc-400); }
+.pd-dot[data-priority="high"] { background: var(--color-amber-500, #f59e0b); }
+.pd-dot[data-priority="critic"] { background: var(--color-rose-600); }
+.pd-dot[data-priority="low"] { background: var(--color-emerald-600); }
+
+.pd-thread-detail { display: flex; flex-direction: column; min-width: 0; }
+
+.pd-thread-placeholder {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px;
+  color: var(--text-muted, var(--color-zinc-400));
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.pd-thread-placeholder p { margin: 0; }
+
+.pd-thread-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-zinc-100);
+}
+
+.pd-thread-close { display: none; }
+.pd-thread-title { flex: 1; min-width: 0; margin: 0; font-size: 0.95rem; font-weight: 700; overflow-wrap: anywhere; }
+
+.pd-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  max-height: 440px;
+  overflow-y: auto;
+  background: var(--color-zinc-50);
+}
+
+.pd-older { align-self: center; }
+
+.pd-msg {
+  align-self: flex-start;
+  max-width: 82%;
+  padding: 10px 13px;
+  border-radius: 14px 14px 14px 4px;
+  background: var(--surface, var(--color-white));
+  border: 1px solid var(--border, var(--color-sand-200));
+}
+
+.pd-msg--admin {
+  align-self: flex-end;
+  border-radius: 14px 14px 4px 14px;
+  background: var(--color-zinc-900);
+  border-color: var(--color-zinc-900);
+  color: var(--color-white);
+}
+
+.pd-msg-meta { margin-bottom: 4px; font-size: 0.7rem; opacity: 0.65; }
+.pd-msg-body { font-size: 0.88rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.pd-msg-files { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+.pd-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.14);
+  color: inherit;
+  font-size: 0.74rem;
+  text-decoration: none;
+}
+
+.pd-file-size { opacity: 0.7; }
+
+.pd-reply { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--color-zinc-100); }
+.pd-reply-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.pd-attach { cursor: pointer; }
+.pd-error { margin: 0; font-size: 0.78rem; color: var(--color-rose-600); }
+.pd-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.pd-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 3px 10px;
+  border-radius: 999px;
+  background: var(--color-zinc-100);
+  font-size: 0.74rem;
+}
+
+.pd-file-chip button { border: 0; background: transparent; cursor: pointer; font-size: 0.7rem; }
+
+/*
+    @module: Settings form
+    @description: Two-column grid of the project fields; with unsaved changes the save bar is
+        highlighted and floats at the bottom of the scroll area (StickyBarDirective).
+    @usage: .pd-form, .pd-field(--wide), .pd-savebar(--dirty)
+*/
+.pd-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+  padding: 16px 18px;
+}
+
+.pd-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.pd-field--wide { grid-column: 1 / -1; }
+
+.pd-savebar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-zinc-100);
+  position: static;
+  bottom: 18px; /* read by StickyBarDirective; applies once the bar is sticky */
+  background: var(--surface, var(--color-white));
+}
+
+/* Floats over the page only with unsaved changes - a "saved" bar must not cover the conversations. */
+.pd-savebar--dirty {
+  position: sticky;
+  z-index: 5;
+}
+
+.pd-savebar-text { margin-right: auto; font-size: 0.78rem; color: var(--text-muted, var(--color-zinc-500)); }
+.pd-savebar--dirty .pd-savebar-text { color: var(--color-amber-700); font-weight: 600; }
+
+.pd-savebar--dirty.is-stuck {
+  border-radius: 10px;
+  border-top-color: transparent;
+  box-shadow: 0 0 0 10px var(--color-white), 0 0 0 11px var(--color-zinc-200), 0 10px 28px 8px rgba(24, 24, 27, 0.12);
+}
+
+/*
+    @module: Access
+    @description: Portal URL and the one-time password of the client portal.
+    @usage: .pd-url-row, .pd-url, .pd-password, .pd-warning
+*/
+.pd-url-row { display: flex; align-items: center; gap: 8px; }
+
+.pd-url, .pd-password-value {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--color-zinc-100);
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+
+.pd-password { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; background: var(--color-amber-50); }
+.pd-password-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.pd-warning { margin: 0; font-size: 0.76rem; color: var(--color-amber-700); }
+
+/*
+    @module: Checkpoints
+    @description: Numbered steps of the project, each a separated row: number (✓ when done) |
+        title with its description (as the client reads it) | status dropdown + edit / delete.
+        The progress bar sits under the card header; editing and adding open a form in place.
+    @usage: .pd-cp-progress > span; ol.pd-checkpoints > li.pd-checkpoint[data-status]
+        (.pd-cp-index, .pd-cp-body > .pd-cp-label + .pd-cp-description, .pd-cp-controls > .pd-cp-status
+        + .pd-cp-action | .pd-cp-editor > .pd-cp-field); .pd-cp-new; .pd-hint
+*/
+.pd-cp-progress-label { font-size: 0.75rem; color: var(--color-zinc-500); }
+
+.pd-cp-progress { height: 4px; background: var(--color-zinc-100); }
+.pd-cp-progress > span { display: block; height: 100%; background: var(--color-emerald-500); transition: width 0.3s ease; }
+
+.pd-checkpoints { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+
+.pd-checkpoint {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border, var(--color-sand-200));
+  border-radius: 12px;
+  background: var(--surface, var(--color-white));
+}
+.pd-checkpoint[data-status="done"] { background: var(--color-zinc-50); }
+.pd-checkpoint--editing { grid-template-columns: 28px minmax(0, 1fr); border-color: var(--color-zinc-300); background: var(--color-zinc-50); }
+
+.pd-cp-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--color-zinc-100);
+  color: var(--color-zinc-600);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.pd-checkpoint[data-status="active"] .pd-cp-index { background: var(--color-amber-50); color: var(--color-amber-700); box-shadow: inset 0 0 0 1.5px var(--color-amber-200); }
+.pd-checkpoint[data-status="done"] .pd-cp-index { background: var(--color-emerald-500); color: var(--color-white); }
+
+.pd-cp-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding-top: 4px; }
+.pd-cp-label { font-size: 0.92rem; font-weight: 600; color: var(--color-zinc-900); overflow-wrap: anywhere; }
+.pd-checkpoint[data-status="done"] .pd-cp-label { color: var(--color-zinc-600); }
+.pd-cp-description {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--color-zinc-600);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.pd-cp-description--empty { font-style: italic; color: var(--color-zinc-400); }
+
+.pd-cp-controls { display: flex; align-items: center; gap: 6px; }
+.pd-cp-action { flex-shrink: 0; width: 30px; height: 30px; }
+.pd-cp-action--delete:hover:not(:disabled) { color: var(--color-rose-600); border-color: var(--color-rose-200); background: var(--color-rose-50); }
+
+.pd-cp-status {
+  flex-shrink: 0;
+  min-width: 120px;
+  padding: 6px 26px 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--color-zinc-100);
+  /* chevron: the pill is a dropdown */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  color: var(--color-zinc-700);
+  font-family: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pd-cp-status:hover:not(:disabled) { border-color: var(--color-zinc-300); }
+.pd-cp-status option { background: var(--color-white); color: var(--color-zinc-900); font-weight: 500; }
+.pd-cp-status[data-status="active"] { background-color: var(--color-amber-50); color: var(--color-amber-700); }
+.pd-cp-status[data-status="done"] { background-color: var(--color-emerald-50); color: var(--color-emerald-600); }
+.pd-cp-status:disabled { cursor: default; background-image: none; padding-right: 10px; }
+
+.pd-cp-editor, .pd-cp-new { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.pd-cp-new { padding: 14px; border: 1px dashed var(--color-zinc-300); border-radius: 12px; background: var(--color-zinc-50); }
+.pd-cp-new-title { font-size: 0.85rem; font-weight: 700; color: var(--color-zinc-900); }
+.pd-cp-field { display: flex; flex-direction: column; gap: 4px; }
+.pd-cp-field > span { font-size: 0.74rem; font-weight: 600; color: var(--color-zinc-600); }
+.pd-cp-editor-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.pd-hint { margin: 0; font-size: 0.74rem; color: var(--color-zinc-500); }
+.pd-cp-empty { padding: 4px 0; }
+
+/*
+    @module: Waiting, internal notes and read receipts
+    @description: "Waiting on us / on the client" chip of a thread, internal notes of the team
+        (amber, dashed - never shown to the client), the reply mode switch and the read receipt
+        under our messages.
+    @usage: .pd-waiting[data-waiting], .pd-msg--internal, .pd-internal-tag, .pd-reply-mode,
+        .pd-reply--internal, .pd-msg-receipt(--read), .pd-hint--internal, .pd-textarea--internal
+*/
+.pd-waiting {
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--color-zinc-100);
+  color: var(--color-zinc-600);
+}
+.pd-waiting[data-waiting="supplier"] { background: var(--color-amber-50); color: var(--color-amber-700); box-shadow: inset 0 0 0 1px var(--color-amber-200); }
+
+.pd-msg--internal,
+.pd-msg--admin.pd-msg--internal {
+  background: var(--color-amber-50);
+  border: 1px dashed var(--color-amber-500);
+  color: var(--color-zinc-900);
+}
+
+.pd-internal-tag {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--color-amber-100);
+  color: var(--color-amber-800);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+
+.pd-msg-receipt { margin-top: 6px; font-size: 0.68rem; text-align: right; opacity: 0.6; }
+.pd-msg-receipt--read { opacity: 0.9; color: var(--color-emerald-200); font-weight: 600; }
+
+.pd-reply-mode { display: inline-flex; align-self: flex-start; padding: 3px; border-radius: 10px; background: var(--color-zinc-100); }
+.pd-reply-mode button {
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-zinc-600);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pd-reply-mode button.active { background: var(--color-white); color: var(--color-zinc-900); box-shadow: 0 1px 2px rgba(24, 24, 27, 0.08); }
+.pd-reply--internal { background: var(--color-amber-50); }
+.pd-reply--internal .pd-reply-mode button.active { color: var(--color-amber-800); }
+.pd-hint--internal { color: var(--color-amber-800); }
+.pd-textarea--internal { background: var(--color-amber-50); border-color: var(--color-amber-200); }
+
+/*
+    @module: Checkpoint due date, note and order
+    @description: Due date line (red when overdue and not done), the internal note of the team
+        and the up / down buttons.
+    @usage: .pd-cp-due(--overdue), .pd-checkpoint--overdue, .pd-cp-note, .pd-cp-move, .pd-cp-field--date
+*/
+.pd-cp-due { font-size: 0.75rem; font-weight: 600; color: var(--color-zinc-500); }
+.pd-cp-due--overdue { color: var(--color-rose-600); }
+.pd-checkpoint--overdue { border-color: var(--color-rose-200); }
+.pd-cp-note { margin: 2px 0 0; font-size: 0.78rem; line-height: 1.45; color: var(--color-amber-800); white-space: pre-wrap; overflow-wrap: anywhere; }
+.pd-cp-move { display: inline-flex; gap: 2px; }
+.pd-cp-field--date { max-width: 220px; }
+
+/*
+    @module: Thread tags and the sub-page container
+    @description: "Waiting on" and assignee tags of a thread row; the single column of a sub-page.
+    @usage: .pd-thread-tags > .pd-waiting + .pd-assignee-tag; .pd-section
+*/
+.pd-thread-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.pd-assignee-tag { padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; background: var(--color-indigo-50); color: var(--color-indigo-700); }
+.pd-section { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/*
+    @module: Client accounts
+    @description: Accounts of the client portal (avatar, name, login name, e-mail, notifications,
+        last sign-in) with edit / reset password / remove, the account form and the one-time
+        password panel.
+    @usage: .pd-accounts > .pd-account(--editing), .pd-avatar, .pd-account-*, .pd-tag(--on),
+        .pd-account-form, .pd-password-head, .pd-account-access, fieldset.pd-access-choice > .pd-access-option
+*/
+.pd-accounts { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.pd-account {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 10px;
+  border: 1px solid var(--color-zinc-100);
+  border-radius: 12px;
+}
+.pd-account--editing { border-color: var(--color-zinc-300); background: var(--color-zinc-50); }
+.pd-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--color-zinc-900);
+  color: var(--color-white);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.pd-account-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pd-account-name { font-size: 0.88rem; font-weight: 600; overflow-wrap: anywhere; }
+.pd-account-meta { font-size: 0.72rem; color: var(--color-zinc-500); overflow-wrap: anywhere; }
+.pd-account-meta code { font-size: 0.72rem; color: var(--color-zinc-700, var(--color-zinc-900)); }
+.pd-account-actions { display: flex; gap: 4px; }
+.pd-account-actions .pd-icon-btn { width: 30px; height: 30px; }
+.pd-tag { display: inline-block; white-space: nowrap; padding: 0 6px; border-radius: 999px; background: var(--color-zinc-100); color: var(--color-zinc-600); font-weight: 600; }
+.pd-tag--on { white-space: normal; background: var(--color-emerald-50); color: var(--color-emerald-700); }
+.pd-account-form { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px dashed var(--color-zinc-300); border-radius: 12px; background: var(--color-zinc-50); }
+.pd-password-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pd-account-access { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.pd-access-choice { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 10px 12px; border: 1px solid var(--color-zinc-200, var(--color-zinc-100)); border-radius: 10px; background: var(--color-white); }
+.pd-access-choice legend { padding: 0 4px; font-size: 0.76rem; font-weight: 700; color: var(--color-zinc-600); }
+.pd-access-option { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.82rem; }
+.pd-access-option input { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--color-zinc-900); }
+.pd-access-option span { display: flex; flex-direction: column; gap: 2px; }
+.pd-access-option small { color: var(--color-zinc-500); font-size: 0.74rem; line-height: 1.4; }
+
+/*
+    @module: Files
+    @description: Every file of the conversations, newest first, with size, date, author and a
+        link to its thread; files of internal notes tagged.
+    @usage: .pd-files > .pd-files-row(--internal), .pd-files-name, .pd-files-meta, .pd-link
+*/
+.pd-files { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; max-height: 420px; overflow-y: auto; }
+.pd-files-row { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid var(--color-zinc-100); }
+.pd-files-row:last-child { border-bottom: 0; }
+.pd-files-name { font-size: 0.84rem; font-weight: 600; color: var(--color-zinc-900); text-decoration: none; overflow-wrap: anywhere; }
+.pd-files-name:hover { text-decoration: underline; }
+.pd-files-meta { font-size: 0.72rem; color: var(--color-zinc-500); }
+.pd-link { padding: 0; border: 0; background: none; color: var(--color-indigo-600); font: inherit; cursor: pointer; text-decoration: underline; }
+
+/*
+    @module: Responsive
+    @description: Below 720 px the conversation shows either the list or the open thread (back
+        arrow), the form one column.
+*/
+
+@media (max-width: 720px) {
+  .pd-page { padding: 12px; }
+  .pd-title { font-size: 1.2rem; }
+  .pd-form { grid-template-columns: minmax(0, 1fr); }
+  .pd-conv-body { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .pd-thread-list { border-right: 0; max-height: none; }
+  .pd-conv-body--open .pd-thread-list { display: none; }
+  .pd-conv-body:not(.pd-conv-body--open) .pd-thread-detail { display: none; }
+  .pd-thread-close { display: inline-flex; }
+  .pd-msg { max-width: 92%; }
+  .pd-checkpoint { grid-template-columns: 28px minmax(0, 1fr); }
+  .pd-cp-controls { grid-column: 2; flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pd-spin { animation: none; }
+}

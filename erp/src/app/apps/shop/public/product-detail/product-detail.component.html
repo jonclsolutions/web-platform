@@ -1,0 +1,167 @@
+<!-- 
+    @file: product-detail.component.html
+    @path: /src/app/apps/shop/public/product-detail/product-detail.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026 
+    @description: Template of the product detail component.
+-->
+    
+@if (!isLoading() && product()) {
+  <div class="product-detail-container">
+    <div class="product-main">
+      <div class="product-gallery">
+        <div class="main-image-wrapper">
+          <img [src]="activeImage()" [alt]="product()?.name">
+          @if (product()?.is_featured) {
+            <div class="badge-float">{{ t?.featured_badge }}</div>
+          }
+        </div>
+        @if (variantImages().length > 0) {
+          <div class="gallery-section">
+            <span class="gallery-label">{{ t?.variant_gallery_label }} {{ selectedVariant()?.variant_name }}</span>
+            <div class="image-thumbnails">
+              @for (vImg of variantImages(); track vImg) {
+                <div
+                  class="thumb-item variant-specific"
+                  [class.active]="activeImage() === vImg.url"
+                  (click)="setActiveImage(vImg.url)">
+                  <img [src]="vImg.url" [alt]="selectedVariant()?.variant_name">
+                </div>
+              }
+            </div>
+          </div>
+        }
+        @if (generalImages().length > 0) {
+          <div class="gallery-section">
+            <span class="gallery-label">{{ t?.gallery_label }}</span>
+            <div class="image-thumbnails">
+              @for (img of generalImages(); track img) {
+                <div
+                  class="thumb-item"
+                  [class.active]="activeImage() === img.url"
+                  (click)="setActiveImage(img.url)">
+                  <img [src]="img.url" [alt]="product()?.name">
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+      
+      <div class="product-purchase-zone">
+        <div class="sticky-content">
+          <nav class="breadcrumb-trail">
+            <span [routerLink]="['/shop']">{{ t?.breadcrumb_shop }}</span> / <span>{{ product()?.category?.name }}</span>
+          </nav>
+          <h1 class="product-name">{{ product()?.name }}</h1>
+          <div class="product-meta">
+            <span class="product-stock" [class.in-stock]="isAvailable()" [class.low-stock]="currentStock() > 0 && currentStock() < 5">
+              {{ currentStock() >= 5 ? t?.stock_many : currentStock() > 0 ? t?.stock_few?.replace('{count}', '' + currentStock()) : t?.stock_unavailable }}
+            </span>
+          </div>
+          
+          @if (product()?.variants?.length > 0) {
+            <div class="variant-select-wrapper">
+              <label for="variantSelect" class="section-label">{{ t?.variant_label }}</label>
+              <select
+                id="variantSelect"
+                class="variant-dropdown"
+                (change)="onVariantChange($event)"
+                [value]="selectedVariant()?.id">
+                @for (v of product().variants; track v) {
+                  <option [value]="v.id">
+                    {{ v.variant_name }} — ({{ getVariantPrice(v) }})
+                  </option>
+                }
+              </select>
+              
+              @if (selectedVariant()) {
+                <div class="selected-attributes-box">
+                  @if (selectedVariant().attribute_1_name) {
+                    <div class="attr-row">
+                      <span class="attr-label">{{ selectedVariant().attribute_1_name }}:</span>
+                      <span class="attr-val">{{ selectedVariant().attribute_1_value }}</span>
+                    </div>
+                  }
+                  @if (selectedVariant().attribute_2_name) {
+                    <div class="attr-row">
+                      <span class="attr-label">{{ selectedVariant().attribute_2_name }}:</span>
+                      <span class="attr-val">{{ selectedVariant().attribute_2_value }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <div class="purchase-card">
+            <div class="price-section">
+              <div class="price-main">{{ getFormattedPrice(currentPrice()) }}</div>
+              <div class="price-no-vat">
+                {{ t?.price_without_vat }} {{ getFormattedPrice(priceWithoutVat()) }}
+              </div>
+            </div>
+            
+            <div class="delivery-status">
+              <div class="status-badge" [class.ready]="isAvailable()">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 10L12 15L2 10M22 6L12 11L2 6M12 19V11" />
+                </svg>
+                <span>{{ isAvailable() ? t?.status_ready : t?.status_sold_out }}</span>
+              </div>
+              @if (isAvailable()) {
+                <p class="status-subtext">{{ t?.shipping_note }}</p>
+              }
+            </div>
+
+            @if (isAvailable()) {
+              <div class="quantity-selector">
+                <label>{{ t?.quantity_label }}</label>
+                <div class="quantity-controls">
+                  <button (click)="decreaseQuantity()" [disabled]="selectedQuantity() <= 1" class="qty-btn">−</button>
+                  <input type="number" [value]="selectedQuantity()" readonly class="qty-display">
+                  <button (click)="increaseQuantity()" [disabled]="selectedQuantity() >= currentStock()" class="qty-btn">+</button>
+                </div>
+                @if (selectedQuantity() >= currentStock()) {
+                  <small class="max-stock-info">{{ t?.max_quantity }}</small>
+                }
+              </div>
+            }
+
+            <div class="action-buttons">
+              <button
+                class="btn-buy"
+                [disabled]="!isAvailable()"
+                (click)="addToCart()"
+                >
+                {{ !isInCart() ? (addedToCart() ? t?.added_to_cart : t?.add_to_cart) : (addedToCart() ? t?.quantity_updated : t?.update_quantity) }}
+              </button>
+            </div>
+            <a routerLink="/shop/cart" class="btn-view-cart">
+              {{ t?.go_to_cart?.replace('{count}', '' + cartService.cartCount()) }}
+            </a>
+          </div>
+
+          @if (product()?.short_description) {
+            <div class="quick-description">
+              <h3>{{ t?.description_heading }}</h3>
+              <p>{{ product()?.short_description }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+    
+    <div class="product-tabs">
+      <div class="tab-header">
+        <button class="active">{{ t?.specification_tab }}</button>
+      </div>
+      <div class="tab-content">
+        <div class="description-rich-text" [innerHTML]="product()?.description"></div>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="loading-state">{{ t?.loading }}</div>
+}

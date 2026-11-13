@@ -1,0 +1,267 @@
+/*
+    @file: project-manage-modal.css
+    @path: src/app/apps/project-portal/admin/projects/project-manage-modal.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Styles of the "Project management" modal - shared by ProjectsComponent
+        (Manage panel of a project) and ProjectThreadsComponent (quick thread detail from the
+        cross-project table) - same palette as the email-tpl modal.
+*/
+
+.pm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 24, 27, 0.45);
+  z-index: 1200;
+}
+
+.pm-card {
+  background: var(--color-white);
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.pm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-sand-200);
+  flex-shrink: 0;
+}
+
+.pm-title { margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--color-zinc-900); }
+
+.pm-close {
+  border: 1px solid var(--color-zinc-300);
+  background: var(--color-white);
+  color: var(--color-zinc-600);
+  cursor: pointer;
+  font-size: 1rem;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.pm-close:hover { background: var(--color-zinc-100); color: var(--color-zinc-900); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   .pm-body - TWO MODES:
+   1) Default: one column, centered, scrolls as a whole
+      (ProjectThreadsComponent modal - only messages + reply, no sections).
+   2) `:has(> .pm-section)`: two-panel grid (ProjectsComponent "Manage" modal).
+   ══════════════════════════════════════════════════════════════════════ */
+
+.pm-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px;
+  max-width: 880px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.pm-body:has(> .pm-section) {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "sidebar checkpoints"
+    "sidebar conversation";
+  max-width: 1300px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.pm-loading, .pm-empty { color: var(--color-zinc-400); font-size: 0.85rem; padding: 4px 2px; }
+
+/* ── Left panel: Access (URL, password, regeneration) ────────────────────── */
+.pm-body > .pm-section:nth-of-type(1) {
+  grid-area: sidebar;
+  overflow-y: auto;
+  background: var(--color-zinc-50);
+  border-right: 1px solid var(--color-sand-200);
+  padding: 26px 20px;
+  margin: 0;
+}
+
+.pm-body > .pm-section:nth-of-type(1) .pm-btn-small {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ── Right area, top block: Checkpoints (limited height, own scroll) ── */
+.pm-body > .pm-section:nth-of-type(2) {
+  grid-area: checkpoints;
+  padding: 22px 28px 16px;
+  border-bottom: 1px solid var(--color-sand-200);
+  max-height: 280px;
+  overflow-y: auto;
+  margin: 0;
+}
+
+/* ── Right area, bottom block: Conversation (fills the remaining height, own scroll) ── */
+.pm-body > .pm-section:nth-of-type(3) {
+  grid-area: conversation;
+  padding: 20px 28px 24px;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.pm-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-zinc-500);
+  margin-bottom: 12px;
+}
+
+/* ── Access (sidebar) ─────────────────────────────────────────────── */
+.pm-access-row { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+.pm-url {
+  padding: 8px 10px; background: var(--color-white); border: 1px solid var(--color-sand-200); border-radius: 8px;
+  font-size: 0.78rem; color: var(--color-zinc-900); overflow-x: auto; white-space: nowrap;
+}
+.pm-password-row { display: flex; flex-direction: column; align-items: stretch; gap: 8px; margin-top: 14px; }
+.pm-password-label { font-size: 0.78rem; font-weight: 600; color: var(--color-zinc-500); }
+.pm-password-value {
+  padding: 8px 10px; background: var(--color-white); border: 1px solid var(--color-sand-200); border-radius: 8px;
+  font-size: 0.85rem; color: var(--color-zinc-900); letter-spacing: 0.05em; text-align: center;
+}
+.pm-password-hint { margin: 10px 0 14px; font-size: 0.74rem; color: var(--color-zinc-400); line-height: 1.5; }
+/* One-time password notice - visible enough that the password is copied before the modal closes. */
+.pm-password-warning {
+  margin: 10px 0 4px;
+  padding: 8px 10px;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--color-amber-900, #78350f);
+  background: var(--color-amber-50, #fffbeb);
+  border: 1px solid var(--color-amber-200, #fde68a);
+  border-radius: 10px;
+}
+
+/* ── Common elements (shared by both modes) ──────────────────────── */
+.pm-btn-small {
+  padding: 7px 14px; border-radius: 999px; border: 1px solid var(--color-zinc-300); background: var(--color-white);
+  color: var(--color-zinc-900); font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  transition: background 0.15s ease;
+}
+.pm-btn-small:hover:not(:disabled) { background: var(--color-zinc-100); }
+.pm-btn-small:disabled { opacity: 0.5; cursor: not-allowed; }
+.pm-btn-warn { border-color: var(--color-rose-200); color: var(--color-rose-700); }
+.pm-btn-warn:hover:not(:disabled) { background: var(--color-rose-50); }
+
+.pm-input, .pm-textarea { padding: 8px 10px; border: 1px solid var(--color-zinc-300); border-radius: 8px; font-size: 0.85rem; font-family: inherit; }
+
+/* ── Checkpointy ──────────────────────────────────────────────────────── */
+.pm-checkpoint-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.pm-checkpoint-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--color-sand-200); border-radius: 10px; background: var(--color-zinc-50); }
+.pm-checkpoint-badge { border: none; border-radius: 999px; padding: 4px 10px; font-size: 0.7rem; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+.pm-checkpoint-label { flex: 1; font-size: 0.85rem; color: var(--color-zinc-900); }
+.pm-checkpoint-delete { border: none; background: transparent; color: var(--color-zinc-400); cursor: pointer; flex-shrink: 0; }
+.pm-checkpoint-delete:hover { color: var(--color-rose-700); }
+.pm-add-checkpoint { display: flex; gap: 8px; }
+.pm-add-checkpoint .pm-input { flex: 1; }
+
+/* ── Konverzace ───────────────────────────────────────────────────────── */
+.pm-thread-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+.pm-thread-item {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 10px 12px; border: 1px solid var(--color-sand-200); border-radius: 10px; background: var(--color-white);
+  cursor: pointer; text-align: left; transition: background 0.15s ease;
+}
+.pm-thread-item:hover { background: var(--color-zinc-50); }
+.pm-thread-subject { font-size: 0.85rem; font-weight: 600; color: var(--color-zinc-900); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pm-thread-status { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; }
+.pm-thread-priority { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; }
+
+.pm-thread-detail-subject { margin: 10px 0; font-size: 0.98rem; font-weight: 700; color: var(--color-zinc-900); }
+.pm-thread-status-row { display: flex; align-items: center; gap: 8px; margin: 4px 0 14px; }
+.pm-thread-status-label { font-size: 0.78rem; color: var(--color-zinc-500); font-weight: 600; }
+.pm-thread-status-select { width: auto; margin: 0; }
+
+.pm-message-list { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 100px; overflow-y: auto; margin-bottom: 12px; }
+.pm-message { padding: 10px 12px; border-radius: 10px; background: var(--color-zinc-100); }
+.pm-message-admin { background: var(--color-indigo-50); }
+.pm-message-meta { font-size: 0.68rem; color: var(--color-zinc-500); margin-bottom: 4px; }
+.pm-message-body { font-size: 0.85rem; color: var(--color-zinc-900); white-space: pre-wrap; }
+.pm-reply-box { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   MOBILE (<=860px) - the sidebar moves from the left column to the top, the main area
+   stays one column, every block scrolls independently.
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 860px) {
+  .pm-body:has(> .pm-section) {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      "sidebar"
+      "checkpoints"
+      "conversation";
+  }
+  .pm-body > .pm-section:nth-of-type(1) {
+    border-right: none;
+    border-bottom: 1px solid var(--color-sand-200);
+    max-height: 240px;
+  }
+  .pm-body > .pm-section:nth-of-type(2),
+  .pm-body > .pm-section:nth-of-type(3) {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  .pm-body { padding: 16px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   .projects-threads-section wraps the second table (requests) - no stacked paddings /
+   margins, only a small fixed gap from the top.
+   ══════════════════════════════════════════════════════════════════════ */
+.projects-threads-section {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-sand-200);
+}
+.pm-message-attachments { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+.pm-attachment-link {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px;
+  border-radius: 8px; background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text); text-decoration: none; font-size: 0.78rem; width: fit-content;
+}
+.pm-attachment-link:hover { background: var(--surface); }
+.pm-attachment-size { color: var(--text-dim); font-size: 0.7rem; }
+
+.pm-file-attach-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+.pm-file-attach-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px;
+  border-radius: 999px; border: 1px solid var(--border-mid); background: var(--surface);
+  color: var(--text-muted); font-size: 0.74rem; font-weight: 600; cursor: pointer;
+}
+.pm-file-attach-btn:hover { background: var(--surface-2); }
+.pm-file-attach-count { font-size: 0.7rem; color: var(--text-dim); }
+
+.pm-file-chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.pm-file-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 9px;
+  border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border);
+  font-size: 0.72rem; color: var(--text-muted); max-width: 200px;
+}
+.pm-file-chip button { border: none; background: none; color: var(--text-dim); cursor: pointer; font-size: 0.68rem; }
+.pm-file-chip button:hover { color: var(--danger); }
+/* Allowed attachment types under the attach button */

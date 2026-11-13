@@ -1,0 +1,20 @@
+/*
+    @file: shop-layout.component.css
+    @path: /src/app/apps/shop/public/shop-layout/shop-layout.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026  
+    @description: Styles of the shop layout component.
+*/
+
+.shop-content {
+  background-color: var(--color-white);
+  color: var(--color-black);
+  min-height: calc(100vh - 200px); /* Makes the content cover the screen height between the header and the footer */
+  display: block;
+}
+
+/* Safeguard for the whole page, so the background never shows through */
+body {
+  background-color: var(--color-white) !important;
+}

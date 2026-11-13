@@ -1,0 +1,85 @@
+<!-- 
+    @file: shop-footer.component.html
+    @path: /src/app/apps/shop/public/components/shop-footer/shop-footer.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026 
+    @description: Template of the shop footer component.
+-->
+    
+@if (t) {
+  <footer class="public-footer">
+    <div class="footer-content">
+      <div class="footer-section company-info">
+        @if (siteSettings) {
+          <h3>{{ siteSettings.company_name }}</h3>
+          @if (siteSettings.address) {
+            <p><strong>{{ t?.address_label }}:</strong> {{ siteSettings.address }}</p>
+          }
+          @if (siteSettings.ico) {
+            <p><strong>{{ t?.ico_label }}:</strong> {{ siteSettings.ico }}</p>
+          }
+          @if (siteSettings.dic) {
+            <p><strong>{{ t?.dic_label }}:</strong> {{ siteSettings.dic }}</p>
+          }
+        }
+        <div class="social-links">
+          @for (link of socialLinks; track link.url) {
+            <a [href]="link.url" target="_blank" class="social-box" [title]="link.name">
+              <img [src]="getStorageUrl(link.icon_path)" [alt]="link.name">
+            </a>
+          }
+        </div>
+      </div>
+
+      <div class="footer-section quick-links">
+        <h3><span>{{ t?.quick_links_header }}</span></h3>
+        <ul>
+          @for (link of footerNavLinks; track link) {
+            <li>
+              <a [routerLink]="link.route" [target]="link.external ? '_blank' : '_self'" class="footer-link">{{ link.text }}</a>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <div class="footer-section contact-info">
+        <h3>{{ t?.contact_header }}</h3>
+        @if (siteSettings) {
+          <p><strong>{{ t?.email_label }}: </strong> <a [href]="'mailto:' + siteSettings.contact_email" class="dynamic-email">{{ siteSettings.contact_email }}</a></p>
+          @if (siteSettings.contact_phone) {
+            <p><strong>{{ t?.phone_label }}:</strong> {{ siteSettings.contact_phone }}</p>
+          }
+        }
+      </div>
+
+      <div class="footer-section legal-info">
+        <h3><span>{{ t?.legal_info_header }}</span></h3>
+        <ul>
+          @for (link of footerLegalLinks; track link) {
+            <li><a [routerLink]="link.route" class="footer-link">{{ link.text }}</a></li>
+          }
+        </ul>
+      </div>
+
+      <div class="footer-section payment-info">
+        <h3><span>{{ t?.secure_payments_header }}</span></h3>
+        <div class="payment-methods">
+          @for (method of paymentMethods; track method) {
+            <div class="payment-box" [attr.title]="method.name">
+              <img [src]="method.icon" [alt]="method.name">
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      @if (siteSettings?.footer_text) {
+        <p>{{ siteSettings.footer_text }}</p>
+      } @else if (!siteSettings) {
+        <p>{{ t?.copyright_text?.replace('{year}', currentYear.toString()) }}</p>
+      }
+    </div>
+  </footer>
+}

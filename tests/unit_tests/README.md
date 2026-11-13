@@ -13,11 +13,13 @@ tests/unit_tests/
 │   └── run_all.js       combined runner used by run_all.sh
 ├── erp/
 │   ├── run_all_erp.sh   every *.spec.ts in erp/src
-│   ├── run_admin_core.sh  admin/core-pages + admin/components + admin/auth + admin/intranet
-│   ├── run_admin_web.sh   admin/web-pages
-│   ├── run_admin_shop.sh  admin/shop-pages
-│   ├── run_public_web.sh  public/web-pages
-│   ├── run_public_shop.sh public/shop-pages
+│   ├── run_admin_core.sh  admin/ (core pages, shared admin components, auth, intranet, navigation) + apps.registry
+│   ├── run_web_admin.sh   apps/web/admin
+│   ├── run_web_public.sh  apps/web/public + public/not-found
+│   ├── run_shop_admin.sh  apps/shop/admin
+│   ├── run_shop_public.sh apps/shop/public
+│   ├── run_project_portal_admin.sh   apps/project-portal/admin
+│   ├── run_project_portal_public.sh  apps/project-portal/public
 │   ├── lib/             runner (run.js) and Karma configuration
 │   └── report/          result of the last run (git-ignored)
 └── api/
@@ -33,6 +35,9 @@ tests/unit_tests/
 ```
 
 `core/` and `shared/` specs only run with `erp/run_all_erp.sh` (and `run_all.sh`).
+Every erp runner also checks the **application boundaries**: no file of `erp/src/app/apps/<app>/`
+imports a file of another application (report suite "Application boundaries") - an application
+asks the registry (`hasApp()`) instead.
 
 ## Running
 
@@ -51,7 +56,7 @@ Inside the dev container (or on a host with the tools), from any directory, for 
 tests/unit_tests/run_all.sh                           # all erp + all api tests, combined report
 tests/unit_tests/run_all.sh --no-coverage             # the same without code coverage (faster)
 tests/unit_tests/erp/run_admin_core.sh                # one erp section
-tests/unit_tests/erp/run_admin_web.sh --no-coverage
+tests/unit_tests/erp/run_web_admin.sh --no-coverage
 tests/unit_tests/api/run_all_api.sh                   # all api tests only
 tests/unit_tests/api/run_core.sh --no-coverage        # one api section without coverage
 ```
@@ -102,7 +107,7 @@ same values as `coverage.*` properties.
   code (only interfaces / types, `index.ts` that only re-exports).
 - A source file that no spec imports is listed as **not loaded by any test – 0 %**, so untested
   files are visible.
-- Files outside the tested folders (e.g. `admin/components` when running `run_admin_web.sh`) are
+- Files outside the tested folders (e.g. `admin/components` when running `run_web_admin.sh`) are
   executed but not counted.
 
 ### Code coverage (api)
@@ -146,10 +151,10 @@ were updated on 2026-10-31. Run them with `./dev.sh test` (Docker).
 
 | Script | Coverage |
 |---|---|
-| `erp/run_admin_web.sh` | 100 % (statements, branches, functions, lines) |
-| `erp/run_admin_shop.sh` | 100 % |
+| `erp/run_web_admin.sh` | 100 % (statements, branches, functions, lines) |
+| `erp/run_shop_admin.sh` | 100 % |
 | `erp/run_admin_core.sh` | 99 % lines / 98 % statements – 430 tests (the rest: downloads via `window.location`, ResizeObserver callbacks) |
-| `erp/run_public_web.sh` + `run_public_shop.sh` | 99.6 % lines |
+| `erp/run_web_public.sh` + `run_shop_public.sh` | 99.6 % lines |
 | `erp/run_all_erp.sh` | 99.5 % lines / 99 % statements (last coverage measurement) – 1158 tests on 2026-10-31 (core 100 %, shared ≥ 99.6 % per file) |
 | `api/run_core.sh` | 100 % (lines, methods) – 186 tests |
 | `api/run_web.sh` | 100 % (lines, methods) – 107 tests |

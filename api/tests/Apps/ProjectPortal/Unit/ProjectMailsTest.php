@@ -34,7 +34,7 @@ class ProjectMailsTest extends TestCase
      *   links to the admin thread list on the frontend.
      * @input Project 'Eshop', thread 'Logo colours'; frontend https://admin.example.com/.
      * @output Subjects 'New request — Eshop: Logo colours' / 'New message — …'; HTML contains
-     *   https://admin.example.com/admin/web/projects/{id}, the subject and the English texts
+     *   https://admin.example.com/admin/project-portal/projects/{id}, the subject and the English texts
      *   (no Czech leftovers, finding #10).
      */
     public function test_project_thread_notification(): void
@@ -46,7 +46,7 @@ class ProjectMailsTest extends TestCase
         $new = new ProjectThreadActivityMail($project, $thread, true);
         $new->assertHasSubject('New request — Eshop: Logo colours');
         $html = $new->render();
-        $this->assertStringContainsString("https://admin.example.com/admin/web/projects/{$project->id}", $html);
+        $this->assertStringContainsString("https://admin.example.com/admin/project-portal/projects/{$project->id}", $html);
         $this->assertStringContainsString('Logo colours', $html);
         $this->assertStringContainsString('The customer started a new thread:', $html);
         $this->assertStringContainsString('Open in the administration', $html);
@@ -133,13 +133,13 @@ class ProjectMailsTest extends TestCase
 
         $assigned = new ProjectTeamNotificationMail($project, ProjectTeamNotificationMail::KIND_THREAD_ASSIGNED, 'Hosting', 'Jana');
         $assigned->assertHasSubject('Thread assigned to you — Eshop');
-        $this->assertStringContainsString("https://admin.example.com/admin/web/projects/{$project->id}/conversations", $assigned->render());
+        $this->assertStringContainsString("https://admin.example.com/admin/project-portal/projects/{$project->id}/conversations", $assigned->render());
         $this->assertStringContainsString('Jana assigned you this thread:', $assigned->render());
 
         (new ProjectTeamNotificationMail($project, ProjectTeamNotificationMail::KIND_APPROVAL_DECIDED, 'Logo', 'approved'))->assertHasSubject('Approved — Eshop: Logo');
         $changes = new ProjectTeamNotificationMail($project, ProjectTeamNotificationMail::KIND_APPROVAL_DECIDED, 'Logo', 'changes_requested');
         $changes->assertHasSubject('Changes requested — Eshop: Logo');
-        $this->assertStringContainsString("/admin/web/projects/{$project->id}/approvals", $changes->render());
+        $this->assertStringContainsString("/admin/project-portal/projects/{$project->id}/approvals", $changes->render());
         $this->assertStringContainsString('The client requested changes to:', $changes->render());
     }
 }

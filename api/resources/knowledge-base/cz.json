@@ -1178,6 +1178,28 @@
           ]
         }
       ]
+    },
+    "apps": {
+      "navLabel": "Aplikace",
+      "header": "Aplikace",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Přehled aplikací, které můžete spravovat (web, e-shop, projektový portál …), s tlačítkem Spravovat."
+            },
+            {
+              "type": "text",
+              "content": "Každá aplikace má vlastní menu, stránky a nápovědu. Karta se ukáže jen u aplikace, ke které máte oprávnění záložky a aspoň jednu stránku. Tlačítko Spravovat otevře první stránku aplikace, kterou smíte otevřít."
+            },
+            {
+              "type": "note",
+              "content": "Mezi aplikacemi přepínáte i v hlavičce: vedle záložky Core je tlačítko Aplikace, které vždy ukazuje název aplikace, ve které právě jste."
+            }
+          ]
+        }
+      ]
     }
   }
 }

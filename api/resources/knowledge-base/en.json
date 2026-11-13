@@ -1178,6 +1178,28 @@
           ]
         }
       ]
+    },
+    "apps": {
+      "navLabel": "Applications",
+      "header": "Applications",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Overview of the applications you can manage (web, e-shop, project portal …) with the button Manage."
+            },
+            {
+              "type": "text",
+              "content": "Every application has its own menu, pages and help. A card is shown only for an application whose tab permission you have together with at least one of its pages. Manage opens the first page of the application you may open."
+            },
+            {
+              "type": "note",
+              "content": "You can also switch between the applications in the header: next to the Core tab, the button Applications always shows the name of the application you are in."
+            }
+          ]
+        }
+      ]
     }
   }
 }

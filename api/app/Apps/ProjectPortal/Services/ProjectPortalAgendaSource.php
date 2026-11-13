@@ -42,7 +42,7 @@ final class ProjectPortalAgendaSource implements AgendaSource
             ->limit(AgendaContext::MAX_EVENTS_PER_SOURCE)->get(['id', 'name', 'estimated_completion_to']);
         foreach ($projects as $project) {
             $date = Carbon::parse($project->estimated_completion_to);
-            $events[] = $agenda->event('project_deadline', (string) $project->id, $date, $project->name, "/admin/web/projects/{$project->id}", $date->lt($today) ? 'danger' : 'warning');
+            $events[] = $agenda->event('project_deadline', (string) $project->id, $date, $project->name, "/admin/project-portal/projects/{$project->id}", $date->lt($today) ? 'danger' : 'warning');
         }
 
         return $events;

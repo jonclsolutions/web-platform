@@ -14,6 +14,13 @@
  * since they're the same "add a language" unit of work for a developer, not because
  * they're loaded together at runtime.
  *
+ * Every installed application with its own admin (apps.registry.ts, `adminI18n`) adds its texts in
+ * `apps/<id>/admin/i18n/{code}.json` (copied by angular.json to `assets/i18n/apps/<id>/admin/i18n/`):
+ * its own sections (`sales-orders`, `projects` …) and its keys of shared sections (the names of its
+ * menu items in `admin-layout`, its calendar entries, its permission descriptions …). They are
+ * loaded together with the core file and merged into it section by section - a removed application
+ * takes its texts with it.
+ *
  * Each JSON file is a flat map of SECTION -> { key: string, ... }. `shared` is a
  * special section every component's `strings` getter automatically merges in (see
  * BaseDataComponent.strings) - keys common across the whole admin (confirm/cancel/save/
@@ -31,9 +38,10 @@
 
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, forkJoin, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { migrateLegacyKey } from '../../shared/utils/legacy-storage';
+import { APPS } from '../../apps/apps.registry';
 
 const STORAGE_KEY = 'jsw_admin_language';
 /** Former key of the language choice - moved to STORAGE_KEY on the first read. */
@@ -116,16 +124,43 @@ public getDateLocale(): string {
    * like a successful switch to a language that happens to look identical).
    */
   private loadLanguage(code: string): void {
-    this.http.get<Record<string, any>>(`assets/i18n/admin/${code}/${code}.json`)
-      .pipe(
+    const core$ = this.http.get<Record<string, any>>(`assets/i18n/admin/${code}/${code}.json`).pipe(
+      catchError((err) => {
+        console.error(`[AdminLocalizationService] Failed to load admin language "${code}":`, err);
+        return of(null);
+      })
+    );
+    const apps$: Observable<Record<string, any>>[] = APPS.filter(app => app.adminI18n).map(app =>
+      this.http.get<Record<string, any>>(`assets/i18n/apps/${app.id}/admin/i18n/${code}.json`).pipe(
         catchError((err) => {
-          console.error(`[AdminLocalizationService] Failed to load admin language "${code}":`, err);
+          console.error(`[AdminLocalizationService] Failed to load the admin texts of "${app.id}" (${code}):`, err);
           return of({});
         })
       )
-      .subscribe(data => {
-        this.translationsSource.next(data);
-      });
+    );
+    forkJoin([core$, ...apps$]).subscribe(([core, ...apps]) => {
+      this.translationsSource.next(core === null ? {} : AdminLocalizationService.mergeSections(core, apps));
+    });
+  }
+
+  /**
+   * @description Merges the texts of the applications into the core texts: a section only one
+   *   file has is taken as it is, a section of both is merged key by key (application keys win).
+   * @param core Core texts of the language.
+   * @param apps Texts of the applications.
+   * @returns The merged texts.
+   */
+  static mergeSections(core: Record<string, any>, apps: Record<string, any>[]): Record<string, any> {
+    const merged: Record<string, any> = { ...core };
+    for (const texts of apps) {
+      for (const [section, value] of Object.entries(texts ?? {})) {
+        const current = merged[section];
+        merged[section] = current && typeof current === 'object' && value && typeof value === 'object'
+          ? { ...current, ...value }
+          : value;
+      }
+    }
+    return merged;
   }
 
   /**

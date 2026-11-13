@@ -26,6 +26,9 @@
 
     <div class="header-sep" aria-hidden="true"></div>
 
+    <!-- Mobile only: the module the user is in (the tabs move into the mobile panel). -->
+    <span class="header-current-module">{{ currentModuleName }}</span>
+
     <div class="header-user">
       <app-user-avatar class="header-user-avatar" [src]="isLoggedIn ? avatarUrl : null" [size]="30"></app-user-avatar>
       <!-- The own e-mail opens the personal info page (password, 2FA) - reachable for every role (VT-13) -->
@@ -48,39 +51,37 @@
     </div>
   </div>
 
+  <!-- Core tab + application switcher: the button of the switcher always names the application
+       the user is in ("Aplikace" in the core); the dropdown lists the applications they may open. -->
   <div class="module-switcher">
-    <button
-      *ngIf="isModuleAvailable('core')"
-      [class.active]="currentModule === 'core'"
-      (click)="switchModule('core')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="3" y="3" width="18" height="18" rx="2"/>
-        <path d="M9 3v18"/>
-        <path d="M3 9h6"/>
-      </svg>
-      {{ strings.module_core }}
-    </button>
-    <button
-      *ngIf="isModuleAvailable('web')"
-      [class.active]="currentModule === 'web'"
-      (click)="switchModule('web')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="2" y1="12" x2="22" y2="12"/>
-        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-      </svg>
-      {{ strings.module_web }}
-    </button>
-    <button
-      *ngIf="isModuleAvailable('shop')"
-      [class.active]="currentModule === 'shop'"
-      (click)="switchModule('shop')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-      </svg>
-      {{ strings.module_shop }}
-    </button>
+    @if (isModuleAvailable('core')) {
+      <button type="button" [class.active]="currentModule === 'core'" (click)="switchModule('core')">
+        <app-admin-icon name="layout" [size]="14" />
+        {{ strings.module_core }}
+      </button>
+    }
+    @if (availableApps.length) {
+      <div class="apps-switcher">
+        <button type="button" class="apps-switcher-btn" [class.active]="!!currentApp" aria-haspopup="menu"
+                [attr.aria-expanded]="isAppsMenuOpen" [title]="strings.apps_switcher_title" (click)="toggleAppsMenu()">
+          <app-admin-icon [name]="currentApp?.icon ?? 'layers'" [size]="14" />
+          <span>{{ currentApp ? currentModuleName : strings.apps_switcher_label }}</span>
+          <app-admin-icon name="chevron-down" [size]="11" />
+        </button>
+        @if (isAppsMenuOpen) {
+          <div class="apps-menu-backdrop" (click)="closeAppsMenu()"></div>
+          <div class="apps-menu" role="menu">
+            @for (app of availableApps; track app.id) {
+              <button type="button" role="menuitem" class="apps-menu-item" [class.active]="app.id === currentModule" (click)="switchModule(app.id)">
+                <app-admin-icon [name]="app.icon" [size]="15" />
+                <span>{{ label(app.nameKey) }}</span>
+              </button>
+            }
+            <a class="apps-menu-all" routerLink="/admin/core/apps" (click)="closeAppsMenu()">{{ strings.apps_switcher_all }}</a>
+          </div>
+        }
+      </div>
+    }
   </div>
 
   <div class="header-right">
@@ -171,38 +172,21 @@
     </div>
 
     <div class="map-module-switcher">
-      <button
-        *ngIf="isModuleAvailable('core')"
-        [class.active]="currentModule === 'core'"
-        (click)="switchModule('core'); closeMobileActions()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-          <path d="M9 3v18"/>
-          <path d="M3 9h6"/>
-        </svg>
-        {{ strings.module_core }}
-      </button>
-      <button
-        *ngIf="isModuleAvailable('web')"
-        [class.active]="currentModule === 'web'"
-        (click)="switchModule('web'); closeMobileActions()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="2" y1="12" x2="22" y2="12"/>
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-        </svg>
-        {{ strings.module_web }}
-      </button>
-      <button
-        *ngIf="isModuleAvailable('shop')"
-        [class.active]="currentModule === 'shop'"
-        (click)="switchModule('shop'); closeMobileActions()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-        </svg>
-        {{ strings.module_shop }}
-      </button>
+      @if (isModuleAvailable('core')) {
+        <button type="button" [class.active]="currentModule === 'core'" (click)="switchModule('core'); closeMobileActions()">
+          <app-admin-icon name="layout" [size]="14" />
+          {{ strings.module_core }}
+        </button>
+      }
+      @if (availableApps.length) {
+        <div class="map-apps-label">{{ strings.apps_switcher_label }}</div>
+        @for (app of availableApps; track app.id) {
+          <button type="button" [class.active]="app.id === currentModule" (click)="switchModule(app.id); closeMobileActions()">
+            <app-admin-icon [name]="app.icon" [size]="14" />
+            {{ label(app.nameKey) }}
+          </button>
+        }
+      }
     </div>
 
     <!-- ── Language switcher (mobile variant) ── -->
@@ -250,584 +234,32 @@
   <aside class="admin-sidebar" [style.width.px]="isMenuOpen ? sidebarWidth : 52">
     <nav class="admin-nav">
 
-      @if (currentModule === 'web') {
-        <div class="nav-group" *ngIf="showWebWelcomeGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('web-welcome')"
-                  aria-controls="nav-group-web-welcome" [title]="strings.nav_group_toggle" (click)="toggleGroup('web-welcome')">
-            <span class="nav-group-title">{{ strings.nav_group_overview }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-web-welcome" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('web-welcome')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('web-welcome', $event)">
-              <li *appHasPermission="'web-welcome-page-view'">
-                <a routerLink="/admin/web/welcome-page" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_welcome">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-                      <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_welcome }}</span>
-                </a>
-              </li>
-            </ul>
+      <!-- Sidebar of the current module, built from its navigation data (CORE_NAV / `nav` of the
+           manifest of the application); a section shows only when one of its pages may be opened. -->
+      @for (group of navGroups; track group.key) {
+        @if (isGroupVisible(group)) {
+          <div class="nav-group">
+            <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded(group.key)"
+                    [attr.aria-controls]="'nav-group-' + group.key" [title]="strings.nav_group_toggle" (click)="toggleGroup(group.key)">
+              <span class="nav-group-title">{{ label(group.labelKey) }}</span>
+              <app-admin-icon class="nav-group-chevron" name="chevron-down" [size]="12" [strokeWidth]="2.5" />
+            </button>
+            <div [id]="'nav-group-' + group.key" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded(group.key)">
+              <ul routerLinkActive="" (isActiveChange)="onGroupActive(group.key, $event)">
+                @for (item of group.items; track item.path) {
+                  @if (canOpen(item)) {
+                    <li>
+                      <a [routerLink]="'/admin/' + currentModule + '/' + item.path" routerLinkActive="active" (click)="onLinkClick()" [title]="label(item.titleKey ?? item.labelKey)">
+                        <span class="nav-icon"><app-admin-icon [name]="item.icon" [size]="16" /></span>
+                        <span class="nav-text">{{ label(item.labelKey) }}</span>
+                      </a>
+                    </li>
+                  }
+                }
+              </ul>
+            </div>
           </div>
-        </div>
-
-        <div class="nav-group" *ngIf="showWebOverviewGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('web-overview')"
-                  aria-controls="nav-group-web-overview" [title]="strings.nav_group_toggle" (click)="toggleGroup('web-overview')">
-            <span class="nav-group-title">{{ strings.nav_group_overview }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-web-overview" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('web-overview')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('web-overview', $event)">
-              <li *appHasPermission="'web-view-dashboard'">
-                <a routerLink="/admin/web/dashboard" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_dashboard">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-                      <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_dashboard }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="nav-group" *ngIf="showWebBusinessGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('web-business')"
-                  aria-controls="nav-group-web-business" [title]="strings.nav_group_toggle" (click)="toggleGroup('web-business')">
-            <span class="nav-group-title">{{ strings.nav_group_business }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-web-business" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('web-business')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('web-business', $event)">
-              <li *appHasPermission="'web-user-requests-view'">
-                <a routerLink="/admin/web/user-request" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_user_request">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
-                      <line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_user_request }}</span>
-                </a>
-              </li>
-              <li *appHasPermission="'web-sales-leads-view'">
-                <a routerLink="/admin/web/sales-leads" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_sales_leads">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
-                      <polyline points="16 3 18 5 22 1"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_sales_leads }}</span>
-                </a>
-              </li>
-              <li *appHasPermission="'web-sales-orders-view'">
-                <a routerLink="/admin/web/sales-orders" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_sales_orders">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_sales_orders }}</span>
-                </a>
-              </li>
-                <li *appHasPermission="'web-projects-view'">
-                <a routerLink="/admin/web/projects" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_projects">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_projects }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="nav-group" *ngIf="showWebContentGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('web-content')"
-                  aria-controls="nav-group-web-content" [title]="strings.nav_group_toggle" (click)="toggleGroup('web-content')">
-            <span class="nav-group-title">{{ strings.nav_group_content }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-web-content" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('web-content')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('web-content', $event)">
-              <li *appHasPermission="'web-edit-website-view'">
-                <a routerLink="/admin/web/edit-website" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_edit_website">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_edit_website }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="nav-group" *ngIf="showWebPeopleGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('web-people')"
-                  aria-controls="nav-group-web-people" [title]="strings.nav_group_toggle" (click)="toggleGroup('web-people')">
-            <span class="nav-group-title">{{ strings.nav_group_people }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-web-people" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('web-people')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('web-people', $event)">
-              <li *appHasPermission="'web-job-applications-view'">
-                <a routerLink="/admin/web/job-applications" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_job_applications">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                      <circle cx="9" cy="7" r="4"/>
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_job_applications }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="nav-group" *ngIf="showWebSystemGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('web-system')"
-                  aria-controls="nav-group-web-system" [title]="strings.nav_group_toggle" (click)="toggleGroup('web-system')">
-            <span class="nav-group-title">{{ strings.nav_group_system }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-web-system" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('web-system')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('web-system', $event)">
-              <li *appHasPermission="'web-view-web-logs'">
-                <a routerLink="/admin/web/business-logs" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_business_logs">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
-                      <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-                      <polyline points="10 9 9 9 8 9"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_business_logs }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-      }
-
-      @if (currentModule === 'core') {
-
-        <div class="nav-group" *ngIf="showCoreOverviewGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('core-overview')"
-                  aria-controls="nav-group-core-overview" [title]="strings.nav_group_toggle" (click)="toggleGroup('core-overview')">
-            <span class="nav-group-title">{{ strings.nav_group_overview }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-core-overview" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('core-overview')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('core-overview', $event)">
-              <li *appHasPermission="'core-view-welcome-page'">
-                <a routerLink="/admin/core/welcome-page" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_welcome">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                      <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_welcome }}</span>
-                </a>
-              </li>
-              <li *appHasPermission="'view-core'">
-                <a routerLink="/admin/core/dashboard" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_core_dashboard">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                      <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_dashboard }}</span>
-                </a>
-              </li>
-              <li>
-                <a routerLink="/admin/core/calendar" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_calendar">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_calendar }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="nav-group" *ngIf="showCoreLegalGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('core-legal')"
-                  aria-controls="nav-group-core-legal" [title]="strings.nav_group_toggle" (click)="toggleGroup('core-legal')">
-            <span class="nav-group-title">{{ strings.nav_group_legal }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-core-legal" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('core-legal')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('core-legal', $event)">
-              <li *appHasPermission="'core-legal-documents-view|core-legal-config-view'">
-                <a routerLink="/admin/core/edit-legal" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_gdpr">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_gdpr }}</span>
-                </a>
-              </li>
-              <li *appHasPermission="'core-legal-config-view'">
-                <a routerLink="/admin/core/web-settings" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_company_info">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="3"/>
-                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
-                      <path d="M12 2a10 10 0 0 1 0 20A10 10 0 0 1 12 2z"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_company_info }}</span>
-                </a>
-              </li>
-              <li *appHasPermission="'core-external-links-view'">
-                <a routerLink="/admin/core/external-links" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_external_links">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                      <polyline points="15 3 21 3 21 9"/>
-                      <line x1="10" y1="14" x2="21" y2="3"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_external_links }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="nav-group">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('core-users')"
-                  aria-controls="nav-group-core-users" [title]="strings.nav_group_toggle" (click)="toggleGroup('core-users')">
-            <span class="nav-group-title">{{ strings.nav_group_users }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-core-users" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('core-users')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('core-users', $event)">
-              <li *appHasPermission="'core-administrators-view'">
-                <a routerLink="/admin/core/administrators" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_administrators">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_administrators }}</span>
-                </a>
-              </li>
-              <li *ngIf="userRole === 'sysadmin'">
-                <a routerLink="/admin/core/edit-roles" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_edit_roles_title">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/>
-                      <path d="M9 12l2 2 4-4"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_edit_roles_text }}</span>
-                </a>
-              </li>
-              <li>
-                <a routerLink="/admin/core/personal-info" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_personal_info">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                      <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_personal_info }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="nav-group" *ngIf="showCoreSystemGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('core-system')"
-                  aria-controls="nav-group-core-system" [title]="strings.nav_group_toggle" (click)="toggleGroup('core-system')">
-            <span class="nav-group-title">{{ strings.nav_group_system }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-core-system" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('core-system')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('core-system', $event)">
-              <li *appHasPermission="'view-core'">
-                <a routerLink="/admin/core/logs" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_core_logs">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
-                      <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-                      <polyline points="10 9 9 9 8 9"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_core_logs }}</span>
-                </a>
-              </li>
-              <li *appHasPermission="'core-security-view'">
-                <a routerLink="/admin/core/security-events" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_security_events">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_security_events }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-      }
-
-      @if (currentModule === 'shop') {
-
-        <div class="nav-group" *ngIf="showShopWelcomeGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('shop-welcome')"
-                  aria-controls="nav-group-shop-welcome" [title]="strings.nav_group_toggle" (click)="toggleGroup('shop-welcome')">
-            <span class="nav-group-title">{{ strings.nav_group_overview }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-shop-welcome" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('shop-welcome')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('shop-welcome', $event)">
-              <li *appHasPermission="'shop-welcome-page-view'">
-                <a routerLink="/admin/shop/welcome-page" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_welcome">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
-                      <line x1="6" y1="20" x2="6" y2="14"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_welcome }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="nav-group" *ngIf="showShopOverviewGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('shop-overview')"
-                  aria-controls="nav-group-shop-overview" [title]="strings.nav_group_toggle" (click)="toggleGroup('shop-overview')">
-            <span class="nav-group-title">{{ strings.nav_group_overview }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-shop-overview" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('shop-overview')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('shop-overview', $event)">
-              <li *appHasPermission="'shop-view-dashboard'">
-                <a routerLink="/admin/shop/dashboard" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_shop_dashboard">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
-                      <line x1="6" y1="20" x2="6" y2="14"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_shop_dashboard }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="nav-group" *ngIf="showShopCatalogGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('shop-catalog')"
-                  aria-controls="nav-group-shop-catalog" [title]="strings.nav_group_toggle" (click)="toggleGroup('shop-catalog')">
-            <span class="nav-group-title">{{ strings.nav_group_catalog }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-shop-catalog" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('shop-catalog')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('shop-catalog', $event)">
-              <li *appHasPermission="'shop-products-view'">
-                <a routerLink="/admin/shop/products" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_products">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                      <line x1="3" y1="6" x2="21" y2="6"/>
-                      <path d="M16 10a4 4 0 0 1-8 0"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_products }}</span>
-                </a>
-              </li>
-              <li *appHasPermission="'shop-categories-view'">
-                <a routerLink="/admin/shop/categories" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_categories">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_categories }}</span>
-                </a>
-              </li>
-              <li *appHasPermission="'shop-suppliers-view'">
-                <a routerLink="/admin/shop/suppliers" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_suppliers">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-                      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_suppliers }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="nav-group" *ngIf="showShopTransactionsGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('shop-transactions')"
-                  aria-controls="nav-group-shop-transactions" [title]="strings.nav_group_toggle" (click)="toggleGroup('shop-transactions')">
-            <span class="nav-group-title">{{ strings.nav_group_transactions }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-shop-transactions" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('shop-transactions')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('shop-transactions', $event)">
-              <li *appHasPermission="'shop-orders-view'">
-                <a routerLink="/admin/shop/orders" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_orders">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                      <line x1="1" y1="10" x2="23" y2="10"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_orders }}</span>
-                </a>
-              </li>
-              <li *appHasPermission="'shop-coupons-view'">
-                <a routerLink="/admin/shop/coupons" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_coupons">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="9 11 12 14 22 4"/>
-                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_coupons }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="nav-group" *ngIf="showShopCustomersGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('shop-customers')"
-                  aria-controls="nav-group-shop-customers" [title]="strings.nav_group_toggle" (click)="toggleGroup('shop-customers')">
-            <span class="nav-group-title">{{ strings.nav_group_customers }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-shop-customers" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('shop-customers')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('shop-customers', $event)">
-              <li *appHasPermission="'shop-customers-view'">
-                <a routerLink="/admin/shop/customers" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_customers">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                      <circle cx="9" cy="7" r="4"/>
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_customers }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="nav-group" *ngIf="showShopLogisticsGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('shop-logistics')"
-                  aria-controls="nav-group-shop-logistics" [title]="strings.nav_group_toggle" (click)="toggleGroup('shop-logistics')">
-            <span class="nav-group-title">{{ strings.nav_group_logistics }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-shop-logistics" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('shop-logistics')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('shop-logistics', $event)">
-              <li *appHasPermission="'shop-shipping-methods-view'">
-                <a routerLink="/admin/shop/shipping-methods" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_shipping_methods">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-                      <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_shipping_methods }}</span>
-                </a>
-              </li>
-              <li *appHasPermission="'shop-payment-methods-view'">
-                <a routerLink="/admin/shop/payment-methods" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_payment_methods">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="12" y1="1" x2="12" y2="23"/>
-                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_payment_methods }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div class="nav-group" *ngIf="showShopContentGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('shop-content')"
-                  aria-controls="nav-group-shop-content" [title]="strings.nav_group_toggle" (click)="toggleGroup('shop-content')">
-            <span class="nav-group-title">{{ strings.nav_group_content }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-shop-content" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('shop-content')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('shop-content', $event)">
-              <li *appHasPermission="'shop-edit-eshop-view'">
-                <a routerLink="/admin/shop/edit-eshop" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_edit_eshop_title">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_edit_eshop_text }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div class="nav-group" *ngIf="showShopSystemGroup">
-          <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded('shop-system')"
-                  aria-controls="nav-group-shop-system" [title]="strings.nav_group_toggle" (click)="toggleGroup('shop-system')">
-            <span class="nav-group-title">{{ strings.nav_group_system }}</span>
-            <svg class="nav-group-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="nav-group-shop-system" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded('shop-system')">
-            <ul routerLinkActive="" (isActiveChange)="onGroupActive('shop-system', $event)">
-              <li *appHasPermission="'shop-view-logs'">
-                <a routerLink="/admin/shop/logs" routerLinkActive="active" (click)="onLinkClick()" [title]="strings.nav_shop_logs">
-                  <span class="nav-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
-                      <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-                    </svg>
-                  </span>
-                  <span class="nav-text">{{ strings.nav_shop_logs }}</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
+        }
       }
 
       <div class="nav-group nav-group--bottom">

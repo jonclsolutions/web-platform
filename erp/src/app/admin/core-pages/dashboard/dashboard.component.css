@@ -4,7 +4,7 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Visual language shared with WebDashboardComponent (`web-pages/dashboard`)
+    @description: Visual language shared with WebDashboardComponent (`apps/web/admin/dashboard`)
         and, above all, with the app-wide admin-layout design tokens (--accent/--text/
         --border/--success/--error/--warning/... - see admin-layout.component.css :host
         block) - no colors outside that palette are used anywhere in this file.

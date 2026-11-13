@@ -1,0 +1,248 @@
+<!-- 
+    @file: job-item.component.html
+    @path: /src/app/apps/web/public/jobs/job-item/job-item.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2025
+    @description: Template of the job item component (position of the database: title, type,
+        place, blocks of the description; application form).
+-->
+    
+@if (t) {
+<div class="job-page">
+
+  <div class="job-back-bar">
+    <a routerLink="/jobs" class="back-link">← {{ t?.back_link }}</a>
+  </div>
+
+  @if (job) {
+
+    <section class="job-hero">
+      <h1 class="job-hero-title">{{ job.title }}</h1>
+      @if (job.type || job.location) {
+        <div class="job-hero-meta">
+          @if (job.type) {
+            <span class="job-meta-tag">{{ job.type }}</span>
+          }
+          @if (job.location) {
+            <span class="job-meta-tag">{{ job.location }}</span>
+          }
+        </div>
+      }
+    </section>
+
+    <div class="job-layout">
+
+      <article class="job-description">
+        <div class="job-desc-label">{{ t?.item_desc_label }}</div>
+        <div class="job-desc-body">
+          @for (section of job.sections; track $index) {
+            <div class="job-desc-block">@if (section.heading) {<strong>{{ section.heading }}</strong><br>}{{ section.body }}</div>
+          }
+        </div>
+
+        @if (settings) {
+          <div class="job-contact-strip">
+            <span class="job-contact-label">{{ t?.item_contact_label }}</span>
+            @if (settings.contact_phone) {
+              <a [href]="'tel:' + settings.contact_phone.replace(/\s/g, '')" class="job-contact-link">{{ settings.contact_phone }}</a>
+              <span class="job-contact-sep" aria-hidden="true">•</span>
+            }
+            <a [href]="'mailto:' + settings.contact_email" class="job-contact-link">{{ settings.contact_email }}</a>
+          </div>
+        }
+      </article>
+
+      <aside class="job-form-aside">
+        <div class="form-card">
+
+          @if (!isSubmitted) {
+            <h2 class="form-card-title">{{ t?.form_title }}</h2>
+
+            <form [formGroup]="applicationForm" (ngSubmit)="onSubmit()" novalidate>
+
+              <div class="field-row">
+                <div class="field-group">
+                  <label class="field-label" for="first_name">
+                    {{ t?.form_first_name_label }} <span class="req">*</span>
+                  </label>
+                  <input
+                    id="first_name"
+                    type="text"
+                    formControlName="first_name"
+                    [placeholder]="t?.form_first_name_placeholder"
+                    class="field-input"
+                    [class.is-error]="applicationForm.get('first_name')?.invalid && (applicationForm.get('first_name')?.dirty || applicationForm.get('first_name')?.touched)">
+                  @if (applicationForm.get('first_name')?.dirty || applicationForm.get('first_name')?.touched) {
+                    @if (applicationForm.get('first_name')?.errors?.['required']) {
+                      <span class="field-error">{{ t?.form_first_name_error }}</span>
+                    } @else if (applicationForm.get('first_name')?.errors?.['pattern']) {
+                      <span class="field-error">{{ t?.form_first_name_pattern_error }}</span>
+                    }
+                  }
+                </div>
+
+                <div class="field-group">
+                  <label class="field-label" for="last_name">
+                    {{ t?.form_last_name_label }} <span class="req">*</span>
+                  </label>
+                  <input
+                    id="last_name"
+                    type="text"
+                    formControlName="last_name"
+                    [placeholder]="t?.form_last_name_placeholder"
+                    class="field-input"
+                    [class.is-error]="applicationForm.get('last_name')?.invalid && (applicationForm.get('last_name')?.dirty || applicationForm.get('last_name')?.touched)">
+                  @if (applicationForm.get('last_name')?.dirty || applicationForm.get('last_name')?.touched) {
+                    @if (applicationForm.get('last_name')?.errors?.['required']) {
+                      <span class="field-error">{{ t?.form_last_name_error }}</span>
+                    } @else if (applicationForm.get('last_name')?.errors?.['pattern']) {
+                      <span class="field-error">{{ t?.form_last_name_pattern_error }}</span>
+                    }
+                  }
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label" for="email">
+                  {{ t?.form_email_label }} <span class="req">*</span>
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  formControlName="email"
+                  [placeholder]="t?.form_email_placeholder"
+                  class="field-input"
+                  [class.is-error]="applicationForm.get('email')?.invalid && (applicationForm.get('email')?.dirty || applicationForm.get('email')?.touched)"
+                  autocomplete="email">
+                @if (applicationForm.get('email')?.dirty || applicationForm.get('email')?.touched) {
+                  @if (applicationForm.get('email')?.errors?.['required']) {
+                    <span class="field-error">{{ t?.form_email_required_error }}</span>
+                  } @else if (applicationForm.get('email')?.errors?.['email']) {
+                    <span class="field-error">{{ t?.form_email_invalid_error }}</span>
+                  }
+                }
+              </div>
+
+              <div class="field-group">
+                <label class="field-label" for="phone">{{ t?.form_phone_label }}</label>
+                <input
+                  id="phone"
+                  type="tel"
+                  formControlName="phone"
+                  [placeholder]="t?.form_phone_placeholder"
+                  class="field-input"
+                  [class.is-error]="applicationForm.get('phone')?.invalid && (applicationForm.get('phone')?.dirty || applicationForm.get('phone')?.touched)"
+                  autocomplete="tel">
+                @if (applicationForm.get('phone')?.errors?.['pattern'] && (applicationForm.get('phone')?.dirty || applicationForm.get('phone')?.touched)) {
+                  <span class="field-error">{{ t?.form_phone_pattern_error }}</span>
+                }
+              </div>
+
+              <div class="field-group">
+                <label class="field-label" for="message">{{ t?.form_message_label }}</label>
+                <textarea
+                  id="message"
+                  formControlName="message"
+                  rows="4"
+                  [placeholder]="t?.form_message_placeholder"
+                  class="field-input textarea">
+                </textarea>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label">
+                  {{ t?.form_cv_label }} <span class="req">*</span>
+                </label>
+                <label class="file-zone" [class.file-zone--has]="selectedFile">
+                  @if (!selectedFile) {
+                    <span class="file-zone-icon" aria-hidden="true">↑</span>
+                    <span class="file-zone-text">{{ t?.form_cv_placeholder }}</span>
+                  } @else {
+                    <span class="file-zone-icon" aria-hidden="true">✓</span>
+                    <span class="file-zone-text file-zone-name">{{ selectedFile.name }}</span>
+                  }
+                  <input
+                    type="file"
+                    class="file-hidden"
+                    (change)="onFileSelected($event)"
+                    tabindex="-1"
+                    aria-hidden="true">
+                </label>
+                @if (!selectedFile && applicationForm.touched && !fileSizeError && !fileTypeError) {
+                  <span class="field-error">{{ t?.form_cv_error }}</span>
+                }
+                @if (fileSizeError) {
+                  <span class="field-error">{{ t?.form_cv_size_error }}</span>
+                }
+                @if (fileTypeError) {
+                  <span class="field-error">{{ cvTypeErrorText }}</span>
+                }
+              </div>
+
+              <div class="gdpr-row">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="dataProcessingAgreement" class="checkbox-input">
+                  <span class="checkbox-box" aria-hidden="true"></span>
+                  <span>
+                    {{ t?.form_gdpr_text }}
+                    <a routerLink="/privacy-policy" target="_blank" class="gdpr-link">{{ t?.form_gdpr_link_text }}</a>
+                    <span class="req"> *</span>
+                  </span>
+                </label>
+              </div>
+
+              <app-captcha [loadErrorText]="t?.form_captcha_load" />
+
+              <button
+                type="submit"
+                class="submit-btn"
+                [disabled]="applicationForm.invalid || !selectedFile || (loadingService.isLoading$ | async)">
+                @if (loadingService.isLoading$ | async) {
+                  <span class="spinner" aria-hidden="true"></span>
+                  <span>{{ t?.form_submitting }}</span>
+                } @else {
+                  <span>{{ t?.form_submit_btn }}</span>
+                }
+              </button>
+
+              @if (errorMessage) {
+                <p style="margin-top: 12px; font-size: 0.83rem; color: var(--clr-error); text-align: center;">
+                  {{ errorMessage }}
+                </p>
+              }
+
+            </form>
+
+          } @else {
+
+            <div class="success-panel">
+              <div class="success-icon" aria-hidden="true">✓</div>
+              <h3 class="success-title">{{ t?.success_title }}</h3>
+              <p class="success-text">
+                {{ t?.success_text_before }} <strong>{{ job.title }}</strong> {{ t?.success_text_after }}
+              </p>
+              <a routerLink="/jobs" class="back-btn">← {{ t?.success_back_btn }}</a>
+            </div>
+
+          }
+
+        </div>
+      </aside>
+
+    </div>
+
+  } @else if (jobsLoaded) {
+
+    <section class="job-hero">
+      <div class="job-hero-eyebrow">{{ t?.error_eyebrow }}</div>
+      <h1 class="job-hero-title">{{ t?.not_found }}</h1>
+      <div style="margin-top: 24px;">
+        <a routerLink="/jobs" class="back-btn">← {{ t?.back_link }}</a>
+      </div>
+    </section>
+
+  }
+
+</div>
+}

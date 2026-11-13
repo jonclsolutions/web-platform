@@ -4,8 +4,9 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Unit tests of AdminLayoutComponent – the admin shell: module switch (web / core /
- *   shop) incl. sync from the URL, sidebar open/resize state in localStorage, mobile scroll lock,
+ * @description Unit tests of AdminLayoutComponent – the admin shell: core tab and application
+ *   switcher (core / web / shop / project portal, the name of the current module) incl. sync from
+ *   the URL, the sidebar built from the navigation data, sidebar open/resize state in localStorage, mobile scroll lock,
  *   admin language switch, logout, which menu groups the permissions show, collapsible menu
  *   sections, the own profile photo in the header, the scroll reset of the content area and the
  *   "Help" link to the knowledge base.
@@ -20,6 +21,8 @@ import { throwError } from 'rxjs';
 import { AdminLayoutComponent, NAV_COLLAPSED_STORAGE_KEY } from './admin-layout.component';
 import { ScrollLockService } from '../../../core/services/scroll-lock.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
+import { AdminModulesService } from '../../admin-modules.service';
+import { navOf } from '../../admin-navigation.config';
 
 describe('AdminLayoutComponent', () => {
   let ctx: AdminTestContext;
@@ -79,7 +82,7 @@ describe('AdminLayoutComponent', () => {
    * @input  granted core-view-welcome-page: switchModule('core'); granted only shop-orders-view:
    *         switchModule('shop'); no web page: switchModule('web').
    * @output navigate(['/admin/core/welcome-page']); navigate(['/admin/shop/orders']); no navigation
-   *         for web; currentModule stays 'web' (default) and nothing stored until NavigationEnd.
+   *         for web; currentModule stays 'core' (default) and nothing stored until NavigationEnd.
    */
   it('switchModule() opens the first page the user may open', () => {
     ctx.permissions.granted = new Set(['core-view-welcome-page']);
@@ -93,7 +96,7 @@ describe('AdminLayoutComponent', () => {
     (router.navigate as jasmine.Spy).calls.reset();
     component.switchModule('web');
     expect(router.navigate).not.toHaveBeenCalled();
-    expect(component.currentModule).toBe('web');
+    expect(component.currentModule).toBe('core');
     expect(localStorage.getItem('admin_current_module')).toBeNull();
   });
 
@@ -122,28 +125,66 @@ describe('AdminLayoutComponent', () => {
     expect(component.isModuleAvailable('core')).toBeFalse();
 
     ctx.permissions.granted = new Set(['view-core', 'view-web']);
-    component.userRole = 'admin';
+    ctx.auth.session.role = 'admin';
     expect(component.isModuleAvailable('web')).toBeFalse();
 
     ctx.permissions.granted = new Set([]);
-    component.userRole = 'sysadmin';
-    expect(['web', 'core', 'shop'].map(m => component.isModuleAvailable(m as any))).toEqual([true, true, true]);
+    ctx.auth.session.role = 'sysadmin';
+    expect(['web', 'core', 'shop', 'project-portal'].map(m => component.isModuleAvailable(m))).toEqual([true, true, true, true]);
+    expect(component.isModuleAvailable('nope')).toBeFalse();
     component.switchModule('core');
     expect(router.navigate).toHaveBeenCalledWith(['/admin/core/welcome-page']);
   });
 
   /**
-   * @description The rendered header shows only the available tabs (desktop switcher).
-   * @input  granted view-web, view-core, view-eshop, core-view-welcome-page, shop-orders-view; render.
-   * @output buttons of Core and E-shop only (no Web - no web page).
+   * @description The header shows the core tab and the application switcher; its dropdown lists
+   *   only the applications the user may open and links the page of all applications.
+   * @input  granted view-web, view-core, view-eshop, core-view-welcome-page, shop-orders-view; render;
+   *         open the switcher; pick the e-shop.
+   * @output Core tab + switcher button 'apps_switcher_label' (in the core); dropdown: the e-shop
+   *         only (no web - no web page) + link /admin/core/apps; the pick navigates to
+   *         /admin/shop/orders and closes the dropdown.
    */
-  it('renders only the available module tabs', () => {
+  it('renders the core tab and the application switcher', () => {
     ctx.permissions.granted = new Set(['view-web', 'view-core', 'view-eshop', 'core-view-welcome-page', 'shop-orders-view']);
+    component.currentModule = 'core';
     fixture.detectChanges();
-    const tabs = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.module-switcher button'))
-      .map(b => b.textContent!.trim());
-    expect(tabs.length).toBe(2);
-    expect(tabs.some(t => t.includes('module_web'))).toBeFalse();
+    const el: HTMLElement = fixture.nativeElement;
+    const tabs = Array.from(el.querySelectorAll('.module-switcher > button, .module-switcher .apps-switcher-btn')).map(b => b.textContent!.trim());
+    expect(tabs).toEqual(['admin-layout.module_core', 'admin-layout.apps_switcher_label']);
+    expect(component.availableApps.map(app => app.id)).toEqual(['shop']);
+
+    (el.querySelector('.apps-switcher-btn') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const items = Array.from(el.querySelectorAll('.apps-menu-item')) as HTMLButtonElement[];
+    expect(items.map(i => i.textContent!.trim())).toEqual(['admin-layout.module_shop']);
+    expect(el.querySelector('.apps-menu-all')?.getAttribute('href')).toBe('/admin/core/apps');
+    items[0].click();
+    expect(router.navigate).toHaveBeenCalledWith(['/admin/shop/orders']);
+    expect(component.isAppsMenuOpen).toBeFalse();
+  });
+
+  /**
+   * @description The header always names the module the user is in: in an application the
+   *   switcher shows its name (active), in the core "Applications"; the mobile label the same.
+   * @input  sysadmin; currentModule 'project-portal', then 'core'.
+   * @output currentApp project-portal, name 'admin-layout.module_project-portal' on the switcher and
+   *   the mobile label, switcher active; core: 'admin-layout.module_core', switcher not active.
+   */
+  it('names the current module in the header', () => {
+    ctx.auth.session.role = 'sysadmin';
+    component.currentModule = 'project-portal';
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(component.currentApp?.id).toBe('project-portal');
+    expect(el.querySelector('.apps-switcher-btn')!.textContent!.trim()).toBe('admin-layout.module_project-portal');
+    expect(el.querySelector('.apps-switcher-btn')!.classList).toContain('active');
+    expect(el.querySelector('.header-current-module')!.textContent!.trim()).toBe('admin-layout.module_project-portal');
+
+    component.currentModule = 'core';
+    fixture.detectChanges();
+    expect(component.currentModuleName).toBe('admin-layout.module_core');
+    expect(el.querySelector('.apps-switcher-btn')!.classList).not.toContain('active');
   });
 
   /**
@@ -160,13 +201,19 @@ describe('AdminLayoutComponent', () => {
 
   /**
    * @description URLs outside /admin/<module> do not change the module.
-   * @input  router.url '/auth/login'
-   * @output currentModule stays 'web'
+   * @input  router.url '/auth/login'; then '/admin/forbidden' (no module); then '/admin/project-portal/logs'
+   * @output currentModule stays 'core' (default) twice; then 'project-portal'
    */
   it('ignores URLs without a module', () => {
-    spyOnProperty(router, 'url', 'get').and.returnValue('/auth/login');
+    const url = spyOnProperty(router, 'url', 'get').and.returnValue('/auth/login');
     component.ngOnInit();
-    expect(component.currentModule).toBe('web');
+    expect(component.currentModule).toBe('core');
+    url.and.returnValue('/admin/forbidden');
+    component.ngOnInit();
+    expect(component.currentModule).toBe('core');
+    url.and.returnValue('/admin/project-portal/logs');
+    component.ngOnInit();
+    expect(component.currentModule).toBe('project-portal');
   });
 
   /**
@@ -275,17 +322,26 @@ describe('AdminLayoutComponent', () => {
   });
 
   /**
-   * @description Menu groups follow the permissions ("a|b" = any of them).
-   * @input  granted ['web-edit-website-view', 'shop-orders-view', 'core-legal-config-view']
-   * @output web content, shop transactions, core legal groups visible; web business, shop catalog hidden
+   * @description Menu groups follow the permissions ("a|b" = any of them); the sidebar renders the
+   *   pages of the current module with their links.
+   * @input  granted ['web-edit-website-view', 'shop-orders-view', 'core-legal-config-view',
+   *         'web-projects-view']; render the project portal.
+   * @output web content, shop transactions, core legal groups visible; web business, shop catalog
+   *   hidden; sidebar link /admin/project-portal/projects only (no log page).
    */
   it('shows menu groups by permission', () => {
-    ctx.permissions.granted = new Set(['web-edit-website-view', 'shop-orders-view', 'core-legal-config-view']);
-    expect(component.showWebContentGroup).toBeTrue();
-    expect(component.showShopTransactionsGroup).toBeTrue();
-    expect(component.showCoreLegalGroup).toBeTrue();
-    expect(component.showWebBusinessGroup).toBeFalse();
-    expect(component.showShopCatalogGroup).toBeFalse();
+    ctx.permissions.granted = new Set(['web-edit-website-view', 'shop-orders-view', 'core-legal-config-view', 'web-projects-view']);
+    const visible = (module: string, key: string) => component.isGroupVisible(navOf(module).find(g => g.key === key)!);
+    expect(visible('web', 'web-content')).toBeTrue();
+    expect(visible('shop', 'shop-transactions')).toBeTrue();
+    expect(visible('core', 'core-legal')).toBeTrue();
+    expect(visible('web', 'web-business')).toBeFalse();
+    expect(visible('shop', 'shop-catalog')).toBeFalse();
+
+    component.currentModule = 'project-portal';
+    fixture.detectChanges();
+    const links = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.admin-nav a[href^="/admin/"]')).map(a => a.getAttribute('href'));
+    expect(links).toEqual(['/admin/project-portal/projects']);
   });
 
   /**
@@ -312,7 +368,7 @@ describe('AdminLayoutComponent', () => {
     });
     expect(el.querySelector('.admin-nav a[href="/admin/core/personal-info"]')).not.toBeNull();
     // Without permissions the first core page is the calendar (no permission either).
-    expect((component as any).firstAccessiblePage('core').path).toBe('calendar');
+    expect(TestBed.inject(AdminModulesService).firstPage('core')!.path).toBe('calendar');
     expect(el.querySelector('.admin-nav a[href="/admin/core/calendar"]')).not.toBeNull();
     expect(el.querySelector('a.header-action-btn--calendar')?.getAttribute('href')).toBe('/admin/core/calendar');
 
@@ -432,31 +488,29 @@ describe('AdminLayoutComponent', () => {
   });
 
   /**
-   * @description Every menu group appears exactly with its permissions; the core overview group
-   *   always (it holds the calendar, which needs no permission).
-   * @input Each group's permission granted alone; no permission.
-   * @output That group (+ core overview) shown, all others hidden; core overview without any.
+   * @description Every menu group appears exactly with the permissions of its pages; the core
+   *   overview and users groups always (calendar, applications and personal info need no
+   *   permission); the role-only edit roles page only for the sysadmin.
+   * @input Each permission of a page granted alone (admin role); no permission; sysadmin.
+   * @output The groups holding a page with that permission (+ the always-visible ones) shown, all
+   *   others hidden; edit roles only for the sysadmin.
    */
   it('shows every menu group only with its permission', () => {
-    const groups: Record<string, string> = {
-      showWebWelcomeGroup: 'web-welcome-page-view', showShopWelcomeGroup: 'shop-welcome-page-view',
-      showWebOverviewGroup: 'web-view-dashboard', showWebBusinessGroup: 'web-projects-view', showWebContentGroup: 'web-edit-website-view',
-      showWebPeopleGroup: 'web-job-applications-view', showWebSystemGroup: 'web-view-web-logs',
-      showCoreLegalGroup: 'core-external-links-view', showShopOverviewGroup: 'shop-view-dashboard',
-      showShopCatalogGroup: 'shop-suppliers-view', showShopTransactionsGroup: 'shop-coupons-view', showShopCustomersGroup: 'shop-customers-view',
-      showShopLogisticsGroup: 'shop-payment-methods-view', showShopContentGroup: 'shop-edit-eshop-view', showShopSystemGroup: 'shop-view-logs'
-    };
-    for (const [group, permission] of Object.entries(groups)) {
+    const modules = ['core', 'web', 'shop', 'project-portal'];
+    const groups = modules.flatMap(module => navOf(module));
+    const always = groups.filter(g => g.items.some(i => i.permission === null && !i.sysadminOnly)).map(g => g.key);
+    expect(always).toEqual(['core-overview', 'core-users']);
+    const permissions = [...new Set(groups.flatMap(g => g.items.flatMap(i => i.permission?.split('|') ?? [])))];
+    for (const permission of permissions) {
       ctx.permissions.granted = new Set([permission]);
-      const shown = Object.keys(groups).filter(g => (component as any)[g]);
-      expect(shown).withContext(permission).toEqual([group]);
+      const expected = groups.filter(g => always.includes(g.key) || g.items.some(i => i.permission?.split('|').includes(permission))).map(g => g.key);
+      expect(groups.filter(g => component.isGroupVisible(g)).map(g => g.key)).withContext(permission).toEqual(expected);
     }
+    const editRoles = navOf('core').flatMap(g => g.items).find(i => i.path === 'edit-roles')!;
     ctx.permissions.granted = new Set();
-    expect(component.showCoreOverviewGroup).toBeTrue();
-    ctx.permissions.granted = new Set(['view-core']);
-    expect([component.showCoreOverviewGroup, component.showCoreSystemGroup]).toEqual([true, true]);
-    ctx.permissions.granted = new Set(['core-legal-documents-view']);
-    expect(component.showCoreLegalGroup).toBeTrue();
+    expect(component.canOpen(editRoles)).toBeFalse();
+    ctx.auth.session.role = 'sysadmin';
+    expect(component.canOpen(editRoles)).toBeTrue();
   });
 
   /**

@@ -1,0 +1,42 @@
+/**
+ * @file shop-layout.component.ts
+ * @path src/app/apps/shop/public/shop-layout/shop-layout.component.ts
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
+ * @description Provides the structural wrapper for the e-shop section, incorporating the global header and footer components with an outlet for nested routes.
+ * @dependencies
+ * - RouterOutlet: Enables dynamic rendering of nested shop pages (catalog, product detail, checkout).
+ * - ShopHeaderComponent: Persistent navigation bar for the shop module.
+ * - ShopFooterComponent: Persistent footer for the shop module.
+ * - SeoService: meta description, canonical, og:* and JSON-LD from the site settings.
+ */
+
+import { Component, OnInit, inject } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { ShopFooterComponent } from '../components/shop-footer/shop-footer.component';
+import { ShopHeaderComponent } from '../components/shop-header/shop-header.component';
+import { SeoService } from '../../../../shared/services/seo.service';
+/**
+ * @description Master layout component for the shop module.
+ * @usage Acts as the main container for all shop-related views, ensuring header and footer are consistent across navigation.
+ * @note This layout is typically associated with the main shop route in the application routing configuration.
+ */
+@Component({
+  selector: 'app-shop-layout',
+  standalone: true,
+  imports: [
+    RouterOutlet,
+    ShopHeaderComponent,
+    ShopFooterComponent
+],
+  templateUrl: './shop-layout.component.html',
+  styleUrls: ['./shop-layout.component.css']
+})
+export class ShopLayoutComponent implements OnInit {
+  private seoService = inject(SeoService);
+
+  ngOnInit(): void {
+    this.seoService.init();
+  }
+}

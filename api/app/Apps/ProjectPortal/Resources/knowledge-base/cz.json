@@ -21,7 +21,7 @@
               "cards": [
                 {
                   "title": "Otevřít projekt",
-                  "text": "Ikona složky v řádku otevře stránku projektu na podstránce Přehled (adresa web/projects/ID/overview). Rychlou úpravu v okně nabízí ikona tužky."
+                  "text": "Ikona složky v řádku otevře stránku projektu na podstránce Přehled (adresa project-portal/projects/ID/overview). Rychlou úpravu v okně nabízí ikona tužky."
                 },
                 {
                   "title": "Řešitel",
@@ -37,7 +37,7 @@
                 },
                 {
                   "title": "Šablony projektů",
-                  "text": "Tlačítko Šablony v nástrojové liště otevře správu šablon (web/projects/templates). Šablona má název, popis a seznam checkpointů; u každého nadpis, popis a nepovinný termín jako počet dní od začátku (0–3650). Řádky přidáte, přesunete šipkami a odeberete. Smazání šablony nemění projekty, které z ní vznikly."
+                  "text": "Tlačítko Šablony v nástrojové liště otevře správu šablon (project-portal/projects/templates). Šablona má název, popis a seznam checkpointů; u každého nadpis, popis a nepovinný termín jako počet dní od začátku (0–3650). Řádky přidáte, přesunete šipkami a odeberete. Smazání šablony nemění projekty, které z ní vznikly."
                 }
               ]
             }
@@ -49,7 +49,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "V záhlaví je název, stav, viditelnost, řešitel a počet nepřečtených zpráv, pod ním záložky podstránek. Každá podstránka má vlastní adresu (např. web/projects/7/conversations), takže ji jde poslat kolegovi nebo otevřít z e-mailu; přepínání záložek neztratí rozepsané nastavení. Záložka Konverzace ukazuje počet nepřečtených zpráv, záložka Ke schválení počet žádostí, které čekají na klienta."
+              "content": "V záhlaví je název, stav, viditelnost, řešitel a počet nepřečtených zpráv, pod ním záložky podstránek. Každá podstránka má vlastní adresu (např. project-portal/projects/7/conversations), takže ji jde poslat kolegovi nebo otevřít z e-mailu; přepínání záložek neztratí rozepsané nastavení. Záložka Konverzace ukazuje počet nepřečtených zpráv, záložka Ke schválení počet žádostí, které čekají na klienta."
             },
             {
               "type": "grid",
@@ -274,6 +274,24 @@
               "type": "alert",
               "variant": "info",
               "content": "Bez oprávnění web-projects-update je stránka projektu i správa šablon jen pro čtení. Auditní log zapisuje změny projektu, uživatelů (jen podle ID), pozvánky a přihlášení kódem / odkazem (bez kódu a e-mailu), checkpointy, přiřazení vláken, žádosti o schválení s rozhodnutími (bez komentáře) a aktuality (bez textu); zprávy, kódy ani hesla se do logu nezapisují. Nepoužité a prošlé přihlašovací kódy se automaticky mažou."
+            }
+          ]
+        }
+      ]
+    },
+    "project-portal-logs": {
+      "navLabel": "Logy portálu",
+      "header": "Projektový portál - Logy",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Auditní log projektového portálu: změny projektů, milníků, šablon, účtů klientů, schvalování a aktualit v administraci a činnost klientů v portálu (přihlášení, vlákna, rozhodnutí)."
+            },
+            {
+              "type": "text",
+              "content": "Záznamy jde filtrovat podle uživatele, události, modulu a IP adresy, exportovat a vykreslit do grafů. Texty zpráv klientů log neobsahuje."
             }
           ]
         }

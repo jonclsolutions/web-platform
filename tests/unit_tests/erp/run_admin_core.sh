@@ -5,7 +5,7 @@
 # @project JS web-platform
 # @author JS
 # @created 2026
-# @description Runs the erp unit tests: admin core section – admin/core-pages, the shared admin components (base-data, builders, layout, dialogs) and admin/auth.
+# @description Runs the erp unit tests: admin core – everything in admin/ (core pages, the shared admin components: base-data, builders, layout, dialogs, auth, intranet, error pages, navigation) and the application registry (apps/apps.registry).
 #   Result: tests/unit_tests/erp/report/report.html and report.xml (last run only).
 # @dependencies
 # - Node.js, erp/node_modules (npm install in erp/), Chrome/Chromium (CHROME_BIN or on PATH).
@@ -19,4 +19,4 @@
 
 set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec node "$DIR/lib/run.js" "$@" --group "Admin core" --command "run_admin_core.sh" src/app/admin/core-pages src/app/admin/components src/app/admin/auth src/app/admin/intranet src/app/admin/error-pages
+exec node "$DIR/lib/run.js" "$@" --group "Admin core" --command "run_admin_core.sh" src/app/admin src/app/apps/apps.registry.spec.ts

@@ -1,0 +1,727 @@
+/**
+ * @file categories.component.ts
+ * @path src/app/apps/shop/admin/categories/categories.component.ts
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
+ * @description Manages a hierarchical tree of shop categories, including CRUD operations and product-to-category assignments.
+ * @dependencies
+ * - Core services: DataHandler, GenericTableService, LoadingService.
+ * - Shared UI: SHARED_UI_BUILDERS, ConfirmDialogService.
+ * - BaseDataComponent: Provides foundational data management for entity collections.
+ * - ResourceCacheService: TTL cache of the category tree, the product panel of a category and
+ *   the "all products" list of the add-product panel.
+ * - Config.create* factory functions: i18n-aware button definitions.
+ */
+
+import { Component, OnInit, ViewChildren, QueryList, ElementRef, ChangeDetectionStrategy, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import * as Core from '../../../../shared/imports/core-providers';
+import { SHARED_UI_BUILDERS } from '../../../../shared/imports/shared-ui-builders';
+import { CategoryNode } from '../components/interfaces/category-node';
+import { Button } from '../../../../shared/interfaces/button';
+import * as Config from './categories.config';
+import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
+import { BaseDataComponent } from '../../../../admin/components/base-data/base-data.component';
+import { ResourceCacheService } from '../../../../core/services/resource-cache.service';
+import { PageHelpComponent } from '../../../../admin/components/page-help/page-help.component';
+
+/**
+ * @description Orchestrates the category management interface, handling recursive tree display, editing, and side-panel product associations.
+ * @usage Used in the shop administration area to structure the product catalog.
+ * @note Implements recursive tree building and maintains local state for expansion and editing modes.
+ */
+@Component({
+  selector: 'app-categories',
+  standalone: true,
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, PageHelpComponent],
+  templateUrl: './categories.component.html',
+  styleUrls: ['./categories.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class CategoriesComponent extends BaseDataComponent<CategoryNode> implements OnInit {
+  @ViewChildren('editInput') editInputs!: QueryList<ElementRef>;
+
+  override apiEndpoint = 'shop/categories';
+  override usesPaginatedList = false;
+
+  protected override translationSection: string = 'shop-categories';
+
+  public override t(key: string): string {
+    return this.i18n.getValue(`shop-categories.${key}`);
+  }
+
+  categories: CategoryNode[] = [];
+
+  private resourceCache = inject(ResourceCacheService);
+  private readonly TREE_CACHE_KEY = 'shop-categories:tree';
+  private readonly TREE_TTL_MS = 2 * 60 * 1000;
+  private readonly CATEGORY_PRODUCTS_CACHE_PREFIX = 'shop-categories:products:';
+  private readonly CATEGORY_PRODUCTS_TTL_MS = 2 * 60 * 1000;
+  private readonly ALL_PRODUCTS_CACHE_KEY = 'shop-categories:all-products';
+  private readonly ALL_PRODUCTS_TTL_MS = 2 * 60 * 1000;
+
+  // Produkt panel
+  selectedCategory: CategoryNode | null = null;
+  categoryProducts: any[] = [];
+  allProducts: any[] = [];
+  loadingProducts = false;
+  showAddProduct = false;
+  productSearch = '';
+  addProductSearch = '';
+
+  private backupNames: Map<number, string> = new Map();
+  private expandedStates: Set<number> = new Set();
+
+  constructor(
+    protected override dataHandler: Core.DataHandler,
+    protected override cd: Core.ChangeDetectorRef,
+    protected override genericTableService: Core.GenericTableService,
+    private confirmDialogService: ConfirmDialogService,
+    private router: Core.Router
+  ) {
+    super(dataHandler, cd, genericTableService);
+
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
+  }
+
+  override ngOnInit(): void {
+    super.ngOnInit();
+    this.loadExpandedStates();
+    this.initWithAuthCheck(this.router);
+  }
+
+  /**
+   * @description "Soft" initial / navigation load of the tree - respects the TTL cache.
+   */
+  override refreshData(): void {
+    this.loadTree(undefined, false, false);
+  }
+
+  /**
+   * @description "Hard" refresh of the tree - bypasses the TTL cache. Called by the global
+   * "Refresh all" button in the header and by the periodic background refresh (see
+   * BaseDataComponent.initWithAuthCheck()). OVERRIDES the inherited implementation, which would
+   * call `this.list.forceFullRefresh()` - data this page does not use.
+   */
+  override forceFullRefresh(_currentFilters: Core.FilterParams = this.defaultFilters): void {
+    this.loadTree(undefined, false, true);
+  }
+
+  /**
+   * @description Provides the configuration for global category management toolbar buttons.
+   * @returns {Button[]} List of toolbar buttons.
+   */
+  private withPermission(btn: Button): Button {
+    return btn.permission && !this.permissionService.hasPermission(btn.permission) ? { ...btn, showIf: false } : { ...btn };
+  }
+
+  get toolbarButtons(): Button[] {
+    return Config.createCategoryToolbarButtons(this.i18n).map(btn => this.withPermission(btn));
+  }
+
+  /**
+   * @description Dynamically generates action buttons for individual category rows, adjusting labels and classes based on status.
+   * @param node The category node being rendered.
+   * @returns {Button[]} Array of action buttons.
+   */
+  getRowButtons(node: CategoryNode): Button[] {
+    return Config.createCategoryRowButtons(this.i18n).map(btn => {
+      const updatedBtn = this.withPermission(btn);
+      if (btn.action === 'toggleStatus') {
+        updatedBtn.label = node.is_active ? this.t('row_btn_active') : this.t('row_btn_inactive');
+        updatedBtn.class = node.is_active ? 'btn-export' : 'btn-filter';
+      }
+      return updatedBtn;
+    });
+  }
+
+  /**
+   * @description Returns save/cancel buttons for nodes currently in editing mode.
+   * @param node The category node in edit state.
+   * @returns {Button[]} Array of edit action buttons.
+   */
+  getEditButtons(node: CategoryNode): Button[] {
+    const isDuplicate = this.isDuplicateName(node);
+    const isEmpty = !node.name || node.name.trim().length === 0;
+
+    return [
+      { action: 'submit', label: this.t('edit_btn_save'), icon: 'check', class: 'btn-create', disabled: isDuplicate || isEmpty },
+      { action: 'cancel', label: this.t('edit_btn_cancel'), icon: 'x', class: 'btn-trash' }
+    ];
+  }
+
+  /**
+   * @description Recursively checks the tree to ensure no two categories at the same hierarchy level share the same name.
+   * @param node The node being checked.
+   * @returns {boolean} True if a duplicate name is found.
+   */
+  isDuplicateName(node: CategoryNode): boolean {
+    const check = (list: CategoryNode[]): boolean => {
+      for (const cat of list) {
+        if (cat.id !== node.id && cat.parent_id === node.parent_id && cat.name.toLowerCase() === node.name.toLowerCase()) return true;
+        if (cat.children?.length && check(cat.children)) return true;
+      }
+      return false;
+    };
+    return check(this.categories);
+  }
+
+  /**
+   * @description Dispatches actions triggered from the main module toolbar.
+   * @param action The requested toolbar action identifier.
+   */
+  override handleToolbarAction(action: string): void {
+    if (action === 'expandAll') this.expandAll(true);
+    if (action === 'collapseAll') this.expandAll(false);
+    if (action === 'addMain') this.initAddCategory(null);
+  }
+
+  /**
+   * @description Dispatches row-specific category actions.
+   * @param action The requested row action identifier.
+   * @param node The target category node.
+   */
+  handleRowAction(action: string, node: CategoryNode): void {
+    switch (action) {
+      case 'addChild': this.initAddCategory(node.id); break;
+      case 'edit': this.startEdit(node); break;
+      case 'toggleStatus': this.toggleStatus(node); break;
+      case 'delete': this.deleteCategory(node); break;
+    }
+  }
+
+  /**
+   * @description Handles submission or cancellation of an active edit session.
+   * @param action The edit action identifier (submit/cancel).
+   * @param node The category node being edited.
+   */
+  handleEditAction(action: string, node: CategoryNode): void {
+    if (action === 'submit') {
+      if (!node.name || node.name.trim().length === 0 || this.isDuplicateName(node)) return;
+      if (node.id === 0) this.confirmAdd(node); else this.saveNode(node);
+    } else {
+      if (node.id === 0) this.loadTree(undefined, false, true); else this.cancelEdit(node);
+    }
+  }
+
+  /**
+   * @description Temporarily injects a new category node into the tree display for immediate user input.
+   * @param parentId The parent ID under which the new node is placed, or null for root-level.
+   */
+  initAddCategory(parentId: number | null): void {
+    const newNode: any = { id: 0, name: '', parent_id: parentId, isEditing: true, is_active: false, children: [] };
+    if (!parentId) {
+      this.categories = [newNode, ...this.categories];
+    } else {
+      const findAndAdd = (list: CategoryNode[]) => {
+        for (const n of list) {
+          if (n.id === parentId) {
+            n.isExpanded = true;
+            this.expandedStates.add(n.id);
+            // `children` is always an array (CategoryNode, built by buildTree())
+            n.children = [newNode, ...n.children];
+            return;
+          }
+          if (n.children) findAndAdd(n.children);
+        }
+      };
+      findAndAdd(this.categories);
+    }
+    this.cd.detectChanges();
+  }
+
+  /**
+   * @description Persists a newly created category node to the backend API.
+   * @param node The new node to be created.
+   */
+  confirmAdd(node: CategoryNode): void {
+    const parentId = node.parent_id;
+    if (!parentId) {
+      this.categories = this.categories.filter(c => c.id !== 0);
+    } else {
+      this.removeNewNodeFromParent(this.categories, parentId);
+    }
+    this.cd.markForCheck();
+
+    this.postData({ name: node.name, parent_id: node.parent_id, is_active: false } as CategoryNode)
+      .subscribe({
+        next: () => {
+          this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('category_created_message'), 'success');
+          this.loadTree(undefined, false, true);
+        },
+        error: () => {
+          this.loadTree(undefined, false, true);
+        }
+      });
+  }
+
+  /**
+   * @description Helper to remove the temporary 'new' node if an API request fails or is canceled.
+   * @param nodes The current tree structure.
+   * @param parentId The parent node to clean up.
+   */
+  private removeNewNodeFromParent(nodes: CategoryNode[], parentId: number): void {
+    for (const node of nodes) {
+      if (node.id === parentId) {
+        node.children = node.children.filter(c => c.id !== 0);
+        return;
+      }
+      if (node.children?.length) {
+        this.removeNewNodeFromParent(node.children, parentId);
+      }
+    }
+  }
+
+  /**
+   * @description Enables editing mode for a specific category and focuses the input field.
+   * @param node The category node to edit.
+   */
+  startEdit(node: CategoryNode): void {
+    if (!this.permissionService.hasPermission('shop-categories-update')) return;
+    this.backupNames.set(node.id, node.name);
+    node.isEditing = true;
+    this.cd.detectChanges();
+    setTimeout(() => this.editInputs.last?.nativeElement.focus(), 0);
+  }
+
+  /**
+   * @description Reverts name changes and exits editing mode.
+   * @param node The category node to restore.
+   */
+  cancelEdit(node: CategoryNode): void {
+    const originalName = this.backupNames.get(node.id);
+    if (originalName !== undefined) node.name = originalName;
+    node.isEditing = false;
+    this.backupNames.delete(node.id);
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Fetches the full category list (through the TTL cache) and builds the
+   * recursive tree structure.
+   * @param forceExpandId Optional ID to ensure specific branch remains open after refresh.
+   * @param silent If true, suppresses global loading spinner.
+   * @param force If true, invalidates the cache and forces a real fetch (after a data mutation).
+   */
+  loadTree(forceExpandId?: number | null, silent: boolean = false, force: boolean = false): void {
+    if (!silent) {
+      this.loadingService.show();
+    }
+    if (force) {
+      this.resourceCache.invalidate(this.TREE_CACHE_KEY);
+    }
+
+    this.resourceCache.get(this.TREE_CACHE_KEY, () => this.loadAllData(), this.TREE_TTL_MS).subscribe({
+      next: (res) => {
+        this.categories = this.buildTree(res, null, forceExpandId);
+        this.cd.markForCheck();
+        if (!silent) {
+          this.loadingService.hide();
+        }
+      },
+      error: () => {
+        if (!silent) {
+          this.loadingService.hide();
+        }
+      }
+    });
+  }
+
+  /**
+   * @description Transforms a flat list of items into a hierarchical nested tree.
+   * @param list Raw list from API.
+   * @param parentId The parent ID to map children for.
+   * @param forceExpandId The node ID to force-expand.
+   * @returns {CategoryNode[]} Nested tree structure.
+   */
+  buildTree(list: CategoryNode[], parentId: number | null = null, forceExpandId?: number | null): CategoryNode[] {
+    return list
+      .filter(item => item.parent_id === parentId)
+      .map(item => {
+        const children = this.buildTree(list, item.id, forceExpandId);
+        return {
+          ...item,
+          children,
+          directChildrenCount: children.length,
+          totalRecursiveCount: children.reduce((acc, child) => acc + 1 + (child.totalRecursiveCount || 0), 0),
+          isExpanded: this.expandedStates.has(item.id) || item.id === forceExpandId
+        };
+      });
+  }
+
+  /**
+   * @description Recursively updates expanded state for all tree nodes.
+   * @param state Boolean target state (true=expand, false=collapse).
+   */
+  expandAll(state: boolean): void {
+    const toggle = (nodes: CategoryNode[]) => {
+      nodes.forEach(n => {
+        n.isExpanded = state;
+        if (state) {
+          this.expandedStates.add(n.id);
+        } else {
+          this.expandedStates.delete(n.id);
+        }
+        if (n.children) toggle(n.children);
+      });
+    };
+    toggle(this.categories);
+    this.saveExpandedStates();
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Updates an existing category's properties via the API.
+   * @param node The updated node object.
+   */
+  saveNode(node: CategoryNode): void {
+    node.isEditing = false;
+    this.cd.markForCheck();
+
+    this.updateData(node.id, { name: node.name, parent_id: node.parent_id } as CategoryNode)
+      .subscribe({
+        next: () => {
+          this.alertDialogService.open(this.t('updated_title'), this.t('changes_saved_message'), 'success');
+          this.backupNames.delete(node.id);
+          this.resourceCache.invalidate(this.TREE_CACHE_KEY);
+          this.cd.markForCheck();
+        },
+        error: () => {
+          node.isEditing = true;
+          this.cd.markForCheck();
+        }
+      });
+  }
+
+  /**
+   * @description Toggles category active status and propagates the change to the API.
+   * @param node The category to update.
+   */
+  toggleStatus(node: CategoryNode): void {
+    const newStatus = !node.is_active;
+    node.is_active = newStatus;
+    this.cd.markForCheck();
+
+    this.updateData(node.id, { ...node, is_active: newStatus })
+      .subscribe({
+        next: () => { this.resourceCache.invalidate(this.TREE_CACHE_KEY); },
+        error: () => {
+          node.is_active = !newStatus;
+          this.cd.markForCheck();
+        }
+      });
+  }
+
+  /**
+   * @description Validates delete conditions and removes a category node from the database.
+   * @param node The category to delete.
+   */
+  async deleteCategory(node: CategoryNode): Promise<void> {
+    if (node.children?.length) {
+      await this.alertDialogService.open(this.t('cannot_delete_title'), this.t('cannot_delete_has_subcategories'), 'warning');
+      return;
+    }
+    if (node.products_count && node.products_count > 0) {
+      await this.alertDialogService.open(
+        this.t('cannot_delete_title'),
+        this.t('cannot_delete_has_products')
+          .replace('{name}', node.name)
+          .replace('{count}', String(node.products_count)),
+        'warning'
+      );
+      return;
+    }
+
+    const confirmed = await this.confirmDialogService.open(
+      this.t('confirm_delete_title'),
+      this.t('confirm_delete_message').replace('{name}', node.name)
+    );
+
+    if (confirmed) {
+      this.removeNodeFromTree(node.id);
+      this.expandedStates.delete(node.id);
+      this.cd.markForCheck();
+
+      this.deleteData(node.id).subscribe({
+        next: () => {
+          this.alertDialogService.open(this.t('deleted_title'), this.t('category_deleted_message'), 'success');
+          this.saveExpandedStates();
+          this.resourceCache.invalidate(this.TREE_CACHE_KEY);
+          if (this.selectedCategory?.id === node.id) {
+            this.closeProductPanel();
+          }
+        },
+        error: () => {
+          this.loadTree(undefined, false, true);
+        }
+      });
+    }
+  }
+
+  /**
+   * @description Removes a node from the local memory tree.
+   * @param nodeId ID of the node to remove.
+   */
+  private removeNodeFromTree(nodeId: number): void {
+    const removeRecursive = (nodes: CategoryNode[]): boolean => {
+      for (let i = 0; i < nodes.length; i++) {
+        if (nodes[i].id === nodeId) {
+          nodes.splice(i, 1);
+          return true;
+        }
+        if (nodes[i].children?.length && removeRecursive(nodes[i].children)) {
+          return true;
+        }
+      }
+      return false;
+    };
+    removeRecursive(this.categories);
+  }
+
+  /**
+   * @description Toggles expansion state for a category branch.
+   * @param node The category node to toggle.
+   * @param event The mouse event to stop propagation.
+   */
+  toggleExpanded(node: CategoryNode, event?: Event): void {
+    if (event) event.stopPropagation();
+    if (!node.children?.length) return;
+
+    node.isExpanded = !node.isExpanded;
+
+    if (node.isExpanded) {
+      this.expandedStates.add(node.id);
+    } else {
+      this.expandedStates.delete(node.id);
+    }
+
+    this.saveExpandedStates();
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Persists expansion states to localStorage for persistent session view.
+   */
+  private saveExpandedStates(): void {
+    localStorage.setItem('categoryExpandedStates', JSON.stringify(Array.from(this.expandedStates)));
+  }
+
+  /**
+   * @description Loads persisted expansion states from localStorage.
+   */
+  private loadExpandedStates(): void {
+    const saved = localStorage.getItem('categoryExpandedStates');
+    if (saved) {
+      this.expandedStates = new Set(JSON.parse(saved));
+    }
+  }
+
+  // =====================
+  // PRODUKT PANEL
+  // =====================
+
+  /**
+   * @description Opens the side panel displaying products associated with the selected category.
+   * @param node The selected category.
+   * @param event Mouse event to stop propagation.
+   */
+  openProductPanel(node: CategoryNode, event: Event): void {
+    event.stopPropagation();
+    if (node.id === 0) return;
+    this.selectedCategory = node;
+    this.showAddProduct = false;
+    this.productSearch = '';
+    this.addProductSearch = '';
+    this.loadCategoryProducts(node.id);
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Closes the product management side panel and resets search buffers.
+   */
+  closeProductPanel(): void {
+    this.selectedCategory = null;
+    this.categoryProducts = [];
+    this.allProducts = [];
+    this.showAddProduct = false;
+    this.productSearch = '';
+    this.addProductSearch = '';
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Fetches all products currently assigned to the specific category, through a
+   * short TTL cache.
+   * @param categoryId The ID of the category.
+   * @param force Bypass cache (called after a product assignment mutation).
+   */
+  loadCategoryProducts(categoryId: number, force: boolean = false): void {
+    this.loadingProducts = true;
+    this.cd.markForCheck();
+
+    const key = `${this.CATEGORY_PRODUCTS_CACHE_PREFIX}${categoryId}`;
+    if (force) this.resourceCache.invalidate(key);
+
+    this.resourceCache.get(
+      key,
+      () => this.dataHandler.getCollection<any>(`shop/products?no_pagination=true&category_id=${categoryId}`),
+      this.CATEGORY_PRODUCTS_TTL_MS
+    ).subscribe({
+      next: (products) => {
+        this.categoryProducts = products;
+        this.loadingProducts = false;
+        this.cd.markForCheck();
+      },
+      error: () => {
+        this.loadingProducts = false;
+        this.cd.markForCheck();
+      }
+    });
+  }
+
+  /**
+   * @description Filtered list of products already inside the category.
+   * @returns {any[]} List of products matching the search query.
+   */
+  get filteredCategoryProducts(): any[] {
+    if (!this.productSearch.trim()) return this.categoryProducts;
+    const s = this.productSearch.toLowerCase();
+    return this.categoryProducts.filter(p =>
+      p.name?.toLowerCase().includes(s) || p.sku?.toLowerCase().includes(s)
+    );
+  }
+
+  /**
+   * @description List of products available for addition to the selected category, filtered by exclusion of already added products.
+   * @returns {any[]} Available products.
+   */
+  get filteredAllProducts(): any[] {
+    const categoryProductIds = new Set(this.categoryProducts.map(p => p.id));
+    let products = this.allProducts.filter(p => !categoryProductIds.has(p.id));
+    if (this.addProductSearch.trim()) {
+      const s = this.addProductSearch.toLowerCase();
+      products = products.filter(p =>
+        p.name?.toLowerCase().includes(s) || p.sku?.toLowerCase().includes(s)
+      );
+    }
+    return products;
+  }
+
+  /**
+   * @description Prepares the add-product view and lazily loads all products (through the TTL
+   * cache) if necessary.
+   */
+  openAddProductSearch(): void {
+    if (!this.canManageCategoryProducts) return;
+    this.showAddProduct = true;
+    this.addProductSearch = '';
+
+    if (this.allProducts.length === 0) {
+      this.resourceCache.get(
+        this.ALL_PRODUCTS_CACHE_KEY,
+        () => this.dataHandler.getCollection<any>('shop/products?no_pagination=true'),
+        this.ALL_PRODUCTS_TTL_MS
+      ).subscribe({
+        next: (products) => {
+          this.allProducts = products;
+          this.cd.markForCheck();
+        },
+        error: () => {
+          this.cd.markForCheck();
+        }
+      });
+    }
+
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Whether the user may change the products of a category (add / remove in the
+   *   product panel) - the API route `PATCH shop/products/{id}/category` needs `shop-products-update`.
+   * @returns True with `shop-products-update`.
+   */
+  get canManageCategoryProducts(): boolean {
+    return this.permissionService.hasPermission('shop-products-update');
+  }
+
+  /**
+   * @description Removes an existing product assignment from the selected category.
+   * @param product The product object to remove.
+   */
+  async removeProductFromCategory(product: any): Promise<void> {
+    if (!this.canManageCategoryProducts) return;
+    const confirmed = await this.confirmDialogService.open(
+      this.t('remove_product_confirm_title'),
+      this.t('remove_product_confirm_message')
+        .replace('{product}', product.name)
+        .replace('{category}', this.selectedCategory?.name ?? '')
+    );
+
+    if (!confirmed || !this.selectedCategory) return;
+
+    this.loadingProducts = true;
+    this.cd.markForCheck();
+
+    const currentCategoryIds = product.categories ? product.categories.map((c: any) => c.id) : [];
+    const updatedCategoryIds = currentCategoryIds.filter((id: number) => id !== this.selectedCategory!.id);
+
+    const newPrimaryCategoryId = updatedCategoryIds.length > 0 ? updatedCategoryIds[0] : null;
+
+    const url = `shop/products/${product.id}/category`;
+    const payload = {
+      category_id: newPrimaryCategoryId,
+      category_ids: updatedCategoryIds
+    };
+
+    this.dataHandler.patch<any>(url, payload).subscribe({
+      next: () => {
+        this.alertDialogService.open(this.t('done_title'), this.t('product_removed_message'), 'success');
+        this.loadTree(this.selectedCategory?.id, true, true);
+        if (this.selectedCategory) {
+          this.loadCategoryProducts(this.selectedCategory.id, true);
+        }
+      },
+      error: (error) => {
+        console.error('Product removal FAILED!', error);
+        this.loadingProducts = false;
+        this.cd.markForCheck();
+      }
+    });
+  }
+
+  /**
+   * @description Associates a new product with the selected category via API.
+   * @param product The product object to add.
+   */
+  addProductToCategory(product: any): void {
+    if (!this.selectedCategory || !this.canManageCategoryProducts) return;
+
+    this.loadingProducts = true;
+    this.cd.markForCheck();
+
+    const currentCategoryIds = product.categories ? product.categories.map((c: any) => c.id) : [];
+    const updatedCategoryIds = Array.from(new Set([...currentCategoryIds, this.selectedCategory.id]));
+
+    const url = `shop/products/${product.id}/category`;
+    const payload = {
+      category_id: this.selectedCategory.id,
+      category_ids: updatedCategoryIds
+    };
+
+    this.dataHandler.patch<any>(url, payload).subscribe({
+      next: () => {
+        this.alertDialogService.open(this.t('done_title'), this.t('product_added_message'), 'success');
+        this.loadTree(this.selectedCategory?.id, true, true);
+        this.loadCategoryProducts(this.selectedCategory!.id, true);
+      },
+      error: (error) => {
+        console.error('Product addition FAILED!', error);
+        this.loadingProducts = false;
+        this.cd.markForCheck();
+      }
+    });
+  }
+}

@@ -312,7 +312,7 @@ class ProjectPortalPhase2Test extends TestCase
 
         Mail::assertQueued(ProjectTeamNotificationMail::class, fn (ProjectTeamNotificationMail $m) => $m->hasTo('pm@firm.cz')
             && $m->kind === ProjectTeamNotificationMail::KIND_APPROVAL_DECIDED && $m->detail === 'changes_requested'
-            && str_contains($m->render(), "/admin/web/projects/{$this->portal->id}/approvals") && !str_contains($m->render(), 'Secret'));
+            && str_contains($m->render(), "/admin/project-portal/projects/{$this->portal->id}/approvals") && !str_contains($m->render(), 'Secret'));
         $log = ProjectPortalLog::where('event_type', 'portal_approval_decision')->sole();
         $this->assertStringNotContainsString('Secret', $log->description . json_encode($log->context_data));
         $this->assertSame(ProjectApproval::STATUS_CHANGES, $p->fresh()->status);

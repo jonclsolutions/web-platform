@@ -1,0 +1,52 @@
+/*
+    @file: apps.component.css
+    @path: /src/app/admin/core-pages/apps/apps.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Page "Applications": the card of an application with its "Manage" button (the card
+        frame comes from welcome-links.css) and the empty state.
+    @dependencies: admin/shared-styles/welcome-page.css, admin/shared-styles/welcome-links.css
+*/
+
+/*
+    @module: Application card
+    @description: Card of one application - not a link itself, the button opens the application.
+    @usage: .apps-intro, .apps-card, .apps-card-manage, .apps-empty
+*/
+.apps-intro {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--color-zinc-500);
+  line-height: 1.45;
+}
+
+.apps-card:hover {
+  transform: none;
+}
+
+.apps-card-manage {
+  align-self: flex-start;
+  margin-top: 10px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--color-zinc-900);
+  color: var(--color-white);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.apps-card-manage:hover,
+.apps-card-manage:focus-visible {
+  background: var(--color-zinc-700, #3f3f46);
+}
+
+.apps-empty {
+  padding: 24px;
+  border: 1px dashed var(--color-sand-200);
+  border-radius: 16px;
+  color: var(--color-zinc-500);
+  font-size: 0.85rem;
+}

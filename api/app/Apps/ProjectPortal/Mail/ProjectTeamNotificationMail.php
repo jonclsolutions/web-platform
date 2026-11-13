@@ -79,7 +79,7 @@ class ProjectTeamNotificationMail extends Mailable
                 'projectName' => $this->project->name,
                 'intro'       => $this->texts()[1],
                 'itemTitle'   => $this->itemTitle,
-                'adminUrl'    => rtrim((string) config('app.frontend_url', ''), '/') . '/admin/web/projects/' . $this->project->id
+                'adminUrl'    => rtrim((string) config('app.frontend_url', ''), '/') . '/admin/project-portal/projects/' . $this->project->id
                     . '/' . (self::SECTIONS[$this->kind] ?? 'overview'),
             ],
         );

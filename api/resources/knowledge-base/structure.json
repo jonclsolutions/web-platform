@@ -106,6 +106,13 @@
       "order": 25,
       "permission": "core-security-view",
       "devNote": "SecurityEventsComponent, route 'core/security-events', permission 'core-security-view'. Triage podezřelých eventů, retenční politika (GDPR), ruční purge."
+    },
+    {
+      "id": "apps",
+      "group": "core",
+      "order": 26,
+      "permission": null,
+      "devNote": "AppsComponent, route 'core/apps' (bez oprávnění - karty jen aplikací, které uživatel smí otevřít: oprávnění záložky + aspoň jedna stránka, AdminModulesService). Aplikace = manifesty v erp/src/app/apps/apps.registry.ts (frontend) a api/config/apps.php (API). Přepínač Aplikace v hlavičce AdminLayoutComponent ukazuje stejné aplikace a vždy název aplikace, ve které uživatel je."
     }
   ]
 }

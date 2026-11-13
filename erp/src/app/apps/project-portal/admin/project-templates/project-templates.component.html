@@ -1,0 +1,104 @@
+<!--
+    @file: project-templates.component.html
+    @path: src/app/apps/project-portal/admin/project-templates/project-templates.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Page "Project templates": back to the projects, new template, the form (name,
+        description, checkpoint rows with title, description and days after the start - added,
+        removed, moved) and the templates with their checkpoints.
+-->
+<div class="pd-page">
+  <header class="pd-header">
+    <a class="pd-back" routerLink="/admin/project-portal/projects">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      {{ t('detail_back') }}
+    </a>
+    <div class="pd-header-main">
+      <h1 class="pd-title">{{ t('templates_title') }}</h1>
+      <p class="pd-subtitle">{{ t('templates_lead') }}</p>
+    </div>
+    <div class="pd-header-actions">
+      @if (canEdit && editing !== 'new') {
+        <button type="button" class="pd-btn pd-btn--primary" (click)="openNew()"><app-icon name="plus" [size]="14"></app-icon>{{ t('template_add_button') }}</button>
+      }
+      <app-page-help></app-page-help>
+    </div>
+  </header>
+
+  <div class="pd-section">
+    @if (canEdit && editing !== null) {
+      <form class="pd-card ps-form" (ngSubmit)="save()" autocomplete="off">
+        <div class="pd-cp-new-title">{{ editing === 'new' ? t('template_add_button') : t('template_edit') }}</div>
+        <label class="pd-cp-field">
+          <span>{{ t('template_name_label') }} *</span>
+          <input type="text" class="pd-input" name="name" maxlength="160" required [(ngModel)]="draft.name" [placeholder]="t('template_name_placeholder')">
+        </label>
+        <label class="pd-cp-field">
+          <span>{{ t('template_description_label') }}</span>
+          <textarea class="pd-input pd-textarea" name="description" rows="2" maxlength="5000" [(ngModel)]="draft.description"></textarea>
+        </label>
+        <div class="pd-cp-new-title">{{ t('template_checkpoints_label') }}</div>
+        <ol class="tpl-rows">
+          @for (row of draft.checkpoints; track $index; let i = $index) {
+            <li class="tpl-row">
+              <span class="tpl-index" aria-hidden="true">{{ i + 1 }}</span>
+              <div class="tpl-fields">
+                <input type="text" class="pd-input" [name]="'label' + i" maxlength="255" required [(ngModel)]="row.label"
+                       [placeholder]="t('template_checkpoint_title')" [attr.aria-label]="t('template_checkpoint_title') + ' ' + (i + 1)">
+                <textarea class="pd-input pd-textarea" [name]="'description' + i" rows="2" maxlength="5000" [(ngModel)]="row.description"
+                          [placeholder]="t('template_checkpoint_description')" [attr.aria-label]="t('template_checkpoint_description') + ' ' + (i + 1)"></textarea>
+                <label class="tpl-offset">
+                  <span>{{ t('template_offset_label') }}</span>
+                  <input type="number" class="pd-input pd-input--sm" [name]="'offset' + i" min="0" max="3650" step="1" [(ngModel)]="row.offset_days">
+                </label>
+              </div>
+              <div class="tpl-row-actions">
+                <button type="button" class="pd-icon-btn" [disabled]="i === 0" [title]="t('checkpoint_move_up')" [attr.aria-label]="t('checkpoint_move_up')" (click)="moveRow(i, -1)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>
+                </button>
+                <button type="button" class="pd-icon-btn" [disabled]="i === draft.checkpoints.length - 1" [title]="t('checkpoint_move_down')" [attr.aria-label]="t('checkpoint_move_down')" (click)="moveRow(i, 1)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <button type="button" class="pd-icon-btn pd-cp-action--delete" [disabled]="draft.checkpoints.length <= 1" [title]="t('template_checkpoint_remove')" [attr.aria-label]="t('template_checkpoint_remove')" (click)="removeRow(i)">
+                  <app-icon name="delete" [size]="14"></app-icon>
+                </button>
+              </div>
+            </li>
+          }
+        </ol>
+        <button type="button" class="pd-btn pd-btn--ghost ps-attach" (click)="addRow()"><app-icon name="plus" [size]="14"></app-icon>{{ t('template_checkpoint_add') }}</button>
+        <p class="pd-hint">{{ t('template_offset_hint') }}</p>
+        <div class="pd-cp-editor-actions">
+          <button type="button" class="pd-btn" (click)="cancel()">{{ t('cancel_button') }}</button>
+          <button type="submit" class="pd-btn pd-btn--primary" [disabled]="!draftValid || saving">{{ saving ? t('detail_saving') : t('checkpoint_save') }}</button>
+        </div>
+      </form>
+    }
+
+    <ul class="ps-list">
+      @for (template of templates; track template.id) {
+        <li class="ps-item">
+          <div class="ps-item-head">
+            <h2 class="ps-item-title">{{ template.name }}</h2>
+            <span class="ps-status">{{ t('template_checkpoint_count').replace('{count}', '' + template.checkpoints.length) }}</span>
+            @if (canEdit) {
+              <div class="pd-account-actions">
+                <button type="button" class="pd-icon-btn" [title]="t('template_edit')" [attr.aria-label]="t('template_edit') + ': ' + template.name" (click)="openEdit(template)"><app-icon name="edit" [size]="14"></app-icon></button>
+                <button type="button" class="pd-icon-btn pd-cp-action--delete" [title]="t('template_delete')" [attr.aria-label]="t('template_delete') + ': ' + template.name" (click)="remove(template)"><app-icon name="delete" [size]="14"></app-icon></button>
+              </div>
+            }
+          </div>
+          @if (template.description) { <p class="ps-body">{{ template.description }}</p> }
+          <ol class="tpl-summary">
+            @for (cp of template.checkpoints; track $index) {
+              <li><strong>{{ cp.label }}</strong> <span class="ps-meta">· {{ offsetLabel(cp.offset_days) }}</span></li>
+            }
+          </ol>
+        </li>
+      } @empty {
+        <li class="pd-empty">{{ loading ? t('loading') : t('templates_empty') }}</li>
+      }
+    </ul>
+  </div>
+</div>

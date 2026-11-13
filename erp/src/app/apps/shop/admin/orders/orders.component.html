@@ -1,0 +1,667 @@
+<!-- 
+    @file: orders.component.html
+    @path: /src/app/apps/shop/admin/orders/orders.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026 
+    @description: Template of the orders component.
+-->
+
+<div class="orders-container">
+  @if (errorMessage) {
+    <div class="error-banner">⚠️ {{ errorMessage }}</div>
+  }
+
+  @if (!errorMessage) {
+    <div>
+      <div class="toolbar-section">
+        <div class="toolbar-header">
+          @if(!showTrashTable){
+<div class="table-header">{{ t('table_header') }}</div>
+} @else {
+<div class="table-header">{{ t('trash_header') }}</div>
+}
+          <div class="toolbar-actions">
+            <app-action-menu-builder
+[configs]="toolbarButtons"
+[triggerLabel]="t('toolbar_action_trigger')"
+(actionTriggered)="handleToolbarAction($event)">
+</app-action-menu-builder>
+<app-page-help></app-page-help>
+          </div>
+        </div>
+      </div>
+      <div class="table-mode-tabs">
+        <app-button-builder
+          [configs]="tabButtonsConfigs"
+          (actionTriggered)="setTableMode($event)">
+        </app-button-builder>
+      </div>
+      <div class="main-content-layout">
+        <div class="filter-side-panel" [class.active]="showFiltersPanel">
+          <app-filter-form-builder
+            [filterColumns]="filterColumns"
+            [initialFilters]="filters"
+            (closed)="toggleFilters()"
+            [filterFormTitle]="t('filter_form_title')"
+            (filtersApplied)="applyFilters($event)"
+            (filtersCleared)="clearFilters()">
+          </app-filter-form-builder>
+        </div>
+        <div class="table-and-pagination-container">
+          @if (currentMode !== 'trash') {
+            <app-table-builder #activeTable
+              [buttons]="buttons"
+              [data]="data"
+              [columns]="orderColumns"
+              [currentFilters]="filters"
+              [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
+(refreshRequested)="forceFullRefresh(filters)"
+              [isFullWidth]="true"
+              [tableCaption]="currentMode === 'pending_tasks' ? t('table_caption_pending_tasks') : t('table_caption_all_orders')"
+              [apiEndpoint]="apiEndpoint"
+              (itemDeleted)="refreshData()"
+              (createFormOpened)="handleCreateFormOpened()"
+              (editFormOpened)="handleEditFormOpened($event)"
+              (viewDetailsOpened)="handleViewDetails($event)">
+            </app-table-builder>
+          }
+          @if (currentMode === 'trash') {
+            <app-trash-table-builder
+              [data]="trashData"
+              [columns]="trashOrderColumns"
+              [tableCaption]="t('trash_table_caption')"
+              [apiEndpoint]="apiEndpoint"
+              (itemRestored)="refreshData()"
+              (itemPermanentlyDeleted)="refreshData()">
+            </app-trash-table-builder>
+          }
+          <div class="pagination-container">
+            <app-pagination-buttons-builder
+              [currentPage]="currentMode === 'trash' ? trashCurrentPage : currentPage"
+              [totalPages]="currentMode === 'trash' ? trashTotalPages : totalPages"
+              [totalItems]="currentMode === 'trash' ? trashTotalItems : totalItems"
+              [itemsPerPage]="currentMode === 'trash' ? trashItemsPerPage : itemsPerPage"
+              (pageChange)="handlePageChange($event)"
+              (itemsPerPageChange)="handleItemsPerPageChange($event)">
+            </app-pagination-buttons-builder>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+@if (showDetailsModal && selectedOrderForDetail) {
+  <div class="modal-overlay" (click)="closeDetailsModal()">
+    <div class="modal-content modal-detail" (click)="$event.stopPropagation()">
+
+      <div class="detail-modal-header">
+        <div class="detail-modal-header-left">
+          <div class="detail-order-number-badge">
+            #{{ selectedOrderForDetail.order_number }}
+          </div>
+          <div class="detail-status-row">
+            <span class="badge" [ngClass]="'status-' + selectedOrderForDetail.status">
+              {{ getStatusLabel(selectedOrderForDetail.status) }}
+            </span>
+            <span class="badge" [ngClass]="'payment-' + selectedOrderForDetail.payment_status">
+              {{ getPaymentStatusLabel(selectedOrderForDetail.payment_status) }}
+            </span>
+            @if (selectedOrderForDetail.coupon) {
+              <span class="badge badge-coupon">🎫 {{ selectedOrderForDetail.coupon.code }}</span>
+            }
+          </div>
+        </div>
+        <div class="detail-modal-header-right">
+          <div class="detail-final-amount">{{ formatCurrency(selectedOrderForDetail.final_amount) }}</div>
+          <div class="detail-final-label">{{ t('detail_final_amount_label') }}</div>
+        </div>
+        <button class="close-btn" (click)="closeDetailsModal()">✕</button>
+      </div>
+
+      <div class="detail-timeline">
+        @if (selectedOrderForDetail.status === 'canceled' || selectedOrderForDetail.status === 'returned') {
+          <div class="timeline-alert-banner" [ngClass]="'banner-' + selectedOrderForDetail.status">
+            {{ selectedOrderForDetail.status === 'canceled' ? t('timeline_banner_canceled') : t('timeline_banner_returned') }}
+          </div>
+        } @else {
+          @for (step of [
+            { key: 'pending' },
+            { key: 'confirmed' },
+            { key: 'processing' },
+            { key: 'shipped' },
+            { key: 'delivered' }
+          ]; track step.key) {
+            <div class="timeline-step"
+              [class.timeline-step-done]="isStatusReached(selectedOrderForDetail.status, step.key)"
+              [class.timeline-step-current]="selectedOrderForDetail.status === step.key">
+              <div class="timeline-dot"></div>
+              <span class="timeline-label">{{ getStatusLabel(step.key) }}</span>
+            </div>
+            @if (step.key !== 'delivered') {
+              <div class="timeline-connector"
+                [class.timeline-connector-done]="isStatusReached(selectedOrderForDetail.status, step.key) && selectedOrderForDetail.status !== step.key">
+              </div>
+            }
+          }
+        }
+      </div>
+
+      <div class="modal-body detail-modal-body">
+
+        <div class="detail-grid-2">
+
+          <div class="detail-card">
+            <div class="detail-card-header">
+              <span class="detail-card-icon">👤</span>
+              <span class="detail-card-title">{{ t('customer_card_title') }}</span>
+            </div>
+            <div class="detail-card-body">
+              @if (selectedOrderForDetail.contact || selectedOrderForDetail.customer) {
+                <!-- Buyer as given for this order (snapshot, findings #22 / #23); city from the customer record -->
+                <div class="detail-customer-name">
+                  {{ (selectedOrderForDetail.contact ?? selectedOrderForDetail.customer)?.full_name }}
+                </div>
+                <div class="detail-info-rows">
+                  @if ((selectedOrderForDetail.contact ?? selectedOrderForDetail.customer)?.email) {
+                    <div class="detail-info-row">
+                      <span class="dir-label">{{ t('label_email') }}</span>
+                      <span class="dir-value dir-value-link">{{ (selectedOrderForDetail.contact ?? selectedOrderForDetail.customer)?.email }}</span>
+                    </div>
+                  }
+                  @if ((selectedOrderForDetail.contact ?? selectedOrderForDetail.customer)?.phone) {
+                    <div class="detail-info-row">
+                      <span class="dir-label">{{ t('label_phone') }}</span>
+                      <span class="dir-value">{{ (selectedOrderForDetail.contact ?? selectedOrderForDetail.customer)?.phone }}</span>
+                    </div>
+                  }
+                  @if ((selectedOrderForDetail.contact ?? selectedOrderForDetail.customer)?.company) {
+                    <div class="detail-info-row">
+                      <span class="dir-label">{{ t('label_company') }}</span>
+                      <span class="dir-value">{{ (selectedOrderForDetail.contact ?? selectedOrderForDetail.customer)?.company }}</span>
+                    </div>
+                  }
+                  @if (selectedOrderForDetail.customer?.city) {
+                    <div class="detail-info-row">
+                      <span class="dir-label">{{ t('label_city') }}</span>
+                      <span class="dir-value">{{ selectedOrderForDetail.customer?.city }}</span>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <span class="detail-empty">{{ t('customer_not_found') }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="detail-card">
+            <div class="detail-card-header">
+              <span class="detail-card-icon">🚚</span>
+              <span class="detail-card-title">{{ t('payment_shipping_card_title') }}</span>
+            </div>
+            <div class="detail-card-body">
+              <div class="detail-info-rows">
+                <div class="detail-info-row">
+                  <span class="dir-label">{{ t('label_payment_method') }}</span>
+                  <span class="dir-value">{{ selectedOrderForDetail.payment_method?.name || '—' }}</span>
+                </div>
+                <div class="detail-info-row">
+                  <span class="dir-label">{{ t('label_shipping_method') }}</span>
+                  <span class="dir-value">{{ selectedOrderForDetail.shipping_method?.name || '—' }}</span>
+                </div>
+                @if (selectedOrderForDetail.shipping_amount > 0) {
+                  <div class="detail-info-row">
+                    <span class="dir-label">{{ t('label_shipping_price') }}</span>
+                    <span class="dir-value">{{ formatCurrency(selectedOrderForDetail.shipping_amount) }}</span>
+                  </div>
+                }
+                @if (selectedOrderForDetail.paid_at) {
+                  <div class="detail-info-row">
+                    <span class="dir-label">{{ t('label_paid_at') }}</span>
+                    <span class="dir-value dir-value-success">{{ selectedOrderForDetail.paid_at | date: 'short' }}</span>
+                  </div>
+                }
+                @if (selectedOrderForDetail.shipped_at) {
+                  <div class="detail-info-row">
+                    <span class="dir-label">{{ t('label_shipped_at') }}</span>
+                    <span class="dir-value">{{ selectedOrderForDetail.shipped_at | date: 'short' }}</span>
+                  </div>
+                }
+                @if (selectedOrderForDetail.delivered_at) {
+                  <div class="detail-info-row">
+                    <span class="dir-label">{{ t('label_delivered_at') }}</span>
+                    <span class="dir-value dir-value-success">{{ selectedOrderForDetail.delivered_at | date: 'short' }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-grid-2">
+
+          <div class="detail-card">
+            <div class="detail-card-header">
+              <span class="detail-card-icon">📍</span>
+              <span class="detail-card-title">{{ t('address_card_title') }}</span>
+            </div>
+            <div class="detail-card-body">
+              <div class="detail-address-block">
+                <div class="detail-address-line detail-address-main">{{ selectedOrderForDetail.shipping_address }}</div>
+                <div class="detail-address-line">{{ selectedOrderForDetail.shipping_postal_code }} {{ selectedOrderForDetail.shipping_city }}</div>
+                <div class="detail-address-line detail-address-country">{{ selectedOrderForDetail.shipping_country }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-card">
+            <div class="detail-card-header">
+              <span class="detail-card-icon">🕐</span>
+              <span class="detail-card-title">{{ t('metadata_card_title') }}</span>
+            </div>
+            <div class="detail-card-body">
+              <div class="detail-info-rows">
+                <div class="detail-info-row">
+                  <span class="dir-label">{{ t('label_order_number') }}</span>
+                  <span class="dir-value dir-value-mono">{{ selectedOrderForDetail.order_number }}</span>
+                </div>
+                <div class="detail-info-row">
+                  <span class="dir-label">{{ t('label_created_at') }}</span>
+                  <span class="dir-value">{{ selectedOrderForDetail.created_at | date: 'medium' }}</span>
+                </div>
+                <div class="detail-info-row">
+                  <span class="dir-label">{{ t('label_updated_at') }}</span>
+                  <span class="dir-value">{{ selectedOrderForDetail.updated_at | date: 'medium' }}</span>
+                </div>
+                @if (selectedOrderForDetail.coupon) {
+                  <div class="detail-info-row">
+                    <span class="dir-label">{{ t('label_coupon_used') }}</span>
+                    <span class="dir-value dir-value-coupon">
+                      {{ selectedOrderForDetail.coupon.code }}
+                      ({{ selectedOrderForDetail.coupon.discount_type === 'percent'
+                          ? '-' + selectedOrderForDetail.coupon.discount_value + '%'
+                          : '-' + formatCurrency(selectedOrderForDetail.coupon.discount_value) }})
+                    </span>
+                  </div>
+                }
+                @if (selectedOrderForDetail.notes) {
+                  <div class="detail-info-row detail-info-row-note">
+                    <span class="dir-label">{{ t('label_notes') }}</span>
+                    <span class="dir-value dir-value-note">{{ selectedOrderForDetail.notes }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        @if (getVisibleItems(selectedOrderForDetail).length > 0) {
+          <div class="detail-card detail-card-full">
+            <div class="detail-card-header">
+              <span class="detail-card-icon">📦</span>
+              <span class="detail-card-title">{{ t('items_card_title') }}</span>
+              <span class="detail-card-count">{{ getVisibleItems(selectedOrderForDetail).length }}</span>
+            </div>
+            <div class="detail-items-table">
+              <div class="detail-items-head">
+                <span class="di-name">{{ t('items_head_product') }}</span>
+                <span class="di-qty">{{ t('items_head_qty') }}</span>
+                <span class="di-unit">{{ t('items_head_unit_price') }}</span>
+                <span class="di-vat">{{ t('items_head_vat') }}</span>
+                <span class="di-total">{{ t('items_head_total') }}</span>
+              </div>
+              @for (item of getVisibleItems(selectedOrderForDetail); track item) {
+                <div class="detail-items-row">
+                  <span class="di-name">
+                    <span class="di-product-name">{{ item.product_name }}</span>
+                    @if (item.variant_name) {
+                      <span class="di-variant-name">{{ item.variant_name }}</span>
+                    }
+                  </span>
+                  <span class="di-qty">{{ item.quantity }}</span>
+                  <span class="di-unit">{{ formatCurrency(item.unit_price) }}</span>
+                  <span class="di-vat">{{ item.vat_rate || 21 }} %</span>
+                  <span class="di-total">{{ formatCurrency(item.total_price) }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="detail-amounts-summary">
+              <div class="das-row">
+                <span class="das-label">{{ t('summary_goods_total') }}</span>
+                <span class="das-value">{{ formatCurrency(selectedOrderForDetail.total_amount) }}</span>
+              </div>
+              @if (selectedOrderForDetail.shipping_amount > 0) {
+                <div class="das-row">
+                  <span class="das-label">{{ t('summary_shipping') }}</span>
+                  <span class="das-value">{{ formatCurrency(selectedOrderForDetail.shipping_amount) }}</span>
+                </div>
+              }
+              @if (selectedOrderForDetail.tax_amount > 0) {
+                <div class="das-row">
+                  <span class="das-label">{{ t('summary_vat_total') }}</span>
+                  <span class="das-value">{{ formatCurrency(selectedOrderForDetail.tax_amount) }}</span>
+                </div>
+              }
+              @if (selectedOrderForDetail.discount_amount > 0) {
+                <div class="das-row das-row-discount">
+                  <span class="das-label">{{ t('summary_discount') }}
+                    @if (selectedOrderForDetail.coupon) {
+                      ({{ selectedOrderForDetail.coupon.code }})
+                    }
+                  </span>
+                  <span class="das-value">−{{ formatCurrency(selectedOrderForDetail.discount_amount) }}</span>
+                </div>
+              }
+              <div class="das-row das-row-total">
+                <span class="das-label">{{ t('detail_final_amount_label_upper') }}</span>
+                <span class="das-value">{{ formatCurrency(selectedOrderForDetail.final_amount) }}</span>
+              </div>
+            </div>
+          </div>
+        }
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeDetailsModal()">{{ i18n.getValue('shared.close') }}</button>
+        <button class="btn btn-primary" (click)="openEditOrderForm(selectedOrderForDetail)">✏️ {{ t('btn_edit_label') }}</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showOrderForm && editingOrder) {
+  <div class="modal-overlay" (click)="closeOrderForm()">
+    <div class="modal-content modal-form" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingOrder.id ? ('✏️ ' + t('form_title_edit')) : ('➕ ' + t('form_title_new')) }}</h2>
+        <button class="close-btn" (click)="closeOrderForm()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form class="order-form">
+          <fieldset>
+            <legend>{{ t('legend_basic_contact') }}</legend>
+
+            <div class="form-row-3">
+              <div class="form-group">
+                <label>{{ t('label_email_required') }}</label>
+                <input
+                  type="email"
+                  [(ngModel)]="editingOrder.email"
+                  name="email"
+                  [placeholder]="t('placeholder_email')"
+                  required>
+              </div>
+              <div class="form-group">
+                <label>{{ t('label_phone_required') }}</label>
+                <input
+                  type="tel"
+                  [(ngModel)]="editingOrder.phone"
+                  name="phone"
+                  [placeholder]="t('placeholder_phone')"
+                  required>
+              </div>
+              <div class="form-group">
+                <label>{{ t('label_company_optional') }}</label>
+                <input
+                  type="text"
+                  [(ngModel)]="editingOrder.company"
+                  name="company"
+                  [placeholder]="t('placeholder_optional')">
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>{{ t('label_first_name_required') }}</label>
+                <input
+                  type="text"
+                  [(ngModel)]="editingOrder.first_name"
+                  name="first_name"
+                  [placeholder]="t('placeholder_first_name')"
+                  required>
+              </div>
+              <div class="form-group">
+                <label>{{ t('label_last_name_required') }}</label>
+                <input
+                  type="text"
+                  [(ngModel)]="editingOrder.last_name"
+                  name="last_name"
+                  [placeholder]="t('placeholder_last_name')"
+                  required>
+              </div>
+            </div>
+
+            <hr class="form-divider" style="border: 0; border-top: 1px solid var(--border-color, #eee); margin: 15px 0;">
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>{{ t('label_payment_method_required') }}</label>
+                <select [(ngModel)]="editingOrder.payment_method_id" name="payment_method_id" required (change)="recalculateTotals()">
+                  <option [value]="0">{{ t('select_placeholder') }}</option>
+                  @for (pm of paymentMethods; track pm) {
+                    <option [value]="pm.id">
+                      {{ pm.name }}
+                      @if (pm.price > 0) { ({{ formatCurrency(pm.price) }}) }
+                    </option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
+                <label>{{ t('label_shipping_method_required') }}</label>
+                <select [(ngModel)]="editingOrder.shipping_method_id" name="shipping_method_id" required (change)="recalculateTotals()">
+                  <option value="">{{ t('select_placeholder') }}</option>
+                  @for (sm of shippingMethods; track sm) {
+                    <option [value]="sm.id">{{ sm.name }} ({{ formatCurrency(sm.base_price) }})</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>{{ t('label_coupon') }}</label>
+                <select [(ngModel)]="editingOrder.coupon_id"
+                  name="coupon_id"
+                  (change)="recalculateTotals()"
+                  [ngClass]="getCouponValidationClass()"
+                  [disabled]="!!editingOrder.id"
+                  class="form-control"
+                  [class.disabled-coupon]="editingOrder.id">
+                  <option value="">{{ t('select_no_coupon') }}</option>
+                  @for (coup of coupons; track coup) {
+                    <option [value]="coup.id">{{ coup.code }} ({{ getCouponDisplayValue(coup) }})</option>
+                  }
+                </select>
+                @if (editingOrder.id && editingOrder.coupon_id) {
+                  <div class="text-muted small mt-1">ℹ️ {{ t('coupon_locked_hint') }}</div>
+                }
+                @if (editingOrder.coupon_id && !couponValidation.valid) {
+                  <div class="coupon-error-msg">⚠️ {{ couponValidation.error }}</div>
+                }
+              </div>
+              <div class="form-group"></div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>{{ t('legend_order_statuses') }}</legend>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>{{ t('label_order_status_required') }}</label>
+                <select [(ngModel)]="editingOrder.status" name="status" required>
+                  @for (opt of statusOptions; track opt) {
+                    <option [value]="opt.value">{{ opt.label }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
+                <label>{{ t('label_payment_status_required') }}</label>
+                <select [(ngModel)]="editingOrder.payment_status" name="payment_status" required>
+                  @for (opt of paymentStatusOptions; track opt) {
+                    <option [value]="opt.value">{{ opt.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>{{ t('legend_shipping_address') }}</legend>
+            <div class="form-group">
+              <label>{{ t('label_street_required') }}</label>
+              <input type="text" [(ngModel)]="editingOrder.shipping_address" name="shipping_address" required>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>{{ t('label_city_required') }}</label>
+                <input type="text" [(ngModel)]="editingOrder.shipping_city" name="shipping_city" required>
+              </div>
+              <div class="form-group">
+                <label>{{ t('label_postal_code_required') }}</label>
+                <input type="text" [(ngModel)]="editingOrder.shipping_postal_code" name="shipping_postal_code" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>{{ t('label_country_required') }}</label>
+              <input type="text" [(ngModel)]="editingOrder.shipping_country" name="shipping_country" required>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>{{ t('legend_order_items') }}</legend>
+            @if (getVisibleItems(editingOrder).length === 0) {
+              <div class="empty-state">{{ t('empty_items') }}</div>
+            }
+            @for (item of editingOrder.items; track item; let i = $index) {
+              <div class="order-item" [class.deleted]="item._delete">
+                <div class="item-header">
+                  <h4>{{ t('item_number_prefix') }} {{ i + 1 }}</h4>
+                  <button type="button" class="btn-icon danger" (click)="deleteOrderItem(i)">🗑️</button>
+                </div>
+                <div class="item-form">
+                  <div class="form-row-3">
+                    <div class="form-group">
+                      <label>{{ t('label_product_variant_required') }}</label>
+                      <select [(ngModel)]="item.product_variant_id" [name]="'variant_' + i"
+                        (change)="onVariantSelected(item, i)" [disabled]="!!item._delete">
+                        <option value="">{{ t('select_variant_placeholder') }}</option>
+                        @for (v of variants; track v) {
+                          <option [value]="v.id">{{ v.product_name }} - {{ v.variant_name }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>{{ t('label_quantity_required') }}</label>
+                      <input type="number" [(ngModel)]="item.quantity" [name]="'qty_' + i"
+                        (change)="onItemQuantityChange(item)" min="1" [disabled]="!!item._delete">
+                    </div>
+                    <div class="form-group">
+                      <label>{{ t('label_unit_price_required') }}</label>
+                      <input type="number" [(ngModel)]="item.unit_price" [name]="'price_' + i"
+                        (change)="onItemPriceChange(item)" min="0" step="0.01" [disabled]="!!item._delete">
+                    </div>
+                  </div>
+                  <div class="item-total">
+                    <label>{{ t('item_total_label') }}</label>
+                    <span class="amount">{{ formatCurrency(item.total_price) }}</span>
+                  </div>
+                </div>
+              </div>
+            }
+            @if (editingOrder.coupon_id && couponValidation.valid && editingOrder.discount_amount > 0) {
+              <div class="order-item coupon-row">
+                <div class="item-header">
+                  <h4>🎫 {{ t('applied_coupon_title') }}</h4>
+                </div>
+                <div class="item-form">
+                  <div class="coupon-display-flex">
+                    <div class="coupon-info">
+                      <strong>{{ getCouponCode(editingOrder.coupon_id) }}</strong>
+                      <span class="coupon-type-badge">({{ t('discount_prefix') }} {{ getCouponTypeLabel(editingOrder.coupon_id) }})</span>
+                    </div>
+                    <div class="item-total">
+                      <label>{{ t('discount_label') }}</label>
+                      <span class="amount discount-text">-{{ formatCurrency(editingOrder.discount_amount) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+            <button type="button" class="btn btn-secondary" (click)="addOrderItem()">➕ {{ t('btn_add_item') }}</button>
+          </fieldset>
+          <fieldset class="summary-section">
+            <legend>{{ t('legend_price_summary') }}</legend>
+            <div class="summary-grid">
+              <div class="summary-row">
+                <label>{{ t('summary_without_vat') }}</label>
+                <span>{{ formatCurrency(calculateSummaryTotals().baseAmount) }}</span>
+              </div>
+              @for (group of calculateSummaryTotals().vatGroups; track group) {
+                <div class="summary-row">
+                  <label>{{ t('summary_vat_rate_prefix') }} {{ group.rate }}%:</label>
+                  <span class="vat">{{ formatCurrency(group.amount) }}</span>
+                </div>
+              }
+              <div class="summary-row">
+                <label>{{ t('summary_with_vat') }}</label>
+                <span>{{ formatCurrency(calculateSummaryTotals().withVat) }}</span>
+              </div>
+              <div class="summary-row">
+                <label>{{ t('summary_shipping_price') }}</label>
+                <span>{{ formatCurrency(editingOrder.shipping_amount) }}</span>
+              </div>
+              @if (getPaymentMethodPrice(editingOrder.payment_method_id) > 0) {
+                <div class="summary-row">
+                  <label>{{ t('summary_payment_fee_prefix') }} ({{ getPaymentMethodName(editingOrder.payment_method_id) }})</label>
+                  <span>{{ formatCurrency(getPaymentMethodPrice(editingOrder.payment_method_id)) }}</span>
+                </div>
+              }
+              @if (editingOrder.discount_amount > 0 && couponValidation.valid) {
+                <div class="summary-row">
+                  <label>{{ t('summary_coupon_prefix') }} <span>{{ getCouponCode(editingOrder.coupon_id) }}</span> ({{ getCouponDisplayValue(editingOrder.coupon_id) }})</label>
+                  <span class="discount">-{{ formatCurrency(editingOrder.discount_amount) }}</span>
+                </div>
+              }
+              <div class="summary-row total">
+                <label>{{ t('detail_final_amount_label_upper') }}</label>
+                <span class="total-amount">{{ formatCurrency(editingOrder.final_amount) }}</span>
+              </div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>{{ t('legend_notes') }}</legend>
+            <div class="form-group">
+              <label>{{ t('label_internal_notes') }}</label>
+              <textarea [(ngModel)]="editingOrder.notes" name="notes" rows="3" [placeholder]="t('placeholder_notes')"></textarea>
+            </div>
+          </fieldset>
+          <div class="modal-footer-inline">
+            <button type="button" class="btn btn-secondary" (click)="closeOrderForm()">{{ i18n.getValue('shared.cancel') }}</button>
+            <button type="button" class="btn btn-primary" (click)="saveOrder()" [class.btn-warning]="editingOrder.coupon_id && !couponValidation.valid">
+              💾 {{ t('btn_save_order') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+@if (showEmailTemplateModal) {
+<app-email-template-editor
+  endpoint="shop/settings/order-email-template"
+  fieldPrefix="order_email"
+  i18nSection="shop-orders"
+  languagesEndpoint="languages/shop"
+  [rows]="emailTemplateRows"
+  (closed)="closeEmailTemplateEditor()" />
+}
+@if (showGraphBuilder) {
+<app-graph-builder
+[apiEndpoint]="apiEndpoint"
+[tableCaption]="tableCaption"
+[columns]="graphColumns"
+[dateField]="'created_at'"
+[dateFieldLabel]="t('graph_date_field_label')"
+(closed)="closeGraphBuilder()">
+</app-graph-builder>
+}

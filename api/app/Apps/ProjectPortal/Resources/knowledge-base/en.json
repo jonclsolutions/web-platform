@@ -21,7 +21,7 @@
               "cards": [
                 {
                   "title": "Open a project",
-                  "text": "The folder icon of a row opens the project page on the Overview sub-page (address web/projects/ID/overview). The pencil icon offers a quick edit in a dialog."
+                  "text": "The folder icon of a row opens the project page on the Overview sub-page (address project-portal/projects/ID/overview). The pencil icon offers a quick edit in a dialog."
                 },
                 {
                   "title": "Assignee",
@@ -37,7 +37,7 @@
                 },
                 {
                   "title": "Project templates",
-                  "text": "The Templates toolbar button opens the template management (web/projects/templates). A template has a name, description and a list of checkpoints, each with a title, description and an optional due date as days from the start (0-3650). Rows are added, moved with arrows and removed. Deleting a template does not change projects made from it."
+                  "text": "The Templates toolbar button opens the template management (project-portal/projects/templates). A template has a name, description and a list of checkpoints, each with a title, description and an optional due date as days from the start (0-3650). Rows are added, moved with arrows and removed. Deleting a template does not change projects made from it."
                 }
               ]
             }
@@ -49,7 +49,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "The header shows the name, status, visibility, assignee and the number of unread messages, with the sub-page tabs below. Every sub-page has its own address (e.g. web/projects/7/conversations), so you can send it to a colleague or open it from an e-mail; switching tabs keeps unsaved settings. The Conversations tab shows the unread messages, the Approvals tab the requests waiting for the client."
+              "content": "The header shows the name, status, visibility, assignee and the number of unread messages, with the sub-page tabs below. Every sub-page has its own address (e.g. project-portal/projects/7/conversations), so you can send it to a colleague or open it from an e-mail; switching tabs keeps unsaved settings. The Conversations tab shows the unread messages, the Approvals tab the requests waiting for the client."
             },
             {
               "type": "grid",
@@ -274,6 +274,24 @@
               "type": "alert",
               "variant": "info",
               "content": "Without the web-projects-update permission the project page and the template management are read-only. The audit log records changes of the project, users (by id only), invitations and sign-ins by code / link (without the code and e-mail), checkpoints, thread assignment, approval requests with decisions (without the comment) and updates (without the text); messages, codes and passwords are never logged. Unused and expired sign-in codes are deleted automatically."
+            }
+          ]
+        }
+      ]
+    },
+    "project-portal-logs": {
+      "navLabel": "Portal logs",
+      "header": "Project portal - Logs",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Audit log of the project portal: changes of projects, checkpoints, templates, client accounts, approvals and updates in the admin and the activity of the clients in the portal (sign-in, threads, decisions)."
+            },
+            {
+              "type": "text",
+              "content": "The entries can be filtered by user, event, module and IP address, exported and charted. The log never holds the texts of client messages."
             }
           ]
         }

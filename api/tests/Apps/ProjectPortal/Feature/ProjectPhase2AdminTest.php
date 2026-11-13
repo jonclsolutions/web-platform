@@ -217,7 +217,7 @@ class ProjectPhase2AdminTest extends TestCase
             ->assertJsonPath('data.assignee_id', $petr->id)->assertJsonPath('data.assignee_name', 'Petr');
         Mail::assertQueued(ProjectTeamNotificationMail::class, fn (ProjectTeamNotificationMail $m) => $m->hasTo('petr@firm.cz')
             && $m->kind === ProjectTeamNotificationMail::KIND_THREAD_ASSIGNED && str_contains($m->render(), 'Jana assigned you this thread')
-            && str_contains($m->render(), "/admin/web/projects/{$this->project->id}/conversations"));
+            && str_contains($m->render(), "/admin/project-portal/projects/{$this->project->id}/conversations"));
         $this->putJson("/api/project-portal/project-threads/{$thread->id}/assignee", ['assignee_id' => $jana->id])->assertOk();
         Mail::assertQueued(ProjectTeamNotificationMail::class, 1);
         $this->assertPortalLog('thread_assign', "Thread #{$thread->id} of project #{$this->project->id} assigned to user #{$jana->id}");

@@ -1,0 +1,37 @@
+<!--
+    @file: apps.component.html
+    @path: /src/app/admin/core-pages/apps/apps.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Template of the page "Applications" - one card per application the user may open.
+-->
+
+<div class="wp-page">
+
+  <div class="wp-welcome">
+    <div class="wp-welcome-left">
+      <h1 class="wp-welcome-title">{{ strings.header }}</h1>
+      <p class="apps-intro">{{ strings.intro }}</p>
+    </div>
+    <app-page-help></app-page-help>
+  </div>
+
+  @if (cards.length) {
+    <div class="wp-cards-grid">
+      @for (card of cards; track card.app.id) {
+        <div class="wp-link-card apps-card">
+          <span class="wp-link-icon"><app-admin-icon [name]="card.app.icon" [size]="18" /></span>
+          <div class="wp-link-body">
+            <span class="wp-link-title">{{ layoutText(card.app.nameKey) }}</span>
+            <span class="wp-link-desc">{{ layoutText(card.app.descriptionKey) }}</span>
+            <a class="apps-card-manage" [routerLink]="card.url">{{ strings.manage }}</a>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="apps-empty">{{ strings.empty }}</div>
+  }
+
+</div>

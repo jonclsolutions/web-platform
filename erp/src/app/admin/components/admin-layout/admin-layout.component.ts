@@ -4,7 +4,10 @@
  * @project JS web-platform
  * @author JS
  * @created 2025
- * @description Main shell component for the administrative panel, managing sidebar navigation, module switching, and global UI state.
+ * @description Main shell component for the administrative panel: the header with the core tab and
+ *   the application switcher (always showing the module the user is in), the sidebar built from
+ *   the navigation data of the module (CORE_NAV / the manifest of the application), and global UI
+ *   state.
  * @dependencies
  * - AuthService: Manages user authentication and session status.
  * - PermissionService: Validates access to specific administrative modules.
@@ -12,6 +15,8 @@
  * - AdminLocalizationService: Static i18n of the admin UI + the language switcher in the header.
  * - ScrollLockService: Shared background scroll lock (mobile overlay panels).
  * - UserAvatarComponent: own profile photo in the header.
+ * - AdminModulesService: which modules and pages the user may open; admin-navigation.config +
+ *   apps.registry: the sidebars and the applications; AdminIconComponent: icons of the menus.
  * @note Layout: the header and the sidebar stay in place, only the page content (`<main>`) and,
  * independently, a long sidebar menu scroll. A navigation therefore scrolls `<main>` back to the
  * top itself - the router's scroll restoration only moves the window.
@@ -24,13 +29,14 @@ import { Subscription, interval, Observable, filter } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PermissionService } from '../../../core/auth/services/permission.service';
-import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { LoadingService } from '../../../core/services/loading.service';
 import { AdminLocalizationService, AdminLanguageMeta } from '../../../core/services/admin-localization.service';
 import { ScrollLockService } from '../../../core/services/scroll-lock.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
-import { ADMIN_MODULE_PAGES, ADMIN_MODULE_TAB_PERMISSION, AdminModule, AdminNavPage } from '../../admin-navigation.config';
-import { SYSADMIN_ROLE_NAME } from '../../../core/auth/guards/auth.guard';
+import { AdminModule, AdminNavGroup, AdminNavItem, CORE_MODULE, adminModules, navOf } from '../../admin-navigation.config';
+import { AdminModulesService } from '../../admin-modules.service';
+import { AppManifest, appById } from '../../../apps/apps.registry';
+import { AdminIconComponent } from '../admin-icon/admin-icon.component';
 import { UserAvatarComponent } from '../user-avatar/user-avatar.component';
 import { KNOWLEDGE_BASE_URL } from '../page-help/page-help.component';
 
@@ -50,7 +56,7 @@ export const NAV_COLLAPSED_STORAGE_KEY = 'jsw_admin_nav_collapsed';
   templateUrl: './admin-layout.component.html',
   styleUrls: ['../../shared-styles/theme.css', '../../../shared/styles/base.css', './admin-layout.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule, DatePipe, HasPermissionDirective, UserAvatarComponent],
+  imports: [CommonModule, RouterModule, DatePipe, UserAvatarComponent, AdminIconComponent],
   providers: [
     { provide: LOCALE_ID, useValue: 'cs-CZ' }
   ]
@@ -62,7 +68,11 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   userRole: string | null = null;
   isLoggedIn: boolean = false;
 
-  currentModule: 'web' | 'core' | 'shop' = 'web';
+  /** Module the user is in: 'core' or the id of an application (first URL segment after /admin/). */
+  currentModule: AdminModule = CORE_MODULE;
+
+  /** Dropdown of the application switcher in the header is open. */
+  isAppsMenuOpen = false;
 
   isLoadingGlobal$: Observable<boolean>;
 
@@ -166,7 +176,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private permissionService: PermissionService,
     private cdr: ChangeDetectorRef,
-    private loadingService: LoadingService
+    private loadingService: LoadingService,
+    private modules: AdminModulesService
   ) {
     this.isLoadingGlobal$ = this.loadingService.isLoading$;
 
@@ -202,8 +213,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       // the first time (see syncModuleFromUrl() below) - prevents a short flash of a wrongly
       // highlighted module on the first render.
       const savedState = localStorage.getItem('admin_menu_open');
-      const savedModule = localStorage.getItem('admin_current_module') as 'web' | 'core' | 'shop';
-      if (savedModule) this.currentModule = savedModule;
+      const savedModule = localStorage.getItem('admin_current_module');
+      if (savedModule && adminModules().includes(savedModule)) this.currentModule = savedModule;
 
       if (window.innerWidth <= 768) {
         this.isMenuOpen = false;
@@ -311,15 +322,16 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   /**
    * @description Derives `currentModule` from the first path segment after `/admin/`
-   * (`/admin/core/welcome-page` -> `'core'`). An unknown / missing segment (e.g. `/admin`
-   * itself, or paths outside web/core/shop) leaves `currentModule` unchanged - no point
-   * clearing the last valid choice because of a transient / unmatched URL.
+   * (`/admin/core/welcome-page` -> `'core'`, `/admin/project-portal/projects` ->
+   * `'project-portal'`). A segment that is no module (e.g. `/admin` itself, `/admin/forbidden`)
+   * leaves `currentModule` unchanged - no point clearing the last valid choice because of a
+   * transient / unmatched URL.
    */
   private syncModuleFromUrl(url: string): void {
-    const match = url.match(/^\/admin\/(web|core|shop)(\/|$|\?)/);
-    if (!match) return;
+    const match = url.match(/^\/admin\/([^/?#]+)/);
+    if (!match || !adminModules().includes(match[1])) return;
 
-    const module = match[1] as 'web' | 'core' | 'shop';
+    const module = match[1];
     if (module === this.currentModule) return;
 
     this.currentModule = module;
@@ -359,40 +371,82 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Opens a module: navigates to the first page of it the user may open (welcome page
-   *   first, then the sidebar order - see ADMIN_MODULE_PAGES).
-   * @param module The target module.
+   * @description Opens a module: navigates to the first page of it the user may open (sidebar
+   *   order - the welcome page first where the module has one).
+   * @param module 'core' or an application id.
    */
   switchModule(module: AdminModule): void {
-    const page = this.firstAccessiblePage(module);
-    if (!page) return;
-    this.router.navigate([`/admin/${module}/${page.path}`]);
+    this.isAppsMenuOpen = false;
+    const url = this.modules.landingUrl(module);
+    if (url) this.router.navigate([url]);
   }
 
   /**
-   * @description Whether the header shows the tab of a module: the tab permission (`view-web` /
-   *   `view-core` / `view-eshop`) AND at least one page of the module the user may open - so a
-   *   tab never opens an empty sidebar or an "Access denied" message. Sysadmin: always.
-   * @param module Module of the tab.
+   * @description Whether the header offers a module (the core tab, an item of the application
+   *   switcher) - see AdminModulesService.isAvailable().
+   * @param module 'core' or an application id.
    */
   isModuleAvailable(module: AdminModule): boolean {
-    if (this.userRole === SYSADMIN_ROLE_NAME) return true;
-    return this.permissionService.hasPermission(ADMIN_MODULE_TAB_PERMISSION[module])
-      && this.firstAccessiblePage(module) !== null;
+    return this.modules.isAvailable(module);
+  }
+
+  /** @description Applications of the switcher: the installed ones the user may open. */
+  get availableApps(): AppManifest[] {
+    return this.modules.availableApps();
+  }
+
+  /** @description Manifest of the application the user is in (undefined in the core). */
+  get currentApp(): AppManifest | undefined {
+    return appById(this.currentModule);
   }
 
   /**
-   * @description First page of a module the user may open (same rule as the AuthGuard: sysadmin
-   *   opens everything, a role-only page needs the sysadmin role, a page without a permission is
-   *   open to everybody, otherwise one of the keys).
-   * @param module Module.
-   * @returns The page, or null when there is none.
+   * @description Name of the module the user is in - shown in the header at all times (the
+   *   active tab / the switcher, on mobile a label next to the menu button).
    */
-  private firstAccessiblePage(module: AdminModule): AdminNavPage | null {
-    const isSysadmin = this.userRole === SYSADMIN_ROLE_NAME;
-    return ADMIN_MODULE_PAGES[module].find(page =>
-      isSysadmin || (!page.sysadminOnly && (page.permission === null || this.hasAnyPermission([page.permission])))
-    ) ?? null;
+  get currentModuleName(): string {
+    const app = this.currentApp;
+    return app ? this.strings[app.nameKey] : this.strings.module_core;
+  }
+
+  /** @description Opens / closes the dropdown of the application switcher. */
+  toggleAppsMenu(): void {
+    this.isAppsMenuOpen = !this.isAppsMenuOpen;
+  }
+
+  /** @description Closes the dropdown of the application switcher. */
+  closeAppsMenu(): void {
+    this.isAppsMenuOpen = false;
+  }
+
+  /** @description Sections of the sidebar of the current module. */
+  get navGroups(): AdminNavGroup[] {
+    return navOf(this.currentModule);
+  }
+
+  /**
+   * @description Whether a section of the sidebar is shown (at least one of its pages may be
+   *   opened - *appHasPermission cannot hide the parent when all children vanish).
+   * @param group The section.
+   */
+  isGroupVisible(group: AdminNavGroup): boolean {
+    return this.modules.isGroupVisible(group);
+  }
+
+  /**
+   * @description Whether a page of the sidebar is shown.
+   * @param item The page.
+   */
+  canOpen(item: AdminNavItem): boolean {
+    return this.modules.canOpen(item);
+  }
+
+  /**
+   * @description Text of the admin-layout section (the labels of the sidebar).
+   * @param key Key inside `admin-layout`.
+   */
+  label(key: string): string {
+    return this.strings[key] ?? this.i18n.getValue(`admin-layout.${key}`);
   }
 
   toggleMenu(): void {
@@ -486,120 +540,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       },
       error: () => this.router.navigate(['/auth/login'])
     });
-  }
-
-  // ══════════════════════════════════════════════════════════════════════
-  // VISIBILITY OF THE LEFT MENU SECTIONS (nav-group)
-  // ══════════════════════════════════════════════════════════════════════
-
-  /**
-   * @description Checks whether the current user has AT LEAST ONE of the given permissions.
-   *      Hides a whole menu section (nav-group) when none of its items would stay visible after
-   *      *appHasPermission - the directive cannot "hide the parent when all children vanish",
-   *      so the section visibility is computed here and applied with *ngIf on .nav-group.
-   * @param keys Permission keys of the items of the section. Each element may itself contain
-   *      the OR syntax ('core-legal-documents-view|core-legal-config-view') like
-   *      *appHasPermission - see has-permission.directive.ts.
-   * @returns true when the user satisfies at least one of the keys (or at least one side of an
-   *      OR group).
-   */
-  hasAnyPermission(keys: string[]): boolean {
-    return keys.some(key =>
-      key.split('|').some(single => this.permissionService.hasPermission(single.trim()))
-    );
-  }
-
-  // ── Web modul ────────────────────────────────────────────────────────
-
-  /** Group of the web welcome page (its own key - before 2026-10-27 it hid behind the dashboard key). */
-  get showWebWelcomeGroup(): boolean {
-    return this.hasAnyPermission(['web-welcome-page-view']);
-  }
-
-  get showWebOverviewGroup(): boolean {
-    return this.hasAnyPermission(['web-view-dashboard']);
-  }
-
-  get showWebBusinessGroup(): boolean {
-    return this.hasAnyPermission([
-      'web-user-requests-view',
-      'web-sales-leads-view',
-      'web-sales-orders-view',
-      'web-projects-view'
-    ]);
-  }
-
-  get showWebContentGroup(): boolean {
-    return this.hasAnyPermission(['web-edit-website-view']);
-  }
-
-  get showWebPeopleGroup(): boolean {
-    return this.hasAnyPermission(['web-job-applications-view']);
-  }
-
-  get showWebSystemGroup(): boolean {
-    return this.hasAnyPermission(['web-view-web-logs']);
-  }
-
-  // ── Core modul ───────────────────────────────────────────────────────
-
-  get showCoreOverviewGroup(): boolean {
-    // The calendar (no permission) is in this group - it is shown to everybody in the core tab.
-    return true;
-  }
-
-  get showCoreLegalGroup(): boolean {
-    return this.hasAnyPermission([
-      'core-legal-documents-view|core-legal-config-view',
-      'core-legal-config-view',
-      'core-external-links-view'
-    ]);
-  }
-
-  get showCoreSystemGroup(): boolean {
-    return this.hasAnyPermission(['view-core']);
-  }
-
-  // ── Shop modul ───────────────────────────────────────────────────────
-
-  /** Group of the shop welcome page (its own key - before 2026-10-27 it hid behind the dashboard key). */
-  get showShopWelcomeGroup(): boolean {
-    return this.hasAnyPermission(['shop-welcome-page-view']);
-  }
-
-  get showShopOverviewGroup(): boolean {
-    return this.hasAnyPermission(['shop-view-dashboard']);
-  }
-
-  get showShopCatalogGroup(): boolean {
-    return this.hasAnyPermission([
-      'shop-products-view',
-      'shop-categories-view',
-      'shop-suppliers-view'
-    ]);
-  }
-
-  get showShopTransactionsGroup(): boolean {
-    return this.hasAnyPermission(['shop-orders-view', 'shop-coupons-view']);
-  }
-
-  get showShopCustomersGroup(): boolean {
-    return this.hasAnyPermission(['shop-customers-view']);
-  }
-
-  get showShopLogisticsGroup(): boolean {
-    return this.hasAnyPermission([
-      'shop-shipping-methods-view',
-      'shop-payment-methods-view'
-    ]);
-  }
-
-  get showShopContentGroup(): boolean {
-    return this.hasAnyPermission(['shop-edit-eshop-view']);
-  }
-
-  get showShopSystemGroup(): boolean {
-    return this.hasAnyPermission(['shop-view-logs']);
   }
 
   ngOnDestroy(): void {

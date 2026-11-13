@@ -26,6 +26,16 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "*/admin/i18n/*.json",
+                "input": "src/app/apps",
+                "output": "assets/i18n/apps"
+              },
+              {
+                "glob": "*/public/i18n/*.json",
+                "input": "src/app/apps",
+                "output": "assets/i18n/apps"
               }
             ],
             "styles": [
@@ -109,6 +119,16 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "*/admin/i18n/*.json",
+                "input": "src/app/apps",
+                "output": "assets/i18n/apps"
+              },
+              {
+                "glob": "*/public/i18n/*.json",
+                "input": "src/app/apps",
+                "output": "assets/i18n/apps"
               }
             ],
             "styles": [

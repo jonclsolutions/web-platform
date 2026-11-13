@@ -4,8 +4,9 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Route matching of the application route table (404 pages, 2026-10-27): known web /
- *   e-shop / maintenance / auth / admin URLs open their own page, only an UNKNOWN URL opens the
+ * @description Route matching of the application route table (composed from the manifests of the
+ *   applications, apps.registry.ts): known web / e-shop / project portal / maintenance / auth /
+ *   admin URLs open their own page, only an UNKNOWN URL opens the
  *   404 page of its area - `/shop/<unknown>` the e-shop 404, any other unknown URL the web 404 -
  *   and `/admin/...` never reaches a public 404.
  * @dependencies
@@ -117,13 +118,16 @@ describe('app routes', () => {
   });
 
   /**
-   * @description The web catch-all is the very last route and the e-shop catch-all the last child
-   *   of the e-shop (a route after them would never be reached).
+   * @description The web catch-all comes after every other route (only the fallback of the core
+   *   to the admin follows it, never reached while the web is installed) and the e-shop catch-all
+   *   is the last child of the e-shop (a route after them would never be reached).
    * @input routes.
-   * @output last route '' with one child '**' (area web); last child of 'shop' = '**' (area shop).
+   * @output last route '**' → admin; before it '' with one child '**' (area web); last child of
+   *   'shop' = '**' (area shop).
    */
   it('keeps the catch-all routes last', () => {
-    const last = routes[routes.length - 1];
+    expect([routes[routes.length - 1].path, routes[routes.length - 1].redirectTo]).toEqual(['**', 'admin']);
+    const last = routes[routes.length - 2];
     expect(last.path).toBe('');
     expect(last.children!.map(r => [r.path, r.data?.['publicNotFoundArea']])).toEqual([['**', 'web']]);
     const shop = routes.find(r => r.path === 'shop')!;

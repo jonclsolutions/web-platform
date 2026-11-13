@@ -1,0 +1,138 @@
+<!--
+    @file: project-approvals-section.component.html
+    @path: src/app/apps/project-portal/admin/project-detail/project-approvals-section.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Sub-page "Approvals": filter (open / all), new request, the form (title,
+        description, checkpoint, due date, files) and the requests with state, files, decisions
+        of the client and actions (change, ask again, cancel, delete).
+-->
+<section class="pd-card" aria-labelledby="pd-approvals-title">
+  <div class="pd-card-head">
+    <div class="pd-card-head-title">
+      <h2 class="pd-card-title" id="pd-approvals-title">{{ t('section_approvals') }}</h2>
+      <div class="pd-segment" role="group">
+        <button type="button" [class.active]="filter === 'open'" [attr.aria-pressed]="filter === 'open'" (click)="filter = 'open'">{{ t('approvals_filter_open') }} ({{ openCount }})</button>
+        <button type="button" [class.active]="filter === 'all'" [attr.aria-pressed]="filter === 'all'" (click)="filter = 'all'">{{ t('approvals_filter_all') }} ({{ approvals.length }})</button>
+      </div>
+    </div>
+    @if (canEdit && formMode !== 'add') {
+      <div class="pd-card-head-actions">
+        <button type="button" class="pd-btn pd-btn--primary" (click)="openAdd()"><app-icon name="plus" [size]="14"></app-icon>{{ t('approval_add_button') }}</button>
+      </div>
+    }
+  </div>
+  <div class="pd-card-body">
+    <p class="pd-hint">{{ t('approvals_lead') }}</p>
+
+    @if (canEdit && formMode) {
+      <form class="ps-form" (ngSubmit)="save()">
+        <div class="pd-cp-new-title">{{ formMode === 'add' ? t('approval_add_button') : t('approval_edit') }}</div>
+        <label class="pd-cp-field">
+          <span>{{ t('approval_title_label') }} *</span>
+          <input type="text" class="pd-input" name="title" maxlength="200" required [(ngModel)]="draft.title" [placeholder]="t('approval_title_placeholder')">
+        </label>
+        <label class="pd-cp-field">
+          <span>{{ t('approval_description_label') }}</span>
+          <textarea class="pd-input pd-textarea" name="description" rows="4" maxlength="20000" [(ngModel)]="draft.description" [placeholder]="t('approval_description_placeholder')"></textarea>
+        </label>
+        <div class="ps-form-row">
+          <label class="pd-cp-field">
+            <span>{{ t('approval_checkpoint_label') }}</span>
+            <select class="pd-input" name="checkpoint_id" [(ngModel)]="draft.checkpoint_id">
+              <option value="">{{ t('approval_no_checkpoint') }}</option>
+              @for (cp of checkpoints; track cp.id) { <option [value]="'' + cp.id">{{ cp.label }}</option> }
+            </select>
+          </label>
+          <label class="pd-cp-field pd-cp-field--date">
+            <span>{{ t('approval_due_date_label') }}</span>
+            <input type="date" class="pd-input" name="due_date" [(ngModel)]="draft.due_date">
+          </label>
+        </div>
+        @if (formMode === 'edit' && editing?.attachments?.length) {
+          <div class="ps-saved-files">
+            @for (file of editing!.attachments!; track file.id) {
+              <label class="ps-saved-file" [class.ps-saved-file--removed]="removeIds.has(file.id)">
+                <input type="checkbox" [checked]="removeIds.has(file.id)" (change)="toggleRemove(file.id)">
+                <span>{{ t('file_remove') }}: {{ file.original_filename }}</span>
+              </label>
+            }
+          </div>
+        }
+        <label class="pd-btn pd-btn--ghost pd-attach ps-attach">
+          <app-icon name="link" [size]="14"></app-icon>{{ t('attach_files_button') }}
+          <input type="file" multiple hidden (change)="onFilesSelected($event)">
+        </label>
+        @if (files.length > 0) {
+          <div class="pd-chips">
+            @for (file of files; track file.name; let i = $index) {
+              <span class="pd-file-chip">{{ file.name }} <button type="button" [attr.aria-label]="file.name" (click)="removeFile(i)">✕</button></span>
+            }
+          </div>
+        }
+        @if (fileError) { <p class="pd-error" role="alert">{{ fileError }}</p> }
+        <p class="pd-hint">{{ formMode === 'add' ? t('approval_notify_hint') : t('approval_edit_hint') }}</p>
+        <div class="pd-cp-editor-actions">
+          <button type="button" class="pd-btn" (click)="cancelForm()">{{ t('cancel_button') }}</button>
+          <button type="submit" class="pd-btn pd-btn--primary" [disabled]="!draft.title.trim() || saving">
+            {{ saving ? t('detail_saving') : (formMode === 'add' ? t('approval_send_button') : t('checkpoint_save')) }}
+          </button>
+        </div>
+      </form>
+    }
+
+    <ul class="ps-list">
+      @for (approval of visibleApprovals; track approval.id) {
+        <li class="ps-item" [attr.data-status]="approval.status">
+          <div class="ps-item-head">
+            <span class="ps-status" [attr.data-status]="approval.status">{{ statusLabel(approval.status) }}</span>
+            <h3 class="ps-item-title">{{ approval.title }}</h3>
+            @if (canEdit) {
+              <div class="pd-account-actions">
+                @if (approval.status === 'pending') {
+                  <button type="button" class="pd-icon-btn" [title]="t('approval_edit')" [attr.aria-label]="t('approval_edit') + ': ' + approval.title" (click)="openEdit(approval)"><app-icon name="edit" [size]="14"></app-icon></button>
+                }
+                @if (approval.status === 'changes_requested' || approval.status === 'cancelled') {
+                  <button type="button" class="pd-btn pd-btn--ghost" [disabled]="busyId !== null" (click)="act(approval, 'reopen')">{{ t('approval_reopen') }}</button>
+                }
+                @if (approval.status === 'pending' || approval.status === 'changes_requested') {
+                  <button type="button" class="pd-btn pd-btn--ghost" [disabled]="busyId !== null" (click)="act(approval, 'cancel')">{{ t('approval_cancel') }}</button>
+                }
+                @if (!approval.decisions?.length) {
+                  <button type="button" class="pd-icon-btn pd-cp-action--delete" [title]="t('approval_delete')" [attr.aria-label]="t('approval_delete') + ': ' + approval.title"
+                          [disabled]="busyId !== null" (click)="act(approval, 'delete')"><app-icon name="delete" [size]="14"></app-icon></button>
+                }
+              </div>
+            }
+          </div>
+          <div class="ps-meta">
+            {{ t('approval_requested') }} {{ approval.requested_at | date:'d. M. yyyy HH:mm' }}@if (approval.requested_by_label) { · {{ approval.requested_by_label }} }
+            @if (approval.checkpoint_label) { · {{ t('approval_checkpoint_label') }}: {{ approval.checkpoint_label }} }
+            @if (approval.due_date) { · {{ t('approval_due_prefix') }} {{ approval.due_date | date:'d. M. yyyy' }} }
+          </div>
+          @if (approval.description) { <p class="ps-body">{{ approval.description }}</p> }
+          @if (approval.attachments?.length) {
+            <div class="pd-msg-files">
+              @for (att of approval.attachments!; track att.id) {
+                <a [href]="att.download_url" class="pd-file" target="_blank" rel="noopener"><span>{{ att.original_filename }}</span> <span class="pd-file-size">{{ formatFileSize(att.size_bytes) }}</span></a>
+              }
+            </div>
+          }
+          @if (approval.decisions?.length) {
+            <ol class="ps-decisions" [attr.aria-label]="t('approval_history')">
+              @for (decision of approval.decisions!; track decision.id) {
+                <li class="ps-decision" [attr.data-decision]="decision.decision">
+                  <strong>{{ decisionLabel(decision.decision) }}</strong> · {{ decision.author_label }} · {{ decision.created_at | date:'d. M. yyyy HH:mm' }}
+                  @if (decision.comment) { <p class="ps-body">{{ decision.comment }}</p> }
+                </li>
+              }
+            </ol>
+          }
+        </li>
+      } @empty {
+        <li class="pd-empty">{{ loading ? t('loading') : (filter === 'open' ? t('approvals_empty_open') : t('approvals_empty')) }}</li>
+      }
+    </ul>
+  </div>
+</section>

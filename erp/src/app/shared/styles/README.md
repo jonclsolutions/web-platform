@@ -38,7 +38,7 @@ src/
     │   └── README.md                       this file
     │
     ├── admin/
-    │   ├── shared-styles/                  whole admin (core + shop + web, auth, layout, intranet)
+    │   ├── shared-styles/                  whole admin (core + every application, auth, layout, intranet)
     │   │   ├── theme.css                   admin look tokens (--accent, --text, --border …)
     │   │   ├── page.css                    standard list page: toolbar, buttons, table header, banners
     │   │   ├── dashboard.css               dashboard header bar          (core, shop, web dashboards)
@@ -48,29 +48,35 @@ src/
     │   │   ├── welcome-page.css            greeting block                (core, shop, web welcome pages)
     │   │   └── welcome-links.css           link-card grid                (shop + web welcome pages)
     │   ├── core-pages/shared-styles/page.css   list-page rules only core uses
-    │   ├── shop-pages/shared-styles/
-    │   │   ├── page.css                    list-page rules only shop uses
-    │   │   └── list-page.css               orders + products toolbar / filter panel
-    │   ├── web-pages/shared-styles/page.css    list-page rules only web uses
     │   ├── auth/shared-styles/
     │   │   ├── auth.css                    form controls of login, activation, reset
     │   │   └── auth-card.css               centred card of activation + reset
     │   └── components/builders/table-style.css  (table builders – unchanged)
     │
-    └── public/
-        ├── shared-styles/maintenance.css   maintenance page (web + e-shop)
-        ├── web-pages/shared-styles/
+    ├── public/
+    │   ├── shared-styles/maintenance.css   maintenance page (web + e-shop)
+    │   └── legal/legal-document.css        GDPR / TOS / cookies pages (web + e-shop)
+    │
+    └── apps/                               every application keeps its own shared sheets
+        ├── web/admin/shared-styles/page.css    list-page rules only the web admin uses
+        ├── web/public/shared-styles/
         │   ├── theme.css                   public web look tokens (dark, violet)
         │   ├── content-page.css            .content-page / .content-page-hero frame
         │   ├── cta.css                     call-to-action row
         │   ├── faq-list.css                FAQ accordion (FAQ + services)
         │   ├── form-fields.css             form field states (contact + job application)
-        │   ├── animations.css              fadeUp keyframes
-        │   └── legal-document.css          GDPR / TOS / cookies pages
-        └── shop-pages/shared-styles/
-            ├── theme.css                   e-shop look tokens
-            └── quantity.css                quantity selector + buy buttons (cart + product detail)
+        │   └── animations.css              fadeUp keyframes
+        ├── shop/admin/shared-styles/
+        │   ├── page.css                    list-page rules only the e-shop admin uses
+        │   └── list-page.css               orders + products toolbar / filter panel
+        ├── shop/public/shared-styles/
+        │   ├── theme.css                   e-shop look tokens
+        │   └── quantity.css                quantity selector + buy buttons (cart + product detail)
+        └── project-portal/admin/shared-styles/page.css   list-page rules of the portal admin
 ```
+
+An application never uses a sheet of another application (the erp runners check it) - what two
+applications share belongs to `admin/shared-styles`, `public/shared-styles` or `shared/styles`.
 
 The header of every shared file says what it contains and who uses it (`@description`,
 `@dependencies`, `@module`, `@usage`).
@@ -82,12 +88,12 @@ The header of every shared file says what it contains and who uses it (`@descrip
 A component lists its sheets in `styleUrls`, **from the most general to its own file**:
 
 ```ts
-// admin/shop-pages/edit-eshop/edit-eshop.component.ts
+// apps/shop/admin/edit-eshop/edit-eshop.component.ts
 styleUrls: [
-  '../../shared-styles/theme.css',        // 1. look tokens
-  '../../../shared/styles/base.css',      // 2. shared base
-  '../../shared-styles/settings-page.css',// 3. shared layout
-  './edit-eshop.component.css',           // 4. own rules – always last
+  '../../../../admin/shared-styles/theme.css',         // 1. look tokens
+  '../../../../shared/styles/base.css',                // 2. shared base
+  '../../../../admin/shared-styles/settings-page.css', // 3. shared layout
+  './edit-eshop.component.css',                        // 4. own rules – always last
 ],
 ```
 
@@ -130,8 +136,8 @@ The app has three looks that use the **same token names with different values**:
 | Look | File | Used by |
 |---|---|---|
 | admin (light, zinc) | `admin/shared-styles/theme.css` | admin layout, auth pages, edit-roles, knowledge base, edit-eshop, edit-website, **public project portal** |
-| public web (dark, violet) | `public/web-pages/shared-styles/theme.css` | about, FAQ, references, services, jobs, job detail, order form, footer |
-| public e-shop (light, black) | `public/shop-pages/shared-styles/theme.css` | cart, catalog, checkout, product detail, header, footer, builders |
+| public web (dark, violet) | `apps/web/public/shared-styles/theme.css` | about, FAQ, references, services, jobs, job detail, order form, footer |
+| public e-shop (light, black) | `apps/shop/public/shared-styles/theme.css` | cart, catalog, checkout, product detail, header, footer, builders |
 
 A theme is a `:host { --accent: …; }` block, so it is scoped like any component sheet and the three
 looks never clash.

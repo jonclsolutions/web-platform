@@ -226,6 +226,120 @@
   background: var(--accent);
 }
 
+/*
+    @module: Application switcher
+    @description: Button of the header that names the application the user is in ("Aplikace" in the
+        core) and its dropdown with the applications the user may open + a link to the page of all
+        applications.
+    @usage: .apps-switcher, .apps-switcher-btn(.active), .apps-menu-backdrop, .apps-menu, .apps-menu-item(.active), .apps-menu-all
+*/
+.apps-switcher {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.module-switcher .apps-switcher-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px 0 16px;
+  background: none;
+  border: none;
+  border-radius: 999px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  font-family: var(--ff);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--ease), background var(--ease);
+  white-space: nowrap;
+}
+
+.module-switcher .apps-switcher-btn:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.module-switcher .apps-switcher-btn.active {
+  color: var(--color-white);
+  background: var(--accent);
+}
+
+.apps-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.apps-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 41;
+  min-width: 210px;
+  padding: 6px;
+  background: var(--surface, var(--color-white));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(24, 24, 27, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.apps-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font-size: 0.83rem;
+  font-weight: 600;
+  font-family: var(--ff);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.apps-menu-item:hover { background: var(--surface-2); }
+
+.apps-menu-item.active {
+  background: var(--accent);
+  color: var(--color-white);
+}
+
+.apps-menu-all {
+  margin-top: 4px;
+  padding: 8px 10px 4px;
+  border-top: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.apps-menu-all:hover { color: var(--text); }
+
+/*
+    @module: Current module (mobile)
+    @description: Name of the module the user is in, next to the menu button - only on mobile,
+        where the tabs and the switcher move into the slide-out panel.
+    @usage: .header-current-module
+*/
+.header-current-module {
+  display: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ── Header right group ─────────────────────────────────────── */
 .header-right {
   margin-left: auto;
@@ -390,6 +504,15 @@
   font-family: var(--ff);
   cursor: pointer;
   transition: background var(--ease), color var(--ease);
+}
+
+.map-apps-label {
+  margin-top: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .map-module-switcher button.active {
@@ -731,6 +854,7 @@
      slide-out panel (see .mobile-actions-panel above). */
   .header-user { display: none; }
   .module-switcher { display: none; }
+  .header-current-module { display: inline; }
   .header-action-btn--wiki,
   .header-action-btn--calendar,
   .header-action-btn--bug { display: none; }

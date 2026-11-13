@@ -1,6 +1,6 @@
 /**
  * @file edit-roles.component.ts
- * @path src/app/admin/web-pages/edit-roles/edit-roles.component.ts
+ * @path src/app/admin/core-pages/edit-roles/edit-roles.component.ts
  * @project JS web-platform
  * @author JS
  * @created 2026

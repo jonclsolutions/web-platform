@@ -13,7 +13,8 @@
  *   3. Runs Karma only for the compiling specs (temporary tsconfig limited to those files).
  *   4. Classifies every failed spec (assertion / runtime error / timeout …) and extracts the
  *      expected and actual value and the spec file location from Jasmine's message.
- *   5. Measures code coverage (istanbul via karma-coverage) of the source files in the tested
+ *   5. Checks the application boundaries (no application imports another one - checkAppBoundaries).
+ *   6. Measures code coverage (istanbul via karma-coverage) of the source files in the tested
  *      folders – statements, branches, functions, lines per file. A source file that no spec
  *      loads counts as 0 %. Line-by-line detail: report/coverage/index.html.
  *      `--no-coverage` switches the measurement off.
@@ -23,7 +24,7 @@
  * - ../../lib/report.js, ./karma.conf.js
  * - env UNIT_TESTS_REPORT_DIR (optional): report folder instead of tests/unit_tests/erp/report.
  *
- * @usage node run.js --group "Admin core" --command run_admin_core.sh [--no-coverage] src/app/admin/core-pages src/app/admin/components
+ * @usage node run.js --group "Admin core" --command run_admin_core.sh [--no-coverage] src/app/admin src/app/apps/apps.registry.spec.ts
  */
 
 'use strict';
@@ -95,6 +96,10 @@ function findFiles(dirs, accept) {
   const found = new Set();
   const walk = abs => {
     if (!fs.existsSync(abs)) return;
+    if (fs.statSync(abs).isFile()) { // a single file given instead of a folder
+      if (accept(path.basename(abs))) found.add(path.relative(ERP, abs).split(path.sep).join('/'));
+      return;
+    }
     for (const e of fs.readdirSync(abs, { withFileTypes: true })) {
       const p = path.join(abs, e.name);
       if (e.isDirectory()) { if (e.name !== 'node_modules') walk(p); }
@@ -265,6 +270,42 @@ function summarizeCoverage(sources) {
 }
 
 /** Entry point. */
+/**
+ * @description Static check of the application boundaries: a file of an application
+ *   (src/app/apps/<app>/**) may import the core, `shared` and its own files, never a file of
+ *   another application - it asks the registry (hasApp) instead. Relative imports of .ts files
+ *   (`from '…'`, `import('…')`) and of style / template files (styleUrls, templateUrl, CSS @import)
+ *   are resolved and checked.
+ * @returns {object[]} One passed / failed report entry per application (suite "Application boundaries").
+ */
+function checkAppBoundaries() {
+  const appsDir = path.join(ERP, 'src', 'app', 'apps');
+  if (!fs.existsSync(appsDir)) return [];
+  const apps = fs.readdirSync(appsDir).filter(d => fs.statSync(path.join(appsDir, d)).isDirectory());
+  const spec = /(?:from|import)\s*\(?\s*['"](\.{1,2}\/[^'"]+)['"]|(?:templateUrl|styleUrls?)\s*:\s*\[?\s*['"](\.{1,2}\/[^'"]+)['"]|@import\s+(?:url\()?['"]?(\.{1,2}\/[^'")\s;]+)/g;
+  const walk = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(e =>
+    e.isDirectory() ? walk(path.join(dir, e.name)) : /\.(ts|css)$/.test(e.name) ? [path.join(dir, e.name)] : []);
+  return apps.map(app => {
+    const violations = [];
+    for (const file of walk(path.join(appsDir, app))) {
+      const text = fs.readFileSync(file, 'utf8');
+      for (const m of text.matchAll(spec)) {
+        const target = path.resolve(path.dirname(file), m[1] || m[2] || m[3]);
+        const rel = path.relative(appsDir, target).split(path.sep);
+        if (rel[0] !== '..' && rel.length > 1 && rel[0] !== app) {
+          violations.push(`${path.relative(ERP, file).split(path.sep).join('/')} → ${path.relative(ERP, target).split(path.sep).join('/')}`);
+        }
+      }
+    }
+    const t = { suite: 'Application boundaries', name: `apps/${app} imports no other application`, status: violations.length ? 'failed' : 'passed', timeMs: 0 };
+    if (violations.length) {
+      Object.assign(t, { category: 'assertion failed', message: `${violations.length} import(s) of another application`,
+        expected: 'only core / shared / own files', actual: violations.slice(0, 5).join('; '), details: violations.join('\n') });
+    }
+    return t;
+  });
+}
+
 function main() {
   const { group, command, coverage, dirs } = parseArgs();
   const started = Date.now();
@@ -276,6 +317,7 @@ function main() {
   }
 
   const specs = findSpecs(dirs);
+  tests.push(...checkAppBoundaries());
   console.log(`${group}: ${specs.length} spec file(s), type-checking…`);
   const tsErrors = typeCheck();
 

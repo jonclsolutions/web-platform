@@ -1,0 +1,11 @@
+/*     
+    @file: edit-website.component.css
+    @path: /src/app/apps/shop/admin/edit-eshop/edit-eshop.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2025
+    @description: Styles of the edit eshop component.
+*/
+
+.ew-lang-tab:hover { color: var(--text); background: var(--surface-2); border-color: var(--text-dim); }
+

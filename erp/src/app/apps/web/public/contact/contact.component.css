@@ -1,0 +1,541 @@
+/*
+    @file: contact.component.css
+    @path: /src/app/apps/web/public/contact/contact.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2025
+    @description: Styles of the contact component - also used by the order form (order-form.component.ts), so both forms look the same.
+*/
+
+:host {
+  --clr-bg:          #0d0d1b;
+  --clr-surface:     #11112a;
+  --clr-surface-2:   #181832;
+  --clr-border:      rgba(166, 125, 255, 0.12);
+  --clr-border-mid:  rgba(166, 125, 255, 0.25);
+  --clr-accent:      #a67dff;
+  --clr-accent-dark: #6b2e91;
+  --clr-accent-dim:  rgba(166, 125, 255, 0.08);
+  --clr-text:        #e8e8f0;
+  --clr-muted:       #8585a0;
+  --clr-error:       #f08080;
+  --clr-success:     #5dcaa5;
+  --ff-display:      'Source Sans Pro', 'Segoe UI', sans-serif;
+  --ff-body:         'Segoe UI', system-ui, sans-serif;
+  --radius:          10px;
+  --transition:      0.22s ease;
+  --max-w:           1200px;
+
+  /* ── Unified spacing (same values on every public page) ── */
+  --gutter:       24px;   /* side padding of every container */
+  --section-y:    96px;   /* vertical space between sections / page bottom */
+  --hero-top:     180px;  /* navbar height + air above page title */
+  --hero-bottom:  48px;   /* hero -> first content */
+
+  /* ── Contact split layout ── */
+  --panel-w:      420px;  /* left panel content width */
+  --panel-pad:    48px;   /* space between panel text and the divider / form */
+  --side-label-gap: 56px; /* free space between the vertical label and the panel text */
+}
+
+/* ── Page grid ───────────────────────────────────────────────────
+   Columns: [side][left panel][form][side]
+   --side = empty space outside the 1200px content column (min. gutter).
+   Left panel spans side + panel, so its background reaches the viewport
+   edge while its text starts at the content column's left edge. */
+.contact-page {
+  --side: max(var(--gutter), (100% - var(--max-w)) / 2);
+  display: grid;
+  grid-template-columns: var(--side) var(--panel-w) minmax(0, 1fr) var(--side);
+  min-height: 100vh;
+  background: var(--clr-bg);
+  font-family: var(--ff-body);
+  color: var(--clr-text);
+  overflow: hidden;
+}
+.contact-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(166, 125, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(166, 125, 255, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ══════════════════════════════════════════════
+   LEFT PANEL
+   ══════════════════════════════════════════════ */
+.panel-left {
+  grid-column: 1 / 3;
+  position: relative;
+  background: var(--clr-surface);
+  border-right: 1px solid var(--clr-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Large vertical label – typographic signature. Anchored to the LEFT edge of the panel
+   content (right: 100% of .panel-left-content) with a free gap, so it always sits left of the
+   text and never covers it, whatever the length of the word (KONTAKT / OBJEDNÁVKA). The
+   glyph size follows the free space left of the content column (column width = font-size with
+   line-height 1), min. 4rem, max. 7rem; where not even 4rem fits, the label is hidden. */
+.side-label {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + var(--side-label-gap));
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  font-family: var(--ff-display);
+  font-size: clamp(4rem, calc((100vw - var(--max-w)) / 2 - var(--side-label-gap) - 32px), 7rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.3em;
+  color: rgba(166, 125, 255, 0.045);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  z-index: 0;
+}
+
+/* Right-aligned inside the panel -> left edge = content column edge */
+.panel-left-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  width: var(--panel-w);
+  max-width: 100%;
+  margin-left: auto;
+  padding: var(--hero-top) var(--panel-pad) var(--section-y) 0;
+  height: 100%;
+}
+
+.brand-headline {
+  font-family: var(--ff-display);
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0 0 18px;
+  color: var(--color-white);
+}
+
+.brand-sub {
+  font-size: 0.97rem;
+  line-height: 1.75;
+  color: var(--clr-muted);
+  margin: 0;
+  max-width: 320px;
+}
+
+/* Info list */
+.info-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.info-icon {
+  flex-shrink: 0;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--clr-accent);
+  margin-top: 4px;
+}
+
+.info-link,
+.info-text {
+  font-size: 0.93rem;
+  color: var(--clr-text);
+  text-decoration: none;
+  line-height: 1.5;
+}
+
+.info-address {
+  font-style: normal;
+  font-size: 0.93rem;
+  color: var(--clr-text);
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.info-link:hover { color: var(--clr-accent); text-decoration: underline; }
+
+/* Social networks */
+.social-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 24px;
+  border-top: 1px solid var(--clr-border);
+}
+
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--transition), opacity var(--transition);
+}
+
+.social-link-icon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+/* ══════════════════════════════════════════════
+   RIGHT PANEL
+   ══════════════════════════════════════════════ */
+.panel-right {
+  grid-column: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--hero-top) 0 var(--section-y) var(--panel-pad);
+  overflow-y: auto;
+}
+
+.form-wrapper {
+  width: 100%;
+  max-width: 600px;
+}
+
+.form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Fields */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.field-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--clr-muted);
+}
+
+.req { color: var(--clr-accent); margin-left: 2px; }
+
+.field-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--clr-surface-2);
+  border: 1px solid var(--clr-border-mid);
+  border-radius: var(--radius);
+  color: var(--clr-text);
+  font-size: 0.95rem;
+  font-family: var(--ff-body);
+  box-sizing: border-box;
+  transition: border-color var(--transition), background var(--transition);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: var(--clr-accent);
+  background: var(--clr-surface);
+}
+
+.field-input::placeholder { color: rgba(133, 133, 160, 0.5); }
+
+.field-input.is-error { border-color: var(--clr-error); }
+
+.field-input.textarea {
+  resize: vertical;
+  min-height: 130px;
+  line-height: 1.6;
+}
+
+.field-error {
+  font-size: 0.78rem;
+  color: var(--clr-error);
+}
+
+/* Select with custom arrow */
+.select-wrap {
+  position: relative;
+}
+
+.select-wrap .field-input {
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+.select-wrap .field-input option {
+  background: var(--clr-surface);
+}
+
+.select-arrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--clr-accent);
+  pointer-events: none;
+  font-size: 0.85rem;
+}
+
+/* File zone */
+.file-zone {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 20px;
+  background: var(--clr-surface-2);
+  border: 1px dashed var(--clr-border-mid);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  position: relative;
+}
+
+.file-zone:hover {
+  border-color: var(--clr-accent);
+  background: var(--clr-accent-dim);
+}
+
+/* GDPR */
+.gdpr-row { margin-top: 4px; }
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--clr-muted);
+  line-height: 1.55;
+}
+
+.checkbox-input { display: none; }
+
+.checkbox-box {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--clr-border-mid);
+  border-radius: 4px;
+  background: var(--clr-surface-2);
+  margin-top: 1px;
+  transition: background var(--transition), border-color var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox-input:checked + .checkbox-box {
+  background: var(--clr-accent);
+  border-color: var(--clr-accent);
+}
+
+.checkbox-input:checked + .checkbox-box::after {
+  content: '✓';
+  font-size: 0.7rem;
+  color: var(--color-white);
+  line-height: 1;
+}
+
+.checkbox-label.is-error .checkbox-box { border-color: var(--clr-error); }
+
+.gdpr-link {
+  color: var(--clr-accent);
+  text-decoration: none;
+}
+
+/* Submit button */
+.submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 17px 24px;
+  background: var(--clr-accent);
+  border: none;
+  border-radius: var(--radius);
+  color: #0d0d1b;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: var(--ff-display);
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: background var(--transition), transform 0.15s ease;
+  margin-top: 6px;
+}
+
+.submit-btn:disabled {
+  background: var(--clr-surface-2);
+  color: var(--clr-muted);
+  border: 1px solid var(--clr-border);
+  cursor: not-allowed;
+}
+
+/* Spinner */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(13, 13, 27, 0.3);
+  border-top-color: #0d0d1b;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════
+   SUCCESS STATE
+   ══════════════════════════════════════════════ */
+.success-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 440px;
+  gap: 20px;
+}
+
+.success-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: rgba(93, 202, 165, 0.12);
+  border: 1px solid rgba(93, 202, 165, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  color: var(--clr-success);
+}
+
+.success-title {
+  font-family: var(--ff-display);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--color-white);
+  margin: 0;
+}
+
+.success-text {
+  font-size: 0.97rem;
+  color: var(--clr-muted);
+  line-height: 1.75;
+  margin: 0;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 28px;
+  border: 1px solid var(--clr-border-mid);
+  border-radius: var(--radius);
+  color: var(--clr-accent);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--transition), border-color var(--transition);
+  margin-top: 8px;
+}
+
+.back-btn:hover {
+  background: var(--clr-accent-dim);
+  border-color: var(--clr-accent);
+}
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════ */
+/* Not even the 4rem label fits beside the content column: (100vw - 1200px) / 2 < 4rem + gap + 32px */
+@media (max-width: 1503px) {
+  .side-label { display: none; }
+}
+
+@media (max-width: 1024px) {
+  :host {
+    --panel-w:   360px;
+    --panel-pad: 36px;
+  }
+
+  .panel-left-content { gap: 36px; }
+
+  .brand-headline { font-size: 2.4rem; }
+}
+
+@media (max-width: 768px) {
+  /* Stacked: left panel becomes a full-width top bar, form below */
+  .contact-page {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+
+  .panel-left,
+  .panel-right { grid-column: 1 / -1; }
+
+  .panel-left {
+    border-right: none;
+    border-bottom: 1px solid var(--clr-border);
+  }
+
+  .side-label { display: none; }
+
+  .panel-left-content {
+    width: 100%;
+    margin-left: 0;
+    padding: var(--hero-top) var(--gutter) var(--hero-bottom);
+    gap: 28px;
+  }
+
+  .brand-headline { font-size: 2rem; }
+
+  .stats-row { gap: 24px; }
+
+  .stat-value { font-size: 1.6rem; }
+
+  .social-row { margin-top: 0; padding-top: 0; border-top: none; }
+
+  .panel-right { padding: var(--hero-bottom) var(--gutter) var(--section-y); }
+
+  .field-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  /* Mobile spacing tokens – all containers follow automatically */
+  :host {
+    --gutter:      16px;
+    --section-y:   64px;
+    --hero-top:    120px;
+    --hero-bottom: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-headline { font-size: 1.7rem; }
+}
