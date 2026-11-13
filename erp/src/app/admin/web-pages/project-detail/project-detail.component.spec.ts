@@ -63,11 +63,11 @@ describe('ProjectDetailComponent', () => {
   /** getCollection answers by endpoint. */
   const collections = (endpoint: string, params?: Record<string, string>) => {
     if (params?.['assigned_to_me']) return of([threads()[0]]);
-    if (endpoint === 'web/projects/7/activity') return of(activity());
-    if (endpoint === 'web/projects/templates') return of(templates());
-    if (endpoint === 'web/projects/7/accounts') return of(accounts());
-    if (endpoint === 'web/projects/7/files') return of(projectFiles());
-    if (endpoint === 'web/projects/assignees') return of(assignees());
+    if (endpoint === 'project-portal/projects/7/activity') return of(activity());
+    if (endpoint === 'project-portal/projects/templates') return of(templates());
+    if (endpoint === 'project-portal/projects/7/accounts') return of(accounts());
+    if (endpoint === 'project-portal/projects/7/files') return of(projectFiles());
+    if (endpoint === 'project-portal/projects/assignees') return of(assignees());
     return of(threads());
   };
   const activity = () => [
@@ -134,17 +134,17 @@ describe('ProjectDetailComponent', () => {
      *   link, with the assignee), checkpoints, the client accounts, the files, the assignees and
      *   the threads of THIS project with their unread counts.
      * @input  route id 7
-     * @output get('web/projects/7'); getCollection threads / accounts / files / assignees;
+     * @output get('project-portal/projects/7'); getCollection threads / accounts / files / assignees;
      *   form name 'Shop' / description '' / assignee '3'; 12 fields without order_id; assignee
      *   options Jana, Petr; 1 checkpoint; 2 accounts; 2 files; unreadTotal 3; not dirty
      */
     it('loads the project and its conversations', fakeAsync(() => {
       init();
-      expect(dh().get).toHaveBeenCalledWith('web/projects/7');
-      expect(dh().getCollection).toHaveBeenCalledWith('web/project-threads', { project_id: 7, no_pagination: 'true' });
-      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/7/accounts');
-      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/7/files');
-      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/assignees');
+      expect(dh().get).toHaveBeenCalledWith('project-portal/projects/7');
+      expect(dh().getCollection).toHaveBeenCalledWith('project-portal/project-threads', { project_id: 7, no_pagination: 'true' });
+      expect(dh().getCollection).toHaveBeenCalledWith('project-portal/projects/7/accounts');
+      expect(dh().getCollection).toHaveBeenCalledWith('project-portal/projects/7/files');
+      expect(dh().getCollection).toHaveBeenCalledWith('project-portal/projects/assignees');
       expect(component.loading).toBeFalse();
       expect(component.notFound).toBeFalse();
       expect(component.form['name']).toBe('Shop');
@@ -211,7 +211,7 @@ describe('ProjectDetailComponent', () => {
     /**
      * @description Saving sends only the changed fields (cleared text as null) and resets the dirty state.
      * @input  name 'Shop 2', project_lead '' ; saveSettings(); API answers the updated project
-     * @output put('web/projects/7', { name: 'Shop 2', project_lead: null }); success alert; dirty false; saving false
+     * @output put('project-portal/projects/7', { name: 'Shop 2', project_lead: null }); success alert; dirty false; saving false
      */
     it('saves the changed settings', fakeAsync(() => {
       init();
@@ -220,7 +220,7 @@ describe('ProjectDetailComponent', () => {
       expect(component.dirty).toBeTrue();
       dh().put.and.returnValue(of({ ...project(), name: 'Shop 2', project_lead: null, checkpoints: undefined }));
       component.saveSettings();
-      expect(dh().put).toHaveBeenCalledWith('web/projects/7', { name: 'Shop 2', project_lead: null });
+      expect(dh().put).toHaveBeenCalledWith('project-portal/projects/7', { name: 'Shop 2', project_lead: null });
       expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'projects.project_updated_message', 'success');
       expect(component.dirty).toBeFalse();
       expect(component.saving).toBeFalse();
@@ -331,7 +331,7 @@ describe('ProjectDetailComponent', () => {
       expect(component.form['assignee_id']).toBe('9');
       fixture.destroy();
 
-      dh().getCollection.and.callFake((endpoint: string) => endpoint === 'web/projects/assignees' ? throwError(() => new Error('x')) : collections(endpoint));
+      dh().getCollection.and.callFake((endpoint: string) => endpoint === 'project-portal/projects/assignees' ? throwError(() => new Error('x')) : collections(endpoint));
       dh().get.and.returnValue(of({ ...project(), assignee_id: null, assignee_name: null }));
       fixture = TestBed.createComponent(ProjectDetailComponent);
       component = fixture.componentInstance;
@@ -349,7 +349,7 @@ describe('ProjectDetailComponent', () => {
      *   an invitation, which needs an e-mail; a sent invitation is confirmed, a failed one reported.
      * @input  openAddAccount; draft ' Petr.N ', ' Petr ', email 'p@x.cz'; post → meta.password 'Gen12345abcd';
      *   then 'eva' with a typed password failing; then 'ota' invitation only (meta.invited true / false)
-     * @output invalid until filled; postWithMeta('web/projects/7/accounts', {username 'petr.n', display_name 'Petr',
+     * @output invalid until filled; postWithMeta('project-portal/projects/7/accounts', {username 'petr.n', display_name 'Petr',
      *   email 'p@x.cz', language 'cz', with_password true, send_invitation false}); account appended;
      *   revealed {13, 'petr.n', 'Gen12345abcd'}; form closed; invitation without e-mail invalid and
      *   switched off when the e-mail is cleared; success / danger alert after an invitation
@@ -369,7 +369,7 @@ describe('ProjectDetailComponent', () => {
 
       dh().postWithMeta.and.returnValue(of({ data: { id: 13, username: 'petr.n', display_name: 'Petr', email: 'p@x.cz', notify_replies: false, notify_checkpoint_status: false, notify_checkpoint_dates: false, language: 'cz' }, meta: { password: 'Gen12345abcd', invited: false } }));
       component.saveAccount();
-      expect(dh().postWithMeta).toHaveBeenCalledWith('web/projects/7/accounts', {
+      expect(dh().postWithMeta).toHaveBeenCalledWith('project-portal/projects/7/accounts', {
         username: 'petr.n', display_name: 'Petr', email: 'p@x.cz', language: 'cz', with_password: true, send_invitation: false,
       });
       expect(component.accounts.map(a => a.id)).toEqual([11, 12, 13]);
@@ -382,7 +382,7 @@ describe('ProjectDetailComponent', () => {
       component.accountDraft = { username: 'eva', display_name: 'Eva', email: '', language: 'en', password: 'Typed12345', with_password: true, send_invitation: false };
       dh().postWithMeta.and.returnValue(throwError(() => new Error('422')));
       component.saveAccount();
-      expect(dh().postWithMeta).toHaveBeenCalledWith('web/projects/7/accounts', jasmine.objectContaining({ password: 'Typed12345', email: null, language: 'en' }));
+      expect(dh().postWithMeta).toHaveBeenCalledWith('project-portal/projects/7/accounts', jasmine.objectContaining({ password: 'Typed12345', email: null, language: 'en' }));
       expect(component.accountFormMode).toBe('add');
       expect(component.accountSaving).toBeFalse();
 
@@ -414,7 +414,7 @@ describe('ProjectDetailComponent', () => {
      * @description Editing an account sends only the changed fields; no change closes without a
      *   request; no permission opens nothing; a failure keeps the form.
      * @input  edit anna: display_name 'Anna Veliká', email cleared; then unchanged; then failure
-     * @output put('web/projects/7/accounts/12', { display_name, email: null }); list updated (the API
+     * @output put('project-portal/projects/7/accounts/12', { display_name, email: null }); list updated (the API
      *   turned the client's notifications off with the e-mail)
      */
     it('edits a client account', fakeAsync(() => {
@@ -427,7 +427,7 @@ describe('ProjectDetailComponent', () => {
       component.accountDraft.email = '';
       dh().put.and.returnValue(of({ ...anna, display_name: 'Anna Veliká', email: null, notify_replies: false, notify_checkpoint_dates: false }));
       component.saveAccount();
-      expect(dh().put).toHaveBeenCalledWith('web/projects/7/accounts/12', { display_name: 'Anna Veliká', email: null });
+      expect(dh().put).toHaveBeenCalledWith('project-portal/projects/7/accounts/12', { display_name: 'Anna Veliká', email: null });
       expect(component.accounts[1].display_name).toBe('Anna Veliká');
       expect(component.accountNotifications(component.accounts[1])).toEqual([]);
       expect(component.accountFormMode).toBeNull();
@@ -465,7 +465,7 @@ describe('ProjectDetailComponent', () => {
       dh().postWithMeta.and.returnValue(of({ data: { ...klient }, meta: { password: 'New12345abcd', ended_sessions: 1 } }));
       await component.resetAccountPassword(klient);
       expect(ctx.confirm.open).toHaveBeenCalledWith('projects.account_reset_confirm_title', 'projects.account_reset_confirm_message');
-      expect(dh().postWithMeta).toHaveBeenCalledWith('web/projects/7/accounts/11/password', {});
+      expect(dh().postWithMeta).toHaveBeenCalledWith('project-portal/projects/7/accounts/11/password', {});
       expect(component.revealedPassword).toEqual({ accountId: 11, username: 'klient', password: 'New12345abcd' });
       expect(component.accounts[0].active_sessions).toBe(0);
       expect(component.accountBusyId).toBeNull();
@@ -476,7 +476,7 @@ describe('ProjectDetailComponent', () => {
       ctx.confirm.open.and.returnValue(Promise.resolve(true));
       dh().delete.and.returnValue(of(null));
       await component.removeAccount(klient);
-      expect(dh().delete).toHaveBeenCalledWith('web/projects/7/accounts/11');
+      expect(dh().delete).toHaveBeenCalledWith('project-portal/projects/7/accounts/11');
       expect(component.accounts.map(a => a.id)).toEqual([12]);
       expect(component.revealedPassword).toBeNull();
 
@@ -548,14 +548,14 @@ describe('ProjectDetailComponent', () => {
      * @description The files card reloads on demand, opens the thread of a file (switching the
      *   filter to "all" for a closed thread) and keeps the list on a failure.
      * @input  openFileThread(brief.pdf of closed thread 4); unknown thread; loadFiles failing
-     * @output threadFilter 'all'; getWithMeta('web/project-threads/4'); unknown → nothing; files kept, not loading
+     * @output threadFilter 'all'; getWithMeta('project-portal/project-threads/4'); unknown → nothing; files kept, not loading
      */
     it('lists the files and opens their threads', fakeAsync(() => {
       init();
       dh().getWithMeta.and.returnValue(of({ data: { ...threads()[1], messages: [] }, meta: { has_more_older_messages: false } }));
       component.openFileThread(component.files[1]);
       expect(component.threadFilter).toBe('all');
-      expect(dh().getWithMeta).toHaveBeenCalledWith('web/project-threads/4');
+      expect(dh().getWithMeta).toHaveBeenCalledWith('project-portal/project-threads/4');
       dh().getWithMeta.calls.reset();
       component.openFileThread({ ...component.files[0], thread_id: 999 });
       expect(dh().getWithMeta).not.toHaveBeenCalled();
@@ -585,7 +585,7 @@ describe('ProjectDetailComponent', () => {
       component.newCheckpointLabel = '  Launch ';
       component.newCheckpointDescription = '  Go live  ';
       component.addCheckpoint();
-      expect(dh().post).toHaveBeenCalledWith('web/projects/7/checkpoints', { label: 'Launch', description: 'Go live', due_date: null, internal_note: null });
+      expect(dh().post).toHaveBeenCalledWith('project-portal/projects/7/checkpoints', { label: 'Launch', description: 'Go live', due_date: null, internal_note: null });
       expect(component.checkpoints.length).toBe(2);
       expect(component.newCheckpointLabel).toBe('');
       expect(component.newCheckpointDescription).toBe('');
@@ -593,7 +593,7 @@ describe('ProjectDetailComponent', () => {
       component.newCheckpointDueDate = '2026-12-24';
       component.newCheckpointNote = '  Ask hosting  ';
       component.addCheckpoint();
-      expect(dh().post).toHaveBeenCalledWith('web/projects/7/checkpoints', { label: 'Docs', description: null, due_date: '2026-12-24', internal_note: 'Ask hosting' });
+      expect(dh().post).toHaveBeenCalledWith('project-portal/projects/7/checkpoints', { label: 'Docs', description: null, due_date: '2026-12-24', internal_note: 'Ask hosting' });
       expect([component.newCheckpointDueDate, component.newCheckpointNote]).toEqual(['', '']);
       dh().post.calls.reset();
       ctx.permissions.granted = new Set();
@@ -608,7 +608,7 @@ describe('ProjectDetailComponent', () => {
      *   picked status is saved; the same status, a busy row or no permission send nothing; a failed
      *   save puts the dropdown back.
      * @input  checkpoint 1 (new); dropdown 'done'; then 'done' again; busy; no permission; failure on 'active'
-     * @output put('web/projects/7/checkpoints/1', { status: 'done' }) once; status 'done'; dropdown back to 'done' after
+     * @output put('project-portal/projects/7/checkpoints/1', { status: 'done' }) once; status 'done'; dropdown back to 'done' after
      *   the guards and the failure; busy flag cleared
      */
     it('sets the checkpoint status picked in the dropdown', fakeAsync(() => {
@@ -617,7 +617,7 @@ describe('ProjectDetailComponent', () => {
       const cp = component.checkpoints[0];
       dh().put.and.returnValue(of({ ...cp, status: 'done' }));
       component.setCheckpointStatus(cp, select('done'));
-      expect(dh().put).toHaveBeenCalledWith('web/projects/7/checkpoints/1', { status: 'done' });
+      expect(dh().put).toHaveBeenCalledWith('project-portal/projects/7/checkpoints/1', { status: 'done' });
       const saved = component.checkpoints[0];
       expect(saved.status).toBe('done');
       component.setCheckpointStatus(saved, select('done'));
@@ -698,7 +698,7 @@ describe('ProjectDetailComponent', () => {
       component.checkpointDraft.description = '  Wireframes ';
       dh().put.and.returnValue(of({ ...cp, description: 'Wireframes' }));
       component.saveCheckpoint(cp);
-      expect(dh().put).toHaveBeenCalledWith('web/projects/7/checkpoints/1', { description: 'Wireframes' });
+      expect(dh().put).toHaveBeenCalledWith('project-portal/projects/7/checkpoints/1', { description: 'Wireframes' });
       expect(component.editingCheckpointId).toBeNull();
       const saved = component.checkpoints[0];
       expect(saved.description).toBe('Wireframes');
@@ -714,7 +714,7 @@ describe('ProjectDetailComponent', () => {
       component.checkpointDraft = { label: 'UX', description: '', due_date: '', internal_note: '' };
       dh().put.and.returnValue(throwError(() => new Error('x')));
       component.saveCheckpoint(saved);
-      expect(dh().put).toHaveBeenCalledWith('web/projects/7/checkpoints/1', { label: 'UX', description: null });
+      expect(dh().put).toHaveBeenCalledWith('project-portal/projects/7/checkpoints/1', { label: 'UX', description: null });
       expect(component.editingCheckpointId).toBe(1);
       expect(component.checkpointBusyIds.has(1)).toBeFalse();
       component.cancelEditCheckpoint();
@@ -740,7 +740,7 @@ describe('ProjectDetailComponent', () => {
       component.checkpointDraft.internal_note = ' Hosting ';
       dh().put.and.returnValue(of({ ...cp, due_date: '2026-12-01', internal_note: 'Hosting' }));
       component.saveCheckpoint(cp);
-      expect(dh().put).toHaveBeenCalledWith('web/projects/7/checkpoints/1', { due_date: '2026-12-01', internal_note: 'Hosting' });
+      expect(dh().put).toHaveBeenCalledWith('project-portal/projects/7/checkpoints/1', { due_date: '2026-12-01', internal_note: 'Hosting' });
       const saved = component.checkpoints[0];
       expect([saved.due_date, saved.internal_note]).toEqual(['2026-12-01', 'Hosting']);
       expect(component.isOverdue(saved, '2026-12-02')).toBeTrue();
@@ -755,7 +755,7 @@ describe('ProjectDetailComponent', () => {
      * @description Up / down moves a checkpoint at once and saves the whole order; the ends, a
      *   running save and no permission do nothing; a failure restores the previous order.
      * @input  checkpoints A(1), B(2), C(3); move B up; move A up (first); failure moving C up
-     * @output put('web/projects/7/checkpoints/order', { ids: [2, 1, 3] }); order B, A, C with sort 0..2;
+     * @output put('project-portal/projects/7/checkpoints/order', { ids: [2, 1, 3] }); order B, A, C with sort 0..2;
      *   ends ignored; failure → B, A, C again
      */
     it('reorders the checkpoints', fakeAsync(() => {
@@ -765,7 +765,7 @@ describe('ProjectDetailComponent', () => {
       init();
       dh().put.and.returnValue(of([]));
       component.moveCheckpoint(1, -1);
-      expect(dh().put).toHaveBeenCalledWith('web/projects/7/checkpoints/order', { ids: [2, 1, 3] });
+      expect(dh().put).toHaveBeenCalledWith('project-portal/projects/7/checkpoints/order', { ids: [2, 1, 3] });
       expect(component.checkpoints.map(c => [c.label, c.sort_order])).toEqual([['B', 0], ['A', 1], ['C', 2]]);
       expect(component.checkpointsReordering).toBeFalse();
       dh().put.calls.reset();
@@ -828,7 +828,7 @@ describe('ProjectDetailComponent', () => {
     /**
      * @description Deleting a checkpoint asks with its label first.
      * @input  message '{label}?'; confirm false, then true
-     * @output confirm('…title', 'Design?'); delete('web/projects/7/checkpoints/1') only after confirm; removed
+     * @output confirm('…title', 'Design?'); delete('project-portal/projects/7/checkpoints/1') only after confirm; removed
      */
     it('deletes a checkpoint after confirmation', fakeAsync(async () => {
       ctx.i18n.getValue.and.callFake((p: string) => (p === 'projects.delete_checkpoint_confirm_message' ? '{label}?' : p));
@@ -840,7 +840,7 @@ describe('ProjectDetailComponent', () => {
       expect(dh().delete).not.toHaveBeenCalled();
       ctx.confirm.open.and.returnValue(Promise.resolve(true));
       await component.deleteCheckpoint(cp);
-      expect(dh().delete).toHaveBeenCalledWith('web/projects/7/checkpoints/1');
+      expect(dh().delete).toHaveBeenCalledWith('project-portal/projects/7/checkpoints/1');
       expect(component.checkpoints).toEqual([]);
       discardPeriodicTasks();
     }));
@@ -867,7 +867,7 @@ describe('ProjectDetailComponent', () => {
      * @description Opening a thread loads its messages (the API marks it read), clears its unread
      *   badge and scrolls to the newest message; a failure ends the loading.
      * @input  openThread(thread 3); message list 100 px; then a failing request
-     * @output getWithMeta('web/project-threads/3'); has_more from meta; admin_unread_count 0, unreadTotal 1;
+     * @output getWithMeta('project-portal/project-threads/3'); has_more from meta; admin_unread_count 0, unreadTotal 1;
      *   scrollTop 100; loading false after failure; closeThread clears it
      */
     it('opens a thread and marks it read', fakeAsync(() => {
@@ -876,7 +876,7 @@ describe('ProjectDetailComponent', () => {
       component.messageList = { nativeElement: list.el } as any;
       dh().getWithMeta.and.returnValue(of({ data: { ...threads()[0], messages: [{ id: 10, author_type: 'customer', body: 'Hi' }] }, meta: { has_more_older_messages: true } }));
       component.openThread(threads()[0]);
-      expect(dh().getWithMeta).toHaveBeenCalledWith('web/project-threads/3');
+      expect(dh().getWithMeta).toHaveBeenCalledWith('project-portal/project-threads/3');
       expect(component.selectedThread?.has_more_older_messages).toBeTrue();
       expect(component.threads.find(t => t.id === 3)!.admin_unread_count).toBe(0);
       expect(component.unreadTotal).toBe(1);
@@ -895,14 +895,14 @@ describe('ProjectDetailComponent', () => {
     /**
      * @description Changing the status updates the open thread and the list; no thread or no permission sends nothing.
      * @input  thread 3 open; changeThreadStatus('closed'); then guards
-     * @output put('web/project-threads/3/status', { status: 'closed' }); both copies closed; put once
+     * @output put('project-portal/project-threads/3/status', { status: 'closed' }); both copies closed; put once
      */
     it('changes the thread status', fakeAsync(() => {
       init();
       component.selectedThread = { ...threads()[0] };
       dh().put.and.returnValue(of({ ...threads()[0], status: 'closed' }));
       component.changeThreadStatus('closed');
-      expect(dh().put).toHaveBeenCalledWith('web/project-threads/3/status', { status: 'closed' });
+      expect(dh().put).toHaveBeenCalledWith('project-portal/project-threads/3/status', { status: 'closed' });
       expect(component.selectedThread!.status).toBe('closed');
       expect(component.threads[0].status).toBe('closed');
       ctx.permissions.granted = new Set();
@@ -917,7 +917,7 @@ describe('ProjectDetailComponent', () => {
     /**
      * @description A text reply is posted as JSON, then the thread and the list reload.
      * @input  thread 3 open; replyBody '  Hello '
-     * @output post('web/project-threads/3/reply', { body: 'Hello', is_internal: false }); thread reloaded; threads reloaded; reply cleared
+     * @output post('project-portal/project-threads/3/reply', { body: 'Hello', is_internal: false }); thread reloaded; threads reloaded; reply cleared
      */
     it('sends a text reply', fakeAsync(async () => {
       init();
@@ -925,9 +925,9 @@ describe('ProjectDetailComponent', () => {
       component.replyBody = '  Hello ';
       dh().getCollection.calls.reset();
       await component.sendReply();
-      expect(dh().post).toHaveBeenCalledWith('web/project-threads/3/reply', { body: 'Hello', is_internal: false });
-      expect(dh().getWithMeta).toHaveBeenCalledWith('web/project-threads/3');
-      expect(dh().getCollection).toHaveBeenCalledWith('web/project-threads', { project_id: 7, no_pagination: 'true' });
+      expect(dh().post).toHaveBeenCalledWith('project-portal/project-threads/3/reply', { body: 'Hello', is_internal: false });
+      expect(dh().getWithMeta).toHaveBeenCalledWith('project-portal/project-threads/3');
+      expect(dh().getCollection).toHaveBeenCalledWith('project-portal/project-threads', { project_id: 7, no_pagination: 'true' });
       expect(component.replyBody).toBe('');
       expect(component.replySending).toBeFalse();
       flush();
@@ -950,7 +950,7 @@ describe('ProjectDetailComponent', () => {
       expect(body.get('is_internal')).toBe('0');
       expect(body.getAll('attachments[]').length).toBe(1);
       expect(component.replyFiles).toEqual([]);
-      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/7/files');
+      expect(dh().getCollection).toHaveBeenCalledWith('project-portal/projects/7/files');
       flush();
       discardPeriodicTasks();
     }));
@@ -996,7 +996,7 @@ describe('ProjectDetailComponent', () => {
       component.selectedThread = { ...threads()[0], has_more_older_messages: true, messages: [{ id: 20 } as any] };
       dh().getWithMeta.and.returnValue(of({ data: [{ id: 10 }], meta: { has_more_older_messages: false } }));
       component.loadOlderMessages();
-      expect(dh().getWithMeta).toHaveBeenCalledWith('web/project-threads/3/messages?before_message_id=20');
+      expect(dh().getWithMeta).toHaveBeenCalledWith('project-portal/project-threads/3/messages?before_message_id=20');
       expect(component.selectedThread!.messages!.map(m => m.id)).toEqual([10, 20]);
       expect(component.selectedThread!.has_more_older_messages).toBeFalse();
       tick();
@@ -1081,7 +1081,7 @@ describe('ProjectDetailComponent', () => {
       expect((fixture.nativeElement as HTMLElement).querySelector('.pd-reply--internal')).not.toBeNull();
       component.replyBody = 'Check DNS';
       await component.sendReply();
-      expect(dh().post).toHaveBeenCalledWith('web/project-threads/3/reply', { body: 'Check DNS', is_internal: true });
+      expect(dh().post).toHaveBeenCalledWith('project-portal/project-threads/3/reply', { body: 'Check DNS', is_internal: true });
       expect(component.replyInternal).toBeFalse();
       component.replyInternal = true;
       component.replyFiles = [file('dns.txt')];
@@ -1151,16 +1151,16 @@ describe('ProjectDetailComponent', () => {
     it('follows the sub-page of the address and loads what it needs', fakeAsync(() => {
       init();
       expect(component.section).toBe('overview');
-      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/7/activity');
+      expect(dh().getCollection).toHaveBeenCalledWith('project-portal/projects/7/activity');
       expect(component.activity.length).toBe(2);
       go('progress');
       go('progress');
       expect(component.section).toBe('progress');
-      expect(dh().getCollection.calls.allArgs().filter((a: unknown[]) => a[0] === 'web/projects/templates').length).toBe(1);
+      expect(dh().getCollection.calls.allArgs().filter((a: unknown[]) => a[0] === 'project-portal/projects/templates').length).toBe(1);
       expect(component.templates.map(t => t.name)).toEqual(['Web']);
       dh().getCollection.calls.reset();
       go('files');
-      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/7/files');
+      expect(dh().getCollection).toHaveBeenCalledWith('project-portal/projects/7/files');
       go('nonsense');
       expect(component.section).toBe('overview');
       discardPeriodicTasks();
@@ -1193,12 +1193,12 @@ describe('ProjectDetailComponent', () => {
      * @description "Mine" lists the threads assigned to the signed-in administrator; assigning a
      *   thread saves it, updates the list and reloads "Mine".
      * @input  assigned_to_me → thread 3; open thread 5; assignThread('5'), then ''
-     * @output threadCount('mine') 1; put('web/project-threads/5/assignee', { assignee_id: 5 }) then null;
+     * @output threadCount('mine') 1; put('project-portal/project-threads/5/assignee', { assignee_id: 5 }) then null;
      *   thread 5 assignee 5 / 'Petr'; my threads reloaded
      */
     it('filters my threads and assigns a thread', fakeAsync(() => {
       init();
-      expect(dh().getCollection).toHaveBeenCalledWith('web/project-threads', { project_id: 7, no_pagination: 'true', assigned_to_me: '1' });
+      expect(dh().getCollection).toHaveBeenCalledWith('project-portal/project-threads', { project_id: 7, no_pagination: 'true', assigned_to_me: '1' });
       component.threadFilter = 'mine';
       expect(component.visibleThreads.map(t => t.id)).toEqual([3]);
       expect(component.threadCount('mine')).toBe(1);
@@ -1208,13 +1208,13 @@ describe('ProjectDetailComponent', () => {
       dh().put.and.returnValue(of({ id: 5, assignee_id: 5, assignee_name: 'Petr' }));
       dh().getCollection.calls.reset();
       component.assignThread('5');
-      expect(dh().put).toHaveBeenCalledWith('web/project-threads/5/assignee', { assignee_id: 5 });
+      expect(dh().put).toHaveBeenCalledWith('project-portal/project-threads/5/assignee', { assignee_id: 5 });
       expect(component.selectedThread!.assignee_name).toBe('Petr');
       expect(component.threads.find(t => t.id === 5)!.assignee_id).toBe(5);
-      expect(dh().getCollection).toHaveBeenCalledWith('web/project-threads', jasmine.objectContaining({ assigned_to_me: '1' }));
+      expect(dh().getCollection).toHaveBeenCalledWith('project-portal/project-threads', jasmine.objectContaining({ assigned_to_me: '1' }));
       dh().put.and.returnValue(of({ id: 5, assignee_id: null, assignee_name: null }));
       component.assignThread('');
-      expect(dh().put).toHaveBeenCalledWith('web/project-threads/5/assignee', { assignee_id: null });
+      expect(dh().put).toHaveBeenCalledWith('project-portal/project-threads/5/assignee', { assignee_id: null });
       ctx.permissions.granted = new Set();
       dh().put.calls.reset();
       component.assignThread('3');
@@ -1226,7 +1226,7 @@ describe('ProjectDetailComponent', () => {
      * @description Sending an invitation to an existing account asks first, needs an e-mail and
      *   updates the row; the access chips describe how the account signs in.
      * @input  anna (e-mail) - confirm false, then true; klient (no e-mail); accounts with / without password
-     * @output no request when declined or without e-mail; post('web/projects/7/accounts/12/invite', {});
+     * @output no request when declined or without e-mail; post('project-portal/projects/7/accounts/12/invite', {});
      *   invited_at set; success alert; chips 'account_no_password' + 'account_email_verified'
      */
     it('invites an account and describes its access', fakeAsync(async () => {
@@ -1241,7 +1241,7 @@ describe('ProjectDetailComponent', () => {
       ctx.confirm.open.and.returnValue(Promise.resolve(true));
       dh().post.and.returnValue(of({ ...anna, invited_at: '2026-11-12 10:00:00' }));
       await component.inviteAccount(anna);
-      expect(dh().post).toHaveBeenCalledWith('web/projects/7/accounts/12/invite', {});
+      expect(dh().post).toHaveBeenCalledWith('project-portal/projects/7/accounts/12/invite', {});
       expect(component.accounts[1].invited_at).toBe('2026-11-12 10:00:00');
       expect(component.invitingAccountId).toBeNull();
       expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'projects.account_invite_sent', 'success');
@@ -1257,8 +1257,8 @@ describe('ProjectDetailComponent', () => {
      * @description Progress applies a template (checkpoints with dates from the start) and saves
      *   the checkpoints as a new template; both need a choice / name and the update permission.
      * @input  apply template 1 from 2026-12-01 → 2 checkpoints, meta.added 2; save as 'Shop flow'
-     * @output postWithMeta('web/projects/7/apply-template', { template_id: 1, start_date: '2026-12-01' });
-     *   checkpoints replaced, form closed; post('web/projects/7/template', { name: 'Shop flow' });
+     * @output postWithMeta('project-portal/projects/7/apply-template', { template_id: 1, start_date: '2026-12-01' });
+     *   checkpoints replaced, form closed; post('project-portal/projects/7/template', { name: 'Shop flow' });
      *   template added; nothing without a choice or name
      */
     it('applies a template and saves the checkpoints as a template', fakeAsync(() => {
@@ -1274,7 +1274,7 @@ describe('ProjectDetailComponent', () => {
         { id: 1, label: 'Design', status: 'new', sort_order: 1 }, { id: 9, label: 'Launch', status: 'new', sort_order: 2, due_date: '2026-12-15' },
       ], meta: { added: 1 } }));
       component.applyTemplate();
-      expect(dh().postWithMeta).toHaveBeenCalledWith('web/projects/7/apply-template', { template_id: 1, start_date: '2026-12-01' });
+      expect(dh().postWithMeta).toHaveBeenCalledWith('project-portal/projects/7/apply-template', { template_id: 1, start_date: '2026-12-01' });
       expect(component.checkpoints.map(c => c.label)).toEqual(['Design', 'Launch']);
       expect(component.templateAction).toBeNull();
 
@@ -1286,7 +1286,7 @@ describe('ProjectDetailComponent', () => {
       component.templateDraft.name = 'Shop flow';
       dh().post.and.returnValue(of({ id: 2, name: 'Shop flow', description: null, checkpoints: [{}, {}] }));
       component.saveAsTemplate();
-      expect(dh().post).toHaveBeenCalledWith('web/projects/7/template', { name: 'Shop flow' });
+      expect(dh().post).toHaveBeenCalledWith('project-portal/projects/7/template', { name: 'Shop flow' });
       expect(component.templates.map(t => t.name)).toEqual(['Web', 'Shop flow']);
 
       ctx.permissions.granted = new Set(['web-projects-view']);
@@ -1300,7 +1300,7 @@ describe('ProjectDetailComponent', () => {
      *   change in a child section reloads the counts and the files.
      * @input  file of update 'Week 1'; file of approval 'Homepage'; onChildChanged
      * @output 'projects.file_source_update: Week 1'; navigate to updates / approvals;
-     *   get('web/projects/7') + getCollection files again
+     *   get('project-portal/projects/7') + getCollection files again
      */
     it('labels the files of updates and approvals and refreshes after child changes', fakeAsync(() => {
       init();
@@ -1319,8 +1319,8 @@ describe('ProjectDetailComponent', () => {
       dh().getCollection.calls.reset();
       dh().get.and.returnValue(of({ ...project(), pending_approvals_count: 1, published_updates_count: 4 }));
       component.onChildChanged();
-      expect(dh().get).toHaveBeenCalledWith('web/projects/7');
-      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/7/files');
+      expect(dh().get).toHaveBeenCalledWith('project-portal/projects/7');
+      expect(dh().getCollection).toHaveBeenCalledWith('project-portal/projects/7/files');
       expect(component.project!.pending_approvals_count).toBe(1);
       discardPeriodicTasks();
     }));

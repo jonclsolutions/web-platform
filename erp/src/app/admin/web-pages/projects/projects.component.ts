@@ -12,7 +12,9 @@
  * (assignee), the number of new client messages and of the threads waiting on the team per project;
  * the filter "My projects" keeps the projects of the signed-in administrator.
  * @note A new project opens its Access sub-page, where the client accounts are added. Old links
- * `?open_project=<id>` open the project page.
+ * `?open_project=<id>` open the project page. `?order_id=<id>` (button "Project" of the web
+ * orders) opens the project of that order (GET project-portal/projects?order_id=), or the create
+ * form with the order preselected when it has none yet.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -25,6 +27,7 @@ import * as Config from './projects.config';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 import { PageHelpComponent } from '../../components/page-help/page-help.component';
+import { hasApp } from '../../../apps/apps.registry';
 
 @Component({
   selector: 'app-projects',
@@ -43,7 +46,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
 
   tableCaption: string = '';
 
-  override apiEndpoint: string = 'web/projects';
+  override apiEndpoint: string = 'project-portal/projects';
 
   projectColumns: Core.ColumnDefinition[] = [];
   trashProjectColumns: Core.ColumnDefinition[] = [];
@@ -53,7 +56,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   /** Key prefix under which former versions kept the revealed password in sessionStorage (removed on load, VT-08). */
   private readonly LEGACY_PASSWORD_STORAGE_PREFIX = 'rpsw_project_pw_';
 
-  /** @description Administrators who can be responsible for a project (GET web/projects/assignees). */
+  /** @description Administrators who can be responsible for a project (GET project-portal/projects/assignees). */
   private assignees: { id: number; full_name: string }[] = [];
 
   graphColumns: GraphColumnOption[] = [];
@@ -134,7 +137,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
 
   /** @description Loads the possible assignees once for the create / edit form. */
   private loadAssignees(): void {
-    this.dataHandler.getCollection<{ id: number; full_name: string }>('web/projects/assignees').subscribe({
+    this.dataHandler.getCollection<{ id: number; full_name: string }>('project-portal/projects/assignees').subscribe({
       next: (users) => {
         this.assignees = users ?? [];
         this.applyAssigneeOptions();
@@ -163,8 +166,22 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     }
 
     const orderId = this.activatedRoute.snapshot.queryParamMap.get('order_id');
-    if (!orderId) return;
+    if (!orderId || !hasApp('web')) return;
 
+    // The project of the order when it exists, else a new one with the order preselected.
+    this.dataHandler.getCollection<{ id: number }>(this.apiEndpoint, { order_id: orderId, no_pagination: 'true' }).subscribe({
+      next: (projects) => projects?.length
+        ? this.router.navigate(['/admin/web/projects', projects[0].id], { replaceUrl: true })
+        : this.prefillFromOrder(orderId),
+      error: () => this.prefillFromOrder(orderId),
+    });
+  }
+
+  /**
+   * @description Opens the create form with the order preselected.
+   * @param orderId Id of the web order.
+   */
+  private prefillFromOrder(orderId: string): void {
     this.prefillOrderId = orderId;
     this.loadTemplateOptions();
     this.loadOrderOptions(() => {
@@ -178,7 +195,16 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.forceFullRefresh(this.filters);
   }
 
+  /**
+   * @description Puts the web orders into the order select of the create form (only with the
+   *   web application installed).
+   * @param onLoaded Called when done (also on failure / without the web).
+   */
   private loadOrderOptions(onLoaded: () => void): void {
+    if (!hasApp('web')) {
+      onLoaded();
+      return;
+    }
     this.dataHandler.getCollection<any>('web/sales_orders', { no_pagination: 'true', sort_by: 'id', sort_direction: 'desc' })
       .subscribe({
         next: (orders) => {
@@ -197,7 +223,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
 
   /** @description Puts the project templates into the template select of the create form. */
   private loadTemplateOptions(): void {
-    this.dataHandler.getCollection<{ id: number; name: string; checkpoints: unknown[] }>('web/projects/templates').subscribe({
+    this.dataHandler.getCollection<{ id: number; name: string; checkpoints: unknown[] }>('project-portal/projects/templates').subscribe({
       next: (templates) => {
         const field = this.formFields.find(f => f.column_name === 'template_id');
         if (!field) return;

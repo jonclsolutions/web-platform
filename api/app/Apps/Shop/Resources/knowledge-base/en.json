@@ -1,0 +1,172 @@
+{
+  "pages": {
+    "shop-welcome-page": {
+      "navLabel": "E-shop Welcome Page",
+      "header": "E-shop Welcome Page",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "The guide for this page is being prepared."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-dashboard": {
+      "navLabel": "Dashboard",
+      "header": "Shop - Dashboard",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - the overview page of the Shop admin module."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-products": {
+      "navLabel": "Products",
+      "header": "Product Management",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - management of the product catalog, variants, and images."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-categories": {
+      "navLabel": "Categories",
+      "header": "Category Management",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - hierarchical management of product categories."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-orders": {
+      "navLabel": "Orders",
+      "header": "Order Management",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - management of e-shop orders, statuses, and payments."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-customers": {
+      "navLabel": "Customers",
+      "header": "Customer Management",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - management of customer accounts and their order history."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-shipping-methods": {
+      "navLabel": "Shipping Methods",
+      "header": "Shipping Methods",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - management of available shipping methods."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-payment-methods": {
+      "navLabel": "Payment Methods",
+      "header": "Payment Methods",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - management of available payment methods."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-suppliers": {
+      "navLabel": "Suppliers",
+      "header": "Supplier Management",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - tracking of product suppliers."
+            }
+          ]
+        }
+      ]
+    },
+    "coupons": {
+      "navLabel": "Discount Coupons",
+      "header": "Discount Coupons",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - management of discount coupons and their conditions."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-logs": {
+      "navLabel": "Logs",
+      "header": "Shop - Logs",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - an audit log of actions performed in the Shop module."
+            }
+          ]
+        }
+      ]
+    },
+    "edit-eshop": {
+      "navLabel": "E-shop Settings",
+      "header": "Global E-shop Settings",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Placeholder content - global e-shop settings."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

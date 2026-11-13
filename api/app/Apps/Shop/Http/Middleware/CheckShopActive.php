@@ -1,0 +1,55 @@
+<?php
+/**
+ * @file CheckShopActive.php
+ * @path app/Apps/Shop/Http/Middleware/CheckShopActive.php
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
+ * @description Middleware that enforces e-shop availability by verifying the
+ * `is_shop_active` flag on the shop-owned settings table.
+ */
+
+namespace App\Apps\Shop\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use App\Apps\Shop\Models\ShopSiteSetting;
+use Symfony\Component\HttpFoundation\Response;
+
+/**
+ * @description Intercepts incoming requests to verify if the shop is currently active.
+ * @note Prevents access to storefront/checkout routes if the shop is in maintenance mode,
+ * using caching for performance. Cache key must stay in sync with
+ * `ShopSiteSettingController::CACHE_KEY`.
+ */
+class CheckShopActive
+{
+    /**
+     * Handles the incoming request and validates the shop activity status.
+     *
+     * @param Request $request
+     * @param Closure $next
+     * @return Response Returns the request response or a 503 maintenance error.
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        // Retrieve settings from Cache to minimize database load
+        $settings = Cache::remember('site_setting_active_shop', 300, function () {
+            return ShopSiteSetting::firstOrCreate(
+                ['id' => 1],
+                ['is_shop_active' => true, 'maintenance_message' => 'We apologize, system maintenance is in progress..']
+            );
+        });
+
+        // Return 503 if the shop is inactive
+        if (!$settings->is_shop_active) {
+            // Error shape {message} - no `success` flag, the status says it (finding #6).
+            return response()->json([
+                'message' => $settings->maintenance_message ?? 'We apologize, but order acceptance and e-shop operations are currently suspended..'
+            ], 503);
+        }
+
+        return $next($request);
+    }
+}

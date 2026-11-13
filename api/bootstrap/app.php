@@ -46,13 +46,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('api', \App\Http\Middleware\LogDataExport::class);
 
         /**
-         * Register custom middleware aliases for use in route definitions.
+         * Middleware aliases of the core (the applications add theirs - AppManifest::middlewareAliases()).
          */
         $middleware->alias([
-            'shop.active'  => \App\Http\Middleware\CheckShopActive::class,
-            'web.active'   => \App\Http\Middleware\CheckWebActive::class,
             'permission'   => \App\Http\Middleware\CheckPermission::class,
-            'project.session' => \App\Http\Middleware\CheckProjectSession::class,
             'public.form'  => \App\Http\Middleware\PublicFormGuard::class,
         ]);
     })

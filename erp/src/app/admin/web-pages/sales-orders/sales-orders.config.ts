@@ -10,13 +10,23 @@
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { hasApp } from '../../../apps/apps.registry';
 
 const SECTION = 'sales-orders';
 
+/**
+ * @description Row buttons of the order table; "Project" (open / create the project of the
+ *   order) only while the project portal is installed.
+ * @param i18n Admin translations.
+ * @returns Buttons in table order.
+ */
 export function createSalesOrderButtons(i18n: AdminLocalizationService): Core.TableButtons[] {
+  const project: Core.TableButtons[] = hasApp('project-portal')
+    ? [{ display_name: '', header_name: i18n.getValue(`${SECTION}.btn_project`), isActive: true, type: 'neutral_button', action: 'generate_form', permission: 'web-projects-create', icon: 'folder' }]
+    : [];
   return [
     { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_details`), isActive: true, type: 'info_button', action: 'details', icon: 'search' },
-    { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_project`), isActive: true, type: 'neutral_button', action: 'generate_form', permission: 'web-projects-create', icon: 'folder' },
+    ...project,
     { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_edit`), isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-sales-orders-update', icon: 'edit' },
     { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_delete`), isActive: true, type: 'delete_button', action: 'delete', permission: 'web-sales-orders-delete', icon: 'delete' },
   ];

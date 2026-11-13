@@ -10,7 +10,7 @@
  *     kind, `retention_days` NULL = kept until deleted by hand), filled with the defaults of
  *     CoreRetentionSetting::DEFAULTS; enforced daily by `retention:purge`;
  *   - `web_sales_leads.public_token_expires_at` - the public order form link of a lead expires
- *     (WebSalesLead::PUBLIC_TOKEN_TTL_DAYS); an existing unused link gets the full period from now,
+ *     (PUBLIC_TOKEN_TTL_DAYS, the period of the web lead link); an existing unused link gets the full period from now,
  *     so no link sent before this change stops working at once;
  *   - `web_cookie_consents` - anonymous record of every cookie consent decision (random consent id,
  *     version, categories, time) - no IP address, no user agent.
@@ -18,7 +18,6 @@
  */
 
 use App\Models\Core\CoreRetentionSetting;
-use App\Models\Web\WebSalesLead;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +25,12 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * @description Validity of the public order form link of a web lead (days) - the value of
+     *   WebSalesLead::PUBLIC_TOKEN_TTL_DAYS, kept here so the migration needs no application class.
+     */
+    private const PUBLIC_TOKEN_TTL_DAYS = 30;
+
     /**
      * @description Creates the retention settings (with defaults), the lead link expiry and the
      * consent records.
@@ -56,7 +61,7 @@ return new class extends Migration
         DB::table('web_sales_leads')
             ->whereNotNull('public_token')
             ->whereNull('public_token_used_at')
-            ->update(['public_token_expires_at' => $now->copy()->addDays(WebSalesLead::PUBLIC_TOKEN_TTL_DAYS)]);
+            ->update(['public_token_expires_at' => $now->copy()->addDays(self::PUBLIC_TOKEN_TTL_DAYS)]);
 
         Schema::create('web_cookie_consents', function (Blueprint $table) {
             $table->bigIncrements('id');

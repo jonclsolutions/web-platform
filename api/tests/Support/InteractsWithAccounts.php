@@ -188,7 +188,7 @@ trait InteractsWithAccounts
      * @description Returns a credential cookie the answer sets and checks the attributes every
      *   credential cookie must have (HttpOnly, SameSite=Strict, the given Path, host-only).
      * @param TestResponse $response Answer of the API.
-     * @param string $name Cookie name (refreshCookieName() / AuthCookies::REFRESH / AuthCookies::PORTAL).
+     * @param string $name Cookie name (refreshCookieName() / AuthCookies::REFRESH / the session cookie of an application).
      * @param string $path Expected Path.
      * @return Cookie
      */

@@ -52,12 +52,12 @@ describe('ProjectApprovalsSectionComponent', () => {
    * @description The requests load on init; "open" shows waiting + changes requested, "all" every
    *   one; the list renders the state, the files and the history.
    * @input  3 requests (pending, changes requested, approved)
-   * @output getCollection('web/projects/7/approvals'); openCount 2; visible 2 / 3; 2 items rendered,
+   * @output getCollection('project-portal/projects/7/approvals'); openCount 2; visible 2 / 3; 2 items rendered,
    *   1 decision, the file name
    */
   it('loads the requests and filters the open ones', () => {
     fixture.detectChanges();
-    expect(dh().getCollection).toHaveBeenCalledWith('web/projects/7/approvals');
+    expect(dh().getCollection).toHaveBeenCalledWith('project-portal/projects/7/approvals');
     expect(component.openCount).toBe(2);
     expect(component.visibleApprovals.map(a => a.id)).toEqual([4, 3]);
     const el = fixture.nativeElement as HTMLElement;
@@ -74,7 +74,7 @@ describe('ProjectApprovalsSectionComponent', () => {
    * @description A new request is sent as multipart (title, description, checkpoint, due date,
    *   files) and put first; the parent is told; a title is required; a failure keeps the form.
    * @input  openAdd; title ' Menu '; checkpoint '1'; due '2026-12-01'; file menu.pdf + virus.exe
-   * @output post('web/projects/7/approvals', FormData) with those values and 1 file; type error shown;
+   * @output post('project-portal/projects/7/approvals', FormData) with those values and 1 file; type error shown;
    *   approval first; form closed; changed emitted
    */
   it('asks for a new approval with files', () => {
@@ -92,7 +92,7 @@ describe('ProjectApprovalsSectionComponent', () => {
     dh().post.and.returnValue(of({ ...approvals()[0], id: 9, title: 'Menu' }));
     component.save();
     const [url, form] = dh().post.calls.mostRecent().args as [string, FormData];
-    expect(url).toBe('web/projects/7/approvals');
+    expect(url).toBe('project-portal/projects/7/approvals');
     expect([form.get('title'), form.get('description'), form.get('checkpoint_id'), form.get('due_date')]).toEqual(['Menu', 'Main menu', '1', '2026-12-01']);
     expect(form.getAll('attachments[]').length).toBe(1);
     expect(component.approvals[0].id).toBe(9);
@@ -111,7 +111,7 @@ describe('ProjectApprovalsSectionComponent', () => {
    * @description Only a pending request is edited; saved files can be marked for removal (toggle);
    *   the change goes to the URL of the request and replaces it in the list.
    * @input  openEdit(Texts - changes requested); openEdit(Homepage); toggleRemove(30) twice + once; save
-   * @output no form for Texts; draft from Homepage; post('web/projects/7/approvals/4', FormData remove_attachment_ids[] 30)
+   * @output no form for Texts; draft from Homepage; post('project-portal/projects/7/approvals/4', FormData remove_attachment_ids[] 30)
    */
   it('changes a pending request', () => {
     fixture.detectChanges();
@@ -127,7 +127,7 @@ describe('ProjectApprovalsSectionComponent', () => {
     dh().post.and.returnValue(of({ ...approvals()[0], title: 'Homepage 2', attachments: [] }));
     component.save();
     const [url, form] = dh().post.calls.mostRecent().args as [string, FormData];
-    expect(url).toBe('web/projects/7/approvals/4');
+    expect(url).toBe('project-portal/projects/7/approvals/4');
     expect(form.getAll('remove_attachment_ids[]')).toEqual(['30']);
     expect(component.approvals[0].title).toBe('Homepage 2');
     component.openAdd();
@@ -156,15 +156,15 @@ describe('ProjectApprovalsSectionComponent', () => {
     ctx.confirm.open.and.returnValue(Promise.resolve(true));
     dh().post.and.returnValue(of({ ...approvals()[1], status: 'pending' }));
     await component.act(component.approvals[1], 'reopen');
-    expect(dh().post).toHaveBeenCalledWith('web/projects/7/approvals/3/reopen', {});
+    expect(dh().post).toHaveBeenCalledWith('project-portal/projects/7/approvals/3/reopen', {});
     expect(component.approvals[1].status).toBe('pending');
     dh().post.and.returnValue(of({ ...approvals()[0], status: 'cancelled' }));
     await component.act(component.approvals[0], 'cancel');
-    expect(dh().post).toHaveBeenCalledWith('web/projects/7/approvals/4/cancel', {});
+    expect(dh().post).toHaveBeenCalledWith('project-portal/projects/7/approvals/4/cancel', {});
     expect(component.approvals[0].status).toBe('cancelled');
     dh().delete.and.returnValue(of(null));
     await component.act(component.approvals[2], 'delete');
-    expect(dh().delete).toHaveBeenCalledWith('web/projects/7/approvals/2');
+    expect(dh().delete).toHaveBeenCalledWith('project-portal/projects/7/approvals/2');
     expect(component.approvals.length).toBe(2);
     expect(changed).toHaveBeenCalledTimes(3);
 

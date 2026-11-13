@@ -14,7 +14,7 @@
 /*
     @module: Page and module colours
     @description: Layout of the page; `data-module` sets the colour of a chip / row / dot.
-    @usage: .cal-page, [data-module="personal|web|shop|core"]
+    @usage: .cal-page, [data-module="personal|web|shop|project-portal|core"]
 */
 .cal-page {
   font-family: var(--ff, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif);
@@ -26,6 +26,7 @@
 
 [data-module="web"]  { --mod: var(--color-indigo-600); --mod-bg: var(--color-indigo-50); }
 [data-module="shop"] { --mod: var(--color-emerald-600); --mod-bg: var(--color-emerald-50); }
+[data-module="project-portal"] { --mod: var(--color-rose-600); --mod-bg: var(--color-rose-50); }
 [data-module="core"] { --mod: var(--color-zinc-700, #3f3f46); --mod-bg: var(--color-zinc-100); }
 [data-module="personal"] { --mod: var(--color-amber-700); --mod-bg: var(--color-amber-50); }
 

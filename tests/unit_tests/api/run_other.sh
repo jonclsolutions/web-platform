@@ -5,7 +5,7 @@
 # @project JS web-platform
 # @author JS
 # @created 2026
-# @description Runs the api (Laravel / PHPUnit) tests: suite Other (everything outside Core, Web and Shop: legal, translations, import, …) - tests/Unit/Other and tests/Feature/Other.
+# @description Runs the api (Laravel / PHPUnit) tests: suite Other (everything outside the core and the applications: legal, import, …) - tests/Unit/Other and tests/Feature/Other.
 #   Measures code coverage of the Other section files (lines + methods,
 #   needs pcov or Xdebug - without a driver the tests still run).
 #   Result: tests/unit_tests/api/report/report.html, report.xml and coverage/index.html (last run only).

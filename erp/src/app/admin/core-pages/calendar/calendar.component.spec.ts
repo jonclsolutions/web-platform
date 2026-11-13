@@ -32,7 +32,7 @@ describe('CalendarComponent', () => {
     id, type: 'coupon_end', module: 'shop', date, subject: id.toUpperCase(), link: '/admin/shop/coupons', severity: 'warning', ...overrides,
   });
   const EVENTS: AgendaEvent[] = [
-    event('a', '2026-11-05', { type: 'project_deadline', module: 'web', link: '/admin/web/projects/7', severity: 'danger' }),
+    event('a', '2026-11-05', { type: 'project_deadline', module: 'project-portal', link: '/admin/web/projects/7', severity: 'danger' }),
     event('b', '2026-11-20'), event('c', '2026-11-20'), event('d', '2026-11-20'), event('e', '2026-11-20'),
     event('f', '2026-11-13', { type: 'activation_expiry', module: 'core', link: '/admin/core/administrators' }),
     event('evil', '2026-11-14', { link: 'https://evil.example.com' }),
@@ -41,7 +41,7 @@ describe('CalendarComponent', () => {
     type: 'personal', module: 'personal', subject: 'Call the accountant', link: null, severity: 'info',
     personal: { id: 9, time: '09:30', note: 'Invoices', done: false },
   });
-  const ALL = ['personal', 'web', 'shop', 'core'];
+  const ALL = ['personal', 'web', 'shop', 'project-portal', 'core'];
   const REMINDERS: AgendaReminder[] = [
     { type: 'job_applications_new', module: 'web', count: 3, since: '2026-11-08', link: '/admin/web/job-applications' },
     { type: 'shop_orders_open', module: 'shop', count: 2, since: '2026-11-10', link: '/admin/shop/orders' },
@@ -125,7 +125,8 @@ describe('CalendarComponent', () => {
    *   of the oldest item; the module filter hides events, reminders and counts of a module.
    * @input Reminders web 3 + shop 2; switch e-shop off.
    * @output 2 reminder rows, total 5 (badge of today); since 'calendar.since_days' (3 days);
-   *   e-shop off: 1 reminder, total 3, no shop events, filter chip off.
+   *   e-shop off: 1 reminder, total 3, no shop events, filter chip off; web 1 item (the
+   *   reminder), project portal 1 (the project deadline).
    */
   it('lists the open work and filters the modules', () => {
     create();
@@ -143,7 +144,8 @@ describe('CalendarComponent', () => {
     expect(component.reminderTotal).toBe(3);
     expect(component.visibleEvents.some(e => e.module === 'shop')).toBeFalse();
     expect(el.querySelector('.cal-filter[data-module="shop"]')?.classList).toContain('cal-filter--off');
-    expect(component.moduleCount('web')).toBe(2);
+    expect(component.moduleCount('web')).toBe(1);
+    expect(component.moduleCount('project-portal')).toBe(1);
   });
 
   /**

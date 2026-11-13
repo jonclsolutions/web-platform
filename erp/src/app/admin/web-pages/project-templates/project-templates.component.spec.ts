@@ -42,11 +42,11 @@ describe('ProjectTemplatesComponent', () => {
   /**
    * @description Templates load and render with their checkpoints and day offsets.
    * @input  1 template with 2 checkpoints
-   * @output getCollection('web/projects/templates'); 1 item; labels 'projects.template_offset' / 'projects.template_no_date'
+   * @output getCollection('project-portal/projects/templates'); 1 item; labels 'projects.template_offset' / 'projects.template_no_date'
    */
   it('loads the templates', () => {
     fixture.detectChanges();
-    expect(dh().getCollection).toHaveBeenCalledWith('web/projects/templates');
+    expect(dh().getCollection).toHaveBeenCalledWith('project-portal/projects/templates');
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('.ps-item').length).toBe(1);
     expect(component.offsetLabel(7)).toBe('projects.template_offset');
     expect(component.offsetLabel(null)).toBe('projects.template_no_date');
@@ -57,7 +57,7 @@ describe('ProjectTemplatesComponent', () => {
    *   0–3650; rows are added, moved and removed (one always stays); saving posts the trimmed
    *   payload and keeps the list sorted.
    * @input  openNew; rows 'Brief' (0), 'Analysis' ('x' → '3'); move; remove; save 'Audit'
-   * @output post('web/projects/templates', { name 'Audit', description null, checkpoints [Analysis 3, Brief 0] });
+   * @output post('project-portal/projects/templates', { name 'Audit', description null, checkpoints [Analysis 3, Brief 0] });
    *   list Audit, Web; form closed; success alert
    */
   it('creates a template with its checkpoints', () => {
@@ -85,7 +85,7 @@ describe('ProjectTemplatesComponent', () => {
 
     dh().post.and.returnValue(of({ id: 2, name: 'Audit', description: null, checkpoints: [] }));
     component.save();
-    expect(dh().post).toHaveBeenCalledWith('web/projects/templates', {
+    expect(dh().post).toHaveBeenCalledWith('project-portal/projects/templates', {
       name: 'Audit', description: null, checkpoints: [
         { label: 'Analysis', description: null, offset_days: 3 }, { label: 'Brief', description: null, offset_days: 0 },
       ],
@@ -99,7 +99,7 @@ describe('ProjectTemplatesComponent', () => {
    * @description An existing template opens with its rows (empty days as ''), the last row is
    *   never removed, saving PUTs and replaces it; deleting asks first.
    * @input  openEdit(Web); remove rows; save; delete declined / confirmed
-   * @output draft rows Design '7' / Launch ''; put('web/projects/templates/1', …); delete only after confirm
+   * @output draft rows Design '7' / Launch ''; put('project-portal/projects/templates/1', …); delete only after confirm
    */
   it('edits and deletes a template', async () => {
     fixture.detectChanges();
@@ -113,7 +113,7 @@ describe('ProjectTemplatesComponent', () => {
     expect(component.draft.checkpoints.length).toBe(1);
     dh().put.and.returnValue(of({ ...templates()[0], checkpoints: [{ label: 'Launch', description: 'Go live', offset_days: null }] }));
     component.save();
-    expect(dh().put).toHaveBeenCalledWith('web/projects/templates/1', jasmine.objectContaining({ name: 'Web', checkpoints: [{ label: 'Launch', description: 'Go live', offset_days: null }] }));
+    expect(dh().put).toHaveBeenCalledWith('project-portal/projects/templates/1', jasmine.objectContaining({ name: 'Web', checkpoints: [{ label: 'Launch', description: 'Go live', offset_days: null }] }));
     expect(component.templates[0].checkpoints.length).toBe(1);
 
     ctx.confirm.open.and.returnValue(Promise.resolve(false));
@@ -123,7 +123,7 @@ describe('ProjectTemplatesComponent', () => {
     dh().delete.and.returnValue(of(null));
     component.openEdit(component.templates[0]);
     await component.remove(component.templates[0]);
-    expect(dh().delete).toHaveBeenCalledWith('web/projects/templates/1');
+    expect(dh().delete).toHaveBeenCalledWith('project-portal/projects/templates/1');
     expect(component.templates).toEqual([]);
     expect(component.editing).toBeNull();
   });

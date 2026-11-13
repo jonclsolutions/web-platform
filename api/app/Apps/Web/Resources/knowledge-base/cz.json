@@ -1,0 +1,116 @@
+{
+  "pages": {
+    "web-welcome-page": {
+      "navLabel": "Uvítací stránka webu",
+      "header": "Uvítací stránka webu",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Návod k této stránce se připravuje."
+            }
+          ]
+        }
+      ]
+    },
+    "web-dashboard": {
+      "navLabel": "Dashboard",
+      "header": "Web - Dashboard",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - přehledová stránka webového modulu administrace."
+            }
+          ]
+        }
+      ]
+    },
+    "user-request": {
+      "navLabel": "Webový formulář",
+      "header": "Webový formulář (poptávky)",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa poptávek odeslaných z veřejného webového formuláře."
+            }
+          ]
+        }
+      ]
+    },
+    "web-business-logs": {
+      "navLabel": "Business logy",
+      "header": "Web - Business logy",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - auditní log akcí provedených ve webovém modulu."
+            }
+          ]
+        }
+      ]
+    },
+    "sales-leads": {
+      "navLabel": "Obchodní leady",
+      "header": "Obchodní leady",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - evidence a generování odkazů pro obchodní leady."
+            }
+          ]
+        }
+      ]
+    },
+    "edit-website": {
+      "navLabel": "Editace webu",
+      "header": "Editace obsahu webu",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - editace obsahových částí veřejného webu."
+            }
+          ]
+        }
+      ]
+    },
+    "sales-orders": {
+      "navLabel": "Přijaté objednávky",
+      "header": "Přijaté objednávky (realizace)",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - přehled přijatých objednávek/realizací a jejich zpracování."
+            }
+          ]
+        }
+      ]
+    },
+    "job-applications": {
+      "navLabel": "Pracovní nabídky",
+      "header": "Pracovní formulář (uchazeči)",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - přehled odeslaných žádostí z pracovního formuláře."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

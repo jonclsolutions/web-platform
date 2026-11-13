@@ -1,0 +1,47 @@
+<?php
+/**
+ * @file ProjectPortalLogResource.php
+ * @path app/Apps/ProjectPortal/Http/Resources/ProjectPortalLogResource.php
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
+ * @description Resource of one row of the project portal audit log (project_portal_logs).
+ */
+
+namespace App\Apps\ProjectPortal\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+/**
+ * @description Transforms ProjectPortalLog model data, mapping internal events and user associations.
+ */
+class ProjectPortalLogResource extends JsonResource
+{
+    /**
+     * Transform the resource into an array.
+     *
+     * @param Request $request
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'id'                     => $this->id,
+            'origin'                 => $this->origin,
+            'event_type'             => $this->event_type,
+            'module'                 => $this->module,
+            'description'            => $this->description,
+            'affected_entity_type'   => $this->affected_entity_type,
+            'affected_entity_id'     => $this->affected_entity_id,
+            'user' => [
+                'id'         => $this->user_id,
+                'user_email' => $this->user ? $this->user->user_email : 'Unknown user'
+            ],
+            'context_data'           => $this->context_data,
+            'created_at'             => $this->created_at?->format('Y-m-d H:i:s'),
+            'user_id_plain'          => $this->user_id_plain,
+            'user_plain'             => $this->user_plain,
+        ];
+    }
+}

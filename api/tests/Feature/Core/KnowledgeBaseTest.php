@@ -11,12 +11,14 @@
  *   user gets only the pages / sections of the permissions they hold; languages and fallback;
  *   every admin page links its own page of the manual (help button "?" of the page).
  * @dependencies
- * - Tests\TestCase (InteractsWithAccounts); resources/knowledge-base/*.json (the real content);
+ * - Tests\TestCase (InteractsWithAccounts); resources/knowledge-base/*.json + the knowledge-base
+ *   files of the registered applications (the real content);
  *   ../erp/src/app/admin/admin-routing.module.ts (the admin routes, `data.help`).
  */
 
 namespace Tests\Feature\Core;
 
+use App\Support\Apps\AppRegistry;
 use App\Support\KnowledgeBase\KnowledgeBase;
 use Tests\TestCase;
 
@@ -29,13 +31,22 @@ class KnowledgeBaseTest extends TestCase
     private const BLOCK_TYPES = ['text', 'lead', 'alert', 'image', 'link', 'list', 'grid', 'flow', 'note'];
 
     /**
-     * @description Decodes one file of the manual.
+     * @description Decodes one file of the manual - the core file with the files of the
+     *   registered applications (as KnowledgeBase merges them).
      * @param string $name File name without .json.
      * @return array<string, mixed>
      */
     private function file(string $name): array
     {
-        return json_decode((string) file_get_contents(resource_path(KnowledgeBase::DIRECTORY . "/{$name}.json")), true, 64, JSON_THROW_ON_ERROR);
+        $merged = KnowledgeBase::decode(resource_path(KnowledgeBase::DIRECTORY . "/{$name}.json"));
+        foreach (AppRegistry::apps() as $app) {
+            $extra = ($dir = $app->knowledgeBasePath()) ? KnowledgeBase::decode("{$dir}/{$name}.json") : null;
+            if ($extra !== null) {
+                $merged['pages'] = $name === 'structure' ? [...$merged['pages'], ...$extra['pages']] : $merged['pages'] + $extra['pages'];
+            }
+        }
+
+        return $merged;
     }
 
     /**

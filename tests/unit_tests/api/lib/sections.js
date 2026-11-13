@@ -5,14 +5,15 @@
  * @author JS
  * @created 2026
  * @description Which api source files (app/…) belong to which test section. The coverage of
- *   a section run (run_core.sh, run_web.sh, run_shop.sh, run_other.sh) is measured over
- *   exactly these files; run_all_api.sh measures all of them. The sections match the
- *   PHPUnit suites in api/phpunit.xml (tests/{Unit,Feature}/<Section>).
+ *   a section run (run_core.sh, run_web.sh, run_shop.sh, run_project_portal.sh, run_other.sh)
+ *   is measured over exactly these files; run_integration.sh and run_all_api.sh measure all of
+ *   them. The sections match the PHPUnit suites in api/phpunit.xml (core / other:
+ *   tests/{Unit,Feature}/<Section>, applications: tests/Apps/<App>).
  * @dependencies
  * - none (plain data + one lookup function).
  *
- * @note A file belongs to the FIRST section whose list contains it (core, web, shop);
- *   everything else is "other". Entries ending with "/" are folders, the rest are files.
+ * @note A file belongs to the FIRST section whose list contains it (core, web, shop,
+ *   projectportal); everything else is "other". Entries ending with "/" are folders, the rest are files.
  */
 
 'use strict';
@@ -51,39 +52,33 @@ const SECTIONS = {
     'app/Services/Security/',
     'app/Traits/LogsActivity.php'
   ],
-  // Web section (public web forms, projects portal, admin web pages).
+  // Web application (public website and forms, leads, orders, job applications, web admin) +
+  // the attachment helpers its forms test most.
   web: [
-    'app/Http/Controllers/Api/Web/',
-    'app/Http/Requests/Web/',
-    'app/Http/Resources/Web/',
-    'app/Models/Web/',
-    'app/Mail/Web/',
-    'app/Http/Middleware/CheckWebActive.php',
-    'app/Http/Middleware/CheckProjectSession.php',
-    'app/Support/Mail/RawRequestEmailTemplate.php',
+    'app/Apps/Web/',
     'app/Rules/AttachmentsTotalSize.php',
     'app/Traits/HandlesAttachments.php'
   ],
-  // E-shop section (public shop, checkout, admin shop pages).
+  // E-shop application (public shop, checkout, admin shop pages).
   shop: [
-    'app/Http/Controllers/Api/Shop/',
-    'app/Http/Requests/Shop/',
-    'app/Http/Resources/Shop/',
-    'app/Models/Shop/',
-    'app/Http/Middleware/CheckShopActive.php'
+    'app/Apps/Shop/'
+  ],
+  // Project portal application (projects, client portal, its admin and log).
+  projectportal: [
+    'app/Apps/ProjectPortal/'
   ]
 };
 
 /** Section names in lookup order; "other" is the fallback. */
-const SECTION_NAMES = ['core', 'web', 'shop', 'other'];
+const SECTION_NAMES = ['core', 'web', 'shop', 'projectportal', 'other'];
 
 /**
  * @description Section of one api source file.
  * @param {string} file Path relative to api/ (POSIX separators), e.g. 'app/Models/User.php'.
- * @returns {'core'|'web'|'shop'|'other'} Section name.
+ * @returns {'core'|'web'|'shop'|'projectportal'|'other'} Section name.
  */
 function sectionOf(file) {
-  for (const name of ['core', 'web', 'shop']) {
+  for (const name of ['core', 'web', 'shop', 'projectportal']) {
     if (SECTIONS[name].some(p => (p.endsWith('/') ? file.startsWith(p) : file === p))) return name;
   }
   return 'other';

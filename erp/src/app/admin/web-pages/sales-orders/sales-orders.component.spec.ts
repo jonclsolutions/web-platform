@@ -149,13 +149,12 @@ describe('SalesOrdersComponent', () => {
   }));
 
   /**
-   * @description The project button opens the existing project or starts a new one for the order.
-   * @input  createProject({ id: 4, project_id: 9 }), ({ id: 5 }), ({}), (null)
-   * @output navigate(['/admin/web/projects', 9]); (…, { order_id: 5 }); nothing for rows without id
+   * @description The project button opens the projects page of the portal with the order (it
+   *   opens the project of the order or starts a new one).
+   * @input  createProject({ id: 5 }), ({}), (null)
+   * @output navigate(['/admin/web/projects'], { order_id: 5 }); nothing for rows without id
    */
   it('opens or creates the project of an order', () => {
-    component.createProject({ id: 4, project_id: 9 });
-    expect(navigate).toHaveBeenCalledWith(['/admin/web/projects', 9]);
     component.createProject({ id: 5 });
     expect(navigate).toHaveBeenCalledWith(['/admin/web/projects'], { queryParams: { order_id: 5 } });
     navigate.calls.reset();

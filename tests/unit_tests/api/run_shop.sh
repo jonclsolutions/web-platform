@@ -5,7 +5,7 @@
 # @project JS web-platform
 # @author JS
 # @created 2026
-# @description Runs the api (Laravel / PHPUnit) tests: suite Shop - tests/Unit/Shop and tests/Feature/Shop.
+# @description Runs the api (Laravel / PHPUnit) tests: suite Shop - api/tests/Apps/Shop.
 #   Measures code coverage of the Shop section files (lines + methods,
 #   needs pcov or Xdebug - without a driver the tests still run).
 #   Result: tests/unit_tests/api/report/report.html, report.xml and coverage/index.html (last run only).

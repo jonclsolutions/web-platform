@@ -9,7 +9,7 @@
  *   Progress). Each checkpoint has a title, a description and its due date as days after the
  *   start. Add, edit (rows added, removed, moved), delete. A template can also be saved from a
  *   project (Progress → "Save as a template").
- * @dependencies DataHandler (web/projects/templates), AdminLocalizationService, ConfirmDialogService,
+ * @dependencies DataHandler (project-portal/projects/templates), AdminLocalizationService, ConfirmDialogService,
  *   AlertDialogService, PermissionService (web-projects-update)
  */
 
@@ -93,7 +93,7 @@ export class ProjectTemplatesComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.cd.markForCheck();
-    this.dataHandler.getCollection<ProjectTemplate>('web/projects/templates').subscribe({
+    this.dataHandler.getCollection<ProjectTemplate>('project-portal/projects/templates').subscribe({
       next: (rows) => { this.templates = Array.isArray(rows) ? rows : []; this.loading = false; this.cd.markForCheck(); },
       error: () => { this.loading = false; this.cd.markForCheck(); },
     });
@@ -171,8 +171,8 @@ export class ProjectTemplatesComponent implements OnInit {
     };
     const isNew = this.editing === 'new';
     const request = isNew
-      ? this.dataHandler.post<ProjectTemplate>('web/projects/templates', payload)
-      : this.dataHandler.put<ProjectTemplate>(`web/projects/templates/${this.editing}`, payload);
+      ? this.dataHandler.post<ProjectTemplate>('project-portal/projects/templates', payload)
+      : this.dataHandler.put<ProjectTemplate>(`project-portal/projects/templates/${this.editing}`, payload);
     this.saving = true;
     this.cd.markForCheck();
     request.subscribe({
@@ -195,7 +195,7 @@ export class ProjectTemplatesComponent implements OnInit {
   async remove(template: ProjectTemplate): Promise<void> {
     if (!this.canEdit) return;
     if (!(await this.confirm.open(this.t('template_delete_confirm_title'), this.t('template_delete_confirm_message').replace('{name}', template.name)))) return;
-    this.dataHandler.delete(`web/projects/templates/${template.id}`).subscribe({
+    this.dataHandler.delete(`project-portal/projects/templates/${template.id}`).subscribe({
       next: () => {
         this.templates = this.templates.filter(t => t.id !== template.id);
         if (this.editing === template.id) this.editing = null;

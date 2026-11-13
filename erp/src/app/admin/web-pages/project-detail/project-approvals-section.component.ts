@@ -10,7 +10,7 @@
  *   approval (title, description, files, checkpoint, due date - the client accounts that turned
  *   approval notifications on get an e-mail), changes a pending one, asks again after changes,
  *   cancels or deletes one without a decision.
- * @dependencies DataHandler (web/projects/:id/approvals), AdminLocalizationService, ConfirmDialogService,
+ * @dependencies DataHandler (project-portal/projects/:id/approvals), AdminLocalizationService, ConfirmDialogService,
  *   UploadRulesService (project_thread), project-files.util
  */
 
@@ -121,7 +121,7 @@ export class ProjectApprovalsSectionComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.cd.markForCheck();
-    this.dataHandler.getCollection<ProjectApproval>(`web/projects/${this.projectId}/approvals`).subscribe({
+    this.dataHandler.getCollection<ProjectApproval>(`project-portal/projects/${this.projectId}/approvals`).subscribe({
       next: (rows) => { this.approvals = Array.isArray(rows) ? rows : []; this.loading = false; this.cd.markForCheck(); },
       error: () => { this.loading = false; this.cd.markForCheck(); },
     });
@@ -208,7 +208,7 @@ export class ProjectApprovalsSectionComponent implements OnInit {
     form.append('due_date', this.draft.due_date);
     this.files.forEach(file => form.append('attachments[]', file, file.name));
     this.removeIds.forEach(id => form.append('remove_attachment_ids[]', String(id)));
-    const url = this.formMode === 'edit' ? `web/projects/${this.projectId}/approvals/${this.editingId}` : `web/projects/${this.projectId}/approvals`;
+    const url = this.formMode === 'edit' ? `project-portal/projects/${this.projectId}/approvals/${this.editingId}` : `project-portal/projects/${this.projectId}/approvals`;
 
     this.saving = true;
     this.cd.markForCheck();
@@ -238,7 +238,7 @@ export class ProjectApprovalsSectionComponent implements OnInit {
     if (!confirmed) return;
     this.busyId = approval.id;
     this.cd.markForCheck();
-    const base = `web/projects/${this.projectId}/approvals/${approval.id}`;
+    const base = `project-portal/projects/${this.projectId}/approvals/${approval.id}`;
     const request: Observable<unknown> = action === 'delete' ? this.dataHandler.delete(base) : this.dataHandler.post<ProjectApproval>(`${base}/${action}`, {});
     request.subscribe({
       next: (saved: any) => {

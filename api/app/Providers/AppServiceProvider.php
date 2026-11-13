@@ -8,9 +8,9 @@
  * @created 2026
  * @description Bootstraps the application services; defines the named rate limiters: the login
  * (keyed by IP and by e-mail separately), the 2FA code resend and the public web forms; in
- * production forces the safe values of the settings whose mistake would leak data (VT-09); maps the
- * models of the registered applications that own attachments to their morph aliases
- * (AppManifest::morphMap()), so `attachable_type` stores an alias and the classes may move.
+ * production forces the safe values of the settings whose mistake would leak data (VT-09); wires
+ * the registered applications in (bootApplications(): morph aliases, migrations, views, middleware
+ * aliases, commands).
  * @note Every limit is keyed per client IP, per e-mail or per account - never one counter shared
  * by everybody - so many people using the application at the same time never block each other;
  * only one client (or one account) repeating itself is stopped. The client IP is correct behind a
@@ -60,7 +60,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->enforceProductionSafety();
-        Relation::morphMap(AppRegistry::morphMap());
+        $this->bootApplications();
 
         // ── Audit detail: every model created / updated / deleted / restored is noted with its
         // changed attributes; the next audit log row of the request carries them (`changes`).
@@ -110,5 +110,30 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perDay(50)->by($key . ':day'),
             ];
         });
+    }
+
+    /**
+     * @description Wires the registered applications (config/apps.php) into the framework: morph
+     *   aliases of their models, migrations, views (`<id>::…`), route middleware aliases and
+     *   Artisan commands. Their routes are loaded by routes/api.php.
+     * @return void
+     */
+    private function bootApplications(): void
+    {
+        Relation::morphMap(AppRegistry::morphMap());
+        foreach (AppRegistry::apps() as $app) {
+            if ($path = $app->migrationsPath()) {
+                $this->loadMigrationsFrom($path);
+            }
+            if ($path = $app->viewsPath()) {
+                $this->loadViewsFrom($path, $app->id());
+            }
+            foreach ($app->middlewareAliases() as $alias => $class) {
+                $this->app['router']->aliasMiddleware($alias, $class);
+            }
+            if ($app->commands() !== [] && $this->app->runningInConsole()) {
+                $this->commands($app->commands());
+            }
+        }
     }
 }

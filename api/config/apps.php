@@ -17,7 +17,8 @@
 
 return [
     'apps' => [
-        App\Services\Web\WebApp::class,
-        App\Services\Shop\ShopApp::class,
+        App\Apps\Web\WebApp::class,
+        App\Apps\Shop\ShopApp::class,
+        App\Apps\ProjectPortal\ProjectPortalApp::class,
     ],
 ];

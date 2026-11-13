@@ -43,11 +43,11 @@ describe('ProjectUpdatesSectionComponent', () => {
   /**
    * @description Drafts and published updates load on init and render.
    * @input  2 updates (published, draft)
-   * @output getCollection('web/projects/7/updates'); 2 items; the file of the draft listed
+   * @output getCollection('project-portal/projects/7/updates'); 2 items; the file of the draft listed
    */
   it('loads the updates', () => {
     fixture.detectChanges();
-    expect(dh().getCollection).toHaveBeenCalledWith('web/projects/7/updates');
+    expect(dh().getCollection).toHaveBeenCalledWith('project-portal/projects/7/updates');
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelectorAll('.ps-item').length).toBe(2);
     expect(el.textContent).toContain('plan.pdf');
@@ -72,7 +72,7 @@ describe('ProjectUpdatesSectionComponent', () => {
     dh().postWithMeta.and.returnValue(of({ data: { ...updates()[1], id: 3, title: 'Week 3' }, meta: { notified: 0 } }));
     component.save(false);
     let [url, form] = dh().postWithMeta.calls.mostRecent().args as [string, FormData];
-    expect(url).toBe('web/projects/7/updates');
+    expect(url).toBe('project-portal/projects/7/updates');
     expect([form.get('title'), form.get('body'), form.get('publish')]).toEqual(['Week 3', 'Testing', '0']);
     expect(form.getAll('attachments[]').length).toBe(1);
     expect(ctx.alert.open).not.toHaveBeenCalled();
@@ -94,7 +94,7 @@ describe('ProjectUpdatesSectionComponent', () => {
     component.draft.body = 'Later';
     component.save(false);
     [url, form] = dh().postWithMeta.calls.mostRecent().args as [string, FormData];
-    expect(url).toBe('web/projects/7/updates/1');
+    expect(url).toBe('project-portal/projects/7/updates/1');
     expect(form.get('publish')).toBeNull();
     expect(form.getAll('remove_attachment_ids[]')).toEqual(['5']);
 
@@ -121,17 +121,17 @@ describe('ProjectUpdatesSectionComponent', () => {
     ctx.confirm.open.and.returnValue(Promise.resolve(true));
     dh().postWithMeta.and.returnValue(of({ data: { ...updates()[1], is_published: true }, meta: { notified: 1 } }));
     await component.setPublished(component.updates[1], true);
-    expect(dh().postWithMeta).toHaveBeenCalledWith('web/projects/7/updates/1', { publish: true });
+    expect(dh().postWithMeta).toHaveBeenCalledWith('project-portal/projects/7/updates/1', { publish: true });
     expect(component.updates[1].is_published).toBeTrue();
     expect(ctx.alert.open).toHaveBeenCalledTimes(1);
     dh().postWithMeta.and.returnValue(of({ data: { ...updates()[0], is_published: false }, meta: { notified: 0 } }));
     await component.setPublished(component.updates[0], false);
-    expect(dh().postWithMeta).toHaveBeenCalledWith('web/projects/7/updates/2', { publish: false });
+    expect(dh().postWithMeta).toHaveBeenCalledWith('project-portal/projects/7/updates/2', { publish: false });
     expect(ctx.alert.open).toHaveBeenCalledTimes(1);
 
     dh().delete.and.returnValue(of(null));
     await component.remove(component.updates[0]);
-    expect(dh().delete).toHaveBeenCalledWith('web/projects/7/updates/2');
+    expect(dh().delete).toHaveBeenCalledWith('project-portal/projects/7/updates/2');
     expect(component.updates.map(u => u.id)).toEqual([1]);
 
     dh().delete.and.returnValue(throwError(() => new Error('x')));

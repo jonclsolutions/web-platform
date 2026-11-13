@@ -12,8 +12,9 @@
  *   columns, form fields, and toolbar actions.
  * - EmailTemplateEditorComponent: modal editor of the order confirmation e-mail (sent in the
  *   language of the page, VT-15).
- * @note `createProject(item)` is only a navigation to ProjectsComponent with the `order_id` /
- * `open_project` query parameter - no own API call here.
+ * @note `createProject(item)` is only a navigation to the projects page of the project portal
+ * with the `order_id` query parameter (it opens the project of the order or prefills a new one) -
+ * no API call of the portal here, and nothing at all without the portal (hasApp).
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -27,6 +28,7 @@ import { GraphBuilderComponent } from '../../components/builders/graph-builder/g
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../components/email-template-editor/email-template-editor.component';
 import { PageHelpComponent } from '../../components/page-help/page-help.component';
+import { hasApp } from '../../../apps/apps.registry';
 
 /**
  * @description Manages the lifecycle and administrative view of sales orders.
@@ -172,12 +174,8 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
   }
 
   createProject(item: any): void {
-    if (!item?.id) return;
-    if (item.project_id) {
-      this.router.navigate(['/admin/web/projects', item.project_id]);
-    } else {
-      this.router.navigate(['/admin/web/projects'], { queryParams: { order_id: item.id } });
-    }
+    if (!item?.id || !hasApp('project-portal')) return;
+    this.router.navigate(['/admin/web/projects'], { queryParams: { order_id: item.id } });
   }
 
   override handleFormSubmitted(formData: any): void {

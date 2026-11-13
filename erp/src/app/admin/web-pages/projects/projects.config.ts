@@ -6,10 +6,13 @@
  * @created 2026
  * @description Static-turned-dynamic configuration for the customer Project management
  * list (table, filters, form). The project page itself lives in ../project-detail.
+ * @note The order select of the create form exists only while the web application is installed
+ *   (hasApp('web')) - a project of a web order.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { mapLabeledOptions } from '../../components/builders/labeled-options';
+import { hasApp } from '../../../apps/apps.registry';
 
 const SECTION = 'projects';
 
@@ -70,20 +73,21 @@ export function createNoAssigneeOptionLabel(i18n: AdminLocalizationService): str
 }
 
 export function createProjectFormFields(i18n: AdminLocalizationService): Core.InputDefinition[] {
+  const orderField: Core.InputDefinition[] = hasApp('web') ? [{
+    column_name: 'order_id',
+    label: i18n.getValue(`${SECTION}.field_order_label`),
+    type: 'select',
+    options: [{ value: '', label: createNoOrderOptionLabel(i18n) }],
+    required: false,
+    editable: true, show_in_edit: false, show_in_create: true,
+  }] : [];
   return [
-    {
-      column_name: 'order_id',
-      label: i18n.getValue(`${SECTION}.field_order_label`),
-      type: 'select',
-      options: [{ value: '', label: createNoOrderOptionLabel(i18n) }],
-      required: false,
-      editable: true, show_in_edit: false, show_in_create: true,
-    },
+    ...orderField,
     {
       column_name: 'template_id',
       label: i18n.getValue(`${SECTION}.field_template_label`),
       type: 'select',
-      // Filled by the component from GET web/projects/templates (create only - its checkpoints are copied).
+      // Filled by the component from GET project-portal/projects/templates (create only - its checkpoints are copied).
       options: [{ value: '', label: i18n.getValue(`${SECTION}.field_template_none_option`) }],
       required: false,
       editable: true, show_in_edit: false, show_in_create: true,
@@ -95,7 +99,7 @@ export function createProjectFormFields(i18n: AdminLocalizationService): Core.In
       column_name: 'assignee_id',
       label: i18n.getValue(`${SECTION}.field_assignee_label`),
       type: 'select',
-      // Filled by the component from GET web/projects/assignees (applyAssigneeOptions).
+      // Filled by the component from GET project-portal/projects/assignees (applyAssigneeOptions).
       options: [{ value: '', label: createNoAssigneeOptionLabel(i18n) }],
       required: false, editable: true, show_in_edit: true, show_in_create: true,
     },

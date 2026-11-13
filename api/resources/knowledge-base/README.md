@@ -1,7 +1,10 @@
 # Knowledge Base (internal manual of the administration)
 
-The content of the manual shown at `/admin/intranet/knowledge-base`. These files live outside
-the public folder; only signed-in users can read them, through
+The content of the manual shown at `/admin/intranet/knowledge-base`. This folder holds the
+pages of the core; every application keeps the pages about itself in the same three files in
+`app/Apps/<App>/Resources/knowledge-base/` (`AppManifest::knowledgeBasePath()`), merged with
+these by `KnowledgeBase` - a removed application takes its pages with it. These files live
+outside the public folder; only signed-in users can read them, through
 `GET /api/knowledge-base` and `GET /api/knowledge-base/pages/{id}`. Each user gets only the
 pages and sections their permissions allow (`App\Support\KnowledgeBase\KnowledgeBase`).
 
@@ -10,8 +13,9 @@ pages and sections their permissions allow (`App\Support\KnowledgeBase\Knowledge
 - `structure.json` holds the language-neutral part. It is the only place where access is set.
   - `id`: route slug (`/admin/intranet/knowledge-base/{id}`), kebab-case. Never change it once
     published.
-  - `group`: menu group, one of `general`, `roles`, `web`, `core`, `shop`. The heading comes from
-    the admin i18n key `knowledge-base.nav_group_{group}`.
+  - `group`: menu group, one of `general`, `roles`, `core` or an application id (`web`, `shop`,
+    `project-portal`). The heading comes from the admin i18n key
+    `knowledge-base.nav_group_{group}`.
   - `order`: order in the menu. Groups are ordered by their lowest `order`.
   - `permission`: who sees the page. Normally this is the permission of the admin page it
     describes (the same value as `data.permission` in `admin-routing.module.ts`).
@@ -34,8 +38,9 @@ hidden page answers 404, like a missing one.
 
 ## Adding a page
 
-1. Add the page to `structure.json` (`id`, `group`, `order`, `permission`).
-2. Add the page with the same `id` to every language file.
+1. Add the page to `structure.json` (`id`, `group`, `order`, `permission`) - of the core here,
+   of an application in its folder. Ids must be unique over the core and all applications.
+2. Add the page with the same `id` to every language file (of the same folder).
 3. To restrict a section, give it a `key` in every language file and map that key in
    `structure.json` → `sections`.
 4. Use only these block types:

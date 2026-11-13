@@ -25,7 +25,8 @@ use App\Models\TwoFactorCode;
 use App\Models\User;
 use App\Traits\LogsActivity;
 use App\Traits\RequiresPasswordConfirmation;
-use Illuminate\Http\{JsonResponse, Request};
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 

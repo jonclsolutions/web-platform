@@ -6,16 +6,17 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Builds the cookies that carry the long-lived credentials of the application: the
- * admin refresh token and the session of the customer project portal. JavaScript never sees
- * either value - the browser stores and sends them by itself.
+ * @description Builds the cookies that carry the long-lived credentials: the admin refresh
+ * token here, and through credential() the session cookies of the applications (e.g. the session
+ * of a customer portal). JavaScript never sees any of the values - the browser stores and sends
+ * them by itself.
  * @security Every cookie is:
  * - HttpOnly: unreadable for scripts, so an XSS cannot steal it and keep the account;
  * - Secure (SESSION_SECURE_COOKIE, always on in production): sent over HTTPS only;
  * - SameSite=Strict: never sent with a request started by another site (no CSRF);
  * - host-only (no Domain) and limited by Path to the endpoints that need it - the refresh token
- *   goes only to the refresh routes (/api/refresh...), a portal session only to the routes of ITS
- *   project.
+ *   goes only to the refresh routes (/api/refresh...), an application session only to the routes
+ *   that need it (e.g. a portal session only to the routes of ITS project).
  * @note Several admin accounts can be signed in in one browser at once: every account has its own
  * refresh cookie `jsw_refresh_{slot}` (REFRESH_PREFIX). The slot is a keyed hash of the user ID
  * (no ID in the cookie name, the same account always the same cookie); a tab tells the refresh
@@ -27,7 +28,6 @@
 
 namespace App\Support\Auth;
 
-use App\Models\Web\WebProjectSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Cookie;
@@ -42,9 +42,6 @@ final class AuthCookies
 
     /** @description Request header with the slot of the tab's account (refresh route). */
     public const SLOT_HEADER = 'X-Session-Slot';
-
-    /** @description Cookie of the customer project portal session. */
-    public const PORTAL = 'jsw_project_session';
 
     /**
      * @description Idle limit of a remembered login (days): the refresh token of "Remember me"
@@ -67,9 +64,6 @@ final class AuthCookies
 
     /** @description Name of the refresh route - its path is the Path of the refresh cookie. */
     public const REFRESH_ROUTE = 'auth.refresh';
-
-    /** @description Name of the portal session routes group root - its path (per project) is the Path of the portal cookie. */
-    public const PORTAL_ROUTE = 'projects.public.me';
 
     /**
      * @description Slot of an account: 16 hex characters of an HMAC of the user ID with the
@@ -113,7 +107,7 @@ final class AuthCookies
      */
     public static function refresh(Request $request, string $plainToken, bool $remember, string $slot): Cookie
     {
-        return self::make(self::refreshName($slot), $plainToken, $remember ? self::REFRESH_TTL_DAYS * 24 * 60 : null, self::refreshPath($request));
+        return self::credential(self::refreshName($slot), $plainToken, $remember ? self::REFRESH_TTL_DAYS * 24 * 60 : null, self::refreshPath($request));
     }
 
     /**
@@ -137,32 +131,7 @@ final class AuthCookies
      */
     public static function forgetRefresh(Request $request, ?string $slot = null): Cookie
     {
-        return self::make(self::refreshName($slot), '', -5 * 365 * 24 * 60, self::refreshPath($request));
-    }
-
-    /**
-     * @description Session cookie of the project portal, valid only for the routes of that project.
-     * @param Request $request Current request.
-     * @param string $projectToken Permanent access token of the project (from the URL).
-     * @param string $plainSession Raw session token.
-     * @return Cookie
-     * @note Re-issued on every request of the session, so the cookie slides together with the
-     * session in the database (WebProjectSession::slideExpiry()).
-     */
-    public static function portal(Request $request, string $projectToken, string $plainSession): Cookie
-    {
-        return self::make(self::PORTAL, $plainSession, WebProjectSession::LIFETIME_MINUTES, self::portalPath($request, $projectToken));
-    }
-
-    /**
-     * @description Expired portal cookie of the project - the browser deletes it.
-     * @param Request $request Current request.
-     * @param string $projectToken Permanent access token of the project.
-     * @return Cookie
-     */
-    public static function forgetPortal(Request $request, string $projectToken): Cookie
-    {
-        return self::make(self::PORTAL, '', -5 * 365 * 24 * 60, self::portalPath($request, $projectToken));
+        return self::credential(self::refreshName($slot), '', -5 * 365 * 24 * 60, self::refreshPath($request));
     }
 
     /**
@@ -177,27 +146,15 @@ final class AuthCookies
     }
 
     /**
-     * @description Path of the portal routes of one project ("/api/projects/public/{token}").
-     * @param Request $request Current request.
-     * @param string $projectToken Permanent access token of the project.
-     * @return string
-     */
-    private static function portalPath(Request $request, string $projectToken): string
-    {
-        $uri = Route::getRoutes()->getByName(self::PORTAL_ROUTE)->uri();
-
-        return $request->getBaseUrl() . '/' . str_replace('{token}', rawurlencode($projectToken), $uri);
-    }
-
-    /**
-     * @description One credential cookie with the attributes described in the file header.
+     * @description One credential cookie with the attributes described in the file header - also
+     *   the session cookies of the applications.
      * @param string $name Cookie name.
      * @param string $value Raw value ('' to delete).
      * @param int|null $minutes Lifetime in minutes (negative = delete, null = browser session cookie).
      * @param string $path Path the browser sends the cookie to.
      * @return Cookie
      */
-    private static function make(string $name, string $value, ?int $minutes, string $path): Cookie
+    public static function credential(string $name, string $value, ?int $minutes, string $path): Cookie
     {
         return Cookie::create($name)
             ->withValue($value)

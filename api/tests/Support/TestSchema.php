@@ -12,9 +12,10 @@
  *   builder so it runs on SQLite.
  * @note Why not the migrations: the schema is the MariaDB SQL of the baseline migration
  *   (api/database/schema/baseline.sql) plus later Laravel migrations - SQLite cannot load
- *   that SQL. Keep this file in sync with the migrations whenever a tested table changes. Tables are added per test round (Core + Auth, Web, Shop; Other
- *   with its tests). The web_project* tables are not in database/db.sql (added
- *   later) - their columns follow the models and controllers.
+ *   that SQL. Keep this file in sync with the migrations whenever a tested table changes.
+ *   This file holds the tables of the core; every application mirrors its own tables in
+ *   tests/Apps/<App>/Support/<App>Schema.php (create()), run here for each application of
+ *   config/apps.php - a removed application takes its tables with it.
  */
 
 namespace Tests\Support;
@@ -38,8 +39,25 @@ final class TestSchema
         self::core();
         self::logs();
         self::legal();
-        self::web();
-        self::shop();
+        foreach (config('apps.apps', []) as $manifest) {
+            $schema = self::applicationSchema((string) $manifest);
+            if ($schema !== null && class_exists($schema)) {
+                $schema::create();
+            }
+        }
+    }
+
+    /**
+     * @description Test schema class of an application: App\Apps\<App>\<Manifest> =>
+     *   Tests\Apps\<App>\Support\<App>Schema.
+     * @param string $manifest Manifest class of config/apps.php.
+     * @return string|null Null for a class outside app/Apps.
+     */
+    private static function applicationSchema(string $manifest): ?string
+    {
+        return preg_match('/^App\\\\Apps\\\\(\w+)\\\\\w+$/', $manifest, $match)
+            ? "Tests\\Apps\\{$match[1]}\\Support\\{$match[1]}Schema"
+            : null;
     }
 
     /**
@@ -279,32 +297,53 @@ final class TestSchema
             $t->timestamp('deleted_at')->nullable();
             $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });
+
+        Schema::create('web_attachments', function (Blueprint $t) {
+            $t->id();
+            $t->string('attachable_type', 191);
+            $t->unsignedBigInteger('attachable_id');
+            $t->string('disk', 50)->default('public');
+            $t->string('path', 500);
+            $t->string('original_filename');
+            $t->string('mime_type', 150)->nullable();
+            $t->unsignedBigInteger('size_bytes')->default(0);
+            $t->timestamp('created_at')->nullable();
+            $t->index(['attachable_type', 'attachable_id']);
+        });
     }
 
     /**
-     * @description The three audit log tables (core_logs, web_logs, shop_logs) - same shape,
-     *   written by the LogsActivity trait.
+     * @description The audit log of the core (core_logs).
      * @return void
      */
     private static function logs(): void
     {
-        foreach (['core_logs', 'web_logs', 'shop_logs'] as $table) {
-            Schema::create($table, function (Blueprint $t) {
-                $t->increments('id');
-                $t->dateTime('created_at')->useCurrent();
-                $t->string('origin')->nullable();
-                $t->string('event_type', 50);
-                $t->string('module', 100);
-                $t->string('description', 1000);
-                $t->string('affected_entity_type', 50)->nullable();
-                $t->unsignedBigInteger('affected_entity_id')->nullable();
-                $t->unsignedInteger('user_id')->nullable();
-                $t->text('context_data')->nullable();
-                $t->string('user_id_plain')->nullable();
-                $t->string('user_plain')->nullable();
-                $t->foreign('user_id')->references('id')->on('users')->nullOnDelete();
-            });
-        }
+        self::auditLog('core_logs');
+    }
+
+    /**
+     * @description One audit log table - all logs have the same shape (LogsActivity); also used
+     *   by the schemas of the applications.
+     * @param string $table Table name.
+     * @return void
+     */
+    public static function auditLog(string $table): void
+    {
+        Schema::create($table, function (Blueprint $t) {
+            $t->increments('id');
+            $t->dateTime('created_at')->useCurrent();
+            $t->string('origin')->nullable();
+            $t->string('event_type', 50);
+            $t->string('module', 100);
+            $t->string('description', 1000);
+            $t->string('affected_entity_type', 50)->nullable();
+            $t->unsignedBigInteger('affected_entity_id')->nullable();
+            $t->unsignedInteger('user_id')->nullable();
+            $t->text('context_data')->nullable();
+            $t->string('user_id_plain')->nullable();
+            $t->string('user_plain')->nullable();
+            $t->foreign('user_id')->references('id')->on('users')->nullOnDelete();
+        });
     }
 
     /**
@@ -374,634 +413,5 @@ final class TestSchema
         });
     }
 
-    /**
-     * @description Web section: site settings, public form records (requests, orders, job
-     *   applications), sales leads, attachments and the project portal.
-     * @return void
-     */
-    private static function web(): void
-    {
-        // FAQ and open positions (migration 2026_11_11_000000_create_web_faq_and_jobs).
-        Schema::create('web_faq_categories', function (Blueprint $t) {
-            $t->id();
-            $t->json('name_i18n')->nullable();
-            $t->unsignedInteger('sort_order')->default(0);
-            $t->timestamps();
-        });
-        Schema::create('web_faq_items', function (Blueprint $t) {
-            $t->id();
-            $t->foreignId('category_id')->constrained('web_faq_categories')->cascadeOnDelete();
-            $t->json('question_i18n')->nullable();
-            $t->json('answer_i18n')->nullable();
-            $t->unsignedInteger('sort_order')->default(0);
-            $t->timestamps();
-        });
-        Schema::create('web_jobs', function (Blueprint $t) {
-            $t->id();
-            $t->string('slug', 80)->unique();
-            foreach (['title', 'summary', 'type', 'location'] as $field) {
-                $t->json("{$field}_i18n")->nullable();
-            }
-            $t->boolean('is_active')->default(true);
-            $t->unsignedInteger('sort_order')->default(0);
-            $t->timestamps();
-        });
-        Schema::create('web_job_sections', function (Blueprint $t) {
-            $t->id();
-            $t->foreignId('job_id')->constrained('web_jobs')->cascadeOnDelete();
-            $t->json('heading_i18n')->nullable();
-            $t->json('body_i18n')->nullable();
-            $t->unsignedInteger('sort_order')->default(0);
-            $t->timestamps();
-        });
-        // References (migrations 2026_11_12_000000_create_web_references,
-        // 2026_11_13_000000_web_references_category_text).
-        Schema::create('web_references', function (Blueprint $t) {
-            $t->id();
-            $t->json('category_i18n')->nullable();
-            $t->string('duration', 50)->nullable();
-            $t->string('client', 150)->nullable();
-            foreach (['name', 'size', 'role', 'description', 'result'] as $field) {
-                $t->json("{$field}_i18n")->nullable();
-            }
-            $t->string('image_path')->nullable();
-            $t->boolean('is_active')->default(true);
-            $t->unsignedInteger('sort_order')->default(0);
-            $t->timestamps();
-        });
-        Schema::create('web_reference_features', function (Blueprint $t) {
-            $t->id();
-            $t->foreignId('reference_id')->constrained('web_references')->cascadeOnDelete();
-            $t->json('text_i18n')->nullable();
-            $t->unsignedInteger('sort_order')->default(0);
-            $t->timestamps();
-        });
-        Schema::create('web_reference_stack', function (Blueprint $t) {
-            $t->id();
-            $t->foreignId('reference_id')->constrained('web_references')->cascadeOnDelete();
-            $t->json('label_i18n')->nullable();
-            $t->json('value_i18n')->nullable();
-            $t->unsignedInteger('sort_order')->default(0);
-            $t->timestamps();
-        });
 
-        Schema::create('web_site_settings', function (Blueprint $t) {
-            $t->increments('id');
-            $t->boolean('is_web_active')->default(true);
-            $t->string('web_maintenance_message', 500)->nullable();
-            foreach (['subject', 'title', 'intro', 'outro', 'labels'] as $column) {
-                $t->json("sales_order_email_{$column}_i18n")->nullable();
-            }
-            $t->timestamp('created_at')->nullable()->useCurrent();
-            $t->timestamp('updated_at')->nullable()->useCurrent();
-            foreach (['title', 'intro', 'outro', 'labels', 'subject'] as $part) {
-                $t->longText("raw_request_email_{$part}_i18n")->nullable();
-            }
-        });
-
-        // Polymorphic file attachments (requests, orders, tickets, CVs, project messages).
-        Schema::create('web_attachments', function (Blueprint $t) {
-            $t->id();
-            $t->string('attachable_type', 191);
-            $t->unsignedBigInteger('attachable_id');
-            $t->string('disk', 50)->default('public');
-            $t->string('path', 500);
-            $t->string('original_filename');
-            $t->string('mime_type', 150)->nullable();
-            $t->unsignedBigInteger('size_bytes')->default(0);
-            $t->timestamp('created_at')->nullable();
-            $t->index(['attachable_type', 'attachable_id']);
-        });
-
-        Schema::create('web_raw_request_commissions', function (Blueprint $t) {
-            $t->id();
-            $t->string('thema');
-            $t->string('contact_email');
-            $t->string('contact_phone')->nullable();
-            $t->text('order_description');
-            $t->string('status')->default('new');
-            $t->string('priority')->default('neutral');
-            $t->timestamps();
-            $t->timestamp('deleted_at')->nullable();
-            $t->text('note')->nullable();
-            $t->string('lang', 5)->default('cz');
-        });
-
-        Schema::create('web_job_applications', function (Blueprint $t) {
-            $t->id();
-            $t->string('first_name', 100);
-            $t->string('last_name', 100);
-            $t->string('email', 150);
-            $t->string('phone', 30)->nullable();
-            $t->string('position_name', 150);
-            $t->text('message')->nullable();
-            $t->string('cv_path')->nullable();
-            $t->string('cv_original_name')->nullable();
-            $t->string('state', 50)->nullable()->default('new');
-            $t->text('internal_note')->nullable();
-            $t->timestamp('created_at')->useCurrent();
-            $t->timestamp('updated_at')->useCurrent();
-            $t->timestamp('deleted_at')->nullable();
-        });
-
-        Schema::create('web_sales_leads', function (Blueprint $t) {
-            $t->increments('id');
-            $t->string('public_token', 64)->nullable()->unique();
-            $t->timestamp('public_token_used_at')->nullable();
-            $t->timestamp('public_token_expires_at')->nullable();
-            $t->unsignedInteger('user_id')->nullable();
-            $t->string('salesman_name');
-            $t->date('first_contact_date')->nullable();
-            $t->string('subject_name');
-            $t->string('contact_person')->nullable();
-            $t->string('location', 100)->nullable();
-            $t->string('source_channel');
-            $t->string('source_url', 500)->nullable();
-            $t->text('description')->nullable();
-            $t->string('priority')->nullable()->default('neutral');
-            $t->string('status')->nullable()->default('new');
-            $t->date('last_contact_date')->nullable();
-            $t->string('next_step')->nullable();
-            $t->text('rejection_reason')->nullable();
-            $t->timestamp('created_at')->useCurrent();
-            $t->timestamp('updated_at')->useCurrent();
-            $t->timestamp('deleted_at')->nullable();
-            $t->string('contact_email')->nullable();
-            $t->string('contact_phone')->nullable();
-            $t->string('contact_other')->nullable();
-            $t->foreign('user_id')->references('id')->on('users')->nullOnDelete();
-        });
-
-        Schema::create('web_sales_orders', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('lead_id')->nullable();
-            $t->string('salesman_name')->nullable();
-            $t->string('ico', 20)->nullable();
-            $t->string('client_name');
-            $t->string('client_address', 500)->nullable();
-            $t->string('client_phone')->nullable();
-            $t->string('client_email')->nullable();
-            $t->string('lang', 5)->nullable();
-            $t->text('order_description')->nullable();
-            $t->boolean('data_processing_agreement')->default(false);
-            $t->boolean('tos_agreement')->default(false);
-            $t->timestamp('created_at')->useCurrent();
-            $t->timestamp('updated_at')->useCurrent();
-            $t->timestamp('deleted_at')->nullable();
-            $t->foreign('lead_id')->references('id')->on('web_sales_leads')->nullOnDelete();
-        });
-
-        // Customer project portal (WebProject*), see CheckProjectSession.
-        Schema::create('web_projects', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('lead_id')->nullable();
-            $t->unsignedInteger('order_id')->nullable()->unique();
-            $t->string('name');
-            $t->text('description')->nullable();
-            $t->string('platform', 100)->nullable();
-            $t->string('project_lead')->nullable();
-            $t->string('contact_phone')->nullable();
-            $t->string('contact_email')->nullable();
-            $t->text('technologies')->nullable();
-            $t->date('estimated_completion_from')->nullable();
-            $t->date('estimated_completion_to')->nullable();
-            $t->string('visibility', 20)->default('private');
-            $t->string('status', 20)->default('new');
-            $t->string('access_token', 64)->unique();
-            // Responsible administrator (migration 2026_11_18_000000_web_project_portal_accounts).
-            $t->unsignedInteger('assignee_id')->nullable();
-            $t->timestamps();
-            $t->timestamp('deleted_at')->nullable();
-            $t->foreign('assignee_id')->references('id')->on('users')->nullOnDelete();
-            $t->foreign('lead_id')->references('id')->on('web_sales_leads')->nullOnDelete();
-            $t->foreign('order_id')->references('id')->on('web_sales_orders')->nullOnDelete();
-        });
-
-        Schema::create('web_project_checkpoints', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('project_id');
-            $t->string('label');
-            $t->text('description')->nullable();
-            $t->date('due_date')->nullable();
-            $t->text('internal_note')->nullable();
-            $t->string('status', 20)->default('new');
-            $t->timestamp('status_changed_at')->nullable();
-            $t->integer('sort_order')->default(0);
-            $t->timestamps();
-            $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
-        });
-
-        // Client accounts of the portal (migration 2026_11_18_000000_web_project_portal_accounts).
-        Schema::create('web_project_accounts', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('project_id');
-            $t->string('username', 64);
-            $t->string('display_name', 120);
-            $t->string('email')->nullable();
-            $t->timestamp('email_verified_at')->nullable();
-            // Notification switches of migrations 2026_11_19_000000_web_project_account_notifications
-            // and 2026_11_20_000000_web_project_portal_phase2.
-            $t->boolean('notify_replies')->default(false);
-            $t->boolean('notify_checkpoint_status')->default(false);
-            $t->boolean('notify_checkpoint_dates')->default(false);
-            $t->boolean('notify_updates')->default(false);
-            $t->boolean('notify_approvals')->default(false);
-            $t->string('language', 5)->default('cz');
-            $t->string('password_hash')->nullable();
-            $t->timestamp('password_set_at')->nullable();
-            $t->timestamp('invited_at')->nullable();
-            $t->timestamp('last_login_at')->nullable();
-            $t->timestamp('news_seen_at')->nullable();
-            $t->timestamps();
-            $t->unique(['project_id', 'username']);
-            $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
-        });
-
-        Schema::create('web_project_sessions', function (Blueprint $t) {
-            $t->id();
-            $t->unsignedInteger('project_id');
-            $t->unsignedInteger('account_id');
-            $t->string('session_token_hash', 64)->unique();
-            $t->timestamp('expires_at');
-            $t->timestamp('last_used_at')->nullable();
-            $t->string('ip_address', 45)->nullable();
-            $t->string('user_agent')->nullable();
-            $t->timestamps();
-            $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
-            $t->foreign('account_id')->references('id')->on('web_project_accounts')->cascadeOnDelete();
-        });
-
-        Schema::create('web_project_threads', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('project_id');
-            $t->string('subject');
-            $t->string('priority', 20);
-            $t->string('status', 20)->default('active');
-            $t->unsignedInteger('assignee_id')->nullable();
-            $t->string('opened_by', 20);
-            $t->string('last_public_author', 20)->nullable();
-            $t->timestamp('last_message_at')->nullable();
-            $t->timestamp('customer_last_read_at')->nullable();
-            $t->timestamp('admin_last_read_at')->nullable();
-            $t->timestamps();
-            $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
-        });
-
-        Schema::create('web_project_thread_messages', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('thread_id');
-            $t->string('author_type', 20);
-            $t->string('author_label')->nullable();
-            $t->unsignedInteger('account_id')->nullable();
-            $t->unsignedInteger('user_id')->nullable();
-            $t->boolean('is_internal')->default(false);
-            $t->text('body');
-            $t->timestamps();
-            $t->foreign('thread_id')->references('id')->on('web_project_threads')->cascadeOnDelete();
-            $t->foreign('account_id')->references('id')->on('web_project_accounts')->nullOnDelete();
-            $t->foreign('user_id')->references('id')->on('users')->nullOnDelete();
-        });
-
-        // Phase 2 of the client portal (migration 2026_11_20_000000_web_project_portal_phase2).
-        Schema::create('web_project_login_codes', function (Blueprint $t) {
-            $t->id();
-            $t->unsignedInteger('account_id');
-            $t->string('purpose', 16);
-            $t->string('code_hash', 64)->nullable();
-            $t->string('link_hash', 64)->unique();
-            $t->unsignedTinyInteger('attempts')->default(0);
-            $t->timestamp('expires_at');
-            $t->timestamp('used_at')->nullable();
-            $t->string('created_ip', 45)->nullable();
-            $t->timestamps();
-            $t->foreign('account_id')->references('id')->on('web_project_accounts')->cascadeOnDelete();
-        });
-
-        Schema::create('web_project_updates', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('project_id');
-            $t->string('title', 200);
-            $t->text('body');
-            $t->unsignedInteger('author_id')->nullable();
-            $t->string('author_label', 120)->nullable();
-            $t->timestamp('published_at')->nullable();
-            $t->timestamp('first_published_at')->nullable();
-            $t->timestamps();
-            $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
-            $t->foreign('author_id')->references('id')->on('users')->nullOnDelete();
-        });
-
-        Schema::create('web_project_approvals', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('project_id');
-            $t->unsignedInteger('checkpoint_id')->nullable();
-            $t->string('title', 200);
-            $t->text('description')->nullable();
-            $t->string('status', 20)->default('pending');
-            $t->date('due_date')->nullable();
-            $t->unsignedInteger('requested_by')->nullable();
-            $t->string('requested_by_label', 120)->nullable();
-            $t->timestamp('requested_at')->nullable();
-            $t->timestamp('decided_at')->nullable();
-            $t->timestamps();
-            $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
-            $t->foreign('checkpoint_id')->references('id')->on('web_project_checkpoints')->nullOnDelete();
-            $t->foreign('requested_by')->references('id')->on('users')->nullOnDelete();
-        });
-
-        Schema::create('web_project_approval_decisions', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('approval_id');
-            $t->string('decision', 20);
-            $t->text('comment')->nullable();
-            $t->unsignedInteger('account_id')->nullable();
-            $t->string('author_label', 120)->nullable();
-            $t->timestamp('created_at')->nullable();
-            $t->foreign('approval_id')->references('id')->on('web_project_approvals')->cascadeOnDelete();
-            $t->foreign('account_id')->references('id')->on('web_project_accounts')->nullOnDelete();
-        });
-
-        Schema::create('web_project_templates', function (Blueprint $t) {
-            $t->increments('id');
-            $t->string('name', 160);
-            $t->text('description')->nullable();
-            $t->timestamps();
-        });
-
-        Schema::create('web_project_template_checkpoints', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('template_id');
-            $t->string('label');
-            $t->text('description')->nullable();
-            $t->unsignedSmallInteger('offset_days')->nullable();
-            $t->unsignedSmallInteger('sort_order')->default(0);
-            $t->timestamps();
-            $t->foreign('template_id')->references('id')->on('web_project_templates')->cascadeOnDelete();
-        });
-    }
-
-    /**
-     * @description E-shop section (database/db.sql): settings, catalogue (categories,
-     *   suppliers, products with prices / variants / images), coupons, customers, payment and
-     *   shipping methods, orders with items. Foreign keys with the production ON DELETE
-     *   behaviour (order items keep their product: no cascade).
-     * @return void
-     */
-    private static function shop(): void
-    {
-        Schema::create('shop_site_settings', function (Blueprint $t) {
-            $t->increments('id');
-            $t->boolean('is_shop_active')->default(true);
-            $t->string('maintenance_message')->nullable();
-            // Confirmation e-mail of an order (migration 2026_11_14_000000_shop_order_confirmation_email).
-            foreach (['subject', 'title', 'intro', 'outro', 'labels'] as $field) {
-                $t->json("order_email_{$field}_i18n")->nullable();
-            }
-            $t->timestamps();
-        });
-
-        Schema::create('shop_categories', function (Blueprint $t) {
-            $t->increments('id');
-            $t->string('name', 150);
-            $t->string('slug', 150);
-            $t->text('description')->nullable();
-            $t->unsignedInteger('parent_id')->nullable();
-            $t->string('image_path')->nullable();
-            $t->boolean('is_active')->default(true);
-            $t->integer('sort_order')->default(0);
-            $t->timestamps();
-            $t->unique(['slug', 'parent_id']);
-            $t->foreign('parent_id')->references('id')->on('shop_categories');
-        });
-
-        Schema::create('shop_suppliers', function (Blueprint $t) {
-            $t->increments('id');
-            $t->string('name', 200);
-            $t->string('ico', 20)->nullable()->unique();
-            $t->string('contact_person', 150)->nullable();
-            $t->string('email', 100)->nullable();
-            $t->string('phone', 20)->nullable();
-            $t->string('address')->nullable();
-            $t->string('city', 100)->nullable();
-            $t->string('postal_code', 10)->nullable();
-            $t->string('country', 50)->nullable();
-            $t->string('payment_terms', 100)->nullable();
-            $t->boolean('is_active')->default(true);
-            $t->text('notes')->nullable();
-            $t->timestamps();
-            $t->softDeletes();
-        });
-
-        Schema::create('shop_products', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('category_id')->nullable();
-            $t->unsignedInteger('supplier_id')->nullable();
-            $t->string('name', 200);
-            $t->string('name_en', 200)->nullable();
-            $t->string('slug', 200)->unique();
-            $t->text('description')->nullable();
-            $t->text('description_en')->nullable();
-            $t->string('short_description', 500)->nullable();
-            $t->string('short_description_en', 500)->nullable();
-            $t->string('sku', 50)->nullable()->unique();
-            $t->integer('stock_quantity')->default(0);
-            $t->integer('stock_warning_level')->default(10);
-            $t->boolean('is_active')->default(true);
-            $t->boolean('is_featured')->default(false);
-            $t->timestamps();
-            $t->softDeletes();
-            $t->foreign('category_id')->references('id')->on('shop_categories')->nullOnDelete();
-            $t->foreign('supplier_id')->references('id')->on('shop_suppliers')->nullOnDelete();
-        });
-
-        Schema::create('shop_product_categories', function (Blueprint $t) {
-            $t->bigIncrements('id');
-            $t->unsignedInteger('product_id');
-            $t->unsignedInteger('category_id');
-            $t->boolean('is_primary')->default(false);
-            $t->integer('sort_order')->default(0);
-            $t->timestamps();
-            $t->unique(['product_id', 'category_id']);
-            $t->foreign('product_id')->references('id')->on('shop_products')->cascadeOnDelete();
-            $t->foreign('category_id')->references('id')->on('shop_categories')->cascadeOnDelete();
-        });
-
-        Schema::create('shop_product_variants', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('product_id');
-            $t->string('variant_name', 100);
-            $t->string('attribute_1_name', 50)->nullable();
-            $t->string('attribute_1_value', 100)->nullable();
-            $t->string('attribute_2_name', 50)->nullable();
-            $t->string('attribute_2_value', 100)->nullable();
-            $t->string('sku_variant', 50)->nullable()->unique();
-            $t->integer('stock_quantity')->default(0);
-            $t->timestamps();
-            $t->softDeletes();
-            $t->foreign('product_id')->references('id')->on('shop_products')->cascadeOnDelete();
-        });
-
-        Schema::create('shop_product_prices', function (Blueprint $t) {
-            $t->bigIncrements('id');
-            $t->unsignedInteger('product_id');
-            $t->unsignedInteger('variant_id')->nullable();
-            $t->decimal('vat_rate', 5, 2)->default(21);
-            $t->decimal('price_eur_without_vat', 10, 2)->nullable();
-            $t->decimal('cost_price_eur', 12, 4)->nullable();
-            $t->decimal('price_eur_with_vat', 10, 2)->nullable();
-            $t->timestamps();
-            $t->foreign('product_id')->references('id')->on('shop_products')->cascadeOnDelete();
-            $t->foreign('variant_id')->references('id')->on('shop_product_variants')->cascadeOnDelete();
-        });
-
-        Schema::create('shop_product_images', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('product_id');
-            $t->unsignedInteger('variant_id')->nullable();
-            $t->string('image_path');
-            $t->string('alt_text', 200)->nullable();
-            $t->boolean('is_primary')->default(false);
-            $t->integer('sort_order')->default(0);
-            $t->timestamp('created_at')->useCurrent();
-            $t->timestamp('deleted_at')->nullable();
-            $t->foreign('product_id')->references('id')->on('shop_products')->cascadeOnDelete();
-            $t->foreign('variant_id')->references('id')->on('shop_product_variants')->cascadeOnDelete();
-        });
-
-        Schema::create('shop_coupons', function (Blueprint $t) {
-            $t->increments('id');
-            $t->string('code', 50)->unique();
-            $t->string('description')->nullable();
-            $t->string('discount_type', 20);
-            $t->decimal('discount_value', 10, 2);
-            $t->integer('max_usage')->nullable();
-            $t->integer('usage_count')->default(0);
-            $t->decimal('min_order_amount', 10, 2)->nullable();
-            $t->string('applies_to', 50)->default('all');
-            $t->dateTime('valid_from')->nullable();
-            $t->dateTime('valid_until')->nullable();
-            $t->boolean('is_active')->default(true);
-            $t->timestamps();
-            $t->softDeletes();
-        });
-
-        Schema::create('shop_customers', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('user_id')->nullable();
-            $t->string('email', 150)->unique();
-            $t->string('first_name', 100);
-            $t->string('last_name', 100);
-            $t->string('phone', 20)->nullable();
-            $t->string('company', 150)->nullable();
-            $t->string('address')->nullable();
-            $t->string('city', 100)->nullable();
-            $t->string('postal_code', 10)->nullable();
-            $t->string('country', 50)->nullable();
-            $t->boolean('is_active')->default(true);
-            $t->decimal('total_spent', 12, 2)->default(0);
-            $t->text('notes')->nullable();
-            $t->timestamps();
-            $t->softDeletes();
-            $t->foreign('user_id')->references('id')->on('users')->nullOnDelete();
-        });
-
-        Schema::create('shop_payment_methods', function (Blueprint $t) {
-            $t->increments('id');
-            $t->string('code', 50)->unique();
-            $t->string('name', 100);
-            $t->string('image_path')->nullable();
-            $t->text('description')->nullable();
-            $t->decimal('price', 10, 2)->default(0);
-            $t->string('provider', 50)->default('manual');
-            $t->boolean('is_external')->default(false);
-            $t->string('bank_account_number', 50)->nullable();
-            $t->string('bank_account_code', 10)->nullable();
-            $t->string('bank_iban', 34)->nullable();
-            $t->string('bank_swift_bic', 11)->nullable();
-            $t->string('variable_symbol_type', 20)->default('order_number');
-            $t->longText('config')->default('{}');
-            $t->boolean('is_active')->default(true);
-            $t->integer('sort_order')->default(0);
-            $t->timestamps();
-            $t->softDeletes();
-        });
-
-        Schema::create('shop_shipping_methods', function (Blueprint $t) {
-            $t->increments('id');
-            $t->string('code', 50)->unique();
-            $t->string('name', 100);
-            $t->text('description')->nullable();
-            $t->string('shipping_type', 30)->default('address');
-            $t->decimal('base_price', 8, 2)->default(0);
-            $t->decimal('free_shipping_threshold', 10, 2)->nullable();
-            $t->decimal('max_weight', 8, 2)->nullable();
-            $t->boolean('requires_pickup_point')->default(false);
-            $t->boolean('allows_cod')->default(false);
-            $t->decimal('cod_price', 8, 2)->default(0);
-            $t->string('tracking_url')->nullable();
-            $t->string('logo_path')->nullable();
-            $t->integer('delivery_days_min')->nullable();
-            $t->integer('delivery_days_max')->nullable();
-            $t->boolean('is_active')->default(true);
-            $t->integer('sort_order')->default(0);
-            $t->timestamps();
-            $t->softDeletes();
-        });
-
-        Schema::create('shop_orders', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('customer_id');
-            // Buyer contact snapshot (database/migrations/2026_10_23_shop_orders_vat_contact_retention.sql).
-            $t->string('customer_first_name', 100)->nullable();
-            $t->string('customer_last_name', 100)->nullable();
-            $t->string('customer_email', 150)->nullable();
-            $t->string('customer_phone', 20)->nullable();
-            $t->string('customer_company', 150)->nullable();
-            $t->string('order_number', 50)->unique();
-            $t->string('status', 50)->default('pending');
-            $t->string('payment_status', 50)->default('pending');
-            $t->decimal('total_amount', 10, 2);
-            $t->decimal('shipping_amount', 10, 2)->default(0);
-            $t->decimal('tax_amount', 10, 2)->default(0);
-            $t->decimal('discount_amount', 10, 2)->default(0);
-            $t->decimal('final_amount', 10, 2)->default(0);
-            $t->unsignedInteger('coupon_id')->nullable();
-            $t->unsignedInteger('payment_method_id')->nullable();
-            $t->unsignedInteger('shipping_method_id')->nullable();
-            $t->string('shipping_address')->nullable();
-            $t->string('shipping_city', 100)->nullable();
-            $t->string('shipping_postal_code', 10)->nullable();
-            $t->string('shipping_country', 50)->nullable();
-            $t->text('notes')->nullable();
-            $t->string('lang', 10)->nullable();
-            $t->dateTime('paid_at')->nullable();
-            $t->dateTime('shipped_at')->nullable();
-            $t->dateTime('delivered_at')->nullable();
-            $t->timestamps();
-            $t->softDeletes();
-            $t->foreign('customer_id')->references('id')->on('shop_customers')->restrictOnDelete();  // orders are kept (finding #22)
-            $t->foreign('coupon_id')->references('id')->on('shop_coupons')->nullOnDelete();
-            $t->foreign('payment_method_id')->references('id')->on('shop_payment_methods')->nullOnDelete();
-            $t->foreign('shipping_method_id')->references('id')->on('shop_shipping_methods')->nullOnDelete();
-        });
-
-        Schema::create('shop_order_items', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('order_id');
-            $t->unsignedInteger('product_id');
-            $t->unsignedInteger('product_variant_id')->nullable();
-            $t->string('product_name', 200);
-            $t->string('variant_name')->nullable();
-            $t->integer('quantity');
-            $t->decimal('unit_price', 10, 2);
-            $t->decimal('total_price', 10, 2);
-            $t->decimal('vat_rate', 5, 2)->default(21);  // finding #21
-            $t->decimal('discount_amount', 10, 2)->default(0);
-            $t->timestamp('created_at')->useCurrent();
-            $t->timestamp('updated_at')->useCurrent();
-            $t->foreign('order_id')->references('id')->on('shop_orders')->cascadeOnDelete();
-            $t->foreign('product_id')->references('id')->on('shop_products');
-            $t->foreign('product_variant_id')->references('id')->on('shop_product_variants')->nullOnDelete();
-        });
-    }
 }

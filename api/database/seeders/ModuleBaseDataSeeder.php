@@ -5,11 +5,12 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Base of the base data seeder of one module (web, e-shop, …). A module seeder lives
- *   in the module's own folder (database/seeders/<Module>/ with its data/ and assets/) and is
- *   listed in the module's manifest (AppManifest::baseDataSeeders(), config/apps.php); BaseDataSeeder runs the registered ones after
- *   the core data and then gives the sysadmin role every permission. A removed module (folder
- *   deleted, class gone) is skipped - the core is seeded without it.
+ * @description Base of the base data seeder of one application (web, e-shop, …). An application
+ *   seeder lives in the application's folder (app/Apps/<App>/Database/Seeders/ with its data/ and
+ *   assets/) and is listed in its manifest (AppManifest::baseDataSeeders(), config/apps.php);
+ *   BaseDataSeeder runs the registered ones after the core data and then gives the sysadmin role
+ *   every permission. A removed application (folder deleted, class gone) is skipped - the core is
+ *   seeded without it.
  * @note The helpers only ADD what is missing (idempotent, never destructive): permissions by key,
  *   page titles by area + page key, files on the public disk by path.
  * @dependencies CorePermission, legal_page_titles table, public disk.

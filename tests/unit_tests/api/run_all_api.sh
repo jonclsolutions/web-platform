@@ -5,7 +5,7 @@
 # @project JS web-platform
 # @author JS
 # @created 2026
-# @description Runs the api (Laravel / PHPUnit) tests: every test suite (Core, Web, Shop, Other).
+# @description Runs the api (Laravel / PHPUnit) tests: every test suite (Core, Web, Shop, ProjectPortal, Other, Integration).
 #   Measures code coverage of all of api/app (lines + methods,
 #   needs pcov or Xdebug - without a driver the tests still run).
 #   Result: tests/unit_tests/api/report/report.html, report.xml and coverage/index.html (last run only).

@@ -69,6 +69,7 @@
     "view_list": "List",
     "module_web": "Web",
     "module_shop": "E-shop",
+    "module_project-portal": "Project portal",
     "module_core": "System",
     "module_personal": "Personal",
     "add_event": "Add event",
@@ -744,6 +745,7 @@
 
   "module_web": "Web",
   "module_shop": "E-shop",
+  "module_project-portal": "Project portal",
   "module_core": "System (Core)",
   "general_resource_label": "General",
 
@@ -1050,6 +1052,7 @@
   "nav_group_web": "Web",
   "nav_group_core": "Core",
   "nav_group_shop": "Shop",
+  "nav_group_project-portal": "Project portal",
   "brand_text": "Wiki",
   "home_label": "Administration",
   "home_title": "Back to the administration",

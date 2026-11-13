@@ -1,0 +1,172 @@
+{
+  "pages": {
+    "shop-welcome-page": {
+      "navLabel": "Uvítací stránka e-shopu",
+      "header": "Uvítací stránka e-shopu",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Návod k této stránce se připravuje."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-dashboard": {
+      "navLabel": "Dashboard",
+      "header": "Shop - Dashboard",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - přehledová stránka e-shop modulu administrace."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-products": {
+      "navLabel": "Produkty",
+      "header": "Správa produktů",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa produktového katalogu, variant a obrázků."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-categories": {
+      "navLabel": "Kategorie",
+      "header": "Správa kategorií",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - hierarchická správa kategorií produktů."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-orders": {
+      "navLabel": "Objednávky",
+      "header": "Správa objednávek",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa e-shopových objednávek, stavů a plateb."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-customers": {
+      "navLabel": "Zákazníci",
+      "header": "Správa zákazníků",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa zákaznických účtů a jejich historie objednávek."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-shipping-methods": {
+      "navLabel": "Způsoby dopravy",
+      "header": "Způsoby dopravy",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa dostupných způsobů dopravy."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-payment-methods": {
+      "navLabel": "Platební metody",
+      "header": "Platební metody",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa dostupných platebních metod."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-suppliers": {
+      "navLabel": "Dodavatelé",
+      "header": "Správa dodavatelů",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - evidence dodavatelů produktů."
+            }
+          ]
+        }
+      ]
+    },
+    "coupons": {
+      "navLabel": "Slevové kupóny",
+      "header": "Slevové kupóny",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - správa slevových kupónů a jejich podmínek."
+            }
+          ]
+        }
+      ]
+    },
+    "shop-logs": {
+      "navLabel": "Logy",
+      "header": "Shop - Logy",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - auditní log akcí provedených v e-shop modulu."
+            }
+          ]
+        }
+      ]
+    },
+    "edit-eshop": {
+      "navLabel": "Nastavení e-shopu",
+      "header": "Globální nastavení e-shopu",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Testovací obsah - globální nastavení e-shopu."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

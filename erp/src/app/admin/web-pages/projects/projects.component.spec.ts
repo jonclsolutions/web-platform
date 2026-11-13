@@ -169,17 +169,17 @@ describe('ProjectsComponent', () => {
     /**
      * @description Init loads only the projects (active + trash) - the conversations are on the project pages.
      * @input  ngOnInit() without query params
-     * @output getPaginatedData('web/projects', …) twice, nothing else; no form; no navigation
+     * @output getPaginatedData('project-portal/projects', …) twice, nothing else; no form; no navigation
      */
     it('loads the projects', fakeAsync(() => {
       ctx.genericTable.getPaginatedData.and.returnValue(of(paginated([])));
       component.ngOnInit();
       const urls = ctx.genericTable.getPaginatedData.calls.allArgs().map(a => a[0]);
-      expect(urls).toEqual(['web/projects', 'web/projects']);
+      expect(urls).toEqual(['project-portal/projects', 'project-portal/projects']);
       expect(component.showCreateForm).toBeFalse();
       expect(navigate).not.toHaveBeenCalled();
       component.refreshData();
-      expect(ctx.genericTable.getPaginatedData.calls.mostRecent().args[0]).toBe('web/projects');
+      expect(ctx.genericTable.getPaginatedData.calls.mostRecent().args[0]).toBe('project-portal/projects');
       discardPeriodicTasks();
     }));
 
@@ -197,14 +197,17 @@ describe('ProjectsComponent', () => {
     }));
 
     /**
-     * @description ?order_id=5 opens the create form prefilled with that order; the order select lists all orders.
-     * @input  query { order_id: '5' }; orders [{ id: 5, client_name: 'ACME' }]; ngOnInit()
-     * @output getCollection('web/sales_orders', { no_pagination, sort id desc }); options [none, '#5 — ACME']; form open with { order_id: '5' }
+     * @description ?order_id=5 of an order without a project opens the create form prefilled with
+     *   that order; the order select lists all orders.
+     * @input  query { order_id: '5' }; projects of the order []; orders [{ id: 5, client_name: 'ACME' }]; ngOnInit()
+     * @output getCollection('project-portal/projects', { order_id '5', no_pagination }); getCollection('web/sales_orders',
+     *   { no_pagination, sort id desc }); options [none, '#5 — ACME']; form open with { order_id: '5' }
      */
     it('prefills the create form from a sales order', fakeAsync(() => {
       route.snapshot.queryParamMap = convertToParamMap({ order_id: '5' });
-      dh().getCollection.and.returnValue(of([{ id: 5, client_name: 'ACME' }]));
+      dh().getCollection.and.callFake((endpoint: string) => of(endpoint === 'project-portal/projects' ? [] : [{ id: 5, client_name: 'ACME' }]));
       component.ngOnInit();
+      expect(dh().getCollection).toHaveBeenCalledWith('project-portal/projects', { order_id: '5', no_pagination: 'true' });
       expect(dh().getCollection).toHaveBeenCalledWith('web/sales_orders', { no_pagination: 'true', sort_by: 'id', sort_direction: 'desc' });
       expect(field('order_id').options).toEqual([{ value: '', label: 'projects.field_order_none_option' }, { value: '5', label: '#5 — ACME' }]);
       expect(component.showCreateForm).toBeTrue();
@@ -219,20 +222,40 @@ describe('ProjectsComponent', () => {
     }));
 
     /**
+     * @description ?order_id=5 of an order that has a project opens that project; a failed lookup
+     *   falls back to the create form.
+     * @input  query { order_id: '5' }; projects of the order [{ id: 12 }]; then the lookup fails.
+     * @output navigate(['/admin/web/projects', 12], { replaceUrl: true }), no form; then the form with { order_id: '5' }.
+     */
+    it('opens the project of a sales order', fakeAsync(() => {
+      route.snapshot.queryParamMap = convertToParamMap({ order_id: '5' });
+      dh().getCollection.and.callFake((endpoint: string) => of(endpoint === 'project-portal/projects' ? [{ id: 12 }] : []));
+      component.ngOnInit();
+      expect(navigate).toHaveBeenCalledWith(['/admin/web/projects', 12], { replaceUrl: true });
+      expect(component.showCreateForm).toBeFalse();
+
+      dh().getCollection.and.callFake((endpoint: string) => endpoint === 'project-portal/projects' ? throwError(() => new Error('x')) : of([]));
+      component.ngOnInit();
+      expect(component.showCreateForm).toBeTrue();
+      expect(component.selectedItemForEdit).toEqual({ order_id: '5' });
+      discardPeriodicTasks();
+    }));
+
+    /**
      * @description Opening the create form offers the project templates ("No template" first, with
      *   the number of checkpoints); a failed load keeps the field as it is.
-     * @input  getCollection('web/projects/templates') → [Web #1 (2 checkpoints)]; then failure
+     * @input  getCollection('project-portal/projects/templates') → [Web #1 (2 checkpoints)]; then failure
      * @output template_id options ['' none, '1' 'Web (2)']; form open both times
      */
     it('offers the project templates in the create form', () => {
       dh().getCollection.and.callFake((endpoint: string) =>
-        endpoint === 'web/projects/templates' ? of([{ id: 1, name: 'Web', checkpoints: [{}, {}] }]) : of([]));
+        endpoint === 'project-portal/projects/templates' ? of([{ id: 1, name: 'Web', checkpoints: [{}, {}] }]) : of([]));
       component.handleCreateFormOpened();
-      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/templates');
+      expect(dh().getCollection).toHaveBeenCalledWith('project-portal/projects/templates');
       expect(field('template_id').options).toEqual([{ value: '', label: 'projects.field_template_none_option' }, { value: '1', label: 'Web (2)' }]);
       expect(component.showCreateForm).toBeTrue();
       dh().getCollection.and.callFake((endpoint: string) =>
-        endpoint === 'web/projects/templates' ? throwError(() => new Error('x')) : of([]));
+        endpoint === 'project-portal/projects/templates' ? throwError(() => new Error('x')) : of([]));
       component.handleCreateFormOpened();
       expect(field('template_id').options!.length).toBe(2);
     });
@@ -258,14 +281,14 @@ describe('ProjectsComponent', () => {
      * @description A new project opens its page (the client accounts are added there); no password
      *   is expected from the API any more and nothing is written to browser storage.
      * @input  handleFormSubmitted({ name: 'Shop' }); API { id: 7, public_url }
-     * @output post('web/projects', …); alert 'projects.project_created_message'; navigate to
+     * @output post('project-portal/projects', …); alert 'projects.project_created_message'; navigate to
      *   ['/admin/web/projects', 7, 'access'] (the accounts sub-page); form closed; no storage write
      */
     it('creates a project and opens its page', () => {
       const setItem = spyOn(Storage.prototype, 'setItem').and.callThrough();
       dh().post.and.returnValue(of({ id: 7, public_url: 'https://x/p/7' }));
       component.handleFormSubmitted({ name: 'Shop' });
-      expect(dh().post).toHaveBeenCalledWith('web/projects', { name: 'Shop' });
+      expect(dh().post).toHaveBeenCalledWith('project-portal/projects', { name: 'Shop' });
       expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'projects.project_created_message', 'success');
       expect(navigate).toHaveBeenCalledWith(['/admin/web/projects', 7, 'access']);
       expect(component.showCreateForm).toBeFalse();
@@ -274,17 +297,17 @@ describe('ProjectsComponent', () => {
 
     /**
      * @description The assignee select offers "Nobody" and the administrators of
-     *   GET web/projects/assignees (loaded once on init, kept after a language change); a failed
+     *   GET project-portal/projects/assignees (loaded once on init, kept after a language change); a failed
      *   load keeps only "Nobody".
-     * @input  getCollection('web/projects/assignees') → [Jana #3, Petr #5]; detectChanges; translations$.next;
+     * @input  getCollection('project-portal/projects/assignees') → [Jana #3, Petr #5]; detectChanges; translations$.next;
      *         then a new component whose load fails
      * @output options ['' Nobody, '3' Jana, '5' Petr] before and after the rebuild; failure → ['']
      */
     it('loads the assignee options', () => {
       dh().getCollection.and.callFake((endpoint: string) =>
-        endpoint === 'web/projects/assignees' ? of([{ id: 3, full_name: 'Jana' }, { id: 5, full_name: 'Petr' }]) : of([]));
+        endpoint === 'project-portal/projects/assignees' ? of([{ id: 3, full_name: 'Jana' }, { id: 5, full_name: 'Petr' }]) : of([]));
       fixture.detectChanges();
-      expect(dh().getCollection).toHaveBeenCalledWith('web/projects/assignees');
+      expect(dh().getCollection).toHaveBeenCalledWith('project-portal/projects/assignees');
       const expected = [
         { value: '', label: 'projects.field_assignee_none_option' }, { value: '3', label: 'Jana' }, { value: '5', label: 'Petr' }
       ];
@@ -302,11 +325,11 @@ describe('ProjectsComponent', () => {
     /**
      * @description Updating, or an answer without a project id, only shows "updated" and reloads.
      * @input  handleFormSubmitted({ id: 7, name: 'X' }); handleFormSubmitted({ name: 'Y' }) with API {}
-     * @output put('web/projects/7', …); alerts 'projects.project_updated_message'; no navigation
+     * @output put('project-portal/projects/7', …); alerts 'projects.project_updated_message'; no navigation
      */
     it('updates a project', () => {
       component.handleFormSubmitted({ id: 7, name: 'X' });
-      expect(dh().put).toHaveBeenCalledWith('web/projects/7', { id: 7, name: 'X' });
+      expect(dh().put).toHaveBeenCalledWith('project-portal/projects/7', { id: 7, name: 'X' });
       dh().post.and.returnValue(of({}));
       component.handleFormSubmitted({ name: 'Y' });
       expect(ctx.alert.open.calls.allArgs().every((a: any[]) => a[1] === 'projects.project_updated_message')).toBeTrue();

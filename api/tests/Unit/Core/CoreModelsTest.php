@@ -7,8 +7,8 @@
  * @author JS
  * @created 2026
  * @description Unit tests of the Core / Auth models: relations, effective permissions,
- *   2FA requirement, token validity, the e-mail access policy and the security setting
- *   singleton.
+ *   2FA requirement, token validity, the e-mail access policy, the security setting
+ *   singleton and the signed links of attachments.
  * @dependencies
  * - Tests\TestCase (SQLite in-memory schema, account helpers).
  */
@@ -16,6 +16,7 @@
 namespace Tests\Unit\Core;
 
 use App\Models\AccountActivationToken;
+use App\Models\Core\CoreAttachment;
 use App\Models\Core\CoreEmailAccessRule;
 use App\Models\Core\CoreExternalLink;
 use App\Models\Core\CoreLog;
@@ -196,5 +197,33 @@ class CoreModelsTest extends TestCase
         $this->assertSame(CoreSecuritySetting::SINGLETON_ID, $first->id);
         $this->assertSame(90, $second->retention_days);
         $this->assertSame(1, CoreSecuritySetting::count());
+    }
+
+    /**
+     * @description Attachments are reachable only through signed links (open finding #9): the
+     *   model no longer has the dead `url` storage accessor and the resource does not expose it.
+     *   A "view" link is offered only for previewable types (VT-02).
+     * @input Attachment with path web/x/a.pdf; CoreAttachmentResource of it; attachments data.zip,
+     *        logo.svg, photo.PNG (by name, also without a name: stored path).
+     * @output Model url null; resource without `url`, download_url / view_url signed (signature query);
+     *   zip / svg: view_url null, download_url signed; PNG and the nameless .webp: view_url signed.
+     */
+    public function test_attachment_has_signed_links_only(): void
+    {
+        $attachment = new CoreAttachment(['disk' => 'private', 'path' => 'web/x/a.pdf', 'original_filename' => 'a.pdf']);
+        $this->assertNull($attachment->url);
+
+        $json = (new \App\Http\Resources\Core\CoreAttachmentResource($attachment))->toArray(request());
+        $this->assertArrayNotHasKey('url', $json);
+        $this->assertStringContainsString('signature=', $json['download_url']);
+        $this->assertStringContainsString('signature=', $json['view_url']);
+
+        foreach (['data.zip' => false, 'logo.svg' => false, 'photo.PNG' => true] as $name => $previewable) {
+            $json = (new \App\Http\Resources\Core\CoreAttachmentResource(new CoreAttachment(['path' => 'web/x/f', 'original_filename' => $name])))->toArray(request());
+            $this->assertStringContainsString('signature=', $json['download_url']);
+            $previewable ? $this->assertStringContainsString('signature=', $json['view_url']) : $this->assertNull($json['view_url'], $name);
+        }
+        $json = (new \App\Http\Resources\Core\CoreAttachmentResource(new CoreAttachment(['path' => 'web/x/a.webp', 'original_filename' => ''])))->toArray(request());
+        $this->assertNotNull($json['view_url']);
     }
 }

@@ -29,7 +29,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 import { PageHelpComponent } from '../../components/page-help/page-help.component';
 
 /** Module of an item (colour and filter); `personal` = own events of the admin. */
-export type AgendaModule = 'web' | 'shop' | 'core' | 'personal';
+export type AgendaModule = 'web' | 'shop' | 'project-portal' | 'core' | 'personal';
 
 /** Own event of the admin (only in items of the module `personal`). */
 export interface PersonalEventData {
@@ -96,7 +96,7 @@ export interface AgendaDayGroup {
 }
 
 /** Modules in the order of the filter. */
-export const AGENDA_MODULES: AgendaModule[] = ['personal', 'web', 'shop', 'core'];
+export const AGENDA_MODULES: AgendaModule[] = ['personal', 'web', 'shop', 'project-portal', 'core'];
 
 /** Chips shown in one day cell before "+N more". */
 export const DAY_CELL_LIMIT = 3;

@@ -15,6 +15,7 @@
 namespace App\Services\Agenda;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Carbon;
 
 final class AgendaContext
@@ -55,6 +56,19 @@ final class AgendaContext
     }
 
     /**
+     * @description May the user see the admin page of ANOTHER module (e.g. an entry of one
+     *   application that links to a page of another one)?
+     * @param string $tabPermission Tab permission of that module.
+     * @param string $permission View permission key of the page.
+     * @return bool
+     */
+    public function canInModule(string $tabPermission, string $permission): bool
+    {
+        return $this->permissions === null
+            || (in_array($tabPermission, $this->permissions, true) && in_array($permission, $this->permissions, true));
+    }
+
+    /**
      * @description One dated event.
      * @param string $type Kind of the event (translated by the admin page).
      * @param string $id Id of the record (unique within the kind).
@@ -76,12 +90,12 @@ final class AgendaContext
      * @description One kind of open work - counted; null when there is none.
      * @param string $type Kind of the reminder (translated by the admin page).
      * @param string $link Admin page of the work.
-     * @param Builder $query Records of the work.
+     * @param Builder|QueryBuilder $query Records of the work (Eloquent or a plain table query).
      * @param string|null $dateColumn Column of the start of an item (`since` = the oldest); null
      *   for a state without a start (e.g. low stock).
      * @return array{type: string, module: string, count: int, since: string|null, link: string}|null
      */
-    public function reminder(string $type, string $link, Builder $query, ?string $dateColumn = 'created_at'): ?array
+    public function reminder(string $type, string $link, Builder|QueryBuilder $query, ?string $dateColumn = 'created_at'): ?array
     {
         $count = (clone $query)->count();
         if ($count === 0) {

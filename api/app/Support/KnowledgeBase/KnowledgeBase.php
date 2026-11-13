@@ -6,8 +6,9 @@
  * @author JS
  * @created 2026
  * @description The internal manual of the administration (Knowledge Base) - content kept in JSON
- * files OUTSIDE the public folder (resources/knowledge-base), delivered only to signed-in users and
- * only the parts each one may see:
+ * files OUTSIDE the public folder (resources/knowledge-base for the core, Resources/knowledge-base
+ * of every registered application, AppManifest::knowledgeBasePath(), merged here), delivered only
+ * to signed-in users and only the parts each one may see:
  *   - structure.json - language neutral: pages (id, menu group, order, `permission`) and the
  *     permissions of single sections (`sections`: section key => permission), plus `devNote`
  *     (developer note, never sent);
@@ -20,12 +21,13 @@
  * @note Editing the manual = editing the JSON files (git diff, review, deploy) - the content is
  *   part of the released product, not user data. A page missing in a language falls back to
  *   English, then Czech.
- * @dependencies App\Models\User (roles, effective permissions)
+ * @dependencies App\Models\User (roles, effective permissions), AppRegistry
  */
 
 namespace App\Support\KnowledgeBase;
 
 use App\Models\User;
+use App\Support\Apps\AppRegistry;
 use RuntimeException;
 
 class KnowledgeBase
@@ -163,19 +165,37 @@ class KnowledgeBase
     }
 
     /**
-     * @description Decodes one JSON file of the folder (cached for the request).
+     * @description One JSON file of the manual: the core file merged with the same file of every
+     *   registered application (pages of `structure` appended, `pages` of a language added) -
+     *   cached for the request.
      * @param string $name File name without `.json` (validated by the callers).
-     * @return array<string, mixed>|null Null when the file does not exist.
+     * @return array<string, mixed>|null Null when the core file does not exist.
      */
     private function read(string $name): ?array
     {
         if (!array_key_exists($name, $this->files)) {
-            $path = resource_path(self::DIRECTORY . "/{$name}.json");
-            $this->files[$name] = is_file($path)
-                ? json_decode((string) file_get_contents($path), true, 64, JSON_THROW_ON_ERROR)
-                : null;
+            $merged = self::decode(resource_path(self::DIRECTORY . "/{$name}.json"));
+            foreach (AppRegistry::apps() as $app) {
+                $extra = ($dir = $app->knowledgeBasePath()) ? self::decode("{$dir}/{$name}.json") : null;
+                if ($merged !== null && $extra !== null) {
+                    $merged['pages'] = $name === 'structure'
+                        ? [...$merged['pages'], ...($extra['pages'] ?? [])]
+                        : ($merged['pages'] ?? []) + ($extra['pages'] ?? []);
+                }
+            }
+            $this->files[$name] = $merged;
         }
 
         return $this->files[$name];
+    }
+
+    /**
+     * @description Decodes a JSON file.
+     * @param string $path Absolute path.
+     * @return array<string, mixed>|null Null when the file does not exist.
+     */
+    public static function decode(string $path): ?array
+    {
+        return is_file($path) ? json_decode((string) file_get_contents($path), true, 64, JSON_THROW_ON_ERROR) : null;
     }
 }

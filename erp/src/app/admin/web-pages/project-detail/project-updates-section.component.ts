@@ -9,7 +9,7 @@
  *   team; publishing shows it in the portal and - the first time only - e-mails the client accounts
  *   that turned update notifications on. An update can be taken back to a draft, changed (files
  *   added / removed) and deleted.
- * @dependencies DataHandler (web/projects/:id/updates), AdminLocalizationService, AlertDialogService,
+ * @dependencies DataHandler (project-portal/projects/:id/updates), AdminLocalizationService, AlertDialogService,
  *   ConfirmDialogService, UploadRulesService (project_thread), project-files.util
  */
 
@@ -89,7 +89,7 @@ export class ProjectUpdatesSectionComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.cd.markForCheck();
-    this.dataHandler.getCollection<ProjectUpdate>(`web/projects/${this.projectId}/updates`).subscribe({
+    this.dataHandler.getCollection<ProjectUpdate>(`project-portal/projects/${this.projectId}/updates`).subscribe({
       next: (rows) => { this.updates = Array.isArray(rows) ? rows : []; this.loading = false; this.cd.markForCheck(); },
       error: () => { this.loading = false; this.cd.markForCheck(); },
     });
@@ -167,7 +167,7 @@ export class ProjectUpdatesSectionComponent implements OnInit {
     if (publish || this.formMode === 'add') form.append('publish', publish ? '1' : '0');
     this.files.forEach(file => form.append('attachments[]', file, file.name));
     this.removeIds.forEach(id => form.append('remove_attachment_ids[]', String(id)));
-    const url = this.formMode === 'edit' ? `web/projects/${this.projectId}/updates/${this.editingId}` : `web/projects/${this.projectId}/updates`;
+    const url = this.formMode === 'edit' ? `project-portal/projects/${this.projectId}/updates/${this.editingId}` : `project-portal/projects/${this.projectId}/updates`;
     this.submit(url, form, this.formMode === 'add');
   }
 
@@ -182,7 +182,7 @@ export class ProjectUpdatesSectionComponent implements OnInit {
     if (!(await this.confirm.open(this.t(`${key}_confirm_title`), this.t(`${key}_confirm_message`).replace('{title}', update.title)))) return;
     this.busyId = update.id;
     this.cd.markForCheck();
-    this.dataHandler.postWithMeta<ProjectUpdate, { notified: number }>(`web/projects/${this.projectId}/updates/${update.id}`, { publish }).subscribe({
+    this.dataHandler.postWithMeta<ProjectUpdate, { notified: number }>(`project-portal/projects/${this.projectId}/updates/${update.id}`, { publish }).subscribe({
       next: (res) => {
         this.busyId = null;
         this.updates = this.updates.map(u => (u.id === update.id ? res.data : u));
@@ -203,7 +203,7 @@ export class ProjectUpdatesSectionComponent implements OnInit {
     if (!(await this.confirm.open(this.t('update_delete_confirm_title'), this.t('update_delete_confirm_message').replace('{title}', update.title)))) return;
     this.busyId = update.id;
     this.cd.markForCheck();
-    this.dataHandler.delete(`web/projects/${this.projectId}/updates/${update.id}`).subscribe({
+    this.dataHandler.delete(`project-portal/projects/${this.projectId}/updates/${update.id}`).subscribe({
       next: () => {
         this.busyId = null;
         this.updates = this.updates.filter(u => u.id !== update.id);

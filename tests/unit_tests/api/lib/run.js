@@ -21,7 +21,7 @@
  *
  * @usage node run.js --group "Core" --command run_core.sh --suite Core [--no-coverage]
  *        node run.js --group "All" --command run_all_api.sh        (every test suite)
- * @note The suites (Core, Web, Shop, Other) are defined in api/phpunit.xml. For coverage the
+ * @note The suites (Core, Web, Shop, ProjectPortal, Other, Integration) are defined in api/phpunit.xml. For coverage the
  *   runner writes a temporary copy of phpunit.xml whose <source> lists only the section's
  *   files (absolute paths), so the HTML report shows exactly the measured files.
  */
@@ -182,7 +182,7 @@ function sourceXml(section) {
     return `<source><include>${SECTIONS[section].map(entry).join('')}</include></source>`;
   }
   const exclude = section === 'other'
-    ? `<exclude>${['core', 'web', 'shop'].flatMap(n => SECTIONS[n]).map(entry).join('')}</exclude>` : '';
+    ? `<exclude>${['core', 'web', 'shop', 'projectportal'].flatMap(n => SECTIONS[n]).map(entry).join('')}</exclude>` : '';
   return `<source><include>${entry('app/')}</include>${exclude}</source>`;
 }
 

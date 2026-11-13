@@ -19,16 +19,23 @@
             <directory>tests/Feature/Core</directory>
         </testsuite>
         <testsuite name="Web">
-            <directory>tests/Unit/Web</directory>
-            <directory>tests/Feature/Web</directory>
+            <directory>tests/Apps/Web</directory>
         </testsuite>
         <testsuite name="Shop">
-            <directory>tests/Unit/Shop</directory>
-            <directory>tests/Feature/Shop</directory>
+            <directory>tests/Apps/Shop</directory>
+        </testsuite>
+        <testsuite name="ProjectPortal">
+            <directory>tests/Apps/ProjectPortal</directory>
         </testsuite>
         <testsuite name="Other">
             <directory>tests/Unit/Other</directory>
             <directory>tests/Feature/Other</directory>
+        </testsuite>
+        <!-- The core together with the installed applications (registry, retention, calendar,
+             logs, translations, base data, attachments, sorting) - needs every application of
+             config/apps.php. -->
+        <testsuite name="Integration">
+            <directory>tests/Integration</directory>
         </testsuite>
     </testsuites>
     <source>

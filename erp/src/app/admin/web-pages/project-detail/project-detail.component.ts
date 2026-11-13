@@ -20,8 +20,8 @@
  *   language. Opening a thread marks it read for the administration (API). A password of a client
  *   account is shown once after it was set (memory only, VT-08); leaving with an uncopied password
  *   or unsaved settings asks first. Internal notes and checkpoint notes never reach the client.
- * @dependencies DataHandler (web/projects, web/projects/:id/accounts, web/projects/:id/files,
- *   web/projects/assignees, web/project-threads), AdminLocalizationService, PermissionService
+ * @dependencies DataHandler (project-portal/projects, …/projects/:id/accounts, …/projects/:id/files,
+ *   …/projects/assignees, project-portal/project-threads), AdminLocalizationService, PermissionService
  *   (web-projects-update), AlertDialogService, ConfirmDialogService, UploadRulesService (profile
  *   project_thread), Router.
  */
@@ -427,7 +427,7 @@ export class ProjectDetailComponent implements OnInit {
   loadActivity(): void {
     this.activityLoading = true;
     this.cd.markForCheck();
-    this.dataHandler.getCollection<ProjectActivityItem>(`web/projects/${this.projectId}/activity`).subscribe({
+    this.dataHandler.getCollection<ProjectActivityItem>(`project-portal/projects/${this.projectId}/activity`).subscribe({
       next: (items) => { this.activity = Array.isArray(items) ? items : []; this.activityLoading = false; this.cd.markForCheck(); },
       error: () => { this.activityLoading = false; this.cd.markForCheck(); },
     });
@@ -459,7 +459,7 @@ export class ProjectDetailComponent implements OnInit {
 
   /** @description Loads the project (settings, checkpoints, access). */
   loadProject(): void {
-    this.dataHandler.get<any>(`web/projects/${this.projectId}`).subscribe({
+    this.dataHandler.get<any>(`project-portal/projects/${this.projectId}`).subscribe({
       next: (project) => {
         this.applyProject(project);
         this.applyAssigneeOptions();
@@ -489,9 +489,9 @@ export class ProjectDetailComponent implements OnInit {
     this.original = { ...form };
   }
 
-  /** @description Loads the possible assignees once (GET web/projects/assignees). */
+  /** @description Loads the possible assignees once (GET project-portal/projects/assignees). */
   private loadAssignees(): void {
-    this.dataHandler.getCollection<{ id: number; full_name: string }>('web/projects/assignees').subscribe({
+    this.dataHandler.getCollection<{ id: number; full_name: string }>('project-portal/projects/assignees').subscribe({
       next: (users) => {
         this.assignees = users ?? [];
         this.applyAssigneeOptions();
@@ -534,7 +534,7 @@ export class ProjectDetailComponent implements OnInit {
     }
     this.saving = true;
     this.cd.markForCheck();
-    this.dataHandler.put<any>(`web/projects/${this.projectId}`, payload).subscribe({
+    this.dataHandler.put<any>(`project-portal/projects/${this.projectId}`, payload).subscribe({
       next: (project) => {
         this.saving = false;
         this.applyProject({ ...project, unread_messages_count: this.project?.unread_messages_count });
@@ -584,7 +584,7 @@ export class ProjectDetailComponent implements OnInit {
   /** @description Loads the client accounts of the project (oldest first). */
   loadAccounts(): void {
     this.accountsLoading = true;
-    this.dataHandler.getCollection<ProjectAccount>(`web/projects/${this.projectId}/accounts`).subscribe({
+    this.dataHandler.getCollection<ProjectAccount>(`project-portal/projects/${this.projectId}/accounts`).subscribe({
       next: (accounts) => {
         this.accounts = Array.isArray(accounts) ? accounts : [];
         this.accountsLoading = false;
@@ -678,7 +678,7 @@ export class ProjectDetailComponent implements OnInit {
       fields['with_password'] = !!draft.with_password;
       fields['send_invitation'] = !!draft.send_invitation && !!fields['email'];
       if (draft.with_password && draft.password) fields['password'] = draft.password;
-      this.dataHandler.postWithMeta<ProjectAccount, { password: string | null; invited: boolean }>(`web/projects/${this.projectId}/accounts`, fields).subscribe({
+      this.dataHandler.postWithMeta<ProjectAccount, { password: string | null; invited: boolean }>(`project-portal/projects/${this.projectId}/accounts`, fields).subscribe({
         next: (res) => {
           this.accounts = [...this.accounts, res.data];
           this.revealPassword(res.data, res.meta?.password ?? undefined);
@@ -702,7 +702,7 @@ export class ProjectDetailComponent implements OnInit {
       if (value !== saved) changed[key] = value;
     }
     if (Object.keys(changed).length === 0) { this.finishAccountSave(); return; }
-    this.dataHandler.put<ProjectAccount>(`web/projects/${this.projectId}/accounts/${account.id}`, changed).subscribe({
+    this.dataHandler.put<ProjectAccount>(`project-portal/projects/${this.projectId}/accounts/${account.id}`, changed).subscribe({
       next: (updated) => {
         this.accounts = this.accounts.map(a => (a.id === account.id ? { ...a, ...updated } : a));
         this.finishAccountSave();
@@ -731,7 +731,7 @@ export class ProjectDetailComponent implements OnInit {
     this.accountBusyId = account.id;
     this.cd.markForCheck();
     this.dataHandler.postWithMeta<ProjectAccount, { password: string; ended_sessions: number }>(
-      `web/projects/${this.projectId}/accounts/${account.id}/password`, {},
+      `project-portal/projects/${this.projectId}/accounts/${account.id}/password`, {},
     ).subscribe({
       next: (res) => {
         this.accountBusyId = null;
@@ -754,7 +754,7 @@ export class ProjectDetailComponent implements OnInit {
     if (!confirmed) return;
     this.accountBusyId = account.id;
     this.cd.markForCheck();
-    this.dataHandler.delete(`web/projects/${this.projectId}/accounts/${account.id}`).subscribe({
+    this.dataHandler.delete(`project-portal/projects/${this.projectId}/accounts/${account.id}`).subscribe({
       next: () => {
         this.accountBusyId = null;
         this.accounts = this.accounts.filter(a => a.id !== account.id);
@@ -823,7 +823,7 @@ export class ProjectDetailComponent implements OnInit {
     if (!confirmed) return;
     this.invitingAccountId = account.id;
     this.cd.markForCheck();
-    this.dataHandler.post<ProjectAccount>(`web/projects/${this.projectId}/accounts/${account.id}/invite`, {}).subscribe({
+    this.dataHandler.post<ProjectAccount>(`project-portal/projects/${this.projectId}/accounts/${account.id}/invite`, {}).subscribe({
       next: (updated) => {
         this.invitingAccountId = null;
         this.accounts = this.accounts.map(a => (a.id === account.id ? { ...a, ...updated } : a));
@@ -852,7 +852,7 @@ export class ProjectDetailComponent implements OnInit {
   loadFiles(): void {
     this.filesLoading = true;
     this.cd.markForCheck();
-    this.dataHandler.getCollection<ProjectFile>(`web/projects/${this.projectId}/files`).subscribe({
+    this.dataHandler.getCollection<ProjectFile>(`project-portal/projects/${this.projectId}/files`).subscribe({
       next: (files) => {
         this.files = Array.isArray(files) ? files : [];
         this.filesLoading = false;
@@ -893,7 +893,7 @@ export class ProjectDetailComponent implements OnInit {
 
   /** @description Loads the templates offered in Progress. */
   loadTemplates(): void {
-    this.dataHandler.getCollection<ProjectTemplateOption>('web/projects/templates').subscribe({
+    this.dataHandler.getCollection<ProjectTemplateOption>('project-portal/projects/templates').subscribe({
       next: (templates) => { this.templates = Array.isArray(templates) ? templates : []; this.cd.markForCheck(); },
       error: () => { /* the action shows "no templates" */ },
     });
@@ -916,7 +916,7 @@ export class ProjectDetailComponent implements OnInit {
     if (!this.canEdit || !templateId || this.templateBusy) return;
     this.templateBusy = true;
     this.cd.markForCheck();
-    this.dataHandler.postWithMeta<ProjectCheckpoint[], { added: number }>(`web/projects/${this.projectId}/apply-template`, {
+    this.dataHandler.postWithMeta<ProjectCheckpoint[], { added: number }>(`project-portal/projects/${this.projectId}/apply-template`, {
       template_id: templateId, start_date: this.templateDraft.start_date || null,
     }).subscribe({
       next: (res) => {
@@ -936,7 +936,7 @@ export class ProjectDetailComponent implements OnInit {
     if (!this.canEdit || !name || this.templateBusy || this.checkpoints.length === 0) return;
     this.templateBusy = true;
     this.cd.markForCheck();
-    this.dataHandler.post<ProjectTemplateOption>(`web/projects/${this.projectId}/template`, { name }).subscribe({
+    this.dataHandler.post<ProjectTemplateOption>(`project-portal/projects/${this.projectId}/template`, { name }).subscribe({
       next: (template) => {
         this.templateBusy = false;
         this.templateAction = null;
@@ -958,7 +958,7 @@ export class ProjectDetailComponent implements OnInit {
 
   /** @description Reloads the counts of the project (tabs) without touching the settings form. */
   private loadProjectCounts(): void {
-    this.dataHandler.get<any>(`web/projects/${this.projectId}`).subscribe({
+    this.dataHandler.get<any>(`project-portal/projects/${this.projectId}`).subscribe({
       next: (project) => {
         if (!project || !this.project) return;
         this.project = { ...this.project, pending_approvals_count: project.pending_approvals_count, published_updates_count: project.published_updates_count };
@@ -1004,7 +1004,7 @@ export class ProjectDetailComponent implements OnInit {
       due_date: this.newCheckpointDueDate || null,
       internal_note: this.newCheckpointNote.trim() || null,
     };
-    this.dataHandler.post<ProjectCheckpoint>(`web/projects/${this.projectId}/checkpoints`, payload).subscribe({
+    this.dataHandler.post<ProjectCheckpoint>(`project-portal/projects/${this.projectId}/checkpoints`, payload).subscribe({
       next: (checkpoint) => {
         this.checkpoints = [...this.checkpoints, checkpoint];
         this.cancelAddCheckpoint();
@@ -1055,7 +1055,7 @@ export class ProjectDetailComponent implements OnInit {
       return;
     }
     this.checkpointBusyIds.add(checkpoint.id);
-    this.dataHandler.put<ProjectCheckpoint>(`web/projects/${this.projectId}/checkpoints/${checkpoint.id}`, payload).subscribe({
+    this.dataHandler.put<ProjectCheckpoint>(`project-portal/projects/${this.projectId}/checkpoints/${checkpoint.id}`, payload).subscribe({
       next: (updated) => {
         this.checkpoints = this.checkpoints.map(c => (c.id === checkpoint.id ? {
           ...c, label: updated.label, description: updated.description, due_date: updated.due_date, internal_note: updated.internal_note,
@@ -1085,7 +1085,7 @@ export class ProjectDetailComponent implements OnInit {
       return;
     }
     this.checkpointBusyIds.add(checkpoint.id);
-    this.dataHandler.put<ProjectCheckpoint>(`web/projects/${this.projectId}/checkpoints/${checkpoint.id}`, { status }).subscribe({
+    this.dataHandler.put<ProjectCheckpoint>(`project-portal/projects/${this.projectId}/checkpoints/${checkpoint.id}`, { status }).subscribe({
       next: (updated) => {
         this.checkpoints = this.checkpoints.map(c => (c.id === checkpoint.id ? { ...c, status: updated.status } : c));
         this.checkpointBusyIds.delete(checkpoint.id);
@@ -1129,7 +1129,7 @@ export class ProjectDetailComponent implements OnInit {
     this.checkpoints = reordered.map((c, i) => ({ ...c, sort_order: i }));
     this.checkpointsReordering = true;
     this.cd.markForCheck();
-    this.dataHandler.put<ProjectCheckpoint[]>(`web/projects/${this.projectId}/checkpoints/order`, { ids: reordered.map(c => c.id) }).subscribe({
+    this.dataHandler.put<ProjectCheckpoint[]>(`project-portal/projects/${this.projectId}/checkpoints/order`, { ids: reordered.map(c => c.id) }).subscribe({
       next: () => { this.checkpointsReordering = false; this.cd.markForCheck(); },
       error: () => {
         this.checkpoints = previous;
@@ -1146,7 +1146,7 @@ export class ProjectDetailComponent implements OnInit {
       this.t('delete_checkpoint_confirm_message').replace('{label}', checkpoint.label),
     );
     if (!confirmed) return;
-    this.dataHandler.delete(`web/projects/${this.projectId}/checkpoints/${checkpoint.id}`).subscribe({
+    this.dataHandler.delete(`project-portal/projects/${this.projectId}/checkpoints/${checkpoint.id}`).subscribe({
       next: () => {
         this.checkpoints = this.checkpoints.filter(c => c.id !== checkpoint.id);
         this.cd.markForCheck();
@@ -1166,7 +1166,7 @@ export class ProjectDetailComponent implements OnInit {
       this.threadsLoading = true;
       this.cd.markForCheck();
     }
-    this.dataHandler.getCollection<ProjectThread>('web/project-threads', { project_id: this.projectId, no_pagination: 'true' }).subscribe({
+    this.dataHandler.getCollection<ProjectThread>('project-portal/project-threads', { project_id: this.projectId, no_pagination: 'true' }).subscribe({
       next: (threads) => {
         this.threads = Array.isArray(threads) ? threads : [];
         if (this.selectedThread) {
@@ -1216,14 +1216,14 @@ export class ProjectDetailComponent implements OnInit {
 
   /** @description Thread with its newest messages and the `has_more_older_messages` flag of the answer. */
   private fetchThread(id: number) {
-    return this.dataHandler.getWithMeta<ProjectThread, { has_more_older_messages: boolean }>(`web/project-threads/${id}`)
+    return this.dataHandler.getWithMeta<ProjectThread, { has_more_older_messages: boolean }>(`project-portal/project-threads/${id}`)
       .pipe(map(res => ({ ...res.data, has_more_older_messages: !!res.meta?.has_more_older_messages })));
   }
 
   changeThreadStatus(status: string): void {
     if (!this.selectedThread || !this.canEdit) return;
     const id = this.selectedThread.id;
-    this.dataHandler.put<ProjectThread>(`web/project-threads/${id}/status`, { status }).subscribe({
+    this.dataHandler.put<ProjectThread>(`project-portal/project-threads/${id}/status`, { status }).subscribe({
       next: (updated) => {
         if (this.selectedThread?.id === id) this.selectedThread = { ...this.selectedThread, status: updated.status };
         this.threads = this.threads.map(t => (t.id === id ? { ...t, status: updated.status } : t));
@@ -1242,7 +1242,7 @@ export class ProjectDetailComponent implements OnInit {
     this.olderMessagesLoading = true;
     this.cd.markForCheck();
     this.dataHandler.getWithMeta<ProjectThreadMessage[], { has_more_older_messages: boolean }>(
-      `web/project-threads/${thread.id}/messages?before_message_id=${oldestId}`,
+      `project-portal/project-threads/${thread.id}/messages?before_message_id=${oldestId}`,
     ).subscribe({
       next: (res) => {
         this.selectedThread = { ...thread, messages: [...res.data, ...(thread.messages ?? [])], has_more_older_messages: !!res.meta?.has_more_older_messages };
@@ -1266,7 +1266,7 @@ export class ProjectDetailComponent implements OnInit {
       : { body, is_internal: internal };
     const hadFiles = this.replyFiles.length > 0;
     try {
-      await firstValueFrom(this.dataHandler.post(`web/project-threads/${thread.id}/reply`, payload));
+      await firstValueFrom(this.dataHandler.post(`project-portal/project-threads/${thread.id}/reply`, payload));
       this.replyBody = '';
       this.replyFiles = [];
       this.openThread(thread);
@@ -1282,7 +1282,7 @@ export class ProjectDetailComponent implements OnInit {
 
   /** @description Loads the ids of the threads of this project assigned to the signed-in administrator. */
   loadMyThreads(): void {
-    this.dataHandler.getCollection<ProjectThread>('web/project-threads', { project_id: this.projectId, no_pagination: 'true', assigned_to_me: '1' }).subscribe({
+    this.dataHandler.getCollection<ProjectThread>('project-portal/project-threads', { project_id: this.projectId, no_pagination: 'true', assigned_to_me: '1' }).subscribe({
       next: (threads) => { this.myThreadIds = new Set((Array.isArray(threads) ? threads : []).map(t => t.id)); this.cd.markForCheck(); },
       error: () => { /* the filter "Mine" stays empty */ },
     });
@@ -1296,7 +1296,7 @@ export class ProjectDetailComponent implements OnInit {
     const thread = this.selectedThread;
     if (!thread || !this.canEdit) return;
     const assigneeId = value ? Number(value) : null;
-    this.dataHandler.put<ProjectThread>(`web/project-threads/${thread.id}/assignee`, { assignee_id: assigneeId }).subscribe({
+    this.dataHandler.put<ProjectThread>(`project-portal/project-threads/${thread.id}/assignee`, { assignee_id: assigneeId }).subscribe({
       next: (updated) => {
         const patch = { assignee_id: updated?.assignee_id ?? assigneeId, assignee_name: updated?.assignee_name ?? null };
         if (this.selectedThread?.id === thread.id) this.selectedThread = { ...this.selectedThread, ...patch };

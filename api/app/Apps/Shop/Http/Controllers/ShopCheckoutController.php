@@ -1,0 +1,391 @@
+<?php
+/**
+ * @file ShopCheckoutController.php
+ * @path app/Apps/Shop/Http/Controllers/ShopCheckoutController.php
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
+ * @description Manages the end-to-end checkout process, including order persistence, atomic inventory stock updates, coupon validation, the confirmation e-mail of the order and payment simulation.
+ */
+
+namespace App\Apps\Shop\Http\Controllers;
+
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\TranslationController;
+use App\Apps\Shop\Mail\ShopOrderConfirmation;
+use App\Apps\Shop\Models\ShopOrder;
+use App\Apps\Shop\Models\ShopOrderItem;
+use App\Apps\Shop\Models\ShopProduct;
+use App\Apps\Shop\Models\ShopProductVariant;
+use App\Apps\Shop\Models\ShopCustomer;
+use App\Apps\Shop\Models\ShopCoupon;
+use App\Apps\Shop\Models\ShopLog;
+use App\Apps\Shop\Models\ShopShippingMethod;
+use App\Apps\Shop\Http\Resources\ShopOrderResource;
+use App\Traits\LogsActivity;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Lottery;
+
+/**
+ * @description Controller responsible for processing customer checkouts.
+ * @note Uses database transactions and row-level locking to prevent race conditions during inventory decrementation.
+ */
+class ShopCheckoutController extends Controller
+{
+    use LogsActivity;
+
+    /**
+     * @description Orchestrates the order creation process: customer identification,
+     *   catalogue prices, coupon, stock decrement under row locks, tax calculation; after the
+     *   commit the confirmation e-mail goes to the buyer in the language of the storefront
+     *   (Directive 2011/83/EU, Art. 8(7)) - a failed e-mail never fails the order (logged).
+     * @param Request $request Checkout form (customer, address, methods, coupon_code, items,
+     *   lang = language of the storefront; unknown / missing = cz).
+     * @return JsonResponse 201 order | 422 validation / coupon / availability | 500 error.
+     */
+    public function createOrder(Request $request): JsonResponse
+    {
+        // Lengths = column sizes of shop_customers / shop_orders.
+        $validated = $request->validate([
+            'email' => 'required|email|max:150',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'phone' => 'required|string|max:20',
+            'company' => 'nullable|string|max:150',
+            'address' => 'required|string|max:255',
+            'city' => 'required|string|max:100',
+            'postal_code' => 'required|string|max:10',
+            'country' => 'required|string|max:50',
+            'payment_method_id' => 'required|integer|exists:shop_payment_methods,id',
+            'shipping_method_id' => 'required|integer|exists:shop_shipping_methods,id',
+            'coupon_code' => 'nullable|string',
+            'notes' => 'nullable|string|max:1000',
+            'items' => 'required|array|min:1|max:100',
+            'items.*.product_id' => 'required|integer|exists:shop_products,id',
+            'items.*.product_variant_id' => 'nullable|integer|exists:shop_product_variants,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            // Sent by the storefront, never trusted.
+            'items.*.unit_price' => 'nullable|numeric|min:0',
+            'items.*.vat_rate' => 'nullable|integer|between:0,100',
+            'lang' => 'sometimes|nullable|string|max:10',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $customer = $this->resolveCustomer($validated);
+
+            // Lock and price every line from the catalogue BEFORE anything else is written.
+            $lines = [];
+            $totalAmount = 0;
+            foreach ($validated['items'] as $itemData) {
+                $line = $this->lockAndPriceLine($itemData);
+                if (is_string($line)) {
+                    DB::rollBack();
+                    return response()->json(['message' => $line], 422);
+                }
+                $lines[] = $line;
+                $totalAmount += $line['line_price'];
+            }
+
+            $coupon = null;
+            $discountAmount = 0;
+
+            if (!empty($validated['coupon_code'])) {
+                $coupon = ShopCoupon::where('code', $validated['coupon_code'])->first();
+                $couponError = $this->couponError($coupon, $totalAmount);
+                if ($couponError !== null) {
+                    DB::rollBack();
+                    return response()->json(['message' => $couponError], 422);
+                }
+
+                $discountAmount = ($coupon->discount_type === 'percent')
+                    ? ($totalAmount * (float)$coupon->discount_value) / 100
+                    : (float)$coupon->discount_value;
+            }
+
+            $shippingAmount = (float) ShopShippingMethod::whereKey($validated['shipping_method_id'])->value('base_price');
+            $finalAmount = max(0, $totalAmount + $shippingAmount - $discountAmount);
+
+            $order = ShopOrder::create(ShopOrder::contactSnapshot($validated) + [
+                'customer_id' => $customer->id,
+                'order_number' => ShopOrder::generateOrderNumber(),
+                'status' => 'pending',
+                'payment_status' => 'pending',
+                'total_amount' => $totalAmount,
+                'shipping_amount' => $shippingAmount,
+                'tax_amount' => 0,
+                'discount_amount' => $discountAmount,
+                'final_amount' => $finalAmount,
+                'coupon_id' => $coupon?->id,
+                'payment_method_id' => $validated['payment_method_id'],
+                'shipping_method_id' => $validated['shipping_method_id'],
+                'shipping_address' => $validated['address'],
+                'shipping_city' => $validated['city'],
+                'shipping_postal_code' => $validated['postal_code'],
+                'shipping_country' => $validated['country'],
+                'notes' => $validated['notes'] ?? null,
+                'lang' => $this->orderLanguage($validated['lang'] ?? null),
+            ]);
+
+            $discountFactor = $totalAmount > 0 ? ($totalAmount - $discountAmount) / $totalAmount : 1;
+            $totalTax = 0;
+
+            foreach ($lines as $line) {
+                /** @var ShopProduct $product */
+                $product = $line['product'];
+                /** @var ShopProductVariant|null $variant */
+                $variant = $line['variant'];
+
+                if ($variant) {
+                    $variant->decrement('stock_quantity', $line['quantity']);
+                    ShopProductVariant::forceSyncParentStock($product->id);
+                    Cache::forget("product_stock_{$product->id}_v{$variant->id}");
+                } else {
+                    $product->decrement('stock_quantity', $line['quantity']);
+                }
+                Cache::forget("product_stock_{$product->id}");
+
+                $vatRate = $line['vat_rate'];
+                $totalTax += $line['line_price'] * $discountFactor * ($vatRate / (100 + $vatRate));
+
+                ShopOrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'product_variant_id' => $variant?->id,
+                    'product_name' => $product->name,
+                    'variant_name' => $variant?->variant_name,
+                    'quantity' => $line['quantity'],
+                    'unit_price' => $line['unit_price'],
+                    'total_price' => $line['line_price'],
+                    'vat_rate' => $vatRate,
+                ]);
+            }
+
+            $order->update(['tax_amount' => $totalTax]);
+
+            if ($coupon) {
+                $coupon->increment('usage_count');
+            }
+
+            DB::commit();
+
+            $customer->recalculateTotalSpent();
+
+            $order->load(['customer', 'paymentMethod', 'shippingMethod', 'coupon', 'items']);
+
+            $this->logAction($request, ShopLog::class, 'create', 'ShopOrder (Checkout)', "Created order: {$order->order_number}", $order->id, 'ShopOrder');
+
+            try {
+                Mail::to($order->customer_email)->queue(new ShopOrderConfirmation($order));
+            } catch (\Throwable $e) {
+                report($e); // full detail (class, file, trace) to the core log
+                $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Failed to send the order confirmation e-mail: " . $e->getMessage(), $order->id, 'ShopOrder');
+            }
+
+            // The buyer's token of the payment simulation (dev / test systems only, VT-16).
+            $meta = config('services.shop.payment_simulation') ? ['payment_token' => $order->paymentSimulationToken()] : [];
+
+            return $this->respond(new ShopOrderResource($order), 201, $meta);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            report($e); // full detail (class, file, trace) to the core log
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Error creating order: " . $e->getMessage());
+            return response()->json(['message' => 'Error creating order.'], 500);
+        }
+    }
+
+    /**
+     * @description Language of the order: a language of the e-shop (TranslationController
+     *   languages, module shop), otherwise Czech (the built-in language).
+     * @param string|null $lang Language sent by the storefront.
+     * @return string Lower-case language code.
+     */
+    private function orderLanguage(?string $lang): string
+    {
+        $lang = strtolower(trim((string) $lang));
+
+        return in_array($lang, TranslationController::languageCodes('shop'), true) ? $lang : 'cz';
+    }
+
+    /**
+     * @description Finds the customer by e-mail or creates it. An existing customer's master
+     *   data are not overwritten (only empty fields are filled in) and a trashed customer is
+     *   not restored - the order carries its own contact snapshot (finding #23). A parallel
+     *   insert of the same e-mail is answered by re-reading the row.
+     * @param array $validated Validated checkout data.
+     * @return ShopCustomer
+     * @throws \Exception When the customer can neither be found nor created.
+     */
+    private function resolveCustomer(array $validated): ShopCustomer
+    {
+        $email = trim(strtolower($validated['email']));
+        $data = [
+            'first_name'  => $validated['first_name'],
+            'last_name'   => $validated['last_name'],
+            'phone'       => $validated['phone'],
+            'company'     => $validated['company'] ?? null,
+            'address'     => $validated['address'],
+            'city'        => $validated['city'],
+            'postal_code' => $validated['postal_code'],
+            'country'     => $validated['country'],
+        ];
+
+        $customer = ShopCustomer::withTrashed()->where('email', $email)->first();
+
+        if (!$customer) {
+            try {
+                return ShopCustomer::create($data + ['email' => $email, 'is_active' => true]);
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Parallel checkout with the same e-mail inserted it first - use that row.
+                $customer = ShopCustomer::withTrashed()->where('email', $email)->first();
+                if (!$customer) {
+                    throw new \Exception("Failed to initialize customer with email {$email}: " . $e->getMessage());
+                }
+            }
+        }
+
+        if (!$customer->trashed()) {
+            $missing = array_filter($data, fn ($value, $field) => $value !== null && $value !== ''
+                && ($customer->{$field} === null || $customer->{$field} === ''), ARRAY_FILTER_USE_BOTH);
+            if ($missing) {
+                $customer->update($missing);
+            }
+        }
+
+        return $customer;
+    }
+
+    /**
+     * @description Loads the product (and variant) of one cart line with a row lock and
+     *   prices it from the catalogue.
+     * @param array $itemData Validated cart line {product_id, product_variant_id?, quantity}.
+     * @return array|string Line {product, variant, quantity, unit_price, line_price, vat_rate}
+     *   or the customer-facing reason why the line cannot be ordered.
+     */
+    private function lockAndPriceLine(array $itemData): array|string
+    {
+        $quantity = (int) $itemData['quantity'];
+        $product = ShopProduct::active()->with('prices')->lockForUpdate()->find($itemData['product_id']);
+
+        if (!$product) {
+            return 'One of the products is no longer available.';
+        }
+
+        $variant = null;
+        $price = $product->prices;
+
+        if (!empty($itemData['product_variant_id'])) {
+            $variant = ShopProductVariant::with('prices')->lockForUpdate()
+                ->where('product_id', $product->id)
+                ->find($itemData['product_variant_id']);
+
+            if (!$variant) {
+                return "The selected variant of '{$product->name}' is not available.";
+            }
+            if ($variant->stock_quantity < $quantity) {
+                return "The product '{$product->name} ({$variant->variant_name})' was sold out in the meantime. Available quantity: {$variant->stock_quantity} pcs.";
+            }
+            $price = $variant->prices ?? $price;
+        } elseif ($product->stock_quantity < $quantity) {
+            return "The product '{$product->name}' was sold out in the meantime. Available quantity: {$product->stock_quantity} pcs.";
+        }
+
+        if (!$price || $price->price_eur_with_vat === null) {
+            return "The product '{$product->name}' has no price and cannot be ordered.";
+        }
+
+        $unitPrice = (float) $price->price_eur_with_vat;
+
+        return [
+            'product'    => $product,
+            'variant'    => $variant,
+            'quantity'   => $quantity,
+            'unit_price' => $unitPrice,
+            'line_price' => $quantity * $unitPrice,
+            'vat_rate'   => (float) $price->vat_rate,
+        ];
+    }
+
+    /**
+     * @description Checks a coupon against the checkout rules.
+     * @param ShopCoupon|null $coupon Coupon found by code.
+     * @param float $totalAmount Order total before discount (EUR).
+     * @return string|null Customer-facing reason, or null when the coupon applies.
+     */
+    private function couponError(?ShopCoupon $coupon, float $totalAmount): ?string
+    {
+        if (!$coupon || !$coupon->is_active) {
+            return 'The coupon is invalid or inactive.';
+        }
+        if ($coupon->valid_from && now()->lt($coupon->valid_from)) {
+            return 'The coupon is not valid yet.';
+        }
+        if ($coupon->valid_until && now()->gt($coupon->valid_until)) {
+            return 'The coupon has already expired.';
+        }
+        if ($coupon->max_usage > 0 && $coupon->usage_count >= $coupon->max_usage) {
+            return 'The coupon has been exhausted.';
+        }
+        if ($coupon->min_order_amount > 0 && $totalAmount < (float)$coupon->min_order_amount) {
+            return 'The minimum order amount is ' . number_format($coupon->min_order_amount, 2) . ' EUR.';
+        }
+
+        return null;
+    }
+
+    /**
+     * @description Simulates a payment gateway response (90 % success) - dev / test
+     *   systems only, see config `services.shop.payment_simulation` (off by default, never in
+     *   production). Needs the `payment_token` create-order gave the buyer (VT-16): an unknown
+     *   order and a wrong token answer the same 404, so order ids cannot be probed.
+     * @param Request $request {order_id, payment_token}.
+     * @return JsonResponse 200 paid | 402 declined | 404 disabled / unknown / wrong token | 409 not payable | 422 | 500.
+     */
+    public function simulatePayment(Request $request): JsonResponse
+    {
+        if (!config('services.shop.payment_simulation')) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
+
+        $validated = $request->validate([
+            'order_id'      => 'required|integer',
+            'payment_token' => 'required|string|size:64',
+        ]);
+
+        $order = ShopOrder::find($validated['order_id']);
+        if (!$order || !hash_equals($order->paymentSimulationToken(), $validated['payment_token'])) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
+
+        try {
+            if ($order->payment_status !== 'pending' || $order->status !== 'pending') {
+                return response()->json(['message' => 'This order is not waiting for payment.'], 409);
+            }
+
+            if (!Lottery::odds(9, 10)->choose()) {
+                return response()->json(['message' => 'Payment was declined (simulation).'], 402);
+            }
+
+            $order->update([
+                'payment_status' => 'paid',
+                'status' => 'confirmed',
+                'paid_at' => now()
+            ]);
+
+            $this->logAction($request, ShopLog::class, 'payment', 'ShopOrder (Checkout)', "Payment simulated: {$order->order_number}", $order->id, 'ShopOrder');
+
+            return $this->respond(new ShopOrderResource($order), 200, [], 'Payment was successfully processed.');
+        } catch (\Exception $e) {
+            report($e); // full detail (class, file, trace) to the core log
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Error during payment simulation: " . $e->getMessage());
+            return response()->json(['message' => 'Error during payment simulation'], 500);
+        }
+    }
+}

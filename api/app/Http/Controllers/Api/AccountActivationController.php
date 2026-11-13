@@ -24,7 +24,8 @@ use App\Models\Core\CoreLog;
 use App\Models\Core\CoreSecurityEvent;
 use App\Models\User;
 use App\Traits\LogsActivity;
-use Illuminate\Http\{JsonResponse, Request};
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 

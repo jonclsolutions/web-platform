@@ -78,6 +78,7 @@ interface PermissionModuleGroup {
 const MODULE_LABEL_KEYS: Record<string, string> = {
   web: 'module_web',
   shop: 'module_shop',
+  'project-portal': 'module_project-portal',
   core: 'module_core',
 };
 

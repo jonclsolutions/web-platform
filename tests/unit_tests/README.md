@@ -23,9 +23,11 @@ tests/unit_tests/
 └── api/
     ├── run_all_api.sh   every PHPUnit suite
     ├── run_core.sh      suite Core  (api/tests/{Unit,Feature}/Core)  – core administration + authentication
-    ├── run_web.sh       suite Web   (api/tests/{Unit,Feature}/Web)
-    ├── run_shop.sh      suite Shop  (api/tests/{Unit,Feature}/Shop)
-    ├── run_other.sh     suite Other (api/tests/{Unit,Feature}/Other) – everything else (legal, translations, import, …)
+    ├── run_web.sh       suite Web   (api/tests/Apps/Web)
+    ├── run_shop.sh      suite Shop  (api/tests/Apps/Shop)
+    ├── run_project_portal.sh  suite ProjectPortal (api/tests/Apps/ProjectPortal)
+    ├── run_other.sh     suite Other (api/tests/{Unit,Feature}/Other) – everything else (legal, import, …)
+    ├── run_integration.sh  suite Integration (api/tests/Integration) – the core with every installed application
     ├── lib/             runner (run.js) and the section → source files mapping (sections.js)
     └── report/          result of the last run (git-ignored)
 ```
@@ -111,13 +113,14 @@ off). PHP coverage is line based: the report shows **lines** (executable lines) 
 
 - Each section measures its own files – `api/lib/sections.js` lists them: **Core** (core
   administration + authentication: login, 2FA, password reset, activation, users, roles,
-  permissions, security monitoring, e-mail access policy, external links, audit log), **Web** (public
-  forms, site settings, news, raw requests, support tickets, sales leads / orders, job
-  applications, customer projects + project portal, imports, web log), **Shop** (storefront,
-  checkout, payment simulation, catalogue, orders, customers, coupons, shipping / payment
-  methods, supplier import, shop log, maintenance), and **Other** = every file of `api/app`
-  that is in none of the three.
-  `run_all_api.sh` measures all of `api/app`.
+  permissions, security monitoring, e-mail access policy, external links, audit log), **Web**
+  (`api/app/Apps/Web`: public forms, site settings, FAQ / jobs / references, raw requests,
+  sales leads / orders, job applications, imports, web log), **Shop** (`api/app/Apps/Shop`:
+  storefront, checkout, payment simulation, catalogue, orders, customers, coupons, shipping /
+  payment methods, supplier import, shop log, maintenance), **ProjectPortal**
+  (`api/app/Apps/ProjectPortal`: customer projects, client portal, templates, portal log), and
+  **Other** = every file of `api/app` that is in none of them.
+  `run_integration.sh` and `run_all_api.sh` measure all of `api/app`.
 - The runner writes a temporary copy of `api/phpunit.xml` whose `<source>` contains only the
   section's files, so `coverage/index.html` shows exactly the measured files.
 - A file whose code no test executed is listed as **not loaded by any test – 0 %**; files without
