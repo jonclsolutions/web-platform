@@ -69,19 +69,20 @@ class WebLogTest extends TestCase
     }
 
     /**
-     * @description The detail names the actor's e-mail, or "Unknown user" without an account (English, finding #29).
+     * @description The detail is the shared shape of every audit log (AuditLogResource): the
+     *   account id and the stored e-mail of the actor, the decoded context; 404 for an unknown row.
      * @input Row of an existing account, row without account; GET each; GET /999.
-     * @output user.user_email = e-mail / 'Unknown user'; 404.
+     * @output user_id = id of the account / null, user_plain as stored, context_data decoded; 404.
      */
     public function test_show(): void
     {
         $actor = $this->signIn($this->userWith(['web-view-web-logs']));
-        $own = $this->log(['user_id' => $actor->id, 'context_data' => ['k' => 'v']]);
+        $own = $this->log(['user_id' => $actor->id, 'user_plain' => $actor->user_email, 'context_data' => ['k' => 'v']]);
         $anonymous = $this->log();
 
         $this->getJson("/api/web/logs/{$own->id}")->assertOk()
-            ->assertJsonPath('data.user.user_email', $actor->user_email)->assertJsonPath('data.context_data.k', 'v');
-        $this->getJson("/api/web/logs/{$anonymous->id}")->assertJsonPath('data.user.user_email', 'Unknown user');
+            ->assertJsonPath('data.user_id', $actor->id)->assertJsonPath('data.user_plain', $actor->user_email)->assertJsonPath('data.context_data.k', 'v');
+        $this->getJson("/api/web/logs/{$anonymous->id}")->assertJsonPath('data.user_id', null)->assertJsonPath('data.user_plain', 'system');
         $this->getJson('/api/web/logs/999')->assertStatus(404);
     }
 

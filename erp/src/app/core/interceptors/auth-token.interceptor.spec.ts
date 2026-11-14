@@ -32,6 +32,7 @@ import {
 import { of, throwError, Subject } from 'rxjs';
 
 import { AuthTokenInterceptor } from './auth-token.interceptor';
+import { SKIP_ADMIN_AUTH_CONTEXT } from './skip-admin-auth';
 import { AuthService, AuthSessionResponse } from '../auth/auth.service';
 import { Router }               from '@angular/router';
 
@@ -88,14 +89,15 @@ describe('AuthTokenInterceptor', () => {
   describe('A) Token injection', () => {
 
     /**
-     * @description Public project-portal requests bypass the interceptor (no token, no 401 handling).
-     * @input Token present; GET /api/projects/public/abc answered 401.
+     * @description Requests of a client portal (context SKIP_ADMIN_AUTH) bypass the interceptor
+     *   (no token, no 401 handling).
+     * @input Token present; GET /api/projects/public/abc with SKIP_ADMIN_AUTH_CONTEXT answered 401.
      * @output No Authorization header, error passed through, no refresh attempt.
      */
-    it('passes public project requests without a token and without a refresh', () => {
+    it('passes client portal requests without a token and without a refresh', () => {
       authService.getAccessToken.and.returnValue('test-jwt-token');
       let status = 0;
-      http.get('/api/projects/public/abc').subscribe({ error: e => (status = e.status) });
+      http.get('/api/projects/public/abc', { context: SKIP_ADMIN_AUTH_CONTEXT }).subscribe({ error: e => (status = e.status) });
 
       const req = httpMock.expectOne('/api/projects/public/abc');
       expect(req.request.headers.has('Authorization')).toBeFalse();

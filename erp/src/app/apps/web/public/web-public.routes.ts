@@ -17,11 +17,16 @@
 import { Routes } from '@angular/router';
 import { webMaintenanceGuard } from './components/guards/web-maintenance.guard';
 import { publicNotFoundRoute } from '../../../public/not-found/public-not-found.config';
+import { PUBLIC_AREA_DATA, PublicArea } from '../../../public/public-area';
+
+/** Public area of the web: its translations, home page and the dark look of the shared pages. */
+export const WEB_PUBLIC_AREA: PublicArea = { translationModule: 'web', path: '', theme: 'dark' };
 
 export const WEB_PUBLIC_ROUTES: Routes = [
   {
     path: '',
     canActivateChild: [webMaintenanceGuard],
+    data: { [PUBLIC_AREA_DATA]: WEB_PUBLIC_AREA },
     loadComponent: () => import('./web-layout/web-layout.component').then(m => m.WebLayoutComponent),
     children: [
       {
@@ -67,6 +72,7 @@ export const WEB_PUBLIC_FALLBACK_ROUTES: Routes = [
   {
     path: '',
     canActivateChild: [webMaintenanceGuard],
+    data: { [PUBLIC_AREA_DATA]: WEB_PUBLIC_AREA },
     loadComponent: () => import('./web-layout/web-layout.component').then(m => m.WebLayoutComponent),
     children: [publicNotFoundRoute('web')]
   },

@@ -18,7 +18,7 @@ import { UploadRulesService } from '../../../../shared/services/upload-rules.ser
 import { UploadRule, isAttachmentRejection } from '../../../../shared/utils/upload-rules';
 import { publicFormErrorKey } from '../../../../shared/utils/public-form-errors';
 import { switchMap } from 'rxjs';
-import * as Web from '../../../../shared/imports/web-providers';
+import * as Web from '../web-providers';
 
 /** State of the link check by public_token - decides what the component shows ('expired': VT-10 link validity). */
 type LinkState = 'loading' | 'valid' | 'no-token' | 'invalid' | 'used' | 'expired';

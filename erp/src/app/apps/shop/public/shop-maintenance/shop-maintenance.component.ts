@@ -33,6 +33,6 @@ export class ShopMaintenanceComponent extends BaseMaintenanceComponent {
 
   /** @description E-shop status of the API. */
   protected isSectionActive(): Observable<boolean> {
-    return this.publicDataService.getShopStatus().pipe(map(res => !!res?.is_shop_active));
+    return this.publicDataService.getFresh<{ is_shop_active: boolean }>('shop/public/status').pipe(map(res => !!res?.is_shop_active));
   }
 }

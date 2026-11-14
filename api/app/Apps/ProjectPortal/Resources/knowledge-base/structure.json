@@ -12,7 +12,7 @@
       "group": "project-portal",
       "order": 38,
       "permission": "project-portal-view-logs",
-      "devNote": "PortalLogsComponent, route 'project-portal/logs', API GET project-portal/logs (ProjectPortalLogController, tabulka project_portal_logs), permission 'project-portal-view-logs'."
+      "devNote": "AuditLogPageComponent (core) with PROJECT_PORTAL_AUDIT_LOG (portal-logs.config.ts), route 'project-portal/logs', API GET project-portal/logs (ProjectPortalLogController, tabulka project_portal_logs), permission 'project-portal-view-logs'."
     }
   ]
 }

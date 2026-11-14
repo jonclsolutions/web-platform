@@ -10,26 +10,22 @@
 
 import type { AppManifest } from '../app-manifest';
 import { WEB_ADMIN_ROUTES } from './admin/web-admin.routes';
-import { WEB_PUBLIC_FALLBACK_ROUTES, WEB_PUBLIC_ROUTES } from './public/web-public.routes';
+import { WEB_PUBLIC_FALLBACK_ROUTES, WEB_PUBLIC_ROUTES, WEB_PUBLIC_AREA } from './public/web-public.routes';
 
 export const WEB_APP: AppManifest = {
   id: 'web',
   icon: 'globe',
+  color: 'indigo',
   nameKey: 'module_web',
   descriptionKey: 'app_description_web',
   tabPermission: 'view-web',
   adminI18n: true,
   nav: [
     {
-      key: 'web-welcome', labelKey: 'nav_group_overview',
-      items: [
-        { path: 'welcome-page', permission: 'web-welcome-page-view', labelKey: 'nav_welcome', icon: 'grid' },
-      ],
-    },
-    {
       key: 'web-overview', labelKey: 'nav_group_overview',
       items: [
-        { path: 'dashboard', permission: 'web-view-dashboard', labelKey: 'nav_dashboard', icon: 'grid' },
+        { path: 'welcome-page', permission: 'web-welcome-page-view', labelKey: 'nav_welcome', icon: 'home' },
+        { path: 'dashboard', permission: 'web-view-dashboard', labelKey: 'nav_dashboard', icon: 'bar-chart' },
       ],
     },
     {
@@ -55,11 +51,12 @@ export const WEB_APP: AppManifest = {
     {
       key: 'web-system', labelKey: 'nav_group_system',
       items: [
-        { path: 'business-logs', permission: 'web-view-web-logs', labelKey: 'nav_business_logs', icon: 'file-list' },
+        { path: 'logs', permission: 'web-view-web-logs', labelKey: 'nav_web_logs', icon: 'file-lines' },
       ],
     },
   ],
   adminRoutes: WEB_ADMIN_ROUTES,
+  publicArea: WEB_PUBLIC_AREA,
   publicRoutes: WEB_PUBLIC_ROUTES,
   publicFallbackRoutes: WEB_PUBLIC_FALLBACK_ROUTES,
 };

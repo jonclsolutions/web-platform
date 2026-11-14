@@ -35,7 +35,6 @@ const CATALOG_CONFIG = {
 export class CatalogComponent extends BasePublicComponent implements OnInit {
 
   protected readonly translationKey = 'catalog';
-  protected override readonly translationModule = 'shop';
   readonly config = CATALOG_CONFIG;
   
   private shopService = inject(ShopPublicService);

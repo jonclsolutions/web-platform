@@ -18,10 +18,11 @@
  * route / file.
  */
 
-/** @description Stable, NOT translated identifier of a left menu section. Lower case on
- * purpose - matches the JSON keys `knowledge-base.nav_group_{key}` (AdminLocalizationService),
- * see KnowledgeBaseComponent.buildNavGroups(). */
-export type KBNavGroupKey = 'general' | 'roles' | 'web' | 'core' | 'shop';
+/** @description Stable, NOT translated identifier of a left menu section (`group` of the
+ * pages: `general`, `roles`, `core` or the id of an application). Lower case on purpose - matches
+ * the JSON keys `knowledge-base.nav_group_{key}` (AdminLocalizationService), see
+ * KnowledgeBaseComponent.buildNavGroups(). */
+export type KBNavGroupKey = string;
 
 /** Plain paragraph of text. */
 export interface KBTextBlock {

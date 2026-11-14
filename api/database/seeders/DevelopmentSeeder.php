@@ -11,9 +11,10 @@
  *     http://127.0.0.1:8025);
  *   - the domain `sysadmin.sysadmin` allowed in the e-mail access policy, so the account keeps
  *     logging in after a company domain is set;
- *   - roles for testing permissions: read-only-core / -web / -shop (only viewing),
- *     full-web-core / full-shop-core (every permission of the module and of Core) and
- *     all-permissions (every permission - an ordinary user with full rights, not sysadmin).
+ *   - roles for testing permissions: read-only-<module> for the core and every registered
+ *     application (only viewing), full-<application>-core (every permission of the application
+ *     and of the core) and all-permissions (every permission - an ordinary user with full
+ *     rights, not sysadmin).
  * @note Idempotent and never destructive: an existing account keeps its (possibly changed)
  *   password, an existing role keeps its (possibly edited) permissions - only what is missing
  *   is created. The permissions of a new role are chosen from the permission keys in the
@@ -22,6 +23,7 @@
  *   seeder refuses itself outside APP_ENV=local.
  * @dependencies
  * - BaseDataSeeder (permissions, sysadmin role) must have run first.
+ * - AppRegistry: the registered applications (config/apps.php).
  */
 
 namespace Database\Seeders;
@@ -30,6 +32,7 @@ use App\Models\Core\CoreEmailAccessRule;
 use App\Models\Core\CorePermission;
 use App\Models\Core\CoreRole;
 use App\Models\User;
+use App\Support\Apps\AppRegistry;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use RuntimeException;
@@ -43,9 +46,6 @@ class DevelopmentSeeder extends Seeder
 
     /** Note in the description of every test role. */
     private const TEST_ROLE_NOTE = 'Test role (local development).';
-
-    /** Test roles of the former set (until 2026-10-31) - removed when unused, see removeObsoleteTestRoles(). */
-    private const OBSOLETE_TEST_ROLES = ['editor-web', 'editor-shop', 'manager'];
 
     /**
      * @description Creates the missing test account, policy rule and test roles.
@@ -75,8 +75,8 @@ class DevelopmentSeeder extends Seeder
         }
         $user->roles()->syncWithoutDetaching([$sysadminRole->id]);
 
-        $keys = CorePermission::pluck('permission_key')->all();
-        foreach ($this->testRoles($keys) as $name => [$description, $permissionKeys]) {
+        $modules = CorePermission::pluck('module', 'permission_key')->all();
+        foreach ($this->testRoles($modules) as $name => [$description, $permissionKeys]) {
             $role = CoreRole::withTrashed()->where('role_name', $name)->first();
             if ($role) {
                 continue;
@@ -84,57 +84,35 @@ class DevelopmentSeeder extends Seeder
             $role = CoreRole::create(['role_name' => $name, 'description' => "{$description} " . self::TEST_ROLE_NOTE, 'forces_2fa' => false]);
             $role->permissions()->sync(CorePermission::whereIn('permission_key', $permissionKeys)->pluck('id')->all());
         }
-
-        $this->removeObsoleteTestRoles();
     }
 
     /**
-     * @description Soft-deletes the test roles of the former set - only a role that still carries
-     *   the test note (= created by this seeder, not a real role of the same name) and that no
-     *   user has. Anything else stays untouched.
-     * @return void
-     */
-    private function removeObsoleteTestRoles(): void
-    {
-        CoreRole::whereIn('role_name', self::OBSOLETE_TEST_ROLES)
-            ->where('description', 'like', '%' . self::TEST_ROLE_NOTE)
-            ->whereDoesntHave('users')
-            ->get()
-            ->each(fn (CoreRole $role) => $role->delete());
-    }
-
-    /**
-     * @description Test roles and their permission keys, chosen from the existing keys.
-     *   Module of a key = its prefix (`core-`, `web-`, `shop-`); the tab permissions
-     *   (`view-core`, `view-web`, `view-eshop`) belong to their module. A key of no module
-     *   (e.g. `view-deleted`) is only in all-permissions.
-     * @param array<int, string> $keys All permission keys of the database.
+     * @description Test roles and their permission keys, chosen from the existing keys by their
+     *   module (`core`, or the id of an application - its tab permission included). A read key
+     *   is a `view-…`, `…-view` or `…-view-…` key.
+     * @param array<string, string> $modules Permission key => module, every key of the database.
      * @return array<string, array{0: string, 1: array<int, string>}> name => [description, keys]
      */
-    public function testRoles(array $keys): array
+    public function testRoles(array $modules): array
     {
-        $tab = ['core' => 'view-core', 'web' => 'view-web', 'shop' => 'view-eshop'];
-        $inModule = fn (string $key, string $module): bool => $key === $tab[$module] || str_starts_with($key, "{$module}-");
         $isRead = fn (string $key): bool => str_starts_with($key, 'view-') || str_ends_with($key, '-view') || str_contains($key, '-view-');
-        $isWrite = fn (string $key): bool => str_ends_with($key, '-create') || str_ends_with($key, '-update');
-        $pick = fn (callable $filter): array => array_values(array_filter($keys, $filter));
+        $keysOf = fn (string $module, bool $readOnly = false): array => array_keys(array_filter(
+            $modules,
+            fn (string $keyModule, string $key): bool => $keyModule === $module && (!$readOnly || $isRead($key)),
+            ARRAY_FILTER_USE_BOTH
+        ));
+        $apps = array_map(fn ($app) => $app->id(), AppRegistry::apps());
 
         $roles = [];
-        foreach (['core', 'web', 'shop'] as $module) {
-            $roles["read-only-{$module}"] = [
-                "Can only view the {$module} module.",
-                $pick(fn ($k) => $inModule($k, $module) && $isRead($k)),
-            ];
+        foreach (['core', ...$apps] as $module) {
+            $roles["read-only-{$module}"] = ["Can only view the {$module} module.", $keysOf($module, true)];
         }
-        foreach (['web', 'shop'] as $module) {
-            $roles["full-{$module}-core"] = [
-                "Every permission of the {$module} and core modules.",
-                $pick(fn ($k) => $inModule($k, $module) || $inModule($k, 'core')),
-            ];
+        foreach ($apps as $app) {
+            $roles["full-{$app}-core"] = ["Every permission of the {$app} and core modules.", [...$keysOf($app), ...$keysOf('core')]];
         }
         $roles['all-permissions'] = [
             'Every permission - an ordinary user with full rights (not the protected sysadmin role).',
-            $keys,
+            array_keys($modules),
         ];
 
         return $roles;

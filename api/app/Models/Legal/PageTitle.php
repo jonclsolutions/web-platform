@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Model;
  *       mass-assignable, so a request can not rename or re-key a page.
  *
  * @property int                   $id
- * @property string                $area        'web' | 'shop' | 'admin'
+ * @property string                $area        'admin' or the id of an application ('web', 'shop')
  * @property string                $page_key    Stable page identifier (e.g. 'services').
  * @property string                $route_path  Informative URL shown in admin.
  * @property array<string, string> $title_i18n  Tab title per language code.

@@ -63,24 +63,12 @@ interface PermissionResourceGroup {
   items: CorePermission[];
 }
 
-/** First grouping level - one module (Web / Core / E-shop), holds its resources. */
+/** First grouping level - one module (the core or an application), holds its resources. */
 interface PermissionModuleGroup {
   module: string;
   moduleLabel: string;
   resources: PermissionResourceGroup[];
 }
-
-/**
- * @description Map of the technical `module` key to the i18n path of its label - see
- * `moduleLabel()`. A new module value on the backend needs only an entry here + the matching
- * key in cz.json / en.json, no other logic.
- */
-const MODULE_LABEL_KEYS: Record<string, string> = {
-  web: 'module_web',
-  shop: 'module_shop',
-  'project-portal': 'module_project-portal',
-  core: 'module_core',
-};
 
 @Component({
   selector: 'app-edit-roles',
@@ -369,9 +357,13 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     });
   }
 
+  /**
+   * @description Name of a module: `module_<module>` of the section (the core and every
+   *   application provide theirs).
+   * @param module `module` of the permission.
+   */
   moduleLabel(module: string): string {
-    const key = MODULE_LABEL_KEYS[module];
-    return key ? this.t(key) : module;
+    return this.t(`module_${module}`);
   }
 
   trackByModule(_index: number, group: PermissionModuleGroup): string {

@@ -4,29 +4,30 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Public "page not found" (404), shared by the public web and the e-shop. The area
- *   comes from the route data (`publicNotFoundRoute()`, see public-not-found.config.ts): it decides
- *   the translations (`not_found` of the web / shop module), the target of the button and the look
- *   (dark web / light e-shop). The page is rendered inside the layout of its area (header, footer,
+ * @description Public "page not found" (404), shared by every public application. The public
+ *   area of the route (`publicArea` of the layout, public-area.ts) decides the translations
+ *   (`not_found` of its module), the target of the button and the look (dark with the
+ *   illustration / light). The page is rendered inside the layout of its area (header, footer,
  *   navigation), and only for a URL no route knows - the URL stays as typed.
  * @dependencies
- * - BasePublicComponent: translations (module set from the area before ngOnInit subscribes).
- * - PUBLIC_NOT_FOUND_AREAS: per-area settings.
+ * - BasePublicComponent: translations of the module of the area.
+ * - routePublicArea: home page and look of the area.
  * - Meta: robots noindex while the page is shown.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { Meta } from '@angular/platform-browser';
 import { BasePublicComponent } from '../base-public.component';
-import { PUBLIC_NOT_FOUND_AREAS, PUBLIC_NOT_FOUND_AREA_KEY, PublicNotFoundArea, PublicNotFoundAreaConfig } from './public-not-found.config';
+import { PublicArea, publicAreaHome, routePublicArea } from '../public-area';
 
 /** Robots meta tag selector managed by this page. */
 const ROBOTS_SELECTOR = 'name="robots"';
 
 /**
  * @description 404 page of the public areas.
- * @usage Only through `publicNotFoundRoute('<area>')` - never placed in a template.
+ * @usage Only through `publicNotFoundRoute('<area>')` inside the layout of an application -
+ *   never placed in a template.
  */
 @Component({
   selector: 'app-not-found',
@@ -42,24 +43,13 @@ export class NotFoundComponent extends BasePublicComponent {
 
   private readonly meta = inject(Meta);
 
-  /** Area of the page (route data; unknown / missing = web). */
-  readonly area: PublicNotFoundArea = NotFoundComponent.areaOf(inject(ActivatedRoute).snapshot.data?.[PUBLIC_NOT_FOUND_AREA_KEY]);
-  /** Settings of the area. */
-  readonly config: PublicNotFoundAreaConfig = PUBLIC_NOT_FOUND_AREAS[this.area];
-  protected override readonly translationModule = this.config.translationModule;
+  /** Public area of the page (home page, look); outside every area: the root, light. */
+  readonly area: PublicArea = routePublicArea() ?? { translationModule: '', path: '', theme: 'light' };
+  /** Home page of the area (button). */
+  readonly homeLink = publicAreaHome(this.area);
 
   /** Robots tag present before this page (restored when leaving), null = none. */
   private previousRobots: string | null = null;
-
-  /**
-   * @description Known area or the web.
-   * @param value Route data value.
-   */
-  private static areaOf(value: unknown): PublicNotFoundArea {
-    return typeof value === 'string' && Object.prototype.hasOwnProperty.call(PUBLIC_NOT_FOUND_AREAS, value)
-      ? value as PublicNotFoundArea
-      : 'web';
-  }
 
   /** @description Marks the page as not indexable. */
   protected override onInit(): void {

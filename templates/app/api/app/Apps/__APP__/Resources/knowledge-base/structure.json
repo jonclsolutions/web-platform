@@ -1,0 +1,11 @@
+{
+  "pages": [
+    {
+      "id": "__app__-logs",
+      "group": "__app__",
+      "order": 900,
+      "permission": "__app__-view-logs",
+      "devNote": "AuditLogPageComponent (core) with __APP_CONST___AUDIT_LOG (__app__-logs.config.ts), route '__app__/logs', API GET __app__/logs (__APP__LogController, table __app_snake___logs), permission '__app__-view-logs'."
+    }
+  ]
+}

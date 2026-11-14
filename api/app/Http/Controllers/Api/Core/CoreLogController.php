@@ -5,17 +5,16 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Read/write access to the system-wide audit log (core_logs) - authentication
+ * @description Read access to the system-wide audit log (core_logs) - authentication
  * events, user/role/permission management, legal document changes, core site settings. The
- * endpoints are shared by AuditLogController; this class only names the model and the resource.
+ * endpoints are shared by AuditLogController; this class only names the model.
  * @dependencies
- * - App\Http\Controllers\Api\AuditLogController: index / store / show.
+ * - App\Http\Controllers\Api\AuditLogController: index / show.
  */
 
 namespace App\Http\Controllers\Api\Core;
 
 use App\Http\Controllers\Api\AuditLogController;
-use App\Http\Resources\Core\CoreLogResource;
 use App\Models\Core\CoreLog;
 
 class CoreLogController extends AuditLogController
@@ -24,11 +23,5 @@ class CoreLogController extends AuditLogController
     protected function model(): string
     {
         return CoreLog::class;
-    }
-
-    /** @description Resource of one core_logs row. */
-    protected function resource(): string
-    {
-        return CoreLogResource::class;
     }
 }

@@ -7,11 +7,11 @@
     @description: Template of the not found component.
 -->
 
-<div class="main-content not-found--{{ area }}">
+<div class="main-content not-found--{{ area.theme }}">
   <div class="not-found-container">
     <div class="error-box">
-      @if (area === 'web') {
-        <!-- Web: illustration from the assets (decorative - the heading carries the message). -->
+      @if (area.theme === 'dark') {
+        <!-- Dark look: illustration from the assets (decorative - the heading carries the message). -->
         <img class="not-found-illustration" src="assets/images/icons/404-error.svg" alt="" aria-hidden="true" width="480" height="360" decoding="async">
       } @else {
         <div class="svg-placeholder">
@@ -36,7 +36,7 @@
         </p>
 
         <div class="btn-wrapper">
-          <a [routerLink]="config.homeLink" class="home-btn-404">
+          <a [routerLink]="homeLink" class="home-btn-404">
             {{ t.button }}
           </a>
         </div>

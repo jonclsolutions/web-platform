@@ -7,7 +7,7 @@
  * @created 2026
  * @description Records the cookie consent decisions of the visitors (GDPR Art. 7(1) - the
  * controller must be able to demonstrate the consent: which version of the text, which
- * categories, when). Every decision is a new row of `web_cookie_consents`. A legal concern of the
+ * categories, when). Every decision is a new row of `legal_cookie_consents`. A legal concern of the
  * core - the cookie bar is shown by every public application.
  * @security Public and anonymous: only the random consent id generated in the browser, the
  * version, the categories and the time are stored - no IP address, no user agent, no cookie.

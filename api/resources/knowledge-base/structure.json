@@ -24,7 +24,7 @@
       "group": "core",
       "order": 15,
       "permission": "view-core",
-      "devNote": "CoreDashboardComponent, route 'core/dashboard', permission 'view-core'."
+      "devNote": "CoreDashboardComponent (layout DashboardViewComponent), route 'core/dashboard', permission 'view-core'."
     },
     {
       "id": "calendar",
@@ -55,11 +55,11 @@
       "devNote": "PersonalInfoComponent, route 'core/personal-info', no permission (every signed-in user; also via the own e-mail in the header). Self-service 2FA toggle a změna hesla."
     },
     {
-      "id": "web-settings",
+      "id": "settings",
       "group": "core",
       "order": 20,
       "permission": "core-legal-config-view",
-      "devNote": "WebSettingsComponent, route 'core/web-settings', permission 'core-legal-config-view'. Firemní údaje, logo, sociální sítě. Jazyky = jazyky všech aplikací dohromady (GET languages)."
+      "devNote": "SettingsComponent, route 'core/settings', permission 'core-legal-config-view'. Firemní údaje, logo, sociální sítě. Jazyky = jazyky všech aplikací dohromady (GET languages)."
     },
     {
       "id": "external-links",
@@ -98,7 +98,7 @@
       "group": "core",
       "order": 24,
       "permission": "view-core",
-      "devNote": "CoreLogsComponent, route 'core/logs', permission 'view-core'. Poznámka v routing komentáři: dočasně čte ze stejného zdroje jako web/business-logs."
+      "devNote": "AuditLogPageComponent with CORE_AUDIT_LOG (core-pages/logs/logs.config.ts), route 'core/logs', permission 'view-core'."
     },
     {
       "id": "security-events",

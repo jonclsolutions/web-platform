@@ -8,7 +8,8 @@
  *   module selection, the page's translation section, the optional site settings stream, the
  *   lifecycle hooks, contact links and icon URLs; subscriptions end on destroy.
  * @dependencies
- * - Two minimal concrete pages (web without settings, shop with settings); createPublicPageContext.
+ * - Two minimal concrete pages (one of the area without settings, one with its own module and
+ *   settings); createPublicPageContext with a public area.
  */
 
 import { ChangeDetectionStrategy, Component } from '@angular/core';
@@ -16,6 +17,10 @@ import { TestBed } from '@angular/core/testing';
 
 import { BasePublicComponent } from './base-public.component';
 import { PublicPageContext, createPublicPageContext } from '../../testing/public-test-helpers';
+import { PublicArea } from './public-area';
+
+/** Public area of the route of the pages (a layout of an application). */
+const AREA: PublicArea = { translationModule: 'web', path: '', theme: 'dark' };
 
 /** Web page without site settings, recording the hooks. */
 @Component({ standalone: true, template: '{{ t?.title }}', changeDetection: ChangeDetectionStrategy.OnPush })
@@ -28,7 +33,7 @@ class WebPageComponent extends BasePublicComponent {
   protected override onTranslationsLoaded(all: any): void { this.received = all; }
 }
 
-/** Shop page with site settings and the default hooks. */
+/** Page outside the layout (own module), with site settings and the default hooks. */
 @Component({ standalone: true, template: '' })
 class ShopPageComponent extends BasePublicComponent {
   protected readonly translationKey = 'page';
@@ -40,12 +45,12 @@ describe('BasePublicComponent', () => {
   let ctx: PublicPageContext;
 
   beforeEach(() => {
-    ctx = createPublicPageContext();
+    ctx = createPublicPageContext({ area: AREA });
     TestBed.configureTestingModule({ imports: [WebPageComponent, ShopPageComponent], providers: ctx.providers });
   });
 
   /**
-   * @description Web page: module 'web', texts of its section (other sections ignored), hooks
+   * @description Page of a public area: the module of the area ('web'), texts of its section (other sections ignored), hooks
    *   called, re-render on new translations, nothing after destroy; settings not read.
    * @input Translations without the section; {page: {title: 'A'}}; {page: {title: 'B'}}; destroy; {page: {title: 'C'}}.
    * @output setModule('web'); t null → 'A' rendered → 'B'; hooks ['init', 'destroy']; t stays 'B'.
@@ -77,7 +82,7 @@ describe('BasePublicComponent', () => {
   });
 
   /**
-   * @description Shop page: module 'shop', settings + social links from the stream (null
+   * @description Page with its own module ('shop' wins over the area), settings + social links from the stream (null
    *   ignored, missing parts default), mailto / tel links (spaces removed), icon URL, language stream.
    * @input settings null; {settings: {contact_email, contact_phone '+420 777 123'}, social_links: [1]}; {}.
    * @output setModule('shop'); settings / links set; 'mailto:a@b.cz', 'tel:+420777123'; then null / []; 'mailto:', 'tel:'.

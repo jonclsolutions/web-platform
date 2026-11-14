@@ -19,12 +19,12 @@ import {
   inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '../../../../shared/imports/web-providers';
+import { RouterModule } from '../web-providers';
 import { BasePublicComponent } from '../../../../public/base-public.component';
 import { FaqItem, FaqCategory } from './';
 import { combineLatest } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { PublicFaqCategory, WebContentService, localizedText } from '../../../../shared/services/web-content.service';
+import { PublicFaqCategory, WebContentService, localizedText } from '../web-content.service';
 
 @Component({
   selector: 'app-faq',

@@ -38,6 +38,7 @@ use App\Support\Uploads\AttachmentPolicy;
 use App\Apps\Shop\Database\Seeders\ShopBaseDataSeeder;
 use App\Apps\Web\Database\Seeders\WebBaseDataSeeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Tests\Apps\ProjectPortal\Support\ProjectFixtures;
@@ -131,7 +132,7 @@ class AppRegistryTest extends TestCase
         $order = $this->salesOrder();
         $attachment = $this->attach($order, 'web/sales_orders/a.pdf');
 
-        $this->assertSame('sales_order', DB::table('web_attachments')->where('id', $attachment->id)->value('attachable_type'));
+        $this->assertSame('sales_order', DB::table('core_attachments')->where('id', $attachment->id)->value('attachable_type'));
         $this->assertTrue(CoreAttachment::find($attachment->id)->attachable->is($order));
 
         $this->get(URL::temporarySignedRoute('attachments.download', now()->addMinutes(5), ['path' => 'web/sales_orders/a.pdf']))->assertOk();
@@ -139,7 +140,7 @@ class AppRegistryTest extends TestCase
         $this->assertStringContainsString("of WebSalesOrder #{$order->id}", $log->description);
 
         Storage::disk('private')->put('x/b.pdf', 'b');
-        DB::table('web_attachments')->insert(['attachable_type' => 'removed_thing', 'attachable_id' => 1, 'disk' => 'private', 'path' => 'x/b.pdf',
+        DB::table('core_attachments')->insert(['attachable_type' => 'removed_thing', 'attachable_id' => 1, 'disk' => 'private', 'path' => 'x/b.pdf',
             'original_filename' => 'b.pdf', 'mime_type' => 'application/pdf', 'size_bytes' => 1]);
         $this->get(URL::temporarySignedRoute('attachments.download', now()->addMinutes(5), ['path' => 'x/b.pdf']))->assertOk();
         $this->assertSame(1, CoreLog::where('event_type', 'attachment_download')->count());
@@ -167,13 +168,20 @@ class AppRegistryTest extends TestCase
 
     /**
      * @description The morph-alias migration converts the class names of existing attachments
-     *   and back.
+     *   and back; it ran while the table still had its former name, so the rename migration is
+     *   reverted first (and checked on the way back).
      * @input rows with the former class names of an order and a thread message, one unknown type.
-     * @output up: 'sales_order' / 'project_thread_message', unknown kept; down: class names again.
+     * @output down of the rename: `web_attachments` / `web_cookie_consents`; up: 'sales_order' /
+     *   'project_thread_message', unknown kept; down: class names again; up of the rename:
+     *   `core_attachments` / `legal_cookie_consents` with the rows.
      */
     public function test_morph_alias_migration(): void
     {
+        $rename = require base_path('database/migrations/2026_11_23_000000_rename_core_attachment_and_consent_tables.php');
         $migration = require base_path('database/migrations/2026_11_21_000001_attachment_morph_aliases.php');
+        $rename->down();
+        $this->assertTrue(Schema::hasTable('web_attachments') && Schema::hasTable('web_cookie_consents'));
+        $this->assertFalse(Schema::hasTable('core_attachments'));
         foreach (['App\\Models\\Web\\WebSalesOrder', 'App\\Models\\Web\\WebProjectThreadMessage', 'Other\\Thing'] as $i => $type) {
             DB::table('web_attachments')->insert(['attachable_type' => $type, 'attachable_id' => $i + 1, 'disk' => 'private', 'path' => "p{$i}", 'original_filename' => 'f', 'mime_type' => 'x', 'size_bytes' => 1]);
         }
@@ -183,6 +191,11 @@ class AppRegistryTest extends TestCase
 
         $migration->down();
         $this->assertSame(['App\\Models\\Web\\WebSalesOrder', 'App\\Models\\Web\\WebProjectThreadMessage', 'Other\\Thing'], DB::table('web_attachments')->orderBy('id')->pluck('attachable_type')->all());
+
+        $rename->up();
+        $this->assertTrue(Schema::hasTable('core_attachments') && Schema::hasTable('legal_cookie_consents'));
+        $this->assertFalse(Schema::hasTable('web_attachments') || Schema::hasTable('web_cookie_consents'));
+        $this->assertSame(3, DB::table('core_attachments')->count());
     }
 }
 

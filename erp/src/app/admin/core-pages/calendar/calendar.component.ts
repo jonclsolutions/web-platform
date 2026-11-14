@@ -16,6 +16,7 @@
  * @dependencies
  * - DataHandler (GET core/agenda, POST / PUT / DELETE core/calendar-events), AdminLocalizationService
  *   (section `calendar`, date locale), ConfirmDialogService (delete), Router (opening an item).
+ * - APPS (apps.registry): the applications - order of the filter and colour (manifest `color`).
  */
 
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
@@ -27,9 +28,11 @@ import { DataHandler } from '../../../core/services/data-handler.service';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { PageHelpComponent } from '../../components/page-help/page-help.component';
+import { APPS } from '../../../apps/apps.registry';
 
-/** Module of an item (colour and filter); `personal` = own events of the admin. */
-export type AgendaModule = 'web' | 'shop' | 'project-portal' | 'core' | 'personal';
+/** Module of an item (colour and filter): `personal` (own events of the admin), the id of an
+ *  application or `core`. */
+export type AgendaModule = string;
 
 /** Own event of the admin (only in items of the module `personal`). */
 export interface PersonalEventData {
@@ -95,8 +98,14 @@ export interface AgendaDayGroup {
   events: AgendaEvent[];
 }
 
-/** Modules in the order of the filter. */
-export const AGENDA_MODULES: AgendaModule[] = ['personal', 'web', 'shop', 'project-portal', 'core'];
+/** Modules in the order of the filter: own events, the applications, the core. */
+export const AGENDA_MODULES: AgendaModule[] = ['personal', ...APPS.map(app => app.id), 'core'];
+
+/** Colour of the items of each application (CSS variables `--mod` / `--mod-bg` of
+ *  `[data-module]`; personal and core have theirs in the stylesheet). */
+export const AGENDA_MODULE_STYLES: Record<string, Record<string, string>> = Object.fromEntries(
+  APPS.map(app => [app.id, { '--mod': `var(--color-${app.color}-600)`, '--mod-bg': `var(--color-${app.color}-50)` }])
+);
 
 /** Chips shown in one day cell before "+N more". */
 export const DAY_CELL_LIMIT = 3;
@@ -445,6 +454,14 @@ export class CalendarComponent implements OnInit {
     const date = parseIsoDate(iso);
     this.month = new Date(date.getFullYear(), date.getMonth(), 1);
     this.load();
+  }
+
+  /**
+   * @description Colour variables of an application module (none for personal / core).
+   * @param module Module of the item.
+   */
+  moduleStyle(module: AgendaModule): Record<string, string> | null {
+    return AGENDA_MODULE_STYLES[module] ?? null;
   }
 
   /** @description Name of a module. */

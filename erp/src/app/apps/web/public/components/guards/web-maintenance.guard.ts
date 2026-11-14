@@ -36,7 +36,7 @@ export const webMaintenanceGuard = () => {
     return true;
   }
 
-  return dataService.getWebStatus().pipe(
+  return dataService.getFresh<{ is_web_active: boolean }>('web/public/status').pipe(
     map(res => {
       if (!res.is_web_active) {
         return router.parseUrl('/web-maintenance');

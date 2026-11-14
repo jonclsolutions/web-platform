@@ -6,7 +6,7 @@
  * @author JS
  * @created 2026
  * @description Singleton settings of the security monitoring: retention in days + the company
- * e-mail domain of the e-mail access policy. Same "one row" pattern as WebSiteSetting - always
+ * e-mail domain of the e-mail access policy. A "one row" setting - always
  * the row `id = 1` (CoreSecuritySettingController).
  */
 

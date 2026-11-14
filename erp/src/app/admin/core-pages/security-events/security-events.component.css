@@ -4,7 +4,7 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description Styles in the same visual language as web-settings.component.css (rounded
+    @description Styles in the same visual language as settings.component.css (rounded
     cards, dark accent #18181b, pill buttons) - chart, retention, triage modal. The table /
     filter / pagination section uses the shared `../default-style.css`, so those classes are
     not repeated here.

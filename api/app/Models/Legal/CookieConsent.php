@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Model;
 class CookieConsent extends Model
 {
     /** @var string The table keeps its original name. */
-    protected $table = 'web_cookie_consents';
+    protected $table = 'legal_cookie_consents';
 
     /** @description Only `created_at` - a record never changes. */
     public const UPDATED_AT = null;

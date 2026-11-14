@@ -1,0 +1,31 @@
+{
+  "admin-layout": {
+    "module___app__": "__NAME__",
+    "app_description___app_snake__": "Popis aplikace __NAME__.",
+    "nav___app_snake___logs": "Logy"
+  },
+  "calendar": {
+    "module___app__": "__NAME__"
+  },
+  "edit-roles": {
+    "module___app__": "__NAME__"
+  },
+  "knowledge-base": {
+    "nav_group___app__": "__NAME__"
+  },
+  "permission-descriptions": {
+    "view-__app__": "[doporučeno: vždy zapnuto] Zobrazit aplikaci __NAME__ v administraci - bez něj ji nelze otevřít",
+    "__app__-view-logs": "Zobrazit historii logů (auditní záznam) aplikace __NAME__"
+  },
+  "__app__-logs": {
+    "table_header": "Logy – __NAME__",
+    "event_create": "Vytvoření",
+    "event_update": "Úprava",
+    "event_soft_delete": "Smazání (do koše)",
+    "event_hard_delete": "Trvalé smazání",
+    "event_restore": "Obnovení",
+    "event_export": "Export",
+    "event_error": "Chyba",
+    "module___app_snake__": "__NAME__"
+  }
+}

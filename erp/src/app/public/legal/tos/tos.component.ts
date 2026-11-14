@@ -14,7 +14,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { BasePublicComponent } from '../../base-public.component';
 import { LegalDocsService } from '../../../shared/services/legal-docs.service';
-import { routeTranslationModule } from '../legal-route';
+import { routePublicArea } from '../../public-area';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
@@ -24,15 +24,15 @@ import { takeUntil } from 'rxjs/operators';
   templateUrl: './tos.component.html',
   styleUrl: '../legal-document.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  // Light look in the e-shop layout (legal-document.css).
-  host: { '[class.legal--light]': "translationModule === 'shop'" }
+  // Light look in a light public area (legal-document.css).
+  host: { '[class.legal--light]': 'lightTheme' }
 })
 export class TosComponent extends BasePublicComponent {
 
   protected readonly translationKey = 'tos';
 
-  /** Translations of the application whose layout shows the page (route data). */
-  protected override readonly translationModule = routeTranslationModule();
+  /** Light look of the area of the layout that shows the page. */
+  protected readonly lightTheme = routePublicArea()?.theme === 'light';
   data: any = null;
 
   /** Protected: the template builds the translated footer with it (effectiveFooter()). */

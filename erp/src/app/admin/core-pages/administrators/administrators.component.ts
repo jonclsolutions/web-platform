@@ -66,7 +66,7 @@ interface EmailAccessRule {
   standalone: true,
   imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHelpComponent],
   templateUrl: './administrators.component.html',
-  styleUrls: ['../../shared-styles/page.css', '../shared-styles/page.css', './email-access-policy-modal.css'],
+  styleUrls: ['../../shared-styles/page.css', './email-access-policy-modal.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdministratorsComponent extends BaseDataComponent<any> implements OnInit {

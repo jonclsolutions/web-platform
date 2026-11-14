@@ -20,6 +20,7 @@
 
 namespace Tests\Support;
 
+use App\Support\Database\AuditLogSchema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
@@ -236,7 +237,7 @@ final class TestSchema
             $t->timestamps();
         });
 
-        Schema::create('web_cookie_consents', function (Blueprint $t) {
+        Schema::create('legal_cookie_consents', function (Blueprint $t) {
             $t->bigIncrements('id');
             $t->char('consent_id', 36)->index();
             $t->unsignedSmallInteger('version');
@@ -298,7 +299,7 @@ final class TestSchema
             $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });
 
-        Schema::create('web_attachments', function (Blueprint $t) {
+        Schema::create('core_attachments', function (Blueprint $t) {
             $t->id();
             $t->string('attachable_type', 191);
             $t->unsignedBigInteger('attachable_id');
@@ -329,21 +330,7 @@ final class TestSchema
      */
     public static function auditLog(string $table): void
     {
-        Schema::create($table, function (Blueprint $t) {
-            $t->increments('id');
-            $t->dateTime('created_at')->useCurrent();
-            $t->string('origin')->nullable();
-            $t->string('event_type', 50);
-            $t->string('module', 100);
-            $t->string('description', 1000);
-            $t->string('affected_entity_type', 50)->nullable();
-            $t->unsignedBigInteger('affected_entity_id')->nullable();
-            $t->unsignedInteger('user_id')->nullable();
-            $t->text('context_data')->nullable();
-            $t->string('user_id_plain')->nullable();
-            $t->string('user_plain')->nullable();
-            $t->foreign('user_id')->references('id')->on('users')->nullOnDelete();
-        });
+        Schema::create($table, fn (Blueprint $t) => AuditLogSchema::columns($t, $table));
     }
 
     /**

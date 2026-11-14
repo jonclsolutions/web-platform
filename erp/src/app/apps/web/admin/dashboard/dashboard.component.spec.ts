@@ -225,11 +225,11 @@ describe('DashboardComponent (web)', () => {
   /**
    * @description Navigation tiles follow the permissions.
    * @input  granted ['web-edit-website-view', 'web-view-web-logs']
-   * @output tile routes ['/admin/web/edit-website', '/admin/web/business-logs']
+   * @output tile routes ['/admin/web/edit-website', '/admin/web/logs']
    */
   it('shows navigation tiles by permission', () => {
     ctx.permissions.granted = new Set(['web-edit-website-view', 'web-view-web-logs']);
-    expect(component.visibleNavSections.map(s => s.route)).toEqual(['/admin/web/edit-website', '/admin/web/business-logs']);
+    expect(component.visibleNavSections.map(s => s.route)).toEqual(['/admin/web/edit-website', '/admin/web/logs']);
     ctx.permissions.granted = 'all';
     expect(component.visibleNavSections.length).toBe(6);
   });
@@ -245,12 +245,14 @@ describe('DashboardComponent (web)', () => {
   });
 
   /**
-   * @description Event types get translated labels and colour classes; unknown ones stay as they are.
-   * @input  eventTypeLabel('soft_delete'), ('custom'); eventTypeClass('payment'), ('custom')
-   * @output 'web-dashboard.ev_label_soft_delete', 'custom'; 'ev-create', 'ev-default'
+   * @description Event types get translated labels (shared ones from `dashboard`, own ones from
+   *   the section of the web dashboard) and colour classes; unknown ones stay as they are.
+   * @input  eventTypeLabel('soft_delete'), ('payment'), ('custom'); eventTypeClass('payment'), ('custom')
+   * @output 'dashboard.ev_label_soft_delete', 'web-dashboard.ev_label_payment', 'custom'; 'ev-create', 'ev-default'
    */
   it('maps event types to labels and classes', () => {
-    expect(component.eventTypeLabel('soft_delete')).toBe('web-dashboard.ev_label_soft_delete');
+    expect(component.eventTypeLabel('soft_delete')).toBe('dashboard.ev_label_soft_delete');
+    expect(component.eventTypeLabel('payment')).toBe('web-dashboard.ev_label_payment');
     expect(component.eventTypeLabel('custom')).toBe('custom');
     expect(component.eventTypeClass('payment')).toBe('ev-create');
     expect(component.eventTypeClass('custom')).toBe('ev-default');

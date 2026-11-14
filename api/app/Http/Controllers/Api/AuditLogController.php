@@ -5,21 +5,23 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Shared read endpoints of the three audit logs (core_logs, web_logs, shop_logs) -
- * list with filters, full-text search, safe sorting and optional pagination, and detail. The
- * tables have the same columns, so a module controller only names its model and API resource.
+ * @description Shared read endpoints of every audit log (AuditLog: core_logs and the log of each
+ * application) - list with filters, full-text search, safe sorting and optional pagination, and
+ * detail. The tables have the same columns, so a log controller only names its model.
  * @note Read only: every row is written by the server itself (LogsActivity, the database log
  *   channel, LogDataExport) - the browser cannot write the audit log.
  * @dependencies
  * - App\Traits\AppliesSafeSorting: whitelisted sort column / direction.
  * - Controller::respond() / respondPaginated(): the API envelope.
+ * - AuditLog (the model of the log), AuditLogResource (one row).
  */
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Core\AuditLogResource;
+use App\Models\Core\AuditLog;
 use App\Traits\AppliesSafeSorting;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -29,16 +31,19 @@ abstract class AuditLogController extends Controller
     use AppliesSafeSorting;
 
     /**
-     * @description Eloquent model of the log table (e.g. CoreLog::class).
-     * @return class-string<Model>
+     * @description Model of the log table (e.g. CoreLog::class).
+     * @return class-string<AuditLog>
      */
     abstract protected function model(): string;
 
     /**
-     * @description API resource of one log row (e.g. CoreLogResource::class).
+     * @description API resource of one log row.
      * @return class-string<JsonResource>
      */
-    abstract protected function resource(): string;
+    protected function resource(): string
+    {
+        return AuditLogResource::class;
+    }
 
     /**
      * @description Paginated list of audit events with optional filters.

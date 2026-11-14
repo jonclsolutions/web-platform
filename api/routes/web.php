@@ -29,10 +29,3 @@ use Illuminate\Support\Facades\Route;
 Route::get('/login', function () {
     return response('Unauthorized.', 401);
 })->name('login');
-
-/**
- * Public landing page route.
- */
-Route::get('/', function () {
-    return view('welcome');
-});

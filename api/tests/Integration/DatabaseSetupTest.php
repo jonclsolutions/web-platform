@@ -25,6 +25,7 @@ use App\Models\Core\CoreEmailAccessRule;
 use App\Models\Core\CorePermission;
 use App\Models\Core\CoreRole;
 use App\Models\User;
+use App\Support\Apps\AppRegistry;
 use App\Models\Legal\DocumentSection;
 use App\Models\Legal\DocumentType;
 use App\Models\Legal\SiteSetting;
@@ -284,26 +285,29 @@ class DatabaseSetupTest extends TestCase
 
     /**
      * @description DevelopmentSeeder (local): test sysadmin with the known password, the test
-     *   domain allowed, the test roles with permissions chosen from the existing keys.
-     * @input APP_ENV local; role sysadmin; permissions of core / web / shop (view, create, update,
-     *   delete, maintenance, tab permissions, administrators, security).
+     *   domain allowed, the test roles with permissions chosen from the existing keys by module.
+     * @input APP_ENV local; role sysadmin; permissions of core / web / shop / project-portal
+     *   (view, create, update, delete, maintenance, tab permissions of their application,
+     *   administrators, security).
      * @output user sysadmin@sysadmin.sysadmin (activated, password 123456Ab., role sysadmin);
-     *   domain rule sysadmin.sysadmin; six test roles with exactly the expected keys
-     *   (read-only-*, full-web-core, full-shop-core, all-permissions).
+     *   domain rule sysadmin.sysadmin; read-only-<module> for the core and every application,
+     *   full-<application>-core and all-permissions with exactly the expected keys.
      */
     public function test_development_seeder_creates_the_test_data(): void
     {
         Storage::fake('public');
         $this->app['env'] = 'local';
         $this->role('sysadmin');
-        $keys = [
-            'view-core', 'view-web', 'view-eshop', 'core-view-welcome-page',
-            'core-administrators-view', 'core-administrators-update', 'core-security-view', 'core-external-links-view',
-            'core-external-links-create', 'web-sales-leads-view', 'web-sales-leads-create', 'web-sales-leads-update', 'web-sales-leads-delete',
-            'web-view-dashboard', 'web-set-maintenance-mode', 'shop-products-view', 'shop-products-update', 'shop-products-delete',
+        $modules = [
+            'core' => ['view-core', 'core-view-welcome-page', 'core-administrators-view', 'core-administrators-update', 'core-security-view', 'core-external-links-view', 'core-external-links-create'],
+            'web' => ['view-web', 'web-sales-leads-view', 'web-sales-leads-create', 'web-sales-leads-update', 'web-sales-leads-delete', 'web-view-dashboard', 'web-set-maintenance-mode'],
+            'shop' => ['view-eshop', 'shop-products-view', 'shop-products-update', 'shop-products-delete'],
+            'project-portal' => ['view-project-portal', 'web-projects-view', 'web-projects-update'],
         ];
-        foreach ($keys as $key) {
-            CorePermission::create(['permission_key' => $key, 'module' => 'core']);
+        foreach ($modules as $module => $keys) {
+            foreach ($keys as $key) {
+                CorePermission::create(['permission_key' => $key, 'module' => $module]);
+            }
         }
 
         $this->seed(DevelopmentSeeder::class);
@@ -316,44 +320,24 @@ class DatabaseSetupTest extends TestCase
             && CoreEmailAccessRule::where('type', 'domain')->where('value', 'sysadmin.sysadmin')->exists());
 
         $roleKeys = fn (string $name) => CoreRole::where('role_name', $name)->firstOrFail()->permissions()->pluck('permission_key')->sort()->values()->all();
+        $sorted = fn (array $keys) => collect($keys)->sort()->values()->all();
         $this->assertSame(['core-administrators-view', 'core-external-links-view', 'core-security-view', 'core-view-welcome-page', 'view-core'], $roleKeys('read-only-core'));
         $this->assertSame(['view-web', 'web-sales-leads-view', 'web-view-dashboard'], $roleKeys('read-only-web'));
         $this->assertSame(['shop-products-view', 'view-eshop'], $roleKeys('read-only-shop'));
-        $core = ['core-administrators-update', 'core-administrators-view', 'core-external-links-create', 'core-external-links-view', 'core-security-view', 'core-view-welcome-page', 'view-core'];
-        $this->assertSame([...$core, 'view-web', 'web-sales-leads-create', 'web-sales-leads-delete', 'web-sales-leads-update', 'web-sales-leads-view', 'web-set-maintenance-mode', 'web-view-dashboard'], $roleKeys('full-web-core'));
-        $this->assertSame([...array_slice($core, 0, 6), 'shop-products-delete', 'shop-products-update', 'shop-products-view', 'view-core', 'view-eshop'], $roleKeys('full-shop-core'));
-        $this->assertSame(collect($keys)->sort()->values()->all(), $roleKeys('all-permissions'));
+        $this->assertSame(['view-project-portal', 'web-projects-view'], $roleKeys('read-only-project-portal'));
+        foreach (['web', 'shop', 'project-portal'] as $app) {
+            $this->assertSame($sorted([...$modules[$app], ...$modules['core']]), $roleKeys("full-{$app}-core"), $app);
+        }
+        $this->assertSame($sorted(array_merge(...array_values($modules))), $roleKeys('all-permissions'));
         $this->assertStringContainsString('Test role (local development).', CoreRole::where('role_name', 'all-permissions')->value('description'));
-        $this->assertSame(7, CoreRole::count());
-    }
-
-    /**
-     * @description The test roles of the former set (editor-web, editor-shop, manager) are removed
-     *   only when created by the seeder (test note) and unused; anything else stays.
-     * @input APP_ENV local; roles editor-web (test note, no user), editor-shop (test note, has a user),
-     *   manager (own description, no user); run DevelopmentSeeder.
-     * @output editor-web soft-deleted; editor-shop and manager kept.
-     */
-    public function test_development_seeder_removes_unused_former_test_roles(): void
-    {
-        $this->app['env'] = 'local';
-        $this->role('sysadmin');
-        $this->role('editor-web', [], ['description' => 'Old. Test role (local development).']);
-        $this->user([], $this->role('editor-shop', [], ['description' => 'Old. Test role (local development).']));
-        $this->role('manager', [], ['description' => 'Our real manager role']);
-
-        $this->seed(DevelopmentSeeder::class);
-
-        $this->assertSoftDeleted('core_roles', ['role_name' => 'editor-web']);
-        $this->assertNotSoftDeleted('core_roles', ['role_name' => 'editor-shop']);
-        $this->assertNotSoftDeleted('core_roles', ['role_name' => 'manager']);
+        $this->assertSame(3 + 2 * count(AppRegistry::apps()), CoreRole::count());
     }
 
     /**
      * @description Running it again changes nothing that exists: a changed password and an edited
      *   role stay; nothing is duplicated.
      * @input seeded once; password changed; all-permissions permissions removed; seeded again.
-     * @output password unchanged; all-permissions still without permissions; one user, one domain rule, six roles + sysadmin.
+     * @output password unchanged; all-permissions still without permissions; one user, one domain rule, the test roles (2 per application + 2) + sysadmin.
      */
     public function test_development_seeder_never_overwrites(): void
     {
@@ -370,7 +354,7 @@ class DatabaseSetupTest extends TestCase
         $this->assertSame(0, CoreRole::where('role_name', 'all-permissions')->firstOrFail()->permissions()->count());
         $this->assertSame(1, User::where('user_email', DevelopmentSeeder::TEST_EMAIL)->count());
         $this->assertSame(1, CoreEmailAccessRule::where('value', 'sysadmin.sysadmin')->count());
-        $this->assertSame(7, CoreRole::count());
+        $this->assertSame(3 + 2 * count(AppRegistry::apps()), CoreRole::count());
     }
 
     /**
@@ -394,7 +378,7 @@ class DatabaseSetupTest extends TestCase
      * @description Base data of every installation: all permission keys, the sysadmin role with
      *   all of them, the page titles, document types and the web / e-shop settings rows.
      * @input empty database (test schema); BaseDataSeeder.
-     * @output permissions = core + web + e-shop + project portal data files (89 keys incl.
+     * @output permissions = the data files of the core and of every registered application (keys incl.
      *   view-core, view-web, view-eshop, view-project-portal, core-administrators-view);
      *   sysadmin with every permission and protected; 25 titles incl. web.not-found and
      *   admin.panel; types gdpr / tos / cookies; web + shop active; placeholder company details
@@ -431,11 +415,11 @@ class DatabaseSetupTest extends TestCase
         Storage::disk('public')->assertExists([BaseDataSeeder::DEFAULT_LOGO_PATH, WebBaseDataSeeder::FLAG_PATH, ShopBaseDataSeeder::FLAG_PATH]);
 
         $expected = array_column(BaseDataSeeder::permissions(), 'permission_key');
-        $this->assertCount(89, $expected);
+        $this->assertContains('view-project-portal', $expected);
         $this->assertEqualsCanonicalizing($expected, CorePermission::pluck('permission_key')->all());
         $sysadmin = CoreRole::where('role_name', 'sysadmin')->firstOrFail();
         $this->assertTrue($sysadmin->isProtected());
-        $this->assertSame(89, $sysadmin->permissions()->count());
+        $this->assertSame(count($expected), $sysadmin->permissions()->count());
         $this->assertSame(25, DB::table('legal_page_titles')->count());
         $this->assertTrue(DB::table('legal_page_titles')->where(['area' => 'web', 'page_key' => 'not-found'])->exists());
         $this->assertTrue(DB::table('legal_page_titles')->where(['area' => 'admin', 'page_key' => 'panel'])->exists());
@@ -537,7 +521,8 @@ class DatabaseSetupTest extends TestCase
      *   sections replaced by an own Czech one; logo file replaced, one flag deleted; sysadmin
      *   soft-deleted; one permission row removed; seeded again.
      * @output edits kept (company, own gdpr section only, own logo); deleted flag restored; role
-     *   restored with 89 permissions; 89 permissions, 25 titles, 1 row in each settings table.
+     *   restored with every permission of the data files; no duplicate; 25 titles, 1 row in each
+     *   settings table.
      */
     public function test_base_data_seeder_only_adds(): void
     {
@@ -561,8 +546,8 @@ class DatabaseSetupTest extends TestCase
         $this->assertSame('edited', CorePermission::where('permission_key', 'view-core')->value('description'));
         $this->assertFalse(ShopSiteSetting::firstOrFail()->is_shop_active);
         $role = CoreRole::where('role_name', 'sysadmin')->firstOrFail();
-        $this->assertSame(89, $role->permissions()->count());
-        $this->assertSame(89, CorePermission::count());
+        $this->assertSame(count(BaseDataSeeder::permissions()), $role->permissions()->count());
+        $this->assertSame(count(BaseDataSeeder::permissions()), CorePermission::count());
         $this->assertSame(25, DB::table('legal_page_titles')->count());
         $this->assertSame(1, WebSiteSetting::count());
         $this->assertSame(1, ShopSiteSetting::count());
@@ -576,7 +561,7 @@ class DatabaseSetupTest extends TestCase
     /**
      * @description db:seed: base data always, the test account and roles only with APP_ENV=local.
      * @input DatabaseSeeder with APP_ENV production; then with APP_ENV local.
-     * @output production: sysadmin role, no account, no test role; local: test account + 6 test roles.
+     * @output production: sysadmin role, no account, no test role; local: test account + the test roles (2 per application + 2).
      */
     public function test_database_seeder_adds_development_data_only_locally(): void
     {
@@ -591,6 +576,6 @@ class DatabaseSetupTest extends TestCase
         $this->app['env'] = 'local';
         $this->seed(DatabaseSeeder::class);
         $this->assertTrue(User::where('user_email', DevelopmentSeeder::TEST_EMAIL)->exists());
-        $this->assertSame(7, CoreRole::count());
+        $this->assertSame(3 + 2 * count(AppRegistry::apps()), CoreRole::count());
     }
 }

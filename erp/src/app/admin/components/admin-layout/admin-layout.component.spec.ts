@@ -23,6 +23,7 @@ import { ScrollLockService } from '../../../core/services/scroll-lock.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 import { AdminModulesService } from '../../admin-modules.service';
 import { navOf } from '../../admin-navigation.config';
+import { requiresApps } from '../../../../testing/requires-apps';
 
 describe('AdminLayoutComponent', () => {
   let ctx: AdminTestContext;
@@ -66,6 +67,7 @@ describe('AdminLayoutComponent', () => {
    * @output sidebarWidth 320; isMenuOpen false; currentModule 'shop'
    */
   it('restores the sidebar state from localStorage', () => {
+    requiresApps('shop');
     localStorage.setItem('admin_sidebar_width', '320');
     localStorage.setItem('admin_menu_open', 'false');
     localStorage.setItem('admin_current_module', 'shop');
@@ -85,6 +87,7 @@ describe('AdminLayoutComponent', () => {
    *         for web; currentModule stays 'core' (default) and nothing stored until NavigationEnd.
    */
   it('switchModule() opens the first page the user may open', () => {
+    requiresApps('web', 'shop');
     ctx.permissions.granted = new Set(['core-view-welcome-page']);
     component.switchModule('core');
     expect(router.navigate).toHaveBeenCalledWith(['/admin/core/welcome-page']);
@@ -111,6 +114,7 @@ describe('AdminLayoutComponent', () => {
    *         sysadmin: every tab true; the rendered header shows exactly the available tabs.
    */
   it('shows a module tab only when the module has a page for the user', () => {
+    requiresApps('web', 'shop', 'project-portal');
     ctx.permissions.granted = new Set(['view-web']);
     expect(component.isModuleAvailable('web')).toBeFalse();
     ctx.permissions.granted = new Set(['view-web', 'web-edit-website-view']);
@@ -146,6 +150,7 @@ describe('AdminLayoutComponent', () => {
    *         /admin/shop/orders and closes the dropdown.
    */
   it('renders the core tab and the application switcher', () => {
+    requiresApps('web', 'shop');
     ctx.permissions.granted = new Set(['view-web', 'view-core', 'view-eshop', 'core-view-welcome-page', 'shop-orders-view']);
     component.currentModule = 'core';
     fixture.detectChanges();
@@ -172,6 +177,7 @@ describe('AdminLayoutComponent', () => {
    *   the mobile label, switcher active; core: 'admin-layout.module_core', switcher not active.
    */
   it('names the current module in the header', () => {
+    requiresApps('project-portal');
     ctx.auth.session.role = 'sysadmin';
     component.currentModule = 'project-portal';
     fixture.detectChanges();
@@ -193,6 +199,7 @@ describe('AdminLayoutComponent', () => {
    * @output currentModule 'shop'; stored in localStorage
    */
   it('syncs the module from the URL', () => {
+    requiresApps('shop');
     spyOnProperty(router, 'url', 'get').and.returnValue('/admin/shop/orders?page=2');
     component.ngOnInit();
     expect(component.currentModule).toBe('shop');
@@ -205,6 +212,7 @@ describe('AdminLayoutComponent', () => {
    * @output currentModule stays 'core' (default) twice; then 'project-portal'
    */
   it('ignores URLs without a module', () => {
+    requiresApps('project-portal');
     const url = spyOnProperty(router, 'url', 'get').and.returnValue('/auth/login');
     component.ngOnInit();
     expect(component.currentModule).toBe('core');
@@ -330,6 +338,7 @@ describe('AdminLayoutComponent', () => {
    *   hidden; sidebar link /admin/project-portal/projects only (no log page).
    */
   it('shows menu groups by permission', () => {
+    requiresApps('web', 'shop', 'project-portal');
     ctx.permissions.granted = new Set(['web-edit-website-view', 'shop-orders-view', 'core-legal-config-view', 'web-projects-view']);
     const visible = (module: string, key: string) => component.isGroupVisible(navOf(module).find(g => g.key === key)!);
     expect(visible('web', 'web-content')).toBeTrue();
@@ -468,6 +477,7 @@ describe('AdminLayoutComponent', () => {
    * @output module 'shop' stored; open → closed; meta code cz, dateLocale cs-CZ; navigate login, permissions kept.
    */
   it('follows navigation, the language menu and a failed logout', async () => {
+    requiresApps('shop');
     component.ngOnInit();
     router.resetConfig([{ path: '**', component: AdminLayoutComponent }]);
     await router.navigateByUrl('/admin/shop/orders');
@@ -496,6 +506,7 @@ describe('AdminLayoutComponent', () => {
    *   others hidden; edit roles only for the sysadmin.
    */
   it('shows every menu group only with its permission', () => {
+    requiresApps('web', 'shop', 'project-portal');
     const modules = ['core', 'web', 'shop', 'project-portal'];
     const groups = modules.flatMap(module => navOf(module));
     const always = groups.filter(g => g.items.some(i => i.permission === null && !i.sysadminOnly)).map(g => g.key);
@@ -567,6 +578,7 @@ describe('AdminLayoutComponent', () => {
    * @output empty set each time; collapse and expand work without an error.
    */
   it('survives a broken storage of the menu sections', () => {
+    requiresApps('web');
     localStorage.setItem(NAV_COLLAPSED_STORAGE_KEY, '{"x":1}');
     component.ngOnInit();
     expect(component.collapsedGroups.size).toBe(0);

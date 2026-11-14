@@ -12,7 +12,7 @@
       "group": "web",
       "order": 5,
       "permission": "web-view-dashboard",
-      "devNote": "DashboardComponent (web-pages), route 'web/dashboard', permission 'web-view-dashboard'."
+      "devNote": "DashboardComponent (apps/web/admin/dashboard, layout DashboardViewComponent of the core), route 'web/dashboard', permission 'web-view-dashboard'."
     },
     {
       "id": "user-request",
@@ -22,11 +22,11 @@
       "devNote": "UserRequestComponent, route 'web/user-request', permission 'web-user-requests-view' (edit/delete vyžadují navíc -update/-delete)."
     },
     {
-      "id": "web-business-logs",
+      "id": "web-logs",
       "group": "web",
       "order": 7,
       "permission": "web-view-web-logs",
-      "devNote": "BusinessLogsComponent, route 'web/business-logs', permission 'web-view-web-logs'."
+      "devNote": "AuditLogPageComponent (core) with WEB_AUDIT_LOG (web-logs.config.ts), route 'web/logs', permission 'web-view-web-logs'."
     },
     {
       "id": "sales-leads",
@@ -40,7 +40,7 @@
       "group": "web",
       "order": 10,
       "permission": "web-edit-website-view",
-      "devNote": "EditWebsiteComponent, route 'web/edit-website', permission 'web-edit-website-view'."
+      "devNote": "EditWebsiteComponent (TranslationEditorViewComponent of the core + FAQ / jobs / references tabs), route 'web/edit-website', permission 'web-edit-website-view'."
     },
     {
       "id": "sales-orders",

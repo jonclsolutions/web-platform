@@ -38,13 +38,13 @@ class CoreAgendaController extends Controller
     /** @description Longest range of one request (6 weeks of a month view + margin). */
     private const MAX_RANGE_DAYS = 62;
 
-    /** @description Tab permission of the core module (see ADMIN_MODULE_TAB_PERMISSION). */
+    /** @description Tab permission of the core module (frontend CORE_TAB_PERMISSION). */
     private const CORE_TAB_PERMISSION = 'view-core';
 
     /**
      * @description Events of the range and the current reminders the user may see.
      * @param Request $request from, to (YYYY-MM-DD; at most MAX_RANGE_DAYS apart).
-     * @return JsonResponse { data: { today, modules: ['personal', 'web'|'shop'|'core'...],
+     * @return JsonResponse { data: { today, modules: ['personal', <application ids>…, 'core'],
      *   events: [{ id, type, module, date, subject, link, severity, personal? }],
      *   reminders: [{ type, module, count, since, link }] } } - personal
      *   events have module 'personal', link null and `personal` (personalEvent()).

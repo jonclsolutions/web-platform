@@ -44,7 +44,7 @@
     <div class="cal-toolbar-right">
       <div class="cal-filters" role="group" [attr.aria-label]="t('filter_label')">
         @for (module of modules; track module) {
-          <button type="button" class="cal-filter" [class.cal-filter--off]="hidden.has(module)" [attr.data-module]="module"
+          <button type="button" class="cal-filter" [class.cal-filter--off]="hidden.has(module)" [attr.data-module]="module" [style]="moduleStyle(module)"
                   [attr.aria-pressed]="!hidden.has(module)" (click)="toggleModule(module)">
             <span class="cal-dot" aria-hidden="true"></span>
             {{ moduleLabel(module) }}
@@ -92,7 +92,7 @@
                     @for (event of day.events.slice(0, dayLimit); track event.id) {
                       @if (isPersonal(event)) {
                         <!-- Personal event: opens its form -->
-                        <button type="button" class="cal-chip" [attr.data-module]="event.module" [class.cal-chip--overdue]="event.severity === 'danger'"
+                        <button type="button" class="cal-chip" [attr.data-module]="event.module" [style]="moduleStyle(event.module)" [class.cal-chip--overdue]="event.severity === 'danger'"
                                 [class.cal-chip--done]="event.personal!.done" [title]="eventTitle(event)" [attr.aria-label]="eventTitle(event)"
                                 (click)="$event.stopPropagation(); openEditEvent(event)">
                           <ng-container *ngTemplateOutlet="typeIcon; context: { $implicit: event.type }"></ng-container>
@@ -100,7 +100,7 @@
                           <span class="cal-chip-text">{{ event.subject }}</span>
                         </button>
                       } @else {
-                        <a class="cal-chip" [attr.data-module]="event.module" [class.cal-chip--overdue]="event.severity === 'danger'"
+                        <a class="cal-chip" [attr.data-module]="event.module" [style]="moduleStyle(event.module)" [class.cal-chip--overdue]="event.severity === 'danger'"
                            [routerLink]="linkPath(event.link!)" [queryParams]="linkQuery(event.link!)" [title]="eventTitle(event)"
                            [attr.aria-label]="eventTitle(event)" (click)="$event.stopPropagation()">
                           <ng-container *ngTemplateOutlet="typeIcon; context: { $implicit: event.type }"></ng-container>
@@ -116,7 +116,7 @@
                   @if (day.events.length) {
                     <div class="cal-dots" aria-hidden="true">
                       @for (event of day.events.slice(0, 4); track event.id) {
-                        <span class="cal-dot" [attr.data-module]="event.module" [class.cal-dot--overdue]="event.severity === 'danger'"></span>
+                        <span class="cal-dot" [attr.data-module]="event.module" [style]="moduleStyle(event.module)" [class.cal-dot--overdue]="event.severity === 'danger'"></span>
                       }
                     </div>
                   }
@@ -154,7 +154,7 @@
           @if (reminderTotal) { <span class="cal-panel-count">{{ reminderTotal }}</span> }
         </h3>
         @for (reminder of visibleReminders; track reminder.type) {
-          <a class="cal-reminder" [attr.data-module]="reminder.module" [routerLink]="linkPath(reminder.link)" [queryParams]="linkQuery(reminder.link)">
+          <a class="cal-reminder" [attr.data-module]="reminder.module" [style]="moduleStyle(reminder.module)" [routerLink]="linkPath(reminder.link)" [queryParams]="linkQuery(reminder.link)">
             <span class="cal-reminder-count">{{ reminder.count }}</span>
             <span class="cal-reminder-body">
               <span class="cal-reminder-label">{{ t('reminder_' + reminder.type) }}</span>
@@ -265,7 +265,7 @@
 <!-- One event as a row (list view and day detail); a personal event: done toggle + edit -->
 <ng-template #eventRow let-event>
   @if (isPersonal(event)) {
-    <div class="cal-row cal-row--personal" [attr.data-module]="event.module" [class.cal-row--overdue]="event.severity === 'danger'" [class.cal-row--done]="event.personal.done">
+    <div class="cal-row cal-row--personal" [attr.data-module]="event.module" [style]="moduleStyle(event.module)" [class.cal-row--overdue]="event.severity === 'danger'" [class.cal-row--done]="event.personal.done">
       <button type="button" class="cal-row-icon cal-done-toggle" [attr.aria-pressed]="event.personal.done"
               [title]="t(event.personal.done ? 'mark_open' : 'mark_done')" [attr.aria-label]="t(event.personal.done ? 'mark_open' : 'mark_done')"
               (click)="toggleDone(event)">
@@ -288,7 +288,7 @@
       </button>
     </div>
   } @else {
-  <a class="cal-row" [attr.data-module]="event.module" [class.cal-row--overdue]="event.severity === 'danger'"
+  <a class="cal-row" [attr.data-module]="event.module" [style]="moduleStyle(event.module)" [class.cal-row--overdue]="event.severity === 'danger'"
      [routerLink]="linkPath(event.link)" [queryParams]="linkQuery(event.link)">
     <span class="cal-row-icon" aria-hidden="true"><ng-container *ngTemplateOutlet="typeIcon; context: { $implicit: event.type }"></ng-container></span>
     <span class="cal-row-body">

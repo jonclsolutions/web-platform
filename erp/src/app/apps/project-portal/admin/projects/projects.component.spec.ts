@@ -24,6 +24,7 @@ import {
   createCheckpointStatusLabels
 } from './projects.config';
 import { AdminTestContext, createAdminTestContext, paginated } from '../../../../../testing/admin-test-helpers';
+import { requiresApps } from '../../../../../testing/requires-apps';
 
 describe('ProjectsComponent', () => {
   let ctx: AdminTestContext;
@@ -89,6 +90,7 @@ describe('ProjectsComponent', () => {
      * @output values = exported constants; 'projects.platform_ai'; labels for new/active/done
      */
     it('offers translated options and the checkpoint statuses', () => {
+      requiresApps('web');
       expect(field('platform').options.map((o: any) => o.value)).toEqual(PROJECT_PLATFORM_VALUES);
       expect(field('platform').options[3].label).toBe('projects.platform_ai');
       expect(field('visibility').options.map((o: any) => o.value)).toEqual(PROJECT_VISIBILITY_VALUES);
@@ -204,6 +206,7 @@ describe('ProjectsComponent', () => {
      *   { no_pagination, sort id desc }); options [none, '#5 — ACME']; form open with { order_id: '5' }
      */
     it('prefills the create form from a sales order', fakeAsync(() => {
+      requiresApps('web');
       route.snapshot.queryParamMap = convertToParamMap({ order_id: '5' });
       dh().getCollection.and.callFake((endpoint: string) => of(endpoint === 'project-portal/projects' ? [] : [{ id: 5, client_name: 'ACME' }]));
       component.ngOnInit();
@@ -228,6 +231,7 @@ describe('ProjectsComponent', () => {
      * @output navigate(['/admin/project-portal/projects', 12], { replaceUrl: true }), no form; then the form with { order_id: '5' }.
      */
     it('opens the project of a sales order', fakeAsync(() => {
+      requiresApps('web');
       route.snapshot.queryParamMap = convertToParamMap({ order_id: '5' });
       dh().getCollection.and.callFake((endpoint: string) => of(endpoint === 'project-portal/projects' ? [{ id: 12 }] : []));
       component.ngOnInit();

@@ -9,8 +9,8 @@
  * @description Bootstraps the application services; defines the named rate limiters: the login
  * (keyed by IP and by e-mail separately), the 2FA code resend and the public web forms; in
  * production forces the safe values of the settings whose mistake would leak data (VT-09); wires
- * the registered applications in (bootApplications(): morph aliases, migrations, views, middleware
- * aliases, commands).
+ * the registered applications in (register(): their configuration; bootApplications(): morph
+ * aliases, migrations, views, middleware aliases, commands).
  * @note Every limit is keyed per client IP, per e-mail or per account - never one counter shared
  * by everybody - so many people using the application at the same time never block each other;
  * only one client (or one account) repeating itself is stopped. The client IP is correct behind a
@@ -52,6 +52,13 @@ class AppServiceProvider extends ServiceProvider
     {
         // One collector of data changes per request / job (see LogsActivity: `changes` of a log row).
         $this->app->scoped(ModelChanges::class);
+
+        // Configuration of every registered application (`<app>/config.php` → `config('<id>.…')`).
+        foreach (AppRegistry::apps() as $app) {
+            if ($file = $app->configFile()) {
+                $this->mergeConfigFrom($file, $app->id());
+            }
+        }
     }
 
     /**

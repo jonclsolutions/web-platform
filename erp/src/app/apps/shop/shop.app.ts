@@ -10,25 +10,21 @@
 
 import type { AppManifest } from '../app-manifest';
 import { SHOP_ADMIN_ROUTES } from './admin/shop-admin.routes';
-import { SHOP_PUBLIC_ROUTES } from './public/shop-public.routes';
+import { SHOP_PUBLIC_ROUTES, SHOP_PUBLIC_AREA } from './public/shop-public.routes';
 
 export const SHOP_APP: AppManifest = {
   id: 'shop',
   icon: 'cart',
+  color: 'emerald',
   nameKey: 'module_shop',
   descriptionKey: 'app_description_shop',
   tabPermission: 'view-eshop',
   adminI18n: true,
   nav: [
     {
-      key: 'shop-welcome', labelKey: 'nav_group_overview',
-      items: [
-        { path: 'welcome-page', permission: 'shop-welcome-page-view', labelKey: 'nav_welcome', icon: 'bar-chart' },
-      ],
-    },
-    {
       key: 'shop-overview', labelKey: 'nav_group_overview',
       items: [
+        { path: 'welcome-page', permission: 'shop-welcome-page-view', labelKey: 'nav_welcome', icon: 'home' },
         { path: 'dashboard', permission: 'shop-view-dashboard', labelKey: 'nav_shop_dashboard', icon: 'bar-chart' },
       ],
     },
@@ -74,5 +70,6 @@ export const SHOP_APP: AppManifest = {
     },
   ],
   adminRoutes: SHOP_ADMIN_ROUTES,
+  publicArea: SHOP_PUBLIC_AREA,
   publicRoutes: SHOP_PUBLIC_ROUTES,
 };

@@ -59,7 +59,7 @@ export class WebWelcomePageComponent {
     { icon: 'sales-leads', titleKey: 'card_sales_leads_title', descKey: 'card_sales_leads_desc', route: '/admin/web/sales-leads', permission: 'web-sales-leads-view' },
     { icon: 'sales-orders', titleKey: 'card_sales_orders_title', descKey: 'card_sales_orders_desc', route: '/admin/web/sales-orders', permission: 'web-sales-orders-view' },
     { icon: 'job-applications', titleKey: 'card_job_applications_title', descKey: 'card_job_applications_desc', route: '/admin/web/job-applications', permission: 'web-job-applications-view' },
-    { icon: 'logs', titleKey: 'card_logs_title', descKey: 'card_logs_desc', route: '/admin/web/business-logs', permission: 'web-view-web-logs' },
+    { icon: 'logs', titleKey: 'card_logs_title', descKey: 'card_logs_desc', route: '/admin/web/logs', permission: 'web-view-web-logs' },
   ];
 
   t(key: string): string {

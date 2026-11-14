@@ -1,0 +1,31 @@
+{
+  "admin-layout": {
+    "module___app__": "__NAME__",
+    "app_description___app_snake__": "Description of the __NAME__ application.",
+    "nav___app_snake___logs": "Logs"
+  },
+  "calendar": {
+    "module___app__": "__NAME__"
+  },
+  "edit-roles": {
+    "module___app__": "__NAME__"
+  },
+  "knowledge-base": {
+    "nav_group___app__": "__NAME__"
+  },
+  "permission-descriptions": {
+    "view-__app__": "[recommended: always on] Show the __NAME__ application in the admin - without it the application cannot be opened",
+    "__app__-view-logs": "View the log history (audit trail) of __NAME__"
+  },
+  "__app__-logs": {
+    "table_header": "Logs – __NAME__",
+    "event_create": "Create",
+    "event_update": "Update",
+    "event_soft_delete": "Delete (to trash)",
+    "event_hard_delete": "Permanent delete",
+    "event_restore": "Restore",
+    "event_export": "Export",
+    "event_error": "Error",
+    "module___app_snake__": "__NAME__"
+  }
+}

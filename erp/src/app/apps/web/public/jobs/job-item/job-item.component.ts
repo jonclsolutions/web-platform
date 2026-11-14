@@ -27,7 +27,7 @@ import { UploadRule, extensionsLabel, isAttachmentRejection, isExtensionAllowed 
 import { publicFormErrorKey } from '../../../../../shared/utils/public-form-errors';
 import { CaptchaComponent } from '../../../../../shared/components/captcha/captcha.component';
 import { combineLatest, switchMap } from 'rxjs';
-import { WebContentService, localizedText, optionalText } from '../../../../../shared/services/web-content.service';
+import { WebContentService, localizedText, optionalText } from '../../web-content.service';
 
 /** One position of the detail page in the current language. */
 export interface JobDetail {

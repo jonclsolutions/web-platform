@@ -6,7 +6,7 @@
  * @author JS
  * @created 2026
  * @description Management of security monitoring retention period (core_security_settings) -
- * singleton setting, same pattern as WebSiteSettingController for web maintenance.
+ * singleton setting (one row).
  */
 
 namespace App\Http\Controllers\Api\Core;

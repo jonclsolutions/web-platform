@@ -5,10 +5,11 @@
  * @author JS
  * @created 2026
  * @description Editor of the browser page titles (<title>, the headline in search results) of
- * ONE area. Every module manages its own pages: web/edit-website (area 'web'), shop/edit-eshop
- * (area 'shop') and core/web-settings (area 'admin') - removing a module from a branched
- * application removes its page titles with it. Languages of the area's module, a live browser
- * tab preview, one input per page; only changed rows are saved.
+ * ONE area. Every module manages its own pages: an application in its texts page (area = its
+ * id, e.g. web/edit-website, shop/edit-eshop) and the core in core/settings (area 'admin') -
+ * removing an application removes its page titles with it. Languages of the application (the
+ * administration: the languages of every application), a live browser tab preview, one input
+ * per page; only changed rows are saved.
  * @usage `<app-page-titles-editor area="web" endpoint="web/page-titles"
  *   updatePermission="web-edit-website-update" labelSection="edit-website"
  *   (dirtyChange)="titlesDirty = $event">`
@@ -107,20 +108,19 @@ export class PageTitlesEditorComponent implements OnInit {
     this.load();
   }
 
-  /** @description Loads the languages of the area's module, its rows and (if needed) the logo. */
+  /** @description Loads the languages of the area, its rows and (if needed) the logo. */
   private load(): void {
     this.loading = true;
     this.loadError = false;
     this.cd.markForCheck();
 
     forkJoin({
-      langs: this.loadLanguages(this.area === 'shop' ? 'shop' : 'web'),
-      fallback: this.area === 'shop' ? this.loadLanguages('web') : of([] as PageTitleLang[]),
+      langs: this.loadLanguages(this.area === 'admin' ? null : this.area),
       data: this.dataHandler.get<PageTitleRow[]>(this.endpoint),
       logo: this.logoSrc === undefined ? this.loadPublicLogo() : of(null),
     }).subscribe({
-      next: ({ langs, fallback, data, logo }) => {
-        this.languages = langs.length ? langs : (fallback.length ? fallback : FALLBACK_LANGUAGES);
+      next: ({ langs, data, logo }) => {
+        this.languages = langs.length ? langs : FALLBACK_LANGUAGES;
         if (!this.languages.find(l => l.code === this.lang)) this.lang = this.languages[0].code;
         this.publicLogo = logo;
         this.setRows(Array.isArray(data) ? data : []);
@@ -136,13 +136,15 @@ export class PageTitlesEditorComponent implements OnInit {
   }
 
   /**
-   * @description Active languages of a public module; a failure = empty list (fallback above).
-   * @param module 'web' or 'shop'.
+   * @description Active languages of an application (null = of every application, for the
+   *   titles of the administration); a failure = empty list (fallback above).
+   * @param module Application id or null.
    */
-  private loadLanguages(module: 'web' | 'shop'): Observable<PageTitleLang[]> {
+  private loadLanguages(module: string | null): Observable<PageTitleLang[]> {
+    const endpoint = module ? `languages/${module}` : 'languages';
     return this.resourceCache.get(
-      `page-titles:languages:${module}`,
-      () => this.dataHandler.get<PageTitleLang[]>(`languages/${module}`),
+      `page-titles:${endpoint}`,
+      () => this.dataHandler.get<PageTitleLang[]>(endpoint),
       this.LANG_TTL_MS
     ).pipe(
       map((res: any) => ((Array.isArray(res) ? res : []) as PageTitleLang[]).filter(l => l.active !== false)),

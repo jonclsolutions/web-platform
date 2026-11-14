@@ -4,10 +4,12 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Shared logic of the module dashboards (Core, Web): stat tiles loaded in parallel
- * for the allowed endpoints only, the hero tile with its metric dropdown, the comparison bars,
- * the recent audit events with their breakdown, the icon library and the manual refresh. A
- * dashboard declares only its stat tiles, shortcut cards, log endpoint and event maps.
+ * @description Shared logic of the module dashboards (core, web …): stat tiles loaded in
+ * parallel for the allowed endpoints only, the hero tile with its metric dropdown, the
+ * comparison and distribution bars, the recent audit events with their breakdown, the icon
+ * library and the manual refresh. A dashboard declares only its stat tiles, shortcut cards, log
+ * and event maps; DashboardViewComponent renders it. The texts every dashboard shares are in the
+ * translation section `dashboard` (SHARED_DASHBOARD_KEYS), the others in its own section.
  * @dependencies
  * - BaseDataComponent: i18n, permissionService, dataHandler, cd.
  * - ResourceCacheService: TTL cache of the stats / activity fetch (keys
@@ -50,6 +52,29 @@ export interface DashboardStatDef {
   endpoint: string;
   isAllowed: () => boolean;
 }
+
+/** @description One segment of the distribution bar. */
+export interface DistributionSegment {
+  key: string;
+  labelKey: string;
+  value: number;
+  pct: number;
+  opacity: number;
+}
+
+/** @description Translation section of the texts shared by every dashboard. */
+export const DASHBOARD_SECTION = 'dashboard';
+
+/** @description Keys read from DASHBOARD_SECTION instead of the section of the dashboard. */
+const SHARED_DASHBOARD_KEYS = new Set([
+  'hero_select_aria', 'last_updated_label', 'refresh_button', 'refresh_button_title', 'hero_caption',
+  'hero_caption_urgent', 'bars_card_title', 'bars_card_empty', 'no_visible_stats', 'distribution_card_title',
+  'section_quick_nav', 'activity_view_all', 'activity_loading', 'breakdown_card_title', 'breakdown_hint',
+  'breakdown_create_label', 'breakdown_update_label', 'breakdown_delete_label', 'breakdown_restore_label',
+  'breakdown_export_label', 'breakdown_error_label', 'breakdown_default_label', 'ev_label_create',
+  'ev_label_update', 'ev_label_soft_delete', 'ev_label_hard_delete', 'ev_label_restore', 'ev_label_export',
+  'ev_label_error', 'footer_help_text',
+]);
 
 /** @description One shortcut card of the quick navigation (translation keys + guard). */
 export interface DashboardNavSection {
@@ -113,8 +138,8 @@ const RECENT_ACTIVITY_COUNT = 8;
 /**
  * @description Base of the module dashboards.
  * @usage `export class XDashboardComponent extends BaseDashboardComponent { ... }` with
- * `translationSection`, `statDefs`, `navSections`, `logsEndpoint`, `logsPermission`,
- * `eventTypeLabelKeys`, `eventTypeClassMap`.
+ * `translationSection`, `statDefs`, `navSections`, `logsEndpoint`, `logsPermission`, `logsRoute`,
+ * `eventTypeLabelKeys`, `eventTypeClassMap`; template `<app-dashboard-view [d]="this">`.
  */
 @Directive()
 export abstract class BaseDashboardComponent extends BaseDataComponent<UserLogin> implements Core.OnInit {
@@ -133,8 +158,10 @@ export abstract class BaseDashboardComponent extends BaseDataComponent<UserLogin
   abstract readonly navSections: DashboardNavSection[];
   /** Log list endpoint of the module, e.g. 'core/logs'. */
   protected abstract readonly logsEndpoint: string;
-  /** Permission key of the log list endpoint (api.php). */
-  protected abstract readonly logsPermission: string;
+  /** Permission key of the log list endpoint - shows the activity section. */
+  abstract readonly logsPermission: string;
+  /** Admin page of the log ("view all"), e.g. '/admin/core/logs'. */
+  abstract readonly logsRoute: string;
   /** event_type -> translation key for `eventTypeLabel()`. */
   protected abstract readonly eventTypeLabelKeys: Record<string, string>;
   /** event_type -> CSS badge class for `eventTypeClass()`. */
@@ -163,6 +190,15 @@ export abstract class BaseDashboardComponent extends BaseDataComponent<UserLogin
   ) {
     super(dataHandler, cd, genericTableService);
     this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
+  }
+
+  /**
+   * @description Text of the dashboard: a shared key from `dashboard`, any other from the
+   *   section of the dashboard.
+   * @param key Key without section.
+   */
+  public override t(key: string): string {
+    return this.i18n.getValue(`${SHARED_DASHBOARD_KEYS.has(key) ? DASHBOARD_SECTION : this.translationSection}.${key}`);
   }
 
   /** @description Cache key of the stat tiles. */
@@ -217,6 +253,31 @@ export abstract class BaseDashboardComponent extends BaseDataComponent<UserLogin
     const value = typeof stat.value === 'number' ? stat.value : 0;
     if (value <= 0) return 4;
     return Math.max(8, Math.round((Math.log(value + 1) / this.maxStatLog) * 100));
+  }
+
+  /**
+   * @description Distribution bar: every allowed numeric metric (log-weighted width, zero = a
+   *   small segment), largest first; monochrome with a decreasing opacity by rank.
+   */
+  get distributionSegments(): DistributionSegment[] {
+    const numericStats = this.quickStats.filter(s => typeof s.value === 'number') as (QuickStat & { value: number })[];
+    if (numericStats.length === 0) return [];
+
+    /** Weight of a zero value - roughly the value 1 on the log scale. */
+    const ZERO_WEIGHT = 0.35;
+    const OPACITY_STEPS = [1, 0.82, 0.66, 0.52, 0.4, 0.3, 0.22];
+    const weighted = numericStats.map(stat => ({ stat, weight: stat.value > 0 ? Math.log(stat.value + 1) : ZERO_WEIGHT }));
+    const totalWeight = weighted.reduce((sum, w) => sum + w.weight, 0);
+
+    return [...weighted]
+      .sort((a, b) => b.stat.value - a.stat.value)
+      .map(({ stat, weight }, index) => ({
+        key: stat.key,
+        labelKey: stat.labelKey,
+        value: stat.value,
+        pct: Math.round((weight / totalWeight) * 1000) / 10,
+        opacity: OPACITY_STEPS[Math.min(index, OPACITY_STEPS.length - 1)],
+      }));
   }
 
   /** @description Highest count of `activityBreakdown` - scale of the breakdown bars. */

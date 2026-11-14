@@ -135,7 +135,7 @@
     "loading_data": "Loading data…",
 
     "nav_group_overview": "Overview",
-    "nav_group_content": "Website content",
+    "nav_group_content": "Content",
     "nav_group_system": "System",
     "nav_group_legal": "Legal & company",
     "nav_group_users": "Users",
@@ -145,7 +145,7 @@
     "nav_welcome": "Welcome",
     "nav_core_dashboard": "Dashboard",
     "nav_gdpr": "Legal documents",
-    "nav_company_info": "Website settings & SEO",
+    "nav_company_info": "Settings",
     "nav_external_links": "External links",
     "nav_administrators": "Accounts",
     "nav_edit_roles_title": "Roles & permissions",
@@ -227,9 +227,8 @@
 
   "export_no_data_title": "Export",
   "export_no_data_message": "No data available for export.",
-  "export_error_message": "An error occurred during export.",
+  "export_error_message": "An error occurred during export."
 
-  "export_button": "Export"
 },
 "edit-legal": {
   "page_title": "Legal documents",
@@ -377,12 +376,12 @@
   "pt_language_label": "Language of the titles:",
   "pt_saved_title": "Saved"
 },
-"web-settings": {
+"settings": {
   "pt_page_admin_panel": "Whole administration and login",
-  "page_title": "Website settings & SEO",
+  "page_title": "Settings",
   "page_subtitle": "Logo, company details and social media",
 
-  "logo_card_title": "Website logo",
+  "logo_card_title": "Logo",
   "logo_alt": "Website logo",
   "logo_placeholder_text": "No logo yet",
   "logo_stored_text": "Logo uploaded on server",
@@ -553,7 +552,6 @@
   "role_created_success": "Role \"{name}\" was created.",
   "role_create_error": "Creating the role failed.",
   "role_deleted_success": "Role \"{name}\" was deleted.",
-  "role_delete_error": "Deleting the role failed.",
   "delete_blocked_system": "A system role cannot be deleted.",
   "delete_blocked_users": "Cannot delete - the role is assigned to {count} user account(s).",
   "export_empty_error": "Nothing to export - the list of roles is empty.",
@@ -715,17 +713,9 @@
   "contact_text": "For information or to report bugs, contact"
 },
   "core-dashboard": {
-    "hero_select_aria": "Choose displayed metric",
     "header_title": "System overview",
     "header_subtitle": "Shared settings and resources across the website and the e-shop",
-    "last_updated_label": "Updated at",
-    "refresh_button": "Refresh",
-    "refresh_button_title": "Load current data",
 
-    "hero_caption": "Current value",
-    "bars_card_title": "Overview by module",
-    "bars_card_empty": "No other modules are available to you.",
-    "no_visible_stats": "No overview data is available for your account.",
 
     "stat_users_label": "System users",
     "stat_roles_label": "Roles & permissions",
@@ -733,7 +723,6 @@
     "stat_external_links_label": "External links",
     "stat_core_logs_label": "System logs",
 
-    "section_quick_nav": "Quick navigation",
     "nav_administrators_title": "Accounts",
     "nav_administrators_desc": "Manage administrator user accounts",
     "nav_roles_title": "Roles & permissions",
@@ -744,23 +733,13 @@
     "nav_external_links_desc": "Links to analytics and external tools",
     "nav_logs_title": "System logs",
     "nav_logs_desc": "Authentication and system audit records",
-    "nav_web_settings_title": "Website settings & SEO",
-    "nav_web_settings_desc": "Global configuration of the website and the e-shop",
+    "nav_settings_title": "Settings",
+    "nav_settings_desc": "Company details, page titles of the administration and data retention",
 
     "section_recent_activity": "Recent system events",
     "activity_card_title": "System logs",
-    "activity_view_all": "View all",
-    "activity_loading": "Loading records…",
     "activity_empty": "No system records yet",
 
-    "breakdown_card_title": "Recent events breakdown",
-    "breakdown_hint": "Reflects the most recently loaded records above.",
-    "breakdown_create_label": "Created",
-    "breakdown_update_label": "Updated",
-    "breakdown_delete_label": "Deleted",
-    "breakdown_restore_label": "Restored",
-    "breakdown_error_label": "Error",
-    "breakdown_default_label": "Other",
 
     "ev_label_login_success": "Login",
     "ev_label_login_failed": "Failed login",
@@ -769,15 +748,40 @@
     "ev_label_password_reset_completed": "Password reset completed",
     "ev_label_password_reset_failed": "Password reset failed",
     "ev_label_password_reset_rate_limited": "Password reset - limit exceeded",
+
+    "export_selected_suffix": "selected"
+  },
+  "dashboard": {
+    "hero_select_aria": "Choose displayed metric",
+    "last_updated_label": "Updated at",
+    "refresh_button": "Refresh",
+    "refresh_button_title": "Load current data",
+    "hero_caption": "Current value",
+    "hero_caption_urgent": "Needs attention",
+    "bars_card_title": "Overview by module",
+    "bars_card_empty": "No other modules are available to you.",
+    "no_visible_stats": "No overview data is available for your account.",
+    "distribution_card_title": "Distribution by module",
+    "section_quick_nav": "Quick navigation",
+    "activity_view_all": "View all",
+    "activity_loading": "Loading records…",
+    "breakdown_card_title": "Recent events breakdown",
+    "breakdown_hint": "Reflects the most recently loaded records above.",
+    "breakdown_create_label": "Created",
+    "breakdown_update_label": "Updated",
+    "breakdown_delete_label": "Deleted",
+    "breakdown_restore_label": "Restored",
+    "breakdown_export_label": "Export",
+    "breakdown_error_label": "Error",
+    "breakdown_default_label": "Other",
     "ev_label_create": "Created",
     "ev_label_update": "Updated",
     "ev_label_soft_delete": "Deleted",
     "ev_label_hard_delete": "Permanently deleted",
     "ev_label_restore": "Restored",
+    "ev_label_export": "Export",
     "ev_label_error": "Error",
-
-    "footer_help_text": "Need help? Contact technical support or your system administrator.",
-    "export_selected_suffix": "selected"
+    "footer_help_text": "Need help? Contact technical support or your system administrator."
   },
   "external-links": {
     "table_header": "External links",
@@ -951,13 +955,7 @@
   },
   "core-logs": {
     "table_header": "System logs",
-    "toolbar_action_trigger": "Actions",
-    "toolbar_filters": "Open filters",
-    "toolbar_hide_filters": "Hide",
-    "toolbar_generate_reports": "Generate charts & reports",
-    "toolbar_export_data": "Export data",
 
-    "btn_details": "Details",
 
     "event_create": "Created",
     "event_create_denied": "Creation denied",
@@ -991,23 +989,32 @@
     "module_core_role": "Roles",
     "module_user": "Users",
     "module_legal": "Legal documents",
-    "module_core": "Core (general)",
+    "module_core": "Core (general)"
 
+
+
+
+  },
+  "audit-log": {
+    "toolbar_action_trigger": "Actions",
+    "toolbar_filters": "Filters",
+    "toolbar_hide_filters": "Hide filters",
+    "toolbar_generate_reports": "Generate charts & reports",
+    "toolbar_export_data": "Export data",
+    "btn_details": "Details",
     "col_id": "ID",
     "col_time": "Time",
     "col_user": "User",
     "col_action": "Action",
     "col_module": "Module",
     "col_description": "Event description",
-    "col_ip": "IP address",
-
+    "col_ip": "IP address / origin",
     "filter_id_placeholder": "Log ID",
-    "filter_user_placeholder": "User email",
+    "filter_user_placeholder": "User / e-mail",
     "filter_event_label": "Event",
     "filter_event_placeholder": "-- Action type --",
     "filter_module_placeholder": "-- Module --",
     "filter_ip_placeholder": "Search IP",
-
     "details_id": "Record ID",
     "details_time": "Event time",
     "details_ip": "Source IP address",
@@ -1015,11 +1022,10 @@
     "details_module": "System module",
     "details_description": "Detailed description",
     "details_entity_type": "Table / Entity",
-    "details_entity_id": "Entity record ID",
+    "details_entity_id": "Entity ID",
     "details_user_id": "User ID",
     "details_user": "User",
     "details_context_data": "Payload / JSON Data",
-
     "graph_date_field_label": "Date created"
   },
   "security-events": {
@@ -1204,8 +1210,7 @@
   },
   "base-data": {
   "api_endpoint_undefined": "API endpoint is not defined.",
-  "password_change_error": "Error changing password.",
-  "mass_delete_error": "Mass delete error."
+  "password_change_error": "Error changing password."
 },
 "password-confirm": {
   "title": "Confirm with your password",
@@ -1275,6 +1280,64 @@
     "error_network": "Unable to connect to the server. Please check your connection and try again.",
     "error_generic": "The link is invalid or has expired. Please request a new one."
   },
+  "login": {
+    "accounts": {
+      "title": "Choose an account",
+      "continue_as": "Continue as",
+      "current": "Signed in in this window",
+      "other": "or sign in with another account",
+      "unavailable": "This account is no longer remembered. Please sign in with your password."
+    },
+    "labels": {
+      "email": "Sign-in e-mail",
+      "password": "Password",
+      "remember_me": "Remember me"
+    },
+    "placeholders": {
+      "email": "john.smith@studio.com"
+    },
+    "links": {
+      "forgot_password": "Forgot your password?",
+      "back_to_home": "Back to the home page"
+    },
+    "aria": {
+      "show_password": "Show password",
+      "hide_password": "Hide password"
+    },
+    "buttons": {
+      "submit": "Sign in",
+      "submitting": "Signing in..."
+    },
+    "errors": {
+      "captcha_required": "Please confirm that you are not a robot.",
+      "captcha_load": "The security check could not be loaded. Try reloading the page.",
+      "too_many_attempts": "Too many attempts. Please try again in a moment.",
+      "login_failed": "Sign-in failed.",
+      "verification_failed": "Verification failed. Please try again.",
+      "request_failed": "The request could not be sent. Please try again."
+    },
+    "otp": {
+      "subtitle": "A 6-digit verification code has been sent to your e-mail.",
+      "valid_for": "The code is valid for",
+      "label": "Verification code",
+      "placeholder": "123456",
+      "expired": "The code has expired. Please request a new one.",
+      "verify_btn": "Verify and sign in",
+      "verifying_btn": "Verifying...",
+      "resend": "Send a new code",
+      "back": "← Back to sign-in"
+    },
+    "forgot": {
+      "title": "Password reset",
+      "subtitle": "Enter the e-mail of your account. We will send you a link to reset your password.",
+      "email_label": "E-mail address",
+      "email_placeholder": "you@email.com",
+      "sent": "The instructions have been sent to the e-mail.",
+      "cancel": "Cancel",
+      "submit": "Send instructions",
+      "close_aria": "Close"
+    }
+  },
   "activate-account": {
     "title_loading": "Verifying link…",
     "title_invalid": "This link can't be used",
@@ -1300,5 +1363,64 @@
     "error_network": "Unable to connect to the server. Please check your connection and try again.",
     "error_password_rejected": "The password could not be accepted. Please choose a different one.",
     "error_generic": "Setting the password failed. Please try again later."
+  },
+  "translation-editor": {
+    "tab_translations": "Translations",
+    "tab_page_titles": "Page titles",
+    "tabs_label": "Page sections",
+    "upload_json_title_topbar": "Upload JSON for the current language",
+    "save_changes_button": "Save changes",
+    "saving_label": "Saving…",
+    "unsaved_changes_title": "Unsaved changes",
+    "download_json_title": "Download current JSON",
+    "download_json_button": "Download JSON",
+    "add_language_title": "Add language",
+    "add_language_button": "Add language",
+    "inactive_suffix": "inactive",
+    "inactive_label": "Inactive",
+    "deactivate_title": "Deactivate",
+    "activate_title": "Activate",
+    "delete_language_title": "Delete language",
+    "upload_json_title": "Upload JSON for this language",
+    "stat_keys_label": "keys",
+    "stat_filled_label": "filled",
+    "stat_missing_label": "missing",
+    "show_missing_only_title": "Show missing only",
+    "search_placeholder": "Search key or text…",
+    "missing_count_suffix": "missing",
+    "col_key": "Key (JSON path)",
+    "col_value_prefix": "Value",
+    "missing_translation_title": "Missing translation",
+    "no_results": "No results",
+    "icon_field_label": "Language icon",
+    "icon_field_hint": "(PNG/JPG, max 512 KB)",
+    "icon_preview_alt": "Preview",
+    "remove_button": "Remove",
+    "code_field_label": "Language code",
+    "code_field_hint": "2–5 lowercase letters, e.g. sk, de, fr",
+    "name_field_label": "Language name",
+    "active_checkbox_label": "Language active (visible to users)",
+    "upload_modal_description": "Select a JSON file with the same key structure as the CZ reference. Keys missing from the file will remain empty and flagged as a warning.",
+    "upload_json_button": "Upload JSON",
+    "json_drop_zone_text": "Click or drag a",
+    "json_drop_zone_text_suffix": "file here",
+    "delete_confirm_prefix": "Are you sure you want to delete the language",
+    "delete_confirm_suffix": "This action removes the language from the list. The JSON file on the server will be preserved.",
+    "info_title": "Info",
+    "admin_title": "Admin",
+    "translations_not_found_message": "Translations for \"{lang}\" do not exist yet. Defaulting to empty keys.",
+    "translations_saved_message": "Translations for \"{lang}\" have been saved.",
+    "save_failed_message": "Save failed.",
+    "icon_size_error": "Icon exceeds size limit (512 KB).",
+    "code_and_name_required_error": "Code and name are required.",
+    "code_format_error": "Code must be 2–5 lowercase letters.",
+    "code_already_exists_error": "Language code \"{code}\" already exists.",
+    "language_created_message": "Language \"{code}\" created.",
+    "language_save_failed_error": "Failed to save language to server.",
+    "delete_language_failed_error": "Failed to delete language.",
+    "toggle_failed_error": "Change could not be saved.",
+    "invalid_json_error": "Invalid JSON file.",
+    "json_uploaded_message": "JSON for \"{lang}\" successfully uploaded.",
+    "upload_failed_error": "Upload failed. Check server connectivity."
   }
 }

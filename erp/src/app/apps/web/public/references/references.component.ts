@@ -20,9 +20,9 @@ import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { combineLatest } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { RouterModule } from '../../../../shared/imports/web-providers';
+import { RouterModule } from '../web-providers';
 import { BasePublicComponent } from '../../../../public/base-public.component';
-import { WebContentService, localizedText, optionalText } from '../../../../shared/services/web-content.service';
+import { WebContentService, localizedText, optionalText } from '../web-content.service';
 
 /** One project of the page in the current language. */
 export interface ReferenceView {

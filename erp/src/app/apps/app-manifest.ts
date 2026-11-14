@@ -15,6 +15,11 @@
 import type { Routes } from '@angular/router';
 import type { AdminNavGroup } from '../admin/admin-navigation.config';
 import type { AdminIconName } from '../admin/components/admin-icon/admin-icon.component';
+import type { PublicArea } from '../public/public-area';
+
+/** Colour of an application in the shared views of the core (e.g. the calendar):
+ *  a palette of shared/styles/tokens.css (`--color-<name>-600` / `-50`). */
+export type AppColor = 'indigo' | 'emerald' | 'rose' | 'amber';
 
 /** Ids of the applications (the same as the API registry, config/apps.php). */
 export type AppId = 'web' | 'shop' | 'project-portal';
@@ -25,6 +30,8 @@ export interface AppManifest {
   id: AppId;
   /** Icon of the tab / switcher / application card. */
   icon: AdminIconName;
+  /** Colour of its items in the calendar. */
+  color: AppColor;
   /** Key of the name in the admin i18n section `admin-layout`. */
   nameKey: string;
   /** Key of the short description (application card) in `admin-layout`. */
@@ -35,6 +42,9 @@ export interface AppManifest {
   nav: AdminNavGroup[];
   /** Routes below `/admin/<id>/` (pages lazy-loaded with `loadComponent`, `data.permission` + `data.help`). */
   adminRoutes: Routes;
+  /** Public area of its public pages (also in the data of its layout route) - the bootstrap
+   *  loads the texts of the area of the first URL before the first render. */
+  publicArea?: PublicArea;
   /** Top-level public routes (placed before the admin routes). */
   publicRoutes?: Routes;
   /** Public catch-all routes - placed after every other route (e.g. the 404 of the public web). */

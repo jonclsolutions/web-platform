@@ -1,0 +1,16 @@
+{
+  "pages": {
+    "__app__-logs": {
+      "navLabel": "Logy – __NAME__",
+      "header": "__NAME__ – logy",
+      "sections": [
+        {
+          "blocks": [
+            { "type": "lead", "content": "Auditní log aplikace __NAME__: kdo, kdy a co v aplikaci změnil." },
+            { "type": "text", "content": "Záznamy jde filtrovat podle uživatele, události, modulu a IP adresy, exportovat a vykreslit do grafů." }
+          ]
+        }
+      ]
+    }
+  }
+}

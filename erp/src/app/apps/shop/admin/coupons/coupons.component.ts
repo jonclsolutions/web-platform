@@ -26,7 +26,7 @@ import { PageHelpComponent } from '../../../../admin/components/page-help/page-h
   standalone: true,
   imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent, PageHelpComponent],
   templateUrl: './coupons.component.html',
-  styleUrls: ['../../../../admin/shared-styles/page.css', '../shared-styles/page.css'],
+  styleUrls: ['../../../../admin/shared-styles/page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CouponsComponent extends BaseDataComponent<any> implements Core.OnInit {

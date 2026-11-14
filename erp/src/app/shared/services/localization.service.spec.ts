@@ -34,6 +34,14 @@ describe('LocalizationService', () => {
     return service;
   }
 
+  /** Switches the service to a module and answers its first requests (texts failing - nothing
+   *  cached, no languages). */
+  function enterModule(service: LocalizationService, module: string): void {
+    service.setModule(module);
+    http.expectOne(`${API}/translations/${module}/cz`).flush('x', { status: 500, statusText: 'Error' });
+    http.expectOne(`${API}/languages/${module}`).flush({ data: [] });
+  }
+
   beforeEach(() => localStorage.removeItem('selectedLanguage'));
   afterEach(() => {
     http.verify();
@@ -41,7 +49,7 @@ describe('LocalizationService', () => {
   });
 
   /**
-   * @description initTranslations loads the stored language of the 'web' module and publishes
+   * @description initTranslations('web') loads the stored language of the given module and publishes
    *   it; getText resolves dotted keys and returns the key when missing / not loaded.
    * @input localStorage 'en'; response {home: {title: 'Home'}}.
    * @output GET translations/web/en; resolves the data; 'Home'; 'home.x' → 'home.x'.
@@ -52,7 +60,7 @@ describe('LocalizationService', () => {
     expect(service.getCurrentLanguage()).toBe('en');
     expect(service.getText('home.title')).toBe('home.title');
 
-    const done = service.initTranslations();
+    const done = service.initTranslations('web');
     http.expectOne(`${API}/translations/web/en`).flush({ data: { home: { title: 'Home' } } });
     expect(await done).toEqual({ home: { title: 'Home' } });
     expect(service.getText('home.title')).toBe('Home');
@@ -68,7 +76,7 @@ describe('LocalizationService', () => {
   it('falls back to Czech without caching it under the failed language', async () => {
     localStorage.setItem('selectedLanguage', 'en');
     const service = create();
-    const done = service.initTranslations();
+    const done = service.initTranslations('web');
     http.expectOne(`${API}/translations/web/en`).flush('x', { status: 500, statusText: 'Error' });
     http.expectOne(`${API}/translations/web/cz`).flush({ data: { t: 'CZ' } });
     expect(await done).toEqual({ t: 'CZ' });
@@ -97,6 +105,7 @@ describe('LocalizationService', () => {
    */
   it('ignores responses of a language that is no longer selected', () => {
     const service = create();
+    enterModule(service, 'web');
     service.setLanguage('en');
     service.setLanguage('de');
     const en = http.expectOne(`${API}/translations/web/en`);
@@ -113,6 +122,7 @@ describe('LocalizationService', () => {
    */
   it('switches modules and drops stale responses', () => {
     const service = create();
+    enterModule(service, 'web');
     service.loadTranslations('cz');
     const web = http.expectOne(`${API}/translations/web/cz`);
 
@@ -135,6 +145,7 @@ describe('LocalizationService', () => {
    */
   it('lists active languages and falls back to the last list', () => {
     const service = create();
+    enterModule(service, 'web');
     let result: any;
     service.fetchLanguages().subscribe(r => (result = r));
     http.expectOne(`${API}/languages/web`).flush({ data: [

@@ -5,9 +5,9 @@
     @author: JS
     @created: 2026
     @description: Public 404 page. Own palette on purpose (like the maintenance pages - the page is
-        shared by web and e-shop and must not depend on either module's theme): `.not-found--web`
-        = the dark violet look of the web (the former look of this page), `.not-found--shop` =
-        light look matching the e-shop. A new area without its own block uses the web look.
+        shared by every public application and must not depend on the theme of one): two looks the
+        public area chooses (`theme` of PublicArea) - `.not-found--dark` (dark violet, with the
+        illustration) and `.not-found--light`.
 */
 
 .main-content {
@@ -74,7 +74,7 @@
 }
 
 
-.main-content.not-found--web {
+.main-content.not-found--dark {
     padding-top: 140px; /* clears the floating web navbar (the web pages use 180px above a title) */
 }
 
@@ -116,36 +116,36 @@
     .header-0-2-t { font-size: 1.4rem; }
     .svg-placeholder { max-width: 200px; }
     .not-found-illustration { max-width: 280px; }
-    .main-content.not-found--web { padding-top: 110px; }
+    .main-content.not-found--dark { padding-top: 110px; }
 }
 
 /* ── E-shop look (light, black accent - same colours as the e-shop pages) ───────────────── */
 
-.main-content.not-found--shop {
+.main-content.not-found--light {
     background: var(--color-white);
 }
 
-.main-content.not-found--shop::before {
+.main-content.not-found--light::before {
     content: none;
 }
 
-.not-found--shop .svg-placeholder {
+.not-found--light .svg-placeholder {
     color: var(--color-zinc-900);
 }
 
-.not-found--shop .svg-placeholder svg {
+.not-found--light .svg-placeholder svg {
     filter: none;
 }
 
-.not-found--shop .header-0-2-t {
+.not-found--light .header-0-2-t {
     color: var(--color-zinc-900);
 }
 
-.not-found--shop .text-1 {
+.not-found--light .text-1 {
     color: var(--color-zinc-500);
 }
 
-.not-found--shop .home-btn-404 {
+.not-found--light .home-btn-404 {
     padding: 12px 35px;
     border: none;
     background: var(--color-zinc-900);
@@ -157,7 +157,7 @@
     letter-spacing: 1px;
 }
 
-.not-found--shop .home-btn-404:hover {
+.not-found--light .home-btn-404:hover {
     background: var(--color-zinc-900);
     filter: brightness(1.2);
     transform: none;

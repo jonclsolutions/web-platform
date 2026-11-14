@@ -12,7 +12,8 @@
  *   files), trash, assignable administrators, files of the conversations and checkpoints (due
  *   date, internal note, order, client notification).
  * @dependencies
- * - Tests\TestCase, ProjectFixtures, WebFixtures (project from a web order); Storage fake.
+ * - Tests\TestCase, ProjectFixtures; Storage fake. (The project of a web order:
+ *   tests/Integration/ProjectOfWebOrderTest.)
  */
 
 namespace Tests\Apps\ProjectPortal\Feature;
@@ -28,7 +29,6 @@ use App\Apps\ProjectPortal\Models\ProjectThread;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\Apps\ProjectPortal\Support\ProjectFixtures;
-use Tests\Apps\Web\Support\WebFixtures;
 use Tests\TestCase;
 
 /**
@@ -36,7 +36,7 @@ use Tests\TestCase;
  */
 class ProjectTest extends TestCase
 {
-    use ProjectFixtures, WebFixtures;
+    use ProjectFixtures;
 
     /** @var string[] All project permissions. */
     private const ALL = ['web-projects-view', 'web-projects-create', 'web-projects-update', 'web-projects-delete'];
@@ -52,10 +52,10 @@ class ProjectTest extends TestCase
     }
 
     /**
-     * @description List: permission, search, filters (also the web order), checkpoint count,
-     *   lead / order ids, trash, export.
-     * @input A ('Shop', web, public, 2 checkpoints, lead + order, yesterday), B ('App', mobile, private), C trashed.
-     * @output Each filter returns the expected project; checkpoints_total 2; lead_id / order_id;
+     * @description List: permission, search, filters, checkpoint count,
+     *   trash, export.
+     * @input A ('Shop', web, public, 2 checkpoints, yesterday), B ('App', mobile, private), C trashed.
+     * @output Each filter returns the expected project; checkpoints_total 2;
      *   access_token / public_url present.
      */
     public function test_index(): void
@@ -65,9 +65,7 @@ class ProjectTest extends TestCase
         $this->getJson('/api/project-portal/projects')->assertStatus(403);
 
         $this->signIn($this->userWith(['web-projects-view']));
-        $lead = $this->lead();
-        $order = $this->salesOrder(['lead_id' => $lead->id]);
-        $a = $this->project(['name' => 'Shop', 'platform' => 'web', 'lead_id' => $lead->id, 'order_id' => $order->id, 'project_lead' => 'Karel']);
+        $a = $this->project(['name' => 'Shop', 'platform' => 'web', 'project_lead' => 'Karel']);
         $a->checkpoints()->createMany([['label' => 'Design'], ['label' => 'Build']]);
         $a->forceFill(['created_at' => now()->subDay()])->save();
         $b = $this->project(['name' => 'App', 'platform' => 'mobile', 'visibility' => 'private', 'status' => 'development']);
@@ -79,12 +77,9 @@ class ProjectTest extends TestCase
         $this->assertSame([$b->id], $ids('visibility=private'));
         $this->assertSame([$b->id], $ids('status=development'));
         $this->assertSame([$a->id], $ids('platform=web'));
-        $this->assertSame([$a->id], $ids("order_id={$order->id}"));
         $this->assertSame([$a->id], $ids('created_at=' . now()->subDay()->toDateString()));
         $this->getJson("/api/project-portal/projects?id={$a->id}")
             ->assertJsonPath('data.0.checkpoints_total', 2)
-            ->assertJsonPath('data.0.lead_id', $lead->id)
-            ->assertJsonPath('data.0.order_id', $order->id)
             ->assertJsonPath('data.0.public_url', "https://www.example.com/projects/{$a->access_token}");
         $this->assertSame(['Gone'], array_column($this->getJson('/api/project-portal/projects?only_trashed=1')->json('data'), 'name'));
         $this->getJson('/api/project-portal/projects?per_page=1')->assertJson(['meta' => ['total' => 2, 'last_page' => 2]]);
@@ -118,16 +113,14 @@ class ProjectTest extends TestCase
     }
 
     /**
-     * @description Detail (with checkpoints, also trashed), edit, one order per project, 404s,
+     * @description Detail (with checkpoints, also trashed), edit, 404s,
      *   database error.
-     * @input Project with a checkpoint: GET; PUT {status, name}; PUT another project's order; PUT /999; failure.
-     * @output 200 with checkpoints; 200; 422 order_id; 404; 500.
+     * @input Project with a checkpoint: GET; PUT {status, name}; PUT /999; failure.
+     * @output 200 with checkpoints; 200; 404; 500.
      */
     public function test_show_and_update(): void
     {
         $this->signIn($this->userWith(self::ALL));
-        $order = $this->salesOrder();
-        $taken = $this->project(['order_id' => $order->id]);
         $project = $this->project();
         $project->checkpoints()->create(['label' => 'Kick-off']);
 
@@ -137,8 +130,6 @@ class ProjectTest extends TestCase
             ->assertOk()->assertJsonPath('data.status', 'finished')->assertJsonPath('data.name', 'Done');
         $this->assertPortalLog('update', "Updated project #{$project->id} 'Done': name ");
         $this->assertPortalLog('update', 'status new → finished');
-        $this->putJson("/api/project-portal/projects/{$project->id}", ['order_id' => $order->id])->assertStatus(422)->assertJsonValidationErrors(['order_id']);
-        $this->putJson("/api/project-portal/projects/{$taken->id}", ['order_id' => $order->id])->assertOk();
         $this->putJson('/api/project-portal/projects/999', ['name' => 'x'])->assertStatus(404);
 
         $this->failOn('web_projects', 'UPDATE');

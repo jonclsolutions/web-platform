@@ -4,14 +4,14 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Standard admin list page: toolbar, action buttons, table header, banners and spacing helpers. Shared by every table page of core, shop and web.
+    @description: Standard admin list page: toolbar, action buttons, table header, banners and spacing helpers. Shared by every table page of the core and the applications.
     @dependencies: none
 */
 
 /*
     @module: Admin list page
-    @description: Standard admin list page: toolbar, action buttons, table header, banners and spacing helpers. Shared by every table page of core, shop and web.
-    @usage: .btn-create, .btn-export, .btn-filter, .btn-trash, .error-banner, .filter-side-panel, .filter-side-panel.active, .items-per-page-select, .m-b-10, .m-b-20, .main-content-layout, .p-b-10, .small-btn, .table-and-pagination-container, .table-header, .toolbar-actions, .toolbar-actions-in
+    @description: Standard admin list page: toolbar, action buttons, table header, banners and spacing helpers. Shared by every table page of the core and the applications.
+    @usage: .btn-create, .btn-export, .btn-filter, .btn-trash, .error-banner, .info-banner, .filter-side-panel, .filter-side-panel.active, .items-per-page-select, .m-b-10, .m-b-20, .main-content-layout, .p-b-10, .small-btn, .table-and-pagination-container, .table-header, .toolbar-actions, .toolbar-actions-in
 */
 
 .error-banner {
@@ -103,5 +103,48 @@
   .small-btn {
     flex: 1 1 auto;
     justify-content: center;
+  }
+}
+
+/*
+    @module: Info banner
+    @description: Hint above a table (e.g. where the rows come from) and the notice after an account is created.
+    @usage: <div class="info-banner"><strong>Tip:</strong> text</div>
+*/
+.info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 8px;
+  color: #1a1d23;
+  font-size: small;
+}
+
+/*
+    @module: Filter side panel (desktop)
+    @description: From 1024 px the filter panel opens beside the table instead of above it.
+    @usage: .main-content-layout > .filter-side-panel(.active) + .table-and-pagination-container
+*/
+@media (min-width: 1024px) {
+  .main-content-layout {
+    flex-direction: row;
+    gap: 0;
+  }
+  .filter-side-panel {
+    width: 0;
+    height: 0;
+    max-height: none;
+    margin-right: 0;
+    padding: 0;
+    border: none;
+  }
+  .filter-side-panel.active {
+    width: 250px;
+    height: auto;
+    margin-left: 5px;
   }
 }

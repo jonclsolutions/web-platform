@@ -19,7 +19,7 @@ import { BasePublicComponent } from '../../../../../public/base-public.component
 import { JobItem } from './';
 import { combineLatest } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { WebContentService, localizedText } from '../../../../../shared/services/web-content.service';
+import { WebContentService, localizedText } from '../../web-content.service';
 
 @Component({
   selector: 'app-jobs-list',

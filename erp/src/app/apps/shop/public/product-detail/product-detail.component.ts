@@ -26,7 +26,6 @@ import { AlertDialogService } from '../../../../core/services/alert-dialog.servi
 export class ProductDetailComponent extends BasePublicComponent implements OnInit {
   
   protected readonly translationKey = 'product_detail';
-  protected override readonly translationModule = 'shop';
 
   private route = inject(ActivatedRoute);
   private shopService = inject(ShopPublicService);

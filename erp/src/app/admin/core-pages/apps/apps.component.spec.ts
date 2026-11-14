@@ -13,6 +13,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AppsComponent } from './apps.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
+import { requiresApps } from '../../../../testing/requires-apps';
 
 describe('AppsComponent', () => {
   let ctx: AdminTestContext;
@@ -34,6 +35,7 @@ describe('AppsComponent', () => {
    *   names / descriptions from admin-layout; no empty state.
    */
   it('shows the applications the user may open', () => {
+    requiresApps('web', 'shop', 'project-portal');
     ctx.permissions.granted = new Set(['view-eshop', 'shop-orders-view', 'view-project-portal', 'web-projects-view']);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;

@@ -10,30 +10,20 @@
  *
  * @dependencies
  * - BaseDashboardComponent: stat tiles, hero, comparison bars, activity feed, icons, refresh.
- * - HasPermissionDirective: Gates the maintenance and activity cards on their permission keys.
+ * - DashboardViewComponent: the layout; the maintenance section is projected into it.
+ * - HasPermissionDirective: Gates the maintenance card on its permission key.
  * - PermissionService (inherited): decides which stat / nav / activity / maintenance requests
  *   are sent at all.
  * - ResourceCacheService (inherited): TTL cache, also of the maintenance state.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
 
 import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
 import {
-  BaseDashboardComponent, DashboardNavSection, DashboardStatDef, QuickStat
+  BaseDashboardComponent, DashboardNavSection, DashboardStatDef
 } from '../../../../admin/components/base-dashboard/base-dashboard.component';
-import { PageHelpComponent } from '../../../../admin/components/page-help/page-help.component';
-
-/** @description One segment of the full-width module distribution bar. */
-interface DistributionSegment {
-  key: string;
-  labelKey: string;
-  value: number;
-  pct: number;
-  opacity: number;
-}
+import { DashboardViewComponent } from '../../../../admin/components/base-dashboard/dashboard-view.component';
 
 /**
  * @description Serves as the website-content overview page for administrators with
@@ -46,7 +36,7 @@ interface DistributionSegment {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterModule, CommonModule, HasPermissionDirective, PageHelpComponent],
+  imports: [DashboardViewComponent, HasPermissionDirective],
   templateUrl: './dashboard.component.html',
   styleUrls: ['../../../../admin/shared-styles/dashboard.css', '../../../../admin/shared-styles/dashboard-maintenance.css', '../../../../admin/shared-styles/dashboard-cards.css', './dashboard.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -54,9 +44,6 @@ interface DistributionSegment {
 export class DashboardComponent extends BaseDashboardComponent {
 
   protected override translationSection: string = 'web-dashboard';
-  public override t(key: string): string {
-    return this.i18n.getValue(`web-dashboard.${key}`);
-  }
 
   private readonly MAINTENANCE_TTL_MS = 60 * 1000;
   private readonly MAINTENANCE_CACHE_KEY = 'web-dashboard:maintenance';
@@ -65,8 +52,9 @@ export class DashboardComponent extends BaseDashboardComponent {
   private readonly MAINTENANCE_PERMISSION = 'web-set-maintenance-mode';
 
   protected readonly logsEndpoint = 'web/logs';
-  /** Permission key required by the `web/logs` (GET) endpoint in api.php. */
-  protected readonly logsPermission = 'web-view-web-logs';
+  /** Permission key required by the `web/logs` (GET) endpoint. */
+  readonly logsPermission = 'web-view-web-logs';
+  readonly logsRoute = '/admin/web/logs';
 
   /**
    * Stat cards of the dashboard - only the items the signed-in user has the permission for are
@@ -93,40 +81,8 @@ export class DashboardComponent extends BaseDashboardComponent {
     { titleKey: 'nav_sales_orders_title', icon: 'inbox', route: '/admin/web/sales-orders', descriptionKey: 'nav_sales_orders_desc', isAllowed: () => this.can('web-sales-orders-view') },
     { titleKey: 'nav_leads_title', icon: 'briefcase', route: '/admin/web/sales-leads', descriptionKey: 'nav_leads_desc', isAllowed: () => this.can('web-sales-leads-view') },
     { titleKey: 'nav_job_apps_title', icon: 'file', route: '/admin/web/job-applications', descriptionKey: 'nav_job_apps_desc', isAllowed: () => this.can('web-job-applications-view') },
-    { titleKey: 'nav_business_logs_title', icon: 'logs', route: '/admin/web/business-logs', descriptionKey: 'nav_business_logs_desc', isAllowed: () => this.can(this.logsPermission) },
+    { titleKey: 'nav_web_logs_title', icon: 'logs', route: '/admin/web/logs', descriptionKey: 'nav_web_logs_desc', isAllowed: () => this.can(this.logsPermission) },
   ];
-
-  /**
-   * @description FULL-WIDTH segmented bar comparing ALL allowed modules at once (not only
-   * `secondaryStats`, not limited by the hero choice) - a second chart next to the hero + bars
-   * combination. Monochrome: every segment has the same `--accent` color, only a decreasing
-   * opacity by rank (largest module = darkest).
-   */
-  get distributionSegments(): DistributionSegment[] {
-    const numericStats = this.quickStats.filter(s => typeof s.value === 'number') as (QuickStat & { value: number })[];
-    if (numericStats.length === 0) return [];
-
-    /** Minimum log weight of zero values - roughly the value "1" on the log scale. */
-    const ZERO_WEIGHT = 0.35;
-
-    const weighted = numericStats.map(stat => ({
-      stat,
-      weight: stat.value > 0 ? Math.log(stat.value + 1) : ZERO_WEIGHT,
-    }));
-
-    const totalWeight = weighted.reduce((sum, w) => sum + w.weight, 0);
-
-    const sorted = [...weighted].sort((a, b) => b.stat.value - a.stat.value);
-    const OPACITY_STEPS = [1, 0.82, 0.66, 0.52, 0.4, 0.3, 0.22];
-
-    return sorted.map(({ stat, weight }, index) => ({
-      key: stat.key,
-      labelKey: stat.labelKey,
-      value: stat.value,
-      pct: Math.round((weight / totalWeight) * 1000) / 10,
-      opacity: OPACITY_STEPS[Math.min(index, OPACITY_STEPS.length - 1)],
-    }));
-  }
 
   /** @description event_type -> translation key for `eventTypeLabel()`. */
   protected readonly eventTypeLabelKeys: Record<string, string> = {

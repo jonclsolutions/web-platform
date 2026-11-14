@@ -25,7 +25,6 @@ import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.s
 export class CartComponent extends BasePublicComponent {
 
   protected readonly translationKey = 'cart';
-  protected override readonly translationModule = 'shop';
   
   private router = inject(Router);
   private confirmDialogService = inject(ConfirmDialogService);

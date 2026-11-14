@@ -148,25 +148,32 @@ describe('PageTitlesEditorComponent', () => {
   });
 
   /**
-   * @description The e-shop uses its own languages (web ones when it has none, Czech when neither
-   *   loads); a given logoSrc is used as is (no public config call); a language missing from the
-   *   list switches to the first one.
-   * @input area shop, endpoint shop/page-titles, logoSrc null: shop languages [en]; then none
-   *   (web [cz, en]); then both failing.
-   * @output languages ['en'], lang 'en', favicon null, no public config call; ['cz', 'en']; ['cz'].
+   * @description An application uses only its own languages (Czech when it has none); the
+   *   administration ('admin') uses the languages of every application; a given logoSrc is used
+   *   as is (no public config call); a language missing from the list switches to the first one.
+   * @input area shop, logoSrc null: shop languages [en]; then none; area admin with logoSrc:
+   *   all languages [cz, en].
+   * @output languages ['en'], lang 'en', favicon null, no public config call, never the web
+   *   languages; ['cz']; admin: get('languages') → ['cz', 'en'], favicon '/x.png'.
    */
-  it('uses the languages of the e-shop', () => {
-    const shopGet = (shop: any, webLangs: any) => (url: string) =>
-      url === 'languages/shop' ? shop : url === 'languages/web' ? webLangs : url === 'shop/page-titles' ? of([]) : of({});
-    create({ area: 'shop', endpoint: 'shop/page-titles', logoSrc: null }, shopGet(of([{ code: 'en', name: 'English', active: true }]), of(web)));
+  it('uses the languages of its application', () => {
+    const get = (shop: any) => (url: string) =>
+      url === 'languages/shop' ? shop : url === 'languages' ? of(web) : url.endsWith('page-titles') ? of([]) : of({});
+    create({ area: 'shop', endpoint: 'shop/page-titles', logoSrc: null }, get(of([{ code: 'en', name: 'English', active: true }])));
     expect(component.languages.map(l => l.code)).toEqual(['en']);
     expect(component.lang).toBe('en');
     expect(component.faviconSrc).toBeNull();
     expect((ctx.dataHandler as any).get).not.toHaveBeenCalledWith('public/legal/config');
+    expect((ctx.dataHandler as any).get).not.toHaveBeenCalledWith('languages/web');
     fixture.destroy();
-    TestBed.inject(ResourceCacheService).invalidate('page-titles:languages:shop');  // cached 10 minutes
+    TestBed.inject(ResourceCacheService).invalidate('page-titles:languages/shop');  // cached 10 minutes
 
-    create({ area: 'shop', endpoint: 'shop/page-titles', logoSrc: '/x.png' }, shopGet(of([]), of(web)));
+    create({ area: 'shop', endpoint: 'shop/page-titles', logoSrc: null }, get(of([])));
+    expect(component.languages.map(l => l.code)).toEqual(['cz']);
+    fixture.destroy();
+
+    create({ area: 'admin', endpoint: 'legal/config/page-titles', logoSrc: '/x.png' }, get(of([])));
+    expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('languages');
     expect(component.languages.map(l => l.code)).toEqual(['cz', 'en']);
     expect(component.faviconSrc).toBe('/x.png');
   });
@@ -183,7 +190,7 @@ describe('PageTitlesEditorComponent', () => {
     expect(fixture.nativeElement.querySelector('.pt-error')).not.toBeNull();
     fixture.destroy();
 
-    TestBed.inject(ResourceCacheService).invalidate('page-titles:languages:web');
+    TestBed.inject(ResourceCacheService).invalidate('page-titles:languages/web');
     create({}, (url: string) => url === 'web/page-titles' ? of(rows()) : throwError(() => new Error('x')));
     expect(component.languages.map(l => l.code)).toEqual(['cz']);
     expect(component.faviconSrc).toBeNull();

@@ -229,7 +229,7 @@ class SiteConfigurationTest extends TestCase
 
     /**
      * @description Page titles are managed per module, each area on its own endpoint with the
-     *   permissions of its module (web/edit-website, shop/edit-eshop, core/web-settings): a list
+     *   permissions of its module (web/edit-website, shop/edit-eshop, core/settings): a list
      *   contains only its area (sort order); an update merges the sent languages, strips HTML,
      *   collapses whitespace (max 120 chars), ignores invalid language keys, logs only changed
      *   rows into the module's log and refuses ids of another area or stale ids; the public map
@@ -282,7 +282,7 @@ class SiteConfigurationTest extends TestCase
         $this->assertTrue(\App\Apps\Shop\Models\ShopLog::where('description', 'Updated page title: shop.cart')->exists());
         $this->getJson('/api/web/page-titles')->assertStatus(403);
 
-        // Administration (core web settings).
+        // Administration (core settings).
         $this->signIn($this->userWith(['core-legal-config-view', 'core-legal-config-update']));
         $this->getJson('/api/legal/config/page-titles')->assertOk()->assertJsonPath('data.*.id', [$users->id]);
         $this->putJson('/api/legal/config/page-titles', ['titles' => [['id' => $users->id, 'title_i18n' => ['cz' => 'Správa']]]])->assertOk();

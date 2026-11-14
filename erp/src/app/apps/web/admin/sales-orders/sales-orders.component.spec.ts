@@ -17,6 +17,7 @@ import { Router } from '@angular/router';
 
 import { SalesOrdersComponent } from './sales-orders.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
+import { requiresApps } from '../../../../../testing/requires-apps';
 
 describe('SalesOrdersComponent', () => {
   let ctx: AdminTestContext;
@@ -43,6 +44,7 @@ describe('SalesOrdersComponent', () => {
    * @output caption; row buttons details / project (web-projects-create) / edit / delete; 5 + 4 columns; 4 filters; 13 detail columns
    */
   it('builds the page configuration from translations', () => {
+    requiresApps('project-portal');
     expect(component.tableCaption).toBe('sales-orders.table_header');
     expect(component.buttons.map(b => [b.action, b.permission])).toEqual([
       ['details', undefined], ['generate_form', 'web-projects-create'],
@@ -155,6 +157,7 @@ describe('SalesOrdersComponent', () => {
    * @output navigate(['/admin/project-portal/projects'], { order_id: 5 }); nothing for rows without id
    */
   it('opens or creates the project of an order', () => {
+    requiresApps('project-portal');
     component.createProject({ id: 5 });
     expect(navigate).toHaveBeenCalledWith(['/admin/project-portal/projects'], { queryParams: { order_id: 5 } });
     navigate.calls.reset();

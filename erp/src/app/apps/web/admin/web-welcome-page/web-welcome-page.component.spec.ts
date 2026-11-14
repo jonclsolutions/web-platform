@@ -46,14 +46,14 @@ describe('WebWelcomePageComponent', () => {
   /**
    * @description With all permissions every one of the 6 cards is shown, in menu order.
    * @input  granted 'all'
-   * @output 6 links, first '/admin/web/edit-website', last '/admin/web/business-logs'
+   * @output 6 links, first '/admin/web/edit-website', last '/admin/web/logs'
    */
   it('shows every card to a user with all permissions', async () => {
     await setup('all');
     const links = cardLinks();
     expect(links.length).toBe(6);
     expect(links[0]).toBe('/admin/web/edit-website');
-    expect(links[5]).toBe('/admin/web/business-logs');
+    expect(links[5]).toBe('/admin/web/logs');
     expect(component.quickLinks.map(l => l.icon)).toEqual(['edit-website', 'user-request', 'sales-leads',
       'sales-orders', 'job-applications', 'logs']);
   });

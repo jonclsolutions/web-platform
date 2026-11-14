@@ -13,7 +13,8 @@
  *   3. Runs Karma only for the compiling specs (temporary tsconfig limited to those files).
  *   4. Classifies every failed spec (assertion / runtime error / timeout …) and extracts the
  *      expected and actual value and the spec file location from Jasmine's message.
- *   5. Checks the application boundaries (no application imports another one - checkAppBoundaries).
+ *   5. Checks the application boundaries (no application imports another one - checkAppBoundaries;
+ *      the core imports no application, only the registry - checkCoreIndependence).
  *   6. Measures code coverage (istanbul via karma-coverage) of the source files in the tested
  *      folders – statements, branches, functions, lines per file. A source file that no spec
  *      loads counts as 0 %. Line-by-line detail: report/coverage/index.html.
@@ -269,7 +270,6 @@ function summarizeCoverage(sources) {
   };
 }
 
-/** Entry point. */
 /**
  * @description Static check of the application boundaries: a file of an application
  *   (src/app/apps/<app>/**) may import the core, `shared` and its own files, never a file of
@@ -306,6 +306,37 @@ function checkAppBoundaries() {
   });
 }
 
+/**
+ * @description Static check of the direction of the dependencies: a file of the core (every file
+ *   of src/app outside src/app/apps) may reach the applications only through the registry
+ *   (apps/apps.registry.ts, apps/app-manifest.ts) - never a file of an application, so an
+ *   application can be removed without touching the core. Same import forms as checkAppBoundaries.
+ * @returns {object} One passed / failed report entry (suite "Application boundaries").
+ */
+function checkCoreIndependence() {
+  const appDir = path.join(ERP, 'src', 'app');
+  const appsDir = path.join(appDir, 'apps');
+  const allowed = new Set(['apps.registry', 'apps.registry.ts', 'app-manifest', 'app-manifest.ts']);
+  const spec = /(?:from|import)\s*\(?\s*['"](\.{1,2}\/[^'"]+)['"]|(?:templateUrl|styleUrls?)\s*:\s*\[?\s*['"](\.{1,2}\/[^'"]+)['"]|@import\s+(?:url\()?['"]?(\.{1,2}\/[^'")\s;]+)/g;
+  const walk = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(e =>
+    path.join(dir, e.name) === appsDir ? [] : e.isDirectory() ? walk(path.join(dir, e.name)) : /\.(ts|css)$/.test(e.name) ? [path.join(dir, e.name)] : []);
+  const violations = [];
+  for (const file of walk(appDir)) {
+    for (const m of fs.readFileSync(file, 'utf8').matchAll(spec)) {
+      const rel = path.relative(appsDir, path.resolve(path.dirname(file), m[1] || m[2] || m[3])).split(path.sep);
+      if (rel[0] !== '..' && !(rel.length === 1 && allowed.has(rel[0]))) {
+        violations.push(`${path.relative(ERP, file).split(path.sep).join('/')} → src/app/apps/${rel.join('/')}`);
+      }
+    }
+  }
+  const t = { suite: 'Application boundaries', name: 'the core imports no application (only the registry)', status: violations.length ? 'failed' : 'passed', timeMs: 0 };
+  if (violations.length) {
+    Object.assign(t, { category: 'assertion failed', message: `${violations.length} import(s) of an application in the core`,
+      expected: 'apps/apps.registry.ts or apps/app-manifest.ts only', actual: violations.slice(0, 5).join('; '), details: violations.join('\n') });
+  }
+  return t;
+}
+
 function main() {
   const { group, command, coverage, dirs } = parseArgs();
   const started = Date.now();
@@ -317,7 +348,7 @@ function main() {
   }
 
   const specs = findSpecs(dirs);
-  tests.push(...checkAppBoundaries());
+  tests.push(...checkAppBoundaries(), checkCoreIndependence());
   console.log(`${group}: ${specs.length} spec file(s), type-checking…`);
   const tsErrors = typeCheck();
 

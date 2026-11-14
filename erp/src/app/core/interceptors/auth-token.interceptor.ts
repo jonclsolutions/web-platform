@@ -8,6 +8,7 @@
  * @dependencies
  * - AuthService: Provides token retrieval, refresh logic, and authentication state management.
  * - Router: Handles navigation to the login page when authentication sessions expire.
+ * - SKIP_ADMIN_AUTH: requests of a client portal pass untouched.
  */
 
 import { Injectable } from '@angular/core';
@@ -16,6 +17,7 @@ import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { catchError, filter, take, switchMap } from 'rxjs/operators';
 import { AuthService } from '../auth/auth.service';
 import { Router } from '@angular/router';
+import { SKIP_ADMIN_AUTH } from './skip-admin-auth';
 
 /**
  * @description Manages secure API communication by injecting access tokens and orchestrating the token refresh flow.
@@ -42,7 +44,7 @@ export class AuthTokenInterceptor implements HttpInterceptor {
    * @returns {Observable<HttpEvent<unknown>>} The request stream.
    */
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    if (request.url.includes('/projects/public/')) {
+    if (request.context.get(SKIP_ADMIN_AUTH)) {
       return next.handle(request);
     }
     const accessToken = this.authService.getAccessToken();

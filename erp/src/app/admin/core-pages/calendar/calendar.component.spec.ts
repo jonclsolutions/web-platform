@@ -22,6 +22,7 @@ import { of, throwError } from 'rxjs';
 
 import { CalendarComponent, AgendaEvent, AgendaReminder, isoDate, parseIsoDate } from './calendar.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
+import { requiresApps } from '../../../../testing/requires-apps';
 
 describe('CalendarComponent', () => {
   let ctx: AdminTestContext;
@@ -107,6 +108,7 @@ describe('CalendarComponent', () => {
    *   /admin/project-portal/projects/7, the name as text and the full title as label.
    */
   it('shows the events in their days', () => {
+    requiresApps('web', 'shop', 'project-portal');
     create();
     const el: HTMLElement = fixture.nativeElement;
     const day = (date: string) => Array.from(el.querySelectorAll('.cal-day'))[component.weeks.flat().findIndex(d => d.date === date)] as HTMLElement;
@@ -129,6 +131,7 @@ describe('CalendarComponent', () => {
    *   reminder), project portal 1 (the project deadline).
    */
   it('lists the open work and filters the modules', () => {
+    requiresApps('web', 'shop', 'project-portal');
     create();
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelectorAll('.cal-reminder').length).toBe(2);
@@ -173,6 +176,7 @@ describe('CalendarComponent', () => {
    * @output groups 05, 13, 20 (in order, today none); 4 rows on 20; detail of 20 Nov with 4 rows.
    */
   it('shows the list and the selected day', () => {
+    requiresApps('web', 'shop', 'project-portal');
     create();
     component.selectDay(component.weeks.flat().find(d => d.date === '2026-11-20')!);
     fixture.detectChanges();
@@ -192,6 +196,7 @@ describe('CalendarComponent', () => {
    * @output error banner, no events; the second answer wins.
    */
   it('handles errors and stale answers', () => {
+    requiresApps('web', 'shop', 'project-portal');
     create(throwError(() => new Error('500')));
     expect(component.loadError).toBeTrue();
     expect(fixture.nativeElement.querySelector('.cd-error-banner')).not.toBeNull();
@@ -298,6 +303,7 @@ describe('CalendarComponent', () => {
    *   and no module item.
    */
   it('offers only the modules the user may see', () => {
+    requiresApps('web');
     create(of({ today: '2026-11-11', modules: ['personal', 'web', 'evil'], events: [...EVENTS, PERSONAL], reminders: REMINDERS }));
     const el: HTMLElement = fixture.nativeElement;
     expect(component.modules).toEqual(['personal', 'web']);

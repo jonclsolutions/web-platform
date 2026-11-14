@@ -21,15 +21,19 @@ import { ActivatedRoute, Route, Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { routes } from './app.routes';
+import { PUBLIC_AREA_DATA } from './public/public-area';
+import { requiresApps } from '../testing/requires-apps';
 
-/** Marker page: shows which route matched (its full path + the 404 area). */
+/** Marker page: shows which route matched (its full path, or `404:<translation module of the
+ *  public area>` for a 404 page - title `<area>.not-found`). */
 @Component({ standalone: true, template: '{{ id }}' })
 class MarkerComponent {
   readonly id: string;
   constructor(route: ActivatedRoute) {
     const chain = route.snapshot.pathFromRoot.map(s => s.routeConfig?.path).filter(p => p !== undefined && p !== '');
-    const area = route.snapshot.data['publicNotFoundArea'];
-    this.id = area ? `404:${area}` : chain.join('/');
+    const notFound = String(route.snapshot.routeConfig?.title ?? '').endsWith('.not-found');
+    const area = [...route.snapshot.pathFromRoot].reverse().map(s => s.data?.[PUBLIC_AREA_DATA]).find(Boolean);
+    this.id = notFound ? `404:${area?.translationModule}` : chain.join('/');
   }
 }
 
@@ -82,9 +86,10 @@ describe('app routes', () => {
    *   '/auth/login', '/projects/abc', '/404', the legal pages '/tos', '/shop/tos', '/shop/privacy-policy'.
    * @output '' (home), 'services', 'jobs/:id', 'shop/catalog', 'shop/products/:slugOrId',
    *   'shop-maintenance', 'auth/login', 'projects/:token'; '/404' = the web 404 page; the legal pages
-   *   in both layouts (the e-shop ones with the shop translations).
+   *   in both layouts (the e-shop layout carries the public area of the e-shop).
    */
   it('opens known pages', async () => {
+    requiresApps('web', 'shop', 'project-portal');
     expect(await open('/')).toBe('');
     expect(await open('/services')).toBe('services');
     expect(await open('/jobs/5')).toBe('jobs/:id');
@@ -98,7 +103,7 @@ describe('app routes', () => {
     expect(await open('/shop/tos')).toBe('shop/tos');
     expect(await open('/shop/privacy-policy')).toBe('shop/privacy-policy');
     const shop = routes.find(r => r.path === 'shop')!;
-    expect(shop.children!.filter(r => r.data?.['translationModule'] === 'shop').map(r => r.path)).toEqual(['tos', 'privacy-policy']);
+    expect(shop.data?.[PUBLIC_AREA_DATA]?.translationModule).toBe('shop');
   });
 
   /**
@@ -108,6 +113,7 @@ describe('app routes', () => {
    * @output web 404 for the first three, e-shop 404 for the next three; admin marker (no public 404).
    */
   it('opens the 404 of the area only for unknown URLs', async () => {
+    requiresApps('web', 'shop');
     expect(await open('/nothing')).toBe('404:web');
     expect(await open('/services/extra')).toBe('404:web');
     expect(await open('/a/b/c?x=1')).toBe('404:web');
@@ -122,17 +128,19 @@ describe('app routes', () => {
    *   to the admin follows it, never reached while the web is installed) and the e-shop catch-all
    *   is the last child of the e-shop (a route after them would never be reached).
    * @input routes.
-   * @output last route '**' → admin; before it '' with one child '**' (area web); last child of
-   *   'shop' = '**' (area shop).
+   * @output last route '**' → admin; before it '' (public area of the web) with one child '**'
+   *   (web.not-found); last child of 'shop' = '**' (shop.not-found).
    */
   it('keeps the catch-all routes last', () => {
+    requiresApps('web', 'shop');
     expect([routes[routes.length - 1].path, routes[routes.length - 1].redirectTo]).toEqual(['**', 'admin']);
     const last = routes[routes.length - 2];
     expect(last.path).toBe('');
-    expect(last.children!.map(r => [r.path, r.data?.['publicNotFoundArea']])).toEqual([['**', 'web']]);
+    expect(last.data?.[PUBLIC_AREA_DATA]?.translationModule).toBe('web');
+    expect(last.children!.map(r => [r.path, r.title])).toEqual([['**', 'web.not-found']]);
     const shop = routes.find(r => r.path === 'shop')!;
     const lastShop = shop.children![shop.children!.length - 1];
-    expect([lastShop.path, lastShop.data?.['publicNotFoundArea']]).toEqual(['**', 'shop']);
+    expect([lastShop.path, lastShop.title]).toEqual(['**', 'shop.not-found']);
   });
 
   /**
@@ -142,6 +150,7 @@ describe('app routes', () => {
    * @output Each resolves to a defined class.
    */
   it('loads every lazy page', async () => {
+    requiresApps('web', 'shop', 'project-portal');
     const loaders: Array<() => unknown> = [];
     const collect = (table: Route[]) => table.forEach(route => {
       if (route.loadComponent) loaders.push(route.loadComponent as () => unknown);

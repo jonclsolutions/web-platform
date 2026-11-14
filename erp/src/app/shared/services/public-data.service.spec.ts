@@ -55,22 +55,20 @@ describe('PublicDataService (shared)', () => {
   });
 
   /**
-   * @description Status endpoints are requested with no-cache headers.
-   * @input getShopStatus(); getWebStatus().
-   * @output Cache-Control 'no-cache, no-store, must-revalidate', Pragma, Expires on both.
+   * @description A fresh read (e.g. the status of an application) is requested with no-cache
+   *   headers and returns the payload.
+   * @input getFresh('shop/public/status') answered {data: {is_shop_active: false}}.
+   * @output Cache-Control 'no-cache, no-store, must-revalidate', Pragma, Expires; the payload.
    */
-  it('requests the status endpoints without caching', () => {
-    const got: any[] = [];
-    service.getShopStatus().subscribe(r => got.push(r));
-    service.getWebStatus().subscribe(r => got.push(r));
-    for (const [url, body] of [[`${API}/shop/public/status`, { is_shop_active: false }], [`${API}/web/public/status`, { is_web_active: true }]] as const) {
-      const req = http.expectOne(url);
-      expect(req.request.headers.get('Cache-Control')).toBe('no-cache, no-store, must-revalidate');
-      expect(req.request.headers.get('Pragma')).toBe('no-cache');
-      expect(req.request.headers.get('Expires')).toBe('0');
-      req.flush({ data: body });
-    }
-    expect(got).toEqual([{ is_shop_active: false }, { is_web_active: true }]);
+  it('reads fresh values without caching', () => {
+    let got: unknown;
+    service.getFresh<{ is_shop_active: boolean }>('shop/public/status').subscribe(r => (got = r));
+    const req = http.expectOne(`${API}/shop/public/status`);
+    expect(req.request.headers.get('Cache-Control')).toBe('no-cache, no-store, must-revalidate');
+    expect(req.request.headers.get('Pragma')).toBe('no-cache');
+    expect(req.request.headers.get('Expires')).toBe('0');
+    req.flush({ data: { is_shop_active: false } });
+    expect(got).toEqual({ is_shop_active: false });
   });
 
   /**

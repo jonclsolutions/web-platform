@@ -11,7 +11,7 @@ The project has **two completely separate** translation systems:
 | | `LocalizationService` | `AdminLocalizationService` |
 |---|---|---|
 | What it translates | Content of the **public web** (page and e-shop texts) | The **admin** UI (buttons, labels, messages) |
-| Source | Translation files of the API, editable through `EditWebsiteComponent` / `EditEshopComponent` | Static JSON files bundled with the frontend |
+| Source | Translation files of the API (module = application), editable in the texts page of the application (translation editor) | Static JSON files bundled with the frontend |
 | Who edits the text | An administrator in the UI | A developer, directly in the JSON file |
 | Typical number of languages | 1-2 (per web) | Can grow to 10+ |
 
@@ -54,10 +54,21 @@ A flat map **section -> keys**:
 - `shared` - texts common to the whole admin (Save / Cancel / Error ...).
   Merged automatically into EVERY section.
 - Every other top-level key = one page / component (`user-request`,
-  `edit-roles`, `web-settings` ...).
+  `edit-roles`, `settings` ...).
 - `permission-descriptions` - descriptions of the permission keys shown in the
   role editor, keyed by `permission_key` (a key without a translation shows the
   English description stored in the database).
+- Sections of the shared admin pages of the core - an application does not copy them, its page
+  section holds only what is its own:
+  - `audit-log` - columns, filters and toolbar of every log page (AuditLogPageComponent); the
+    page section (`core-logs`, `web-logs`, `shop-logs`, `project-portal-logs` …) holds only
+    `table_header`, `event_<type>` and `module_<module>`;
+  - `dashboard` - texts of every module dashboard (DashboardViewComponent); the section of a
+    dashboard (`core-dashboard`, `web-dashboard`) holds its tiles, shortcuts and own event labels;
+  - `translation-editor` - the texts / page titles editor (TranslationEditorViewComponent); the
+    page section (`edit-website`, `edit-eshop`) holds the page title, its extra tabs and the
+    names of its pages (`pt_page_*`) and wins over the shared text;
+  - `login` - the sign-in page (nested groups `labels`, `errors`, `otp`, `forgot` …).
 
 ### A missing translation never pretends to be another language
 When a key or a whole section is missing, `AdminLocalizationService` returns

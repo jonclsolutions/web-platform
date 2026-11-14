@@ -45,7 +45,7 @@ class CookieConsentTest extends TestCase
         $this->assertSame([self::BODY['consent_id']], $rows->pluck('consent_id')->unique()->values()->all());
         $this->assertSame(1, $rows->first()->version);
         $this->assertNotNull($rows->first()->created_at);
-        $columns = Schema::getColumnListing('web_cookie_consents');
+        $columns = Schema::getColumnListing('legal_cookie_consents');
         $this->assertNotContains('ip_address', $columns);
         $this->assertNotContains('user_agent', $columns);
     }

@@ -35,9 +35,18 @@ tests/unit_tests/
 ```
 
 `core/` and `shared/` specs only run with `erp/run_all_erp.sh` (and `run_all.sh`).
-Every erp runner also checks the **application boundaries**: no file of `erp/src/app/apps/<app>/`
-imports a file of another application (report suite "Application boundaries") - an application
-asks the registry (`hasApp()`) instead.
+Every erp runner also checks the **application boundaries** (report suite "Application
+boundaries"): no file of `erp/src/app/apps/<app>/` imports a file of another application (an
+application asks the registry, `hasApp()`), and no file of the core (`erp/src/app` outside
+`apps/`) imports an application - the core reaches them only through `apps/apps.registry.ts`.
+The API checks the same in `api/tests/Unit/Core/ApplicationBoundariesTest.php` (suite Core).
+
+A spec of the core that checks it **together with particular applications** (their real routes,
+sidebars or texts) starts with `requiresApps('shop', …)` (`erp/src/testing/requires-apps.ts`):
+without them the test is skipped (pending) instead of failing. `tests/module_removal/check.sh
+<id>|all` runs every test (API suites Core, Other and the remaining applications; all erp specs)
+in a copy of the repository without the application - see the README of the repository,
+chapter *Applications*.
 
 ## Running
 

@@ -15,11 +15,12 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { JobItemComponent } from './job-item.component';
-import { PublicPageContext, createPublicPageContext } from '../../../../../../testing/public-test-helpers';
+import { PublicPageContext, createPublicPageContext, areaRoute } from '../../../../../../testing/public-test-helpers';
+import { WEB_PUBLIC_AREA } from '../../web-public.routes';
 
 describe('JobItemComponent', () => {
   let ctx: PublicPageContext;
@@ -38,7 +39,7 @@ describe('JobItemComponent', () => {
     ctx.publicData.get.and.callFake((endpoint: string) => of(endpoint === 'public/web/jobs' ? JOBS : {}));
     TestBed.configureTestingModule({
       imports: [JobItemComponent],
-      providers: [...ctx.providers, { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap(id ? { id } : {}) } } }]
+      providers: [...ctx.providers, { provide: ActivatedRoute, useValue: areaRoute(WEB_PUBLIC_AREA, id ? { id } : {}) }]
     });
     fixture = TestBed.createComponent(JobItemComponent);
     component = fixture.componentInstance;

@@ -135,7 +135,7 @@
     "loading_data": "Načítám data…",
 
     "nav_group_overview": "Přehled",
-    "nav_group_content": "Obsah webu",
+    "nav_group_content": "Obsah",
     "nav_group_system": "Systém",
     "nav_group_legal": "Právní a firemní",
     "nav_group_users": "Uživatelé",
@@ -145,7 +145,7 @@
     "nav_welcome": "Vítejte",
     "nav_core_dashboard": "Dashboard",
     "nav_gdpr": "Právní dokumenty",
-    "nav_company_info": "Nastavení webu a SEO",
+    "nav_company_info": "Nastavení",
     "nav_external_links": "Externí odkazy",
     "nav_administrators": "Účty",
     "nav_edit_roles_title": "Role a oprávnění",
@@ -227,9 +227,8 @@
 
   "export_no_data_title": "Export",
   "export_no_data_message": "K exportu nejsou dostupná žádná data.",
-  "export_error_message": "Při exportu došlo k chybě.",
+  "export_error_message": "Při exportu došlo k chybě."
 
-  "export_button": "Exportovat"
 },
 "edit-legal": {
   "page_title": "Právní dokumenty",
@@ -377,12 +376,12 @@
   "pt_language_label": "Jazyk názvů:",
   "pt_saved_title": "Uloženo"
 },
-"web-settings": {
+"settings": {
   "pt_page_admin_panel": "Celá administrace a přihlášení",
-  "page_title": "Nastavení webu a SEO",
+  "page_title": "Nastavení",
   "page_subtitle": "Logo, firemní údaje a sociální sítě",
 
-  "logo_card_title": "Logo webu",
+  "logo_card_title": "Logo",
   "logo_alt": "Logo webu",
   "logo_placeholder_text": "Zatím bez loga",
   "logo_stored_text": "Logo nahráno na serveru",
@@ -553,7 +552,6 @@
   "role_created_success": "Role \"{name}\" byla vytvořena.",
   "role_create_error": "Vytvoření role se nezdařilo.",
   "role_deleted_success": "Role \"{name}\" byla smazána.",
-  "role_delete_error": "Smazání role se nezdařilo.",
   "delete_blocked_system": "Systémovou roli nelze smazat.",
   "delete_blocked_users": "Nelze smazat - role je přiřazena k {count} uživatelskému účtu(ům).",
   "export_empty_error": "Není co exportovat - seznam rolí je prázdný.",
@@ -715,17 +713,9 @@
   "contact_text": "Pro informace nebo nahlášení chyb kontaktujte"
 },
   "core-dashboard": {
-    "hero_select_aria": "Zvolit zobrazenou metriku",
     "header_title": "Systémový přehled",
     "header_subtitle": "Sdílená nastavení a zdroje napříč weblovou prezentací a e-shopem",
-    "last_updated_label": "Aktualizováno v",
-    "refresh_button": "Aktualizovat",
-    "refresh_button_title": "Načíst aktuální data",
 
-    "hero_caption": "Aktuální hodnota",
-    "bars_card_title": "Přehled podle modulů",
-    "bars_card_empty": "Žádné další povolené moduly.",
-    "no_visible_stats": "Pro váš účet nejsou k dispozici žádné přehledy.",
 
     "stat_users_label": "Uživatelé systému",
     "stat_roles_label": "Role a oprávnění",
@@ -733,7 +723,6 @@
     "stat_external_links_label": "Externí odkazy",
     "stat_core_logs_label": "Systémové logy",
 
-    "section_quick_nav": "Rychlá navigace",
     "nav_administrators_title": "Účty",
     "nav_administrators_desc": "Správa uživatelských účtů administrátorů",
     "nav_roles_title": "Role a oprávnění",
@@ -744,23 +733,13 @@
     "nav_external_links_desc": "Odkazy na analytiku a externí nástroje",
     "nav_logs_title": "Logy systému",
     "nav_logs_desc": "Auditní záznamy autentizace a systému",
-    "nav_web_settings_title": "Nastavení webu a SEO",
-    "nav_web_settings_desc": "Globální konfigurace webu a e-shopu",
+    "nav_settings_title": "Nastavení",
+    "nav_settings_desc": "Firemní údaje, názvy stránek administrace a retence dat",
 
     "section_recent_activity": "Poslední systémové události",
     "activity_card_title": "Systémové logy",
-    "activity_view_all": "Zobrazit vše",
-    "activity_loading": "Načítám záznamy…",
     "activity_empty": "Zatím žádné systémové záznamy",
 
-    "breakdown_card_title": "Rozložení posledních událostí",
-    "breakdown_hint": "Vztahuje se k naposledy načteným záznamům výše.",
-    "breakdown_create_label": "Vytvořeno",
-    "breakdown_update_label": "Úprava",
-    "breakdown_delete_label": "Smazání",
-    "breakdown_restore_label": "Obnova",
-    "breakdown_error_label": "Chyba",
-    "breakdown_default_label": "Ostatní",
 
     "ev_label_login_success": "Přihlášení",
     "ev_label_login_failed": "Neúspěšné přihlášení",
@@ -769,15 +748,40 @@
     "ev_label_password_reset_completed": "Reset hesla dokončen",
     "ev_label_password_reset_failed": "Reset hesla selhal",
     "ev_label_password_reset_rate_limited": "Reset hesla - limit vyčerpán",
+
+    "export_selected_suffix": "vybrane"
+  },
+  "dashboard": {
+    "hero_select_aria": "Zvolit zobrazenou metriku",
+    "last_updated_label": "Aktualizováno v",
+    "refresh_button": "Aktualizovat",
+    "refresh_button_title": "Načíst aktuální data",
+    "hero_caption": "Aktuální hodnota",
+    "hero_caption_urgent": "Vyžaduje pozornost",
+    "bars_card_title": "Přehled podle modulů",
+    "bars_card_empty": "Žádné další povolené moduly.",
+    "no_visible_stats": "Pro váš účet nejsou k dispozici žádné přehledy.",
+    "distribution_card_title": "Distribuce podle modulů",
+    "section_quick_nav": "Rychlá navigace",
+    "activity_view_all": "Zobrazit vše",
+    "activity_loading": "Načítám záznamy…",
+    "breakdown_card_title": "Rozložení posledních událostí",
+    "breakdown_hint": "Vztahuje se k naposledy načteným záznamům výše.",
+    "breakdown_create_label": "Vytvořeno",
+    "breakdown_update_label": "Úprava",
+    "breakdown_delete_label": "Smazání",
+    "breakdown_restore_label": "Obnova",
+    "breakdown_export_label": "Export",
+    "breakdown_error_label": "Chyba",
+    "breakdown_default_label": "Ostatní",
     "ev_label_create": "Vytvoření",
     "ev_label_update": "Úprava",
     "ev_label_soft_delete": "Smazání",
     "ev_label_hard_delete": "Trvalé smazání",
     "ev_label_restore": "Obnova",
+    "ev_label_export": "Export",
     "ev_label_error": "Chyba",
-
-    "footer_help_text": "Potřebujete pomoc? Kontaktujte technickou podporu nebo svého správce systému.",
-    "export_selected_suffix": "vybrane"
+    "footer_help_text": "Potřebujete pomoc? Kontaktujte technickou podporu nebo svého správce systému."
   },
   "external-links": {
     "table_header": "Externí odkazy",
@@ -951,13 +955,7 @@
   },
   "core-logs": {
     "table_header": "Logy systému",
-    "toolbar_action_trigger": "Akce",
-    "toolbar_filters": "Otevřít filtry",
-    "toolbar_hide_filters": "Skrýt",
-    "toolbar_generate_reports": "Generovat grafy a reporty",
-    "toolbar_export_data": "Exportovat data",
 
-    "btn_details": "Detaily",
 
     "event_create": "Vytvoření",
     "event_create_denied": "Vytvoření zamítnuto",
@@ -991,23 +989,32 @@
     "module_core_role": "Role",
     "module_user": "Uživatelé",
     "module_legal": "Právní dokumenty",
-    "module_core": "Core (obecné)",
+    "module_core": "Core (obecné)"
 
+
+
+
+  },
+  "audit-log": {
+    "toolbar_action_trigger": "Akce",
+    "toolbar_filters": "Filtry",
+    "toolbar_hide_filters": "Skrýt filtry",
+    "toolbar_generate_reports": "Generovat grafy a reporty",
+    "toolbar_export_data": "Exportovat data",
+    "btn_details": "Detaily",
     "col_id": "ID",
     "col_time": "Čas",
     "col_user": "Uživatel",
     "col_action": "Akce",
     "col_module": "Modul",
     "col_description": "Popis události",
-    "col_ip": "IP adresa",
-
+    "col_ip": "IP adresa / Původ",
     "filter_id_placeholder": "ID logu",
-    "filter_user_placeholder": "Email uživatele",
+    "filter_user_placeholder": "Uživatel / Email",
     "filter_event_label": "Událost",
     "filter_event_placeholder": "-- Typ akce --",
     "filter_module_placeholder": "-- Modul --",
     "filter_ip_placeholder": "Hledat IP",
-
     "details_id": "ID Záznamu",
     "details_time": "Čas události",
     "details_ip": "IP adresa zdroje",
@@ -1015,11 +1022,10 @@
     "details_module": "Systémový modul",
     "details_description": "Podrobný popis",
     "details_entity_type": "Tabulka / Entita",
-    "details_entity_id": "ID záznamu entity",
+    "details_entity_id": "ID entity",
     "details_user_id": "ID uživatele",
     "details_user": "Uživatel",
     "details_context_data": "Payload / JSON Data",
-
     "graph_date_field_label": "Datum vytvoření"
   },
   "security-events": {
@@ -1204,8 +1210,7 @@
   },
   "base-data": {
   "api_endpoint_undefined": "API endpoint není definován.",
-  "password_change_error": "Chyba při změně hesla.",
-  "mass_delete_error": "Chyba při hromadném mazání."
+  "password_change_error": "Chyba při změně hesla."
 },
 "password-confirm": {
   "title": "Potvrďte heslem",
@@ -1275,6 +1280,64 @@
     "error_network": "Nelze se připojit k serveru. Zkontrolujte připojení a zkuste to znovu.",
     "error_generic": "Odkaz je neplatný nebo vypršel. Vyžádejte si prosím nový."
   },
+  "login": {
+    "accounts": {
+      "title": "Vyberte účet",
+      "continue_as": "Pokračovat jako",
+      "current": "Přihlášen v tomto okně",
+      "other": "nebo se přihlaste jiným účtem",
+      "unavailable": "Tento účet už není zapamatovaný. Přihlaste se prosím heslem."
+    },
+    "labels": {
+      "email": "Přihlašovací e-mail",
+      "password": "Heslo",
+      "remember_me": "Zapamatovat přihlášení"
+    },
+    "placeholders": {
+      "email": "jannovak@studio.cz"
+    },
+    "links": {
+      "forgot_password": "Zapomenuté heslo?",
+      "back_to_home": "Zpět na hlavní stránku"
+    },
+    "aria": {
+      "show_password": "Zobrazit heslo",
+      "hide_password": "Skrýt heslo"
+    },
+    "buttons": {
+      "submit": "Přihlásit se",
+      "submitting": "Přihlašování..."
+    },
+    "errors": {
+      "captcha_required": "Potvrďte prosím, že nejste robot.",
+      "captcha_load": "Nepodařilo se načíst ověření zabezpečení. Zkuste stránku obnovit.",
+      "too_many_attempts": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu.",
+      "login_failed": "Přihlášení se nezdařilo.",
+      "verification_failed": "Ověření se nezdařilo. Zkuste to prosím znovu.",
+      "request_failed": "Požadavek se nepodařilo odeslat. Zkuste to prosím znovu."
+    },
+    "otp": {
+      "subtitle": "Na váš e-mail byl odeslán 6místný ověřovací kód.",
+      "valid_for": "Kód je platný ještě",
+      "label": "Ověřovací kód",
+      "placeholder": "123456",
+      "expired": "Platnost kódu vypršela. Vyžádejte si prosím nový.",
+      "verify_btn": "Ověřit a přihlásit",
+      "verifying_btn": "Ověřování...",
+      "resend": "Odeslat nový kód",
+      "back": "← Zpět na přihlášení"
+    },
+    "forgot": {
+      "title": "Obnovení hesla",
+      "subtitle": "Zadejte e-mail spojený s vaším účtem. Pošleme vám odkaz pro obnovení hesla.",
+      "email_label": "E-mailová adresa",
+      "email_placeholder": "vas@email.cz",
+      "sent": "Instrukce byly odeslány na zadaný e-mail.",
+      "cancel": "Zrušit",
+      "submit": "Odeslat instrukce",
+      "close_aria": "Zavřít"
+    }
+  },
   "activate-account": {
     "title_loading": "Ověřuji odkaz…",
     "title_invalid": "Tento odkaz nelze použít",
@@ -1300,5 +1363,64 @@
     "error_network": "Nelze se připojit k serveru. Zkontrolujte připojení a zkuste to znovu.",
     "error_password_rejected": "Heslo nebylo přijato. Zvolte prosím jiné.",
     "error_generic": "Nastavení hesla se nezdařilo. Zkuste to prosím později."
+  },
+  "translation-editor": {
+    "tab_translations": "Překlady",
+    "tab_page_titles": "Názvy stránek",
+    "tabs_label": "Části stránky",
+    "upload_json_title_topbar": "Nahrát JSON pro aktuální jazyk",
+    "save_changes_button": "Uložit změny",
+    "saving_label": "Ukládám…",
+    "unsaved_changes_title": "Neuložené změny",
+    "download_json_title": "Stáhnout aktuální JSON",
+    "download_json_button": "Stáhnout JSON",
+    "add_language_title": "Přidat jazyk",
+    "add_language_button": "Přidat jazyk",
+    "inactive_suffix": "neaktivní",
+    "inactive_label": "Neaktivní",
+    "deactivate_title": "Deaktivovat",
+    "activate_title": "Aktivovat",
+    "delete_language_title": "Smazat jazyk",
+    "upload_json_title": "Nahrát JSON pro tento jazyk",
+    "stat_keys_label": "klíčů",
+    "stat_filled_label": "vyplněno",
+    "stat_missing_label": "chybí",
+    "show_missing_only_title": "Zobrazit pouze chybějící",
+    "search_placeholder": "Vyhledat klíč nebo text…",
+    "missing_count_suffix": "chybějících",
+    "col_key": "Klíč (JSON cesta)",
+    "col_value_prefix": "Hodnota",
+    "missing_translation_title": "Chybějící překlad",
+    "no_results": "Žádné výsledky",
+    "icon_field_label": "Ikonka jazyka",
+    "icon_field_hint": "(PNG/JPG, max 512 KB)",
+    "icon_preview_alt": "Náhled",
+    "remove_button": "Odebrat",
+    "code_field_label": "Kód jazyka",
+    "code_field_hint": "2–5 malých písmen, např. sk, de, fr",
+    "name_field_label": "Název jazyka",
+    "active_checkbox_label": "Jazyk aktivní (viditelný pro uživatele)",
+    "upload_modal_description": "Vyberte JSON soubor se stejnou strukturou klíčů jako CZ vzor. Klíče, které v souboru chybí, zůstanou prázdné a budou označeny varováním.",
+    "upload_json_button": "Nahrát JSON",
+    "json_drop_zone_text": "Klikněte nebo přetáhněte",
+    "json_drop_zone_text_suffix": "soubor sem",
+    "delete_confirm_prefix": "Opravdu chcete smazat jazyk",
+    "delete_confirm_suffix": "Tato akce odstraní jazyk ze seznamu. JSON soubor na serveru zůstane zachován.",
+    "info_title": "Info",
+    "admin_title": "Admin",
+    "translations_not_found_message": "Překlady pro „{lang}\" ještě neexistují. Použity prázdné klíče.",
+    "translations_saved_message": "Překlady pro „{lang}\" byly uloženy.",
+    "save_failed_message": "Uložení se nezdařilo.",
+    "icon_size_error": "Ikonka přesahuje limit velikosti (512 KB).",
+    "code_and_name_required_error": "Kód a název jsou povinné.",
+    "code_format_error": "Kód musí mít 2–5 malých písmen.",
+    "code_already_exists_error": "Jazykový kód „{code}\" už existuje.",
+    "language_created_message": "Jazyk „{code}\" byl vytvořen.",
+    "language_save_failed_error": "Uložení jazyka na server se nezdařilo.",
+    "delete_language_failed_error": "Smazání jazyka se nezdařilo.",
+    "toggle_failed_error": "Změnu se nepodařilo uložit.",
+    "invalid_json_error": "Neplatný JSON soubor.",
+    "json_uploaded_message": "JSON pro „{lang}\" byl úspěšně nahrán.",
+    "upload_failed_error": "Nahrání se nezdařilo. Zkontrolujte připojení k serveru."
   }
 }

@@ -75,14 +75,14 @@
       "group": "shop",
       "order": 36,
       "permission": "shop-view-logs",
-      "devNote": "ShopLogsComponent, route 'shop/logs', permission 'shop-view-logs'."
+      "devNote": "AuditLogPageComponent (core) with SHOP_AUDIT_LOG (shop-logs.config.ts), route 'shop/logs', permission 'shop-view-logs'."
     },
     {
       "id": "edit-eshop",
       "group": "shop",
       "order": 37,
       "permission": "shop-edit-eshop-view",
-      "devNote": "EditEshopComponent, route 'shop/edit-eshop', permission 'shop-edit-eshop-view'."
+      "devNote": "EditEshopComponent (TranslationEditorViewComponent of the core), route 'shop/edit-eshop', permission 'shop-edit-eshop-view'."
     }
   ]
 }

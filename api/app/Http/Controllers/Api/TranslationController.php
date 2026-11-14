@@ -47,11 +47,8 @@ class TranslationController extends Controller
     /** @var string Role that passes every permission check (see CheckPermission). */
     private const SYSADMIN_ROLE_NAME = 'sysadmin';
 
-    /** @var string Module of language entries stored without one (the original web-only format). */
-    private const DEFAULT_MODULE = 'web';
-
     /**
-     * @var array<int, array<string, mixed>> Language list used while no languages.json exists.
+     * @var array<int, array<string, mixed>> Languages of a module that has none stored yet.
      */
     private const DEFAULT_LANGUAGES = [
         ['code' => 'cz', 'name' => 'Čeština', 'active' => true, 'isBuiltIn' => true, 'icon_path' => null],
@@ -142,11 +139,7 @@ class TranslationController extends Controller
      */
     public function getLanguages(string $module): JsonResponse
     {
-        $allMeta = self::readLanguagesMeta();
-
-        $filtered = array_values(array_filter($allMeta, fn($l) => $this->moduleOf($l) === $module));
-
-        return $this->respond($this->withIconUrls($filtered));
+        return $this->respond($this->withIconUrls(self::moduleLanguages($module)));
     }
 
     /**
@@ -158,7 +151,7 @@ class TranslationController extends Controller
     public function getAllLanguages(): JsonResponse
     {
         $byCode = [];
-        foreach (self::readLanguagesMeta() as $lang) {
+        foreach (self::readLanguagesMeta() ?: self::DEFAULT_LANGUAGES as $lang) {
             if (is_array($lang) && is_string($lang['code'] ?? null)) {
                 $byCode[strtolower($lang['code'])] ??= $lang;
             }
@@ -212,8 +205,7 @@ class TranslationController extends Controller
 
         $otherModulesMeta = array_filter($allMeta, fn($l) => $this->moduleOf($l) !== $module);
 
-        $currentModuleMeta = collect(array_filter($allMeta, fn($l) => $this->moduleOf($l) === $module))
-            ->keyBy('code');
+        $currentModuleMeta = collect(self::moduleLanguages($module))->keyBy('code');
 
         $mergedCurrent = [];
         foreach ($incoming as $lang) {
@@ -344,19 +336,12 @@ class TranslationController extends Controller
     /**
      * @description Codes of the languages of a module (active or not) - the languages the content
      *   of the module may be stored in (e.g. the FAQ and the jobs of the web).
-     * @param string $module Module ('web', 'shop').
+     * @param string $module Module (application id).
      * @return string[] Lower-case codes.
      */
     public static function languageCodes(string $module): array
     {
-        $codes = [];
-        foreach (self::readLanguagesMeta() as $lang) {
-            if (is_array($lang) && is_string($lang['code'] ?? null) && ($lang['module'] ?? self::DEFAULT_MODULE) === $module) {
-                $codes[] = strtolower($lang['code']);
-            }
-        }
-
-        return array_values(array_unique($codes));
+        return array_values(array_unique(array_map(fn (array $lang) => strtolower($lang['code']), self::moduleLanguages($module))));
     }
 
     /**
@@ -381,10 +366,25 @@ class TranslationController extends Controller
     private static function readLanguagesMeta(): array
     {
         $path = self::languagesMetaPath();
-        if (File::exists($path)) {
-            return json_decode(File::get($path), true) ?? self::DEFAULT_LANGUAGES;
-        }
-        return self::DEFAULT_LANGUAGES;
+        $meta = File::exists($path) ? json_decode(File::get($path), true) : null;
+
+        return is_array($meta) ? $meta : [];
+    }
+
+    /**
+     * @description Languages of one module: its stored entries, or DEFAULT_LANGUAGES while the
+     *   module has none stored yet.
+     * @param string $module Module (application id).
+     * @return array<int, array<string, mixed>> Entries with a code, each with `module`.
+     */
+    private static function moduleLanguages(string $module): array
+    {
+        $stored = array_values(array_filter(
+            self::readLanguagesMeta(),
+            fn ($lang) => is_array($lang) && is_string($lang['code'] ?? null) && ($lang['module'] ?? null) === $module
+        ));
+
+        return $stored ?: array_map(fn (array $lang) => $lang + ['module' => $module], self::DEFAULT_LANGUAGES);
     }
 
     /**
@@ -419,13 +419,13 @@ class TranslationController extends Controller
     }
 
     /**
-     * @description Module of a language entry - entries without one belong to DEFAULT_MODULE.
+     * @description Module of a language entry (null for an entry without one).
      * @param array $lang Language entry.
      * @return string
      */
-    private function moduleOf(array $lang): string
+    private function moduleOf(array $lang): ?string
     {
-        return $lang['module'] ?? self::DEFAULT_MODULE;
+        return $lang['module'] ?? null;
     }
 
     /**

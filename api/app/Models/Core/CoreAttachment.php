@@ -22,7 +22,7 @@ class CoreAttachment extends Model
     const UPDATED_AT = null;
 
     /** @var string The table keeps its original name. */
-    protected $table = 'web_attachments';
+    protected $table = 'core_attachments';
 
     /**
      * @description Personal data: the audit log notes that these attributes changed, never their

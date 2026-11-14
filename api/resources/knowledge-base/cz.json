@@ -112,9 +112,9 @@
         }
       ]
     },
-    "web-settings": {
-      "navLabel": "Nastavení webu",
-      "header": "Globální nastavení webu",
+    "settings": {
+      "navLabel": "Nastavení",
+      "header": "Nastavení systému",
       "sections": [
         {
           "blocks": [

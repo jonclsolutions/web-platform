@@ -10,15 +10,18 @@
  * @note The page is never skipped and never signs in on its own; the user chooses an account or
  *   signs in with another one. Several accounts may be signed in in one browser (each tab works
  *   with one of them, see AuthService) - a login or a chosen account signs in THIS tab only.
+ * @note Texts: admin translation section `login` (AdminLocalizationService), like the other
+ *   pages of the sign-in (activate account, reset password) - independent of any application.
  */
 
-import { Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthError, AuthService, LoginError, RememberedAccount, TwoFactorError } from '../../../core/auth/auth.service';
 import { UserAvatarComponent } from '../../components/user-avatar/user-avatar.component';
 import { TurnstileService } from '../../../core/services/turnstile.service';
-import { BasePublicComponent } from '../../../public/base-public.component';
+import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { CommonModule } from '@angular/common';
 import { map, switchMap } from 'rxjs/operators';
 type LoginStep = 'credentials' | 'otp';
@@ -33,9 +36,14 @@ export type AccountChoice = RememberedAccount & { current?: boolean };
   templateUrl: './login.component.html',
   styleUrls: ['../../shared-styles/theme.css', '../shared-styles/auth.css', '../../../shared/styles/base.css', './login.component.css']
 })
-export class LoginComponent extends BasePublicComponent implements OnDestroy {
+export class LoginComponent implements OnInit, OnDestroy {
 
-  protected readonly translationKey = 'login';
+  private readonly i18n = inject(AdminLocalizationService);
+  private readonly destroyRef = inject(DestroyRef);
+  protected readonly cdr = inject(ChangeDetectorRef);
+
+  /** Texts of the page (section `login`, nested groups: labels, errors, otp, forgot …). */
+  t: any = {};
 
   @ViewChild('captchaContainer') captchaContainer?: ElementRef<HTMLDivElement>;
 
@@ -78,15 +86,19 @@ export class LoginComponent extends BasePublicComponent implements OnDestroy {
     private router: Router,
     private authService: AuthService,
     private turnstile: TurnstileService,
-  ) {
-    super();
-  }
+  ) {}
 
   /**
-   * @description Loads the chooser: the account of this tab (restored after a reload, also when it
-   *   is not remembered) and the accounts remembered in this browser (no request without a hint).
+   * @description Follows the texts of the admin language and loads the chooser: the account of
+   *   this tab (restored after a reload, also when it is not remembered) and the accounts
+   *   remembered in this browser (no request without a hint).
    */
-  protected override onInit(): void {
+  ngOnInit(): void {
+    this.i18n.translations$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.t = this.i18n.getMergedSection('login') ?? {};
+      this.cdr.markForCheck();
+    });
+
     this.authService.checkAuth().pipe(
       switchMap(signedIn => this.authService.rememberedAccounts().pipe(map(accounts => ({ signedIn, accounts }))))
     ).subscribe(({ signedIn, accounts }) => {
@@ -128,7 +140,7 @@ export class LoginComponent extends BasePublicComponent implements OnDestroy {
     });
   }
 
-  override ngOnDestroy(): void {
+  ngOnDestroy(): void {
     this.clearCountdown();
     if (this.captchaWidgetId) {
       this.turnstile.remove(this.captchaWidgetId);
@@ -136,7 +148,6 @@ export class LoginComponent extends BasePublicComponent implements OnDestroy {
     this.password = '';
     this.otpCode = '';
     this.loginToken = null;
-    super.ngOnDestroy();
   }
 
   onLogin(): void {

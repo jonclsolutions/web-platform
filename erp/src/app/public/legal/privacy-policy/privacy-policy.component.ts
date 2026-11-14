@@ -13,7 +13,7 @@ import { Component, ChangeDetectionStrategy, Input, inject } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { BasePublicComponent } from '../../base-public.component';
 import { LegalDocsService } from '../../../shared/services/legal-docs.service';
-import { routeTranslationModule } from '../legal-route';
+import { routePublicArea } from '../../public-area';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
@@ -23,14 +23,14 @@ import { takeUntil } from 'rxjs/operators';
   templateUrl: './privacy-policy.component.html',
   styleUrl: '../legal-document.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  // Light look in the e-shop layout (legal-document.css).
-  host: { '[class.legal--light]': "translationModule === 'shop'" }
+  // Light look in a light public area (legal-document.css).
+  host: { '[class.legal--light]': 'lightTheme' }
 })
 export class PrivacyPolicyComponent extends BasePublicComponent {
   protected readonly translationKey = 'privacy_policy';
 
-  /** Translations of the application whose layout shows the page (route data). */
-  protected override readonly translationModule = routeTranslationModule();
+  /** Light look of the area of the layout that shows the page. */
+  protected readonly lightTheme = routePublicArea()?.theme === 'light';
 
   @Input() docSlug: 'gdpr' | 'tos' = 'gdpr';
   data: any = null;

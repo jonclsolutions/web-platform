@@ -44,7 +44,7 @@ describe('ShopMaintenanceComponent', () => {
     expect(ctx.localization.setModule).toHaveBeenCalledWith('shop');
 
     (router.navigate as jasmine.Spy).calls.reset();
-    ctx.publicData.getShopStatus.and.returnValue(of({ is_shop_active: false }));
+    ctx.publicData.getFresh.and.returnValue(of({ is_shop_active: false }));
     const fixture = TestBed.createComponent(ShopMaintenanceComponent);
     fixture.detectChanges();
     expect(router.navigate).not.toHaveBeenCalled();
@@ -54,7 +54,7 @@ describe('ShopMaintenanceComponent', () => {
     expect(fixture.nativeElement.querySelector('.maintenance-lang')).not.toBeNull();
 
     spyOn(console, 'error');
-    ctx.publicData.getShopStatus.and.returnValue(throwError(() => new Error('down')));
+    ctx.publicData.getFresh.and.returnValue(throwError(() => new Error('down')));
     fixture.componentInstance.checkStatusAndRedirect();
     expect(console.error).toHaveBeenCalled();
   });
@@ -70,16 +70,16 @@ describe('ShopMaintenanceComponent', () => {
     const value = (result: any) => { let v: any; (result as Observable<any>).subscribe(r => (v = r)); return v; };
     const url = spyOnProperty(router, 'url', 'get').and.returnValue('/shop-maintenance');
     expect(run()).toBeTrue();
-    expect(ctx.publicData.getShopStatus).not.toHaveBeenCalled();
+    expect(ctx.publicData.getFresh).not.toHaveBeenCalled();
 
     url.and.returnValue('/shop');
-    ctx.publicData.getShopStatus.and.returnValue(of({ is_shop_active: false }));
+    ctx.publicData.getFresh.and.returnValue(of({ is_shop_active: false }));
     const tree = value(run());
     expect(tree instanceof UrlTree).toBeTrue();
     expect(router.serializeUrl(tree)).toBe('/shop-maintenance');
-    ctx.publicData.getShopStatus.and.returnValue(of({ is_shop_active: true }));
+    ctx.publicData.getFresh.and.returnValue(of({ is_shop_active: true }));
     expect(value(run())).toBeTrue();
-    ctx.publicData.getShopStatus.and.returnValue(throwError(() => new Error('x')));
+    ctx.publicData.getFresh.and.returnValue(throwError(() => new Error('x')));
     expect(value(run())).toBeTrue();
   });
 });

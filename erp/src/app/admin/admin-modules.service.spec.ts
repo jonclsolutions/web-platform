@@ -14,6 +14,8 @@ import { TestBed } from '@angular/core/testing';
 import { AdminModulesService } from './admin-modules.service';
 import { AdminTestContext, createAdminTestContext } from '../../testing/admin-test-helpers';
 import { navOf } from './admin-navigation.config';
+import { APPS } from '../apps/apps.registry';
+import { requiresApps } from '../../testing/requires-apps';
 
 describe('AdminModulesService', () => {
   let ctx: AdminTestContext;
@@ -49,9 +51,11 @@ describe('AdminModulesService', () => {
    * @input view-project-portal + project-portal-view-logs; then + web-projects-view; then
    *   view-web without a web page; sysadmin.
    * @output project portal available, landing /admin/project-portal/logs, then …/projects; web
-   *   not available; availableApps ['project-portal']; sysadmin: all three, unknown module false.
+   *   not available; availableApps ['project-portal']; sysadmin: every installed application,
+   *   unknown module false. Needs the web and the project portal (requiresApps).
    */
   it('decides which modules and applications the user may open', () => {
+    requiresApps('web', 'project-portal');
     ctx.permissions.granted = new Set(['view-project-portal', 'project-portal-view-logs', 'view-web']);
     expect(service.isAvailable('project-portal')).toBeTrue();
     expect(service.landingUrl('project-portal')).toBe('/admin/project-portal/logs');
@@ -65,7 +69,7 @@ describe('AdminModulesService', () => {
 
     ctx.permissions.granted = new Set();
     ctx.auth.session.role = 'sysadmin';
-    expect(service.availableApps().map(app => app.id)).toEqual(['web', 'shop', 'project-portal']);
+    expect(service.availableApps().map(app => app.id)).toEqual(APPS.map(app => app.id));
     expect(service.isAvailable('nope')).toBeFalse();
   });
 });

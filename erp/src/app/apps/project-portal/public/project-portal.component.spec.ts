@@ -26,8 +26,22 @@ import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 
 import { ProjectPortalComponent } from './project-portal.component';
 import { ProjectPortalLocalizationService, PROJECT_PORTAL_AVAILABLE_LANGUAGES } from './project-portal-localization.service';
+import { HttpContext } from '@angular/common/http';
+import { SKIP_ADMIN_AUTH } from '../../../core/interceptors/skip-admin-auth';
 import { PublicDataService } from '../../../shared/services/public-data.service';
 import { provideUploadRulesStub } from '../../../../testing/upload-rules-stub';
+
+/**
+ * @description Runs a request of the portal stub; a request with the admin session fails the test.
+ * @param context HTTP context of the request.
+ * @param send The recorded request.
+ */
+function portalRequest<T>(context: HttpContext | undefined, send: () => T): T {
+  if (!context?.get(SKIP_ADMIN_AUTH)) {
+    throw new Error('A request of the project portal must skip the admin session.');
+  }
+  return send();
+}
 
 describe('ProjectPortalComponent', () => {
   let fixture: ComponentFixture<ProjectPortalComponent>;
@@ -78,7 +92,14 @@ describe('ProjectPortalComponent', () => {
       imports: [ProjectPortalComponent],
       providers: [
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap(token ? { token } : {}), queryParamMap: convertToParamMap(query) } } },
-        { provide: PublicDataService, useValue: { get, getWithMeta, post, getSiteSettings } },
+        // Every request of the portal goes without the admin session (SKIP_ADMIN_AUTH_CONTEXT);
+        // the spies record the path (and body) only.
+        { provide: PublicDataService, useValue: {
+          get: (path: string, _p: unknown, _h: unknown, context?: HttpContext) => portalRequest(context, () => get(path)),
+          getWithMeta: (path: string, _p: unknown, _h: unknown, context?: HttpContext) => portalRequest(context, () => getWithMeta(path)),
+          post: (path: string, body: unknown, _h: unknown, context?: HttpContext) => portalRequest(context, () => post(path, body)),
+          getSiteSettings,
+        } },
         provideUploadRulesStub(),
         { provide: ProjectPortalLocalizationService, useValue: {
           translations$, currentLanguage$: language$, availableLanguages: PROJECT_PORTAL_AVAILABLE_LANGUAGES,

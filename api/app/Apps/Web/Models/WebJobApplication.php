@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
  * @description Manages applicant data, contact details, and resume storage for career opportunities.
  * * @property int $id Unique identifier.
  * @property string $email Candidate email address.
- * @property string|null $cv_path Legacy path to a CV uploaded before the web_attachments refactor.
+ * @property string|null $cv_path Legacy path to a CV uploaded before the attachments refactor.
  */
 class WebJobApplication extends Model
 {

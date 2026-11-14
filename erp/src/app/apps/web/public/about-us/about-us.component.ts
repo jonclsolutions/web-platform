@@ -8,7 +8,7 @@
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { RouterModule } from '../../../../shared/imports/web-providers';
+import { RouterModule } from '../web-providers';
 import { BasePublicComponent } from '../../../../public/base-public.component';
 
 @Component({

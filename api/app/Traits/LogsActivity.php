@@ -5,10 +5,9 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Shared audit-logging helper used by Core/Web/Shop controllers. Writes to
- * whichever log model is passed in (CoreLog::class, WebLog::class, ShopLog::class - all
- * three share an identical column structure and an `'array'` cast on `context_data` by
- * design). Centralizes truncation safety so an oversized description/context_data can
+ * @description Shared audit-logging helper of the core and the applications. Writes to
+ * whichever log model is passed in (an AuditLog: CoreLog or the log of an application - the same
+ * columns and an `'array'` cast on `context_data`). Centralizes truncation safety so an oversized description/context_data can
  * never itself throw and mask the original error. Each row also carries the data changes of the
  * request since the previous row (`changes`, App\Support\Audit\ModelChanges).
  */

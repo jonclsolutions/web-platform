@@ -11,7 +11,7 @@
 
 /*
     @module: Page titles editor
-    @description: The whole card - shared by core/web-settings, web/edit-website and
+    @description: The whole card - shared by core/settings, web/edit-website and
       shop/edit-eshop.
     @usage: <app-page-titles-editor> (.pt-card, .pt-header-actions, .pt-row, .pt-input, ...)
 */

@@ -14,13 +14,14 @@
  */
 
 import { EnvironmentProviders, Provider } from '@angular/core';
-import { Routes, provideRouter } from '@angular/router';
+import { ActivatedRoute, Routes, convertToParamMap, provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { BehaviorSubject, of } from 'rxjs';
 
 import { LocalizationService, LangMeta } from '../app/shared/services/localization.service';
 import { PublicDataService } from '../app/shared/services/public-data.service';
+import { PUBLIC_AREA_DATA, PublicArea } from '../app/public/public-area';
 import { provideUploadRulesStub } from './upload-rules-stub';
 import { TurnstileService } from '../app/core/services/turnstile.service';
 
@@ -43,8 +44,7 @@ export interface PublicDataStub {
   post: jasmine.Spy;
   getStorageUrl: jasmine.Spy;
   getSiteSettings: jasmine.Spy;
-  getWebStatus: jasmine.Spy;
-  getShopStatus: jasmine.Spy;
+  getFresh: jasmine.Spy;
   setCachedSettings: jasmine.Spy;
 }
 
@@ -73,10 +73,12 @@ export const STUB_LANGUAGES: LangMeta[] = [
 
 /**
  * @description Creates the stubs and providers of a public page.
- * @param options translations (full module object), settings (site settings response), lang, routes.
+ * @param options translations (full module object), settings (site settings response), lang, routes,
+ *   area (public area of the page = route data of its layout; the page then reads the module of
+ *   the area - a spec with its own ActivatedRoute puts the area into that one).
  * @returns Context; `getText(key)` resolves dotted keys in the current translations (key when missing).
  */
-export function createPublicPageContext(options: { translations?: any; settings?: any; lang?: string; routes?: Routes } = {}): PublicPageContext {
+export function createPublicPageContext(options: { translations?: any; settings?: any; lang?: string; routes?: Routes; area?: PublicArea } = {}): PublicPageContext {
   const translations$ = new BehaviorSubject<any>(options.translations ?? null);
   const language$ = new BehaviorSubject<string>(options.lang ?? 'cz');
   const resolve = (key: string) =>
@@ -102,8 +104,8 @@ export function createPublicPageContext(options: { translations?: any; settings?
     post: jasmine.createSpy('post').and.returnValue(of({})),
     getStorageUrl: jasmine.createSpy('getStorageUrl').and.callFake((p: string) => (p ? `/storage/${p}` : '')),
     getSiteSettings: jasmine.createSpy('getSiteSettings').and.returnValue(of(options.settings ?? { settings: {} })),
-    getWebStatus: jasmine.createSpy('getWebStatus').and.returnValue(of({ is_web_active: true })),
-    getShopStatus: jasmine.createSpy('getShopStatus').and.returnValue(of({ is_shop_active: true })),
+    // Status reads of the applications (no-cache GET) answer "active" by default.
+    getFresh: jasmine.createSpy('getFresh').and.returnValue(of({ is_web_active: true, is_shop_active: true })),
     setCachedSettings: jasmine.createSpy('setCachedSettings')
   };
 
@@ -125,9 +127,20 @@ export function createPublicPageContext(options: { translations?: any; settings?
       { provide: LocalizationService, useValue: localization },
       { provide: PublicDataService, useValue: publicData },
       { provide: TurnstileService, useValue: turnstile },
-      provideUploadRulesStub()
+      provideUploadRulesStub(),
+      ...(options.area ? [{ provide: ActivatedRoute, useValue: areaRoute(options.area) }] : [])
     ]
   };
+}
+
+/**
+ * @description ActivatedRoute stub of a page inside the layout of a public area.
+ * @param area The public area.
+ * @param params Route parameters.
+ * @returns Stub with `snapshot` (data with the area, no parent, parameters).
+ */
+export function areaRoute(area: PublicArea, params: Record<string, string> = {}): Partial<ActivatedRoute> {
+  return { snapshot: { data: { [PUBLIC_AREA_DATA]: area }, parent: null, paramMap: convertToParamMap(params), queryParamMap: convertToParamMap({}) } as any };
 }
 
 /** Text content of the first element matching the selector ('' when missing), trimmed. */

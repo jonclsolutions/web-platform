@@ -4,8 +4,11 @@
  * @project JS web-platform
  * @author JS
  * @created 2025
- * @description Preloads global data (translations, site settings, logo image) before the
- *   Angular app renders its root component. Used as the APP_INITIALIZER factory in app.config.ts.
+ * @description Preloads global data (the texts of the public area of the first URL, site
+ *   settings, logo image) before the Angular app renders its root component. Used as the
+ *   APP_INITIALIZER factory in app.config.ts. The public areas come from the manifests of the
+ *   installed applications (apps.registry, `publicArea`); the admin and the sign-in pages load
+ *   their own texts.
  *   Also warms the legal-docs cache (GDPR/TOS) in the background AFTER the app has rendered,
  *   so visiting /privacy-policy or /tos later usually needs no network wait — without
  *   delaying the initial paint for pages almost nobody visits.
@@ -17,10 +20,16 @@
  */
 
 import { Injectable, inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { LocalizationService } from './localization.service';
 import { PublicDataService } from './public-data.service';
 import { LegalDocsService } from './legal-docs.service';
+import { APPS } from '../../apps/apps.registry';
+import { PublicArea, publicAreaOfUrl } from '../../public/public-area';
+
+/** First URL segments of the core pages that are no public area (admin, sign-in). */
+const NON_PUBLIC_SEGMENTS = ['admin', 'auth'];
 
 /**
  * @description Viewport width (in px) at or below which ':hover' rules are
@@ -34,6 +43,7 @@ export class AppBootstrapService {
   private localizationService = inject(LocalizationService);
   private publicDataService = inject(PublicDataService);
   private legalDocsService = inject(LegalDocsService);
+  private document = inject(DOCUMENT);
 
   /**
    * @description Stores the original inline cssText of every ':hover' CSSStyleRule
@@ -46,27 +56,22 @@ export class AppBootstrapService {
   /**
    * @description Entry point called by APP_INITIALIZER. Angular bootstrap is
    *   held until this Promise resolves — keep this to critical, above-the-fold
-   *   data only (translations, settings, logo). Anything else goes to
+   *   data only (texts of the public area, settings, logo). Anything else goes to
    *   prefetchLegalDocs(), which is deliberately NOT awaited here.
-   * @note The web-active status is checked first and
-   *   used ONLY to gate prefetchLegalDocs() (full GDPR/TOS document bodies) - everything
-   *   else (translations, site settings/contact/social links, logo) loads unconditionally,
-   *   maintenance or not, since the maintenance page itself depends on it.
+   * @note The legal documents are prefetched only on a public page (not in the admin).
    */
   async init(): Promise<void> {
-    const webActive = await this.checkWebActiveStatus();
+    const area = this.initialPublicArea();
 
     await Promise.all([
-      this.localizationService.initTranslations(),
+      area ? this.localizationService.initTranslations(area.translationModule) : Promise.resolve(null),
       this.preloadSiteSettings(),
     ]);
 
-    // Fire-and-forget: runs after the app has already started rendering.
-    // Skipped entirely during maintenance - full GDPR/TOS document bodies have no
-    // legitimate reason to be downloaded while the site is dark.
-    // If it fails or is slow, nobody waits on it — the legal-page components
-    // simply fall back to fetching on demand (see LegalDocsService.getDocument).
-    if (webActive) {
+    // Fire-and-forget: runs after the app has already started rendering. If it fails or is
+    // slow, nobody waits on it — the legal-page components simply fall back to fetching on
+    // demand (see LegalDocsService.getDocument).
+    if (area) {
       this.prefetchLegalDocs();
     }
 
@@ -76,20 +81,20 @@ export class AppBootstrapService {
   }
 
   /**
-   * @description Checks whether the public web is currently active, using the same
-   *   no-cache status endpoint webMaintenanceGuard uses (GET /web/public/status).
-   *   Used only to gate prefetchLegalDocs() - see init().
-   * @note Fails open (returns true) on any error, exactly like webMaintenanceGuard's
-   *   own catchError — a transient status-check failure must never prevent the app
-   *   from starting normally.
+   * @description Public area of the first URL (none for the admin and the sign-in pages).
+   * @returns The area of an installed application, or null.
    */
-  private async checkWebActiveStatus(): Promise<boolean> {
-    try {
-      const res = await firstValueFrom(this.publicDataService.getWebStatus());
-      return res.is_web_active;
-    } catch {
-      return true;
+  private initialPublicArea(): PublicArea | null {
+    const path = this.currentPath();
+    if (NON_PUBLIC_SEGMENTS.includes(path.replace(/^\/+/, '').split('/')[0])) {
+      return null;
     }
+    return publicAreaOfUrl(path, APPS.flatMap(app => app.publicArea ? [app.publicArea] : []));
+  }
+
+  /** @description Path of the URL the app was opened with. */
+  protected currentPath(): string {
+    return this.document.location?.pathname ?? '/';
   }
 
   /**

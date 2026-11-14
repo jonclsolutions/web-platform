@@ -165,7 +165,7 @@ class RetentionTest extends TestCase
         DB::table('web_project_sessions')->where('project_id', $activeProject->id)->update(['expires_at' => now()->subMinute()]);
 
         CookieConsent::create(['consent_id' => '11111111-1111-4111-8111-111111111111', 'version' => 1, 'functional' => true, 'analytics' => false, 'marketing' => false]);
-        DB::table('web_cookie_consents')->update(['created_at' => now()->subYears(4)]);
+        DB::table('legal_cookie_consents')->update(['created_at' => now()->subYears(4)]);
         CookieConsent::create(['consent_id' => '22222222-2222-4222-8222-222222222222', 'version' => 1, 'functional' => true, 'analytics' => true, 'marketing' => false]);
 
         $this->artisan('retention:purge')->assertSuccessful();
@@ -239,7 +239,7 @@ class RetentionTest extends TestCase
         $this->age($old, 800);
         $this->failOn($old->getTable(), 'DELETE');
         CookieConsent::create(['consent_id' => '33333333-3333-4333-8333-333333333333', 'version' => 1, 'functional' => true, 'analytics' => false, 'marketing' => false]);
-        DB::table('web_cookie_consents')->update(['created_at' => now()->subYears(4)]);
+        DB::table('legal_cookie_consents')->update(['created_at' => now()->subYears(4)]);
         \Illuminate\Support\Facades\Log::spy();
 
         $this->artisan('retention:purge')->expectsOutputToContain('FAILED')->assertFailed();

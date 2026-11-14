@@ -16,6 +16,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { PublicFooterComponent } from './public-footer.component';
 import { PublicPageContext, createPublicPageContext } from '../../../../../../testing/public-test-helpers';
+import { hasApp } from '../../../../apps.registry';
 
 describe('PublicFooterComponent', () => {
   let ctx: PublicPageContext;
@@ -41,7 +42,8 @@ describe('PublicFooterComponent', () => {
    *   links; renders without a phone, address, DIČ, tagline and copyright in the settings
    *   (missing or switched off in the admin) - no empty rows.
    * @input Translations with group_offer only; settings name, e-mail, IČO.
-   * @output ['Offer', '', '']; 'Services', key for missing; /shop external;
+   * @output ['Offer', '', '']; 'Services', key for missing; /shop external (only with the e-shop
+   *   installed);
    *   legal 3 links; login '/auth/login' 'Login'; 'RPSW' + 'a@b.cz' rendered; one meta item (IČO);
    *   no tel: link, address, tagline or copyright element.
    */
@@ -49,7 +51,8 @@ describe('PublicFooterComponent', () => {
     expect(ctx.localization.setModule).toHaveBeenCalledWith('web');
     expect(footer.footerLinkGroups.map(g => g.title)).toEqual(['Offer', '', '']);
     expect(footer.footerLinkGroups[0].links.map(l => [l.route, l.text, l.external])).toEqual([
-      ['/services', 'Services', false], ['/references', 'navigation.references_full', false], ['/shop', 'navigation.shop', true]
+      ['/services', 'Services', false], ['/references', 'navigation.references_full', false],
+      ...(hasApp('shop') ? [['/shop', 'navigation.shop', true]] : []),
     ]);
     expect(footer.footerLegalLinks.map(l => [l.route, l.text])).toEqual([['/privacy-policy', 'Privacy'], ['/tos', 'legal.terms_of_service'], ['/cookies-policy', 'legal.cookies_policy']]);
     expect(footer.footerLoginLink).toEqual({ route: '/auth/login', text: 'Login', external: false });

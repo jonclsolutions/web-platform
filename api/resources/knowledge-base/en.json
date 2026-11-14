@@ -112,9 +112,9 @@
         }
       ]
     },
-    "web-settings": {
-      "navLabel": "Website Settings",
-      "header": "Global Website Settings",
+    "settings": {
+      "navLabel": "Settings",
+      "header": "System Settings",
       "sections": [
         {
           "blocks": [

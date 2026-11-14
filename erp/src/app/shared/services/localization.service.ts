@@ -4,13 +4,13 @@
  * @project JS web-platform
  * @author JS
  * @created 2025
- * @description Centralized service for managing application localization, translation loading, and active language state.
+ * @description Texts of the public pages: the translation module of the public area shown (the
+ *   id of an application), its languages, the active language and the loaded texts.
  * @dependencies
  * - HttpClient: Performs API requests to fetch language definitions and translation JSONs.
- * @note Translation loading is NOT triggered automatically in the constructor anymore.
- *   It is triggered exactly once by AppBootstrapService.initTranslations() during
- *   APP_INITIALIZER, so the app never renders before translations are ready — and never
- *   fires the fetch twice (once in the constructor, once at bootstrap).
+ * @note Nothing is loaded in the constructor: AppBootstrapService calls initTranslations()
+ *   with the module of the first URL during APP_INITIALIZER (no render before the texts are
+ *   ready); a public page then switches the module with setModule().
  */
 
 import { Injectable } from '@angular/core';
@@ -44,7 +44,8 @@ export interface LangMeta {
   providedIn: 'root'
 })
 export class LocalizationService {
-  private currentModule: string = 'web';
+  /** Translation module of the public area shown ('' until a public page / the bootstrap sets it). */
+  private currentModule: string = '';
   private readonly API_URL = environment.base_api_url;
   private translationsCache = new Map<string, any>();
   private languagesCache: LangMeta[] = [];
@@ -56,9 +57,8 @@ export class LocalizationService {
   public currentTranslations$ = this.currentTranslationsSource.asObservable();
 
   /**
-   * @description Current language list of currentModule. Filled BEFORE the first render of the
-   *   app through `initLanguages()` (called from AppBootstrapService.init()), so components like
-   *   PublicHeaderComponent can just subscribe without waiting / flashing.
+   * @description Current language list of currentModule (filled by `fetchLanguages()`, e.g. by
+   *   a module switch or the header of a public application).
    */
   private languagesSource = new BehaviorSubject<LangMeta[]>([]);
 
@@ -67,7 +67,14 @@ export class LocalizationService {
     this.currentLanguageSource.next(stored);
   }
 
-  public initTranslations(): Promise<any> {
+  /**
+   * @description Loads the texts of a module before the first render (AppBootstrapService) -
+   *   the module of the public area of the first URL.
+   * @param module Translation module.
+   * @returns The translations (null when they could not be loaded).
+   */
+  public initTranslations(module: string): Promise<any> {
+    this.currentModule = module;
     const lang = this.currentLanguageSource.getValue();
     return firstValueFrom(this.loadTranslations$(lang)).then(data => {
       if (data) {
@@ -78,7 +85,7 @@ export class LocalizationService {
   }
 
   /**
-   * @description Switches the translation module (`'web'`, `'shop'`) and loads the current
+   * @description Switches the translation module (of a public area) and loads the current
    *   language of the new module. No-op when the module is already active.
    * @param module Backend translation module.
    */

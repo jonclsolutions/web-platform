@@ -11,7 +11,7 @@
 
 /**
  * Language of a public module (`languages/web`, `languages/shop`) - structurally identical to
- * LangMeta of the web settings, so both are interchangeable.
+ * LangMeta of the core settings page, so both are interchangeable.
  */
 export interface PageTitleLang {
   code: string;
@@ -22,11 +22,11 @@ export interface PageTitleLang {
 }
 
 /**
- * Area a page belongs to – also selects which language set is used and which module manages
- * it ('web' = web/edit-website, 'shop' = shop/edit-eshop, 'admin' = core/web-settings: one
- * shared title for the whole administration, uses the web languages).
+ * Area a page belongs to – also selects the language set and the module that manages it: the id
+ * of an application (its texts page, its languages) or 'admin' (core/settings: one shared title
+ * for the whole administration, in the languages of every application).
  */
-export type PageTitleArea = 'web' | 'shop' | 'admin';
+export type PageTitleArea = string;
 
 /** One public page and its browser tab title per language code. */
 export interface PageTitleRow {

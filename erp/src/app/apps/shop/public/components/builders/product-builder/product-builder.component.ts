@@ -29,7 +29,6 @@ import { BasePublicComponent } from '../../../../../../public/base-public.compon
 })
 export class ProductBuilderComponent extends BasePublicComponent {
   protected readonly translationKey = 'product_card';
-  protected override readonly translationModule = 'shop';
 
   /** The product data object containing metadata, prices, and image arrays */
   @Input() product: any;

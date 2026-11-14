@@ -63,7 +63,7 @@ export const CORE_NAV: AdminNavGroup[] = [
     key: 'core-overview', labelKey: 'nav_group_overview',
     items: [
       { path: 'welcome-page', permission: 'core-view-welcome-page', labelKey: 'nav_welcome', icon: 'home' },
-      { path: 'dashboard', permission: 'view-core', labelKey: 'nav_dashboard', titleKey: 'nav_core_dashboard', icon: 'home' },
+      { path: 'dashboard', permission: 'view-core', labelKey: 'nav_dashboard', titleKey: 'nav_core_dashboard', icon: 'bar-chart' },
       { path: 'calendar', permission: null, labelKey: 'nav_calendar', icon: 'calendar' },
       { path: 'apps', permission: null, labelKey: 'nav_apps', icon: 'layers' },
     ],
@@ -72,7 +72,7 @@ export const CORE_NAV: AdminNavGroup[] = [
     key: 'core-legal', labelKey: 'nav_group_legal',
     items: [
       { path: 'edit-legal', permission: 'core-legal-documents-view|core-legal-config-view', labelKey: 'nav_gdpr', icon: 'shield' },
-      { path: 'web-settings', permission: 'core-legal-config-view', labelKey: 'nav_company_info', icon: 'globe-settings' },
+      { path: 'settings', permission: 'core-legal-config-view', labelKey: 'nav_company_info', icon: 'globe-settings' },
       { path: 'external-links', permission: 'core-external-links-view', labelKey: 'nav_external_links', icon: 'external-link' },
     ],
   },
@@ -87,7 +87,7 @@ export const CORE_NAV: AdminNavGroup[] = [
   {
     key: 'core-system', labelKey: 'nav_group_system',
     items: [
-      { path: 'logs', permission: 'view-core', labelKey: 'nav_core_logs', icon: 'file-list' },
+      { path: 'logs', permission: 'view-core', labelKey: 'nav_core_logs', icon: 'file-lines' },
       { path: 'security-events', permission: 'core-security-view', labelKey: 'nav_security_events', icon: 'shield' },
     ],
   },

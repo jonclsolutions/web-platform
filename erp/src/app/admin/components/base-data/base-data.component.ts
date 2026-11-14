@@ -252,7 +252,7 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
    * backend CheckPermission middleware. Intended for templates that render their own
    * inline action buttons instead of going through TableBuilderComponent's `buttons`
    * Input (which has its own `isButtonVisible()`) - e.g. EditLegalComponent's inline
-   * edit/delete/add controls, or WebSettingsComponent's single-form Save button.
+   * edit/delete/add controls, or SettingsComponent's single-form Save button.
    * @param permission One permission key, or several separated by '|'.
    */
   public hasAnyPermission(permission: string): boolean {

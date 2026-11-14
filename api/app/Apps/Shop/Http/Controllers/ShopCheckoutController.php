@@ -189,7 +189,7 @@ class ShopCheckoutController extends Controller
             }
 
             // The buyer's token of the payment simulation (dev / test systems only, VT-16).
-            $meta = config('services.shop.payment_simulation') ? ['payment_token' => $order->paymentSimulationToken()] : [];
+            $meta = config('shop.payment_simulation') ? ['payment_token' => $order->paymentSimulationToken()] : [];
 
             return $this->respond(new ShopOrderResource($order), 201, $meta);
 
@@ -342,7 +342,7 @@ class ShopCheckoutController extends Controller
 
     /**
      * @description Simulates a payment gateway response (90 % success) - dev / test
-     *   systems only, see config `services.shop.payment_simulation` (off by default, never in
+     *   systems only, see config `shop.payment_simulation` (off by default, never in
      *   production). Needs the `payment_token` create-order gave the buyer (VT-16): an unknown
      *   order and a wrong token answer the same 404, so order ids cannot be probed.
      * @param Request $request {order_id, payment_token}.
@@ -350,7 +350,7 @@ class ShopCheckoutController extends Controller
      */
     public function simulatePayment(Request $request): JsonResponse
     {
-        if (!config('services.shop.payment_simulation')) {
+        if (!config('shop.payment_simulation')) {
             return response()->json(['message' => 'Not found.'], 404);
         }
 

@@ -40,7 +40,7 @@ import { hasApp } from '../../../apps.registry';
   standalone: true,
   imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, EmailTemplateEditorComponent, PageHelpComponent],
   templateUrl: './sales-orders.component.html',
-  styleUrls: ['../../../../admin/shared-styles/page.css', '../shared-styles/page.css'],
+  styleUrls: ['../../../../admin/shared-styles/page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SalesOrdersComponent extends BaseDataComponent<any> implements Core.OnInit {

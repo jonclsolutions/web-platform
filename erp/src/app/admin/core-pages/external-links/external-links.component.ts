@@ -37,7 +37,7 @@ import { PageHelpComponent } from '../../components/page-help/page-help.componen
   standalone: true,
   imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHelpComponent],
   templateUrl: './external-links.component.html',
-  styleUrls: ['../../shared-styles/page.css', '../shared-styles/page.css'],
+  styleUrls: ['../../shared-styles/page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ExternalLinksComponent extends BaseDataComponent<any> implements Core.OnInit {

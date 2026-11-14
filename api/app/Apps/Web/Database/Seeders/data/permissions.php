@@ -13,7 +13,7 @@
 return [
     ['permission_key' => 'web-view-web-logs', 'description' => 'View the log history (audit trail) of the web section', 'module' => 'web'],
     ['permission_key' => 'web-view-dashboard', 'description' => '[recommended: always on] View the dashboard of the web section (default page of the Web menu)', 'module' => 'web'],
-    ['permission_key' => 'view-web', 'description' => '[recommended: always on] Show the Web tab in the admin menu - without it the section cannot be opened', 'module' => 'core'],
+    ['permission_key' => 'view-web', 'description' => '[recommended: always on] Show the Web tab in the admin menu - without it the section cannot be opened', 'module' => 'web'],
     ['permission_key' => 'web-set-maintenance-mode', 'description' => 'Switch the web to maintenance mode (closed to the public)', 'module' => 'web'],
     ['permission_key' => 'web-sales-leads-view', 'description' => 'View sales leads (contacts of potential customers)', 'module' => 'web'],
     ['permission_key' => 'web-sales-leads-create', 'description' => 'Create a sales lead manually (internally by an administrator)', 'module' => 'web'],

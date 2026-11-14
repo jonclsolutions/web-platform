@@ -13,6 +13,7 @@
  */
 
 import { Routes } from '@angular/router';
+import { PROJECT_PORTAL_AUDIT_LOG } from './portal-logs/portal-logs.config';
 
 export const PROJECT_PORTAL_ADMIN_ROUTES: Routes = [
   { path: '', redirectTo: 'projects', pathMatch: 'full' },
@@ -22,5 +23,5 @@ export const PROJECT_PORTAL_ADMIN_ROUTES: Routes = [
   // (and its unsaved settings) alive while switching between them.
   { path: 'projects/:id', redirectTo: 'projects/:id/overview', pathMatch: 'full' },
   { path: 'projects/:id/:section', loadComponent: () => import('./project-detail/project-detail.component').then(m => m.ProjectDetailComponent), data: { help: 'projects', permission: 'web-projects-view' } },
-  { path: 'logs', loadComponent: () => import('./portal-logs/portal-logs.component').then(m => m.PortalLogsComponent), data: { help: 'project-portal-logs', permission: 'project-portal-view-logs' } },
+  { path: 'logs', loadComponent: () => import('../../../admin/components/audit-log-page/audit-log-page.component').then(m => m.AuditLogPageComponent), data: { help: 'project-portal-logs', permission: 'project-portal-view-logs', auditLog: PROJECT_PORTAL_AUDIT_LOG } },
 ];

@@ -26,7 +26,7 @@ import { filter, takeUntil } from 'rxjs/operators';
 import { LocalizationService, LangMeta } from '../../../../../shared/services/localization.service';
 import { PublicDataService } from '../../../../../shared/services/public-data.service';
 import { Observable } from 'rxjs';
-import * as Web from '../../../../../shared/imports/web-providers';
+import * as Web from '../../web-providers';
 import { hasApp } from '../../../../apps.registry';
 
 /**

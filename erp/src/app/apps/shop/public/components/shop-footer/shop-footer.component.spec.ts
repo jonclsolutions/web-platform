@@ -15,6 +15,7 @@ import { of, throwError } from 'rxjs';
 
 import { ShopFooterComponent } from './shop-footer.component';
 import { PublicPageContext, createPublicPageContext } from '../../../../../../testing/public-test-helpers';
+import { requiresApps } from '../../../../../../testing/requires-apps';
 
 describe('ShopFooterComponent', () => {
   let ctx: PublicPageContext;
@@ -40,6 +41,7 @@ describe('ShopFooterComponent', () => {
    * @output '© <year> Shop'; social [fb]; nav [Home, navigation.faq_full]; legal [legal.terms_of_service, Privacy]; icons /storage/card.svg, /storage/cash.svg.
    */
   it('builds the footer from site data and translations', () => {
+    requiresApps('web');
     create(of({ settings: { footer_text: '© {year} Shop' }, social_links: [{ id: 1, url: 'https://fb' }] }));
     expect(ctx.localization.setModule).toHaveBeenCalledWith('shop');
     expect(footer.siteSettings.footer_text).toBe(`© ${new Date().getFullYear()} Shop`);

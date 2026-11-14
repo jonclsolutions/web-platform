@@ -26,11 +26,12 @@ import { CoreDashboardComponent } from './core-pages/dashboard/dashboard.compone
 import { EditLegalComponent } from './core-pages/edit-legal/edit-legal.component';
 import { PersonalInfoComponent } from './core-pages/personal-info/personal-info.component';
 import { CalendarComponent } from './core-pages/calendar/calendar.component';
-import { WebSettingsComponent } from './core-pages/web-settings/web-settings.component';
+import { SettingsComponent } from './core-pages/settings/settings.component';
 import { ExternalLinksComponent } from './core-pages/external-links/external-links.component';
 import { EditRolesComponent } from './core-pages/edit-roles/edit-roles.component';
 import { AdministratorsComponent } from './core-pages/administrators/administrators.component';
-import { CoreLogsComponent } from './core-pages/logs/logs.component';
+import { AuditLogPageComponent } from './components/audit-log-page/audit-log-page.component';
+import { CORE_AUDIT_LOG } from './core-pages/logs/logs.config';
 import { WelcomePageComponent } from './core-pages/welcome-page/welcome-page.component';
 import { SecurityEventsComponent } from './core-pages/security-events/security-events.component';
 
@@ -96,13 +97,13 @@ export const ADMIN_ROUTES: Routes = [
           // Overview of the installed applications the user may open (no permission - the page
           // lists only the applications of the user's permissions).
           { path: 'apps', component: AppsComponent, data: { help: 'apps' } },
-          { path: 'web-settings', component: WebSettingsComponent, data: { help: 'web-settings', permission: 'core-legal-config-view' } },
+          { path: 'settings', component: SettingsComponent, data: { help: 'settings', permission: 'core-legal-config-view' } },
           { path: 'external-links', component: ExternalLinksComponent, data: { help: 'external-links', permission: 'core-external-links-view' } },
           // Restricted to the 'sysadmin' role regardless of the permission system (see sysadminGuard).
           { path: 'edit-roles', component: EditRolesComponent, data: { help: 'edit-roles' }, canActivate: [sysadminGuard] },
           { path: 'administrators', component: AdministratorsComponent, data: { help: 'administrators', permission: 'core-administrators-view' } },
           // System audit log (core/logs).
-          { path: 'logs', component: CoreLogsComponent, data: { help: 'core-logs', permission: 'view-core' } },
+          { path: 'logs', component: AuditLogPageComponent, data: { help: 'core-logs', permission: 'view-core', auditLog: CORE_AUDIT_LOG } },
           { path: 'security-events', component: SecurityEventsComponent, data: { help: 'security-events', permission: 'core-security-view' } },
         ]
       },

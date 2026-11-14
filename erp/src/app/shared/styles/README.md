@@ -40,14 +40,16 @@ src/
     ├── admin/
     │   ├── shared-styles/                  whole admin (core + every application, auth, layout, intranet)
     │   │   ├── theme.css                   admin look tokens (--accent, --text, --border …)
-    │   │   ├── page.css                    standard list page: toolbar, buttons, table header, banners
+    │   │   ├── page.css                    standard list page: toolbar, buttons, table header, banners,
+    │   │   │                               info banner, filter panel beside the table (≥ 1024 px)
     │   │   ├── dashboard.css               dashboard header bar          (core, shop, web dashboards)
-    │   │   ├── dashboard-cards.css         cards, KPI rows, charts       (core + web dashboards)
+    │   │   ├── dashboard-cards.css         cards, KPI rows, charts       (dashboard view)
     │   │   ├── dashboard-maintenance.css   maintenance switch            (shop + web dashboards)
-    │   │   ├── settings-page.css           site-settings editor          (edit-eshop + edit-website)
+    │   │   ├── settings-page.css           settings / translation editor (core settings, translation editor view)
     │   │   ├── welcome-page.css            greeting block                (core, shop, web welcome pages)
     │   │   └── welcome-links.css           link-card grid                (shop + web welcome pages)
-    │   ├── core-pages/shared-styles/page.css   list-page rules only core uses
+    │   ├── components/base-dashboard/dashboard-view.component.css   layout of every module dashboard
+    │   ├── components/translation-editor/translation-editor-view.component.css   language tabs
     │   ├── auth/shared-styles/
     │   │   ├── auth.css                    form controls of login, activation, reset
     │   │   └── auth-card.css               centred card of activation + reset
@@ -58,7 +60,6 @@ src/
     │   └── legal/legal-document.css        GDPR / TOS / cookies pages (web + e-shop)
     │
     └── apps/                               every application keeps its own shared sheets
-        ├── web/admin/shared-styles/page.css    list-page rules only the web admin uses
         ├── web/public/shared-styles/
         │   ├── theme.css                   public web look tokens (dark, violet)
         │   ├── content-page.css            .content-page / .content-page-hero frame
@@ -67,12 +68,10 @@ src/
         │   ├── form-fields.css             form field states (contact + job application)
         │   └── animations.css              fadeUp keyframes
         ├── shop/admin/shared-styles/
-        │   ├── page.css                    list-page rules only the e-shop admin uses
         │   └── list-page.css               orders + products toolbar / filter panel
         ├── shop/public/shared-styles/
         │   ├── theme.css                   e-shop look tokens
         │   └── quantity.css                quantity selector + buy buttons (cart + product detail)
-        └── project-portal/admin/shared-styles/page.css   list-page rules of the portal admin
 ```
 
 An application never uses a sheet of another application (the erp runners check it) - what two
@@ -88,12 +87,12 @@ The header of every shared file says what it contains and who uses it (`@descrip
 A component lists its sheets in `styleUrls`, **from the most general to its own file**:
 
 ```ts
-// apps/shop/admin/edit-eshop/edit-eshop.component.ts
+// admin/components/translation-editor/translation-editor-view.component.ts
 styleUrls: [
-  '../../../../admin/shared-styles/theme.css',         // 1. look tokens
-  '../../../../shared/styles/base.css',                // 2. shared base
-  '../../../../admin/shared-styles/settings-page.css', // 3. shared layout
-  './edit-eshop.component.css',                        // 4. own rules – always last
+  '../../shared-styles/theme.css',                     // 1. look tokens
+  '../../../shared/styles/base.css',                   // 2. shared base
+  '../../shared-styles/settings-page.css',             // 3. shared layout
+  './translation-editor-view.component.css',           // 4. own rules – always last
 ],
 ```
 
@@ -135,7 +134,7 @@ The app has three looks that use the **same token names with different values**:
 
 | Look | File | Used by |
 |---|---|---|
-| admin (light, zinc) | `admin/shared-styles/theme.css` | admin layout, auth pages, edit-roles, knowledge base, edit-eshop, edit-website, **public project portal** |
+| admin (light, zinc) | `admin/shared-styles/theme.css` | admin layout, auth pages, edit-roles, knowledge base, translation editor (texts of the web / e-shop), **public project portal** |
 | public web (dark, violet) | `apps/web/public/shared-styles/theme.css` | about, FAQ, references, services, jobs, job detail, order form, footer |
 | public e-shop (light, black) | `apps/shop/public/shared-styles/theme.css` | cart, catalog, checkout, product detail, header, footer, builders |
 
@@ -193,7 +192,7 @@ Rules for shared files:
 
 **New admin list page** (table + toolbar, like logs or coupons)
 ```ts
-styleUrls: ['../../shared-styles/page.css', '../shared-styles/page.css', './my-page.component.css'],
+styleUrls: ['../../../../admin/shared-styles/page.css', './my-page.component.css'],   // from apps/<app>/admin/<page>/
 ```
 Leave out `./my-page.component.css` if the page has no rules of its own – do not keep empty CSS files.
 

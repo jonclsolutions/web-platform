@@ -26,10 +26,12 @@ import { BaseMaintenanceComponent } from '../../../../public/shared/maintenance/
 })
 export class WebMaintenanceComponent extends BaseMaintenanceComponent {
   protected readonly translationKey = 'web_maintenance';
+  /** Outside the web layout - the texts of the web. */
+  protected override readonly translationModule = 'web';
   protected readonly activeUrl = '/home';
 
   /** @description Web status of the API. */
   protected isSectionActive(): Observable<boolean> {
-    return this.publicDataService.getWebStatus().pipe(map(res => !!res?.is_web_active));
+    return this.publicDataService.getFresh<{ is_web_active: boolean }>('web/public/status').pipe(map(res => !!res?.is_web_active));
   }
 }

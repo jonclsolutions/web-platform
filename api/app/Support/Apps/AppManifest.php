@@ -63,6 +63,17 @@ abstract class AppManifest
     }
 
     /**
+     * @description Configuration of the application (`config.php` in its folder), merged as the
+     *   config key of its id (`config('<id>.…')`, e.g. `config('shop.payment_simulation')`).
+     *   The id must therefore not be the name of a file of `config/`.
+     * @return string|null Null when the application has no configuration.
+     */
+    public function configFile(): ?string
+    {
+        return $this->existingPath('config.php');
+    }
+
+    /**
      * @description Migrations of the application (`Database/Migrations`).
      * @return string|null
      */

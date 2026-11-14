@@ -27,8 +27,8 @@ The solution is developed and operated in line with EU law (GDPR, ePrivacy).
 
 ```
 web-platform/
-├── api/                 Laravel API
-├── erp/                 Angular application (public web, shop, admin)
+├── api/                 Laravel API (core in app/, applications in app/Apps/<App>)
+├── erp/                 Angular application (core in src/app, applications in src/app/apps/<id>)
 ├── dev/                 everything of the LOCAL environment (used by the scripts below):
 │   ├── compose.yaml       services api, queue, scheduler, erp, db, mailpit, phpmyadmin
 │   ├── docker/Dockerfile  development image (PHP 8.5, Composer, Node.js, Chromium)
@@ -41,7 +41,9 @@ web-platform/
 │   ├── production.env.example  template of the production .env (copy to production.env)
 │   └── server/          server config shipped into the webroot (.htaccess, .user.ini, configure-server.sh)
 ├── docs/                project documentation, DOCS templates
+├── templates/app/       template + script of a new application (see its README)
 ├── tests/
+│   ├── module_removal/  check.sh – proves that an application can be removed
 │   ├── regression_tests/ manual regression tests (scripts + checklists)
 │   └── unit_tests/      runners for the erp (Karma) and api (PHPUnit) unit tests, see its README
 ├── init-workspace.sh    prepares a freshly cloned app for local development (repeatable)
@@ -52,6 +54,35 @@ web-platform/
 ├── temp/                (git-ignored) local scratch files – not backed up
 └── build/               (git-ignored) output of deploy/build.sh, wiped on every build
 ```
+
+---
+
+## Applications (modules)
+
+The platform is a **core** with **applications** plugged into it:
+
+| Part | API | Frontend | What |
+|---|---|---|---|
+| Core | `api/app` (outside `Apps/`) | `erp/src/app/{admin,core,public,shared}` | accounts, roles and permissions, settings and company details, legal documents and cookie consent, calendar, audit log, security monitoring, data retention, manual (KB), attachments, the shared admin pages (audit log, dashboard, translation editor, page titles) and public pages (legal, 404) |
+| Web | `api/app/Apps/Web` | `erp/src/app/apps/web` | public website, inquiries, leads, orders, job applications, texts and content of the website |
+| E-shop | `api/app/Apps/Shop` | `erp/src/app/apps/shop` | catalogue, cart and checkout, orders, customers, coupons, shipping and payment |
+| Project portal | `api/app/Apps/ProjectPortal` | `erp/src/app/apps/project-portal` | customer projects and their client portal |
+
+- **The core never depends on an application** – it reads them only from the registries
+  `api/config/apps.php` (manifests `AppManifest`: routes, migrations, views, permissions, logs,
+  retention, calendar, uploads, configuration `<App>/config.php` → `config('<id>.…')`) and
+  `erp/src/app/apps/apps.registry.ts` (manifests `AppManifest`: admin and public routes, sidebar,
+  tab, texts, public area). **An application never depends on another one** – it asks the registry
+  (`hasApp('shop')`). Both rules are tested (`ApplicationBoundariesTest`, the erp runner).
+- In the admin, the header has the **Core** tab and the **application switcher** (always naming
+  the current application); Core → *Applications* lists the applications the user may open.
+- **New application:** `templates/app/new-app.sh <id> "<Name>"` – see
+  [templates/app/README.md](templates/app/README.md).
+- **Removing an application:** delete its folders (`api/app/Apps/<App>`, `api/tests/Apps/<App>`,
+  `erp/src/app/apps/<id>`) and its lines in `api/config/apps.php`, `api/phpunit.xml` and
+  `apps.registry.ts`. `tests/module_removal/check.sh <id>` (or `all`) does it in a temporary copy
+  and runs `route:list`, the API tests, the production build and the erp unit tests without it.
+  The tables of a removed application stay in the database until dropped by hand.
 
 ---
 
@@ -211,7 +242,7 @@ With `APP_ENV=local` the seeders create:
 | e-mail | `sysadmin@sysadmin.sysadmin` (the domain `sysadmin.sysadmin` is allowed in the e-mail access policy) |
 | password | `123456Ab.` |
 | 2FA | always required for the sysadmin role – the code arrives in Mailpit, http://127.0.0.1:8025 |
-| test roles | `read-only-core`, `read-only-web`, `read-only-shop` (viewing only), `full-web-core`, `full-shop-core` (every permission of the module and of Core), `all-permissions` (every permission – an ordinary user, not the protected sysadmin) |
+| test roles | `read-only-core` and `read-only-<application>` (viewing only), `full-<application>-core` (every permission of the application and of Core), `all-permissions` (every permission – an ordinary user, not the protected sysadmin) – for the core and every application of `config/apps.php` |
 
 The account and roles exist **only locally** – production never gets an account with a known
 password (see [Deployment checklist](#deployment-checklist-monthly-release)).
@@ -460,6 +491,24 @@ The full step-by-step guide with explanations is in [deploy/HOW_TO_DEPLOY.md](de
    - public web, e-shop, admin login, sending an e-mail
    - `curl -I https://<domain>/laravel/.env` must return **403 or 404**, never 200
 
+### One-time steps of the November 2026 modular refactor (patches 0101–0104)
+
+Deploy the API and the frontend of the release together. Before the upload, let the queue finish
+(`php artisan queue:work --stop-when-empty`) - queued mails of the old release carry class names
+that no longer exist. Then, besides step 6 above:
+
+- `php artisan migrate --force` renames `web_attachments` → `core_attachments` and
+  `web_cookie_consents` → `legal_cookie_consents`, moves the tab permissions `view-web`,
+  `view-eshop`, `view-project-portal` to the module of their application and creates the log of
+  the project portal (the rows of the projects move there from `web_logs`);
+- `php artisan db:seed --force` adds the new permission keys (`view-project-portal`,
+  `project-portal-view-logs`);
+- the admin of the project portal moved to `/admin/project-portal/projects` - links to
+  `/admin/web/projects` in e-mails sent before are no longer valid; the web log is
+  `/admin/web/logs`, the core settings `/admin/core/settings`;
+- the sign-in page reads its texts from the admin translations (section `login`); the section
+  `login` of the web translations (`storage/app/public/translations/web/*.json`) is no longer used.
+
 ### One-time steps of the October 2026 fixes (findings-fixes 1–4)
 
 Run once on the first release that contains them (back up the database first):
@@ -542,7 +591,7 @@ the server with the local one. The checksum file does not need to be deployed.
 - The order form link of a lead is valid 30 days (`WebSalesLead::PUBLIC_TOKEN_TTL_DAYS`); every
   "generate link" in the admin starts the validity again, an expired link gets a new token.
 - Cookie consent decisions are recorded on the server as the proof of consent
-  (`web_cookie_consents`: random consent id, version, categories, time – no IP address).
+  (`legal_cookie_consents`: random consent id, version, categories, time – no IP address).
 - Production always runs with `APP_DEBUG` off and an HTTPS-only session cookie, whatever the
   `.env` says (`AppServiceProvider::enforceProductionSafety`); `deploy/build.sh --check` refuses
   such a `.env` before that.

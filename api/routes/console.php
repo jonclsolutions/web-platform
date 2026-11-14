@@ -79,7 +79,7 @@ Schedule::command('queue:prune-failed', ['--hours' => 720])
     ->runInBackground();
 
 /**
- * @description Daily deletion of uploaded files without a web_attachments row
+ * @description Daily deletion of uploaded files without a core_attachments row
  * (PruneOrphanFilesCommand).
  */
 Schedule::command(PruneOrphanFilesCommand::class)

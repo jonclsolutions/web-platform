@@ -10,11 +10,12 @@
  *              ONE area, each managed by its own module (route default `area`):
  *              - web   - web/page-titles   (web/edit-website, web-edit-website-view / -update),
  *              - shop  - shop/page-titles  (shop/edit-eshop, shop-edit-eshop-view / -update),
- *              - admin - legal/config/page-titles (core/web-settings, core-legal-config-view / -update).
+ *              - admin - legal/config/page-titles (core/settings, core-legal-config-view / -update).
  *              Removing a module from a branched application therefore removes its page
  *              titles with it. Public: map "area.page_key" => { lang: title } for the
  *              Angular PageTitleStrategy.
- * @dependencies PageTitle; CoreLog / WebLog / ShopLog (audit log of the area's module).
+ * @dependencies PageTitle; AppRegistry::logModel() (audit log of the area's application,
+ *   CoreLog for the admin area).
  */
 
 namespace App\Http\Controllers\Api\Legal;

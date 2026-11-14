@@ -8,7 +8,7 @@
  *   attempts, two-factor (OTP) step with countdown and resend limit, forgot-password modal,
  *   chooser of the accounts remembered in this browser and clearing secrets on destroy.
  * @dependencies
- * - src/testing/admin-test-helpers.ts (auth stub, public localization stub), TurnstileService (spy)
+ * - src/testing/admin-test-helpers.ts (auth stub, admin i18n stub), TurnstileService (spy)
  */
 
 import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
@@ -17,13 +17,10 @@ import { of, throwError } from 'rxjs';
 
 import { LoginComponent } from './login.component';
 import { TurnstileService } from '../../../core/services/turnstile.service';
-import {
-  AdminTestContext, PublicTestContext, createAdminTestContext, createPublicTestContext
-} from '../../../../testing/admin-test-helpers';
+import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 
 describe('LoginComponent', () => {
   let ctx: AdminTestContext;
-  let pub: PublicTestContext;
   let fixture: ComponentFixture<LoginComponent>;
   let component: LoginComponent;
   let router: Router;
@@ -33,12 +30,13 @@ describe('LoginComponent', () => {
     localStorage.removeItem('admin_current_module');
     ctx = createAdminTestContext({ loggedIn: false });
     ctx.auth.checkAuth.and.returnValue(of(false));
-    pub = createPublicTestContext({ login: { errors: { captcha_required: 'Confirm captcha', captcha_load: 'Captcha failed' } } });
+    const texts = { errors: { captcha_required: 'Confirm captcha', captcha_load: 'Captcha failed' } };
+    ctx.i18n.getMergedSection.and.callFake((section: string) => (section === 'login' ? texts : {}));
     turnstile = jasmine.createSpyObj<TurnstileService>('TurnstileService', ['render', 'reset', 'remove']);
     turnstile.render.and.returnValue(Promise.resolve('widget-1'));
     await TestBed.configureTestingModule({
       imports: [LoginComponent],
-      providers: [...ctx.providers, ...pub.providers, { provide: TurnstileService, useValue: turnstile }]
+      providers: [...ctx.providers, { provide: TurnstileService, useValue: turnstile }]
     }).compileComponents();
     router = TestBed.inject(Router);
     spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
@@ -50,13 +48,17 @@ describe('LoginComponent', () => {
   afterEach(() => localStorage.removeItem('admin_current_module'));
 
   /**
-   * @description The login texts come from the 'login' section of the WEB translations.
-   * @input  component init
-   * @output setModule('web'); t.errors.captcha_required = 'Confirm captcha'
+   * @description The login texts come from the admin translation section 'login' (no
+   *   application) and follow a switch of the admin language.
+   * @input  component init; translations$ emits again with other texts
+   * @output getMergedSection('login'); t.errors.captcha_required = 'Confirm captcha', then the new text
    */
-  it('reads the web "login" translations', () => {
-    expect(pub.localization.setModule).toHaveBeenCalledWith('web');
+  it('reads the admin "login" texts', () => {
+    expect(ctx.i18n.getMergedSection).toHaveBeenCalledWith('login');
     expect(component.t.errors.captcha_required).toBe('Confirm captcha');
+    ctx.i18n.getMergedSection.and.returnValue({ errors: { captcha_required: 'Bestätigen' } });
+    ctx.i18n.translations$.next({});
+    expect(component.t.errors.captcha_required).toBe('Bestätigen');
   });
 
   /**

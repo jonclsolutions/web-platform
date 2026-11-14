@@ -215,6 +215,12 @@ php artisan up                    # end of the maintenance from section 5
 `configure-server.sh` is **not** needed for a release (it is idempotent, but asks questions).
 Release notes may list extra one-time steps – see *One-time steps* in the README.
 
+A release that renames or moves PHP classes (e.g. the modular refactor of November 2026,
+applications in `app/Apps`) needs an **empty queue before the upload** – queued jobs and mails
+store their class names: `php artisan queue:work --stop-when-empty` on the old release, then
+upload. An application removed from the platform leaves its tables in the database; drop them by
+hand only after a backup.
+
 > The API and the Angular app of one release always go together (one package) – never deploy
 > only one of them.
 

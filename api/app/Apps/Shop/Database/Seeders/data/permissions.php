@@ -12,7 +12,7 @@
 
 return [
     ['permission_key' => 'shop-view-reports', 'description' => 'View e-shop reports and statistics', 'module' => 'shop'],
-    ['permission_key' => 'view-eshop', 'description' => '[recommended: always on] Show the E-shop tab in the admin menu - without it the section cannot be opened', 'module' => 'core'],
+    ['permission_key' => 'view-eshop', 'description' => '[recommended: always on] Show the E-shop tab in the admin menu - without it the section cannot be opened', 'module' => 'shop'],
     ['permission_key' => 'shop-view-dashboard', 'description' => '[recommended: always on] View the dashboard of the e-shop section (default page of the E-shop menu)', 'module' => 'shop'],
     ['permission_key' => 'shop-view-logs', 'description' => 'View the log history (audit trail) of the e-shop', 'module' => 'shop'],
     ['permission_key' => 'shop-set-maintenance-mode', 'description' => 'Switch the e-shop to maintenance mode (closed to customers)', 'module' => 'shop'],

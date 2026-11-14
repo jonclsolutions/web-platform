@@ -2,6 +2,8 @@
  * @file base-public.component.ts
  * @path src/app/public/base-public.component.ts
  * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Abstract base for all public-facing components.
  *   Handles translation subscription, optional site-settings loading,
  *   destroy$ cleanup, and getIconUrl — so subclasses only declare
@@ -11,8 +13,10 @@
  *   export class MyComponent extends BasePublicComponent {
  *     protected readonly translationKey = 'my_section';
  *     protected override readonly loadSiteSettings = true; // optional
- *     protected override readonly translationModule = 'shop'; // e-shop pages only
  *   }
+ *   The translation module is the one of the public area of the route (`publicArea` in the
+ *   route data of the layout of the application, public-area.ts); a page outside every layout
+ *   (e.g. a maintenance page) sets `translationModule` itself.
  *
  * @hooks
  *   onTranslationsLoaded(translations) — called after t is set; override
@@ -24,6 +28,8 @@
  * @note Components that already extend BaseDataComponent (e.g. JobItemComponent)
  *   cannot use this class due to single-inheritance. They must manage
  *   translations manually as before.
+ * @dependencies LocalizationService (texts), PublicDataService (site settings),
+ *   routePublicArea (translation module of the area).
  */
 
 import { Directive, inject, ChangeDetectorRef, OnInit, OnDestroy } from '@angular/core';
@@ -31,6 +37,7 @@ import { Subject, Observable } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LocalizationService } from '../shared/services/localization.service';
 import { PublicDataService } from '../shared/services/public-data.service';
+import { routePublicArea } from './public-area';
 @Directive()
 export abstract class BasePublicComponent implements OnInit, OnDestroy {
 
@@ -60,8 +67,9 @@ export abstract class BasePublicComponent implements OnInit, OnDestroy {
    */
   protected readonly loadSiteSettings: boolean = false;
 
-  /** Translation module this component reads (`translations/{module}/{lang}`). */
-  protected readonly translationModule: 'web' | 'shop' = 'web';
+  /** Translation module this component reads (`translations/{module}/{lang}`): the module of
+   *  the public area of the route; empty = no texts (outside every public area). */
+  protected readonly translationModule: string = routePublicArea()?.translationModule ?? '';
 
   // ── RxJS cleanup ─────────────────────────────────────────────
   protected destroy$ = new Subject<void>();
@@ -72,7 +80,9 @@ export abstract class BasePublicComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // 0. Make sure the right translation module is active (no-op if it already is)
-    this.localizationService.setModule(this.translationModule);
+    if (this.translationModule) {
+      this.localizationService.setModule(this.translationModule);
+    }
 
     // 1. Translation stream
     this.localizationService.currentTranslations$

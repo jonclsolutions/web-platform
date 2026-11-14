@@ -8,8 +8,8 @@
  * @created 2026
  * @description Test tables of the project portal (SQLite mirror of its migrations):
  *   projects, checkpoints, client accounts, sessions, threads and messages, sign-in codes,
- *   updates, approvals and templates. `lead_id` / `order_id` keep the foreign keys to the web
- *   tables of production (always NULL while the web is not installed).
+ *   updates, approvals and templates. `lead_id` / `order_id` get the foreign keys to the web
+ *   tables of production only while the web is installed (otherwise plain columns, always NULL).
  * @dependencies Tests\Support\TestSchema (audit log shape); run by TestSchema::create() while
  *   the application is in config/apps.php.
  */
@@ -54,8 +54,11 @@ final class ProjectPortalSchema
             $t->timestamps();
             $t->timestamp('deleted_at')->nullable();
             $t->foreign('assignee_id')->references('id')->on('users')->nullOnDelete();
-            $t->foreign('lead_id')->references('id')->on('web_sales_leads')->nullOnDelete();
-            $t->foreign('order_id')->references('id')->on('web_sales_orders')->nullOnDelete();
+            // The web tables exist only while the web application is installed (its schema runs first).
+            if (Schema::hasTable('web_sales_orders')) {
+                $t->foreign('lead_id')->references('id')->on('web_sales_leads')->nullOnDelete();
+                $t->foreign('order_id')->references('id')->on('web_sales_orders')->nullOnDelete();
+            }
         });
 
         Schema::create('web_project_checkpoints', function (Blueprint $t) {

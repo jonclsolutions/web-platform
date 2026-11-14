@@ -32,7 +32,7 @@ export const shopMaintenanceGuard = () => {
   }
 
   // 2. Validate shop activity status against the public API
-  return dataService.getShopStatus().pipe(
+  return dataService.getFresh<{ is_shop_active: boolean }>('shop/public/status').pipe(
     map(res => {
       // If the shop is inactive, redirect the user to the dedicated maintenance page
       if (!res.is_shop_active) {

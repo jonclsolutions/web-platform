@@ -18,6 +18,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 
 import { AdminLocalizationService } from './admin-localization.service';
 import { APPS } from '../../apps/apps.registry';
+import { requiresApps } from '../../../testing/requires-apps';
 
 const KEY = 'jsw_admin_language';
 
@@ -124,6 +125,7 @@ describe('AdminLocalizationService', () => {
    * @output admin-layout has both keys; sales-orders.x; console.error for the shop.
    */
   it('merges the texts of the applications', () => {
+    requiresApps('web', 'shop');
     const service = create();
     spyOn(console, 'error');
     http.expectOne('assets/i18n/admin/cz/cz.json').flush({ 'admin-layout': { module_core: 'Core' } });

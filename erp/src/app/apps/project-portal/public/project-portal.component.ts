@@ -31,6 +31,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, Subject, takeUntil, finalize, timer, switchMap, filter } from 'rxjs';
 import { PublicDataService } from '../../../shared/services/public-data.service';
+import { SKIP_ADMIN_AUTH_CONTEXT } from '../../../core/interceptors/skip-admin-auth';
 import { ApiEnvelope } from '../../../shared/interfaces/api-envelope';
 import { ProjectPortalLocalizationService } from './project-portal-localization.service';
 import { UploadRulesService } from '../../../shared/services/upload-rules.service';
@@ -854,17 +855,17 @@ updateThreadStatus(status: string): void {
 
   /** GET of a portal endpoint (the browser sends the session cookie). */
   private portalGet<T>(path: string): Observable<T> {
-    return this.publicDataService.get<T>(path);
+    return this.publicDataService.get<T>(path, undefined, undefined, SKIP_ADMIN_AUTH_CONTEXT);
   }
 
   /** GET of a portal endpoint keeping the envelope (`meta`, finding #6). */
   private portalGetWithMeta<T, M>(path: string): Observable<ApiEnvelope<T, M>> {
-    return this.publicDataService.getWithMeta<T, M>(path);
+    return this.publicDataService.getWithMeta<T, M>(path, undefined, undefined, SKIP_ADMIN_AUTH_CONTEXT);
   }
 
   /** POST to a portal endpoint (the browser sends the session cookie). */
   private portalPost<T>(path: string, body: any): Observable<T> {
-    return this.publicDataService.post<T>(path, body);
+    return this.publicDataService.post<T>(path, body, undefined, SKIP_ADMIN_AUTH_CONTEXT);
   }
 
   private clearSession(): void {

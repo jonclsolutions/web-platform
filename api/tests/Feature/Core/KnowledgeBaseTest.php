@@ -170,8 +170,9 @@ class KnowledgeBaseTest extends TestCase
      *   manual for the same readers: the same permission as the route, null for a page without one,
      *   'sysadmin' for a sysadminGuard page.
      * @input The real admin routes of the core and the applications, the merged structure.json.
-     * @output 34 pages (core 12, web 8, e-shop 12, project portal 2), each with an existing manual
-     *   page of its permission; no manual page used twice.
+     * @output The 12 pages of the core and at least one page of every application whose admin
+     *   route file exists, each with an existing manual page of its permission; no manual page
+     *   used twice.
      */
     public function test_every_admin_page_links_its_manual_page(): void
     {
@@ -215,7 +216,12 @@ class KnowledgeBaseTest extends TestCase
             }
         }
 
-        $this->assertCount(34, $checked);
+        $perModule = array_count_values(array_map(fn (string $route) => strtok($route, '/'), array_keys($checked)));
+        $this->assertSame(12, $perModule['core'] ?? 0, 'core pages');
+        foreach (glob(base_path('../erp/src/app/apps/*/admin/*-admin.routes.ts')) as $file) {
+            $app = basename(dirname($file, 2));
+            $this->assertGreaterThan(0, $perModule[$app] ?? 0, "{$app} pages");
+        }
         $this->assertSame(count($checked), count(array_unique($checked)));
     }
 }

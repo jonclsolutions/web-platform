@@ -15,6 +15,7 @@ import { PROJECT_PORTAL_PUBLIC_ROUTES } from './public/project-portal-public.rou
 export const PROJECT_PORTAL_APP: AppManifest = {
   id: 'project-portal',
   icon: 'folder',
+  color: 'rose',
   nameKey: 'module_project-portal',
   descriptionKey: 'app_description_project_portal',
   tabPermission: 'view-project-portal',

@@ -10,7 +10,7 @@
  *   create / edit with validation, delete / bulk delete / restore / trash and the import
  *   (template, dry run, commit).
  * @dependencies
- * - Tests\TestCase, Tests\Apps\Shop\Support\ShopFixtures, Tests\Apps\Web\Support\WebFixtures (importFile); Storage fake.
+ * - Tests\TestCase, Tests\Apps\Shop\Support\ShopFixtures (with CommonFixtures: importFile); Storage fake.
  */
 
 namespace Tests\Apps\Shop\Feature;
@@ -19,7 +19,7 @@ use App\Models\Core\CoreImportBatch;
 use App\Apps\Shop\Models\ShopSupplier;
 use Illuminate\Support\Facades\Storage;
 use Tests\Apps\Shop\Support\ShopFixtures;
-use Tests\Apps\Web\Support\WebFixtures;
+use Tests\Support\CommonFixtures;
 use Tests\TestCase;
 
 /**
@@ -28,7 +28,7 @@ use Tests\TestCase;
 class SupplierTest extends TestCase
 {
     use ShopFixtures;
-    use WebFixtures;
+    use CommonFixtures;
 
     /** @var string[] All supplier permissions. */
     private const ALL = ['shop-suppliers-view', 'shop-suppliers-create', 'shop-suppliers-update', 'shop-suppliers-delete'];

@@ -42,7 +42,7 @@
         }
       ]
     },
-    "web-business-logs": {
+    "web-logs": {
       "navLabel": "Business logy",
       "header": "Web - Business logy",
       "sections": [

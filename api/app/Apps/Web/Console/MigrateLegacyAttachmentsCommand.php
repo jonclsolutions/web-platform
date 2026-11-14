@@ -6,11 +6,11 @@
  * @author JS
  * @created 2026
  * @description One-time GDPR migration (open finding #31): CVs of job applications
- *   (`web_job_applications.cv_path`) uploaded before the `web_attachments` refactor lie on the PUBLIC disk - with the `storage`
+ *   (`web_job_applications.cv_path`) uploaded before the attachments refactor lie on the PUBLIC disk - with the `storage`
  *   symlink they are reachable by anyone who knows / guesses the URL (`/storage/cv_files/…`),
  *   without a signed link, and no admin screen lists them any more. This command moves every
  *   such file to the PRIVATE disk (`web/cv_files/…` like new uploads), creates
- *   its `web_attachments` row (signed download / preview as for every other attachment) and
+ *   its `core_attachments` row (signed download / preview as for every other attachment) and
  *   clears the legacy columns.
  * @note Run once after the deploy: `php artisan attachments:migrate-legacy --dry-run`, then without
  *   `--dry-run`. Idempotent: rows already migrated have empty legacy columns. A missing file is
@@ -35,7 +35,7 @@ class MigrateLegacyAttachmentsCommand extends Command
     protected $signature = 'attachments:migrate-legacy {--dry-run : Only report what would be moved}';
 
     /** @var string */
-    protected $description = 'Moves legacy CVs from the public to the private disk and registers them as web_attachments (GDPR).';
+    protected $description = 'Moves legacy CVs from the public to the private disk and registers them as attachments (GDPR).';
 
     /**
      * @var array<int, array{model: class-string<Model>, path: string, name: string, folder: string}>

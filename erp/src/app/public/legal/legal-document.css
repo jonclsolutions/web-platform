@@ -6,8 +6,8 @@
     @created: 2026
     @description: Shared look for all legal document pages (GDPR, TOS, Cookies, ...) of every
         public application: the three legal page components use it as their stylesheet
-        (styleUrl), so a change here applies to all of them. Dark look of the public web by
-        default, the light look of the e-shop with the host class `legal--light`.
+        (styleUrl), so a change here applies to all of them. Dark look by default, the light
+        look (public area with the light theme) with the host class `legal--light`.
     @dependencies: none (defines its own spacing and colour tokens on :host)
 */
 
@@ -19,7 +19,7 @@
   --section-y:  96px;   /* page bottom spacing */
   --hero-top:   180px;  /* navbar height + air above page title */
 
-  /* ── Colours: dark look of the public web ── */
+  /* ── Colours: dark look (default) ── */
   --legal-heading: var(--color-white);
   --legal-text:    #a0a0b0;
   --legal-body:    #8a8a9c;
@@ -34,8 +34,8 @@
 
 /*
     @module: Light legal look
-    @description: Colours of the legal pages in the light layout of the e-shop.
-    @usage: host class `legal--light` (set by the component when the route belongs to the e-shop)
+    @description: Colours of the legal pages in a public area with the light theme.
+    @usage: host class `legal--light` (set by the component when the public area of the route is light)
 */
 :host(.legal--light) {
   --hero-top:      64px;

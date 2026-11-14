@@ -42,14 +42,14 @@ describe('WebMaintenanceComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/home']);
 
     (router.navigate as jasmine.Spy).calls.reset();
-    ctx.publicData.getWebStatus.and.returnValue(of({ is_web_active: false }));
+    ctx.publicData.getFresh.and.returnValue(of({ is_web_active: false }));
     const fixture = TestBed.createComponent(WebMaintenanceComponent);
     fixture.detectChanges();
     expect(router.navigate).not.toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('help@x.cz');
 
     spyOn(console, 'error');
-    ctx.publicData.getWebStatus.and.returnValue(throwError(() => new Error('down')));
+    ctx.publicData.getFresh.and.returnValue(throwError(() => new Error('down')));
     fixture.componentInstance.checkStatusAndRedirect();
     expect(console.error).toHaveBeenCalled();
   });
@@ -66,7 +66,7 @@ describe('WebMaintenanceComponent', () => {
    *   setLanguage('en') + 'EN'; dropdown with one language; no .maintenance-lang.
    */
   it('shows the translated page with the language dropdown', () => {
-    ctx.publicData.getWebStatus.and.returnValue(of({ is_web_active: false }));
+    ctx.publicData.getFresh.and.returnValue(of({ is_web_active: false }));
     const fixture = TestBed.createComponent(WebMaintenanceComponent);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
@@ -77,7 +77,7 @@ describe('WebMaintenanceComponent', () => {
     expect(page.activeLang).toEqual(STUB_LANGUAGES[0]);
     const retry = el.querySelector('button.btn-home') as HTMLButtonElement;
     expect(retry.textContent).toContain('Znovu');
-    ctx.publicData.getWebStatus.and.returnValue(of({ is_web_active: true }));
+    ctx.publicData.getFresh.and.returnValue(of({ is_web_active: true }));
     retry.click();
     expect(router.navigate).toHaveBeenCalledWith(['/home']);
     expect(el.querySelector('.maintenance-admin-link')?.getAttribute('title')).toBe('Admin');
@@ -122,17 +122,17 @@ describe('WebMaintenanceComponent', () => {
     const value = (result: any) => { let v: any; (result as Observable<any>).subscribe(r => (v = r)); return v; };
     const url = spyOnProperty(router, 'url', 'get').and.returnValue('/web-maintenance');
     expect(run()).toBeTrue();
-    expect(ctx.publicData.getWebStatus).not.toHaveBeenCalled();
+    expect(ctx.publicData.getFresh).not.toHaveBeenCalled();
 
     url.and.returnValue('/');
-    ctx.publicData.getWebStatus.and.returnValue(of({ is_web_active: false }));
+    ctx.publicData.getFresh.and.returnValue(of({ is_web_active: false }));
     const tree = value(run());
     expect(tree instanceof UrlTree).toBeTrue();
     expect(router.serializeUrl(tree)).toBe('/web-maintenance');
 
-    ctx.publicData.getWebStatus.and.returnValue(of({ is_web_active: true }));
+    ctx.publicData.getFresh.and.returnValue(of({ is_web_active: true }));
     expect(value(run())).toBeTrue();
-    ctx.publicData.getWebStatus.and.returnValue(throwError(() => new Error('x')));
+    ctx.publicData.getFresh.and.returnValue(throwError(() => new Error('x')));
     expect(value(run())).toBeTrue();
   });
 });

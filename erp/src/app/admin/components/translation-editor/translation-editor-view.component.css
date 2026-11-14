@@ -1,0 +1,27 @@
+/*
+    @file: translation-editor-view.component.css
+    @path: /src/app/admin/components/translation-editor/translation-editor-view.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Language tabs of the translation editor page; the rest of the page is
+        admin/shared-styles/settings-page.css (.ew-*).
+    @dependencies: admin/shared-styles/theme.css, shared/styles/base.css, admin/shared-styles/settings-page.css
+*/
+
+/*
+    @module: Language tabs
+    @description: Hover of a language tab and a focus ring in the application colour instead of the
+        native outline of the browser.
+    @usage: .ew-lang-tab
+*/
+.ew-lang-tab:hover {
+  color: var(--text);
+  background: var(--surface-2);
+  border-color: var(--text-dim);
+}
+
+.ew-lang-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.18);
+}

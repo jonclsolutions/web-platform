@@ -35,7 +35,6 @@ import { BasePublicComponent } from '../../../../public/base-public.component';
 })
 export class CheckoutComponent extends BasePublicComponent implements OnInit {
   protected readonly translationKey = 'checkout';
-  protected override readonly translationModule = 'shop';
 
   currentStep = signal(1); // 1 = Form entry, 5 = Success
   isProcessing = signal(false);

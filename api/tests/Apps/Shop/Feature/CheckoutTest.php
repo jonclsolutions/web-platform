@@ -47,7 +47,7 @@ class CheckoutTest extends TestCase
         parent::setUp();
         $this->payment = $this->paymentMethod();
         $this->shipping = $this->shippingMethod();
-        config(['services.shop.payment_simulation' => true]);
+        config(['shop.payment_simulation' => true]);
     }
 
     /**
@@ -295,7 +295,7 @@ class CheckoutTest extends TestCase
         $p = $this->product();
         $created = $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 1]]))->assertCreated();
         $this->assertSame(ShopOrder::find($created->json('data.id'))->paymentSimulationToken(), $created->json('meta.payment_token'));
-        config(['services.shop.payment_simulation' => false]);
+        config(['shop.payment_simulation' => false]);
         $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 1]]))->assertCreated()->assertJsonMissingPath('meta');
 
         $paid = $this->order();
@@ -308,7 +308,7 @@ class CheckoutTest extends TestCase
         $pay($paid)->assertStatus(404);
         $this->assertSame('pending', $paid->fresh()->payment_status);
 
-        config(['services.shop.payment_simulation' => true]);
+        config(['shop.payment_simulation' => true]);
         Lottery::alwaysWin();
         $pay($paid, $declined->paymentSimulationToken())->assertStatus(404)->assertExactJson(['message' => 'Not found.']);
         $this->postJson('/api/shop/checkout/simulate-payment', ['order_id' => 999999, 'payment_token' => str_repeat('a', 64)])
@@ -333,7 +333,7 @@ class CheckoutTest extends TestCase
     /**
      * @description The simulation is on only when SHOP_PAYMENT_SIMULATION is set explicitly, and
      *   never in production (VT-16).
-     * @input config/services.php with APP_ENV local / production × SHOP_PAYMENT_SIMULATION unset / true.
+     * @input app/Apps/Shop/config.php with APP_ENV local / production × SHOP_PAYMENT_SIMULATION unset / true.
      * @output local: false / true; production: false / false.
      */
     public function test_payment_simulation_default(): void
@@ -343,7 +343,7 @@ class CheckoutTest extends TestCase
             $_ENV['APP_ENV'] = $_SERVER['APP_ENV'] = $env;
             $flag === null ? putenv('SHOP_PAYMENT_SIMULATION') : putenv("SHOP_PAYMENT_SIMULATION={$flag}");
             unset($_ENV['SHOP_PAYMENT_SIMULATION'], $_SERVER['SHOP_PAYMENT_SIMULATION']);
-            $value = (require base_path('config/services.php'))['shop']['payment_simulation'];
+            $value = (require base_path('app/Apps/Shop/config.php'))['payment_simulation'];
             putenv('APP_ENV=testing');
             putenv('SHOP_PAYMENT_SIMULATION');
             $_ENV['APP_ENV'] = $_SERVER['APP_ENV'] = 'testing';

@@ -20,7 +20,7 @@ import { Route } from '@angular/router';
 
 import { ADMIN_ROUTES } from './admin-routing.module';
 import { CORE_MODULE, adminModules, navOf, pagesOf, tabPermissionOf } from './admin-navigation.config';
-import { APPS } from '../apps/apps.registry';
+import { APPS, hasApp } from '../apps/apps.registry';
 import { sysadminGuard } from '../core/auth/guards/sysadmin.guard';
 
 describe('admin navigation config', () => {
@@ -34,13 +34,12 @@ describe('admin navigation config', () => {
    * @description The modules are the core and the applications of the registry; each has a tab
    *   permission and a sidebar; the admin mounts every application below its id.
    * @input adminModules(); the route table.
-   * @output ['core', 'web', 'shop', 'project-portal']; tab permissions; a route `<id>` with the
-   *   route table of the manifest for every application.
+   * @output ['core', …ids of the registry]; view-core + the tab permission of every manifest; a
+   *   route `<id>` with the route table of the manifest for every application.
    */
   it('mounts the core and every application', () => {
     expect(adminModules()).toEqual([CORE_MODULE, ...APPS.map(app => app.id)]);
-    expect(adminModules()).toEqual(['core', 'web', 'shop', 'project-portal']);
-    expect(adminModules().map(tabPermissionOf)).toEqual(['view-core', 'view-web', 'view-eshop', 'view-project-portal']);
+    expect(adminModules().map(tabPermissionOf)).toEqual(['view-core', ...APPS.map(app => app.tabPermission)]);
     for (const app of APPS) {
       const route = layoutChildren().find(r => r.path === app.id);
       expect(route?.children).withContext(app.id).toBe(app.adminRoutes);
@@ -76,10 +75,10 @@ describe('admin navigation config', () => {
 
   /**
    * @description Every page route of a table is in the sidebar exactly once; the section keys are
-   *   unique over all modules; the core, the web and the e-shop start with their welcome page.
+   *   unique over all modules; the core and every application with a welcome page start with it.
    * @input The route tables and sidebars of every module.
    * @output Sorted route paths = sorted sidebar paths (no duplicates); unique section keys; first
-   *   page 'welcome-page' for core / web / shop.
+   *   page 'welcome-page' for the core and the applications that have one.
    */
   it('lists every page route once, welcome page first', () => {
     for (const module of adminModules()) {
@@ -90,7 +89,7 @@ describe('admin navigation config', () => {
     }
     const keys = adminModules().flatMap(module => navOf(module).map(group => group.key));
     expect(new Set(keys).size).toBe(keys.length);
-    for (const module of ['core', 'web', 'shop']) {
+    for (const module of adminModules().filter(m => pagesOf(m).some(page => page.path === 'welcome-page'))) {
       expect(pagesOf(module)[0].path).withContext(module).toBe('welcome-page');
     }
   });
@@ -99,8 +98,8 @@ describe('admin navigation config', () => {
    * @description A sub-page (path with '/') belongs to a listed page and requires the same
    *   permission (e.g. project-portal/projects/:id/:section = project-portal/projects).
    * @input Routes with '/' in the path of every module.
-   * @output The parent path is a configured page with the same permission; the project sub-pages
-   *   and the templates exist below the project portal.
+   * @output The parent path is a configured page with the same permission; with the project
+   *   portal installed, its project sub-pages and the templates exist.
    */
   it('protects detail sub-pages like their parent page', () => {
     const detailPaths: string[] = [];
@@ -113,8 +112,10 @@ describe('admin navigation config', () => {
         detailPaths.push(`${module}/${route.path}`);
       }
     }
-    expect(detailPaths).toContain('project-portal/projects/:id/:section');
-    expect(detailPaths).toContain('project-portal/projects/templates');
+    if (hasApp('project-portal')) {
+      expect(detailPaths).toContain('project-portal/projects/:id/:section');
+      expect(detailPaths).toContain('project-portal/projects/templates');
+    }
   });
 
   /**

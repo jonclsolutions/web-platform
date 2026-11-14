@@ -128,13 +128,13 @@ class TranslationTest extends TestCase
     /**
      * @description The languages of all applications together (core pages such as the legal
      *   documents): one entry per code, the first one wins, with icon URLs; public.
-     * @input languages.json: cz (web, no module = web), EN (web), en (shop), de (shop, with icon).
+     * @input languages.json: cz (web), EN (web), en (shop), de (shop, with icon).
      * @output GET /api/languages: codes [cz, EN, de], the first `en` entry (web), de iconUrl set.
      */
     public function test_languages_of_all_applications(): void
     {
         $this->languages([
-            ['code' => 'cz', 'name' => 'Čeština', 'active' => true],
+            ['code' => 'cz', 'name' => 'Čeština', 'active' => true, 'module' => 'web'],
             ['code' => 'EN', 'name' => 'English (web)', 'active' => true, 'module' => 'web'],
             ['code' => 'en', 'name' => 'English (shop)', 'active' => true, 'module' => 'shop'],
             ['code' => 'de', 'name' => 'Deutsch', 'active' => false, 'module' => 'shop', 'icon_path' => 'translation_images/de.png'],
@@ -194,38 +194,41 @@ class TranslationTest extends TestCase
     }
 
     /**
-     * @description Language lists: without languages.json the defaults belong to 'web'; with a
-     *   file each module gets only its entries (entries without module = web) with an icon URL
-     *   instead of the stored path.
-     * @input No folder: POST shop [en] (creates translations/languages.json with the web defaults);
-     *        no file: GET web / shop; file with web cz (icon), shop en, legacy entry de: GET web / shop.
-     * @output web [cz, en] / shop []; web [cz with iconUrl, de] / shop [en]; no icon_path in the answer.
+     * @description Language lists: a module without stored languages has the defaults (cz, en);
+     *   with a file each module gets only its entries (an entry without a module belongs to none)
+     *   with an icon URL instead of the stored path.
+     * @input No folder: POST shop [en] (creates translations/languages.json with the shop list);
+     *        no file: GET web / shop; file with web cz (icon), shop en, entry de without module:
+     *        GET web / shop / sales (no entry).
+     * @output only [en, shop] stored; web [cz, en] / shop [cz, en]; web [cz with iconUrl] /
+     *   shop [en] / sales [cz, en]; no icon_path in the answer.
      */
     public function test_get_languages(): void
     {
         $this->signIn($this->userWith(self::EDITOR));
         $this->assertFalse(File::isDirectory($this->file('')));
         $this->postJson('/api/languages/shop', ['languages' => json_encode([['code' => 'en', 'name' => 'English']])])->assertNoContent();
-        // The defaults (web) are kept next to the new shop list in the newly created folder.
-        $this->assertSame([['cz', 'web'], ['en', 'web'], ['en', 'shop']], array_map(
-            fn ($l) => [$l['code'], $l['module'] ?? 'web'],
+        // Only the list of the shop is stored - the other modules keep their defaults.
+        $this->assertSame([['en', 'shop']], array_map(
+            fn ($l) => [$l['code'], $l['module']],
             json_decode(File::get($this->file('languages.json')), true)
         ));
         File::deleteDirectory($this->file(''));
 
         $this->getJson('/api/languages/web')->assertOk()->assertJsonPath('data.*.code', ['cz', 'en']);
-        $this->getJson('/api/languages/shop')->assertOk()->assertJsonPath('data', []);
+        $this->getJson('/api/languages/shop')->assertOk()->assertJsonPath('data.*.code', ['cz', 'en']);
 
         $this->languages([
             ['code' => 'cz', 'name' => 'Čeština', 'module' => 'web', 'icon_path' => 'translation_images/web/cz.png'],
             ['code' => 'en', 'name' => 'English', 'module' => 'shop', 'icon_path' => null],
             ['code' => 'de', 'name' => 'Deutsch'],
         ]);
-        $web = $this->getJson('/api/languages/web')->assertOk()->assertJsonPath('data.*.code', ['cz', 'de'])->json('data');
+        $web = $this->getJson('/api/languages/web')->assertOk()->assertJsonPath('data.*.code', ['cz'])->json('data');
         $this->assertStringEndsWith('/storage/translation_images/web/cz.png', $web[0]['iconUrl']);
-        $this->assertNull($web[1]['iconUrl']);
         $this->assertArrayNotHasKey('icon_path', $web[0]);
-        $this->getJson('/api/languages/shop')->assertJsonPath('data.*.code', ['en']);
+        $shop = $this->getJson('/api/languages/shop')->assertJsonPath('data.*.code', ['en'])->json('data');
+        $this->assertNull($shop[0]['iconUrl']);
+        $this->getJson('/api/languages/sales')->assertJsonPath('data.*.code', ['cz', 'en']);
     }
 
     /**

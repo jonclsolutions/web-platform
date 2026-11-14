@@ -4,53 +4,45 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Central administrative dashboard for the "Core" module - system-wide
- * settings and resources shared across the Web and Shop modules (user accounts, roles &
- * permissions, legal documents, external links, system-level audit logs). Gated behind
- * `core-view-dashboard` permission.
+ * @description Dashboard of the core - the resources the core manages for every application
+ * (user accounts, roles & permissions, legal documents, external links, the system audit log).
  *
  * @dependencies
  * - BaseDashboardComponent: stat tiles, hero, comparison bars, activity feed, icons, refresh.
- * - HasPermissionDirective: Gates the "Recent system events" section on `view-core`.
+ * - DashboardViewComponent: the layout.
  * - PermissionService (inherited): decides which stat / nav / activity requests are sent at all.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
 
-import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import {
   BaseDashboardComponent, DashboardNavSection, DashboardStatDef
 } from '../../components/base-dashboard/base-dashboard.component';
-import { PageHelpComponent } from '../../components/page-help/page-help.component';
+import { DashboardViewComponent } from '../../components/base-dashboard/dashboard-view.component';
 
 /**
  * @description Serves as the sensitive system-configuration overview for administrators
  * with Core access. Aggregates counts from every resource owned by the Core module and
  * offers one-click navigation into each management screen.
- * @note The loading and rendering logic is shared with the web dashboard
- * (BaseDashboardComponent); every aggregated piece is gated by `PermissionService` /
- * `isSysadmin()`.
+ * @note The loading and rendering logic is shared with the dashboards of the applications
+ * (BaseDashboardComponent, DashboardViewComponent); every aggregated piece is gated by
+ * `PermissionService` / `isSysadmin()`.
  */
 @Component({
   selector: 'app-core-dashboard',
   standalone: true,
-  imports: [RouterModule, CommonModule, HasPermissionDirective, PageHelpComponent],
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['../../shared-styles/dashboard.css', '../../shared-styles/dashboard-cards.css', './dashboard.component.css'],
+  imports: [DashboardViewComponent],
+  template: '<app-dashboard-view [d]="this"></app-dashboard-view>',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CoreDashboardComponent extends BaseDashboardComponent {
 
   protected override translationSection: string = 'core-dashboard';
-  public override t(key: string): string {
-    return this.i18n.getValue(`core-dashboard.${key}`);
-  }
 
   protected readonly logsEndpoint = 'core/logs';
-  /** Permission key gating the `core/logs` GET in api.php (`CheckPermission` middleware). */
-  protected readonly logsPermission = 'view-core';
+  /** Permission key gating the `core/logs` GET (`CheckPermission` middleware). */
+  readonly logsPermission = 'view-core';
+  readonly logsRoute = '/admin/core/logs';
 
   /**
    * Stat cards of the dashboard - only the items whose `isAllowed()` returns true are requested.
@@ -121,11 +113,11 @@ export class CoreDashboardComponent extends BaseDashboardComponent {
       isAllowed: () => this.permissionService.hasPermission(this.logsPermission),
     },
     {
-      titleKey: 'nav_web_settings_title',
+      titleKey: 'nav_settings_title',
       icon: 'settings',
-      route: '/admin/core/web-settings',
-      descriptionKey: 'nav_web_settings_desc',
-      // WebSettingsComponent calls legal/config/* (SiteConfigurationController).
+      route: '/admin/core/settings',
+      descriptionKey: 'nav_settings_desc',
+      // SettingsComponent calls legal/config/* (SiteConfigurationController).
       isAllowed: () => this.permissionService.hasPermission('core-legal-config-view'),
     },
   ];

@@ -7,7 +7,7 @@
  * @description Unit tests of CartComponent: quantity buttons (min 1, stock cap, unknown item), removal
  *   after confirmation, net total, checkout navigation and the EUR price format; renders the items.
  * @dependencies
- * - createPublicPageContext (module shop); real CartService (localStorage cleared); ConfirmDialogService spy.
+ * - createPublicPageContext (public area of the e-shop); real CartService (localStorage cleared); ConfirmDialogService spy.
  */
 
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flushMicrotasks } from '@angular/core/testing';
@@ -17,6 +17,7 @@ import { CartComponent } from './cart.component';
 import { CartService } from '../components/services/cart.service';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
 import { PublicPageContext, createPublicPageContext } from '../../../../../testing/public-test-helpers';
+import { SHOP_PUBLIC_AREA } from '../shop-public.routes';
 
 describe('CartComponent', () => {
   let ctx: PublicPageContext;
@@ -28,7 +29,7 @@ describe('CartComponent', () => {
   /** Creates the page with a cart of one mug (12.10 EUR incl. 21 % VAT, stock 3, quantity 2). */
   function create(): void {
     localStorage.removeItem('shop_cart');
-    ctx = createPublicPageContext({ translations: { cart: { confirm_remove_title: 'Remove?', confirm_remove_text: 'Sure?', confirm_remove_confirm: 'Remove', confirm_remove_cancel: 'Keep' } } });
+    ctx = createPublicPageContext({ area: SHOP_PUBLIC_AREA, translations: { cart: { confirm_remove_title: 'Remove?', confirm_remove_text: 'Sure?', confirm_remove_confirm: 'Remove', confirm_remove_cancel: 'Keep' } } });
     confirm = jasmine.createSpyObj('ConfirmDialogService', ['open']);
     TestBed.configureTestingModule({ imports: [CartComponent], providers: [...ctx.providers, { provide: ConfirmDialogService, useValue: confirm }] });
     cart = TestBed.inject(CartService);

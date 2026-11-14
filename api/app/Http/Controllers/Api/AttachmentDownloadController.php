@@ -10,7 +10,7 @@
  *              original human-readable file name from the owning DB record.
  *              The route takes ONE wildcard `{path}` - module paths contain slashes
  *              (`web/raw_request_commissions/...`).
- *              Files are resolved from the polymorphic `web_attachments` table (CoreAttachment),
+ *              Files are resolved from the polymorphic `core_attachments` table (CoreAttachment),
  *              looked up by `path`, disk per row (`$attachment->disk`, private by default).
  * @security The files are uploaded by the public (inquiries, orders, portal threads) and the API
  *              runs on the same origin as the admin, so a file the browser renders as a page

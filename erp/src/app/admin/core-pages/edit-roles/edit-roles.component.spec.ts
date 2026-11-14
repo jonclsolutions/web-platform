@@ -74,7 +74,8 @@ describe('EditRolesComponent', () => {
   /**
    * @description Permission keys are grouped by module and resource; actions go view → create → update → delete; "general" last.
    * @input  6 permissions (web news ×3, web about, view-web, core administrators)
-   * @output modules ['web', 'core']; web resources ['About', 'News', general]; News items view, create, delete
+   * @output modules ['web', 'core']; web resources ['About', 'News', general]; News items view, create, delete;
+   *   the name of any module is its key module_<module>
    */
   it('groups permissions by module and resource', () => {
     component.ngOnInit();
@@ -83,7 +84,7 @@ describe('EditRolesComponent', () => {
     expect(web.moduleLabel).toBe('edit-roles.module_web');
     expect(web.resources.map(r => r.resourceLabel)).toEqual(['About', 'News', 'edit-roles.general_resource_label']);
     expect(web.resources[1].items.map(p => p.permission_key)).toEqual(['web-news-view', 'web-news-create', 'web-news-delete']);
-    expect(component.moduleLabel('unknown')).toBe('unknown');
+    expect(component.moduleLabel('project-portal')).toBe('edit-roles.module_project-portal');
   });
 
   /**

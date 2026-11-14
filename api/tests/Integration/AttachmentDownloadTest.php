@@ -7,7 +7,7 @@
  * @author JS
  * @created 2026
  * @description Feature tests of the attachment download / preview (AttachmentDownloadController):
- *   only signed, unexpired URLs work; files of web_attachments (any disk) are served under their
+ *   only signed, unexpired URLs work; files of core_attachments (any disk) are served under their
  *   original name; legacy public files (CVs) are no longer served and the
  *   command `attachments:migrate-legacy` moves them to the private disk (finding #31).
  * @dependencies
@@ -73,7 +73,7 @@ class AttachmentDownloadTest extends TestCase
     }
 
     /**
-     * @description web_attachments: download (attachment) and preview (inline) under the original
+     * @description core_attachments: download (attachment) and preview (inline) under the original
      *   name from the record's disk; a missing file or unknown path is 404.
      * @input Attachment 'Offer 2026.pdf' on private disk; public-disk attachment without name;
      *        attachment row whose file is gone; unknown path.
@@ -81,7 +81,7 @@ class AttachmentDownloadTest extends TestCase
      *   ASCII fallback name and the UTF-8 name (RFC 6266), Content-Type application/pdf;
      *   public file under its base name; 404; 404.
      */
-    public function test_web_attachments(): void
+    public function test_core_attachments(): void
     {
         $owner = $this->rawRequest();
         $attachment = $this->attach($owner, 'web/x/abc.pdf');
@@ -158,7 +158,7 @@ class AttachmentDownloadTest extends TestCase
 
     /**
      * @description GDPR (finding #31): legacy single-file paths on the public disk are not served
-     *   any more, even with a valid signature - only web_attachments are.
+     *   any more, even with a valid signature - only core_attachments are.
      * @input Job application with cv_files/a.pdf on the public disk; signed download / view.
      * @output 404 for both.
      */
@@ -173,7 +173,7 @@ class AttachmentDownloadTest extends TestCase
 
     /**
      * @description `attachments:migrate-legacy` moves legacy CVs to the private
-     *   disk as web_attachments (also of trashed records); --dry-run changes nothing; a missing file
+     *   disk as core_attachments (also of trashed records); --dry-run changes nothing; a missing file
      *   only clears the columns; a second run finds nothing; the migrated file is served signed.
      * @input Trashed application cv_files/a.pdf 'Eva CV.pdf'; application web/cv_files/b.pdf without name;
      *        application with cv_files/none.pdf (no file); dry-run, run, run.
@@ -218,7 +218,7 @@ class AttachmentDownloadTest extends TestCase
     /**
      * @description A file that cannot be registered is reported, the command fails and the public
      *   file and its legacy columns stay untouched (nothing lost).
-     * @input Job application with cv_files/x.pdf; web_attachments INSERT fails.
+     * @input Job application with cv_files/x.pdf; core_attachments INSERT fails.
      * @output Exit code 1, 'failed 1'; public file kept, no private copy left; cv_path unchanged.
      */
     public function test_migrate_legacy_command_failure(): void
@@ -226,7 +226,7 @@ class AttachmentDownloadTest extends TestCase
         Storage::disk('public')->put('cv_files/x.pdf', 'x');
         $application = $this->jobApplication();
         $application->forceFill(['cv_path' => 'cv_files/x.pdf'])->save();
-        $this->failOn('web_attachments', 'INSERT');
+        $this->failOn('core_attachments', 'INSERT');
 
         $this->artisan('attachments:migrate-legacy')->expectsOutputToContain('failed 1.')->assertFailed();
         Storage::disk('public')->assertExists('cv_files/x.pdf');

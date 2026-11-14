@@ -10,7 +10,7 @@ import { UploadRulesService } from '../../../../shared/services/upload-rules.ser
 import { UploadRule, isAttachmentRejection } from '../../../../shared/utils/upload-rules';
 import { publicFormErrorKey } from '../../../../shared/utils/public-form-errors';
 import { switchMap } from 'rxjs';
-import * as Web from '../../../../shared/imports/web-providers';
+import * as Web from '../web-providers';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 
 @Component({

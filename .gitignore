@@ -26,3 +26,5 @@ temp.txt
 /temp/
 # Former name of the scratch folder (before 2026-10-31) - renamed to temp/ by init-workspace.sh
 /.temp/
+# Temporary copies of tests/module_removal/check.sh (deleted after each run unless --keep)
+/tests/module_removal/.work/

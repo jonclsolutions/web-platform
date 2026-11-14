@@ -4,52 +4,18 @@
  * @path app/Apps/Web/Models/WebLog.php
  * @project JS web-platform
  * @author JS
- * @created 2025
- * @description Model representing web module audit logs.
+ * @created 2026
+ * @description Audit log of the web application (web_logs): inquiries, leads, orders, job applications,
+ *   texts and content of the website.
+ * @dependencies AuditLog (columns, casts, author).
  */
 
 namespace App\Apps\Web\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\User;
+use App\Models\Core\AuditLog;
 
-/**
- * @description Tracks administrative and system events within the web module.
- * * @property int $id Unique identifier.
- * @property array $context_data JSON object containing event-specific metadata.
- */
-class WebLog extends Model
+final class WebLog extends AuditLog
 {
-
-    /**
-     * @var bool Indicates if the model should be timestamped.
-     */
-    public $timestamps = false;
-
-    /**
-     * @var array<int, string> The attributes that are mass assignable.
-     */
-    protected $fillable = [
-        'origin', 'event_type', 'module', 'description', 
-        'affected_entity_type', 'affected_entity_id', 'user_id', 
-        'context_data', 'user_id_plain', 'user_plain'
-    ];
-
-    /**
-     * @var array<string, string> The attributes that should be cast to native types.
-     */
-    protected $casts = [
-        'created_at' => 'datetime',
-        'context_data' => 'array',
-    ];
-
-    /**
-     * Get the user who triggered the log event.
-     * * @return BelongsTo
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
+    /** @var string Table of the log. */
+    protected $table = 'web_logs';
 }
