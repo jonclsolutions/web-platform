@@ -1,0 +1,31 @@
+<!--
+    @file: legal-document-sections.component.html
+    @path: src/app/public/legal/legal-document-sections/legal-document-sections.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Sections of a legal document with their subsections and bullet lists.
+-->
+<div class="legal-sections">
+  @for (section of sections; track section.id) {
+    <section class="legal-section">
+      <h2>{{ section.heading }}</h2>
+      <div [innerHTML]="section.content"></div>
+      @for (sub of section.subsections ?? []; track sub.id) {
+        <div class="legal-subsection">
+          <h3>{{ sub.heading }}</h3>
+          @if (sub.text) {
+            <p>{{ sub.text }}</p>
+          }
+          @if (sub.list?.length) {
+            <ul>
+              @for (bullet of sub.list; track bullet) {
+                <li [innerHTML]="bullet"></li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </section>
+  }
+</div>

@@ -1,6 +1,27 @@
 {
   "pages": [
     {
+      "id": "sales-leads",
+      "group": "project-portal",
+      "order": 12,
+      "permission": "project-portal-sales-leads-view",
+      "devNote": "SalesLeadsComponent (apps/project-portal/admin/sales-leads), route 'project-portal/sales-leads', API project-portal/sales_leads (SalesLeadController, tabulka project_portal_sales_leads), permission 'project-portal-sales-leads-view' (úpravy -update, odkaz na formulář POST …/{id}/generate-link). Veřejně: GET project-portal/public/sales-leads/{token} (předvyplnění formuláře, 404/410). Kalendář: ProjectPortalAgendaSource (lead_follow_up, lead_form_expiry, leads_without_contact). Retence sales_leads (ProjectPortalRetentionSource)."
+    },
+    {
+      "id": "sales-orders",
+      "group": "project-portal",
+      "order": 13,
+      "permission": "project-portal-sales-orders-view",
+      "devNote": "SalesOrdersComponent (apps/project-portal/admin/sales-orders), route 'project-portal/sales-orders', API project-portal/sales_orders (SalesOrderController, tabulka project_portal_sales_orders, přílohy morph 'sales_order', složka web/sales_orders), permission 'project-portal-sales-orders-view'; e-mail GET/PUT project-portal/sales_orders/email-template (project_portal_settings, SalesOrderEmailTemplate, SalesOrderReceivedMail). Veřejný formulář OrderFormComponent (apps/project-portal/public/order-form), adresa /projects/order/:token (stará /order_form/:token přesměruje), POST project-portal/public/sales-orders (public-form limit + PublicFormGuard). Řádková akce Projekt otevře project-portal/projects?order_id= (projekt zakázky, nebo nový s předvyplněnou zakázkou). Připomínka orders_without_project."
+    },
+    {
+      "id": "project-portal-settings",
+      "group": "project-portal",
+      "order": 37,
+      "permission": "project-portal-settings-view",
+      "devNote": "ProjectPortalSettingsComponent (apps/project-portal/admin/portal-settings) s PageTitlesEditorComponent jádra, route 'project-portal/settings', API GET/PUT project-portal/page-titles (PageTitleController, area 'project-portal'), permission 'project-portal-settings-view' / '-update'."
+    },
+    {
       "id": "projects",
       "group": "project-portal",
       "order": 14,

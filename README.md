@@ -64,9 +64,9 @@ The platform is a **core** with **applications** plugged into it:
 | Part | API | Frontend | What |
 |---|---|---|---|
 | Core | `api/app` (outside `Apps/`) | `erp/src/app/{admin,core,public,shared}` | accounts, roles and permissions, settings and company details, legal documents and cookie consent, calendar, audit log, security monitoring, data retention, manual (KB), attachments, the shared admin pages (audit log, dashboard, translation editor, page titles) and public pages (legal, 404) |
-| Web | `api/app/Apps/Web` | `erp/src/app/apps/web` | public website, inquiries, leads, orders, job applications, texts and content of the website |
+| Web | `api/app/Apps/Web` | `erp/src/app/apps/web` | public website, inquiries, job applications, texts and content of the website |
 | E-shop | `api/app/Apps/Shop` | `erp/src/app/apps/shop` | catalogue, cart and checkout, orders, customers, coupons, shipping and payment |
-| Project portal | `api/app/Apps/ProjectPortal` | `erp/src/app/apps/project-portal` | customer projects and their client portal |
+| Project portal | `api/app/Apps/ProjectPortal` | `erp/src/app/apps/project-portal` | sales leads, orders with the public order form, customer projects and their client portal |
 
 - **The core never depends on an application** – it reads them only from the registries
   `api/config/apps.php` (manifests `AppManifest`: routes, migrations, views, permissions, logs,
@@ -491,7 +491,7 @@ The full step-by-step guide with explanations is in [deploy/HOW_TO_DEPLOY.md](de
    - public web, e-shop, admin login, sending an e-mail
    - `curl -I https://<domain>/laravel/.env` must return **403 or 404**, never 200
 
-### One-time steps of the November 2026 modular refactor (patches 0101–0104)
+### One-time steps of the November 2026 modular refactor (patches 0101–0105)
 
 Deploy the API and the frontend of the release together. Before the upload, let the queue finish
 (`php artisan queue:work --stop-when-empty`) - queued mails of the old release carry class names
@@ -507,7 +507,17 @@ that no longer exist. Then, besides step 6 above:
   `/admin/web/projects` in e-mails sent before are no longer valid; the web log is
   `/admin/web/logs`, the core settings `/admin/core/settings`;
 - the sign-in page reads its texts from the admin translations (section `login`); the section
-  `login` of the web translations (`storage/app/public/translations/web/*.json`) is no longer used.
+  `login` of the web translations (`storage/app/public/translations/web/*.json`) is no longer used;
+- (0105) sales leads and orders belong to the project portal: `php artisan migrate --force` renames
+  `web_sales_leads` / `web_sales_orders` → `project_portal_sales_leads` / `project_portal_sales_orders`,
+  moves the order e-mail template into `project_portal_settings`, renames the permissions
+  `web-sales-*` → `project-portal-sales-*` (roles keep them) and moves their log rows and the
+  browser titles of the order form and of the portal; `php artisan db:seed --force` adds
+  `project-portal-settings-view` / `-update`. Admin pages: `/admin/project-portal/sales-leads`,
+  `/admin/project-portal/sales-orders`, `/admin/project-portal/settings`. The order form is a page
+  of the portal (`/projects/order/<token>`, links `/order_form/<token>` sent before redirect);
+  its texts are in the portal translations, the section `order_form` of the web translations is
+  no longer used.
 
 ### One-time steps of the October 2026 fixes (findings-fixes 1–4)
 
@@ -583,12 +593,12 @@ the server with the local one. The checksum file does not need to be deployed.
 - Retention of personal data is enforced by scheduled clean-up jobs – keep the production
   scheduler cron running:
   - `security:purge-events` (security events, period in Security events), `imports:purge-stale`;
-  - `retention:purge` (03:45) – job applications (default 6 months), inquiries, leads and tickets
-    (2 years), web orders and projects (10 years), cookie consent records (3 years): records not
+  - `retention:purge` (03:45) – job applications (default 6 months), inquiries and sales leads
+    (2 years), orders and projects (10 years), cookie consent records (3 years): records not
     changed for longer than their period are deleted for good with their attachments and files,
     also from the trash; expired portal sessions always. Periods (or "off") and an immediate run:
-    admin → Web settings → Data retention. E-shop orders / customers are not deleted (accounting).
-- The order form link of a lead is valid 30 days (`WebSalesLead::PUBLIC_TOKEN_TTL_DAYS`); every
+    admin → Core → Settings → Data retention. E-shop orders / customers are not deleted (accounting).
+- The order form link of a lead is valid 30 days (`SalesLead::PUBLIC_TOKEN_TTL_DAYS`); every
   "generate link" in the admin starts the validity again, an expired link gets a new token.
 - Cookie consent decisions are recorded on the server as the proof of consent
   (`legal_cookie_consents`: random consent id, version, categories, time – no IP address).

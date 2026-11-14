@@ -65,7 +65,8 @@ describe('AdminModulesService', () => {
 
     ctx.permissions.granted = new Set(['view-project-portal', 'project-portal-view-logs', 'web-projects-view']);
     expect(service.landingUrl('project-portal')).toBe('/admin/project-portal/projects');
-    expect(service.isGroupVisible(navOf('project-portal')[0])).toBeTrue();
+    expect(service.isGroupVisible(navOf('project-portal').find(group => group.key === 'project-portal-projects')!)).toBeTrue();
+    expect(service.isGroupVisible(navOf('project-portal').find(group => group.key === 'project-portal-business')!)).toBeFalse();
 
     ctx.permissions.granted = new Set();
     ctx.auth.session.role = 'sysadmin';

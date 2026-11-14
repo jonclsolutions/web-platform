@@ -11,28 +11,7 @@
         collapses on desktop and slides in on mobile, and the content of the picked section.
 -->
 <ng-template #langSwitcher>
-  <div class="pp-lang-switcher">
-    <button type="button" class="pp-header-btn pp-lang-btn" [title]="t('language_switcher_title')" [attr.aria-label]="t('language_switcher_title')"
-            aria-haspopup="menu" [attr.aria-expanded]="isLangMenuOpen" (click)="toggleLangMenu()">
-      @if (currentLanguageMeta?.icon) {
-        <img [src]="currentLanguageMeta!.icon" [alt]="currentLanguageMeta!.code" class="pp-lang-btn-flag">
-      }
-      <svg class="pp-lang-chevron" [class.pp-lang-chevron-open]="isLangMenuOpen" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <polyline points="6 9 12 15 18 9"/>
-      </svg>
-    </button>
-    @if (isLangMenuOpen) {
-      <div class="pp-lang-menu-backdrop" (click)="closeLangMenu()"></div>
-      <div class="pp-lang-menu" role="menu">
-        @for (lang of portalI18n.availableLanguages; track lang.code) {
-          <button type="button" role="menuitem" class="pp-lang-menu-item" [class.pp-lang-menu-item-active]="lang.code === portalI18n.getCurrentLanguage()" (click)="selectLanguage(lang.code)">
-            <img [src]="lang.icon" [alt]="lang.code" class="pp-lang-flag-img">
-            <span>{{ lang.name }}</span>
-          </button>
-        }
-      </div>
-    }
-  </div>
+  <app-portal-language-switcher [label]="t('language_switcher_title')"></app-portal-language-switcher>
 </ng-template>
 
 <!-- Icons of the menu sections (one place, used by the menu and the section titles). -->

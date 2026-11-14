@@ -17,8 +17,7 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * @description Stores the public web's global availability state (maintenance mode),
  * the message shown to visitors while it is disabled, and the editable per-language
- * confirmation e-mail templates of the inquiries (raw_request_email_*) and of the orders
- * (sales_order_email_*, VT-15).
+ * confirmation e-mail template of the inquiries (raw_request_email_*, VT-15).
  *
  * @property bool $is_web_active Whether the public web is enabled.
  * @property string|null $web_maintenance_message Message displayed to visitors when disabled.
@@ -44,11 +43,6 @@ class WebSiteSetting extends Model
         'raw_request_email_outro_i18n',
         'raw_request_email_labels_i18n',
         'raw_request_email_subject_i18n',
-        'sales_order_email_subject_i18n',
-        'sales_order_email_title_i18n',
-        'sales_order_email_intro_i18n',
-        'sales_order_email_outro_i18n',
-        'sales_order_email_labels_i18n',
     ];
 
     /**
@@ -61,10 +55,5 @@ class WebSiteSetting extends Model
         'raw_request_email_outro_i18n'   => 'array',
         'raw_request_email_labels_i18n'  => 'array',
         'raw_request_email_subject_i18n' => 'array',
-        'sales_order_email_subject_i18n' => 'array',
-        'sales_order_email_title_i18n'   => 'array',
-        'sales_order_email_intro_i18n'   => 'array',
-        'sales_order_email_outro_i18n'   => 'array',
-        'sales_order_email_labels_i18n'  => 'array',
     ];
 }

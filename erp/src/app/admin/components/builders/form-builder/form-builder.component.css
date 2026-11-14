@@ -6,20 +6,6 @@
     @created: 2025
     @description: Styles of the form builder component.
 */
-.form-container {
-  --mfu-surface-2: var(--color-zinc-100);
-  --mfu-border-mid: var(--color-zinc-300);
-  --mfu-accent: var(--color-zinc-900);
-  --mfu-accent-dim: var(--color-zinc-100);
-  --mfu-accent-ring: rgba(24, 24, 27, 0.08);
-  --mfu-text: var(--color-zinc-900);
-  --mfu-text-muted: var(--color-zinc-500);
-  --mfu-text-dim: var(--color-zinc-400);
-  --mfu-error: var(--color-rose-700);
-  --mfu-error-dim: var(--color-rose-50);
-  --mfu-error-border: var(--color-rose-200);
-  --mfu-radius: 10px;
-}
 .popup-overlay {
   position: fixed;
   top: 0; left: 0;

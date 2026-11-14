@@ -4,7 +4,7 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Styles of the contact component - also used by the order form (order-form.component.ts), so both forms look the same.
+    @description: Styles of the contact component (split layout, fields, consents, success panel).
 */
 
 :host {

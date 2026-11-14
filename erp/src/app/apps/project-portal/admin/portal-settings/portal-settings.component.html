@@ -1,0 +1,26 @@
+<!--
+    @file: portal-settings.component.html
+    @path: src/app/apps/project-portal/admin/portal-settings/portal-settings.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Page "Portal settings": header with the help button and the editor of the browser
+        tab titles of the public pages of the portal.
+-->
+<div class="pp-settings">
+  <div class="pp-settings-header">
+    <div>
+      <h1 class="pp-settings-title">{{ t('header') }}</h1>
+      <span class="pp-settings-subtitle">{{ t('subtitle') }}</span>
+    </div>
+    <app-page-help></app-page-help>
+  </div>
+
+  <app-page-titles-editor
+    area="project-portal"
+    endpoint="project-portal/page-titles"
+    updatePermission="project-portal-settings-update"
+    [labelSection]="section"
+    (dirtyChange)="titlesDirty = $event">
+  </app-page-titles-editor>
+</div>

@@ -129,10 +129,11 @@ off). PHP coverage is line based: the report shows **lines** (executable lines) 
   administration + authentication: login, 2FA, password reset, activation, users, roles,
   permissions, security monitoring, e-mail access policy, external links, audit log), **Web**
   (`api/app/Apps/Web`: public forms, site settings, FAQ / jobs / references, raw requests,
-  sales leads / orders, job applications, imports, web log), **Shop** (`api/app/Apps/Shop`:
+  job applications, imports, web log), **Shop** (`api/app/Apps/Shop`:
   storefront, checkout, payment simulation, catalogue, orders, customers, coupons, shipping /
   payment methods, supplier import, shop log, maintenance), **ProjectPortal**
-  (`api/app/Apps/ProjectPortal`: customer projects, client portal, templates, portal log), and
+  (`api/app/Apps/ProjectPortal`: sales leads, orders and the order form, customer projects,
+  client portal, templates, settings, portal log), and
   **Other** = every file of `api/app` that is in none of them.
   `run_integration.sh` and `run_all_api.sh` measure all of `api/app`.
 - The runner writes a temporary copy of `api/phpunit.xml` whose `<source>` contains only the

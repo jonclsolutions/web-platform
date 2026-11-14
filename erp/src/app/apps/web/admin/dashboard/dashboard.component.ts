@@ -62,8 +62,6 @@ export class DashboardComponent extends BaseDashboardComponent {
    */
   protected readonly statDefs: DashboardStatDef[] = [
     { key: 'jobApps', isAllowed: () => this.can('web-job-applications-view'), labelKey: 'stat_job_apps_label', icon: 'file', endpoint: 'web/job_applications?per_page=1' },
-    { key: 'leads', isAllowed: () => this.can('web-sales-leads-view'), labelKey: 'stat_leads_label', icon: 'briefcase', endpoint: 'web/sales_leads?per_page=1' },
-    { key: 'salesOrders', isAllowed: () => this.can('web-sales-orders-view'), labelKey: 'stat_sales_orders_label', icon: 'inbox', endpoint: 'web/sales_orders?per_page=1' },
     { key: 'rawRequests', isAllowed: () => this.can('web-user-requests-view'), labelKey: 'stat_raw_requests_label', icon: 'mail', endpoint: 'web/raw_request_commissions?per_page=1' },
     { key: 'webLogs', isAllowed: () => this.can(this.logsPermission), labelKey: 'stat_web_logs_label', icon: 'logs', endpoint: 'web/logs?per_page=1' },
   ];
@@ -78,8 +76,6 @@ export class DashboardComponent extends BaseDashboardComponent {
   readonly navSections: DashboardNavSection[] = [
     { titleKey: 'nav_website_title', icon: 'globe', route: '/admin/web/edit-website', descriptionKey: 'nav_website_desc', isAllowed: () => this.can('web-edit-website-view') },
     { titleKey: 'nav_requests_title', icon: 'mail', route: '/admin/web/user-request', descriptionKey: 'nav_requests_desc', isAllowed: () => this.can('web-user-requests-view') },
-    { titleKey: 'nav_sales_orders_title', icon: 'inbox', route: '/admin/web/sales-orders', descriptionKey: 'nav_sales_orders_desc', isAllowed: () => this.can('web-sales-orders-view') },
-    { titleKey: 'nav_leads_title', icon: 'briefcase', route: '/admin/web/sales-leads', descriptionKey: 'nav_leads_desc', isAllowed: () => this.can('web-sales-leads-view') },
     { titleKey: 'nav_job_apps_title', icon: 'file', route: '/admin/web/job-applications', descriptionKey: 'nav_job_apps_desc', isAllowed: () => this.can('web-job-applications-view') },
     { titleKey: 'nav_web_logs_title', icon: 'logs', route: '/admin/web/logs', descriptionKey: 'nav_web_logs_desc', isAllowed: () => this.can(this.logsPermission) },
   ];

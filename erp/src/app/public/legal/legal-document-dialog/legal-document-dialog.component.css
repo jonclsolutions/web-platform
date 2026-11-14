@@ -1,0 +1,75 @@
+/*
+    @file: legal-document-dialog.component.css
+    @path: src/app/public/legal/legal-document-dialog/legal-document-dialog.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Modal window of a legal document in the light look: dimmed backdrop, centred
+        window (full screen on a phone) with a fixed header and a scrolling body.
+    @dependencies: admin/shared-styles/theme.css (global colour tokens)
+*/
+
+/*
+    @module: Legal document dialog
+    @description: Backdrop, window, header with the close button, body with the date and the
+        sections (colours of the sections through the --legal-* properties), loading spinner.
+    @usage: :host > .ldd-backdrop + .ldd-window > .ldd-header (.ldd-title, .ldd-close) + .ldd-body
+*/
+:host {
+  --legal-heading: var(--color-black);
+  --legal-body:    #4a4a4a;
+  --legal-strong:  var(--color-black);
+  --legal-em:      #555555;
+  --legal-link:    var(--color-black);
+  --legal-link-hover: #555555;
+  --legal-line:    #e5e5e5;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.ldd-backdrop { position: absolute; inset: 0; background: rgba(24, 24, 27, 0.45); }
+.ldd-window {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 760px;
+  max-height: 100%;
+  background: var(--color-white);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(24, 24, 27, 0.25);
+  overflow: hidden;
+}
+.ldd-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--legal-line);
+}
+.ldd-title { margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--legal-heading); }
+.ldd-close {
+  display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; flex-shrink: 0;
+  border: 1px solid var(--legal-line); border-radius: 999px; background: var(--color-white); color: var(--legal-body); cursor: pointer;
+}
+.ldd-close:hover { background: var(--color-zinc-100); color: var(--legal-heading); }
+.ldd-close:focus-visible { outline: 2px solid var(--legal-heading); outline-offset: 2px; }
+.ldd-body { padding: 4px 24px 24px; overflow-y: auto; }
+.ldd-updated { margin: 16px 0 0; font-size: 0.8rem; color: var(--legal-em); }
+.ldd-state { margin: 24px 0; color: var(--legal-body); }
+.ldd-spinner {
+  width: 28px; height: 28px; margin: 40px auto; border: 3px solid var(--legal-line);
+  border-top-color: var(--legal-heading); border-radius: 50%; animation: ldd-spin 0.8s linear infinite;
+}
+@keyframes ldd-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 600px) {
+  :host { padding: 0; }
+  .ldd-window { max-height: 100%; height: 100%; border-radius: 0; }
+  .ldd-body { padding: 4px 16px 20px; }
+}

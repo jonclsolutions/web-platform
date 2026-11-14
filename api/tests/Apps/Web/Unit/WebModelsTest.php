@@ -25,19 +25,19 @@ class WebModelsTest extends TestCase
     use WebFixtures;
 
     /**
-     * @description Relations resolve to the owning / owned records.
-     * @input Lead of user U with an order; an attachment of the order.
-     * @output lead → user / orders, attachment → its owner (morph).
+     * @description The attachments of the web records resolve to their owners (morph aliases of
+     *   WebApp::morphMap()).
+     * @input Raw request and job application, one attachment each.
+     * @output attachment → its owner; owner → its attachments.
      */
     public function test_relations(): void
     {
         Storage::fake('private');
-        $owner = $this->user();
-        $lead = $this->lead(['user_id' => $owner->id]);
-        $order = $this->salesOrder(['lead_id' => $lead->id]);
+        $request = $this->rawRequest();
+        $application = $this->jobApplication();
 
-        $this->assertTrue($lead->user->is($owner));
-        $this->assertTrue($lead->orders->sole()->is($order));
-        $this->assertTrue($this->attach($order)->attachable->is($order));
+        $this->assertTrue($this->attach($request)->attachable->is($request));
+        $this->assertTrue($this->attach($application)->attachable->is($application));
+        $this->assertSame(1, $request->attachments()->count());
     }
 }

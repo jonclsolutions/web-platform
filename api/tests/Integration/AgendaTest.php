@@ -23,9 +23,9 @@ use App\Models\Core\CoreSecurityEvent;
 use App\Apps\Shop\Models\ShopCoupon;
 use App\Apps\Web\Models\WebJobApplication;
 use App\Apps\ProjectPortal\Models\Project;
+use App\Apps\ProjectPortal\Models\SalesLead;
+use App\Apps\ProjectPortal\Models\SalesOrder;
 use App\Apps\Web\Models\WebRawRequestCommission;
-use App\Apps\Web\Models\WebSalesLead;
-use App\Apps\Web\Models\WebSalesOrder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Tests\Apps\Shop\Support\ShopFixtures;
@@ -54,15 +54,15 @@ class AgendaTest extends TestCase
             'valid_from' => '2026-11-20 00:00:00', 'valid_until' => '2026-11-30 23:59:59']);
         ShopCoupon::forceCreate(['code' => 'OFF', 'discount_type' => 'percent', 'discount_value' => 10, 'applies_to' => 'all', 'is_active' => false,
             'valid_until' => '2026-11-15 00:00:00']);
-        $order = WebSalesOrder::forceCreate(['client_name' => 'Acme']);
-        WebSalesOrder::forceCreate(['client_name' => 'Beta']);
+        $order = SalesOrder::forceCreate(['client_name' => 'Acme']);
+        SalesOrder::forceCreate(['client_name' => 'Beta']);
         $this->project('Portal', '2026-11-05', 'development', $order->id);
         $this->project('Done', '2026-11-18', 'finished');
         $this->project('Later', '2027-01-10', 'new');
-        WebSalesLead::forceCreate(['salesman_name' => 'S', 'subject_name' => 'Lead A', 'source_channel' => 'web', 'status' => 'negotiating', 'last_contact_date' => '2026-11-01']);
-        WebSalesLead::forceCreate(['salesman_name' => 'S', 'subject_name' => 'Lead Old', 'source_channel' => 'web', 'status' => 'new', 'last_contact_date' => '2026-10-01']);
-        WebSalesLead::forceCreate(['salesman_name' => 'S', 'subject_name' => 'Lead Won', 'source_channel' => 'web', 'status' => 'closed_won', 'last_contact_date' => '2026-11-01']);
-        $link = WebSalesLead::forceCreate(['salesman_name' => 'S', 'subject_name' => 'Lead Link', 'source_channel' => 'web', 'status' => 'offer_sent', 'last_contact_date' => '2026-11-10']);
+        SalesLead::forceCreate(['salesman_name' => 'S', 'subject_name' => 'Lead A', 'source_channel' => 'web', 'status' => 'negotiating', 'last_contact_date' => '2026-11-01']);
+        SalesLead::forceCreate(['salesman_name' => 'S', 'subject_name' => 'Lead Old', 'source_channel' => 'web', 'status' => 'new', 'last_contact_date' => '2026-10-01']);
+        SalesLead::forceCreate(['salesman_name' => 'S', 'subject_name' => 'Lead Won', 'source_channel' => 'web', 'status' => 'closed_won', 'last_contact_date' => '2026-11-01']);
+        $link = SalesLead::forceCreate(['salesman_name' => 'S', 'subject_name' => 'Lead Link', 'source_channel' => 'web', 'status' => 'offer_sent', 'last_contact_date' => '2026-11-10']);
         $link->forceFill(['public_token' => Str::random(40), 'public_token_expires_at' => '2026-11-25 12:00:00'])->save();
         foreach (['new', 'new', 'new', 'interview'] as $index => $state) {
             WebJobApplication::forceCreate(['first_name' => 'A', 'last_name' => "B{$index}", 'email' => "a{$index}@x.cz", 'position_name' => 'Dev', 'state' => $state]);
@@ -92,7 +92,7 @@ class AgendaTest extends TestCase
      * @param string $name Name.
      * @param string $deadline estimated_completion_to.
      * @param string $status Status.
-     * @param int|null $orderId Web order of the project.
+     * @param int|null $orderId Order of the project.
      * @return Project
      */
     private function project(string $name, string $deadline, string $status, ?int $orderId = null): Project
@@ -109,9 +109,8 @@ class AgendaTest extends TestCase
      *   activation (11-13), lead follow-up Lead A (11-15), coupon start (11-20), Lead Link
      *   follow-up (11-24) + form expiry (11-25), coupon end (11-30); no inactive coupon, finished
      *   or later project, closed lead; modules personal, web, shop, project-portal, core;
-     *   reminders job applicants 3, inquiries 1, leads without contact 1 (Lead Old), e-shop
-     *   orders 1, low stock 1, web order without project 1 (Beta - project portal), security
-     *   events 1.
+     *   reminders job applicants 3, inquiries 1, e-shop orders 1, low stock 1, leads without
+     *   contact 1 (Lead Old), order without project 1 (Beta), security events 1.
      */
     public function test_sysadmin_gets_all_events_and_reminders(): void
     {
@@ -130,12 +129,13 @@ class AgendaTest extends TestCase
             ['coupon_end', '2026-11-30', 'XMAS', 'warning'],
         ], array_map(fn ($e) => [$e['type'], $e['date'], $e['subject'], $e['severity']], $data['events']));
         $this->assertMatchesRegularExpression('#^/admin/project-portal/projects/\d+$#', $data['events'][0]['link']);
+        $this->assertSame('/admin/project-portal/sales-leads', $data['events'][2]['link']);
         $this->assertSame('/admin/shop/coupons', $data['events'][6]['link']);
 
         $reminders = array_column($data['reminders'], 'count', 'type');
         $this->assertSame([
-            'job_applications_new' => 3, 'inquiries_new' => 1, 'leads_without_contact' => 1, 'shop_orders_open' => 1,
-            'products_low_stock' => 1, 'web_orders_without_project' => 1, 'security_events_new' => 1,
+            'job_applications_new' => 3, 'inquiries_new' => 1, 'shop_orders_open' => 1, 'products_low_stock' => 1,
+            'leads_without_contact' => 1, 'orders_without_project' => 1, 'security_events_new' => 1,
         ], $reminders);
         $this->assertSame('2026-11-11', $data['reminders'][0]['since']);
         $this->assertNull(collect($data['reminders'])->firstWhere('type', 'products_low_stock')['since']);
@@ -172,14 +172,14 @@ class AgendaTest extends TestCase
      *   menu) none of its sources is returned, even with the page permissions.
      * @input Account with all page view permissions of web, e-shop, project portal and core, but
      *   only the tab permission view-web.
-     * @output Only web events / reminders (no project deadline); modules personal, web.
+     * @output Only web reminders (no project deadline, no lead); modules personal, web.
      */
     public function test_module_without_tab_permission_is_hidden(): void
     {
-        $this->signIn($this->userWith(['view-web', 'web-projects-view', 'web-sales-leads-view', 'web-job-applications-view', 'web-user-requests-view',
+        $this->signIn($this->userWith(['view-web', 'web-projects-view', 'project-portal-sales-leads-view', 'web-job-applications-view', 'web-user-requests-view',
             'shop-coupons-view', 'shop-orders-view', 'shop-products-view', 'core-administrators-view', 'core-security-view']));
         $data = $this->getJson(self::RANGE)->assertOk()->json('data');
-        $this->assertSame(['web'], array_values(array_unique(array_column($data['events'], 'module'))));
+        $this->assertSame([], $data['events']);
         $this->assertSame(['web'], array_values(array_unique(array_column($data['reminders'], 'module'))));
         $this->assertSame(['personal', 'web'], $data['modules']);
     }

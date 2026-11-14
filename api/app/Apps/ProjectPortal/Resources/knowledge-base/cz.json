@@ -1,5 +1,98 @@
 {
   "pages": {
+    "sales-leads": {
+      "navLabel": "Obchodní leady",
+      "header": "Obchodní leady",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Obchodní lead je potenciální klient, se kterým obchodník jedná: kontakt, zdroj, priorita, stav a další krok. Když se klient rozhodne objednat, pošlete mu odkaz na objednávkový formulář – z odeslaného formuláře vznikne objednávka a z ní projekt v portálu."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Lead",
+                  "text": "Založte lead ručně nebo ho naimportujte (CSV / XLSX). Sledujte datum posledního kontaktu – kalendář připomene lead bez kontaktu 14 a více dní.",
+                  "active": true
+                },
+                {
+                  "label": "Odkaz na formulář",
+                  "text": "Akce Odkaz vytvoří odkaz na objednávkový formulář s předvyplněným kontaktem leadu. Platí 30 dní od posledního vygenerování a jde použít jen jednou."
+                },
+                {
+                  "label": "Objednávka",
+                  "text": "Klient formulář vyplní a odešle; objednávka se objeví na stránce Objednávky a lead se označí jako odeslaný."
+                },
+                {
+                  "label": "Projekt",
+                  "text": "Z objednávky založíte projekt (akce Projekt) a klientovi zpřístupníte portál."
+                }
+              ]
+            },
+            {
+              "type": "note",
+              "content": "Odkaz obsahuje jen náhodný token – nikdy interní číslo leadu. Neplatný, použitý nebo prošlý odkaz formulář nepustí dál a zapíše se do bezpečnostních událostí."
+            }
+          ]
+        }
+      ]
+    },
+    "sales-orders": {
+      "navLabel": "Objednávky",
+      "header": "Objednávky",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Objednávky odeslané klienty přes objednávkový formulář (odkaz z obchodního leadu) i objednávky založené ručně. U každé je kontakt klienta, popis, přílohy a záznam souhlasů s obchodními podmínkami a se zpracováním osobních údajů."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Projekt",
+                  "text": "Ikona složky v řádku otevře projekt objednávky. Když objednávka projekt ještě nemá, otevře se formulář nového projektu s vybranou objednávkou a předvyplněným názvem a kontaktem."
+                },
+                {
+                  "title": "Potvrzovací e-mail",
+                  "text": "Klient dostane po odeslání potvrzení v jazyce formuláře. Texty upravíte tlačítkem E-mail v nástrojové liště (pro každý jazyk zvlášť)."
+                },
+                {
+                  "title": "Přílohy",
+                  "text": "Soubory od klienta (až 10 souborů, 20 MB na soubor, 50 MB celkem). Další soubory můžete přidat při úpravě objednávky."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Objednávkový formulář je veřejná stránka portálu na adrese /projects/order/<token>. Starší odkazy /order_form/<token> fungují dál (přesměrují se). Připomínka v kalendáři hlídá objednávky, ze kterých ještě nevznikl projekt."
+            }
+          ]
+        }
+      ]
+    },
+    "project-portal-settings": {
+      "navLabel": "Nastavení portálu",
+      "header": "Nastavení portálu",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Názvy záložek prohlížeče veřejných stránek portálu – klientského portálu projektu a objednávkového formuláře – pro každý jazyk."
+            },
+            {
+              "type": "text",
+              "content": "Prázdný název použije výchozí název aplikace. Změny se projeví klientům po načtení stránky."
+            }
+          ]
+        }
+      ]
+    },
     "projects": {
       "navLabel": "Projekty",
       "header": "Projekty, klientský portál a konverzace",

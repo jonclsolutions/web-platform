@@ -1,5 +1,98 @@
 {
   "pages": {
+    "sales-leads": {
+      "navLabel": "Sales leads",
+      "header": "Sales leads",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "A sales lead is a potential client a salesman deals with: contact, source, priority, status and the next step. When the client decides to order, send them the link to the order form – the sent form becomes an order and the order a project in the portal."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Lead",
+                  "text": "Create a lead by hand or import it (CSV / XLSX). Keep the date of the last contact – the calendar reminds you of leads without contact for 14 days or more.",
+                  "active": true
+                },
+                {
+                  "label": "Form link",
+                  "text": "The Link action creates a link to the order form prefilled with the contact of the lead. It is valid for 30 days from the last generation and can be used once."
+                },
+                {
+                  "label": "Order",
+                  "text": "The client fills in and sends the form; the order appears on the Orders page and the lead is marked as sent."
+                },
+                {
+                  "label": "Project",
+                  "text": "Create a project from the order (Project action) and give the client access to the portal."
+                }
+              ]
+            },
+            {
+              "type": "note",
+              "content": "The link carries only a random token – never the internal number of the lead. An invalid, used or expired link does not open the form and is recorded in the security events."
+            }
+          ]
+        }
+      ]
+    },
+    "sales-orders": {
+      "navLabel": "Orders",
+      "header": "Orders",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Orders sent by clients through the order form (the link of a sales lead) and orders created by hand. Each has the contact of the client, the description, attachments and the record of the consents to the terms of service and to the processing of personal data."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Project",
+                  "text": "The folder icon in a row opens the project of the order. When the order has no project yet, the form of a new project opens with the order selected and its name and contact prefilled."
+                },
+                {
+                  "title": "Confirmation e-mail",
+                  "text": "After sending, the client gets a confirmation in the language of the form. Edit its texts with the E-mail button of the toolbar (per language)."
+                },
+                {
+                  "title": "Attachments",
+                  "text": "Files of the client (up to 10 files, 20 MB per file, 50 MB in total). You can add more files when editing the order."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "The order form is a public page of the portal at /projects/order/<token>. Older links /order_form/<token> keep working (redirected). A calendar reminder watches orders without a project."
+            }
+          ]
+        }
+      ]
+    },
+    "project-portal-settings": {
+      "navLabel": "Portal settings",
+      "header": "Portal settings",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Browser tab titles of the public pages of the portal – the client portal of a project and the order form – per language."
+            },
+            {
+              "type": "text",
+              "content": "An empty title uses the default name of the application. Clients see the change after the page is loaded."
+            }
+          ]
+        }
+      ]
+    },
     "projects": {
       "navLabel": "Projects",
       "header": "Projects, client portal and conversations",

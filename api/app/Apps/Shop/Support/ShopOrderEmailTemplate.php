@@ -7,8 +7,8 @@
  * @author JS
  * @created 2026
  * @description Texts of the e-shop order confirmation e-mail (ShopOrderConfirmation) in the
- * language of the storefront the order was placed from (`ShopOrder::lang`) - the same mechanism as
- * the web order confirmation (SalesOrderEmailTemplate). The texts are edited in the admin
+ * language of the storefront the order was placed from (`ShopOrder::lang`) - the shared mechanism of
+ * the confirmation e-mails (I18nEmailTemplate). The texts are edited in the admin
  * (E-shop orders → Edit confirmation e-mail, `shop_site_settings.order_email_*_i18n`); a language
  * without text uses the Czech one, then the built-in default (I18nEmailTemplate).
  * @note The e-mail is the confirmation of the concluded contract on a durable medium (Directive

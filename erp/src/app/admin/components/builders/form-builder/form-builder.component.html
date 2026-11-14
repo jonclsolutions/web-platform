@@ -35,7 +35,7 @@
               <div class="field-value">
                 @switch (input.type) {
                   @case ('password') {
-                    <input [type]="input.type" [id]="input.column_name" [placeholder]="input.placeholder"
+                    <input [type]="input.type" [id]="input.column_name" [placeholder]="input.placeholder ?? ''"
                       [required]="!!input.required" [pattern]="input.pattern || ''" [name]="input.column_name"
                       [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
                   }
@@ -43,7 +43,7 @@
                     <input type="file" [id]="input.column_name" (change)="onFileChange($event, input.column_name)" class="custom-input" [disabled]="input.editable === false" />
                   }
                   @case ('files') {
-                    <app-multi-file-upload
+                    <app-multi-file-upload class="mfu--light"
                       [label]="i18n.getValue('file-upload.attachments_label')"
                       [maxFiles]="rulesFor(input)?.max_files ?? 10"
                       [maxFileSizeMb]="rulesFor(input)?.max_file_size_mb ?? 20"
@@ -83,17 +83,17 @@
                                        (avatarChange)="onAvatarChange(input.column_name, $event)"></app-avatar-editor>
                   }
                   @case ('text') {
-                    <input type="text" [id]="input.column_name" [placeholder]="input.placeholder" 
+                    <input type="text" [id]="input.column_name" [placeholder]="input.placeholder ?? ''"
                       [required]="!!input.required" [pattern]="input.pattern || '.*'" [name]="input.column_name" 
                       [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
                   }
                   @case ('email') {
-                    <input type="email" email [id]="input.column_name" [placeholder]="input.placeholder" 
+                    <input type="email" email [id]="input.column_name" [placeholder]="input.placeholder ?? ''"
                       [required]="!!input.required" [pattern]="input.pattern || '.*'" [name]="input.column_name" 
                       [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
                   }
                   @case ('tel') {
-                    <input type="tel" [id]="input.column_name" [placeholder]="input.placeholder" 
+                    <input type="tel" [id]="input.column_name" [placeholder]="input.placeholder ?? ''"
                       [required]="!!input.required" [pattern]="input.pattern || '.*'" [name]="input.column_name" 
                       [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
                   }
@@ -109,7 +109,7 @@
                     </select>
                   }
                   @case ('textarea') {
-                    <textarea [id]="input.column_name" [placeholder]="input.placeholder" [required]="!!input.required" 
+                    <textarea [id]="input.column_name" [placeholder]="input.placeholder ?? ''" [required]="!!input.required"
                       [pattern]="input.pattern || ''" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" 
                       class="custom-input textarea" [disabled]="input.editable === false"></textarea>
                   }

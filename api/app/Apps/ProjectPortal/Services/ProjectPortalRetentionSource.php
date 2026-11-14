@@ -5,14 +5,19 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Retention of the project portal (GDPR Art. 5(1)(e)): client projects - deleted for
- *   good with their accounts, sessions, checkpoints, threads, updates, approvals and all files -
- *   plus the portal audit log and the always-run clean-up of expired portal sessions (IP address,
+ * @description Retention of the project portal (GDPR Art. 5(1)(e)): sales leads, orders (with
+ *   their attachments) and client projects - deleted for good with their accounts, sessions,
+ *   checkpoints, threads, updates, approvals and all files - plus the portal audit log and the always-run clean-up of expired portal sessions (IP address,
  *   user agent) and used / expired one-time sign-in codes. Registered in
  *   ProjectPortalApp::retentionSources().
- * @note Default period: projects 3650 days (10 years) - contractual relationship; it runs from the
- *   LAST ACTIVITY of a project (a change of the project or a message in one of its threads). The
- *   key `projects` is the same as before, so a saved setting stays valid.
+ * @note Default periods (days):
+ * - sales_leads 730 (2 years): pre-contractual communication; from the last change of the lead;
+ * - sales_orders 3650 (10 years): contractual relationship - accounting and tax documents may
+ *   have to be kept that long; from the last change of the order;
+ * - projects 3650 (10 years): contractual relationship; from the LAST ACTIVITY of a project (a
+ *   change of the project or a message in one of its threads).
+ * The keys are the same as before the leads and orders moved from the web, so saved settings
+ * stay valid.
  * @dependencies Portal models, PurgesRecords.
  */
 
@@ -22,6 +27,8 @@ use App\Apps\ProjectPortal\Models\Project;
 use App\Apps\ProjectPortal\Models\ProjectLoginCode;
 use App\Apps\ProjectPortal\Models\ProjectPortalLog;
 use App\Apps\ProjectPortal\Models\ProjectSession;
+use App\Apps\ProjectPortal\Models\SalesLead;
+use App\Apps\ProjectPortal\Models\SalesOrder;
 use App\Services\Retention\PurgesRecords;
 use App\Services\Retention\RetentionSource;
 use Illuminate\Database\Eloquent\Builder;
@@ -35,15 +42,17 @@ final class ProjectPortalRetentionSource implements RetentionSource
     /** @description See RetentionSource::defaults(). */
     public function defaults(): array
     {
-        return ['projects' => 3650];
+        return ['sales_leads' => 730, 'sales_orders' => 3650, 'projects' => 3650];
     }
 
     /** @description See RetentionSource::purge(). */
     public function purge(string $key, Carbon $cutoff): int
     {
         return match ($key) {
-            'projects' => $this->purgeProjects($cutoff),
-            default    => throw new InvalidArgumentException("Unknown project portal retention key: {$key}"),
+            'sales_leads'  => $this->purgeRecords(SalesLead::withTrashed()->where('updated_at', '<', $cutoff)),
+            'sales_orders' => $this->purgeRecords(SalesOrder::withTrashed()->with('attachments')->where('updated_at', '<', $cutoff)),
+            'projects'     => $this->purgeProjects($cutoff),
+            default        => throw new InvalidArgumentException("Unknown project portal retention key: {$key}"),
         };
     }
 

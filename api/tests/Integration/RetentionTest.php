@@ -25,9 +25,9 @@ use App\Apps\Web\Models\WebJobApplication;
 use App\Apps\ProjectPortal\Models\Project;
 use App\Apps\ProjectPortal\Models\ProjectSession;
 use App\Apps\ProjectPortal\Models\ProjectThreadMessage;
+use App\Apps\ProjectPortal\Models\SalesLead;
+use App\Apps\ProjectPortal\Models\SalesOrder;
 use App\Apps\Web\Models\WebRawRequestCommission;
-use App\Apps\Web\Models\WebSalesLead;
-use App\Apps\Web\Models\WebSalesOrder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -172,9 +172,9 @@ class RetentionTest extends TestCase
 
         $this->assertSame([$freshCv->id], WebJobApplication::withTrashed()->pluck('id')->all());
         $this->assertSame([$freshRequest->id], WebRawRequestCommission::withTrashed()->pluck('id')->all());
-        $this->assertSame(1, WebSalesLead::withTrashed()->count());
-        $this->assertFalse(WebSalesLead::withTrashed()->whereKey($oldLead->id)->exists());
-        $this->assertSame(1, WebSalesOrder::count());
+        $this->assertSame(1, SalesLead::withTrashed()->count());
+        $this->assertFalse(SalesLead::withTrashed()->whereKey($oldLead->id)->exists());
+        $this->assertSame(1, SalesOrder::count());
         $this->assertSame([$activeProject->id], Project::withTrashed()->pluck('id')->all());
         $this->assertSame(1, ProjectThreadMessage::count());
         $this->assertSame(0, ProjectSession::count());
@@ -197,7 +197,7 @@ class RetentionTest extends TestCase
         $keptLead = $this->lead();
         $this->age($keptLead, 5000);
         $this->artisan('retention:purge')->assertSuccessful();
-        $this->assertTrue(WebSalesLead::whereKey($keptLead->id)->exists());
+        $this->assertTrue(SalesLead::whereKey($keptLead->id)->exists());
     }
 
     /**

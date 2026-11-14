@@ -4,7 +4,7 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Manifest of the web application (public website, inquiries, leads, orders, job applications, texts of the web) - what the core needs to know about it (apps.registry.ts).
+ * @description Manifest of the web application (public website, inquiries, job applications, texts of the web) - what the core needs to know about it (apps.registry.ts).
  * @dependencies AppManifest; its admin and public route tables.
  */
 
@@ -32,8 +32,6 @@ export const WEB_APP: AppManifest = {
       key: 'web-business', labelKey: 'nav_group_business',
       items: [
         { path: 'user-request', permission: 'web-user-requests-view', labelKey: 'nav_user_request', icon: 'file-text' },
-        { path: 'sales-leads', permission: 'web-sales-leads-view', labelKey: 'nav_sales_leads', icon: 'user-check' },
-        { path: 'sales-orders', permission: 'web-sales-orders-view', labelKey: 'nav_sales_orders', icon: 'box' },
       ],
     },
     {

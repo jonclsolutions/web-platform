@@ -18,7 +18,7 @@ export const PROJECT_PORTAL_AUDIT_LOG: AuditLogPageConfig = {
   reportPermission: 'project-portal-view-logs',
   eventTypes: [
     'create', 'update', 'soft_delete', 'hard_delete', 'soft_delete_bulk', 'hard_delete_bulk',
-    'restore', 'force_delete_all', 'error', 'checkpoint_status', 'checkpoint_order',
+    'restore', 'force_delete_all', 'error', 'export', 'import', 'generate_link', 'checkpoint_status', 'checkpoint_order',
     'template_create', 'template_update', 'template_delete', 'template_apply', 'account_create',
     'account_update', 'account_delete', 'account_password_reset', 'account_invite',
     'approval_create', 'approval_update', 'approval_reopen', 'approval_cancel', 'approval_delete',
@@ -29,7 +29,7 @@ export const PROJECT_PORTAL_AUDIT_LOG: AuditLogPageConfig = {
     'export_xlsx', 'export_json', 'export_txt',
   ],
   modules: [
-    'Project', 'ProjectCheckpoint', 'ProjectTemplate', 'ProjectAccount', 'ProjectApproval',
+    'SalesLead', 'SalesOrder', 'ProjectPortalSetting', 'Project', 'ProjectCheckpoint', 'ProjectTemplate', 'ProjectAccount', 'ProjectApproval',
     'ProjectUpdate', 'ProjectThread', 'ProjectPortal',
   ],
 };

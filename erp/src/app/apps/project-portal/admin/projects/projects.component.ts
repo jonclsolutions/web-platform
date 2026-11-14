@@ -12,9 +12,9 @@
  * (assignee), the number of new client messages and of the threads waiting on the team per project;
  * the filter "My projects" keeps the projects of the signed-in administrator.
  * @note A new project opens its Access sub-page, where the client accounts are added. Old links
- * `?open_project=<id>` open the project page. `?order_id=<id>` (button "Project" of the web
- * orders) opens the project of that order (GET project-portal/projects?order_id=), or the create
- * form with the order preselected when it has none yet.
+ * `?open_project=<id>` open the project page. `?order_id=<id>` (button "Project" of the orders)
+ * opens the project of that order (GET project-portal/projects?order_id=), or the create form
+ * with the order preselected and its client name and contact filled in when it has none yet.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -27,7 +27,6 @@ import * as Config from './projects.config';
 import { GraphBuilderComponent } from '../../../../admin/components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import { PageHelpComponent } from '../../../../admin/components/page-help/page-help.component';
-import { hasApp } from '../../../apps.registry';
 
 @Component({
   selector: 'app-projects',
@@ -50,8 +49,6 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
 
   projectColumns: Core.ColumnDefinition[] = [];
   trashProjectColumns: Core.ColumnDefinition[] = [];
-
-  private prefillOrderId: string | null = null;
 
   /** Key prefix under which former versions kept the revealed password in sessionStorage (removed on load, VT-08). */
   private readonly LEGACY_PASSWORD_STORAGE_PREFIX = 'rpsw_project_pw_';
@@ -166,28 +163,14 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     }
 
     const orderId = this.activatedRoute.snapshot.queryParamMap.get('order_id');
-    if (!orderId || !hasApp('web')) return;
+    if (!orderId) return;
 
-    // The project of the order when it exists, else a new one with the order preselected.
+    // The project of the order when it exists, else a new one from the order.
     this.dataHandler.getCollection<{ id: number }>(this.apiEndpoint, { order_id: orderId, no_pagination: 'true' }).subscribe({
       next: (projects) => projects?.length
         ? this.router.navigate(['/admin/project-portal/projects', projects[0].id], { replaceUrl: true })
-        : this.prefillFromOrder(orderId),
-      error: () => this.prefillFromOrder(orderId),
-    });
-  }
-
-  /**
-   * @description Opens the create form with the order preselected.
-   * @param orderId Id of the web order.
-   */
-  private prefillFromOrder(orderId: string): void {
-    this.prefillOrderId = orderId;
-    this.loadTemplateOptions();
-    this.loadOrderOptions(() => {
-      this.selectedItemForEdit = { order_id: orderId };
-      this.showCreateForm = true;
-      this.cd.markForCheck();
+        : this.openCreateForm(orderId),
+      error: () => this.openCreateForm(orderId),
     });
   }
 
@@ -196,28 +179,23 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   }
 
   /**
-   * @description Puts the web orders into the order select of the create form (only with the
-   *   web application installed).
-   * @param onLoaded Called when done (also on failure / without the web).
+   * @description Puts the orders into the order select of the create form.
+   * @param onLoaded Called with the loaded orders when done (an empty list on failure).
    */
-  private loadOrderOptions(onLoaded: () => void): void {
-    if (!hasApp('web')) {
-      onLoaded();
-      return;
-    }
-    this.dataHandler.getCollection<any>('web/sales_orders', { no_pagination: 'true', sort_by: 'id', sort_direction: 'desc' })
+  private loadOrderOptions(onLoaded: (orders: Config.ProjectOrder[]) => void): void {
+    this.dataHandler.getCollection<Config.ProjectOrder>('project-portal/sales_orders', { no_pagination: 'true', sort_by: 'id', sort_direction: 'desc' })
       .subscribe({
         next: (orders) => {
           const orderField = this.formFields.find(f => f.column_name === 'order_id');
           if (orderField) {
             orderField.options = [
               { value: '', label: Config.createNoOrderOptionLabel(this.i18n) },
-              ...orders.map((o: any) => ({ value: String(o.id), label: `#${o.id} — ${o.client_name}` })),
+              ...(orders ?? []).map(o => ({ value: String(o.id), label: `#${o.id} — ${o.client_name}` })),
             ];
           }
-          onLoaded();
+          onLoaded(orders ?? []);
         },
-        error: () => onLoaded()
+        error: () => onLoaded([])
       });
   }
 
@@ -238,9 +216,22 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   }
 
   override handleCreateFormOpened(): void {
+    this.openCreateForm(null);
+  }
+
+  /**
+   * @description Opens the create form (never the edit form - the project does not exist yet).
+   *   With an order its select is preselected and the name and contact come from the order
+   *   (Config.projectDefaultsFromOrder()); without one every field starts empty.
+   * @param orderId Id of the order of the new project, or null.
+   */
+  private openCreateForm(orderId: string | null): void {
     this.loadTemplateOptions();
-    this.loadOrderOptions(() => {
-      this.selectedItemForEdit = this.prefillOrderId ? { order_id: this.prefillOrderId } : null;
+    this.loadOrderOptions((orders) => {
+      const order = orderId ? orders.find(o => String(o.id) === orderId) : undefined;
+      const defaults = order ? Config.projectDefaultsFromOrder(order) : {};
+      this.formFields.forEach(field => field.defaultValue = defaults[field.column_name]);
+      this.selectedItemForEdit = null;
       this.showCreateForm = true;
       this.cd.markForCheck();
     });
@@ -252,7 +243,6 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     request$.pipe(
       Core.finalize(() => {
         this.showCreateForm = false;
-        this.prefillOrderId = null;
         this.cd.markForCheck();
       })
     ).subscribe({
@@ -272,7 +262,6 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   override onCancelForm(): void {
     this.showCreateForm = false;
     this.selectedItemForEdit = null;
-    this.prefillOrderId = null;
     this.cd.markForCheck();
   }
 

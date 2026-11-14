@@ -32,6 +32,7 @@ use App\Models\Legal\SiteSetting;
 use App\Apps\Shop\Models\ShopPaymentMethod;
 use App\Apps\Shop\Models\ShopShippingMethod;
 use App\Apps\Shop\Models\ShopSiteSetting;
+use App\Apps\ProjectPortal\Models\ProjectPortalSetting;
 use App\Apps\Web\Models\WebSiteSetting;
 use Database\Seeders\BaseDataSeeder;
 use App\Apps\Shop\Database\Seeders\ShopBaseDataSeeder;
@@ -300,7 +301,7 @@ class DatabaseSetupTest extends TestCase
         $this->role('sysadmin');
         $modules = [
             'core' => ['view-core', 'core-view-welcome-page', 'core-administrators-view', 'core-administrators-update', 'core-security-view', 'core-external-links-view', 'core-external-links-create'],
-            'web' => ['view-web', 'web-sales-leads-view', 'web-sales-leads-create', 'web-sales-leads-update', 'web-sales-leads-delete', 'web-view-dashboard', 'web-set-maintenance-mode'],
+            'web' => ['view-web', 'web-job-applications-view', 'web-job-applications-create', 'web-job-applications-update', 'web-job-applications-delete', 'web-view-dashboard', 'web-set-maintenance-mode'],
             'shop' => ['view-eshop', 'shop-products-view', 'shop-products-update', 'shop-products-delete'],
             'project-portal' => ['view-project-portal', 'web-projects-view', 'web-projects-update'],
         ];
@@ -322,7 +323,7 @@ class DatabaseSetupTest extends TestCase
         $roleKeys = fn (string $name) => CoreRole::where('role_name', $name)->firstOrFail()->permissions()->pluck('permission_key')->sort()->values()->all();
         $sorted = fn (array $keys) => collect($keys)->sort()->values()->all();
         $this->assertSame(['core-administrators-view', 'core-external-links-view', 'core-security-view', 'core-view-welcome-page', 'view-core'], $roleKeys('read-only-core'));
-        $this->assertSame(['view-web', 'web-sales-leads-view', 'web-view-dashboard'], $roleKeys('read-only-web'));
+        $this->assertSame(['view-web', 'web-job-applications-view', 'web-view-dashboard'], $roleKeys('read-only-web'));
         $this->assertSame(['shop-products-view', 'view-eshop'], $roleKeys('read-only-shop'));
         $this->assertSame(['view-project-portal', 'web-projects-view'], $roleKeys('read-only-project-portal'));
         foreach (['web', 'shop', 'project-portal'] as $app) {
@@ -343,7 +344,7 @@ class DatabaseSetupTest extends TestCase
     {
         $this->app['env'] = 'local';
         $this->role('sysadmin');
-        CorePermission::create(['permission_key' => 'web-sales-leads-view', 'module' => 'web']);
+        CorePermission::create(['permission_key' => 'web-job-applications-view', 'module' => 'web']);
         $this->seed(DevelopmentSeeder::class);
 
         User::where('user_email', DevelopmentSeeder::TEST_EMAIL)->update(['user_password_hash' => Hash::make('Changed1!')]);
@@ -507,10 +508,11 @@ class DatabaseSetupTest extends TestCase
         config(['apps.apps' => [\App\Apps\Web\WebApp::class]]);
         $this->seed(BaseDataSeeder::class);
 
-        $this->assertSame(45, CorePermission::count());
-        $this->assertSame(45, CoreRole::where('role_name', 'sysadmin')->firstOrFail()->permissions()->count());
+        $this->assertSame(37, CorePermission::count());
+        $this->assertSame(37, CoreRole::where('role_name', 'sysadmin')->firstOrFail()->permissions()->count());
         $this->assertTrue(CorePermission::where('permission_key', 'view-web')->exists());
         $this->assertSame(1, WebSiteSetting::count());
+        $this->assertSame(0, ProjectPortalSetting::count());
         $this->assertSame(0, ShopSiteSetting::count());
     }
 
@@ -538,7 +540,7 @@ class DatabaseSetupTest extends TestCase
         CorePermission::where('permission_key', 'view-core')->update(['description' => 'edited']);
         ShopSiteSetting::firstOrFail()->update(['is_shop_active' => false]);
         CoreRole::where('role_name', 'sysadmin')->firstOrFail()->delete();
-        CorePermission::where('permission_key', 'web-sales-leads-delete')->delete();
+        CorePermission::where('permission_key', 'web-job-applications-delete')->delete();
 
         $this->seed(BaseDataSeeder::class);
 
@@ -550,6 +552,7 @@ class DatabaseSetupTest extends TestCase
         $this->assertSame(count(BaseDataSeeder::permissions()), CorePermission::count());
         $this->assertSame(25, DB::table('legal_page_titles')->count());
         $this->assertSame(1, WebSiteSetting::count());
+        $this->assertSame(1, ProjectPortalSetting::count());
         $this->assertSame(1, ShopSiteSetting::count());
         $this->assertSame('My company', SiteSetting::firstOrFail()->company_name);
         $this->assertSame(1, SiteSetting::count());

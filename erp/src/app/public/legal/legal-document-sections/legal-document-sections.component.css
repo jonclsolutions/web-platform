@@ -1,0 +1,59 @@
+/*
+    @file: legal-document-sections.component.css
+    @path: src/app/public/legal/legal-document-sections/legal-document-sections.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Typography of the sections of a legal document. Global stylesheet scoped by
+        `.legal-sections` (the section content is inserted HTML); colours from the `--legal-*`
+        custom properties of the host page with neutral fallbacks.
+    @dependencies: --legal-heading, --legal-body, --legal-strong, --legal-em, --legal-link,
+        --legal-link-hover, --legal-line of the host page
+*/
+
+/*
+    @module: Legal sections
+    @description: Section heading with a line, sub-heading, paragraphs, lists, emphasis and links;
+        a subsection is indented with a line on the left.
+    @usage: .legal-sections > .legal-section (h2, inserted HTML, .legal-subsection > h3, p, ul > li)
+*/
+.legal-sections {
+  font-family: "Source Sans Pro", sans-serif;
+  line-height: 1.7;
+}
+.legal-sections h2 {
+  color: var(--legal-heading, #18181b);
+  margin: 40px 0 12px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  border-bottom: 1px solid var(--legal-line, #e5e5e5);
+  padding-bottom: 8px;
+  letter-spacing: 0.01em;
+}
+.legal-sections h3 {
+  color: var(--legal-heading, #18181b);
+  margin: 22px 0 8px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.legal-sections p,
+.legal-sections li {
+  font-size: 0.95rem;
+  color: var(--legal-body, #4a4a4a);
+}
+.legal-sections p { margin: 0 0 12px; }
+.legal-sections ul,
+.legal-sections ol { margin: 0 0 12px 20px; padding-left: 4px; }
+.legal-sections ul { list-style: disc; }
+.legal-sections ol { list-style: decimal; }
+.legal-sections li { margin-bottom: 6px; line-height: 1.65; }
+.legal-sections strong { font-weight: 700; color: var(--legal-strong, #18181b); }
+.legal-sections em { font-style: italic; color: var(--legal-em, #555555); }
+.legal-sections a { color: var(--legal-link, #18181b); text-decoration: none; transition: color 0.2s ease; }
+.legal-sections a:hover { color: var(--legal-link-hover, #555555); text-decoration: underline; }
+.legal-section { margin-bottom: 8px; }
+.legal-subsection { margin-top: 4px; padding-left: 16px; border-left: 2px solid var(--legal-line, #e5e5e5); }
+
+@media (max-width: 480px) {
+  .legal-sections h2 { font-size: 1.1rem; }
+}

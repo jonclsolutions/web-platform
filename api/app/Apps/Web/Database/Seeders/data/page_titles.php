@@ -76,13 +76,6 @@ return [
     ],
     [
         'area' => 'web',
-        'page_key' => 'order-form',
-        'route_path' => '/order_form/:token',
-        'title_i18n' => ['cz' => 'Objednávkový formulář | Company name', 'en' => 'Order form | Company name'],
-        'sort_order' => 100,
-    ],
-    [
-        'area' => 'web',
         'page_key' => 'privacy-policy',
         'route_path' => '/privacy-policy',
         'title_i18n' => ['cz' => 'Ochrana osobních údajů | Company name', 'en' => 'Privacy policy | Company name'],
@@ -115,12 +108,5 @@ return [
         'route_path' => '/404',
         'title_i18n' => ['cz' => 'Stránka nenalezena | Company name', 'en' => 'Page not found | Company name'],
         'sort_order' => 150,
-    ],
-    [
-        'area' => 'web',
-        'page_key' => 'project-portal',
-        'route_path' => '/projects/:token',
-        'title_i18n' => ['cz' => 'Projektový portál | Company name', 'en' => 'Project portal | Company name'],
-        'sort_order' => 160,
     ],
 ];

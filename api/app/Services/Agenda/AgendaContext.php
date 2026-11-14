@@ -56,19 +56,6 @@ final class AgendaContext
     }
 
     /**
-     * @description May the user see the admin page of ANOTHER module (e.g. an entry of one
-     *   application that links to a page of another one)?
-     * @param string $tabPermission Tab permission of that module.
-     * @param string $permission View permission key of the page.
-     * @return bool
-     */
-    public function canInModule(string $tabPermission, string $permission): bool
-    {
-        return $this->permissions === null
-            || (in_array($tabPermission, $this->permissions, true) && in_array($permission, $this->permissions, true));
-    }
-
-    /**
      * @description One dated event.
      * @param string $type Kind of the event (translated by the admin page).
      * @param string $id Id of the record (unique within the kind).

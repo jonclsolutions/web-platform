@@ -5,7 +5,7 @@
  * @author JS
  * @created 2026
  * @description Public routes of the web application: the website in its layout (home, services,
- *   contact, references, FAQ, knowledge base, about us, jobs, the order form of a lead, the shared
+ *   contact, references, FAQ, knowledge base, about us, jobs, the shared
  *   legal pages and the known 404 address), its maintenance page and the catch-all 404 of the
  *   public web.
  * @usage `publicRoutes` / `publicFallbackRoutes` of WEB_APP (web.app.ts), composed by app.routes.ts.
@@ -51,7 +51,6 @@ export const WEB_PUBLIC_ROUTES: Routes = [
       { path: 'about-us', title: 'web.about-us', loadComponent: () => import('./about-us/about-us.component').then(m => m.AboutUsComponent) },
       { path: 'jobs', title: 'web.jobs', loadComponent: () => import('./jobs/jobs-list/jobs-list.component').then(m => m.JobsListComponent) },
       { path: 'jobs/:id', title: 'web.job-detail', loadComponent: () => import('./jobs/job-item/job-item.component').then(m => m.JobItemComponent) },
-      { path: 'order_form/:token', title: 'web.order-form', loadComponent: () => import('./order-form/order-form.component').then(m => m.OrderFormComponent) },
       // Known address of the web 404 page (e.g. for links); unknown URLs use the catch-all at the end.
       { ...publicNotFoundRoute('web'), path: '404' },
     ]

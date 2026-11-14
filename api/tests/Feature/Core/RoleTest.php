@@ -43,12 +43,12 @@ class RoleTest extends TestCase
 
     /**
      * @description The role list is paginated and carries user counts and permission keys.
-     * @input Role 'editor' (web-sales-leads-view) with 1 user; GET /api/core/roles?per_page=1.
+     * @input Role 'editor' (core-external-links-view) with 1 user; GET /api/core/roles?per_page=1.
      * @output 200 {data, total, per_page 1, current_page, last_page}; users_count, permissions.
      */
     public function test_index_paginated(): void
     {
-        $editor = $this->role('editor', ['web-sales-leads-view'], ['description' => 'Edits leads']);
+        $editor = $this->role('editor', ['core-external-links-view'], ['description' => 'Edits links']);
         $this->user([], $editor);
         $this->signIn($this->user());
 
@@ -57,7 +57,7 @@ class RoleTest extends TestCase
             ->assertJson(['meta' => ['total' => 1, 'per_page' => 1, 'current_page' => 1, 'last_page' => 1]])
             ->assertJsonPath('data.0.role_name', 'editor')
             ->assertJsonPath('data.0.users_count', 1)
-            ->assertJsonPath('data.0.permissions', ['web-sales-leads-view'])
+            ->assertJsonPath('data.0.permissions', ['core-external-links-view'])
             ->assertJsonPath('data.0.is_protected', false);
     }
 

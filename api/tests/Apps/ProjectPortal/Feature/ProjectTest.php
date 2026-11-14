@@ -12,7 +12,7 @@
  *   files), trash, assignable administrators, files of the conversations and checkpoints (due
  *   date, internal note, order, client notification).
  * @dependencies
- * - Tests\TestCase, ProjectFixtures; Storage fake. (The project of a web order:
+ * - Tests\TestCase, ProjectFixtures; Storage fake. (The project of an order:
  *   tests/Integration/ProjectOfWebOrderTest.)
  */
 

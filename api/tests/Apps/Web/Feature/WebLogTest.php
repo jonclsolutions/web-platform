@@ -30,7 +30,7 @@ class WebLogTest extends TestCase
     private function log(array $attributes = []): WebLog
     {
         return WebLog::forceCreate(array_merge([
-            'event_type' => 'update', 'module' => 'WebJobApplication', 'description' => 'Changed', 'origin' => '127.0.0.1',
+            'event_type' => 'update', 'module' => 'WebRawRequestCommission', 'description' => 'Changed', 'origin' => '127.0.0.1',
             'user_plain' => 'system', 'user_id_plain' => '0',
         ], $attributes));
     }
@@ -51,18 +51,18 @@ class WebLogTest extends TestCase
 
     /**
      * @description List: paginated, newest first, column filters, global search, export.
-     * @input Row A (yesterday, create / WebSalesLead / eve@x.cz / 10.1.1.1 / 'Lead added') and row B (today).
+     * @input Row A (yesterday, create / WebJobApplication / eve@x.cz / 10.1.1.1 / 'Lead added') and row B (today).
      * @output Default: B first; each filter and the search return only A; no_pagination returns both.
      */
     public function test_index(): void
     {
         $this->signIn($this->userWith(['web-view-web-logs']));
-        $a = $this->log(['created_at' => now()->subDay(), 'event_type' => 'create', 'module' => 'WebSalesLead', 'user_plain' => 'eve@x.cz', 'origin' => '10.1.1.1', 'description' => 'Lead added']);
+        $a = $this->log(['created_at' => now()->subDay(), 'event_type' => 'create', 'module' => 'WebJobApplication', 'user_plain' => 'eve@x.cz', 'origin' => '10.1.1.1', 'description' => 'Lead added']);
         $b = $this->log(['created_at' => now()]);
 
         $this->getJson('/api/web/logs?per_page=1')->assertOk()
             ->assertJson(['meta' => ['total' => 2, 'last_page' => 2]])->assertJsonPath('data.0.id', $b->id);
-        foreach (["id={$a->id}", 'event_type=create', 'module=WebSalesLead', 'user_plain=eve@', 'origin=10.1', 'search=Lead%20add'] as $filter) {
+        foreach (["id={$a->id}", 'event_type=create', 'module=WebJobApplication', 'user_plain=eve@', 'origin=10.1', 'search=Lead%20add'] as $filter) {
             $this->getJson("/api/web/logs?{$filter}")->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $a->id);
         }
         $this->getJson('/api/web/logs?no_pagination=true&sort_by=id&sort_direction=asc')->assertJsonPath('data.*.id', [$a->id, $b->id]);

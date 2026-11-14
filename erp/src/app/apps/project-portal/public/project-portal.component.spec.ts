@@ -641,9 +641,9 @@ describe('ProjectPortalComponent', () => {
 
   /**
    * @description Derived values: checkpoint progress, completion estimate per language,
-   *   thread search (subject or message body), file sizes, language menu.
-   * @input 1 of 3 done; dates; search 'hosting' / 'colours' / 'xyz'; sizes; menu actions.
-   * @output {1, 3, 33}; formatted ranges; matching threads; '1 KB' / '2.0 MB' / ''; language set.
+   *   thread search (subject or message body) and file sizes.
+   * @input 1 of 3 done; dates; search 'hosting' / 'colours' / 'xyz'; sizes.
+   * @output {1, 3, 33}; formatted ranges; matching threads; '1 KB' / '2.0 MB' / ''.
    */
   it('computes the derived labels', fakeAsync(() => {
     loggedIn();
@@ -671,14 +671,6 @@ describe('ProjectPortalComponent', () => {
     expect(portal.formatFileSize(2 * 1024 * 1024)).toBe('2.0 MB');
     expect(portal.formatFileSize(undefined as any)).toBe('');
 
-    portal.toggleLangMenu();
-    expect(portal.isLangMenuOpen).toBeTrue();
-    portal.closeLangMenu();
-    portal.toggleLangMenu();
-    portal.selectLanguage('cz');
-    expect(TestBed.inject(ProjectPortalLocalizationService).setLanguage).toHaveBeenCalledWith('cz');
-    expect(portal.isLangMenuOpen).toBeFalse();
-    expect(portal.currentLanguageMeta!.code).toBe('en');
     fixture.destroy();
     discardPeriodicTasks();
     flush();

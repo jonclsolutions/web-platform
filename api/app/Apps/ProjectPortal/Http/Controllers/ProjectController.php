@@ -75,7 +75,7 @@ class ProjectController extends Controller
                 ->orWhere('contact_email', 'like', "%$s%"));
         }
 
-        // `order_id`: the project of a web order (the order list opens it or prefills a new one).
+        // `order_id`: the project of an order (the order list opens it or prefills a new one).
         foreach (['id', 'order_id', 'visibility', 'status', 'platform'] as $f) {
             if ($request->filled($f)) $query->where($f, $request->input($f));
         }

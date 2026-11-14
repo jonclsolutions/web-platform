@@ -1,0 +1,135 @@
+<!--
+    @file: order-form.component.html
+    @path: src/app/apps/project-portal/public/order-form/order-form.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2025
+    @description: Order form of the project portal: language switcher in the corner, a card with
+        the state of the link (checking / unknown / used / expired), the form (client, contact,
+        description, attachments, consents with the legal documents in a window, invisible
+        captcha) or the thank-you message; the contact of the supplier under the card.
+-->
+<div class="of-page">
+  <div class="of-lang">
+    <app-portal-language-switcher [label]="t('language_switcher_title')"></app-portal-language-switcher>
+  </div>
+
+  <main class="of-center">
+    <section class="of-card" [class.of-card--wide]="linkState === 'valid' && !isSubmitted">
+      @switch (linkState) {
+        @case ('loading') {
+          <div class="of-spinner" aria-hidden="true"></div>
+          <p class="of-lead">{{ t('order_link_checking') }}</p>
+        }
+        @case ('valid') {
+          @if (isSubmitted) {
+            <div class="of-icon of-icon--ok" aria-hidden="true">✓</div>
+            <h1 class="of-title">{{ t('order_thanks_title') }}</h1>
+            <p class="of-lead">{{ t('order_thanks_text') }}</p>
+          } @else {
+            <h1 class="of-title">{{ t('order_title') }}</h1>
+            <p class="of-lead">{{ t('order_lead') }}</p>
+
+            <form class="of-form" [formGroup]="orderForm" (ngSubmit)="onSubmit()" novalidate>
+              <div class="of-row">
+                <label class="of-field">
+                  <span>{{ t('order_name_label') }} <span class="of-req">*</span></span>
+                  <input class="of-input" formControlName="client_name" autocomplete="name" [class.of-input--error]="fieldInvalid('client_name')">
+                </label>
+                <label class="of-field">
+                  <span>{{ t('order_ico_label') }}</span>
+                  <input class="of-input" formControlName="ico" inputmode="numeric" [class.of-input--error]="fieldInvalid('ico')">
+                  @if (fieldInvalid('ico')) { <small class="of-error">{{ t('order_ico_error') }}</small> }
+                </label>
+              </div>
+
+              <label class="of-field">
+                <span>{{ t('order_address_label') }}</span>
+                <input class="of-input" formControlName="client_address" autocomplete="street-address">
+              </label>
+
+              <div class="of-row">
+                <label class="of-field">
+                  <span>{{ t('order_email_label') }} <span class="of-req">*</span></span>
+                  <input class="of-input" type="email" formControlName="client_email" autocomplete="email" [class.of-input--error]="fieldInvalid('client_email')">
+                  @if (fieldInvalid('client_email')) { <small class="of-error">{{ t('order_email_error') }}</small> }
+                </label>
+                <label class="of-field">
+                  <span>{{ t('order_phone_label') }}</span>
+                  <input class="of-input" type="tel" formControlName="client_phone" maxlength="20" autocomplete="tel"
+                         [placeholder]="t('order_phone_placeholder')" [class.of-input--error]="fieldInvalid('client_phone')">
+                  @if (fieldInvalid('client_phone')) { <small class="of-error">{{ t('order_phone_error') }}</small> }
+                </label>
+              </div>
+
+              <label class="of-field">
+                <span>{{ t('order_description_label') }} <span class="of-req">*</span></span>
+                <textarea class="of-input of-textarea" rows="5" formControlName="order_description" [class.of-input--error]="fieldInvalid('order_description')"></textarea>
+              </label>
+
+              <app-multi-file-upload class="mfu--light"
+                [label]="t('order_attachments_label')"
+                [maxFiles]="attachmentRules?.max_files ?? 10"
+                [maxFileSizeMb]="attachmentRules?.max_file_size_mb ?? 20"
+                [maxTotalSizeMb]="attachmentRules?.max_total_size_mb ?? 50"
+                [allowedExtensions]="attachmentRules?.extensions ?? []"
+                [textOverrides]="uploaderTexts"
+                (filesChanged)="onFilesChanged($event)">
+              </app-multi-file-upload>
+
+              <label class="of-check">
+                <input type="checkbox" formControlName="dataProcessingAgreement">
+                <span>{{ t('order_gdpr_consent') }}
+                  <button type="button" class="of-link" (click)="showDoc('gdpr')">{{ t('order_gdpr_link') }}</button>
+                  <span class="of-req">*</span></span>
+              </label>
+              <label class="of-check">
+                <input type="checkbox" formControlName="tosAgreement">
+                <span>{{ t('order_tos_consent') }}
+                  <button type="button" class="of-link" (click)="showDoc('tos')">{{ t('order_tos_link') }}</button>
+                  <span class="of-req">*</span></span>
+              </label>
+
+              <app-captcha [loadErrorText]="t('order_error_captcha_load')" />
+
+              @if (errorMessage) {
+                <p class="of-form-error" role="alert">{{ errorMessage }}</p>
+              }
+
+              <button type="submit" class="of-submit" [disabled]="orderForm.invalid || isLoading">
+                {{ isLoading ? t('order_sending') : t('order_send') }}
+              </button>
+              <p class="of-hint">{{ t('order_required_hint') }}</p>
+            </form>
+          }
+        }
+        @default {
+          <div class="of-icon of-icon--error" aria-hidden="true">✕</div>
+          <h1 class="of-title">{{ t('order_link_' + linkState + '_title') }}</h1>
+          <p class="of-lead">{{ t('order_link_' + linkState + '_text') }}</p>
+        }
+      }
+    </section>
+
+    @if (contact?.email || contact?.phone) {
+      <p class="of-contact">
+        {{ t('order_contact') }}
+        @if (contact?.email) { <a [href]="'mailto:' + contact!.email">{{ contact!.email }}</a> }
+        @if (contact?.email && contact?.phone) { · }
+        @if (contact?.phone) { <a [href]="'tel:' + contact!.phone">{{ contact!.phone }}</a> }
+      </p>
+    }
+  </main>
+</div>
+
+@if (openDoc) {
+  <app-legal-document-dialog
+    [slug]="openDoc"
+    [lang]="portalI18n.getCurrentLanguage()"
+    [heading]="t(openDoc === 'gdpr' ? 'order_gdpr_title' : 'order_tos_title')"
+    [lastUpdateLabel]="t('order_doc_updated')"
+    [closeLabel]="t('order_doc_close')"
+    [errorText]="t('order_doc_error')"
+    (closed)="showDoc(null)">
+  </app-legal-document-dialog>
+}

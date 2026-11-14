@@ -7,9 +7,9 @@
  * @author JS
  * @created 2026
  * @description Shared fallback of the confirmation e-mail templates editable per language in the
- * admin (web_site_settings `*_email_*_i18n`): the text of the record's language, otherwise the
- * Czech text (fallback language), otherwise the built-in default - never an empty text. Used by
- * RawRequestEmailTemplate (inquiries) and SalesOrderEmailTemplate (orders).
+ * admin (`*_email_*_i18n` columns of the settings of an application): the text of the record's language, otherwise the
+ * Czech text (fallback language), otherwise the built-in default - never an empty text. Extended by
+ * the template classes of the applications (inquiries, orders, e-shop orders).
  * @dependencies none
  */
 

@@ -36,6 +36,7 @@ import { ApiEnvelope } from '../../../shared/interfaces/api-envelope';
 import { ProjectPortalLocalizationService } from './project-portal-localization.service';
 import { UploadRulesService } from '../../../shared/services/upload-rules.service';
 import { UploadRule, extensionsLabel, fileExtension, isExtensionAllowed } from '../../../shared/utils/upload-rules';
+import { PortalLanguageSwitcherComponent } from './language-switcher/portal-language-switcher.component';
 
 type PortalState = 'loading' | 'login' | 'portal' | 'invalid';
 /** Sections of the left menu. */
@@ -212,7 +213,7 @@ interface CompanySettings {
 @Component({
   selector: 'app-project-portal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PortalLanguageSwitcherComponent],
   templateUrl: './project-portal.component.html',
   styleUrls: ['../../../admin/shared-styles/theme.css', './project-portal.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -313,8 +314,6 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
   replySendError: string | null = null;
 
   isRefreshing = false;
-
-  isLangMenuOpen = false;
 
   companySettings: CompanySettings | null = null;
   companySettingsLoading = false;
@@ -563,19 +562,6 @@ updateThreadStatus(status: string): void {
   get accountInitials(): string {
     const parts = this.accountName.trim().split(/\s+/).filter(Boolean);
     return parts.slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('');
-  }
-
-  // ── Language dropdown (minimalist - flag only) ──────────────────────
-
-  get currentLanguageMeta() {
-    return this.portalI18n.availableLanguages.find(l => l.code === this.portalI18n.getCurrentLanguage());
-  }
-
-  toggleLangMenu(): void { this.isLangMenuOpen = !this.isLangMenuOpen; }
-  closeLangMenu(): void { this.isLangMenuOpen = false; }
-  selectLanguage(code: string): void {
-    this.portalI18n.setLanguage(code);
-    this.isLangMenuOpen = false;
   }
 
   // ── Checkpoints ───────────────────────────────────────────────────────

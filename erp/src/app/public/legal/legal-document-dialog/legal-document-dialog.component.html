@@ -1,0 +1,32 @@
+<!--
+    @file: legal-document-dialog.component.html
+    @path: src/app/public/legal/legal-document-dialog/legal-document-dialog.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Backdrop and the window of a legal document: header (title, close button),
+        scrolling body (last update, sections; loading / error text).
+-->
+<div class="ldd-backdrop" (click)="close()"></div>
+<div class="ldd-window" role="dialog" aria-modal="true" [attr.aria-label]="heading">
+  <header class="ldd-header">
+    <h2 class="ldd-title">{{ heading }}</h2>
+    <button type="button" class="ldd-close" [attr.aria-label]="closeLabel" [title]="closeLabel" (click)="close()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </header>
+  <div class="ldd-body">
+    @if (doc) {
+      @if (doc.last_update_date) {
+        <p class="ldd-updated"><strong>{{ lastUpdateLabel }}</strong> {{ doc.last_update_date }}</p>
+      }
+      <app-legal-document-sections [sections]="doc.sections ?? []"></app-legal-document-sections>
+    } @else if (failed) {
+      <p class="ldd-state">{{ errorText }}</p>
+    } @else {
+      <div class="ldd-spinner" aria-hidden="true"></div>
+    }
+  </div>
+</div>

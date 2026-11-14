@@ -36,7 +36,7 @@ class UploadRulesTest extends TestCase
     {
         $data = $this->getJson('/api/upload-rules')->assertOk()->json('data');
 
-        $this->assertSame(['raw_request_commission', 'sales_order', 'job_application', 'project_thread'], array_keys($data));
+        $this->assertSame(['raw_request_commission', 'job_application', 'project_thread', 'sales_order'], array_keys($data));
         $this->assertSame(AttachmentPolicy::publicRules(), $data);
         $this->assertSame(['max_files' => 10, 'max_file_size_mb' => 20, 'max_total_size_mb' => 50], array_diff_key($data['sales_order'], ['extensions' => 0]));
         $this->assertSame(['max_files' => 5, 'max_file_size_mb' => 15, 'max_total_size_mb' => null], array_diff_key($data['project_thread'], ['extensions' => 0]));

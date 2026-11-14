@@ -29,25 +29,11 @@
       "devNote": "AuditLogPageComponent (core) with WEB_AUDIT_LOG (web-logs.config.ts), route 'web/logs', permission 'web-view-web-logs'."
     },
     {
-      "id": "sales-leads",
-      "group": "web",
-      "order": 8,
-      "permission": "web-sales-leads-view",
-      "devNote": "SalesLeadsComponent, route 'web/sales-leads', permission 'web-sales-leads-view'."
-    },
-    {
       "id": "edit-website",
       "group": "web",
       "order": 10,
       "permission": "web-edit-website-view",
       "devNote": "EditWebsiteComponent (TranslationEditorViewComponent of the core + FAQ / jobs / references tabs), route 'web/edit-website', permission 'web-edit-website-view'."
-    },
-    {
-      "id": "sales-orders",
-      "group": "web",
-      "order": 11,
-      "permission": "web-sales-orders-view",
-      "devNote": "SalesOrdersComponent, route 'web/sales-orders', permission 'web-sales-orders-view'. Řádková akce 'Projekt' zakládá navazující záznam v Projects."
     },
     {
       "id": "job-applications",

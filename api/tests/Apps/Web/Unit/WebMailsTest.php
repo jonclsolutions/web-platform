@@ -7,7 +7,7 @@
  * @author JS
  * @created 2026
  * @description Unit tests of the web e-mails: subject and rendered content of the raw
- *   request confirmation and the sales order confirmation.
+ *   request confirmation.
  * @dependencies
  * - Tests\TestCase, Tests\Apps\Web\Support\WebFixtures; views web::emails.*.
  */
@@ -15,8 +15,6 @@
 namespace Tests\Apps\Web\Unit;
 
 use App\Apps\Web\Mail\WebRawRequestCommissionReceived;
-use App\Apps\Web\Mail\WebSalesOrderReceived;
-use App\Apps\Web\Support\SalesOrderEmailTemplate;
 use Tests\Apps\Web\Support\WebFixtures;
 use Tests\TestCase;
 
@@ -46,25 +44,6 @@ class WebMailsTest extends TestCase
         $this->assertStringContainsString('client@example.com', $html);
         $this->assertStringContainsString('We need a new website.', $html);
         $this->assertStringContainsString('brief.pdf', $html);
-        $this->assertSame([], $mail->attachments());
-    }
-
-    /**
-     * @description Without a stored template the sales order confirmation uses the built-in
-     *   default subject and repeats the order data.
-     * @input Sales order of 'Acme s.r.o.', no site settings.
-     * @output Subject SalesOrderEmailTemplate default; HTML contains client name and e-mail.
-     */
-    public function test_sales_order_confirmation(): void
-    {
-        $order = $this->salesOrder();
-
-        $mail = new WebSalesOrderReceived($order->load('attachments'));
-        $html = $mail->render();
-
-        $mail->assertHasSubject(SalesOrderEmailTemplate::DEFAULTS['subject']);
-        $this->assertStringContainsString('Acme s.r.o.', $html);
-        $this->assertStringContainsString($order->client_email, $html);
         $this->assertSame([], $mail->attachments());
     }
 }

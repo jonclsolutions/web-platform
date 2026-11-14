@@ -7,9 +7,8 @@
  * @author JS
  * @created 2026
  * @description Test tables of the project portal (SQLite mirror of its migrations):
- *   projects, checkpoints, client accounts, sessions, threads and messages, sign-in codes,
- *   updates, approvals and templates. `lead_id` / `order_id` get the foreign keys to the web
- *   tables of production only while the web is installed (otherwise plain columns, always NULL).
+ *   settings, sales leads and orders, projects, checkpoints, client accounts, sessions, threads
+ *   and messages, sign-in codes, updates, approvals and templates.
  * @dependencies Tests\Support\TestSchema (audit log shape); run by TestSchema::create() while
  *   the application is in config/apps.php.
  */
@@ -33,6 +32,61 @@ final class ProjectPortalSchema
     {
         TestSchema::auditLog('project_portal_logs');
 
+        Schema::create('project_portal_settings', function (Blueprint $t) {
+            $t->increments('id');
+            foreach (['subject', 'title', 'intro', 'outro', 'labels'] as $column) {
+                $t->json("sales_order_email_{$column}_i18n")->nullable();
+            }
+            $t->timestamps();
+        });
+
+        Schema::create('project_portal_sales_leads', function (Blueprint $t) {
+            $t->increments('id');
+            $t->string('public_token', 64)->nullable()->unique();
+            $t->timestamp('public_token_used_at')->nullable();
+            $t->timestamp('public_token_expires_at')->nullable();
+            $t->unsignedInteger('user_id')->nullable();
+            $t->string('salesman_name');
+            $t->date('first_contact_date')->nullable();
+            $t->string('subject_name');
+            $t->string('contact_person')->nullable();
+            $t->string('location', 100)->nullable();
+            $t->string('source_channel');
+            $t->string('source_url', 500)->nullable();
+            $t->text('description')->nullable();
+            $t->string('priority')->nullable()->default('neutral');
+            $t->string('status')->nullable()->default('new');
+            $t->date('last_contact_date')->nullable();
+            $t->string('next_step')->nullable();
+            $t->text('rejection_reason')->nullable();
+            $t->timestamp('created_at')->useCurrent();
+            $t->timestamp('updated_at')->useCurrent();
+            $t->timestamp('deleted_at')->nullable();
+            $t->string('contact_email')->nullable();
+            $t->string('contact_phone')->nullable();
+            $t->string('contact_other')->nullable();
+            $t->foreign('user_id')->references('id')->on('users')->nullOnDelete();
+        });
+
+        Schema::create('project_portal_sales_orders', function (Blueprint $t) {
+            $t->increments('id');
+            $t->unsignedInteger('lead_id')->nullable();
+            $t->string('salesman_name')->nullable();
+            $t->string('ico', 20)->nullable();
+            $t->string('client_name');
+            $t->string('client_address', 500)->nullable();
+            $t->string('client_phone')->nullable();
+            $t->string('client_email')->nullable();
+            $t->string('lang', 5)->nullable();
+            $t->text('order_description')->nullable();
+            $t->boolean('data_processing_agreement')->default(false);
+            $t->boolean('tos_agreement')->default(false);
+            $t->timestamp('created_at')->useCurrent();
+            $t->timestamp('updated_at')->useCurrent();
+            $t->timestamp('deleted_at')->nullable();
+            $t->foreign('lead_id')->references('id')->on('project_portal_sales_leads')->nullOnDelete();
+        });
+
         Schema::create('web_projects', function (Blueprint $t) {
             $t->increments('id');
             $t->unsignedInteger('lead_id')->nullable();
@@ -54,11 +108,8 @@ final class ProjectPortalSchema
             $t->timestamps();
             $t->timestamp('deleted_at')->nullable();
             $t->foreign('assignee_id')->references('id')->on('users')->nullOnDelete();
-            // The web tables exist only while the web application is installed (its schema runs first).
-            if (Schema::hasTable('web_sales_orders')) {
-                $t->foreign('lead_id')->references('id')->on('web_sales_leads')->nullOnDelete();
-                $t->foreign('order_id')->references('id')->on('web_sales_orders')->nullOnDelete();
-            }
+            $t->foreign('lead_id')->references('id')->on('project_portal_sales_leads')->nullOnDelete();
+            $t->foreign('order_id')->references('id')->on('project_portal_sales_orders')->nullOnDelete();
         });
 
         Schema::create('web_project_checkpoints', function (Blueprint $t) {

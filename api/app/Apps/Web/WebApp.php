@@ -5,8 +5,8 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Manifest of the web application (public website, inquiries, leads, orders, job
- * applications) - everything the core needs to know about it. Registered in config/apps.php.
+ * @description Manifest of the web application (public website, inquiries, job applications) -
+ * everything the core needs to know about it. Registered in config/apps.php.
  * @dependencies AppManifest; WebBaseDataSeeder, WebRetentionSource, WebAgendaSource, WebLog,
  *   WebContentLanguages, CheckWebActive, MigrateLegacyAttachmentsCommand and the Web models with
  *   attachments.
@@ -21,8 +21,8 @@ use App\Apps\Web\Services\WebRetentionSource;
 use App\Apps\Web\Models\WebJobApplication;
 use App\Apps\Web\Models\WebLog;
 use App\Apps\Web\Models\WebRawRequestCommission;
-use App\Apps\Web\Models\WebSalesOrder;
 use App\Support\Apps\AppManifest;
+use App\Support\Uploads\AttachmentPolicy;
 use App\Apps\Web\Support\WebContentLanguages;
 use App\Apps\Web\Database\Seeders\WebBaseDataSeeder;
 
@@ -31,25 +31,8 @@ final class WebApp extends AppManifest
     /** @description Upload profile of the inquiries (WebRawRequestCommission) - contact form and admin. */
     public const UPLOAD_RAW_REQUEST_COMMISSION = 'raw_request_commission';
 
-    /** @description Upload profile of the orders (WebSalesOrder) - public order form and admin. */
-    public const UPLOAD_SALES_ORDER = 'sales_order';
-
     /** @description Upload profile of the CV of a job application (WebJobApplication) - one file. */
     public const UPLOAD_JOB_APPLICATION = 'job_application';
-
-    /**
-     * @description Allowed attachments of the inquiry / order forms - documents, images, archives,
-     * audio / video, CAD.
-     */
-    public const COMMISSION_EXTENSIONS = [
-        'pdf', 'doc', 'docx', 'dotx', 'odt', 'pages', 'rtf', 'txt', 'csv',
-        'xls', 'xlsx', 'xlsm', 'xltx', 'ods', 'numbers', 'ppt', 'pptx', 'key',
-        'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'tif', 'heic', 'heif', 'psd', 'ai', 'eps',
-        'zip', 'rar', '7z', 'tar', 'gz',
-        'mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac',
-        'mp4', 'mov', 'avi', 'wmv', 'mkv', 'webm',
-        'dwg', 'dxf', 'stp', 'step', 'stl', 'obj',
-    ];
 
     /**
      * @description Upload profiles of the web (AppManifest::uploadProfiles()) - also read as
@@ -57,10 +40,7 @@ final class WebApp extends AppManifest
      */
     public const UPLOAD_PROFILES = [
         self::UPLOAD_RAW_REQUEST_COMMISSION => [
-            'extensions' => self::COMMISSION_EXTENSIONS, 'max_files' => 10, 'max_file_kb' => 20480, 'max_total_bytes' => 50 * 1024 * 1024,
-        ],
-        self::UPLOAD_SALES_ORDER => [
-            'extensions' => self::COMMISSION_EXTENSIONS, 'max_files' => 10, 'max_file_kb' => 20480, 'max_total_bytes' => 50 * 1024 * 1024,
+            'extensions' => AttachmentPolicy::MATERIAL_EXTENSIONS, 'max_files' => 10, 'max_file_kb' => 20480, 'max_total_bytes' => 50 * 1024 * 1024,
         ],
         self::UPLOAD_JOB_APPLICATION => [
             'extensions' => ['pdf', 'doc', 'docx', 'odt', 'pages', 'rtf', 'txt', 'jpg', 'jpeg', 'png', 'heic', 'heif', 'zip', 'rar', '7z'],
@@ -131,7 +111,6 @@ final class WebApp extends AppManifest
         return [
             'web/cv_files',
             'web/raw_request_commissions',
-            'web/sales_orders',
         ];
     }
 
@@ -141,7 +120,6 @@ final class WebApp extends AppManifest
         return [
             'job_application'        => WebJobApplication::class,
             'raw_request_commission' => WebRawRequestCommission::class,
-            'sales_order'            => WebSalesOrder::class,
         ];
     }
 

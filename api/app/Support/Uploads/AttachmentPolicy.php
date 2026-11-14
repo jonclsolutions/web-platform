@@ -41,6 +41,20 @@ final class AttachmentPolicy
     public const INLINE_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
 
     /**
+     * @description Materials a client sends with an inquiry or an order (applications: web
+     *   inquiries, project portal orders) - documents, images, archives, audio / video, CAD.
+     */
+    public const MATERIAL_EXTENSIONS = [
+        'pdf', 'doc', 'docx', 'dotx', 'odt', 'pages', 'rtf', 'txt', 'csv',
+        'xls', 'xlsx', 'xlsm', 'xltx', 'ods', 'numbers', 'ppt', 'pptx', 'key',
+        'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'tif', 'heic', 'heif', 'psd', 'ai', 'eps',
+        'zip', 'rar', '7z', 'tar', 'gz',
+        'mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac',
+        'mp4', 'mov', 'avi', 'wmv', 'mkv', 'webm',
+        'dwg', 'dxf', 'stp', 'step', 'stl', 'obj',
+    ];
+
+    /**
      * @description Upload profiles of all applications, without BLOCKED_EXTENSIONS. `max_file_kb`
      * is the Laravel `max:` value (kilobytes), `max_total_bytes` the AttachmentsTotalSize limit
      * (null = no total limit).

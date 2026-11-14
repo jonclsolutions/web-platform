@@ -156,7 +156,7 @@ class SiteSettingTest extends TestCase
      * @description Web maintenance blocks the web-only public endpoints (open finding #7: the
      *   `web.active` middleware was registered but used on no route).
      * @input Settings row switched off (is_web_active false, own message), cache cleared; the
-     *   three public form POSTs and the lead prefill GET; then status / legal config; then web on.
+     *   two public form POSTs; then status / legal config; then web on.
      * @output 503 {success:false, message:<maintenance message>} for the guarded routes; status and
      *   legal config still 200; with the web active again the form answers 422 (validation), not 503.
      */
@@ -165,10 +165,9 @@ class SiteSettingTest extends TestCase
         WebSiteSetting::query()->updateOrCreate(['id' => 1], ['is_web_active' => false, 'web_maintenance_message' => 'Back soon']);
         Cache::forget('site_setting_active_web');
 
-        foreach (['raw_request_commissions', 'sales_orders', 'job_applications'] as $form) {
+        foreach (['raw_request_commissions', 'job_applications'] as $form) {
             $this->postJson("/api/{$form}", [])->assertStatus(503)->assertExactJson(['message' => 'Back soon']);
         }
-        $this->getJson('/api/public/sales-leads/any-token')->assertStatus(503);
 
         $this->getJson('/api/web/public/status')->assertOk()->assertExactJson(['data' => ['is_web_active' => false]]);
         $this->getJson('/api/public/legal/config')->assertOk();
@@ -176,6 +175,5 @@ class SiteSettingTest extends TestCase
         WebSiteSetting::query()->update(['is_web_active' => true]);
         Cache::flush();
         $this->postJson('/api/raw_request_commissions', [])->assertStatus(422);
-        $this->getJson('/api/public/sales-leads/any-token')->assertStatus(404);
     }
 }

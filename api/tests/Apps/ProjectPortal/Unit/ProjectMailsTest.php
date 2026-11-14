@@ -8,7 +8,8 @@
  * @created 2026
  * @description Unit tests of the project portal e-mails: the thread notification of the team,
  *   the update notification of a client account (cz / en), the access e-mail of a client
- *   account (invitation / sign-in code) and the team notification (assigned thread / decision).
+ *   account (invitation / sign-in code), the team notification (assigned thread / decision) and
+ *   the order confirmation.
  * @dependencies
  * - Tests\TestCase, Tests\Apps\ProjectPortal\Support\ProjectFixtures; views project-portal::emails.*.
  */
@@ -19,6 +20,8 @@ use App\Apps\ProjectPortal\Mail\ProjectAccessMail;
 use App\Apps\ProjectPortal\Mail\ProjectClientUpdateMail;
 use App\Apps\ProjectPortal\Mail\ProjectTeamNotificationMail;
 use App\Apps\ProjectPortal\Mail\ProjectThreadActivityMail;
+use App\Apps\ProjectPortal\Mail\SalesOrderReceivedMail;
+use App\Apps\ProjectPortal\Support\SalesOrderEmailTemplate;
 use Tests\Apps\ProjectPortal\Support\ProjectFixtures;
 use Tests\TestCase;
 
@@ -141,5 +144,24 @@ class ProjectMailsTest extends TestCase
         $changes->assertHasSubject('Changes requested — Eshop: Logo');
         $this->assertStringContainsString("/admin/project-portal/projects/{$project->id}/approvals", $changes->render());
         $this->assertStringContainsString('The client requested changes to:', $changes->render());
+    }
+
+    /**
+     * @description Without a stored template the sales order confirmation uses the built-in
+     *   default subject and repeats the order data.
+     * @input Sales order of 'Acme s.r.o.', no portal settings.
+     * @output Subject SalesOrderEmailTemplate default; HTML contains client name and e-mail.
+     */
+    public function test_sales_order_confirmation(): void
+    {
+        $order = $this->salesOrder();
+
+        $mail = new SalesOrderReceivedMail($order->load('attachments'));
+        $html = $mail->render();
+
+        $mail->assertHasSubject(SalesOrderEmailTemplate::DEFAULTS['subject']);
+        $this->assertStringContainsString('Acme s.r.o.', $html);
+        $this->assertStringContainsString($order->client_email, $html);
+        $this->assertSame([], $mail->attachments());
     }
 }

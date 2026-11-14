@@ -28,7 +28,7 @@ describe('DashboardComponent (web)', () => {
 
   const totals: Record<string, number> = {
     'web/job_applications?per_page=1': 0,
-    'web/sales_leads?per_page=1': 40, 'web/sales_orders?per_page=1': 5, 'web/raw_request_commissions?per_page=1': 9,
+    'web/raw_request_commissions?per_page=1': 9,
     'web/logs?per_page=1': 900
   };
   const logs = [
@@ -53,12 +53,12 @@ describe('DashboardComponent (web)', () => {
   /**
    * @description With all permissions every statistic is loaded; none of them is urgent.
    * @input  ngOnInit(), all permissions
-   * @output 5 stats in order jobApps … webLogs with their totals; no urgent stat; loadingStats false; lastUpdatedAt set
+   * @output 3 stats in order jobApps, rawRequests, webLogs with their totals; no urgent stat; loadingStats false; lastUpdatedAt set
    */
   it('loads all statistics', () => {
     component.ngOnInit();
     expect(component.quickStats.map(s => [s.key, s.value])).toEqual([
-      ['jobApps', 0], ['leads', 40], ['salesOrders', 5], ['rawRequests', 9], ['webLogs', 900]
+      ['jobApps', 0], ['rawRequests', 9], ['webLogs', 900]
     ]);
     expect(component.quickStats.filter(s => s.urgent)).toEqual([]);
     expect(component.loadingStats).toBeFalse();
@@ -68,16 +68,16 @@ describe('DashboardComponent (web)', () => {
 
   /**
    * @description Only allowed statistics are requested; a failed one shows '—' and is never urgent.
-   * @input  granted ['web-job-applications-view', 'web-sales-leads-view']; leads request fails
-   * @output stats jobApps 0, leads '—' (urgent false); no request for orders; no activity and no maintenance request
+   * @input  granted ['web-job-applications-view', 'web-user-requests-view']; inquiries request fails
+   * @output stats jobApps 0, rawRequests '—' (urgent false); no request for the logs; no activity and no maintenance request
    */
   it('requests only allowed statistics and survives a failed one', () => {
-    ctx.permissions.granted = new Set(['web-job-applications-view', 'web-sales-leads-view']);
+    ctx.permissions.granted = new Set(['web-job-applications-view', 'web-user-requests-view']);
     (ctx.dataHandler as any).getPaginatedCollection.and.callFake((url: string) =>
-      url.startsWith('web/sales_leads') ? throwError(() => new Error('x')) : of({ data: [], meta: { total: totals[url] } }));
+      url.startsWith('web/raw_request_commissions') ? throwError(() => new Error('x')) : of({ data: [], meta: { total: totals[url] } }));
     component.ngOnInit();
-    expect(component.quickStats.map(s => [s.key, s.value, !!s.urgent])).toEqual([['jobApps', 0, false], ['leads', '—', false]]);
-    expect(urls()).not.toContain('web/sales_orders?per_page=1');
+    expect(component.quickStats.map(s => [s.key, s.value, !!s.urgent])).toEqual([['jobApps', 0, false], ['rawRequests', '—', false]]);
+    expect(urls()).not.toContain('web/logs?per_page=1');
     expect(urls()).not.toContain(ACTIVITY_URL);
     expect((ctx.dataHandler as any).get).not.toHaveBeenCalledWith('web/settings');
     expect(component.recentActivity).toEqual([]);
@@ -116,17 +116,17 @@ describe('DashboardComponent (web)', () => {
 
   /**
    * @description The hero stat is the first one or the chosen one; the dropdown opens and closes.
-   * @input  stats loaded; toggleHeroDropdown(); selectHeroStat('leads'); toggle + closeHeroDropdown(); unknown key
-   * @output hero jobApps → leads; secondary without leads; dropdown closed; unknown key falls back to the first stat
+   * @input  stats loaded; toggleHeroDropdown(); selectHeroStat('rawRequests'); toggle + closeHeroDropdown(); unknown key
+   * @output hero jobApps → rawRequests; secondary without it; dropdown closed; unknown key falls back to the first stat
    */
   it('lets the user choose the hero statistic', () => {
     component.ngOnInit();
     expect(component.heroStat?.key).toBe('jobApps');
     component.toggleHeroDropdown();
     expect(component.heroDropdownOpen).toBeTrue();
-    component.selectHeroStat('leads');
-    expect(component.heroStat?.key).toBe('leads');
-    expect(component.secondaryStats.map(s => s.key)).not.toContain('leads');
+    component.selectHeroStat('rawRequests');
+    expect(component.heroStat?.key).toBe('rawRequests');
+    expect(component.secondaryStats.map(s => s.key)).not.toContain('rawRequests');
     expect(component.heroDropdownOpen).toBeFalse();
     component.toggleHeroDropdown();
     component.closeHeroDropdown();
@@ -137,25 +137,25 @@ describe('DashboardComponent (web)', () => {
 
   /**
    * @description Bars use a log scale (largest = 100 %, minimum 8 %, zero or '—' = 4 %).
-   * @input  stats loaded (max 900); leads 40; jobApps 0; a '—' stat; then all stats '—' except one
-   * @output webLogs 100; leads between 8 and 100; jobApps 4; '—' 4; failed stats do not change the scale
+   * @input  stats loaded (max 900); rawRequests 9; jobApps 0; a '—' stat; then all stats '—' except one
+   * @output webLogs 100; rawRequests between 8 and 100; jobApps 4; '—' 4; failed stats do not change the scale
    */
   it('computes logarithmic stat bars', () => {
     component.ngOnInit();
     const stat = (k: string) => component.quickStats.find(s => s.key === k)!;
     expect(component.statBarPct(stat('webLogs'))).toBe(100);
-    expect(component.statBarPct(stat('leads'))).toBeGreaterThanOrEqual(8);
-    expect(component.statBarPct(stat('leads'))).toBeLessThan(100);
+    expect(component.statBarPct(stat('rawRequests'))).toBeGreaterThanOrEqual(8);
+    expect(component.statBarPct(stat('rawRequests'))).toBeLessThan(100);
     expect(component.statBarPct(stat('jobApps'))).toBe(4);
-    expect(component.statBarPct({ ...stat('leads'), value: '—' })).toBe(4);
-    component.quickStats = [{ ...stat('leads') }, { ...stat('webLogs'), value: '—' }];
+    expect(component.statBarPct({ ...stat('rawRequests'), value: '—' })).toBe(4);
+    component.quickStats = [{ ...stat('rawRequests') }, { ...stat('webLogs'), value: '—' }];
     expect(component.statBarPct(component.quickStats[0])).toBe(100);
   });
 
   /**
    * @description The distribution bar is sorted by value, sums to ~100 %, gives zero a small share and fades the opacity.
-   * @input  stats loaded (5 numeric values, jobApps 0); then one '—' value
-   * @output first segment webLogs opacity 1; last (5th) jobApps with pct > 0 and opacity 0.4; pct sum ≈ 100; '—' left out
+   * @input  stats loaded (3 numeric values, jobApps 0); then one '—' value
+   * @output first segment webLogs opacity 1; last (3rd) jobApps with pct > 0 and opacity 0.66; pct sum ≈ 100; '—' left out
    */
   it('computes the distribution segments', () => {
     component.ngOnInit();
@@ -164,10 +164,10 @@ describe('DashboardComponent (web)', () => {
     expect(seg[0].opacity).toBe(1);
     expect(seg[seg.length - 1].key).toBe('jobApps');
     expect(seg[seg.length - 1].pct).toBeGreaterThan(0);
-    expect(seg[seg.length - 1].opacity).toBe(0.4);
+    expect(seg[seg.length - 1].opacity).toBe(0.66);
     expect(seg.reduce((s, x) => s + x.pct, 0)).toBeCloseTo(100, 0);
     component.quickStats[1].value = '—';
-    expect(component.distributionSegments.map(s => s.key)).not.toContain('leads');
+    expect(component.distributionSegments.map(s => s.key)).not.toContain('rawRequests');
   });
 
   /**
@@ -231,7 +231,7 @@ describe('DashboardComponent (web)', () => {
     ctx.permissions.granted = new Set(['web-edit-website-view', 'web-view-web-logs']);
     expect(component.visibleNavSections.map(s => s.route)).toEqual(['/admin/web/edit-website', '/admin/web/logs']);
     ctx.permissions.granted = 'all';
-    expect(component.visibleNavSections.length).toBe(6);
+    expect(component.visibleNavSections.length).toBe(4);
   });
 
   /**

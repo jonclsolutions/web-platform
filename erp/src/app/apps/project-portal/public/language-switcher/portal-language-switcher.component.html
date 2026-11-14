@@ -1,0 +1,30 @@
+<!--
+    @file: portal-language-switcher.component.html
+    @path: src/app/apps/project-portal/public/language-switcher/portal-language-switcher.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Flag button of the current language and the menu of the portal languages.
+-->
+<div class="pp-lang-switcher">
+  <button type="button" class="pp-lang-btn" [title]="label" [attr.aria-label]="label"
+          aria-haspopup="menu" [attr.aria-expanded]="isOpen" (click)="toggle()">
+    @if (current?.icon) {
+      <img [src]="current!.icon" [alt]="current!.code" class="pp-lang-btn-flag">
+    }
+    <svg class="pp-lang-chevron" [class.pp-lang-chevron-open]="isOpen" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  </button>
+  @if (isOpen) {
+    <div class="pp-lang-menu-backdrop" (click)="close()"></div>
+    <div class="pp-lang-menu" role="menu">
+      @for (lang of languages; track lang.code) {
+        <button type="button" role="menuitem" class="pp-lang-menu-item" [class.pp-lang-menu-item-active]="lang.code === current?.code" (click)="select(lang.code)">
+          <img [src]="lang.icon" [alt]="lang.code" class="pp-lang-flag-img">
+          <span>{{ lang.name }}</span>
+        </button>
+      }
+    </div>
+  }
+</div>

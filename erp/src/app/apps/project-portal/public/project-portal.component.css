@@ -117,7 +117,7 @@
     @module: Header
     @description: Menu button (52 px, border right), avatar with the initials, the signed-in name
         and the project; on the right the refresh button and the language switcher.
-    @usage: .pp-header > .pp-header-left (.pp-menu-btn, .pp-header-user) + .pp-header-right (.pp-header-btn, .pp-lang-switcher)
+    @usage: .pp-header > .pp-header-left (.pp-menu-btn, .pp-header-user) + .pp-header-right (.pp-header-btn, app-portal-language-switcher)
 */
 .pp-header {
   height: var(--header-h); flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
@@ -147,31 +147,6 @@
 .pp-header-btn:hover:not(:disabled) { background: var(--surface-2); color: var(--text); border-color: var(--border-mid); }
 .pp-header-btn:disabled { opacity: 0.6; cursor: default; }
 .pp-spin-icon { animation: pp-spin 0.7s linear infinite; }
-
-/*
-    @module: Language switcher
-    @description: Current flag + chevron; the menu opens below it aligned to the right (the same
-        pattern as the administration header).
-    @usage: .pp-lang-switcher > .pp-lang-btn (.pp-lang-btn-flag, .pp-lang-chevron) + .pp-lang-menu > .pp-lang-menu-item
-*/
-.pp-lang-switcher { position: relative; }
-.pp-lang-btn-flag { width: 18px; height: 18px; border-radius: 3px; object-fit: cover; display: block; }
-.pp-lang-chevron { transition: transform var(--ease); }
-.pp-lang-chevron-open { transform: rotate(180deg); }
-.pp-lang-menu-backdrop { position: fixed; inset: 0; z-index: 40; }
-.pp-lang-menu {
-  position: absolute; top: calc(100% + 6px); right: 0; z-index: 41; min-width: 160px;
-  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(24, 24, 27, 0.12); overflow: hidden;
-}
-.pp-lang-menu-item {
-  display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 13px;
-  border: none; background: none; cursor: pointer; text-align: left;
-  font-size: 0.83rem; color: var(--text); font-family: var(--ff);
-}
-.pp-lang-flag-img { width: 17px; height: 17px; border-radius: 3px; object-fit: cover; flex-shrink: 0; }
-.pp-lang-menu-item:hover { background: var(--surface-2); }
-.pp-lang-menu-item-active { background: var(--surface-2); font-weight: 600; }
 
 /*
     @module: Left menu

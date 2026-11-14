@@ -35,12 +35,6 @@ use Illuminate\Support\Facades\Cache;
  */
 class WebSiteSettingController extends Controller
 {
-    /** @description Template fields of the order confirmation e-mail (web_site_settings). */
-    private const SALES_ORDER_TEMPLATE_FIELDS = [
-        'sales_order_email_subject_i18n', 'sales_order_email_title_i18n', 'sales_order_email_intro_i18n',
-        'sales_order_email_outro_i18n', 'sales_order_email_labels_i18n',
-    ];
-
     use LogsActivity;
 
     /**
@@ -176,40 +170,5 @@ class WebSiteSettingController extends Controller
         );
 
         return $this->respond($settings);
-    }
-
-    /**
-     * @description Editable fields of the WebSalesOrder confirmation e-mail template (VT-15) -
-     * subject / title / intro / outro / labels, each an i18n object keyed by language code; the
-     * counterpart of showRawRequestEmailTemplate().
-     * @return JsonResponse { data: { sales_order_email_*_i18n } }
-     */
-    public function showSalesOrderEmailTemplate(): JsonResponse
-    {
-        $settings = WebSiteSetting::first() ?? WebSiteSetting::create([
-            'is_web_active'           => true,
-            'web_maintenance_message' => 'We apologize, but the website is currently undergoing maintenance.',
-        ]);
-
-        return $this->respond($settings->only(self::SALES_ORDER_TEMPLATE_FIELDS));
-    }
-
-    /**
-     * @description Saves the editable WebSalesOrder confirmation e-mail template - like
-     * updateRawRequestEmailTemplate() without `confirm_password` (only the permission of the route).
-     * @param Request $request { sales_order_email_*_i18n }.
-     * @return JsonResponse { data: { sales_order_email_*_i18n } }
-     */
-    public function updateSalesOrderEmailTemplate(Request $request): JsonResponse
-    {
-        $validated = $request->validate(array_fill_keys(self::SALES_ORDER_TEMPLATE_FIELDS, 'sometimes|nullable|array'));
-
-        $settings = WebSiteSetting::first() ?? new WebSiteSetting();
-        $settings->fill($validated);
-        $settings->save();
-
-        $this->logAction($request, WebLog::class, 'update', 'Web', 'Updated confirmation email template (Sales Orders).', $settings->id, 'WebSiteSetting');
-
-        return $this->respond($settings->only(self::SALES_ORDER_TEMPLATE_FIELDS));
     }
 }

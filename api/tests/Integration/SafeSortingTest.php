@@ -34,8 +34,8 @@ class SafeSortingTest extends TestCase
         'shop/categories', 'shop/coupons', 'shop/customers', 'shop/logs', 'shop/orders',
         'shop/payment_methods', 'shop/products', 'shop/shipping_methods', 'shop/suppliers',
         'shop/public/categories', 'shop/public/products',
-        'web/job_applications', 'web/logs', 'project-portal/logs', 'project-portal/project-threads', 'project-portal/projects',
-        'web/raw_request_commissions', 'web/sales_leads', 'web/sales_orders',
+        'web/job_applications', 'web/logs', 'web/raw_request_commissions',
+        'project-portal/logs', 'project-portal/project-threads', 'project-portal/projects', 'project-portal/sales_leads', 'project-portal/sales_orders',
     ];
 
     /**

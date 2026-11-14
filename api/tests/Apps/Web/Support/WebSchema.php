@@ -7,8 +7,7 @@
  * @author JS
  * @created 2026
  * @description Test tables of the web application (SQLite mirror of its migrations):
- *   site settings, FAQ, jobs, references, public form records (inquiries, orders, job
- *   applications) and sales leads.
+ *   site settings, FAQ, jobs, references and public form records (inquiries, job applications).
  * @dependencies Tests\Support\TestSchema (audit log shape); run by TestSchema::create() while
  *   the application is in config/apps.php.
  */
@@ -106,17 +105,12 @@ final class WebSchema
             $t->increments('id');
             $t->boolean('is_web_active')->default(true);
             $t->string('web_maintenance_message', 500)->nullable();
-            foreach (['subject', 'title', 'intro', 'outro', 'labels'] as $column) {
-                $t->json("sales_order_email_{$column}_i18n")->nullable();
-            }
             $t->timestamp('created_at')->nullable()->useCurrent();
             $t->timestamp('updated_at')->nullable()->useCurrent();
             foreach (['title', 'intro', 'outro', 'labels', 'subject'] as $part) {
                 $t->longText("raw_request_email_{$part}_i18n")->nullable();
             }
         });
-
-        // Polymorphic file attachments (requests, orders, tickets, CVs, project messages).
 
         Schema::create('web_raw_request_commissions', function (Blueprint $t) {
             $t->id();
@@ -149,53 +143,5 @@ final class WebSchema
             $t->timestamp('deleted_at')->nullable();
         });
 
-        Schema::create('web_sales_leads', function (Blueprint $t) {
-            $t->increments('id');
-            $t->string('public_token', 64)->nullable()->unique();
-            $t->timestamp('public_token_used_at')->nullable();
-            $t->timestamp('public_token_expires_at')->nullable();
-            $t->unsignedInteger('user_id')->nullable();
-            $t->string('salesman_name');
-            $t->date('first_contact_date')->nullable();
-            $t->string('subject_name');
-            $t->string('contact_person')->nullable();
-            $t->string('location', 100)->nullable();
-            $t->string('source_channel');
-            $t->string('source_url', 500)->nullable();
-            $t->text('description')->nullable();
-            $t->string('priority')->nullable()->default('neutral');
-            $t->string('status')->nullable()->default('new');
-            $t->date('last_contact_date')->nullable();
-            $t->string('next_step')->nullable();
-            $t->text('rejection_reason')->nullable();
-            $t->timestamp('created_at')->useCurrent();
-            $t->timestamp('updated_at')->useCurrent();
-            $t->timestamp('deleted_at')->nullable();
-            $t->string('contact_email')->nullable();
-            $t->string('contact_phone')->nullable();
-            $t->string('contact_other')->nullable();
-            $t->foreign('user_id')->references('id')->on('users')->nullOnDelete();
-        });
-
-        Schema::create('web_sales_orders', function (Blueprint $t) {
-            $t->increments('id');
-            $t->unsignedInteger('lead_id')->nullable();
-            $t->string('salesman_name')->nullable();
-            $t->string('ico', 20)->nullable();
-            $t->string('client_name');
-            $t->string('client_address', 500)->nullable();
-            $t->string('client_phone')->nullable();
-            $t->string('client_email')->nullable();
-            $t->string('lang', 5)->nullable();
-            $t->text('order_description')->nullable();
-            $t->boolean('data_processing_agreement')->default(false);
-            $t->boolean('tos_agreement')->default(false);
-            $t->timestamp('created_at')->useCurrent();
-            $t->timestamp('updated_at')->useCurrent();
-            $t->timestamp('deleted_at')->nullable();
-            $t->foreign('lead_id')->references('id')->on('web_sales_leads')->nullOnDelete();
-        });
-
-        // Customer project portal (Project*), see CheckProjectSession.
     }
 }

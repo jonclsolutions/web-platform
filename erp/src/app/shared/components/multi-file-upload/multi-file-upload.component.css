@@ -12,6 +12,27 @@
   font-family: var(--mfu-ff-body, 'Segoe UI', system-ui, sans-serif);
 }
 
+/*
+    @module: Light look
+    @description: Colours of the uploader on a light page (administration forms, project portal);
+        the dark look of the public web is the default.
+    @usage: <app-multi-file-upload class="mfu--light">
+*/
+:host(.mfu--light) {
+  --mfu-surface-2: var(--color-zinc-100);
+  --mfu-border-mid: var(--color-zinc-300);
+  --mfu-accent: var(--color-zinc-900);
+  --mfu-accent-dim: var(--color-zinc-100);
+  --mfu-accent-ring: rgba(24, 24, 27, 0.08);
+  --mfu-text: var(--color-zinc-900);
+  --mfu-text-muted: var(--color-zinc-500);
+  --mfu-text-dim: var(--color-zinc-400);
+  --mfu-error: var(--color-rose-700);
+  --mfu-error-dim: var(--color-rose-50);
+  --mfu-error-border: var(--color-rose-200);
+  --mfu-radius: 10px;
+}
+
 *, *::before, *::as { box-sizing: border-box; }
 
 .mfu-container {

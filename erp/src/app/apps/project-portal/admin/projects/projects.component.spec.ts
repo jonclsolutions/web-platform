@@ -5,9 +5,9 @@
  * @author JS
  * @created 2026
  * @description Unit tests of ProjectsComponent and projects.config.ts – the list of client
- *   projects of the Web module: translated configuration (with the unread messages column and
+ *   projects of the project portal: translated configuration (with the unread messages column and
  *   filter, the assignee and the threads waiting on the team, the "my projects" filter), the
- *   assignee options, toolbars, prefill from a sales order (?order_id), old links ?open_project →
+ *   assignee options, toolbars, a new project from an order (?order_id), old links ?open_project →
  *   project page, creating a project (opens its page) and opening the project page from the table.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (all admin doubles), ActivatedRoute (stub with query
@@ -21,10 +21,9 @@ import { of, throwError } from 'rxjs';
 import { ProjectsComponent } from './projects.component';
 import {
   CHECKPOINT_STATUS_VALUES, PROJECT_PLATFORM_VALUES, PROJECT_STATUS_VALUES, PROJECT_VISIBILITY_VALUES,
-  createCheckpointStatusLabels
+  createCheckpointStatusLabels, projectDefaultsFromOrder
 } from './projects.config';
 import { AdminTestContext, createAdminTestContext, paginated } from '../../../../../testing/admin-test-helpers';
-import { requiresApps } from '../../../../../testing/requires-apps';
 
 describe('ProjectsComponent', () => {
   let ctx: AdminTestContext;
@@ -90,7 +89,6 @@ describe('ProjectsComponent', () => {
      * @output values = exported constants; 'projects.platform_ai'; labels for new/active/done
      */
     it('offers translated options and the checkpoint statuses', () => {
-      requiresApps('web');
       expect(field('platform').options.map((o: any) => o.value)).toEqual(PROJECT_PLATFORM_VALUES);
       expect(field('platform').options[3].label).toBe('projects.platform_ai');
       expect(field('visibility').options.map((o: any) => o.value)).toEqual(PROJECT_VISIBILITY_VALUES);
@@ -199,39 +197,51 @@ describe('ProjectsComponent', () => {
     }));
 
     /**
-     * @description ?order_id=5 of an order without a project opens the create form prefilled with
-     *   that order; the order select lists all orders.
-     * @input  query { order_id: '5' }; projects of the order []; orders [{ id: 5, client_name: 'ACME' }]; ngOnInit()
-     * @output getCollection('project-portal/projects', { order_id '5', no_pagination }); getCollection('web/sales_orders',
-     *   { no_pagination, sort id desc }); options [none, '#5 — ACME']; form open with { order_id: '5' }
+     * @description ?order_id=5 of an order without a project opens the CREATE form (not the edit
+     *   form) with the order selected and the client name and contact of the order filled in; the
+     *   order select lists all orders; the toolbar create form afterwards starts empty.
+     * @input  query { order_id: '5' }; projects of the order []; orders [{ id: 5, ACME, a@acme.cz, 777 }]; ngOnInit()
+     * @output getCollection('project-portal/projects', { order_id '5', no_pagination });
+     *   getCollection('project-portal/sales_orders', { no_pagination, sort id desc }); options [none,
+     *   '#5 — ACME']; form open, selectedItemForEdit null, defaults order_id '5' / name ACME / e-mail /
+     *   phone; then handleCreateFormOpened(): defaults undefined.
      */
-    it('prefills the create form from a sales order', fakeAsync(() => {
-      requiresApps('web');
+    it('opens the create form of a new project from an order', fakeAsync(() => {
       route.snapshot.queryParamMap = convertToParamMap({ order_id: '5' });
-      dh().getCollection.and.callFake((endpoint: string) => of(endpoint === 'project-portal/projects' ? [] : [{ id: 5, client_name: 'ACME' }]));
+      dh().getCollection.and.callFake((endpoint: string) => of(endpoint === 'project-portal/projects' ? []
+        : [{ id: 5, client_name: 'ACME', client_email: 'a@acme.cz', client_phone: '777' }]));
       component.ngOnInit();
       expect(dh().getCollection).toHaveBeenCalledWith('project-portal/projects', { order_id: '5', no_pagination: 'true' });
-      expect(dh().getCollection).toHaveBeenCalledWith('web/sales_orders', { no_pagination: 'true', sort_by: 'id', sort_direction: 'desc' });
+      expect(dh().getCollection).toHaveBeenCalledWith('project-portal/sales_orders', { no_pagination: 'true', sort_by: 'id', sort_direction: 'desc' });
       expect(field('order_id').options).toEqual([{ value: '', label: 'projects.field_order_none_option' }, { value: '5', label: '#5 — ACME' }]);
       expect(component.showCreateForm).toBeTrue();
-      expect(component.selectedItemForEdit).toEqual({ order_id: '5' });
-      component.handleCreateFormOpened();
-      expect(component.selectedItemForEdit).toEqual({ order_id: '5' });
+      expect(component.selectedItemForEdit).toBeNull();
+      expect(['order_id', 'name', 'contact_email', 'contact_phone'].map(f => field(f).defaultValue)).toEqual(['5', 'ACME', 'a@acme.cz', '777']);
       component.onCancelForm();
       expect(component.showCreateForm).toBeFalse();
       component.handleCreateFormOpened();
       expect(component.selectedItemForEdit).toBeNull();
+      expect(field('name').defaultValue).toBeUndefined();
       discardPeriodicTasks();
     }));
+
+    /**
+     * @description The starting values of a project from an order; missing contact data are empty.
+     * @input  order { id 3, client_name 'Beta' }
+     * @output { order_id '3', name 'Beta', contact_email '', contact_phone '' }
+     */
+    it('takes the starting values of a project from its order', () => {
+      expect(projectDefaultsFromOrder({ id: 3, client_name: 'Beta' }))
+        .toEqual({ order_id: '3', name: 'Beta', contact_email: '', contact_phone: '' });
+    });
 
     /**
      * @description ?order_id=5 of an order that has a project opens that project; a failed lookup
      *   falls back to the create form.
      * @input  query { order_id: '5' }; projects of the order [{ id: 12 }]; then the lookup fails.
-     * @output navigate(['/admin/project-portal/projects', 12], { replaceUrl: true }), no form; then the form with { order_id: '5' }.
+     * @output navigate(['/admin/project-portal/projects', 12], { replaceUrl: true }), no form; then the create form.
      */
     it('opens the project of a sales order', fakeAsync(() => {
-      requiresApps('web');
       route.snapshot.queryParamMap = convertToParamMap({ order_id: '5' });
       dh().getCollection.and.callFake((endpoint: string) => of(endpoint === 'project-portal/projects' ? [{ id: 12 }] : []));
       component.ngOnInit();
@@ -241,7 +251,7 @@ describe('ProjectsComponent', () => {
       dh().getCollection.and.callFake((endpoint: string) => endpoint === 'project-portal/projects' ? throwError(() => new Error('x')) : of([]));
       component.ngOnInit();
       expect(component.showCreateForm).toBeTrue();
-      expect(component.selectedItemForEdit).toEqual({ order_id: '5' });
+      expect(component.selectedItemForEdit).toBeNull();
       discardPeriodicTasks();
     }));
 

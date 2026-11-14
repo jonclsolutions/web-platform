@@ -6,14 +6,17 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description API endpoints of the customer project portal: the public portal of a project
- *   (projects/public/{token} - sign-in by password / one-time code / link, then the session
- *   routes) and the administration (project-portal/..., signed-in users with permissions).
+ * @description API endpoints of the customer project portal: the public order form
+ *   (project-portal/public/... - the lead of a link, sending an order), the public portal of a
+ *   project (projects/public/{token} - sign-in by password / one-time code / link, then the
+ *   session routes) and the administration (project-portal/..., signed-in users with permissions).
  *   Loaded by routes/api.php inside the `api` prefix (AppManifest::routesFile()), so every path
  *   here is below /api.
  * @dependencies
- * - App\Apps\ProjectPortal\Http\Controllers\*; PortalCookie::ROUTE (Path of the session cookie);
- *   middleware `project.session` (ProjectPortalApp::middlewareAliases()), `auth:sanctum`, `permission`.
+ * - App\Apps\ProjectPortal\Http\Controllers\*; core PageTitleController (browser titles of the
+ *   public pages); PortalCookie::ROUTE (Path of the session cookie); middleware `project.session`
+ *   (ProjectPortalApp::middlewareAliases()), core `public.form`, `auth:sanctum`, `permission`;
+ *   named rate limiter `public-form`.
  */
 
 use App\Apps\ProjectPortal\Http\Controllers\ProjectAccountController;
@@ -26,7 +29,10 @@ use App\Apps\ProjectPortal\Http\Controllers\ProjectPublicController;
 use App\Apps\ProjectPortal\Http\Controllers\ProjectTemplateController;
 use App\Apps\ProjectPortal\Http\Controllers\ProjectThreadController;
 use App\Apps\ProjectPortal\Http\Controllers\ProjectUpdateController;
+use App\Apps\ProjectPortal\Http\Controllers\SalesLeadController;
+use App\Apps\ProjectPortal\Http\Controllers\SalesOrderController;
 use App\Apps\ProjectPortal\Support\PortalCookie;
+use App\Http\Controllers\Api\Legal\PageTitleController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -73,11 +79,92 @@ Route::prefix('projects/public/{token}')
 
 /*
 |--------------------------------------------------------------------------
+| PUBLIC ORDER FORM — the lead of a link (by its unguessable token only, never by the internal
+| id; prefills the form) and sending an order (per-IP limit `public-form`, then the quota per
+| recipient e-mail and the captcha - PublicFormGuard). The admin creates orders through the
+| authenticated routes below, which have none of these checks.
+|--------------------------------------------------------------------------
+*/
+Route::prefix('project-portal/public')->group(function () {
+    Route::get('sales-leads/{token}', [SalesLeadController::class, 'showByToken'])
+        ->middleware('throttle:30,1,sales-lead-token');
+    Route::post('sales-orders', [SalesOrderController::class, 'store'])
+        ->middleware(['throttle:public-form', 'public.form:sales_order,client_email']);
+});
+
+/*
+|--------------------------------------------------------------------------
 | ADMINISTRATION (signed-in users; every route checks its permission)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
     Route::prefix('project-portal')->group(function () {
+
+        // Browser titles of the public pages of the portal (project-portal/settings).
+        Route::get('/page-titles', [PageTitleController::class, 'index'])
+            ->defaults('area', 'project-portal')
+            ->middleware('permission:project-portal-settings-view');
+        Route::put('/page-titles', [PageTitleController::class, 'update'])
+            ->defaults('area', 'project-portal')
+            ->middleware('permission:project-portal-settings-update');
+
+        // ── project-portal/sales_leads ──────────────────────────────────────
+        Route::prefix('sales_leads')->group(function () {
+            Route::post('/bulk-delete', [SalesLeadController::class, 'bulkDestroy'])
+                ->middleware('permission:project-portal-sales-leads-delete');
+            Route::delete('/force-delete-all', [SalesLeadController::class, 'forceDeleteAllTrashed'])
+                ->middleware('permission:project-portal-sales-leads-delete');
+            Route::get('/import/template', [SalesLeadController::class, 'importTemplate'])
+                ->middleware('permission:project-portal-sales-leads-create');
+            Route::post('/import/validate', [SalesLeadController::class, 'importValidate'])
+                ->middleware(['throttle:30,1,import-sales-leads-validate', 'permission:project-portal-sales-leads-create']);
+            Route::post('/import/commit', [SalesLeadController::class, 'importCommit'])
+                ->middleware(['throttle:30,1,import-sales-leads-commit', 'permission:project-portal-sales-leads-create']);
+            Route::get('/',      [SalesLeadController::class, 'index'])
+                ->middleware('permission:project-portal-sales-leads-view');
+            Route::post('/',     [SalesLeadController::class, 'store'])
+                ->middleware('permission:project-portal-sales-leads-create');
+            Route::get('/{id}',  [SalesLeadController::class, 'show'])
+                ->middleware('permission:project-portal-sales-leads-view');
+            Route::put('/{id}',  [SalesLeadController::class, 'update'])
+                ->middleware('permission:project-portal-sales-leads-update');
+            Route::patch('/{id}', [SalesLeadController::class, 'update'])
+                ->middleware('permission:project-portal-sales-leads-update');
+            Route::post('/{id}/restore', [SalesLeadController::class, 'restore'])
+                ->middleware('permission:project-portal-sales-leads-delete');
+            Route::delete('/{id}', [SalesLeadController::class, 'destroy'])
+                ->middleware('permission:project-portal-sales-leads-delete');
+            Route::post('/{id}/generate-link', [SalesLeadController::class, 'generateLink'])
+                ->middleware('permission:project-portal-sales-leads-update');
+        });
+
+        // ── project-portal/sales_orders ─────────────────────────────────────
+        // No import on purpose (SalesOrderController: atomic lead_token + GDPR consent cannot be
+        // imported retroactively).
+        Route::prefix('sales_orders')->group(function () {
+            Route::get('/email-template', [SalesOrderController::class, 'emailTemplate'])
+                ->middleware('permission:project-portal-sales-orders-update');
+            Route::put('/email-template', [SalesOrderController::class, 'updateEmailTemplate'])
+                ->middleware('permission:project-portal-sales-orders-update');
+            Route::post('/bulk-delete', [SalesOrderController::class, 'bulkDestroy'])
+                ->middleware('permission:project-portal-sales-orders-delete');
+            Route::delete('/force-delete-all', [SalesOrderController::class, 'forceDeleteAllTrashed'])
+                ->middleware('permission:project-portal-sales-orders-delete');
+            Route::get('/',      [SalesOrderController::class, 'index'])
+                ->middleware('permission:project-portal-sales-orders-view');
+            Route::post('/',     [SalesOrderController::class, 'store'])
+                ->middleware('permission:project-portal-sales-orders-create');
+            Route::get('/{id}',  [SalesOrderController::class, 'show'])
+                ->middleware('permission:project-portal-sales-orders-view');
+            Route::put('/{id}',  [SalesOrderController::class, 'update'])
+                ->middleware('permission:project-portal-sales-orders-update');
+            Route::patch('/{id}', [SalesOrderController::class, 'update'])
+                ->middleware('permission:project-portal-sales-orders-update');
+            Route::post('/{id}/restore', [SalesOrderController::class, 'restore'])
+                ->middleware('permission:project-portal-sales-orders-delete');
+            Route::delete('/{id}', [SalesOrderController::class, 'destroy'])
+                ->middleware('permission:project-portal-sales-orders-delete');
+        });
 
         // ── project-portal/logs (audit log of the portal) ─────────────────────
         Route::prefix('logs')->group(function () {

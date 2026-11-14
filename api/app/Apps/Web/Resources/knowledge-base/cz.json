@@ -56,20 +56,6 @@
         }
       ]
     },
-    "sales-leads": {
-      "navLabel": "Obchodní leady",
-      "header": "Obchodní leady",
-      "sections": [
-        {
-          "blocks": [
-            {
-              "type": "lead",
-              "content": "Testovací obsah - evidence a generování odkazů pro obchodní leady."
-            }
-          ]
-        }
-      ]
-    },
     "edit-website": {
       "navLabel": "Editace webu",
       "header": "Editace obsahu webu",
@@ -79,20 +65,6 @@
             {
               "type": "lead",
               "content": "Testovací obsah - editace obsahových částí veřejného webu."
-            }
-          ]
-        }
-      ]
-    },
-    "sales-orders": {
-      "navLabel": "Přijaté objednávky",
-      "header": "Přijaté objednávky (realizace)",
-      "sections": [
-        {
-          "blocks": [
-            {
-              "type": "lead",
-              "content": "Testovací obsah - přehled přijatých objednávek/realizací a jejich zpracování."
             }
           ]
         }

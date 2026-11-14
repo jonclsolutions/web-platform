@@ -7,34 +7,28 @@
  * @author JS
  * @created 2026
  * @description The project portal together with the web application (Integration: both
- *   installed): the migration that moved the portal out of the web (its audit log and
- *   permissions), the log endpoint, the project of a web order (filter, ids, one project per
- *   order), and the portal without the web application (no origin of a project, no reminder of
- *   web orders).
+ *   installed): the migrations that moved the portal out of the web (its audit log and
+ *   permissions) and the sales leads and orders from the web into the portal, and the log
+ *   endpoint of the portal.
  * @dependencies
- * - Tests\TestCase, ProjectFixtures, WebFixtures (web orders).
+ * - Tests\TestCase, ProjectFixtures; the web tables of the test schema (web_logs, web_site_settings).
  */
 
 namespace Tests\Integration;
 
 use App\Apps\ProjectPortal\Models\ProjectPortalLog;
-use App\Apps\ProjectPortal\ProjectPortalApp;
 use App\Models\Core\CorePermission;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\Apps\ProjectPortal\Support\ProjectFixtures;
-use Tests\Apps\Web\Support\WebFixtures;
 use Tests\TestCase;
 
 /**
- * @description ProjectPortalApp, its migration, ProjectPortalLogController, ProjectPortalAgendaSource.
+ * @description The migrations of the portal application, ProjectPortalLogController.
  */
 class ProjectPortalApplicationTest extends TestCase
 {
-    use ProjectFixtures, WebFixtures;
-
-    /** @description Agenda range around the test orders. */
-    private const RANGE = '/api/core/agenda?from=2026-10-26&to=2026-12-06';
+    use ProjectFixtures;
 
     /**
      * @description The migration moves the project rows of the web log into the portal log (names
@@ -99,68 +93,54 @@ class ProjectPortalApplicationTest extends TestCase
     }
 
     /**
-     * @description Without the web application a project has no origin: lead / order ids are
-     *   refused, a standalone project is created; the calendar has no reminder of web orders.
-     * @input apps = [project portal]; POST with order_id; POST without; sysadmin agenda with a
-     *   web order without a project in the database.
-     * @output 422 order_id + lead_id; 201; no web_orders_without_project, modules without web.
+     * @description The migration that moved the sales leads and orders from the web into the
+     *   portal: tables renamed, the order e-mail template moved into the portal settings, the
+     *   permissions renamed (same ids - roles keep them) with the tab and settings permissions
+     *   granted, the log rows and the browser titles moved; down() reverts it all.
+     * @input After down(): web tables with a lead and an order, web_site_settings with a subject
+     *   of the order e-mail, web_logs rows WebSalesLead / WebJobApplication, role S with
+     *   web-sales-orders-view, role P with web-projects-update, title web.order-form; up(), down().
+     * @output up: project_portal_sales_* with the rows, settings subject moved and the web columns
+     *   gone, role S with project-portal-sales-orders-view + view-project-portal, role P with
+     *   project-portal-settings-*, 1 portal row SalesLead, 1 web row, title
+     *   project-portal.order-form (/projects/order/:token). down: web tables and keys again.
      */
-    public function test_portal_without_the_web(): void
+    public function test_sales_migration(): void
     {
-        config(['apps.apps' => [ProjectPortalApp::class]]);
-        $order = $this->salesOrder();
-        $this->signIn($this->sysadmin());
+        $migration = require app_path('Apps/ProjectPortal/Database/Migrations/2026_11_24_000001_sales_leads_and_orders_in_project_portal.php');
+        $migration->down();
+        $this->assertTrue(Schema::hasTable('web_sales_leads') && Schema::hasColumn('web_site_settings', 'sales_order_email_subject_i18n'));
+        $leadId = DB::table('web_sales_leads')->insertGetId(['salesman_name' => 'S', 'subject_name' => 'Acme', 'source_channel' => 'web']);
+        DB::table('web_sales_orders')->insert(['lead_id' => $leadId, 'client_name' => 'Acme']);
+        DB::table('web_site_settings')->insert(['is_web_active' => true, 'sales_order_email_subject_i18n' => json_encode(['cz' => 'Díky'])]);
+        foreach (['WebSalesLead', 'WebJobApplication'] as $module) {
+            DB::table('web_logs')->insert(['event_type' => 'update', 'module' => $module, 'description' => "{$module} changed", 'affected_entity_type' => $module, 'affected_entity_id' => 1]);
+        }
+        $this->permission('view-project-portal', 'project-portal');
+        $sales = $this->role('sales', ['web-sales-orders-view']);
+        $pm = $this->role('pm', ['web-projects-update']);
+        DB::table('legal_page_titles')->where(['area' => 'project-portal', 'page_key' => 'order-form'])->delete();
+        DB::table('legal_page_titles')->insert(['area' => 'web', 'page_key' => 'order-form', 'route_path' => '/order_form/:token', 'title_i18n' => '{"cz":"Objednávka"}', 'sort_order' => 1]);
 
-        $this->postJson('/api/project-portal/projects', ['name' => 'X', 'visibility' => 'public', 'order_id' => $order->id, 'lead_id' => 1])
-            ->assertStatus(422)->assertJsonValidationErrors(['order_id', 'lead_id']);
-        $this->postJson('/api/project-portal/projects', ['name' => 'X', 'visibility' => 'public'])->assertCreated();
+        $migration->up();
 
-        $data = $this->getJson(self::RANGE)->assertOk()->json('data');
-        $this->assertNotContains('web_orders_without_project', array_column($data['reminders'], 'type'));
-        $this->assertSame(['personal', 'project-portal', 'core'], $data['modules']);
-    }
+        $this->assertFalse(Schema::hasTable('web_sales_leads') || Schema::hasTable('web_sales_orders'));
+        $this->assertSame([1, 1], [DB::table('project_portal_sales_leads')->count(), DB::table('project_portal_sales_orders')->count()]);
+        $this->assertSame(['cz' => 'Díky'], json_decode(DB::table('project_portal_settings')->value('sales_order_email_subject_i18n'), true));
+        $this->assertFalse(Schema::hasColumn('web_site_settings', 'sales_order_email_subject_i18n'));
+        $this->assertSame(['project-portal-sales-orders-view', 'view-project-portal'], $sales->permissions()->orderBy('permission_key')->pluck('permission_key')->all());
+        $this->assertSame(['project-portal'], CorePermission::where('permission_key', 'like', 'project-portal-sales-%')->distinct()->pluck('module')->all());
+        $this->assertSame(['project-portal-settings-update', 'project-portal-settings-view', 'web-projects-update'], $pm->permissions()->orderBy('permission_key')->pluck('permission_key')->all());
+        $this->assertSame([['SalesLead', 'SalesLead']], DB::table('project_portal_logs')->get()->map(fn ($row) => [$row->module, $row->affected_entity_type])->all());
+        $this->assertSame(['WebJobApplication'], DB::table('web_logs')->pluck('module')->all());
+        $this->assertSame('/projects/order/:token', DB::table('legal_page_titles')->where(['area' => 'project-portal', 'page_key' => 'order-form'])->value('route_path'));
 
-    /**
-     * @description The reminder of web orders without a project needs the project view AND the
-     *   web orders (tab + page permission); a project of an order removes the order from it.
-     * @input Orders A, B; project of A; account with the portal only; account with the portal and
-     *   the web orders.
-     * @output Portal only: no reminder; with the web orders: count 1, link of the web orders.
-     */
-    public function test_web_orders_without_a_project(): void
-    {
-        $a = $this->salesOrder();
-        $this->salesOrder(['client_name' => 'Beta']);
-        $this->project(['order_id' => $a->id]);
+        $migration->down();
 
-        $this->signIn($this->userWith(['view-project-portal', 'web-projects-view']));
-        $this->assertSame([], $this->getJson(self::RANGE)->assertOk()->json('data.reminders'));
-
-        $this->signIn($this->userWith(['view-project-portal', 'web-projects-view', 'view-web', 'web-sales-orders-view']));
-        $reminder = collect($this->getJson(self::RANGE)->assertOk()->json('data.reminders'))->firstWhere('type', 'web_orders_without_project');
-        $this->assertSame([1, 'project-portal', '/admin/web/sales-orders'], [$reminder['count'], $reminder['module'], $reminder['link']]);
-    }
-
-    /**
-     * @description The project of a web order: the list filters by the order and names the lead
-     *   and the order; an order belongs to one project only.
-     * @input Lead + order; project A of the order, project B; PUT B with the order of A; PUT A
-     *   with its own order.
-     * @output order_id filter = [A]; lead_id / order_id of A; 422 order_id; 200.
-     */
-    public function test_project_of_a_web_order(): void
-    {
-        $this->signIn($this->userWith(['web-projects-view', 'web-projects-update']));
-        $lead = $this->lead();
-        $order = $this->salesOrder(['lead_id' => $lead->id]);
-        $a = $this->project(['lead_id' => $lead->id, 'order_id' => $order->id]);
-        $b = $this->project();
-
-        $this->assertSame([$a->id], array_column($this->getJson("/api/project-portal/projects?order_id={$order->id}")->json('data'), 'id'));
-        $this->getJson("/api/project-portal/projects?id={$a->id}")
-            ->assertJsonPath('data.0.lead_id', $lead->id)
-            ->assertJsonPath('data.0.order_id', $order->id);
-        $this->putJson("/api/project-portal/projects/{$b->id}", ['order_id' => $order->id])->assertStatus(422)->assertJsonValidationErrors(['order_id']);
-        $this->putJson("/api/project-portal/projects/{$a->id}", ['order_id' => $order->id])->assertOk();
+        $this->assertTrue(Schema::hasTable('web_sales_orders') && !Schema::hasTable('project_portal_settings'));
+        $this->assertSame(['view-project-portal', 'web-sales-orders-view'], $sales->permissions()->orderBy('permission_key')->pluck('permission_key')->all());
+        $this->assertSame(['WebJobApplication', 'WebSalesLead'], DB::table('web_logs')->orderBy('module')->pluck('module')->all());
+        $this->assertSame('/order_form/:token', DB::table('legal_page_titles')->where(['area' => 'web', 'page_key' => 'order-form'])->value('route_path'));
+        $migration->up();
     }
 }

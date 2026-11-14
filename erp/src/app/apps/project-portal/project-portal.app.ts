@@ -4,7 +4,7 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Manifest of the customer project portal (projects, their client portal, templates, the portal log) - what the core needs to know about it (apps.registry.ts).
+ * @description Manifest of the customer project portal (sales leads, orders with the public order form, projects, their client portal, templates, settings, the portal log) - what the core needs to know about it (apps.registry.ts).
  * @dependencies AppManifest; its admin and public route tables.
  */
 
@@ -22,6 +22,13 @@ export const PROJECT_PORTAL_APP: AppManifest = {
   adminI18n: true,
   nav: [
     {
+      key: 'project-portal-business', labelKey: 'nav_group_business',
+      items: [
+        { path: 'sales-leads', permission: 'project-portal-sales-leads-view', labelKey: 'nav_sales_leads', icon: 'user-check' },
+        { path: 'sales-orders', permission: 'project-portal-sales-orders-view', labelKey: 'nav_sales_orders', icon: 'box' },
+      ],
+    },
+    {
       key: 'project-portal-projects', labelKey: 'nav_group_projects',
       items: [
         { path: 'projects', permission: 'web-projects-view', labelKey: 'nav_projects', icon: 'folder' },
@@ -30,6 +37,7 @@ export const PROJECT_PORTAL_APP: AppManifest = {
     {
       key: 'project-portal-system', labelKey: 'nav_group_system',
       items: [
+        { path: 'settings', permission: 'project-portal-settings-view', labelKey: 'nav_project_portal_settings', icon: 'globe-settings' },
         { path: 'logs', permission: 'project-portal-view-logs', labelKey: 'nav_project_portal_logs', icon: 'file-lines' },
       ],
     },

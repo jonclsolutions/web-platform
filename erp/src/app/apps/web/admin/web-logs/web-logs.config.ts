@@ -4,7 +4,7 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Audit log of the web application (web_logs): inquiries, leads, orders, job applications and
+ * @description Audit log of the web application (web_logs): inquiries, job applications and
  *   the texts of the website.
  * @dependencies AuditLogPageConfig (admin/components/audit-log-page).
  */
@@ -18,11 +18,11 @@ export const WEB_AUDIT_LOG: AuditLogPageConfig = {
   reportPermission: 'web-view-web-logs',
   eventTypes: [
     'create', 'update', 'delete', 'soft_delete', 'hard_delete', 'restore', 'force_delete_all',
-    'export', 'error', 'delete_bulk', 'generate_link', 'maintenance_status_changed',
+    'export', 'error', 'delete_bulk', 'maintenance_status_changed',
     'unauthorized_maintenance_toggle_attempt',
   ],
   modules: [
-    'WebJobApplication', 'WebSalesLead', 'WebSalesOrder', 'WebRawRequestCommission', 'Web',
+    'WebJobApplication', 'WebRawRequestCommission', 'Web',
     'Translation:web',
   ],
 };

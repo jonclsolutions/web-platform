@@ -49,6 +49,27 @@ class ProjectModelsTest extends TestCase
     }
 
     /**
+     * @description Sales lead, order and project are linked: lead → salesman / orders, order →
+     *   lead / attachments, project → order.
+     * @input Lead of user U with an order, an attachment of the order, a project of the order.
+     * @output lead → user / orders, order → lead, attachment → its owner (morph), project → order.
+     */
+    public function test_sales_relations(): void
+    {
+        Storage::fake('private');
+        $owner = $this->user();
+        $lead = $this->lead(['user_id' => $owner->id]);
+        $order = $this->salesOrder(['lead_id' => $lead->id]);
+        $project = $this->project(['order_id' => $order->id]);
+
+        $this->assertTrue($lead->user->is($owner));
+        $this->assertTrue($lead->orders->sole()->is($order));
+        $this->assertTrue($order->lead->is($lead));
+        $this->assertTrue($this->attach($order)->attachable->is($order));
+        $this->assertTrue($project->order->is($order));
+    }
+
+    /**
      * @description The checkpoint status setter stamps the change time and refuses unknown states.
      * @input setStatus('done'); setStatus('bogus').
      * @output status 'done', status_changed_at set, saved; InvalidArgumentException, status kept.

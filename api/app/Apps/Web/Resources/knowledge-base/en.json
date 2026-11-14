@@ -56,20 +56,6 @@
         }
       ]
     },
-    "sales-leads": {
-      "navLabel": "Sales Leads",
-      "header": "Sales Leads",
-      "sections": [
-        {
-          "blocks": [
-            {
-              "type": "lead",
-              "content": "Placeholder content - tracking and link generation for sales leads."
-            }
-          ]
-        }
-      ]
-    },
     "edit-website": {
       "navLabel": "Website Editing",
       "header": "Website Content Editing",
@@ -79,20 +65,6 @@
             {
               "type": "lead",
               "content": "Placeholder content - editing content sections of the public website."
-            }
-          ]
-        }
-      ]
-    },
-    "sales-orders": {
-      "navLabel": "Received Orders",
-      "header": "Received Orders (Fulfillment)",
-      "sections": [
-        {
-          "blocks": [
-            {
-              "type": "lead",
-              "content": "Placeholder content - overview of received orders/fulfillments and their processing."
             }
           ]
         }

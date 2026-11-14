@@ -220,15 +220,15 @@ class UserUpdateTest extends TestCase
     /**
      * @description A real role change syncs the role and wipes all explicit grants before
      *   the requested ones are applied.
-     * @input Editor with web-sales-leads-view; target with explicit grant web-sales-leads-view and role 'a';
+     * @input Editor with core-external-links-view; target with explicit grant core-external-links-view and role 'a';
      *        PUT {role_id: 'b'} (no permissions).
      * @output 200 with role 'b'; no explicit grants left; core log about the reset.
      */
     public function test_role_change_resets_explicit_permissions(): void
     {
-        $this->editor(['web-sales-leads-view']);
+        $this->editor(['core-external-links-view']);
         $target = $this->user([], $this->role('a'));
-        $target->explicitPermissions()->attach($this->permission('web-sales-leads-view')->id);
+        $target->explicitPermissions()->attach($this->permission('core-external-links-view')->id);
         $b = $this->role('b');
 
         $this->putJson("/api/core/users/{$target->id}", ['role_id' => $b->id])
@@ -242,22 +242,22 @@ class UserUpdateTest extends TestCase
     /**
      * @description Explicit permissions: the editor can only add/remove what it holds itself;
      *   grants outside its authority stay, grants covered by the role are not stored.
-     * @input Editor with web-sales-leads-view + web-sales-leads-update; target role grants web-sales-leads-view and
+     * @input Editor with core-external-links-view + core-external-links-update; target role grants core-external-links-view and
      *        has an explicit core-security-view (granted by a sysadmin earlier);
-     *        PUT {permission_ids: [web-sales-leads-view, web-sales-leads-update]}.
-     * @output 200; explicit grants = core-security-view + web-sales-leads-update.
+     *        PUT {permission_ids: [core-external-links-view, core-external-links-update]}.
+     * @output 200; explicit grants = core-security-view + core-external-links-update.
      */
     public function test_explicit_permissions_within_authority(): void
     {
-        $this->editor(['web-sales-leads-view', 'web-sales-leads-update']);
-        $target = $this->user([], $this->role('reader', ['web-sales-leads-view']));
+        $this->editor(['core-external-links-view', 'core-external-links-update']);
+        $target = $this->user([], $this->role('reader', ['core-external-links-view']));
         $target->explicitPermissions()->attach($this->permission('core-security-view')->id);
 
         $response = $this->putJson("/api/core/users/{$target->id}", [
-            'permission_ids' => [$this->permission('web-sales-leads-view')->id, $this->permission('web-sales-leads-update')->id],
+            'permission_ids' => [$this->permission('core-external-links-view')->id, $this->permission('core-external-links-update')->id],
         ])->assertOk();
 
-        $this->assertEqualsCanonicalizing(['core-security-view', 'web-sales-leads-update'], $response->json('data.user_permissions'));
+        $this->assertEqualsCanonicalizing(['core-security-view', 'core-external-links-update'], $response->json('data.user_permissions'));
     }
 
     /**

@@ -5,11 +5,11 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Core entity of the customer project portal - can originate from a web order
- * (`order_id`, or its lead `lead_id` - plain ids, valid only while the web application is
- * installed) or be created standalone by an admin; both paths result in an identical row here.
+ * @description Core entity of the customer project portal - can originate from an order of the
+ * portal (`order_id`, or its lead `lead_id`) or be created standalone by an admin; both paths
+ * result in an identical row here.
  * @property string $access_token Permanent, plaintext, unguessable public URL id -
- * see migration for the security rationale (like the public token of a web lead). The secret of
+ * see migration for the security rationale (like the public token of a sales lead). The secret of
  * a sign-in is the password of a client account (ProjectAccount), set by the administration.
  * @property string $visibility 'public' | 'private' - checked on EVERY public
  * request by `ProjectPublicController`, not just at login.
@@ -26,7 +26,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Builder;
 use App\Models\User;
-use App\Support\Apps\AppRegistry;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
@@ -74,22 +73,23 @@ class Project extends Model
     public const ASSIGNEE_PERMISSION = 'web-projects-update';
 
     /**
-     * @description Validation of the origin of a project (web lead / order): only while the web
-     *   application is installed (AppRegistry) - without it a project has no origin and the ids
-     *   are refused. An order has at most one project.
+     * @description Validation of the origin of a project (sales lead / order). An order has at
+     *   most one project.
      * @param int|null $ignoreProjectId Project being updated (its own order is not "taken").
      * @return array<string, array<int, mixed>>
      */
     public static function originRules(?int $ignoreProjectId = null): array
     {
-        if (AppRegistry::app('web') === null) {
-            return ['lead_id' => ['prohibited'], 'order_id' => ['prohibited']];
-        }
-
         return [
-            'lead_id'  => ['nullable', 'integer', 'exists:web_sales_leads,id'],
-            'order_id' => ['nullable', 'integer', 'exists:web_sales_orders,id', Rule::unique('web_projects', 'order_id')->ignore($ignoreProjectId)],
+            'lead_id'  => ['nullable', 'integer', Rule::exists(SalesLead::class, 'id')],
+            'order_id' => ['nullable', 'integer', Rule::exists(SalesOrder::class, 'id'), Rule::unique(self::class, 'order_id')->ignore($ignoreProjectId)],
         ];
+    }
+
+    /** @description Order the project was created from (null for a standalone project). */
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(SalesOrder::class, 'order_id');
     }
 
     public function checkpoints(): HasMany

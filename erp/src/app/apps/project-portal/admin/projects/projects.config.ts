@@ -6,13 +6,11 @@
  * @created 2026
  * @description Static-turned-dynamic configuration for the customer Project management
  * list (table, filters, form). The project page itself lives in ../project-detail.
- * @note The order select of the create form exists only while the web application is installed
- *   (hasApp('web')) - a project of a web order.
+ * @note The order select is in the create form only (a project of an order).
  */
 import * as Core from '../../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { mapLabeledOptions } from '../../../../admin/components/builders/labeled-options';
-import { hasApp } from '../../../apps.registry';
 
 const SECTION = 'projects';
 
@@ -67,22 +65,45 @@ export function createNoOrderOptionLabel(i18n: AdminLocalizationService): string
   return i18n.getValue(`${SECTION}.field_order_none_option`);
 }
 
+/** @description Order as the projects page reads it (GET project-portal/sales_orders). */
+export interface ProjectOrder {
+  id: number;
+  client_name: string;
+  client_email?: string | null;
+  client_phone?: string | null;
+}
+
+/**
+ * @description Starting values of a project created from an order: the order selected, the name
+ *   and contact of its client (all editable in the form).
+ * @param order The order.
+ * @returns Values by column name.
+ */
+export function projectDefaultsFromOrder(order: ProjectOrder): Record<string, string> {
+  return {
+    order_id: String(order.id),
+    name: order.client_name ?? '',
+    contact_email: order.client_email ?? '',
+    contact_phone: order.client_phone ?? '',
+  };
+}
+
 /** @description `— Nobody —` option of the assignee select (project without a responsible administrator). */
 export function createNoAssigneeOptionLabel(i18n: AdminLocalizationService): string {
   return i18n.getValue(`${SECTION}.field_assignee_none_option`);
 }
 
 export function createProjectFormFields(i18n: AdminLocalizationService): Core.InputDefinition[] {
-  const orderField: Core.InputDefinition[] = hasApp('web') ? [{
-    column_name: 'order_id',
-    label: i18n.getValue(`${SECTION}.field_order_label`),
-    type: 'select',
-    options: [{ value: '', label: createNoOrderOptionLabel(i18n) }],
-    required: false,
-    editable: true, show_in_edit: false, show_in_create: true,
-  }] : [];
   return [
-    ...orderField,
+    {
+      column_name: 'order_id',
+      label: i18n.getValue(`${SECTION}.field_order_label`),
+      type: 'select',
+      // Filled by the component from GET project-portal/sales_orders (create only).
+      options: [{ value: '', label: createNoOrderOptionLabel(i18n) }],
+      required: false,
+      editable: true, show_in_edit: false, show_in_create: true,
+    },
     {
       column_name: 'template_id',
       label: i18n.getValue(`${SECTION}.field_template_label`),

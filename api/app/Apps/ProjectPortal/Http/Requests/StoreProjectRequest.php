@@ -6,7 +6,7 @@
  * @author JS
  * @created 2026
  * @description Validation for creating a project - either standalone (no lead_id/
- * order_id) or from an existing web order, both producing an identical row (origin rules:
+ * order_id) or from an existing order, both producing an identical row (origin rules:
  * Project::originRules()).
  */
 

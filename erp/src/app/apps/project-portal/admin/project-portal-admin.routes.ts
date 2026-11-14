@@ -5,9 +5,9 @@
  * @author JS
  * @created 2026
  * @description Admin pages of the project portal, below `/admin/project-portal/` (inside
- *   AdminLayoutComponent, AuthGuard checks `data.permission` of every page): the projects, the
- *   project templates, the page of one project with its sub-pages and the portal log. Each page
- *   is loaded on its first visit.
+ *   AdminLayoutComponent, AuthGuard checks `data.permission` of every page): the sales leads, the
+ *   orders, the projects, the project templates, the page of one project with its sub-pages, the
+ *   portal settings and the portal log. Each page is loaded on its first visit.
  * @usage `adminRoutes` of PROJECT_PORTAL_APP (project-portal.app.ts); `help` = id of the page of the
  *   internal manual (api/app/Apps/ProjectPortal/Resources/knowledge-base).
  */
@@ -23,5 +23,8 @@ export const PROJECT_PORTAL_ADMIN_ROUTES: Routes = [
   // (and its unsaved settings) alive while switching between them.
   { path: 'projects/:id', redirectTo: 'projects/:id/overview', pathMatch: 'full' },
   { path: 'projects/:id/:section', loadComponent: () => import('./project-detail/project-detail.component').then(m => m.ProjectDetailComponent), data: { help: 'projects', permission: 'web-projects-view' } },
+  { path: 'sales-leads', loadComponent: () => import('./sales-leads/sales-leads.component').then(m => m.SalesLeadsComponent), data: { help: 'sales-leads', permission: 'project-portal-sales-leads-view' } },
+  { path: 'sales-orders', loadComponent: () => import('./sales-orders/sales-orders.component').then(m => m.SalesOrdersComponent), data: { help: 'sales-orders', permission: 'project-portal-sales-orders-view' } },
+  { path: 'settings', loadComponent: () => import('./portal-settings/portal-settings.component').then(m => m.PortalSettingsComponent), data: { help: 'project-portal-settings', permission: 'project-portal-settings-view' } },
   { path: 'logs', loadComponent: () => import('../../../admin/components/audit-log-page/audit-log-page.component').then(m => m.AuditLogPageComponent), data: { help: 'project-portal-logs', permission: 'project-portal-view-logs', auditLog: PROJECT_PORTAL_AUDIT_LOG } },
 ];

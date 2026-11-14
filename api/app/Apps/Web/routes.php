@@ -7,8 +7,8 @@
  * @author JS
  * @created 2026
  * @description API endpoints of the web application: the public website (status, FAQ, jobs,
- *   references, the order-form link of a lead, the contact / order / job forms) and the
- *   administration (web/..., signed-in users with permissions). Loaded by routes/api.php inside
+ *   references, the contact and job forms) and the administration (web/..., signed-in users with
+ *   permissions). Loaded by routes/api.php inside
  *   the `api` prefix (AppManifest::routesFile()), so every path here is below /api.
  * @dependencies
  * - App\Apps\Web\Http\Controllers\*; core PageTitleController (browser titles of the web pages);
@@ -23,8 +23,6 @@ use App\Apps\Web\Http\Controllers\WebLogController;
 use App\Apps\Web\Http\Controllers\WebPublicController;
 use App\Apps\Web\Http\Controllers\WebRawRequestCommissionController;
 use App\Apps\Web\Http\Controllers\WebReferenceController;
-use App\Apps\Web\Http\Controllers\WebSalesLeadController;
-use App\Apps\Web\Http\Controllers\WebSalesOrderController;
 use App\Apps\Web\Http\Controllers\WebSiteSettingController;
 use App\Http\Controllers\Api\Legal\PageTitleController;
 use Illuminate\Support\Facades\Route;
@@ -35,18 +33,6 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::get('web/public/status', [WebPublicController::class, 'getStatus']);
-
-/*
-|--------------------------------------------------------------------------
-| PUBLIC SALES LEADS — resolve by unguessable token (order form prefill)
-|--------------------------------------------------------------------------
-| OrderFormComponent prefills the form from the link the salesman sent to the lead
-| (WebSalesLeadController::generateLink in the protected section). NEVER add access by the
-| internal `id` here - only by `token`.
-*/
-Route::prefix('public')->middleware('web.active')->group(function () {
-    Route::get('sales-leads/{token}', [WebSalesLeadController::class, 'showByToken'])->middleware('throttle:30,1,sales-lead-token');
-});
 
 /*
 |--------------------------------------------------------------------------
@@ -64,8 +50,6 @@ Route::prefix('public/web')->middleware(['web.active', 'throttle:60,1,public-web
 // the authenticated routes below (web/...), which have none of these checks.
 Route::post('raw_request_commissions', [WebRawRequestCommissionController::class, 'store'])
     ->middleware(['web.active', 'throttle:public-form', 'public.form:raw_request,contact_email']);
-Route::post('sales_orders', [WebSalesOrderController::class, 'store'])
-    ->middleware(['web.active', 'throttle:public-form', 'public.form:sales_order,client_email']);
 Route::post('job_applications',        [WebJobApplicationController::class, 'store'])
     ->middleware(['web.active', 'throttle:public-form', 'public.form:job_application,email']);
 
@@ -113,10 +97,6 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:web-user-requests-update');
             Route::put('/raw-request-email-template', [WebSiteSettingController::class, 'updateRawRequestEmailTemplate'])
                 ->middleware('permission:web-user-requests-update');
-            Route::get('/sales-order-email-template', [WebSiteSettingController::class, 'showSalesOrderEmailTemplate'])
-                ->middleware('permission:web-sales-orders-update');
-            Route::put('/sales-order-email-template', [WebSiteSettingController::class, 'updateSalesOrderEmailTemplate'])
-                ->middleware('permission:web-sales-orders-update');
         });
 
         // ── web/job_applications ─────────────────────────────────────────
@@ -178,61 +158,5 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
             Route::delete('/{id}', [WebRawRequestCommissionController::class, 'destroy'])
                 ->middleware('permission:web-user-requests-delete');
         });
-
-        // ── web/sales_orders ───────────────────────────────────────────────
-        // No import on purpose (WebSalesOrderController: atomic lead_token + GDPR consent cannot be
-        // imported retroactively).
-        Route::prefix('sales_orders')->group(function () {
-            Route::post('/bulk-delete', [WebSalesOrderController::class, 'bulkDestroy'])
-                ->middleware('permission:web-sales-orders-delete');
-            Route::delete('/force-delete-all', [WebSalesOrderController::class, 'forceDeleteAllTrashed'])
-                ->middleware('permission:web-sales-orders-delete');
-            Route::get('/',      [WebSalesOrderController::class, 'index'])
-                ->middleware('permission:web-sales-orders-view');
-            Route::post('/',     [WebSalesOrderController::class, 'store'])
-                ->middleware('permission:web-sales-orders-create');
-            Route::get('/{id}',  [WebSalesOrderController::class, 'show'])
-                ->middleware('permission:web-sales-orders-view');
-            Route::put('/{id}',  [WebSalesOrderController::class, 'update'])
-                ->middleware('permission:web-sales-orders-update');
-            Route::patch('/{id}', [WebSalesOrderController::class, 'update'])
-                ->middleware('permission:web-sales-orders-update');
-            Route::post('/{id}/restore', [WebSalesOrderController::class, 'restore'])
-                ->middleware('permission:web-sales-orders-delete');
-            Route::delete('/{id}', [WebSalesOrderController::class, 'destroy'])
-                ->middleware('permission:web-sales-orders-delete');
-        });
-
-        // ── web/sales_leads ────────────────────────────────────────────────
-        Route::prefix('sales_leads')->group(function () {
-            Route::post('/bulk-delete', [WebSalesLeadController::class, 'bulkDestroy'])
-                ->middleware('permission:web-sales-leads-delete');
-            Route::delete('/force-delete-all', [WebSalesLeadController::class, 'forceDeleteAllTrashed'])
-                ->middleware('permission:web-sales-leads-delete');
-                 Route::get('/import/template', [WebSalesLeadController::class, 'importTemplate'])
-        ->middleware('permission:web-sales-leads-create');
-    Route::post('/import/validate', [WebSalesLeadController::class, 'importValidate'])
-        ->middleware(['throttle:30,1,import-sales-leads-validate', 'permission:web-sales-leads-create']);
-    Route::post('/import/commit', [WebSalesLeadController::class, 'importCommit'])
-        ->middleware(['throttle:30,1,import-sales-leads-commit', 'permission:web-sales-leads-create']);
-
-            Route::get('/',      [WebSalesLeadController::class, 'index'])
-                ->middleware('permission:web-sales-leads-view');
-            Route::post('/',     [WebSalesLeadController::class, 'store'])
-                ->middleware('permission:web-sales-leads-create');
-            Route::get('/{id}',  [WebSalesLeadController::class, 'show'])
-                ->middleware('permission:web-sales-leads-view');
-            Route::put('/{id}',  [WebSalesLeadController::class, 'update'])
-                ->middleware('permission:web-sales-leads-update');
-            Route::patch('/{id}', [WebSalesLeadController::class, 'update'])
-                ->middleware('permission:web-sales-leads-update');
-            Route::post('/{id}/restore', [WebSalesLeadController::class, 'restore'])
-                ->middleware('permission:web-sales-leads-delete');
-            Route::delete('/{id}', [WebSalesLeadController::class, 'destroy'])
-                ->middleware('permission:web-sales-leads-delete');
-            Route::post('/{id}/generate-link', [WebSalesLeadController::class, 'generateLink'])
-                ->middleware('permission:web-sales-leads-update');
-        });
-
     });
 });

@@ -1,0 +1,48 @@
+/*
+    @file: portal-settings.component.css
+    @path: src/app/apps/project-portal/admin/portal-settings/portal-settings.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Layout of the page "Portal settings": the header (title, subtitle, help) above
+        the editor of the browser tab titles.
+    @dependencies: admin/shared-styles/theme.css (tokens)
+*/
+
+/*
+    @module: Page and header
+    @description: Column of the page width and its header with the help button on the right.
+    @usage: .pp-settings > .pp-settings-header (.pp-settings-title, .pp-settings-subtitle)
+*/
+.pp-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 860px;
+  padding-bottom: 28px;
+  font-family: var(--ff, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif);
+  color: var(--color-zinc-900);
+}
+.pp-settings-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+}
+.pp-settings-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.pp-settings-subtitle {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.8rem;
+  color: var(--color-zinc-500);
+}
+
+@media (max-width: 640px) {
+  .pp-settings-title { font-size: 1.2rem; }
+}
