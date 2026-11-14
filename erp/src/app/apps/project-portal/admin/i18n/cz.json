@@ -655,10 +655,10 @@
     "hint_projects": "Včetně vláken, zpráv a příloh; počítá se i poslední zpráva v portálu."
   },
   "permission-descriptions": {
-    "web-projects-view": "Zobrazit seznam a detail zákaznických projektů",
-    "web-projects-create": "Vytvořit nový zákaznický projekt (samostatně nebo z objednávky)",
-    "web-projects-update": "Upravit projekt, checkpointy a klientské účty a odpovídat na požadavky zákazníků",
-    "web-projects-delete": "Smazat (i hromadně) zákaznický projekt",
+    "project-portal-projects-view": "Zobrazit seznam a detail zákaznických projektů",
+    "project-portal-projects-create": "Vytvořit nový zákaznický projekt (samostatně nebo z objednávky)",
+    "project-portal-projects-update": "Upravit projekt, checkpointy a klientské účty a odpovídat na požadavky zákazníků",
+    "project-portal-projects-delete": "Smazat (i hromadně) zákaznický projekt",
     "view-project-portal": "[doporučeno: vždy zapnuto] Zobrazit aplikaci Projektový portál v administraci – bez toho ji nelze otevřít",
     "project-portal-view-logs": "Zobrazit historii logů (audit) projektového portálu",
     "project-portal-settings-view": "Zobrazit nastavení portálu (názvy záložek veřejných stránek)",

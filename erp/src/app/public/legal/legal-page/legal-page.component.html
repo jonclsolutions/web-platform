@@ -1,0 +1,33 @@
+<!--
+    @file: legal-page.component.html
+    @path: src/app/public/legal/legal-page/legal-page.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Legal document page: title, last update, sections, the paragraphs of the
+        document (cookie settings, more information) and the translated "effective from" footer.
+-->
+@if (data) {
+  <div class="container">
+    <h1>{{ t?.header_main }}</h1>
+    <p class="last-update">
+      <strong>{{ t?.last_update_text }}</strong> {{ data.last_update_date }}
+    </p>
+
+    <app-legal-document-sections [sections]="data.sections ?? []"></app-legal-document-sections>
+
+    @if (page.cookieSettings) {
+      <p class="legal-note">
+        {{ t?.change_settings_text }} <button type="button" class="legal-link-button" (click)="openCookieSettings()">{{ t?.change_settings_link_text }}</button>.
+      </p>
+    }
+    @if (page.privacyLink) {
+      <p class="legal-note">
+        {{ t?.more_info_text }} <a routerLink="../privacy-policy">{{ t?.more_info_link_text }}</a>.
+      </p>
+    }
+
+    <!-- Translated footer, the API text only as the fallback -->
+    <p class="last-update">{{ legalDocsService.effectiveFooter(data, t?.effective_from_text) }}</p>
+  </div>
+}

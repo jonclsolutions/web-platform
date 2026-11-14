@@ -34,7 +34,7 @@ class SaveProjectApprovalRequest extends FormRequest
             'title'                   => [$required, 'string', 'max:200'],
             'description'             => ['nullable', 'string', 'max:20000'],
             'checkpoint_id'           => ['nullable', 'integer',
-                Rule::exists('web_project_checkpoints', 'id')->where('project_id', (int) $this->route('projectId'))],
+                Rule::exists('project_portal_project_checkpoints', 'id')->where('project_id', (int) $this->route('projectId'))],
             'due_date'                => ['nullable', 'date_format:Y-m-d'],
             'attachments'             => ['nullable', 'array', 'max:' . ProjectPortalApp::UPLOAD_PROFILES[ProjectPortalApp::UPLOAD_PROJECT_THREAD]['max_files']],
             'attachments.*'           => AttachmentPolicy::fileRules(ProjectPortalApp::UPLOAD_PROJECT_THREAD),

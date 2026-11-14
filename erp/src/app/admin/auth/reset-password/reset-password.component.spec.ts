@@ -5,8 +5,9 @@
  * @author JS
  * @created 2026
  * @description Unit tests of ResetPasswordComponent – setting a new password from the e-mailed
- *   link: token from the URL, password policy, confirmation, API errors and redirect to login;
- *   all texts from the admin translations `reset-password` (finding #39, the i18n double returns key paths).
+ *   link: token from the URL, the shared form, API errors and redirect to login; all texts from
+ *   the admin translations `reset-password` (finding #39, the i18n double returns key paths). The
+ *   form itself (policy, confirmation, toggles): set-password-form.component.spec.ts.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (auth stub), ActivatedRoute (stub with query params)
  */
@@ -16,6 +17,8 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { ResetPasswordComponent } from './reset-password.component';
+import { SetPasswordFormComponent } from '../set-password-form/set-password-form.component';
+import { By } from '@angular/platform-browser';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 
 describe('ResetPasswordComponent', () => {
@@ -52,66 +55,45 @@ describe('ResetPasswordComponent', () => {
     expect(component.tokenMissing).toBeFalse();
   });
 
+  const value = { password: VALID, password_confirmation: VALID };
+  const form = () => fixture.debugElement.query(By.directive(SetPasswordFormComponent))?.componentInstance as SetPasswordFormComponent | undefined;
+
   /**
-   * @description Without token the form cannot be submitted and explains why.
-   * @input  URL without token; onSubmit()
-   * @output tokenMissing true; canSubmit false; errorKey 'error_token_missing'; no API call
+   * @description Without token there is no form; a submit explains why and calls nothing.
+   * @input  URL without token; onSubmit(value)
+   * @output tokenMissing true; no form; no API call
    */
   it('rejects a link without token', async () => {
     await setup(null);
-    component.password = VALID;
-    component.passwordConfirmation = VALID;
-    expect(component.canSubmit).toBeFalse();
-    component.onSubmit();
-    expect(component.errorKey).toBe('error_token_missing');
+    expect(form()).toBeUndefined();
+    component.onSubmit(value);
     expect(ctx.auth.resetPassword).not.toHaveBeenCalled();
   });
 
   /**
-   * @description A weak password is rejected before calling the API.
-   * @input  password 'short' (no digit/symbol, < 8 chars)
-   * @output passwordValid false; errorKey 'error_policy'; no API call
+   * @description The page shows the shared form with its texts and passes its state to it.
+   * @input  token 'abc'
+   * @output form section 'reset-password', submitting false, errorKey ''
    */
-  it('rejects a password that breaks the policy', async () => {
+  it('shows the shared password form', async () => {
     await setup('abc');
-    component.password = 'short';
-    component.passwordConfirmation = 'short';
-    component.onSubmit();
-    expect(component.passwordValid).toBeFalse();
-    expect(component.errorKey).toBe('error_policy');
-    expect(ctx.auth.resetPassword).not.toHaveBeenCalled();
+    expect([form()!.section, form()!.submitting, form()!.errorKey]).toEqual(['reset-password', false, '']);
   });
 
   /**
-   * @description Different confirmation is detected and blocks submit.
-   * @input  password VALID, confirmation 'Heslo123?'
-   * @output passwordsMismatch true; errorKey 'error_mismatch'
-   */
-  it('detects a different confirmation', async () => {
-    await setup('abc');
-    component.password = VALID;
-    component.passwordConfirmation = 'Heslo123?';
-    expect(component.passwordsMismatch).toBeTrue();
-    component.onSubmit();
-    expect(component.errorKey).toBe('error_mismatch');
-  });
-
-  /**
-   * @description A valid reset clears the fields, shows success and redirects to login after 4 s.
-   * @input  token 'abc', VALID twice; API returns { email: 'a@b.cz' }
-   * @output resetPassword('abc', VALID, VALID); success true; changedForEmail 'a@b.cz'; password ''; navigate(['/auth/login']) after 4000 ms
+   * @description A valid reset shows success and redirects to login after 4 s.
+   * @input  token 'abc'; the form emits VALID twice; API returns { email: 'a@b.cz' }
+   * @output resetPassword('abc', VALID, VALID); success true; changedForEmail 'a@b.cz'; no form; navigate(['/auth/login']) after 4000 ms
    */
   it('resets the password and redirects to login', fakeAsync(() => {
     setup('abc');
     tick();
     ctx.auth.resetPassword.and.returnValue(of({ email: 'a@b.cz' }));
-    component.password = VALID;
-    component.passwordConfirmation = VALID;
-    component.onSubmit();
+    form()!.submitted.emit(value);
     expect(ctx.auth.resetPassword).toHaveBeenCalledWith('abc', VALID, VALID);
     expect(component.success).toBeTrue();
     expect(component.changedForEmail).toBe('a@b.cz');
-    expect(component.password).toBe('');
+    expect(form()).toBeUndefined();
     tick(3999);
     expect(router.navigate).not.toHaveBeenCalled();
     tick(1);
@@ -119,15 +101,14 @@ describe('ResetPasswordComponent', () => {
   }));
 
   /**
-   * @description API errors map to translated messages (the English API texts are not shown): a password
-   *   error → policy, no connection → network, anything else → invalid / expired link.
+   * @description API errors map to translated messages (the English API texts are not shown) and
+   *   reach the form: a password error → policy, no connection → network, anything else →
+   *   invalid / expired link.
    * @input  error { error: { errors: { password: ['Too common.'] } } }; { status: 0 }; { error: { message: 'Expired' } }; {}
-   * @output 'error_policy'; 'error_network'; 'error_generic'; 'error_generic'
+   * @output 'error_policy'; 'error_network'; 'error_generic'; 'error_generic'; the form shows the last one
    */
   it('maps API errors to translated messages', async () => {
     await setup('abc');
-    component.password = VALID;
-    component.passwordConfirmation = VALID;
     const errors = [
       { error: { errors: { password: ['Too common.'] } } },
       { status: 0 },
@@ -137,23 +118,12 @@ describe('ResetPasswordComponent', () => {
     const shown: string[] = [];
     for (const e of errors) {
       ctx.auth.resetPassword.and.returnValue(throwError(() => e));
-      component.onSubmit();
+      component.onSubmit(value);
       shown.push(component.errorKey);
     }
     expect(shown).toEqual(['error_policy', 'error_network', 'error_generic', 'error_generic']);
-  });
-
-  /**
-   * @description The show/hide toggles switch the password fields.
-   * @input  togglePasswordVisibility(), togglePasswordConfirmationVisibility()
-   * @output showPassword true; showPasswordConfirmation true
-   */
-  it('toggles password visibility', async () => {
-    await setup('abc');
-    component.togglePasswordVisibility();
-    component.togglePasswordConfirmationVisibility();
-    expect(component.showPassword).toBeTrue();
-    expect(component.showPasswordConfirmation).toBeTrue();
+    fixture.detectChanges();
+    expect(form()!.errorKey).toBe('error_generic');
   });
 
   /**
@@ -165,9 +135,7 @@ describe('ResetPasswordComponent', () => {
     setup('abc');
     tick();
     ctx.auth.resetPassword.and.returnValue(of({}));
-    component.password = VALID;
-    component.passwordConfirmation = VALID;
-    component.onSubmit();
+    component.onSubmit(value);
     fixture.destroy();
     tick(5000);
     expect(router.navigate).not.toHaveBeenCalled();
@@ -175,8 +143,8 @@ describe('ResetPasswordComponent', () => {
 
   /**
    * @description The page renders its texts from the `reset-password` translations (no English copy).
-   * @input  token 'abc'; detectChanges(); then token missing; then success with e-mail
-   * @output title / labels / submit / placeholders are reset-password keys; invalid-link text; success for the e-mail
+   * @input  token 'abc'; detectChanges(); then success with e-mail
+   * @output title / subtitle / labels / submit are reset-password keys; success for the e-mail
    */
   it('renders translated texts', fakeAsync(() => {
     setup('abc');
@@ -187,16 +155,9 @@ describe('ResetPasswordComponent', () => {
       expect(text).toContain(`reset-password.${key}`);
     }
     expect(text).not.toContain('Set a new password');
-    expect(el.querySelector('#passwordConfirmation')!.getAttribute('placeholder')).toBe('reset-password.placeholder_confirmation');
-    component.password = 'short';
-    component.onSubmit();
-    fixture.detectChanges();
-    expect(el.textContent).toContain('reset-password.error_policy');
 
     ctx.auth.resetPassword.and.returnValue(of({ email: 'a@b.cz' }));
-    component.password = VALID;
-    component.passwordConfirmation = VALID;
-    component.onSubmit();
+    component.onSubmit(value);
     fixture.detectChanges();
     expect(el.textContent).toContain('reset-password.success_message_for');
     expect(el.textContent).toContain('a@b.cz');

@@ -40,12 +40,12 @@ describe('SalesOrdersComponent', () => {
   /**
    * @description The page configuration is built from the 'sales-orders' translations.
    * @input  component created
-   * @output caption; row buttons details / project (web-projects-create) / edit / delete; 5 + 4 columns; 4 filters; 13 detail columns
+   * @output caption; row buttons details / project (project-portal-projects-create) / edit / delete; 5 + 4 columns; 4 filters; 13 detail columns
    */
   it('builds the page configuration from translations', () => {
     expect(component.tableCaption).toBe('sales-orders.table_header');
     expect(component.buttons.map(b => [b.action, b.permission])).toEqual([
-      ['details', undefined], ['generate_form', 'web-projects-create'],
+      ['details', undefined], ['generate_form', 'project-portal-projects-create'],
       ['edit', 'project-portal-sales-orders-update'], ['delete', 'project-portal-sales-orders-delete']
     ]);
     expect(component.columns.map(c => c.key)).toEqual(['id', 'client_name', 'salesman_name', 'ico', 'created_at']);

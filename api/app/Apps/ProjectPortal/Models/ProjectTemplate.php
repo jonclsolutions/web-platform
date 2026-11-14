@@ -20,7 +20,7 @@ use Illuminate\Support\Carbon;
 class ProjectTemplate extends Model
 {
     /** @description Database table of the model. */
-    protected $table = 'web_project_templates';
+    protected $table = 'project_portal_project_templates';
 
     protected $fillable = ['name', 'description'];
 

@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ProjectApprovalDecision extends Model
 {
     /** @description Database table of the model. */
-    protected $table = 'web_project_approval_decisions';
+    protected $table = 'project_portal_project_approval_decisions';
 
     public const UPDATED_AT = null;
 

@@ -87,7 +87,7 @@ final class ProjectPortalSchema
             $t->foreign('lead_id')->references('id')->on('project_portal_sales_leads')->nullOnDelete();
         });
 
-        Schema::create('web_projects', function (Blueprint $t) {
+        Schema::create('project_portal_projects', function (Blueprint $t) {
             $t->increments('id');
             $t->unsignedInteger('lead_id')->nullable();
             $t->unsignedInteger('order_id')->nullable()->unique();
@@ -112,7 +112,7 @@ final class ProjectPortalSchema
             $t->foreign('order_id')->references('id')->on('project_portal_sales_orders')->nullOnDelete();
         });
 
-        Schema::create('web_project_checkpoints', function (Blueprint $t) {
+        Schema::create('project_portal_project_checkpoints', function (Blueprint $t) {
             $t->increments('id');
             $t->unsignedInteger('project_id');
             $t->string('label');
@@ -123,12 +123,12 @@ final class ProjectPortalSchema
             $t->timestamp('status_changed_at')->nullable();
             $t->integer('sort_order')->default(0);
             $t->timestamps();
-            $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
+            $t->foreign('project_id')->references('id')->on('project_portal_projects')->cascadeOnDelete();
         });
 
         // Client accounts of the portal (migration 2026_11_18_000000_web_project_portal_accounts).
 
-        Schema::create('web_project_accounts', function (Blueprint $t) {
+        Schema::create('project_portal_project_accounts', function (Blueprint $t) {
             $t->increments('id');
             $t->unsignedInteger('project_id');
             $t->string('username', 64);
@@ -150,10 +150,10 @@ final class ProjectPortalSchema
             $t->timestamp('news_seen_at')->nullable();
             $t->timestamps();
             $t->unique(['project_id', 'username']);
-            $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
+            $t->foreign('project_id')->references('id')->on('project_portal_projects')->cascadeOnDelete();
         });
 
-        Schema::create('web_project_sessions', function (Blueprint $t) {
+        Schema::create('project_portal_project_sessions', function (Blueprint $t) {
             $t->id();
             $t->unsignedInteger('project_id');
             $t->unsignedInteger('account_id');
@@ -163,11 +163,11 @@ final class ProjectPortalSchema
             $t->string('ip_address', 45)->nullable();
             $t->string('user_agent')->nullable();
             $t->timestamps();
-            $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
-            $t->foreign('account_id')->references('id')->on('web_project_accounts')->cascadeOnDelete();
+            $t->foreign('project_id')->references('id')->on('project_portal_projects')->cascadeOnDelete();
+            $t->foreign('account_id')->references('id')->on('project_portal_project_accounts')->cascadeOnDelete();
         });
 
-        Schema::create('web_project_threads', function (Blueprint $t) {
+        Schema::create('project_portal_project_threads', function (Blueprint $t) {
             $t->increments('id');
             $t->unsignedInteger('project_id');
             $t->string('subject');
@@ -180,10 +180,10 @@ final class ProjectPortalSchema
             $t->timestamp('customer_last_read_at')->nullable();
             $t->timestamp('admin_last_read_at')->nullable();
             $t->timestamps();
-            $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
+            $t->foreign('project_id')->references('id')->on('project_portal_projects')->cascadeOnDelete();
         });
 
-        Schema::create('web_project_thread_messages', function (Blueprint $t) {
+        Schema::create('project_portal_project_thread_messages', function (Blueprint $t) {
             $t->increments('id');
             $t->unsignedInteger('thread_id');
             $t->string('author_type', 20);
@@ -193,14 +193,14 @@ final class ProjectPortalSchema
             $t->boolean('is_internal')->default(false);
             $t->text('body');
             $t->timestamps();
-            $t->foreign('thread_id')->references('id')->on('web_project_threads')->cascadeOnDelete();
-            $t->foreign('account_id')->references('id')->on('web_project_accounts')->nullOnDelete();
+            $t->foreign('thread_id')->references('id')->on('project_portal_project_threads')->cascadeOnDelete();
+            $t->foreign('account_id')->references('id')->on('project_portal_project_accounts')->nullOnDelete();
             $t->foreign('user_id')->references('id')->on('users')->nullOnDelete();
         });
 
         // Phase 2 of the client portal (migration 2026_11_20_000000_web_project_portal_phase2).
 
-        Schema::create('web_project_login_codes', function (Blueprint $t) {
+        Schema::create('project_portal_project_login_codes', function (Blueprint $t) {
             $t->id();
             $t->unsignedInteger('account_id');
             $t->string('purpose', 16);
@@ -211,10 +211,10 @@ final class ProjectPortalSchema
             $t->timestamp('used_at')->nullable();
             $t->string('created_ip', 45)->nullable();
             $t->timestamps();
-            $t->foreign('account_id')->references('id')->on('web_project_accounts')->cascadeOnDelete();
+            $t->foreign('account_id')->references('id')->on('project_portal_project_accounts')->cascadeOnDelete();
         });
 
-        Schema::create('web_project_updates', function (Blueprint $t) {
+        Schema::create('project_portal_project_updates', function (Blueprint $t) {
             $t->increments('id');
             $t->unsignedInteger('project_id');
             $t->string('title', 200);
@@ -224,11 +224,11 @@ final class ProjectPortalSchema
             $t->timestamp('published_at')->nullable();
             $t->timestamp('first_published_at')->nullable();
             $t->timestamps();
-            $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
+            $t->foreign('project_id')->references('id')->on('project_portal_projects')->cascadeOnDelete();
             $t->foreign('author_id')->references('id')->on('users')->nullOnDelete();
         });
 
-        Schema::create('web_project_approvals', function (Blueprint $t) {
+        Schema::create('project_portal_project_approvals', function (Blueprint $t) {
             $t->increments('id');
             $t->unsignedInteger('project_id');
             $t->unsignedInteger('checkpoint_id')->nullable();
@@ -241,12 +241,12 @@ final class ProjectPortalSchema
             $t->timestamp('requested_at')->nullable();
             $t->timestamp('decided_at')->nullable();
             $t->timestamps();
-            $t->foreign('project_id')->references('id')->on('web_projects')->cascadeOnDelete();
-            $t->foreign('checkpoint_id')->references('id')->on('web_project_checkpoints')->nullOnDelete();
+            $t->foreign('project_id')->references('id')->on('project_portal_projects')->cascadeOnDelete();
+            $t->foreign('checkpoint_id')->references('id')->on('project_portal_project_checkpoints')->nullOnDelete();
             $t->foreign('requested_by')->references('id')->on('users')->nullOnDelete();
         });
 
-        Schema::create('web_project_approval_decisions', function (Blueprint $t) {
+        Schema::create('project_portal_project_approval_decisions', function (Blueprint $t) {
             $t->increments('id');
             $t->unsignedInteger('approval_id');
             $t->string('decision', 20);
@@ -254,18 +254,18 @@ final class ProjectPortalSchema
             $t->unsignedInteger('account_id')->nullable();
             $t->string('author_label', 120)->nullable();
             $t->timestamp('created_at')->nullable();
-            $t->foreign('approval_id')->references('id')->on('web_project_approvals')->cascadeOnDelete();
-            $t->foreign('account_id')->references('id')->on('web_project_accounts')->nullOnDelete();
+            $t->foreign('approval_id')->references('id')->on('project_portal_project_approvals')->cascadeOnDelete();
+            $t->foreign('account_id')->references('id')->on('project_portal_project_accounts')->nullOnDelete();
         });
 
-        Schema::create('web_project_templates', function (Blueprint $t) {
+        Schema::create('project_portal_project_templates', function (Blueprint $t) {
             $t->increments('id');
             $t->string('name', 160);
             $t->text('description')->nullable();
             $t->timestamps();
         });
 
-        Schema::create('web_project_template_checkpoints', function (Blueprint $t) {
+        Schema::create('project_portal_project_template_checkpoints', function (Blueprint $t) {
             $t->increments('id');
             $t->unsignedInteger('template_id');
             $t->string('label');
@@ -273,7 +273,7 @@ final class ProjectPortalSchema
             $t->unsignedSmallInteger('offset_days')->nullable();
             $t->unsignedSmallInteger('sort_order')->default(0);
             $t->timestamps();
-            $t->foreign('template_id')->references('id')->on('web_project_templates')->cascadeOnDelete();
+            $t->foreign('template_id')->references('id')->on('project_portal_project_templates')->cascadeOnDelete();
         });
     }
 }

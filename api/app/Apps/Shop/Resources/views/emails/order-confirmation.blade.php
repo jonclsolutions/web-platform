@@ -4,13 +4,15 @@
     @project JS web-platform
     @author JS
     @created 2026
-    @description Confirmation of an e-shop order (ShopOrderConfirmation), same look as the web
-    order confirmation (emails/web/sales-order-received.blade.php): order number and date, items,
+    @description Confirmation of an e-shop order (ShopOrderConfirmation), same look as the other
+    confirmation e-mails: order number and date, items,
     prices, shipping / payment, delivery address and contact, right of withdrawal and the link to
     the terms and conditions (Directive 2011/83/EU, Art. 8(7)). All texts come from
     ShopOrderEmailTemplate in the language of the order ($tpl), amounts are formatted ($items,
     $amounts); everything is escaped ({{ }}), the buyer's note keeps its line breaks.
+    Shell (header bar, card, company footer): emails/layouts/card.blade.php.
 --}}
+@extends('emails.layouts.card')
 @php
     $l = $tpl['labels'];
     $th = 'padding:10px 12px;background:#fafafa;font-size:12px;font-weight:600;color:#52525b;border-bottom:1px solid #ececea;';
@@ -18,29 +20,13 @@
     $label = 'padding:10px 16px;background:#fafafa;font-size:13px;font-weight:600;color:#52525b;width:38%;border-bottom:1px solid #ececea;';
     $value = 'padding:10px 16px;font-size:13px;color:#18181b;border-bottom:1px solid #ececea;';
 @endphp
-<!DOCTYPE html>
-<html lang="{{ $tpl['htmlLang'] }}">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ $tpl['title'] }}</title>
-</head>
-<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;">
-<tr>
-<td align="center">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #ececea;">
 
-{{-- Header bar --}}
-<tr>
-<td style="background:#18181b;padding:20px 32px;">
-<span style="color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.02em;">{{ $companyName ?? config('app.name') }}</span>
-</td>
-</tr>
+@section('lang', $tpl['htmlLang'])
+@section('title', $tpl['title'])
+@section('width', '600')
+@section('padding', '32px')
 
-{{-- Content --}}
-<tr>
-<td style="padding:32px;">
+@section('content')
 <h1 style="margin:0 0 20px;font-size:19px;font-weight:700;color:#18181b;">{{ $tpl['title'] }}</h1>
 
 <p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#3f3f46;">
@@ -144,15 +130,4 @@
 </p>
 
 <p style="margin:0;font-size:13px;line-height:1.6;color:#71717a;">{{ $tpl['outro'] }}</p>
-
-@include('emails.partials.footer')
-
-</td>
-</tr>
-
-</table>
-</td>
-</tr>
-</table>
-</body>
-</html>
+@endsection

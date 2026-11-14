@@ -256,10 +256,10 @@ class SalesOrderTest extends TestCase
         $this->project(['order_id' => $a->id]);
         $range = '/api/core/agenda?from=' . now()->toDateString() . '&to=' . now()->addDays(10)->toDateString();
 
-        $this->signIn($this->userWith(['view-project-portal', 'web-projects-view']));
+        $this->signIn($this->userWith(['view-project-portal', 'project-portal-projects-view']));
         $this->assertSame([], $this->getJson($range)->assertOk()->json('data.reminders'));
 
-        $this->signIn($this->userWith(['view-project-portal', 'web-projects-view', 'project-portal-sales-orders-view']));
+        $this->signIn($this->userWith(['view-project-portal', 'project-portal-projects-view', 'project-portal-sales-orders-view']));
         $reminder = collect($this->getJson($range)->assertOk()->json('data.reminders'))->firstWhere('type', 'orders_without_project');
         $this->assertSame([1, 'project-portal', '/admin/project-portal/sales-orders'], [$reminder['count'], $reminder['module'], $reminder['link']]);
     }
@@ -273,7 +273,7 @@ class SalesOrderTest extends TestCase
      */
     public function test_project_of_an_order(): void
     {
-        $this->signIn($this->userWith(['web-projects-view', 'web-projects-create', 'web-projects-update']));
+        $this->signIn($this->userWith(['project-portal-projects-view', 'project-portal-projects-create', 'project-portal-projects-update']));
         $lead = $this->lead();
         $order = $this->salesOrder(['lead_id' => $lead->id]);
         $a = $this->project(['lead_id' => $lead->id, 'order_id' => $order->id]);

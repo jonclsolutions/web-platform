@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ProjectTemplateCheckpoint extends Model
 {
     /** @description Database table of the model. */
-    protected $table = 'web_project_template_checkpoints';
+    protected $table = 'project_portal_project_template_checkpoints';
 
     protected $fillable = ['template_id', 'label', 'description', 'offset_days', 'sort_order'];
 

@@ -48,7 +48,7 @@ describe('AdminModulesService', () => {
   /**
    * @description A module is available with its tab permission and a page; the landing page is
    *   the first page of the sidebar the user may open; the applications follow the same rule.
-   * @input view-project-portal + project-portal-view-logs; then + web-projects-view; then
+   * @input view-project-portal + project-portal-view-logs; then + project-portal-projects-view; then
    *   view-web without a web page; sysadmin.
    * @output project portal available, landing /admin/project-portal/logs, then …/projects; web
    *   not available; availableApps ['project-portal']; sysadmin: every installed application,
@@ -63,7 +63,7 @@ describe('AdminModulesService', () => {
     expect(service.landingUrl('web')).toBeNull();
     expect(service.availableApps().map(app => app.id)).toEqual(['project-portal']);
 
-    ctx.permissions.granted = new Set(['view-project-portal', 'project-portal-view-logs', 'web-projects-view']);
+    ctx.permissions.granted = new Set(['view-project-portal', 'project-portal-view-logs', 'project-portal-projects-view']);
     expect(service.landingUrl('project-portal')).toBe('/admin/project-portal/projects');
     expect(service.isGroupVisible(navOf('project-portal').find(group => group.key === 'project-portal-projects')!)).toBeTrue();
     expect(service.isGroupVisible(navOf('project-portal').find(group => group.key === 'project-portal-business')!)).toBeFalse();

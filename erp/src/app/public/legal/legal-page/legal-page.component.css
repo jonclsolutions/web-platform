@@ -1,13 +1,14 @@
 /*
-    @file: legal-document.css
-    @path: /src/app/public/legal/legal-document.css
+    @file: legal-page.component.css
+    @path: src/app/public/legal/legal-page/legal-page.component.css
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Shared look for all legal document pages (GDPR, TOS, Cookies, ...) of every
-        public application: the three legal page components use it as their stylesheet
-        (styleUrl), so a change here applies to all of them. Dark look by default, the light
-        look (public area with the light theme) with the host class `legal--light`.
+    @description: Look of the legal document page of every public application (privacy policy,
+        terms, cookies policy): page column, title, update / effective lines and the notes under
+        the document. Dark look by default, the light look (public area with the light theme)
+        with the host class `legal--light`. The typography of the sections is in
+        legal-document-sections.component.css and takes the `--legal-*` colours defined here.
     @dependencies: none (defines its own spacing and colour tokens on :host)
 */
 
@@ -83,60 +84,15 @@ h1 {
   margin: 0 auto 16px;
 }
 
-/* Section heading – white like .svc-panel-title / .milestones-heading */
-h2 {
-  color: var(--legal-heading);
-  margin-top: 40px;
-  margin-bottom: 12px;
-  font-size: 1.25rem;
-  font-weight: 700;
-  font-family: "Source Sans Pro", sans-serif;
-  border-bottom: 1px solid var(--legal-line);
-  padding-bottom: 8px;
-  letter-spacing: 0.01em;
-}
-
-/* Sub-heading – white like .milestone-title / .feature-card-title */
-h3 {
-  color: var(--legal-heading);
-  margin-top: 22px;
-  margin-bottom: 8px;
-  font-size: 1rem;
-  font-weight: 700;
-  font-family: "Source Sans Pro", sans-serif;
-}
-
 p {
   margin-bottom: 12px;
   font-size: 0.95rem;
   color: var(--legal-body);
 }
 
-ul, ol {
-  margin-left: 20px;
-  margin-bottom: 12px;
-  padding-left: 4px;
-}
-
-ul { list-style: disc; }
-ol { list-style: decimal; }
-
-li {
-  font-family: "Source Sans Pro", sans-serif;
-  font-size: 0.95rem;
-  color: var(--legal-body);
-  margin-bottom: 6px;
-  line-height: 1.65;
-}
-
 strong {
   font-weight: 700;
   color: var(--legal-strong);
-}
-
-em {
-  font-style: italic;
-  color: var(--legal-em);
 }
 
 a {
@@ -160,14 +116,30 @@ a:hover {
   padding-top: 14px;
 }
 
-.policy-section {
-  margin-bottom: 8px;
+/*
+    @module: Notes of the document
+    @description: Paragraphs under the sections (change cookie settings, more information); the
+        cookie settings action is a button that looks like the links of the page.
+    @usage: p.legal-note > a | button.legal-link-button
+*/
+.legal-note {
+  margin-top: 20px;
 }
 
-.subsection {
-  margin-top: 4px;
-  padding-left: 16px;
-  border-left: 2px solid var(--legal-line);
+.legal-link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--legal-link);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.legal-link-button:hover,
+.legal-link-button:focus-visible {
+  color: var(--legal-link-hover);
+  text-decoration: underline;
 }
 
 @media (max-width: 600px) {
@@ -181,10 +153,4 @@ a:hover {
 
   /* Same mobile title size as other public pages */
   h1 { font-size: 2rem; }
-}
-
-@media (max-width: 480px) {
-  h2 {
-    font-size: 1.1rem;
-  }
 }

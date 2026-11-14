@@ -155,14 +155,14 @@ class RetentionTest extends TestCase
         $this->attach($thread->messages->first(), 'web/project_threads/old.png');
         $this->portalSession($oldProject);
         $this->age($oldProject, 3651);
-        DB::table('web_project_thread_messages')->update(['created_at' => now()->subDays(3651)]);
+        DB::table('project_portal_project_thread_messages')->update(['created_at' => now()->subDays(3651)]);
         $activeProject = $this->project();
         $this->thread($activeProject, [], [['customer', 'Still here']]);
         $this->age($activeProject, 3651);
-        DB::table('web_project_thread_messages')->where('thread_id', '!=', $thread->id)->update(['created_at' => now()->subDays(10)]);
+        DB::table('project_portal_project_thread_messages')->where('thread_id', '!=', $thread->id)->update(['created_at' => now()->subDays(10)]);
         ProjectSession::query()->where('project_id', $activeProject->id)->delete();
         $this->portalSession($activeProject);
-        DB::table('web_project_sessions')->where('project_id', $activeProject->id)->update(['expires_at' => now()->subMinute()]);
+        DB::table('project_portal_project_sessions')->where('project_id', $activeProject->id)->update(['expires_at' => now()->subMinute()]);
 
         CookieConsent::create(['consent_id' => '11111111-1111-4111-8111-111111111111', 'version' => 1, 'functional' => true, 'analytics' => false, 'marketing' => false]);
         DB::table('legal_cookie_consents')->update(['created_at' => now()->subYears(4)]);

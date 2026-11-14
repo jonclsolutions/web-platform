@@ -38,7 +38,7 @@ use Illuminate\Support\Str;
 class ProjectAccount extends Model
 {
     /** @description Database table of the model. */
-    protected $table = 'web_project_accounts';
+    protected $table = 'project_portal_project_accounts';
 
     /**
      * @description Personal data: the audit log notes that these attributes changed, never their

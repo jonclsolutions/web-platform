@@ -8,7 +8,7 @@
  * @description The authenticated 24h-sliding session of a client account (ProjectAccount),
  * issued after a successful sign-in (see ProjectPublicController::login()). Deleted with its
  * account and when the administration resets the account's password.
- * Separate from `web_projects.access_token` (the permanent URL) - this is the
+ * Separate from `project_portal_projects.access_token` (the permanent URL) - this is the
  * actual post-password credential, expiring after 24h of INACTIVITY (sliding
  * window, extended on every authenticated request by CheckProjectSession
  * middleware), never on a hard wall-clock timer from login.
@@ -27,7 +27,7 @@ use Illuminate\Support\Str;
 class ProjectSession extends Model
 {
     /** @description Database table of the model. */
-    protected $table = 'web_project_sessions';
+    protected $table = 'project_portal_project_sessions';
 
     /**
      * @description Personal data: the audit log notes that these attributes changed, never their

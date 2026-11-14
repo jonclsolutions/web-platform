@@ -8,8 +8,7 @@
  * @created 2026
  * @description Feature tests of the attachment download / preview (AttachmentDownloadController):
  *   only signed, unexpired URLs work; files of core_attachments (any disk) are served under their
- *   original name; legacy public files (CVs) are no longer served and the
- *   command `attachments:migrate-legacy` moves them to the private disk (finding #31).
+ *   original name; legacy public files (CVs) are no longer served (finding #31).
  * @dependencies
  * - Tests\TestCase, Tests\Apps\Web\Support\WebFixtures; Storage fakes (private, public).
  */
@@ -169,69 +168,6 @@ class AttachmentDownloadTest extends TestCase
 
         $this->get($this->signed('download', 'cv_files/a.pdf'))->assertStatus(404);
         $this->get($this->signed('view', 'cv_files/a.pdf'))->assertStatus(404);
-    }
-
-    /**
-     * @description `attachments:migrate-legacy` moves legacy CVs to the private
-     *   disk as core_attachments (also of trashed records); --dry-run changes nothing; a missing file
-     *   only clears the columns; a second run finds nothing; the migrated file is served signed.
-     * @input Trashed application cv_files/a.pdf 'Eva CV.pdf'; application web/cv_files/b.pdf without name;
-     *        application with cv_files/none.pdf (no file); dry-run, run, run.
-     * @output dry-run: nothing moved, files still public; run: 2 moved, 1 missing, exit 0; private files
-     *   web/cv_files/a.pdf, web/cv_files/b.pdf with names 'Eva CV.pdf', 'b.pdf';
-     *   public files gone; legacy columns null; second run 0 moved; view of the migrated CV 'Eva CV.pdf'.
-     */
-    public function test_migrate_legacy_command(): void
-    {
-        foreach (['cv_files/a.pdf', 'web/cv_files/b.pdf'] as $path) {
-            Storage::disk('public')->put($path, 'data-' . $path);
-        }
-        $a = $this->jobApplication();
-        $a->forceFill(['cv_path' => 'cv_files/a.pdf', 'cv_original_name' => 'Eva CV.pdf'])->save();
-        $a->delete();
-        $b = $this->jobApplication();
-        $b->forceFill(['cv_path' => 'web/cv_files/b.pdf', 'cv_original_name' => ''])->save();
-        $gone = $this->jobApplication();
-        $gone->forceFill(['cv_path' => 'cv_files/none.pdf', 'cv_original_name' => 'None.pdf'])->save();
-
-        $this->artisan('attachments:migrate-legacy', ['--dry-run' => true])
-            ->expectsOutputToContain('[dry-run] would move 2 file(s); missing 1; failed 0.')->assertSuccessful();
-        Storage::disk('public')->assertExists('cv_files/a.pdf');
-        $this->assertSame(0, \App\Models\Core\CoreAttachment::count());
-        $this->assertSame('cv_files/none.pdf', $gone->fresh()->cv_path);
-
-        $this->artisan('attachments:migrate-legacy')->expectsOutputToContain('Moved 2 file(s); missing 1; failed 0.')->assertSuccessful();
-        foreach (['web/cv_files/a.pdf' => 'Eva CV.pdf', 'web/cv_files/b.pdf' => 'b.pdf'] as $path => $name) {
-            Storage::disk('private')->assertExists($path);
-            $this->assertSame($name, \App\Models\Core\CoreAttachment::where('path', $path)->value('original_filename'));
-        }
-        $this->assertSame('data-cv_files/a.pdf', Storage::disk('private')->get('web/cv_files/a.pdf'));
-        Storage::disk('public')->assertMissing('cv_files/a.pdf');
-        $this->assertNull(\App\Apps\Web\Models\WebJobApplication::withTrashed()->find($a->id)->cv_path);
-        $this->assertNull($gone->fresh()->cv_path);
-        $this->assertSame(1, \App\Apps\Web\Models\WebJobApplication::withTrashed()->find($a->id)->attachments()->count());
-
-        $this->artisan('attachments:migrate-legacy')->expectsOutputToContain('Moved 0 file(s); missing 0; failed 0.')->assertSuccessful();
-        $this->assertSame('inline; filename="Eva CV.pdf"', $this->get($this->signed('view', 'web/cv_files/a.pdf'))->assertOk()->headers->get('Content-Disposition'));
-    }
-
-    /**
-     * @description A file that cannot be registered is reported, the command fails and the public
-     *   file and its legacy columns stay untouched (nothing lost).
-     * @input Job application with cv_files/x.pdf; core_attachments INSERT fails.
-     * @output Exit code 1, 'failed 1'; public file kept, no private copy left; cv_path unchanged.
-     */
-    public function test_migrate_legacy_command_failure(): void
-    {
-        Storage::disk('public')->put('cv_files/x.pdf', 'x');
-        $application = $this->jobApplication();
-        $application->forceFill(['cv_path' => 'cv_files/x.pdf'])->save();
-        $this->failOn('core_attachments', 'INSERT');
-
-        $this->artisan('attachments:migrate-legacy')->expectsOutputToContain('failed 1.')->assertFailed();
-        Storage::disk('public')->assertExists('cv_files/x.pdf');
-        Storage::disk('private')->assertMissing('web/cv_files/x.pdf');
-        $this->assertSame('cv_files/x.pdf', $application->fresh()->cv_path);
     }
 
     /**

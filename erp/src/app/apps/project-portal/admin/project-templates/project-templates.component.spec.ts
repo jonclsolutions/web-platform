@@ -130,11 +130,11 @@ describe('ProjectTemplatesComponent', () => {
 
   /**
    * @description Without the update permission the page is read-only.
-   * @input  granted only web-projects-view
+   * @input  granted only project-portal-projects-view
    * @output canEdit false; openNew / openEdit / save / remove do nothing
    */
   it('is read-only without the update permission', async () => {
-    ctx.permissions.granted = new Set(['web-projects-view']);
+    ctx.permissions.granted = new Set(['project-portal-projects-view']);
     fixture.detectChanges();
     expect(component.canEdit).toBeFalse();
     component.openNew();

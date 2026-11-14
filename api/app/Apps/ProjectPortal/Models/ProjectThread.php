@@ -23,7 +23,7 @@ use Illuminate\Support\Collection;
 class ProjectThread extends Model
 {
     /** @description Database table of the model. */
-    protected $table = 'web_project_threads';
+    protected $table = 'project_portal_project_threads';
 
     public const STATUSES = ['active', 'closed'];
 
@@ -56,15 +56,15 @@ class ProjectThread extends Model
     /**
      * @description Condition of a client message the administration has not read yet: written by
      *   the customer after the thread's `admin_last_read_at` (any, when never read). For queries on
-     *   web_project_thread_messages joined with / nested in web_project_threads.
+     *   project_portal_project_thread_messages joined with / nested in project_portal_project_threads.
      * @return \Closure(\Illuminate\Database\Eloquent\Builder): void
      */
     public static function unreadByAdmin(): \Closure
     {
         return function ($query): void {
-            $query->where('web_project_thread_messages.author_type', 'customer')
-                ->where(fn ($w) => $w->whereNull('web_project_threads.admin_last_read_at')
-                    ->orWhereColumn('web_project_thread_messages.created_at', '>', 'web_project_threads.admin_last_read_at'));
+            $query->where('project_portal_project_thread_messages.author_type', 'customer')
+                ->where(fn ($w) => $w->whereNull('project_portal_project_threads.admin_last_read_at')
+                    ->orWhereColumn('project_portal_project_thread_messages.created_at', '>', 'project_portal_project_threads.admin_last_read_at'));
         };
     }
 

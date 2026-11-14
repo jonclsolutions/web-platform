@@ -17,12 +17,12 @@ import { PROJECT_PORTAL_AUDIT_LOG } from './portal-logs/portal-logs.config';
 
 export const PROJECT_PORTAL_ADMIN_ROUTES: Routes = [
   { path: '', redirectTo: 'projects', pathMatch: 'full' },
-  { path: 'projects', loadComponent: () => import('./projects/projects.component').then(m => m.ProjectsComponent), data: { help: 'projects', permission: 'web-projects-view' } },
-  { path: 'projects/templates', loadComponent: () => import('./project-templates/project-templates.component').then(m => m.ProjectTemplatesComponent), data: { help: 'projects', permission: 'web-projects-view' } },
+  { path: 'projects', loadComponent: () => import('./projects/projects.component').then(m => m.ProjectsComponent), data: { help: 'projects', permission: 'project-portal-projects-view' } },
+  { path: 'projects/templates', loadComponent: () => import('./project-templates/project-templates.component').then(m => m.ProjectTemplatesComponent), data: { help: 'projects', permission: 'project-portal-projects-view' } },
   // The project page has sub-pages (overview, conversations, …); one route keeps the page
   // (and its unsaved settings) alive while switching between them.
   { path: 'projects/:id', redirectTo: 'projects/:id/overview', pathMatch: 'full' },
-  { path: 'projects/:id/:section', loadComponent: () => import('./project-detail/project-detail.component').then(m => m.ProjectDetailComponent), data: { help: 'projects', permission: 'web-projects-view' } },
+  { path: 'projects/:id/:section', loadComponent: () => import('./project-detail/project-detail.component').then(m => m.ProjectDetailComponent), data: { help: 'projects', permission: 'project-portal-projects-view' } },
   { path: 'sales-leads', loadComponent: () => import('./sales-leads/sales-leads.component').then(m => m.SalesLeadsComponent), data: { help: 'sales-leads', permission: 'project-portal-sales-leads-view' } },
   { path: 'sales-orders', loadComponent: () => import('./sales-orders/sales-orders.component').then(m => m.SalesOrdersComponent), data: { help: 'sales-orders', permission: 'project-portal-sales-orders-view' } },
   { path: 'settings', loadComponent: () => import('./portal-settings/portal-settings.component').then(m => m.PortalSettingsComponent), data: { help: 'project-portal-settings', permission: 'project-portal-settings-view' } },

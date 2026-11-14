@@ -30,13 +30,13 @@ describe('AppsComponent', () => {
   /**
    * @description Cards of the applications the user may open, with name, description and the
    *   "Manage" link to the first page of the application the user may open.
-   * @input view-eshop + shop-orders-view, view-project-portal + web-projects-view; render.
+   * @input view-eshop + shop-orders-view, view-project-portal + project-portal-projects-view; render.
    * @output 2 cards: e-shop → /admin/shop/orders, project portal → /admin/project-portal/projects;
    *   names / descriptions from admin-layout; no empty state.
    */
   it('shows the applications the user may open', () => {
     requiresApps('web', 'shop', 'project-portal');
-    ctx.permissions.granted = new Set(['view-eshop', 'shop-orders-view', 'view-project-portal', 'web-projects-view']);
+    ctx.permissions.granted = new Set(['view-eshop', 'shop-orders-view', 'view-project-portal', 'project-portal-projects-view']);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const cards = Array.from(el.querySelectorAll('.apps-card'));

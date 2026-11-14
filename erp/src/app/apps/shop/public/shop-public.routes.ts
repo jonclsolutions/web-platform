@@ -13,6 +13,7 @@ import { Routes } from '@angular/router';
 import { shopMaintenanceGuard } from './components/guards/shop-maintenance.guard';
 import { publicNotFoundRoute } from '../../../public/not-found/public-not-found.config';
 import { PUBLIC_AREA_DATA, PublicArea } from '../../../public/public-area';
+import { legalPageRoute } from '../../../public/legal/legal-page/legal-page.config';
 
 /** Public area of the e-shop: its translations, home page and the light look of the shared pages. */
 export const SHOP_PUBLIC_AREA: PublicArea = { translationModule: 'shop', path: 'shop', theme: 'light' };
@@ -49,8 +50,8 @@ export const SHOP_PUBLIC_ROUTES: Routes = [
         loadComponent: () => import('./checkout/checkout.component').then(m => m.CheckoutComponent)
       },
       // Shared legal pages of the core (public/legal), in the e-shop layout and translations.
-      { path: 'tos', title: 'shop.tos', loadComponent: () => import('../../../public/legal/tos/tos.component').then(m => m.TosComponent) },
-      { path: 'privacy-policy', title: 'shop.privacy-policy', loadComponent: () => import('../../../public/legal/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent) },
+      legalPageRoute('shop', 'tos'),
+      legalPageRoute('shop', 'gdpr'),
       // Unknown /shop/... URL - LAST child of the e-shop (404 in the e-shop layout and language).
       publicNotFoundRoute('shop', { canActivate: [shopMaintenanceGuard] })
     ]

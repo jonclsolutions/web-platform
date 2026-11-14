@@ -26,7 +26,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class ProjectApproval extends Model
 {
     /** @description Database table of the model. */
-    protected $table = 'web_project_approvals';
+    protected $table = 'project_portal_project_approvals';
 
     public const STATUS_PENDING = 'pending';
     public const STATUS_APPROVED = 'approved';

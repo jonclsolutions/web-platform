@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ProjectCheckpoint extends Model
 {
     /** @description Database table of the model. */
-    protected $table = 'web_project_checkpoints';
+    protected $table = 'project_portal_project_checkpoints';
 
     public const STATUSES = ['new', 'active', 'done'];
 

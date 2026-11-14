@@ -374,7 +374,7 @@ class ProjectPortalTest extends TestCase
         $this->portal('POST', "/threads/{$thread->id}/messages", ['body' => 'Hello?'])->assertCreated();
         Mail::assertQueuedCount(1);
 
-        $admin = $this->userWith(['web-projects-update']);
+        $admin = $this->userWith(['project-portal-projects-update']);
         $this->portal->update(['assignee_id' => $admin->id]);
         $this->portal('POST', "/threads/{$thread->id}/messages", ['body' => 'Hello again'])->assertCreated();
         Mail::assertQueued(ProjectThreadActivityMail::class, fn ($mail) => $mail->hasTo($admin->user_email));
@@ -538,7 +538,7 @@ class ProjectPortalTest extends TestCase
         $this->portal('POST', '/account', ['email' => 'nope', 'language' => 'de'])->assertStatus(422)->assertJsonValidationErrors(['email', 'language']);
 
         $thread = $this->thread($this->portal);
-        $this->signIn($this->userWith(['web-projects-update']));
+        $this->signIn($this->userWith(['project-portal-projects-update']));
         $this->postJson("/api/project-portal/project-threads/{$thread->id}/reply", ['body' => 'Hi'])->assertCreated();
         Mail::assertQueued(\App\Apps\ProjectPortal\Mail\ProjectClientUpdateMail::class, fn ($m) => $m->hasTo('jana@client.cz'));
         Mail::assertQueued(\App\Apps\ProjectPortal\Mail\ProjectClientUpdateMail::class, 1);

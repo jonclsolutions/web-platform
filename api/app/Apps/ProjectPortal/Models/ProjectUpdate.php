@@ -24,7 +24,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class ProjectUpdate extends Model
 {
     /** @description Database table of the model. */
-    protected $table = 'web_project_updates';
+    protected $table = 'project_portal_project_updates';
 
     protected $fillable = ['project_id', 'title', 'body', 'author_id', 'author_label', 'published_at', 'first_published_at'];
 

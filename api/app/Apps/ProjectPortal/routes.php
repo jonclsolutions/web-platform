@@ -177,118 +177,118 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         // ── project-portal/projects────────────────────────────────────────────────
         Route::prefix('projects')->group(function () {
             Route::post('/bulk-delete', [ProjectController::class, 'bulkDestroy'])
-                ->middleware('permission:web-projects-delete');
+                ->middleware('permission:project-portal-projects-delete');
             Route::delete('/force-delete-all', [ProjectController::class, 'forceDeleteAllTrashed'])
-                ->middleware('permission:web-projects-delete');
+                ->middleware('permission:project-portal-projects-delete');
 
             Route::get('/',      [ProjectController::class, 'index'])
-                ->middleware('permission:web-projects-view');
+                ->middleware('permission:project-portal-projects-view');
             // Administrators who can be responsible for a project (select of the project form).
             Route::get('/assignees', [ProjectController::class, 'assignees'])
-                ->middleware('permission:web-projects-view');
+                ->middleware('permission:project-portal-projects-view');
 
             // ── Project templates (before /{id}) ──────────────────────
             Route::get('/templates', [ProjectTemplateController::class, 'index'])
-                ->middleware('permission:web-projects-view');
+                ->middleware('permission:project-portal-projects-view');
             Route::post('/templates', [ProjectTemplateController::class, 'store'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::get('/templates/{templateId}', [ProjectTemplateController::class, 'show'])
-                ->middleware('permission:web-projects-view');
+                ->middleware('permission:project-portal-projects-view');
             Route::put('/templates/{templateId}', [ProjectTemplateController::class, 'update'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::delete('/templates/{templateId}', [ProjectTemplateController::class, 'destroy'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::post('/',     [ProjectController::class, 'store'])
-                ->middleware('permission:web-projects-create');
+                ->middleware('permission:project-portal-projects-create');
             Route::get('/{id}',  [ProjectController::class, 'show'])
-                ->middleware('permission:web-projects-view');
+                ->middleware('permission:project-portal-projects-view');
             Route::put('/{id}',  [ProjectController::class, 'update'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::patch('/{id}', [ProjectController::class, 'update'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::post('/{id}/restore', [ProjectController::class, 'restore'])
-                ->middleware('permission:web-projects-delete');
+                ->middleware('permission:project-portal-projects-delete');
             Route::delete('/{id}', [ProjectController::class, 'destroy'])
-                ->middleware('permission:web-projects-delete');
+                ->middleware('permission:project-portal-projects-delete');
 
             // Files of the project (threads - also internal notes, flagged - updates, approvals).
             Route::get('/{id}/files', [ProjectController::class, 'files'])
-                ->middleware('permission:web-projects-view');
+                ->middleware('permission:project-portal-projects-view');
             // What happened lately (client messages, approval decisions, updates, checkpoints).
             Route::get('/{id}/activity', [ProjectController::class, 'activity'])
-                ->middleware('permission:web-projects-view');
+                ->middleware('permission:project-portal-projects-view');
             // Templates: save the checkpoints as a template / add a template's checkpoints.
             Route::post('/{projectId}/template', [ProjectTemplateController::class, 'storeFromProject'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::post('/{projectId}/apply-template', [ProjectTemplateController::class, 'applyToProject'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
 
             // ── Updates for the client ────────────────────────────────
             Route::get('/{projectId}/updates', [ProjectUpdateController::class, 'index'])
-                ->middleware('permission:web-projects-view');
+                ->middleware('permission:project-portal-projects-view');
             Route::post('/{projectId}/updates', [ProjectUpdateController::class, 'store'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             // POST (multipart: files) for a change.
             Route::post('/{projectId}/updates/{updateId}', [ProjectUpdateController::class, 'update'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::delete('/{projectId}/updates/{updateId}', [ProjectUpdateController::class, 'destroy'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
 
             // ── Approval requests ─────────────────────────────────────
             Route::get('/{projectId}/approvals', [ProjectApprovalController::class, 'index'])
-                ->middleware('permission:web-projects-view');
+                ->middleware('permission:project-portal-projects-view');
             Route::post('/{projectId}/approvals', [ProjectApprovalController::class, 'store'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::post('/{projectId}/approvals/{approvalId}', [ProjectApprovalController::class, 'update'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::post('/{projectId}/approvals/{approvalId}/reopen', [ProjectApprovalController::class, 'reopen'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::post('/{projectId}/approvals/{approvalId}/cancel', [ProjectApprovalController::class, 'cancel'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::delete('/{projectId}/approvals/{approvalId}', [ProjectApprovalController::class, 'destroy'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
 
             // ── Client accounts of the portal ─────────────────────────
             // A password reset is security sensitive (it ends the account's sessions), but whoever
             // may edit a project may manage its access: the same permission as update(), no extra key.
             Route::get('/{projectId}/accounts', [ProjectAccountController::class, 'index'])
-                ->middleware('permission:web-projects-view');
+                ->middleware('permission:project-portal-projects-view');
             Route::post('/{projectId}/accounts', [ProjectAccountController::class, 'store'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::put('/{projectId}/accounts/{accountId}', [ProjectAccountController::class, 'update'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::post('/{projectId}/accounts/{accountId}/password', [ProjectAccountController::class, 'resetPassword'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::post('/{projectId}/accounts/{accountId}/invite', [ProjectAccountController::class, 'invite'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::delete('/{projectId}/accounts/{accountId}', [ProjectAccountController::class, 'destroy'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
 
             // ── Checkpoints (nested under a project) ──────────────────
             Route::post('/{projectId}/checkpoints', [ProjectController::class, 'storeCheckpoint'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::put('/{projectId}/checkpoints/order', [ProjectController::class, 'reorderCheckpoints'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::put('/{projectId}/checkpoints/{checkpointId}', [ProjectController::class, 'updateCheckpoint'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::delete('/{projectId}/checkpoints/{checkpointId}', [ProjectController::class, 'destroyCheckpoint'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
         });
 
         // ── project-portal/project-threads────────────────────────────────────────────
         Route::prefix('project-threads')->group(function () {
             Route::get('/',    [ProjectThreadController::class, 'index'])
-                ->middleware('permission:web-projects-view');
+                ->middleware('permission:project-portal-projects-view');
             Route::get('/{id}', [ProjectThreadController::class, 'show'])
-                ->middleware('permission:web-projects-view');
+                ->middleware('permission:project-portal-projects-view');
             Route::post('/{threadId}/reply', [ProjectThreadController::class, 'reply'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::put('/{threadId}/status', [ProjectThreadController::class, 'updateStatus'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::put('/{threadId}/assignee', [ProjectThreadController::class, 'assign'])
-                ->middleware('permission:web-projects-update');
+                ->middleware('permission:project-portal-projects-update');
             Route::get('/{threadId}/messages', [ProjectThreadController::class, 'olderMessages'])
-                ->middleware('permission:web-projects-view');
+                ->middleware('permission:project-portal-projects-view');
         });
     });
 });

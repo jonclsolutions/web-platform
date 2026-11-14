@@ -15,7 +15,7 @@
  *    their very next request, without needing to hunt down and delete their session
  *    row separately. This is the direct fix for consultation note 4.
  * 2) The session cookie (the 24h-sliding SESSION, distinct from the permanent URL
- *    token) must resolve to a non-expired `web_project_sessions` row belonging to
+ *    token) must resolve to a non-expired `project_portal_project_sessions` row belonging to
  *    THIS SAME project - a session issued for project A can never be replayed
  *    against project B's routes, even if somehow guessed (IDOR guard).
  *

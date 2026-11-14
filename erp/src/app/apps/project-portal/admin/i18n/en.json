@@ -655,10 +655,10 @@
     "hint_projects": "With threads, messages and attachments; the last portal message counts too."
   },
   "permission-descriptions": {
-    "web-projects-view": "View the list and detail of customer projects",
-    "web-projects-create": "Create a customer project (standalone or from an order)",
-    "web-projects-update": "Edit a project, its checkpoints and client accounts and answer customer requests",
-    "web-projects-delete": "Delete customer projects (also in bulk)",
+    "project-portal-projects-view": "View the list and detail of customer projects",
+    "project-portal-projects-create": "Create a customer project (standalone or from an order)",
+    "project-portal-projects-update": "Edit a project, its checkpoints and client accounts and answer customer requests",
+    "project-portal-projects-delete": "Delete customer projects (also in bulk)",
     "view-project-portal": "[recommended: always on] Show the Project portal application in the admin - without it the application cannot be opened",
     "project-portal-view-logs": "View the log history (audit trail) of the project portal",
     "project-portal-settings-view": "View the settings of the portal (browser titles of its public pages)",

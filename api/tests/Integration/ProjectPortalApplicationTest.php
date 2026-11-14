@@ -8,8 +8,8 @@
  * @created 2026
  * @description The project portal together with the web application (Integration: both
  *   installed): the migrations that moved the portal out of the web (its audit log and
- *   permissions) and the sales leads and orders from the web into the portal, and the log
- *   endpoint of the portal.
+ *   permissions) and the sales leads and orders from the web into the portal, the portal prefix
+ *   of the project tables and permissions, and the log endpoint of the portal.
  * @dependencies
  * - Tests\TestCase, ProjectFixtures; the web tables of the test schema (web_logs, web_site_settings).
  */
@@ -80,10 +80,10 @@ class ProjectPortalApplicationTest extends TestCase
      */
     public function test_portal_log(): void
     {
-        $this->signIn($this->userWith(['web-projects-view']));
+        $this->signIn($this->userWith(['project-portal-projects-view']));
         $this->getJson('/api/project-portal/logs')->assertForbidden();
 
-        $this->signIn($this->userWith(['web-projects-create', 'project-portal-view-logs']));
+        $this->signIn($this->userWith(['project-portal-projects-create', 'project-portal-view-logs']));
         $this->postJson('/api/project-portal/projects', ['name' => 'Portal', 'visibility' => 'public'])->assertCreated();
 
         $row = $this->getJson('/api/project-portal/logs')->assertOk()->json('data.0');
@@ -142,5 +142,35 @@ class ProjectPortalApplicationTest extends TestCase
         $this->assertSame(['WebJobApplication', 'WebSalesLead'], DB::table('web_logs')->orderBy('module')->pluck('module')->all());
         $this->assertSame('/order_form/:token', DB::table('legal_page_titles')->where(['area' => 'web', 'page_key' => 'order-form'])->value('route_path'));
         $migration->up();
+    }
+
+    /**
+     * @description The migration that gives the project tables and permissions the portal prefix:
+     *   down() restores the web names with the rows and the grants, up() renames them back.
+     * @input A project; role with project-portal-projects-view; down(), then up().
+     * @output down: web_projects with the project, no project_portal_projects, the role holds
+     *   web-projects-view (same id); up: the reverse.
+     */
+    public function test_table_and_permission_names(): void
+    {
+        $migration = require app_path('Apps/ProjectPortal/Database/Migrations/2026_11_24_000002_project_portal_table_and_permission_names.php');
+        $project = $this->project();
+        $pm = $this->role('pm', ['project-portal-projects-view']);
+        $permissionId = CorePermission::where('permission_key', 'project-portal-projects-view')->value('id');
+
+        $migration->down();
+
+        $this->assertTrue(Schema::hasTable('web_projects') && Schema::hasTable('web_project_template_checkpoints'));
+        $this->assertFalse(Schema::hasTable('project_portal_projects') || Schema::hasTable('project_portal_project_thread_messages'));
+        $this->assertSame($project->id, DB::table('web_projects')->value('id'));
+        $this->assertSame(['web-projects-view'], $pm->permissions()->pluck('permission_key')->all());
+        $this->assertSame($permissionId, CorePermission::where('permission_key', 'web-projects-view')->value('id'));
+
+        $migration->up();
+
+        $this->assertFalse(Schema::hasTable('web_projects'));
+        $this->assertSame($project->id, DB::table('project_portal_projects')->value('id'));
+        $this->assertSame(['project-portal-projects-view'], $pm->permissions()->pluck('permission_key')->all());
+        $this->assertSame(0, CorePermission::where('permission_key', 'like', 'web-projects-%')->count());
     }
 }

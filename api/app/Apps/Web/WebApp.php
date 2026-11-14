@@ -8,13 +8,11 @@
  * @description Manifest of the web application (public website, inquiries, job applications) -
  * everything the core needs to know about it. Registered in config/apps.php.
  * @dependencies AppManifest; WebBaseDataSeeder, WebRetentionSource, WebAgendaSource, WebLog,
- *   WebContentLanguages, CheckWebActive, MigrateLegacyAttachmentsCommand and the Web models with
- *   attachments.
+ *   WebContentLanguages, CheckWebActive and the Web models with attachments.
  */
 
 namespace App\Apps\Web;
 
-use App\Apps\Web\Console\MigrateLegacyAttachmentsCommand;
 use App\Apps\Web\Http\Middleware\CheckWebActive;
 use App\Apps\Web\Services\WebAgendaSource;
 use App\Apps\Web\Services\WebRetentionSource;
@@ -73,12 +71,6 @@ final class WebApp extends AppManifest
     public function middlewareAliases(): array
     {
         return ['web.active' => CheckWebActive::class];
-    }
-
-    /** @description See AppManifest::commands(). */
-    public function commands(): array
-    {
-        return [MigrateLegacyAttachmentsCommand::class];
     }
 
     /** @description See AppManifest::baseDataSeeders(). */

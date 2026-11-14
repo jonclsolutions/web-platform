@@ -69,7 +69,7 @@ export class ProjectApprovalsSectionComponent implements OnInit {
 
   /** Project of the page. */
   @Input({ required: true }) projectId!: number;
-  /** May the user change approvals (web-projects-update)? */
+  /** May the user change approvals (project-portal-projects-update)? */
   @Input() canEdit = false;
   /** Checkpoints of the project (link of a request). */
   @Input() checkpoints: { id: number; label: string }[] = [];

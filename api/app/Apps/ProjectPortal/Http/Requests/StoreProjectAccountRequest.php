@@ -44,7 +44,7 @@ class StoreProjectAccountRequest extends FormRequest
     {
         return [
             'username'     => ['required', 'string', 'min:3', 'max:64', 'regex:/^[a-z0-9._-]+$/',
-                Rule::unique('web_project_accounts', 'username')->where('project_id', (int) $this->route('projectId'))],
+                Rule::unique('project_portal_project_accounts', 'username')->where('project_id', (int) $this->route('projectId'))],
             'display_name' => ['required', 'string', 'max:120'],
             'email'        => ['nullable', 'email', 'max:255', 'required_if_accepted:send_invitation'],
             'language'     => ['sometimes', Rule::in(ProjectAccount::LANGUAGES)],

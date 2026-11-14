@@ -58,7 +58,7 @@ export class ProjectUpdatesSectionComponent implements OnInit {
 
   /** Project of the page. */
   @Input({ required: true }) projectId!: number;
-  /** May the user change updates (web-projects-update)? */
+  /** May the user change updates (project-portal-projects-update)? */
   @Input() canEdit = false;
   /** Something changed (the page refreshes its counts / files). */
   @Output() changed = new EventEmitter<void>();

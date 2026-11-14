@@ -286,7 +286,7 @@ class ProjectPortalPhase2Test extends TestCase
      */
     public function test_approvals_and_decisions(): void
     {
-        $assignee = $this->userWith(['web-projects-update'], ['user_email' => 'pm@firm.cz']);
+        $assignee = $this->userWith(['project-portal-projects-update'], ['user_email' => 'pm@firm.cz']);
         $this->portal->update(['assignee_id' => $assignee->id]);
         $checkpoint = $this->portal->checkpoints()->create(['label' => 'Design']);
         $p = $this->portal->approvals()->create(['title' => 'Homepage design', 'status' => 'pending', 'checkpoint_id' => $checkpoint->id, 'requested_at' => now()->subHour()]);

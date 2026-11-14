@@ -491,7 +491,7 @@ The full step-by-step guide with explanations is in [deploy/HOW_TO_DEPLOY.md](de
    - public web, e-shop, admin login, sending an e-mail
    - `curl -I https://<domain>/laravel/.env` must return **403 or 404**, never 200
 
-### One-time steps of the November 2026 modular refactor (patches 0101–0105)
+### One-time steps of the November 2026 modular refactor (patches 0101–0106)
 
 Deploy the API and the frontend of the release together. Before the upload, let the queue finish
 (`php artisan queue:work --stop-when-empty`) - queued mails of the old release carry class names
@@ -518,6 +518,11 @@ that no longer exist. Then, besides step 6 above:
   of the portal (`/projects/order/<token>`, links `/order_form/<token>` sent before redirect);
   its texts are in the portal translations, the section `order_form` of the web translations is
   no longer used.
+- (0106) the project tables and permissions carry the portal prefix: `php artisan migrate --force`
+  renames `web_project*` → `project_portal_project*` (e.g. `web_projects` → `project_portal_projects`)
+  and the permissions `web-projects-*` → `project-portal-projects-*` (same ids - roles and accounts
+  keep them); nothing to seed. Database reports or scripts that read the old table names must
+  use the new ones.
 
 ### One-time steps of the October 2026 fixes (findings-fixes 1–4)
 
@@ -526,8 +531,8 @@ Run once on the first release that contains them (back up the database first):
 1. ~~**SQL migrations** (`database/migrations/*.sql`)~~ – **done on the server**; the scripts were
    removed with the root `database/` folder on 2026-10-31. Later schema changes are Laravel
    migrations, run by `php artisan migrate --force` (step 6 above).
-2. **Legacy attachments to the private disk** (GDPR, in `laravel/`):
-   `php artisan attachments:migrate-legacy --dry-run`, check the output, then without `--dry-run`
+2. ~~**Legacy attachments to the private disk**~~ – **done on the server**; the one-time command
+   `attachments:migrate-legacy` was removed afterwards.
 3. **Clear caches**: `php artisan optimize:clear`, then the `config:cache` / `route:cache` /
    `view:cache` of step 6
 4. **Runtime translations** – the public web / shop texts live in

@@ -39,7 +39,7 @@ class ProjectTest extends TestCase
     use ProjectFixtures;
 
     /** @var string[] All project permissions. */
-    private const ALL = ['web-projects-view', 'web-projects-create', 'web-projects-update', 'web-projects-delete'];
+    private const ALL = ['project-portal-projects-view', 'project-portal-projects-create', 'project-portal-projects-update', 'project-portal-projects-delete'];
 
     /**
      * @description Fake attachment disk.
@@ -64,7 +64,7 @@ class ProjectTest extends TestCase
         $this->signIn($this->user());
         $this->getJson('/api/project-portal/projects')->assertStatus(403);
 
-        $this->signIn($this->userWith(['web-projects-view']));
+        $this->signIn($this->userWith(['project-portal-projects-view']));
         $a = $this->project(['name' => 'Shop', 'platform' => 'web', 'project_lead' => 'Karel']);
         $a->checkpoints()->createMany([['label' => 'Design'], ['label' => 'Build']]);
         $a->forceFill(['created_at' => now()->subDay()])->save();
@@ -108,7 +108,7 @@ class ProjectTest extends TestCase
         $this->postJson('/api/project-portal/projects', ['visibility' => 'hidden', 'order_id' => 999, 'estimated_completion_from' => '2026-12-01', 'estimated_completion_to' => '2026-11-01'])
             ->assertStatus(422)->assertJsonValidationErrors(['name', 'visibility', 'order_id', 'estimated_completion_to']);
 
-        $this->failOn('web_projects', 'INSERT');
+        $this->failOn('project_portal_projects', 'INSERT');
         $this->postJson('/api/project-portal/projects', ['name' => 'X', 'visibility' => 'private'])->assertStatus(500)->assertJson(['message' => 'Project creation failed.']);
     }
 
@@ -132,7 +132,7 @@ class ProjectTest extends TestCase
         $this->assertPortalLog('update', 'status new → finished');
         $this->putJson('/api/project-portal/projects/999', ['name' => 'x'])->assertStatus(404);
 
-        $this->failOn('web_projects', 'UPDATE');
+        $this->failOn('project_portal_projects', 'UPDATE');
         $this->putJson("/api/project-portal/projects/{$project->id}", ['name' => 'Boom'])->assertStatus(500)->assertJson(['message' => 'Project update failed.']);
     }
 
@@ -163,7 +163,7 @@ class ProjectTest extends TestCase
         $this->deleteJson('/api/project-portal/projects/999')->assertStatus(404);
 
         $other = $this->project();
-        $this->failOn('web_projects', 'UPDATE');
+        $this->failOn('project_portal_projects', 'UPDATE');
         $this->deleteJson("/api/project-portal/projects/{$other->id}")->assertStatus(500)->assertJson(['message' => 'Project deletion failed.']);
     }
 
@@ -205,12 +205,12 @@ class ProjectTest extends TestCase
      */
     public function test_assignees_and_my_projects(): void
     {
-        $jana = $this->userWith(['web-projects-view', 'web-projects-update'], ['full_name' => 'Jana']);
+        $jana = $this->userWith(['project-portal-projects-view', 'project-portal-projects-update'], ['full_name' => 'Jana']);
         $adam = $this->user(['full_name' => 'Adam']);
-        $adam->explicitPermissions()->attach($this->permission('web-projects-update')->id);
+        $adam->explicitPermissions()->attach($this->permission('project-portal-projects-update')->id);
         $root = $this->user(['full_name' => 'Root'], $this->role('sysadmin'));
-        $viewer = $this->userWith(['web-projects-view'], ['full_name' => 'Viewer']);
-        $blocked = $this->userWith(['web-projects-update'], ['full_name' => 'Blocked', 'is_blocked' => true]);
+        $viewer = $this->userWith(['project-portal-projects-view'], ['full_name' => 'Viewer']);
+        $blocked = $this->userWith(['project-portal-projects-update'], ['full_name' => 'Blocked', 'is_blocked' => true]);
 
         $a = $this->project(['name' => 'A', 'assignee_id' => $jana->id]);
         $b = $this->project(['name' => 'B']);
@@ -247,7 +247,7 @@ class ProjectTest extends TestCase
      */
     public function test_files(): void
     {
-        $this->signIn($this->userWith(['web-projects-view']));
+        $this->signIn($this->userWith(['project-portal-projects-view']));
         $project = $this->project();
         $thread = $this->thread($project, ['subject' => 'Logo'], [['customer', 'Here']]);
         $this->attach($thread->messages()->first(), 'web/project_threads/c.pdf');
@@ -274,7 +274,7 @@ class ProjectTest extends TestCase
      */
     public function test_checkpoints(): void
     {
-        $this->signIn($this->userWith(['web-projects-update']));
+        $this->signIn($this->userWith(['project-portal-projects-update']));
         $project = $this->project();
         $other = $this->project();
         $project->checkpoints()->create(['label' => 'First', 'sort_order' => 0]);
@@ -329,7 +329,7 @@ class ProjectTest extends TestCase
     public function test_checkpoint_dates_notes_order_and_notifications(): void
     {
         Mail::fake();
-        $this->signIn($this->userWith(['web-projects-update']));
+        $this->signIn($this->userWith(['project-portal-projects-update']));
         $project = $this->project();
         $this->portalAccount($project, 'anna', 'Anna', ['email' => 'anna@client.cz', 'notify_checkpoint_status' => true]);
         $this->portalAccount($project, 'dana', 'Dana', ['email' => 'dana@client.cz', 'notify_checkpoint_dates' => true, 'language' => 'en']);

@@ -57,7 +57,7 @@ src/
     │
     ├── public/
     │   ├── shared-styles/maintenance.css   maintenance page (web + e-shop)
-    │   └── legal/legal-document.css        GDPR / TOS / cookies pages (web + e-shop)
+    │   └── legal/legal-page/legal-page.component.css   GDPR / TOS / cookies page (web + e-shop)
     │
     └── apps/                               every application keeps its own shared sheets
         ├── web/public/shared-styles/
@@ -68,7 +68,7 @@ src/
         │   ├── form-fields.css             form field states (contact + job application)
         │   └── animations.css              fadeUp keyframes
         ├── shop/admin/shared-styles/
-        │   └── list-page.css               orders + products toolbar / filter panel
+        │   └── list-page.css               orders + products additions to the core page.css (title row, form modal)
         ├── shop/public/shared-styles/
         │   ├── theme.css                   e-shop look tokens
         │   └── quantity.css                quantity selector + buy buttons (cart + product detail)

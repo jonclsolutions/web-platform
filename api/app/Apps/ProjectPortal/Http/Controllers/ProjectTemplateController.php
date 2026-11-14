@@ -143,7 +143,7 @@ class ProjectTemplateController extends Controller
     public function applyToProject(Request $request, $projectId): JsonResponse
     {
         $validated = $request->validate([
-            'template_id' => ['required', 'integer', 'exists:web_project_templates,id'],
+            'template_id' => ['required', 'integer', 'exists:project_portal_project_templates,id'],
             'start_date'  => ['nullable', 'date_format:Y-m-d'],
         ]);
         $project = Project::findOrFail($projectId);

@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class ProjectThreadMessage extends Model
 {
     /** @description Database table of the model. */
-    protected $table = 'web_project_thread_messages';
+    protected $table = 'project_portal_project_thread_messages';
 
     /**
      * @description Personal data: the audit log notes that these attributes changed, never their

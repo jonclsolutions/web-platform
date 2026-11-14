@@ -366,7 +366,7 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "Bez oprávnění web-projects-update je stránka projektu i správa šablon jen pro čtení. Auditní log zapisuje změny projektu, uživatelů (jen podle ID), pozvánky a přihlášení kódem / odkazem (bez kódu a e-mailu), checkpointy, přiřazení vláken, žádosti o schválení s rozhodnutími (bez komentáře) a aktuality (bez textu); zprávy, kódy ani hesla se do logu nezapisují. Nepoužité a prošlé přihlašovací kódy se automaticky mažou."
+              "content": "Bez oprávnění project-portal-projects-update je stránka projektu i správa šablon jen pro čtení. Auditní log zapisuje změny projektu, uživatelů (jen podle ID), pozvánky a přihlášení kódem / odkazem (bez kódu a e-mailu), checkpointy, přiřazení vláken, žádosti o schválení s rozhodnutími (bez komentáře) a aktuality (bez textu); zprávy, kódy ani hesla se do logu nezapisují. Nepoužité a prošlé přihlašovací kódy se automaticky mažou."
             }
           ]
         }

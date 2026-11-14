@@ -9,7 +9,7 @@
  *   incl. the tab permission `view-project-portal`. ProjectPortalBaseDataSeeder adds the missing
  *   ones; the sysadmin role gets all of them. The description is the English fallback (admin i18n
  *   `permission-descriptions`).
- * @note The `web-projects-*` keys keep their names (roles of existing installations stay valid);
+ * @note The `project-portal-projects-*` keys keep their names (roles of existing installations stay valid);
  *   only their module is `project-portal`.
  */
 
@@ -26,8 +26,8 @@ return [
     ['permission_key' => 'project-portal-sales-orders-create', 'description' => 'Create an order manually (internally by an administrator)', 'module' => 'project-portal'],
     ['permission_key' => 'project-portal-sales-orders-update', 'description' => 'Edit an order and its confirmation e-mail template', 'module' => 'project-portal'],
     ['permission_key' => 'project-portal-sales-orders-delete', 'description' => 'Delete / restore an order from the trash', 'module' => 'project-portal'],
-    ['permission_key' => 'web-projects-view', 'description' => 'View the list and detail of customer projects', 'module' => 'project-portal'],
-    ['permission_key' => 'web-projects-create', 'description' => 'Create a customer project (standalone or from an order)', 'module' => 'project-portal'],
-    ['permission_key' => 'web-projects-update', 'description' => 'Edit a project, its checkpoints and client accounts and answer customer requests', 'module' => 'project-portal'],
-    ['permission_key' => 'web-projects-delete', 'description' => 'Delete customer projects (also in bulk)', 'module' => 'project-portal'],
+    ['permission_key' => 'project-portal-projects-view', 'description' => 'View the list and detail of customer projects', 'module' => 'project-portal'],
+    ['permission_key' => 'project-portal-projects-create', 'description' => 'Create a customer project (standalone or from an order)', 'module' => 'project-portal'],
+    ['permission_key' => 'project-portal-projects-update', 'description' => 'Edit a project, its checkpoints and client accounts and answer customer requests', 'module' => 'project-portal'],
+    ['permission_key' => 'project-portal-projects-delete', 'description' => 'Delete customer projects (also in bulk)', 'module' => 'project-portal'],
 ];

@@ -44,18 +44,18 @@ export function createCheckpointStatusLabels(i18n: AdminLocalizationService): Re
 export function createProjectButtons(i18n: AdminLocalizationService): Core.TableButtons[] {
   return [
     { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_manage`), isActive: true, type: 'neutral_button', action: 'generate_form', icon: 'folder-open' },
-    { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_edit`), isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-projects-update', icon: 'edit' },
-    { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_delete`), isActive: true, type: 'delete_button', action: 'delete', permission: 'web-projects-delete', icon: 'delete' },
+    { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_edit`), isActive: true, type: 'neutral_button', action: 'edit', permission: 'project-portal-projects-update', icon: 'edit' },
+    { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_delete`), isActive: true, type: 'delete_button', action: 'delete', permission: 'project-portal-projects-delete', icon: 'delete' },
   ];
 }
 
 export function createProjectToolbarButtons(i18n: AdminLocalizationService): Core.Button[] {
   return [
     { action: 'toggleFilters', label: i18n.getValue(`${SECTION}.toolbar_filters`), icon: '', class: 'btn-filter', isActive: false },
-    { action: 'handleCreateFormOpened', label: i18n.getValue(`${SECTION}.toolbar_create_record`), icon: '', class: 'btn-create', showIf: true, permission: 'web-projects-create' },
-    { action: 'openTemplates', label: i18n.getValue(`${SECTION}.toolbar_templates`), icon: '', class: 'btn-neutral', showIf: true, permission: 'web-projects-view' },
+    { action: 'handleCreateFormOpened', label: i18n.getValue(`${SECTION}.toolbar_create_record`), icon: '', class: 'btn-create', showIf: true, permission: 'project-portal-projects-create' },
+    { action: 'openTemplates', label: i18n.getValue(`${SECTION}.toolbar_templates`), icon: '', class: 'btn-neutral', showIf: true, permission: 'project-portal-projects-view' },
     { action: 'exportActiveTable', label: i18n.getValue(`${SECTION}.toolbar_export_data`), icon: '', class: 'btn-export', showIf: true },
-    { action: 'openGraphBuilder', label: i18n.getValue(`${SECTION}.toolbar_generate_reports`), icon: '', class: 'btn-neutral', showIf: true, permission: 'web-projects-view' },
+    { action: 'openGraphBuilder', label: i18n.getValue(`${SECTION}.toolbar_generate_reports`), icon: '', class: 'btn-neutral', showIf: true, permission: 'project-portal-projects-view' },
     { action: 'toggleTable', label: i18n.getValue(`${SECTION}.toolbar_show_trash`), icon: '', class: 'btn-trash', permission: 'view-deleted' },
   ];
 }

@@ -42,7 +42,7 @@ class UpdateProjectAccountRequest extends FormRequest
     {
         return [
             'username'     => ['sometimes', 'required', 'string', 'min:3', 'max:64', 'regex:/^[a-z0-9._-]+$/',
-                Rule::unique('web_project_accounts', 'username')
+                Rule::unique('project_portal_project_accounts', 'username')
                     ->where('project_id', (int) $this->route('projectId'))
                     ->ignore((int) $this->route('accountId'))],
             'display_name' => ['sometimes', 'required', 'string', 'max:120'],

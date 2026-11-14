@@ -5,27 +5,20 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Validation logic for updating existing legal document sections.
+ * @description Validation logic for updating existing legal document sections - the rules of
+ *   StoreDocumentSectionRequest, each field optional (partial update).
  */
 
 namespace App\Http\Requests\Legal\DocumentSection;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\Concerns\PartialUpdateRules;
 
 /**
  * @description Handles validation for partial updates to document sections.
  */
-class UpdateDocumentSectionRequest extends FormRequest
+class UpdateDocumentSectionRequest extends StoreDocumentSectionRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
+    use PartialUpdateRules;
 
     /**
      * Get the validation rules that apply to the request.
@@ -34,12 +27,6 @@ class UpdateDocumentSectionRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'document_type_id' => 'sometimes|required|exists:document_types,id',
-            'position'         => 'sometimes|integer|min:0',
-            'heading'          => 'nullable|string|max:255',
-            'content'          => 'sometimes|required|string',
-            'lang'             => 'sometimes|required|string|max:5',
-        ];
+        return self::partial(parent::rules());
     }
 }

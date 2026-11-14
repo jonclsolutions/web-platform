@@ -7,15 +7,17 @@
  * @created 2026
  * @description Notification to the team on EVERY customer activity in a thread - a new thread and
  * every reply, no debounce: to the administrator responsible for the project (`assignee`), else
- * to `web_projects.contact_email` (the supplier's contact of the project); without either no
+ * to `project_portal_projects.contact_email` (the supplier's contact of the project); without either no
  * e-mail is created (ProjectNotifier::notifyTeam()). The button opens the project page.
  * @note Contains only the thread subject and a link to the admin, NOT the message text - a
  * sensitive message is not copied into a mailbox.
+ * @dependencies project-portal::emails.project-thread-activity; CompanyContactInfo (footer)
  */
 
 namespace App\Apps\ProjectPortal\Mail;
 
 use App\Apps\ProjectPortal\Models\Project;
+use App\Support\Mail\CompanyContactInfo;
 use App\Apps\ProjectPortal\Models\ProjectThread;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -46,13 +48,13 @@ class ProjectThreadActivityMail extends Mailable
     {
         return new Content(
             view: 'project-portal::emails.project-thread-activity',
-            with: [
+            with: array_merge(CompanyContactInfo::get(), [
                 'projectName'  => $this->project->name,
                 'threadSubject' => $this->thread->subject,
                 'isNewThread'  => $this->isNewThread,
                 // The conversations of the project in the administration.
                 'adminUrl'     => rtrim(config('app.frontend_url', ''), '/') . '/admin/project-portal/projects/' . $this->project->id . '/conversations',
-            ],
+            ]),
         );
     }
 }

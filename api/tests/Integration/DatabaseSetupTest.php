@@ -303,7 +303,7 @@ class DatabaseSetupTest extends TestCase
             'core' => ['view-core', 'core-view-welcome-page', 'core-administrators-view', 'core-administrators-update', 'core-security-view', 'core-external-links-view', 'core-external-links-create'],
             'web' => ['view-web', 'web-job-applications-view', 'web-job-applications-create', 'web-job-applications-update', 'web-job-applications-delete', 'web-view-dashboard', 'web-set-maintenance-mode'],
             'shop' => ['view-eshop', 'shop-products-view', 'shop-products-update', 'shop-products-delete'],
-            'project-portal' => ['view-project-portal', 'web-projects-view', 'web-projects-update'],
+            'project-portal' => ['view-project-portal', 'project-portal-projects-view', 'project-portal-projects-update'],
         ];
         foreach ($modules as $module => $keys) {
             foreach ($keys as $key) {
@@ -325,7 +325,7 @@ class DatabaseSetupTest extends TestCase
         $this->assertSame(['core-administrators-view', 'core-external-links-view', 'core-security-view', 'core-view-welcome-page', 'view-core'], $roleKeys('read-only-core'));
         $this->assertSame(['view-web', 'web-job-applications-view', 'web-view-dashboard'], $roleKeys('read-only-web'));
         $this->assertSame(['shop-products-view', 'view-eshop'], $roleKeys('read-only-shop'));
-        $this->assertSame(['view-project-portal', 'web-projects-view'], $roleKeys('read-only-project-portal'));
+        $this->assertSame(['project-portal-projects-view', 'view-project-portal'], $roleKeys('read-only-project-portal'));
         foreach (['web', 'shop', 'project-portal'] as $app) {
             $this->assertSame($sorted([...$modules[$app], ...$modules['core']]), $roleKeys("full-{$app}-core"), $app);
         }
@@ -480,8 +480,8 @@ class DatabaseSetupTest extends TestCase
      *   only the web application registered.
      * @output modules() []; 22 core permissions incl. view-core, no web-/shop- key; sysadmin 22;
      *   1 page title (admin.panel); no web / shop settings rows; logo, no flags; company details
-     *   + legal types; then web only: 45 permissions incl. view-web (no web-projects-* - they belong
-     *   to the project portal), web settings row, no shop row.
+     *   + legal types; then web only: 37 permissions incl. view-web (no project-portal-* - they
+     *   belong to the project portal), web settings row, no shop row.
      */
     public function test_base_data_seeder_without_modules(): void
     {

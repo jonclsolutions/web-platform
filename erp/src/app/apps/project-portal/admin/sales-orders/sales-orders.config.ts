@@ -21,7 +21,7 @@ const SECTION = 'sales-orders';
 export function createSalesOrderButtons(i18n: AdminLocalizationService): Core.TableButtons[] {
   return [
     { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_details`), isActive: true, type: 'info_button', action: 'details', icon: 'search' },
-    { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_project`), isActive: true, type: 'neutral_button', action: 'generate_form', permission: 'web-projects-create', icon: 'folder' },
+    { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_project`), isActive: true, type: 'neutral_button', action: 'generate_form', permission: 'project-portal-projects-create', icon: 'folder' },
     { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_edit`), isActive: true, type: 'neutral_button', action: 'edit', permission: 'project-portal-sales-orders-update', icon: 'edit' },
     { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_delete`), isActive: true, type: 'delete_button', action: 'delete', permission: 'project-portal-sales-orders-delete', icon: 'delete' },
   ];

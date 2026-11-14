@@ -73,7 +73,7 @@ class ProjectPhase2AdminTest extends TestCase
      */
     public function test_invitations(): void
     {
-        $this->signIn($this->userWith(['web-projects-update']));
+        $this->signIn($this->userWith(['project-portal-projects-update']));
         $url = "/api/project-portal/projects/{$this->project->id}/accounts";
 
         $this->postJson($url, ['username' => 'nova', 'display_name' => 'Nová', 'send_invitation' => true, 'with_password' => false])
@@ -110,9 +110,9 @@ class ProjectPhase2AdminTest extends TestCase
      */
     public function test_updates(): void
     {
-        $this->signIn($this->userWith(['web-projects-view']));
+        $this->signIn($this->userWith(['project-portal-projects-view']));
         $this->postJson("/api/project-portal/projects/{$this->project->id}/updates", ['title' => 'x', 'body' => 'y'])->assertStatus(403);
-        $this->signIn($this->userWith(['web-projects-view', 'web-projects-update'], ['full_name' => 'Jana']));
+        $this->signIn($this->userWith(['project-portal-projects-view', 'project-portal-projects-update'], ['full_name' => 'Jana']));
         $base = "/api/project-portal/projects/{$this->project->id}/updates";
 
         $update = $this->post($base, ['title' => 'Week 1', 'body' => 'We did the design.', 'attachments' => [$this->upload('a.pdf')]], ['Accept' => 'application/json'])
@@ -157,7 +157,7 @@ class ProjectPhase2AdminTest extends TestCase
      */
     public function test_approvals(): void
     {
-        $this->signIn($this->userWith(['web-projects-view', 'web-projects-update'], ['full_name' => 'Jana']));
+        $this->signIn($this->userWith(['project-portal-projects-view', 'project-portal-projects-update'], ['full_name' => 'Jana']));
         $base = "/api/project-portal/projects/{$this->project->id}/approvals";
         $own = $this->project->checkpoints()->create(['label' => 'Design']);
         $foreign = $this->project()->checkpoints()->create(['label' => 'X']);
@@ -204,9 +204,9 @@ class ProjectPhase2AdminTest extends TestCase
      */
     public function test_thread_assignment(): void
     {
-        $jana = $this->userWith(['web-projects-view', 'web-projects-update'], ['full_name' => 'Jana', 'user_email' => 'jana@firm.cz']);
-        $petr = $this->userWith(['web-projects-update'], ['full_name' => 'Petr', 'user_email' => 'petr@firm.cz']);
-        $viewer = $this->userWith(['web-projects-view']);
+        $jana = $this->userWith(['project-portal-projects-view', 'project-portal-projects-update'], ['full_name' => 'Jana', 'user_email' => 'jana@firm.cz']);
+        $petr = $this->userWith(['project-portal-projects-update'], ['full_name' => 'Petr', 'user_email' => 'petr@firm.cz']);
+        $viewer = $this->userWith(['project-portal-projects-view']);
         $this->project->update(['assignee_id' => $petr->id]);
         $thread = $this->thread($this->project, ['subject' => 'Hosting'], [['customer', 'Hi']]);
         $other = $this->thread($this->project, ['subject' => 'Other']);
@@ -246,9 +246,9 @@ class ProjectPhase2AdminTest extends TestCase
      */
     public function test_templates(): void
     {
-        $this->signIn($this->userWith(['web-projects-view']));
+        $this->signIn($this->userWith(['project-portal-projects-view']));
         $this->postJson('/api/project-portal/projects/templates', ['name' => 'X', 'checkpoints' => [['label' => 'A']]])->assertStatus(403);
-        $this->signIn($this->userWith(['web-projects-view', 'web-projects-create', 'web-projects-update']));
+        $this->signIn($this->userWith(['project-portal-projects-view', 'project-portal-projects-create', 'project-portal-projects-update']));
 
         $template = $this->postJson('/api/project-portal/projects/templates', ['name' => 'E-shop', 'description' => 'Standard',
             'checkpoints' => [['label' => 'Analysis', 'offset_days' => 0], ['label' => 'Design', 'description' => 'UI', 'offset_days' => 14]]])
@@ -296,7 +296,7 @@ class ProjectPhase2AdminTest extends TestCase
      */
     public function test_project_page_data_and_cascade(): void
     {
-        $this->signIn($this->userWith(['web-projects-view', 'web-projects-delete']));
+        $this->signIn($this->userWith(['project-portal-projects-view', 'project-portal-projects-delete']));
         $this->project->approvals()->create(['title' => 'P', 'status' => 'pending', 'requested_at' => now()]);
         $approved = $this->project->approvals()->create(['title' => 'Q', 'status' => 'approved', 'requested_at' => now()->subHour()]);
         $approved->decisions()->create(['decision' => 'approved', 'author_label' => 'Anna']);

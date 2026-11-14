@@ -32,7 +32,7 @@ use Illuminate\Support\Str;
 class Project extends Model
 {
     /** @description Database table of the model. */
-    protected $table = 'web_projects';
+    protected $table = 'project_portal_projects';
 
     use SoftDeletes;
 
@@ -70,7 +70,7 @@ class Project extends Model
     public const STATUSES = ['new', 'development', 'finished'];
 
     /** @description Permission an administrator needs to be assignable to a project. */
-    public const ASSIGNEE_PERMISSION = 'web-projects-update';
+    public const ASSIGNEE_PERMISSION = 'project-portal-projects-update';
 
     /**
      * @description Validation of the origin of a project (sales lead / order). An order has at

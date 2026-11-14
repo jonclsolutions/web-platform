@@ -11,12 +11,13 @@
  *   - KIND_APPROVAL_DECIDED: the client approved an approval request / requested changes.
  *   Only the title of the item, the decision and a link to the project in the administration -
  *   never a message text or the client's comment.
- * @dependencies project-portal::emails.project-team-notification
+ * @dependencies project-portal::emails.project-team-notification; CompanyContactInfo (footer)
  */
 
 namespace App\Apps\ProjectPortal\Mail;
 
 use App\Apps\ProjectPortal\Models\Project;
+use App\Support\Mail\CompanyContactInfo;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -75,13 +76,13 @@ class ProjectTeamNotificationMail extends Mailable
     {
         return new Content(
             view: 'project-portal::emails.project-team-notification',
-            with: [
+            with: array_merge(CompanyContactInfo::get(), [
                 'projectName' => $this->project->name,
                 'intro'       => $this->texts()[1],
                 'itemTitle'   => $this->itemTitle,
                 'adminUrl'    => rtrim((string) config('app.frontend_url', ''), '/') . '/admin/project-portal/projects/' . $this->project->id
                     . '/' . (self::SECTIONS[$this->kind] ?? 'overview'),
-            ],
+            ]),
         );
     }
 }

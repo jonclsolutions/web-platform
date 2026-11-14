@@ -41,7 +41,7 @@ class StoreProjectRequest extends FormRequest
             // Responsible administrator - only someone who can answer the client (Project::assignableUsers()).
             'assignee_id'                => ['nullable', 'integer', Rule::in(Project::assignableUsers()->pluck('id')->all())],
             // Optional template whose checkpoints the new project gets (due dates from today).
-            'template_id' => ['nullable', 'integer', 'exists:web_project_templates,id'],
+            'template_id' => ['nullable', 'integer', 'exists:project_portal_project_templates,id'],
         ];
     }
 }

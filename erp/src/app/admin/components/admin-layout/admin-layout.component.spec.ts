@@ -333,13 +333,13 @@ describe('AdminLayoutComponent', () => {
    * @description Menu groups follow the permissions ("a|b" = any of them); the sidebar renders the
    *   pages of the current module with their links.
    * @input  granted ['web-edit-website-view', 'shop-orders-view', 'core-legal-config-view',
-   *         'web-projects-view']; render the project portal.
+   *         'project-portal-projects-view']; render the project portal.
    * @output web content, shop transactions, core legal groups visible; web business, shop catalog
    *   hidden; sidebar link /admin/project-portal/projects only (no log page).
    */
   it('shows menu groups by permission', () => {
     requiresApps('web', 'shop', 'project-portal');
-    ctx.permissions.granted = new Set(['web-edit-website-view', 'shop-orders-view', 'core-legal-config-view', 'web-projects-view']);
+    ctx.permissions.granted = new Set(['web-edit-website-view', 'shop-orders-view', 'core-legal-config-view', 'project-portal-projects-view']);
     const visible = (module: string, key: string) => component.isGroupVisible(navOf(module).find(g => g.key === key)!);
     expect(visible('web', 'web-content')).toBeTrue();
     expect(visible('shop', 'shop-transactions')).toBeTrue();

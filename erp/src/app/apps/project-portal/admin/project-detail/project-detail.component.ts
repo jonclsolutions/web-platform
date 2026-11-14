@@ -22,7 +22,7 @@
  *   or unsaved settings asks first. Internal notes and checkpoint notes never reach the client.
  * @dependencies DataHandler (project-portal/projects, …/projects/:id/accounts, …/projects/:id/files,
  *   …/projects/assignees, project-portal/project-threads), AdminLocalizationService, PermissionService
- *   (web-projects-update), AlertDialogService, ConfirmDialogService, UploadRulesService (profile
+ *   (project-portal-projects-update), AlertDialogService, ConfirmDialogService, UploadRulesService (profile
  *   project_thread), Router.
  */
 
@@ -325,7 +325,7 @@ export class ProjectDetailComponent implements OnInit {
 
   /** @description May the user change the project (settings, accounts, checkpoints, replies)? */
   get canEdit(): boolean {
-    return this.permissions.hasPermission('web-projects-update');
+    return this.permissions.hasPermission('project-portal-projects-update');
   }
 
   /** @description Settings changed and not saved yet. */

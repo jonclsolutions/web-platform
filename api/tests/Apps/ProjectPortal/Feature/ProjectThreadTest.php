@@ -52,7 +52,7 @@ class ProjectThreadTest extends TestCase
         $this->signIn($this->user());
         $this->getJson('/api/project-portal/project-threads')->assertStatus(403);
 
-        $this->signIn($this->userWith(['web-projects-view']));
+        $this->signIn($this->userWith(['project-portal-projects-view']));
         $p = $this->project(['name' => 'Portal P']);
         $q = $this->project(['name' => 'Portal Q']);
         $a = $this->thread($p, ['priority' => 'high', 'last_message_at' => now()->subHour()]);
@@ -78,7 +78,7 @@ class ProjectThreadTest extends TestCase
      */
     public function test_show_and_older_messages(): void
     {
-        $this->signIn($this->userWith(['web-projects-view']));
+        $this->signIn($this->userWith(['project-portal-projects-view']));
         $thread = $this->thread($this->project(), [], array_map(fn ($i) => ['customer', "Message {$i}"], range(1, 52)));
 
         $show = $this->getJson("/api/project-portal/project-threads/{$thread->id}")->assertOk()
@@ -108,10 +108,10 @@ class ProjectThreadTest extends TestCase
     public function test_reply(): void
     {
         $thread = $this->thread($this->project(), ['last_message_at' => now()->subDay()]);
-        $this->signIn($this->userWith(['web-projects-view']));
+        $this->signIn($this->userWith(['project-portal-projects-view']));
         $this->postJson("/api/project-portal/project-threads/{$thread->id}/reply", ['body' => 'x'])->assertStatus(403);
 
-        $admin = $this->userWith(['web-projects-update'], ['full_name' => 'Jana Nová']);
+        $admin = $this->userWith(['project-portal-projects-update'], ['full_name' => 'Jana Nová']);
         $this->signIn($admin);
         $this->post("/api/project-portal/project-threads/{$thread->id}/reply", ['body' => 'Here you go', 'attachments' => [$this->upload('a.pdf')]], ['Accept' => 'application/json'])
             ->assertCreated()
@@ -151,7 +151,7 @@ class ProjectThreadTest extends TestCase
         $this->portalAccount($project, 'anna', 'Anna', ['email' => 'anna@client.cz', 'notify_replies' => true, 'language' => 'en']);
         $this->portalAccount($project, 'petr', 'Petr', ['email' => 'petr@client.cz', 'notify_checkpoint_status' => true, 'notify_checkpoint_dates' => true]);
         $thread = $this->thread($project, ['last_message_at' => now()->subDay()], [['customer', 'Question']]);
-        $this->signIn($this->userWith(['web-projects-update']));
+        $this->signIn($this->userWith(['project-portal-projects-update']));
 
         $this->postJson("/api/project-portal/project-threads/{$thread->id}/reply", ['body' => 'Ask Petr first', 'is_internal' => true])
             ->assertCreated()->assertJsonPath('data.is_internal', true);
@@ -179,7 +179,7 @@ class ProjectThreadTest extends TestCase
      */
     public function test_update_status(): void
     {
-        $this->signIn($this->userWith(['web-projects-update']));
+        $this->signIn($this->userWith(['project-portal-projects-update']));
         $thread = $this->thread($this->project());
 
         $this->putJson("/api/project-portal/project-threads/{$thread->id}/status", ['status' => 'closed'])->assertOk()->assertJsonPath('data.status', 'closed');
@@ -204,7 +204,7 @@ class ProjectThreadTest extends TestCase
      */
     public function test_unread_messages_for_the_administration(): void
     {
-        $this->signIn($this->userWith(['web-projects-view', 'web-projects-update']));
+        $this->signIn($this->userWith(['project-portal-projects-view', 'project-portal-projects-update']));
         $p = $this->project(['name' => 'P']);
         $q = $this->project(['name' => 'Q']);
         $a = $this->thread($p, [], [['customer', 'hi'], ['customer', 'are you there?'], ['admin', 'yes']]);

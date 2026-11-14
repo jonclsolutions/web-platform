@@ -31,7 +31,7 @@ export const PROJECT_PORTAL_APP: AppManifest = {
     {
       key: 'project-portal-projects', labelKey: 'nav_group_projects',
       items: [
-        { path: 'projects', permission: 'web-projects-view', labelKey: 'nav_projects', icon: 'folder' },
+        { path: 'projects', permission: 'project-portal-projects-view', labelKey: 'nav_projects', icon: 'folder' },
       ],
     },
     {

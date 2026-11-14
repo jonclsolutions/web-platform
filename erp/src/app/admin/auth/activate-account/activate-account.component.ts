@@ -12,22 +12,19 @@
  * @dependencies
  * - HttpClient: HTTP calls to the public `account-activation/{token}` endpoints.
  * - environment: Base URL of the API.
- * - PasswordRequirementsChecklistComponent: Live checklist of the password rules - the same
- *   component as ResetPasswordComponent / admin user creation.
+ * - SetPasswordFormComponent: the password form shared with ResetPasswordComponent.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { map } from 'rxjs';
 import { ApiEnvelope } from '../../../shared/interfaces/api-envelope';
-import { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH, meetsPasswordRequirements, fillPasswordLimits } from '../../../shared/constants/password-policy';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
-import { PasswordRequirementsChecklistComponent } from '../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
+import { SetPasswordFormComponent, SetPasswordValue } from '../set-password-form/set-password-form.component';
 
 /** Controls which block of the template is rendered - link check, form, error, done. */
 type ViewState = 'loading' | 'form' | 'invalid' | 'success';
@@ -41,7 +38,7 @@ interface ActivationCheckResponse {
 @Component({
   selector: 'app-activate-account',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, PasswordRequirementsChecklistComponent],
+  imports: [CommonModule, RouterLink, SetPasswordFormComponent],
   templateUrl: './activate-account.component.html',
   styleUrls: ['../../shared-styles/theme.css', '../shared-styles/auth.css', '../shared-styles/auth-card.css', './activate-account.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -60,17 +57,9 @@ export class ActivateAccountComponent implements OnInit, OnDestroy {
   /** Translation key (section `activate-account`) of the invalid-link reason. */
   errorKey = '';
   email = '';
-
-  password = '';
-  passwordConfirmation = '';
-  showPassword = false;
-  showPasswordConfirmation = false;
   submitting = false;
   /** Translation key of the error under the form, '' = none. */
   fieldErrorKey = '';
-
-  readonly minLength = PASSWORD_MIN_LENGTH;
-  readonly maxLength = PASSWORD_MAX_LENGTH;
 
   /** Seconds until the automatic redirect after success - shown in the UI. */
   redirectCountdown = 4;
@@ -92,11 +81,6 @@ export class ActivateAccountComponent implements OnInit, OnDestroy {
    */
   t(key: string): string {
     return this.i18n.getValue(`activate-account.${key}`);
-  }
-
-  /** Placeholder of the password field with the length limits filled in. */
-  get lengthPlaceholder(): string {
-    return fillPasswordLimits(this.t('placeholder_password'));
   }
 
   ngOnDestroy(): void {
@@ -126,48 +110,19 @@ export class ActivateAccountComponent implements OnInit, OnDestroy {
     });
   }
 
-  togglePasswordVisibility(): void {
-    this.showPassword = !this.showPassword;
-  }
-
-  toggleConfirmationVisibility(): void {
-    this.showPasswordConfirmation = !this.showPasswordConfirmation;
-  }
-
   /**
-   * @description Live password mismatch computed from the current values - no stored state.
-   * An empty confirmation is not a mismatch (no error until the user starts typing it). Same
-   * logic as ResetPasswordComponent.passwordsMismatch.
+   * @description Sets the password of the account (the form checked the policy already).
+   * @param value Password and its confirmation from SetPasswordFormComponent.
    */
-  get passwordsMismatch(): boolean {
-    return !!this.passwordConfirmation && this.password !== this.passwordConfirmation;
-  }
-
-  /**
-   * @description Whether the form may be submitted: every password rule is met and the
-   * confirmation is filled in and matches. Drives the submit button's `[disabled]`.
-   * @returns True when the form is ready to submit.
-   */
-  get canSubmit(): boolean {
-    return meetsPasswordRequirements(this.password)
-      && !!this.passwordConfirmation
-      && this.password === this.passwordConfirmation;
-  }
-
-  onSubmit(): void {
+  onSubmit(value: SetPasswordValue): void {
     this.fieldErrorKey = '';
-
-    // The button is disabled in this case; this also covers a submit by the Enter key.
-    if (!this.canSubmit || this.submitting) {
+    if (this.submitting) {
       return;
     }
 
     this.submitting = true;
 
-    this.http.post(this.activationUrl(), {
-      password: this.password,
-      password_confirmation: this.passwordConfirmation
-    }, { headers: this.headers }).subscribe({
+    this.http.post(this.activationUrl(), value, { headers: this.headers }).subscribe({
       next: () => {
         this.submitting = false;
         this.state = 'success';

@@ -366,7 +366,7 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "Without the web-projects-update permission the project page and the template management are read-only. The audit log records changes of the project, users (by id only), invitations and sign-ins by code / link (without the code and e-mail), checkpoints, thread assignment, approval requests with decisions (without the comment) and updates (without the text); messages, codes and passwords are never logged. Unused and expired sign-in codes are deleted automatically."
+              "content": "Without the project-portal-projects-update permission the project page and the template management are read-only. The audit log records changes of the project, users (by id only), invitations and sign-ins by code / link (without the code and e-mail), checkpoints, thread assignment, approval requests with decisions (without the comment) and updates (without the text); messages, codes and passwords are never logged. Unused and expired sign-in codes are deleted automatically."
             }
           ]
         }

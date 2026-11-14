@@ -176,7 +176,7 @@ class AgendaTest extends TestCase
      */
     public function test_module_without_tab_permission_is_hidden(): void
     {
-        $this->signIn($this->userWith(['view-web', 'web-projects-view', 'project-portal-sales-leads-view', 'web-job-applications-view', 'web-user-requests-view',
+        $this->signIn($this->userWith(['view-web', 'project-portal-projects-view', 'project-portal-sales-leads-view', 'web-job-applications-view', 'web-user-requests-view',
             'shop-coupons-view', 'shop-orders-view', 'shop-products-view', 'core-administrators-view', 'core-security-view']));
         $data = $this->getJson(self::RANGE)->assertOk()->json('data');
         $this->assertSame([], $data['events']);

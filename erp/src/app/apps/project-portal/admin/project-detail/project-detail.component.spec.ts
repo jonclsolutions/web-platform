@@ -1289,7 +1289,7 @@ describe('ProjectDetailComponent', () => {
       expect(dh().post).toHaveBeenCalledWith('project-portal/projects/7/template', { name: 'Shop flow' });
       expect(component.templates.map(t => t.name)).toEqual(['Web', 'Shop flow']);
 
-      ctx.permissions.granted = new Set(['web-projects-view']);
+      ctx.permissions.granted = new Set(['project-portal-projects-view']);
       component.openTemplateAction('apply');
       expect(component.templateAction).toBeNull();
       discardPeriodicTasks();
@@ -1370,11 +1370,11 @@ describe('ProjectDetailComponent', () => {
     /**
      * @description Without the update permission everything is read-only: no save bar, no reply,
      *   no account actions, inputs disabled.
-     * @input  granted only web-projects-view; sub-pages settings, conversations (open thread), access
+     * @input  granted only project-portal-projects-view; sub-pages settings, conversations (open thread), access
      * @output read-only note; no .pd-savebar / .pd-reply / .pd-account-actions; accounts listed; first input disabled
      */
     it('renders read-only without the update permission', fakeAsync(() => {
-      ctx.permissions.granted = new Set(['web-projects-view']);
+      ctx.permissions.granted = new Set(['project-portal-projects-view']);
       init();
       go('settings');
       tick();

@@ -23,7 +23,7 @@ use Illuminate\Support\Str;
 class ProjectLoginCode extends Model
 {
     /** @description Database table of the model. */
-    protected $table = 'web_project_login_codes';
+    protected $table = 'project_portal_project_login_codes';
 
     /** @description Never copied into the audit log (secrets / personal data). */
     public const AUDIT_MASKED = ['code_hash', 'link_hash', 'created_ip'];

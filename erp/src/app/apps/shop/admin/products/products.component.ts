@@ -33,7 +33,7 @@ import { PageHelpComponent } from '../../../../admin/components/page-help/page-h
   standalone: true,
   imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHelpComponent],
   templateUrl: './products.component.html',
-  styleUrls: ['../shared-styles/list-page.css', './products.component.css'],
+  styleUrls: ['../../../../admin/shared-styles/page.css', '../shared-styles/list-page.css', './products.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProductsComponent extends BaseDataComponent<Product> implements OnInit, OnDestroy {

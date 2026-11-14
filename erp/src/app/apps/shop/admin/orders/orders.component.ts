@@ -46,7 +46,7 @@ type TableMode = 'all' | 'pending_tasks' | 'trash';
   standalone: true,
   imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHelpComponent, EmailTemplateEditorComponent],
   templateUrl: './orders.component.html',
-  styleUrls: ['../shared-styles/list-page.css', './orders.component.css'],
+  styleUrls: ['../../../../admin/shared-styles/page.css', '../shared-styles/list-page.css', './orders.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OrdersComponent extends BaseDataComponent<Order> implements OnInit, OnDestroy {

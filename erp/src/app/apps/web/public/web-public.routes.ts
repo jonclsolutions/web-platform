@@ -18,6 +18,7 @@ import { Routes } from '@angular/router';
 import { webMaintenanceGuard } from './components/guards/web-maintenance.guard';
 import { publicNotFoundRoute } from '../../../public/not-found/public-not-found.config';
 import { PUBLIC_AREA_DATA, PublicArea } from '../../../public/public-area';
+import { legalPageRoute } from '../../../public/legal/legal-page/legal-page.config';
 
 /** Public area of the web: its translations, home page and the dark look of the shared pages. */
 export const WEB_PUBLIC_AREA: PublicArea = { translationModule: 'web', path: '', theme: 'dark' };
@@ -42,12 +43,12 @@ export const WEB_PUBLIC_ROUTES: Routes = [
       },
       { path: 'services', title: 'web.services', loadComponent: () => import('./services/services.component').then(m => m.ServicesComponent) },
       { path: 'contact', title: 'web.contact', loadComponent: () => import('./contact/contact.component').then(m => m.ContactComponent) },
-      { path: 'tos', title: 'web.tos', loadComponent: () => import('../../../public/legal/tos/tos.component').then(m => m.TosComponent) },
-      { path: 'privacy-policy', title: 'web.privacy-policy', loadComponent: () => import('../../../public/legal/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent) },
+      legalPageRoute('web', 'tos'),
+      legalPageRoute('web', 'gdpr'),
       { path: 'references', title: 'web.references', loadComponent: () => import('./references/references.component').then(m => m.ReferencesComponent) },
       { path: 'faq', title: 'web.faq', loadComponent: () => import('./faq/faq.component').then(m => m.FaqComponent) },
       { path: 'knowledge-base', title: 'web.knowledge-base', loadComponent: () => import('./knowledge-base/knowledge-base.component').then(m => m.KnowledgeBaseComponent) },
-      { path: 'cookies-policy', title: 'web.cookies-policy', loadComponent: () => import('../../../public/legal/cookies-policy/cookies-policy.component').then(m => m.CookiesPolicyComponent) },
+      legalPageRoute('web', 'cookies'),
       { path: 'about-us', title: 'web.about-us', loadComponent: () => import('./about-us/about-us.component').then(m => m.AboutUsComponent) },
       { path: 'jobs', title: 'web.jobs', loadComponent: () => import('./jobs/jobs-list/jobs-list.component').then(m => m.JobsListComponent) },
       { path: 'jobs/:id', title: 'web.job-detail', loadComponent: () => import('./jobs/job-item/job-item.component').then(m => m.JobItemComponent) },

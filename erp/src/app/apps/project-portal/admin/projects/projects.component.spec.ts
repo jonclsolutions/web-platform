@@ -67,7 +67,7 @@ describe('ProjectsComponent', () => {
     it('builds the configuration from translations', () => {
       expect(component.tableCaption).toBe('projects.table_header');
       expect(component.buttons.map(b => [b.action, b.permission, b.icon])).toEqual([
-        ['generate_form', undefined, 'folder-open'], ['edit', 'web-projects-update', 'edit'], ['delete', 'web-projects-delete', 'delete']
+        ['generate_form', undefined, 'folder-open'], ['edit', 'project-portal-projects-update', 'edit'], ['delete', 'project-portal-projects-delete', 'delete']
       ]);
       expect(component.projectColumns.length).toBe(10);
       expect(component.projectColumns.find(c => c.key === 'unread_messages_count')).toEqual(

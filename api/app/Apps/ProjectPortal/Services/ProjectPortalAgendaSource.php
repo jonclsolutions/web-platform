@@ -35,7 +35,7 @@ final class ProjectPortalAgendaSource implements AgendaSource
     /** @description See AgendaSource::permissions(). */
     public function permissions(): array
     {
-        return ['web-projects-view', 'project-portal-sales-leads-view', 'project-portal-sales-orders-view'];
+        return ['project-portal-projects-view', 'project-portal-sales-leads-view', 'project-portal-sales-orders-view'];
     }
 
     /** @description See AgendaSource::events(). */
@@ -44,7 +44,7 @@ final class ProjectPortalAgendaSource implements AgendaSource
         $events = [];
         $today = now()->startOfDay();
 
-        if ($agenda->can('web-projects-view')) {
+        if ($agenda->can('project-portal-projects-view')) {
             $projects = Project::where('status', '!=', 'finished')->whereBetween('estimated_completion_to', [$from->toDateString(), $to->toDateString()])
                 ->limit(AgendaContext::MAX_EVENTS_PER_SOURCE)->get(['id', 'name', 'estimated_completion_to']);
             foreach ($projects as $project) {
@@ -82,7 +82,7 @@ final class ProjectPortalAgendaSource implements AgendaSource
                 ->where(fn ($q) => $q->where('last_contact_date', '<', $limit->toDateString())
                     ->orWhere(fn ($q) => $q->whereNull('last_contact_date')->where('created_at', '<', $limit))));
         }
-        if ($agenda->can('web-projects-view') && $agenda->can('project-portal-sales-orders-view')) {
+        if ($agenda->can('project-portal-projects-view') && $agenda->can('project-portal-sales-orders-view')) {
             $reminders[] = $agenda->reminder('orders_without_project', '/admin/project-portal/sales-orders',
                 SalesOrder::whereNotIn('id', Project::withTrashed()->whereNotNull('order_id')->select('order_id')));
         }

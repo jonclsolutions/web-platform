@@ -58,7 +58,7 @@ class ProjectAccountTest extends TestCase
         $this->signIn($this->user());
         $this->getJson("/api/project-portal/projects/{$project->id}/accounts")->assertStatus(403);
 
-        $this->signIn($this->userWith(['web-projects-view']));
+        $this->signIn($this->userWith(['project-portal-projects-view']));
         $data = $this->getJson("/api/project-portal/projects/{$project->id}/accounts")->assertOk()
             ->assertJsonPath('data.0.username', 'klient')->assertJsonPath('data.0.active_sessions', 1)
             ->assertJsonPath('data.1.id', $anna->id)->assertJsonPath('data.1.email', 'anna@client.cz')
@@ -81,10 +81,10 @@ class ProjectAccountTest extends TestCase
     public function test_store(): void
     {
         $project = $this->project();
-        $this->signIn($this->userWith(['web-projects-view']));
+        $this->signIn($this->userWith(['project-portal-projects-view']));
         $this->postJson("/api/project-portal/projects/{$project->id}/accounts", ['username' => 'x', 'display_name' => 'X'])->assertStatus(403);
 
-        $this->signIn($this->userWith(['web-projects-update']));
+        $this->signIn($this->userWith(['project-portal-projects-update']));
         $typed = $this->postJson("/api/project-portal/projects/{$project->id}/accounts", ['username' => ' Petr.N ', 'display_name' => 'Petr Novák', 'password' => 'Heslo12345'])
             ->assertCreated()->assertJsonPath('data.username', 'petr.n')->assertJsonPath('data.language', 'cz')
             ->assertJsonPath('meta.password', 'Heslo12345')->assertJsonMissingPath('data.password_hash');
@@ -135,7 +135,7 @@ class ProjectAccountTest extends TestCase
         $project = $this->project();
         $klient = $project->accounts()->sole();
         $anna = $this->portalAccount($project, 'anna', 'Anna', ['email' => 'anna@client.cz', 'notify_replies' => true, 'notify_checkpoint_status' => true, 'notify_checkpoint_dates' => true]);
-        $this->signIn($this->userWith(['web-projects-update']));
+        $this->signIn($this->userWith(['project-portal-projects-update']));
         $url = "/api/project-portal/projects/{$project->id}/accounts/{$anna->id}";
 
         $this->putJson($url, ['display_name' => 'Anna Veliká', 'language' => 'en'])->assertOk()
@@ -178,10 +178,10 @@ class ProjectAccountTest extends TestCase
         $this->portalSession($project, $anna);
         $url = "/api/project-portal/projects/{$project->id}/accounts/{$klient->id}/password";
 
-        $this->signIn($this->userWith(['web-projects-view']));
+        $this->signIn($this->userWith(['project-portal-projects-view']));
         $this->postJson($url)->assertStatus(403);
 
-        $this->signIn($this->userWith(['web-projects-update']));
+        $this->signIn($this->userWith(['project-portal-projects-update']));
         $this->postJson($url, ['password' => 'Nove12345heslo'])->assertOk()
             ->assertJsonPath('meta.password', 'Nove12345heslo')->assertJsonPath('meta.ended_sessions', 2);
         $this->assertTrue($klient->fresh()->verifyPassword('Nove12345heslo'));
@@ -210,7 +210,7 @@ class ProjectAccountTest extends TestCase
         $this->portalSession($project, $anna);
         $thread = $this->thread($project);
         $message = $thread->messages()->create(['author_type' => 'customer', 'author_label' => 'Anna', 'account_id' => $anna->id, 'body' => 'Hi']);
-        $this->signIn($this->userWith(['web-projects-update']));
+        $this->signIn($this->userWith(['project-portal-projects-update']));
 
         $this->deleteJson("/api/project-portal/projects/{$this->project()->id}/accounts/{$anna->id}")->assertStatus(404);
         $this->deleteJson("/api/project-portal/projects/{$project->id}/accounts/{$anna->id}")->assertNoContent();

@@ -5,27 +5,28 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Partial change of a checkpoint: title, description (client-visible), due date,
- *   internal note (team only), status, position.
+ * @description Partial change of a checkpoint: the fields of StoreProjectCheckpointRequest, each
+ *   optional; status and position cannot be emptied.
  * @dependencies ProjectController::updateCheckpoint()
  */
 
 namespace App\Apps\ProjectPortal\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use App\Apps\ProjectPortal\Models\ProjectCheckpoint;
+use App\Http\Requests\Concerns\PartialUpdateRules;
 
-class UpdateProjectCheckpointRequest extends FormRequest
+class UpdateProjectCheckpointRequest extends StoreProjectCheckpointRequest
 {
-    public function authorize(): bool { return true; }
+    use PartialUpdateRules;
 
+    /**
+     * @description Rules of the create request, each field optional.
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [
-            'label'       => ['sometimes', 'required', 'string', 'max:255'],
-            'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
-            'due_date'    => ['sometimes', 'nullable', 'date_format:Y-m-d'],
-            'internal_note' => ['sometimes', 'nullable', 'string', 'max:5000'],
+            ...self::partial(parent::rules()),
             'status'     => ['sometimes', 'in:' . implode(',', ProjectCheckpoint::STATUSES)],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
         ];

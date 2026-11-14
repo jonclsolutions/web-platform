@@ -14,7 +14,10 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { HttpTestingController } from '@angular/common/http/testing';
 
+import { By } from '@angular/platform-browser';
+
 import { ActivateAccountComponent } from './activate-account.component';
+import { SetPasswordFormComponent, SetPasswordValue } from '../set-password-form/set-password-form.component';
 import { environment } from '../../../../environments/environment';
 import { createAdminTestContext } from '../../../../testing/admin-test-helpers';
 
@@ -24,6 +27,7 @@ describe('ActivateAccountComponent', () => {
   let http: HttpTestingController;
   let router: Router;
   const VALID = 'Heslo123!';
+  const value: SetPasswordValue = { password: VALID, password_confirmation: VALID };
   const url = (token: string) => `${environment.base_api_url}/account-activation/${encodeURIComponent(token)}`;
 
   const setup = async (token: string) => {
@@ -84,23 +88,6 @@ describe('ActivateAccountComponent', () => {
   });
 
   /**
-   * @description Submit needs a policy-compliant password and an equal confirmation.
-   * @input  'weak'/'weak'; VALID/'other'; VALID/VALID
-   * @output canSubmit false, false (passwordsMismatch true), true
-   */
-  it('canSubmit follows the password rules', async () => {
-    await setup('tok');
-    http.expectOne(url('tok')).flush({ data: { email: 'e', full_name: 'n' } });
-    component.password = 'weak'; component.passwordConfirmation = 'weak';
-    expect(component.canSubmit).toBeFalse();
-    component.password = VALID; component.passwordConfirmation = 'other';
-    expect(component.canSubmit).toBeFalse();
-    expect(component.passwordsMismatch).toBeTrue();
-    component.passwordConfirmation = VALID;
-    expect(component.canSubmit).toBeTrue();
-  });
-
-  /**
    * @description A valid password is posted; success counts down 4 s and opens the login page.
    * @input  VALID twice; POST answered 200
    * @output POST body { password, password_confirmation }; state 'success'; navigate to the login
@@ -110,9 +97,7 @@ describe('ActivateAccountComponent', () => {
     setup('tok');
     tick();
     http.expectOne(url('tok')).flush({ data: { email: 'e', full_name: 'n' } });
-    component.password = VALID;
-    component.passwordConfirmation = VALID;
-    component.onSubmit();
+    component.onSubmit(value);
     const req = http.expectOne(r => r.method === 'POST');
     expect(req.request.body).toEqual({ password: VALID, password_confirmation: VALID });
     req.flush({});
@@ -133,9 +118,7 @@ describe('ActivateAccountComponent', () => {
     setup('tok');
     tick();
     http.expectOne(url('tok')).flush({ data: { email: 'e', full_name: 'n' } });
-    component.password = VALID;
-    component.passwordConfirmation = VALID;
-    component.onSubmit();
+    component.onSubmit(value);
     http.expectOne(r => r.method === 'POST').flush({});
     tick(1000);
     component.ngOnDestroy();
@@ -152,58 +135,42 @@ describe('ActivateAccountComponent', () => {
   it('maps submit errors', async () => {
     await setup('tok');
     http.expectOne(url('tok')).flush({ data: { email: 'e', full_name: 'n' } });
-    component.password = VALID;
-    component.passwordConfirmation = VALID;
-
-    component.onSubmit();
+    component.onSubmit(value);
     http.expectOne(r => r.method === 'POST').flush({}, { status: 422, statusText: 'Unprocessable' });
     expect(component.fieldErrorKey).toBe('error_password_rejected');
 
-    component.onSubmit();
+    component.onSubmit(value);
     http.expectOne(r => r.method === 'POST').error(new ProgressEvent('error'), { status: 0 });
     expect(component.fieldErrorKey).toBe('error_network');
 
-    component.onSubmit();
+    component.onSubmit(value);
     http.expectOne(r => r.method === 'POST').flush({ message: 'Used already.' }, { status: 410, statusText: 'Gone' });
     expect(component.state).toBe('invalid');
     expect(component.errorKey).toBe('error_invalid_link');
   });
 
   /**
-   * @description An invalid form is never posted.
-   * @input  password 'weak'; onSubmit()
-   * @output no POST request
+   * @description Other server errors give the generic message; a second submit while one runs
+   *   is ignored.
+   * @input POST answered 500; then submitting true, onSubmit.
+   * @output fieldErrorKey 'error_generic'; no second POST.
    */
-  it('does not post an invalid form', async () => {
+  it('reports other errors', async () => {
     await setup('tok');
     http.expectOne(url('tok')).flush({ data: { email: 'e', full_name: 'n' } });
-    component.password = 'weak';
-    component.onSubmit();
-    http.expectNone(r => r.method === 'POST');
-  });
-  /**
-   * @description Other server errors give the generic message; the password fields can be shown.
-   * @input POST answered 500; toggle both visibility switches.
-   * @output fieldErrorKey 'error_generic'; showPassword / showPasswordConfirmation true.
-   */
-  it('reports other errors and toggles the password fields', async () => {
-    await setup('tok');
-    http.expectOne(url('tok')).flush({ data: { email: 'e', full_name: 'n' } });
-    component.password = VALID;
-    component.passwordConfirmation = VALID;
-    component.onSubmit();
+    component.onSubmit(value);
     http.expectOne(r => r.method === 'POST').flush({}, { status: 500, statusText: 'Error' });
     expect(component.fieldErrorKey).toBe('error_generic');
 
-    component.togglePasswordVisibility();
-    component.toggleConfirmationVisibility();
-    expect([component.showPassword, component.showPasswordConfirmation]).toEqual([true, true]);
+    component.submitting = true;
+    component.onSubmit(value);
+    http.expectNone(r => r.method === 'POST');
   });
 
   /**
    * @description The page renders its texts from the `activate-account` translations (no English copy).
-   * @input  token 'tok', form state; detectChanges(); invalid state; success countdown text '{seconds}'.
-   * @output title / labels / submit keys; invalid text with errorKey; countdown with the seconds filled in.
+   * @input  token 'tok', form state; detectChanges(); error 'error_generic'; success state.
+   * @output title / labels / submit keys; the form gets the section and the error; success text.
    */
   it('renders translated texts', async () => {
     await setup('tok');
@@ -215,7 +182,12 @@ describe('ActivateAccountComponent', () => {
       expect(el.textContent).toContain(`activate-account.${key}`);
     }
     expect(el.textContent).not.toContain('Set your password');
-    expect(component.lengthPlaceholder).toBe('activate-account.placeholder_password');
+
+    component.fieldErrorKey = 'error_generic';
+    (component as any).cd.markForCheck();
+    fixture.detectChanges();
+    const form = fixture.debugElement.query(By.directive(SetPasswordFormComponent)).componentInstance as SetPasswordFormComponent;
+    expect([form.section, form.errorKey]).toEqual(['activate-account', 'error_generic']);
 
     component.state = 'success';
     component.redirectCountdown = 3;

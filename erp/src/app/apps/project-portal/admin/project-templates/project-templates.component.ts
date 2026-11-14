@@ -10,7 +10,7 @@
  *   start. Add, edit (rows added, removed, moved), delete. A template can also be saved from a
  *   project (Progress → "Save as a template").
  * @dependencies DataHandler (project-portal/projects/templates), AdminLocalizationService, ConfirmDialogService,
- *   AlertDialogService, PermissionService (web-projects-update)
+ *   AlertDialogService, PermissionService (project-portal-projects-update)
  */
 
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
@@ -83,7 +83,7 @@ export class ProjectTemplatesComponent implements OnInit {
 
   /** @description May the user change templates? */
   get canEdit(): boolean {
-    return this.permissions.hasPermission('web-projects-update');
+    return this.permissions.hasPermission('project-portal-projects-update');
   }
 
   ngOnInit(): void {
