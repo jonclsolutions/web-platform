@@ -206,7 +206,8 @@ firewall() {
     ufw default deny incoming >/dev/null
     ufw default allow outgoing >/dev/null
     ufw allow 22/tcp comment 'SSH' >/dev/null
-    ufw allow 80/tcp comment 'HTTP (Let'"'"'s Encrypt, redirect)' >/dev/null
+    # ufw refuses an apostrophe in a comment.
+    ufw allow 80/tcp comment 'HTTP - Lets Encrypt, redirect' >/dev/null
     ufw allow 443/tcp comment 'HTTPS' >/dev/null
     ufw allow 443/udp comment 'HTTP/3' >/dev/null
     ufw --force enable >/dev/null

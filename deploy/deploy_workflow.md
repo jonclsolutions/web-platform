@@ -19,7 +19,7 @@ Obsah:
 10. [Přenos stávajícího webu](#10-přenos-stávajícího-webu)
 11. [Běžné vydání](#11-běžné-vydání)
 12. [Rollback, stav, obnova](#12-rollback-stav-obnova)
-13. [Nový klient (fork)](#13-nový-klient-fork)
+13. [Nový klient (kopie platformy)](#13-nový-klient-kopie-platformy)
 14. [Bezpečnost – shrnutí](#14-bezpečnost--shrnutí)
 15. [Když něco nejde](#15-když-něco-nejde)
 
@@ -319,17 +319,31 @@ Rollback potřebuje image předchozí verze na serveru – skript drží posledn
 
 ---
 
-## 13. Nový klient (fork)
+## 13. Nový klient (kopie platformy)
 
-Jeden klient = jeden repozitář = jeden VPS.
+Jeden klient = jeden repozitář = jeden VPS. Repozitář klienta je **samostatná kopie**
+`web-platform`, ne fork GitHubu: soukromý repozitář nejde na plánu GitHub Free forknout do
+organizace a soukromý fork by GitHub smazal spolu s originálem.
 
-1. Na GitHubu v organizaci vytvoř repozitář klienta z `web-platform` (fork / import).
-2. Lokálně: `git clone …klient… && git remote add upstream https://github.com/jonclsolutions/web-platform`.
+1. GitHub → organizace → **New repository** → název klienta (např. `klient-xyz`), **Private**,
+   prázdný (bez README, .gitignore, licence).
+2. Lokálně – kopie platformy, `web-platform` jako `upstream` jen pro čtení:
+   ```bash
+   git clone git@github.com:jonclsolutions/web-platform.git klient-xyz
+   cd klient-xyz
+   git remote rename origin upstream
+   git remote set-url --push upstream NO-PUSH       # do platformy se z klienta nikdy nepushuje
+   git remote add origin git@github.com:jonclsolutions/klient-xyz.git
+   git push -u origin main
+   ./init-workspace.sh                              # lokální vývoj (při souběhu s platformou jiné porty v dev/.env)
+   ```
+   Hned po pushi běží v novém repozitáři **CI** (Actions → CI) – na projektu se dá pracovat
+   okamžitě; nasazení přijde, až má klient server.
 3. [setup_hosting.md](setup_hosting.md) pro klienta (doména, e-maily, VPS, `.env` s
-   `IMAGE_PREFIX=ghcr.io/<owner>/<repo klienta>` malými písmeny).
+   `IMAGE_PREFIX=ghcr.io/jonclsolutions/<repo klienta>` malými písmeny).
 4. Kroky 3–9 tohoto návodu v repozitáři klienta (vlastní deploy klíč, vlastní `production`).
-5. Opravy z platformy: `git fetch upstream && git cherry-pick <commit>` → tag v repozitáři
-   klienta → nasadí se jen u něj.
+5. Opravy z platformy: `git fetch upstream && git cherry-pick <commit>` (jednotlivé opravy) nebo
+   `git merge upstream/main` (vše) → testy → tag v repozitáři klienta → nasadí se jen u něj.
 
 ---
 
