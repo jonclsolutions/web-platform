@@ -398,7 +398,7 @@
               "cards": [
                 {
                   "title": "Délka hesla",
-                  "text": "8 až 16 znaků."
+                  "text": "8 až 64 znaků."
                 },
                 {
                   "title": "Písmeno",
@@ -767,7 +767,7 @@
                 },
                 {
                   "label": "4. Nové heslo",
-                  "text": "Na stránce „Set a new password“ uživatel zadá nové heslo a zopakuje ho. Platí stejné požadavky jako při aktivaci: 8 až 16 znaků, písmeno, číslice a speciální znak. Tlačítko „Set new password“ je aktivní až ve chvíli, kdy heslo splňuje všechny požadavky a obě pole se shodují."
+                  "text": "Na stránce „Set a new password“ uživatel zadá nové heslo a zopakuje ho. Platí stejné požadavky jako při aktivaci: 8 až 64 znaků, písmeno, číslice a speciální znak. Tlačítko „Set new password“ je aktivní až ve chvíli, kdy heslo splňuje všechny požadavky a obě pole se shodují."
                 },
                 {
                   "label": "5. Potvrzení",
@@ -800,7 +800,7 @@
                 },
                 {
                   "label": "4. Zadejte nové heslo",
-                  "text": "Nové heslo zadejte a pro kontrolu zopakujte. Musí mít 8 až 16 znaků a obsahovat písmeno, číslici a speciální znak."
+                  "text": "Nové heslo zadejte a pro kontrolu zopakujte. Musí mít 8 až 64 znaků a obsahovat písmeno, číslici a speciální znak."
                 },
                 {
                   "label": "5. Uložte",

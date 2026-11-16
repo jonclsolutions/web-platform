@@ -41,6 +41,7 @@ web-platform/
 │   ├── production.docker.env.example  template of /srv/app/.env on the VPS
 │   ├── vps/bootstrap.sh one-time preparation of a fresh Ubuntu VPS (Docker, user deploy, SSH, firewall)
 │   ├── vps/deploy.sh    releases, rollback, backups on the VPS (/srv/app/deploy.sh)
+│   ├── vps/provision.sh one run from your computer: new server + .env + GitHub environment + first release
 │   ├── dependencies.sh  known vulnerabilities of the production packages (./dev.sh deps-audit / deps-fix)
 │   ├── setup_hosting.md FORPSI step by step: domain, e-mail, VPS, DNS (Czech)
 │   └── deploy_workflow.md GitHub Actions + VPS: automated releases step by step (Czech)
@@ -457,6 +458,10 @@ the queue finish - queued mails of the old release carry class names that no lon
   is gone - releases go only through GitHub Actions to the VPS. Moving the existing site:
   [deploy/deploy_workflow.md](deploy/deploy_workflow.md), chapter "Přenos stávajícího webu".
   Delete the local `deploy/production.env` once its values are in Bitwarden / `/srv/app/.env`.
+- (0114) passwords of the admin accounts may have up to **64** characters (was 16; OWASP ASVS /
+  NIST) - one policy in `App\Support\Auth\PasswordPolicy` and `erp/.../password-policy.ts`;
+  `deploy/vps/provision.sh <IP> <domain>` prepares a new installation in one run
+  ([setup_hosting.md](deploy/setup_hosting.md), "Rychlá cesta").
 
 ### One-time steps of the October 2026 fixes (findings-fixes 1–4)
 

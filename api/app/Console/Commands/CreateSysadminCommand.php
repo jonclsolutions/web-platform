@@ -8,7 +8,7 @@
  * @description Creates the first system administrator of a new installation from the server
  *   console: `php artisan security:create-sysadmin [email]` asks for the e-mail, the name and the
  *   password (typed twice, never shown), validates them like the application does (e-mail
- *   rfc + strict, password 8–16 characters with a letter, a digit and a symbol), creates the
+ *   rfc + strict, password 8–64 characters with a letter, a digit and a symbol), creates the
  *   activated account with the sysadmin role and adds the e-mail as an exception of the e-mail
  *   access policy, so the account can log in even after a company domain is set.
  *   `--if-none` does nothing when a sysadmin account exists already (deploy/vps/deploy.sh
@@ -27,11 +27,11 @@ use App\Models\Core\CoreEmailAccessRule;
 use App\Models\Core\CoreLog;
 use App\Models\Core\CoreRole;
 use App\Models\User;
+use App\Support\Auth\PasswordPolicy;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rules\Password;
 
 class CreateSysadminCommand extends Command
 {
@@ -120,9 +120,9 @@ class CreateSysadminCommand extends Command
     private function askPassword(): ?string
     {
         for ($attempt = 1; $attempt <= self::PASSWORD_ATTEMPTS; $attempt++) {
-            $password = (string) $this->secret('Password (8–16 characters, a letter, a digit and a symbol)');
+            $password = (string) $this->secret('Password (' . PasswordPolicy::description() . ')');
             $check = Validator::make(['password' => $password], [
-                'password' => ['required', 'string', 'max:16', Password::min(8)->letters()->numbers()->symbols()],
+                'password' => ['required', ...PasswordPolicy::rules()],
             ]);
             if ($check->fails()) {
                 $this->warn($check->errors()->first('password'));

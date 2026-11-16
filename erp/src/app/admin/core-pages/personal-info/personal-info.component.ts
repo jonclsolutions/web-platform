@@ -31,7 +31,7 @@ import { AlertDialogService } from '../../../core/services/alert-dialog.service'
 import { CurrentUserProfileService } from '../../../core/services/current-user-profile.service';
 import { UserLogin } from '../../../shared/interfaces/user';
 import { LoadingService } from '../../../core/services/loading.service';
-import { passwordPolicyValidator } from '../../../shared/constants/password-policy';
+import { PASSWORD_MAX_LENGTH, fillPasswordLimits, passwordPolicyValidator } from '../../../shared/constants/password-policy';
 import { PasswordRequirementsChecklistComponent } from '../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { AvatarEditorComponent } from '../../components/avatar-editor/avatar-editor.component';
@@ -89,6 +89,9 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
 
   private crud: EntityCrudService<UserLogin>;
 
+  /** Maxlength of the new password fields (the password policy). */
+  readonly passwordMaxLength = PASSWORD_MAX_LENGTH;
+
   constructor(
     private dataHandler: DataHandler,
     private cd: ChangeDetectorRef,
@@ -133,6 +136,11 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
 
   t(key: string): string {
     return this.i18n.getValue(`personal-info.${key}`);
+  }
+
+  /** Placeholder of the new password with the limits of the policy ("8-64 characters"). */
+  get passwordPlaceholder(): string {
+    return fillPasswordLimits(this.strings.password_placeholder_new ?? '');
   }
 
   private loadCurrentUserData(): void {

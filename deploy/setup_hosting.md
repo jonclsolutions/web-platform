@@ -6,6 +6,29 @@ k doméně). Každý krok říká **co udělat**, **co se stane** a **jak to ov�
 > Po tomto návodu je server připravený (Docker, uživatel `deploy`, firewall, `/srv/app/.env`).
 > Automatické nasazování z GitHubu nastavuje navazující **`deploy/deploy_workflow.md`**.
 
+## Rychlá cesta: `provision.sh`
+
+Ručně se dělá jen to, co skript udělat nemůže: **kroky 1–7** (účet, doména, e-maily, DNS pošty,
+objednávka VPS), **widget Turnstile** (krok 11) a **záznamy DNS webu** (krok 12). Všechno ostatní
+– kroky 8–10 tohoto návodu i kroky 3–9 `deploy_workflow.md` – udělá jeden příkaz z tvého počítače
+(z kořene repozitáře instalace):
+
+```bash
+gh auth login                                      # jednou: GitHub CLI (https://cli.github.com)
+deploy/vps/provision.sh <IP> <doména>              # např. 185.33.145.230 jonclsolutions.com
+```
+
+Skript se zeptá jen na: potvrzení otisku serveru, **heslo roota** (jednou, do `ssh-copy-id`),
+**heslo `noreply@`** a **Turnstile klíče** (skrytě), případně `APP_KEY` přenášené instalace.
+Hesla databáze a `APP_KEY` vygeneruje sám; nic tajného se neukládá na tvůj disk ani nevypisuje.
+Pak: bootstrap + restart, `/srv/app` + `deploy.sh check`, deploy klíč a prostředí `production`
+na GitHubu, kontrola DNS, tag prvního vydání, první sysadmin, noční zálohy. Spuštěný znovu
+přeskočí hotové kroky (bezpečné i na běžící instalaci; nic nerestartuje). Možnosti:
+`--alias`, `--key`, `--repo`, `--no-github`, `--new-env`, `--rotate-deploy-key`
+(`deploy/vps/provision.sh` bez argumentů je vypíše).
+
+Kapitoly níže popisují tytéž kroky ručně – při chybě skriptu podle nich zjistíš, co se děje.
+
 Obsah:
 
 1. [Co mít připravené](#1-co-mít-připravené)
@@ -174,6 +197,12 @@ Klíč je tvůj **osobní** přístup na servery (jeden pro všechny klienty). G
 ✔ Ověření: `ssh -i ~/.ssh/id_ed25519_server root@<IP>` se přihlásí **bez hesla roota**
 (jen passphrase klíče).
 
+> Při **prvním** připojení se SSH zeptá `Are you sure you want to continue connecting` a ukáže
+> otisk serveru (`ED25519 key fingerprint is SHA256:…`). Odpověz celým slovem `yes` a otisk si
+> zapiš k serveru do Bitwardenu – porovnáš s ním otisk pro GitHub (deploy_workflow.md, krok 5).
+> Uvítací obrazovka ukáže i **IPv6 adresu** serveru (`IPv6 address for …`) – potřebuješ ji
+> v kroku 12.
+
 ---
 
 ## 9. Příprava serveru – bootstrap.sh
@@ -192,11 +221,19 @@ ssh -i ~/.ssh/id_ed25519_server root@<IP> 'bash /root/bootstrap.sh'
 - Skript lze spustit znovu (každý krok nejdřív zjistí stav).
 - Pokud na serveru ještě není klíč roota, SSH **nechá heslo zapnuté** a vypíše varování – doplň
   klíč (krok 8.3) a spusť skript znovu. Zablokovat se tím nedá.
+- Hlášku `New release '26.04…' available / Run 'do-release-upgrade'` **ignoruj** – server zůstává
+  na 24.04 LTS (podpora do 2029); upgrade na novou verzi systému se nespouští.
 
-✔ Ověření – v **novém** terminálu (původní nech otevřený, dokud vše nefunguje):
+Po prvním běhu **restartuj server** (aktualizace přinesly nové jádro – uvítací obrazovka hlásí
+`System restart required`):
 ```bash
-ssh klient-vps                                    # přihlášení jako deploy klíčem
-docker run --rm hello-world                       # deploy smí používat Docker
+ssh -i ~/.ssh/id_ed25519_server root@<IP> reboot
+```
+
+✔ Ověření po 1–2 minutách – v **novém** terminálu:
+```bash
+ssh klient-vps 'uname -r'                         # přihlášení jako deploy klíčem, nové jádro
+ssh klient-vps 'docker run --rm hello-world'      # deploy smí používat Docker („Hello from Docker!“)
 ssh -o PubkeyAuthentication=no root@<IP>          # musí skončit: Permission denied (publickey)
 ssh -i ~/.ssh/id_ed25519_server root@<IP> ufw status   # 22, 80, 443 ALLOW
 ```
@@ -208,20 +245,34 @@ ssh -i ~/.ssh/id_ed25519_server root@<IP> ufw status   # 22, 80, 443 ALLOW
 Jeden soubor s nastavením klienta (doména, databáze, SMTP, Turnstile). Je **jen na serveru**
 a v Bitwardenu.
 
-1. Nahraj šablony (z kořene repozitáře):
+> **Ostré hodnoty se zapisují jen na serveru** (`nano /srv/app/.env`) – nikdy do šablony
+> `deploy/production.docker.env.example` v repozitáři a nikdy se neposílají (ani screenshot
+> `.env`). Uniklé heslo / secret se hned mění: heslo schránky ve webmailu FORPSI (postmaster),
+> Turnstile v Cloudflare → widget → *Rotate Secret Key*.
+
+1. Nahraj šablony a skript nasazení (z kořene repozitáře):
    ```bash
    scp deploy/compose.prod.yaml klient-vps:/srv/app/compose.yaml
    scp deploy/production.docker.env.example klient-vps:/srv/app/.env
-   ssh klient-vps 'chmod 600 /srv/app/.env'
+   scp deploy/vps/deploy.sh klient-vps:/srv/app/deploy.sh
+   ssh klient-vps 'chmod 600 /srv/app/.env && chmod 750 /srv/app/deploy.sh && ls -la /srv/app'
    ```
-2. Vygeneruj tajné hodnoty **na serveru** (nikam se neposílají):
+   (`ls -la` – `.env` začíná tečkou, obyčejné `ls -l` ho nezobrazí.)
+2. Vygeneruj tajné hodnoty **na serveru** (nikam se neposílají). Nejdřív se přihlas, příkazy
+   vlož až po promptu `deploy@…:~$`:
    ```bash
    ssh klient-vps
+   ```
+   ```bash
    echo "APP_KEY=base64:$(openssl rand -base64 32)"
    echo "DB_PASSWORD=$(openssl rand -hex 24)"
    echo "DB_ROOT_PASSWORD=$(openssl rand -hex 24)"
    ```
-3. `nano /srv/app/.env` a vyplň:
+3. `nano /srv/app/.env` a vyplň. V nano: vložení ze schránky **Ctrl+Shift+V** (v terminálu,
+   na macOS Cmd+V), kopírování výstupu v terminálu **Ctrl+Shift+C**, hledání Ctrl+W, smazání
+   řádku Ctrl+K, uložení Ctrl+O + Enter, konec Ctrl+X.
+   Hesla jen z písmen a číslic; obsahuje-li hodnota `$`, `!`, `&`, mezeru nebo `#`, dej ji do
+   jednoduchých uvozovek (`MAIL_PASSWORD='…'`).
 
    | Hodnota | Co tam patří |
    |---|---|
@@ -239,10 +290,9 @@ a v Bitwardenu.
 
 4. Celý obsah `.env` ulož do Bitwardenu jako zabezpečenou poznámku „<klient> – .env“.
 
-✔ Ověření: `ls -l /srv/app/.env` → `-rw------- deploy deploy`;
-`grep '=$' /srv/app/.env` – prázdné zůstávají jen `RELEASE`, `TRUSTED_PROXIES`,
-`CORS_ALLOWED_ORIGINS`, `BACKUP_REMOTE` (a Turnstile, dokud není krok 11). Úplnou kontrolu
-udělá `deploy.sh check` (deploy_workflow.md, krok 4).
+✔ Ověření: `/srv/app/deploy.sh check` → `OK` (vypíše všechny problémy najednou, hesla
+neukazuje). Prázdné zůstávají jen `RELEASE`, `TRUSTED_PROXIES`, `CORS_ALLOWED_ORIGINS`,
+`BACKUP_REMOTE`.
 
 > **`APP_KEY` se po prvním spuštění už nikdy nemění** – jiný klíč odhlásí všechny a zašifrovaná
 > data přestanou být čitelná.
@@ -271,14 +321,21 @@ Udělej, až je aplikace na VPS připravená ke spuštění (deploy_workflow.md)
 webu klidně hned. Certifikát **Let's Encrypt vydá Caddy sám** při prvním startu, jakmile doména
 ukazuje na VPS (porty 80 a 443 jsou otevřené z kroku 9). SSL se u FORPSI **nekupuje**.
 
-V administraci FORPSI → doména → **Editace DNS záznamů**:
+V administraci FORPSI → doména → **Editace DNS záznamů** (Hostname prázdný = doména sama):
 
-1. Den předem sniž **TTL** záznamů `@` a `www` na 300 s (rychlejší přepnutí).
-2. Záznam **A** `@` (doména bez www): místo parkovací IP FORPSI (např. `81.2.196.19`) → **IPv4 VPS**.
-3. Záznam **AAAA** `@` → **IPv6 VPS** (pokud ji VPS má; jinak žádný AAAA, ani starý).
+1. Přenášíš-li běžící web: den předem sniž **TTL** záznamů `@` a `www` na 300 s.
+2. Záznam **A** `@` (řádek `<domena> … A 81.2.196.19` – parkovací IP FORPSI) → **Upravit** →
+   hodnota **IPv4 VPS**, TTL 300.
+3. Záznam **AAAA** `@` (Typ AAAA, Hostname prázdný) → **IPv6 VPS** z kroku 8 (např.
+   `2001:15e8:110:2de6::1`); nemá-li VPS IPv6, žádný AAAA (ani starý).
 4. **www**: pokud existuje `*` (wildcard) CNAME na doménu, stačí; jinak CNAME `www` → `<domena>.`
-5. **CAA** `@`: `0 issue "letsencrypt.org"` (certifikáty smí vydat jen Let's Encrypt).
-6. **MX, SPF, DKIM, DMARC nech beze změny** – pošta běží dál u FORPSI.
+5. **CAA** `@`: Typ CAA, Hostname prázdný, **Flags `0`**, **Tag `issue`**, **Hodnota jen
+   `letsencrypt.org`** (formulář má flags a tag zvlášť – do hodnoty ne `0 issue`). V seznamu
+   pak musí být `0 issue "letsencrypt.org"`.
+6. **MX, SPF, DKIM, DMARC, autoconfig, autodiscover, SRV nech beze změny** – pošta běží dál
+   u FORPSI. SPF s `a` pak povoluje i IP VPS – nevadí, aplikace posílá přes SMTP FORPSI.
+7. Tlačítka nahoře (**nastavit na stránku / na webserver FORPSI / na mailserver FORPSI**)
+   **nemačkej** – přepsala by záznamy zpět na služby FORPSI.
 
 ✔ Ověření:
 ```bash
@@ -288,7 +345,12 @@ dig +short www.<domena>      # vede na doménu / IP VPS
 dig +short CAA <domena>      # 0 issue "letsencrypt.org"
 ```
 Po spuštění stacku: `https://<domena>` má platný certifikát (zámek v prohlížeči),
-`http://` a `https://www.` přesměrují na `https://<domena>`.
+`http://` a `https://www.` přesměrují na `https://<domena>`:
+```bash
+curl -s https://<domena>/api/version          # {"version":"v…"} = nasazená verze, platný certifikát
+curl -sI https://www.<domena> | head -3        # 301, location: https://<domena>/
+curl -sI http://<domena> | head -3             # 308 → https://
+```
 
 ---
 
@@ -329,4 +391,6 @@ Do Bitwardenu k záznamu klienta: přihlášení FORPSI, IP VPS, heslo roota, `p
 | E-maily končí ve spamu | DKIM zapnutý? DMARC záznam? mail-tester ukáže, co chybí |
 | Certifikát se nevydá | `dig +short A <domena>` = IP VPS? CAA povoluje letsencrypt.org? porty 80/443 v `ufw status`? log: `docker compose logs proxy` |
 | FORPSI odmítá heslo roota | 14–20 znaků, bez `$` |
+| `bootstrap.sh`: `ERROR: Invalid syntax` u ufw | starší verze skriptu (apostrof v poznámce pravidla) – aktuální z repozitáře nahraj a spusť znovu |
+| Do nano nejde vložit text | Ctrl+Shift+V (Ctrl+V v nano jen posune stránku) nebo pravé tlačítko → Vložit |
 | Webmail postmastera hlásí chybu hned po objednání | služba se ještě nastavuje – zkus za 15–30 min |

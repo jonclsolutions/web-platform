@@ -10,9 +10,9 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Auth\PasswordPolicy;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rules\Password;
 
 /**
  * @description Handles request validation for changing a user's password, ensuring security and proper confirmation.
@@ -29,8 +29,7 @@ class PasswordChangeRequest extends FormRequest
         return [
             'old_password'   => ['required', 'string'],
             'new_password'   => [
-                'required', 'string', 'max:16', 'confirmed',
-                Password::min(8)->letters()->numbers()->symbols(),
+                'required', 'confirmed', ...PasswordPolicy::rules(),
             ],
             'target_user_id' => ['sometimes', 'integer', 'exists:users,id'],
         ];
@@ -40,7 +39,7 @@ class PasswordChangeRequest extends FormRequest
     {
         return [
             'new_password.confirmed' => 'The passwords do not match.',
-            'new_password.max'       => 'The password may not be greater than 16 characters.',
+            'new_password.max'       => 'The password may not be greater than ' . PasswordPolicy::MAX_LENGTH . ' characters.',
         ];
     }
 }

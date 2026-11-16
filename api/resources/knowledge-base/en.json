@@ -398,7 +398,7 @@
               "cards": [
                 {
                   "title": "Password length",
-                  "text": "8 to 16 characters."
+                  "text": "8 to 64 characters."
                 },
                 {
                   "title": "Letter",
@@ -767,7 +767,7 @@
                 },
                 {
                   "label": "4. The new password",
-                  "text": "On the page \"Set a new password\" the user enters the new password and repeats it. The same requirements apply as during activation: 8 to 16 characters, a letter, a digit, and a special character. The button \"Set new password\" becomes active only when the password meets all requirements and both fields match."
+                  "text": "On the page \"Set a new password\" the user enters the new password and repeats it. The same requirements apply as during activation: 8 to 64 characters, a letter, a digit, and a special character. The button \"Set new password\" becomes active only when the password meets all requirements and both fields match."
                 },
                 {
                   "label": "5. Confirmation",
@@ -800,7 +800,7 @@
                 },
                 {
                   "label": "4. Enter the new password",
-                  "text": "Enter the new password and repeat it for confirmation. It must have 8 to 16 characters and contain a letter, a digit, and a special character."
+                  "text": "Enter the new password and repeat it for confirmation. It must have 8 to 64 characters and contain a letter, a digit, and a special character."
                 },
                 {
                   "label": "5. Save",

@@ -44,7 +44,7 @@
     "password_field_old": "Current password",
     "password_placeholder_old": "••••••••",
     "password_field_new": "New password",
-    "password_placeholder_new": "8-16 characters",
+    "password_placeholder_new": "{min}-{max} characters",
     "password_field_confirm": "Confirm password",
     "password_placeholder_confirm": "Repeat the password",
     "password_mismatch": "Passwords do not match.",

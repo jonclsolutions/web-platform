@@ -36,11 +36,11 @@ describe('PasswordRequirementsChecklistComponent', () => {
   /**
    * @description Labels and met state per requirement for the given password.
    * @input password '' then 'abcdefg1'.
-   * @output 4 items, none met, first label '8-16 chars'; then length / letter / digit met, special not.
+   * @output 4 items, none met, first label '8-64 chars'; then length / letter / digit met, special not.
    */
   it('shows each requirement and whether it is met', () => {
     expect(items().length).toBe(4);
-    expect(items()[0].textContent!.trim()).toBe('8-16 chars');
+    expect(items()[0].textContent!.trim()).toBe('8-64 chars');
     expect(items().filter(li => li.classList.contains('met')).length).toBe(0);
 
     fixture.componentRef.setInput('password', 'abcdefg1');

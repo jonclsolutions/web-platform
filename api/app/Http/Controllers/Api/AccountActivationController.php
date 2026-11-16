@@ -23,11 +23,11 @@ use App\Models\AccountActivationToken;
 use App\Models\Core\CoreLog;
 use App\Models\Core\CoreSecurityEvent;
 use App\Models\User;
+use App\Support\Auth\PasswordPolicy;
 use App\Traits\LogsActivity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
 
 class AccountActivationController extends Controller
 {
@@ -87,7 +87,7 @@ class AccountActivationController extends Controller
         }
 
         $validated = $request->validate([
-            'password'              => ['required', 'string', 'max:16', Password::min(8)->letters()->numbers()->symbols()],
+            'password'              => ['required', ...PasswordPolicy::rules()],
             'password_confirmation' => ['required', 'same:password'],
         ], [
             'password.required'          => 'Password is required.',

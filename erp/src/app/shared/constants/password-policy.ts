@@ -26,7 +26,8 @@ export interface PasswordRequirement {
 }
 
 export const PASSWORD_MIN_LENGTH = 8;
-export const PASSWORD_MAX_LENGTH = 16;
+/** 64 = OWASP ASVS 2.1.2 / NIST SP 800-63B (allow at least 64) - room for passphrases and password managers. */
+export const PASSWORD_MAX_LENGTH = 64;
 
 /*
  * Unicode property regexes - the character classes of Laravel's

@@ -5,6 +5,10 @@ sestavil a nasadil** novou verzi – se zálohou, migracemi, kontrolou a automat
 při chybě. Navazuje na **[setup_hosting.md](setup_hosting.md)** (doména, e-maily, VPS,
 `bootstrap.sh`, `/srv/app/.env`).
 
+> **Kroky 3–9 udělá automaticky `deploy/vps/provision.sh <IP> <doména>`** (setup_hosting.md,
+> „Rychlá cesta“) – GitHub CLI nastaví prostředí `production`, deploy klíč i první vydání.
+> Kapitoly níže jsou ruční postup a vysvětlení.
+
 Obsah:
 
 1. [Jak to funguje](#1-jak-to-funguje)
@@ -199,7 +203,8 @@ Interaktivně (heslo píšeš jen do terminálu, nikam se neukládá):
 ssh -t klient-vps '/srv/app/deploy.sh create-sysadmin'
 ```
 
-E-mail, jméno, heslo 2× (8–16 znaků, písmeno, číslice, symbol). E-mail se sám přidá do výjimek
+E-mail, jméno, heslo 2× (8–64 znaků, písmeno, číslice, symbol – ideálně vygenerované
+v Bitwardenu). E-mail se sám přidá do výjimek
 e-mailové politiky. Pak se přihlas na `https://<domena>/auth/login` – **2FA kód přijde e-mailem**,
 tím je ověřené i SMTP `noreply@`. Při `--if-none` se nic nestane, když sysadmin už existuje.
 

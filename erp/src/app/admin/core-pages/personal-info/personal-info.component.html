@@ -103,13 +103,13 @@
 
         <div class="form-field-minimal">
           <label for="new_password">{{ strings.password_field_new }}</label>
-          <input id="new_password" type="password" formControlName="new_password" [placeholder]="strings.password_placeholder_new" maxlength="16">
+          <input id="new_password" type="password" formControlName="new_password" [placeholder]="passwordPlaceholder" [attr.maxlength]="passwordMaxLength">
           <app-password-requirements-checklist [password]="passwordForm.get('new_password')?.value || ''"></app-password-requirements-checklist>
         </div>
 
         <div class="form-field-minimal">
           <label for="new_password_confirmation">{{ strings.password_field_confirm }}</label>
-          <input id="new_password_confirmation" type="password" formControlName="new_password_confirmation" [placeholder]="strings.password_placeholder_confirm" maxlength="16">
+          <input id="new_password_confirmation" type="password" formControlName="new_password_confirmation" [placeholder]="strings.password_placeholder_confirm" [attr.maxlength]="passwordMaxLength">
           @if (passwordMismatch) {
             <div class="error-text">{{ strings.password_mismatch }}</div>
           }

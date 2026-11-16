@@ -44,7 +44,7 @@
     "password_field_old": "Staré heslo",
     "password_placeholder_old": "••••••••",
     "password_field_new": "Nové heslo",
-    "password_placeholder_new": "8-16 znaků",
+    "password_placeholder_new": "{min}-{max} znaků",
     "password_field_confirm": "Potvrzení hesla",
     "password_placeholder_confirm": "Zopakujte heslo",
     "password_mismatch": "Hesla se neshodují.",

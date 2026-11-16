@@ -219,11 +219,11 @@ class DatabaseSetupTest extends TestCase
 
         $this->artisan('security:create-sysadmin', ['email' => ' Root@Firma.CZ '])
             ->expectsQuestion('Full name', 'Jan')
-            ->expectsQuestion('Password (8–16 characters, a letter, a digit and a symbol)', 'short')
-            ->expectsQuestion('Password (8–16 characters, a letter, a digit and a symbol)', 'Valid1!x')
+            ->expectsQuestion('Password (8–64 characters, a letter, a digit and a symbol)', 'short')
+            ->expectsQuestion('Password (8–64 characters, a letter, a digit and a symbol)', 'Valid1!x')
             ->expectsQuestion('Password again', 'other')
             ->expectsOutput('The passwords do not match.')
-            ->expectsQuestion('Password (8–16 characters, a letter, a digit and a symbol)', 'Valid1!x')
+            ->expectsQuestion('Password (8–64 characters, a letter, a digit and a symbol)', 'Valid1!x')
             ->expectsQuestion('Password again', 'Valid1!x')
             ->expectsOutputToContain('Sysadmin root@firma.cz created and activated.')
             ->assertExitCode(0);
@@ -260,11 +260,11 @@ class DatabaseSetupTest extends TestCase
         $this->artisan('security:create-sysadmin', ['email' => 'taken@b.cz'])
             ->expectsOutputToContain('has already been taken')->assertExitCode(1);
 
-        $prompt = 'Password (8–16 characters, a letter, a digit and a symbol)';
+        $prompt = 'Password (8–64 characters, a letter, a digit and a symbol)';
         $this->artisan('security:create-sysadmin', ['email' => 'new@b.cz'])
             ->expectsQuestion('Full name', 'X')
             ->expectsQuestion($prompt, 'a')
-            ->expectsQuestion($prompt, 'TooLongPassword1!x')
+            ->expectsQuestion($prompt, str_pad('TooLongPassword1!', 65, 'x'))
             ->expectsQuestion($prompt, 'nodigits!')
             ->expectsOutput('No valid password entered - account not created.')
             ->assertExitCode(1);

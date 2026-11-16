@@ -23,6 +23,7 @@ import { AlertDialogService } from '../../../../core/services/alert-dialog.servi
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 import { PasswordRequirementsChecklistComponent } from '../../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 import { PasswordPolicyDirective } from '../../../../shared/directives/password-policy.directive';
+import { PASSWORD_MAX_LENGTH } from '../../../../shared/constants/password-policy';
 import { MultiFileUploadComponent } from '../../../../shared/components/multi-file-upload/multi-file-upload.component';
 import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
@@ -83,6 +84,9 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
 
   private scrollLock = inject(ScrollLockService);
   private initialized = false;
+
+  /** Default maxlength of a password field (the password policy). */
+  readonly passwordMaxLength = PASSWORD_MAX_LENGTH;
 
   public readonly i18n = inject(AdminLocalizationService);
   public get strings(): any { return this.i18n.getMergedSection('form-builder'); }

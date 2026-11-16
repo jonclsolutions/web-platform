@@ -20,7 +20,8 @@ describe('password-policy', () => {
   /**
    * @description The rules accept every script / symbol the API accepts and count code points.
    * @input 'abcdef1!'; 'žluťoučký1€' (non-ASCII letters, € symbol); 'heslo1§' + 'x'; '密码密码密码密码1!';
-   *        8 emoji + 'a1' (10 code points, 18 UTF-16 units); too short / long; no digit / letter / symbol.
+   *        8 emoji + 'a1' (10 code points, 18 UTF-16 units); 64 / 65 emoji; too short / long (65);
+   *        no digit / letter / symbol.
    * @output true for the valid ones (also non-ASCII / emoji); false for each broken rule.
    */
   it('checks the rules like the Laravel Password rule', () => {
@@ -29,10 +30,11 @@ describe('password-policy', () => {
     expect(meetsPasswordRequirements('heslo1§x')).toBeTrue();
     expect(meetsPasswordRequirements('密码密码密码密码1!')).toBeTrue();
     expect(meetsPasswordRequirements('😀😀😀😀😀😀😀😀a1')).toBeTrue();
-    expect(PASSWORD_RULE_CHECKS.length('😀'.repeat(16))).toBeTrue();
-    expect(PASSWORD_RULE_CHECKS.length('😀'.repeat(17))).toBeFalse();
+    expect(PASSWORD_RULE_CHECKS.length('😀'.repeat(64))).toBeTrue();
+    expect(PASSWORD_RULE_CHECKS.length('😀'.repeat(65))).toBeFalse();
     expect(meetsPasswordRequirements('abc1!')).toBeFalse();
-    expect(meetsPasswordRequirements('abcdefghijklmn1!x')).toBeFalse();
+    expect(meetsPasswordRequirements('a1!'.padEnd(64, 'x'))).toBeTrue();
+    expect(meetsPasswordRequirements('a1!'.padEnd(65, 'x'))).toBeFalse();
     expect(meetsPasswordRequirements('abcdefg!')).toBeFalse();
     expect(meetsPasswordRequirements('1234567!')).toBeFalse();
     expect(meetsPasswordRequirements('abcdefg1')).toBeFalse();
@@ -70,7 +72,7 @@ describe('password-policy', () => {
   /**
    * @description Placeholders are filled in one pass from the constants.
    * @input '{min}-{max} {other}'; translate returning 'Min {min}'.
-   * @output '8-16 {other}'; 'Min 8' requested from 'password-policy.error_message'.
+   * @output '8-64 {other}'; 'Min 8' requested from 'password-policy.error_message'.
    */
   it('fills the length placeholders', () => {
     expect(fillPasswordLimits('{min}-{max} {other}')).toBe(`${PASSWORD_MIN_LENGTH}-${PASSWORD_MAX_LENGTH} {other}`);
