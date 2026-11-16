@@ -26,7 +26,8 @@ export const PROJECT_PORTAL_AUDIT_LOG: AuditLogPageConfig = {
     'thread_reopen', 'portal_login', 'portal_logout', 'portal_code_sent',
     'portal_account_settings', 'portal_thread_create', 'portal_thread_status',
     'portal_approval_decision', 'attachment_download', 'generate_report', 'export_csv',
-    'export_xlsx', 'export_json', 'export_txt',
+    'export_xlsx', 'export_json', 'export_txt', 'maintenance_status_changed',
+    'unauthorized_maintenance_toggle_attempt',
   ],
   modules: [
     'SalesLead', 'SalesOrder', 'ProjectPortalSetting', 'Project', 'ProjectCheckpoint', 'ProjectTemplate', 'ProjectAccount', 'ProjectApproval',

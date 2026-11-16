@@ -1,4 +1,23 @@
 {
+  "project-portal-dashboard": {
+    "header_title": "Přehled projektového portálu",
+    "header_subtitle": "Obchod, projekty klientů a provoz veřejného portálu",
+    "stat_sales_leads_label": "Obchodní leady",
+    "stat_sales_orders_label": "Objednávky",
+    "stat_projects_label": "Projekty",
+    "stat_portal_logs_label": "Záznamy v logu",
+    "nav_sales_leads_title": "Obchodní leady",
+    "nav_sales_leads_desc": "Kontakty potenciálních zákazníků a odkazy na objednávku",
+    "nav_sales_orders_title": "Objednávky",
+    "nav_sales_orders_desc": "Objednávky z objednávkového formuláře",
+    "nav_projects_title": "Projekty",
+    "nav_projects_desc": "Projekty klientů, checkpointy a klientský portál",
+    "nav_logs_title": "Logy portálu",
+    "nav_logs_desc": "Záznamy o aktivitách v portálu",
+    "section_recent_activity": "Poslední aktivita",
+    "activity_card_title": "Logy portálu",
+    "activity_empty": "Zatím žádné záznamy"
+  },
   "sales-leads": {
     "table_header": "Obchodní leady",
     "trash_header": "Koš",
@@ -655,6 +674,8 @@
     "hint_projects": "Včetně vláken, zpráv a příloh; počítá se i poslední zpráva v portálu."
   },
   "permission-descriptions": {
+    "project-portal-view-dashboard": "Zobrazit dashboard projektového portálu (přehled a poslední aktivita)",
+    "project-portal-set-maintenance-mode": "Vypnout / zapnout veřejný portál a objednávkový formulář (režim údržby)",
     "project-portal-projects-view": "Zobrazit seznam a detail zákaznických projektů",
     "project-portal-projects-create": "Vytvořit nový zákaznický projekt (samostatně nebo z objednávky)",
     "project-portal-projects-update": "Upravit projekt, checkpointy a klientské účty a odpovídat na požadavky zákazníků",
@@ -731,6 +752,8 @@
     "event_generate_link": "Vygenerování odkazu",
     "module_sales_lead": "Obchodní leady",
     "module_sales_order": "Objednávky",
-    "module_project_portal_setting": "Nastavení portálu"
+    "module_project_portal_setting": "Nastavení portálu",
+    "event_maintenance_status_changed": "Změna režimu údržby",
+    "event_unauthorized_maintenance_toggle_attempt": "Neautorizovaný pokus o změnu údržby"
   }
 }

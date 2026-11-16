@@ -7,7 +7,7 @@
     @description: Visual language shared with CoreDashboardComponent/WebDashboardComponent
         - the `.cd-*` header classes are copied 1:1 from those files so every dashboard's
         top bar reads as one consistent product. Everything below (KPI cards, chart,
-        status breakdown, orders table, low stock, maintenance) is Shop-specific but
+        status breakdown, orders table, low stock) is Shop-specific but
         retokenized into the SAME admin-layout design tokens (--accent/--text/--border/
         --success/--error/--warning/...) - no colors outside that palette anywhere.
 */
@@ -292,10 +292,6 @@
 
 .stock-limit { margin-top: 4px; font-size: 0.7rem; color: var(--text-dim, var(--color-zinc-400)); }
 
-/* ── E-shop maintenance mode (same as the Web dashboard) ───────────────── */
-
-/* ── Confirmation modal (same as the Web dashboard) ──────────────────── */
-
 /* ── Responsive ─────────────────────────────────────────────────────── */
 
 @media (max-width: 1100px) {
@@ -306,8 +302,7 @@
   .cd-header-title { font-size: 1.3rem; }
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .kpi-value { font-size: 1.25rem; }
-  .maintenance-toggle-row { flex-direction: column; align-items: flex-start; }
-  .maintenance-switch-btn { width: 100%; }
+  .cd-header-side { align-items: flex-start; }
   .shop-dashboard { gap: 16px; }
 }
 

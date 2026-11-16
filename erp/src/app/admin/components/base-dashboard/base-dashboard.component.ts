@@ -15,6 +15,7 @@
  * - ResourceCacheService: TTL cache of the stats / activity fetch (keys
  *   `<translationSection>:stats` / `<translationSection>:activity`).
  * - DomSanitizer: icons are static SVG markup of this file (`bypassSecurityTrustHtml`).
+ * - AppStatusService: the manual refresh reloads the state of the application (`appId`).
  */
 
 import { Directive, inject } from '@angular/core';
@@ -27,6 +28,7 @@ import { ApiPage } from '../../../shared/interfaces/api-envelope';
 import { UserLogin } from '../../../shared/interfaces/user';
 import { BaseDataComponent } from '../base-data/base-data.component';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
+import { AppStatusService } from '../app-status/app-status.service';
 
 /**
  * @description One metric tile. Carries a translation KEY, not resolved text, so a language
@@ -139,18 +141,23 @@ const RECENT_ACTIVITY_COUNT = 8;
  * @description Base of the module dashboards.
  * @usage `export class XDashboardComponent extends BaseDashboardComponent { ... }` with
  * `translationSection`, `statDefs`, `navSections`, `logsEndpoint`, `logsPermission`, `logsRoute`,
- * `eventTypeLabelKeys`, `eventTypeClassMap`; template `<app-dashboard-view [d]="this">`.
+ * `eventTypeLabelKeys`, `eventTypeClassMap` (and `appId` for the state of an application in the
+ * header); template `<app-dashboard-view [d]="this">`.
  */
 @Directive()
 export abstract class BaseDashboardComponent extends BaseDataComponent<UserLogin> implements Core.OnInit {
 
   protected sanitizer = inject(DomSanitizer);
   protected resourceCache = inject(ResourceCacheService);
+  private readonly appStatus = inject(AppStatusService);
 
   override apiEndpoint = 'core/users';
 
   /** TTL of the stats / activity cache. */
   protected readonly TTL_MS = 2 * 60 * 1000;
+
+  /** Application of the dashboard - its state and maintenance switch are in the header (null = core). */
+  readonly appId: string | null = null;
 
   /** Stat tiles of the module; only the allowed ones are requested. */
   protected abstract readonly statDefs: DashboardStatDef[];
@@ -310,6 +317,7 @@ export abstract class BaseDashboardComponent extends BaseDataComponent<UserLogin
     this.resourceCache.invalidate(this.ACTIVITY_CACHE_KEY);
     this.loadStats();
     this.loadRecentActivity();
+    if (this.appId) this.appStatus.load(true);
     this.refreshExtras();
   }
 

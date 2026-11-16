@@ -4,55 +4,9 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Web dashboard: the shared dashboard layout (DashboardViewComponent) with the
-        maintenance mode toggle of the website and its password confirmation modal.
-    @dependencies: DashboardComponent (t(), isWebActive, maintenance modal state and actions)
+    @description: Web dashboard: the shared dashboard layout (DashboardViewComponent); the state of
+        the public web with its maintenance switch is in its header (appId 'web').
+    @dependencies: DashboardComponent
 -->
 
-<app-dashboard-view [d]="this">
-  <!-- @component: Web maintenance toggle — visible only with 'web-set-maintenance-mode' -->
-  <div class="cd-section" *appHasPermission="'web-set-maintenance-mode'">
-    <div class="cd-section-label">{{ t('section_maintenance') }}</div>
-    <div class="cd-card">
-      <div class="maintenance-toggle-row">
-        <div class="maintenance-status" [class.status-active]="isWebActive" [class.status-inactive]="!isWebActive">
-          <span class="status-indicator"></span>
-          {{ isWebActive ? t('maintenance_status_active') : t('maintenance_status_inactive') }}
-        </div>
-        <button class="maintenance-switch-btn" (click)="openWebMaintenanceModal()">
-          {{ isWebActive ? t('maintenance_switch_to_maintenance') : t('maintenance_switch_to_active') }}
-        </button>
-      </div>
-    </div>
-  </div>
-</app-dashboard-view>
-
-@if (showWebMaintenanceModal) {
-  <div class="password-modal-overlay">
-    <div class="password-modal-card">
-      <div class="password-modal-header">
-        <h3 class="modal-header-title">{{ t('maintenance_modal_title') }}</h3>
-        <button class="close-modal-btn" (click)="cancelWebMaintenanceModal()" [attr.aria-label]="t('maintenance_modal_close_aria')">✕</button>
-      </div>
-      <div class="password-modal-body">
-        <p>{{ t('maintenance_modal_intro') }}
-          <strong [class.state-active]="pendingWebTargetState" [class.state-inactive]="!pendingWebTargetState">
-            {{ pendingWebTargetState ? t('maintenance_modal_state_active') : t('maintenance_modal_state_maintenance') }}
-          </strong>
-        </p>
-        <div class="modal-warning-box">{{ t('maintenance_modal_warning') }}</div>
-        <div class="password-input-group">
-          <label for="web-confirm-pwd">{{ t('maintenance_modal_password_label') }}</label>
-          <input id="web-confirm-pwd" type="password" placeholder="••••••••"
-            (input)="webConfirmPasswordValue = $any($event.target).value"
-            (keyup.enter)="submitWebMaintenanceChange()"
-            class="form-control-password" autocomplete="current-password">
-        </div>
-      </div>
-      <div class="password-modal-footer">
-        <button class="btn-modal-secondary" (click)="cancelWebMaintenanceModal()">{{ t('maintenance_modal_cancel') }}</button>
-        <button class="btn-modal-primary" (click)="submitWebMaintenanceChange()">{{ t('maintenance_modal_confirm') }}</button>
-      </div>
-    </div>
-  </div>
-}
+<app-dashboard-view [d]="this"></app-dashboard-view>

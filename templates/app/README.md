@@ -47,7 +47,11 @@ real pages on top of it.
   `/admin/<id>/…`, API `/api/<id>/…`, translation sections prefixed `<id>-`.
 - **Public part** (optional): a layout route with `data: { publicArea: … }` (`public/public-area.ts`),
   the same `publicArea` in the manifest, `publicRoutes` (+ `publicFallbackRoutes` for a catch-all),
-  runtime translations of the module `<id>` (`translations/<id>/<lang>`).
+  runtime translations of the module `<id>` (`translations/<id>/<lang>`). A maintenance switch:
+  `availability()` in the API manifest, `maintenance` (endpoint, permission, field names) in the
+  frontend manifest, a middleware answering 503 on the public routes and a guard → maintenance page
+  (see the project portal); the core then shows its state on the page Applications and in the
+  header of its dashboard (`appId` of the dashboard).
 - Every admin page has a sidebar item, `data.permission` and `data.help` (a manual page with the
   same permission) – `admin-navigation.config.spec.ts` and `KnowledgeBaseTest` check it.
 

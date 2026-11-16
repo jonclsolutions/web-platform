@@ -14,17 +14,21 @@
       <h1 class="cd-header-title">{{ t('header_title') }}</h1>
       <p class="cd-header-sub">{{ t('header_subtitle') }}</p>
     </div>
-    <div class="cd-header-actions">
-      <span class="cd-last-updated">{{ t('last_updated_label') }} {{ lastRefreshed | date:'HH:mm:ss' }}</span>
-      <button type="button" class="cd-refresh-btn" (click)="refresh()" [disabled]="isRefreshing || loading" [title]="t('refresh_button_title')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="23 4 23 10 17 10"/>
-          <polyline points="1 20 1 14 7 14"/>
-          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-        </svg>
-        {{ t('refresh_button') }}
-      </button>
-      <app-page-help></app-page-help>
+    <div class="cd-header-side">
+      <div class="cd-header-actions">
+        <span class="cd-last-updated">{{ t('last_updated_label') }} {{ lastRefreshed | date:'HH:mm:ss' }}</span>
+        <button type="button" class="cd-refresh-btn" (click)="refresh()" [disabled]="isRefreshing || loading" [title]="t('refresh_button_title')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          {{ t('refresh_button') }}
+        </button>
+        <app-page-help></app-page-help>
+      </div>
+      <!-- State of the storefront + maintenance switch -->
+      <app-status-control appId="shop"></app-status-control>
     </div>
   </div>
 
@@ -297,52 +301,5 @@
       }
     </div>
 
-    <div class="cd-section" *appHasPermission="'shop-set-maintenance-mode'">
-      <div class="sd-card sd-card-maintenance">
-        <div class="sd-card-header">
-          <span class="sd-card-title">{{ t('section_maintenance') }}</span>
-        </div>
-        <div class="maintenance-toggle-row">
-          <div class="maintenance-status" [class.status-active]="isShopActive" [class.status-inactive]="!isShopActive">
-            <span class="status-indicator"></span>
-            {{ isShopActive ? t('maintenance_status_active') : t('maintenance_status_inactive') }}
-          </div>
-          <button class="maintenance-switch-btn" (click)="openShopMaintenanceModal()">
-            {{ isShopActive ? t('maintenance_switch_to_maintenance') : t('maintenance_switch_to_active') }}
-          </button>
-        </div>
-      </div>
-    </div>
-
   }
 </div>
-
-@if (showShopMaintenanceModal) {
-  <div class="password-modal-overlay">
-    <div class="password-modal-card">
-      <div class="password-modal-header">
-        <h3 class="modal-header-title">{{ t('maintenance_modal_title') }}</h3>
-        <button class="close-modal-btn" (click)="cancelShopMaintenanceModal()" [attr.aria-label]="t('maintenance_modal_close_aria')">✕</button>
-      </div>
-      <div class="password-modal-body">
-        <p>{{ t('maintenance_modal_intro') }}
-          <strong [class.state-active]="pendingShopTargetState" [class.state-inactive]="!pendingShopTargetState">
-            {{ pendingShopTargetState ? t('maintenance_modal_state_active') : t('maintenance_modal_state_maintenance') }}
-          </strong>
-        </p>
-        <div class="modal-warning-box">{{ t('maintenance_modal_warning') }}</div>
-        <div class="password-input-group">
-          <label for="shop-confirm-pwd">{{ t('maintenance_modal_password_label') }}</label>
-          <input id="shop-confirm-pwd" type="password" placeholder="••••••••"
-            (input)="shopConfirmPasswordValue = $any($event.target).value"
-            (keyup.enter)="submitShopMaintenanceChange()"
-            class="form-control-password" autocomplete="current-password">
-        </div>
-      </div>
-      <div class="password-modal-footer">
-        <button class="btn-modal-secondary" (click)="cancelShopMaintenanceModal()">{{ t('maintenance_modal_cancel') }}</button>
-        <button class="btn-modal-primary" (click)="submitShopMaintenanceChange()">{{ t('maintenance_modal_confirm') }}</button>
-      </div>
-    </div>
-  </div>
-}

@@ -7,11 +7,11 @@
  * @description Unit tests of DashboardComponent – the dashboard of the Web module: statistics
  *   only for the sections the user may see (failed counts), hero / secondary
  *   stats, log-scaled bars and the distribution bar, recent activity with its breakdown,
- *   navigation tiles by permission, refresh past the cache, icons, date / event formatting and
- *   switching the public web between live and maintenance mode (password confirmation).
+ *   navigation tiles by permission, refresh past the cache (also of the state of the web in the
+ *   header), icons and date / event formatting.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, permission stub, alert spy, i18n stub),
- *   ResourceCacheService (real, spied on for the error paths)
+ *   ResourceCacheService (real, spied on for the error paths), AppStatusService (spied on)
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -19,6 +19,7 @@ import { of, throwError } from 'rxjs';
 
 import { DashboardComponent } from './dashboard.component';
 import { ResourceCacheService } from '../../../../core/services/resource-cache.service';
+import { AppStatusService } from '../../../../admin/components/app-status/app-status.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
 
 describe('DashboardComponent (web)', () => {
@@ -42,7 +43,6 @@ describe('DashboardComponent (web)', () => {
     ctx = createAdminTestContext();
     (ctx.dataHandler as any).getPaginatedCollection.and.callFake((url: string) =>
       url === ACTIVITY_URL ? of({ data: logs }) : of({ data: [], meta: { total: totals[url] } }));
-    (ctx.dataHandler as any).get.and.returnValue(of({ is_web_active: true, web_maintenance_message: 'Brzy zpět' }));
     await TestBed.configureTestingModule({ imports: [DashboardComponent], providers: ctx.providers }).compileComponents();
     fixture = TestBed.createComponent(DashboardComponent);
     component = fixture.componentInstance;
@@ -69,7 +69,7 @@ describe('DashboardComponent (web)', () => {
   /**
    * @description Only allowed statistics are requested; a failed one shows '—' and is never urgent.
    * @input  granted ['web-job-applications-view', 'web-user-requests-view']; inquiries request fails
-   * @output stats jobApps 0, rawRequests '—' (urgent false); no request for the logs; no activity and no maintenance request
+   * @output stats jobApps 0, rawRequests '—' (urgent false); no request for the logs; no activity
    */
   it('requests only allowed statistics and survives a failed one', () => {
     ctx.permissions.granted = new Set(['web-job-applications-view', 'web-user-requests-view']);
@@ -79,7 +79,6 @@ describe('DashboardComponent (web)', () => {
     expect(component.quickStats.map(s => [s.key, s.value, !!s.urgent])).toEqual([['jobApps', 0, false], ['rawRequests', '—', false]]);
     expect(urls()).not.toContain('web/logs?per_page=1');
     expect(urls()).not.toContain(ACTIVITY_URL);
-    expect((ctx.dataHandler as any).get).not.toHaveBeenCalledWith('web/settings');
     expect(component.recentActivity).toEqual([]);
     expect(component.loadingActivity).toBeFalse();
   });
@@ -100,9 +99,9 @@ describe('DashboardComponent (web)', () => {
   });
 
   /**
-   * @description Errors of the statistics / activity / maintenance streams end the loading state without an unhandled error.
+   * @description Errors of the statistics / activity streams end the loading state without an unhandled error.
    * @input  ResourceCacheService.get returns an error
-   * @output loadingStats false, isRefreshing false, loadingActivity false; maintenance state unchanged (isWebActive true)
+   * @output loadingStats false, isRefreshing false, loadingActivity false
    */
   it('ends loading when the cached streams fail', () => {
     spyOn(TestBed.inject(ResourceCacheService), 'get').and.returnValue(throwError(() => new Error('x')));
@@ -111,7 +110,6 @@ describe('DashboardComponent (web)', () => {
     expect(component.loadingStats).toBeFalse();
     expect(component.isRefreshing).toBeFalse();
     expect(component.loadingActivity).toBeFalse();
-    expect(component.isWebActive).toBeTrue();
   });
 
   /**
@@ -207,15 +205,20 @@ describe('DashboardComponent (web)', () => {
   });
 
   /**
-   * @description Refresh bypasses the cache and is ignored while running.
+   * @description Refresh bypasses the cache (also the state of the web shown in the header) and is
+   *   ignored while running.
    * @input  ngOnInit(); refresh(); refresh() while isRefreshing
-   * @output second round of requests; isRefreshing false at the end; no third round while refreshing
+   * @output appId 'web'; second round of requests; AppStatusService.load(true); isRefreshing false
+   *   at the end; no third round while refreshing
    */
   it('refresh() reloads past the cache', () => {
+    const status = spyOn(TestBed.inject(AppStatusService), 'load');
+    expect(component.appId).toBe('web');
     component.ngOnInit();
     const first = urls().length;
     component.refresh();
     expect(urls().length).toBe(first * 2);
+    expect(status).toHaveBeenCalledWith(true);
     expect(component.isRefreshing).toBeFalse();
     component.isRefreshing = true;
     component.refresh();
@@ -268,122 +271,5 @@ describe('DashboardComponent (web)', () => {
     expect(component.formatDate('2026-03-04T05:06:00')).toBe(new Date('2026-03-04T05:06:00').toLocaleString('cs-CZ', {
       day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
     }));
-  });
-
-  describe('maintenance mode', () => {
-    /**
-     * @description The current web state is loaded for users with web-set-maintenance-mode.
-     * @input  web/settings { is_web_active: false, web_maintenance_message: 'Brzy zpět' }; then null / empty message
-     * @output isWebActive false, message 'Brzy zpět'; null answer changes nothing; missing message → ''
-     */
-    it('loads the maintenance state', () => {
-      (ctx.dataHandler as any).get.and.returnValue(of({ is_web_active: false, web_maintenance_message: 'Brzy zpět' }));
-      component.ngOnInit();
-      expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('web/settings');
-      expect(component.isWebActive).toBeFalse();
-      expect(component.webMaintenanceMessage).toBe('Brzy zpět');
-      (ctx.dataHandler as any).get.and.returnValue(of(null));
-      component.refresh();
-      expect(component.isWebActive).toBeFalse();
-      (ctx.dataHandler as any).get.and.returnValue(of({ is_web_active: 1 }));
-      component.refresh();
-      expect(component.isWebActive).toBeTrue();
-      expect(component.webMaintenanceMessage).toBe('');
-    });
-
-    /**
-     * @description The modal targets the opposite state and can be cancelled (password cleared).
-     * @input  isWebActive true; openWebMaintenanceModal(); type password; cancelWebMaintenanceModal()
-     * @output pendingWebTargetState false; modal open; after cancel closed and password ''
-     */
-    it('opens and cancels the modal', () => {
-      component.isWebActive = true;
-      component.openWebMaintenanceModal();
-      expect(component.pendingWebTargetState).toBeFalse();
-      expect(component.showWebMaintenanceModal).toBeTrue();
-      component.webConfirmPasswordValue = 'secret';
-      component.cancelWebMaintenanceModal();
-      expect(component.showWebMaintenanceModal).toBeFalse();
-      expect(component.webConfirmPasswordValue).toBe('');
-    });
-
-    /**
-     * @description The change needs the admin password.
-     * @input  password '   '; submitWebMaintenanceChange()
-     * @output alert ('web-dashboard.maintenance_error_title', '…maintenance_error_missing_password', 'danger'); put not called
-     */
-    it('requires the password', () => {
-      component.webConfirmPasswordValue = '   ';
-      component.submitWebMaintenanceChange();
-      expect(ctx.alert.open).toHaveBeenCalledWith('web-dashboard.maintenance_error_title', 'web-dashboard.maintenance_error_missing_password', 'danger');
-      expect((ctx.dataHandler as any).put).not.toHaveBeenCalled();
-    });
-
-    /**
-     * @description Switching to maintenance sends the state, the default message when empty and the password.
-     * @input  isWebActive true; open modal; message ''; password 'pw'; submit
-     * @output put('web/settings', { is_web_active: false, web_maintenance_message: 'web-dashboard.maintenance_default_message', confirm_password: 'pw' }); isWebActive false; '…maintenance_success_maintenance'
-     */
-    it('switches the web to maintenance', () => {
-      component.isWebActive = true;
-      component.webMaintenanceMessage = '';
-      component.openWebMaintenanceModal();
-      component.webConfirmPasswordValue = 'pw';
-      component.submitWebMaintenanceChange();
-      expect((ctx.dataHandler as any).put).toHaveBeenCalledWith('web/settings', {
-        is_web_active: false, web_maintenance_message: 'web-dashboard.maintenance_default_message', confirm_password: 'pw'
-      });
-      expect(component.isWebActive).toBeFalse();
-      expect(component.showWebMaintenanceModal).toBeFalse();
-      expect(ctx.alert.open).toHaveBeenCalledWith('web-dashboard.maintenance_success_title', 'web-dashboard.maintenance_success_maintenance', 'success');
-    });
-
-    /**
-     * @description Switching back to live keeps the custom message.
-     * @input  isWebActive false; message 'Brzy zpět'; password 'pw'; submit
-     * @output put with is_web_active true and 'Brzy zpět'; isWebActive true; '…maintenance_success_active'
-     */
-    it('switches the web back to live', () => {
-      component.isWebActive = false;
-      component.webMaintenanceMessage = 'Brzy zpět';
-      component.openWebMaintenanceModal();
-      component.webConfirmPasswordValue = 'pw';
-      component.submitWebMaintenanceChange();
-      expect((ctx.dataHandler as any).put.calls.mostRecent().args[1]).toEqual(jasmine.objectContaining({ is_web_active: true, web_maintenance_message: 'Brzy zpět' }));
-      expect(component.isWebActive).toBeTrue();
-      expect(ctx.alert.open).toHaveBeenCalledWith('web-dashboard.maintenance_success_title', 'web-dashboard.maintenance_success_active', 'success');
-    });
-
-    /**
-     * @description A rejected change (e.g. wrong password) shows the server message or a generic one.
-     * @input  put fails with { error: { message: 'Wrong password' } }, then with {}
-     * @output alert ('web-dashboard.maintenance_error_auth_title', 'Wrong password', 'danger'); then '…maintenance_error_generic'; state unchanged
-     */
-    it('reports a rejected change', () => {
-      component.isWebActive = true;
-      component.webConfirmPasswordValue = 'bad';
-      (ctx.dataHandler as any).put.and.returnValue(throwError(() => ({ error: { message: 'Wrong password' } })));
-      component.submitWebMaintenanceChange();
-      expect(ctx.alert.open).toHaveBeenCalledWith('web-dashboard.maintenance_error_auth_title', 'Wrong password', 'danger');
-      (ctx.dataHandler as any).put.and.returnValue(throwError(() => ({})));
-      component.submitWebMaintenanceChange();
-      expect(ctx.alert.open).toHaveBeenCalledWith('web-dashboard.maintenance_error_auth_title', 'web-dashboard.maintenance_error_generic', 'danger');
-      expect(component.isWebActive).toBeTrue();
-    });
-  });
-
-  /**
-   * @description The dashboard renders stats, tiles and the maintenance card; a language change re-renders.
-   * @input  detectChanges(); translations$.next({})
-   * @output text contains 'web-dashboard.header_title', 'web-dashboard.nav_website_title', 'web-dashboard.maintenance_status_active'
-   */
-  it('renders the dashboard', () => {
-    fixture.detectChanges();
-    ctx.i18n.translations$.next({});
-    fixture.detectChanges();
-    const text = fixture.nativeElement.textContent;
-    expect(text).toContain('web-dashboard.header_title');
-    expect(text).toContain('web-dashboard.nav_website_title');
-    expect(text).toContain('web-dashboard.maintenance_status_active');
   });
 });

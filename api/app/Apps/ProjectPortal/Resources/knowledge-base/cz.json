@@ -1,5 +1,31 @@
 {
   "pages": {
+    "project-portal-dashboard": {
+      "navLabel": "Dashboard",
+      "header": "Projektový portál - Dashboard",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Přehled projektového portálu: počty obchodních leadů, objednávek, projektů a záznamů v logu, rychlá navigace a poslední aktivita."
+            },
+            {
+              "type": "text",
+              "content": "Každá dlaždice a zkratka se ukáže jen tehdy, když máte oprávnění k její stránce. Tlačítko Aktualizovat načte data znovu (i stav portálu)."
+            },
+            {
+              "type": "text",
+              "content": "Vpravo nahoře je stav veřejné části portálu: zelená tečka Online, oranžová Online s problémem (chyby v logu za posledních 24 hodin nebo pomalá odezva), červená Offline (údržba). S oprávněním k přepínání údržby je vedle tlačítko Vypnout / Zapnout aplikaci - změnu potvrdíte svým heslem."
+            },
+            {
+              "type": "note",
+              "content": "Vypnutý portál: klientský portál projektu i objednávkový formulář ukážou stránku údržby a jejich API odpovídá kódem 503. Administrace běží dál."
+            }
+          ]
+        }
+      ]
+    },
     "sales-leads": {
       "navLabel": "Obchodní leady",
       "header": "Obchodní leady",

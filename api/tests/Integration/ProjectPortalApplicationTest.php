@@ -9,7 +9,8 @@
  * @description The project portal together with the web application (Integration: both
  *   installed): the migrations that moved the portal out of the web (its audit log and
  *   permissions) and the sales leads and orders from the web into the portal, the portal prefix
- *   of the project tables and permissions, and the log endpoint of the portal.
+ *   of the project tables and permissions, the maintenance switch and the dashboard permission,
+ *   and the log endpoint of the portal.
  * @dependencies
  * - Tests\TestCase, ProjectFixtures; the web tables of the test schema (web_logs, web_site_settings).
  */
@@ -172,5 +173,30 @@ class ProjectPortalApplicationTest extends TestCase
         $this->assertSame($project->id, DB::table('project_portal_projects')->value('id'));
         $this->assertSame(['project-portal-projects-view'], $pm->permissions()->pluck('permission_key')->all());
         $this->assertSame(0, CorePermission::where('permission_key', 'like', 'web-projects-%')->count());
+    }
+
+    /**
+     * @description The migration of the maintenance switch and the dashboard of the portal: down()
+     *   removes the columns and the permissions, up() adds them and gives them to the holders of
+     *   the settings / tab permission of the portal.
+     * @input Role 'pm' with project-portal-settings-update + view-project-portal; down(), then up().
+     * @output down: no is_portal_active column, no new permissions; up: column, the role holds both
+     *   new permissions.
+     */
+    public function test_maintenance_migration(): void
+    {
+        $migration = require app_path('Apps/ProjectPortal/Database/Migrations/2026_11_25_000000_project_portal_maintenance_and_dashboard.php');
+        $pm = $this->role('pm', ['project-portal-settings-update', 'view-project-portal']);
+
+        $migration->down();
+        $this->assertFalse(Schema::hasColumn('project_portal_settings', 'is_portal_active'));
+        $this->assertSame(0, CorePermission::whereIn('permission_key', ['project-portal-set-maintenance-mode', 'project-portal-view-dashboard'])->count());
+
+        $migration->up();
+        $this->assertTrue(Schema::hasColumn('project_portal_settings', 'portal_maintenance_message'));
+        $this->assertSame(
+            ['project-portal-set-maintenance-mode', 'project-portal-settings-update', 'project-portal-view-dashboard', 'view-project-portal'],
+            $pm->permissions()->orderBy('permission_key')->pluck('permission_key')->all()
+        );
     }
 }

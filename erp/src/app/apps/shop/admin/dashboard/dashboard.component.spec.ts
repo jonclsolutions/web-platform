@@ -7,7 +7,7 @@
  * @description Unit tests of the e-shop DashboardComponent: data requested by permission, KPI
  *   cards with week-over-week trends, revenue only from paid and not cancelled / returned orders,
  *   the 30-day revenue chart (points, smooth path, axis labels, tooltip), status breakdown, low
- *   stock list, auto refresh, formatting and switching the shop between live and maintenance mode.
+ *   stock list, auto refresh, formatting and the state of the storefront in the header.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, permission stub, alert spy, i18n stub),
  *   ResourceCacheService (real, spied on for the error path)
@@ -17,7 +17,10 @@ import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from
 import { of, throwError } from 'rxjs';
 
 import { DashboardComponent } from './dashboard.component';
+import { By } from '@angular/platform-browser';
 import { ResourceCacheService } from '../../../../core/services/resource-cache.service';
+import { AppStatusService } from '../../../../admin/components/app-status/app-status.service';
+import { AppStatusControlComponent } from '../../../../admin/components/app-status/app-status-control.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
 
 describe('DashboardComponent (shop)', () => {
@@ -53,7 +56,7 @@ describe('DashboardComponent (shop)', () => {
   beforeEach(async () => {
     ctx = createAdminTestContext();
     answers();
-    dh().get.and.returnValue(of({ is_shop_active: true, maintenance_message: 'Brzy' }));
+    dh().get.and.returnValue(of([]));
     await TestBed.configureTestingModule({ imports: [DashboardComponent], providers: ctx.providers }).compileComponents();
     fixture = TestBed.createComponent(DashboardComponent);
     component = fixture.componentInstance;
@@ -293,104 +296,24 @@ describe('DashboardComponent (shop)', () => {
     });
   });
 
-  describe('maintenance mode', () => {
-    /**
-     * @description The shop state is loaded with shop-set-maintenance-mode; null answers and failures keep the state.
-     * @input  shop/settings { is_shop_active: false, maintenance_message: 'Brzy' }; without permission; null; failure; no message
-     * @output isShopActive false, message 'Brzy'; no request without permission; state kept; message ''
-     */
-    it('loads the maintenance state', fakeAsync(() => {
-      dh().get.and.returnValue(of({ is_shop_active: false, maintenance_message: 'Brzy' }));
-      component.ngOnInit();
-      expect(dh().get).toHaveBeenCalledWith('shop/settings');
-      expect([component.isShopActive, component.shopMaintenanceMessage]).toEqual([false, 'Brzy']);
-      const cache = TestBed.inject(ResourceCacheService);
-      const load = () => { cache.invalidate('shop-dashboard:maintenance'); (component as any).loadMaintenanceStatus(); };
-      dh().get.and.returnValue(of(null));
-      load();
-      expect(component.isShopActive).toBeFalse();
-      dh().get.and.returnValue(throwError(() => new Error('x')));
-      load();
-      expect(component.isShopActive).toBeFalse();
-      dh().get.and.returnValue(of({ is_shop_active: 1 }));
-      load();
-      expect([component.isShopActive, component.shopMaintenanceMessage]).toEqual([true, '']);
-      ctx.permissions.granted = new Set();
-      dh().get.calls.reset();
-      load();
-      expect(dh().get).not.toHaveBeenCalled();
-      discardPeriodicTasks();
-    }));
-
-    /**
-     * @description The modal targets the opposite state; cancel clears the password; the password is required.
-     * @input  isShopActive true; open; type password; cancel; submit with '  '
-     * @output pending target false; closed and password ''; warning 'shop-dashboard.maintenance_error_missing_password'; no request
-     */
-    it('opens, cancels and requires the password', () => {
-      component.openShopMaintenanceModal();
-      expect([component.pendingShopTargetState, component.showShopMaintenanceModal]).toEqual([false, true]);
-      component.shopConfirmPasswordValue = 'pw';
-      component.cancelShopMaintenanceModal();
-      expect([component.showShopMaintenanceModal, component.shopConfirmPasswordValue]).toEqual([false, '']);
-      component.shopConfirmPasswordValue = '  ';
-      component.submitShopMaintenanceChange();
-      expect(ctx.alert.open).toHaveBeenCalledWith('shop-dashboard.maintenance_error_title', 'shop-dashboard.maintenance_error_missing_password', 'danger');
-      expect(dh().put).not.toHaveBeenCalled();
-    });
-
-    /**
-     * @description Switching to maintenance uses the default message when empty; switching back keeps a custom message.
-     * @input  active shop, message '' → submit; then inactive, message 'Brzy' → submit
-     * @output put('shop/settings', { is_shop_active: false, maintenance_message: 'shop-dashboard.maintenance_default_message', confirm_password: 'pw' }); success texts for both directions
-     */
-    it('switches the shop mode', () => {
-      component.isShopActive = true;
-      component.shopMaintenanceMessage = '';
-      component.openShopMaintenanceModal();
-      component.shopConfirmPasswordValue = 'pw';
-      component.submitShopMaintenanceChange();
-      expect(dh().put).toHaveBeenCalledWith('shop/settings', { is_shop_active: false, maintenance_message: 'shop-dashboard.maintenance_default_message', confirm_password: 'pw' });
-      expect(component.isShopActive).toBeFalse();
-      expect(ctx.alert.open).toHaveBeenCalledWith('shop-dashboard.maintenance_success_title', 'shop-dashboard.maintenance_success_maintenance', 'success');
-      component.shopMaintenanceMessage = 'Brzy';
-      component.openShopMaintenanceModal();
-      component.shopConfirmPasswordValue = 'pw';
-      component.submitShopMaintenanceChange();
-      expect(dh().put.calls.mostRecent().args[1].maintenance_message).toBe('Brzy');
-      expect(component.isShopActive).toBeTrue();
-      expect(ctx.alert.open).toHaveBeenCalledWith('shop-dashboard.maintenance_success_title', 'shop-dashboard.maintenance_success_active', 'success');
-    });
-
-    /**
-     * @description A rejected change shows the server message or a generic one.
-     * @input  put fails with { error: { message: 'Wrong password' } }, then with {}
-     * @output alerts 'Wrong password' / 'shop-dashboard.maintenance_error_generic'
-     */
-    it('reports a rejected change', () => {
-      component.shopConfirmPasswordValue = 'bad';
-      dh().put.and.returnValue(throwError(() => ({ error: { message: 'Wrong password' } })));
-      component.submitShopMaintenanceChange();
-      expect(ctx.alert.open).toHaveBeenCalledWith('shop-dashboard.maintenance_error_auth_title', 'Wrong password', 'danger');
-      dh().put.and.returnValue(throwError(() => ({})));
-      component.submitShopMaintenanceChange();
-      expect(ctx.alert.open).toHaveBeenCalledWith('shop-dashboard.maintenance_error_auth_title', 'shop-dashboard.maintenance_error_generic', 'danger');
-    });
-  });
-
   /**
-   * @description The dashboard renders KPIs, chart, orders and the maintenance card.
-   * @input  detectChanges() after loading; maintenance modal open
-   * @output 'shop-dashboard.header_title', 'shop-dashboard.chart_title', 'shop-dashboard.section_maintenance' rendered
+   * @description The dashboard renders KPIs and the chart, with the state of the storefront in
+   *   the header; the manual refresh reloads that state too.
+   * @input  detectChanges() after loading; refresh()
+   * @output 'shop-dashboard.header_title', 'shop-dashboard.chart_title' rendered; status control
+   *   of 'shop'; AppStatusService.load(true)
    */
   it('renders the dashboard', fakeAsync(() => {
-    fixture.detectChanges();
-    component.openShopMaintenanceModal();
+    const status = spyOn(TestBed.inject(AppStatusService), 'load');
     fixture.detectChanges();
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('shop-dashboard.header_title');
     expect(text).toContain('shop-dashboard.chart_title');
-    expect(text).toContain('shop-dashboard.section_maintenance');
+    const control = fixture.debugElement.query(By.directive(AppStatusControlComponent)).componentInstance as AppStatusControlComponent;
+    expect(control.appId).toBe('shop');
+    component.isRefreshing = false;
+    component.refresh();
+    expect(status).toHaveBeenCalledWith(true);
     discardPeriodicTasks();
   }));
 });

@@ -117,6 +117,7 @@
 
 @media (max-width: 640px) {
   .cd-header-title { font-size: 1.3rem; }
+  .cd-header-side { align-items: flex-start; }
   .cd-nav-grid { grid-template-columns: 1fr; }
   .cd-activity-row { grid-template-columns: 110px 1fr; grid-template-rows: auto auto; }
   .cd-activity-right { grid-column: 2; text-align: left; color: var(--border-mid, var(--color-zinc-300)); }

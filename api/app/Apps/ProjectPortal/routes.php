@@ -15,8 +15,9 @@
  * @dependencies
  * - App\Apps\ProjectPortal\Http\Controllers\*; core PageTitleController (browser titles of the
  *   public pages); PortalCookie::ROUTE (Path of the session cookie); middleware `project.session`
- *   (ProjectPortalApp::middlewareAliases()), core `public.form`, `auth:sanctum`, `permission`;
- *   named rate limiter `public-form`.
+ *   and `project-portal.active` (maintenance switch - every public route but the status answers
+ *   503 while the portal is off) (ProjectPortalApp::middlewareAliases()), core `public.form`,
+ *   `auth:sanctum`, `permission`; named rate limiter `public-form`.
  */
 
 use App\Apps\ProjectPortal\Http\Controllers\ProjectAccountController;
@@ -25,6 +26,7 @@ use App\Apps\ProjectPortal\Http\Controllers\ProjectController;
 use App\Apps\ProjectPortal\Http\Controllers\ProjectPortalAccessController;
 use App\Apps\ProjectPortal\Http\Controllers\ProjectPortalController;
 use App\Apps\ProjectPortal\Http\Controllers\ProjectPortalLogController;
+use App\Apps\ProjectPortal\Http\Controllers\ProjectPortalMaintenanceController;
 use App\Apps\ProjectPortal\Http\Controllers\ProjectPublicController;
 use App\Apps\ProjectPortal\Http\Controllers\ProjectTemplateController;
 use App\Apps\ProjectPortal\Http\Controllers\ProjectThreadController;
@@ -41,41 +43,47 @@ use Illuminate\Support\Facades\Route;
 | 24h-sliding session (CheckProjectSession middleware, alias 'project.session')
 |--------------------------------------------------------------------------
 */
-Route::post('projects/public/{token}/login', [ProjectPublicController::class, 'login'])
-    ->middleware('throttle:10,1,project-login');
-// Password-less sign-in: a one-time code / link sent to the account's e-mail (also invitations).
-Route::post('projects/public/{token}/login/code-request', [ProjectPortalAccessController::class, 'requestCode'])
-    ->middleware('throttle:5,1,project-code-request');
-Route::post('projects/public/{token}/login/code', [ProjectPortalAccessController::class, 'loginWithCode'])
-    ->middleware('throttle:10,1,project-login');
-Route::post('projects/public/{token}/login/link', [ProjectPortalAccessController::class, 'loginWithLink'])
-    ->middleware('throttle:10,1,project-login');
+// Public status of the maintenance switch (always answers - the maintenance page asks it).
+Route::get('project-portal/public/status', [ProjectPortalMaintenanceController::class, 'publicStatus'])
+    ->middleware('throttle:60,1');
 
-Route::prefix('projects/public/{token}')
-    ->middleware(['project.session', 'throttle:120,1,project-session'])
-    ->group(function () {
-        Route::get('/',       [ProjectPublicController::class, 'me'])->name(PortalCookie::ROUTE);
-        Route::post('logout', [ProjectPublicController::class, 'logout']);
+Route::middleware('project-portal.active')->group(function () {
+    Route::post('projects/public/{token}/login', [ProjectPublicController::class, 'login'])
+        ->middleware('throttle:10,1,project-login');
+    // Password-less sign-in: a one-time code / link sent to the account's e-mail (also invitations).
+    Route::post('projects/public/{token}/login/code-request', [ProjectPortalAccessController::class, 'requestCode'])
+        ->middleware('throttle:5,1,project-code-request');
+    Route::post('projects/public/{token}/login/code', [ProjectPortalAccessController::class, 'loginWithCode'])
+        ->middleware('throttle:10,1,project-login');
+    Route::post('projects/public/{token}/login/link', [ProjectPortalAccessController::class, 'loginWithLink'])
+        ->middleware('throttle:10,1,project-login');
 
-        Route::get('threads',            [ProjectPublicController::class, 'threadsIndex']);
-        Route::get('threads/{threadId}', [ProjectPublicController::class, 'threadShow']);
-        Route::get('threads/{threadId}/messages', [ProjectPublicController::class, 'olderMessages']);
-        Route::post('threads', [ProjectPublicController::class, 'threadStore'])
-            ->middleware('throttle:20,1,project-thread-create');
-        Route::post('threads/{threadId}/messages', [ProjectPublicController::class, 'messageStore'])
-            ->middleware('throttle:30,1,project-message-create');
-        Route::post('threads/{threadId}/status', [ProjectPublicController::class, 'updateStatus']);
-        Route::get('threads/{threadId}/new-messages', [ProjectPublicController::class, 'newMessages']);
-        Route::get('files', [ProjectPublicController::class, 'files']);
-        Route::post('account', [ProjectPublicController::class, 'updateAccount'])
-            ->middleware('throttle:20,1,project-account-settings');
-        Route::get('activity', [ProjectPortalController::class, 'activity']);
-        Route::post('activity/seen', [ProjectPortalController::class, 'markActivitySeen']);
-        Route::get('updates', [ProjectPortalController::class, 'updates']);
-        Route::get('approvals', [ProjectPortalController::class, 'approvals']);
-        Route::post('approvals/{approvalId}/decision', [ProjectPortalController::class, 'decide'])
-            ->middleware('throttle:20,1,project-approval-decision');
-    });
+    Route::prefix('projects/public/{token}')
+        ->middleware(['project.session', 'throttle:120,1,project-session'])
+        ->group(function () {
+            Route::get('/',       [ProjectPublicController::class, 'me'])->name(PortalCookie::ROUTE);
+            Route::post('logout', [ProjectPublicController::class, 'logout']);
+
+            Route::get('threads',            [ProjectPublicController::class, 'threadsIndex']);
+            Route::get('threads/{threadId}', [ProjectPublicController::class, 'threadShow']);
+            Route::get('threads/{threadId}/messages', [ProjectPublicController::class, 'olderMessages']);
+            Route::post('threads', [ProjectPublicController::class, 'threadStore'])
+                ->middleware('throttle:20,1,project-thread-create');
+            Route::post('threads/{threadId}/messages', [ProjectPublicController::class, 'messageStore'])
+                ->middleware('throttle:30,1,project-message-create');
+            Route::post('threads/{threadId}/status', [ProjectPublicController::class, 'updateStatus']);
+            Route::get('threads/{threadId}/new-messages', [ProjectPublicController::class, 'newMessages']);
+            Route::get('files', [ProjectPublicController::class, 'files']);
+            Route::post('account', [ProjectPublicController::class, 'updateAccount'])
+                ->middleware('throttle:20,1,project-account-settings');
+            Route::get('activity', [ProjectPortalController::class, 'activity']);
+            Route::post('activity/seen', [ProjectPortalController::class, 'markActivitySeen']);
+            Route::get('updates', [ProjectPortalController::class, 'updates']);
+            Route::get('approvals', [ProjectPortalController::class, 'approvals']);
+            Route::post('approvals/{approvalId}/decision', [ProjectPortalController::class, 'decide'])
+                ->middleware('throttle:20,1,project-approval-decision');
+        });
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -85,7 +93,7 @@ Route::prefix('projects/public/{token}')
 | authenticated routes below, which have none of these checks.
 |--------------------------------------------------------------------------
 */
-Route::prefix('project-portal/public')->group(function () {
+Route::prefix('project-portal/public')->middleware('project-portal.active')->group(function () {
     Route::get('sales-leads/{token}', [SalesLeadController::class, 'showByToken'])
         ->middleware('throttle:30,1,sales-lead-token');
     Route::post('sales-orders', [SalesOrderController::class, 'store'])
@@ -99,6 +107,12 @@ Route::prefix('project-portal/public')->group(function () {
 */
 Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
     Route::prefix('project-portal')->group(function () {
+
+        // Maintenance switch of the public portal and order form (dashboard, core Applications page).
+        Route::get('/maintenance', [ProjectPortalMaintenanceController::class, 'show'])
+            ->middleware('permission:project-portal-set-maintenance-mode');
+        Route::put('/maintenance', [ProjectPortalMaintenanceController::class, 'update'])
+            ->middleware(['permission:project-portal-set-maintenance-mode', 'throttle:10,1,maintenance-toggle']);
 
         // Browser titles of the public pages of the portal (project-portal/settings).
         Route::get('/page-titles', [PageTitleController::class, 'index'])

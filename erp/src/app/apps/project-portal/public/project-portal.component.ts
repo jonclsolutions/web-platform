@@ -17,6 +17,8 @@
  * @note The client sees only what the supplier made public: no internal notes, no internal
  *   checkpoint notes (the API leaves them out). Several accounts of one client share the
  *   conversations - messages show who wrote them ("You" for the own ones).
+ * @note Every portal request goes through `leaveOnMaintenance()`: a 503 (the portal was switched
+ *   off by the supplier) opens the maintenance page, which returns here once it is online.
  *
  * @security The portal session is NOT handled by JavaScript at all: the API sets it as an
  *   HttpOnly / Secure / SameSite=Strict cookie limited to the routes of this project and the
@@ -37,6 +39,7 @@ import { ProjectPortalLocalizationService } from './project-portal-localization.
 import { UploadRulesService } from '../../../shared/services/upload-rules.service';
 import { UploadRule, extensionsLabel, fileExtension, isExtensionAllowed } from '../../../shared/utils/upload-rules';
 import { PortalLanguageSwitcherComponent } from './language-switcher/portal-language-switcher.component';
+import { leaveOnMaintenance } from './maintenance/portal-maintenance';
 
 type PortalState = 'loading' | 'login' | 'portal' | 'invalid';
 /** Sections of the left menu. */
@@ -841,17 +844,17 @@ updateThreadStatus(status: string): void {
 
   /** GET of a portal endpoint (the browser sends the session cookie). */
   private portalGet<T>(path: string): Observable<T> {
-    return this.publicDataService.get<T>(path, undefined, undefined, SKIP_ADMIN_AUTH_CONTEXT);
+    return this.publicDataService.get<T>(path, undefined, undefined, SKIP_ADMIN_AUTH_CONTEXT).pipe(leaveOnMaintenance(this.router));
   }
 
   /** GET of a portal endpoint keeping the envelope (`meta`, finding #6). */
   private portalGetWithMeta<T, M>(path: string): Observable<ApiEnvelope<T, M>> {
-    return this.publicDataService.getWithMeta<T, M>(path, undefined, undefined, SKIP_ADMIN_AUTH_CONTEXT);
+    return this.publicDataService.getWithMeta<T, M>(path, undefined, undefined, SKIP_ADMIN_AUTH_CONTEXT).pipe(leaveOnMaintenance(this.router));
   }
 
   /** POST to a portal endpoint (the browser sends the session cookie). */
   private portalPost<T>(path: string, body: any): Observable<T> {
-    return this.publicDataService.post<T>(path, body, undefined, SKIP_ADMIN_AUTH_CONTEXT);
+    return this.publicDataService.post<T>(path, body, undefined, SKIP_ADMIN_AUTH_CONTEXT).pipe(leaveOnMaintenance(this.router));
   }
 
   private clearSession(): void {

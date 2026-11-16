@@ -9,12 +9,12 @@
  *   incl. the tab permission `view-project-portal`. ProjectPortalBaseDataSeeder adds the missing
  *   ones; the sysadmin role gets all of them. The description is the English fallback (admin i18n
  *   `permission-descriptions`).
- * @note The `project-portal-projects-*` keys keep their names (roles of existing installations stay valid);
- *   only their module is `project-portal`.
  */
 
 return [
     ['permission_key' => 'view-project-portal', 'description' => '[recommended: always on] Show the Project portal application in the admin - without it the application cannot be opened', 'module' => 'project-portal'],
+    ['permission_key' => 'project-portal-view-dashboard', 'description' => 'View the dashboard of the project portal (overview metrics and recent activity)', 'module' => 'project-portal'],
+    ['permission_key' => 'project-portal-set-maintenance-mode', 'description' => 'Switch the public portal and the order form on / off (maintenance mode)', 'module' => 'project-portal'],
     ['permission_key' => 'project-portal-view-logs', 'description' => 'View the log history (audit trail) of the project portal', 'module' => 'project-portal'],
     ['permission_key' => 'project-portal-settings-view', 'description' => 'View the settings of the portal (browser titles of its public pages)', 'module' => 'project-portal'],
     ['permission_key' => 'project-portal-settings-update', 'description' => 'Edit the settings of the portal (browser titles of its public pages)', 'module' => 'project-portal'],

@@ -26,4 +26,11 @@ return [
         'title_i18n' => ['cz' => 'Objednávkový formulář | Company name', 'en' => 'Order form | Company name'],
         'sort_order' => 20,
     ],
+    [
+        'area' => 'project-portal',
+        'page_key' => 'maintenance',
+        'route_path' => '/projects/maintenance',
+        'title_i18n' => ['cz' => 'Probíhá údržba | Company name', 'en' => 'Maintenance | Company name'],
+        'sort_order' => 30,
+    ],
 ];

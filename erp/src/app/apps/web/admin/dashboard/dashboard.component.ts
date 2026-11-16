@@ -10,16 +10,14 @@
  *
  * @dependencies
  * - BaseDashboardComponent: stat tiles, hero, comparison bars, activity feed, icons, refresh.
- * - DashboardViewComponent: the layout; the maintenance section is projected into it.
- * - HasPermissionDirective: Gates the maintenance card on its permission key.
- * - PermissionService (inherited): decides which stat / nav / activity / maintenance requests
- *   are sent at all.
- * - ResourceCacheService (inherited): TTL cache, also of the maintenance state.
+ * - DashboardViewComponent: the layout, with the state and maintenance switch of the web in the
+ *   header (appId).
+ * - PermissionService (inherited): decides which stat / nav / activity requests are sent at all.
+ * - ResourceCacheService (inherited): TTL cache.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 
-import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
 import {
   BaseDashboardComponent, DashboardNavSection, DashboardStatDef
 } from '../../../../admin/components/base-dashboard/base-dashboard.component';
@@ -36,20 +34,17 @@ import { DashboardViewComponent } from '../../../../admin/components/base-dashbo
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [DashboardViewComponent, HasPermissionDirective],
+  imports: [DashboardViewComponent],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['../../../../admin/shared-styles/dashboard.css', '../../../../admin/shared-styles/dashboard-maintenance.css', '../../../../admin/shared-styles/dashboard-cards.css', './dashboard.component.css'],
+  styleUrls: ['../../../../admin/shared-styles/dashboard.css', '../../../../admin/shared-styles/dashboard-cards.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent extends BaseDashboardComponent {
 
   protected override translationSection: string = 'web-dashboard';
 
-  private readonly MAINTENANCE_TTL_MS = 60 * 1000;
-  private readonly MAINTENANCE_CACHE_KEY = 'web-dashboard:maintenance';
-
-  /** Permission key required by the `web/settings` (maintenance) endpoint in api.php. */
-  private readonly MAINTENANCE_PERMISSION = 'web-set-maintenance-mode';
+  /** The header shows the state of the public web with its maintenance switch. */
+  override readonly appId = 'web';
 
   protected readonly logsEndpoint = 'web/logs';
   /** Permission key required by the `web/logs` (GET) endpoint. */
@@ -65,13 +60,6 @@ export class DashboardComponent extends BaseDashboardComponent {
     { key: 'rawRequests', isAllowed: () => this.can('web-user-requests-view'), labelKey: 'stat_raw_requests_label', icon: 'mail', endpoint: 'web/raw_request_commissions?per_page=1' },
     { key: 'webLogs', isAllowed: () => this.can(this.logsPermission), labelKey: 'stat_web_logs_label', icon: 'logs', endpoint: 'web/logs?per_page=1' },
   ];
-
-  // ── Web maintenance mode ────────────────────────────────────────────
-  isWebActive = true;
-  webMaintenanceMessage = '';
-  showWebMaintenanceModal = false;
-  webConfirmPasswordValue = '';
-  pendingWebTargetState = true;
 
   readonly navSections: DashboardNavSection[] = [
     { titleKey: 'nav_website_title', icon: 'globe', route: '/admin/web/edit-website', descriptionKey: 'nav_website_desc', isAllowed: () => this.can('web-edit-website-view') },
@@ -99,90 +87,8 @@ export class DashboardComponent extends BaseDashboardComponent {
     export: 'ev-export', error: 'ev-error', payment: 'ev-create',
   };
 
-  override ngOnInit(): void {
-    super.ngOnInit();
-    this.loadWebMaintenanceStatus();
-  }
-
   /** @description Synchronous permission check of the stat / nav guards. */
   private can(permission: string): boolean {
     return this.permissionService.hasPermission(permission);
-  }
-
-  /** @description The manual refresh reloads the maintenance state too (bypassing its cache). */
-  protected override refreshExtras(): void {
-    this.resourceCache.invalidate(this.MAINTENANCE_CACHE_KEY);
-    this.loadWebMaintenanceStatus();
-  }
-
-  // ── Web maintenance mode ────────────────────────────────────────────
-
-  /**
-   * @description Loads the current web maintenance state from `web/settings`, through a short
-   * TTL cache (1 min). Called separately from `loadStats()` / `loadRecentActivity()`.
-   */
-  private loadWebMaintenanceStatus(): void {
-    if (!this.permissionService.hasPermission(this.MAINTENANCE_PERMISSION)) {
-      return;
-    }
-
-    this.resourceCache.get(
-      this.MAINTENANCE_CACHE_KEY,
-      () => this.dataHandler.get<any>('web/settings'),
-      this.MAINTENANCE_TTL_MS
-    ).subscribe({
-      next: (res: any) => {
-        if (res) {
-          this.isWebActive = !!res.is_web_active;
-          this.webMaintenanceMessage = res.web_maintenance_message || '';
-          this.cd.markForCheck();
-        }
-      },
-      error: () => this.cd.markForCheck()
-    });
-  }
-
-  openWebMaintenanceModal(): void {
-    this.pendingWebTargetState = !this.isWebActive;
-    this.webConfirmPasswordValue = '';
-    this.showWebMaintenanceModal = true;
-  }
-
-  cancelWebMaintenanceModal(): void {
-    this.showWebMaintenanceModal = false;
-    this.webConfirmPasswordValue = '';
-  }
-
-  /**
-   * @description Sends the web state change to `web/settings`. Invalidates the maintenance cache
-   * key on success, so the next read (also elsewhere in the admin) reflects the new value.
-   */
-  submitWebMaintenanceChange(): void {
-    if (!this.webConfirmPasswordValue.trim()) {
-      this.alertDialogService.open(this.t('maintenance_error_title'), this.t('maintenance_error_missing_password'), 'danger');
-      return;
-    }
-
-    this.dataHandler.put<any>('web/settings', {
-      is_web_active: this.pendingWebTargetState,
-      web_maintenance_message: this.webMaintenanceMessage || this.t('maintenance_default_message'),
-      confirm_password: this.webConfirmPasswordValue
-    }).subscribe({
-      next: () => {
-        this.isWebActive = this.pendingWebTargetState;
-        this.showWebMaintenanceModal = false;
-        this.resourceCache.invalidate(this.MAINTENANCE_CACHE_KEY);
-        this.alertDialogService.open(
-          this.t('maintenance_success_title'),
-          this.pendingWebTargetState ? this.t('maintenance_success_active') : this.t('maintenance_success_maintenance'),
-          'success'
-        );
-        this.cd.markForCheck();
-      },
-      error: (err: any) => {
-        const message = err?.error?.message || this.t('maintenance_error_generic');
-        this.alertDialogService.open(this.t('maintenance_error_auth_title'), message, 'danger');
-      }
-    });
   }
 }

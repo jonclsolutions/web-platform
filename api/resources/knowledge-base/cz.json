@@ -1187,11 +1187,19 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Přehled aplikací, které můžete spravovat (web, e-shop, projektový portál …), s tlačítkem Spravovat."
+              "content": "Přehled aplikací, které můžete spravovat (web, e-shop, projektový portál …): stav každé aplikace, lehká diagnostika a tlačítko Spravovat."
             },
             {
               "type": "text",
-              "content": "Každá aplikace má vlastní menu, stránky a nápovědu. Karta se ukáže jen u aplikace, ke které máte oprávnění záložky a aspoň jednu stránku. Tlačítko Spravovat otevře první stránku aplikace, kterou smíte otevřít."
+              "content": "Aplikace jsou pod sebou. U každé vidíte stav veřejné části - zelená tečka Online, oranžová Online s problémem, červená Offline (údržba) nebo Nedostupné (data aplikace nejdou přečíst) - a diagnostiku: odezvu čtení dat, počet záznamů v logu aplikace za 24 hodin (vytížení), chyby za 24 hodin, poslední aktivitu a poslední chybu."
+            },
+            {
+              "type": "text",
+              "content": "S oprávněním k režimu údržby dané aplikace je u ní tlačítko Vypnout / Zapnout aplikaci. Změnu potvrdíte svým heslem; vypnutá aplikace ukáže návštěvníkům stránku údržby (web, e-shop i projektový portál), administrace běží dál. Stejné tlačítko je v hlavičce dashboardu aplikace."
+            },
+            {
+              "type": "text",
+              "content": "Karta se ukáže jen u aplikace, ke které máte oprávnění záložky a aspoň jednu stránku. Tlačítko Spravovat otevře první stránku aplikace, kterou smíte otevřít. Tlačítko Aktualizovat stav načte stav znovu."
             },
             {
               "type": "note",

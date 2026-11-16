@@ -4,15 +4,17 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Page "Applications": the card of an application with its "Manage" button (the card
-        frame comes from welcome-links.css) and the empty state.
+    @description: Page "Applications": the applications one below the other - each row with its
+        name, the state of the public part (coloured dot), the light diagnosis, the maintenance
+        switch and the "Manage" button; header actions, error and empty state.
     @dependencies: admin/shared-styles/welcome-page.css, admin/shared-styles/welcome-links.css
+        (icon, title and description of an application)
 */
 
 /*
-    @module: Application card
-    @description: Card of one application - not a link itself, the button opens the application.
-    @usage: .apps-intro, .apps-card, .apps-card-manage, .apps-empty
+    @module: Page header
+    @description: Intro text and the refresh button beside the help.
+    @usage: .apps-intro, .apps-header-actions, .apps-refresh-btn, .apps-error, .apps-checked
 */
 .apps-intro {
   margin: 6px 0 0;
@@ -21,13 +23,114 @@
   line-height: 1.45;
 }
 
-.apps-card:hover {
-  transform: none;
+.apps-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.apps-refresh-btn {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-zinc-200);
+  background: var(--color-white);
+  color: var(--color-zinc-900);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.apps-refresh-btn:hover:not(:disabled),
+.apps-refresh-btn:focus-visible { background: var(--color-zinc-100); }
+
+.apps-refresh-btn:disabled { opacity: 0.6; cursor: default; }
+
+.apps-error {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-rose-200, #fecdd3);
+  border-radius: 12px;
+  background: var(--color-rose-50, #fff1f2);
+  color: var(--color-rose-700, #be123c);
+  font-size: 0.82rem;
+}
+
+.apps-checked {
+  margin: 12px 2px 0;
+  font-size: 0.75rem;
+  color: var(--color-zinc-400);
+}
+
+/*
+    @module: Application row
+    @description: One application per row: identity | state | actions, the diagnosis under them
+        across the card; the left edge takes the colour of the health. Stacks on small screens.
+    @usage: .apps-list, .apps-card(--ok|--warning|--offline|--error|--unknown), .apps-card-main,
+        .apps-card-text, .apps-card-status, .apps-card-actions, .apps-card-manage
+*/
+.apps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.apps-card {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(180px, 1fr) auto;
+  grid-template-areas:
+    "main status actions"
+    "diag diag diag";
+  align-items: center;
+  gap: 14px 20px;
+  padding: 18px 20px;
+  background: var(--color-white);
+  border: 1px solid var(--color-sand-200);
+  border-left: 4px solid var(--color-zinc-300, #d4d4d8);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
+}
+
+.apps-card--ok { border-left-color: var(--color-emerald-600, #059669); }
+.apps-card--warning { border-left-color: var(--color-amber-500, #f59e0b); }
+.apps-card--offline,
+.apps-card--error { border-left-color: var(--color-rose-600, #e11d48); }
+
+.apps-card-main {
+  grid-area: main;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.apps-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.apps-card-status {
+  grid-area: status;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.apps-card-actions {
+  grid-area: actions;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .apps-card-manage {
-  align-self: flex-start;
-  margin-top: 10px;
   padding: 7px 14px;
   border-radius: 999px;
   background: var(--color-zinc-900);
@@ -35,6 +138,7 @@
   font-size: 0.78rem;
   font-weight: 600;
   text-decoration: none;
+  white-space: nowrap;
   transition: background 0.15s ease;
 }
 
@@ -43,10 +147,119 @@
   background: var(--color-zinc-700, #3f3f46);
 }
 
+/*
+    @module: Health
+    @description: State pill with the coloured dot (green ok, amber warning, red offline / error,
+        grey unknown) and the hint under it.
+    @usage: .apps-health(--ok|--warning|--offline|--error|--unknown), .apps-dot, .apps-health-hint
+*/
+.apps-health {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--color-zinc-200);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-zinc-600);
+  white-space: nowrap;
+}
+
+.apps-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-zinc-400, #a1a1aa);
+}
+
+.apps-health--ok { color: var(--color-emerald-700, #047857); }
+.apps-health--ok .apps-dot { background: var(--color-emerald-600, #059669); box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.18); }
+.apps-health--warning { color: var(--color-amber-700, #b45309); }
+.apps-health--warning .apps-dot { background: var(--color-amber-500, #f59e0b); box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2); }
+.apps-health--offline,
+.apps-health--error { color: var(--color-rose-700, #be123c); }
+.apps-health--offline .apps-dot,
+.apps-health--error .apps-dot { background: var(--color-rose-600, #e11d48); box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.18); }
+
+.apps-health-hint {
+  font-size: 0.74rem;
+  color: var(--color-zinc-500);
+  line-height: 1.35;
+}
+
+/*
+    @module: Diagnosis
+    @description: Small figures of an application (data response, entries / errors in 24 h,
+        last activity / error); an error count above zero is red.
+    @usage: dl.apps-diag > div > dt + dd, .apps-diag--bad
+*/
+.apps-diag {
+  grid-area: diag;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-sand-200);
+}
+
+.apps-diag div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.apps-diag dt {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-zinc-400);
+}
+
+.apps-diag dd {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--color-zinc-900);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.apps-diag--bad dd { color: var(--color-rose-700, #be123c); }
+
+/*
+    @module: Empty state
+    @description: Shown when the user may open no application.
+    @usage: .apps-empty
+*/
 .apps-empty {
   padding: 24px;
   border: 1px dashed var(--color-sand-200);
   border-radius: 16px;
   color: var(--color-zinc-500);
   font-size: 0.85rem;
+}
+
+@media (max-width: 900px) {
+  .apps-card {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "main actions"
+      "status status"
+      "diag diag";
+  }
+  .apps-diag { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .apps-card {
+    grid-template-columns: 1fr;
+    grid-template-areas: "main" "status" "diag" "actions";
+    padding: 16px;
+  }
+  .apps-diag { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .apps-card-actions { justify-content: space-between; }
 }

@@ -21,6 +21,22 @@ import type { PublicArea } from '../public/public-area';
  *  a palette of shared/styles/tokens.css (`--color-<name>-600` / `-50`). */
 export type AppColor = 'indigo' | 'emerald' | 'rose' | 'amber';
 
+/**
+ * Maintenance switch of the public part of an application (shown by the core: dashboard header,
+ * page Applications). The API endpoint answers GET with the state and takes PUT
+ * `{ <activeField>, <messageField>, confirm_password }`.
+ */
+export interface AppMaintenance {
+  /** Admin endpoint of the switch (e.g. `web/settings`). */
+  endpoint: string;
+  /** Permission of the endpoint - without it the state is shown, the switch is not. */
+  permission: string;
+  /** Field of the on / off state. */
+  activeField: string;
+  /** Field of the text of the maintenance page. */
+  messageField: string;
+}
+
 /** Ids of the applications (the same as the API registry, config/apps.php). */
 export type AppId = 'web' | 'shop' | 'project-portal';
 
@@ -51,4 +67,6 @@ export interface AppManifest {
   publicFallbackRoutes?: Routes;
   /** The admin has its own translations (apps/<id>/admin/i18n/{lang}.json). */
   adminI18n?: boolean;
+  /** Maintenance switch of its public part (none = the application cannot be switched off). */
+  maintenance?: AppMaintenance;
 }

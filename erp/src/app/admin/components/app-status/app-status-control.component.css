@@ -1,57 +1,97 @@
 /*
-    @file: dashboard-maintenance.css
-    @path: /src/app/admin/shared-styles/dashboard-maintenance.css
+    @file: app-status-control.component.css
+    @path: src/app/admin/components/app-status/app-status-control.component.css
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Maintenance-mode toggle row and status indicator on the shop and web dashboards.
-    @dependencies: none
+    @description: State of an application (coloured dot + text) with its maintenance switch
+        button, and the password confirmation window of the switch.
+    @dependencies: colour tokens of the admin (with fallbacks)
 */
 
 /*
-    @module: Dashboard maintenance switch
-    @description: Maintenance-mode toggle row and status indicator on the shop and web dashboards.
-    @usage: .btn-modal-primary, .btn-modal-primary:hover, .btn-modal-secondary, .btn-modal-secondary, .btn-modal-primary, .btn-modal-secondary:hover, .close-modal-btn, .close-modal-btn:hover, .form-control-password, .form-control-password:focus, .maintenance-status, .maintenance-switch-btn, .maintenance-switch-
+    @module: State and switch
+    @description: Pill with the dot of the health (green online, amber problem, red maintenance,
+        grey unknown) and the round switch button beside it.
+    @usage: .as-control, .as-state--{ok|warning|offline|error|unknown}, .as-dot, .as-switch-btn(--on)
 */
+:host { display: inline-block; }
 
-.maintenance-toggle-row {
+.as-control {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 18px;
-  gap: 14px;
+  gap: 10px;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
-.maintenance-status { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; }
-
-.status-indicator { width: 9px; height: 9px; border-radius: 50%; }
-
-.status-active .status-indicator { background: var(--success, var(--color-emerald-600)); }
-
-.status-active { color: var(--success, var(--color-emerald-600)); }
-
-.status-inactive .status-indicator { background: var(--warning, var(--color-amber-600)); }
-
-.status-inactive { color: var(--warning, var(--color-amber-600)); }
-
-.maintenance-switch-btn {
-  padding: 8px 16px;
+.as-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid var(--border-mid, var(--color-zinc-200));
-  background: var(--surface, var(--color-white));
-  color: var(--text, var(--color-zinc-900));
-  font-size: 0.82rem;
+  border: 1px solid var(--color-zinc-200, #e4e4e7);
+  background: var(--color-white, #fff);
+  font-size: 0.8rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: background var(--ease, 0.15s ease);
-  font-family: inherit;
+  color: var(--color-zinc-700, #3f3f46);
+  white-space: nowrap;
 }
 
-.maintenance-switch-btn:hover { background: var(--surface-2, var(--color-zinc-100)); }
+.as-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-zinc-400, #a1a1aa);
+  flex-shrink: 0;
+}
 
+.as-state--ok .as-dot { background: var(--color-emerald-600, #059669); box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.18); }
+.as-state--ok { color: var(--color-emerald-700, #047857); }
+.as-state--warning .as-dot { background: var(--color-amber-500, #f59e0b); box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2); }
+.as-state--warning { color: var(--color-amber-700, #b45309); }
+.as-state--offline .as-dot,
+.as-state--error .as-dot { background: var(--color-rose-600, #e11d48); box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.18); }
+.as-state--offline,
+.as-state--error { color: var(--color-rose-700, #be123c); }
+
+.as-switch-btn {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-zinc-200, #e4e4e7);
+  background: var(--color-white, #fff);
+  color: var(--color-zinc-900, #18181b);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.as-switch-btn:hover,
+.as-switch-btn:focus-visible { background: var(--color-zinc-100, #f4f4f5); }
+
+.as-switch-btn--on {
+  background: var(--color-zinc-900, #18181b);
+  border-color: var(--color-zinc-900, #18181b);
+  color: var(--color-white, #fff);
+}
+
+.as-switch-btn--on:hover,
+.as-switch-btn--on:focus-visible { background: var(--color-zinc-700, #3f3f46); }
+
+/*
+    @module: Confirmation window
+    @description: Overlay, card, warning, password field and buttons of the switch confirmation.
+    @usage: .password-modal-overlay, .password-modal-card, .password-modal-header, .password-modal-body,
+        .password-modal-footer, .modal-warning-box, .password-input-group, .form-control-password,
+        .btn-modal-primary, .btn-modal-secondary, .close-modal-btn
+*/
 .password-modal-overlay {
   position: fixed;
+  text-align: left;
   inset: 0;
   background: rgba(24, 24, 27, 0.45);
   display: flex;
@@ -147,6 +187,9 @@
 .btn-modal-primary { background: var(--accent, var(--color-zinc-900)); color: var(--color-white); }
 
 .btn-modal-primary:hover { background: var(--accent-dark, var(--color-black)); }
+
+.btn-modal-primary:disabled,
+.btn-modal-secondary:disabled { opacity: 0.6; cursor: default; }
 
 @media (max-width: 480px) {
   .password-modal-overlay { align-items: flex-end; padding: 0; }

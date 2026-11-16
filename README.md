@@ -70,12 +70,18 @@ The platform is a **core** with **applications** plugged into it:
 
 - **The core never depends on an application** – it reads them only from the registries
   `api/config/apps.php` (manifests `AppManifest`: routes, migrations, views, permissions, logs,
-  retention, calendar, uploads, configuration `<App>/config.php` → `config('<id>.…')`) and
-  `erp/src/app/apps/apps.registry.ts` (manifests `AppManifest`: admin and public routes, sidebar,
-  tab, texts, public area). **An application never depends on another one** – it asks the registry
+  retention, calendar, uploads, public availability `availability()`, configuration
+  `<App>/config.php` → `config('<id>.…')`) and `erp/src/app/apps/apps.registry.ts` (manifests
+  `AppManifest`: admin and public routes, sidebar, tab, texts, public area, maintenance switch
+  `maintenance`). **An application never depends on another one** – it asks the registry
   (`hasApp('shop')`). Both rules are tested (`ApplicationBoundariesTest`, the erp runner).
 - In the admin, the header has the **Core** tab and the **application switcher** (always naming
-  the current application); Core → *Applications* lists the applications the user may open.
+  the current application); Core → *Applications* lists the applications the user may open, one
+  below the other, with the state of the public part (green online / amber problem / red
+  maintenance), a light diagnosis (`GET core/apps/status`: data response, log entries and errors in
+  24 h) and the switch. The same state and switch is in the header of every application dashboard
+  (`AppStatusControlComponent`); switching an application off shows the visitors its maintenance
+  page (web, e-shop and project portal - the API of its public part answers 503).
 - **New application:** `templates/app/new-app.sh <id> "<Name>"` – see
   [templates/app/README.md](templates/app/README.md).
 - **Removing an application:** delete its folders (`api/app/Apps/<App>`, `api/tests/Apps/<App>`,
@@ -491,7 +497,7 @@ The full step-by-step guide with explanations is in [deploy/HOW_TO_DEPLOY.md](de
    - public web, e-shop, admin login, sending an e-mail
    - `curl -I https://<domain>/laravel/.env` must return **403 or 404**, never 200
 
-### One-time steps of the November 2026 modular refactor (patches 0101–0106)
+### One-time steps of the November 2026 modular refactor (patches 0101–0107)
 
 Deploy the API and the frontend of the release together. Before the upload, let the queue finish
 (`php artisan queue:work --stop-when-empty`) - queued mails of the old release carry class names
@@ -523,6 +529,11 @@ that no longer exist. Then, besides step 6 above:
   and the permissions `web-projects-*` → `project-portal-projects-*` (same ids - roles and accounts
   keep them); nothing to seed. Database reports or scripts that read the old table names must
   use the new ones.
+- (0107) the project portal gets a maintenance switch and a dashboard: `php artisan migrate --force`
+  adds `project_portal_settings.is_portal_active` / `portal_maintenance_message` and the
+  permissions `project-portal-set-maintenance-mode` (to holders of `project-portal-settings-update`)
+  and `project-portal-view-dashboard` (to holders of `view-project-portal`); `php artisan db:seed
+  --force` adds the browser title of the portal maintenance page (`project-portal.maintenance`).
 
 ### One-time steps of the October 2026 fixes (findings-fixes 1–4)
 

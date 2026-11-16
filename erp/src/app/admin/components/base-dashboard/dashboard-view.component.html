@@ -5,7 +5,7 @@
     @author: JS
     @created: 2026
     @description: Layout of a module dashboard (`d` = the dashboard, BaseDashboardComponent):
-        header with refresh, hero metric + comparison bars, distribution bar, quick navigation,
+        header with refresh (and the state + maintenance switch of the application `d.appId`), hero metric + comparison bars, distribution bar, quick navigation,
         recent activity of the module log with its breakdown; extra sections of the dashboard
         (e.g. the maintenance toggle of the web) are projected before the footer.
 -->
@@ -17,19 +17,25 @@
       <h1 class="cd-header-title">{{ d.t('header_title') }}</h1>
       <p class="cd-header-sub">{{ d.t('header_subtitle') }}</p>
     </div>
-    <div class="cd-header-actions">
-      @if (d.lastUpdatedAt) {
-        <span class="cd-last-updated">{{ d.t('last_updated_label') }} {{ d.lastUpdatedAt | date:'HH:mm:ss' }}</span>
+    <div class="cd-header-side">
+      <div class="cd-header-actions">
+        @if (d.lastUpdatedAt) {
+          <span class="cd-last-updated">{{ d.t('last_updated_label') }} {{ d.lastUpdatedAt | date:'HH:mm:ss' }}</span>
+        }
+        <button type="button" class="cd-refresh-btn" (click)="d.refresh()" [disabled]="d.isRefreshing" [title]="d.t('refresh_button_title')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          {{ d.t('refresh_button') }}
+        </button>
+        <app-page-help></app-page-help>
+      </div>
+      @if (d.appId) {
+        <!-- State of the application + maintenance switch (AppStatusControlComponent) -->
+        <app-status-control class="cd-app-status" [appId]="d.appId"></app-status-control>
       }
-      <button type="button" class="cd-refresh-btn" (click)="d.refresh()" [disabled]="d.isRefreshing" [title]="d.t('refresh_button_title')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="23 4 23 10 17 10"/>
-          <polyline points="1 20 1 14 7 14"/>
-          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-        </svg>
-        {{ d.t('refresh_button') }}
-      </button>
-      <app-page-help></app-page-help>
     </div>
   </div>
 

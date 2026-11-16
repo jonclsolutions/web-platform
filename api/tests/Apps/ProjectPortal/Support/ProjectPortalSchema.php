@@ -34,6 +34,8 @@ final class ProjectPortalSchema
 
         Schema::create('project_portal_settings', function (Blueprint $t) {
             $t->increments('id');
+            $t->boolean('is_portal_active')->default(true);
+            $t->string('portal_maintenance_message', 500)->nullable();
             foreach (['subject', 'title', 'intro', 'outro', 'labels'] as $column) {
                 $t->json("sales_order_email_{$column}_i18n")->nullable();
             }

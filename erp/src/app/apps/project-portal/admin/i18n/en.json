@@ -1,4 +1,23 @@
 {
+  "project-portal-dashboard": {
+    "header_title": "Project portal overview",
+    "header_subtitle": "Sales, client projects and the operation of the public portal",
+    "stat_sales_leads_label": "Sales leads",
+    "stat_sales_orders_label": "Orders",
+    "stat_projects_label": "Projects",
+    "stat_portal_logs_label": "Log entries",
+    "nav_sales_leads_title": "Sales leads",
+    "nav_sales_leads_desc": "Contacts of potential customers and order links",
+    "nav_sales_orders_title": "Orders",
+    "nav_sales_orders_desc": "Orders from the order form",
+    "nav_projects_title": "Projects",
+    "nav_projects_desc": "Client projects, checkpoints and the client portal",
+    "nav_logs_title": "Portal logs",
+    "nav_logs_desc": "Records of the activity in the portal",
+    "section_recent_activity": "Recent activity",
+    "activity_card_title": "Portal logs",
+    "activity_empty": "No entries yet"
+  },
   "sales-leads": {
     "table_header": "Sales leads",
     "trash_header": "Trash",
@@ -655,6 +674,8 @@
     "hint_projects": "With threads, messages and attachments; the last portal message counts too."
   },
   "permission-descriptions": {
+    "project-portal-view-dashboard": "View the dashboard of the project portal (overview and recent activity)",
+    "project-portal-set-maintenance-mode": "Switch the public portal and the order form off / on (maintenance mode)",
     "project-portal-projects-view": "View the list and detail of customer projects",
     "project-portal-projects-create": "Create a customer project (standalone or from an order)",
     "project-portal-projects-update": "Edit a project, its checkpoints and client accounts and answer customer requests",
@@ -731,6 +752,8 @@
     "event_generate_link": "Link generated",
     "module_sales_lead": "Sales leads",
     "module_sales_order": "Orders",
-    "module_project_portal_setting": "Portal settings"
+    "module_project_portal_setting": "Portal settings",
+    "event_maintenance_status_changed": "Maintenance mode changed",
+    "event_unauthorized_maintenance_toggle_attempt": "Unauthorized attempt to change maintenance"
   }
 }

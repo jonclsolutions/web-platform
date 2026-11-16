@@ -1187,15 +1187,23 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Overview of the applications you can manage (web, e-shop, project portal …) with the button Manage."
+              "content": "Overview of the applications you may manage (web, e-shop, project portal …): the state of each application, a light diagnosis and the Manage button."
             },
             {
               "type": "text",
-              "content": "Every application has its own menu, pages and help. A card is shown only for an application whose tab permission you have together with at least one of its pages. Manage opens the first page of the application you may open."
+              "content": "The applications are listed one below the other. Each shows the state of its public part - green dot Online, amber Online with a problem, red Offline (maintenance) or Unavailable (its data cannot be read) - and a diagnosis: data response time, entries of its log in 24 hours (load), errors in 24 hours, the last activity and the last error."
+            },
+            {
+              "type": "text",
+              "content": "With the maintenance permission of an application there is the button Switch application off / on. You confirm the change with your password; a switched-off application shows the maintenance page to visitors (web, e-shop and project portal), the administration keeps running. The same button is in the header of the application dashboard."
+            },
+            {
+              "type": "text",
+              "content": "A card is shown only for an application whose tab permission and at least one page you have. Manage opens the first page of the application you may open. Refresh status loads the state again."
             },
             {
               "type": "note",
-              "content": "You can also switch between the applications in the header: next to the Core tab, the button Applications always shows the name of the application you are in."
+              "content": "You can also switch applications in the header: next to the Core tab is the Applications button, which always shows the name of the application you are in."
             }
           ]
         }

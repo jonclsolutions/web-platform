@@ -188,6 +188,17 @@ abstract class AppManifest
     }
 
     /**
+     * @description Public availability of the application (its maintenance switch) - read fresh
+     *   from the database by the status overview of the core. Null = the application has no
+     *   switch (e.g. no public pages).
+     * @return AppAvailability|null
+     */
+    public function availability(): ?AppAvailability
+    {
+        return null;
+    }
+
+    /**
      * @description Removes the texts of a language the admin deleted from the application's
      *   content (e.g. translated FAQ items).
      * @param string $code Language code.

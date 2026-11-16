@@ -30,7 +30,7 @@
 /*
     @module: Dashboard header
     @description: Header bar shared by the core, shop and web dashboards: title, subtitle, last-updated label, refresh button and error banner.
-    @usage: .cd-error-banner, .cd-header-actions, .cd-header-bar, .cd-header-sub, .cd-last-updated, .cd-refresh-btn, .cd-section
+    @usage: .cd-error-banner, .cd-header-actions, .cd-header-side, .cd-header-bar, .cd-header-sub, .cd-last-updated, .cd-refresh-btn, .cd-section
 */
 
 .cd-header-bar {
@@ -49,6 +49,9 @@
 }
 
 .cd-header-actions { display: flex; align-items: center; gap: 10px; }
+
+/* Right side of the header: the actions, under them the state of the application. */
+.cd-header-side { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
 
 .cd-last-updated { font-size: 0.78rem; color: var(--text-dim, var(--color-zinc-400)); }
 

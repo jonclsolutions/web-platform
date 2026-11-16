@@ -17,6 +17,7 @@
 namespace App\Apps\ProjectPortal;
 
 use App\Apps\ProjectPortal\Database\Seeders\ProjectPortalBaseDataSeeder;
+use App\Apps\ProjectPortal\Http\Middleware\CheckProjectPortalActive;
 use App\Apps\ProjectPortal\Http\Middleware\CheckProjectSession;
 use App\Apps\ProjectPortal\Models\ProjectApproval;
 use App\Apps\ProjectPortal\Models\ProjectPortalLog;
@@ -25,6 +26,8 @@ use App\Apps\ProjectPortal\Models\ProjectUpdate;
 use App\Apps\ProjectPortal\Models\SalesOrder;
 use App\Apps\ProjectPortal\Services\ProjectPortalAgendaSource;
 use App\Apps\ProjectPortal\Services\ProjectPortalRetentionSource;
+use App\Apps\ProjectPortal\Models\ProjectPortalSetting;
+use App\Support\Apps\AppAvailability;
 use App\Support\Apps\AppManifest;
 use App\Support\Uploads\AttachmentPolicy;
 
@@ -74,11 +77,12 @@ final class ProjectPortalApp extends AppManifest
 
     /**
      * @description See AppManifest::middlewareAliases(). `project.session` = a valid portal
-     *   session of the project in the URL (HttpOnly cookie).
+     *   session of the project in the URL (HttpOnly cookie); `project-portal.active` = the public
+     *   portal is not in maintenance.
      */
     public function middlewareAliases(): array
     {
-        return ['project.session' => CheckProjectSession::class];
+        return ['project.session' => CheckProjectSession::class, 'project-portal.active' => CheckProjectPortalActive::class];
     }
 
     /** @description See AppManifest::baseDataSeeders(). */
@@ -125,5 +129,13 @@ final class ProjectPortalApp extends AppManifest
             'project_approval'       => ProjectApproval::class,
             'sales_order'            => SalesOrder::class,
         ];
+    }
+
+    /** @description See AppManifest::availability() - the switch of the public portal and order form (project-portal/maintenance). */
+    public function availability(): AppAvailability
+    {
+        $settings = ProjectPortalSetting::query()->first();
+
+        return new AppAvailability((bool) ($settings->is_portal_active ?? true), $settings?->portal_maintenance_message);
     }
 }

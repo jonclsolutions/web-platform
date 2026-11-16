@@ -1,6 +1,13 @@
 {
   "pages": [
     {
+      "id": "project-portal-dashboard",
+      "group": "project-portal",
+      "order": 11,
+      "permission": "project-portal-view-dashboard",
+      "devNote": "ProjectPortalDashboardComponent (apps/project-portal/admin/dashboard, BaseDashboardComponent + DashboardViewComponent), route 'project-portal/dashboard', permission 'project-portal-view-dashboard'. Dlaždice: leady (project-portal/sales_leads), objednávky (project-portal/sales_orders), projekty (project-portal/projects), záznamy logu (project-portal/logs) - každá jen s oprávněním své stránky. V hlavičce AppStatusControlComponent (appId 'project-portal'): stav z core/apps/status, přepínač PUT project-portal/maintenance (ProjectPortalMaintenanceController, oprávnění 'project-portal-set-maintenance-mode', heslo). Vypnutý portál: middleware 'project-portal.active' (CheckProjectPortalActive) vrací 503 na projects/public/* a project-portal/public/*, veřejné stránky přesměruje projectPortalMaintenanceGuard na /projects/maintenance (GET project-portal/public/status)."
+    },
+    {
       "id": "sales-leads",
       "group": "project-portal",
       "order": 12,

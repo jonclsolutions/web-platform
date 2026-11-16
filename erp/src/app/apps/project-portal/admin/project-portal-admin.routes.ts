@@ -5,7 +5,7 @@
  * @author JS
  * @created 2026
  * @description Admin pages of the project portal, below `/admin/project-portal/` (inside
- *   AdminLayoutComponent, AuthGuard checks `data.permission` of every page): the sales leads, the
+ *   AdminLayoutComponent, AuthGuard checks `data.permission` of every page): the dashboard, the sales leads, the
  *   orders, the projects, the project templates, the page of one project with its sub-pages, the
  *   portal settings and the portal log. Each page is loaded on its first visit.
  * @usage `adminRoutes` of PROJECT_PORTAL_APP (project-portal.app.ts); `help` = id of the page of the
@@ -16,7 +16,8 @@ import { Routes } from '@angular/router';
 import { PROJECT_PORTAL_AUDIT_LOG } from './portal-logs/portal-logs.config';
 
 export const PROJECT_PORTAL_ADMIN_ROUTES: Routes = [
-  { path: '', redirectTo: 'projects', pathMatch: 'full' },
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  { path: 'dashboard', loadComponent: () => import('./dashboard/dashboard.component').then(m => m.ProjectPortalDashboardComponent), data: { help: 'project-portal-dashboard', permission: 'project-portal-view-dashboard' } },
   { path: 'projects', loadComponent: () => import('./projects/projects.component').then(m => m.ProjectsComponent), data: { help: 'projects', permission: 'project-portal-projects-view' } },
   { path: 'projects/templates', loadComponent: () => import('./project-templates/project-templates.component').then(m => m.ProjectTemplatesComponent), data: { help: 'projects', permission: 'project-portal-projects-view' } },
   // The project page has sub-pages (overview, conversations, …); one route keeps the page

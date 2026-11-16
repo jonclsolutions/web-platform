@@ -12,14 +12,15 @@
  *   portal (ProjectPortalLocalizationService, keys `order_*`), the legal documents open in a window.
  * @dependencies PublicDataService (SKIP_ADMIN_AUTH_CONTEXT), ProjectPortalLocalizationService,
  *   UploadRulesService (profile sales_order), MultiFileUploadComponent, CaptchaComponent,
- *   LegalDocumentDialogComponent, PortalLanguageSwitcherComponent.
+ *   LegalDocumentDialogComponent, PortalLanguageSwitcherComponent, leaveOnMaintenance (a 503 =
+ *   the portal was switched off → maintenance page).
  * @security The lead is reached only by its random token (never by the internal id); the API
  *   checks the token again when the order is sent (SalesOrderController::store()).
  */
 
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize, switchMap } from 'rxjs';
 import { PublicDataService } from '../../../../shared/services/public-data.service';
@@ -32,6 +33,7 @@ import { publicFormErrorKey } from '../../../../shared/utils/public-form-errors'
 import { LegalDocumentDialogComponent } from '../../../../public/legal/legal-document-dialog/legal-document-dialog.component';
 import { ProjectPortalLocalizationService } from '../project-portal-localization.service';
 import { PortalLanguageSwitcherComponent } from '../language-switcher/portal-language-switcher.component';
+import { leaveOnMaintenance } from '../maintenance/portal-maintenance';
 
 /** State of the link - decides what the page shows. */
 export type OrderLinkState = 'loading' | 'valid' | 'invalid' | 'used' | 'expired';
@@ -68,6 +70,7 @@ export class OrderFormComponent implements OnInit {
   private readonly publicData = inject(PublicDataService);
   private readonly uploadRules = inject(UploadRulesService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -119,7 +122,7 @@ export class OrderFormComponent implements OnInit {
 
     this.token = this.route.snapshot.paramMap.get('token') ?? '';
     this.publicData.get<LeadPrefill>(`project-portal/public/sales-leads/${encodeURIComponent(this.token)}`, undefined, undefined, SKIP_ADMIN_AUTH_CONTEXT)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(leaveOnMaintenance(this.router), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (lead) => {
           this.orderForm.patchValue({
@@ -197,7 +200,7 @@ export class OrderFormComponent implements OnInit {
     this.captcha.nextToken().pipe(
       switchMap(token => {
         this.captcha.appendTo(formData, token);
-        return this.publicData.post('project-portal/public/sales-orders', formData, undefined, SKIP_ADMIN_AUTH_CONTEXT);
+        return this.publicData.post('project-portal/public/sales-orders', formData, undefined, SKIP_ADMIN_AUTH_CONTEXT).pipe(leaveOnMaintenance(this.router));
       }),
       finalize(() => { this.isLoading = false; this.cdr.markForCheck(); }),
       takeUntilDestroyed(this.destroyRef),

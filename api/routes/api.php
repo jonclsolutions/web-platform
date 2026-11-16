@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\Legal\SiteConfigurationController;
 use App\Http\Controllers\Api\Legal\DocumentTypeController;
 use App\Http\Controllers\Api\Core\CoreExternalLinkController;
 use App\Http\Controllers\Api\Core\CoreLogController;
+use App\Http\Controllers\Api\Core\CoreAppStatusController;
 use App\Http\Controllers\Api\AttachmentDownloadController;
 use App\Http\Controllers\Api\UploadRulesController;
 use App\Http\Controllers\Api\CspReportController;
@@ -193,6 +194,10 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
     |----------------------------------------------------------------------
     */
     Route::prefix('core')->group(function () {
+
+        // Status of the applications (core/apps): no page permission - only the applications of
+        // the user's tab permissions are returned (CoreAppStatusController).
+        Route::get('/apps/status', [CoreAppStatusController::class, 'index'])->middleware('throttle:60,1');
 
         // Agenda of the admin calendar (core/calendar): no page permission - every source is
         // filtered by the user's permissions inside (CoreAgendaController).

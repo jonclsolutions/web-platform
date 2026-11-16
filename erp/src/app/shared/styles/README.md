@@ -44,11 +44,11 @@ src/
     │   │   │                               info banner, filter panel beside the table (≥ 1024 px)
     │   │   ├── dashboard.css               dashboard header bar          (core, shop, web dashboards)
     │   │   ├── dashboard-cards.css         cards, KPI rows, charts       (dashboard view)
-    │   │   ├── dashboard-maintenance.css   maintenance switch            (shop + web dashboards)
     │   │   ├── settings-page.css           settings / translation editor (core settings, translation editor view)
     │   │   ├── welcome-page.css            greeting block                (core, shop, web welcome pages)
     │   │   └── welcome-links.css           link-card grid                (shop + web welcome pages)
     │   ├── components/base-dashboard/dashboard-view.component.css   layout of every module dashboard
+    │   ├── components/app-status/app-status-control.component.css   state of an application + maintenance switch
     │   ├── components/translation-editor/translation-editor-view.component.css   language tabs
     │   ├── auth/shared-styles/
     │   │   ├── auth.css                    form controls of login, activation, reset

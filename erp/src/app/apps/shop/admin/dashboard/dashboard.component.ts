@@ -28,11 +28,11 @@
  *
  * @dependencies
  * - DataHandler: Centralized HTTP communication (baseUrl + error handling).
- * - AlertDialogService: Feedback on success / failure of the maintenance mode change.
- * - HasPermissionDirective: Gates the maintenance card on the `shop-set-maintenance-mode` permission.
+ * - AppStatusControlComponent / AppStatusService: state of the storefront with its maintenance
+ *   switch in the header (the manual refresh reloads it).
  * - PermissionService: Synchronous check of permission keys - decides which KPI / chart / table
  *   requests are sent at all.
- * - ResourceCacheService: TTL cache of the stats / maintenance fetch.
+ * - ResourceCacheService: TTL cache of the stats fetch.
  * - AdminLocalizationService: Static i18n of the admin UI (section `shop-dashboard`).
  * - RxJS (forkJoin, interval): Manages concurrent data streams and polling mechanisms.
  */
@@ -42,8 +42,8 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { forkJoin, interval, Subscription, catchError, of, Observable } from 'rxjs';
 import { DataHandler } from '../../../../core/services/data-handler.service';
-import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
-import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
+import { AppStatusService } from '../../../../admin/components/app-status/app-status.service';
+import { AppStatusControlComponent } from '../../../../admin/components/app-status/app-status-control.component';
 import { PermissionService } from '../../../../core/auth/services/permission.service';
 import { ResourceCacheService } from '../../../../core/services/resource-cache.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
@@ -119,14 +119,14 @@ interface RecentOrder {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, HasPermissionDirective, PageHelpComponent],
+  imports: [CommonModule, PageHelpComponent, AppStatusControlComponent],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['../../../../admin/shared-styles/dashboard.css', '../../../../admin/shared-styles/dashboard-maintenance.css', './dashboard.component.css'],
+  styleUrls: ['../../../../admin/shared-styles/dashboard.css', './dashboard.component.css'],
 })
 export class DashboardComponent implements OnInit, OnDestroy {
 
   private sanitizer = inject(DomSanitizer);
-  private alertDialogService = inject(AlertDialogService);
+  private appStatus = inject(AppStatusService);
   private resourceCache = inject(ResourceCacheService);
   private permissionService = inject(PermissionService);
   public readonly i18n = inject(AdminLocalizationService);
@@ -138,15 +138,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private readonly TTL_MS = 2 * 60 * 1000;
   private readonly STATS_CACHE_KEY = 'shop-dashboard:all';
-  private readonly MAINTENANCE_CACHE_KEY = 'shop-dashboard:maintenance';
-  private readonly MAINTENANCE_TTL_MS = 60 * 1000;
 
   /** Permission keys - match `data: { permission }` of the shop page in `admin-routing.module.ts`. */
   private readonly PERM_ORDERS = 'shop-orders-view';
   private readonly PERM_CUSTOMERS = 'shop-customers-view';
   private readonly PERM_PRODUCTS = 'shop-products-view';
   private readonly PERM_COUPONS = 'shop-coupons-view';
-  private readonly PERM_MAINTENANCE = 'shop-set-maintenance-mode';
 
   /** Orders, revenue, 30-day chart, order states - all from `shop/orders`. */
   get canViewOrders(): boolean { return this.permissionService.hasPermission(this.PERM_ORDERS); }
@@ -219,13 +216,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ordersThisWeek = 0;
   ordersLastWeek = 0;
 
-  // ── E-shop maintenance mode ────────────────────────────────────────────
-  isShopActive = true;
-  shopMaintenanceMessage = '';
-  showShopMaintenanceModal = false;
-  shopConfirmPasswordValue = '';
-  pendingShopTargetState = true;
-
   /**
    * @description "Closed paid order" - the single source of truth of what counts as really
    * collected revenue (chart, revenue KPI, AOV, weekly comparison): `payment_status === 'paid'`
@@ -287,7 +277,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadAll();
-    this.loadMaintenanceStatus();
     this.refreshSub = interval(120_000).subscribe(() => this.loadAll(true));
   }
 
@@ -302,6 +291,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.isRefreshing) return;
     this.isRefreshing = true;
     this.loadAll(true);
+    this.appStatus.load(true);
   }
 
   /**
@@ -706,76 +696,5 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   yPos(step: number): number {
     return this.chartPadT + this.chartInnerH - (step / 4) * this.chartInnerH;
-  }
-
-  // ── E-shop maintenance mode ────────────────────────────────────────────
-
-  /**
-   * @description Loads the current maintenance state of the e-shop from the shop-owned
-   * `shop/settings` endpoint, through a short TTL cache (1 min). Called separately from
-   * `loadAll()`, so an outage of the shop KPI data does not block the maintenance state and
-   * vice versa.
-   */
-  private loadMaintenanceStatus(): void {
-    if (!this.permissionService.hasPermission(this.PERM_MAINTENANCE)) {
-      return;
-    }
-
-    this.resourceCache.get(
-      this.MAINTENANCE_CACHE_KEY,
-      () => this.dataHandler.get<any>('shop/settings'),
-      this.MAINTENANCE_TTL_MS
-    ).subscribe({
-      next: (res) => {
-        if (res) {
-          this.isShopActive = !!res.is_shop_active;
-          this.shopMaintenanceMessage = res.maintenance_message || '';
-        }
-      },
-      error: () => { /* keep the last known state (default: shop active) */ }
-    });
-  }
-
-  openShopMaintenanceModal(): void {
-    this.pendingShopTargetState = !this.isShopActive;
-    this.shopConfirmPasswordValue = '';
-    this.showShopMaintenanceModal = true;
-  }
-
-  cancelShopMaintenanceModal(): void {
-    this.showShopMaintenanceModal = false;
-    this.shopConfirmPasswordValue = '';
-  }
-
-  /**
-   * @description Sends the e-shop state change to `shop/settings`
-   * (ShopSiteSettingController::update). Invalidates the maintenance cache key on success.
-   */
-  submitShopMaintenanceChange(): void {
-    if (!this.shopConfirmPasswordValue.trim()) {
-      this.alertDialogService.open(this.t('maintenance_error_title'), this.t('maintenance_error_missing_password'), 'danger');
-      return;
-    }
-
-    this.dataHandler.put<any>('shop/settings', {
-      is_shop_active: this.pendingShopTargetState,
-      maintenance_message: this.shopMaintenanceMessage || this.t('maintenance_default_message'),
-      confirm_password: this.shopConfirmPasswordValue
-    }).subscribe({
-      next: () => {
-        this.isShopActive = this.pendingShopTargetState;
-        this.showShopMaintenanceModal = false;
-        this.resourceCache.invalidate(this.MAINTENANCE_CACHE_KEY);
-        this.alertDialogService.open(
-          this.t('maintenance_success_title'),
-          this.pendingShopTargetState ? this.t('maintenance_success_active') : this.t('maintenance_success_maintenance'),
-          'success'
-        );
-      },
-      error: (err) => {
-        const message = err?.error?.message || this.t('maintenance_error_generic');
-        this.alertDialogService.open(this.t('maintenance_error_auth_title'), message, 'danger');
-      }
-    });
   }
 }

@@ -19,6 +19,8 @@ use App\Apps\Web\Services\WebRetentionSource;
 use App\Apps\Web\Models\WebJobApplication;
 use App\Apps\Web\Models\WebLog;
 use App\Apps\Web\Models\WebRawRequestCommission;
+use App\Apps\Web\Models\WebSiteSetting;
+use App\Support\Apps\AppAvailability;
 use App\Support\Apps\AppManifest;
 use App\Support\Uploads\AttachmentPolicy;
 use App\Apps\Web\Support\WebContentLanguages;
@@ -125,5 +127,13 @@ final class WebApp extends AppManifest
     public function languageDeleted(string $code): void
     {
         WebContentLanguages::forget($code);
+    }
+
+    /** @description See AppManifest::availability() - the switch of the public web (web/settings). */
+    public function availability(): AppAvailability
+    {
+        $settings = WebSiteSetting::query()->first();
+
+        return new AppAvailability((bool) ($settings->is_web_active ?? true), $settings?->web_maintenance_message);
     }
 }

@@ -17,6 +17,8 @@ use App\Apps\Shop\Services\ShopAgendaSource;
 use App\Apps\Shop\Services\ShopRetentionSource;
 use App\Apps\Shop\Http\Middleware\CheckShopActive;
 use App\Apps\Shop\Models\ShopLog;
+use App\Apps\Shop\Models\ShopSiteSetting;
+use App\Support\Apps\AppAvailability;
 use App\Support\Apps\AppManifest;
 use App\Apps\Shop\Support\ShopOrderEmailTemplate;
 use App\Apps\Shop\Database\Seeders\ShopBaseDataSeeder;
@@ -78,5 +80,13 @@ final class ShopApp extends AppManifest
     public function languageDeleted(string $code): void
     {
         ShopOrderEmailTemplate::forget(strtolower($code));
+    }
+
+    /** @description See AppManifest::availability() - the switch of the storefront (shop/settings). */
+    public function availability(): AppAvailability
+    {
+        $settings = ShopSiteSetting::query()->first();
+
+        return new AppAvailability((bool) ($settings->is_shop_active ?? true), $settings?->maintenance_message);
     }
 }

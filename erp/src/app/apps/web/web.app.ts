@@ -53,6 +53,7 @@ export const WEB_APP: AppManifest = {
       ],
     },
   ],
+  maintenance: { endpoint: 'web/settings', permission: 'web-set-maintenance-mode', activeField: 'is_web_active', messageField: 'web_maintenance_message' },
   adminRoutes: WEB_ADMIN_ROUTES,
   publicArea: WEB_PUBLIC_AREA,
   publicRoutes: WEB_PUBLIC_ROUTES,

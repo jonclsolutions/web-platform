@@ -4,7 +4,7 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Manifest of the customer project portal (sales leads, orders with the public order form, projects, their client portal, templates, settings, the portal log) - what the core needs to know about it (apps.registry.ts).
+ * @description Manifest of the customer project portal (dashboard, sales leads, orders with the public order form, projects, their client portal, templates, settings, the portal log) - what the core needs to know about it (apps.registry.ts).
  * @dependencies AppManifest; its admin and public route tables.
  */
 
@@ -21,6 +21,12 @@ export const PROJECT_PORTAL_APP: AppManifest = {
   tabPermission: 'view-project-portal',
   adminI18n: true,
   nav: [
+    {
+      key: 'project-portal-overview', labelKey: 'nav_group_overview',
+      items: [
+        { path: 'dashboard', permission: 'project-portal-view-dashboard', labelKey: 'nav_dashboard', icon: 'bar-chart' },
+      ],
+    },
     {
       key: 'project-portal-business', labelKey: 'nav_group_business',
       items: [
@@ -42,6 +48,7 @@ export const PROJECT_PORTAL_APP: AppManifest = {
       ],
     },
   ],
+  maintenance: { endpoint: 'project-portal/maintenance', permission: 'project-portal-set-maintenance-mode', activeField: 'is_portal_active', messageField: 'portal_maintenance_message' },
   adminRoutes: PROJECT_PORTAL_ADMIN_ROUTES,
   publicRoutes: PROJECT_PORTAL_PUBLIC_ROUTES,
 };

@@ -69,6 +69,7 @@ export const SHOP_APP: AppManifest = {
       ],
     },
   ],
+  maintenance: { endpoint: 'shop/settings', permission: 'shop-set-maintenance-mode', activeField: 'is_shop_active', messageField: 'maintenance_message' },
   adminRoutes: SHOP_ADMIN_ROUTES,
   publicArea: SHOP_PUBLIC_AREA,
   publicRoutes: SHOP_PUBLIC_ROUTES,

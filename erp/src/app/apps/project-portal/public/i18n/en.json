@@ -252,5 +252,9 @@
   "order_doc_updated": "Last update:",
   "order_doc_close": "Close",
   "order_doc_error": "The document could not be loaded. Please try again later.",
-  "order_contact": "Questions:"
+  "order_contact": "Questions:",
+
+  "maintenance_title": "Maintenance in progress",
+  "maintenance_text": "The project portal is temporarily unavailable due to maintenance. Please try again shortly.",
+  "maintenance_retry": "Try again"
 }

@@ -1,0 +1,35 @@
+/*
+    @file: portal-maintenance.component.css
+    @path: src/app/apps/project-portal/public/maintenance/portal-maintenance.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Maintenance page of the project portal - the page, card, title and text come
+        from the order form (same light look); here only the icon colour and the retry button.
+    @dependencies: admin/shared-styles/theme.css, order-form/order-form.component.css (listed before)
+*/
+
+/*
+    @module: Maintenance card
+    @description: Amber icon of the maintenance and the round "Try again" button.
+    @usage: .pm-card, .pm-icon, .pm-retry
+*/
+.pm-icon { color: var(--color-amber-700, #b45309); background: var(--color-amber-50, #fffbeb); }
+
+.pm-retry {
+  padding: 10px 22px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent, #18181b);
+  color: var(--color-white, #fff);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.pm-retry:hover:not(:disabled),
+.pm-retry:focus-visible { opacity: 0.88; }
+
+.pm-retry:disabled { opacity: 0.6; cursor: default; }

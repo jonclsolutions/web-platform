@@ -252,5 +252,9 @@
   "order_doc_updated": "Poslední aktualizace:",
   "order_doc_close": "Zavřít",
   "order_doc_error": "Dokument se nepodařilo načíst. Zkuste to prosím později.",
-  "order_contact": "Dotazy:"
+  "order_contact": "Dotazy:",
+
+  "maintenance_title": "Probíhá údržba",
+  "maintenance_text": "Projektový portál je dočasně mimo provoz kvůli údržbě. Zkuste to prosím za chvíli.",
+  "maintenance_retry": "Zkusit znovu"
 }

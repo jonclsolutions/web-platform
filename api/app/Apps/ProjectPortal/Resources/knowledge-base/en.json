@@ -1,5 +1,31 @@
 {
   "pages": {
+    "project-portal-dashboard": {
+      "navLabel": "Dashboard",
+      "header": "Project portal - Dashboard",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Overview of the project portal: numbers of sales leads, orders, projects and log entries, quick navigation and the recent activity."
+            },
+            {
+              "type": "text",
+              "content": "Every tile and shortcut is shown only when you have the permission of its page. The Refresh button loads the data again (also the state of the portal)."
+            },
+            {
+              "type": "text",
+              "content": "Top right is the state of the public portal: green dot Online, amber Online with a problem (errors in the log in the last 24 hours or a slow response), red Offline (maintenance). With the permission to switch the maintenance there is the button Switch application off / on beside it - you confirm the change with your password."
+            },
+            {
+              "type": "note",
+              "content": "A switched-off portal: the client portal of a project and the order form show the maintenance page and their API answers 503. The administration keeps running."
+            }
+          ]
+        }
+      ]
+    },
     "sales-leads": {
       "navLabel": "Sales leads",
       "header": "Sales leads",
