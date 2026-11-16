@@ -6,7 +6,8 @@
 # Former location of the logs (before 2026-10-31) - the folder can be deleted
 /.dev/
 /build/
-# Production Laravel settings (secrets) used by deploy/build.sh - see deploy/production.env.example
+# Former production settings of the classic hosting (secrets) - never commit a leftover copy;
+# production settings now live only in /srv/app/.env on the VPS
 /deploy/production.env
 /app_build/
 .~lock.*#

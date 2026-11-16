@@ -28,7 +28,7 @@
 #   XAMPP still works). The browser reaches the API on the published 127.0.0.1:${API_PORT}.
 # @security Every port is published on 127.0.0.1 only (BIND_IP) - nothing is reachable from
 #   the LAN. The database root password exists only in the local .env. Never use this file
-#   for production (FORPSI hosting: deploy/build.sh + deploy/server/configure-server.sh).
+#   for production (VPS: deploy/compose.prod.yaml, deploy/deploy_workflow.md).
 # =============================================================================
 
 name: ${COMPOSE_PROJECT_NAME:-web-platform}

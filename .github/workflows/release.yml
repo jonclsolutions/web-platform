@@ -1,0 +1,183 @@
+# =============================================================================
+# @file release.yml
+# @path .github/workflows/release.yml
+# @project JS web-platform
+# @author JS
+# @created 2026
+# @description Automated release of THIS repository (one client = one repository = one VPS):
+#   push of a tag v* (git tag -a v2026.11.1 -m "…" && git push origin v2026.11.1):
+#     1. tests      - ci.yml (all unit tests)
+#     2. images     - <prefix>-api:<tag> and <prefix>-web:<tag> built and pushed to ghcr.io
+#                     (prefix = ghcr.io/<owner>/<repository>, lower case = IMAGE_PREFIX of .env)
+#     3. deploy     - SSH to the VPS: /srv/app/deploy.sh release <tag> (backup, migrations,
+#                     smoke test, automatic rollback on a failure)
+#   Run workflow (Actions → Release → Run workflow): deploy an existing tag again, roll back to the
+#   previous release, or show the status - without tests and builds.
+# @note Settings of the GitHub environment `production` of the repository (deploy_workflow.md):
+#   variables DEPLOY_HOST (IP of the VPS), DEPLOY_KNOWN_HOSTS (its SSH host keys), DEPLOY_USER
+#   (optional, default deploy); secret DEPLOY_SSH_KEY (private deploy key - its public part is
+#   a forced command on the server, it can run nothing but deploy.sh). Optional protection:
+#   required reviewers / tag rule on the environment.
+# @security Minimal permissions per job. The registry token sent to the server is the short-lived
+#   GITHUB_TOKEN of the deploy job (read packages), passed on stdin, never in a command line or
+#   log. Actions pinned to commit SHAs. One deployment at a time (concurrency).
+# =============================================================================
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "deploy = deploy the tag below again (images must exist); rollback = previous release; status"
+        type: choice
+        options: [deploy, rollback, rollback-with-db, status]
+        default: deploy
+      release:
+        description: "Release tag for deploy (e.g. v2026.11.1)"
+        type: string
+        required: false
+
+permissions: {}
+
+concurrency:
+  group: release-production
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    name: Tests
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+
+  images:
+    name: Images
+    if: github.event_name == 'push'
+    needs: tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Image names
+        id: names
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          [[ "$TAG" =~ ^v[0-9A-Za-z][0-9A-Za-z._-]{0,62}$ ]] || { echo "::error::invalid release tag '$TAG'"; exit 1; }
+          prefix="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "api=$prefix-api:$TAG" >> "$GITHUB_OUTPUT"
+          echo "web=$prefix-web:$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Login to ghcr.io
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: API image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: deploy/docker/api.Dockerfile
+          push: true
+          tags: ${{ steps.names.outputs.api }}
+          build-args: |
+            APP_VERSION=${{ github.ref_name }}
+            VCS_REF=${{ github.sha }}
+          # Links the package to this repository (its access follows the repository).
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      - name: Web image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: deploy/docker/web.Dockerfile
+          push: true
+          tags: ${{ steps.names.outputs.web }}
+          build-args: |
+            APP_VERSION=${{ github.ref_name }}
+            VCS_REF=${{ github.sha }}
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
+  deploy:
+    name: Deploy
+    needs: images
+    # After the images of a tag push; directly for Run workflow (images skipped).
+    if: always() && (needs.images.result == 'success' || (github.event_name == 'workflow_dispatch' && needs.images.result == 'skipped'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: production
+    permissions:
+      packages: read
+    steps:
+      - name: Command
+        id: cmd
+        env:
+          EVENT: ${{ github.event_name }}
+          TAG_PUSHED: ${{ github.ref_name }}
+          ACTION: ${{ inputs.action }}
+          TAG_INPUT: ${{ inputs.release }}
+        run: |
+          if [[ "$EVENT" == "push" ]]; then ACTION=deploy; TAG="$TAG_PUSHED"; else TAG="$TAG_INPUT"; fi
+          case "$ACTION" in
+            deploy)
+              [[ "$TAG" =~ ^v[0-9A-Za-z][0-9A-Za-z._-]{0,62}$ ]] || { echo "::error::invalid or missing release tag '$TAG'"; exit 1; }
+              echo "command=release $TAG" >> "$GITHUB_OUTPUT"; echo "login=yes" >> "$GITHUB_OUTPUT" ;;
+            rollback)         echo "command=rollback" >> "$GITHUB_OUTPUT" ;;
+            rollback-with-db) echo "command=rollback --with-db" >> "$GITHUB_OUTPUT" ;;
+            status)           echo "command=status" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::unknown action '$ACTION'"; exit 1 ;;
+          esac
+
+      - name: SSH key
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ vars.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          [[ -n "$SSH_KEY" && -n "$KNOWN_HOSTS" ]] || { echo "::error::DEPLOY_SSH_KEY / DEPLOY_KNOWN_HOSTS missing in the environment production"; exit 1; }
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Run on the server
+        env:
+          HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER || 'deploy' }}
+          COMMAND: ${{ steps.cmd.outputs.command }}
+          LOGIN: ${{ steps.cmd.outputs.login }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # The command goes to the server as text on purpose: it runs only through deploy.sh ci.
+          [[ -n "$HOST" ]] || { echo "::error::DEPLOY_HOST missing in the environment production"; exit 1; }
+          ssh_opts=(-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30)
+          if [[ "$LOGIN" == "yes" ]]; then
+            # Registry login for the pull: user and token on stdin (read by deploy.sh ci).
+            # shellcheck disable=SC2029
+            printf '%s\n%s\n' "$GITHUB_ACTOR" "$REGISTRY_TOKEN" | ssh "${ssh_opts[@]}" "$DEPLOY_USER@$HOST" "$COMMAND"
+          else
+            # shellcheck disable=SC2029
+            ssh "${ssh_opts[@]}" "$DEPLOY_USER@$HOST" "$COMMAND" < /dev/null
+          fi
+
+      - name: Remove the SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

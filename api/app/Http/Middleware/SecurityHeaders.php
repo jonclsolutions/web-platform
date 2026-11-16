@@ -18,7 +18,7 @@
  * - Referrer-Policy: no-referrer - no URL of the API (signed links) leaks to other sites.
  * - Strict-Transport-Security - only on HTTPS requests: the browser uses HTTPS only for one year.
  * The pages of the SPA get their own headers (with the CSP of the application) from
- * deploy/server/.htaccess, which leaves /api to this middleware.
+ * deploy/docker/Caddyfile, which leaves /api to this middleware.
  */
 
 namespace App\Http\Middleware;

@@ -17,8 +17,8 @@
 # (ports from the root .env). First run ./init-workspace.sh once.
 #
 # @note WHY NOT CRON (unchanged): the queue and the scheduler run only while the environment
-#   runs - nothing is written to crontab or systemd. Production: queue:work + cron
-#   (deploy/server/configure-server.sh).
+#   runs - nothing is written to crontab or systemd. Production: the containers queue and
+#   scheduler of deploy/compose.prod.yaml.
 # @note The database data live in the Docker volume <app>_db-data: `stop` / `down` keep them,
 #   only `docker compose -f dev/compose.yaml down -v` deletes them.
 #
@@ -42,8 +42,6 @@
 #   ./dev.sh npm <args>              npm … in erp/        ./dev.sh npx <args>   npx … in erp/
 #   ./dev.sh shell [service]         bash in a container (default: a new dev container)
 #   ./dev.sh test [args]             all unit tests (tests/unit_tests/run_all.sh) in the container
-#   ./dev.sh build [args]            production build (deploy/build.sh) in the container
-#   ./dev.sh build --check           only check deploy/production.env and the build prerequisites
 #   ./dev.sh deps-audit              known vulnerabilities of the production npm / Composer packages
 #   ./dev.sh deps-fix                update ONLY the vulnerable packages within the allowed versions
 #                                    (no new major version), run all tests, list what still needs a
@@ -390,7 +388,6 @@ case "$command" in
     shell)
         if [[ $# -gt 0 ]]; then preflight; dc exec "$1" bash; else dev_run . bash; fi ;;
     test)        dev_run_nodeps . tests/unit_tests/run_all.sh "$@" ;;
-    build)       dev_run_nodeps . deploy/build.sh "$@" ;;
     deps-audit)  dev_run_nodeps . deploy/dependencies.sh audit ;;
     deps-fix)    dev_run_nodeps . deploy/dependencies.sh fix ;;
     db-import)   cmd_db_import "$@" ;;

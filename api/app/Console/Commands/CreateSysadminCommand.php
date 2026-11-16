@@ -11,8 +11,8 @@
  *   rfc + strict, password 8–16 characters with a letter, a digit and a symbol), creates the
  *   activated account with the sysadmin role and adds the e-mail as an exception of the e-mail
  *   access policy, so the account can log in even after a company domain is set.
- *   `--if-none` does nothing when a sysadmin account exists already (configure-server.sh runs
- *   it on every deployment). Written to the core log, without the password.
+ *   `--if-none` does nothing when a sysadmin account exists already (deploy/vps/deploy.sh
+ *   create-sysadmin, safe to run again). Written to the core log, without the password.
  * @note Production never gets a default account with a known password - the local test account
  *   (DevelopmentSeeder) exists only in APP_ENV=local. 2FA by e-mail is forced for the sysadmin
  *   role, so the mail settings of .env must work before the first login.

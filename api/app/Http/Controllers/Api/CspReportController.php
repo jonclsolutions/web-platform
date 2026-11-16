@@ -7,7 +7,7 @@
  * @author JS
  * @created 2026
  * @description Receives the violation reports of the Content-Security-Policy of the SPA
- * (`report-uri /api/csp-report` in deploy/server/.htaccess) and records them as the security
+ * (`report-uri /api/csp-report` in deploy/docker/Caddyfile) and records them as the security
  * event `csp_violation`, so the admin sees in Security events when the policy blocks something -
  * an attempted script injection, or a legitimate source the policy is missing.
  * @security Public (the browser sends the reports without any session) and throttled by the

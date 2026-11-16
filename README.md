@@ -36,15 +36,15 @@ web-platform/
 │   ├── windows/           init-workspace.ps1, dev.ps1 – behind the .cmd launchers
 │   └── logs/, pids/       (git-ignored) one log file per service, PIDs of the log writers
 ├── deploy/
-│   ├── build.sh         production build → build/www.zip
-│   ├── HOW_TO_DEPLOY.md step-by-step deployment guide
-│   ├── production.env.example  template of the production .env (copy to production.env)
-│   ├── server/          server config shipped into the webroot (.htaccess, .user.ini, configure-server.sh)
 │   ├── docker/          PRODUCTION images: api.Dockerfile (PHP-FPM), web.Dockerfile (Angular + Caddy), Caddyfile
 │   ├── compose.prod.yaml  production stack of a VPS (proxy, app, queue, scheduler, db) → /srv/app/compose.yaml
 │   ├── production.docker.env.example  template of /srv/app/.env on the VPS
 │   ├── vps/bootstrap.sh one-time preparation of a fresh Ubuntu VPS (Docker, user deploy, SSH, firewall)
-│   └── setup_hosting.md FORPSI step by step: domain, e-mail, VPS, DNS (Czech)
+│   ├── vps/deploy.sh    releases, rollback, backups on the VPS (/srv/app/deploy.sh)
+│   ├── dependencies.sh  known vulnerabilities of the production packages (./dev.sh deps-audit / deps-fix)
+│   ├── setup_hosting.md FORPSI step by step: domain, e-mail, VPS, DNS (Czech)
+│   └── deploy_workflow.md GitHub Actions + VPS: automated releases step by step (Czech)
+├── .github/workflows/   ci.yml (unit tests of every push / PR), release.yml (tag v* → images → VPS)
 ├── docs/                project documentation, DOCS templates
 ├── templates/app/       template + script of a new application (see its README)
 ├── tests/
@@ -57,7 +57,6 @@ web-platform/
 ├── .gitattributes       fixed line endings (*.sh LF, *.cmd / *.ps1 CRLF)
 ├── dev.sh               starts / stops the local environment, runs artisan / composer / npm / tests in Docker
 ├── temp/                (git-ignored) local scratch files – not backed up
-└── build/               (git-ignored) output of deploy/build.sh, wiped on every build
 ```
 
 ---
@@ -208,7 +207,7 @@ needed. The same commands work by hand (in the container):
 
 `./dev.sh` / `./dev.sh up` brings an existing database up to date on every start: new migrations
 (`migrate --force`) and missing base data (`db:seed --class=BaseDataSeeder`, e.g. new permission
-keys) – the same as step 6 of a production release. Nothing is dropped or overwritten, and the
+keys) – the same as every production release (deploy/vps/deploy.sh). Nothing is dropped or overwritten, and the
 test account is not re-created. After pulling a change while the environment runs, use
 `./dev.sh artisan migrate`.
 
@@ -256,7 +255,7 @@ With `APP_ENV=local` the seeders create:
 | test roles | `read-only-core` and `read-only-<application>` (viewing only), `full-<application>-core` (every permission of the application and of Core), `all-permissions` (every permission – an ordinary user, not the protected sysadmin) – for the core and every application of `config/apps.php` |
 
 The account and roles exist **only locally** – production never gets an account with a known
-password (see [Deployment checklist](#deployment-checklist-monthly-release)).
+password (see [Production](#production-vps-with-docker)).
 
 ### Creating a new application from web-platform
 
@@ -286,7 +285,7 @@ its `dev/.env` and its `erp/src/environments/environment.ts`.
 The project is set up and tested only with Docker. Running it directly on the host needs PHP 8.5+
 (api/composer.lock) with the extensions of `dev/docker/Dockerfile`, Composer, Node.js 24,
 MariaDB, Mailpit and Chromium – the old host-based scripts are in the git history
-(before 2026-10-31); `deploy/build.sh` builds on the host with `BUILD_ON_HOST=1`.
+(before 2026-10-31).
 
 ---
 
@@ -377,143 +376,43 @@ The scheduler currently contains only nightly GDPR clean-up jobs (see `api/route
   that content it fills in the former Czech texts. Back up `storage/app/public/translations/`
   before the release.
 
-## Production build
+## Production (VPS with Docker)
 
-> Step-by-step deployment guide (first install, releases, rollback): **[deploy/HOW_TO_DEPLOY.md](deploy/HOW_TO_DEPLOY.md)**.
+Every installation runs on its own VPS (one client = one repository = one VPS) as the Docker
+stack of `deploy/compose.prod.yaml`: Caddy (HTTPS with Let's Encrypt, Angular, `/api`), PHP-FPM +
+Laravel, queue, scheduler and MariaDB. The images are built once per release by GitHub Actions
+and serve every client - the settings of an installation, including the Turnstile site key, come
+from `/srv/app/.env` on its server at run time.
 
-> **VPS with Docker** (FORPSI VPS, the target of every new installation): the hosting, the e-mail
-> and the server are prepared by **[deploy/setup_hosting.md](deploy/setup_hosting.md)**; the stack
-> is `deploy/compose.prod.yaml` with the images of `deploy/docker/` (one image for every client -
-> the settings, including the Turnstile site key, come from `/srv/app/.env` at run time). The
-> automated releases from GitHub Actions follow in `deploy/deploy_workflow.md`. The FTP package
-> below stays for the classic hosting.
+| Guide | What it covers |
+|---|---|
+| [deploy/setup_hosting.md](deploy/setup_hosting.md) | FORPSI: domain, e-mail (noreply@ / info@ / sysadmin@), SPF / DKIM / DMARC, VPS, SSH key, `bootstrap.sh`, `/srv/app/.env`, Turnstile, DNS |
+| [deploy/deploy_workflow.md](deploy/deploy_workflow.md) | GitHub Actions: deploy key, environment `production`, first release, sysadmin, backups, releases, rollback, moving an existing site, a new client (fork) |
 
-```bash
-deploy/build.sh                         # all unit tests first, then the full build
-deploy/build.sh --skip-tests            # build without running the tests
-deploy/build.sh --skip-angular          # reuse the existing Angular build
-deploy/build.sh --with-public-storage   # also ship storage/app/public (first install only)
-deploy/build.sh --no-zip                # skip the archive
-```
-
-**Production settings – `deploy/production.env`:** the production Laravel `.env` is prepared
-locally and shipped in the package as `laravel/.env`, so the server needs no manual editing.
+**A release** (after the tests and the manual regression of `tests/regression_tests/`):
 
 ```bash
-cp deploy/production.env.example deploy/production.env   # once; the file is git-ignored
-deploy/build.sh --check                                  # checks it (and the prerequisites) without building
+git tag -a v2026.11.1 -m "Release 2026-11.1"
+git push origin v2026.11.1
 ```
 
-The check runs at the start of every build and lists all problems at once:
+GitHub Actions (`.github/workflows/release.yml`) then runs all unit tests, builds and pushes the
+images `ghcr.io/<owner>/<repo>-api|web:<tag>` and runs `/srv/app/deploy.sh release <tag>` on the
+VPS: check of `.env`, backup (database + `storage/app`), stop of the API, `migrate --force` +
+`db:seed --force`, start, smoke test (`/api/version` = the tag, the page, `/.env` = 404). A failure
+puts the previous release - and its database - back automatically. Downtime of the API: tens of
+seconds. Rollback / status: Actions → Release → Run workflow, or on the server
+`/srv/app/deploy.sh rollback | status`.
 
-- **ERROR** (the build stops) – values that would break production or open a hole: `APP_ENV`
-  not `production`, `APP_DEBUG` not `false`, missing / invalid `APP_KEY`, `APP_URL` /
-  `FRONTEND_URL` not `https://` or still local / example, empty `DB_HOST` / `DB_DATABASE` /
-  `DB_USERNAME`, `SESSION_SECURE_COOKIE` not `true`, `MAIL_MAILER` `log` / `array` (no 2FA
-  e-mails = nobody can log in), missing or test Turnstile keys, `SHOP_PAYMENT_SIMULATION` on,
-  `deploy/server/.htaccess` without the rule that blocks `/laravel`.
-- **WARNING** (the build continues) – empty `DB_PASSWORD`, `root` database user, local
-  `MAIL_HOST`, example `MAIL_FROM_ADDRESS`, `LOG_LEVEL=debug`, `QUEUE_CONNECTION=sync`, the
-  same `APP_KEY` as the local `api/.env`, different hosts in `APP_URL` and `FRONTEND_URL`.
-
-`TURNSTILE_SITE_KEY` (public, `0x…`) from the same file is built into the Angular app
-(`ng build --define`); `TURNSTILE_SECRET_KEY` stays in `laravel/.env`. The Angular production
-build uses `erp/src/environments/environment.prod.ts` (`/api`, `/storage` on the same origin)
-and the build aborts if the bundle still contains `127.0.0.1` or a test key.
-
-> **Every deploy overwrites `laravel/.env` on the server** with this file – it is the single
-> source of the production settings. On a server that is already running, copy its current
-> `APP_KEY` into `deploy/production.env` first (a new key logs everybody out and makes
-> encrypted data unreadable). Because the package now contains secrets, upload `www.zip` only
-> over SFTP / FTPS and delete it from the server after extracting.
-
-The build runs **inside the dev container** (same PHP as the hosting, Composer, Node.js,
-Chromium for the tests) – `deploy/build.sh` started on the host re-runs itself there
-(`./dev.sh build` does the same; `BUILD_ON_HOST=1` builds with the host tools).
-
-**Tests first:** every build starts with all unit tests (`tests/unit_tests/run_all.sh`, erp +
-api, report in `tests/unit_tests/report/`). When all of them pass, the build says
-`ALL TESTS PASSED – starting the production build` and continues; when one fails (or a part
-cannot run), the build stops with an error and the previous `build/` stays untouched.
-`--skip-tests` skips this gate.
-
-Output:
-
-```
-build/
-├── www/                  → hosting webroot
-│   ├── index.html, chunks, assets      (Angular production build)
-│   ├── .htaccess, .user.ini, configure-server.sh   (from deploy/server/)
-│   └── laravel/          (API with production dependencies only)
-├── www.zip               → the same www/ as one archive
-├── www.zip.sha256        → checksum to verify the upload
-└── README.md             → preview only (never part of www)
-```
-
-The build **never ships**: the local `api/.env` (only `laravel/.env` built from
-`deploy/production.env`, protected by `.htaccess`), logs, framework cache/sessions/views, user uploads
-in `storage/app/private` (personal data), dev dependencies, tests, IDE helpers, private keys.
-`storage/app/public` is skipped by default so local test files cannot overwrite production
-uploads. A final check aborts the build if any other `.env`, `.sql`, key or log file ends up in
-`www/`, or if `.htaccess` lacks the rule that blocks `/laravel`, `configure-server.sh` and dot
-files (`deny-internal-files`).
-
----
-
-## Deployment checklist (monthly release)
-
-The full step-by-step guide with explanations is in [deploy/HOW_TO_DEPLOY.md](deploy/HOW_TO_DEPLOY.md).
-
-1. **Prepare**
-   - all changes committed and pushed, tests and manual regression (`tests/regression_tests/`) done
-   - tag the release: `git tag -a vYYYY.MM -m "Release YYYY-MM" && git push --tags`
-2. **Build** – `deploy/build.sh --check` (production settings in `deploy/production.env`), then
-   `deploy/build.sh` (runs all unit tests first), check that it ends with `COMPLETE`
-3. **Back up production** – database dump, `laravel/.env`, `laravel/storage/app/`
-4. **Upload** `build/www.zip` – see [Uploading the package](#uploading-the-package):
-   - use **SFTP or FTPS** (FTP over TLS), never plain FTP – it sends the hosting password unencrypted
-   - upload it **outside the webroot**, or delete it right after extracting – the archive contains
-     the complete source code **and `laravel/.env` with all production secrets** and would be
-     downloadable at `https://<domain>/www.zip`
-   - verify it was not corrupted: `sha256sum -c www.zip.sha256` must print `www.zip: OK`
-5. **Extract over the existing deployment.** `laravel/.env` is replaced by the one from the
-   package (built from `deploy/production.env`). Do **not** delete `laravel/storage/` on the
-   server – the package does not contain it, so user uploads stay in place.
-   - **First install only:** run `bash configure-server.sh` in the webroot. It recognises the
-     `.env` from the package (no manual editing); without one it falls back to copying
-     `.env.example` and asks you to edit it. It also prepares the database:
-     `db:create-if-missing` (on shared hosting create the empty database in the hosting panel
-     first), `migrate --force` (whole schema on an empty database), `db:seed --force` (base data
-     only – no test account in production) and `security:create-sysadmin --if-none`, which **asks
-     for the e-mail and password of the first sysadmin** (typed in the console, never stored in a
-     file; the e-mail is allowed in the e-mail access policy). 2FA by e-mail is forced for
-     sysadmins, so `MAIL_*` must work before the first login. *(The database part of
-     configure-server.sh is not tested on the server yet – go through its output carefully.)*
-   - **Never regenerate `APP_KEY` on a running production** – it logs out all users and makes
-     encrypted data unreadable.
-   - `APP_ENV=production` and `APP_DEBUG=false` are enforced by the build check; with debug on,
-     error pages expose credentials and server paths.
-   - Check once after the upload that `https://<domain>/laravel/.env` answers **403** (the rule
-     `deny-internal-files` in `.htaccess`).
-6. **On the server** (in `laravel/`):
-   ```bash
-   php artisan down
-   php artisan migrate --force       # existing database: only new migrations (the baseline is a no-op)
-   php artisan db:seed --force       # adds new base data (e.g. new permission keys), changes nothing else
-   php artisan config:cache && php artisan route:cache && php artisan view:cache
-   php artisan storage:link          # first install only
-   php artisan queue:restart         # workers pick up the new code
-   php artisan up
-   ```
-7. **Smoke test**
-   - public web, e-shop, admin login, sending an e-mail
-   - `curl -I https://<domain>/laravel/.env` must return **403 or 404**, never 200
+`/srv/app/deploy.sh check` refuses a production `.env` that would break production or open a hole
+(debug on, http URLs, missing / invalid `APP_KEY`, `log` mailer, test Turnstile keys, payment
+simulation, `root` database user, readable `.env` …).
 
 ### One-time steps of the November 2026 modular refactor (patches 0101–0107)
 
-Deploy the API and the frontend of the release together. Before the upload, let the queue finish
-(`php artisan queue:work --stop-when-empty`) - queued mails of the old release carry class names
-that no longer exist. Then, besides step 6 above:
+Historical notes of the releases on the former hosting (the migrations and seeds run automatically
+with every release now). Deploy the API and the frontend of the release together; before it, let
+the queue finish - queued mails of the old release carry class names that no longer exist. Then:
 
 - `php artisan migrate --force` renames `web_attachments` → `core_attachments` and
   `web_cookie_consents` → `legal_cookie_consents`, moves the tab permissions `view-web`,
@@ -547,13 +446,17 @@ that no longer exist. Then, besides step 6 above:
   and `project-portal-view-dashboard` (to holders of `view-project-portal`); `php artisan db:seed
   --force` adds the browser title of the portal maintenance page (`project-portal.maintenance`).
 
-### Release notes of patch 0108 (production Docker)
+### Release notes of patches 0108–0109 (VPS with Docker)
 
-Nothing to run on an existing installation. New: `GET /api/version` (release of the running code,
-`APP_VERSION` of the image, `dev` otherwise); `MAIL_REPLY_TO_ADDRESS` / `MAIL_REPLY_TO_NAME` in
-`.env` = Reply-To of every e-mail without its own (e.g. `info@` while sending from `noreply@`) -
-add it to `deploy/production.env` too; the Angular app loads `/runtime-config.js` before its
-bundle (empty on the classic hosting - the Turnstile key built in by `deploy/build.sh` is used).
+- (0108) `GET /api/version` (release of the running code, `APP_VERSION` of the image, `dev`
+  otherwise); `MAIL_REPLY_TO_ADDRESS` / `MAIL_REPLY_TO_NAME` = Reply-To of every e-mail without its
+  own (e.g. `info@` while sending from `noreply@`); the Angular app loads `/runtime-config.js`
+  (Turnstile site key of the installation) before its bundle.
+- (0109) the classic hosting (FTP package of `deploy/build.sh`, `deploy/server/` with `.htaccess`
+  and `configure-server.sh`, `HOW_TO_DEPLOY.md`, `production.env.example`, the queue cron script)
+  is gone - releases go only through GitHub Actions to the VPS. Moving the existing site:
+  [deploy/deploy_workflow.md](deploy/deploy_workflow.md), chapter "Přenos stávajícího webu".
+  Delete the local `deploy/production.env` once its values are in Bitwarden / `/srv/app/.env`.
 
 ### One-time steps of the October 2026 fixes (findings-fixes 1–4)
 
@@ -561,11 +464,11 @@ Run once on the first release that contains them (back up the database first):
 
 1. ~~**SQL migrations** (`database/migrations/*.sql`)~~ – **done on the server**; the scripts were
    removed with the root `database/` folder on 2026-10-31. Later schema changes are Laravel
-   migrations, run by `php artisan migrate --force` (step 6 above).
+   migrations, run by `php artisan migrate --force` (every release).
 2. ~~**Legacy attachments to the private disk**~~ – **done on the server**; the one-time command
    `attachments:migrate-legacy` was removed afterwards.
-3. **Clear caches**: `php artisan optimize:clear`, then the `config:cache` / `route:cache` /
-   `view:cache` of step 6
+3. **Clear caches**: `php artisan optimize:clear`, then `php artisan optimize` (the containers do
+   it at every start)
 4. **Runtime translations** – the public web / shop texts live in
    `laravel/storage/app/public/translations/{web,shop}/<lang>.json` on the server and are **not**
    part of the package (they are edited in the admin). Add the new keys to every language file
@@ -596,28 +499,6 @@ Run once on the first release that contains them (back up the database first):
    (`php artisan key:generate --force` – everyone is logged out, data encrypted with the old key
    can no longer be read).
 
-### Uploading the package
-
-**`www.zip`** is a plain, unencrypted ZIP archive – no key or password is needed to upload
-or extract it. FTP cannot extract archives; extract it in the hosting file manager or over
-SSH (`unzip www.zip`), or upload the extracted `build/www/` directory instead.
-
-**`www.zip.sha256`** is a checksum (fingerprint) of the archive – not a key, nothing is
-encrypted. Changing a single byte of the archive produces a completely different value, so it
-answers two questions:
-
-- *Did the upload succeed?* An interrupted transfer leaves a truncated archive that may extract
-  only partially and break production. Verify on the server before extracting:
-  ```bash
-  sha256sum -c www.zip.sha256     # with the .sha256 file uploaded next to the archive
-  sha256sum www.zip               # or compare the value with build/www.zip.sha256 by hand
-  ```
-- *Is this the right build?* The checksum identifies one specific build, so you can tell which
-  of several `www.zip` files is current and what exactly is deployed.
-
-Without SSH access the check cannot run on the server – then at least compare the file size on
-the server with the local one. The checksum file does not need to be deployed.
-
 ---
 
 ## Security and GDPR rules
@@ -626,8 +507,8 @@ the server with the local one. The checksum file does not need to be deployed.
 - **No real personal data in the repository**: `api/database/` contains the schema, migrations
   and seeders only (placeholder data); database dumps (`./dev.sh db-dump` → `temp/`) stay outside git.
 - User uploads (`storage/app/private`) are personal data – never copied into builds or shared.
-- Retention of personal data is enforced by scheduled clean-up jobs – keep the production
-  scheduler cron running:
+- Retention of personal data is enforced by scheduled clean-up jobs – the container `scheduler` of
+  production runs them:
   - `security:purge-events` (security events, period in Security events), `imports:purge-stale`;
   - `retention:purge` (03:45) – job applications (default 6 months), inquiries and sales leads
     (2 years), orders and projects (10 years), cookie consent records (3 years): records not
@@ -639,13 +520,13 @@ the server with the local one. The checksum file does not need to be deployed.
 - Cookie consent decisions are recorded on the server as the proof of consent
   (`legal_cookie_consents`: random consent id, version, categories, time – no IP address).
 - Production always runs with `APP_DEBUG` off and an HTTPS-only session cookie, whatever the
-  `.env` says (`AppServiceProvider::enforceProductionSafety`); `deploy/build.sh --check` refuses
-  such a `.env` before that.
+  `.env` says (`AppServiceProvider::enforceProductionSafety`); `deploy.sh check` refuses such a
+  `.env` before every release.
 - The shop payment simulation is off unless `SHOP_PAYMENT_SIMULATION=true` (never in production)
   and needs the `payment_token` that create-order returns to the buyer.
 - One-time project portal passwords are shown only in the open admin modal – never stored in
   the browser; a lost password can only be regenerated.
-- `dev/.env`, `dev/logs/`, `dev/pids/` and `build/` are git-ignored; check with `git status` before every commit.
+- `dev/.env`, `dev/logs/`, `dev/pids/` are git-ignored; check with `git status` before every commit.
 - **E-mail access policy** (admin → Account management → E-mail domains) applies to every role,
   sysadmin included: an account outside the allowed domains / exceptions cannot log in, and its
   open sessions end as soon as the policy excludes it. The editor refuses a change that would
@@ -732,7 +613,7 @@ the server with the local one. The checksum file does not need to be deployed.
   - The admin creates the same records through the signed-in routes – no captcha, no form limits.
   - Security events: `form_captcha_failed`, `form_captcha_service_error`, `form_honeypot`,
     `throttle_exceeded`. Reset the limits locally: `./dev.sh artisan cache:clear`.
-  - Behind a proxy / CDN set `TRUSTED_PROXIES` (see deploy/HOW_TO_DEPLOY.md), otherwise every
+  - Behind a proxy / CDN set `TRUSTED_PROXIES` (see deploy/production.docker.env.example), otherwise every
     per-IP limit (login, forms) is shared by all visitors.
   - Cloudflare Turnstile must be named as a processor in the privacy policy (GDPR).
 
@@ -789,4 +670,3 @@ All code must be documented using the DOCS templates in `docs/`:
 | *permission denied … docker.sock* | Your user is not in the `docker` group yet: `sudo usermod -aG docker $USER`, log out and in (`./init-workspace.sh` offers it). |
 | Files in the repository owned by root / another user | `HOST_UID` / `HOST_GID` in `dev/.env` do not match `id -u` / `id -g` – run `./init-workspace.sh` (fixes them), then `./dev.sh rebuild`; fix existing files with `sudo chown -R $USER: .` |
 | *the input device is not a TTY* | Run the command in a terminal (not from a script / pipe) or use `docker compose run -T …`. |
-| Build fails with *"Angular output not found"* | The output path is read from `outputPath` in `erp/angular.json`; override with `ANGULAR_OUTPUT=dist/<name> deploy/build.sh`. |

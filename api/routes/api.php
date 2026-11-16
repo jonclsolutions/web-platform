@@ -65,7 +65,7 @@ Route::get('translations/{module}/{lang}', [TranslationController::class, 'show'
 // requests validate with; the frontend uses it for the file picker and the hints.
 Route::get('upload-rules', [UploadRulesController::class, 'index'])->middleware('throttle:60,1');
 
-// Violation reports of the Content-Security-Policy of the SPA (report-uri in deploy/server/.htaccess).
+// Violation reports of the Content-Security-Policy of the SPA (report-uri in deploy/docker/Caddyfile).
 Route::post('csp-report', [CspReportController::class, 'store'])->middleware('throttle:20,1,csp-report');
 
 // Release of the running code - checked by the deploy smoke test (deploy/docker, APP_VERSION).

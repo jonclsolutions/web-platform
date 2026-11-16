@@ -84,6 +84,10 @@ WORKDIR /var/www/html
 COPY --from=vendor --chown=www-data:www-data /var/www/html /var/www/html
 COPY --from=vendor --chown=www-data:www-data /opt/seed /opt/seed
 COPY --chmod=755 deploy/docker/api-entrypoint.sh /usr/local/bin/api-entrypoint
+# Deployment bundle of this release: deploy/vps/deploy.sh installs compose.yaml and itself from
+# here, so the server always runs the files of the deployed release (deploy_workflow.md).
+COPY --chmod=644 deploy/compose.prod.yaml /opt/deploy/compose.yaml
+COPY --chmod=755 deploy/vps/deploy.sh /opt/deploy/deploy.sh
 
 USER www-data
 EXPOSE 9000

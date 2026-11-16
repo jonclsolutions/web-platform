@@ -6,8 +6,7 @@
 # @author JS
 # @created 2026
 # @description Known vulnerabilities of the PRODUCTION dependencies (npm of erp/, Composer of
-# api/) - one implementation for `./dev.sh deps-audit`, `./dev.sh deps-fix` and the dependency
-# step of deploy/build.sh.
+# api/) - one implementation for `./dev.sh deps-audit` and `./dev.sh deps-fix`.
 #   audit  lists the advisories, critical / high ones by name, and whether each can be fixed
 #          automatically; changes nothing.
 #   fix    updates ONLY the vulnerable packages and ONLY within the versions allowed by

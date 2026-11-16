@@ -52,9 +52,10 @@ COPY --from=build /src/dist/rp_website/browser /srv/www
 
 EXPOSE 80 443 443/udp
 
-# The admin API of Caddy answers = the server runs (only inside the container).
+# The app is served (internal door of the Caddyfile, only inside the container) - independent of
+# the DNS and the certificate.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD wget -q -O /dev/null http://127.0.0.1:2019/config/ || exit 1
+    CMD wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1
 
 ENTRYPOINT ["web-entrypoint"]
 CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

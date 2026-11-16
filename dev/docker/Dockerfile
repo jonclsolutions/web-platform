@@ -12,8 +12,8 @@
 #     built in) + pcov (test coverage, optional), Composer 2;
 #   - Node.js 24 LTS + npm (Angular 21 needs ^20.19 || ^22.12 || >=24);
 #   - Chromium for the Karma unit tests of erp (CHROME_BIN);
-#   - git, unzip, zip, rsync, openssl, mariadb-client - used by Composer, deploy/build.sh,
-#     the dev certificate and ./dev.sh db-import / db-dump.
+#   - git, unzip, zip, rsync, openssl, mariadb-client - used by Composer, the dev certificate
+#     and ./dev.sh db-import / db-dump.
 #   Used by the services api, queue, scheduler and erp of compose.yaml and by every
 #   `./dev.sh <tool>` command.
 # @note The image runs as the user `dev` with the UID / GID of the host user (build args from

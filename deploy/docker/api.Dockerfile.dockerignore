@@ -5,7 +5,8 @@
 # @author JS
 # @created 2026
 # @description Build context of api.Dockerfile (BuildKit reads <Dockerfile>.dockerignore next to
-#   the Dockerfile). Allow-list: only the code of the API and the image files of deploy/docker -
+#   the Dockerfile). Allow-list: only the code of the API, the image files of deploy/docker and
+#   the deployment bundle (compose.prod.yaml, vps/deploy.sh) -
 #   never .env, keys, vendor/ of the developer, uploads, logs or tests. From storage/ only the
 #   base translations (storage/app/public/translations - the seed of a new installation).
 # =============================================================================
@@ -23,6 +24,8 @@
 !api/storage/app/public/translations
 !deploy/docker/php
 !deploy/docker/api-entrypoint.sh
+!deploy/compose.prod.yaml
+!deploy/vps/deploy.sh
 api/bootstrap/cache/*.php
 api/public/storage
 api/public/hot

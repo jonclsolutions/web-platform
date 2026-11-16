@@ -8,7 +8,8 @@
  * @description Creates the database of the configured connection when it does not exist yet
  *   (`CREATE DATABASE … utf8mb4_unicode_ci`), so a fresh installation needs no phpMyAdmin step:
  *   `php artisan db:create-if-missing && php artisan migrate && php artisan db:seed`.
- *   Used by init-workspace.sh (local MariaDB container) and deploy/server/configure-server.sh (server).
+ *   Used by init-workspace.sh (local MariaDB container); in production the db container creates
+ *   the database itself (deploy/compose.prod.yaml).
  *   An existing database is never touched (no drop, no change of its collation).
  * @note It connects to the database SERVER without selecting a database (Laravel itself
  *   cannot connect before the database exists). Only MySQL / MariaDB connections are handled;

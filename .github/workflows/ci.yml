@@ -1,0 +1,74 @@
+# =============================================================================
+# @file ci.yml
+# @path .github/workflows/ci.yml
+# @project JS web-platform
+# @author JS
+# @created 2026
+# @description Unit tests of the whole platform (Angular / Karma + Laravel / PHPUnit through
+#   tests/unit_tests/run_all.sh) on every push to main and every pull request; also called by
+#   release.yml before the images of a release are built. The report is kept as an artifact.
+# @note The API tests run on SQLite in memory (api/phpunit.xml) - no database service. A
+#   throw-away APP_KEY is generated for the run (never a production key).
+# @security Read-only token; the actions are pinned to commit SHAs (the comment names the tag).
+# =============================================================================
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: PHP 8.5
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: "8.5"
+          extensions: bcmath, gd, intl, mbstring, pdo_sqlite, sqlite3, zip, pcntl, exif
+          coverage: none
+          tools: composer:v2
+
+      - name: Node.js 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: erp/package-lock.json
+
+      - name: API dependencies
+        working-directory: api
+        run: |
+          composer install --no-interaction --no-progress --prefer-dist
+          cp .env.example .env
+          php artisan key:generate --no-interaction
+
+      - name: Angular dependencies
+        working-directory: erp
+        run: npm ci --no-audit --no-fund
+
+      - name: Unit tests (erp + api)
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: tests/unit_tests/run_all.sh --no-coverage
+
+      - name: Test report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: unit-test-report
+          path: tests/unit_tests/report/
+          retention-days: 14
+          if-no-files-found: ignore

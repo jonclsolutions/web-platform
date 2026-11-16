@@ -6,8 +6,7 @@
 # @created 2026
 # @description Web server of the production stack (container `proxy`, web.Dockerfile): HTTPS with
 #   automatic Let's Encrypt certificates, the Angular app (SPA), /api → php-fpm of the container
-#   `app`, the public uploads (/storage) and the security headers. The Docker counterpart of
-#   deploy/server/.htaccess (classic hosting) - keep the two in step.
+#   `app`, the public uploads (/storage) and the security headers.
 # @note Environment of the container (deploy/compose.prod.yaml, from /srv/app/.env):
 #   SITE_DOMAIN  the domain without www (jonclsolutions.com); www.<domain> redirects to it
 #   ACME_EMAIL   address Let's Encrypt writes to about the certificates (sysadmin@<domain>)
@@ -16,7 +15,7 @@
 # =============================================================================
 {
 	email {$ACME_EMAIL}
-	# Admin API only inside the container (healthcheck), never published.
+	# Admin API only inside the container, never published.
 	admin localhost:2019
 }
 
@@ -48,7 +47,8 @@ www.{$SITE_DOMAIN} {
 	redir https://{$SITE_DOMAIN}{uri} permanent
 }
 
-{$SITE_DOMAIN} {
+# The application: one definition for the public site and the internal door below.
+(app) {
 	encode zstd gzip
 	header -Server
 
@@ -118,4 +118,16 @@ www.{$SITE_DOMAIN} {
 			file_server
 		}
 	}
+}
+
+{$SITE_DOMAIN} {
+	import app
+}
+
+# Internal plain-HTTP door: the same application for the smoke test of deploy/vps/deploy.sh and
+# the healthcheck (`wget http://127.0.0.1:8080/…` inside this container) - works before the DNS
+# points here and a certificate exists. Bound to 127.0.0.1 of the container, never published.
+http://127.0.0.1:8080 {
+	bind 127.0.0.1
+	import app
 }

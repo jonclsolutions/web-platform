@@ -267,7 +267,7 @@ summary() {
 Next (deploy/setup_hosting.md):
   1. In a NEW terminal check the login:  ssh ${DEPLOY_USER}@<IP>   (keep this one open until it works)
   2. As ${DEPLOY_USER}: put compose.yaml and .env into ${APP_DIR} (chmod 600 .env)
-  3. Deployment from GitHub: deploy/deploy_workflow.md (patch 0109)
+  3. Deployment from GitHub: deploy/deploy_workflow.md
 TXT
 }
 

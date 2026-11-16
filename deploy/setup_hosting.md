@@ -240,8 +240,9 @@ a v Bitwardenu.
 4. Celý obsah `.env` ulož do Bitwardenu jako zabezpečenou poznámku „<klient> – .env“.
 
 ✔ Ověření: `ls -l /srv/app/.env` → `-rw------- deploy deploy`;
-`grep -c '=$' /srv/app/.env` – prázdné zůstávají jen `RELEASE`, `TRUSTED_PROXIES`,
-`CORS_ALLOWED_ORIGINS` (a Turnstile, dokud není krok 11).
+`grep '=$' /srv/app/.env` – prázdné zůstávají jen `RELEASE`, `TRUSTED_PROXIES`,
+`CORS_ALLOWED_ORIGINS`, `BACKUP_REMOTE` (a Turnstile, dokud není krok 11). Úplnou kontrolu
+udělá `deploy.sh check` (deploy_workflow.md, krok 4).
 
 > **`APP_KEY` se po prvním spuštění už nikdy nemění** – jiný klíč odhlásí všechny a zašifrovaná
 > data přestanou být čitelná.

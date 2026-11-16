@@ -37,8 +37,8 @@ class AppServiceProvider extends ServiceProvider
     /**
      * @description Production can never run with the debug page (it shows the configuration and
      * stack traces to anybody) or with a session cookie sent over plain HTTP, whatever a
-     * forgotten or copied .env says (VT-09). deploy/build.sh refuses such a .env already; this
-     * covers a .env edited on the server by hand.
+     * forgotten or copied .env says (VT-09). deploy/vps/deploy.sh refuses such a .env before a
+     * release already; this covers a .env edited on the server afterwards.
      * @return void
      */
     private function enforceProductionSafety(): void

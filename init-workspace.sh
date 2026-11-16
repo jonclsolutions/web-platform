@@ -767,7 +767,7 @@ setup_repository() {
     if [[ ${#added[@]} -gt 0 ]]; then done_ ".gitignore: added ${added[*]}"; else skip ".gitignore complete"; fi
 
     local s
-    for s in dev.sh deploy/build.sh init-workspace.sh; do
+    for s in dev.sh init-workspace.sh; do
         [[ -f "$ROOT_DIR/$s" ]] && chmod +x "$ROOT_DIR/$s"
     done
     info "scripts are executable"
@@ -805,7 +805,6 @@ setup_aliases() {
         printf '%s\n' "$start"
         printf "alias %s='cd %q'\n" "$APP_SLUG" "$ROOT_DIR"
         printf "alias %s-dev='%q/dev.sh'\n" "$APP_SLUG" "$ROOT_DIR"
-        printf "alias %s-build='%q/deploy/build.sh'\n" "$APP_SLUG" "$ROOT_DIR"
         printf '%s\n' "$end"
     } >> "$tmp"
     cat "$tmp" > "$rc"
