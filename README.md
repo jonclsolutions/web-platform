@@ -39,7 +39,12 @@ web-platform/
 │   ├── build.sh         production build → build/www.zip
 │   ├── HOW_TO_DEPLOY.md step-by-step deployment guide
 │   ├── production.env.example  template of the production .env (copy to production.env)
-│   └── server/          server config shipped into the webroot (.htaccess, .user.ini, configure-server.sh)
+│   ├── server/          server config shipped into the webroot (.htaccess, .user.ini, configure-server.sh)
+│   ├── docker/          PRODUCTION images: api.Dockerfile (PHP-FPM), web.Dockerfile (Angular + Caddy), Caddyfile
+│   ├── compose.prod.yaml  production stack of a VPS (proxy, app, queue, scheduler, db) → /srv/app/compose.yaml
+│   ├── production.docker.env.example  template of /srv/app/.env on the VPS
+│   ├── vps/bootstrap.sh one-time preparation of a fresh Ubuntu VPS (Docker, user deploy, SSH, firewall)
+│   └── setup_hosting.md FORPSI step by step: domain, e-mail, VPS, DNS (Czech)
 ├── docs/                project documentation, DOCS templates
 ├── templates/app/       template + script of a new application (see its README)
 ├── tests/
@@ -376,6 +381,13 @@ The scheduler currently contains only nightly GDPR clean-up jobs (see `api/route
 
 > Step-by-step deployment guide (first install, releases, rollback): **[deploy/HOW_TO_DEPLOY.md](deploy/HOW_TO_DEPLOY.md)**.
 
+> **VPS with Docker** (FORPSI VPS, the target of every new installation): the hosting, the e-mail
+> and the server are prepared by **[deploy/setup_hosting.md](deploy/setup_hosting.md)**; the stack
+> is `deploy/compose.prod.yaml` with the images of `deploy/docker/` (one image for every client -
+> the settings, including the Turnstile site key, come from `/srv/app/.env` at run time). The
+> automated releases from GitHub Actions follow in `deploy/deploy_workflow.md`. The FTP package
+> below stays for the classic hosting.
+
 ```bash
 deploy/build.sh                         # all unit tests first, then the full build
 deploy/build.sh --skip-tests            # build without running the tests
@@ -534,6 +546,14 @@ that no longer exist. Then, besides step 6 above:
   permissions `project-portal-set-maintenance-mode` (to holders of `project-portal-settings-update`)
   and `project-portal-view-dashboard` (to holders of `view-project-portal`); `php artisan db:seed
   --force` adds the browser title of the portal maintenance page (`project-portal.maintenance`).
+
+### Release notes of patch 0108 (production Docker)
+
+Nothing to run on an existing installation. New: `GET /api/version` (release of the running code,
+`APP_VERSION` of the image, `dev` otherwise); `MAIL_REPLY_TO_ADDRESS` / `MAIL_REPLY_TO_NAME` in
+`.env` = Reply-To of every e-mail without its own (e.g. `info@` while sending from `noreply@`) -
+add it to `deploy/production.env` too; the Angular app loads `/runtime-config.js` before its
+bundle (empty on the classic hosting - the Turnstile key built in by `deploy/build.sh` is used).
 
 ### One-time steps of the October 2026 fixes (findings-fixes 1–4)
 

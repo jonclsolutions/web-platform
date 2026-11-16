@@ -22,6 +22,9 @@
 <!-- description, author, canonical, og:* and the Organization JSON-LD are set at runtime from
      the site settings of this installation (SeoService) - nothing brand-specific here. -->
 <meta property="og:type" content="website">
+<!-- Settings of this installation (public values only) - loaded before the app bundle;
+     written by the proxy container at start, see public/runtime-config.js. -->
+<script src="runtime-config.js"></script>
 
 <style>
     /* Inline and outside Angular on purpose - the loader must show before anything else

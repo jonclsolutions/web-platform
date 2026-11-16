@@ -1,0 +1,121 @@
+# =============================================================================
+# @file Caddyfile
+# @path deploy/docker/Caddyfile
+# @project JS web-platform
+# @author JS
+# @created 2026
+# @description Web server of the production stack (container `proxy`, web.Dockerfile): HTTPS with
+#   automatic Let's Encrypt certificates, the Angular app (SPA), /api → php-fpm of the container
+#   `app`, the public uploads (/storage) and the security headers. The Docker counterpart of
+#   deploy/server/.htaccess (classic hosting) - keep the two in step.
+# @note Environment of the container (deploy/compose.prod.yaml, from /srv/app/.env):
+#   SITE_DOMAIN  the domain without www (jonclsolutions.com); www.<domain> redirects to it
+#   ACME_EMAIL   address Let's Encrypt writes to about the certificates (sysadmin@<domain>)
+# @note No access log: it would be a log of IP addresses (personal data) - the app records the
+#   security events it needs itself.
+# =============================================================================
+{
+	email {$ACME_EMAIL}
+	# Admin API only inside the container (healthcheck), never published.
+	admin localhost:2019
+}
+
+# Security headers of the SPA, the public web and /storage. The API answers are left out - Laravel
+# sets its own, stricter headers (App\Http\Middleware\SecurityHeaders).
+# Content-Security-Policy - what the pages may load and run:
+#   script-src  own bundle + Cloudflare Turnstile (captcha) + Google Analytics (loaded only after
+#               consent); NO inline script and NO eval
+#   style-src   'unsafe-inline' is required by Angular (component styles are <style> elements)
+#   font-src    the fonts are self-hosted (src/fonts.css)
+#   frame-src   only the Turnstile widget; frame-ancestors 'self' = no clickjacking
+#   report-uri  every blocked resource is recorded as the security event csp_violation (admin)
+# To diagnose a broken page, rename the header to Content-Security-Policy-Report-Only.
+(security_headers) {
+	header {
+		Content-Security-Policy "default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self' data:; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests; report-uri /api/csp-report"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		# HTTPS only for one year (no includeSubDomains - other subdomains may have no HTTPS).
+		Strict-Transport-Security "max-age=31536000"
+	}
+}
+
+# www → the domain without www (one address = one cookie origin).
+www.{$SITE_DOMAIN} {
+	redir https://{$SITE_DOMAIN}{uri} permanent
+}
+
+{$SITE_DOMAIN} {
+	encode zstd gzip
+	header -Server
+
+	# Request size: uploads up to 25 MB (php: post_max_size) + form fields.
+	request_body {
+		max_size 26MB
+	}
+
+	# Everything below in the written order (route): the refusals first, then the handlers.
+	route {
+		# Dot files (.env, .git …) are never served, wherever they are; .well-known stays reachable.
+		@hidden {
+			path_regexp hidden /\.
+			not path /.well-known/*
+		}
+		respond @hidden 404
+
+		# Laravel API → php-fpm of the container `app`. Every /api request runs public/index.php of
+		# the app image (the proxy has no PHP files); REQUEST_URI keeps the original path.
+		# REMOTE_ADDR is the real client IP (no proxy header to trust).
+		@api path /api /api/*
+		handle @api {
+			rewrite * /index.php
+			reverse_proxy app:9000 {
+				transport fastcgi {
+					root /var/www/html/public
+					split .php
+				}
+			}
+		}
+
+		# Public uploads: only storage/app/public of the volume `storage` is mounted (read-only) -
+		# the private files, logs and caches are not even visible to this container. No listing.
+		handle_path /storage/* {
+			import security_headers
+			root * /srv/storage
+			file_server
+		}
+
+		# Settings of this installation (Turnstile site key) - written at start, never cached.
+		handle /runtime-config.js {
+			import security_headers
+			header Cache-Control "no-store"
+			root * /srv/runtime
+			file_server
+		}
+
+		# Angular: an existing file; a path without a file extension that is no file is a
+		# client-side route → index.html. A missing file (/composer.json, /x.php …) is 404.
+		handle {
+			import security_headers
+			root * /srv/www
+
+			# Bundles with a content hash in the name never change → cached for a year.
+			@hashed path_regexp hashed -[A-Z0-9]{8}\.(js|css)$
+			header @hashed Cache-Control "public, max-age=31536000, immutable"
+			# Everything else (index.html, the routes answered by it, translations, images) is
+			# revalidated (ETag) → a release is visible at the next page load.
+			@unhashed not path_regexp -[A-Z0-9]{8}\.(js|css)$
+			header @unhashed Cache-Control "no-cache"
+
+			@route {
+				not file
+				not path_regexp \.[A-Za-z0-9]+$
+			}
+			rewrite @route /index.html
+			file_server
+		}
+	}
+}

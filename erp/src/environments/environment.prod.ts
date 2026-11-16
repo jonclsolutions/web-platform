@@ -8,14 +8,21 @@
  * production` (fileReplacements in angular.json) - must keep the same keys as environment.ts.
  * @note The API and the public storage are served from the same origin (see
  * deploy/server/.htaccess), so relative URLs work on any domain.
- * @note `NG_TURNSTILE_SITE_KEY` is injected by deploy/build.sh (`ng build --define`) from the
- * TURNSTILE_SITE_KEY setting - the site key differs per installation and is not committed.
+ * @note The Turnstile site key differs per installation and is not committed. It comes from
+ * `window.__RUNTIME_CONFIG__` (public/runtime-config.js, written at start by the proxy container
+ * of the Docker deployment - one image for every client); when that is empty, from
+ * `NG_TURNSTILE_SITE_KEY` injected by deploy/build.sh (`ng build --define`).
  */
 declare const NG_TURNSTILE_SITE_KEY: string | undefined;
+
+/** Settings of this installation loaded before the bundle (public/runtime-config.js). */
+const runtimeConfig =
+  (globalThis as { __RUNTIME_CONFIG__?: { turnstileSiteKey?: string } }).__RUNTIME_CONFIG__ ?? {};
 
 export const environment = {
   production: true,
   base_api_url: '/api',
   public_storage_url: '/storage',
-  turnstileSiteKey: typeof NG_TURNSTILE_SITE_KEY === 'string' ? NG_TURNSTILE_SITE_KEY : ''
+  turnstileSiteKey:
+    runtimeConfig.turnstileSiteKey || (typeof NG_TURNSTILE_SITE_KEY === 'string' ? NG_TURNSTILE_SITE_KEY : '')
 };

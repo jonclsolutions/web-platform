@@ -1,0 +1,136 @@
+# =============================================================================
+# @file compose.prod.yaml
+# @path deploy/compose.prod.yaml
+# @project JS web-platform
+# @author JS
+# @created 2026
+# @description PRODUCTION stack of one installation (one client = one VPS). On the server it is
+#   /srv/app/compose.yaml next to /srv/app/.env (template deploy/production.docker.env.example):
+#     proxy      Caddy: HTTPS (Let's Encrypt), Angular, /api → app, /storage, security headers
+#     app        PHP-FPM + Laravel (requests)
+#     queue      php artisan queue:work (e-mails, imports)
+#     scheduler  php artisan schedule:work (GDPR clean-up, reminders)
+#     db         MariaDB 10.11 - only on the internal network, no published port
+#   Volumes (the data - kept across releases): db-data, storage (uploads, logs), caddy-data
+#   (certificates), caddy-config.
+# @usage On the server (the deploy script of patch 0109 does this; it keeps RELEASE in .env):
+#   docker compose up -d
+#   Locally (images built by hand from deploy/docker/*.Dockerfile with the tag `local`): copy this
+#   file as compose.yaml into an empty folder with a test .env (RELEASE=local, IMAGE_PREFIX=
+#   web-platform, SITE_DOMAIN=localhost) and run `docker compose up -d` there.
+# @note RELEASE = the tag of both images; IMAGE_PREFIX = their name without -api / -web
+#   (ghcr.io/<organisation>/<repository>). A release changes only RELEASE.
+# @note Memory limits keep the whole stack within the 4 GB of the FORPSI VPS 2-4 with room for
+#   the system and the backups: db 768 MB, app 512 MB, queue 256 MB, scheduler 192 MB, proxy 128 MB.
+# @security The database is on the network `data` (internal: no way out, no published port).
+#   The API containers get the whole .env as their environment, except DB_ROOT_PASSWORD (only the
+#   db container needs it). No container has more Linux capabilities than it needs.
+# =============================================================================
+
+name: web-platform
+
+x-api: &api
+  image: ${IMAGE_PREFIX:-ghcr.io/jonclsolutions/web-platform}-api:${RELEASE:?set RELEASE - the image tag to run}
+  env_file: [.env]
+  environment:
+    # The database of this stack; the root password stays with the db container only.
+    DB_HOST: db
+    DB_PORT: "3306"
+    DB_ROOT_PASSWORD: ""
+  volumes:
+    - storage:/var/www/html/storage
+  depends_on:
+    db: { condition: service_healthy }
+  networks: [web, data]
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+  stop_grace_period: 30s
+
+services:
+  proxy:
+    image: ${IMAGE_PREFIX:-ghcr.io/jonclsolutions/web-platform}-web:${RELEASE:?set RELEASE - the image tag to run}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?set SITE_DOMAIN in .env}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in .env}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
+    volumes:
+      # Only the public uploads, read-only (Caddyfile: /storage/*).
+      - type: volume
+        source: storage
+        target: /srv/storage
+        read_only: true
+        volume: { subpath: app/public }
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      app: { condition: service_healthy }
+    networks: [web]
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    mem_limit: 128m
+
+  app:
+    <<: *api
+    command: ["app"]
+    mem_limit: 512m
+
+  queue:
+    <<: *api
+    command: ["queue"]
+    # The image healthcheck pings php-fpm, which does not run here.
+    healthcheck: { disable: true }
+    mem_limit: 256m
+
+  scheduler:
+    <<: *api
+    command: ["scheduler"]
+    healthcheck: { disable: true }
+    mem_limit: 192m
+
+  db:
+    image: mariadb:${MARIADB_VERSION:-10.11}
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE:?set DB_DATABASE in .env}
+      MARIADB_USER: ${DB_USERNAME:?set DB_USERNAME in .env}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env}
+      # A newer image of the same major version upgrades the system tables itself.
+      MARIADB_AUTO_UPGRADE: "1"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=384M
+      - --max-connections=60
+      - --skip-name-resolve
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks: [data]
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 768m
+
+networks:
+  # Containers that talk to the internet (HTTPS, SMTP, Turnstile).
+  web: {}
+  # Database traffic only - internal: no route out, nothing published.
+  data:
+    internal: true
+
+volumes:
+  db-data: {}
+  storage: {}
+  caddy-data: {}
+  caddy-config: {}

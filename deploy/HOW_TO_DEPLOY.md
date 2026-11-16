@@ -3,6 +3,10 @@
 Step-by-step guide for putting **web-platform** on a hosting server – the first installation
 and every later release. Each step says **what to do**, **what happens** and **how to check it**.
 
+> **This guide is for the classic hosting** (Apache, FTP package). A new installation runs on a
+> **VPS with Docker** - see [setup_hosting.md](setup_hosting.md) (FORPSI domain, e-mail, VPS) and
+> `deploy_workflow.md` (automated releases).
+
 > In short: fill in `deploy/production.env` → `deploy/build.sh --check` → `deploy/build.sh` →
 > upload and extract `build/www.zip` → first install: `bash configure-server.sh`,
 > release: the update commands → smoke test.

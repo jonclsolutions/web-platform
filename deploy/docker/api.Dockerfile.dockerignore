@@ -1,0 +1,33 @@
+# =============================================================================
+# @file api.Dockerfile.dockerignore
+# @path deploy/docker/api.Dockerfile.dockerignore
+# @project JS web-platform
+# @author JS
+# @created 2026
+# @description Build context of api.Dockerfile (BuildKit reads <Dockerfile>.dockerignore next to
+#   the Dockerfile). Allow-list: only the code of the API and the image files of deploy/docker -
+#   never .env, keys, vendor/ of the developer, uploads, logs or tests. From storage/ only the
+#   base translations (storage/app/public/translations - the seed of a new installation).
+# =============================================================================
+*
+!api/app
+!api/artisan
+!api/bootstrap
+!api/composer.json
+!api/composer.lock
+!api/config
+!api/database
+!api/public
+!api/resources
+!api/routes
+!api/storage/app/public/translations
+!deploy/docker/php
+!deploy/docker/api-entrypoint.sh
+api/bootstrap/cache/*.php
+api/public/storage
+api/public/hot
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+**/.DS_Store

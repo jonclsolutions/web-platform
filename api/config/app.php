@@ -7,6 +7,10 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    // Release of the running code (`v2026.11.1`), set by the production image (build arg
+    // APP_VERSION of deploy/docker/api.Dockerfile); `dev` outside an image. GET /api/version.
+    'version' => env('APP_VERSION', 'dev'),
+
 
     'env' => env('APP_ENV', 'production'),
 

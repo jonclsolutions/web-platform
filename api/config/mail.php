@@ -122,4 +122,23 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Default "Reply-To" Address
+    |--------------------------------------------------------------------------
+    |
+    | Address the answers to the application e-mails go to (`info@` of the
+    | domain - the e-mails are sent from `noreply@`). Added by
+    | App\Support\Mail\DefaultReplyTo only to an e-mail without its own Reply-To.
+    | Not the Laravel key `reply_to`: that one is added to EVERY e-mail, even
+    | to one that sets its own, which would give two Reply-To addresses.
+    | Empty = no Reply-To.
+    |
+    */
+
+    'default_reply_to' => [
+        'address' => env('MAIL_REPLY_TO_ADDRESS'),
+        'name' => env('MAIL_REPLY_TO_NAME'),
+    ],
+
 ];

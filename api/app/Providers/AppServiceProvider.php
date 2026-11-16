@@ -10,7 +10,8 @@
  * (keyed by IP and by e-mail separately), the 2FA code resend and the public web forms; in
  * production forces the safe values of the settings whose mistake would leak data (VT-09); wires
  * the registered applications in (register(): their configuration; bootApplications(): morph
- * aliases, migrations, views, middleware aliases, commands).
+ * aliases, migrations, views, middleware aliases, commands); adds the default Reply-To to the
+ * e-mails (DefaultReplyTo).
  * @note Every limit is keyed per client IP, per e-mail or per account - never one counter shared
  * by everybody - so many people using the application at the same time never block each other;
  * only one client (or one account) repeating itself is stopped. The client IP is correct behind a
@@ -21,9 +22,11 @@ namespace App\Providers;
 
 use App\Support\Apps\AppRegistry;
 use App\Support\Audit\ModelChanges;
+use App\Support\Mail\DefaultReplyTo;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
@@ -81,6 +84,9 @@ class AppServiceProvider extends ServiceProvider
                 }
             });
         }
+
+        // ── Default Reply-To (info@ of the domain) of every e-mail without its own one.
+        Event::listen(MessageSending::class, DefaultReplyTo::class);
 
         // ── Login rate limiter: 5 attempts / minute, keyed by the IP and by the e-mail separately ──────
         // Per e-mail (= per account): 5 / minute - one account tried again and again is stopped
