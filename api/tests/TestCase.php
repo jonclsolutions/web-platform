@@ -81,4 +81,24 @@ abstract class TestCase extends BaseTestCase
         $name = "fail_{$table}_" . strtolower($operation);
         DB::unprepared("CREATE TRIGGER {$name} BEFORE {$operation} ON {$table} BEGIN SELECT RAISE(ABORT, 'forced test failure'); END;");
     }
+
+    /**
+     * @description Sets or removes an environment variable everywhere env() reads it ($_SERVER,
+     *   $_ENV, getenv) - putenv() alone is not enough when a .env file or the runner (CI) defines
+     *   the variable, because env() reads $_SERVER / $_ENV first.
+     * @param string $name Variable name, e.g. 'TRUSTED_PROXIES'.
+     * @param string|null $value New value; null = unset.
+     * @return void
+     */
+    protected function setEnvironment(string $name, ?string $value): void
+    {
+        if ($value === null) {
+            putenv($name);
+            unset($_ENV[$name], $_SERVER[$name]);
+
+            return;
+        }
+        putenv("{$name}={$value}");
+        $_ENV[$name] = $_SERVER[$name] = $value;
+    }
 }

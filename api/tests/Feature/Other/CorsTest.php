@@ -27,8 +27,7 @@ class CorsTest extends TestCase
      */
     protected function tearDown(): void
     {
-        putenv('CORS_ALLOWED_ORIGINS');
-        unset($_ENV['CORS_ALLOWED_ORIGINS'], $_SERVER['CORS_ALLOWED_ORIGINS']);
+        $this->setEnvironment('CORS_ALLOWED_ORIGINS', null);
         parent::tearDown();
     }
 
@@ -78,10 +77,10 @@ class CorsTest extends TestCase
      */
     public function test_config_reads_exact_origins_without_wildcard(): void
     {
-        putenv('CORS_ALLOWED_ORIGINS= https://a.example , ,*, https://b.example');
+        $this->setEnvironment('CORS_ALLOWED_ORIGINS', ' https://a.example , ,*, https://b.example');
         $this->assertSame(['https://a.example', 'https://b.example'], (require config_path('cors.php'))['allowed_origins']);
 
-        putenv('CORS_ALLOWED_ORIGINS');
+        $this->setEnvironment('CORS_ALLOWED_ORIGINS', null);
         $this->assertSame([], (require config_path('cors.php'))['allowed_origins']);
         $this->assertTrue((require config_path('cors.php'))['supports_credentials']);
     }

@@ -50,8 +50,7 @@ class PublicFormGuardTest extends TestCase
      */
     protected function tearDown(): void
     {
-        putenv('TRUSTED_PROXIES');
-        unset($_ENV['TRUSTED_PROXIES'], $_SERVER['TRUSTED_PROXIES']);
+        $this->setEnvironment('TRUSTED_PROXIES', null);
         parent::tearDown();
     }
 
@@ -201,13 +200,13 @@ class PublicFormGuardTest extends TestCase
      */
     public function test_trusted_proxies_config(): void
     {
-        putenv('TRUSTED_PROXIES');
+        $this->setEnvironment('TRUSTED_PROXIES', null);
         $this->assertNull((require config_path('trustedproxy.php'))['proxies']);
 
-        putenv('TRUSTED_PROXIES=*');
+        $this->setEnvironment('TRUSTED_PROXIES', '*');
         $this->assertSame('*', (require config_path('trustedproxy.php'))['proxies']);
 
-        putenv('TRUSTED_PROXIES= 10.0.0.1 , ,172.16.0.0/12');
+        $this->setEnvironment('TRUSTED_PROXIES', ' 10.0.0.1 , ,172.16.0.0/12');
         $this->assertSame(['10.0.0.1', '172.16.0.0/12'], (require config_path('trustedproxy.php'))['proxies']);
     }
 }
