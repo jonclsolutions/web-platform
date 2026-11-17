@@ -4,137 +4,168 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Admin login (credentials -> OTP step) + "forgot password" modal.
-        Visual language aligned 1:1 with the admin dashboard (dashboard.component.css):
-        same design tokens (--accent/--text/--border/--success/--error/...), white
-        surfaces on a light neutral page, 20px card radius, pill-shaped buttons and the
-        same neutral focus ring. Auth pages render OUTSIDE the admin layout, so the tokens
-        are declared on :host with values identical to admin-layout.
-    @dependencies: none (self-contained; token values mirror admin-layout /
-        dashboard.component.css - keep in sync)
+    @description: Admin login (credentials -> OTP / forgot password, all inline in one card).
+        Style follows faq.component.css. Auth pages render outside the admin layout,
+        so all tokens live on :host.
 */
 
-/*
-    @module: Design tokens
-    @description: Admin palette, radii, font stack and motion timing scoped to the component.
-    @usage: :host
-    @note: Values must stay identical to the admin-layout tokens.
-*/
 :host {
-  --bg:            var(--color-zinc-100);
-  --accent-dark:   var(--color-black);
-  --accent-dim:    var(--color-zinc-100);
-  --accent-dim-2:  var(--color-zinc-200);
-  --error:         var(--color-rose-600);
-  --error-dim:     var(--color-rose-50);
-  --warning:       var(--color-amber-600);
-  --warning-dim:   var(--color-amber-50);
-  --radius:        10px;
-  --radius-lg:     20px;
-  --ease:          0.18s ease;
-  --focus-ring:    0 0 0 3px rgba(24, 24, 27, 0.08);
-
+  --bg: #0a0a1a;
+  --panel: #111128;
+  --surface-2: rgba(255, 255, 255, 0.025);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-mid: rgba(255, 255, 255, 0.11);
+  --white: #fff;
+  --text: #e8e8f2;
+  --text-muted: #9a9ab5;
+  --text-dim: #555566;
+  --accent: #a67dff;
+  --accent-dark: #6a2ca0;
+  --accent-hover: #7d35ae;
+  --accent-dim: rgba(166, 125, 255, 0.1);
+  --accent-dim-2: rgba(166, 125, 255, 0.25);
+  --accent-grid: rgba(166, 125, 255, 0.03);
+  --success: #6ee7b7;
+  --success-dim: rgba(16, 185, 129, 0.12);
+  --error: #fda4af;
+  --error-dim: rgba(244, 63, 94, 0.12);
+  --radius: 10px;
+  --radius-lg: 20px;
+  --ease: 0.18s ease;
+  --focus-ring: 0 0 0 3px rgba(166, 125, 255, 0.2);
+  --ff-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --ff-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   display: block;
 }
 
-/*
-    @module: Page
-    @description: Full-height light neutral page that centres the login card.
-    @usage: .login-page, .login-center
-*/
+/* ── Page (fixed grid background, same as FAQ) ── */
 .login-page {
-  min-height: 104vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 16px;
-  background: var(--bg);
-  font-family: var(--ff);
-  color: var(--text);
-}
-
-.login-center {
+  position: relative;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 22px;
-  width: 100%;
-  max-width: 420px;
-  animation: fadeUp 0.35s ease-out both;
+  padding: 0 40px;
+  background: var(--bg);
+  font-family: var(--ff-body);
+  color: var(--text);
+  overflow-x: hidden;
 }
 
-/*
-    @module: Card
-    @description: White surface card - same border, radius and shadow as dashboard cards.
-    @usage: .login-card
-*/
+.login-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--accent-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--accent-grid) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+
+/* ── Main grid: hero + card ── */
+.login-main {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+  gap: 72px;
+  align-items: center;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 36px 0;
+}
+
+.login-center { display: flex; flex-direction: column; align-items: center; width: 100%; animation: fadeUp 0.6s 0.15s ease-out both; }
+
+/* ── Hero: calm headline, large logo ── */
+.hero { display: flex; flex-direction: column; align-items: flex-start; align-self: stretch; justify-content: center; min-width: 0; animation: fadeUp 0.6s 0.2s ease-out both; }
+
+.hero-title {
+  margin-top: 20px;
+  max-width: 100%;
+  font-family: var(--ff-display);
+  font-size: clamp(1.25rem, 1.9vw, 1.6rem);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--text-muted);
+}
+
+.hero-visual {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ── Card ── */
 .login-card {
   width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--panel);
+  border: 1px solid var(--border-mid);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03), 0 12px 32px rgba(24, 24, 27, 0.06);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
 }
 
-/*
-    @module: Form fields
-    @description: Form layout, labels and text inputs with the admin focus ring.
-    @usage: .login-form, .field-group, .field-label-row, .field-label, .field-input
-*/
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 28px 28px 24px;
-}
+.card-header { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 26px 28px 0; }
+.card-header-inline { padding: 0; }
 
-.field-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
+.card-title { margin: 0; font-family: var(--ff-display); font-size: 1.5rem; font-weight: 700; line-height: 1.3; color: var(--white); }
+.otp-subtitle { margin: 0; font-size: 0.87rem; line-height: 1.65; color: var(--text-muted); }
 
-.field-label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--text);
-}
+.login-card-footer { display: flex; justify-content: center; padding: 14px 28px 16px; border-top: 1px solid var(--border); background: var(--surface-2); }
+.back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-decoration: none; transition: color var(--ease); }
+.back-link:hover { color: var(--accent); }
+
+/* ── Form ── */
+.login-form { display: flex; flex-direction: column; gap: 16px; padding: 22px 28px 26px; }
+.field-group { display: flex; flex-direction: column; gap: 8px; }
+.field-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.field-label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text); }
+
+.input-wrapper { position: relative; display: flex; align-items: center; }
+.input-icon { position: absolute; left: 14px; color: var(--text-muted); pointer-events: none; }
 
 .field-input {
   width: 100%;
-  padding: 10px 13px;
-  background: var(--surface);
+  padding: 12px 14px;
+  background: var(--bg);
   border: 1px solid var(--border-mid);
-  border-radius: var(--radius);
+  border-radius: 12px;
   color: var(--text);
-  font-size: 0.9rem;
-  font-family: inherit;
+  font: 0.91rem var(--ff-body);
   outline: none;
-  transition: border-color var(--ease), box-shadow var(--ease);
   appearance: none;
-  -webkit-appearance: none;
+  transition: border-color var(--ease), box-shadow var(--ease);
 }
-
+.field-input.has-icon { padding-left: 40px; }
 .field-input::placeholder { color: var(--text-dim); }
+.field-input:focus { border-color: var(--accent); box-shadow: var(--focus-ring); }
 
-.field-input:focus {
-  border-color: var(--accent);
-  box-shadow: var(--focus-ring);
+.field-input:-webkit-autofill,
+.field-input:-webkit-autofill:hover,
+.field-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  caret-color: var(--text);
+  box-shadow: 0 0 0 1000px var(--bg) inset;
+  transition: background-color 9999s ease-out 0s;
 }
 
-/*
-    @module: OTP step + captcha
-    @description: Helper text, monospaced 6-digit code input and captcha placeholder.
-    @usage: .otp-subtitle, .otp-input, .captcha-container
-    @note: .captcha-container reserves height so the layout doesn't jump on widget load.
-*/
-.otp-subtitle {
-  font-size: 0.85rem;
-  line-height: 1.55;
+.password-wrapper .field-input { padding-right: 44px; }
+
+.toggle-password {
+  position: absolute; right: 8px;
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px;
+  background: transparent; border: none; border-radius: 8px;
   color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--ease), color var(--ease);
 }
+.toggle-password svg { width: 15px; height: 15px; }
+.toggle-password:hover { background: var(--accent-dim); color: var(--accent); }
 
 .otp-input {
   text-align: center;
@@ -142,465 +173,144 @@
   font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: 0.45em;
-  padding-left: calc(13px + 0.45em); /* optically re-centre the tracked digits */
+  padding-left: calc(14px + 0.45em); /* re-centre tracked digits */
 }
 
-/*
-    @module: Remember me
-    @description: Checkbox row under the password - off by default (the login ends with the browser).
-    @usage: .remember-row
-*/
-.remember-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
+.captcha-container { display: flex; justify-content: center; min-height: 65px; }
+
+/* ── Options row ── */
+.options-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: -4px; }
+.remember-row { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--text-muted); cursor: pointer; user-select: none; }
+.remember-row input { width: 14px; height: 14px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+
+.forgot-trigger {
+  align-self: center;
+  padding: 2px 0;
+  background: none; border: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
   color: var(--text-muted);
   cursor: pointer;
-  user-select: none;
+  transition: color var(--ease);
 }
+.options-row .forgot-trigger { align-self: auto; }
+.forgot-trigger:hover:not(:disabled) { color: var(--accent); }
+.forgot-trigger:disabled { color: var(--text-dim); cursor: default; }
 
-.remember-row input {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  accent-color: var(--accent-dark);
-  cursor: pointer;
-}
-
-/*
-    @module: Account chooser
-    @description: Account of this tab and the accounts remembered in this browser above the form -
-        one row per account (photo, name, e-mail, "signed in in this window" note), then a divider
-        "or sign in with another account".
-    @usage: .account-chooser, .account-chooser-title, .account-option, .account-text,
-        .account-name, .account-email, .account-current, .account-arrow, .account-chooser-divider
-*/
-.account-chooser {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 28px 28px 0;
-}
-
-.account-chooser-title {
-  margin: 0 0 4px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text);
-}
+/* ── Account chooser ── */
+.account-chooser { display: flex; flex-direction: column; gap: 8px; padding: 22px 28px 0; }
+.account-chooser + .login-form { padding-top: 16px; }
+.account-chooser-title { margin: 0 0 4px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text); }
 
 .account-option {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: flex; align-items: center; gap: 12px;
   width: 100%;
   padding: 10px 12px;
-  background: var(--surface);
+  background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 12px;
   font: inherit;
   color: var(--text);
   text-align: left;
   cursor: pointer;
   transition: background var(--ease), border-color var(--ease);
 }
+.account-option:hover:not(:disabled) { background: var(--accent-dim); border-color: var(--accent-dim-2); }
+.account-option:focus-visible { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
+.account-option:disabled { opacity: 0.6; cursor: default; }
 
-.account-option:hover:not(:disabled) {
-  background: var(--accent-dim);
-  border-color: var(--accent-dim-2);
-}
+.account-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.account-name, .account-email { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-name { font-size: 0.91rem; font-weight: 600; }
+.account-email { font-size: 0.78rem; color: var(--text-muted); }
+.account-current { font-size: 0.72rem; font-weight: 600; color: var(--success); }
+.account-arrow { flex-shrink: 0; color: var(--text-muted); }
 
-.account-option:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
-.account-option:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.account-text {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-}
-
-.account-name,
-.account-email {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.account-name {
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.account-email {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-}
-
-.account-current {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--success);
-}
-
-.account-arrow {
-  flex-shrink: 0;
-  color: var(--text-muted);
-}
-
-.account-chooser-divider {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 10px 0 0;
-  font-size: 0.78rem;
-  color: var(--text-muted);
-}
-
-.account-chooser + .login-form {
-  padding-top: 18px;
-}
-
+.account-chooser-divider { display: flex; align-items: center; gap: 10px; margin: 10px 0 0; font-size: 0.78rem; color: var(--text-muted); }
 .account-chooser-divider::before,
-.account-chooser-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
+.account-chooser-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-.captcha-container {
-  display: flex;
-  justify-content: center;
-  min-height: 65px;
-}
+/* ── Status messages ── */
+.error-message, .success-message { display: flex; align-items: flex-start; gap: 8px; padding: 11px 14px; border-radius: var(--radius); font-size: 0.87rem; line-height: 1.5; }
+.error-message svg, .success-message svg { flex-shrink: 0; margin-top: 1px; }
+.error-message { color: var(--error); background: var(--error-dim); border: 1px solid rgba(244, 63, 94, 0.4); }
+.success-message { color: var(--success); background: var(--success-dim); border: 1px solid rgba(16, 185, 129, 0.4); }
 
-/*
-    @module: Text buttons
-    @description: Link-style buttons - "Forgot password?", "Resend code", "Back".
-    @usage: .forgot-trigger
-*/
-.forgot-trigger {
-  align-self: center;
-  background: none;
-  border: none;
-  padding: 2px 0;
-  font-size: 0.78rem;
-  font-weight: 600;
-  font-family: inherit;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: color var(--ease);
-}
-
-.field-label-row .forgot-trigger { align-self: auto; }
-
-.forgot-trigger:hover:not(:disabled) { color: var(--text); }
-
-.forgot-trigger:disabled {
-  color: var(--text-dim);
-  cursor: default;
-}
-
-/*
-    @module: Password visibility
-    @description: Password input wrapper with the show/hide eye toggle.
-    @usage: .password-wrapper, .toggle-password
-*/
-.password-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.password-wrapper .field-input { padding-right: 44px; }
-
-.toggle-password {
-  position: absolute;
-  right: 6px;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  color: var(--text-dim);
-  cursor: pointer;
-  transition: background var(--ease), color var(--ease);
-}
-
-.toggle-password svg { width: 17px; height: 17px; }
-
-.toggle-password:hover {
-  background: var(--accent-dim);
-  color: var(--text);
-}
-
-/*
-    @module: Status messages
-    @description: Error / success banners using only the semantic admin tokens.
-    @usage: .error-message, .success-message
-*/
-.error-message,
-.success-message {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 11px 14px;
-  border-radius: var(--radius);
-  font-size: 0.84rem;
-  line-height: 1.45;
-}
-
-.error-message svg,
-.success-message svg { flex-shrink: 0; margin-top: 1px; }
-
-.error-message {
-  color: var(--error);
-  background: var(--error-dim);
-  border: 1px solid var(--error);
-}
-
-.success-message {
-  color: var(--success);
-  background: var(--success-dim);
-  border: 1px solid var(--success);
-}
-
-/*
-    @module: Primary button
-    @description: Full-width pill button - same look as .btn-modal-primary in the dashboard.
-    @usage: .submit-btn
-*/
+/* ── Primary button (pill, same as .sidebar-cta-btn in FAQ) ── */
 .submit-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
   width: 100%;
   padding: 12px 20px;
   margin-top: 2px;
-  background: var(--accent);
-  border: none;
+  background: var(--accent-dark);
+  border: 1px solid var(--accent);
   border-radius: 999px;
-  color: var(--color-white);
-  font-size: 0.88rem;
-  font-weight: 600;
-  font-family: inherit;
+  color: var(--white);
+  font: 600 0.88rem var(--ff-body);
   cursor: pointer;
-  transition: background var(--ease), box-shadow var(--ease);
+  transition: background var(--ease), transform 0.15s ease, opacity var(--ease);
 }
+.submit-btn:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-2px); }
+.submit-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-/*
-    @module: Card footer
-    @description: Muted footer strip with the "Back to home" link.
-    @usage: .login-card-footer, .back-link
-*/
-.login-card-footer {
-  padding: 16px 28px 20px;
-  border-top: 1px solid var(--border);
-  background: var(--surface-2);
-  display: flex;
-  justify-content: center;
-}
-
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-decoration: none;
-  transition: color var(--ease);
-}
-
-.back-link:hover { color: var(--text); }
-
-/*
-    @module: Forgot password modal
-    @description: Overlay + dialog card, styled like the dashboard password-confirmation modal.
-    @usage: .modal-overlay, .modal-card, .modal-close, .modal-header, .modal-icon,
-        .modal-title, .modal-actions, .modal-cancel-btn, .modal-submit-btn
-*/
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: rgba(24, 24, 27, 0.45);
-  animation: fadeOverlay 0.18s ease both;
-}
-
-.modal-card {
-  position: relative;
-  width: 100%;
-  max-width: 420px;
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: 26px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  font-family: var(--ff);
-  color: var(--text);
-  box-shadow: 0 20px 50px rgba(24, 24, 27, 0.25);
-  animation: fadeUp 0.22s ease both;
-}
-
-.modal-close {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  border-radius: 8px;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: background var(--ease), color var(--ease);
-}
-
-.modal-close:hover {
-  background: var(--accent-dim);
-  color: var(--text);
-}
-
-.modal-header {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-right: 32px; /* keep text clear of the close button */
-}
-
-.modal-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: var(--accent-dim);
-  color: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 4px;
-}
-
-.modal-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.25;
-  color: var(--text);
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 2px;
-}
-
-.modal-cancel-btn,
-.modal-submit-btn {
-  padding: 9px 18px;
-  border-radius: 999px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background var(--ease);
-}
-
-.modal-cancel-btn {
-  background: var(--surface);
-  border: 1px solid var(--border-mid);
-  color: var(--text-muted);
-}
-
-.modal-cancel-btn:hover { background: var(--surface-2); color: var(--text); }
-
-.modal-submit-btn {
-  background: var(--accent);
-  border: none;
-  color: var(--color-white);
-}
-
-.modal-submit-btn:hover:not(:disabled) { background: var(--accent-dark); }
-
-.modal-submit-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/*
-    @module: Keyboard focus
-    @description: Visible focus outline for keyboard users (WCAG 2.2 - 2.4.7).
-    @usage: :focus-visible on interactive elements
-*/
-.forgot-trigger:focus-visible,
-.toggle-password:focus-visible,
-.submit-btn:focus-visible,
-.back-link:focus-visible,
-.modal-close:focus-visible,
-.modal-cancel-btn:focus-visible,
-.modal-submit-btn:focus-visible {
+/* ── Keyboard focus ── */
+.forgot-trigger:focus-visible, .toggle-password:focus-visible, .submit-btn:focus-visible,
+.back-link:focus-visible, .remember-row input:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-/*
-    @module: Animations
-    @description: Entrance animations; disabled for users who prefer reduced motion.
-    @usage: @keyframes fadeUp, fadeOverlay
-*/
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeOverlay {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
+/* ── Animations ── */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .login-center, .modal-overlay, .modal-card { animation: none; }
+  .login-center, .hero { animation: none; }
+  .submit-btn:hover:not(:disabled) { transform: none; }
 }
 
-/*
-    @module: Responsive
-    @description: Tighter paddings and bottom-sheet modal on phones.
-    @usage: @media (max-width: 480px)
-    @note: Bottom-sheet pattern matches the dashboard password modal.
-*/
-@media (max-width: 480px) {
-  .login-form        { padding: 22px 20px 20px; }
-  .login-card-footer { padding: 14px 20px 18px; }
+/* ── Responsive ── */
 
-  .modal-overlay { align-items: flex-end; padding: 0; }
-  .modal-card {
-    max-width: 100%;
-    padding: 24px 20px;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+@media (max-width: 920px) {
+  .login-page { padding: 0 20px; }
+  .login-main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    max-width: 440px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 32px 0;
   }
-  .modal-actions { flex-direction: column-reverse; }
-  .modal-cancel-btn,
-  .modal-submit-btn { width: 100%; }
+  .hero {
+    align-items: center;
+    text-align: center;
+    align-self: center;
+  }
+  .hero-visual {
+    max-width: 220px;
+    margin: 0 auto;
+  }
+  .hero-title {
+    margin-top: 12px;
+    font-size: 1.15rem;
+  }
+  .login-center {
+    max-width: 440px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .card-title { font-size: 1.35rem; }
+}
+
+@media (max-width: 480px) {
+  .card-header { padding: 22px 20px 0; }
+  .login-form { padding: 20px 20px 22px; }
+  .account-chooser { padding: 20px 20px 0; }
+  .login-card-footer { padding: 14px 20px 16px; }
 }

@@ -68,6 +68,8 @@ export class LoginComponent implements OnInit, OnDestroy {
   private captchaToken: string | null = null;
   private captchaWidgetId: string | null = null;
 
+  logo_path: string = "assets/images/logos/logo_big.svg"
+
   private loginToken: string | null = null;
   otpCode = '';
   otpExpiresAt: number | null = null;
