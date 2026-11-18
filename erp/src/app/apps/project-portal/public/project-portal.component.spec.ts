@@ -165,53 +165,6 @@ describe('ProjectPortalComponent', () => {
   });
 
   /**
-   * @description Login: login name and password are both required; success (the API sets the
-   *   session cookie) opens the portal with threads - nothing is stored by the component and the
-   *   typed password is forgotten; 404 → project not found; 429 → too many attempts; other
-   *   errors → invalid login.
-   * @input '' / password only / login name only; ' jana ' + 'pw' → {project}; 404; 429; 401.
-   * @output No post; 'portal', {username: 'jana', password: 'pw'}, threads 2, requests without
-   *   headers, localStorage untouched, password cleared; 'error_project_not_found';
-   *   'error_too_many_attempts'; 'error_invalid_login'.
-   */
-  it('logs in with the login name and password', fakeAsync(() => {
-    create();
-    portal.login();
-    portal.loginPassword = 'pw';
-    portal.login();
-    portal.loginPassword = '';
-    portal.loginUsername = 'jana';
-    portal.login();
-    expect(post).not.toHaveBeenCalled();
-
-    portal.loginUsername = ' jana ';
-    portal.loginPassword = 'pw';
-    replies['/tok/login'] = () => throwError(() => ({ status: 404 }));
-    portal.login();
-    expect(portal.loginError).toBe('error_project_not_found');
-    replies['/tok/login'] = () => throwError(() => ({ status: 429 }));
-    portal.login();
-    expect(portal.loginError).toBe('error_too_many_attempts');
-    replies['/tok/login'] = () => throwError(() => ({ status: 401 }));
-    portal.login();
-    expect(portal.loginError).toBe('error_invalid_login');
-    expect(portal.loginLoading).toBeFalse();
-
-    replies['/tok/login'] = () => { cookie = true; return of({ project }); };
-    const storedBefore = localStorage.length;
-    portal.login();
-    expect(post).toHaveBeenCalledWith('projects/public/tok/login', { username: 'jana', password: 'pw' });
-    expect(portal.loginPassword).toBe('');
-    expect(get).toHaveBeenCalledWith('projects/public/tok/threads');
-    expect(get.calls.allArgs().every((a: any[]) => a.length === 1)).toBeTrue();
-    expect(localStorage.length).toBe(storedBefore);
-    expect(portal.state).toBe('portal');
-    expect(portal.threads.length).toBe(2);
-    fixture.destroy();
-    discardPeriodicTasks();
-  }));
-
-  /**
    * @description After a reload the portal asks the API: a valid cookie → project loaded; an
    *   expired session (401) → login.
    * @input Valid cookie; then the project request failing.
@@ -511,33 +464,6 @@ describe('ProjectPortalComponent', () => {
     get.calls.reset();
     portal.refresh();
     expect(get).not.toHaveBeenCalled();
-    fixture.destroy();
-    discardPeriodicTasks();
-  }));
-
-  /**
-   * @description Logout ends the session on the server (also when that fails) and resets the
-   *   portal; without a session it just shows the login.
-   * @input logout() ok; login again + logout failing; logout without session.
-   * @output post …/logout (the API deletes the cookie); state login, data reset.
-   */
-  it('logs out', fakeAsync(() => {
-    loggedIn();
-    portal.setActiveTab('checkpoints');
-    portal.logout();
-    expect(post).toHaveBeenCalledWith('projects/public/tok/logout', {});
-    expect([portal.state, portal.project, portal.threads.length, portal.activeTab]).toEqual(['login', null, 0, 'overview']);
-
-    portal.logout();
-    expect(portal.state).toBe('login');
-    fixture.destroy();
-    discardPeriodicTasks();
-
-    TestBed.resetTestingModule();
-    replies['/logout'] = () => throwError(() => new Error('x'));
-    loggedIn();
-    portal.logout();
-    expect(portal.state).toBe('login');
     fixture.destroy();
     discardPeriodicTasks();
   }));
@@ -934,99 +860,6 @@ describe('ProjectPortalComponent', () => {
       replies['/tok/updates'] = () => of(updates());
       replies['/activity/seen'] = () => of({});
     });
-
-    /**
-     * @description Sign-in by an e-mailed code: the mode switch clears the state; step 1 asks for
-     *   a code (always the same answer - no account enumeration), step 2 signs in with it and
-     *   opens the portal; a wrong code / too many attempts / a failed request show their reason.
-     * @input  no session; setLoginMode('code'); identifier 'jana'; requestCode (ok, then 429, then 500);
-     *   code '12 34 56' wrong (422), then right; rendered login card
-     * @output post('…/login/code-request', { identifier: 'jana' }); codeRequested + 'login_code_sent';
-     *   'error_too_many_attempts' / 'error_code_request_failed'; post('…/login/code', { identifier, code: '123456' });
-     *   'error_code_invalid'; state 'portal'; two mode buttons and the one-time-code input rendered
-     */
-    it('signs in with a code sent by e-mail', fakeAsync(() => {
-      create();
-      portal.loginError = 'error_invalid_credentials';
-      portal.setLoginMode('code');
-      expect(portal.loginMode).toBe('code');
-      expect(portal.loginError).toBeNull();
-      expect(portal.codeRequested).toBeFalse();
-      portal.requestCode();
-      expect(post).not.toHaveBeenCalled();
-      portal.loginUsername = ' jana ';
-      replies['/login/code-request'] = () => of({});
-      portal.requestCode();
-      expect(post).toHaveBeenCalledWith('projects/public/tok/login/code-request', { identifier: 'jana' });
-      expect([portal.codeRequested, portal.loginInfo]).toEqual([true, 'login_code_sent']);
-      fixture.detectChanges();
-      const el = fixture.nativeElement as HTMLElement;
-      expect(el.querySelectorAll('.pp-login-modes button').length).toBe(2);
-      expect(el.querySelector('input[autocomplete="one-time-code"]')).not.toBeNull();
-      expect(el.querySelector('.pp-login-info')!.textContent).toContain('login_code_sent');
-
-      portal.loginCode = '12 34 5';
-      portal.loginWithCode();
-      expect(post).not.toHaveBeenCalledWith('projects/public/tok/login/code', jasmine.anything());
-      portal.loginCode = '12 34 56';
-      replies['/login/code'] = () => throwError(() => ({ status: 422 }));
-      portal.loginWithCode();
-      expect(post).toHaveBeenCalledWith('projects/public/tok/login/code', { identifier: 'jana', code: '123456' });
-      expect(portal.loginError).toBe('error_code_invalid');
-      cookie = true;
-      replies['/login/code'] = () => of({ project: structuredClone(project) });
-      portal.loginWithCode();
-      expect(portal.state).toBe('portal');
-      expect(portal.loginInfo).toBeNull();
-
-      replies['/login/code-request'] = () => throwError(() => ({ status: 429 }));
-      portal.loginUsername = 'jana';
-      portal.requestCode();
-      expect(portal.loginError).toBe('error_too_many_attempts');
-      replies['/login/code-request'] = () => throwError(() => ({ status: 500 }));
-      portal.requestCode();
-      expect(portal.loginError).toBe('error_code_request_failed');
-      fixture.destroy();
-      discardPeriodicTasks();
-    }));
-
-    /**
-     * @description A one-time link of an e-mail (`?access=`) signs in once and is dropped from the
-     *   address; a spent link falls back to an existing session, otherwise to the code login with
-     *   the reason; `?section=` opens that section after the sign-in.
-     * @input  ?access=L1&section=approvals (ok); ?access=L2 failing without / with a session cookie
-     * @output post('…/login/link', { link: 'L1' }); navigate removing `access` with replaceUrl;
-     *   portal on 'approvals'; then login in code mode with 'error_link_invalid'; then portal
-     */
-    it('signs in with the link of an e-mail and opens the requested section', fakeAsync(() => {
-      query = { access: 'L1', section: 'approvals' };
-      replies['/login/link'] = () => of({ project: structuredClone(project) });
-      cookie = true;
-      create('tok', true);
-      expect(post).toHaveBeenCalledWith('projects/public/tok/login/link', { link: 'L1' });
-      expect(navigate).toHaveBeenCalledWith([], jasmine.objectContaining({ queryParams: { access: null }, replaceUrl: true }));
-      expect(portal.state).toBe('portal');
-      expect(portal.activeTab).toBe('approvals');
-      expect(portal.approvals.length).toBe(2);
-      fixture.destroy();
-      discardPeriodicTasks();
-
-      TestBed.resetTestingModule();
-      query = { access: 'L2' };
-      replies['/login/link'] = () => throwError(() => ({ status: 422 }));
-      create('tok', false);
-      expect(portal.state).toBe('login');
-      expect(portal.loginMode).toBe('code');
-      expect(portal.loginError).toBe('error_link_invalid');
-      fixture.destroy();
-      discardPeriodicTasks();
-
-      TestBed.resetTestingModule();
-      create('tok', true);
-      expect(portal.state).toBe('portal');
-      fixture.destroy();
-      discardPeriodicTasks();
-    }));
 
     /**
      * @description "What is new": loaded with the portal, marked seen at once on the overview

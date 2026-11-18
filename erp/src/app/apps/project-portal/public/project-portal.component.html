@@ -65,13 +65,6 @@
       </div>
     </div>
   }
-  @if (state === 'login') {
-  <app-portal-login
-    [token]="token!"
-    [initialMode]="loginStartMode"
-    [initialError]="loginStartError"
-    (signedIn)="enterPortal($event)"></app-portal-login>
-}
 
   @if (state === 'portal' && project) {
     <div class="pp-app" [class.pp-app--collapsed]="sidebarCollapsed" [class.pp-app--mobile-open]="mobileNavOpen">

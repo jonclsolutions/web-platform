@@ -4,16 +4,15 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Customer-facing project portal - login (permanent access_token URL + login name
- *   and password of a client account created by the supplier) followed by a 24h-sliding session
- *   (CheckProjectSession middleware). Laid out like the administration: header (menu button,
- *   signed-in name, refresh, language), a left menu that collapses (desktop) or slides in (mobile)
- *   and the sections Overview (key numbers + "What is new since your last visit"), Progress,
- *   Communication (unread badge, "waiting on you"), Approvals (approve / request changes),
+ * @description Customer-facing project portal (/projects/:token) of a signed-in client account
+ *   (24h-sliding session, CheckProjectSession middleware). The sign-in is a routed page of its own
+ *   (/projects/login/:token, PortalLoginComponent); the route of this component has a session
+ *   resolver that redirects to the login without a valid session. Laid out like the administration:
+ *   header (menu button, signed-in name, refresh, language), a left menu that collapses (desktop) or
+ *   slides in (mobile) and the sections Overview (key numbers + "What is new since your last visit"),
+ *   Progress, Communication (unread badge, "waiting on you"), Approvals (approve / request changes),
  *   Updates of the supplier, Files, Contacts, My account (own e-mail and e-mail notifications -
- *   all off by default) and Help. Sign-in: login name + password, or a one-time code / link sent
- *   to the account's e-mail (also the invitation link `?access=`); `?section=` of an e-mail opens
- *   its section after the sign-in.
+ *   all off by default) and Help. `?section=` of an e-mail opens its section after the sign-in.
  * @note The client sees only what the supplier made public: no internal notes, no internal
  *   checkpoint notes (the API leaves them out). Several accounts of one client share the
  *   conversations - messages show who wrote them ("You" for the own ones).
@@ -23,8 +22,9 @@
  * @security The portal session is NOT handled by JavaScript at all: the API sets it as an
  *   HttpOnly / Secure / SameSite=Strict cookie limited to the routes of this project and the
  *   browser sends it by itself (same origin). Nothing is stored in localStorage, so an XSS
- *   cannot read the session. After a reload the portal simply asks the API (GET of the project):
- *   200 = the session is still valid, 401 = show the login.
+ *   cannot read the session. The resolver of the route asks the API (GET of the project):
+ *   200 = the session is valid, 401 = redirect to the login. UX only - the API checks the
+ *   session on every request.
  */
 
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef, ElementRef, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
@@ -40,8 +40,8 @@ import { UploadRulesService } from '../../../shared/services/upload-rules.servic
 import { UploadRule, extensionsLabel, fileExtension, isExtensionAllowed } from '../../../shared/utils/upload-rules';
 import { PortalLanguageSwitcherComponent } from './language-switcher/portal-language-switcher.component';
 import { leaveOnMaintenance } from './maintenance/portal-maintenance';
-import {PortalLoginComponent} from './portal-login/portal-login.component'
-type PortalState = 'loading' | 'login' | 'portal' | 'invalid';
+
+type PortalState = 'loading' | 'portal' | 'invalid';
 /** Sections of the left menu. */
 export type PortalTab = 'overview' | 'checkpoints' | 'threads' | 'approvals' | 'updates' | 'files' | 'contacts' | 'account' | 'help';
 
@@ -62,9 +62,6 @@ export interface PortalAccountSettings {
 
 /** Items of the left menu in their order (Help and logout are at the bottom). */
 export const PORTAL_SECTIONS: PortalTab[] = ['overview', 'checkpoints', 'threads', 'approvals', 'updates', 'files', 'contacts'];
-
-/** How the login screen signs in: password, or a code e-mailed to the account. */
-export type PortalLoginMode = 'password' | 'code';
 
 /** Item of "What is new" (API ProjectActivityFeed, client audience). */
 export interface PortalActivityItem {
@@ -218,7 +215,7 @@ interface CompanySettings {
 @Component({
   selector: 'app-project-portal',
   standalone: true,
-  imports: [CommonModule, FormsModule, PortalLanguageSwitcherComponent, PortalLoginComponent],
+  imports: [CommonModule, FormsModule, PortalLanguageSwitcherComponent],
   templateUrl: './project-portal.component.html',
   styleUrls: ['../../../admin/shared-styles/theme.css', './project-portal.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -238,23 +235,11 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
     return this.portalI18n.getValue(key);
   }
 
-  public loginStartMode: PortalLoginMode = 'password';
-  public loginStartError: string | null = null;
-
   checkpointStatusLabels: Record<string, string> = {};
 
   token: string | null = null;
   state: PortalState = 'loading';
 
-  loginUsername = '';
-  loginPassword = '';
-  /** Password, or a code e-mailed to the account. */
-  loginMode: PortalLoginMode = 'password';
-  /** Code mode: the code was requested (second step - enter it). */
-  codeRequested = false;
-  loginCode = '';
-  /** Neutral confirmation after a code request (never says whether the account exists). */
-  loginInfo: string | null = null;
   /** Section asked for by the address (`?section=` of an e-mail) - opened after the sign-in. */
   private requestedSection: PortalTab | null = null;
 
@@ -272,8 +257,6 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
   /** Approval whose decision is being sent. */
   decidingId: number | null = null;
   decisionError: string | null = null;
-  loginError: string | null = null;
-  loginLoading = false;
 
   project: PublicProject | null = null;
   threads: ProjectThread[] = [];
@@ -416,17 +399,13 @@ updateThreadStatus(status: string): void {
 
     this.removeLegacySessionToken();
     this.sidebarCollapsed = this.readSidebarCollapsed();
-    const query = this.route.snapshot.queryParamMap;
-    const section = query.get('section') as PortalTab | null;
+    const section = this.route.snapshot.queryParamMap.get('section') as PortalTab | null;
     this.requestedSection = section && (PORTAL_SECTIONS as string[]).concat(['account', 'help']).includes(section) ? section : null;
-    const accessLink = query.get('access');
-    if (accessLink) {
-      // One-time link of an e-mail (sign-in code / invitation) - used once, then dropped from the address.
-      this.loginWithLink(accessLink);
-      return;
-    }
-    // The cookie (if any) is unreadable here - the API answers whether the session is valid.
-    this.loadProject();
+
+    // The resolver of the route already asked the API (session valid); without a project it
+    // redirected to the login, so this is only a safety net.
+    const project = this.route.snapshot.data['project'] as PublicProject | undefined;
+    if (project) this.enterPortal(project); else this.goToLogin();
   }
 
   /** @description Deletes the session token a former version of the portal kept in localStorage. */
@@ -866,18 +845,10 @@ updateThreadStatus(status: string): void {
     this.hasSession = false;
   }
 
-  private loadProject(): void {
-    this.state = 'loading';
-    this.portalGet<PublicProject>(`projects/public/${this.token}`)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (project) => this.enterPortal(project),
-        error: () => {
-          this.clearSession();
-          this.state = 'login';
-          this.cdr.markForCheck();
-        }
-      });
+  /** @description Opens the login of this project (no session / logged out); Back does not return here. */
+  private goToLogin(): void {
+    this.clearSession();
+    this.router.navigate(['/projects/login', this.token], { replaceUrl: true });
   }
 
   /**
@@ -889,8 +860,6 @@ updateThreadStatus(status: string): void {
     this.hasSession = true;
     this.project = project;
     this.state = 'portal';
-    this.loginPassword = '';
-    this.loginCode = '';
     this.loadThreads();
     this.loadActivity();
     this.loadApprovals();
@@ -901,82 +870,6 @@ updateThreadStatus(status: string): void {
       this.setActiveTab(section);
     }
     this.cdr.markForCheck();
-  }
-
-  /**
-   * @description Switches the login screen between password and e-mailed code.
-   * @param mode Login mode.
-   */
-  setLoginMode(mode: PortalLoginMode): void {
-    this.loginMode = mode;
-    this.loginError = null;
-    this.loginInfo = null;
-    this.codeRequested = false;
-    this.loginCode = '';
-    this.cdr.markForCheck();
-  }
-
-  /**
-   * @description Asks for a sign-in code to the e-mail of the login name / e-mail. The answer is
-   *   the same whether the account exists or not.
-   */
-  requestCode(): void {
-    if (!this.loginUsername.trim() || this.loginLoading) return;
-    this.loginLoading = true;
-    this.loginError = null;
-    this.cdr.markForCheck();
-    this.portalPost(`projects/public/${this.token}/login/code-request`, { identifier: this.loginUsername.trim() })
-      .pipe(finalize(() => { this.loginLoading = false; this.cdr.markForCheck(); }), takeUntil(this.destroy$))
-      .subscribe({
-        next: () => { this.codeRequested = true; this.loginInfo = 'login_code_sent'; },
-        error: (err: any) => {
-          this.loginError = err?.status === 404 ? 'error_project_not_found' : err?.status === 429 ? 'error_too_many_attempts' : 'error_code_request_failed';
-        },
-      });
-  }
-
-  /** @description Signs in with the code from the e-mail. */
-  loginWithCode(): void {
-    const code = this.loginCode.replace(/\s/g, '');
-    if (!this.loginUsername.trim() || code.length < 6 || this.loginLoading) return;
-    this.loginLoading = true;
-    this.loginError = null;
-    this.cdr.markForCheck();
-    this.portalPost<{ project: PublicProject }>(`projects/public/${this.token}/login/code`, { identifier: this.loginUsername.trim(), code })
-      .pipe(finalize(() => { this.loginLoading = false; this.cdr.markForCheck(); }), takeUntil(this.destroy$))
-      .subscribe({
-        next: (res) => { this.loginInfo = null; this.enterPortal(res.project); },
-        error: (err: any) => { this.loginError = err?.status === 429 ? 'error_too_many_attempts' : 'error_code_invalid'; },
-      });
-  }
-
-  /**
-   * @description Signs in with the one-time link of an e-mail and removes it from the address
-   *   (it works once; a reload must not try it again).
-   * @param link Link token of `?access=`.
-   */
-  private loginWithLink(link: string): void {
-    this.state = 'loading';
-    this.router.navigate([], { relativeTo: this.route, queryParams: { access: null }, queryParamsHandling: 'merge', replaceUrl: true });
-    this.portalPost<{ project: PublicProject }>(`projects/public/${this.token}/login/link`, { link })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (res) => this.enterPortal(res.project),
-        error: (err: any) => {
-          if (err?.status === 404) { this.state = 'invalid'; this.cdr.markForCheck(); return; }
-          // A spent / expired link: an existing session still opens the portal, else the login with the reason.
-          this.portalGet<PublicProject>(`projects/public/${this.token}`).pipe(takeUntil(this.destroy$)).subscribe({
-            next: (project) => this.enterPortal(project),
-            error: () => {
-              this.clearSession();
-              this.state = 'login';
-              this.loginMode = 'code';
-              this.loginError = 'error_link_invalid';
-              this.cdr.markForCheck();
-            },
-          });
-        },
-      });
   }
 
   // ── What is new, updates, approvals ──────────────────────────────────
@@ -1112,31 +1005,8 @@ updateThreadStatus(status: string): void {
     return this.t('approval_status_' + status);
   }
 
-  login(): void {
-    if (!this.loginUsername.trim() || !this.loginPassword.trim() || this.loginLoading) return;
-
-    this.loginLoading = true;
-    this.loginError = null;
-    this.cdr.markForCheck();
-
-    this.portalPost<{ project: PublicProject }>(
-      `projects/public/${this.token}/login`,
-      { username: this.loginUsername.trim(), password: this.loginPassword }
-    ).pipe(
-      finalize(() => { this.loginLoading = false; this.cdr.markForCheck(); }),
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (res) => this.enterPortal(res.project),
-      error: (err: any) => {
-        this.loginError = err?.status === 404
-          ? 'error_project_not_found'
-          : err?.status === 429 ? 'error_too_many_attempts' : 'error_invalid_login';
-      }
-    });
-  }
-
   logout(): void {
-    if (!this.hasSession) { this.state = 'login'; return; }
+    if (!this.hasSession) { this.goToLogin(); return; }
 
     this.portalPost(`projects/public/${this.token}/logout`, {})
       .pipe(takeUntil(this.destroy$))
@@ -1146,12 +1016,9 @@ updateThreadStatus(status: string): void {
   private finishLogout(): void {
     this.stopPolling$.next();
     this.stopGlobalPolling$.next();
-    this.clearSession();
     this.project = null;
     this.threads = [];
     this.selectedThread = null;
-    this.state = 'login';
-    this.loginPassword = '';
     this.activeTab = 'overview';
     this.mobileNavOpen = false;
     this.expandedCheckpointIds.clear();
@@ -1161,9 +1028,7 @@ updateThreadStatus(status: string): void {
     this.activityUnseen = 0;
     this.updates = [];
     this.approvals = [];
-    this.loginMode = 'password';
-    this.codeRequested = false;
-    this.cdr.markForCheck();
+    this.goToLogin();
   }
 
   private loadThreads(): void {
@@ -1181,7 +1046,8 @@ updateThreadStatus(status: string): void {
    * `totalUnreadCount` badge update even while the customer is on another tab (Description /
    * Progress / Contacts). When a thread is open, its own detail polling
    * (`startPollingNewMessages()`) runs independently next to this one - one extra request every
-   * 15 s is a negligible price for a "live" feel without WebSockets.
+   * 15 s is a negligible price for a "live" feel without WebSockets. A 401 (the session expired
+   * after 24 h of inactivity) sends the client to the login.
    */
   private startGlobalThreadsPolling(): void {
     this.stopGlobalPolling$.next();
@@ -1206,7 +1072,7 @@ updateThreadStatus(status: string): void {
         this.threads = threads;
         this.cdr.markForCheck();
       },
-      error: () => { /* silent error - next attempt in 15 s */ }
+      error: (err) => { if (err?.status === 401) this.goToLogin(); }
     });
   }
 
@@ -1229,10 +1095,7 @@ updateThreadStatus(status: string): void {
             this.openThread(this.selectedThread);
           }
         },
-        error: () => {
-          this.clearSession();
-          this.state = 'login';
-        }
+        error: () => this.goToLogin()
       });
   }
 

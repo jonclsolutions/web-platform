@@ -11,11 +11,16 @@
 */
 
 :host {
+  --bg:       var(--color-sand-50);
   --danger:   var(--color-rose-700);
   --info:     var(--color-indigo-700);
   --info-dim: var(--color-indigo-50);
   --ease:     0.18s ease;
   display: block;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ff);
 }
 
 .pp-center { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
