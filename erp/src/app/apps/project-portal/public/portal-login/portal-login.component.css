@@ -1,0 +1,73 @@
+/*
+    @file: portal-login.component.css
+    @path: src/app/apps/project-portal/public/login/portal-login.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Styles of the portal sign-in (pp-login-*), moved out of project-portal.component.css.
+        The component is encapsulated, so the few shared controls it uses (.pp-input,
+        .pp-btn-primary, .pp-link, .pp-login-field, .pp-center) are repeated here.
+    @dependencies: ../../../../admin/shared-styles/theme.css (tokens), global colour variables
+*/
+
+:host {
+  --danger:   var(--color-rose-700);
+  --info:     var(--color-indigo-700);
+  --info-dim: var(--color-indigo-50);
+  --ease:     0.18s ease;
+  display: block;
+}
+
+.pp-center { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+
+/* Card */
+.pp-login-lang { position: fixed; top: 14px; right: 16px; z-index: 30; }
+.pp-login-card {
+  width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 18px; padding: 36px 32px; text-align: center; box-shadow: 0 1px 2px rgba(24, 24, 27, 0.04);
+}
+.pp-login-icon {
+  width: 44px; height: 44px; margin: 0 auto 16px; border-radius: 12px; background: var(--surface-2);
+  border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--accent);
+}
+.pp-login-title { font-size: 1.3rem; font-weight: 700; margin: 0 0 8px; color: var(--text); }
+.pp-login-lead { font-size: 0.88rem; color: var(--text-muted); margin: 0 0 20px; line-height: 1.5; }
+.pp-login-field { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+.pp-login-field > span { font-size: 0.76rem; font-weight: 600; color: var(--text-muted); }
+.pp-login-error { color: var(--danger); font-size: 0.83rem; margin: 0 0 10px; }
+.pp-login-hint { margin: 14px 0 0; font-size: 0.76rem; color: var(--text-dim); line-height: 1.5; }
+
+/* Form controls and buttons */
+.pp-input {
+  width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-mid);
+  background: var(--surface); color: var(--text); font-size: 0.88rem; font-family: inherit; margin-bottom: 10px;
+}
+.pp-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--color-zinc-100); }
+
+.pp-btn-primary {
+  width: 100%; padding: 11px; border-radius: 999px; border: none; background: var(--accent);
+  color: var(--color-white); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background var(--ease);
+}
+.pp-btn-primary:hover:not(:disabled) { background: var(--color-zinc-700); }
+.pp-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.pp-link { padding: 0; border: 0; background: none; color: var(--info); font: inherit; cursor: pointer; text-decoration: underline; }
+.pp-btn-primary:focus-visible, .pp-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Sign-in modes: password / e-mailed code */
+.pp-login-modes {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin: 0 0 16px;
+  background: var(--surface-2); border-radius: 10px;
+}
+.pp-login-modes button {
+  padding: 8px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--text-muted);
+  font: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background var(--ease), color var(--ease);
+}
+.pp-login-modes button.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+.pp-login-modes button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pp-code-input { font-size: 1.3rem; letter-spacing: 0.35em; text-align: center; font-variant-numeric: tabular-nums; }
+.pp-login-info { color: var(--info); background: var(--info-dim); border-radius: 8px; padding: 8px 10px; font-size: 0.82rem; margin: 0 0 10px; }
+.pp-login-again { display: block; margin: 12px auto 0; font-size: 0.8rem; }
+
+@media (max-width: 768px) {
+  .pp-login-card { padding: 28px 22px; }
+}

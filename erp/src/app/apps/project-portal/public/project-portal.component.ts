@@ -40,7 +40,7 @@ import { UploadRulesService } from '../../../shared/services/upload-rules.servic
 import { UploadRule, extensionsLabel, fileExtension, isExtensionAllowed } from '../../../shared/utils/upload-rules';
 import { PortalLanguageSwitcherComponent } from './language-switcher/portal-language-switcher.component';
 import { leaveOnMaintenance } from './maintenance/portal-maintenance';
-
+import {PortalLoginComponent} from './portal-login/portal-login.component'
 type PortalState = 'loading' | 'login' | 'portal' | 'invalid';
 /** Sections of the left menu. */
 export type PortalTab = 'overview' | 'checkpoints' | 'threads' | 'approvals' | 'updates' | 'files' | 'contacts' | 'account' | 'help';
@@ -107,6 +107,8 @@ export const PORTAL_SIDEBAR_STORAGE_KEY = 'pp_sidebar_collapsed';
 /** Window width up to which the menu slides in over the content instead of collapsing. */
 const MOBILE_MAX_WIDTH = 768;
 
+
+
 /** Fallback limits of the thread attachments while the rules of the API (`GET upload-rules`, profile project_thread) are not loaded. */
 const DEFAULT_MAX_ATTACHMENTS = 5;
 const DEFAULT_MAX_ATTACHMENT_SIZE_MB = 15;
@@ -156,7 +158,7 @@ interface ProjectThread {
   messages?: ProjectThreadMessage[];
 }
 
-interface PublicProject {
+export interface PublicProject {
   id: number;
   name: string;
   description: string | null;
@@ -216,7 +218,7 @@ interface CompanySettings {
 @Component({
   selector: 'app-project-portal',
   standalone: true,
-  imports: [CommonModule, FormsModule, PortalLanguageSwitcherComponent],
+  imports: [CommonModule, FormsModule, PortalLanguageSwitcherComponent, PortalLoginComponent],
   templateUrl: './project-portal.component.html',
   styleUrls: ['../../../admin/shared-styles/theme.css', './project-portal.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -235,6 +237,9 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
   public t(key: string): string {
     return this.portalI18n.getValue(key);
   }
+
+  public loginStartMode: PortalLoginMode = 'password';
+  public loginStartError: string | null = null;
 
   checkpointStatusLabels: Record<string, string> = {};
 

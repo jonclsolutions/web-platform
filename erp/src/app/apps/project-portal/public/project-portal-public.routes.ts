@@ -9,6 +9,8 @@
  *   project (/projects/:token - sign-in, then the project) - both closed by the maintenance guard
  *   while the portal is switched off - and the maintenance page (/projects/maintenance). Browser
  *   titles: area `project-portal`.
+ * @note The sign-in is not a route of its own: `PortalLoginComponent` (login/) is shown by
+ *   ProjectPortalComponent while its state is `login`, so this file needs no change.
  * @usage `publicRoutes` of PROJECT_PORTAL_APP (project-portal.app.ts), composed by app.routes.ts.
  */
 
