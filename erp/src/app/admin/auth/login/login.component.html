@@ -6,19 +6,54 @@
     @created: 2025
     @description: Template of the login component (split layout: hero + login card).
         The card has three steps: credentials, otp and "forgot password" (inline, no modal).
-    @note: All texts are hardcoded (English) on purpose - replace them with t?.… later.
+        All texts come from the admin translation section `login` (`t`), nothing is hardcoded.
 -->
 
 <div *ngIf="t">
 <div class="login-page">
+
+  <!-- ───────── Language switcher (top right, same markup as the public header) ───────── -->
+  <div class="lang-wrp">
+    <div class="lang-dropdown" [class.lang-dropdown--open]="isLangMenuOpen" #langSwitcher>
+      <button class="lang-trigger" type="button" (click)="toggleLangMenu()" [attr.aria-expanded]="isLangMenuOpen" aria-haspopup="listbox" [attr.aria-label]="t.language.label">
+        @if (currentLanguageMeta; as activeLang) {
+          <img [src]="activeLang.icon" [alt]="activeLang.code" class="lang-trigger-flag">
+        }
+        <span class="lang-trigger-code">{{ currentLanguageCode | uppercase }}</span>
+        <svg class="lang-trigger-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      @if (isLangMenuOpen) {
+        <ul class="lang-menu" role="listbox" [attr.aria-label]="t.language.label">
+          @for (lang of languages; track lang.code) {
+            <li
+              class="lang-option"
+              [class.lang-option--active]="currentLanguageCode === lang.code"
+              role="option"
+              [attr.aria-selected]="currentLanguageCode === lang.code"
+              (click)="selectLanguage(lang.code)">
+              <img [src]="lang.icon" [alt]="lang.code" class="lang-option-flag">
+              <span class="lang-option-label">{{ lang.name }}</span>
+              @if (currentLanguageCode === lang.code) {
+                <svg class="lang-option-check" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                  <path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
 
   <!-- ───────── Main: hero + card ───────── -->
   <main class="login-main">
 
     <section class="hero">
       <img class="hero-visual" [src]="logo_path" alt="" aria-hidden="true">
-      <h1 class="hero-title">Engineering better tomorrows.</h1>
-
+      <h1 class="hero-title">{{ t.hero.title }}</h1>
     </section>
 
     <div class="login-center">
@@ -26,14 +61,14 @@
 
         @if (step === 'credentials' && !showForgotModal && rememberedAccounts.length) {
           <div class="account-chooser">
-            <p class="account-chooser-title">Continue with a saved account</p>
+            <p class="account-chooser-title">{{ t.accounts.chooser_title }}</p>
             @for (account of rememberedAccounts; track account.slot ?? account.user_email) {
               <button
                 type="button"
                 class="account-option"
                 [disabled]="isSubmitting"
                 (click)="onResume(account)"
-                [attr.aria-label]="'Continue as ' + account.user_email">
+                [attr.aria-label]="t.accounts.continue_as + ' ' + account.user_email">
                 <app-user-avatar [src]="account.avatar_url" [size]="36"></app-user-avatar>
                 <span class="account-text">
                   <span class="account-name">{{ account.full_name || account.user_email }}</span>
@@ -41,7 +76,7 @@
                     <span class="account-email">{{ account.user_email }}</span>
                   }
                   @if (account.current) {
-                    <span class="account-current">Signed in in this window</span>
+                    <span class="account-current">{{ t.accounts.signed_in_here }}</span>
                   }
                 </span>
                 <svg class="account-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -49,7 +84,7 @@
                 </svg>
               </button>
             }
-            <p class="account-chooser-divider"><span>or sign in with another account</span></p>
+            <p class="account-chooser-divider"><span>{{ t.accounts.divider }}</span></p>
           </div>
         }
 
@@ -57,7 +92,7 @@
           <form (ngSubmit)="onLogin()" class="login-form" novalidate>
 
             <div class="field-group">
-              <label class="field-label" for="email">Email address</label>
+              <label class="field-label" for="email">{{ t.labels.email }}</label>
               <div class="input-wrapper">
                 <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <rect x="2" y="4" width="20" height="16" rx="2"/>
@@ -68,7 +103,7 @@
                   id="email"
                   [(ngModel)]="email"
                   name="email"
-                  placeholder="name@example.com"
+                  [placeholder]="t.placeholders.email"
                   class="field-input has-icon"
                   required
                   autocomplete="username">
@@ -77,7 +112,7 @@
 
             <div class="field-group">
               <div class="field-label-row">
-                <label class="field-label" for="password">Password</label>
+                <label class="field-label" for="password">{{ t.labels.password }}</label>
               </div>
               <div class="input-wrapper password-wrapper">
                 <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -97,8 +132,8 @@
                   type="button"
                   class="toggle-password"
                   (click)="showPassword = !showPassword"
-                  [title]="showPassword ? 'Hide password' : 'Show password'"
-                  [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
+                  [title]="showPassword ? t.buttons.hide_password : t.buttons.show_password"
+                  [attr.aria-label]="showPassword ? t.buttons.hide_password : t.buttons.show_password">
                   @if (showPassword) {
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -117,10 +152,10 @@
             <div class="options-row">
               <label class="remember-row">
                 <input type="checkbox" name="rememberMe" [(ngModel)]="rememberMe">
-                <span>Remember me</span>
+                <span>{{ t.labels.remember_me }}</span>
               </label>
               <button type="button" class="forgot-trigger" (click)="openForgotModal()">
-                Forgot password?
+                {{ t.buttons.forgot_password }}
               </button>
             </div>
 
@@ -142,7 +177,7 @@
             }
 
             <button type="submit" class="submit-btn" [disabled]="isSubmitting">
-              {{ isSubmitting ? 'Signing in…' : 'Sign in' }}
+              {{ isSubmitting ? t.buttons.signing_in : t.buttons.sign_in }}
               @if (!isSubmitting) {
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M5 12h14M13 6l6 6-6 6"/>
@@ -157,12 +192,12 @@
           <form (ngSubmit)="onResetPassword()" class="login-form" novalidate>
 
             <div class="card-header card-header-inline">
-              <h2 class="card-title">Reset your password</h2>
-              <p class="otp-subtitle">Enter your email and we'll send you a link to set a new password.</p>
+              <h2 class="card-title">{{ t.forgot.title }}</h2>
+              <p class="otp-subtitle">{{ t.forgot.subtitle }}</p>
             </div>
 
             <div class="field-group">
-              <label class="field-label" for="reset-email">Email address</label>
+              <label class="field-label" for="reset-email">{{ t.labels.email }}</label>
               <div class="input-wrapper">
                 <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <rect x="2" y="4" width="20" height="16" rx="2"/>
@@ -173,7 +208,7 @@
                   id="reset-email"
                   [(ngModel)]="resetEmail"
                   name="resetEmail"
-                  placeholder="name@example.com"
+                  [placeholder]="t.placeholders.email"
                   class="field-input has-icon"
                   required
                   autocomplete="email">
@@ -189,12 +224,12 @@
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
-                If the account exists, a reset link is on its way.
+                {{ t.forgot.success }}
               </div>
             }
 
             <button type="submit" class="submit-btn" [disabled]="resetSubmitting">
-              {{ resetSubmitting ? 'Sending…' : 'Send reset link' }}
+              {{ resetSubmitting ? t.buttons.sending : t.buttons.send_reset_link }}
               @if (!resetSubmitting) {
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M5 12h14M13 6l6 6-6 6"/>
@@ -203,7 +238,7 @@
             </button>
 
             <button type="button" class="forgot-trigger" (click)="closeForgotModal()">
-              Back to sign in
+              {{ t.buttons.back_to_sign_in }}
             </button>
 
           </form>
@@ -213,17 +248,17 @@
           <form (ngSubmit)="onVerifyOtp()" class="login-form" novalidate>
 
             <div class="card-header card-header-inline">
-              <h2 class="card-title">Verify it's you.</h2>
+              <h2 class="card-title">{{ t.otp.title }}</h2>
               <p class="otp-subtitle">
-                Enter the 6-digit code we sent to your email.
+                {{ t.otp.subtitle }}
                 @if (!isOtpExpired) {
-                  The code is valid for {{ countdownDisplay }}.
+                  {{ otpValidText }}
                 }
               </p>
             </div>
 
             <div class="field-group">
-              <label class="field-label" for="otp">Verification code</label>
+              <label class="field-label" for="otp">{{ t.labels.verification_code }}</label>
               <input
                 type="text"
                 id="otp"
@@ -238,7 +273,7 @@
             </div>
 
             @if (isOtpExpired) {
-              <div class="error-message" role="alert">The code has expired. Request a new one.</div>
+              <div class="error-message" role="alert">{{ t.errors.otp_expired }}</div>
             }
 
             @if (errorMessage) {
@@ -246,7 +281,7 @@
             }
 
             <button type="submit" class="submit-btn" [disabled]="isSubmitting || otpCode.length !== 6">
-              {{ isSubmitting ? 'Verifying…' : 'Verify' }}
+              {{ isSubmitting ? t.buttons.verifying : t.buttons.verify }}
               @if (!isSubmitting) {
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M5 12h14M13 6l6 6-6 6"/>
@@ -255,11 +290,11 @@
             </button>
 
             <button type="button" class="forgot-trigger" [disabled]="!canResend" (click)="onResendOtp()">
-              Resend code {{ resendCountdownDisplay }}
+              {{ t.buttons.resend_code }} {{ resendCountdownDisplay }}
             </button>
 
             <button type="button" class="forgot-trigger" (click)="backToCredentials()">
-              Back to sign in
+              {{ t.buttons.back_to_sign_in }}
             </button>
 
           </form>
@@ -270,7 +305,7 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M19 12H5M12 5l-7 7 7 7"/>
             </svg>
-            Back to home
+            {{ t.buttons.back_to_home }}
           </a>
         </div>
 

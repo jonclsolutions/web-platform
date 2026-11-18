@@ -1461,5 +1461,59 @@
     "invalid_json_error": "Invalid JSON file.",
     "json_uploaded_message": "JSON for \"{lang}\" successfully uploaded.",
     "upload_failed_error": "Upload failed. Check server connectivity."
+  },
+  "login": {
+    "hero": {
+      "title": "Engineering better tomorrows."
+    },
+    "language": {
+      "label": "Language"
+    },
+    "accounts": {
+      "chooser_title": "Continue with a saved account",
+      "continue_as": "Continue as",
+      "signed_in_here": "Signed in in this window",
+      "divider": "or sign in with another account",
+      "unavailable": "This account is no longer available. Please sign in with your password."
+    },
+    "labels": {
+      "email": "Email address",
+      "password": "Password",
+      "remember_me": "Remember me",
+      "verification_code": "Verification code"
+    },
+    "placeholders": {
+      "email": "name@example.com"
+    },
+    "buttons": {
+      "sign_in": "Sign in",
+      "signing_in": "Signing in…",
+      "forgot_password": "Forgot password?",
+      "show_password": "Show password",
+      "hide_password": "Hide password",
+      "verify": "Verify",
+      "verifying": "Verifying…",
+      "resend_code": "Resend code",
+      "send_reset_link": "Send reset link",
+      "sending": "Sending…",
+      "back_to_sign_in": "Back to sign in",
+      "back_to_home": "Back to home"
+    },
+    "otp": {
+      "title": "Verify it's you.",
+      "subtitle": "Enter the 6-digit code we sent to your email.",
+      "valid_for": "The code is valid for {time}."
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "subtitle": "Enter your email and we'll send you a link to set a new password.",
+      "success": "If the account exists, a reset link is on its way."
+    },
+    "errors": {
+      "captcha_required": "Please confirm you are not a robot.",
+      "captcha_load": "Failed to load verification. Please try again.",
+      "login_failed": "Sign-in failed.",
+      "otp_expired": "The code has expired. Request a new one."
+    }
   }
 }

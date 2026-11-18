@@ -5,23 +5,26 @@
  * @author JS
  * @created 2025
  * @description Authentication component: login form ("Remember me" included), captcha, the
- *   2FA OTP step and the account chooser ("Continue as ...": the account of this tab and the
- *   accounts remembered in this browser).
+ *   2FA OTP step, the account chooser ("Continue as ...": the account of this tab and the
+ *   accounts remembered in this browser), the inline "forgot password" step and the language
+ *   switcher (top right).
  * @note The page is never skipped and never signs in on its own; the user chooses an account or
  *   signs in with another one. Several accounts may be signed in in one browser (each tab works
  *   with one of them, see AuthService) - a login or a chosen account signs in THIS tab only.
  * @note Texts: admin translation section `login` (AdminLocalizationService), like the other
  *   pages of the sign-in (activate account, reset password) - independent of any application.
+ *   The language is the one of the admin (same service, same localStorage key), so a language
+ *   chosen here is the language of the admin after the sign-in and vice versa.
  */
 
-import { ChangeDetectorRef, Component, DestroyRef, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthError, AuthService, LoginError, RememberedAccount, TwoFactorError } from '../../../core/auth/auth.service';
 import { UserAvatarComponent } from '../../components/user-avatar/user-avatar.component';
 import { TurnstileService } from '../../../core/services/turnstile.service';
-import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
+import { AdminLocalizationService, AdminLanguageMeta } from '../../../core/services/admin-localization.service';
 import { CommonModule } from '@angular/common';
 import { map, switchMap } from 'rxjs/operators';
 type LoginStep = 'credentials' | 'otp';
@@ -42,10 +45,15 @@ export class LoginComponent implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly cdr = inject(ChangeDetectorRef);
 
-  /** Texts of the page (section `login`, nested groups: labels, errors, otp, forgot …). */
-  t: any = {};
+  /**
+   * Texts of the page (section `login` merged with `shared`, nested groups: hero, accounts,
+   * labels, placeholders, buttons, otp, forgot, errors). `null` until the language is loaded -
+   * the template renders nothing before that, so it never reads a missing group.
+   */
+  t: any = null;
 
   @ViewChild('captchaContainer') captchaContainer?: ElementRef<HTMLDivElement>;
+  @ViewChild('langSwitcher') private langSwitcher?: ElementRef<HTMLElement>;
 
   step: LoginStep = 'credentials';
 
@@ -84,6 +92,46 @@ export class LoginComponent implements OnInit, OnDestroy {
   resetSubmitting = false;
   resetErrorMessage = '';
 
+  // ── Language switcher (same languages and same service as the admin header) ──────────────
+  readonly languages: AdminLanguageMeta[] = this.i18n.availableLanguages;
+  isLangMenuOpen = false;
+
+  get currentLanguageCode(): string {
+    return this.i18n.getCurrentLanguage();
+  }
+
+  get currentLanguageMeta(): AdminLanguageMeta | undefined {
+    return this.languages.find(l => l.code === this.currentLanguageCode);
+  }
+
+  toggleLangMenu(): void {
+    this.isLangMenuOpen = !this.isLangMenuOpen;
+  }
+
+  closeLangMenu(): void {
+    this.isLangMenuOpen = false;
+  }
+
+  selectLanguage(code: string): void {
+    this.i18n.setLanguage(code);
+    this.isLangMenuOpen = false;
+  }
+
+  /** Closes the language menu on a click anywhere outside of the switcher. */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.isLangMenuOpen) return;
+    if (!this.langSwitcher?.nativeElement.contains(event.target as Node)) {
+      this.closeLangMenu();
+    }
+  }
+
+  /** Closes the language menu with Escape. */
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.closeLangMenu();
+  }
+
   constructor(
     private router: Router,
     private authService: AuthService,
@@ -97,7 +145,8 @@ export class LoginComponent implements OnInit, OnDestroy {
    */
   ngOnInit(): void {
     this.i18n.translations$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.t = this.i18n.getMergedSection('login') ?? {};
+      const section = this.i18n.getMergedSection('login');
+      this.t = section && Object.keys(section).length ? section : null;
       this.cdr.markForCheck();
     });
 
@@ -285,6 +334,11 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   get canResend(): boolean {
     return Date.now() >= this.resendAvailableAt;
+  }
+
+  /** "The code is valid for {time}." - the placeholder of the translation is replaced by the countdown. */
+  get otpValidText(): string {
+    return (this.t?.otp?.valid_for ?? '').replace('{time}', this.countdownDisplay);
   }
 
   private startCountdown(): void {

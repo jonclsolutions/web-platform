@@ -1461,5 +1461,59 @@
     "invalid_json_error": "Neplatný JSON soubor.",
     "json_uploaded_message": "JSON pro „{lang}\" byl úspěšně nahrán.",
     "upload_failed_error": "Nahrání se nezdařilo. Zkontrolujte připojení k serveru."
+  },
+  "login": {
+  "hero": {
+    "title": "Engineering better tomorrows."
+  },
+  "language": {
+    "label": "Jazyk"
+  },
+  "accounts": {
+    "chooser_title": "Pokračovat s uloženým účtem",
+    "continue_as": "Pokračovat jako",
+    "signed_in_here": "Přihlášen v tomto okně",
+    "divider": "nebo se přihlaste jiným účtem",
+    "unavailable": "Tento účet už není k dispozici. Přihlaste se heslem."
+  },
+  "labels": {
+    "email": "E-mailová adresa",
+    "password": "Heslo",
+    "remember_me": "Zapamatovat si mě",
+    "verification_code": "Ověřovací kód"
+  },
+  "placeholders": {
+    "email": "jmeno@priklad.cz"
+  },
+  "buttons": {
+    "sign_in": "Přihlásit se",
+    "signing_in": "Přihlašování…",
+    "forgot_password": "Zapomněli jste heslo?",
+    "show_password": "Zobrazit heslo",
+    "hide_password": "Skrýt heslo",
+    "verify": "Ověřit",
+    "verifying": "Ověřování…",
+    "resend_code": "Odeslat kód znovu",
+    "send_reset_link": "Odeslat odkaz pro obnovení",
+    "sending": "Odesílání…",
+    "back_to_sign_in": "Zpět na přihlášení",
+    "back_to_home": "Zpět na úvodní stránku"
+  },
+  "otp": {
+    "title": "Ověřte, že jste to vy.",
+    "subtitle": "Zadejte 6místný kód, který jsme vám poslali e-mailem.",
+    "valid_for": "Kód je platný ještě {time}."
+  },
+  "forgot": {
+    "title": "Obnovení hesla",
+    "subtitle": "Zadejte svůj e-mail a my vám pošleme odkaz pro nastavení nového hesla.",
+    "success": "Pokud účet existuje, odkaz pro obnovení je na cestě."
+  },
+  "errors": {
+    "captcha_required": "Potvrďte, že nejste robot.",
+    "captcha_load": "Ověření se nepodařilo načíst. Zkuste to prosím znovu.",
+    "login_failed": "Přihlášení se nezdařilo.",
+    "otp_expired": "Platnost kódu vypršela. Vyžádejte si nový."
   }
+}
 }
