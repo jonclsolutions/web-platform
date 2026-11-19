@@ -1,13 +1,15 @@
 /**
- * @file password-confirm-dialog.component.ts
- * @path src/app/admin/components/password-confirm-dialog/password-confirm-dialog.component.ts
+ * @file password-dialog.component.ts
+ * @path src/app/admin/components/password-dialog/password-dialog.component.ts
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Modal asking for the own password before a sensitive operation (operations on
- *   sysadmin accounts, changes of the e-mail access policy). Rendered and driven by
- *   PasswordConfirmationService - the component only collects the password and shows the state
- *   (checking, wrong password, locked); it never stores or sends it itself.
+ * @description Shared modal asking for the password of the signed-in user before a sensitive
+ *   operation (maintenance switch of an application, operations on sysadmin accounts, e-mail
+ *   access policy …): title with a close button, optional description with a highlighted value,
+ *   optional amber warning, the password field, cancel / confirm. Rendered and driven by
+ *   PasswordDialogService - the component only collects the password and shows the state
+ *   (checking, error); it never stores or sends it itself.
  * @dependencies
  * - ScrollLockService: background scroll locked while open (same counter as other overlays).
  */
@@ -16,47 +18,59 @@ import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, E
 import { FormsModule } from '@angular/forms';
 import { ScrollLockService } from '../../../core/services/scroll-lock.service';
 
-/** @description Texts of the dialog (translated by PasswordConfirmationService). */
-export interface PasswordConfirmDialogTexts {
+/** @description Texts of the dialog with every optional part resolved (set by PasswordDialogService). */
+export interface PasswordDialogTexts {
   title: string;
+  /** Description above the field ('' = none). */
   message: string;
+  /** Highlighted value after the description, e.g. the target state ('' = none). */
+  highlight: string;
+  /** Colour of the highlighted value. */
+  highlightTone: 'success' | 'warning' | 'danger';
+  /** Amber warning box ('' = none). */
+  warning: string;
   label: string;
   confirm: string;
   cancel: string;
+  close: string;
 }
 
 /**
- * @description Password prompt of the step-up confirmation.
- * @usage Created by PasswordConfirmationService.confirm(); not placed in templates.
+ * @description Password prompt of the administration.
+ * @usage Created by PasswordDialogService.open(); not placed in templates.
  */
 @Component({
-  selector: 'app-password-confirm-dialog',
+  selector: 'app-password-dialog',
   standalone: true,
   imports: [FormsModule],
-  templateUrl: './password-confirm-dialog.component.html',
-  styleUrls: ['./password-confirm-dialog.component.css'],
+  templateUrl: './password-dialog.component.html',
+  styleUrls: ['./password-dialog.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PasswordConfirmDialogComponent implements AfterViewInit, OnDestroy {
+export class PasswordDialogComponent implements AfterViewInit, OnDestroy {
   /** Texts (neutral English defaults until the service sets the translation). */
-  texts: PasswordConfirmDialogTexts = {
+  texts: PasswordDialogTexts = {
     title: 'Confirm with your password',
-    message: 'This operation needs your password.',
-    label: 'Password',
+    message: '',
+    highlight: '',
+    highlightTone: 'success',
+    warning: '',
+    label: 'Current password',
     confirm: 'Confirm',
     cancel: 'Cancel',
+    close: 'Close',
   };
 
   /** The typed password - cleared after every submit and on close. */
   password = '';
-  /** A request with the password is running. */
+  /** The operation with the password is running. */
   busy = false;
   /** Error shown under the field (wrong password, locked, …), null = none. */
   error: string | null = null;
 
   /** Emitted with the typed password when the user submits. */
   @Output() submitted = new EventEmitter<string>();
-  /** Emitted when the user cancels (button, Escape, overlay). */
+  /** Emitted when the user cancels (button, close, Escape, overlay). */
   @Output() cancelled = new EventEmitter<void>();
 
   @ViewChild('passwordInput') passwordInput?: ElementRef<HTMLInputElement>;
@@ -86,7 +100,7 @@ export class PasswordConfirmDialogComponent implements AfterViewInit, OnDestroy 
     this.cd.markForCheck();
   }
 
-  /** @description Cancels the confirmation. */
+  /** @description Cancels the dialog (not while the operation runs). */
   cancel(): void {
     if (this.busy) return;
     this.password = '';
@@ -94,23 +108,26 @@ export class PasswordConfirmDialogComponent implements AfterViewInit, OnDestroy 
   }
 
   /**
-   * @description Shows why the confirmation failed and lets the user try again.
-   * @param message Translated error.
+   * @description The operation failed - the dialog stays open for another try.
+   * @param message Translated error under the field ('' = none, e.g. already announced elsewhere).
    */
   showError(message: string): void {
     this.busy = false;
-    this.error = message;
+    this.error = message || null;
     this.cd.markForCheck();
     setTimeout(() => this.passwordInput?.nativeElement.focus());
   }
 
-  /** @description Applies new texts (the service sets the translation). */
-  setTexts(texts: PasswordConfirmDialogTexts): void {
+  /**
+   * @description Applies the texts (the service sets the translation and the options).
+   * @param texts Resolved texts.
+   */
+  setTexts(texts: PasswordDialogTexts): void {
     this.texts = texts;
     this.cd.markForCheck();
   }
 
-  /** @description Releases the scroll lock (once). */
+  /** @description Releases the scroll lock (once) and forgets the password. */
   ngOnDestroy(): void {
     this.password = '';
     if (this.locked) {

@@ -4,8 +4,8 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: State of an application (dot + text) and its maintenance switch with the
-        password confirmation window.
+    @description: State of an application (dot + text) and its maintenance switch (the
+        confirmation is the shared password dialog).
 -->
 @if (visible) {
   <div class="as-control">
@@ -23,32 +23,3 @@
   </div>
 }
 
-@if (modalOpen) {
-  <div class="password-modal-overlay" (click)="cancel()">
-    <div class="password-modal-card" role="dialog" aria-modal="true" aria-labelledby="as-modal-title" (click)="$event.stopPropagation()">
-      <div class="password-modal-header">
-        <h3 class="modal-header-title" id="as-modal-title">{{ t('modal_title') }}</h3>
-        <button type="button" class="close-modal-btn" (click)="cancel()" [attr.aria-label]="t('modal_close_aria')">✕</button>
-      </div>
-      <div class="password-modal-body">
-        <p>{{ t('modal_intro') }}
-          <strong [class.state-active]="targetActive" [class.state-inactive]="!targetActive">
-            {{ targetActive ? t('modal_state_active') : t('modal_state_maintenance') }}
-          </strong>
-        </p>
-        <div class="modal-warning-box">{{ targetActive ? t('modal_warning_on') : t('modal_warning_off') }}</div>
-        <div class="password-input-group">
-          <label for="as-confirm-pwd-{{ appId }}">{{ t('modal_password_label') }}</label>
-          <input id="as-confirm-pwd-{{ appId }}" type="password" placeholder="••••••••"
-            [value]="password" (input)="password = $any($event.target).value"
-            (keyup.enter)="submit()" [disabled]="saving"
-            class="form-control-password" autocomplete="current-password">
-        </div>
-      </div>
-      <div class="password-modal-footer">
-        <button type="button" class="btn-modal-secondary" (click)="cancel()" [disabled]="saving">{{ t('modal_cancel') }}</button>
-        <button type="button" class="btn-modal-primary" (click)="submit()" [disabled]="saving">{{ t('modal_confirm') }}</button>
-      </div>
-    </div>
-  </div>
-}

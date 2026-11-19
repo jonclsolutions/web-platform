@@ -5,6 +5,12 @@
             "area": "core",
             "part": "admin",
             "text": "Tabs, filters and language switches of the administration have one look: a grey bar with icon buttons, the selected one white (settings, releases, calendar, legal documents, translation and content editors, project page, orders)."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Every confirmation with your password (switching an application on / off, operations on system administrators, the e-mail access policy) uses the same window; a wrong password is shown right under the field."
         }
     ],
     "releases": [

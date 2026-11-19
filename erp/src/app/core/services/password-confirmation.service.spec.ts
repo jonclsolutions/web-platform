@@ -10,7 +10,7 @@
  *   matching text, cancel → false, a parallel call of the same scope shares the dialog, another
  *   scope replaces it (the first resolves false), the dialog is always removed afterwards.
  * @dependencies
- * - HttpClientTestingModule; real PasswordConfirmDialogComponent; AdminLocalizationService stub
+ * - HttpClientTestingModule; real PasswordDialogService + PasswordDialogComponent; AdminLocalizationService stub
  *   (returns the key); ScrollLockService spy.
  */
 
@@ -20,15 +20,16 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { PasswordConfirmationService } from './password-confirmation.service';
 import { AdminLocalizationService } from './admin-localization.service';
 import { ScrollLockService } from './scroll-lock.service';
-import { PasswordConfirmDialogComponent } from '../../admin/components/password-confirm-dialog/password-confirm-dialog.component';
+import { PasswordDialogComponent } from '../../admin/components/password-dialog/password-dialog.component';
+import { PasswordDialogService } from './password-dialog.service';
 import { environment } from '../../../environments/environment';
 
 describe('PasswordConfirmationService', () => {
   let service: PasswordConfirmationService;
   let httpMock: HttpTestingController;
   const url = `${environment.base_api_url}/confirm-password`;
-  const dialogs = () => document.body.querySelectorAll('app-password-confirm-dialog');
-  const current = () => (service as any).componentRef?.instance as PasswordConfirmDialogComponent | undefined;
+  const dialogs = () => document.body.querySelectorAll('app-password-dialog');
+  const current = () => (TestBed.inject(PasswordDialogService) as any).componentRef?.instance as PasswordDialogComponent | undefined;
   const flushAsync = () => new Promise(resolve => setTimeout(resolve));
 
   /** Types `password` into the open dialog and submits it. */
@@ -56,14 +57,15 @@ describe('PasswordConfirmationService', () => {
   /**
    * @description The correct password confirms the scope: POST {password, scope}, true, dialog removed.
    * @input confirm('user:7'); submit 'S3cret!'; 204.
-   * @output texts = password-confirm.* keys; body {password:'S3cret!', scope:'user:7'}; true; no dialog.
+   * @output title / message = password-confirm.*, the rest the defaults password-dialog.*; body
+   *   {password:'S3cret!', scope:'user:7'}; true; no dialog.
    */
   it('confirms the scope with the password', async () => {
     const result = service.confirm('user:7');
     expect(dialogs().length).toBe(1);
     expect(current()!.texts).toEqual({
-      title: 'password-confirm.title', message: 'password-confirm.message', label: 'password-confirm.label',
-      confirm: 'password-confirm.confirm', cancel: 'password-confirm.cancel',
+      title: 'password-confirm.title', message: 'password-confirm.message', highlight: '', highlightTone: 'success', warning: '',
+      label: 'password-dialog.label', confirm: 'password-dialog.confirm', cancel: 'password-dialog.cancel', close: 'password-dialog.close',
     });
 
     submit('S3cret!');

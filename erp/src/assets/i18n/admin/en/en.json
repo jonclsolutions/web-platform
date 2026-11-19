@@ -154,18 +154,14 @@
     "switch_off": "Switch application off",
     "switch_on": "Switch application on",
     "modal_title": "Administrator verification",
-    "modal_close_aria": "Close",
     "modal_intro": "You are about to change the state of {app} to:",
     "modal_state_active": "ONLINE – NORMAL OPERATION",
     "modal_state_maintenance": "OFFLINE – MAINTENANCE MODE",
     "modal_warning_off": "The public part of {app} will be switched off and visitors will see the maintenance page. The administration keeps running. Enter your login password to save.",
     "modal_warning_on": "The public part of {app} will be available to visitors again. Enter your login password to save.",
     "modal_password_label": "Current password",
-    "modal_cancel": "Cancel",
     "modal_confirm": "Confirm and save",
     "default_message": "We apologize, maintenance is in progress. Please try again later.",
-    "error_title": "Error",
-    "error_missing_password": "Please enter your password to confirm.",
     "success_title": "Success",
     "success_active": "{app} is online.",
     "success_maintenance": "{app} is in maintenance mode."
@@ -1273,12 +1269,16 @@
   "api_endpoint_undefined": "API endpoint is not defined.",
   "password_change_error": "Error changing password."
 },
+"password-dialog": {
+  "label": "Current password",
+  "confirm": "Confirm",
+  "cancel": "Cancel",
+  "close": "Close",
+  "failed": "The operation could not be completed. Please try again."
+},
 "password-confirm": {
   "title": "Confirm with your password",
   "message": "This operation concerns a system administrator or the access policy. Enter your password to confirm it.",
-  "label": "Your password",
-  "confirm": "Confirm",
-  "cancel": "Cancel",
   "wrong_password": "The password is incorrect.",
   "too_many": "Too many wrong passwords. Try again in 15 minutes.",
   "failed": "The password could not be verified. Please try again."

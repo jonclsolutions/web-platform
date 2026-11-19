@@ -226,6 +226,11 @@ get tabItems(): RowButton[] {
 `[stretch]="true"` for page tabs (full width on mobile). A wrapper class on the element only places it
 (margin), the look stays in the builder.
 
+**Dialogs** – never build your own modal for a question, a message or a password:
+`ConfirmDialogService.open(title, message)`, `AlertDialogService.open(title, message, type)` and
+`PasswordDialogService.open({ title, message?, highlight?, warning?, label?, confirmLabel?, submit })`
+(`submit(password)` returns `null` = done, a text = error under the field).
+
 **Change the accent of the admin**: edit `admin/shared-styles/theme.css`, then search for
 `local value – admin theme.css` to see which components keep their own value.
 

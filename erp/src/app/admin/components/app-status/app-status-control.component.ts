@@ -6,18 +6,20 @@
  * @created 2026
  * @description Status of an application with its maintenance switch: a coloured dot with
  *   online / maintenance / problem and, for a user with the switch permission, the button that
- *   opens the confirmation window (target state, warning, password of the signed-in user). The
+ *   opens the shared password dialog (target state, warning, password of the signed-in user). The
  *   same control in the header of every application dashboard and on the page Applications.
  * @usage `<app-status-control appId="web" />`; `[showState]="false"` = only the button (the
  *   page Applications shows the state itself).
  * @dependencies AppStatusService (state, switch), AdminLocalizationService (section `app-status`,
- *   names of the applications in `admin-layout`), AlertDialogService (missing password, success;
- *   a refusal of the API is announced by DataHandler).
+ *   names of the applications in `admin-layout`), PasswordDialogService (the confirmation),
+ *   AlertDialogService (success; a refusal of the API is announced by DataHandler).
  */
 
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit, inject } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
+import { PasswordDialogService } from '../../../core/services/password-dialog.service';
 import { AppManifest, appById } from '../../../apps/apps.registry';
 import { AppHealth, AppStatusService } from './app-status.service';
 
@@ -37,16 +39,7 @@ export class AppStatusControlComponent implements OnInit {
   readonly status = inject(AppStatusService);
   private readonly i18n = inject(AdminLocalizationService);
   private readonly alerts = inject(AlertDialogService);
-  private readonly cd = inject(ChangeDetectorRef);
-
-  /** Confirmation window open. */
-  modalOpen = false;
-  /** Target state of the open window. */
-  targetActive = true;
-  /** Password typed in the window. */
-  password = '';
-  /** The change is being saved. */
-  saving = false;
+  private readonly passwordDialog = inject(PasswordDialogService);
 
   ngOnInit(): void {
     this.status.load();
@@ -81,42 +74,30 @@ export class AppStatusControlComponent implements OnInit {
     return this.i18n.getValue(`app-status.${key}`).replace('{app}', name);
   }
 
-  /** @description Opens the confirmation of the opposite state. */
-  open(): void {
-    this.targetActive = !this.active;
-    this.password = '';
-    this.modalOpen = true;
-  }
-
-  /** @description Closes the window without a change (not while saving). */
-  cancel(): void {
-    if (this.saving) return;
-    this.modalOpen = false;
-    this.password = '';
-  }
-
-  /** @description Saves the change after the password is typed; the API checks it. */
-  submit(): void {
-    if (this.saving || !this.app) return;
-    if (!this.password.trim()) {
-      this.alerts.open(this.t('error_title'), this.t('error_missing_password'), 'danger');
-      return;
-    }
-    this.saving = true;
-    this.status.setActive(this.app, this.targetActive, this.password, this.t('default_message')).subscribe({
-      next: () => {
-        this.saving = false;
-        this.modalOpen = false;
-        this.password = '';
-        this.cd.markForCheck();
-        this.alerts.open(this.t('success_title'), this.targetActive ? this.t('success_active') : this.t('success_maintenance'), 'success');
-      },
-      // The refusal (e.g. a wrong password) is announced by the API error dialog of DataHandler;
-      // the window stays open for another try.
-      error: () => {
-        this.saving = false;
-        this.cd.markForCheck();
-      },
+  /**
+   * @description Asks for the password to switch to the opposite state (shared password dialog)
+   *   and saves the change; the API checks the password. A refusal (e.g. a wrong password) is
+   *   announced by the API error dialog of DataHandler and the dialog stays open for another try.
+   * @returns Promise - true = switched, false = cancelled.
+   */
+  async open(): Promise<boolean> {
+    const app = this.app;
+    if (!app) return false;
+    const targetActive = !this.active;
+    const done = await this.passwordDialog.open({
+      title: this.t('modal_title'),
+      message: this.t('modal_intro'),
+      highlight: targetActive ? this.t('modal_state_active') : this.t('modal_state_maintenance'),
+      highlightTone: targetActive ? 'success' : 'warning',
+      warning: targetActive ? this.t('modal_warning_on') : this.t('modal_warning_off'),
+      label: this.t('modal_password_label'),
+      confirmLabel: this.t('modal_confirm'),
+      submit: password => firstValueFrom(this.status.setActive(app, targetActive, password, this.t('default_message')))
+        .then(() => null, () => ''),
     });
+    if (done) {
+      this.alerts.open(this.t('success_title'), targetActive ? this.t('success_active') : this.t('success_maintenance'), 'success');
+    }
+    return done;
   }
 }
