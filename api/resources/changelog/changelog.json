@@ -1,25 +1,30 @@
 {
-    "unreleased": [
-        {
-            "type": "added",
-            "area": "core",
-            "part": "admin",
-            "text": "Releases page (Core → Releases): the running version and what changed in every release; the version is shown in the sidebar and a short notice appears after an update of the part you work in."
-        },
-        {
-            "type": "changed",
-            "area": "core",
-            "part": "admin",
-            "text": "Passwords of administrator accounts may have up to 64 characters (was 16), so password managers and passphrases can be used."
-        },
-        {
-            "type": "fixed",
-            "area": "core",
-            "part": "admin",
-            "text": "Nightly maintenance jobs (GDPR retention clean-up, security events, expired sign-in data, orphan files) stopped with \"Table 'cache_locks' doesn't exist\" in System logs; the missing table is created and the jobs run again."
-        }
-    ],
+    "unreleased": [],
     "releases": [
+        {
+            "version": "v2026.11.2",
+            "date": "2026-11-19",
+            "changes": [
+                {
+                    "type": "added",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Releases page (Core → Releases): the running version and what changed in every release; the version is shown in the sidebar and a short notice appears after an update of the part you work in."
+                },
+                {
+                    "type": "changed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Passwords of administrator accounts may have up to 64 characters (was 16), so password managers and passphrases can be used."
+                },
+                {
+                    "type": "fixed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Nightly maintenance jobs (GDPR retention clean-up, security events, expired sign-in data, orphan files) stopped with \"Table 'cache_locks' doesn't exist\" in System logs; the missing table is created and the jobs run again."
+                }
+            ]
+        },
         {
             "version": "v2026.11.1",
             "date": "2026-11-16",
