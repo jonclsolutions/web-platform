@@ -11,6 +11,12 @@
             "area": "core",
             "part": "admin",
             "text": "Passwords of administrator accounts may have up to 64 characters (was 16), so password managers and passphrases can be used."
+        },
+        {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Nightly maintenance jobs (GDPR retention clean-up, security events, expired sign-in data, orphan files) stopped with \"Table 'cache_locks' doesn't exist\" in System logs; the missing table is created and the jobs run again."
         }
     ],
     "releases": [

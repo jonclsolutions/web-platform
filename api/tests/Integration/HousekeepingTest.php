@@ -9,7 +9,8 @@
  * @description Feature tests of the scheduled clean-ups that keep the database and the disk from
  *   growing for ever: `auth:prune` (expired / used authentication rows, expired cache rows),
  *   `storage:prune-orphans` (uploaded files without a record) and the `audit_logs` retention
- *   (audit logs of the three modules and finished import batches).
+ *   (audit logs of the three modules and finished import batches); the lock table of the
+ *   scheduler (`cache_locks`, withoutOverlapping() of every scheduled job).
  * @dependencies
  * - Tests\TestCase, Tests\Apps\Web\Support\WebFixtures; Storage fake; Carbon test time.
  */
@@ -28,6 +29,7 @@ use App\Apps\Web\Models\WebLog;
 use App\Services\Retention\RetentionPurgeService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -150,5 +152,29 @@ class HousekeepingTest extends TestCase
         CoreRetentionSetting::allInOrder();
         CoreRetentionSetting::where('data_key', 'audit_logs')->update(['retention_days' => null]);
         $this->assertNull(app(RetentionPurgeService::class)->purgeAll()['audit_logs']);
+    }
+
+    /**
+     * @description The scheduler can lock its jobs with the database cache store: every scheduled
+     *   job uses withoutOverlapping(), whose mutex is a Cache::lock() in the table `cache_locks`
+     *   (missing in the baseline schema - the jobs failed in production before they ran). The
+     *   migration creates the table, a second run changes nothing.
+     * @input The migration run twice; two locks of the same key in the database store.
+     * @output The table has key / owner / expiration; the first lock is acquired, the second is
+     *   refused until the first is released.
+     */
+    public function test_scheduler_locks_work_with_the_database_cache_store(): void
+    {
+        $migration = require database_path('migrations/2026_11_25_000000_create_cache_locks_table.php');
+        $migration->up();
+        $migration->up();
+        $this->assertTrue(Schema::hasColumns('cache_locks', ['key', 'owner', 'expiration']));
+
+        $store = Cache::store('database');
+        $lock = $store->lock('framework/schedule-test', 60);
+        $this->assertTrue($lock->get());
+        $this->assertFalse($store->lock('framework/schedule-test', 60)->get());
+        $lock->release();
+        $this->assertTrue($store->lock('framework/schedule-test', 60)->get());
     }
 }

@@ -484,6 +484,9 @@ the queue finish - queued mails of the old release carry class names that no lon
   Core → Releases with the running version in the sidebar and a notice after an update of the
   module the user is in; releases only through `./dev.sh release <tag>` (the workflow refuses a
   tag without notes and creates the GitHub Release).
+- (0117) the table `cache_locks` of the database cache store (missing in the baseline schema):
+  without it every scheduled job (withoutOverlapping) failed before it ran - nightly GDPR
+  retention, security events, auth and file clean-ups. Created by a migration on the next release.
 
 ### One-time steps of the October 2026 fixes (findings-fixes 1–4)
 
