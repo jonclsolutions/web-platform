@@ -8,7 +8,9 @@
  *   diagnosis) - one request `core/apps/status` for every application the user may open, shared
  *   by the status in the dashboard headers and the page Applications, so a switch made in one
  *   place shows everywhere. Switching goes to the endpoint of the application from its manifest
- *   (`AppManifest.maintenance`) with the password of the signed-in user.
+ *   (`AppManifest.maintenance`) with the password of the signed-in user. A page can refresh the
+ *   states quietly in the background (poll(): no loading state, no error dialog); an answer
+ *   older than the newest request or switch is ignored.
  * @dependencies DataHandler, apps.registry (manifests), PermissionService.
  */
 
@@ -53,6 +55,11 @@ export class AppStatusService {
   /** The last request failed. */
   readonly failed = signal(false);
 
+  /** A quiet poll (poll()) is running. */
+  private polling = false;
+  /** Number of the newest request / local change - an older answer arriving later is ignored. */
+  private sequence = 0;
+
   /** Time of the last answer (ms) - a load within MAX_AGE_MS reuses it. */
   private loadedAt = 0;
   private static readonly MAX_AGE_MS = 30 * 1000;
@@ -65,16 +72,42 @@ export class AppStatusService {
     if (this.loading() || (!force && this.statuses() !== null && Date.now() - this.loadedAt < AppStatusService.MAX_AGE_MS)) {
       return;
     }
+    const sequence = ++this.sequence;
     this.loading.set(true);
     this.dataHandler.get<AppStatus[]>('core/apps/status')
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: list => {
+          if (sequence !== this.sequence) return;
           this.statuses.set(list ?? []);
           this.failed.set(false);
           this.loadedAt = Date.now();
         },
         error: () => this.failed.set(true),
+      });
+  }
+
+  /**
+   * @description Quiet reload for the periodic refresh of a page: no loading state (the refresh
+   *   button does not blink) and no error dialog - a failure only sets `failed` (the page shows
+   *   its note) and the next successful poll clears it. Skipped while another request runs.
+   */
+  poll(): void {
+    if (this.loading() || this.polling) return;
+    const sequence = ++this.sequence;
+    this.polling = true;
+    this.dataHandler.getQuietly<AppStatus[]>('core/apps/status')
+      .pipe(finalize(() => (this.polling = false)))
+      .subscribe({
+        next: list => {
+          if (sequence !== this.sequence) return;
+          this.statuses.set(list ?? []);
+          this.failed.set(false);
+          this.loadedAt = Date.now();
+        },
+        error: () => {
+          if (sequence === this.sequence) this.failed.set(true);
+        },
       });
   }
 
@@ -112,7 +145,8 @@ export class AppStatusService {
       [maintenance.messageField]: saved || defaultMessage,
       confirm_password: password,
     }).pipe(tap(() => {
-      // Shown at once; the reload brings the fresh diagnosis.
+      // Shown at once; the reload brings the fresh diagnosis (a poll still running is outdated).
+      this.sequence++;
       this.statuses.update(list => (list ?? []).map(s => s.id !== app.id ? s : {
         ...s, active, health: !active ? 'offline' : s.health === 'offline' ? 'ok' : s.health,
       }));

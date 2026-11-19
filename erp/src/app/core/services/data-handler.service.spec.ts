@@ -116,6 +116,23 @@ describe('DataHandler', () => {
   });
 
   /**
+   * @description getQuietly returns the payload and passes an error on WITHOUT the error dialog.
+   * @input getQuietly → {data: [1]}; getQuietly → 500.
+   * @output [1]; the error reaches the subscriber (status 500); alert not opened.
+   */
+  it('getQuietly does not open the error dialog', () => {
+    const results: any[] = [];
+    let status = 0;
+    service.getQuietly('q').subscribe(r => results.push(r));
+    http.expectOne(`${base}/q`).flush({ data: [1] });
+    service.getQuietly('q').subscribe({ error: e => (status = e.status) });
+    http.expectOne(`${base}/q`).flush(null, { status: 500, statusText: 'Server Error' });
+    expect(results).toEqual([[1]]);
+    expect(status).toBe(500);
+    expect(alert.open).not.toHaveBeenCalled();
+  });
+
+  /**
    * @description post / put / patch send JSON and return `data`; delete sends DELETE and returns
    *   null for 204 or the payload of an answer with a body (e.g. kept trash records).
    * @input post({n: 1}), put({n: 2}), patch({n: 3}) answered {data: …}; delete ×2 (204; {data: {skipped_count: 1}}).

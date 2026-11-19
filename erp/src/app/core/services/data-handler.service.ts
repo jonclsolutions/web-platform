@@ -214,6 +214,19 @@ export class DataHandler {
   }
 
   /**
+   * @description GET of the payload WITHOUT the global error dialog - for background polling,
+   *   where a passing failure (network, server restart) must not open a dialog every few
+   *   seconds; the caller handles the error itself.
+   * @param apiUrl The relative path to the resource.
+   * @returns {Observable<T>} The payload; errors are passed on unchanged.
+   */
+  getQuietly<T>(apiUrl: string): Observable<T> {
+    return this.http.get<ApiEnvelope<T>>(`${this.baseUrl}/${apiUrl}`, { headers: this.getHeaders() }).pipe(
+      map(response => this.unwrap<T>(response))
+    );
+  }
+
+  /**
    * @description GET keeping the whole envelope `{data, meta?, message?}` - for answers with
    *   extra information beside the payload (e.g. `has_more_older_messages` of a message page).
    * @param apiUrl The relative path to the resource.

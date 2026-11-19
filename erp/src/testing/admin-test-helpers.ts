@@ -152,7 +152,7 @@ export function createAuthStub(loggedIn = true): AuthStub {
  */
 export function createDataHandlerSpy(): jasmine.SpyObj<DataHandler> {
   const spy = jasmine.createSpyObj<DataHandler>('DataHandler',
-    ['get', 'getOne', 'getCollection', 'getPaginatedCollection', 'getWithMeta', 'post', 'postWithMeta', 'put', 'patch', 'delete', 'upload', 'uploadPut'] as any);
+    ['get', 'getQuietly', 'getOne', 'getCollection', 'getPaginatedCollection', 'getWithMeta', 'post', 'postWithMeta', 'put', 'patch', 'delete', 'upload', 'uploadPut'] as any);
   (spy as any).get.and.returnValue(of({}));
   (spy as any).getOne.and.returnValue(of({}));
   (spy as any).getCollection.and.returnValue(of([]));

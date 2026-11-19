@@ -1199,7 +1199,7 @@
             },
             {
               "type": "text",
-              "content": "A card is shown only for an application whose tab permission and at least one page you have. Manage opens the first page of the application you may open. Refresh status loads the state again."
+              "content": "A card is shown only for an application whose tab permission and at least one page you have. Manage opens the first page of the application you may open. The state and the diagnosis refresh themselves every 10 seconds while the page is open and the browser tab is active; Refresh status loads them at once."
             },
             {
               "type": "note",

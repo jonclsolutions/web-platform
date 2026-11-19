@@ -6,11 +6,12 @@
  * @created 2026
  * @description Unit tests of AppsComponent (page "Applications"): one row per application the
  *   user may open with the link to its landing page, its state (health, diagnosis) from
- *   `core/apps/status` and its maintenance switch; refresh; failed status; the empty state.
+ *   `core/apps/status` and its maintenance switch; refresh; the quiet refresh every 10 s;
+ *   failed status; the empty state.
  * @dependencies src/testing/admin-test-helpers.ts (auth, permission, i18n stubs).
  */
 
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
@@ -87,6 +88,31 @@ describe('AppsComponent', () => {
     fixture.componentInstance.refresh();
     expect((ctx.dataHandler as any).get).toHaveBeenCalledTimes(2);
   });
+
+  /**
+   * @description The states refresh themselves quietly every 10 s while the tab is visible and
+   *   stop with the page.
+   * @input render; 10 s; hidden tab 10 s; visible 10 s; destroy; 10 s.
+   * @output getQuietly('core/apps/status') 1×, still 1× while hidden, 2×, still 2× after destroy.
+   */
+  it('refreshes the states every 10 seconds', fakeAsync(() => {
+    const quiet = (ctx.dataHandler as any).getQuietly as jasmine.Spy;
+    quiet.and.returnValue(of(statuses));
+    fixture.detectChanges();
+    tick(AppsComponent.POLL_INTERVAL_MS);
+    expect(quiet).toHaveBeenCalledOnceWith('core/apps/status');
+
+    const hidden = spyOnProperty(document, 'hidden').and.returnValue(true);
+    tick(AppsComponent.POLL_INTERVAL_MS);
+    expect(quiet).toHaveBeenCalledTimes(1);
+    hidden.and.returnValue(false);
+    tick(AppsComponent.POLL_INTERVAL_MS);
+    expect(quiet).toHaveBeenCalledTimes(2);
+
+    fixture.destroy();
+    tick(AppsComponent.POLL_INTERVAL_MS);
+    expect(quiet).toHaveBeenCalledTimes(2);
+  }));
 
   /**
    * @description A failed status request is announced; the rows stay with the unknown state.

@@ -6,12 +6,13 @@
  * @created 2026
  * @description Unit tests of AppStatusService: one shared load of `core/apps/status` (reused for
  *   30 s, forced on demand), the failed state, the switch permission from the manifest and the
- *   switch request to the endpoint of the application with the saved or default maintenance text.
+ *   switch request to the endpoint of the application with the saved or default maintenance text,
+ *   the quiet poll (no loading, no dialog, stale answers ignored).
  * @dependencies src/testing/admin-test-helpers.ts (DataHandler spy, permission stub).
  */
 
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import { AppStatus, AppStatusService } from './app-status.service';
 import { appById } from '../../../apps/apps.registry';
@@ -52,6 +53,48 @@ describe('AppStatusService', () => {
     expect(service.failed()).toBeTrue();
     expect(service.statuses()).toEqual([web]);
     expect(service.loading()).toBeFalse();
+  });
+
+  /**
+   * @description poll() asks quietly (getQuietly - no error dialog) without the loading state; a
+   *   failure sets `failed`, the next success clears it; an answer overtaken by a newer request
+   *   is ignored; no poll while a load runs.
+   * @input poll() ok; poll() failing; poll() ok; a slow poll overtaken by load(true); poll() during a load.
+   * @output loading never true; statuses / failed as described; the slow answer not applied; skipped poll.
+   */
+  it('polls quietly and ignores stale answers', () => {
+    const quiet = (ctx.dataHandler as any).getQuietly as jasmine.Spy;
+    quiet.and.returnValue(of([web]));
+    service.poll();
+    expect(quiet).toHaveBeenCalledWith('core/apps/status');
+    expect(get()).not.toHaveBeenCalled();
+    expect(service.statusOf('web')).toEqual(web);
+    expect(service.loading()).toBeFalse();
+
+    quiet.and.returnValue(throwError(() => new Error('down')));
+    service.poll();
+    expect(service.failed()).toBeTrue();
+    quiet.and.returnValue(of([web]));
+    service.poll();
+    expect(service.failed()).toBeFalse();
+
+    const slow = new Subject<AppStatus[]>();
+    quiet.and.returnValue(slow);
+    service.poll();
+    const fresh = { ...web, health: 'warning' as const };
+    get().and.returnValue(of([fresh]));
+    service.load(true);
+    slow.next([web]);
+    slow.complete();
+    expect(service.statusOf('web')).toEqual(fresh);
+
+    const running = new Subject<AppStatus[]>();
+    get().and.returnValue(running);
+    service.load(true);
+    quiet.calls.reset();
+    service.poll();
+    expect(quiet).not.toHaveBeenCalled();
+    running.complete();
   });
 
   /**

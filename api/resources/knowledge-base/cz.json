@@ -1199,7 +1199,7 @@
             },
             {
               "type": "text",
-              "content": "Karta se ukáže jen u aplikace, ke které máte oprávnění záložky a aspoň jednu stránku. Tlačítko Spravovat otevře první stránku aplikace, kterou smíte otevřít. Tlačítko Aktualizovat stav načte stav znovu."
+              "content": "Karta se ukáže jen u aplikace, ke které máte oprávnění záložky a aspoň jednu stránku. Tlačítko Spravovat otevře první stránku aplikace, kterou smíte otevřít. Stav a diagnostika se samy obnovují každých 10 sekund, dokud je stránka otevřená a záložka prohlížeče aktivní; tlačítko Aktualizovat stav je načte hned."
             },
             {
               "type": "note",
