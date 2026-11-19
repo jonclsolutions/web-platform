@@ -14,33 +14,28 @@
 -->
 <div class="pd-page">
 
-  <header class="pd-header">
-    <button type="button" class="pd-back" (click)="goBack()">
+  <app-page-header [title]="project?.name || t('manage_modal_title')">
+    <button phBefore type="button" class="pd-back" (click)="goBack()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
       {{ t('detail_back') }}
     </button>
-    <div class="pd-header-main">
-      <div class="pd-title-row">
-        <h1 class="pd-title">{{ project?.name || t('manage_modal_title') }}</h1>
-        @if (project) {
-          <span class="pd-chip" [attr.data-status]="project.status">{{ t('status_' + project.status) }}</span>
-          <span class="pd-chip pd-chip--visibility" [class.pd-chip--public]="project.visibility === 'public'">
-            {{ t(project.visibility === 'public' ? 'detail_visibility_public' : 'detail_visibility_private') }}
-          </span>
-        }
-        @if (unreadTotal > 0) {
-          <span class="pd-chip pd-chip--unread" role="status">{{ t('detail_unread_badge').replace('{count}', '' + unreadTotal) }}</span>
-        }
-      </div>
-      @if (project) {
-        <p class="pd-subtitle">#{{ project.id }} · {{ t('detail_created') }} {{ project.created_at | date:'d. M. yyyy' }}
-          · {{ t('detail_assignee') }}: <strong>{{ project.assignee_name || t('detail_no_assignee') }}</strong></p>
-      }
-    </div>
-    <div class="pd-header-actions">
-      <app-page-help></app-page-help>
-    </div>
-  </header>
+    <!-- One element per @if: a block with one root element is projected by its selector. -->
+    @if (project) {
+      <span phMeta class="pd-chip" [attr.data-status]="project.status">{{ t('status_' + project.status) }}</span>
+    }
+    @if (project) {
+      <span phMeta class="pd-chip pd-chip--visibility" [class.pd-chip--public]="project.visibility === 'public'">
+        {{ t(project.visibility === 'public' ? 'detail_visibility_public' : 'detail_visibility_private') }}
+      </span>
+    }
+    @if (project) {
+      <span phSub>#{{ project.id }} · {{ t('detail_created') }} {{ project.created_at | date:'d. M. yyyy' }}
+        · {{ t('detail_assignee') }}: <strong>{{ project.assignee_name || t('detail_no_assignee') }}</strong></span>
+    }
+    @if (unreadTotal > 0) {
+      <span phMeta class="pd-chip pd-chip--unread" role="status">{{ t('detail_unread_badge').replace('{count}', '' + unreadTotal) }}</span>
+    }
+  </app-page-header>
 
   @if (loading) {
     <p class="pd-state">{{ t('loading') }}</p>

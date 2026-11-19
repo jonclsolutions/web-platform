@@ -27,14 +27,14 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { CurrentUserProfileService } from '../../../core/services/current-user-profile.service';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { UserLogin } from '../../../shared/interfaces/user';
-import { PageHelpComponent } from '../../components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 
 @Component({
   selector: 'app-welcome-page',
   standalone: true,
-  imports: [CommonModule, RouterModule, PageHelpComponent],
+  imports: [CommonModule, RouterModule, PageHeaderComponent],
   templateUrl: './welcome-page.component.html',
-  styleUrls: ['../../shared-styles/welcome-page.css', './welcome-page.component.css'],
+  styleUrls: ['./welcome-page.component.css'],
 })
 export class WelcomePageComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);

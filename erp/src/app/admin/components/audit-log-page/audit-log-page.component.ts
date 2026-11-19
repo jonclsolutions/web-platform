@@ -12,7 +12,7 @@
  * @dependencies
  * - BaseDataComponent: loading, pagination, filters, export, graph builder state.
  * - audit-log-page.config: buttons and columns.
- * - SHARED_UI_BUILDERS, GraphBuilderComponent, PageHelpComponent.
+ * - SHARED_UI_BUILDERS, GraphBuilderComponent, PageHeaderComponent.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -23,7 +23,7 @@ import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { BaseDataComponent } from '../base-data/base-data.component';
 import { GraphBuilderComponent } from '../builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
-import { PageHelpComponent } from '../page-help/page-help.component';
+import { PageHeaderComponent } from '../page-header/page-header.component';
 import {
   AUDIT_LOG_ROUTE_DATA, AUDIT_LOG_SECTION, AuditLogPageConfig, createAuditLogButtons, createAuditLogDetailsColumns,
   createAuditLogFilterColumns, createAuditLogTableColumns, createAuditLogToolbarButtons,
@@ -36,7 +36,7 @@ import {
 @Component({
   selector: 'app-audit-log-page',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, GraphBuilderComponent, PageHelpComponent],
+  imports: [SHARED_UI_BUILDERS, GraphBuilderComponent, PageHeaderComponent],
   templateUrl: './audit-log-page.component.html',
   styleUrls: ['../../shared-styles/page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

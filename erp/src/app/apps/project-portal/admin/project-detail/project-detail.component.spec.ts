@@ -1343,9 +1343,9 @@ describe('ProjectDetailComponent', () => {
       init();
       fixture.detectChanges();
       const el = fixture.nativeElement as HTMLElement;
-      expect(el.querySelector('.pd-title')!.textContent).toContain('Shop');
+      expect(el.querySelector('app-page-header h1')!.textContent).toContain('Shop');
       expect(el.querySelector('.pd-chip--unread')).not.toBeNull();
-      expect(el.querySelector('.pd-subtitle')!.textContent).toContain('Jana');
+      expect(el.querySelector('app-page-header .ph-subtitle--rich')!.textContent).toContain('Jana');
       const tabs = Array.from(el.querySelectorAll('.pd-tab')) as HTMLAnchorElement[];
       expect(tabs.length).toBe(8);
       expect(tabs[1].getAttribute('href')).toBe('/admin/project-portal/projects/7/conversations');

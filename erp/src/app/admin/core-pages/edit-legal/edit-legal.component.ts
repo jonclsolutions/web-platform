@@ -23,7 +23,7 @@ import { BaseDataComponent } from '../../components/base-data/base-data.componen
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
-import { PageHelpComponent } from '../../components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 
 interface DocumentSection {
   id: number;
@@ -48,7 +48,7 @@ interface DocumentTypeItem {
 @Component({
   selector: 'app-edit-legal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, PageHelpComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, PageHeaderComponent],
   templateUrl: './edit-legal.component.html',
   styleUrl: './edit-legal.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

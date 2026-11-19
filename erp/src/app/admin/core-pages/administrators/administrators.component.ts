@@ -30,7 +30,7 @@ import { GraphBuilderComponent } from '../../components/builders/graph-builder/g
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 import { ScrollLockService } from '../../../core/services/scroll-lock.service';
 import { PasswordConfirmationService } from '../../../core/services/password-confirmation.service';
-import { PageHelpComponent } from '../../components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 
 /** Key of the cached e-mail access policy (ResourceCacheService). */
@@ -69,7 +69,7 @@ interface EmailAccessRule {
 @Component({
   selector: 'app-administrators',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHelpComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHeaderComponent],
   templateUrl: './administrators.component.html',
   styleUrls: ['../../shared-styles/page.css', './email-access-policy-modal.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

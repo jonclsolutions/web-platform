@@ -24,7 +24,7 @@ import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../../../admi
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import { BaseDataComponent } from '../../../../admin/components/base-data/base-data.component';
 import * as Config from './user-request.config';
-import { PageHelpComponent } from '../../../../admin/components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 
 /**
  * @description Manages the administration of user request commissions.
@@ -34,7 +34,7 @@ import { PageHelpComponent } from '../../../../admin/components/page-help/page-h
 @Component({
   selector: 'app-user-request',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, EmailTemplateEditorComponent, PageHelpComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, EmailTemplateEditorComponent, PageHeaderComponent],
   templateUrl: './user-request.component.html',
   styleUrls: ['../../../../admin/shared-styles/page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

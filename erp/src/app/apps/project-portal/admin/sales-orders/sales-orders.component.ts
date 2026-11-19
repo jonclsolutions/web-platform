@@ -26,7 +26,7 @@ import { ActionMenuBuilderComponent } from '../../../../admin/components/builder
 import { GraphBuilderComponent } from '../../../../admin/components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../../../admin/components/email-template-editor/email-template-editor.component';
-import { PageHelpComponent } from '../../../../admin/components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 
 /**
  * @description Manages the lifecycle and administrative view of sales orders.
@@ -36,7 +36,7 @@ import { PageHelpComponent } from '../../../../admin/components/page-help/page-h
 @Component({
   selector: 'app-sales-orders',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, EmailTemplateEditorComponent, PageHelpComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, EmailTemplateEditorComponent, PageHeaderComponent],
   templateUrl: './sales-orders.component.html',
   styleUrls: ['../../../../admin/shared-styles/page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

@@ -22,12 +22,13 @@ import { RouterLink } from '@angular/router';
 import { BaseDashboardComponent } from './base-dashboard.component';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { PageHelpComponent } from '../page-help/page-help.component';
+import { PageHeaderComponent } from '../page-header/page-header.component';
 import { AppStatusControlComponent } from '../app-status/app-status-control.component';
 
 @Component({
   selector: 'app-dashboard-view',
   standalone: true,
-  imports: [DatePipe, RouterLink, HasPermissionDirective, PageHelpComponent, AppStatusControlComponent],
+  imports: [DatePipe, RouterLink, HasPermissionDirective, PageHelpComponent, PageHeaderComponent, AppStatusControlComponent],
   templateUrl: './dashboard-view.component.html',
   styleUrls: ['../../shared-styles/dashboard.css', '../../shared-styles/dashboard-cards.css', './dashboard-view.component.css'],
   changeDetection: ChangeDetectionStrategy.Default,

@@ -12,19 +12,12 @@
 -->
 <div class="cal-page">
 
-  <div class="cd-header-bar">
-    <div>
-      <h1 class="cd-header-title">{{ t('title') }}</h1>
-      <p class="cd-header-sub">{{ t('subtitle') }}</p>
-    </div>
-    <div class="cd-header-actions">
-      <button type="button" class="cal-add-btn" (click)="openNewEvent()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-        {{ t('add_event') }}
-      </button>
-      <app-page-help></app-page-help>
-    </div>
-  </div>
+  <app-page-header [title]="t('title')" [subtitle]="t('subtitle')">
+    <button type="button" class="cal-add-btn" (click)="openNewEvent()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      {{ t('add_event') }}
+    </button>
+  </app-page-header>
 
   <!-- Toolbar: month navigation, view, module filter -->
   <div class="cal-toolbar">

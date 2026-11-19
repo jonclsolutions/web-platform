@@ -299,7 +299,6 @@
 }
 
 @media (max-width: 640px) {
-  .cd-header-title { font-size: 1.3rem; }
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .kpi-value { font-size: 1.25rem; }
   .cd-header-side { align-items: flex-start; }

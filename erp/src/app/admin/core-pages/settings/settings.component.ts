@@ -28,12 +28,12 @@ import { environment } from '../../../../environments/environment';
 import { CompanyOptionalField, LangMeta, SiteSetting, SocialLink } from './'
 import { RetentionSettingsComponent } from './retention-settings/retention-settings.component';
 import { PageTitlesEditorComponent } from '../../components/page-titles-editor/page-titles-editor.component';
-import { PageHelpComponent } from '../../components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RetentionSettingsComponent, PageTitlesEditorComponent, PageHelpComponent, StickyBarDirective],
+  imports: [CommonModule, FormsModule, RetentionSettingsComponent, PageTitlesEditorComponent, PageHeaderComponent, StickyBarDirective],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

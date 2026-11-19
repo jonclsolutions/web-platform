@@ -44,7 +44,7 @@ import { UploadRulesService } from '../../../../shared/services/upload-rules.ser
 import { UploadRule, extensionsLabel, fileExtension, isExtensionAllowed } from '../../../../shared/utils/upload-rules';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 import { StickyBarDirective } from '../../../../shared/directives/sticky-bar.directive';
-import { PageHelpComponent } from '../../../../admin/components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import * as Config from '../projects/projects.config';
 import { ProjectApprovalsSectionComponent } from './project-approvals-section.component';
@@ -213,7 +213,7 @@ const PROJECTS_ENDPOINT = 'project-portal/projects';
   selector: 'app-project-detail',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, RouterLink, StickyBarDirective, PageHelpComponent, IconComponent,
+    CommonModule, FormsModule, RouterLink, StickyBarDirective, PageHeaderComponent, IconComponent,
     ProjectApprovalsSectionComponent, ProjectUpdatesSectionComponent,
   ],
   templateUrl: './project-detail.component.html',

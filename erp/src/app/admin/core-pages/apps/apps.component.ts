@@ -13,7 +13,7 @@
  * @dependencies AdminModulesService (which applications / landing page), AppStatusService (state
  *   and diagnosis, `core/apps/status`), AppStatusControlComponent (switch), AdminLocalizationService
  *   (section `apps`, `app-status`; names and descriptions in `admin-layout`), AdminIconComponent,
- *   PageHelpComponent.
+ *   PageHeaderComponent.
  * @note No permission - the page lists only what the user may open (nothing without any application).
  */
 
@@ -23,7 +23,7 @@ import { RouterModule } from '@angular/router';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { AdminModulesService } from '../../admin-modules.service';
 import { AdminIconComponent } from '../../components/admin-icon/admin-icon.component';
-import { PageHelpComponent } from '../../components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { AppManifest } from '../../../apps/apps.registry';
 import { AppStatus, AppStatusService } from '../../components/app-status/app-status.service';
 import { AppStatusControlComponent } from '../../components/app-status/app-status-control.component';
@@ -38,9 +38,9 @@ export interface AppCard {
 @Component({
   selector: 'app-apps',
   standalone: true,
-  imports: [RouterModule, DatePipe, AdminIconComponent, PageHelpComponent, AppStatusControlComponent],
+  imports: [RouterModule, DatePipe, AdminIconComponent, PageHeaderComponent, AppStatusControlComponent],
   templateUrl: './apps.component.html',
-  styleUrls: ['../../shared-styles/welcome-page.css', '../../shared-styles/welcome-links.css', './apps.component.css'],
+  styleUrls: ['../../shared-styles/welcome-links.css', './apps.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppsComponent implements OnInit {

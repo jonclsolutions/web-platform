@@ -9,11 +9,7 @@
 
 <div class="shop-dashboard">
 
-  <div class="cd-header-bar">
-    <div>
-      <h1 class="cd-header-title">{{ t('header_title') }}</h1>
-      <p class="cd-header-sub">{{ t('header_subtitle') }}</p>
-    </div>
+  <app-page-header [title]="t('header_title')" [subtitle]="t('header_subtitle')" [help]="false">
     <div class="cd-header-side">
       <div class="cd-header-actions">
         <span class="cd-last-updated">{{ t('last_updated_label') }} {{ lastRefreshed | date:'HH:mm:ss' }}</span>
@@ -30,7 +26,7 @@
       <!-- State of the storefront + maintenance switch -->
       <app-status-control appId="shop"></app-status-control>
     </div>
-  </div>
+  </app-page-header>
 
   @if (loading && !kpiCards.length) {
     <div class="sd-loading">

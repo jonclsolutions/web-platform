@@ -26,7 +26,7 @@ import * as Config from './orders.config';
 import { Order, OrderItem, Product, ProductVariant, PaymentMethod, ShippingMethod, Coupon } from './';
 import { GraphBuilderComponent } from '../../../../admin/components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
-import { PageHelpComponent } from '../../../../admin/components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../../../admin/components/email-template-editor/email-template-editor.component';
 
 interface CouponValidationResult {
@@ -44,7 +44,7 @@ type TableMode = 'all' | 'pending_tasks' | 'trash';
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHelpComponent, EmailTemplateEditorComponent],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHeaderComponent, EmailTemplateEditorComponent],
   templateUrl: './orders.component.html',
   styleUrls: ['../../../../admin/shared-styles/page.css', '../shared-styles/list-page.css', './orders.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

@@ -17,26 +17,6 @@
   flex-direction: column;
   gap: 16px;
 }
-.ws-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 10px;
-  padding-bottom: 10px;
-}
-.ws-title {
-  margin: 0;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--color-zinc-900);
-  letter-spacing: -0.01em;
-}
-.ws-subtitle {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--color-zinc-500);
-  margin-top: 3px;
-}
 .ws-tabs {
   display: inline-flex;
   align-self: flex-start;
@@ -619,7 +599,6 @@
   }
   .ws-icon-upload { width: 44px; height: 44px; }
   .ws-social-actions { flex-direction: row; }
-  .ws-title { font-size: 1.2rem; }
   .ws-form-footer { justify-content: stretch; flex-direction: column; align-items: stretch; }
   .ws-btn-primary { justify-content: center; }
   .ws-i18n-bar { flex-direction: column; align-items: flex-start; }

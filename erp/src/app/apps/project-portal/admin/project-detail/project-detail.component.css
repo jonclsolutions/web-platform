@@ -15,7 +15,7 @@
 /*
     @module: Page and header
     @description: Back button, project name with status / visibility / unread chips, help.
-    @usage: .pd-page, .pd-header, .pd-back, .pd-title, .pd-chip(--unread|--visibility|--public)
+    @usage: .pd-page, .pd-back ([phBefore] of app-page-header), .pd-chip ([phMeta])(--unread|--visibility|--public)
 */
 .pd-page {
   font-family: var(--ff, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif);
@@ -25,16 +25,6 @@
   padding: 16px;
   color: var(--text, var(--color-zinc-900));
 }
-
-.pd-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-.pd-header-main { flex: 1; min-width: 0; }
-.pd-header-actions { display: flex; align-items: center; gap: 8px; }
 
 .pd-back {
   display: inline-flex;
@@ -53,18 +43,6 @@
 }
 
 .pd-back:hover { background: var(--surface-2, var(--color-zinc-50)); }
-
-.pd-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-
-.pd-title {
-  margin: 0;
-  font-size: 1.45rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  overflow-wrap: anywhere;
-}
-
-.pd-subtitle { margin: 4px 0 0; font-size: 0.8rem; color: var(--text-muted, var(--color-zinc-500)); }
 
 .pd-chip {
   display: inline-flex;
@@ -692,7 +670,6 @@
 
 @media (max-width: 720px) {
   .pd-page { padding: 12px; }
-  .pd-title { font-size: 1.2rem; }
   .pd-form { grid-template-columns: minmax(0, 1fr); }
   .pd-conv-body { grid-template-columns: minmax(0, 1fr); min-height: 0; }
   .pd-thread-list { border-right: 0; max-height: none; }

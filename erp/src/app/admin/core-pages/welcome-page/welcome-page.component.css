@@ -130,6 +130,5 @@
 }
 
 @media (max-width: 640px) {
-  .wp-welcome-title { font-size: 1.3rem; }
   .wp-card-body { flex-direction: column; align-items: flex-start; }
 }

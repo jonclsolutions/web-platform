@@ -20,12 +20,12 @@ import * as Config from './suppliers.config';
 import { ActionMenuBuilderComponent } from '../../../../admin/components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../../../admin/components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
-import { PageHelpComponent } from '../../../../admin/components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-suppliers',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHelpComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHeaderComponent],
   templateUrl: './suppliers.component.html',
   styleUrls: ['../../../../admin/shared-styles/page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

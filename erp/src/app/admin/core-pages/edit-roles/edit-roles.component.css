@@ -43,23 +43,8 @@
 /**
  * @module Page header
  * @description Title, subtitle and the page-level action buttons.
- * @usage .roles-page-header, .roles-page-subtitle
+ * @usage .roles-page-subtitle (the page title: app-page-header)
  */
-.roles-page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.roles-page-header h1 {
-  margin: 0 0 6px;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: -0.01em;
-}
 
 /**
  * @module Buttons
@@ -739,7 +724,6 @@
 
 @media (max-width: 600px) {
   :host { padding: 0 0 40px; }
-  .roles-page-header { flex-direction: column; }
   .detail-header { flex-wrap: wrap; }
   .detail-header-actions { justify-content: flex-start; flex-shrink: 1; min-width: 0; }
   /* "New role" / "Export" get their own line under the role buttons, no divider. */

@@ -73,13 +73,6 @@
   gap: 12px;
 }
 
-.ew-title {
-  font-size: 0.97rem;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: -0.01em;
-}
-
 .ew-current-lang {
   display: flex;
   align-items: center;

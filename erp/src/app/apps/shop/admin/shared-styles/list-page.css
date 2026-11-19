@@ -14,33 +14,13 @@
 /*
     @module: Shop list page
     @description: Title row, form modal, badges, fieldsets, form rows and totals of the shop list pages.
-    @usage: .row, .toolbar-section, .toolbar-header, .modal-overlay, .modal-header, .modal-body, .modal-footer, .badge, fieldset, .form-row-2, .form-row-3, .form-group, .btn:disabled, .summary-grid, .summary-row(.total), .total-amount
+    @usage: .row, .modal-overlay, .modal-header, .modal-body, .modal-footer, .badge, fieldset, .form-row-2, .form-row-3, .form-group, .btn:disabled, .summary-grid, .summary-row(.total), .total-amount
 */
 
 .row {
   display: flex;
   gap: 5px;
   padding-bottom: 4px;
-}
-
-.toolbar-section {
-  background: transparent;
-  margin-bottom: 8px;
-}
-
-.toolbar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-}
-
-.toolbar-header h1 {
-  margin: 0;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--color-zinc-900);
-  letter-spacing: -0.01em;
 }
 
 .modal-overlay {

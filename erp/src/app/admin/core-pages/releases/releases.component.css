@@ -6,27 +6,15 @@
     @created: 2026
     @description: Page "Releases": running version, filter by area, releases as expandable cards
         with their changes.
-    @dependencies: admin/shared-styles/welcome-page.css (page and header), colour tokens of the
+    @dependencies: colour tokens of the
         admin (with fallbacks)
 */
 
 /*
     @module: Header and filter
     @description: Intro, running version beside the help, area buttons.
-    @usage: .rl-intro, .rl-header-side, .rl-current, .rl-filter > .rl-chip(--active)
+    @usage: .rl-current (in app-page-header), .rl-filter > .rl-chip(--active)
 */
-.rl-intro {
-  margin: 6px 0 0;
-  font-size: 0.85rem;
-  color: var(--color-zinc-500);
-  line-height: 1.45;
-}
-
-.rl-header-side {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
 
 .rl-current {
   font-size: 0.8rem;

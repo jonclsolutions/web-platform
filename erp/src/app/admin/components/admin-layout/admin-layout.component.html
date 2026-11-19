@@ -264,15 +264,6 @@
 
       <div class="nav-group nav-group--bottom">
         <ul>
-          @if (releases.current()) {
-            <!-- Running version → page Core → Releases. -->
-            <li>
-              <a routerLink="/admin/core/releases" routerLinkActive="active" (click)="onLinkClick()" class="version-nav-item" [title]="strings.version_title">
-                <span class="nav-icon"><app-admin-icon name="tag" [size]="16" /></span>
-                <span class="nav-text">{{ releases.current() }}</span>
-              </a>
-            </li>
-          }
           <li>
             <a href="javascript:void(0)" (click)="logout()" [title]="strings.logout" class="logout-nav-item">
               <span class="nav-icon">

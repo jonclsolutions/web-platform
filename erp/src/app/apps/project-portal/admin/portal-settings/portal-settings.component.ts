@@ -7,19 +7,19 @@
  * @description Page "Portal settings" (project-portal/settings): the browser tab titles of the
  *   public pages of the portal - the client portal of a project and the order form - in the
  *   shared editor of the core (area `project-portal`, API project-portal/page-titles).
- * @dependencies PageTitlesEditorComponent (core), PageHelpComponent, AdminLocalizationService
+ * @dependencies PageTitlesEditorComponent (core), PageHeaderComponent, AdminLocalizationService
  *   (section `project-portal-settings`).
  */
 
 import { ChangeDetectionStrategy, Component, HostListener, inject } from '@angular/core';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
-import { PageHelpComponent } from '../../../../admin/components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 import { PageTitlesEditorComponent } from '../../../../admin/components/page-titles-editor/page-titles-editor.component';
 
 @Component({
   selector: 'app-portal-settings',
   standalone: true,
-  imports: [PageHelpComponent, PageTitlesEditorComponent],
+  imports: [PageHeaderComponent, PageTitlesEditorComponent],
   templateUrl: './portal-settings.component.html',
   styleUrl: './portal-settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

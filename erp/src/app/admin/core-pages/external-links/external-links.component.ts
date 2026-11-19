@@ -25,7 +25,7 @@ import * as Config from './external-links.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
-import { PageHelpComponent } from '../../components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 
 /**
  * @description Component for managing the list of external admin links.
@@ -35,7 +35,7 @@ import { PageHelpComponent } from '../../components/page-help/page-help.componen
 @Component({
   selector: 'app-external-links',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHelpComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHeaderComponent],
   templateUrl: './external-links.component.html',
   styleUrls: ['../../shared-styles/page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

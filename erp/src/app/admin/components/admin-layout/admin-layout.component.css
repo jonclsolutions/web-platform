@@ -735,13 +735,6 @@
   border-left-color: transparent;
 }
 
-/* Running version above the logout (→ Releases): quiet, small, tabular digits. */
-.admin-nav li a.version-nav-item:not(.active) {
-  color: var(--color-zinc-500);
-  font-size: 0.78rem;
-  font-variant-numeric: tabular-nums;
-}
-
 .nav-icon {
   flex-shrink: 0;
   width: 24px;

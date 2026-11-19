@@ -1,0 +1,29 @@
+<!--
+    @file: page-header.component.html
+    @path: /src/app/admin/components/page-header/page-header.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Header of an admin page: optional content above the title ([phBefore]), the
+        h1 with inline badges ([phMeta]), the subtitle ([subtitle] or [phSub]); on the right the
+        projected actions and the help button.
+-->
+<header class="ph">
+  <div class="ph-text">
+    <div class="ph-before"><ng-content select="[phBefore]"></ng-content></div>
+    <div class="ph-title-row">
+      <h1 class="ph-title">{{ title }}</h1>
+      <ng-content select="[phMeta]"></ng-content>
+    </div>
+    @if (subtitle) {
+      <p class="ph-subtitle">{{ subtitle }}</p>
+    }
+    <div class="ph-subtitle ph-subtitle--rich"><ng-content select="[phSub]"></ng-content></div>
+  </div>
+  <div class="ph-actions">
+    <ng-content></ng-content>
+    @if (help) {
+      <app-page-help></app-page-help>
+    }
+  </div>
+</header>

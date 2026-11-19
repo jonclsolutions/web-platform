@@ -9,7 +9,7 @@
  *   text, ticket). Filter by area: all, the core or one of the user's applications (`?area=` -
  *   opened that way from the notice after an update). The newest release is expanded.
  * @dependencies ReleaseNotesService (`core/releases`), AdminModulesService (applications of the
- *   user), AdminLocalizationService (section `releases`, names in `admin-layout`), PageHelpComponent.
+ *   user), AdminLocalizationService (section `releases`, names in `admin-layout`), PageHeaderComponent.
  * @note No permission - every administrator sees the core and the applications he may open.
  */
 
@@ -18,7 +18,7 @@ import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { AdminModulesService } from '../../admin-modules.service';
-import { PageHelpComponent } from '../../components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { appById } from '../../../apps/apps.registry';
 import { Release, ReleaseChange, ReleaseNotesService } from '../../components/releases/release-notes.service';
 
@@ -32,9 +32,9 @@ export interface ReleaseArea {
 @Component({
   selector: 'app-releases',
   standalone: true,
-  imports: [DatePipe, PageHelpComponent],
+  imports: [DatePipe, PageHeaderComponent],
   templateUrl: './releases.component.html',
-  styleUrls: ['../../shared-styles/welcome-page.css', './releases.component.css'],
+  styleUrls: ['./releases.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReleasesComponent implements OnInit {

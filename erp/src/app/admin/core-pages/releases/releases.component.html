@@ -10,18 +10,11 @@
 
 <div class="wp-page">
 
-  <div class="wp-welcome">
-    <div class="wp-welcome-left">
-      <h1 class="wp-welcome-title">{{ strings['header'] }}</h1>
-      <p class="rl-intro">{{ strings['intro'] }}</p>
-    </div>
-    <div class="rl-header-side">
-      @if (notes.current()) {
-        <span class="rl-current">{{ strings['current_version'] }} <strong>{{ notes.current() }}</strong></span>
-      }
-      <app-page-help></app-page-help>
-    </div>
-  </div>
+  <app-page-header [title]="strings['header']" [subtitle]="strings['intro']">
+    @if (notes.current()) {
+      <span class="rl-current">{{ strings['current_version'] }} <strong>{{ notes.current() }}</strong></span>
+    }
+  </app-page-header>
 
   <div class="rl-filter" role="group" [attr.aria-label]="strings['filter_label']">
     @for (a of areas; track a.id) {

@@ -23,7 +23,7 @@ import { AlertDialogService } from '../../../../core/services/alert-dialog.servi
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
 import { PermissionService } from '../../../../core/auth/services/permission.service';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
-import { PageHelpComponent } from '../../../../admin/components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 
 /** @description Checkpoint of a template. */
 export interface TemplateCheckpoint {
@@ -52,7 +52,7 @@ export interface TemplateDraft {
 @Component({
   selector: 'app-project-templates',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, IconComponent, PageHelpComponent],
+  imports: [CommonModule, FormsModule, RouterLink, IconComponent, PageHeaderComponent],
   templateUrl: './project-templates.component.html',
   styleUrls: ['../project-detail/project-detail.component.css', '../project-detail/project-sections.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

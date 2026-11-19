@@ -8,13 +8,7 @@
         tab titles of the public pages of the portal.
 -->
 <div class="pp-settings">
-  <div class="pp-settings-header">
-    <div>
-      <h1 class="pp-settings-title">{{ t('header') }}</h1>
-      <span class="pp-settings-subtitle">{{ t('subtitle') }}</span>
-    </div>
-    <app-page-help></app-page-help>
-  </div>
+  <app-page-header [title]="t('header')" [subtitle]="t('subtitle')"></app-page-header>
 
   <app-page-titles-editor
     area="project-portal"

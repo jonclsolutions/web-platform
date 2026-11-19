@@ -11,18 +11,11 @@
 
 <div class="wp-page">
 
-  <div class="wp-welcome">
-    <div class="wp-welcome-left">
-      <h1 class="wp-welcome-title">{{ strings.header }}</h1>
-      <p class="apps-intro">{{ strings.intro }}</p>
-    </div>
-    <div class="apps-header-actions">
-      @if (cards.length) {
-        <button type="button" class="apps-refresh-btn" (click)="refresh()" [disabled]="status.loading()">{{ strings.refresh }}</button>
-      }
-      <app-page-help></app-page-help>
-    </div>
-  </div>
+  <app-page-header [title]="strings.header" [subtitle]="strings.intro">
+    @if (cards.length) {
+      <button type="button" class="apps-refresh-btn" (click)="refresh()" [disabled]="status.loading()">{{ strings.refresh }}</button>
+    }
+  </app-page-header>
 
   @if (status.failed()) {
     <div class="apps-error" role="alert">{{ strings.status_failed }}</div>

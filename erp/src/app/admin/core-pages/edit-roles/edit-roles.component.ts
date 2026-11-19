@@ -26,7 +26,7 @@ import { ResourceCacheService } from '../../../core/services/resource-cache.serv
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { RoleOptionsService } from '../../../core/services/role-options.service';
 import { ExportPopupBuilderComponent, ExportColumnOption, ExportSelection } from '../../components/builders/export-popup-builder/export-popup-builder.component';
-import { PageHelpComponent } from '../../components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 
 interface CorePermission {
   id: number;
@@ -73,7 +73,7 @@ interface PermissionModuleGroup {
 @Component({
   selector: 'app-edit-roles',
   standalone: true,
-  imports: [CommonModule, FormsModule, ExportPopupBuilderComponent, PageHelpComponent],
+  imports: [CommonModule, FormsModule, ExportPopupBuilderComponent, PageHeaderComponent],
   templateUrl: './edit-roles.component.html',
   styleUrls: ['../../shared-styles/theme.css', './edit-roles.component.css'],
 })

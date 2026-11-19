@@ -30,7 +30,7 @@ export const SECURITY_SETTINGS_CACHE_KEY = 'core:security_settings';
 import * as Config from './security-events.config';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
-import { PageHelpComponent } from '../../components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 
 interface SecuritySetting {
   id: number;
@@ -54,7 +54,7 @@ interface ChartDay {
 @Component({
   selector: 'app-core-security-events',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHelpComponent],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHeaderComponent],
   templateUrl: './security-events.component.html',
   styleUrls: ['../../shared-styles/page.css', './security-events.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

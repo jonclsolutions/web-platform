@@ -116,7 +116,6 @@
 .cd-breakdown-fill.ev-default { background: var(--text-dim, var(--color-zinc-400)); }
 
 @media (max-width: 640px) {
-  .cd-header-title { font-size: 1.3rem; }
   .cd-header-side { align-items: flex-start; }
   .cd-nav-grid { grid-template-columns: 1fr; }
   .cd-activity-row { grid-template-columns: 110px 1fr; grid-template-rows: auto auto; }

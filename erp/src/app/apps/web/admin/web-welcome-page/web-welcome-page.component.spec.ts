@@ -40,7 +40,7 @@ describe('WebWelcomePageComponent', () => {
     await setup('all');
     expect(component.t('card_logs_title')).toBe('web-welcome-page.card_logs_title');
     expect(ctx.i18n.getMergedSection).toHaveBeenCalledWith('web-welcome-page');
-    expect(fixture.nativeElement.querySelector('.wp-welcome-title').textContent).toContain('web-welcome-page.header');
+    expect(fixture.nativeElement.querySelector('app-page-header h1').textContent).toContain('web-welcome-page.header');
   });
 
   /**

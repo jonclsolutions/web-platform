@@ -817,12 +817,6 @@
 
   .modal-body { display: block; overflow-y: auto; }
 
-  .toolbar-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
   .toolbar-actions {
     width: 100%;
     flex-wrap: wrap;
@@ -887,7 +881,6 @@
 }
 
 @media (max-width: 480px) {
-  .toolbar-header h1 { font-size: 1.2rem; }
   .modal-header h2   { font-size: 1rem; }
   .modal-overlay { background: white; }
 

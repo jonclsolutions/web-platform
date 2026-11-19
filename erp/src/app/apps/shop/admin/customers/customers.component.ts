@@ -22,12 +22,12 @@ import { ActionMenuBuilderComponent } from '../../../../admin/components/builder
 import { GraphBuilderComponent } from '../../../../admin/components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
-import { PageHelpComponent } from '../../../../admin/components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CommonModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHelpComponent],
+  imports: [CommonModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHeaderComponent],
   templateUrl: './customers.component.html',
   styleUrl: './customers.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

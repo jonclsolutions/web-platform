@@ -26,12 +26,12 @@ import { BaseDataComponent } from '../../../../admin/components/base-data/base-d
 import * as Config from './projects.config';
 import { GraphBuilderComponent } from '../../../../admin/components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
-import { PageHelpComponent } from '../../../../admin/components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 
 @Component({
   selector: 'app-projects',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, GraphBuilderComponent, PageHelpComponent],
+  imports: [SHARED_UI_BUILDERS, GraphBuilderComponent, PageHeaderComponent],
   templateUrl: './projects.component.html',
   styleUrls: ['../../../../admin/shared-styles/page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

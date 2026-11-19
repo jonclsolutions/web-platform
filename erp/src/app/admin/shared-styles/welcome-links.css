@@ -93,6 +93,5 @@
 }
 
 @media (max-width: 640px) {
-  .wp-welcome-title { font-size: 1.3rem; }
   .wp-cards-grid { grid-template-columns: 1fr; }
 }

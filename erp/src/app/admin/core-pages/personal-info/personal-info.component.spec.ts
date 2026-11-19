@@ -197,14 +197,14 @@ describe('PersonalInfoComponent', () => {
     (ctx.dataHandler as any).get.and.returnValue(of({ full_name: 'Me', user_email: 'me@b.cz', roles: [] }));
     fixture.detectChanges();
     expect(component.canEditProfile).toBeFalse();
-    expect(fixture.nativeElement.querySelector('.admin-note').textContent).toContain('personal-info.title_note');
+    expect(fixture.nativeElement.querySelector('app-page-header p.ph-subtitle').textContent).toContain('personal-info.title_note');
     expect(fixture.nativeElement.querySelectorAll('.profile-edit-btn').length).toBe(0);
 
     ctx.permissions.granted = new Set(['core-administrators-update']);
     expect(component.canEditProfile).toBeTrue();
     fixture.componentRef.changeDetectorRef.markForCheck();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.admin-note')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-page-header p.ph-subtitle')).toBeNull();
     expect(fixture.nativeElement.querySelectorAll('.profile-edit-btn').length).toBe(2);
 
     ctx.permissions.granted = new Set();

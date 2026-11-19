@@ -5,10 +5,12 @@
     @author: JS
     @created: 2026
     @description: Page of a translation editor (`e` = the editor, BaseTranslationEditorComponent):
-        tabs, the texts of the module against the CZ reference (languages, search, missing
+        the page header, tabs, the texts of the module against the CZ reference (languages, search, missing
         texts, JSON upload / download, saving), the browser page titles of the module, the panels
         of the extra tabs (projected) and the language / upload / delete modals.
 -->
+
+<app-page-header [title]="e.t('page_title')"></app-page-header>
 
 <!-- Page tabs: the texts, the browser page titles and the extra tabs of the application -->
 <div class="ew-page-head">
@@ -24,14 +26,12 @@
       </button>
     }
   </div>
-  <app-page-help></app-page-help>
 </div>
 
 <!-- Every tab stays created once opened and is only hidden - unsaved edits survive a tab switch. -->
 <div class="ew-root" [style.display]="e.activeTab === 'translations' ? null : 'none'">
   <div class="ew-topbar" appStickyBar>
     <div class="ew-topbar-left">
-      <h1 class="ew-title">{{ e.t('page_title') }}</h1>
       @if (e.getCurrentLangMeta(); as meta) {
         <div class="ew-current-lang">
           @if (meta.iconUrl) {

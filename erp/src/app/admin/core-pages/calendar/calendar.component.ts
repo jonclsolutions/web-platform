@@ -27,7 +27,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DataHandler } from '../../../core/services/data-handler.service';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
-import { PageHelpComponent } from '../../components/page-help/page-help.component';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { APPS } from '../../../apps/apps.registry';
 
 /** Module of an item (colour and filter): `personal` (own events of the admin), the id of an
@@ -131,7 +131,7 @@ export function parseIsoDate(iso: string): Date {
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, PageHelpComponent],
+  imports: [CommonModule, FormsModule, RouterLink, PageHeaderComponent],
   templateUrl: './calendar.component.html',
   styleUrls: ['../../shared-styles/dashboard.css', './calendar.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -10,14 +10,9 @@
     
 <div class="personal-info-container">
 
+  <app-page-header [title]="strings.title" [subtitle]="canEditProfile ? null : strings.title_note"></app-page-header>
+
   <div class="cd-card info-card">
-    <div class="card-header-clean">
-      <h2 class="card-title">{{ strings.title }}</h2>
-      <app-page-help></app-page-help>
-      @if (!canEditProfile) {
-        <span class="admin-note">{{ strings.title_note }}</span>
-      }
-    </div>
     <div class="card-content-minimal">
 
       @if (userData && ownUserId) {

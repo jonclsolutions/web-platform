@@ -16,21 +16,13 @@
 
   @if (!errorMessage) {
     <div>
-      <div class="toolbar-actions m-b-t-5">
-        @if(!showTrashTable){
-<div class="table-header">{{ t('table_header') }}</div>
-} @else {
-<div class="table-header">{{ t('trash_header') }}</div>
-}
-        <div class="toolbar-actions-in">
-           <app-action-menu-builder
-[configs]="toolbarButtons"
-[triggerLabel]="t('toolbar_action_trigger')"
-(actionTriggered)="handleToolbarAction($event)">
-</app-action-menu-builder>
-<app-page-help></app-page-help>
-        </div>
-      </div>
+      <app-page-header [title]="showTrashTable ? t('trash_header') : t('table_header')">
+        <app-action-menu-builder
+          [configs]="toolbarButtons"
+          [triggerLabel]="t('toolbar_action_trigger')"
+          (actionTriggered)="handleToolbarAction($event)">
+        </app-action-menu-builder>
+      </app-page-header>
       <div class="main-content-layout">
         <div class="filter-side-panel" [class.active]="isFilterVisible">
           <app-filter-form-builder

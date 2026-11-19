@@ -12,11 +12,7 @@
 
 <div class="core-dashboard">
 
-  <div class="cd-header-bar">
-    <div>
-      <h1 class="cd-header-title">{{ d.t('header_title') }}</h1>
-      <p class="cd-header-sub">{{ d.t('header_subtitle') }}</p>
-    </div>
+  <app-page-header [title]="d.t('header_title')" [subtitle]="d.t('header_subtitle')" [help]="false">
     <div class="cd-header-side">
       <div class="cd-header-actions">
         @if (d.lastUpdatedAt) {
@@ -37,7 +33,7 @@
         <app-status-control class="cd-app-status" [appId]="d.appId"></app-status-control>
       }
     </div>
-  </div>
+  </app-page-header>
 
   @if (d.errorMessage) {
     <div class="cd-error-banner">

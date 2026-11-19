@@ -7,27 +7,15 @@
     @description: Page "Applications": the applications one below the other - each row with its
         name, the state of the public part (coloured dot), the light diagnosis, the maintenance
         switch and the "Manage" button; header actions, error and empty state.
-    @dependencies: admin/shared-styles/welcome-page.css, admin/shared-styles/welcome-links.css
+    @dependencies: admin/shared-styles/welcome-links.css
         (icon, title and description of an application)
 */
 
 /*
     @module: Page header
     @description: Intro text and the refresh button beside the help.
-    @usage: .apps-intro, .apps-header-actions, .apps-refresh-btn, .apps-error, .apps-checked
+    @usage: .apps-refresh-btn (in app-page-header), .apps-error, .apps-checked
 */
-.apps-intro {
-  margin: 6px 0 0;
-  font-size: 0.85rem;
-  color: var(--color-zinc-500);
-  line-height: 1.45;
-}
-
-.apps-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
 
 .apps-refresh-btn {
   padding: 7px 14px;

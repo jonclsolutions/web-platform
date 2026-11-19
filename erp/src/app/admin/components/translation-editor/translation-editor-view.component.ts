@@ -8,7 +8,7 @@
  *   browser page titles, its extra tabs). The editor (BaseTranslationEditorComponent) keeps the
  *   state and logic and passes itself in; the panels of its extra tabs are its content.
  * @usage `<app-translation-editor-view [e]="this"> …panels of extraTabs… </app-translation-editor-view>`
- * @dependencies BaseTranslationEditorComponent, PageTitlesEditorComponent, PageHelpComponent,
+ * @dependencies BaseTranslationEditorComponent, PageTitlesEditorComponent, PageHeaderComponent,
  *   AdminIconComponent, StickyBarDirective, FormsModule.
  */
 
@@ -18,14 +18,14 @@ import { FormsModule } from '@angular/forms';
 
 import { BaseTranslationEditorComponent } from './base-translation-editor.component';
 import { PageTitlesEditorComponent } from '../page-titles-editor/page-titles-editor.component';
-import { PageHelpComponent } from '../page-help/page-help.component';
+import { PageHeaderComponent } from '../page-header/page-header.component';
 import { AdminIconComponent } from '../admin-icon/admin-icon.component';
 import { StickyBarDirective } from '../../../shared/directives/sticky-bar.directive';
 
 @Component({
   selector: 'app-translation-editor-view',
   standalone: true,
-  imports: [AsyncPipe, UpperCasePipe, FormsModule, PageTitlesEditorComponent, PageHelpComponent, AdminIconComponent, StickyBarDirective],
+  imports: [AsyncPipe, UpperCasePipe, FormsModule, PageTitlesEditorComponent, PageHeaderComponent, AdminIconComponent, StickyBarDirective],
   templateUrl: './translation-editor-view.component.html',
   styleUrls: ['../../shared-styles/theme.css', '../../../shared/styles/base.css', '../../shared-styles/settings-page.css', './translation-editor-view.component.css'],
   changeDetection: ChangeDetectionStrategy.Default,
