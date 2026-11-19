@@ -1,0 +1,252 @@
+/*
+    @file: auth-form.css
+    @path: src/app/shared/styles/auth-form.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Dark look of the sign-in pages (admin login, account activation, password reset,
+        sign-in of the project portal) - the tokens and the controls of the card on the right of
+        AuthShellComponent: header, form fields, messages, buttons, card footer. Included by
+        every page that renders its content into the shell (Angular styles are scoped to the
+        component, so the projected content needs them in the page itself).
+    @dependencies: none (self-contained tokens; the pages render outside the admin layout)
+*/
+
+/*
+    @module: Design tokens
+    @description: Dark palette with the violet accent of the brand, radii, fonts, motion.
+    @usage: :host of the shell and of every page using it
+*/
+:host {
+  --bg: #0a0a1a;
+  --panel: #111128;
+  --surface-2: rgba(255, 255, 255, 0.025);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-mid: rgba(255, 255, 255, 0.11);
+  --white: #fff;
+  --text: #e8e8f2;
+  --text-muted: #9a9ab5;
+  --text-dim: #555566;
+  --accent: #a67dff;
+  --accent-dark: #6a2ca0;
+  --accent-hover: #7d35ae;
+  --accent-dim: rgba(166, 125, 255, 0.1);
+  --accent-dim-2: rgba(166, 125, 255, 0.25);
+  --accent-grid: rgba(166, 125, 255, 0.03);
+  --success: #6ee7b7;
+  --success-dim: rgba(16, 185, 129, 0.12);
+  --error: #fda4af;
+  --error-dim: rgba(244, 63, 94, 0.12);
+  --info: #c4b5fd;
+  --info-dim: rgba(166, 125, 255, 0.12);
+  --radius: 10px;
+  --radius-lg: 20px;
+  --ease: 0.18s ease;
+  --focus-ring: 0 0 0 3px rgba(166, 125, 255, 0.2);
+  --ff-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --ff-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Password requirements checklist (shared component) on the dark card. */
+  --pw-check-muted: var(--text-muted);
+  --pw-check-met: var(--success);
+  display: block;
+  font-family: var(--ff-body);
+  color: var(--text);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/*
+    @module: Card header
+    @description: Optional status icon, title and subtitle at the top of a step of the card.
+    @usage: .card-header > (.header-icon(--success|--error|--loading)) + .card-title + .card-subtitle
+*/
+.card-header { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.card-header--row { flex-direction: row; align-items: center; gap: 14px; }
+.card-header--row .card-header-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.card-title { margin: 0; font-family: var(--ff-display); font-size: 1.5rem; font-weight: 700; line-height: 1.3; color: var(--white); }
+.card-header--row .card-title { font-size: 1.25rem; }
+.card-subtitle { margin: 0; font-size: 0.87rem; line-height: 1.65; color: var(--text-muted); overflow-wrap: anywhere; }
+
+.header-icon {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-dim-2);
+  color: var(--accent);
+}
+.header-icon--success { background: var(--success-dim); border-color: rgba(16, 185, 129, 0.35); color: var(--success); animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.header-icon--error { background: var(--error-dim); border-color: rgba(244, 63, 94, 0.35); color: var(--error); }
+.header-icon--loading svg { animation: spin 1s linear infinite; transform-origin: center; }
+
+/*
+    @module: Form
+    @description: Column of fields with labels, icon-prefixed inputs, the password visibility
+        toggle, the one-time code input, the field error and the options row.
+    @usage: form.auth-form > .field-group > .field-label + .input-wrapper(.password-wrapper) >
+        .input-icon + input.field-input(.has-icon|.otp-input) + button.toggle-password
+*/
+.auth-form, .auth-body { display: flex; flex-direction: column; gap: 16px; padding: 22px 28px 26px; }
+.field-group { display: flex; flex-direction: column; gap: 8px; }
+.field-label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text); }
+
+.input-wrapper { position: relative; display: flex; align-items: center; }
+.input-icon { position: absolute; left: 14px; color: var(--text-muted); pointer-events: none; }
+
+.field-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border-mid);
+  border-radius: 12px;
+  color: var(--text);
+  font: 0.91rem var(--ff-body);
+  outline: none;
+  appearance: none;
+  transition: border-color var(--ease), box-shadow var(--ease);
+}
+.field-input.has-icon { padding-left: 40px; }
+.field-input::placeholder { color: var(--text-dim); }
+.field-input:focus { border-color: var(--accent); box-shadow: var(--focus-ring); }
+.field-input:disabled { opacity: 0.6; }
+
+.field-input:-webkit-autofill,
+.field-input:-webkit-autofill:hover,
+.field-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  caret-color: var(--text);
+  box-shadow: 0 0 0 1000px var(--bg) inset;
+  transition: background-color 9999s ease-out 0s;
+}
+
+.password-wrapper .field-input { padding-right: 44px; }
+
+.toggle-password {
+  position: absolute; right: 8px;
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px;
+  background: transparent; border: none; border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--ease), color var(--ease);
+}
+.toggle-password svg { width: 15px; height: 15px; }
+.toggle-password:hover { background: var(--accent-dim); color: var(--accent); }
+
+.otp-input {
+  text-align: center;
+  font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.45em;
+  padding-left: calc(14px + 0.45em); /* re-centre tracked digits */
+}
+
+.field-error-text { font-size: 0.8rem; font-weight: 600; color: var(--error); }
+
+.captcha-container { display: flex; justify-content: center; min-height: 65px; }
+
+.options-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: -4px; }
+.remember-row { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--text-muted); cursor: pointer; user-select: none; }
+.remember-row input { width: 14px; height: 14px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+
+/*
+    @module: Messages
+    @description: Error, success and neutral info boxes inside the card.
+    @usage: .error-message, .success-message, .info-message (role alert / status)
+*/
+.error-message, .success-message, .info-message {
+  display: flex; align-items: flex-start; gap: 8px;
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: var(--radius);
+  font-size: 0.87rem; line-height: 1.5;
+}
+.error-message svg, .success-message svg, .info-message svg { flex-shrink: 0; margin-top: 1px; }
+.error-message { color: var(--error); background: var(--error-dim); border: 1px solid rgba(244, 63, 94, 0.4); }
+.success-message { color: var(--success); background: var(--success-dim); border: 1px solid rgba(16, 185, 129, 0.4); }
+.info-message { color: var(--info); background: var(--info-dim); border: 1px solid var(--accent-dim-2); }
+.error-message a, .success-message a, .info-message a { color: inherit; font-weight: 700; }
+.message-note { margin: 4px 0 0; font-size: 0.8rem; opacity: 0.85; }
+
+/*
+    @module: Buttons and links
+    @description: Primary pill button (also as a link), quiet text button, small hint text.
+    @usage: .submit-btn(.submit-btn--link), .link-btn, .btn-spinner, .auth-hint
+*/
+.submit-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%;
+  padding: 12px 20px;
+  margin-top: 2px;
+  background: var(--accent-dark);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: var(--white);
+  font: 600 0.88rem var(--ff-body);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--ease), transform 0.15s ease, opacity var(--ease);
+}
+.submit-btn:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-2px); }
+.submit-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.link-btn {
+  align-self: center;
+  padding: 2px 0;
+  background: none; border: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--ease);
+}
+.options-row .link-btn { align-self: auto; }
+.link-btn:hover:not(:disabled) { color: var(--accent); }
+.link-btn:disabled { color: var(--text-dim); cursor: default; }
+
+.auth-hint { margin: 0; font-size: 0.78rem; line-height: 1.55; color: var(--text-muted); text-align: center; }
+
+.btn-spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: var(--white);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/*
+    @module: Card footer
+    @description: Quiet bar at the bottom of the card with a link (back to the home page /
+        to the sign-in).
+    @usage: .auth-card-footer > a.back-link
+*/
+.auth-card-footer { display: flex; justify-content: center; padding: 14px 28px 16px; border-top: 1px solid var(--border); background: var(--surface-2); }
+.back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-decoration: none; transition: color var(--ease); }
+.back-link:hover { color: var(--accent); }
+
+/* Keyboard focus */
+.link-btn:focus-visible, .toggle-password:focus-visible, .submit-btn:focus-visible,
+.back-link:focus-visible, .remember-row input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes popIn { from { transform: scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .submit-btn:hover:not(:disabled) { transform: none; }
+  .header-icon--success, .header-icon--loading svg, .btn-spinner { animation: none; }
+}
+
+@media (max-width: 600px) {
+  .card-title { font-size: 1.35rem; }
+}
+
+@media (max-width: 480px) {
+  .auth-form, .auth-body { padding: 20px 20px 22px; }
+  .auth-card-footer { padding: 14px 20px 16px; }
+}

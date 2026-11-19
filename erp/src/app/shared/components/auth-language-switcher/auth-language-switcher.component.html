@@ -1,0 +1,36 @@
+<!--
+    @file: auth-language-switcher.component.html
+    @path: src/app/shared/components/auth-language-switcher/auth-language-switcher.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Pill with the flag and code of the current language; menu of the languages.
+-->
+<div class="lang-dropdown" [class.lang-dropdown--open]="isOpen">
+  <button class="lang-trigger" type="button" (click)="toggle()" [attr.aria-expanded]="isOpen" aria-haspopup="listbox" [attr.aria-label]="label">
+    @if (currentLanguage; as active) {
+      <img [src]="active.icon" alt="" class="lang-trigger-flag">
+    }
+    <span class="lang-trigger-code">{{ current.toUpperCase() }}</span>
+    <svg class="lang-trigger-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  @if (isOpen) {
+    <ul class="lang-menu" role="listbox" [attr.aria-label]="label">
+      @for (lang of languages; track lang.code) {
+        <li class="lang-option" [class.lang-option--active]="current === lang.code" role="option" tabindex="0"
+            [attr.aria-selected]="current === lang.code" (click)="select(lang.code)" (keydown.enter)="select(lang.code)">
+          <img [src]="lang.icon" alt="" class="lang-option-flag">
+          <span class="lang-option-label">{{ lang.name }}</span>
+          @if (current === lang.code) {
+            <svg class="lang-option-check" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

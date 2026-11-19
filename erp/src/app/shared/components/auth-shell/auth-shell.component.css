@@ -1,0 +1,120 @@
+/*
+    @file: auth-shell.component.css
+    @path: src/app/shared/components/auth-shell/auth-shell.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Layout of the sign-in pages - dark page with the fixed brand grid, logo and
+        tagline on the left, the card on the right, the language switcher in the top-right
+        corner; one column (logo above the card) up to 920 px.
+    @dependencies: ../../styles/auth-form.css (tokens)
+*/
+
+/*
+    @module: Page
+    @description: Full-height dark page with the fixed grid in the background.
+    @usage: .auth-page, .auth-page::before
+*/
+.auth-page {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 0 40px;
+  background: var(--bg);
+  font-family: var(--ff-body);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+.auth-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--accent-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--accent-grid) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+
+/*
+    @module: Language switcher slot
+    @description: Fixed in the top-right corner of the window.
+    @usage: .auth-lang > [authLang]
+*/
+.auth-lang {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/*
+    @module: Main grid
+    @description: Logo + tagline (left) and the card (right, at most 440 px).
+    @usage: .auth-main > .auth-hero + .auth-center > .auth-card
+*/
+.auth-main {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+  gap: 72px;
+  align-items: center;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 36px 0;
+}
+
+.auth-hero { display: flex; flex-direction: column; align-items: flex-start; align-self: stretch; justify-content: center; min-width: 0; animation: fadeUp 0.6s 0.2s ease-out both; }
+.auth-hero-visual { display: block; width: 100%; height: auto; }
+.auth-hero-title {
+  margin: 20px 0 0;
+  max-width: 100%;
+  font-family: var(--ff-display);
+  font-size: clamp(1.25rem, 1.9vw, 1.6rem);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--text-muted);
+}
+
+.auth-center { display: flex; flex-direction: column; align-items: center; width: 100%; animation: fadeUp 0.6s 0.15s ease-out both; }
+
+.auth-card {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-center, .auth-hero { animation: none; }
+}
+
+@media (max-width: 920px) {
+  .auth-page { padding: 0 20px; }
+  .auth-main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    max-width: 440px;
+    padding: 56px 0 32px;
+  }
+  .auth-hero { align-items: center; text-align: center; align-self: center; }
+  .auth-hero-visual { max-width: 220px; margin: 0 auto; }
+  .auth-hero-title { margin-top: 12px; font-size: 1.15rem; }
+  .auth-center { max-width: 440px; margin: 0 auto; }
+}

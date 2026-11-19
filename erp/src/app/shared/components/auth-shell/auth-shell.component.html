@@ -1,0 +1,33 @@
+<!--
+    @file: auth-shell.component.html
+    @path: src/app/shared/components/auth-shell/auth-shell.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Sign-in layout: language switcher (top right, slot [authLang]), logo + tagline
+        (left), the card with the content of the page (right, default slot).
+-->
+<div class="auth-page">
+
+  <div class="auth-lang">
+    <ng-content select="[authLang]"></ng-content>
+  </div>
+
+  <main class="auth-main">
+
+    <section class="auth-hero">
+      <img class="auth-hero-visual" [src]="logo" alt="" aria-hidden="true">
+      @if (tagline) {
+        <p class="auth-hero-title">{{ tagline }}</p>
+      }
+    </section>
+
+    <div class="auth-center">
+      <div class="auth-card">
+        <ng-content></ng-content>
+      </div>
+    </div>
+
+  </main>
+
+</div>

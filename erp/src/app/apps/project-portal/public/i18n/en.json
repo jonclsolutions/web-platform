@@ -1,6 +1,7 @@
 {
   "project_not_found": "Project not found.",
 
+  "login_hero_title": "Engineering better tomorrows.",
   "login_title": "Project login",
   "login_lead": "Sign in with the login name and password from your supplier, or have a code sent to your e-mail.",
   "login_loading": "Logging in…",

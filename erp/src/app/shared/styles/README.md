@@ -35,6 +35,8 @@ src/
     ├── shared/styles/                      ADMIN + PUBLIC
     │   ├── tokens.css                      global colour primitives (:root, --color-*)
     │   ├── base.css                        box-model reset for a component (*, ::before, ::after)
+    │   ├── auth-form.css                   dark sign-in look: tokens + controls of the card (login, activation,
+    │   │                                   password reset, portal sign-in) - with <app-auth-shell>
     │   └── README.md                       this file
     │
     ├── admin/
@@ -53,9 +55,6 @@ src/
     │   ├── components/base-dashboard/dashboard-view.component.css   layout of every module dashboard
     │   ├── components/app-status/app-status-control.component.css   state of an application + maintenance switch
     │   ├── components/translation-editor/translation-editor-view.component.css   language tabs
-    │   ├── auth/shared-styles/
-    │   │   ├── auth.css                    form controls of login, activation, reset
-    │   │   └── auth-card.css               centred card of activation + reset
     │   └── components/builders/table-style.css  (table builders – unchanged)
     │
     ├── public/
@@ -133,13 +132,14 @@ background: var(--color-emerald-50);
 
 ### 4.2 Looks (themes) – `theme.css`
 
-The app has three looks that use the **same token names with different values**:
+The app has four looks that use the **same token names with different values**:
 
 | Look | File | Used by |
 |---|---|---|
-| admin (light, zinc) | `admin/shared-styles/theme.css` | admin layout, auth pages, edit-roles, knowledge base, translation editor (texts of the web / e-shop), **public project portal** |
+| admin (light, zinc) | `admin/shared-styles/theme.css` | admin layout, edit-roles, knowledge base, translation editor (texts of the web / e-shop), **public project portal** |
 | public web (dark, violet) | `apps/web/public/shared-styles/theme.css` | about, FAQ, references, services, jobs, job detail, order form, footer |
 | public e-shop (light, black) | `apps/shop/public/shared-styles/theme.css` | cart, catalog, checkout, product detail, header, footer, builders |
+| sign-in (dark, violet) | `shared/styles/auth-form.css` | admin login, account activation, password reset, sign-in of the project portal (`<app-auth-shell>`) |
 
 A theme is a `:host { --accent: …; }` block, so it is scoped like any component sheet and the three
 looks never clash.
@@ -225,6 +225,18 @@ get tabItems(): RowButton[] {
 `kind` tabs / filter / nav (links), `size="sm"` inside cards and for languages (`languageRowButtons(languages)`),
 `[stretch]="true"` for page tabs (full width on mobile). A wrapper class on the element only places it
 (margin), the look stays in the builder.
+
+**Sign-in page** (login, activation, reset, a sign-in of an application) – never build your own layout:
+```html
+<app-auth-shell [tagline]="…">                       <!-- admin pages: <app-admin-auth-shell> -->
+  <app-auth-language-switcher authLang [languages]="…" [current]="…" (selected)="…" />
+  <form class="auth-form"> … .field-group, .field-input, .submit-btn … </form>
+  <div class="auth-card-footer"> <a class="back-link">…</a> </div>
+</app-auth-shell>
+```
+```ts
+styleUrls: ['…/shared/styles/base.css', '…/shared/styles/auth-form.css', './my-page.component.css'],
+```
 
 **Dialogs** – never build your own modal for a question, a message or a password:
 `ConfirmDialogService.open(title, message)`, `AlertDialogService.open(title, message, type)` and

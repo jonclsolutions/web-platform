@@ -91,7 +91,7 @@ describe('SetPasswordFormComponent', () => {
   it('renders the texts, toggles and the error', () => {
     expect(el().querySelector('label[for="password"]')!.textContent).toContain('reset-password.label_password');
     expect(component.lengthPlaceholder).toBe('reset-password.placeholder_password');
-    const toggles = el().querySelectorAll<HTMLButtonElement>('button.visibility-toggle');
+    const toggles = el().querySelectorAll<HTMLButtonElement>('button.toggle-password');
     expect(toggles[0].getAttribute('aria-label')).toBe('reset-password.show_password');
     toggles[0].click();
     toggles[1].click();
@@ -99,9 +99,9 @@ describe('SetPasswordFormComponent', () => {
     expect((el().querySelector('#password') as HTMLInputElement).type).toBe('text');
     expect((el().querySelector('#passwordConfirmation') as HTMLInputElement).type).toBe('text');
     expect(toggles[0].getAttribute('aria-label')).toBe('reset-password.hide_password');
-    expect(el().querySelector('.state-box--error')).toBeNull();
+    expect(el().querySelector('.error-message')).toBeNull();
     fixture.componentRef.setInput('errorKey', 'error_network');
     fixture.detectChanges();
-    expect(el().querySelector('.state-box--error')!.textContent).toContain('reset-password.error_network');
+    expect(el().querySelector('.error-message')!.textContent).toContain('reset-password.error_network');
   });
 });

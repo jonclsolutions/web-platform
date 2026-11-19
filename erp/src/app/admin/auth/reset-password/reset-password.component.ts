@@ -14,13 +14,14 @@
  * - Router: redirects back to sign-in after a successful reset.
  * - SetPasswordFormComponent: the password form shared with ActivateAccountComponent (policy
  *   checklist, confirmation, submit gate).
+ * - AdminAuthShellComponent: the shared sign-in layout (logo, card, language switcher).
  */
 
 import { Component, ChangeDetectorRef, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { SetPasswordFormComponent, SetPasswordValue } from '../set-password-form/set-password-form.component';
+import { AdminAuthShellComponent } from '../admin-auth-shell/admin-auth-shell.component';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 /** Delay before the automatic redirect to sign-in after a successful reset (ms). */
 const REDIRECT_DELAY_MS = 4000;
@@ -36,9 +37,9 @@ const REDIRECT_DELAY_MS = 4000;
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [CommonModule, RouterModule, SetPasswordFormComponent],
+  imports: [RouterModule, SetPasswordFormComponent, AdminAuthShellComponent],
   templateUrl: './reset-password.component.html',
-  styleUrls: ['../../shared-styles/theme.css', '../shared-styles/auth.css', '../shared-styles/auth-card.css', './reset-password.component.css']
+  styleUrls: ['../../../shared/styles/base.css', '../../../shared/styles/auth-form.css']
 })
 export class ResetPasswordComponent implements OnInit, OnDestroy {
   token = '';
@@ -61,6 +62,11 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private i18n: AdminLocalizationService
   ) {}
+
+  /** @description Text of the link in the footer of the card (back to the sign-in). */
+  get backToSignIn(): string {
+    return this.i18n.getValue('login.buttons.back_to_sign_in');
+  }
 
   /**
    * @description Text of the page in the admin language (finding #39 - was English-only).

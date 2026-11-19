@@ -1,72 +1,83 @@
 <!--
     @file: portal-login.component.html
-    @path: src/app/apps/project-portal/public/login/portal-login.component.html
+    @path: src/app/apps/project-portal/public/portal-login/portal-login.component.html
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Template of the portal sign-in (login name + password, or an e-mailed code); the
-        language switcher sits in the top-right corner of the window.
+    @description: Sign-in of the client portal (login name + password, or an e-mailed code) in the
+        shared sign-in layout (AuthShellComponent: logo + tagline left, this card right, language
+        switcher of the portal texts top right).
 -->
-<div class="pp-login-lang">
-  <app-portal-language-switcher [label]="t('language_switcher_title')"></app-portal-language-switcher>
-</div>
+<app-auth-shell [tagline]="t('login_hero_title')">
 
-<div class="pp-center">
-  <form class="pp-login-card" (ngSubmit)="loginMode === 'password' ? login() : (codeRequested ? loginWithCode() : requestCode())" autocomplete="on">
-    <div class="pp-login-icon">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-      </svg>
+  <app-auth-language-switcher authLang [languages]="languages" [current]="currentLanguage"
+                              [label]="t('language_switcher_title')" (selected)="selectLanguage($event)" />
+
+  <form class="auth-form" (ngSubmit)="loginMode === 'password' ? login() : (codeRequested ? loginWithCode() : requestCode())" autocomplete="on">
+
+    <div class="card-header">
+      <h1 class="card-title">{{ t('login_title') }}</h1>
+      <p class="card-subtitle">{{ loginMode === 'password' ? t('login_lead') : t('login_code_lead') }}</p>
     </div>
-    <h1 class="pp-login-title">{{ t('login_title') }}</h1>
-    <p class="pp-login-lead">{{ loginMode === 'password' ? t('login_lead') : t('login_code_lead') }}</p>
 
     <div class="pp-login-modes" role="tablist" [attr.aria-label]="t('login_mode_label')">
       <button type="button" role="tab" [class.active]="loginMode === 'password'" [attr.aria-selected]="loginMode === 'password'" (click)="setLoginMode('password')">{{ t('login_mode_password') }}</button>
       <button type="button" role="tab" [class.active]="loginMode === 'code'" [attr.aria-selected]="loginMode === 'code'" (click)="setLoginMode('code')">{{ t('login_mode_code') }}</button>
     </div>
 
-    <label class="pp-login-field">
-      <span>{{ loginMode === 'password' ? t('login_username_label') : t('login_identifier_label') }}</span>
-      <input type="text" class="pp-input" name="username" autocomplete="username" autocapitalize="none" spellcheck="false"
-             [(ngModel)]="loginUsername" [disabled]="loginLoading || (loginMode === 'code' && codeRequested)">
-    </label>
+    <div class="field-group">
+      <label class="field-label" for="pp-username">{{ loginMode === 'password' ? t('login_username_label') : t('login_identifier_label') }}</label>
+      <div class="input-wrapper">
+        <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+        <input type="text" id="pp-username" class="field-input has-icon" name="username" autocomplete="username" autocapitalize="none" spellcheck="false"
+               [(ngModel)]="loginUsername" [disabled]="loginLoading || (loginMode === 'code' && codeRequested)">
+      </div>
+    </div>
+
     @if (loginMode === 'password') {
-      <label class="pp-login-field">
-        <span>{{ t('login_password_label') }}</span>
-        <input type="password" class="pp-input" name="password" autocomplete="current-password"
-               [(ngModel)]="loginPassword" [disabled]="loginLoading">
-      </label>
+      <div class="field-group">
+        <label class="field-label" for="pp-password">{{ t('login_password_label') }}</label>
+        <div class="input-wrapper">
+          <svg class="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <input type="password" id="pp-password" class="field-input has-icon" name="password" autocomplete="current-password"
+                 [(ngModel)]="loginPassword" [disabled]="loginLoading" placeholder="••••••••">
+        </div>
+      </div>
     } @else if (codeRequested) {
-      <label class="pp-login-field">
-        <span>{{ t('login_code_label') }}</span>
-        <input type="text" class="pp-input pp-code-input" name="code" autocomplete="one-time-code" inputmode="numeric" maxlength="7"
+      <div class="field-group">
+        <label class="field-label" for="pp-code">{{ t('login_code_label') }}</label>
+        <input type="text" id="pp-code" class="field-input otp-input" name="code" autocomplete="one-time-code" inputmode="numeric" maxlength="7"
                [(ngModel)]="loginCode" [disabled]="loginLoading" placeholder="000000">
-      </label>
+      </div>
     }
 
     @if (loginInfo) {
-      <p class="pp-login-info" role="status">{{ t(loginInfo) }}</p>
+      <p class="info-message" role="status">{{ t(loginInfo) }}</p>
     }
     @if (loginError) {
-      <p class="pp-login-error" role="alert">{{ t(loginError) }}</p>
+      <p class="error-message" role="alert">{{ t(loginError) }}</p>
     }
 
     @if (loginMode === 'password') {
-      <button type="submit" class="pp-btn-primary" [disabled]="loginLoading || !loginUsername.trim() || !loginPassword.trim()">
+      <button type="submit" class="submit-btn" [disabled]="loginLoading || !loginUsername.trim() || !loginPassword.trim()">
         {{ loginLoading ? t('login_loading') : t('login_button') }}
       </button>
-      <p class="pp-login-hint">{{ t('login_forgotten_hint') }}</p>
+      <p class="auth-hint">{{ t('login_forgotten_hint') }}</p>
     } @else if (!codeRequested) {
-      <button type="submit" class="pp-btn-primary" [disabled]="loginLoading || !loginUsername.trim()">
+      <button type="submit" class="submit-btn" [disabled]="loginLoading || !loginUsername.trim()">
         {{ loginLoading ? t('login_loading') : t('login_send_code') }}
       </button>
-      <p class="pp-login-hint">{{ t('login_code_hint') }}</p>
+      <p class="auth-hint">{{ t('login_code_hint') }}</p>
     } @else {
-      <button type="submit" class="pp-btn-primary" [disabled]="loginLoading || loginCode.replace(' ', '').length < 6">
+      <button type="submit" class="submit-btn" [disabled]="loginLoading || loginCode.replace(' ', '').length < 6">
         {{ loginLoading ? t('login_loading') : t('login_button') }}
       </button>
-      <button type="button" class="pp-link pp-login-again" [disabled]="loginLoading" (click)="setLoginMode('code')">{{ t('login_code_again') }}</button>
+      <button type="button" class="link-btn" [disabled]="loginLoading" (click)="setLoginMode('code')">{{ t('login_code_again') }}</button>
     }
   </form>
-</div>
+
+</app-auth-shell>

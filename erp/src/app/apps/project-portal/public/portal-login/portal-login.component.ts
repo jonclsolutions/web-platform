@@ -1,21 +1,27 @@
 /**
  * @file portal-login.component.ts
  * @path src/app/apps/project-portal/public/portal-login/portal-login.component.ts
+ * @project JS web-platform
+ * @author JS
+ * @created 2026
  * @description Routed sign-in page of the client project portal (/projects/login/:token): login
  *   name + password, or a one-time code e-mailed to the account; also signs in with the
  *   one-time link of an e-mail (`?access=`). After a successful sign-in it opens the portal
- *   (/projects/:token, with `?section=` when the e-mail asked for one).
+ *   (/projects/:token, with `?section=` when the e-mail asked for one). Rendered in the shared
+ *   sign-in layout (AuthShellComponent) with the language switcher of the portal texts.
+ * @dependencies PublicDataService, ProjectPortalLocalizationService (texts, languages),
+ *   AuthShellComponent, AuthLanguageSwitcherComponent, leaveOnMaintenance.
  */
 
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef, OnDestroy, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, Subject, takeUntil, finalize } from 'rxjs';
 import { PublicDataService } from '../../../../shared/services/public-data.service';
 import { SKIP_ADMIN_AUTH_CONTEXT } from '../../../../core/interceptors/skip-admin-auth';
 import { ProjectPortalLocalizationService } from '../project-portal-localization.service';
-import { PortalLanguageSwitcherComponent } from '../language-switcher/portal-language-switcher.component';
+import { AuthShellComponent } from '../../../../shared/components/auth-shell/auth-shell.component';
+import { AuthLanguageSwitcherComponent } from '../../../../shared/components/auth-language-switcher/auth-language-switcher.component';
 import { leaveOnMaintenance } from '../maintenance/portal-maintenance';
 
 /** How the login screen signs in: password, or a code e-mailed to the account. */
@@ -24,9 +30,9 @@ export type PortalLoginMode = 'password' | 'code';
 @Component({
   selector: 'app-portal-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, PortalLanguageSwitcherComponent],
+  imports: [FormsModule, AuthShellComponent, AuthLanguageSwitcherComponent],
   templateUrl: './portal-login.component.html',
-  styleUrls: ['../../../../admin/shared-styles/theme.css', './portal-login.component.css'],
+  styleUrls: ['../../../../shared/styles/base.css', '../../../../shared/styles/auth-form.css', './portal-login.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PortalLoginComponent implements OnInit, OnDestroy {
@@ -40,6 +46,22 @@ export class PortalLoginComponent implements OnInit, OnDestroy {
 
   public t(key: string): string {
     return this.portalI18n.getValue(key);
+  }
+
+  /** Languages of the portal texts (switcher in the top-right corner). */
+  readonly languages = this.portalI18n.availableLanguages;
+
+  /** @description Code of the current language of the portal texts. */
+  get currentLanguage(): string {
+    return this.portalI18n.getCurrentLanguage();
+  }
+
+  /**
+   * @description Switches the language of the portal texts (remembered in the browser).
+   * @param code Language code.
+   */
+  selectLanguage(code: string): void {
+    this.portalI18n.setLanguage(code);
   }
 
   /** Access token of the project (route parameter). */

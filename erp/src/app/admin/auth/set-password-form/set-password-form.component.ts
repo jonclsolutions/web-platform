@@ -37,7 +37,8 @@ export interface SetPasswordValue {
   standalone: true,
   imports: [FormsModule, PasswordRequirementsChecklistComponent],
   templateUrl: './set-password-form.component.html',
-  styleUrls: ['../../shared-styles/theme.css', '../shared-styles/auth.css', '../shared-styles/auth-card.css'],
+  styleUrls: ['../../../shared/styles/base.css', '../../../shared/styles/auth-form.css'],
+  styles: ['.auth-form--flush { padding: 0; }'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SetPasswordFormComponent {

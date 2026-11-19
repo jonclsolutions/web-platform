@@ -13,10 +13,10 @@
  * - HttpClient: HTTP calls to the public `account-activation/{token}` endpoints.
  * - environment: Base URL of the API.
  * - SetPasswordFormComponent: the password form shared with ResetPasswordComponent.
+ * - AdminAuthShellComponent: the shared sign-in layout (logo, card, language switcher).
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -25,6 +25,7 @@ import { map } from 'rxjs';
 import { ApiEnvelope } from '../../../shared/interfaces/api-envelope';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { SetPasswordFormComponent, SetPasswordValue } from '../set-password-form/set-password-form.component';
+import { AdminAuthShellComponent } from '../admin-auth-shell/admin-auth-shell.component';
 
 /** Controls which block of the template is rendered - link check, form, error, done. */
 type ViewState = 'loading' | 'form' | 'invalid' | 'success';
@@ -38,9 +39,9 @@ interface ActivationCheckResponse {
 @Component({
   selector: 'app-activate-account',
   standalone: true,
-  imports: [CommonModule, RouterLink, SetPasswordFormComponent],
+  imports: [RouterLink, SetPasswordFormComponent, AdminAuthShellComponent],
   templateUrl: './activate-account.component.html',
-  styleUrls: ['../../shared-styles/theme.css', '../shared-styles/auth.css', '../shared-styles/auth-card.css', './activate-account.component.css'],
+  styleUrls: ['../../../shared/styles/base.css', '../../../shared/styles/auth-form.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActivateAccountComponent implements OnInit, OnDestroy {
@@ -81,6 +82,11 @@ export class ActivateAccountComponent implements OnInit, OnDestroy {
    */
   t(key: string): string {
     return this.i18n.getValue(`activate-account.${key}`);
+  }
+
+  /** @description Text of the link in the footer of the card (back to the sign-in). */
+  get backToSignIn(): string {
+    return this.i18n.getValue('login.buttons.back_to_sign_in');
   }
 
   ngOnDestroy(): void {

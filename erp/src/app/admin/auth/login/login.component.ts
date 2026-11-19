@@ -7,7 +7,8 @@
  * @description Authentication component: login form ("Remember me" included), captcha, the
  *   2FA OTP step, the account chooser ("Continue as ...": the account of this tab and the
  *   accounts remembered in this browser), the inline "forgot password" step and the language
- *   switcher (top right).
+ *   switcher (top right) - in the shared sign-in layout (AdminAuthShellComponent; look of the
+ *   card: shared/styles/auth-form.css).
  * @note The page is never skipped and never signs in on its own; the user chooses an account or
  *   signs in with another one. Several accounts may be signed in in one browser (each tab works
  *   with one of them, see AuthService) - a login or a chosen account signs in THIS tab only.
@@ -17,15 +18,15 @@
  *   chosen here is the language of the admin after the sign-in and vice versa.
  */
 
-import { ChangeDetectorRef, Component, DestroyRef, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthError, AuthService, LoginError, RememberedAccount, TwoFactorError } from '../../../core/auth/auth.service';
 import { UserAvatarComponent } from '../../components/user-avatar/user-avatar.component';
+import { AdminAuthShellComponent } from '../admin-auth-shell/admin-auth-shell.component';
 import { TurnstileService } from '../../../core/services/turnstile.service';
-import { AdminLocalizationService, AdminLanguageMeta } from '../../../core/services/admin-localization.service';
-import { CommonModule } from '@angular/common';
+import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { map, switchMap } from 'rxjs/operators';
 type LoginStep = 'credentials' | 'otp';
 
@@ -35,9 +36,9 @@ export type AccountChoice = RememberedAccount & { current?: boolean };
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, RouterModule, CommonModule, UserAvatarComponent],
+  imports: [FormsModule, RouterModule, UserAvatarComponent, AdminAuthShellComponent],
   templateUrl: './login.component.html',
-  styleUrls: ['../../shared-styles/theme.css', '../shared-styles/auth.css', '../../../shared/styles/base.css', './login.component.css']
+  styleUrls: ['../../../shared/styles/base.css', '../../../shared/styles/auth-form.css', './login.component.css']
 })
 export class LoginComponent implements OnInit, OnDestroy {
 
@@ -53,7 +54,6 @@ export class LoginComponent implements OnInit, OnDestroy {
   t: any = null;
 
   @ViewChild('captchaContainer') captchaContainer?: ElementRef<HTMLDivElement>;
-  @ViewChild('langSwitcher') private langSwitcher?: ElementRef<HTMLElement>;
 
   step: LoginStep = 'credentials';
 
@@ -76,8 +76,6 @@ export class LoginComponent implements OnInit, OnDestroy {
   private captchaToken: string | null = null;
   private captchaWidgetId: string | null = null;
 
-  logo_path: string = "assets/images/logos/logo_big.svg"
-
   private loginToken: string | null = null;
   otpCode = '';
   otpExpiresAt: number | null = null;
@@ -91,46 +89,6 @@ export class LoginComponent implements OnInit, OnDestroy {
   resetSent = false;
   resetSubmitting = false;
   resetErrorMessage = '';
-
-  // ── Language switcher (same languages and same service as the admin header) ──────────────
-  readonly languages: AdminLanguageMeta[] = this.i18n.availableLanguages;
-  isLangMenuOpen = false;
-
-  get currentLanguageCode(): string {
-    return this.i18n.getCurrentLanguage();
-  }
-
-  get currentLanguageMeta(): AdminLanguageMeta | undefined {
-    return this.languages.find(l => l.code === this.currentLanguageCode);
-  }
-
-  toggleLangMenu(): void {
-    this.isLangMenuOpen = !this.isLangMenuOpen;
-  }
-
-  closeLangMenu(): void {
-    this.isLangMenuOpen = false;
-  }
-
-  selectLanguage(code: string): void {
-    this.i18n.setLanguage(code);
-    this.isLangMenuOpen = false;
-  }
-
-  /** Closes the language menu on a click anywhere outside of the switcher. */
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (!this.isLangMenuOpen) return;
-    if (!this.langSwitcher?.nativeElement.contains(event.target as Node)) {
-      this.closeLangMenu();
-    }
-  }
-
-  /** Closes the language menu with Escape. */
-  @HostListener('document:keydown.escape')
-  onEscape(): void {
-    this.closeLangMenu();
-  }
 
   constructor(
     private router: Router,
