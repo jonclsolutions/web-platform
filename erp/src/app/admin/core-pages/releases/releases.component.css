@@ -1,0 +1,219 @@
+/*
+    @file: releases.component.css
+    @path: /src/app/admin/core-pages/releases/releases.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Page "Releases": running version, filter by area, releases as expandable cards
+        with their changes.
+    @dependencies: admin/shared-styles/welcome-page.css (page and header), colour tokens of the
+        admin (with fallbacks)
+*/
+
+/*
+    @module: Header and filter
+    @description: Intro, running version beside the help, area buttons.
+    @usage: .rl-intro, .rl-header-side, .rl-current, .rl-filter > .rl-chip(--active)
+*/
+.rl-intro {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--color-zinc-500);
+  line-height: 1.45;
+}
+
+.rl-header-side {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rl-current {
+  font-size: 0.8rem;
+  color: var(--color-zinc-500);
+  white-space: nowrap;
+}
+
+.rl-current strong { color: var(--color-zinc-900); }
+
+.rl-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.rl-chip {
+  padding: 6px 13px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 999px;
+  background: var(--color-white);
+  color: var(--color-zinc-700, #3f3f46);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rl-chip:hover,
+.rl-chip:focus-visible { background: var(--color-zinc-100); }
+
+.rl-chip--active,
+.rl-chip--active:hover {
+  border-color: var(--color-zinc-900);
+  background: var(--color-zinc-900);
+  color: var(--color-white);
+}
+
+/*
+    @module: States
+    @description: Error, loading and empty text.
+    @usage: .rl-error, .rl-empty
+*/
+.rl-error {
+  padding: 10px 14px;
+  border: 1px solid var(--color-rose-200, #fecdd3);
+  border-radius: 12px;
+  background: var(--color-rose-50, #fff1f2);
+  color: var(--color-rose-700, #be123c);
+  font-size: 0.82rem;
+}
+
+.rl-empty {
+  padding: 24px;
+  border: 1px dashed var(--color-sand-200);
+  border-radius: 16px;
+  color: var(--color-zinc-500);
+  font-size: 0.85rem;
+}
+
+/*
+    @module: Release
+    @description: Card with a clickable head (version, running badge, date, number of changes)
+        and the list of changes.
+    @usage: .rl-list > section.rl-release(--open) > button.rl-release-head + ul.rl-changes
+*/
+.rl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rl-release {
+  background: var(--color-white);
+  border: 1px solid var(--color-sand-200);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.rl-release-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 18px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rl-release-head:hover,
+.rl-release-head:focus-visible { background: var(--color-zinc-50, #fafafa); }
+
+.rl-version {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-zinc-900);
+}
+
+.rl-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-emerald-50, #ecfdf5);
+  color: var(--color-emerald-700, #047857);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.rl-date,
+.rl-count {
+  font-size: 0.78rem;
+  color: var(--color-zinc-500);
+}
+
+.rl-count { margin-left: auto; }
+
+.rl-chevron {
+  color: var(--color-zinc-400);
+  transition: transform 0.15s ease;
+}
+
+.rl-release--open .rl-chevron { transform: rotate(180deg); }
+
+/*
+    @module: Change
+    @description: Type badge (security red, added green, changed blue, fixed amber, removed grey),
+        area (+ public part) and the text with its ticket.
+    @usage: ul.rl-changes > li.rl-change > .rl-type.rl-type--{type} + .rl-area + .rl-text > .rl-ref
+*/
+.rl-changes {
+  margin: 0;
+  padding: 4px 18px 16px;
+  list-style: none;
+  border-top: 1px solid var(--color-sand-200);
+}
+
+.rl-change {
+  display: grid;
+  grid-template-columns: 92px 150px 1fr;
+  align-items: baseline;
+  gap: 4px 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-zinc-100);
+  font-size: 0.84rem;
+}
+
+.rl-change:last-child { border-bottom: none; }
+
+.rl-type {
+  justify-self: start;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: var(--color-zinc-100);
+  color: var(--color-zinc-600);
+}
+
+.rl-type--security { background: var(--color-rose-50, #fff1f2); color: var(--color-rose-700, #be123c); }
+.rl-type--added { background: var(--color-emerald-50, #ecfdf5); color: var(--color-emerald-700, #047857); }
+.rl-type--changed { background: var(--color-indigo-50, #eef2ff); color: var(--color-indigo-700, #4338ca); }
+.rl-type--fixed { background: var(--color-amber-50, #fffbeb); color: var(--color-amber-700, #b45309); }
+
+.rl-area {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-zinc-500);
+}
+
+.rl-text {
+  color: var(--color-zinc-900);
+  line-height: 1.45;
+}
+
+.rl-ref {
+  margin-left: 6px;
+  font-size: 0.75rem;
+  color: var(--color-zinc-400);
+}
+
+@media (max-width: 640px) {
+  .rl-change { grid-template-columns: auto 1fr; }
+  .rl-text { grid-column: 1 / -1; }
+  .rl-count { margin-left: 0; }
+}

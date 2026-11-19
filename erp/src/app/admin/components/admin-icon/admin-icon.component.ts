@@ -14,7 +14,7 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 /** Names of the available icons. */
-export type AdminIconName = 'bar-chart' | 'box' | 'briefcase' | 'calendar' | 'cart' | 'check-square' | 'chevron-down' | 'code' | 'credit-card' | 'dollar' | 'external-link' | 'file-lines' | 'file-text' | 'folder' | 'globe' | 'globe-settings' | 'help-circle' | 'home' | 'languages' | 'layers' | 'layout' | 'lock' | 'shield' | 'shield-check' | 'shopping-bag' | 'star' | 'truck' | 'user' | 'user-check' | 'users' | 'window';
+export type AdminIconName = 'bar-chart' | 'box' | 'briefcase' | 'calendar' | 'cart' | 'check-square' | 'chevron-down' | 'code' | 'credit-card' | 'dollar' | 'external-link' | 'file-lines' | 'file-text' | 'folder' | 'globe' | 'globe-settings' | 'help-circle' | 'home' | 'languages' | 'layers' | 'layout' | 'lock' | 'shield' | 'shield-check' | 'shopping-bag' | 'star' | 'tag' | 'truck' | 'user' | 'user-check' | 'users' | 'window';
 
 @Component({
   selector: 'app-admin-icon',
@@ -55,6 +55,7 @@ export type AdminIconName = 'bar-chart' | 'box' | 'briefcase' | 'calendar' | 'ca
       @case ('user-check') { <circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/> <polyline points="16 3 18 5 22 1"/> }
       @case ('users') { <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/> <circle cx="9" cy="7" r="4"/> <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/> }
       @case ('window') { <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20"/> }
+      @case ('tag') { <path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"/><circle cx="7.5" cy="7.5" r="1"/> }
       }
     </svg>
   `,

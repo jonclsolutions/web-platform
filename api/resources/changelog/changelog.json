@@ -1,0 +1,54 @@
+{
+    "unreleased": [
+        {
+            "type": "added",
+            "area": "core",
+            "part": "admin",
+            "text": "Releases page (Core → Releases): the running version and what changed in every release; the version is shown in the sidebar and a short notice appears after an update of the part you work in."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Passwords of administrator accounts may have up to 64 characters (was 16), so password managers and passphrases can be used."
+        }
+    ],
+    "releases": [
+        {
+            "version": "v2026.11.1",
+            "date": "2026-11-16",
+            "changes": [
+                {
+                    "type": "added",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "First release on the own server: automatic deployment with a backup before every release and an automatic return to the previous version when a release fails."
+                },
+                {
+                    "type": "added",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Applications page: state of every application, light diagnostics and the maintenance switch; the switch is also in the header of every dashboard."
+                },
+                {
+                    "type": "changed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Answers to e-mails of the application go to the info address of the domain (Reply-To)."
+                },
+                {
+                    "type": "added",
+                    "area": "project-portal",
+                    "part": "admin",
+                    "text": "Dashboard of the project portal and its maintenance switch."
+                },
+                {
+                    "type": "added",
+                    "area": "project-portal",
+                    "part": "public",
+                    "text": "Maintenance page of the project portal while it is switched off."
+                }
+            ]
+        }
+    ]
+}

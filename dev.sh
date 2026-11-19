@@ -42,6 +42,7 @@
 #   ./dev.sh npm <args>              npm … in erp/        ./dev.sh npx <args>   npx … in erp/
 #   ./dev.sh shell [service]         bash in a container (default: a new dev container)
 #   ./dev.sh test [args]             all unit tests (tests/unit_tests/run_all.sh) in the container
+#   ./dev.sh release <tag>           release a version: changelog → commit → tag → push (deploy/release.sh)
 #   ./dev.sh deps-audit              known vulnerabilities of the production npm / Composer packages
 #   ./dev.sh deps-fix                update ONLY the vulnerable packages within the allowed versions
 #                                    (no new major version), run all tests, list what still needs a
@@ -388,6 +389,7 @@ case "$command" in
     shell)
         if [[ $# -gt 0 ]]; then preflight; dc exec "$1" bash; else dev_run . bash; fi ;;
     test)        dev_run_nodeps . tests/unit_tests/run_all.sh "$@" ;;
+    release)     "$ROOT_DIR/deploy/release.sh" "$@" ;;
     deps-audit)  dev_run_nodeps . deploy/dependencies.sh audit ;;
     deps-fix)    dev_run_nodeps . deploy/dependencies.sh fix ;;
     db-import)   cmd_db_import "$@" ;;

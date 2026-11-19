@@ -17,6 +17,8 @@
  * - UserAvatarComponent: own profile photo in the header.
  * - AdminModulesService: which modules and pages the user may open; admin-navigation.config +
  *   apps.registry: the sidebars and the applications; AdminIconComponent: icons of the menus.
+ * - ReleaseNotesService / ReleaseNoticeComponent: the running version at the bottom of the
+ *   sidebar and the notice after an update of the current module.
  * @note Layout: the header and the sidebar stay in place, only the page content (`<main>`) and,
  * independently, a long sidebar menu scroll. A navigation therefore scrolls `<main>` back to the
  * top itself - the router's scroll restoration only moves the window.
@@ -39,6 +41,8 @@ import { AppManifest, appById } from '../../../apps/apps.registry';
 import { AdminIconComponent } from '../admin-icon/admin-icon.component';
 import { UserAvatarComponent } from '../user-avatar/user-avatar.component';
 import { KNOWLEDGE_BASE_URL } from '../page-help/page-help.component';
+import { ReleaseNoticeComponent } from '../releases/release-notice.component';
+import { ReleaseNotesService } from '../releases/release-notes.service';
 
 /**
  * @description localStorage key of the menu sections the user collapsed (JSON array of section
@@ -56,7 +60,7 @@ export const NAV_COLLAPSED_STORAGE_KEY = 'jsw_admin_nav_collapsed';
   templateUrl: './admin-layout.component.html',
   styleUrls: ['../../shared-styles/theme.css', '../../../shared/styles/base.css', './admin-layout.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule, DatePipe, UserAvatarComponent, AdminIconComponent],
+  imports: [CommonModule, RouterModule, DatePipe, UserAvatarComponent, AdminIconComponent, ReleaseNoticeComponent],
   providers: [
     { provide: LOCALE_ID, useValue: 'cs-CZ' }
   ]
@@ -70,6 +74,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   /** Module the user is in: 'core' or the id of an application (first URL segment after /admin/). */
   currentModule: AdminModule = CORE_MODULE;
+  /** Release notes - the running version in the sidebar (loaded by the release notice). */
+  readonly releases = inject(ReleaseNotesService);
 
   /** Dropdown of the application switcher in the header is open. */
   isAppsMenuOpen = false;

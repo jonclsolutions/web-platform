@@ -1,0 +1,17 @@
+<!--
+    @file: release-notice.component.html
+    @path: /src/app/admin/components/releases/release-notice.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Notice after an update (only when the release changed this module).
+-->
+@let unseen = releases;
+@if (unseen.length) {
+  <div class="release-notice" role="status">
+    <span class="release-notice-dot" aria-hidden="true"></span>
+    <span class="release-notice-text">{{ text(unseen) }}</span>
+    <button type="button" class="release-notice-open" (click)="open()">{{ t('notice_open') }}</button>
+    <button type="button" class="release-notice-close" (click)="close()" [title]="t('notice_close')" [attr.aria-label]="t('notice_close')">×</button>
+  </div>
+}

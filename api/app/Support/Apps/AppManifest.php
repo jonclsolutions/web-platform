@@ -199,6 +199,18 @@ abstract class AppManifest
     }
 
     /**
+     * @description Whether the public part of the application may show its release notes
+     *   (GET public/releases/{id} - the `public` changes of this application in the changelog).
+     *   Off by default: visitors of a web, a shop or a portal are not interested in them; an
+     *   application for technical users can switch it on. The admin always shows them.
+     * @return bool
+     */
+    public function publicChangelog(): bool
+    {
+        return false;
+    }
+
+    /**
      * @description Removes the texts of a language the admin deleted from the application's
      *   content (e.g. translated FAQ items).
      * @param string $code Language code.

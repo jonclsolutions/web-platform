@@ -1208,6 +1208,36 @@
           ]
         }
       ]
+    },
+    "releases": {
+      "navLabel": "Releases",
+      "header": "Releases",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "The version of the application that runs and what changed in every release - for the core and for the applications you may manage."
+            },
+            {
+              "type": "text",
+              "content": "The releases are listed from the newest; the newest is open, click a release to open or close it. Each change has its type (Security, Added, Changed, Fixed, Removed), the part it concerns (the core or an application; public part = what visitors see) and a short description in English, sometimes with the number of the ticket (#57)."
+            },
+            {
+              "type": "text",
+              "content": "The buttons above the list show only the changes of the core or of one application. You see the core and the applications you have access to."
+            },
+            {
+              "type": "text",
+              "content": "The running version is also at the bottom of the left menu. After an update a short notice appears above the page - only in the part you work in and only when the update changed it (an update of the e-shop does not bother you in the web). What's new opens this page, the cross hides the notice until the next update."
+            },
+            {
+              "type": "note",
+              "content": "The release notes are written by the developers together with every change; a release without them cannot be deployed."
+            }
+          ]
+        }
+      ]
     }
   }
 }

@@ -37,6 +37,7 @@ import { SecurityEventsComponent } from './core-pages/security-events/security-e
 
 import { AdminErrorPageComponent } from './error-pages/admin-error-page.component';
 import { AppsComponent } from './core-pages/apps/apps.component';
+import { ReleasesComponent } from './core-pages/releases/releases.component';
 import { APPS } from '../apps/apps.registry';
 /**
  * @description Defines the navigation hierarchy and access permissions for the administration interface.
@@ -97,6 +98,8 @@ export const ADMIN_ROUTES: Routes = [
           // Overview of the installed applications the user may open (no permission - the page
           // lists only the applications of the user's permissions).
           { path: 'apps', component: AppsComponent, data: { help: 'apps' } },
+          // Release notes of the running installation - every administrator (no permission).
+          { path: 'releases', component: ReleasesComponent, data: { help: 'releases' } },
           { path: 'settings', component: SettingsComponent, data: { help: 'settings', permission: 'core-legal-config-view' } },
           { path: 'external-links', component: ExternalLinksComponent, data: { help: 'external-links', permission: 'core-external-links-view' } },
           // Restricted to the 'sysadmin' role regardless of the permission system (see sysadminGuard).

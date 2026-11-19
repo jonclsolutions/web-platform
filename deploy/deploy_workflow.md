@@ -32,13 +32,15 @@ Obsah:
 ## 1. Jak to funguje
 
 ```
- ty:  git tag -a v2026.11.1 -m "…" && git push origin v2026.11.1
+ ty:  ./dev.sh release v2026.11.2   (changelog → commit → tag → push)
                       │
  GitHub Actions (.github/workflows/release.yml)
+   0. Changelog – tag má své poznámky v changelogu (jinak stop)
    1. Tests   – všechny unit testy (ci.yml: Karma + PHPUnit)
    2. Images  – ghcr.io/<owner>/<repo>-api:v2026.11.1  (PHP-FPM + Laravel + deploy bundle)
                 ghcr.io/<owner>/<repo>-web:v2026.11.1  (Angular + Caddy)
    3. Deploy  – SSH na VPS deploy klíčem (smí spustit JEN deploy.sh)
+   4. Notes   – GitHub Release se stejnými poznámkami
                       │
  VPS /srv/app/deploy.sh release v2026.11.1
    kontrola .env → stažení image → záloha (DB + storage/app) → stop API
@@ -168,11 +170,11 @@ Repozitář → **Settings → Environments → New environment** → název `pr
 
 ## 7. První vydání
 
-1. Na `main` je vše, co chceš nasadit (testy prošly v CI).
-2. Tag a push:
+1. Na `main` je vše, co chceš nasadit (testy prošly v CI, `git status` čisté, pushnuté).
+2. Vydání (changelog → commit → tag → push; u nové instalace bez záznamů v changelogu
+   s poznámkou):
    ```bash
-   git tag -a v2026.11.1 -m "First release on VPS"
-   git push origin v2026.11.1
+   ./dev.sh release v2026.11.1 --note "First release of <doména>"
    ```
 3. GitHub → **Actions → Release** – sleduj *Tests* → *Images* → *Deploy* (schválení, pokud jsi
    nastavil reviewers).
@@ -284,13 +286,37 @@ přihlášeni jen tehdy, když zůstane stejný **`APP_KEY`**.
 
 ## 11. Běžné vydání
 
-1. Změny na `main`, CI zelené, ruční regrese (`tests/regression_tests/`).
-2. Tag: `vRRRR.MM.N` (např. `v2026.12.1`, `v2026.12.2` …):
+**Changelog – píše se průběžně, ne při vydání.** Každá změna, která zajímá administrátora,
+přidá **ve stejném commitu** záznam do `"unreleased"` v `api/resources/changelog/changelog.json`
+(anglicky, krátce, pro uživatele adminu – ne commit message):
+
+```json
+{ "type": "fixed", "area": "web", "part": "public", "text": "Inquiry form: sending works when the name contains an apostrophe.", "ref": "#57" }
+```
+
+| Pole | Hodnoty |
+|---|---|
+| `type` | `security`, `added`, `changed`, `fixed`, `removed` |
+| `area` | `core` nebo id aplikace (`web`, `shop`, `project-portal`, …) |
+| `part` | `admin` (administrace) nebo `public` (co vidí návštěvníci) |
+| `ref` | nepovinné číslo tiketu (`#57`) – nahlášená chyba → GitHub issue → oprava → záznam |
+
+Admin to ukáže v **Core → Verze** (běžící verze je dole v levém menu; po aktualizaci se objeví
+upozornění jen v části, kterou vydání změnilo – oprava jádra neruší v e-shopu). Veřejné části
+aplikací changelog neukazují, pokud ho aplikace v manifestu API nezapne (`publicChangelog()`).
+
+**Vydání:**
+
+1. Změny na `main`, CI zelené, ruční regrese (`tests/regression_tests/`), vše pushnuté.
+2. Tag `vRRRR.MM.N` (např. `v2026.12.1`, `v2026.12.2` …):
    ```bash
-   git tag -a v2026.12.1 -m "Release 2026-12.1" && git push origin v2026.12.1
+   ./dev.sh release v2026.12.1
    ```
-3. Actions → Release → (schválit) → `Release v2026.12.1 is live`.
-4. Krátká kontrola webu; `/api/version` vrací nový tag.
+   Přesune `"unreleased"` pod tag (prázdný odmítne), ukáže poznámky, po potvrzení commitne,
+   otaguje a pushne. Tag bez poznámek (např. vytvořený na webu GitHubu) workflow odmítne.
+3. Actions → Release → (schválit) → `Release v2026.12.1 is live`; po úspěchu vznikne GitHub
+   Release se stejnými poznámkami.
+4. Krátká kontrola webu; `/api/version` vrací nový tag; v adminu Core → Verze.
 
 Když vydání selže (migrace, start, smoke test), skript **sám vrátí předchozí verzi a databázi
 ze zálohy těsně před vydáním** – log v Actions i na serveru (`/srv/app/logs/deploy.log`) říká proč.

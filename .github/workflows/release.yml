@@ -5,12 +5,15 @@
 # @author JS
 # @created 2026
 # @description Automated release of THIS repository (one client = one repository = one VPS):
-#   push of a tag v* (git tag -a v2026.11.1 -m "…" && git push origin v2026.11.1):
+#   push of a tag v* (deploy/release.sh v2026.11.2 - moves the changelog under the tag, commits,
+#   tags, pushes):
+#     0. changelog  - the tag has its notes in api/resources/changelog/changelog.json (else stop)
 #     1. tests      - ci.yml (all unit tests)
 #     2. images     - <prefix>-api:<tag> and <prefix>-web:<tag> built and pushed to ghcr.io
 #                     (prefix = ghcr.io/<owner>/<repository>, lower case = IMAGE_PREFIX of .env)
 #     3. deploy     - SSH to the VPS: /srv/app/deploy.sh release <tag> (backup, migrations,
 #                     smoke test, automatic rollback on a failure)
+#     4. notes      - GitHub Release of the tag with the notes of the changelog
 #   Run workflow (Actions → Release → Run workflow): deploy an existing tag again, roll back to the
 #   previous release, or show the status - without tests and builds.
 # @note Settings of the GitHub environment `production` of the repository (deploy_workflow.md):
@@ -46,9 +49,50 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  changelog:
+    name: Changelog
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      notes: ${{ steps.notes.outputs.notes }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: PHP 8.5
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: "8.5"
+          extensions: bcmath, gd, intl, mbstring, pdo_sqlite, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: API dependencies
+        working-directory: api
+        run: composer install --no-dev --no-interaction --no-progress --prefer-dist
+
+      - name: Notes of the tag
+        id: notes
+        working-directory: api
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          php artisan changelog:check --release="$TAG"
+          {
+            echo 'notes<<CHANGELOG_EOF'
+            php artisan changelog:notes "$TAG"
+            echo 'CHANGELOG_EOF'
+          } >> "$GITHUB_OUTPUT"
+
   tests:
     name: Tests
     if: github.event_name == 'push'
+    needs: changelog
     permissions:
       contents: read
     uses: ./.github/workflows/ci.yml
@@ -181,3 +225,24 @@ jobs:
       - name: Remove the SSH key
         if: always()
         run: rm -f ~/.ssh/deploy_key
+
+  notes:
+    name: GitHub Release
+    needs: [changelog, deploy]
+    if: github.event_name == 'push' && needs.deploy.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Release with the notes of the changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          NOTES: ${{ needs.changelog.outputs.notes }}
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes "$NOTES"
+          else
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --notes "$NOTES" --verify-tag
+          fi

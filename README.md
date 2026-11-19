@@ -42,6 +42,7 @@ web-platform/
 │   ├── vps/bootstrap.sh one-time preparation of a fresh Ubuntu VPS (Docker, user deploy, SSH, firewall)
 │   ├── vps/deploy.sh    releases, rollback, backups on the VPS (/srv/app/deploy.sh)
 │   ├── vps/provision.sh one run from your computer: new server + .env + GitHub environment + first release
+│   ├── release.sh       a release: changelog → commit → tag → push (./dev.sh release <tag>)
 │   ├── dependencies.sh  known vulnerabilities of the production packages (./dev.sh deps-audit / deps-fix)
 │   ├── setup_hosting.md FORPSI step by step: domain, e-mail, VPS, DNS (Czech)
 │   └── deploy_workflow.md GitHub Actions + VPS: automated releases step by step (Czech)
@@ -390,19 +391,36 @@ from `/srv/app/.env` on its server at run time.
 | [deploy/setup_hosting.md](deploy/setup_hosting.md) | FORPSI: domain, e-mail (noreply@ / info@ / sysadmin@), SPF / DKIM / DMARC, VPS, SSH key, `bootstrap.sh`, `/srv/app/.env`, Turnstile, DNS |
 | [deploy/deploy_workflow.md](deploy/deploy_workflow.md) | GitHub Actions: deploy key, environment `production`, first release, sysadmin, backups, releases, rollback, moving an existing site, a new client (fork) |
 
+**Changelog** – one file, `api/resources/changelog/changelog.json`: every change that matters to
+an administrator adds an entry to `unreleased` **in the same commit** (English, short, for the
+admin - not a commit message):
+
+```json
+{ "type": "fixed", "area": "web", "part": "public", "text": "Inquiry form: sending works when the name contains an apostrophe.", "ref": "#57" }
+```
+
+`type` security / added / changed / fixed / removed; `area` `core` or an application id; `part`
+admin / public; `ref` optional ticket. `php artisan changelog:check` validates it (also a unit
+test). The admin shows it on Core → Releases (the running version is at the bottom of the
+sidebar; after an update a notice appears only in the module whose part changed). The public part
+of an application shows nothing unless its API manifest enables `publicChangelog()`
+(`GET /api/public/releases/{app}`).
+
 **A release** (after the tests and the manual regression of `tests/regression_tests/`):
 
 ```bash
-git tag -a v2026.11.1 -m "Release 2026-11.1"
-git push origin v2026.11.1
+./dev.sh release v2026.11.2          # = deploy/release.sh: changelog → commit → tag → push
 ```
 
-GitHub Actions (`.github/workflows/release.yml`) then runs all unit tests, builds and pushes the
+It moves `unreleased` under the tag (refuses an empty one), shows the notes, commits, tags and
+pushes. A tag without its section in the changelog (e.g. created on the GitHub web) is refused by
+the workflow. GitHub Actions (`.github/workflows/release.yml`) then checks the notes, runs all unit tests, builds and pushes the
 images `ghcr.io/<owner>/<repo>-api|web:<tag>` and runs `/srv/app/deploy.sh release <tag>` on the
 VPS: check of `.env`, backup (database + `storage/app`), stop of the API, `migrate --force` +
 `db:seed --force`, start, smoke test (`/api/version` = the tag, the page, `/.env` = 404). A failure
 puts the previous release - and its database - back automatically. Downtime of the API: tens of
-seconds. Rollback / status: Actions → Release → Run workflow, or on the server
+seconds. After a successful deploy the GitHub Release of the tag is created with the same notes.
+Rollback / status: Actions → Release → Run workflow, or on the server
 `/srv/app/deploy.sh rollback | status`.
 
 `/srv/app/deploy.sh check` refuses a production `.env` that would break production or open a hole
@@ -462,6 +480,10 @@ the queue finish - queued mails of the old release carry class names that no lon
   NIST) - one policy in `App\Support\Auth\PasswordPolicy` and `erp/.../password-policy.ts`;
   `deploy/vps/provision.sh <IP> <domain>` prepares a new installation in one run
   ([setup_hosting.md](deploy/setup_hosting.md), "Rychlá cesta").
+- (0116) changelog `api/resources/changelog/changelog.json` (an entry with every change), page
+  Core → Releases with the running version in the sidebar and a notice after an update of the
+  module the user is in; releases only through `./dev.sh release <tag>` (the workflow refuses a
+  tag without notes and creates the GitHub Release).
 
 ### One-time steps of the October 2026 fixes (findings-fixes 1–4)
 

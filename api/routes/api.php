@@ -39,6 +39,7 @@ use App\Http\Controllers\Api\Legal\DocumentTypeController;
 use App\Http\Controllers\Api\Core\CoreExternalLinkController;
 use App\Http\Controllers\Api\Core\CoreLogController;
 use App\Http\Controllers\Api\Core\CoreAppStatusController;
+use App\Http\Controllers\Api\Core\CoreReleaseController;
 use App\Http\Controllers\Api\AttachmentDownloadController;
 use App\Http\Controllers\Api\UploadRulesController;
 use App\Http\Controllers\Api\CspReportController;
@@ -76,6 +77,10 @@ Route::get('version', VersionController::class)->middleware('throttle:60,1');
 | PUBLIC LEGAL DOCUMENTS AND CONFIGURATION
 |--------------------------------------------------------------------------
 */
+// Release notes of an application that publishes them (AppManifest::publicChangelog(), else 404).
+Route::get('public/releases/{app}', [CoreReleaseController::class, 'publicIndex'])
+    ->where('app', '[a-z0-9-]+')->middleware('throttle:60,1');
+
 Route::prefix('public/legal')->group(function () {
     Route::get('/config',      [SiteConfigurationController::class, 'publicShow']);
     Route::get('/page-titles', [PageTitleController::class, 'publicIndex']);
@@ -202,6 +207,10 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         // Status of the applications (core/apps): no page permission - only the applications of
         // the user's tab permissions are returned (CoreAppStatusController).
         Route::get('/apps/status', [CoreAppStatusController::class, 'index'])->middleware('throttle:60,1');
+
+        // Release notes: no page permission - the core and the applications of the user's tab
+        // permissions (CoreReleaseController).
+        Route::get('/releases', [CoreReleaseController::class, 'index'])->middleware('throttle:60,1');
 
         // Agenda of the admin calendar (core/calendar): no page permission - every source is
         // filtered by the user's permissions inside (CoreAgendaController).

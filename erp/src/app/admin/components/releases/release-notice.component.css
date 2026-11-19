@@ -1,0 +1,69 @@
+/*
+    @file: release-notice.component.css
+    @path: /src/app/admin/components/releases/release-notice.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Notice after an update above the admin page.
+    @dependencies: colour tokens of the admin (with fallbacks)
+*/
+
+/*
+    @module: Release notice
+    @description: One line: dot, text, "What's new", close; wraps on small screens.
+    @usage: .release-notice > .release-notice-dot + .release-notice-text + .release-notice-open + .release-notice-close
+*/
+.release-notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-indigo-200, #c7d2fe);
+  border-radius: 12px;
+  background: var(--color-indigo-50, #eef2ff);
+  color: var(--color-zinc-900);
+  font-size: 0.84rem;
+}
+
+.release-notice-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-indigo-600, #4f46e5);
+}
+
+.release-notice-text {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.release-notice-open {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-zinc-900);
+  color: var(--color-white);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.release-notice-open:hover,
+.release-notice-open:focus-visible { background: var(--color-zinc-700, #3f3f46); }
+
+.release-notice-close {
+  padding: 2px 6px;
+  border: none;
+  background: transparent;
+  color: var(--color-zinc-500);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.release-notice-close:hover,
+.release-notice-close:focus-visible { color: var(--color-zinc-900); }

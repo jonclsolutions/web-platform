@@ -447,9 +447,8 @@ first_release() {
         n=$((n + 1))
     done
     tag="v$(date +%Y.%m).$n"
-    ask_yes "create the tag $tag on main and deploy it now?" y || { warn "skipped - push a tag later and run provision.sh again"; return 1; }
-    git -C "$ROOT_DIR" tag -a "$tag" -m "First release of $DOMAIN" || die "cannot create the tag $tag"
-    git -C "$ROOT_DIR" push -q origin "$tag" || die "cannot push the tag $tag"
+    ask_yes "release $tag (changelog → commit → tag → push) and deploy it now?" y || { warn "skipped - release later (deploy/release.sh) and run provision.sh again"; return 1; }
+    "$ROOT_DIR/deploy/release.sh" "$tag" --note "First release of $DOMAIN" --yes || die "the release $tag was not created (see above)"
     info "tag pushed - GitHub Actions: tests → images → deploy (first run 15-25 min)"
     info "follow it on GitHub (Actions → Release) or: gh run watch --repo $REPO"
     local i state
@@ -476,7 +475,7 @@ finish() {
     cat <<TXT
     https://$DOMAIN            (admin: https://$DOMAIN/auth/login)
     ssh $ALIAS '/srv/app/deploy.sh status'
-    Next releases: git tag -a vYYYY.MM.N -m "…" && git push origin vYYYY.MM.N  (or GitHub → Releases)
+    Next releases: write the changes into api/resources/changelog/changelog.json, then ./dev.sh release vYYYY.MM.N
     Into Bitwarden: .env (ssh $ALIAS cat /srv/app/.env), sysadmin password, fingerprint of the server.
     Backups off the server: deploy_workflow.md, step 9.
 TXT

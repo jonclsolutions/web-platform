@@ -113,6 +113,13 @@
       "order": 26,
       "permission": null,
       "devNote": "AppsComponent, route 'core/apps' (bez oprávnění - řádky jen aplikací, které uživatel smí otevřít: oprávnění záložky + aspoň jedna stránka, AdminModulesService). Stav a diagnostika: GET core/apps/status (CoreAppStatusController - AppManifest::availability(), log aplikace za 24 h, zdraví ok/warning/offline/error), sdílí AppStatusService s hlavičkami dashboardů. Přepínač AppStatusControlComponent volá endpoint z manifestu aplikace (AppManifest.maintenance: web/settings, shop/settings, project-portal/maintenance) s heslem. Aplikace = manifesty v erp/src/app/apps/apps.registry.ts (frontend) a api/config/apps.php (API). Přepínač Aplikace v hlavičce AdminLayoutComponent ukazuje stejné aplikace a vždy název aplikace, ve které uživatel je."
+    },
+    {
+      "id": "releases",
+      "group": "core",
+      "order": 27,
+      "permission": null,
+      "devNote": "ReleasesComponent, route 'core/releases' (bez oprávnění). Zdroj: api/resources/changelog/changelog.json (App\\Support\\Changelog\\Changelog) - změny se zapisují do 'unreleased' spolu s každou změnou kódu, deploy/release.sh (./dev.sh release <tag>) je přesune pod tag; release.yml odmítne tag bez sekce (changelog:check --release) a vytvoří GitHub Release (changelog:notes). GET core/releases (CoreReleaseController) - vydání do běžící verze (config app.version), jen jádro + aplikace dle oprávnění záložky. ReleaseNotesService sdílí verzi v sidebaru a ReleaseNoticeComponent (upozornění per modul, viděná verze v localStorage jsw_release_seen_<modul>). Veřejný changelog aplikace volitelně: AppManifest::publicChangelog() + GET public/releases/{app} (vypnuto pro web, shop i portál)."
     }
   ]
 }

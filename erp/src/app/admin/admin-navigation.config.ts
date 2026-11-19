@@ -66,6 +66,7 @@ export const CORE_NAV: AdminNavGroup[] = [
       { path: 'dashboard', permission: 'view-core', labelKey: 'nav_dashboard', titleKey: 'nav_core_dashboard', icon: 'bar-chart' },
       { path: 'calendar', permission: null, labelKey: 'nav_calendar', icon: 'calendar' },
       { path: 'apps', permission: null, labelKey: 'nav_apps', icon: 'layers' },
+      { path: 'releases', permission: null, labelKey: 'nav_releases', icon: 'tag' },
     ],
   },
   {

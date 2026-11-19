@@ -1208,6 +1208,36 @@
           ]
         }
       ]
+    },
+    "releases": {
+      "navLabel": "Verze",
+      "header": "Verze",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Verze aplikace, která běží, a co se změnilo v každém vydání - pro jádro a pro aplikace, které můžete spravovat."
+            },
+            {
+              "type": "text",
+              "content": "Vydání jsou seřazená od nejnovějšího; nejnovější je rozbalené, kliknutím vydání rozbalíte nebo sbalíte. Každá změna má typ (Bezpečnost, Nové, Změna, Oprava, Odebráno), část, které se týká (jádro nebo aplikace; veřejná část = co vidí návštěvníci), a krátký popis v angličtině, někdy s číslem tiketu (#57)."
+            },
+            {
+              "type": "text",
+              "content": "Tlačítka nad seznamem zobrazí jen změny jádra nebo jedné aplikace. Vidíte jádro a aplikace, ke kterým máte přístup."
+            },
+            {
+              "type": "text",
+              "content": "Běžící verze je také dole v levém menu. Po aktualizaci se nad stránkou krátce zobrazí upozornění - jen v části, ve které pracujete, a jen když ji aktualizace změnila (aktualizace e-shopu vás na webu neruší). Co je nového otevře tuto stránku, křížek upozornění skryje do další aktualizace."
+            },
+            {
+              "type": "note",
+              "content": "Poznámky k vydání píší vývojáři spolu s každou změnou; vydání bez nich nejde nasadit."
+            }
+          ]
+        }
+      ]
     }
   }
 }

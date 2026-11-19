@@ -1,0 +1,68 @@
+<!--
+    @file: releases.component.html
+    @path: /src/app/admin/core-pages/releases/releases.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Template of the page "Releases" - running version, filter by area, the releases
+        with their changes (newest expanded).
+-->
+
+<div class="wp-page">
+
+  <div class="wp-welcome">
+    <div class="wp-welcome-left">
+      <h1 class="wp-welcome-title">{{ strings['header'] }}</h1>
+      <p class="rl-intro">{{ strings['intro'] }}</p>
+    </div>
+    <div class="rl-header-side">
+      @if (notes.current()) {
+        <span class="rl-current">{{ strings['current_version'] }} <strong>{{ notes.current() }}</strong></span>
+      }
+      <app-page-help></app-page-help>
+    </div>
+  </div>
+
+  <div class="rl-filter" role="group" [attr.aria-label]="strings['filter_label']">
+    @for (a of areas; track a.id) {
+      <button type="button" class="rl-chip" [class.rl-chip--active]="area === a.id" [attr.aria-pressed]="area === a.id" (click)="select(a.id)">{{ a.label }}</button>
+    }
+  </div>
+
+  @if (notes.failed()) {
+    <div class="rl-error" role="alert">{{ strings['failed'] }}</div>
+  } @else if (notes.notes() === null) {
+    <div class="rl-empty">{{ strings['loading'] }}</div>
+  } @else if (!releases.length) {
+    <div class="rl-empty">{{ strings['empty'] }}</div>
+  } @else {
+    <div class="rl-list">
+      @for (release of releases; track release.version; let i = $index) {
+        @let open = isOpen(release, i);
+        <section class="rl-release" [class.rl-release--open]="open">
+          <button type="button" class="rl-release-head" [attr.aria-expanded]="open" [attr.aria-controls]="'rl-' + release.version" (click)="toggle(release)">
+            <span class="rl-version">{{ release.version }}</span>
+            @if (release.version === notes.current()) {
+              <span class="rl-badge">{{ strings['running'] }}</span>
+            }
+            <span class="rl-date">{{ release.date | date:'d. M. yyyy' }}</span>
+            <span class="rl-count">{{ release.changes.length }} {{ strings['changes'] }}</span>
+            <span class="rl-chevron" aria-hidden="true">▾</span>
+          </button>
+          @if (open) {
+            <ul class="rl-changes" [id]="'rl-' + release.version">
+              @for (change of release.changes; track $index) {
+                <li class="rl-change">
+                  <span class="rl-type rl-type--{{ change.type }}">{{ strings['type_' + change.type] }}</span>
+                  <span class="rl-area">{{ areaLabel(change) }}@if (change.part === 'public') { · {{ strings['part_public'] }} }</span>
+                  <span class="rl-text" lang="en">{{ change.text }}@if (change.ref) { <span class="rl-ref">{{ change.ref }}</span> }</span>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
+    </div>
+  }
+
+</div>
