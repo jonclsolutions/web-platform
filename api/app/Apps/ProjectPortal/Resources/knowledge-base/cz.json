@@ -362,7 +362,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Klient se přihlásí odkazem projektu – heslem, kódem z e-mailu nebo odkazem z pozvánky (přihlášení vydrží 24 hodin od poslední aktivity). Portál vypadá jako administrace: nahoře jméno uživatele, obnovení a jazyk; vlevo menu s počty (novinky, ke schválení, nepřečtené zprávy, postup)."
+              "content": "Klient se přihlásí odkazem projektu – heslem, kódem z e-mailu nebo odkazem z pozvánky (přihlášení vydrží 24 hodin od poslední aktivity). Portál vypadá jako administrace: vlevo nahoře „Klient: jméno přihlášeného účtu“ a „Projekt: název“, vpravo obnovení a jazyk; vlevo menu s počty (novinky, ke schválení, nepřečtené zprávy, postup), dole Můj účet, Nápověda a Odhlásit se. Každá část má vlastní adresu (…/projects/{token}/overview, /checkpoints, /threads, /approvals, /updates, /files, /contacts, /account, /help), takže obnovení stránky klienta nechá na místě a odkaz z e-mailu otevře rovnou správnou část. Část Nápověda obsahuje podrobný návod pro netechnické uživatele (první kroky, přihlášení, každá část menu, upozornění, bezpečnost) v češtině i angličtině."
             },
             {
               "type": "grid",
@@ -393,6 +393,98 @@
               "type": "alert",
               "variant": "info",
               "content": "Bez oprávnění project-portal-projects-update je stránka projektu i správa šablon jen pro čtení. Auditní log zapisuje změny projektu, uživatelů (jen podle ID), pozvánky a přihlášení kódem / odkazem (bez kódu a e-mailu), checkpointy, přiřazení vláken, žádosti o schválení s rozhodnutími (bez komentáře) a aktuality (bez textu); zprávy, kódy ani hesla se do logu nezapisují. Nepoužité a prošlé přihlašovací kódy se automaticky mažou."
+            }
+          ]
+        },
+        {
+          "key": "chapter-10",
+          "heading": "10. Přihlášení klienta, session a bezpečnost",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Přihlášení klienta drží výhradně server: po úspěšném přihlášení API nastaví cookie (HttpOnly, Secure, SameSite=Strict) platnou jen pro adresy daného projektu. JavaScript portálu ji nevidí a nic se neukládá do localStorage, takže ji nejde ukrást skriptem. Session vyprší po 24 hodinách nečinnosti, odhlášením (smaže se na serveru), resetem hesla nebo odebráním uživatele. Každý požadavek API kontroluje znovu; jakmile odpoví 401, portál klienta pošle na přihlašovací stránku projektu."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Odkaz projektu",
+                  "text": "Klient otevře /projects/{token}. Před zobrazením portálu se aplikace zeptá API, zda má platnou session.",
+                  "active": true
+                },
+                {
+                  "label": "Bez session",
+                  "text": "Přesměrování na /projects/login/{token}. Sekce, kterou chtěl otevřít (např. Ke schválení z e-mailu), i jednorázový odkaz ?access= zůstanou zachované."
+                },
+                {
+                  "label": "Přihlášení",
+                  "text": "Heslem, kódem z e-mailu (15 minut, 5 pokusů) nebo odkazem z pozvánky / e-mailu (jednorázový). Server nastaví cookie a portál otevře požadovanou sekci."
+                },
+                {
+                  "label": "Práce v portálu",
+                  "text": "Seznam vláken (odznaky) se obnovuje každých 15 s, otevřené vlákno také. Neúspěšné obnovení se jen přeskočí; 401 ukončí práci a otevře přihlášení."
+                },
+                {
+                  "label": "Odhlášení",
+                  "text": "Tlačítko Odhlásit se ukončí session na serveru; stejná cookie už nikde neplatí."
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Jednorázový odkaz",
+                  "text": "Odkaz z pozvánky (7 dní) i z přihlašovacího e-mailu (15 minut) platí jen jednou; v databázi je jen jeho otisk (SHA-256), nový odkaz zruší starší nepoužité. Druhé otevření už použitého odkazu nepřihlásí – pokud ale prohlížeč ještě má platnou session, portál se normálně otevře (přihlásila ho session, ne odkaz). V jiném prohlížeči nebo anonymním okně se ukáže přihlašovací stránka."
+                },
+                {
+                  "title": "Jeden účet v prohlížeči",
+                  "text": "Prohlížeč drží pro jeden projekt jen jednu session. Když se v něm přihlásí jiný uživatel téhož projektu (třeba odkazem ze svého e-mailu), přepíše cookie. Otevřené záložky to poznají při návratu do okna: zeptají se API, kdo je přihlášený, a přepnou se na nový účet (hlavička, strany zpráv, Můj účet). Portál tedy nikdy neukazuje jiný účet, než pod kterým API zprávy ukládá. Dva uživatelé najednou = dva prohlížeče nebo anonymní okno."
+                },
+                {
+                  "title": "Údržba portálu",
+                  "text": "Vypnutý portál (nastavení aplikace) odpovídá 503 a klient vidí stránku Probíhá údržba s textem z nastavení; tlačítko Zkusit znovu ho po zapnutí vrátí tam, kde byl."
+                },
+                {
+                  "title": "Oddělení od administrace",
+                  "text": "Požadavky portálu se posílají bez přihlášení administrace a portál nevidí žádná interní data: interní poznámky, interní poznámky kroků, koncepty aktualit, zrušené žádosti ani interní přílohy API klientovi vůbec nepošle."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-11",
+          "heading": "11. Časté situace a jak je vyřešit",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Klient se nemůže přihlásit",
+                  "text": "Zkontrolujte na podstránce Přístupy přihlašovací jméno a štítky účtu. Zapomenuté heslo: klient se může přihlásit kódem e-mailem (účet musí mít e-mail), nebo heslo resetujte ikonou klíče a předejte nové. Portál nesmí být vypnutý (údržba) a projekt musí být viditelný."
+                },
+                {
+                  "title": "Odkaz z pozvánky nefunguje",
+                  "text": "Byl už použitý, vypršel (7 dní) nebo jste mezitím poslali novou pozvánku. Pošlete pozvánku znovu ikonou obálky, nebo ať se klient přihlásí kódem e-mailem."
+                },
+                {
+                  "title": "Kód nepřišel",
+                  "text": "Účet nemá e-mail, e-mail skončil ve spamu, nebo klient vyčerpal 5 kódů za hodinu. Formulář z bezpečnostních důvodů odpovídá vždy stejně, takže klient chybu nevidí – ověřte e-mail účtu a auditní log."
+                },
+                {
+                  "title": "Zprávy se ukazují pod jiným jménem",
+                  "text": "Dva uživatelé stejného projektu v jednom prohlížeči: platí vždy ten, kdo se přihlásil naposledy, a otevřené záložky se na něj přepnou. Poraďte klientovi samostatný prohlížeč nebo anonymní okno pro každého."
+                },
+                {
+                  "title": "Klientovi nechodí upozornění",
+                  "text": "Upozornění si zapíná sám v Můj účet a potřebují e-mail; ve výchozím stavu je vše vypnuté. Změna e-mailu upozornění vypne a zruší ověření."
+                },
+                {
+                  "title": "Nefunguje stažení souboru",
+                  "text": "Odkazy ke stažení jsou časově omezené. Klient otevře Soubory znovu nebo klikne na obnovení vpravo nahoře – načtou se nové odkazy."
+                }
+              ]
             }
           ]
         }

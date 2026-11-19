@@ -362,7 +362,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "The client signs in through the project link - with a password, a code from the e-mail or the invitation link (a sign-in lasts 24 hours from the last activity). The portal looks like the administration: the user name, refresh and language at the top; on the left a menu with counts (news, approvals, unread messages, progress)."
+              "content": "The client signs in through the project link - with a password, a code from the e-mail or the invitation link (a sign-in lasts 24 hours from the last activity). The portal looks like the administration: at the top left “Client: name of the signed-in account” and “Project: name”, refresh and language on the right; on the left a menu with counts (news, approvals, unread messages, progress), at the bottom My account, Help and Log out. Every part has its own address (…/projects/{token}/overview, /checkpoints, /threads, /approvals, /updates, /files, /contacts, /account, /help), so a reload keeps the client in place and a link of an e-mail opens the right part directly. The Help part is a detailed guide for non-technical users (first steps, signing in, every part of the menu, notifications, security) in Czech and English."
             },
             {
               "type": "grid",
@@ -393,6 +393,98 @@
               "type": "alert",
               "variant": "info",
               "content": "Without the project-portal-projects-update permission the project page and the template management are read-only. The audit log records changes of the project, users (by id only), invitations and sign-ins by code / link (without the code and e-mail), checkpoints, thread assignment, approval requests with decisions (without the comment) and updates (without the text); messages, codes and passwords are never logged. Unused and expired sign-in codes are deleted automatically."
+            }
+          ]
+        },
+        {
+          "key": "chapter-10",
+          "heading": "10. Client sign-in, session and security",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The sign-in of a client is held by the server only: after a successful sign-in the API sets a cookie (HttpOnly, Secure, SameSite=Strict) valid only for the addresses of that project. The JavaScript of the portal cannot see it and nothing is stored in localStorage, so a script cannot steal it. The session ends after 24 hours of inactivity, with a logout (deleted on the server), a password reset or when the user is removed. The API checks it on every request; as soon as it answers 401 the portal sends the client to the sign-in page of the project."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Project link",
+                  "text": "The client opens /projects/{token}. Before the portal shows, the application asks the API whether there is a valid session.",
+                  "active": true
+                },
+                {
+                  "label": "No session",
+                  "text": "Redirect to /projects/login/{token}. The section the client wanted (e.g. Approvals from an e-mail) and a one-time ?access= link are kept."
+                },
+                {
+                  "label": "Sign-in",
+                  "text": "With a password, a code from the e-mail (15 minutes, 5 tries) or the link of an invitation / e-mail (one-time). The server sets the cookie and the portal opens the requested section."
+                },
+                {
+                  "label": "Working in the portal",
+                  "text": "The thread list (badges) refreshes every 15 s, so does an open thread. A failed refresh is just skipped; a 401 ends the work and opens the sign-in."
+                },
+                {
+                  "label": "Logout",
+                  "text": "Log out ends the session on the server; the same cookie is no longer valid anywhere."
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "One-time link",
+                  "text": "The link of an invitation (7 days) and of a sign-in e-mail (15 minutes) works only once; the database holds only its fingerprint (SHA-256), a new link cancels older unused ones. Opening a used link again does not sign in - but if the browser still has a valid session, the portal simply opens (the session signed in, not the link). In another browser or a private window the sign-in page appears."
+                },
+                {
+                  "title": "One account per browser",
+                  "text": "A browser holds only one session per project. When another user of the same project signs in in it (e.g. with the link of their e-mail), the cookie is replaced. Open tabs notice it when the window is used again: they ask the API who is signed in and switch to the new account (header, sides of the messages, My account). So the portal never shows another account than the one the API saves the messages for. Two users at once = two browsers or a private window."
+                },
+                {
+                  "title": "Portal maintenance",
+                  "text": "A switched-off portal (settings of the application) answers 503 and the client sees the Maintenance page with the text of the settings; Try again returns them where they were once it is on again."
+                },
+                {
+                  "title": "Separated from the administration",
+                  "text": "The requests of the portal go without the sign-in of the administration and the portal never gets internal data: internal notes, internal notes of steps, draft updates, cancelled requests or internal attachments are not sent to the client at all."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "chapter-11",
+          "heading": "11. Common situations and how to solve them",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "The client cannot sign in",
+                  "text": "Check the login name and the labels of the account on the Access subpage. A forgotten password: the client can sign in with a code by e-mail (the account needs an e-mail), or reset the password with the key icon and hand over the new one. The portal must not be switched off (maintenance) and the project must be visible."
+                },
+                {
+                  "title": "The invitation link does not work",
+                  "text": "It was used already, expired (7 days) or you sent a newer invitation meanwhile. Send the invitation again with the envelope icon, or let the client sign in with a code by e-mail."
+                },
+                {
+                  "title": "The code did not arrive",
+                  "text": "The account has no e-mail, the e-mail ended in spam, or the client used up 5 codes an hour. For security the form always answers the same, so the client does not see the reason - check the e-mail of the account and the audit log."
+                },
+                {
+                  "title": "Messages show under another name",
+                  "text": "Two users of the same project in one browser: whoever signed in last counts and the open tabs switch to them. Advise the client to use a separate browser or a private window for each person."
+                },
+                {
+                  "title": "The client gets no notifications",
+                  "text": "The client turns them on in My account and they need an e-mail; everything is off by default. Changing the e-mail turns the notifications off and removes the confirmation."
+                },
+                {
+                  "title": "A file does not download",
+                  "text": "Download links expire after a while. The client opens Files again or clicks refresh at the top right - new links load."
+                }
+              ]
             }
           ]
         }
