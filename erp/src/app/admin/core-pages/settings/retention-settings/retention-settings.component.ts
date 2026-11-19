@@ -13,6 +13,8 @@
  * read-only. A destructive run is always confirmed first.
  * @dependencies
  * - DataHandler: `core/retention_settings` (GET / PUT) and `core/retention_settings/purge` (POST).
+ * - ResourceCacheService: the settings are kept 3 min (switching tabs / pages makes no request);
+ *   a save and a clean-up drop them.
  * - AdminLocalizationService: texts of the section `retention-settings`; a language switch
  *   re-renders the tab (OnPush).
  */
@@ -23,6 +25,7 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StickyBarDirective } from '../../../../shared/directives/sticky-bar.directive';
 import { DataHandler } from '../../../../core/services/data-handler.service';
+import { ResourceCacheService } from '../../../../core/services/resource-cache.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
@@ -48,6 +51,9 @@ interface PurgeResult {
 /** @description Periods offered in the select (days); null = off. A custom value of the API is added. */
 export const RETENTION_OPTIONS: (number | null)[] = [null, 30, 90, 180, 365, 730, 1095, 1825, 3650];
 
+/** Key of the cached settings (ResourceCacheService, default 3 min) - dropped after a save / clean-up. */
+export const RETENTION_CACHE_KEY = 'core:retention_settings';
+
 @Component({
   selector: 'app-retention-settings',
   standalone: true,
@@ -58,6 +64,7 @@ export const RETENTION_OPTIONS: (number | null)[] = [null, 30, 90, 180, 365, 730
 })
 export class RetentionSettingsComponent implements OnInit {
   private dataHandler = inject(DataHandler);
+  private resourceCache = inject(ResourceCacheService);
   private i18n = inject(AdminLocalizationService);
   private alert = inject(AlertDialogService);
   private confirm = inject(ConfirmDialogService);
@@ -91,7 +98,7 @@ export class RetentionSettingsComponent implements OnInit {
     this.loading = true;
     this.loadError = false;
     this.cd.markForCheck();
-    this.dataHandler.get<RetentionSetting[]>('core/retention_settings').subscribe({
+    this.resourceCache.get(RETENTION_CACHE_KEY, () => this.dataHandler.get<RetentionSetting[]>('core/retention_settings')).subscribe({
       next: (rows) => { this.settings = this.copy(rows); this.loading = false; this.cd.markForCheck(); },
       error: () => { this.loading = false; this.loadError = true; this.cd.markForCheck(); }
     });
@@ -128,6 +135,7 @@ export class RetentionSettingsComponent implements OnInit {
     const payload = { settings: this.settings.map(s => ({ data_key: s.data_key, retention_days: s.retention_days })) };
     this.dataHandler.put<RetentionSetting[]>('core/retention_settings', payload).subscribe({
       next: (rows) => {
+        this.resourceCache.invalidate(RETENTION_CACHE_KEY);
         this.settings = this.copy(rows);
         this.saving = false;
         this.alert.open(this.t('saved_title'), this.t('saved_message'), 'success');
@@ -150,6 +158,8 @@ export class RetentionSettingsComponent implements OnInit {
     this.cd.markForCheck();
     this.dataHandler.post<PurgeResult>('core/retention_settings/purge', {}).subscribe({
       next: (res) => {
+        // The rows carry the time of the last clean-up.
+        this.resourceCache.invalidate(RETENTION_CACHE_KEY);
         this.purging = false;
         this.settings = this.copy(res?.settings ?? this.settings);
         const total = Object.values(res?.deleted ?? {}).reduce<number>((sum, n) => sum + (n ?? 0), 0);

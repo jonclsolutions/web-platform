@@ -130,17 +130,28 @@ describe('SecurityEventsComponent', () => {
   });
 
   /**
-   * @description Saving the retention sends the chosen number of days.
-   * @input  retentionDays 60; saveRetention(); API returns { retention_days: 60 }
-   * @output put('core/security_settings', { retention_days: 60 }); success alert; settingsSaving false
+   * @description The retention setting is cached between visits; saving sends the chosen number
+   *   of days and drops the cache.
+   * @input  a second page in the same session; retentionDays 60; saveRetention(); API returns
+   *   { retention_days: 60 }; a third page.
+   * @output one GET for the first two pages; put('core/security_settings', { retention_days: 60 });
+   *   success alert; settingsSaving false; GET again for the third page
    */
   it('saves the retention period', () => {
+    const settingsLoads = () => (ctx.dataHandler as any).get.calls.allArgs().filter((a: any[]) => a[0] === 'core/security_settings').length;
+    answer();
+    fixture.detectChanges();
+    expect(settingsLoads()).toBe(1);
+    TestBed.createComponent(SecurityEventsComponent).detectChanges();
+    expect(settingsLoads()).toBe(1);
     (ctx.dataHandler as any).put.and.returnValue(of({ retention_days: 60 }));
     component.retentionDays = 60;
     component.saveRetention();
     expect((ctx.dataHandler as any).put).toHaveBeenCalledWith('core/security_settings', { retention_days: 60 });
     expect(ctx.alert.open).toHaveBeenCalledWith('security-events.saved_title', 'security-events.retention_updated_message', 'success');
     expect(component.settingsSaving).toBeFalse();
+    TestBed.createComponent(SecurityEventsComponent).detectChanges();
+    expect(settingsLoads()).toBe(2);
   });
 
   /**

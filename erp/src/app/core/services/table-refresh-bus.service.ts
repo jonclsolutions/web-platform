@@ -9,12 +9,14 @@
  * goes through <router-outlet>), so it needs a way to "call" a refresh without a direct
  * dependency - hence the bus.
  * @dependencies
- * - GenericTableService: The real cache invalidation across all endpoints.
+ * - GenericTableService, ResourceCacheService: The real cache invalidation (tables and the other
+ *   cached GETs - settings, roles, knowledge base …).
  */
 
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { GenericTableService } from './generic-table.service';
+import { ResourceCacheService } from './resource-cache.service';
 
 @Injectable({ providedIn: 'root' })
 export class TableRefreshBusService {
@@ -23,7 +25,7 @@ export class TableRefreshBusService {
   /** Table pages (through BaseDataComponent.initWithAuthCheck()) subscribe to this. */
   public refreshAll$ = this._refreshAll$.asObservable();
 
-  constructor(private genericTableService: GenericTableService) {}
+  constructor(private genericTableService: GenericTableService, private resourceCache: ResourceCacheService) {}
 
   /**
    * @description Called by the global refresh button of the admin header. First invalidates the
@@ -33,6 +35,7 @@ export class TableRefreshBusService {
    */
   triggerGlobalRefresh(): void {
     this.genericTableService.invalidateAll();
+    this.resourceCache.clear();
     this._refreshAll$.next();
   }
 }

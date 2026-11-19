@@ -292,13 +292,21 @@ describe('AdministratorsComponent', () => {
     }));
 
     /**
-     * @description The e-mail policy modal: open locks scroll, domain saved trimmed, rules added and removed.
-     * @input  openEmailAccessPolicyModal(); primaryEmailDomain '  nova.cz '; savePrimaryDomain(); add rule 'x.cz'; remove rule 1; close
-     * @output lock(); put('core/email-access-policy/primary-domain', { primary_email_domain: 'nova.cz' }); post rule; delete rule 1; unlock()
+     * @description The e-mail policy modal: open locks scroll; opening it again uses the cached
+     *   policy (no request); domain saved trimmed, rules added and removed - each change drops the
+     *   cache, so the next opening reads the policy again.
+     * @input  open; close + open; primaryEmailDomain '  nova.cz '; savePrimaryDomain(); add rule 'x.cz'; remove rule 1; close; open again
+     * @output lock(); no second GET of the policy; put('core/email-access-policy/primary-domain', { primary_email_domain: 'nova.cz' });
+     *   post rule; delete rule 1; unlock(); GET of the policy on the second opening
      */
     it('manages the e-mail access policy', fakeAsync(() => {
+      const policyLoads = () => (ctx.dataHandler as any).get.calls.allArgs().filter((a: any[]) => a[0] === 'core/email-access-policy').length;
       component.openEmailAccessPolicyModal();
       expect(scrollLock.lock).toHaveBeenCalled();
+      const loaded = policyLoads();
+      component.closeEmailAccessPolicyModal();
+      component.openEmailAccessPolicyModal();
+      expect(policyLoads()).toBe(loaded);
       component.primaryEmailDomain = '  nova.cz ';
       (ctx.dataHandler as any).put.and.returnValue(of({ primary_email_domain: 'nova.cz' }));
       component.savePrimaryDomain();
@@ -313,6 +321,8 @@ describe('AdministratorsComponent', () => {
       expect(component.domainRules.map(r => r.id)).not.toContain(1);
       component.closeEmailAccessPolicyModal();
       expect(scrollLock.unlock).toHaveBeenCalled();
+      component.openEmailAccessPolicyModal();
+      expect(policyLoads()).toBe(loaded + 1);
     }));
 
     /**

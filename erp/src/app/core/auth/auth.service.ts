@@ -39,8 +39,8 @@
  * @dependencies
  * - HttpClient: Facilitates API communication for authentication endpoints.
  * - PermissionService: Synchronizes user permissions within the application.
- * - GenericTableService: Invalidates the table cache when the logged-in user changes - no
- *   circular dependency, GenericTableService does not depend on AuthService.
+ * - GenericTableService, ResourceCacheService: Their caches are dropped when the logged-in user
+ *   changes or signs out - no circular dependency, neither depends on AuthService.
  */
 
 import { Injectable, OnDestroy } from '@angular/core';
@@ -51,6 +51,7 @@ import { environment } from '../../../environments/environment';
 import { ApiEnvelope } from '../../shared/interfaces/api-envelope';
 import { PermissionService } from './services/permission.service';
 import { GenericTableService } from '../services/generic-table.service';
+import { ResourceCacheService } from '../services/resource-cache.service';
 
 /** Translation key (login.errors.*) of an auth error the backend sent no message for. */
 export type AuthErrorKey = 'too_many_attempts' | 'login_failed' | 'verification_failed' | 'request_failed';
@@ -201,7 +202,8 @@ export class AuthService implements OnDestroy {
   constructor(
     private http: HttpClient,
     private permissionService: PermissionService,
-    private genericTableService: GenericTableService
+    private genericTableService: GenericTableService,
+    private resourceCache: ResourceCacheService
   ) {
     // Leftovers of the former sessionStorage session (tokens, user data) - removed for good.
     this.removeLegacyStorage();
@@ -434,6 +436,7 @@ export class AuthService implements OnDestroy {
     this.permissionService.clearPermissions();
     this.genericTableService.setCurrentUser(null);
     this.genericTableService.invalidateAll();
+    this.resourceCache.clear();
     this._isLoggedIn.next(false);
     this._userEmailSubject.next(null);
     this._avatarUrlSubject.next(null);
@@ -519,6 +522,7 @@ export class AuthService implements OnDestroy {
 
     if (changedUser) {
       this.genericTableService.invalidateAll();
+      this.resourceCache.clear();
     }
     this.genericTableService.setCurrentUser(userId);
 

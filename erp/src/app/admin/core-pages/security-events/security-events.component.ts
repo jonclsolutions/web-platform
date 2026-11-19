@@ -10,6 +10,8 @@
  * @dependencies
  * - BaseDataComponent: Standard CRUD / pagination for `core/security_events`.
  * - ConfirmDialogService: Confirmation BEFORE the destructive purge and before 'false_positive' triage.
+ * - ResourceCacheService: the retention setting is kept 3 min (dropped after a save); the events
+ *   and the chart are always loaded fresh.
  * - Config.create* factory functions: i18n-aware definitions.
  */
 
@@ -21,6 +23,10 @@ import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
+import { ResourceCacheService } from '../../../core/services/resource-cache.service';
+
+/** Key of the cached retention setting (ResourceCacheService). */
+export const SECURITY_SETTINGS_CACHE_KEY = 'core:security_settings';
 import * as Config from './security-events.config';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
@@ -68,6 +74,7 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
   tableColumns: Core.ColumnDefinition[] = [];
 
   private confirmDialog = inject(ConfirmDialogService);
+  private resourceCache = inject(ResourceCacheService);
 
   override filters: Core.FilterParams = {
     sort_by: 'last_seen_at',
@@ -381,7 +388,7 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
     this.settingsLoading = true;
     this.cd.markForCheck();
 
-    this.dataHandler.get<SecuritySetting>('core/security_settings').subscribe({
+    this.resourceCache.get(SECURITY_SETTINGS_CACHE_KEY, () => this.dataHandler.get<SecuritySetting>('core/security_settings')).subscribe({
       next: (res) => {
         this.retentionDays = res?.retention_days ?? 90;
         this.settingsLoading = false;
@@ -403,6 +410,7 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
       retention_days: this.retentionDays,
     } as any).subscribe({
       next: (res) => {
+        this.resourceCache.invalidate(SECURITY_SETTINGS_CACHE_KEY);
         this.retentionDays = res?.retention_days ?? this.retentionDays;
         this.settingsSaving = false;
         this.alertDialogService.open(this.t('saved_title'), this.t('retention_updated_message'), 'success');

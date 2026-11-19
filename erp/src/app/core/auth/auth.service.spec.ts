@@ -27,6 +27,7 @@ import {
 } from './auth.service';
 import { PermissionService } from './services/permission.service';
 import { GenericTableService } from '../services/generic-table.service';
+import { ResourceCacheService } from '../services/resource-cache.service';
 import { environment } from '../../../environments/environment';
 
 describe('AuthService', () => {
@@ -521,13 +522,16 @@ describe('AuthService', () => {
      *   cache; a refresh answering for ANOTHER account never continues as that account: the tab
      *   reloads, the session of this tab stays untouched until then.
      * @input Login as 42 without slot; refresh as 42; refresh as 7.
-     * @output invalidateAll once (login); same user no change; user 7: reloadPage, user still 42,
-     *   token 'a2', no further invalidation, the refresh does not emit.
+     * @output invalidateAll + resource cache clear once (login); same user no change; user 7:
+     *   reloadPage, user still 42, token 'a2', no further invalidation, the refresh does not emit;
+     *   clearAuthData clears the resource cache again.
      */
     it('reloads instead of continuing as another account', () => {
       const invalidate = spyOn(tables, 'invalidateAll').and.callThrough();
+      const clearResources = spyOn(TestBed.inject(ResourceCacheService), 'clear').and.callThrough();
       logIn(session({ session_slot: undefined }));
       expect(invalidate).toHaveBeenCalledTimes(1);
+      expect(clearResources).toHaveBeenCalledTimes(1);
 
       service.refreshAccessToken().subscribe();
       httpMock.expectOne(`${baseUrl}/refresh`).flush({ data: session({ token: 'a2', session_slot: undefined }) });
@@ -542,7 +546,9 @@ describe('AuthService', () => {
       expect(service.getUserId()).toBe('42');
       expect(service.getAccessToken()).toBe('a2');
       expect(invalidate).toHaveBeenCalledTimes(1);
+      expect(clearResources).toHaveBeenCalledTimes(1);
       service.clearAuthData();
+      expect(clearResources).toHaveBeenCalledTimes(2);
     });
 
     /**

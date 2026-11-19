@@ -9,6 +9,7 @@
  * - BaseDataComponent: Provides the base logic for API interactions, pagination, and state management.
  * - TableBuilderComponent: Used for rendering the administrators data grid.
  * - RoleOptionsService: TTL-cached source of `core/roles` for `role_id` select options.
+ * - ResourceCacheService: the e-mail access policy is kept 3 min (dropped after each change of it).
  * - PermissionOptionsService: TTL-cached source of `core/permissions` for the
  *   `permission_ids` multiselect (explicit extra permissions).
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the dashboard.
@@ -30,6 +31,10 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 import { ScrollLockService } from '../../../core/services/scroll-lock.service';
 import { PasswordConfirmationService } from '../../../core/services/password-confirmation.service';
 import { PageHelpComponent } from '../../components/page-help/page-help.component';
+import { ResourceCacheService } from '../../../core/services/resource-cache.service';
+
+/** Key of the cached e-mail access policy (ResourceCacheService). */
+export const EMAIL_ACCESS_POLICY_CACHE_KEY = 'core:email-access-policy';
 
 /**
  * Name of the role with unrestricted access. Only a sysadmin may assign it; the API refuses it
@@ -119,6 +124,8 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   newRuleValue = '';
 
   graphColumns: GraphColumnOption[] = [];
+
+  private readonly resourceCache = inject(ResourceCacheService);
 
   constructor(
     protected override dataHandler: Core.DataHandler,
@@ -767,7 +774,8 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     this.emailAccessPolicyLoading = true;
     this.cd.markForCheck();
 
-    this.dataHandler.get<{ primary_email_domain: string | null; rules: EmailAccessRule[] }>('core/email-access-policy').subscribe({
+    this.resourceCache.get(EMAIL_ACCESS_POLICY_CACHE_KEY,
+      () => this.dataHandler.get<{ primary_email_domain: string | null; rules: EmailAccessRule[] }>('core/email-access-policy')).subscribe({
       next: (res) => {
         this.primaryEmailDomain = res.primary_email_domain;
         this.savedPrimaryEmailDomain = res.primary_email_domain;
@@ -797,6 +805,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       primary_email_domain: this.primaryEmailDomain?.trim() || null,
     }).subscribe({
       next: (setting: any) => {
+        this.resourceCache.invalidate(EMAIL_ACCESS_POLICY_CACHE_KEY);
         this.emailAccessPolicySaving = false;
         this.primaryEmailDomain = setting?.primary_email_domain ?? this.primaryEmailDomain;
         this.savedPrimaryEmailDomain = this.primaryEmailDomain?.trim() || null;
@@ -819,6 +828,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       value,
     }).subscribe({
       next: (rule) => {
+        this.resourceCache.invalidate(EMAIL_ACCESS_POLICY_CACHE_KEY);
         this.emailAccessRules = [...this.emailAccessRules, rule];
         this.newRuleValue = '';
         this.cd.markForCheck();
@@ -829,6 +839,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   removeEmailAccessRule(id: number): void {
     this.dataHandler.delete(`core/email-access-policy/rules/${id}`).subscribe({
       next: () => {
+        this.resourceCache.invalidate(EMAIL_ACCESS_POLICY_CACHE_KEY);
         this.emailAccessRules = this.emailAccessRules.filter(r => r.id !== id);
         this.cd.markForCheck();
       }

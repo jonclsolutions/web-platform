@@ -9,6 +9,8 @@
  * Generalizes the pattern used by RoleOptionsService, so it doesn't have to be hand-rolled
  * again for every non-tabular page (dashboards, settings screens, profile pages).
  * @note RoleOptionsService stays its own small dedicated class.
+ * @security The entries are NOT keyed per user: `clear()` runs on every change of the signed-in
+ * user and on logout (AuthService), so one admin never gets the cached answers of another.
  */
 
 import { Injectable } from '@angular/core';
@@ -54,5 +56,14 @@ export class ResourceCacheService {
   /** Invalidates one specific key (e.g. after saving a form). */
   invalidate(key: string): void {
     this.cache.delete(key);
+  }
+
+  /**
+   * @description Drops every entry. Called by AuthService when the signed-in user changes (or
+   *   signs out) - the entries are not per user and many answers depend on the permissions of
+   *   the user (e.g. the knowledge base) - and by the global "Refresh all" button.
+   */
+  clear(): void {
+    this.cache.clear();
   }
 }

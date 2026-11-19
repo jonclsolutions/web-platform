@@ -111,7 +111,8 @@ describe('RetentionSettingsComponent', () => {
    * @description Save sends every period, takes the answer and confirms; a second save while
    *   saving is ignored; a failure resets the flag.
    * @input job_applications → 365; save (answer echoes); save while saving; save failing.
-   * @output put('core/retention_settings', { settings: [...] }) once; alert saved; saving false.
+   * @output put('core/retention_settings', { settings: [...] }) once; alert saved; the next load
+   *   asks the API again (cache dropped); saving false.
    */
   it('saves the periods', () => {
     create();
@@ -125,6 +126,9 @@ describe('RetentionSettingsComponent', () => {
     ] });
     expect(component.settings).toEqual([{ ...rows[0], retention_days: 365 }]);
     expect(ctx.alert.open).toHaveBeenCalledWith('retention-settings.saved_title', 'retention-settings.saved_message', 'success');
+    // The saved values are read again on the next visit (the cache was dropped).
+    component.load();
+    expect(dh().get).toHaveBeenCalledTimes(2);
 
     component.saving = true;
     component.save();
@@ -189,5 +193,22 @@ describe('RetentionSettingsComponent', () => {
     dh().post.and.returnValue(of({ deleted: { cookie_consents: 4, raw_requests: null }, failed: ['raw_requests', 'expired_portal_sessions'], settings: rows }));
     await component.purgeNow();
     expect(ctx.alert.open).toHaveBeenCalledWith('retention-settings.purge_failed_title', 'Raw requests, expired_portal_sessions / 4', 'warning');
+  });
+
+  /**
+   * @description The settings are cached (switching the tabs of the settings or leaving the page
+   *   and coming back makes no request) and served as a copy - edits never change the cache.
+   * @input load twice; edit a period; a new component (same session).
+   * @output one GET; the new component shows the original 180.
+   */
+  it('keeps the settings in the cache between visits', () => {
+    create();
+    component.settings[0].retention_days = 30;
+    component.load();
+    fixture.destroy();
+    const again = TestBed.createComponent(RetentionSettingsComponent);
+    again.detectChanges();
+    expect(dh().get).toHaveBeenCalledTimes(1);
+    expect(again.componentInstance.settings[0].retention_days).toBe(180);
   });
 });

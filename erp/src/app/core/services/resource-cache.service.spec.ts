@@ -81,4 +81,20 @@ describe('ResourceCacheService', () => {
     service.get('y', loaders).subscribe();
     expect(loaders).toHaveBeenCalledTimes(2);
   });
+
+  /**
+   * @description clear() drops every key - the next get() of each loads again.
+   * @input get('a'), get('b'); clear(); get('a'), get('b').
+   * @output 4 loader calls.
+   */
+  it('clears every key', () => {
+    let runs = 0;
+    const loader = () => defer(() => of(++runs));
+    service.get('a', loader).subscribe();
+    service.get('b', loader).subscribe();
+    service.clear();
+    service.get('a', loader).subscribe();
+    service.get('b', loader).subscribe();
+    expect(runs).toBe(4);
+  });
 });
