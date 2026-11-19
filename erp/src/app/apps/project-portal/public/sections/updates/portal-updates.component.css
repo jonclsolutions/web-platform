@@ -1,0 +1,15 @@
+/*
+    @file: portal-updates.component.css
+    @path: src/app/apps/project-portal/public/sections/updates/portal-updates.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Updates of the project portal (card, title and meta line in ../portal-section.css).
+    @dependencies: ../portal-section.css, tokens of the portal layout
+*/
+
+/*
+    @module: Update
+    @usage: article.pp-card.pp-update > .pp-project-desc
+*/
+.pp-update .pp-project-desc { white-space: pre-line; }

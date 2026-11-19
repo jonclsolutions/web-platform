@@ -1,0 +1,30 @@
+<!--
+    @file: portal-updates.component.html
+    @path: src/app/apps/project-portal/public/sections/updates/portal-updates.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Updates published by the supplier, newest first, with their files.
+-->
+<section class="pp-tab-panel">
+  <p class="pp-section-lead">{{ t('updates_lead') }}</p>
+  @for (update of session.updates(); track update.id) {
+    <article class="pp-card pp-update">
+      <div class="pp-approval-meta">{{ update.published_at | date:'d. M. yyyy' }}@if (update.author_label) { · {{ update.author_label }} }</div>
+      <h2 class="pp-approval-title">{{ update.title }}</h2>
+      <p class="pp-project-desc">{{ update.body }}</p>
+      @if (update.attachments?.length) {
+        <div class="pp-message-attachments">
+          @for (att of update.attachments!; track att.id) {
+            <a [href]="att.download_url" class="pp-attachment-link" target="_blank" rel="noopener">
+              <span class="pp-attachment-name">{{ att.original_filename }}</span>
+              <span class="pp-attachment-size">{{ formatFileSize(att.size_bytes) }}</span>
+            </a>
+          }
+        </div>
+      }
+    </article>
+  } @empty {
+    <p class="pp-empty">{{ session.updatesLoading() ? t('loading') : t('updates_empty') }}</p>
+  }
+</section>

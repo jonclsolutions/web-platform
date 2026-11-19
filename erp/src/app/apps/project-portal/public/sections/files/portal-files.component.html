@@ -1,0 +1,34 @@
+<!--
+    @file: portal-files.component.html
+    @path: src/app/apps/project-portal/public/sections/files/portal-files.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Files of the project with size, date, author and a link to where they come from.
+-->
+<section class="pp-tab-panel">
+  <p class="pp-section-lead">{{ t('files_lead') }}</p>
+  @if (session.filesLoading() && session.files().length === 0) {
+    <p class="pp-empty">{{ t('loading') }}</p>
+  } @else if (session.filesError()) {
+    <p class="pp-empty">{{ t('files_error') }}</p>
+  } @else {
+    <ul class="pp-card pp-files">
+      @for (file of session.files(); track file.id) {
+        <li class="pp-file-row">
+          <svg class="pp-file-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <div class="pp-file-main">
+            <a [href]="file.download_url" class="pp-file-name" target="_blank" rel="noopener">{{ file.original_filename }}</a>
+            <span class="pp-file-meta">
+              {{ formatFileSize(file.size_bytes) }} · {{ file.created_at | date:'d. M. yyyy' }} ·
+              {{ file.author_type === 'admin' ? (file.author_label || t('author_supplier')) : (file.author_label || t('author_client')) }} ·
+              <button type="button" class="pp-link" (click)="openFileThread(file)">{{ fileSourceLabel(file) }}</button>
+            </span>
+          </div>
+        </li>
+      } @empty {
+        <li class="pp-empty pp-file-empty">{{ t('files_empty') }}</li>
+      }
+    </ul>
+  }
+</section>

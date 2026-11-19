@@ -81,6 +81,8 @@
   "error_too_many_attempts": "Too many sign-in attempts. Please try again in a moment.",
   "menu_label": "Menu",
   "menu_toggle": "Show / hide the menu",
+  "header_client": "Client",
+  "header_project": "Project",
   "tab_overview": "Overview",
   "tab_files": "Files",
   "unread_badge": "{count} unread messages",

@@ -1,0 +1,32 @@
+/*
+    @file: portal-account.component.css
+    @path: src/app/apps/project-portal/public/sections/account/portal-account.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: My account of the project portal: the form of the client's own e-mail
+        notifications - e-mail, language and one switch per kind (disabled without an e-mail).
+    @dependencies: ../portal-section.css (cards, controls, rows, note), tokens of the portal layout
+*/
+
+/*
+    @module: My account
+    @usage: form.pp-card.pp-account-form > fieldset.pp-switches > label.pp-switch (input + .pp-switch-text); .pp-account-saved
+*/
+.pp-account-form { display: flex; flex-direction: column; gap: 6px; }
+.pp-account-form .pp-section-lead { margin-bottom: 8px; font-size: 0.85rem; }
+.pp-account-saved { margin: 0; font-size: 0.82rem; font-weight: 600; color: var(--success); }
+.pp-switches { display: flex; flex-direction: column; gap: 4px; margin: 4px 0 8px; padding: 0; border: 0; min-width: 0; }
+.pp-switches:disabled { opacity: 0.55; }
+.pp-switches-legend { padding: 0; margin-bottom: 6px; font-size: 0.76rem; font-weight: 600; color: var(--text-muted); }
+.pp-switch {
+  display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--border); cursor: pointer; transition: background var(--ease), border-color var(--ease);
+}
+.pp-switch:hover { background: var(--surface-2); }
+.pp-switches:disabled .pp-switch { cursor: not-allowed; }
+.pp-switch input { width: 18px; height: 18px; margin: 2px 0 0; flex-shrink: 0; accent-color: var(--accent); }
+.pp-switch input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pp-switch-text { display: flex; flex-direction: column; gap: 2px; }
+.pp-switch-title { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+.pp-switch-hint { font-size: 0.76rem; color: var(--text-muted); line-height: 1.45; }

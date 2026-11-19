@@ -1,0 +1,92 @@
+<!--
+    @file: portal-overview.component.html
+    @path: src/app/apps/project-portal/public/sections/overview/portal-overview.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Overview of the project portal: key numbers (each opens its section), banner of
+        pending approvals, "What is new" (8 newest, new ones highlighted), the current step, the
+        description and the technologies.
+-->
+@if (session.project(); as project) {
+  <section class="pp-tab-panel">
+    <div class="pp-stats">
+      <button type="button" class="pp-stat" (click)="session.openSection('checkpoints')">
+        <span class="pp-stat-label">{{ t('progress_label') }}</span>
+        <span class="pp-stat-value">{{ session.checkpointProgress().percent }} %</span>
+        <span class="pp-stat-track"><span [style.width.%]="session.checkpointProgress().percent"></span></span>
+        <span class="pp-stat-sub">{{ t('overview_steps_done').replace('{done}', '' + session.checkpointProgress().done).replace('{total}', '' + session.checkpointProgress().total) }}</span>
+      </button>
+      <button type="button" class="pp-stat" [class.pp-stat--attention]="session.waitingOnYouCount() > 0" (click)="session.openSection('threads')">
+        <span class="pp-stat-label">{{ t('overview_waiting_on_you') }}</span>
+        <span class="pp-stat-value">{{ session.waitingOnYouCount() }}</span>
+        <span class="pp-stat-sub">{{ session.waitingOnYouCount() > 0 ? t('overview_waiting_on_you_hint') : t('overview_nothing_waiting') }}</span>
+      </button>
+      <button type="button" class="pp-stat" [class.pp-stat--unread]="session.totalUnreadCount() > 0" (click)="session.openSection('threads')">
+        <span class="pp-stat-label">{{ t('overview_unread') }}</span>
+        <span class="pp-stat-value">{{ session.totalUnreadCount() }}</span>
+        <span class="pp-stat-sub">{{ t('overview_threads_count').replace('{count}', '' + session.threads().length) }}</span>
+      </button>
+      @if (estimatedCompletionLabel) {
+        <div class="pp-stat pp-stat--static">
+          <span class="pp-stat-label">{{ t('estimated_completion_label') }}</span>
+          <span class="pp-stat-value pp-stat-value--text">{{ estimatedCompletionLabel }}</span>
+        </div>
+      }
+    </div>
+
+    @if (session.pendingApprovalsCount() > 0) {
+      <button type="button" class="pp-banner" (click)="session.openSection('approvals')">
+        <strong>{{ t('overview_approvals_banner').replace('{count}', '' + session.pendingApprovalsCount()) }}</strong>
+        <span>{{ t('overview_approvals_banner_action') }} →</span>
+      </button>
+    }
+
+    <div class="pp-card">
+      <div class="pp-card-title">{{ t('news_title') }}</div>
+      <ul class="pp-news">
+        @for (item of session.activity().slice(0, 8); track $index) {
+          <li>
+            <button type="button" class="pp-news-item" [class.pp-news-item--new]="item.is_new" (click)="openActivity(item)">
+              <span class="pp-news-dot" [attr.data-type]="item.type" aria-hidden="true"></span>
+              <span class="pp-news-text">
+                <span class="pp-news-label">{{ activityLabel(item) }}@if (item.is_new) { <span class="pp-news-new">{{ t('news_new') }}</span> }</span>
+                <span class="pp-news-title">{{ item.title }}</span>
+              </span>
+              <span class="pp-news-time">{{ item.at | date:'d. M. HH:mm' }}</span>
+            </button>
+          </li>
+        } @empty {
+          <li class="pp-empty">{{ session.activityLoading() ? t('loading') : t('news_empty') }}</li>
+        }
+      </ul>
+    </div>
+
+    @if (currentCheckpoint(); as step) {
+      <div class="pp-card pp-current-step">
+        <div class="pp-card-title">{{ t('overview_current_step') }}</div>
+        <div class="pp-current-step-row">
+          <span class="pp-checkpoint-badge" [class]="'pp-checkpoint-badge status-' + step.status">{{ checkpointStatusLabel(step.status) }}</span>
+          <strong>{{ step.label }}</strong>
+          @if (step.due_date) { <span class="pp-due">{{ t('due_date_prefix') }} {{ formatDate(step.due_date) }}</span> }
+        </div>
+        @if (step.description) { <p class="pp-project-desc">{{ step.description }}</p> }
+      </div>
+    }
+
+    <div class="pp-card">
+      <div class="pp-card-title">{{ t('description_label') }}</div>
+      @if (project.description) {
+        <p class="pp-project-desc">{{ project.description }}</p>
+      } @else {
+        <p class="pp-empty">{{ t('description_empty') }}</p>
+      }
+    </div>
+    @if (project.technologies) {
+      <div class="pp-card">
+        <div class="pp-card-title">{{ t('technologies_label') }}</div>
+        <p class="pp-project-desc">{{ project.technologies }}</p>
+      </div>
+    }
+  </section>
+}

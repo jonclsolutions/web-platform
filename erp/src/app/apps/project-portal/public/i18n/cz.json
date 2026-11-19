@@ -81,6 +81,8 @@
   "error_too_many_attempts": "Příliš mnoho pokusů o přihlášení. Zkuste to prosím za chvíli.",
   "menu_label": "Menu",
   "menu_toggle": "Zobrazit / skrýt menu",
+  "header_client": "Klient",
+  "header_project": "Projekt",
   "tab_overview": "Přehled",
   "tab_files": "Soubory",
   "unread_badge": "{count} nepřečtených zpráv",

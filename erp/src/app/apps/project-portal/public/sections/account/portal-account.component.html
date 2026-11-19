@@ -1,0 +1,73 @@
+<!--
+    @file: portal-account.component.html
+    @path: src/app/apps/project-portal/public/sections/account/portal-account.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: My account: read-only account data and the e-mail notifications form (e-mail,
+        language, one switch per kind - disabled without an e-mail).
+-->
+@if (session.project(); as project) {
+  <section class="pp-tab-panel">
+    <div class="pp-card">
+      <div class="pp-card-title">{{ t('account_title') }}</div>
+      <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('account_name') }}</span><span class="pp-contacts-value">{{ project.account?.display_name }}</span></div>
+      <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('login_username_label') }}</span><span class="pp-contacts-value">{{ project.account?.username }}</span></div>
+      <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('account_signin') }}</span><span class="pp-contacts-value">{{ project.account?.has_password ? t('account_signin_password_code') : t('account_signin_code') }}</span></div>
+      @if (project.account?.email) {
+        <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('notifications_email_label') }}</span>
+          <span class="pp-contacts-value">{{ project.account?.email }} · {{ project.account?.email_verified ? t('account_email_verified') : t('account_email_unverified') }}</span></div>
+      }
+      <p class="pp-account-note">{{ t('account_managed_by_supplier') }}</p>
+    </div>
+
+    <form class="pp-card pp-account-form" (ngSubmit)="saveAccountSettings()" autocomplete="on">
+      <div class="pp-card-title">{{ t('notifications_title') }}</div>
+      <p class="pp-section-lead">{{ t('notifications_lead') }}</p>
+
+      <label class="pp-login-field">
+        <span>{{ t('notifications_email_label') }}</span>
+        <input type="email" class="pp-input" name="email" autocomplete="email" maxlength="255"
+               [(ngModel)]="accountSettings.email" (ngModelChange)="onAccountEmailChange()">
+      </label>
+      <label class="pp-login-field">
+        <span>{{ t('notifications_language_label') }}</span>
+        <select class="pp-input" name="language" [(ngModel)]="accountSettings.language">
+          <option value="cz">{{ t('language_cz') }}</option>
+          <option value="en">{{ t('language_en') }}</option>
+        </select>
+      </label>
+
+      <fieldset class="pp-switches" [disabled]="!accountSettings.email.trim()">
+        <legend class="pp-switches-legend">{{ t('notifications_kinds_label') }}</legend>
+        @for (kind of notificationKinds; track kind) {
+          <label class="pp-switch">
+            <input type="checkbox" [name]="kind" [(ngModel)]="accountSettings[kind]" (ngModelChange)="accountSaveResult = null">
+            <span class="pp-switch-text">
+              <span class="pp-switch-title">{{ t(kind + '_title') }}</span>
+              <span class="pp-switch-hint">{{ t(kind + '_hint') }}</span>
+            </span>
+          </label>
+        }
+        @if (!accountSettings.email.trim()) {
+          <p class="pp-account-note">{{ t('notifications_need_email') }}</p>
+        }
+      </fieldset>
+
+      @if (accountSaveResult === 'saved') {
+        <p class="pp-account-saved" role="status">{{ t('notifications_saved') }}</p>
+      } @else if (accountSaveResult === 'error') {
+        <p class="pp-file-error" role="alert">{{ t('notifications_save_failed') }}</p>
+      } @else if (accountSaveResult === 'email_required') {
+        <p class="pp-file-error" role="alert">{{ t('notifications_need_email') }}</p>
+      }
+
+      <div class="pp-form-actions">
+        <button type="button" class="pp-btn-small" [disabled]="!accountSettingsDirty || accountSaving" (click)="resetAccountSettings()">{{ t('cancel') }}</button>
+        <button type="submit" class="pp-btn-primary-small" [disabled]="!accountSettingsDirty || accountSaving">
+          {{ accountSaving ? t('saving') : t('save') }}
+        </button>
+      </div>
+    </form>
+  </section>
+}

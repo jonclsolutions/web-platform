@@ -1,0 +1,24 @@
+/*
+    @file: portal-files.component.css
+    @path: src/app/apps/project-portal/public/sections/files/portal-files.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Files of the project portal: one row per file with size, date, author and the
+        link to where it comes from.
+    @dependencies: ../portal-section.css, tokens of the portal layout
+*/
+
+/*
+    @module: Files
+    @usage: ul.pp-card.pp-files > li.pp-file-row > .pp-file-icon + .pp-file-main (.pp-file-name, .pp-file-meta)
+*/
+.pp-files { list-style: none; margin: 0; padding: 4px 18px; }
+.pp-file-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.pp-file-row:last-child { border-bottom: 0; }
+.pp-file-icon { flex-shrink: 0; margin-top: 2px; color: var(--text-dim); }
+.pp-file-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pp-file-name { font-size: 0.9rem; font-weight: 600; color: var(--text); text-decoration: none; overflow-wrap: anywhere; }
+.pp-file-name:hover { text-decoration: underline; }
+.pp-file-meta { font-size: 0.75rem; color: var(--text-muted); }
+.pp-file-empty { padding: 12px 0; }

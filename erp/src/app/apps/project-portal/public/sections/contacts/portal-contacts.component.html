@@ -1,0 +1,55 @@
+<!--
+    @file: portal-contacts.component.html
+    @path: src/app/apps/project-portal/public/sections/contacts/portal-contacts.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Contact of the supplier for the project and the company data of the supplier.
+-->
+@if (session.project(); as project) {
+  <section class="pp-tab-panel pp-contacts-grid">
+    <div class="pp-card">
+      <div class="pp-card-title">{{ t('supplier_contact_title') }}</div>
+      @if (project.project_lead || project.contact_phone || project.contact_email) {
+        @if (project.project_lead) {
+          <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('contacts_person') }}</span><span class="pp-contacts-value">{{ project.project_lead }}</span></div>
+        }
+        @if (project.contact_phone) {
+          <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('contacts_phone') }}</span><a class="pp-contacts-value" [href]="'tel:' + project.contact_phone">{{ project.contact_phone }}</a></div>
+        }
+        @if (project.contact_email) {
+          <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('contacts_email') }}</span><a class="pp-contacts-value" [href]="'mailto:' + project.contact_email">{{ project.contact_email }}</a></div>
+        }
+      } @else {
+        <p class="pp-empty">{{ t('supplier_contact_empty') }}</p>
+      }
+    </div>
+    <div class="pp-card">
+      <div class="pp-card-title">{{ t('company_title') }}</div>
+      @if (session.companySettingsLoading()) {
+        <p class="pp-empty">{{ t('loading') }}</p>
+      } @else if (session.companySettings(); as companySettings) {
+        @if (companySettings.company_name) {
+          <div class="pp-contacts-company-name">{{ companySettings.company_name }}</div>
+        }
+        @if (companySettings.address) {
+          <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('contacts_address') }}</span><span class="pp-contacts-value">{{ companySettings.address }}</span></div>
+        }
+        @if (companySettings.ico) {
+          <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('contacts_ico') }}</span><span class="pp-contacts-value">{{ companySettings.ico }}</span></div>
+        }
+        @if (companySettings.dic) {
+          <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('contacts_dic') }}</span><span class="pp-contacts-value">{{ companySettings.dic }}</span></div>
+        }
+        @if (companySettings.contact_email) {
+          <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('contacts_email') }}</span><span class="pp-contacts-value">{{ companySettings.contact_email }}</span></div>
+        }
+        @if (companySettings.contact_phone) {
+          <div class="pp-contacts-row"><span class="pp-contacts-label">{{ t('contacts_phone') }}</span><span class="pp-contacts-value">{{ companySettings.contact_phone }}</span></div>
+        }
+      } @else {
+        <p class="pp-empty">{{ t('contacts_empty') }}</p>
+      }
+    </div>
+  </section>
+}

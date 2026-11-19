@@ -5,7 +5,7 @@
  * @author JS
  * @created 2026
  * @description Static (bundled, non-editable-in-admin-UI) multi-language support for the
- * CUSTOMER-facing project portal (`ProjectPortalComponent`) - a THIRD, separate i18n
+ * CUSTOMER-facing project portal (PortalLayoutComponent and its sections) - a THIRD, separate i18n
  * concern in this codebase, distinct from both:
  * - `AdminLocalizationService` (admin UI chrome, `assets/i18n/admin/`, `jsw_admin_language`
  *   localStorage key) - the project portal is NOT part of the admin.

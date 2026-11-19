@@ -6,7 +6,7 @@
  * @created 2026
  * @description Public routes of the customer project portal: the order form of a sales lead
  *   link (/projects/order/:token, the former /order_form/:token redirects), the sign-in of one
- *   project (/projects/login/:token) and the portal of one project (/projects/:token) - all
+ *   project (/projects/login/:token) and the portal of one project (/projects/:token/<section>) - all
  *   closed by the maintenance guard while the portal is switched off - and the maintenance page
  *   (/projects/maintenance). The portal route has a session resolver: without a valid session it
  *   redirects to the sign-in. Browser titles: area `project-portal`.
@@ -17,6 +17,7 @@
 import { Routes } from '@angular/router';
 import { projectPortalMaintenanceGuard } from './maintenance/portal-maintenance';
 import { projectPortalSessionResolver } from './project-portal-session.resolver';
+import { PORTAL_SECTION_ROUTES } from './portal-sections.routes';
 
 export const PROJECT_PORTAL_PUBLIC_ROUTES: Routes = [
   // Shown while the portal is switched off (guard below, 503 of a portal request).
@@ -46,13 +47,15 @@ export const PROJECT_PORTAL_PUBLIC_ROUTES: Routes = [
   },
   // Address of the order form before it moved into the portal (links already sent to clients).
   { path: 'order_form/:token', redirectTo: 'projects/order/:token' },
+  // Portal of one project: the layout with the sections as child routes (portal-sections.routes.ts).
   {
     path: 'projects/:token',
     title: 'project-portal.portal',
     canActivate: [projectPortalMaintenanceGuard],
     resolve: { project: projectPortalSessionResolver },
     loadComponent: () =>
-      import('./project-portal.component')
-        .then(m => m.ProjectPortalComponent)
+      import('./portal-layout/portal-layout.component')
+        .then(m => m.PortalLayoutComponent),
+    children: PORTAL_SECTION_ROUTES,
   },
 ];

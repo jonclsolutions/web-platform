@@ -1,0 +1,73 @@
+/*
+    @file: portal-overview.component.css
+    @path: src/app/apps/project-portal/public/sections/overview/portal-overview.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Overview of the project portal: key numbers, banner of pending approvals, "What
+        is new" and the current step (cards and badges in ../portal-section.css).
+    @dependencies: ../portal-section.css, tokens of the portal layout
+*/
+
+/*
+    @module: Key numbers
+    @description: Grid of statistic buttons (progress with a bar, waiting on you, unread,
+        estimated completion as static text).
+    @usage: .pp-stats > button.pp-stat(--attention|--unread) | div.pp-stat.pp-stat--static
+*/
+.pp-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.pp-stat {
+  display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; text-align: left;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px; color: var(--text);
+  font-family: inherit; cursor: pointer; transition: border-color var(--ease), box-shadow var(--ease);
+}
+.pp-stat:hover { border-color: var(--border-mid); box-shadow: 0 2px 8px rgba(24, 24, 27, 0.05); }
+.pp-stat:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pp-stat--static { cursor: default; }
+.pp-stat--static:hover { border-color: var(--border); box-shadow: none; }
+.pp-stat-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); }
+.pp-stat-value { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; }
+.pp-stat-value--text { font-size: 1rem; line-height: 1.35; }
+.pp-stat-sub { font-size: 0.76rem; color: var(--text-muted); }
+.pp-stat-track { height: 6px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
+.pp-stat-track > span { display: block; height: 100%; background: var(--success); transition: width 0.3s ease; }
+.pp-stat--attention { border-color: var(--color-amber-200); background: var(--warning-dim); }
+.pp-stat--attention .pp-stat-value { color: var(--warning); }
+.pp-stat--unread .pp-stat-value { color: var(--danger); }
+
+.pp-current-step-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 6px; font-size: 0.95rem; }
+
+/*
+    @module: What is new
+    @description: Banner of the approvals waiting on the client and the activity list; a new item
+        (since the last visit) is highlighted.
+    @usage: button.pp-banner; ul.pp-news > li > button.pp-news-item(.pp-news-item--new) > .pp-news-dot[data-type] + .pp-news-text + .pp-news-time
+*/
+.pp-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;
+  padding: 14px 18px; border: 1px solid var(--color-amber-200); border-radius: 14px;
+  background: var(--warning-dim); color: var(--warning); font: inherit; font-size: 0.9rem; text-align: left; cursor: pointer;
+}
+.pp-banner:hover { filter: brightness(0.98); }
+.pp-banner:focus-visible { outline: 2px solid var(--warning); outline-offset: 2px; }
+.pp-news { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.pp-news-item {
+  display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 10px 8px; border: 0;
+  border-bottom: 1px solid var(--border); background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.pp-news li:last-child .pp-news-item { border-bottom: 0; }
+.pp-news-item:hover { background: var(--surface-2); }
+.pp-news-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.pp-news-item--new { background: var(--info-dim); }
+.pp-news-dot { width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; flex-shrink: 0; background: var(--text-dim); }
+.pp-news-dot[data-type="update"] { background: var(--info); }
+.pp-news-dot[data-type="approval_requested"] { background: var(--warning); }
+.pp-news-dot[data-type="approval_decided"], .pp-news-dot[data-type="checkpoint"] { background: var(--color-emerald-600); }
+.pp-news-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pp-news-label { font-size: 0.75rem; color: var(--text-muted); }
+.pp-news-title { font-size: 0.88rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-news-new {
+  margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: var(--info); color: var(--color-white);
+  font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.pp-news-time { font-size: 0.72rem; color: var(--text-dim); white-space: nowrap; }

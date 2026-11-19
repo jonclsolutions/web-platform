@@ -1,0 +1,35 @@
+/*
+    @file: portal-approvals.component.css
+    @path: src/app/apps/project-portal/public/sections/approvals/portal-approvals.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Approval requests of the project portal: state chip, Approve / Request changes,
+        the changes form and the history of decisions (card, title and meta line in
+        ../portal-section.css).
+    @dependencies: ../portal-section.css, tokens of the portal layout
+*/
+
+/*
+    @module: Approval requests
+    @usage: article.pp-card.pp-approval[data-status] > .pp-approval-head > .pp-approval-status + h2.pp-approval-title;
+        .pp-approval-changes; .pp-approval-actions; ol.pp-decisions > li[data-decision]
+*/
+.pp-approval[data-status="pending"] { border-left: 4px solid var(--warning); }
+.pp-approval-head { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.pp-approval-status {
+  padding: 2px 9px; border-radius: 999px; font-size: 0.7rem; font-weight: 700;
+  background: var(--surface-2); color: var(--text-muted);
+}
+.pp-approval-status[data-status="pending"] { background: var(--warning-dim); color: var(--warning); }
+.pp-approval-status[data-status="approved"] { background: var(--color-emerald-50); color: var(--color-emerald-700); }
+.pp-approval-status[data-status="changes_requested"] { background: var(--danger-dim); color: var(--danger); }
+.pp-approval-actions { justify-content: flex-start; flex-wrap: wrap; }
+.pp-btn-approve { background: var(--color-emerald-700); }
+.pp-btn-approve:hover:not(:disabled) { background: var(--color-emerald-600); }
+.pp-approval-changes { display: flex; flex-direction: column; gap: 8px; }
+.pp-decisions { list-style: none; margin: 4px 0 0; padding: 10px 0 0; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; font-size: 0.8rem; color: var(--text-muted); }
+.pp-decisions li { padding-left: 10px; border-left: 3px solid var(--border); }
+.pp-decisions li[data-decision="approved"] { border-left-color: var(--color-emerald-600); }
+.pp-decisions li[data-decision="changes_requested"] { border-left-color: var(--danger); }
+.pp-decisions .pp-project-desc { margin: 4px 0 0; color: var(--text); white-space: pre-line; }

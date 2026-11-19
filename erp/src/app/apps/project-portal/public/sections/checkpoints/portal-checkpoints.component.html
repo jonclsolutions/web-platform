@@ -1,0 +1,60 @@
+<!--
+    @file: portal-checkpoints.component.html
+    @path: src/app/apps/project-portal/public/sections/checkpoints/portal-checkpoints.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Progress of the project: progress bar (done / total) and the numbered steps; a
+        step with a description is a button that expands it (aria-expanded / aria-controls).
+-->
+@if (session.project(); as project) {
+  <section class="pp-tab-panel">
+    <div class="pp-progress-block">
+      <div class="pp-progress-header">
+        <span class="pp-progress-label">{{ t('progress_label') }}</span>
+        <span class="pp-progress-fraction">{{ session.checkpointProgress().done }} / {{ session.checkpointProgress().total }}</span>
+      </div>
+      <div class="pp-progress-track">
+        <div class="pp-progress-fill" [style.width.%]="session.checkpointProgress().percent"></div>
+      </div>
+    </div>
+
+    <ol class="pp-checkpoint-list">
+      @for (cp of project.checkpoints; track cp.id; let i = $index) {
+        <ng-template #cpSummary>
+          <span class="pp-checkpoint-index" aria-hidden="true">
+            @if (cp.status === 'done') {
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            } @else { {{ i + 1 }} }
+          </span>
+          <span class="pp-checkpoint-main">
+            <span class="pp-checkpoint-label">{{ cp.label }}</span>
+            @if (cp.due_date) { <span class="pp-due">{{ t('due_date_prefix') }} {{ formatDate(cp.due_date) }}</span> }
+          </span>
+          <span class="pp-checkpoint-badge" [class]="'pp-checkpoint-badge status-' + cp.status">{{ t('checkpoint_status_' + cp.status) }}</span>
+        </ng-template>
+
+        <li class="pp-checkpoint-item" [class]="'pp-checkpoint-item status-' + cp.status" [class.pp-checkpoint-item-open]="session.expandedCheckpointIds().has(cp.id)">
+          @if (cp.description) {
+            <!-- A checkpoint with a description expands on click to show what it covers. -->
+            <button type="button" class="pp-checkpoint-head pp-checkpoint-toggle" [attr.aria-expanded]="session.expandedCheckpointIds().has(cp.id)"
+                    [attr.aria-controls]="'pp-cp-desc-' + cp.id" (click)="session.toggleCheckpoint(cp.id)">
+              <ng-container [ngTemplateOutlet]="cpSummary"></ng-container>
+              <svg class="pp-checkpoint-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            @if (session.expandedCheckpointIds().has(cp.id)) {
+              <div class="pp-checkpoint-description" [id]="'pp-cp-desc-' + cp.id">{{ cp.description }}</div>
+            }
+          } @else {
+            <div class="pp-checkpoint-head">
+              <ng-container [ngTemplateOutlet]="cpSummary"></ng-container>
+            </div>
+          }
+        </li>
+      }
+    </ol>
+    @if (project.checkpoints.length === 0) {
+      <p class="pp-empty">{{ t('no_checkpoints') }}</p>
+    }
+  </section>
+}

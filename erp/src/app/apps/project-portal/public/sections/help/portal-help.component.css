@@ -1,0 +1,17 @@
+/*
+    @file: portal-help.component.css
+    @path: src/app/apps/project-portal/public/sections/help/portal-help.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Help of the project portal: topic cards (../portal-section.css) and the support box.
+    @dependencies: ../portal-section.css, tokens of the portal layout
+*/
+
+/*
+    @module: Support box
+    @usage: .pp-help-support-box > .pp-card-title + .pp-project-desc
+*/
+.pp-help-support-box { padding: 16px 18px; border-radius: 14px; background: var(--info-dim); color: var(--info); }
+.pp-help-support-box .pp-card-title { color: var(--info); }
+.pp-help-support-box .pp-project-desc { color: var(--info); }

@@ -1,0 +1,129 @@
+/*
+    @file: portal-threads.component.css
+    @path: src/app/apps/project-portal/public/sections/threads/portal-threads.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Communication of the project portal: search + new thread, the thread list
+        (priority dot, "waiting on you / on the supplier", unread badge, status), the thread detail
+        with messages (own = indigo, supplier = white, colleagues = grey), the reply box and the
+        chosen attachments.
+    @dependencies: ../portal-section.css (cards, controls, attachment links), tokens of the portal layout
+*/
+
+/*
+    @module: Thread list
+    @usage: .pp-threads-toolbar; .pp-new-thread-form; .pp-thread-list > button.pp-thread-item(--unread); .pp-waiting[data-waiting]
+*/
+.pp-threads-toolbar { display: flex; gap: 10px; align-items: center; }
+.pp-search-wrap { position: relative; flex: 1; }
+.pp-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-dim); pointer-events: none; }
+.pp-search-input {
+  width: 100%; padding: 9px 12px 9px 34px; border-radius: 999px; border: 1px solid var(--border-mid);
+  background: var(--surface); color: var(--text); font-size: 0.85rem; font-family: inherit;
+}
+.pp-search-input:focus { outline: none; border-color: var(--accent); }
+
+.pp-new-thread-form { display: flex; flex-direction: column; }
+
+.pp-thread-list { display: flex; flex-direction: column; gap: 6px; }
+.pp-thread-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 12px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid transparent; color: var(--text); cursor: pointer; font-size: 0.87rem; font-family: inherit; text-align: left;
+  transition: background var(--ease), border-color var(--ease);
+}
+.pp-thread-item:hover { background: var(--surface-2); border-color: var(--border-mid); }
+.pp-thread-item--unread { border-left-color: var(--danger); }
+.pp-thread-item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.pp-thread-item-subject { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.pp-thread-item--unread .pp-thread-item-subject { font-weight: 800; }
+.pp-thread-item-meta { display: flex; align-items: center; gap: 5px; font-size: 0.74rem; color: var(--text-muted); }
+.pp-thread-unread-badge {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px;
+  background: var(--danger); color: var(--color-white); font-size: 0.68rem; font-weight: 700;
+}
+.pp-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--color-zinc-400); flex-shrink: 0; }
+.pp-dot[data-priority="high"] { background: var(--color-amber-500); }
+.pp-dot[data-priority="critic"] { background: var(--color-rose-600); }
+.pp-dot[data-priority="low"] { background: var(--color-emerald-600); }
+
+.pp-waiting {
+  flex-shrink: 0; padding: 2px 9px; border-radius: 999px; font-size: 0.7rem; font-weight: 700;
+  background: var(--surface-2); color: var(--text-muted);
+}
+.pp-waiting[data-waiting="customer"] { background: var(--warning-dim); color: var(--warning); box-shadow: inset 0 0 0 1px var(--color-amber-200); }
+
+.pp-status-chip { font-size: 0.64rem; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; background: var(--success-dim); color: var(--success); }
+.pp-status-chip.pp-status-closed { background: var(--surface-2); color: var(--text-dim); }
+
+.pp-thread-item:focus-visible, .pp-back-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/*
+    @module: Thread detail
+    @usage: .pp-thread-detail > .pp-back-btn + .pp-thread-detail-head + .pp-thread-status-row + .pp-message-list > .pp-message(.pp-message-mine|.pp-message-supplier); .pp-reply-box
+*/
+.pp-thread-detail { display: flex; flex-direction: column; }
+.pp-back-btn {
+  display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+  border: none; background: transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 600;
+  font-family: inherit; cursor: pointer; padding: 4px 2px; margin-bottom: 8px;
+}
+.pp-back-btn:hover { color: var(--text); }
+.pp-thread-detail-head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.pp-thread-detail-subject { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--text); overflow-wrap: anywhere; }
+.pp-thread-status-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.pp-thread-status-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; }
+.pp-thread-status-select { width: auto; margin-bottom: 0; padding: 6px 10px; font-size: 0.82rem; }
+
+.pp-message-list {
+  display: flex; flex-direction: column; gap: 10px; max-height: 460px; overflow-y: auto; margin-bottom: 14px;
+  padding: 12px; border-radius: 12px; background: var(--surface-2);
+}
+.pp-message { align-self: flex-start; max-width: 85%; padding: 10px 13px; border-radius: 14px 14px 14px 4px; background: var(--color-zinc-100); }
+.pp-message-supplier { background: var(--surface); border: 1px solid var(--border); }
+.pp-message-mine { align-self: flex-end; border-radius: 14px 14px 4px 14px; background: var(--info-dim); }
+.pp-message-meta { font-size: 0.7rem; font-weight: 700; color: var(--text-dim); margin-bottom: 4px; }
+.pp-message-body { font-size: 0.88rem; color: var(--text); white-space: pre-wrap; line-height: 1.5; overflow-wrap: anywhere; }
+.pp-load-older-btn {
+  display: block; margin: 0 auto 4px; padding: 6px 16px; border-radius: 999px;
+  border: 1px solid var(--border-mid); background: var(--surface); color: var(--text-muted);
+  font-size: 0.76rem; font-weight: 600; cursor: pointer; font-family: var(--ff);
+}
+.pp-load-older-btn:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.pp-load-older-btn:disabled { opacity: 0.6; cursor: default; }
+
+.pp-reply-box { display: flex; flex-direction: column; }
+.pp-reply-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+
+/*
+    @module: Chosen attachments
+    @description: Attach button, chosen files as chips (errors in ../portal-section.css).
+    @usage: .pp-file-attach-row, label.pp-file-attach-btn, .pp-file-attach-count, .pp-file-chip-list > .pp-file-chip
+*/
+.pp-file-attach-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.pp-file-attach-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border-mid);
+  background: var(--surface); color: var(--text-muted); font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; transition: background var(--ease), color var(--ease);
+}
+.pp-file-attach-btn:hover { background: var(--surface-2); color: var(--text); }
+.pp-file-attach-count { font-size: 0.72rem; color: var(--text-dim); font-weight: 600; }
+.pp-file-chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.pp-file-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px 5px 10px;
+  border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border);
+  font-size: 0.76rem; color: var(--text-muted); max-width: 220px;
+}
+.pp-file-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-file-chip-remove { border: none; background: none; color: var(--text-dim); cursor: pointer; font-size: 0.7rem; padding: 0; line-height: 1; flex-shrink: 0; }
+.pp-file-chip-remove:hover { color: var(--danger); }
+
+@media (max-width: 768px) {
+  .pp-message { max-width: 94%; }
+  .pp-threads-toolbar { flex-wrap: wrap; }
+  .pp-thread-item { flex-wrap: wrap; }
+  .pp-thread-item-main { flex-basis: 100%; }
+}

@@ -1,0 +1,74 @@
+<!--
+    @file: portal-approvals.component.html
+    @path: src/app/apps/project-portal/public/sections/approvals/portal-approvals.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Approval requests: state, meta line, description, files, Approve / Request changes
+        (comment required) and the history of decisions.
+-->
+<section class="pp-tab-panel">
+  <p class="pp-section-lead">{{ t('approvals_lead') }}</p>
+  @if (decisionError) { <p class="pp-file-error" role="alert">{{ t(decisionError) }}</p> }
+  @for (approval of session.approvals(); track approval.id) {
+    <article class="pp-card pp-approval" [attr.data-status]="approval.status">
+      <div class="pp-approval-head">
+        <span class="pp-approval-status" [attr.data-status]="approval.status">{{ approvalStatusLabel(approval.status) }}</span>
+        <h2 class="pp-approval-title">{{ approval.title }}</h2>
+      </div>
+      <div class="pp-approval-meta">
+        {{ t('approval_requested') }} {{ approval.requested_at | date:'d. M. yyyy' }}@if (approval.requested_by_label) { · {{ approval.requested_by_label }} }
+        @if (approval.checkpoint_label) { · {{ t('approval_step') }}: {{ approval.checkpoint_label }} }
+        @if (approval.due_date) { · <strong>{{ t('approval_due') }} {{ formatDate(approval.due_date) }}</strong> }
+      </div>
+      @if (approval.description) { <p class="pp-project-desc">{{ approval.description }}</p> }
+      @if (approval.attachments?.length) {
+        <div class="pp-message-attachments">
+          @for (att of approval.attachments!; track att.id) {
+            <a [href]="att.download_url" class="pp-attachment-link" target="_blank" rel="noopener">
+              <span class="pp-attachment-name">{{ att.original_filename }}</span>
+              <span class="pp-attachment-size">{{ formatFileSize(att.size_bytes) }}</span>
+            </a>
+          }
+        </div>
+      }
+      @if (approval.status === 'pending') {
+        @if (changesFormId === approval.id) {
+          <div class="pp-approval-changes">
+            <label class="pp-login-field">
+              <span>{{ t('approval_changes_label') }}</span>
+              <textarea class="pp-textarea" rows="4" maxlength="5000" [(ngModel)]="changesComment" [placeholder]="t('approval_changes_placeholder')"></textarea>
+            </label>
+            <div class="pp-form-actions">
+              <button type="button" class="pp-btn-small" (click)="toggleChangesForm(approval)">{{ t('cancel') }}</button>
+              <button type="button" class="pp-btn-primary-small" [disabled]="decidingId !== null || !changesComment.trim()" (click)="decide(approval, 'changes_requested')">
+                {{ decidingId === approval.id ? t('sending') : t('approval_send_changes') }}
+              </button>
+            </div>
+          </div>
+        } @else {
+          <div class="pp-form-actions pp-approval-actions">
+            <button type="button" class="pp-btn-small" [disabled]="decidingId !== null" (click)="toggleChangesForm(approval)">{{ t('approval_request_changes') }}</button>
+            <button type="button" class="pp-btn-primary-small pp-btn-approve" [disabled]="decidingId !== null" (click)="decide(approval, 'approved')">
+              {{ decidingId === approval.id ? t('sending') : t('approval_approve') }}
+            </button>
+          </div>
+          <p class="pp-account-note">{{ t('approval_record_note') }}</p>
+        }
+      }
+      @if (approval.decisions?.length) {
+        <ol class="pp-decisions" [attr.aria-label]="t('approval_history')">
+          @for (decision of approval.decisions!; track decision.id) {
+            <li [attr.data-decision]="decision.decision">
+              <strong>{{ approvalStatusLabel(decision.decision) }}</strong> · {{ decision.account_id === session.project()?.account?.id ? t('author_you') : decision.author_label }}
+              · {{ decision.created_at | date:'d. M. yyyy HH:mm' }}
+              @if (decision.comment) { <p class="pp-project-desc">{{ decision.comment }}</p> }
+            </li>
+          }
+        </ol>
+      }
+    </article>
+  } @empty {
+    <p class="pp-empty">{{ session.approvalsLoading() ? t('loading') : t('approvals_empty') }}</p>
+  }
+</section>

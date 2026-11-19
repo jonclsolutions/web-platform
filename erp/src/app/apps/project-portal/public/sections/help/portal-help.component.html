@@ -1,0 +1,21 @@
+<!--
+    @file: portal-help.component.html
+    @path: src/app/apps/project-portal/public/sections/help/portal-help.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Help topics of the portal and the support box.
+-->
+<section class="pp-tab-panel">
+  <p class="pp-section-lead">{{ t('help_intro_text') }}</p>
+  @for (topic of topics; track topic) {
+    <div class="pp-card pp-help-item">
+      <div class="pp-card-title">{{ t('help_' + topic + '_title') }}</div>
+      <p class="pp-project-desc">{{ t('help_' + topic + '_text') }}</p>
+    </div>
+  }
+  <div class="pp-help-support-box">
+    <div class="pp-card-title">{{ t('help_support_title') }}</div>
+    <p class="pp-project-desc">{{ t('help_support_text') }}</p>
+  </div>
+</section>

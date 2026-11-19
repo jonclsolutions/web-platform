@@ -1,0 +1,17 @@
+/*
+    @file: portal-contacts.component.css
+    @path: src/app/apps/project-portal/public/sections/contacts/portal-contacts.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Contacts of the project portal: the supplier contact and the company data side
+        by side (rows in ../portal-section.css).
+    @dependencies: ../portal-section.css, tokens of the portal layout
+*/
+
+/*
+    @module: Contacts
+    @usage: section.pp-contacts-grid > .pp-card (.pp-contacts-company-name, .pp-contacts-row)
+*/
+.pp-contacts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; align-items: start; }
+.pp-contacts-company-name { font-size: 1.02rem; font-weight: 700; color: var(--text); padding-bottom: 8px; }

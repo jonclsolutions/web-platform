@@ -1,0 +1,125 @@
+/*
+    @file: portal-section.css
+    @path: src/app/apps/project-portal/public/sections/portal-section.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Building blocks shared by the sections of the client project portal (pp-*):
+        the panel of a section, cards, form controls and buttons, attachments, contact rows,
+        step badges and the cards of approvals and updates. Included first in the styleUrls of
+        every section component, before its own file. The tokens (--surface, --text, --danger …)
+        come from PortalLayoutComponent (admin theme.css + local tokens) by inheritance.
+    @dependencies: tokens of portal-layout.component.css, global colour variables
+*/
+
+/*
+    @module: Section panel
+    @description: Host of a section (block, fades in), lead text, cards with a title, empty texts.
+    @usage: :host > section.pp-tab-panel; .pp-section-lead; .pp-card(.pp-card-title); .pp-project-desc; .pp-empty
+*/
+:host { display: block; }
+.pp-tab-panel { display: flex; flex-direction: column; gap: 14px; animation: pp-fade-in 0.15s ease; }
+@keyframes pp-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.pp-section-lead { margin: 0; color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; }
+
+.pp-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+.pp-card-title {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--text-dim); margin-bottom: 8px;
+}
+.pp-project-desc { color: var(--text-muted); line-height: 1.65; margin: 0; font-size: 0.93rem; white-space: pre-line; overflow-wrap: anywhere; }
+.pp-empty { color: var(--text-dim); font-size: 0.85rem; margin: 0; }
+
+/*
+    @module: Form controls and buttons
+    @description: Inputs, text areas, labelled fields and the pill buttons of the sections.
+    @usage: .pp-input, .pp-textarea, label.pp-login-field > span; .pp-btn-primary-small, .pp-btn-small, .pp-link;
+        .pp-form-actions; .pp-file-error; .pp-account-note
+*/
+.pp-input, .pp-textarea {
+  width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-mid);
+  background: var(--surface); color: var(--text); font-size: 0.88rem; font-family: inherit; margin-bottom: 10px;
+}
+.pp-input:focus, .pp-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--color-zinc-100); }
+.pp-textarea { resize: vertical; line-height: 1.5; }
+.pp-login-field { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+.pp-login-field > span { font-size: 0.76rem; font-weight: 600; color: var(--text-muted); }
+
+.pp-btn-primary-small {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  padding: 8px 16px; border-radius: 999px; border: none; background: var(--accent);
+  color: var(--color-white); font-size: 0.8rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: background var(--ease);
+}
+.pp-btn-primary-small:hover:not(:disabled) { background: var(--color-zinc-700); }
+.pp-btn-primary-small:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.pp-btn-small {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border-mid); background: var(--surface);
+  color: var(--text); font-size: 0.8rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: background var(--ease);
+}
+.pp-btn-small:hover:not(:disabled) { background: var(--surface-2); }
+
+.pp-link { padding: 0; border: 0; background: none; color: var(--info); font: inherit; cursor: pointer; text-decoration: underline; }
+
+.pp-btn-primary-small:focus-visible, .pp-btn-small:focus-visible, .pp-link:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+
+.pp-form-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.pp-file-error { color: var(--danger); font-size: 0.76rem; margin: 0 0 8px; }
+.pp-account-note { margin: 8px 0 0; font-size: 0.78rem; color: var(--text-dim); line-height: 1.5; }
+
+/*
+    @module: Attachments
+    @description: Attachments of messages, updates and approval requests (download links).
+    @usage: .pp-message-attachments > a.pp-attachment-link (.pp-attachment-name, .pp-attachment-size)
+*/
+.pp-message-attachments { display: flex; flex-direction: column; gap: 5px; margin-top: 9px; }
+.pp-attachment-link {
+  display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px;
+  border-radius: 10px; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); text-decoration: none; font-size: 0.8rem; width: fit-content; max-width: 100%;
+}
+.pp-attachment-link:hover { border-color: var(--border-mid); background: var(--surface-2); }
+.pp-attachment-link svg { flex-shrink: 0; color: var(--text-dim); }
+.pp-attachment-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.pp-attachment-size { color: var(--text-dim); font-size: 0.72rem; flex-shrink: 0; }
+
+/*
+    @module: Contact rows
+    @description: Label / value rows (Contacts, My account).
+    @usage: .pp-contacts-row > .pp-contacts-label + .pp-contacts-value
+*/
+.pp-contacts-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 9px 0; border-bottom: 1px dashed var(--border); }
+.pp-contacts-row:last-child { border-bottom: none; }
+.pp-contacts-label { font-size: 0.82rem; color: var(--text-muted); flex-shrink: 0; }
+.pp-contacts-value { font-size: 0.88rem; color: var(--text); font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+a.pp-contacts-value { text-decoration: none; }
+a.pp-contacts-value:hover { text-decoration: underline; }
+
+/*
+    @module: Steps
+    @description: State badge of a step and its due date (Overview, Progress).
+    @usage: .pp-checkpoint-badge.status-(new|active|done); .pp-due
+*/
+.pp-due { font-size: 0.76rem; font-weight: 600; color: var(--text-muted); }
+.pp-checkpoint-badge {
+  font-size: 0.66rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; flex-shrink: 0;
+  background: var(--surface-2); color: var(--text-muted);
+}
+.pp-checkpoint-badge.status-active { background: var(--warning-dim); color: var(--warning); }
+.pp-checkpoint-badge.status-done { background: var(--success-dim); color: var(--success); }
+
+/*
+    @module: Approval and update cards
+    @description: Cards of the approval requests and of the published updates: title and meta line.
+    @usage: article.pp-card.pp-approval | article.pp-card.pp-update > .pp-approval-meta + h2.pp-approval-title
+*/
+.pp-approval, .pp-update { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.pp-approval-title { margin: 0; font-size: 1.02rem; font-weight: 700; color: var(--text); }
+.pp-approval-meta { font-size: 0.78rem; color: var(--text-muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-tab-panel { transition: none; animation: none; }
+}
