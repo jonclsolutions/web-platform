@@ -89,7 +89,7 @@ describe('ReleasesComponent', () => {
     expect(fixture.componentInstance.areas.map(a => a.id)).toEqual(['all', 'core', 'shop']);
     expect(el.querySelectorAll('.rl-release').length).toBe(1);
     expect(el.querySelector('.rl-text')!.textContent).toContain('Shop fix');
-    expect(el.querySelector('.rl-chip--active')!.textContent!.trim()).toBe('admin-layout.module_shop');
+    expect(el.querySelector('.rl-filter .rbb-btn.active .rbb-label')!.textContent!.trim()).toBe('admin-layout.module_shop');
 
     query.next(convertToParamMap({ area: 'blog' }));
     fixture.detectChanges();

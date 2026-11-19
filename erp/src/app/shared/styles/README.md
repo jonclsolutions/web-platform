@@ -48,6 +48,8 @@ src/
     │   │   └── welcome-links.css           link-card grid                (shop + web welcome pages)
     │   ├── components/page-header/page-header.component.css   THE header of every admin page (title,
     │   │                                   subtitle, actions, help) - <app-page-header>
+    │   ├── components/builders/row-button-builder/row-button-builder.component.css   THE row of buttons
+    │   │                                   (page tabs, filters, view switch, language tabs) - <app-row-button-builder>
     │   ├── components/base-dashboard/dashboard-view.component.css   layout of every module dashboard
     │   ├── components/app-status/app-status-control.component.css   state of an application + maintenance switch
     │   ├── components/translation-editor/translation-editor-view.component.css   language tabs
@@ -209,6 +211,20 @@ The hero **title** is not shared – the pages use different title sizes, so sty
 
 **New colour**: used in both admin and public → add `--color-…` to `tokens.css`; used in one look → add
 a token to that `theme.css`; used once → a literal in the component is fine.
+
+**Row of buttons** (page tabs, a filter, a view switch, language tabs) – never style your own:
+```html
+<app-row-button-builder kind="tabs" [items]="tabItems" [active]="activeTab" (selected)="switchTab($event)" />
+```
+```ts
+private readonly tabButtons = new RowButtonItems();
+get tabItems(): RowButton[] {
+  return this.tabButtons.update([{ value: 'company', label: this.strings.tab_company, icon: 'building' }, …]);
+}
+```
+`kind` tabs / filter / nav (links), `size="sm"` inside cards and for languages (`languageRowButtons(languages)`),
+`[stretch]="true"` for page tabs (full width on mobile). A wrapper class on the element only places it
+(margin), the look stays in the builder.
 
 **Change the accent of the admin**: edit `admin/shared-styles/theme.css`, then search for
 `local value – admin theme.css` to see which components keep their own value.

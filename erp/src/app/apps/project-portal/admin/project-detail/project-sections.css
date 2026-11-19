@@ -12,42 +12,10 @@
 
 /*
     @module: Tabs of the project page
-    @description: Horizontal tabs (own address per sub-page) with a badge; scrolls on narrow screens.
-    @usage: nav.pd-tabs > a.pd-tab(.active) > .pd-tab-badge
+    @description: Links to the sub-pages (own address each) - the shared row button builder, here only placed.
+    @usage: app-row-button-builder.pd-tabs
 */
-.pd-tabs {
-  display: flex;
-  gap: 4px;
-  overflow-x: auto;
-  margin: 0 0 16px;
-  padding: 4px;
-  border: 1px solid var(--color-zinc-100);
-  border-radius: 12px;
-  background: var(--color-white);
-  scrollbar-width: thin;
-}
-.pd-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  padding: 8px 14px;
-  border-radius: 9px;
-  color: var(--color-zinc-600);
-  font-size: 0.84rem;
-  font-weight: 600;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-.pd-tab:hover { background: var(--color-zinc-50); color: var(--color-zinc-900); }
-.pd-tab.active { background: var(--color-zinc-900); color: var(--color-white); }
-.pd-tab:focus-visible { outline: 2px solid var(--color-zinc-900); outline-offset: 2px; }
-.pd-tab-badge {
-  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--color-rose-600); color: var(--color-white); font-size: 0.66rem; font-weight: 700;
-}
+.pd-tabs { margin: 0 0 16px; }
 
 /*
     @module: Overview

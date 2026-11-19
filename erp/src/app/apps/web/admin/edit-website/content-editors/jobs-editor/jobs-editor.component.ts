@@ -13,6 +13,7 @@
  *   unique and contain lower-case letters, digits and hyphens only (checked before saving and by
  *   the API).
  * @dependencies
+ * - RowButtonBuilderComponent: the language tabs.
  * - I18nContentEditorBase (languages, save / discard, missing translations).
  */
 
@@ -22,6 +23,7 @@ import { FormsModule } from '@angular/forms';
 import { StickyBarDirective } from '../../../../../../shared/directives/sticky-bar.directive';
 import { I18nContentEditorBase } from '../i18n-content-editor.base';
 import { CheckedText, JobDraft, JobSectionDraft } from '../content-editor.model';
+import { RowButtonBuilderComponent } from '../../../../../../admin/components/builders/row-button-builder/row-button-builder.component';
 
 /** @description Allowed URL of a position - same rule as the API (WebJobController::SLUG_PATTERN). */
 export const JOB_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -29,7 +31,7 @@ export const JOB_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 @Component({
   selector: 'app-jobs-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, StickyBarDirective],
+  imports: [CommonModule, FormsModule, StickyBarDirective, RowButtonBuilderComponent],
   templateUrl: './jobs-editor.component.html',
   styleUrl: '../content-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

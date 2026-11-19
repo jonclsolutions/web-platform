@@ -16,11 +16,7 @@
     }
   </app-page-header>
 
-  <div class="rl-filter" role="group" [attr.aria-label]="strings['filter_label']">
-    @for (a of areas; track a.id) {
-      <button type="button" class="rl-chip" [class.rl-chip--active]="area === a.id" [attr.aria-pressed]="area === a.id" (click)="select(a.id)">{{ a.label }}</button>
-    }
-  </div>
+  <app-row-button-builder class="rl-filter" [items]="areaItems" [active]="area" [ariaLabel]="strings['filter_label']" (selected)="select($event)" />
 
   @if (notes.failed()) {
     <div class="rl-error" role="alert">{{ strings['failed'] }}</div>

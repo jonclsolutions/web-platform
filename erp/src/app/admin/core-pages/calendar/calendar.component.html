@@ -45,10 +45,7 @@
           </button>
         }
       </div>
-      <div class="cal-segmented" role="group" [attr.aria-label]="t('view_label')">
-        <button type="button" [class.active]="view === 'month'" [attr.aria-pressed]="view === 'month'" (click)="setView('month')">{{ t('view_month') }}</button>
-        <button type="button" [class.active]="view === 'list'" [attr.aria-pressed]="view === 'list'" (click)="setView('list')">{{ t('view_list') }}</button>
-      </div>
+      <app-row-button-builder size="sm" [items]="viewItems" [active]="view" [ariaLabel]="t('view_label')" (selected)="setView($any($event))" />
     </div>
   </div>
 

@@ -71,7 +71,7 @@ describe('EmailTemplateEditorComponent', () => {
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelectorAll('.email-tpl-preview-table tr').length).toBe(2);
     expect(el.querySelector('.email-tpl-preview-subject-value')!.textContent!.trim()).toBe('Předmět – X');
-    expect(el.querySelectorAll('.email-tpl-lang-tab').length).toBe(2);
+    expect(el.querySelectorAll('.email-tpl-lang-tabs .rbb-btn').length).toBe(2);
   });
 
   /**

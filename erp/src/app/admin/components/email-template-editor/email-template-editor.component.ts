@@ -19,14 +19,16 @@
  * @dependencies
  * - DataHandler: the languages (`languages/web` by default), GET / PUT of the template endpoint.
  * - AdminLocalizationService: texts of the given section; AlertDialogService: saved message.
+ * - RowButtonBuilderComponent: the language tabs.
  */
 
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
-import { UpperCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataHandler } from '../../../core/services/data-handler.service';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
+import { RowButtonBuilderComponent } from '../builders/row-button-builder/row-button-builder.component';
+import { RowButton, RowButtonItems, languageRowButtons } from '../builders/row-button-builder/row-button';
 
 /** @description One language of `GET languages/web`. */
 export interface EmailTemplateLang {
@@ -63,7 +65,7 @@ type TextField = 'subject' | 'title' | 'intro' | 'outro';
 @Component({
   selector: 'app-email-template-editor',
   standalone: true,
-  imports: [FormsModule, UpperCasePipe],
+  imports: [FormsModule, RowButtonBuilderComponent],
   templateUrl: './email-template-editor.component.html',
   styleUrl: './email-template-editor.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -148,6 +150,14 @@ export class EmailTemplateEditorComponent implements OnInit {
     if (!this.template.labels_i18n[lang]) {
       this.template.labels_i18n[lang] = {};
     }
+  }
+
+  /** Stable buttons of the language tabs. */
+  private readonly langButtons = new RowButtonItems();
+
+  /** @description Language tabs (upper-case code). */
+  get langItems(): RowButton[] {
+    return this.langButtons.update(languageRowButtons(this.languages));
   }
 
   /** @description Switches the language tab - only the shown language changes. */

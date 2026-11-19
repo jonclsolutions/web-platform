@@ -45,15 +45,7 @@
       <a class="pd-btn" routerLink="/admin/project-portal/projects">{{ t('detail_back') }}</a>
     </div>
   } @else {
-  <nav class="pd-tabs" [attr.aria-label]="t('sections_label')">
-    @for (item of sections; track item) {
-      <a class="pd-tab" [class.active]="section === item" [attr.aria-current]="section === item ? 'page' : null"
-         [routerLink]="['/admin/project-portal/projects', projectId, item]">
-        {{ sectionLabel(item) }}
-        @if (sectionBadge(item) > 0) { <span class="pd-tab-badge">{{ sectionBadge(item) }}</span> }
-      </a>
-    }
-  </nav>
+  <app-row-button-builder class="pd-tabs" kind="nav" [items]="sectionItems" [active]="section" [ariaLabel]="t('sections_label')" />
   <div class="pd-section" [attr.data-section]="section">
     @switch (section) {
       @case ('overview') {
@@ -123,13 +115,8 @@
             @if (unreadTotal > 0) { <span class="pd-count pd-count--unread">{{ unreadTotal }}</span> }
           </div>
           <div class="pd-card-head-actions">
-            <div class="pd-segment" role="group" [attr.aria-label]="t('conversation_section_title')">
-              @for (filter of ['active', 'mine', 'closed', 'all']; track filter) {
-                <button type="button" [class.active]="threadFilter === filter" [attr.aria-pressed]="threadFilter === filter" (click)="setThreadFilter($any(filter))">
-                  {{ t('detail_threads_' + filter) }} <span class="pd-segment-count">{{ threadCount($any(filter)) }}</span>
-                </button>
-              }
-            </div>
+            <app-row-button-builder size="sm" [items]="threadFilterItems" [active]="threadFilter" [ariaLabel]="t('conversation_section_title')"
+                                    (selected)="setThreadFilter($any($event))" />
             <button type="button" class="pd-icon-btn" [title]="t('detail_refresh')" [attr.aria-label]="t('detail_refresh')" [disabled]="threadsLoading" (click)="loadThreads()">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" [class.pd-spin]="threadsLoading"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
             </button>
@@ -235,10 +222,8 @@
 
                 @if (canEdit) {
                   <div class="pd-reply" [class.pd-reply--internal]="replyInternal">
-                    <div class="pd-reply-mode" role="group" [attr.aria-label]="t('reply_mode_label')">
-                      <button type="button" [class.active]="!replyInternal" [attr.aria-pressed]="!replyInternal" (click)="replyInternal = false">{{ t('reply_mode_client') }}</button>
-                      <button type="button" [class.active]="replyInternal" [attr.aria-pressed]="replyInternal" (click)="replyInternal = true">{{ t('reply_mode_internal') }}</button>
-                    </div>
+                    <app-row-button-builder class="pd-reply-mode" size="sm" [items]="replyModeItems" [active]="replyInternal ? 'internal' : 'client'"
+                                            [ariaLabel]="t('reply_mode_label')" (selected)="replyInternal = $event === 'internal'" />
                     @if (replyInternal) { <p class="pd-hint pd-hint--internal">{{ t('reply_internal_hint') }}</p> }
                     <textarea class="pd-input pd-textarea" rows="3" [placeholder]="replyInternal ? t('reply_internal_placeholder') : t('reply_placeholder')" [(ngModel)]="replyBody" [attr.aria-label]="t('reply_placeholder')"></textarea>
                     @if (replyFileError) { <p class="pd-error" role="alert">{{ replyFileError }}</p> }

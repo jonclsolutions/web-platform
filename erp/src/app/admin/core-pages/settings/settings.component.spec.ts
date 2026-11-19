@@ -322,7 +322,7 @@ describe('SettingsComponent', () => {
     editor.dirtyChange.emit(true);
     fixture.detectChanges();
     expect(component.ptIsDirty).toBeTrue();
-    expect(fixture.nativeElement.querySelector('.ws-tab-dot')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.rbb-dot')).not.toBeNull();
 
     component.switchTab('company');
     fixture.detectChanges();

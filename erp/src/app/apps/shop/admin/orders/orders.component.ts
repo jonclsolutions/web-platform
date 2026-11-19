@@ -10,6 +10,7 @@
  * - ConfirmDialogService: Facilitates user confirmation for sensitive deletions.
  * - Core Providers: Handles API communication and dependency injection.
  * - Config.create* factory functions: i18n-aware definitions.
+ * - RowButtonBuilderComponent (SHARED_UI_BUILDERS): the tabs all / pending tasks / trash.
  * - EmailTemplateEditorComponent: texts of the order confirmation e-mail (toolbar "Edit
  *   confirmation e-mail", API shop/settings/order-email-template, languages of the e-shop).
  */
@@ -23,6 +24,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
 import * as Config from './orders.config';
+import { RowButton, RowButtonItems } from '../../../../admin/components/builders/row-button-builder/row-button';
 import { Order, OrderItem, Product, ProductVariant, PaymentMethod, ShippingMethod, Coupon } from './';
 import { GraphBuilderComponent } from '../../../../admin/components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
@@ -90,7 +92,9 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   trashOrderColumns: Core.ColumnDefinition[] = [];
   toolbarButtons: Core.Button[] = [];
 
-  private orderTabButtons: Core.Button[] = [];
+  private orderTabButtons: Config.OrderTab[] = [];
+  /** Stable buttons of the table tabs. */
+  private readonly tabButtons = new RowButtonItems();
 
   graphColumns: GraphColumnOption[] = [];
 
@@ -129,17 +133,13 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   }
 
   /**
-   * @returns Map of tab configurations with active state synchronized to current
-   * table mode, filtered by permission.
+   * @description Tabs of the table (row button builder); a tab without its permission is hidden.
+   * @returns Tabs all / pending tasks / trash.
    */
-  get tabButtonsConfigs(): Core.Button[] {
-    return this.orderTabButtons.map(btn => {
-      const updatedBtn = { ...btn, isActive: this.currentMode === btn.action };
-      if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
-        updatedBtn.showIf = false;
-      }
-      return updatedBtn;
-    });
+  get tabItems(): RowButton[] {
+    return this.tabButtons.update(this.orderTabButtons.map(({ permission, ...tab }) => ({
+      ...tab, hidden: !!permission && !this.permissionService.hasPermission(permission),
+    })));
   }
 
   /**

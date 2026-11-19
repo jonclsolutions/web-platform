@@ -40,7 +40,7 @@
 /*
     @module: Toolbar
     @description: Today button, month arrows, month name, module filter and the view switch.
-    @usage: .cal-toolbar, .cal-nav, .cal-btn, .cal-icon-btn, .cal-month, .cal-filters, .cal-filter(--off), .cal-segmented
+    @usage: .cal-toolbar, .cal-nav, .cal-btn, .cal-icon-btn, .cal-month, .cal-filters, .cal-filter(--off); the view switch is the shared row button builder
 */
 .cal-toolbar {
   display: flex;
@@ -56,8 +56,7 @@
 
 .cal-btn,
 .cal-icon-btn,
-.cal-filter,
-.cal-segmented button {
+.cal-filter {
   font-family: var(--ff, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif);
   cursor: pointer;
   transition: background var(--ease, 0.18s ease), color var(--ease, 0.18s ease), border-color var(--ease, 0.18s ease);
@@ -124,33 +123,9 @@
 .cal-filter--off .cal-dot { background: var(--color-zinc-300); }
 .cal-filter--off .cal-filter-count { background: var(--color-zinc-100); color: var(--text-dim, var(--color-zinc-400)); }
 
-.cal-segmented {
-  display: inline-flex;
-  padding: 3px;
-  border-radius: 999px;
-  background: var(--color-zinc-100);
-}
-
-.cal-segmented button {
-  padding: 5px 14px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-muted, var(--color-zinc-500));
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.cal-segmented button.active {
-  background: var(--surface, var(--color-white));
-  color: var(--text, var(--color-zinc-900));
-  box-shadow: 0 1px 3px rgba(24, 24, 27, 0.12);
-}
-
 .cal-btn:focus-visible,
 .cal-icon-btn:focus-visible,
 .cal-filter:focus-visible,
-.cal-segmented button:focus-visible,
 .cal-day:focus-visible,
 .cal-chip:focus-visible,
 .cal-row:focus-visible,

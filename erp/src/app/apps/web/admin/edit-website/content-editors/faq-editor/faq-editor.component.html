@@ -50,20 +50,7 @@
 
       <div class="ce-i18n-bar">
         <span class="ce-i18n-bar-label">{{ strings.language_label }}</span>
-        <div class="ce-lang-tabs">
-          @for (l of languages; track l.code) {
-            <button type="button" class="ce-lang-tab" [class.active]="lang === l.code" (click)="switchLang(l.code)"
-                    [title]="missingCount(l.code) ? strings.missing_badge_title : ''">
-              @if (l.iconUrl) {
-                <img [src]="l.iconUrl" class="ce-lang-icon" [alt]="l.code">
-              }
-              {{ l.code | uppercase }}
-              @if (missingCount(l.code); as count) {
-                <span class="ce-missing-count">{{ count }}</span>
-              }
-            </button>
-          }
-        </div>
+        <app-row-button-builder size="sm" [items]="langItems" [active]="lang" [ariaLabel]="strings.language_label" (selected)="switchLang($event)" />
       </div>
 
       @if (missingWarning) {

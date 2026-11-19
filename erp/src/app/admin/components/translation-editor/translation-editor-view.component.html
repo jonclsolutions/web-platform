@@ -14,18 +14,8 @@
 
 <!-- Page tabs: the texts, the browser page titles and the extra tabs of the application -->
 <div class="ew-page-head">
-  <div class="ew-page-tabs" role="tablist" [attr.aria-label]="e.t('tabs_label')">
-    @for (tab of e.tabs; track tab.key) {
-      <button type="button" role="tab" class="ew-page-tab" [class.active]="e.activeTab === tab.key"
-              [attr.aria-selected]="e.activeTab === tab.key" (click)="e.switchTab(tab.key)">
-        <app-admin-icon [name]="tab.icon" [size]="14"></app-admin-icon>
-        {{ e.t(tab.labelKey) }}
-        @if (e.isTabDirty(tab.key)) {
-          <span class="ew-page-tab-dot" aria-hidden="true"></span>
-        }
-      </button>
-    }
-  </div>
+  <app-row-button-builder class="ew-page-tabs" kind="tabs" [stretch]="true" [items]="e.tabItems" [active]="e.activeTab"
+                          [ariaLabel]="e.t('tabs_label')" (selected)="e.switchTab($event)" />
 </div>
 
 <!-- Every tab stays created once opened and is only hidden - unsaved edits survive a tab switch. -->

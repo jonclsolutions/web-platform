@@ -144,44 +144,6 @@
   white-space: nowrap;
 }
 
-.pt-lang-tabs {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-}
-
-.pt-lang-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 12px;
-  font-size: 0.74rem;
-  font-weight: 700;
-  font-family: inherit;
-  letter-spacing: 0.02em;
-  color: var(--color-zinc-600);
-  background: var(--color-white);
-  border: 1px solid var(--color-zinc-200);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.pt-lang-tab:hover { border-color: var(--color-zinc-400); color: var(--color-zinc-900); }
-
-.pt-lang-tab.active {
-  background: var(--color-zinc-900);
-  border-color: var(--color-zinc-900);
-  color: var(--color-white);
-}
-
-.pt-lang-icon {
-  width: 13px;
-  height: 13px;
-  border-radius: 3px;
-  object-fit: cover;
-}
-
 /* ── Browser-tab preview ─────────────────────────────────────── */
 .pt-preview {
   display: flex;

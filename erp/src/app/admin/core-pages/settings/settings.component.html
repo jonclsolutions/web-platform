@@ -11,51 +11,8 @@
   <app-page-header [title]="strings.page_title" [subtitle]="strings.page_subtitle"></app-page-header>
 
   <!-- Page tabs: Company details / Page titles / Data retention -->
-  <div class="ws-tabs" role="tablist" [attr.aria-label]="strings.tabs_label">
-    <button
-      type="button"
-      role="tab"
-      class="ws-tab"
-      [class.active]="activeTab === 'company'"
-      [attr.aria-selected]="activeTab === 'company'"
-      (click)="switchTab('company')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M6 22V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v18"/>
-        <path d="M2 22h20"/>
-        <path d="M9 6h.01"/><path d="M15 6h.01"/>
-        <path d="M9 10h.01"/><path d="M15 10h.01"/>
-      </svg>
-      {{ strings.tab_company }}
-    </button>
-    <button
-      type="button"
-      role="tab"
-      class="ws-tab"
-      [class.active]="activeTab === 'page_titles'"
-      [attr.aria-selected]="activeTab === 'page_titles'"
-      (click)="switchTab('page_titles')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="2" y="4" width="20" height="16" rx="2"/>
-        <path d="M2 9h20"/>
-      </svg>
-      {{ strings.tab_page_titles }}
-      @if (ptIsDirty) {
-        <span class="ws-tab-dot" aria-hidden="true"></span>
-      }
-    </button>
-    <button
-      type="button"
-      role="tab"
-      class="ws-tab"
-      [class.active]="activeTab === 'retention'"
-      [attr.aria-selected]="activeTab === 'retention'"
-      (click)="switchTab('retention')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-      </svg>
-      {{ strings.tab_retention }}
-    </button>
-  </div>
+  <app-row-button-builder kind="tabs" [stretch]="true" [items]="tabItems" [active]="activeTab"
+                          [ariaLabel]="strings.tabs_label" (selected)="switchTab($any($event))" />
 
   <!-- Data retention tab (GDPR retention periods) - own component, loads when opened -->
   @if (activeTab === 'retention') {
@@ -214,20 +171,8 @@
                 </svg>
                 {{ strings.i18n_bar_label }}
               </span>
-              <div class="ws-mini-lang-tabs">
-                @for (lang of languages; track lang.code) {
-                  <button
-                    type="button"
-                    class="ws-mini-lang-tab"
-                    [class.active]="currentLang === lang.code"
-                    (click)="switchLang(lang.code)">
-                    @if (lang.iconUrl) {
-                      <img [src]="lang.iconUrl" class="ws-mini-lang-icon" [alt]="lang.code">
-                    }
-                    {{ lang.code | uppercase }}
-                  </button>
-                }
-              </div>
+              <app-row-button-builder size="sm" [items]="langItems" [active]="currentLang"
+                                      [ariaLabel]="strings.i18n_bar_label" (selected)="switchLang($event)" />
             </div>
           }
 

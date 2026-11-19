@@ -26,14 +26,7 @@
 } @else {
 
 @if (languages.length > 1) {
-<div class="email-tpl-lang-tabs">
-@for (lang of languages; track lang.code) {
-<button type="button" class="email-tpl-lang-tab" [class.active]="currentLang === lang.code"
-        (click)="switchLang(lang.code)">
-{{ lang.code | uppercase }}
-</button>
-        }
-</div>
+<app-row-button-builder class="email-tpl-lang-tabs" size="sm" [items]="langItems" [active]="currentLang" (selected)="switchLang($event)" />
       }
 
 <div class="email-tpl-field">

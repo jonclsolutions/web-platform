@@ -12,10 +12,7 @@
   <div class="pd-card-head">
     <div class="pd-card-head-title">
       <h2 class="pd-card-title" id="pd-approvals-title">{{ t('section_approvals') }}</h2>
-      <div class="pd-segment" role="group">
-        <button type="button" [class.active]="filter === 'open'" [attr.aria-pressed]="filter === 'open'" (click)="filter = 'open'">{{ t('approvals_filter_open') }} ({{ openCount }})</button>
-        <button type="button" [class.active]="filter === 'all'" [attr.aria-pressed]="filter === 'all'" (click)="filter = 'all'">{{ t('approvals_filter_all') }} ({{ approvals.length }})</button>
-      </div>
+      <app-row-button-builder size="sm" [items]="filterItems" [active]="filter" [ariaLabel]="t('section_approvals')" (selected)="filter = $any($event)" />
     </div>
     @if (canEdit && formMode !== 'add') {
       <div class="pd-card-head-actions">

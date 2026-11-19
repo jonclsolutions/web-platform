@@ -17,6 +17,7 @@
  * - DataHandler (GET core/agenda, POST / PUT / DELETE core/calendar-events), AdminLocalizationService
  *   (section `calendar`, date locale), ConfirmDialogService (delete), Router (opening an item).
  * - APPS (apps.registry): the applications - order of the filter and colour (manifest `color`).
+ * - RowButtonBuilderComponent: the month / list view switch.
  */
 
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
@@ -28,6 +29,8 @@ import { DataHandler } from '../../../core/services/data-handler.service';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { RowButtonBuilderComponent } from '../../components/builders/row-button-builder/row-button-builder.component';
+import { RowButton, RowButtonItems } from '../../components/builders/row-button-builder/row-button';
 import { APPS } from '../../../apps/apps.registry';
 
 /** Module of an item (colour and filter): `personal` (own events of the admin), the id of an
@@ -131,7 +134,7 @@ export function parseIsoDate(iso: string): Date {
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, PageHeaderComponent],
+  imports: [CommonModule, FormsModule, RouterLink, PageHeaderComponent, RowButtonBuilderComponent],
   templateUrl: './calendar.component.html',
   styleUrls: ['../../shared-styles/dashboard.css', './calendar.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -333,6 +336,17 @@ export class CalendarComponent implements OnInit {
       return;
     }
     this.cd.markForCheck();
+  }
+
+  /** Stable buttons of the view switch. */
+  private readonly viewButtons = new RowButtonItems();
+
+  /** @description View switch: month / list. */
+  get viewItems(): RowButton[] {
+    return this.viewButtons.update([
+      { value: 'month', label: this.t('view_month'), icon: 'calendar' },
+      { value: 'list', label: this.t('view_list'), icon: 'list' },
+    ]);
   }
 
   /** @description Month / list view. */

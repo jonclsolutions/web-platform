@@ -9,6 +9,7 @@
  *   language; add, reorder, move a question to another category, remove - saved at once.
  * @usage `<app-faq-editor (dirtyChange)="faqDirty = $event"></app-faq-editor>`
  * @dependencies
+ * - RowButtonBuilderComponent: the language tabs.
  * - I18nContentEditorBase (languages, save / discard, missing translations).
  */
 
@@ -18,11 +19,12 @@ import { FormsModule } from '@angular/forms';
 import { StickyBarDirective } from '../../../../../../shared/directives/sticky-bar.directive';
 import { I18nContentEditorBase } from '../i18n-content-editor.base';
 import { CheckedText, FaqCategoryDraft, FaqItemDraft } from '../content-editor.model';
+import { RowButtonBuilderComponent } from '../../../../../../admin/components/builders/row-button-builder/row-button-builder.component';
 
 @Component({
   selector: 'app-faq-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, StickyBarDirective],
+  imports: [CommonModule, FormsModule, StickyBarDirective, RowButtonBuilderComponent],
   templateUrl: './faq-editor.component.html',
   styleUrl: '../content-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

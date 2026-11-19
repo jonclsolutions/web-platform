@@ -12,8 +12,8 @@
 
 /*
     @module: Header and filter
-    @description: Intro, running version beside the help, area buttons.
-    @usage: .rl-current (in app-page-header), .rl-filter > .rl-chip(--active)
+    @description: Running version beside the help, area buttons (shared row button builder).
+    @usage: .rl-current (in app-page-header), .rl-filter (row button builder)
 */
 
 .rl-current {
@@ -25,32 +25,7 @@
 .rl-current strong { color: var(--color-zinc-900); }
 
 .rl-filter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
   margin-bottom: 16px;
-}
-
-.rl-chip {
-  padding: 6px 13px;
-  border: 1px solid var(--color-zinc-200);
-  border-radius: 999px;
-  background: var(--color-white);
-  color: var(--color-zinc-700, #3f3f46);
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.rl-chip:hover,
-.rl-chip:focus-visible { background: var(--color-zinc-100); }
-
-.rl-chip--active,
-.rl-chip--active:hover {
-  border-color: var(--color-zinc-900);
-  background: var(--color-zinc-900);
-  color: var(--color-white);
 }
 
 /*

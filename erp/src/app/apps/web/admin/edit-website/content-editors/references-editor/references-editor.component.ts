@@ -19,6 +19,7 @@
  *   stored by the API as WebP (scaled down, metadata dropped). With an image the website shows the key features in one column and the image next
  *   to them.
  * @dependencies
+ * - RowButtonBuilderComponent: the language tabs.
  * - I18nContentEditorBase (languages, save / discard, missing translations).
  * - PublicDataService (URL of the image on the public storage), AlertDialogService.
  */
@@ -32,6 +33,7 @@ import { I18nContentEditorBase } from '../i18n-content-editor.base';
 import { CheckedText, ReferenceDraft, ReferenceFeatureDraft, ReferenceStackDraft } from '../content-editor.model';
 import { PublicDataService } from '../../../../../../shared/services/public-data.service';
 import { AlertDialogService } from '../../../../../../core/services/alert-dialog.service';
+import { RowButtonBuilderComponent } from '../../../../../../admin/components/builders/row-button-builder/row-button-builder.component';
 
 /** @description Accepted image types (WebReferenceController: mimes jpg, jpeg, png, webp). */
 export const REFERENCE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -42,7 +44,7 @@ export const REFERENCE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 @Component({
   selector: 'app-references-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, StickyBarDirective],
+  imports: [CommonModule, FormsModule, StickyBarDirective, RowButtonBuilderComponent],
   templateUrl: './references-editor.component.html',
   styleUrl: '../content-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

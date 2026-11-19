@@ -74,20 +74,7 @@
             </svg>
             {{ strings.pt_language_label }}
           </span>
-          <div class="pt-lang-tabs">
-            @for (l of languages; track l.code) {
-              <button
-                type="button"
-                class="pt-lang-tab"
-                [class.active]="lang === l.code"
-                (click)="switchLang(l.code)">
-                @if (l.iconUrl) {
-                  <img [src]="l.iconUrl" class="pt-lang-icon" [alt]="l.code">
-                }
-                {{ l.code | uppercase }}
-              </button>
-            }
-          </div>
+          <app-row-button-builder size="sm" [items]="langItems" [active]="lang" [ariaLabel]="strings.pt_language_label" (selected)="switchLang($event)" />
         </div>
       }
 

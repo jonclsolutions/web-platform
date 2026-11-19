@@ -1,5 +1,12 @@
 {
-    "unreleased": [],
+    "unreleased": [
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Tabs, filters and language switches of the administration have one look: a grey bar with icon buttons, the selected one white (settings, releases, calendar, legal documents, translation and content editors, project page, orders)."
+        }
+    ],
     "releases": [
         {
             "version": "v2026.11.2",

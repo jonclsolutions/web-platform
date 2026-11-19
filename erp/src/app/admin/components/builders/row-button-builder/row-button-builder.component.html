@@ -1,0 +1,47 @@
+<!--
+    @file: row-button-builder.component.html
+    @path: src/app/admin/components/builders/row-button-builder/row-button-builder.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Row of buttons: buttons (tabs / filter) or links (nav), each with an icon or a
+        flag, the text, an optional number and dot.
+-->
+<ng-template #content let-item>
+  @if (item.icon) {
+    <app-admin-icon [name]="item.icon" [size]="size === 'sm' ? 13 : 14" />
+  } @else if (item.imageUrl) {
+    <img class="rbb-image" [src]="item.imageUrl" alt="">
+  }
+  <span class="rbb-label">{{ item.label }}</span>
+  @if (item.count !== null && item.count !== undefined) {
+    <span class="rbb-count" [class.rbb-count--attention]="item.countTone === 'attention'">{{ item.count }}</span>
+  }
+  @if (item.dot) {
+    <span class="rbb-dot" aria-hidden="true"></span>
+  }
+</ng-template>
+
+@if (kind === 'nav') {
+  <nav class="rbb" [class.rbb--sm]="size === 'sm'" [class.rbb--stretch]="stretch" [attr.aria-label]="ariaLabel || null">
+    @for (item of visibleItems; track item.value) {
+      <a class="rbb-btn" [class.active]="isActive(item)" [class.rbb-btn--danger]="item.tone === 'danger'" [class.rbb-btn--attention]="item.tone === 'attention'"
+         [routerLink]="item.link ?? null" [attr.aria-current]="isActive(item) ? 'page' : null" [attr.title]="item.title || null">
+        <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: item }"></ng-container>
+      </a>
+    }
+  </nav>
+} @else {
+  <div class="rbb" [class.rbb--sm]="size === 'sm'" [class.rbb--stretch]="stretch"
+       [attr.role]="kind === 'tabs' ? 'tablist' : 'group'" [attr.aria-label]="ariaLabel || null">
+    @for (item of visibleItems; track item.value) {
+      <button type="button" class="rbb-btn" [class.active]="isActive(item)" [class.rbb-btn--danger]="item.tone === 'danger'" [class.rbb-btn--attention]="item.tone === 'attention'"
+              [attr.role]="kind === 'tabs' ? 'tab' : null"
+              [attr.aria-selected]="kind === 'tabs' ? isActive(item) : null"
+              [attr.aria-pressed]="kind === 'filter' ? isActive(item) : null"
+              [attr.title]="item.title || null" [disabled]="item.disabled" (click)="select(item)">
+        <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: item }"></ng-container>
+      </button>
+    }
+  </div>
+}

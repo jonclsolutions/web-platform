@@ -34,104 +34,6 @@
   white-space: nowrap;
 }
 
-.legal-tabs {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.legal-tab {
-  padding: 8px 18px;
-  font-size: 0.84rem;
-  font-weight: 600;
-  border: 1px solid var(--color-zinc-200);
-  background: var(--color-zinc-100);
-  color: var(--color-zinc-700);
-  border-radius: 999px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.15s ease;
-}
-
-.legal-tab:hover {
-  background: var(--color-sand-200);
-  border-color: var(--color-zinc-300);
-}
-
-.legal-tab.active {
-  background: var(--color-zinc-900);
-  border-color: var(--color-zinc-900);
-  color: var(--color-white);
-}
-
-.lang-tabs {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  padding: 10px 12px;
-  background: var(--color-zinc-50);
-  border: 1px solid var(--color-sand-200);
-  border-radius: 14px;
-}
-
-.lang-tab {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 13px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-zinc-600);
-  background: var(--color-white);
-  border: 1px solid var(--color-zinc-200);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.lang-tab:hover {
-  border-color: var(--color-zinc-400);
-  color: var(--color-zinc-900);
-}
-
-.lang-tab.active {
-  background: var(--color-zinc-900);
-  border-color: var(--color-zinc-900);
-  color: var(--color-white);
-}
-
-.lang-tab.has-warning:not(.active) {
-  border-color: #fcd34d;
-  color: var(--color-amber-700);
-}
-
-.lang-tab-icon {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.lang-tab-name {
-  line-height: 1;
-}
-
-.lang-tab-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--color-amber-500);
-  flex-shrink: 0;
-}
-
-.lang-tab.active .lang-tab-dot {
-  background: var(--color-amber-200);
-}
-
 .missing-banner {
   display: flex;
   align-items: flex-start;
@@ -547,10 +449,6 @@
 
   .edit-textarea {
     min-height: 100px;
-  }
-
-  .lang-tabs {
-    padding: 8px 10px;
   }
 
   .missing-banner {

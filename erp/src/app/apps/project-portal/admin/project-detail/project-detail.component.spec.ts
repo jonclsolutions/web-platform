@@ -1346,11 +1346,11 @@ describe('ProjectDetailComponent', () => {
       expect(el.querySelector('app-page-header h1')!.textContent).toContain('Shop');
       expect(el.querySelector('.pd-chip--unread')).not.toBeNull();
       expect(el.querySelector('app-page-header .ph-subtitle--rich')!.textContent).toContain('Jana');
-      const tabs = Array.from(el.querySelectorAll('.pd-tab')) as HTMLAnchorElement[];
+      const tabs = Array.from(el.querySelectorAll('.pd-tabs .rbb-btn')) as HTMLAnchorElement[];
       expect(tabs.length).toBe(8);
       expect(tabs[1].getAttribute('href')).toBe('/admin/project-portal/projects/7/conversations');
       expect(tabs[0].getAttribute('aria-current')).toBe('page');
-      expect(tabs[1].querySelector('.pd-tab-badge')!.textContent).toContain('3');
+      expect(tabs[1].querySelector('.rbb-count')!.textContent).toContain('3');
       expect(el.querySelectorAll('.pd-activity-item').length).toBe(2);
 
       go('conversations');

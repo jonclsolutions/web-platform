@@ -87,7 +87,7 @@ describe('FaqEditorComponent', () => {
     expect(component.entries.map(c => component.missingIn(c))).toEqual([2, 1]);
     expect(fixture.nativeElement.querySelectorAll('.ce-input--missing').length).toBe(2);
     expect(fixture.nativeElement.querySelector('.ce-warning')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('.ce-lang-tab .ce-missing-count')?.textContent.trim()).toBe('3');
+    expect(fixture.nativeElement.querySelector('.rbb-btn .rbb-count--attention')?.textContent.trim()).toBe('3');
   });
 
   /**
@@ -222,7 +222,7 @@ describe('FaqEditorComponent', () => {
     fixture.detectChanges();
     expect(component.languages.map(l => l.code)).toEqual(['cz']);
     expect(component.lang).toBe('cz');
-    expect(fixture.nativeElement.querySelectorAll('.ce-lang-tab').length).toBe(1);
+    expect(fixture.nativeElement.querySelectorAll('.ce-i18n-bar .rbb-btn').length).toBe(1);
     // The texts of the deleted language are gone (also from the saved state), other edits stay.
     expect(component.entries[0].name_i18n).toEqual({ cz: 'Obecné' });
     expect(component.entries[0].items[0].answer_i18n).toEqual({ cz: 'A1' });

@@ -23,7 +23,7 @@
  * @dependencies DataHandler (project-portal/projects, …/projects/:id/accounts, …/projects/:id/files,
  *   …/projects/assignees, project-portal/project-threads), AdminLocalizationService, PermissionService
  *   (project-portal-projects-update), AlertDialogService, ConfirmDialogService, UploadRulesService (profile
- *   project_thread), Router.
+ *   project_thread), Router, RowButtonBuilderComponent (tabs, thread filter, reply mode).
  */
 
 import {
@@ -45,6 +45,9 @@ import { UploadRule, extensionsLabel, fileExtension, isExtensionAllowed } from '
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 import { StickyBarDirective } from '../../../../shared/directives/sticky-bar.directive';
 import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
+import { RowButtonBuilderComponent } from '../../../../admin/components/builders/row-button-builder/row-button-builder.component';
+import { RowButton, RowButtonItems } from '../../../../admin/components/builders/row-button-builder/row-button';
+import { AdminIconName } from '../../../../admin/components/admin-icon/admin-icon.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import * as Config from '../projects/projects.config';
 import { ProjectApprovalsSectionComponent } from './project-approvals-section.component';
@@ -155,6 +158,17 @@ export type ProjectSection = 'overview' | 'conversations' | 'progress' | 'approv
 /** @description Sub-pages in the order of the tabs. */
 export const PROJECT_SECTIONS: ProjectSection[] = ['overview', 'conversations', 'progress', 'approvals', 'updates', 'access', 'files', 'settings'];
 
+/** Icons of the tabs of the project page. */
+const SECTION_ICONS: Record<ProjectSection, AdminIconName> = {
+  overview: 'layout', conversations: 'message', progress: 'check-square', approvals: 'shield-check',
+  updates: 'file-text', access: 'users', files: 'folder', settings: 'settings',
+};
+
+/** Filters of the thread list in their order, with icons. */
+const THREAD_FILTERS: { value: ThreadFilter; icon: AdminIconName }[] = [
+  { value: 'active', icon: 'message' }, { value: 'mine', icon: 'user' }, { value: 'closed', icon: 'check-circle' }, { value: 'all', icon: 'layers' },
+];
+
 /** @description Attachment of a thread message. */
 export interface ProjectAttachment {
   id: number;
@@ -213,7 +227,7 @@ const PROJECTS_ENDPOINT = 'project-portal/projects';
   selector: 'app-project-detail',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, RouterLink, StickyBarDirective, PageHeaderComponent, IconComponent,
+    CommonModule, FormsModule, RouterLink, StickyBarDirective, PageHeaderComponent, IconComponent, RowButtonBuilderComponent,
     ProjectApprovalsSectionComponent, ProjectUpdatesSectionComponent,
   ],
   templateUrl: './project-detail.component.html',
@@ -1187,6 +1201,39 @@ export class ProjectDetailComponent implements OnInit {
     });
   }
 
+  /** Stable buttons of the tabs, the thread filter and the reply mode. */
+  private readonly sectionButtons = new RowButtonItems();
+  private readonly threadFilterButtons = new RowButtonItems();
+  private readonly replyModeButtons = new RowButtonItems();
+
+  /** @description Tabs of the project page (links to the sub-pages) with icon and badge. */
+  get sectionItems(): RowButton[] {
+    return this.sectionButtons.update(this.sections.map(item => ({
+      value: item, label: this.sectionLabel(item), icon: SECTION_ICONS[item],
+      link: ['/admin/project-portal/projects', this.projectId, item],
+      count: this.sectionBadge(item) > 0 ? this.sectionBadge(item) : null, countTone: 'attention' as const,
+    })));
+  }
+
+  /** @description Filter of the thread list with the number of threads. */
+  get threadFilterItems(): RowButton[] {
+    return this.threadFilterButtons.update(THREAD_FILTERS.map(filter => ({
+      value: filter.value, label: this.t('detail_threads_' + filter.value), icon: filter.icon, count: this.threadCount(filter.value),
+    })));
+  }
+
+  /** @description Reply mode: to the client / internal note (amber). */
+  get replyModeItems(): RowButton[] {
+    return this.replyModeButtons.update([
+      { value: 'client', label: this.t('reply_mode_client'), icon: 'message' },
+      { value: 'internal', label: this.t('reply_mode_internal'), icon: 'lock', tone: 'attention' },
+    ]);
+  }
+
+  /**
+   * @description Filter of the thread list.
+   * @param filter Filter.
+   */
   setThreadFilter(filter: ThreadFilter): void {
     this.threadFilter = filter;
     this.cd.markForCheck();

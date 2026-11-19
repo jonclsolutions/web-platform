@@ -11,7 +11,7 @@
  *   approval notifications on get an e-mail), changes a pending one, asks again after changes,
  *   cancels or deletes one without a decision.
  * @dependencies DataHandler (project-portal/projects/:id/approvals), AdminLocalizationService, ConfirmDialogService,
- *   UploadRulesService (project_thread), project-files.util
+ *   UploadRulesService (project_thread), project-files.util, RowButtonBuilderComponent (filter)
  */
 
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
@@ -25,6 +25,8 @@ import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.s
 import { UploadRulesService } from '../../../../shared/services/upload-rules.service';
 import { UploadRule } from '../../../../shared/utils/upload-rules';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
+import { RowButtonBuilderComponent } from '../../../../admin/components/builders/row-button-builder/row-button-builder.component';
+import { RowButton, RowButtonItems } from '../../../../admin/components/builders/row-button-builder/row-button';
 import { formatProjectFileSize, pickProjectFiles } from './project-files.util';
 
 /** @description Approval request (API WebProjectApprovalResource). */
@@ -54,7 +56,7 @@ export interface ApprovalDraft {
 @Component({
   selector: 'app-project-approvals-section',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent],
+  imports: [CommonModule, FormsModule, IconComponent, RowButtonBuilderComponent],
   templateUrl: './project-approvals-section.component.html',
   styleUrls: ['./project-detail.component.css', './project-sections.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -115,6 +117,17 @@ export class ProjectApprovalsSectionComponent implements OnInit {
   /** @description Number of open requests (filter label). */
   get openCount(): number {
     return this.approvals.filter(a => a.status === 'pending' || a.status === 'changes_requested').length;
+  }
+
+  /** Stable buttons of the filter. */
+  private readonly filterButtons = new RowButtonItems();
+
+  /** @description Filter: open / all requests with their number. */
+  get filterItems(): RowButton[] {
+    return this.filterButtons.update([
+      { value: 'open', label: this.t('approvals_filter_open'), icon: 'clock', count: this.openCount },
+      { value: 'all', label: this.t('approvals_filter_all'), icon: 'layers', count: this.approvals.length },
+    ]);
   }
 
   /** @description Loads the requests (newest first). */

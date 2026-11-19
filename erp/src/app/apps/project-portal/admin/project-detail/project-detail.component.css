@@ -120,7 +120,7 @@
 
 /*
     @module: Buttons and inputs
-    @usage: .pd-btn(--primary|--ghost|--warn), .pd-icon-btn, .pd-segment, .pd-input(--sm), .pd-textarea, .pd-label
+    @usage: .pd-btn(--primary|--ghost|--warn), .pd-icon-btn, .pd-input(--sm), .pd-textarea, .pd-label
 */
 .pd-btn {
   display: inline-flex;
@@ -161,31 +161,6 @@
 
 .pd-icon-btn:disabled { opacity: 0.5; }
 
-.pd-segment {
-  display: inline-flex;
-  padding: 3px;
-  border-radius: 999px;
-  background: var(--color-zinc-100);
-}
-
-.pd-segment button {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 11px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-muted, var(--color-zinc-600));
-  font-family: inherit;
-  font-size: 0.76rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.pd-segment button.active { background: var(--surface, var(--color-white)); color: var(--text, var(--color-zinc-900)); box-shadow: 0 1px 2px rgba(24, 24, 27, 0.08); }
-.pd-segment-count { font-size: 0.7rem; opacity: 0.7; }
-
 .pd-label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted, var(--color-zinc-600)); }
 
 .pd-input {
@@ -205,8 +180,8 @@
 .pd-input--sm { width: auto; padding: 5px 8px; font-size: 0.8rem; }
 .pd-textarea { resize: vertical; min-height: 72px; line-height: 1.45; }
 
-.pd-btn:focus-visible, .pd-icon-btn:focus-visible, .pd-back:focus-visible, .pd-thread:focus-visible, .pd-segment button:focus-visible, .pd-cp-status:focus-visible,
-.pd-reply-mode button:focus-visible, .pd-link:focus-visible {
+.pd-btn:focus-visible, .pd-icon-btn:focus-visible, .pd-back:focus-visible, .pd-thread:focus-visible, .pd-cp-status:focus-visible,
+.pd-link:focus-visible {
   outline: 2px solid var(--color-zinc-900);
   outline-offset: 2px;
 }
@@ -559,21 +534,8 @@
 .pd-msg-receipt { margin-top: 6px; font-size: 0.68rem; text-align: right; opacity: 0.6; }
 .pd-msg-receipt--read { opacity: 0.9; color: var(--color-emerald-200); font-weight: 600; }
 
-.pd-reply-mode { display: inline-flex; align-self: flex-start; padding: 3px; border-radius: 10px; background: var(--color-zinc-100); }
-.pd-reply-mode button {
-  padding: 5px 12px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--color-zinc-600);
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.pd-reply-mode button.active { background: var(--color-white); color: var(--color-zinc-900); box-shadow: 0 1px 2px rgba(24, 24, 27, 0.08); }
+.pd-reply-mode { align-self: flex-start; }
 .pd-reply--internal { background: var(--color-amber-50); }
-.pd-reply--internal .pd-reply-mode button.active { color: var(--color-amber-800); }
 .pd-hint--internal { color: var(--color-amber-800); }
 .pd-textarea--internal { background: var(--color-amber-50); border-color: var(--color-amber-200); }
 

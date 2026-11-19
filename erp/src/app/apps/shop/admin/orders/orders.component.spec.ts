@@ -103,18 +103,18 @@ describe('OrdersComponent', () => {
     });
 
     /**
-     * @description Tabs show the active mode; the trash tab needs 'view-deleted'.
+     * @description Tabs with icons; the trash tab (danger) needs 'view-deleted'.
      * @input  currentMode 'pending_tasks'; granted []
-     * @output pending_tasks isActive; trash showIf false
+     * @output icons box / clock / trash (danger); trash hidden, the others shown
      */
     it('builds the tabs', () => {
       component.currentMode = 'pending_tasks';
       ctx.permissions.granted = new Set();
-      const tabs = Object.fromEntries(component.tabButtonsConfigs.map(b => [b.action, b]));
-      expect(tabs['pending_tasks'].isActive).toBeTrue();
-      expect(tabs['all'].isActive).toBeFalse();
-      expect(tabs['trash'].showIf).toBeFalse();
-      expect(tabs['all'].showIf).toBeUndefined();
+      const tabs = Object.fromEntries(component.tabItems.map(b => [b.value, b]));
+      expect([tabs['all'].icon, tabs['pending_tasks'].icon, tabs['trash'].icon]).toEqual(['box', 'clock', 'trash']);
+      expect(tabs['trash'].tone).toBe('danger');
+      expect(tabs['trash'].hidden).toBeTrue();
+      expect(tabs['all'].hidden).toBeFalse();
     });
 
     /**

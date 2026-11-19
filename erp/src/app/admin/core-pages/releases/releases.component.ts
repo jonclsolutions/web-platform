@@ -9,7 +9,8 @@
  *   text, ticket). Filter by area: all, the core or one of the user's applications (`?area=` -
  *   opened that way from the notice after an update). The newest release is expanded.
  * @dependencies ReleaseNotesService (`core/releases`), AdminModulesService (applications of the
- *   user), AdminLocalizationService (section `releases`, names in `admin-layout`), PageHeaderComponent.
+ *   user), AdminLocalizationService (section `releases`, names in `admin-layout`), PageHeaderComponent,
+ *   RowButtonBuilderComponent (area filter).
  * @note No permission - every administrator sees the core and the applications he may open.
  */
 
@@ -19,6 +20,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { AdminModulesService } from '../../admin-modules.service';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { RowButtonBuilderComponent } from '../../components/builders/row-button-builder/row-button-builder.component';
+import { RowButton, RowButtonItems } from '../../components/builders/row-button-builder/row-button';
+import { AdminIconName } from '../../components/admin-icon/admin-icon.component';
 import { appById } from '../../../apps/apps.registry';
 import { Release, ReleaseChange, ReleaseNotesService } from '../../components/releases/release-notes.service';
 
@@ -27,12 +31,14 @@ export interface ReleaseArea {
   /** `all`, `core` or an application id. */
   id: string;
   label: string;
+  /** Icon of the button (layers = all, layout = the core, the icon of an application). */
+  icon: AdminIconName;
 }
 
 @Component({
   selector: 'app-releases',
   standalone: true,
-  imports: [DatePipe, PageHeaderComponent],
+  imports: [DatePipe, PageHeaderComponent, RowButtonBuilderComponent],
   templateUrl: './releases.component.html',
   styleUrls: ['./releases.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -67,10 +73,18 @@ export class ReleasesComponent implements OnInit {
   /** Filter buttons: all, the core, the user's applications. */
   get areas(): ReleaseArea[] {
     return [
-      { id: 'all', label: this.strings['area_all'] },
-      { id: 'core', label: this.i18n.getValue('admin-layout.module_core') },
-      ...this.modules.availableApps().map(app => ({ id: app.id, label: this.i18n.getValue(`admin-layout.${app.nameKey}`) })),
+      { id: 'all', label: this.strings['area_all'], icon: 'layers' },
+      { id: 'core', label: this.i18n.getValue('admin-layout.module_core'), icon: 'layout' },
+      ...this.modules.availableApps().map(app => ({ id: app.id, label: this.i18n.getValue(`admin-layout.${app.nameKey}`), icon: app.icon })),
     ];
+  }
+
+  /** Stable buttons of the area filter. */
+  private readonly areaButtons = new RowButtonItems();
+
+  /** @description Area filter as row buttons (icon + name). */
+  get areaItems(): RowButton[] {
+    return this.areaButtons.update(this.areas.map(a => ({ value: a.id, label: a.label, icon: a.icon })));
   }
 
   /** Releases with the changes of the selected area (releases without one are left out). */

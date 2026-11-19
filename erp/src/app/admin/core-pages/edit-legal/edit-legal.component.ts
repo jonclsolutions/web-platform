@@ -10,6 +10,7 @@
  * - ConfirmDialogService: Facilitates secure deletion of content sections.
  * - AlertDialogService: Provides feedback to users after operations.
  * - ResourceCacheService: TTL cache of the document-types / languages / section fetches.
+ * - RowButtonBuilderComponent: tabs of the document types and of the languages.
  * - RxJS: Used for reactive data fetching and cross-language consistency checks.
  */
 
@@ -24,6 +25,8 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { RowButtonBuilderComponent } from '../../components/builders/row-button-builder/row-button-builder.component';
+import { RowButton, RowButtonItems, languageRowButtons } from '../../components/builders/row-button-builder/row-button';
 
 interface DocumentSection {
   id: number;
@@ -48,7 +51,7 @@ interface DocumentTypeItem {
 @Component({
   selector: 'app-edit-legal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, PageHeaderComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, PageHeaderComponent, RowButtonBuilderComponent],
   templateUrl: './edit-legal.component.html',
   styleUrl: './edit-legal.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -285,6 +288,24 @@ protected override translationSection: string = 'edit-legal';
     return this.missingSummary[position] ?? [];
   }
 
+  /** Stable buttons of the document types and of the languages. */
+  private readonly documentTypeButtons = new RowButtonItems();
+  private readonly langButtons = new RowButtonItems();
+
+  /** @description Tabs of the document types (value = id as text). */
+  get documentTypeItems(): RowButton[] {
+    return this.documentTypeButtons.update(this.documentTypes.map(type => ({ value: String(type.id), label: type.title, icon: 'file-text' as const })));
+  }
+
+  /** @description Language tabs: flag, name, amber dot when a section is missing in the language. */
+  get langItems(): RowButton[] {
+    return this.langButtons.update(languageRowButtons(this.languages, {
+      showName: true,
+      dot: code => this.langHasWarning(code),
+      title: code => (this.langHasWarning(code) ? this.strings.lang_tab_warning_title : ''),
+    }));
+  }
+
   langHasWarning(langCode: string): boolean {
     return Object.values(this.missingSummary).some(missing => missing.includes(langCode));
   }
@@ -490,7 +511,4 @@ protected override translationSection: string = 'edit-legal';
     return item.id;
   }
 
-  trackByTypeId(_: number, item: DocumentTypeItem): number {
-    return item.id;
-  }
 }

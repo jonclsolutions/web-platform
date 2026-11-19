@@ -14,7 +14,7 @@
 /*
     @module: Card and language bar
     @description: Same look as the page titles editor (card, header actions, language tabs).
-    @usage: .ce-card, .ce-card-header, .ce-header-actions, .ce-btn, .ce-i18n-bar, .ce-lang-tab
+    @usage: .ce-card, .ce-card-header, .ce-header-actions, .ce-btn, .ce-i18n-bar (language tabs = row button builder)
 */
 :host { display: block; }
 
@@ -145,44 +145,6 @@
   white-space: nowrap;
 }
 
-.ce-lang-tabs {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-}
-
-.ce-lang-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 12px;
-  font-size: 0.74rem;
-  font-weight: 700;
-  font-family: inherit;
-  letter-spacing: 0.02em;
-  color: var(--color-zinc-600);
-  background: var(--color-white);
-  border: 1px solid var(--color-zinc-200);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.ce-lang-tab:hover { border-color: var(--color-zinc-400); color: var(--color-zinc-900); }
-
-.ce-lang-tab.active {
-  background: var(--color-zinc-900);
-  border-color: var(--color-zinc-900);
-  color: var(--color-white);
-}
-
-.ce-lang-icon {
-  width: 13px;
-  height: 13px;
-  border-radius: 3px;
-  object-fit: cover;
-}
-
 /* ── Save / discard - top right of the card header ─────────── */
 /* Save / discard - top right of the card header. */
 .ce-header-actions {
@@ -222,7 +184,7 @@
 
 /*
     @module: Missing translations
-    @description: Count on a language tab / an entry, the warning of the edited language and the
+    @description: Count on an entry, the warning of the edited language and the
       marking of an empty field.
     @usage: .ce-missing-count, .ce-warning, .ce-input--missing, .ce-missing-text
 */

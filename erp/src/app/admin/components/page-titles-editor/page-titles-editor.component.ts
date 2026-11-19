@@ -20,6 +20,7 @@
  * @dependencies
  * - DataHandler: GET / PUT of the endpoint, languages, public configuration.
  * - ResourceCacheService: languages cached 10 minutes.
+ * - RowButtonBuilderComponent: the language tabs.
  * - PermissionService: the update permission.
  * - AdminLocalizationService (redrawn on a switch of the admin language), AlertDialogService.
  */
@@ -38,6 +39,8 @@ import { ResourceCacheService } from '../../../core/services/resource-cache.serv
 import { PermissionService } from '../../../core/auth/services/permission.service';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
+import { RowButtonBuilderComponent } from '../builders/row-button-builder/row-button-builder.component';
+import { RowButton, RowButtonItems, languageRowButtons } from '../builders/row-button-builder/row-button';
 import { environment } from '../../../../environments/environment';
 import { PageTitleArea, PageTitleLang, PageTitleRow, PageTitlesUpdatePayload } from './page-titles.model';
 
@@ -47,7 +50,7 @@ const FALLBACK_LANGUAGES: PageTitleLang[] = [{ code: 'cz', name: 'Čeština', ac
 @Component({
   selector: 'app-page-titles-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, StickyBarDirective],
+  imports: [CommonModule, FormsModule, StickyBarDirective, RowButtonBuilderComponent],
   templateUrl: './page-titles-editor.component.html',
   styleUrl: './page-titles-editor.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -236,6 +239,18 @@ export class PageTitlesEditorComponent implements OnInit {
     return JSON.stringify(row.title_i18n) !== this.snapshot.get(row.id);
   }
 
+  /** Stable buttons of the language tabs. */
+  private readonly langButtons = new RowButtonItems();
+
+  /** @description Language tabs (flag + upper-case code). */
+  get langItems(): RowButton[] {
+    return this.langButtons.update(languageRowButtons(this.languages));
+  }
+
+  /**
+   * @description Switches the language of the edited titles.
+   * @param code Language code.
+   */
   switchLang(code: string): void {
     this.lang = code;
     this.cd.markForCheck();

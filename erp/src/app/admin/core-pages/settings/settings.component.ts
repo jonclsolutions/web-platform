@@ -12,6 +12,7 @@
  * - BaseDataComponent: Provides base CRUD and state management.
  * - ConfirmDialogService: Orchestrates user confirmation for destructive actions (e.g., deleting social links).
  * - ResourceCacheService: TTL cache of the languages (10 min) / settings (2 min) fetch.
+ * - RowButtonBuilderComponent: the page tabs and the language tabs.
  * @note After EVERY successful mutation the cache key `settings:all` is invalidated
  * explicitly BEFORE `loadAll()` is called.
  */
@@ -29,11 +30,13 @@ import { CompanyOptionalField, LangMeta, SiteSetting, SocialLink } from './'
 import { RetentionSettingsComponent } from './retention-settings/retention-settings.component';
 import { PageTitlesEditorComponent } from '../../components/page-titles-editor/page-titles-editor.component';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { RowButtonBuilderComponent } from '../../components/builders/row-button-builder/row-button-builder.component';
+import { RowButton, RowButtonItems, languageRowButtons } from '../../components/builders/row-button-builder/row-button';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RetentionSettingsComponent, PageTitlesEditorComponent, PageHeaderComponent, StickyBarDirective],
+  imports: [CommonModule, FormsModule, RetentionSettingsComponent, PageTitlesEditorComponent, PageHeaderComponent, RowButtonBuilderComponent, StickyBarDirective],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -148,6 +151,28 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit 
     this.cd.markForCheck();
   }
 
+  /** Stable buttons of the page tabs and of the language tabs. */
+  private readonly tabButtons = new RowButtonItems();
+  private readonly langButtons = new RowButtonItems();
+
+  /** @description Page tabs: Company details, Page titles (dot = unsaved), Data retention. */
+  get tabItems(): RowButton[] {
+    return this.tabButtons.update([
+      { value: 'company', label: this.strings.tab_company, icon: 'building' },
+      { value: 'page_titles', label: this.strings.tab_page_titles, icon: 'window', dot: this.ptIsDirty },
+      { value: 'retention', label: this.strings.tab_retention, icon: 'clock' },
+    ]);
+  }
+
+  /** @description Language tabs of the translated fields. */
+  get langItems(): RowButton[] {
+    return this.langButtons.update(languageRowButtons(this.languages));
+  }
+
+  /**
+   * @description Switches the language of the translated fields.
+   * @param code Language code.
+   */
   switchLang(code: string): void {
     if (this.currentLang === code) return;
     this.currentLang = code;

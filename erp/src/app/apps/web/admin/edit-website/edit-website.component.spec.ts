@@ -288,7 +288,7 @@ describe('EditWebsiteComponent', () => {
     fixture.detectChanges();
     flush();
     const el: HTMLElement = fixture.nativeElement;
-    const tabs = () => el.querySelectorAll('.ew-page-tab') as NodeListOf<HTMLButtonElement>;
+    const tabs = () => el.querySelectorAll('.ew-page-tabs .rbb-btn') as NodeListOf<HTMLButtonElement>;
     expect(tabs().length).toBe(5);
     expect(el.querySelector('app-page-titles-editor')).toBeNull();
 
@@ -303,7 +303,7 @@ describe('EditWebsiteComponent', () => {
 
     editor.dirtyChange.emit(true);
     fixture.detectChanges();
-    expect(tabs()[1].querySelector('.ew-page-tab-dot')).not.toBeNull();
+    expect(tabs()[1].querySelector('.rbb-dot')).not.toBeNull();
 
     tabs()[0].click();
     fixture.detectChanges();
@@ -327,7 +327,7 @@ describe('EditWebsiteComponent', () => {
     fixture.detectChanges();
     flush();
     const el: HTMLElement = fixture.nativeElement;
-    const tabs = () => el.querySelectorAll('.ew-page-tab') as NodeListOf<HTMLButtonElement>;
+    const tabs = () => el.querySelectorAll('.ew-page-tabs .rbb-btn') as NodeListOf<HTMLButtonElement>;
     expect(el.querySelector('app-faq-editor')).toBeNull();
     expect(el.querySelector('app-jobs-editor')).toBeNull();
 
@@ -343,8 +343,8 @@ describe('EditWebsiteComponent', () => {
     const jobs = fixture.debugElement.query(By.directive(JobsEditorComponent)).componentInstance as JobsEditorComponent;
     jobs.dirtyChange.emit(true);
     fixture.detectChanges();
-    expect(tabs()[3].querySelector('.ew-page-tab-dot')).not.toBeNull();
-    expect(tabs()[2].querySelector('.ew-page-tab-dot')).toBeNull();
+    expect(tabs()[3].querySelector('.rbb-dot')).not.toBeNull();
+    expect(tabs()[2].querySelector('.rbb-dot')).toBeNull();
 
     tabs()[2].click();
     fixture.detectChanges();
@@ -359,7 +359,7 @@ describe('EditWebsiteComponent', () => {
     expect(references.languages.map(l => l.code)).toEqual(['cz', 'en']);
     references.dirtyChange.emit(true);
     fixture.detectChanges();
-    expect(tabs()[4].querySelector('.ew-page-tab-dot')).not.toBeNull();
+    expect(tabs()[4].querySelector('.rbb-dot')).not.toBeNull();
     discardPeriodicTasks();
   }));
 });

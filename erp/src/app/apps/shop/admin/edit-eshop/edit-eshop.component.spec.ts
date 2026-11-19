@@ -154,7 +154,7 @@ describe('EditEshopComponent', () => {
     fixture.detectChanges();
     flush();
     const el: HTMLElement = fixture.nativeElement;
-    const tabs = () => el.querySelectorAll('.ew-page-tab') as NodeListOf<HTMLButtonElement>;
+    const tabs = () => el.querySelectorAll('.ew-page-tabs .rbb-btn') as NodeListOf<HTMLButtonElement>;
     expect(tabs().length).toBe(2);
     expect(el.querySelector('app-page-titles-editor')).toBeNull();
 
@@ -169,7 +169,7 @@ describe('EditEshopComponent', () => {
 
     editor.dirtyChange.emit(true);
     fixture.detectChanges();
-    expect(tabs()[1].querySelector('.ew-page-tab-dot')).not.toBeNull();
+    expect(tabs()[1].querySelector('.rbb-dot')).not.toBeNull();
 
     tabs()[0].click();
     fixture.detectChanges();

@@ -31,6 +31,7 @@ import { BaseDataComponent } from '../base-data/base-data.component';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { migrateLegacyKey } from '../../../shared/utils/legacy-storage';
 import { AdminIconName } from '../admin-icon/admin-icon.component';
+import { RowButton, RowButtonItems } from '../builders/row-button-builder/row-button';
 
 /** @description Translation section of the texts shared by every translation editor. */
 export const TRANSLATION_EDITOR_SECTION = 'translation-editor';
@@ -138,6 +139,16 @@ export abstract class BaseTranslationEditorComponent
   /** @description Every tab of the page in order. */
   get tabs(): TranslationEditorTab[] {
     return [...BUILT_IN_TABS, ...this.extraTabs];
+  }
+
+  /** Stable buttons of the page tabs (row button builder). */
+  private readonly tabButtons = new RowButtonItems();
+
+  /** @description Page tabs as row buttons: icon, label, dot for unsaved edits. */
+  get tabItems(): RowButton[] {
+    return this.tabButtons.update(this.tabs.map(tab => ({
+      value: tab.key, label: this.t(tab.labelKey), icon: tab.icon, dot: this.isTabDirty(tab.key),
+    })));
   }
 
   /**

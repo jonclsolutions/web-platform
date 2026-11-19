@@ -21,12 +21,8 @@
           (actionTriggered)="handleToolbarAction($event)">
         </app-action-menu-builder>
       </app-page-header>
-      <div class="table-mode-tabs">
-        <app-button-builder
-          [configs]="tabButtonsConfigs"
-          (actionTriggered)="setTableMode($event)">
-        </app-button-builder>
-      </div>
+      <app-row-button-builder class="table-mode-tabs" kind="tabs" [items]="tabItems" [active]="currentMode"
+                              [ariaLabel]="t('page_title')" (selected)="setTableMode($any($event))" />
       <div class="main-content-layout">
         <div class="filter-side-panel" [class.active]="showFiltersPanel">
           <app-filter-form-builder

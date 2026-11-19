@@ -21,7 +21,8 @@
  * @dependencies
  * - DataHandler (GET / PUT, languages), ResourceCacheService (languages, 10 minutes),
  *   PermissionService (web-edit-website-update), AdminLocalizationService (section
- *   `web-content-editor`, redrawn on a switch of the admin language), AlertDialogService.
+ *   `web-content-editor`, redrawn on a switch of the admin language), AlertDialogService,
+ *   row-button helpers (the language tabs of the editors - RowButtonBuilderComponent).
  */
 
 import { ChangeDetectorRef, DestroyRef, Directive, DoCheck, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
@@ -34,6 +35,7 @@ import { PermissionService } from '../../../../../core/auth/services/permission.
 import { AdminLocalizationService } from '../../../../../core/services/admin-localization.service';
 import { AlertDialogService } from '../../../../../core/services/alert-dialog.service';
 import { CheckedText, ContentLang, I18nText } from './content-editor.model';
+import { RowButton, RowButtonItems, languageRowButtons } from '../../../../../admin/components/builders/row-button-builder/row-button';
 
 /** @description Languages when the module has none (or they cannot be loaded). */
 const FALLBACK_LANGUAGES: ContentLang[] = [{ code: 'cz', name: 'Čeština', active: true, isBuiltIn: true }];
@@ -264,6 +266,21 @@ export abstract class I18nContentEditorBase<T extends { open: boolean }> impleme
     return this.i18nOf({});
   }
 
+  /** Stable buttons of the language tabs. */
+  private readonly langButtons = new RowButtonItems();
+
+  /** @description Language tabs: flag, code and the number of missing texts (amber). */
+  get langItems(): RowButton[] {
+    return this.langButtons.update(languageRowButtons(this.languages, {
+      count: code => this.missingCount(code),
+      title: code => (this.missingCount(code) ? this.strings?.missing_badge_title ?? '' : ''),
+    }));
+  }
+
+  /**
+   * @description Switches the edited language.
+   * @param code Language code.
+   */
   switchLang(code: string): void {
     this.lang = code;
     this.cd.markForCheck();

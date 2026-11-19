@@ -22,35 +22,11 @@
   </app-page-header>
 
   <!-- Tabs of the document types - dynamic from document_types of the API, not hard-coded 1|2 -->
-  <div class="legal-tabs">
-    @for (docType of documentTypes; track trackByTypeId($index, docType)) {
-      <button
-        class="legal-tab"
-        [class.active]="activeTabId === docType.id"
-        (click)="switchTab(docType.id)">
-        {{ docType.title }}
-      </button>
-    }
-  </div>
+  <app-row-button-builder kind="tabs" [items]="documentTypeItems" [active]="activeTabId === null ? null : '' + activeTabId"
+                          (selected)="switchTab(+$event)" />
 
   @if (languages.length > 0) {
-    <div class="lang-tabs">
-      @for (lang of languages; track lang.code) {
-        <button
-          class="lang-tab"
-          [class.active]="activeLang === lang.code"
-          [class.has-warning]="langHasWarning(lang.code)"
-          (click)="switchLang(lang.code)">
-          @if (lang.iconUrl) {
-            <img [src]="lang.iconUrl" [alt]="lang.code" class="lang-tab-icon">
-          }
-          <span class="lang-tab-name">{{ lang.name || lang.code.toUpperCase() }}</span>
-          @if (langHasWarning(lang.code)) {
-            <span class="lang-tab-dot" [title]="strings.lang_tab_warning_title"></span>
-          }
-        </button>
-      }
-    </div>
+    <app-row-button-builder size="sm" [items]="langItems" [active]="activeLang" (selected)="switchLang($event)" />
   }
 
   @if (missingPositionsForCurrentLang.length > 0) {

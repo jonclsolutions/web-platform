@@ -7,6 +7,7 @@
  * @description Line icons of the admin navigation (sidebar items, module / application tabs,
  *   application cards) by name - the menus are built from data (admin-navigation.config.ts and
  *   the manifests of the applications), so an icon is a name there, not markup.
+ *   Also the icons of the row buttons (RowButtonBuilderComponent).
  * @usage `<app-admin-icon name="folder" [size]="16" />`
  * @note Decorative only (aria-hidden) - the link / button always has its own text.
  */
@@ -14,7 +15,7 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 /** Names of the available icons. */
-export type AdminIconName = 'bar-chart' | 'box' | 'briefcase' | 'calendar' | 'cart' | 'check-square' | 'chevron-down' | 'code' | 'credit-card' | 'dollar' | 'external-link' | 'file-lines' | 'file-text' | 'folder' | 'globe' | 'globe-settings' | 'help-circle' | 'home' | 'languages' | 'layers' | 'layout' | 'lock' | 'shield' | 'shield-check' | 'shopping-bag' | 'star' | 'tag' | 'truck' | 'user' | 'user-check' | 'users' | 'window';
+export type AdminIconName = 'bar-chart' | 'box' | 'briefcase' | 'building' | 'calendar' | 'cart' | 'check-circle' | 'check-square' | 'chevron-down' | 'clock' | 'code' | 'credit-card' | 'dollar' | 'external-link' | 'file-lines' | 'file-text' | 'folder' | 'globe' | 'globe-settings' | 'help-circle' | 'home' | 'languages' | 'layers' | 'layout' | 'list' | 'lock' | 'message' | 'settings' | 'shield' | 'shield-check' | 'shopping-bag' | 'star' | 'tag' | 'trash' | 'truck' | 'user' | 'user-check' | 'users' | 'window';
 
 @Component({
   selector: 'app-admin-icon',
@@ -55,6 +56,13 @@ export type AdminIconName = 'bar-chart' | 'box' | 'briefcase' | 'calendar' | 'ca
       @case ('user-check') { <circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/> <polyline points="16 3 18 5 22 1"/> }
       @case ('users') { <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/> <circle cx="9" cy="7" r="4"/> <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/> }
       @case ('window') { <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20"/> }
+      @case ('building') { <path d="M6 22V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v18"/><path d="M2 22h20"/><path d="M9 6h.01"/><path d="M15 6h.01"/><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M9 14h.01"/><path d="M15 14h.01"/> }
+      @case ('check-circle') { <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/> }
+      @case ('clock') { <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/> }
+      @case ('list') { <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/> }
+      @case ('message') { <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/> }
+      @case ('settings') { <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/> }
+      @case ('trash') { <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/> }
       @case ('tag') { <path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"/><circle cx="7.5" cy="7.5" r="1"/> }
       }
     </svg>

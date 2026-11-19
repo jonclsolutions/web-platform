@@ -9,6 +9,7 @@
 import * as Core from '../../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { mapLabeledOptions } from '../../../../admin/components/builders/labeled-options';
+import { RowButton } from '../../../../admin/components/builders/row-button-builder/row-button';
 
 const SECTION = 'shop-orders';
 
@@ -115,10 +116,18 @@ export function createOrderDetailsColumns(i18n: AdminLocalizationService): Core.
   ];
 }
 
-export function createOrderTabButtons(i18n: AdminLocalizationService): Core.Button[] {
+/** @description Tab of the order table with the permission it needs (none = everyone). */
+export type OrderTab = RowButton & { permission?: string };
+
+/**
+ * @description Tabs of the order table (row button builder): all, pending tasks, trash.
+ * @param i18n Texts of the section.
+ * @returns Tabs; the trash needs `view-deleted`.
+ */
+export function createOrderTabButtons(i18n: AdminLocalizationService): OrderTab[] {
   return [
-    { action: 'all', label: i18n.getValue(`${SECTION}.tab_all`), icon: '📦', class: 'btn-filter', isActive: true },
-    { action: 'pending_tasks', label: i18n.getValue(`${SECTION}.tab_pending_tasks`), icon: '⏳', class: 'btn-filter', isActive: false },
-    { action: 'trash', label: i18n.getValue(`${SECTION}.tab_trash`), icon: '🗑️', isActive: false, class: 'btn-trash', permission: 'view-deleted' },
+    { value: 'all', label: i18n.getValue(`${SECTION}.tab_all`), icon: 'box' },
+    { value: 'pending_tasks', label: i18n.getValue(`${SECTION}.tab_pending_tasks`), icon: 'clock' },
+    { value: 'trash', label: i18n.getValue(`${SECTION}.tab_trash`), icon: 'trash', tone: 'danger', permission: 'view-deleted' },
   ];
 }
