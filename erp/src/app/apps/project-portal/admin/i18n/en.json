@@ -271,7 +271,9 @@
     "header": "Portal settings",
     "subtitle": "Browser tab titles of the public pages of the portal.",
     "pt_page_project-portal_portal": "Client portal of a project",
-    "pt_page_project-portal_order_form": "Order form"
+    "pt_page_project-portal_order_form": "Order form",
+    "pt_page_project-portal_login": "Sign-in to the portal of a project",
+    "pt_page_project-portal_maintenance": "Maintenance of the portal"
   },
   "projects": {
     "load_older_messages": "Load older messages",

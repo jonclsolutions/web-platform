@@ -271,7 +271,9 @@
     "header": "Nastavení portálu",
     "subtitle": "Názvy záložek prohlížeče veřejných stránek portálu.",
     "pt_page_project-portal_portal": "Klientský portál projektu",
-    "pt_page_project-portal_order_form": "Objednávkový formulář"
+    "pt_page_project-portal_order_form": "Objednávkový formulář",
+    "pt_page_project-portal_login": "Přihlášení do portálu projektu",
+    "pt_page_project-portal_maintenance": "Údržba portálu"
   },
   "projects": {
     "load_older_messages": "Načíst starší zprávy",

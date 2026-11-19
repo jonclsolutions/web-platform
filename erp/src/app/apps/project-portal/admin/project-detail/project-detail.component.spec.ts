@@ -209,9 +209,11 @@ describe('ProjectDetailComponent', () => {
 
   describe('settings', () => {
     /**
-     * @description Saving sends only the changed fields (cleared text as null) and resets the dirty state.
+     * @description Saving sends only the changed fields (cleared text as null), resets the dirty
+     *   state and drops the cached pages of the project list (its columns changed).
      * @input  name 'Shop 2', project_lead '' ; saveSettings(); API answers the updated project
-     * @output put('project-portal/projects/7', { name: 'Shop 2', project_lead: null }); success alert; dirty false; saving false
+     * @output put('project-portal/projects/7', { name: 'Shop 2', project_lead: null }); success alert;
+     *   invalidateEndpoint('project-portal/projects'); dirty false; saving false
      */
     it('saves the changed settings', fakeAsync(() => {
       init();
@@ -222,6 +224,7 @@ describe('ProjectDetailComponent', () => {
       component.saveSettings();
       expect(dh().put).toHaveBeenCalledWith('project-portal/projects/7', { name: 'Shop 2', project_lead: null });
       expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'projects.project_updated_message', 'success');
+      expect(ctx.genericTable.invalidateEndpoint).toHaveBeenCalledWith('project-portal/projects');
       expect(component.dirty).toBeFalse();
       expect(component.saving).toBeFalse();
       expect(component.checkpoints.length).toBe(1);

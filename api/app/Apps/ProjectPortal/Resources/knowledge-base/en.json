@@ -109,7 +109,7 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Browser tab titles of the public pages of the portal – the client portal of a project and the order form – per language."
+              "content": "Browser tab titles of the public pages of the portal – the client portal of a project, the sign-in to the portal, the order form and the maintenance page – per language."
             },
             {
               "type": "text",

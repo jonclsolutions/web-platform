@@ -8,7 +8,8 @@
  * @description Browser tab titles of the public pages of the portal (legal_page_titles, area
  *   `project-portal`): one row per page key of the Angular routes
  *   (`title: 'project-portal.page_key'`). Rows are never created from the admin - only here
- *   (ProjectPortalBaseDataSeeder); the admin edits their texts (project-portal/settings).
+ *   (ProjectPortalBaseDataSeeder - a missing row is added on the next deploy, existing texts stay);
+ *   the admin edits their texts (project-portal/settings).
  */
 
 return [
@@ -18,6 +19,13 @@ return [
         'route_path' => '/projects/:token',
         'title_i18n' => ['cz' => 'Projektový portál | Company name', 'en' => 'Project portal | Company name'],
         'sort_order' => 10,
+    ],
+    [
+        'area' => 'project-portal',
+        'page_key' => 'login',
+        'route_path' => '/projects/login/:token',
+        'title_i18n' => ['cz' => 'Přihlášení do projektového portálu | Company name', 'en' => 'Sign in to the project portal | Company name'],
+        'sort_order' => 15,
     ],
     [
         'area' => 'project-portal',

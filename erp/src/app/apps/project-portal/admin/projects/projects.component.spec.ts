@@ -292,11 +292,13 @@ describe('ProjectsComponent', () => {
     });
 
     /**
-     * @description A new project opens its page (the client accounts are added there); no password
-     *   is expected from the API any more and nothing is written to browser storage.
+     * @description A new project opens its page (the client accounts are added there); the cached
+     *   list pages are dropped, so going back shows the new project (issue #50); no password is
+     *   expected from the API any more and nothing is written to browser storage.
      * @input  handleFormSubmitted({ name: 'Shop' }); API { id: 7, public_url }
      * @output post('project-portal/projects', …); alert 'projects.project_created_message'; navigate to
-     *   ['/admin/project-portal/projects', 7, 'access'] (the accounts sub-page); form closed; no storage write
+     *   ['/admin/project-portal/projects', 7, 'access'] (the accounts sub-page) after
+     *   invalidateEndpoint('project-portal/projects'); form closed; no storage write
      */
     it('creates a project and opens its page', () => {
       const setItem = spyOn(Storage.prototype, 'setItem').and.callThrough();
@@ -305,6 +307,8 @@ describe('ProjectsComponent', () => {
       expect(dh().post).toHaveBeenCalledWith('project-portal/projects', { name: 'Shop' });
       expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'projects.project_created_message', 'success');
       expect(navigate).toHaveBeenCalledWith(['/admin/project-portal/projects', 7, 'access']);
+      expect(ctx.genericTable.invalidateEndpoint).toHaveBeenCalledWith('project-portal/projects');
+      expect(ctx.genericTable.invalidateEndpoint).toHaveBeenCalledBefore(navigate);
       expect(component.showCreateForm).toBeFalse();
       expect(setItem).not.toHaveBeenCalled();
     });

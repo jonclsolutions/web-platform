@@ -248,6 +248,9 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     ).subscribe({
       next: (result: any) => {
         if (!formData.id && result?.id) {
+          // The list is left for the new project - drop its cached pages, so going back shows the
+          // new project (without this the list came from the cache until a refresh, issue #50).
+          this.genericTableService.invalidateEndpoint(this.apiEndpoint);
           // The client accounts are added on the page of the new project.
           this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('project_created_message'), 'success');
           this.router.navigate(['/admin/project-portal/projects', result.id, 'access']);

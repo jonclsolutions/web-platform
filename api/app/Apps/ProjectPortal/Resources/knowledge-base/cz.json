@@ -109,7 +109,7 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Názvy záložek prohlížeče veřejných stránek portálu – klientského portálu projektu a objednávkového formuláře – pro každý jazyk."
+              "content": "Názvy záložek prohlížeče veřejných stránek portálu – klientského portálu projektu, přihlášení do portálu, objednávkového formuláře a stránky údržby – pro každý jazyk."
             },
             {
               "type": "text",

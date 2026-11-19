@@ -35,6 +35,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { firstValueFrom, interval, map } from 'rxjs';
 import { DataHandler } from '../../../../core/services/data-handler.service';
+import { GenericTableService } from '../../../../core/services/generic-table.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
@@ -205,6 +206,9 @@ export type ThreadFilter = 'active' | 'closed' | 'all' | 'mine';
 /** @description Seconds between two automatic refreshes of the thread list. */
 export const THREAD_REFRESH_SECONDS = 60;
 
+/** Endpoint of the project list (ProjectsComponent) - its cached pages are dropped after a change of the project. */
+const PROJECTS_ENDPOINT = 'project-portal/projects';
+
 @Component({
   selector: 'app-project-detail',
   standalone: true,
@@ -220,6 +224,7 @@ export class ProjectDetailComponent implements OnInit {
   @ViewChild('messageList') messageList?: ElementRef<HTMLDivElement>;
 
   private readonly dataHandler = inject(DataHandler);
+  private readonly tables = inject(GenericTableService);
   private readonly i18n = inject(AdminLocalizationService);
   private readonly alert = inject(AlertDialogService);
   private readonly confirm = inject(ConfirmDialogService);
@@ -539,6 +544,8 @@ export class ProjectDetailComponent implements OnInit {
         this.saving = false;
         this.applyProject({ ...project, unread_messages_count: this.project?.unread_messages_count });
         this.applyAssigneeOptions();
+        // Name, state, assignee … are columns of the project list - its cached pages are stale.
+        this.tables.invalidateEndpoint(PROJECTS_ENDPOINT);
         this.alert.open(this.i18n.getValue('shared.success'), this.t('project_updated_message'), 'success');
         this.cd.markForCheck();
       },
