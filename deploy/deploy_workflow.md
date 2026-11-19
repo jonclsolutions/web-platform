@@ -403,6 +403,7 @@ organizace a soukromý fork by GitHub smazal spolu s originálem.
 | `command not allowed for the deploy key` | workflow posílá jiný příkaz – jen `release <tag>`, `rollback`, `status` |
 | `cannot pull …` / `denied` | `IMAGE_PREFIX` v `.env` není přesně `ghcr.io/<owner>/<repo>` malými písmeny; balíček není propojený s repozitářem (Packages → Package settings → Manage Actions access) |
 | `error(s) in /srv/app/.env` | oprav vypsané hodnoty, `/srv/app/deploy.sh check` |
+| Vydání spadlo na changelogu / testech / buildu (na server nic nešlo) | oprav, commitni a pushni; tag ještě nikdy nenasazený přesuň na opravený commit: `git tag -d vX && git push origin :refs/tags/vX && git tag -a vX -m "Release vX" && git push origin vX` (sekce changelogu zůstává) |
 | Vydání selhalo a vrátilo se | log v Actions; `cd /srv/app && docker compose logs --tail=200 app`; oprav, nový tag |
 | `the first release … failed` | první vydání nemá kam se vrátit – zůstane běžet pro diagnózu; oprav a spusť znovu (Run workflow → deploy) |
 | `no valid certificate yet` | DNS ještě neukazuje na VPS / CAA nepovoluje letsencrypt.org – setup_hosting.md krok 12, `docker compose logs proxy` |

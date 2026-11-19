@@ -22,6 +22,18 @@
                     "area": "core",
                     "part": "admin",
                     "text": "Nightly maintenance jobs (GDPR retention clean-up, security events, expired sign-in data, orphan files) stopped with \"Table 'cache_locks' doesn't exist\" in System logs; the missing table is created and the jobs run again."
+                },
+                {
+                    "type": "changed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "New sign-in page of the administration: split layout, language switcher and the remembered accounts above the form; all texts translated."
+                },
+                {
+                    "type": "changed",
+                    "area": "project-portal",
+                    "part": "public",
+                    "text": "Sign-in of a project has its own page (/projects/login/…); a link to the portal without a valid session opens it and keeps the requested section."
                 }
             ]
         },

@@ -19,6 +19,21 @@ import { LoginComponent } from './login.component';
 import { TurnstileService } from '../../../core/services/turnstile.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 
+/** Groups of the admin translation section 'login' (assets/i18n/admin/<lang>.json) read by the template. */
+const LOGIN_GROUPS = ['hero', 'language', 'accounts', 'labels', 'placeholders', 'buttons', 'otp', 'forgot', 'errors'];
+
+/**
+ * @description Texts of the section 'login' as the template reads them: every group is present and
+ *   a missing key reads as '<group>.<key>', so a test sets only the texts it checks.
+ * @param overrides Texts per group (e.g. { errors: { captcha_required: '…' } }).
+ * @returns The section.
+ */
+function loginTexts(overrides: Record<string, Record<string, string>> = {}): any {
+  return Object.fromEntries(LOGIN_GROUPS.map(group => [group, new Proxy({ ...(overrides[group] ?? {}) }, {
+    get: (texts: Record<string, string>, key) => (typeof key !== 'string' ? undefined : key in texts ? texts[key] : `${group}.${key}`),
+  })]));
+}
+
 describe('LoginComponent', () => {
   let ctx: AdminTestContext;
   let fixture: ComponentFixture<LoginComponent>;
@@ -30,7 +45,7 @@ describe('LoginComponent', () => {
     localStorage.removeItem('admin_current_module');
     ctx = createAdminTestContext({ loggedIn: false });
     ctx.auth.checkAuth.and.returnValue(of(false));
-    const texts = { errors: { captcha_required: 'Confirm captcha', captcha_load: 'Captcha failed' } };
+    const texts = loginTexts({ errors: { captcha_required: 'Confirm captcha', captcha_load: 'Captcha failed' } });
     ctx.i18n.getMergedSection.and.callFake((section: string) => (section === 'login' ? texts : {}));
     turnstile = jasmine.createSpyObj<TurnstileService>('TurnstileService', ['render', 'reset', 'remove']);
     turnstile.render.and.returnValue(Promise.resolve('widget-1'));
@@ -56,7 +71,7 @@ describe('LoginComponent', () => {
   it('reads the admin "login" texts', () => {
     expect(ctx.i18n.getMergedSection).toHaveBeenCalledWith('login');
     expect(component.t.errors.captcha_required).toBe('Confirm captcha');
-    ctx.i18n.getMergedSection.and.returnValue({ errors: { captcha_required: 'Bestätigen' } });
+    ctx.i18n.getMergedSection.and.returnValue(loginTexts({ errors: { captcha_required: 'Bestätigen' } }));
     ctx.i18n.translations$.next({});
     expect(component.t.errors.captcha_required).toBe('Bestätigen');
   });
@@ -113,7 +128,7 @@ describe('LoginComponent', () => {
       ['admin@example.test', 's0', 'Admin A', '/me.webp', true],
       ['other@example.test', 's9', null, null, false],
     ]);
-    component.t = { ...component.t, accounts: { current: 'This window' } };
+    component.t = { ...component.t, accounts: loginTexts({ accounts: { signed_in_here: 'This window' } })['accounts'] };
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.account-current')?.textContent).toContain('This window');
 

@@ -88,10 +88,16 @@ describe('ProjectPortalComponent', () => {
   /** Creates the portal for the token (null = none), with or without a valid session cookie. */
   function create(token: string | null = 'tok', session = false): void {
     cookie = session;
+    // projectPortalSessionResolver: the route gets the project only with a valid session (its
+    // own spec tests the request and the redirect).
+    let resolved: unknown;
+    if (token) replies['/' + token]?.().subscribe({ next: p => (resolved = p), error: () => (resolved = undefined) });
     TestBed.configureTestingModule({
       imports: [ProjectPortalComponent],
       providers: [
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap(token ? { token } : {}), queryParamMap: convertToParamMap(query) } } },
+        { provide: ActivatedRoute, useValue: { snapshot: {
+          paramMap: convertToParamMap(token ? { token } : {}), queryParamMap: convertToParamMap(query), data: { project: resolved }
+        } } },
         // Every request of the portal goes without the admin session (SKIP_ADMIN_AUTH_CONTEXT);
         // the spies record the path (and body) only.
         { provide: PublicDataService, useValue: {
@@ -143,11 +149,12 @@ describe('ProjectPortalComponent', () => {
   });
 
   /**
-   * @description No token → invalid; token without a session cookie → the API answers 401 →
-   *   login form; a session token a former version kept in localStorage is deleted; status labels set.
+   * @description No token → invalid; token without a session (the resolver gave no project) →
+   *   the login page of the project; a session token a former version kept in localStorage is
+   *   deleted; status labels set.
    * @input token null; token 'tok' with a legacy localStorage session and no cookie.
-   * @output 'invalid' (no request); GET of the project (no header), 'login', legacy key removed;
-   *   checkpointStatusLabels from the texts.
+   * @output 'invalid' (no request); no request of the project, navigation to /projects/login/tok
+   *   (replaceUrl), legacy key removed; checkpointStatusLabels from the texts.
    */
   it('starts invalid without a token and with the login otherwise', () => {
     create(null);
@@ -158,29 +165,31 @@ describe('ProjectPortalComponent', () => {
     TestBed.resetTestingModule();
     localStorage.setItem(LEGACY_SESSION, 'old');
     create();
-    expect(get).toHaveBeenCalledOnceWith('projects/public/tok');
+    expect(get).not.toHaveBeenCalledWith('projects/public/tok');
     expect(localStorage.getItem(LEGACY_SESSION)).toBeNull();
-    expect(portal.state).toBe('login');
+    expect(navigate).toHaveBeenCalledWith(['/projects/login', 'tok'], { replaceUrl: true });
     expect(portal.checkpointStatusLabels).toEqual({ new: 'checkpoint_status_new', active: 'checkpoint_status_active', done: 'checkpoint_status_done' });
   });
 
   /**
-   * @description After a reload the portal asks the API: a valid cookie → project loaded; an
-   *   expired session (401) → login.
+   * @description After a reload the resolver of the route asks the API: a valid cookie → the
+   *   portal opens with the resolved project (no second request); an expired session (401) → the
+   *   login page.
    * @input Valid cookie; then the project request failing.
-   * @output GET of the project without header, 'portal'; 'login'.
+   * @output 'portal' with the project, no GET of the project; navigation to /projects/login/tok.
    */
   it('restores or drops the session of the cookie', fakeAsync(() => {
     loggedIn();
-    expect(get).toHaveBeenCalledWith('projects/public/tok');
+    expect(get).not.toHaveBeenCalledWith('projects/public/tok');
     expect(portal.state).toBe('portal');
+    expect(portal.project?.name).toBe('Web');
     fixture.destroy();
     discardPeriodicTasks();
 
     TestBed.resetTestingModule();
     replies['/tok'] = () => throwError(() => ({ status: 401 }));
     loggedIn();
-    expect(portal.state).toBe('login');
+    expect(navigate).toHaveBeenCalledWith(['/projects/login', 'tok'], { replaceUrl: true });
   }));
 
   /**
@@ -444,7 +453,7 @@ describe('ProjectPortalComponent', () => {
    * @description Refresh reloads the project + threads and re-opens the open thread; a failing
    *   refresh logs out; no session → nothing.
    * @input Thread open + refresh ok; refresh failing.
-   * @output project reloaded, thread detail requested again; 'login'.
+   * @output project reloaded, thread detail requested again; navigation to /projects/login/tok.
    */
   it('refreshes the portal data', fakeAsync(() => {
     loggedIn();
@@ -460,7 +469,7 @@ describe('ProjectPortalComponent', () => {
 
     replies['/tok'] = () => throwError(() => ({ status: 401 }));
     portal.refresh();
-    expect(portal.state).toBe('login');
+    expect(navigate).toHaveBeenCalledWith(['/projects/login', 'tok'], { replaceUrl: true });
     get.calls.reset();
     portal.refresh();
     expect(get).not.toHaveBeenCalled();
@@ -502,19 +511,20 @@ describe('ProjectPortalComponent', () => {
   }));
 
   /**
-   * @description The language switcher sits once in the top-right corner (outside the login card;
-   *   in the portal in the right part of the header, not in the menu): flag + chevron, the menu
-   *   opens on click with all languages.
-   * @input Login screen; click on the switcher; then the logged-in portal.
-   * @output One .pp-lang-switcher outside the card, aria-expanded true and one item per language;
-   *   in the portal one switcher inside .pp-header-right and none in the sidebar.
+   * @description The language switcher sits once in the top-right corner of the portal (in the
+   *   right part of the header, not in the menu): flag + chevron, the menu opens on click with all
+   *   languages. (The switcher of the sign-in page belongs to PortalLoginComponent.)
+   * @input The logged-in portal; click on the switcher.
+   * @output One .pp-lang-switcher inside .pp-header-right, none in the sidebar; aria-expanded
+   *   false → true and one item per language.
    */
   it('shows one language switcher in the top-right corner', fakeAsync(() => {
-    create();
+    loggedIn();
     fixture.detectChanges();
-    let el = fixture.nativeElement as HTMLElement;
+    const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelectorAll('.pp-lang-switcher').length).toBe(1);
-    expect(el.querySelector('.pp-login-card .pp-lang-btn')).toBeNull();
+    expect(el.querySelector('.pp-header-right .pp-lang-switcher')).not.toBeNull();
+    expect(el.querySelector('.pp-sidebar .pp-lang-btn')).toBeNull();
     const btn = el.querySelector('.pp-lang-switcher .pp-lang-btn') as HTMLButtonElement;
     expect(btn.querySelector('.pp-lang-chevron')).not.toBeNull();
     expect(btn.getAttribute('aria-expanded')).toBe('false');
@@ -522,15 +532,6 @@ describe('ProjectPortalComponent', () => {
     fixture.detectChanges();
     expect(btn.getAttribute('aria-expanded')).toBe('true');
     expect(el.querySelectorAll('.pp-lang-menu-item').length).toBe(PROJECT_PORTAL_AVAILABLE_LANGUAGES.length);
-    fixture.destroy();
-
-    TestBed.resetTestingModule();
-    loggedIn();
-    fixture.detectChanges();
-    el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelectorAll('.pp-lang-switcher').length).toBe(1);
-    expect(el.querySelector('.pp-header-right .pp-lang-switcher')).not.toBeNull();
-    expect(el.querySelector('.pp-sidebar .pp-lang-btn')).toBeNull();
     fixture.destroy();
     discardPeriodicTasks();
   }));
@@ -640,6 +641,8 @@ describe('ProjectPortalComponent', () => {
    *   after the pick, true → false after closeMobileNav; no error without storage.
    */
   it('collapses or slides in the menu', fakeAsync(() => {
+    // Desktop width whatever the size of the test browser (its window may be under 768 px).
+    const media = spyOn(window, 'matchMedia').and.returnValue({ matches: false } as MediaQueryList);
     loggedIn();
     portal.toggleSidebar();
     expect(portal.sidebarCollapsed).toBeTrue();
@@ -655,7 +658,7 @@ describe('ProjectPortalComponent', () => {
     portal.toggleSidebar();
     expect(localStorage.getItem('pp_sidebar_collapsed')).toBe('0');
 
-    const media = spyOn(window, 'matchMedia').and.returnValue({ matches: true } as MediaQueryList);
+    media.and.returnValue({ matches: true } as MediaQueryList);
     portal.toggleSidebar();
     expect(portal.mobileNavOpen).toBeTrue();
     expect(portal.sidebarCollapsed).toBeFalse();
