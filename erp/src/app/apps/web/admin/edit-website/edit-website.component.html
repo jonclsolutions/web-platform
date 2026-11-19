@@ -5,7 +5,8 @@
     @author: JS
     @created: 2026
     @description: Texts of the website: the shared translation editor page with the panels of
-        the FAQ, the open positions and the references (extra tabs, created on their first open).
+        the FAQ, the open positions, the references and the knowledge base (extra tabs, created
+        on their first open).
 -->
 
 <app-translation-editor-view [e]="this">
@@ -24,6 +25,12 @@
   @if (isTabOpened('references')) {
     <div class="ew-titles-wrap" [style.display]="activeTab === 'references' ? null : 'none'">
       <app-references-editor [hostLanguages]="languages" (dirtyChange)="setTabDirty('references', $event)"></app-references-editor>
+    </div>
+  }
+
+  @if (isTabOpened('knowledge_base')) {
+    <div class="ew-titles-wrap" [style.display]="activeTab === 'knowledge_base' ? null : 'none'">
+      <app-knowledge-base-editor [hostLanguages]="languages" (dirtyChange)="setTabDirty('knowledge_base', $event)"></app-knowledge-base-editor>
     </div>
   }
 </app-translation-editor-view>

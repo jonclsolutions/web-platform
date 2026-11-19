@@ -243,7 +243,15 @@
   align-items: center;
   gap: 8px;
   padding: 8px 10px 8px 6px;
+  border-radius: 13px;
+  transition: background 0.15s ease;
 }
+
+/* Hover over the whole row of the entry (not only the toggle in its middle); an expanded entry
+   keeps square bottom corners above its body. */
+.ce-entry-header:hover { background: var(--color-zinc-50); }
+.ce-entry--inactive .ce-entry-header:hover { background: var(--color-zinc-100); }
+.ce-entry-header:has(.ce-entry-toggle[aria-expanded="true"]) { border-radius: 13px 13px 0 0; }
 
 .ce-entry-toggle {
   flex: 1;
@@ -261,7 +269,6 @@
   cursor: pointer;
 }
 
-.ce-entry-toggle:hover { background: var(--color-zinc-50); }
 
 .ce-chevron {
   flex-shrink: 0;

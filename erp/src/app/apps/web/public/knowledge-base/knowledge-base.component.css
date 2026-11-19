@@ -5,7 +5,8 @@
     @author: JS
     @created: 2025
     @description: Calm, "documentation" look - no playful shapes or extra animations,
-    just consistent dark cards and typography shared with the rest of the site.
+    just consistent dark cards and typography shared with the rest of the site. Blocks with
+    sub-blocks and an optional image at their end (content from the admin).
 */
 
 :host {
@@ -55,6 +56,7 @@
 }
 
 .kb-hero-lead {
+    white-space: pre-line; /* plain text from the admin - its line breaks are kept */
     font-size: 1.02rem;
     color: #a0a0b5;
     line-height: 1.65;
@@ -179,6 +181,7 @@
 }
 
 .kb-section-lead {
+    white-space: pre-line; /* plain text from the admin - its line breaks are kept */
     font-size: 0.96rem;
     color: #8a8a9c;
     line-height: 1.7;
@@ -199,111 +202,24 @@
 }
 
 .kb-point-text {
+    white-space: pre-line; /* plain text from the admin - its line breaks are kept */
     font-size: 0.87rem;
     line-height: 1.65;
     color: #8a8a9c;
     margin: 0;
 }
 
-/* ── Glossary (accordion, pure CSS - checkbox hack) ── */
-.kb-glossary-section {
-    padding: var(--head-gap) 0 0;
+/* ── Image at the end of a block (optional, uploaded in the admin) ── */
+.kb-section-figure {
+    margin: 28px 0 0;
 }
 
-.kb-glossary-header {
-    margin-bottom: 28px;
-}
-
-.kb-glossary-header .kb-section-header {
-    margin-bottom: var(--title-gap);
-}
-
-.kb-glossary-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.kb-glossary-item {
-    background: #111128;
-    border: 1px solid rgba(166, 125, 255, 0.1);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.kb-glossary-checkbox {
-    position: absolute;
-    opacity: 0;
-    width: 1px;
-    height: 1px;
-    pointer-events: none;
-}
-
-.kb-glossary-checkbox:checked ~ .kb-glossary-trigger {
-    background: rgba(166, 125, 255, 0.07);
-}
-
-.kb-glossary-checkbox:checked ~ .kb-glossary-body {
-    grid-template-rows: 1fr;
-}
-.kb-glossary-checkbox:checked ~ .kb-glossary-trigger .kb-glossary-chevron {
-    transform: rotate(180deg);
-}
-
-.kb-glossary-checkbox:focus-visible ~ .kb-glossary-trigger {
-    outline: 2px solid #a67dff;
-    outline-offset: -2px;
-}
-
-.kb-glossary-trigger {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    width: 100%;
-    padding: 14px 18px;
-    cursor: pointer;
-    color: #e0e0f0;
-    font-family: inherit;
-    user-select: none;
-    transition: background 0.25s ease;
-}
-
-.kb-glossary-trigger:hover {
-    background: rgba(255, 255, 255, 0.025);
-}
-
-.kb-glossary-term {
-    font-size: 0.92rem;
-    font-weight: 700;
-}
-
-.kb-glossary-chevron {
-    flex-shrink: 0;
-    color: #a67dff;
-    display: flex;
-    transition: transform 0.25s ease;
-}
-
-.kb-glossary-body {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 0.32s ease;
-}
-
-.kb-glossary-answer {
-    overflow: hidden;
-    min-height: 0;
-    margin: 0;
-    padding: 0 18px;
-    font-size: 0.87rem;
-    line-height: 1.7;
-    color: #8a8a9c;
-    transition: padding 0.32s ease;
-}
-
-.kb-glossary-checkbox:checked ~ .kb-glossary-body .kb-glossary-answer {
-    padding-bottom: 16px;
+.kb-section-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    border: 1px solid rgba(166, 125, 255, 0.12);
 }
 
 /* ── Closing CTA ──────────────────────────────────── */
@@ -383,7 +299,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .kb-glossary-body, .kb-glossary-chevron, .kb-glossary-answer, .kb-cta-btn, .kb-cta-arrow, .kb-toc-item {
+    .kb-cta-btn, .kb-cta-arrow, .kb-toc-item {
         transition: none;
     }
 }

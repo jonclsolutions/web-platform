@@ -49,8 +49,8 @@ export const appConfig: ApplicationConfig = {
   providers: [
     /**
      * @description Registers the app routes and enables in-memory scroll handling.
-     * @note anchorScrolling lets links like [routerLink] + fragment="kb-security"
-     *   smoothly scroll to the matching #kb-security element on the SAME route,
+     * @note anchorScrolling lets links like [routerLink] + fragment="kb-12"
+     *   smoothly scroll to the matching #kb-12 element on the SAME route,
      *   instead of the fragment being misinterpreted as a new root-level route.
      *   scrollPositionRestoration restores the scroll position correctly on
      *   browser back/forward navigation.

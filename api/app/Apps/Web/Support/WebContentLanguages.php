@@ -7,14 +7,14 @@
  * @author JS
  * @created 2026
  * @description Languages of the content of the public website stored in the database (FAQ, open
- * positions, references - `*_i18n` JSON columns): the languages a text may be saved in (the languages of the
+ * positions, references, knowledge base - `*_i18n` JSON columns): the languages a text may be saved in (the languages of the
  * web module, languages.json) and the removal of every text of a deleted language, so no text of a
  * language that no longer exists stays on the server.
  * @note Called by TranslationController when a web language is deleted / left out of the list;
- * WebFaqController / WebJobController / WebReferenceController keep only the codes() when saving (an admin page opened
+ * WebFaqController / WebJobController / WebReferenceController / WebKnowledgeBaseController keep only the codes() when saving (an admin page opened
  * before a language was deleted cannot store it again).
  * @dependencies TranslationController::languageCodes(), WebFaqCategory, WebFaqItem, WebJob,
- *   WebJobSection, WebReference, WebReferenceFeature, WebReferenceStack.
+ *   WebJobSection, WebReference, WebReferenceFeature, WebReferenceStack, WebKbSection, WebKbItem.
  */
 
 namespace App\Apps\Web\Support;
@@ -24,6 +24,8 @@ use App\Apps\Web\Models\WebFaqCategory;
 use App\Apps\Web\Models\WebFaqItem;
 use App\Apps\Web\Models\WebJob;
 use App\Apps\Web\Models\WebJobSection;
+use App\Apps\Web\Models\WebKbItem;
+use App\Apps\Web\Models\WebKbSection;
 use App\Apps\Web\Models\WebReference;
 use App\Apps\Web\Models\WebReferenceFeature;
 use App\Apps\Web\Models\WebReferenceStack;
@@ -40,6 +42,8 @@ final class WebContentLanguages
         WebReference::class        => ['category_i18n', 'name_i18n', 'size_i18n', 'role_i18n', 'description_i18n', 'result_i18n'],
         WebReferenceFeature::class => ['text_i18n'],
         WebReferenceStack::class   => ['label_i18n', 'value_i18n'],
+        WebKbSection::class        => ['heading_i18n', 'text_i18n'],
+        WebKbItem::class           => ['title_i18n', 'text_i18n'],
     ];
 
     /**

@@ -4,7 +4,7 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Unit tests of WebContentService: one shared request per list (FAQ, jobs), a failed
+ * @description Unit tests of WebContentService: one shared request per list (FAQ, jobs, references, knowledge base), a failed
  *   request gives [] and is tried again next time; localizedText / optionalText pick the current
  *   language ('Cannot load text' when missing, null for an optional field empty everywhere).
  * @dependencies
@@ -29,12 +29,12 @@ describe('WebContentService', () => {
 
   /**
    * @description Each list is requested once and shared by every subscriber.
-   * @input faq(), jobs(), references() twice each.
-   * @output GET public/web/faq, public/web/jobs, public/web/references once each; the answers
+   * @input faq(), jobs(), references(), knowledgeBase() twice each.
+   * @output GET public/web/faq, public/web/jobs, public/web/references, public/web/knowledge-base once each; the answers
    *   passed on.
    */
   it('shares one request per list', () => {
-    const answers: Record<string, unknown[]> = { 'public/web/faq': [{ id: 1 }], 'public/web/jobs': [{ slug: 'dev' }], 'public/web/references': [{ id: 7 }] };
+    const answers: Record<string, unknown[]> = { 'public/web/faq': [{ id: 1 }], 'public/web/jobs': [{ slug: 'dev' }], 'public/web/references': [{ id: 7 }], 'public/web/knowledge-base': [{ id: 9 }] };
     get.and.callFake((endpoint: string) => of(answers[endpoint]));
     const results: unknown[] = [];
     service.faq().subscribe(r => results.push(r));
@@ -43,9 +43,11 @@ describe('WebContentService', () => {
     service.jobs().subscribe(r => results.push(r));
     service.references().subscribe(r => results.push(r));
     service.references().subscribe(r => results.push(r));
+    service.knowledgeBase().subscribe(r => results.push(r));
+    service.knowledgeBase().subscribe(r => results.push(r));
 
-    expect(get.calls.allArgs()).toEqual([['public/web/faq'], ['public/web/jobs'], ['public/web/references']]);
-    expect(results).toEqual([[{ id: 1 }], [{ id: 1 }], [{ slug: 'dev' }], [{ slug: 'dev' }], [{ id: 7 }], [{ id: 7 }]]);
+    expect(get.calls.allArgs()).toEqual([['public/web/faq'], ['public/web/jobs'], ['public/web/references'], ['public/web/knowledge-base']]);
+    expect(results).toEqual([[{ id: 1 }], [{ id: 1 }], [{ slug: 'dev' }], [{ slug: 'dev' }], [{ id: 7 }], [{ id: 7 }], [{ id: 9 }], [{ id: 9 }]]);
   });
 
   /**

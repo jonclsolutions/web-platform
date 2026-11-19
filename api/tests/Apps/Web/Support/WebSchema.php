@@ -7,7 +7,8 @@
  * @author JS
  * @created 2026
  * @description Test tables of the web application (SQLite mirror of its migrations):
- *   site settings, FAQ, jobs, references and public form records (inquiries, job applications).
+ *   site settings, FAQ, jobs, references, knowledge base and public form records (inquiries, job
+ *   applications).
  * @dependencies Tests\Support\TestSchema (audit log shape); run by TestSchema::create() while
  *   the application is in config/apps.php.
  */
@@ -97,6 +98,27 @@ final class WebSchema
             $t->foreignId('reference_id')->constrained('web_references')->cascadeOnDelete();
             $t->json('label_i18n')->nullable();
             $t->json('value_i18n')->nullable();
+            $t->unsignedInteger('sort_order')->default(0);
+            $t->timestamps();
+        });
+
+        // Knowledge base (migration 2026_11_20_000000_create_web_knowledge_base).
+        Schema::create('web_kb_sections', function (Blueprint $t) {
+            $t->id();
+            $t->boolean('is_intro')->default(false);
+            $t->json('heading_i18n')->nullable();
+            $t->json('text_i18n')->nullable();
+            $t->string('image_path')->nullable();
+            $t->boolean('is_active')->default(true);
+            $t->unsignedInteger('sort_order')->default(0);
+            $t->timestamps();
+        });
+
+        Schema::create('web_kb_items', function (Blueprint $t) {
+            $t->id();
+            $t->foreignId('section_id')->constrained('web_kb_sections')->cascadeOnDelete();
+            $t->json('title_i18n')->nullable();
+            $t->json('text_i18n')->nullable();
             $t->unsignedInteger('sort_order')->default(0);
             $t->timestamps();
         });

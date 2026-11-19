@@ -7,7 +7,7 @@
  * @author JS
  * @created 2026
  * @description API endpoints of the web application: the public website (status, FAQ, jobs,
- *   references, the contact and job forms) and the administration (web/..., signed-in users with
+ *   references, knowledge base, the contact and job forms) and the administration (web/..., signed-in users with
  *   permissions). Loaded by routes/api.php inside
  *   the `api` prefix (AppManifest::routesFile()), so every path here is below /api.
  * @dependencies
@@ -19,6 +19,7 @@
 use App\Apps\Web\Http\Controllers\WebFaqController;
 use App\Apps\Web\Http\Controllers\WebJobApplicationController;
 use App\Apps\Web\Http\Controllers\WebJobController;
+use App\Apps\Web\Http\Controllers\WebKnowledgeBaseController;
 use App\Apps\Web\Http\Controllers\WebLogController;
 use App\Apps\Web\Http\Controllers\WebPublicController;
 use App\Apps\Web\Http\Controllers\WebRawRequestCommissionController;
@@ -36,13 +37,14 @@ Route::get('web/public/status', [WebPublicController::class, 'getStatus']);
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC FAQ, OPEN POSITIONS AND REFERENCES — content of the public website (edited in web/edit-website)
+| PUBLIC FAQ, OPEN POSITIONS, REFERENCES AND KNOWLEDGE BASE — content of the public website (edited in web/edit-website)
 |--------------------------------------------------------------------------
 */
 Route::prefix('public/web')->middleware(['web.active', 'throttle:60,1,public-web-content'])->group(function () {
     Route::get('faq',  [WebFaqController::class, 'publicIndex']);
     Route::get('jobs', [WebJobController::class, 'publicIndex']);
     Route::get('references', [WebReferenceController::class, 'publicIndex']);
+    Route::get('knowledge-base', [WebKnowledgeBaseController::class, 'publicIndex']);
 });
 
 // Public web forms - per-IP limit (named limiter `public-form`), then the quota per recipient
@@ -86,6 +88,15 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         Route::post('/references/{id}/image', [WebReferenceController::class, 'storeImage'])
             ->middleware(['permission:web-edit-website-update', 'throttle:30,1']);
         Route::delete('/references/{id}/image', [WebReferenceController::class, 'destroyImage'])
+            ->middleware('permission:web-edit-website-update');
+        // Knowledge base of the website (web/edit-website, tab Knowledge base); the image of a saved block on its own.
+        Route::get('/knowledge-base', [WebKnowledgeBaseController::class, 'index'])
+            ->middleware('permission:web-edit-website-view');
+        Route::put('/knowledge-base', [WebKnowledgeBaseController::class, 'update'])
+            ->middleware('permission:web-edit-website-update');
+        Route::post('/knowledge-base/{id}/image', [WebKnowledgeBaseController::class, 'storeImage'])
+            ->middleware(['permission:web-edit-website-update', 'throttle:30,1']);
+        Route::delete('/knowledge-base/{id}/image', [WebKnowledgeBaseController::class, 'destroyImage'])
             ->middleware('permission:web-edit-website-update');
 
         Route::prefix('settings')->group(function () {

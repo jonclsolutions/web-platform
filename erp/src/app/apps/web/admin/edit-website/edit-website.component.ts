@@ -6,13 +6,14 @@
  * @created 2026
  * @description Texts of the website: translations of the `web` module, the browser page titles
  *   of the website pages (API web/page-titles) and the content of the website stored in the
- *   database - FAQ, open positions and references (extra tabs, API web/faq, web/jobs,
- *   web/references).
+ *   database - FAQ, open positions, references and the public knowledge base (extra tabs, API
+ *   web/faq, web/jobs, web/references, web/knowledge-base).
  *
  * @dependencies
  * - BaseTranslationEditorComponent: language / translation editor logic and tabs.
  * - TranslationEditorViewComponent: the page; the panels of the extra tabs are its content.
- * - FaqEditorComponent, JobsEditorComponent, ReferencesEditorComponent: the extra tabs.
+ * - FaqEditorComponent, JobsEditorComponent, ReferencesEditorComponent, KnowledgeBaseEditorComponent:
+ *   the extra tabs.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -23,6 +24,7 @@ import { TranslationEditorViewComponent } from '../../../../admin/components/tra
 import { FaqEditorComponent } from './content-editors/faq-editor/faq-editor.component';
 import { JobsEditorComponent } from './content-editors/jobs-editor/jobs-editor.component';
 import { ReferencesEditorComponent } from './content-editors/references-editor/references-editor.component';
+import { KnowledgeBaseEditorComponent } from './content-editors/knowledge-base-editor/knowledge-base-editor.component';
 
 /**
  * @description Translation editor of the `web` module with the content tabs of the website.
@@ -31,7 +33,7 @@ import { ReferencesEditorComponent } from './content-editors/references-editor/r
 @Component({
   selector: 'app-edit-website',
   standalone: true,
-  imports: [TranslationEditorViewComponent, FaqEditorComponent, JobsEditorComponent, ReferencesEditorComponent],
+  imports: [TranslationEditorViewComponent, FaqEditorComponent, JobsEditorComponent, ReferencesEditorComponent, KnowledgeBaseEditorComponent],
   templateUrl: './edit-website.component.html',
   styleUrls: ['../../../../admin/shared-styles/settings-page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,10 +46,11 @@ export class EditWebsiteComponent extends BaseTranslationEditorComponent {
   protected override readonly TRANSLATIONS_CACHE_PREFIX = 'edit-website:translations:';
   protected override readonly UPDATE_PERMISSION = 'web-edit-website-update';
 
-  /** FAQ, open positions and references of the website. */
+  /** FAQ, open positions, references and the knowledge base of the website. */
   override readonly extraTabs: TranslationEditorTab[] = [
     { key: 'faq', labelKey: 'tab_faq', icon: 'help-circle' },
     { key: 'jobs', labelKey: 'tab_jobs', icon: 'briefcase' },
     { key: 'references', labelKey: 'tab_references', icon: 'star' },
+    { key: 'knowledge_base', labelKey: 'tab_knowledge_base', icon: 'book' },
   ];
 }

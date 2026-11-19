@@ -11,6 +11,20 @@
             "area": "core",
             "part": "admin",
             "text": "Every confirmation with your password (switching an application on / off, operations on system administrators, the e-mail access policy) uses the same window; a wrong password is shown right under the field."
+        },
+        {
+            "type": "added",
+            "area": "web",
+            "part": "admin",
+            "text": "Edit website has a new tab Knowledge base: the introduction and the blocks of the public help page (heading, text, optional sub-blocks and an image at the end of a block) are edited in every language, blocks can be reordered or hidden.",
+            "ref": "#44"
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "public",
+            "text": "The help page (/knowledge-base) shows the content edited in the administration, with an optional image at the end of a block; the glossary was removed.",
+            "ref": "#44"
         }
     ],
     "releases": [

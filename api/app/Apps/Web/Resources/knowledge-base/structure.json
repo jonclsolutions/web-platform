@@ -33,7 +33,7 @@
       "group": "web",
       "order": 10,
       "permission": "web-edit-website-view",
-      "devNote": "EditWebsiteComponent (TranslationEditorViewComponent of the core + FAQ / jobs / references tabs), route 'web/edit-website', permission 'web-edit-website-view'."
+      "devNote": "EditWebsiteComponent (TranslationEditorViewComponent of the core + FAQ / jobs / references / knowledge base tabs), route 'web/edit-website', permission 'web-edit-website-view' (changes 'web-edit-website-update'). Knowledge base: KnowledgeBaseEditorComponent, API GET / PUT web/knowledge-base + POST / DELETE web/knowledge-base/{id}/image (WebKnowledgeBaseController, tables web_kb_sections - the row is_intro = introduction - and web_kb_items, image WebKbImage → public disk knowledge-base/*.webp); public GET public/web/knowledge-base, page /knowledge-base (KnowledgeBaseComponent); the call to action and the footer link stay in the web translations (knowledge-base.cta, knowledge-base_footer)."
     },
     {
       "id": "job-applications",

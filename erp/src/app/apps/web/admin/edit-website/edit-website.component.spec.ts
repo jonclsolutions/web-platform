@@ -25,6 +25,7 @@ import { EditWebsiteComponent } from './edit-website.component';
 import { FaqEditorComponent } from './content-editors/faq-editor/faq-editor.component';
 import { JobsEditorComponent } from './content-editors/jobs-editor/jobs-editor.component';
 import { ReferencesEditorComponent } from './content-editors/references-editor/references-editor.component';
+import { KnowledgeBaseEditorComponent } from './content-editors/knowledge-base-editor/knowledge-base-editor.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
 
 describe('EditWebsiteComponent', () => {
@@ -289,7 +290,7 @@ describe('EditWebsiteComponent', () => {
     flush();
     const el: HTMLElement = fixture.nativeElement;
     const tabs = () => el.querySelectorAll('.ew-page-tabs .rbb-btn') as NodeListOf<HTMLButtonElement>;
-    expect(tabs().length).toBe(5);
+    expect(tabs().length).toBe(6);
     expect(el.querySelector('app-page-titles-editor')).toBeNull();
 
     tabs()[1].click();
@@ -320,10 +321,11 @@ describe('EditWebsiteComponent', () => {
    *   its editor reports unsaved changes.
    * @output faq editor created once (with the languages of the page) and shown / hidden; jobs
    *   editor created; dot on the Jobs tab; references editor created with the languages of the
-   *   page, dot on its tab.
+   *   page, dot on its tab; knowledge base editor created with the languages of the page, dot on
+   *   its tab.
    */
-  it('manages the FAQ, the jobs and the references in tabs', fakeAsync(() => {
-    answer({ 'web/faq': of([]), 'web/jobs': of([]), 'web/references': of([]) });
+  it('manages the FAQ, the jobs, the references and the knowledge base in tabs', fakeAsync(() => {
+    answer({ 'web/faq': of([]), 'web/jobs': of([]), 'web/references': of([]), 'web/knowledge-base': of([]) });
     fixture.detectChanges();
     flush();
     const el: HTMLElement = fixture.nativeElement;
@@ -360,6 +362,16 @@ describe('EditWebsiteComponent', () => {
     references.dirtyChange.emit(true);
     fixture.detectChanges();
     expect(tabs()[4].querySelector('.rbb-dot')).not.toBeNull();
+
+    expect(el.querySelector('app-knowledge-base-editor')).toBeNull();
+    tabs()[5].click();
+    fixture.detectChanges();
+    const kb = fixture.debugElement.query(By.directive(KnowledgeBaseEditorComponent)).componentInstance as KnowledgeBaseEditorComponent;
+    expect(component.activeTab).toBe('knowledge_base');
+    expect(kb.languages.map(l => l.code)).toEqual(['cz', 'en']);
+    kb.dirtyChange.emit(true);
+    fixture.detectChanges();
+    expect(tabs()[5].querySelector('.rbb-dot')).not.toBeNull();
     discardPeriodicTasks();
   }));
 });

@@ -5,8 +5,9 @@
  * @author JS
  * @created 2026
  * @description Content of the public website managed in the admin (web/edit-website, tabs FAQ,
- * Jobs and References): the FAQ (`public/web/faq`), the open positions (`public/web/jobs`) and
- * the references (`public/web/references`). Every text comes
+ * Jobs, References and Knowledge base): the FAQ (`public/web/faq`), the open positions
+ * (`public/web/jobs`), the references (`public/web/references`) and the knowledge base
+ * (`public/web/knowledge-base`). Every text comes
  * in all languages (`{ cz: '...', en: '...' }`, a language without text has no key); the pages
  * pick the current language with `localizedText()` / `optionalText()`. Each list is loaded once
  * per page load and shared by all components.
@@ -63,6 +64,20 @@ export interface PublicReference {
 }
 
 /**
+ * One row of the knowledge base: the introduction (`intro`: main heading + first text, first row)
+ * or a shown block with its sub-blocks and an optional image at its end.
+ */
+export interface PublicKbSection {
+  id: number;
+  intro: boolean;
+  heading: I18nText;
+  text: I18nText;
+  /** Image on the public storage (`knowledge-base/….webp`), null = none. */
+  image: string | null;
+  items: { title: I18nText; text: I18nText }[];
+}
+
+/**
  * @description Text of the current language.
  * @param text Text per language.
  * @param lang Current language code.
@@ -93,6 +108,7 @@ export class WebContentService {
   private faq$: Observable<PublicFaqCategory[]> | null = null;
   private jobs$: Observable<PublicJob[]> | null = null;
   private references$: Observable<PublicReference[]> | null = null;
+  private knowledgeBase$: Observable<PublicKbSection[]> | null = null;
 
   /**
    * @description FAQ categories with their questions in the order of the website.
@@ -125,6 +141,17 @@ export class WebContentService {
       this.references$ = this.load<PublicReference[]>('public/web/references', () => (this.references$ = null));
     }
     return this.references$;
+  }
+
+  /**
+   * @description The introduction and the shown blocks of the knowledge base in the order of the website.
+   * @returns {Observable<PublicKbSection[]>} [] when it cannot be loaded.
+   */
+  knowledgeBase(): Observable<PublicKbSection[]> {
+    if (!this.knowledgeBase$) {
+      this.knowledgeBase$ = this.load<PublicKbSection[]>('public/web/knowledge-base', () => (this.knowledgeBase$ = null));
+    }
+    return this.knowledgeBase$;
   }
 
   /**

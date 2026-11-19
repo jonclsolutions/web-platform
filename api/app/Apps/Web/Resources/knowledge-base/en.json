@@ -64,7 +64,23 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - editing content sections of the public website."
+              "content": "Texts and content of the public website: translations, browser page titles, FAQ, open positions, references and the knowledge base. Each part is a tab at the top."
+            },
+            {
+              "type": "text",
+              "content": "The tab Knowledge base edits the public Help centre page (/knowledge-base). At the top is the introduction of the page - the main heading and the first text. Below it come the blocks in the order of the website: each block has a heading and a text, optionally any number of sub-blocks (smaller heading + text, button Add sub-block) and one optional image at the end. Blocks and sub-blocks can be added, moved and removed, and a block can be hidden (Show on the website)."
+            },
+            {
+              "type": "text",
+              "content": "Texts are entered for every language of the website separately (language switch at the top); each language shows the number of missing texts. Text changes are stored with Save, Discard returns the last saved state."
+            },
+            {
+              "type": "text",
+              "content": "Image of a block: only JPG, PNG or WebP up to 5 MB - no video or other files. The image is stored at once (without Save); the server scales it down, converts it to WebP and removes its metadata (e.g. the location). A new block has to be saved first, then its image can be uploaded."
+            },
+            {
+              "type": "note",
+              "content": "Changes need the permission to edit the website; with read permission only the editor is read-only."
             }
           ]
         }

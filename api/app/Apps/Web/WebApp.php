@@ -123,7 +123,7 @@ final class WebApp extends AppManifest
         return 'web-edit-website-update';
     }
 
-    /** @description See AppManifest::languageDeleted() - FAQ, jobs and references texts. */
+    /** @description See AppManifest::languageDeleted() - FAQ, jobs, references and knowledge base texts. */
     public function languageDeleted(string $code): void
     {
         WebContentLanguages::forget($code);

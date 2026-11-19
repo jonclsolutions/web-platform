@@ -64,7 +64,23 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - editace obsahových částí veřejného webu."
+              "content": "Texty a obsah veřejného webu: překlady, titulky stránek v prohlížeči, FAQ, pracovní pozice, reference a znalostní báze. Každá část je samostatná záložka nahoře."
+            },
+            {
+              "type": "text",
+              "content": "Záložka Znalostní báze upravuje veřejnou stránku Centrum nápovědy (/knowledge-base). Nahoře je úvod stránky - hlavní nadpis a první text. Pod ním jsou bloky v pořadí, v jakém se zobrazí na webu: každý blok má nadpis a text, volitelně libovolný počet podbloků (menší nadpis + text, tlačítko Přidat podblok) a na konci jeden volitelný obrázek. Bloky i podbloky jde přidávat, přesouvat, odebírat a blok skrýt (Zobrazit na webu)."
+            },
+            {
+              "type": "text",
+              "content": "Texty se zadávají pro každý jazyk webu zvlášť (přepínač jazyků nahoře); u jazyka se ukáže počet chybějících textů. Změny textů se uloží tlačítkem Uložit, tlačítko Zahodit vrátí poslední uložený stav."
+            },
+            {
+              "type": "text",
+              "content": "Obrázek bloku: jen JPG, PNG nebo WebP do 5 MB - video ani jiné soubory nahrát nejde. Obrázek se uloží hned (bez tlačítka Uložit) a server ho zmenší, převede do WebP a odstraní z něj metadata (např. polohu). Nový blok je potřeba nejdřív uložit, teprve potom jde nahrát obrázek."
+            },
+            {
+              "type": "note",
+              "content": "Úpravy vyžadují oprávnění k úpravě webu; s oprávněním jen ke čtení je editor pouze pro čtení."
             }
           ]
         }

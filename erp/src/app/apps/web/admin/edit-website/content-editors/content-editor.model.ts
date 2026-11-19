@@ -5,7 +5,7 @@
  * @author JS
  * @created 2026
  * @description Types of the content editors of the public website (web/edit-website, tabs FAQ,
- *   Jobs and References; API web/faq, web/jobs, web/references). Every text is stored per language (`{ cz: '...', en: '...' }`).
+ *   Jobs, References and Knowledge base; API web/faq, web/jobs, web/references, web/knowledge-base). Every text is stored per language (`{ cz: '...', en: '...' }`).
  * @dependencies none
  */
 
@@ -103,5 +103,29 @@ export interface ReferenceDraft {
   result_i18n: I18nText;
   features: ReferenceFeatureDraft[];
   stack: ReferenceStackDraft[];
+  open: boolean;
+}
+
+/** One sub-block of a knowledge base block (smaller heading + text). */
+export interface KbItemDraft {
+  key: number;
+  id: number | null;
+  title_i18n: I18nText;
+  text_i18n: I18nText;
+}
+
+/**
+ * The introduction (`is_intro`: main heading + first text, always the first entry, no sub-blocks,
+ * no image) or a block of the knowledge base; `open` = expanded in the editor (not sent). The
+ * image of a block is uploaded on its own (not part of the draft).
+ */
+export interface KbSectionDraft {
+  key: number;
+  id: number | null;
+  is_intro: boolean;
+  is_active: boolean;
+  heading_i18n: I18nText;
+  text_i18n: I18nText;
+  items: KbItemDraft[];
   open: boolean;
 }

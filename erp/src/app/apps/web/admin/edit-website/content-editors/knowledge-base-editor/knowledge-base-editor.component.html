@@ -1,0 +1,233 @@
+<!--
+    @file: knowledge-base-editor.component.html
+    @path: src/app/apps/web/admin/edit-website/content-editors/knowledge-base-editor/knowledge-base-editor.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Knowledge base editor: card header with save / discard, language bar with the
+        number of missing translations, the introduction (main heading + first text) and one card
+        per block (heading, text, sub-blocks, shown / hidden and the image at the end of the block).
+        Logic: knowledge-base-editor.component.ts.
+-->
+<div class="ce-card">
+
+  <div class="ce-card-header" appStickyBar>
+    <span class="ce-card-icon" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+      </svg>
+    </span>
+    <span class="ce-card-title">{{ strings.kb_card_title }}</span>
+    @if (isDirty) {
+      <span class="ce-dirty-badge">{{ strings.unsaved_badge }}</span>
+    }
+    @if (!loading && !loadError && canUpdate) {
+      <div class="ce-header-actions">
+        @if (isDirty) {
+          <button type="button" class="ce-btn ce-btn-ghost" (click)="discard()" [disabled]="saving">{{ strings.discard_button }}</button>
+        }
+        <button type="button" class="ce-btn ce-btn-primary" (click)="save()" [disabled]="!isDirty || saving">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+          </svg>
+          {{ saving ? strings.saving_label : strings.save_button }}
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (loading) {
+    <div class="ce-skeleton-body">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="ce-skeleton-row"></div>
+      }
+    </div>
+  } @else if (loadError) {
+    <div class="ce-card-body">
+      <div class="ce-error">{{ strings.load_error }}</div>
+    </div>
+  } @else {
+    <div class="ce-card-body">
+      <p class="ce-intro">{{ strings.kb_intro }}</p>
+
+      <div class="ce-i18n-bar">
+        <span class="ce-i18n-bar-label">{{ strings.language_label }}</span>
+        <app-row-button-builder size="sm" [items]="langItems" [active]="lang" [ariaLabel]="strings.language_label" (selected)="switchLang($event)" />
+      </div>
+
+      @if (missingWarning) {
+        <div class="ce-warning" role="status">{{ missingWarning }}</div>
+      }
+
+      <!-- Introduction of the page: main heading + first text -->
+      @if (intro; as page) {
+        <h4 class="ce-group-title">{{ strings.kb_intro_heading }}</h4>
+        <div class="ce-subentry">
+          <label class="ce-field">
+            <span class="ce-label">{{ strings.kb_page_heading }} <span class="ce-lang-code">{{ lang | uppercase }}</span></span>
+            <input class="ce-input" type="text" [class.ce-input--missing]="isMissing(page.heading_i18n)"
+                   [(ngModel)]="page.heading_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_HEADING"
+                   [readonly]="!canUpdate" [name]="'kb_page_heading_' + lang">
+            @if (isMissing(page.heading_i18n)) {
+              <span class="ce-missing-text">{{ strings.missing_field }}</span>
+            }
+          </label>
+          <label class="ce-field">
+            <span class="ce-label">{{ strings.kb_page_text }} <span class="ce-lang-code">{{ lang | uppercase }}</span></span>
+            <textarea class="ce-input ce-textarea" rows="4" [class.ce-input--missing]="isMissing(page.text_i18n)"
+                      [(ngModel)]="page.text_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_TEXT"
+                      [readonly]="!canUpdate" [name]="'kb_page_text_' + lang"></textarea>
+            @if (isMissing(page.text_i18n)) {
+              <span class="ce-missing-text">{{ strings.missing_field }}</span>
+            }
+          </label>
+        </div>
+      }
+
+      <h4 class="ce-group-title">{{ strings.kb_blocks_heading }}</h4>
+      @if (!blockCount) {
+        <p class="ce-empty">{{ strings.kb_empty }}</p>
+      }
+
+      @for (block of entries; track block.key; let bi = $index; let lastBlock = $last) {
+        @if (!block.is_intro) {
+          <section class="ce-entry" [class.ce-entry--inactive]="!block.is_active">
+            <div class="ce-entry-header">
+              <button type="button" class="ce-entry-toggle" (click)="toggle(block)" [attr.aria-expanded]="block.open">
+                <svg class="ce-chevron" [class.ce-chevron--open]="block.open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+                <span class="ce-entry-title">{{ titleOf(block) }}</span>
+                <span class="ce-entry-meta">{{ strings.kb_items_count.replace('{count}', '' + block.items.length) }}</span>
+                <span class="ce-status" [class.ce-status--off]="!block.is_active">{{ block.is_active ? strings.kb_status_shown : strings.kb_status_hidden }}</span>
+                @if (missingIn(block); as count) {
+                  <span class="ce-missing-count" [title]="strings.missing_badge_title">{{ count }}</span>
+                }
+              </button>
+              @if (canUpdate) {
+                <div class="ce-entry-actions">
+                  <button type="button" class="ce-icon-btn" (click)="moveBlock(bi, -1)" [disabled]="bi <= 1" [title]="strings.move_up" [attr.aria-label]="strings.move_up">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                  </button>
+                  <button type="button" class="ce-icon-btn" (click)="moveBlock(bi, 1)" [disabled]="lastBlock" [title]="strings.move_down" [attr.aria-label]="strings.move_down">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                  <button type="button" class="ce-icon-btn ce-icon-btn--danger" (click)="removeBlock(bi)" [title]="strings.kb_remove" [attr.aria-label]="strings.kb_remove">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                  </button>
+                </div>
+              }
+            </div>
+
+            @if (block.open) {
+              <div class="ce-entry-body">
+                <label class="ce-check">
+                  <input type="checkbox" [(ngModel)]="block.is_active" (ngModelChange)="changed()" [disabled]="!canUpdate" [name]="'kb_active_' + block.key">
+                  {{ strings.kb_active }}
+                </label>
+
+                <div class="ce-subentry">
+                  <label class="ce-field">
+                    <span class="ce-label">{{ strings.kb_heading }} <span class="ce-lang-code">{{ lang | uppercase }}</span></span>
+                    <input class="ce-input" type="text" [class.ce-input--missing]="isMissing(block.heading_i18n)"
+                           [(ngModel)]="block.heading_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_HEADING"
+                           [readonly]="!canUpdate" [name]="'kb_heading_' + block.key + '_' + lang">
+                    @if (isMissing(block.heading_i18n)) {
+                      <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                    }
+                  </label>
+                  <label class="ce-field">
+                    <span class="ce-label">{{ strings.kb_text }} <span class="ce-lang-code">{{ lang | uppercase }}</span></span>
+                    <textarea class="ce-input ce-textarea" rows="4" [class.ce-input--missing]="isMissing(block.text_i18n)"
+                              [(ngModel)]="block.text_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_TEXT"
+                              [readonly]="!canUpdate" [name]="'kb_text_' + block.key + '_' + lang"></textarea>
+                    @if (isMissing(block.text_i18n)) {
+                      <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                    }
+                  </label>
+                </div>
+
+                <h4 class="ce-group-title">{{ strings.kb_items_heading }} <span class="ce-optional">{{ strings.optional_label }}</span></h4>
+                <div class="ce-sublist">
+                  @for (item of block.items; track item.key; let ii = $index; let lastItem = $last) {
+                    <div class="ce-subentry">
+                      <div class="ce-subentry-header">
+                        <span class="ce-subentry-num">{{ ii + 1 }}</span>
+                        <span class="ce-subentry-label">{{ strings.kb_item }}</span>
+                        @if (canUpdate) {
+                          <div class="ce-entry-actions">
+                            <button type="button" class="ce-icon-btn" (click)="move(block.items, ii, -1)" [disabled]="ii === 0" [title]="strings.move_up" [attr.aria-label]="strings.move_up">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                            </button>
+                            <button type="button" class="ce-icon-btn" (click)="move(block.items, ii, 1)" [disabled]="lastItem" [title]="strings.move_down" [attr.aria-label]="strings.move_down">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                            </button>
+                            <button type="button" class="ce-icon-btn ce-icon-btn--danger" (click)="remove(block.items, ii)" [title]="strings.kb_remove_item" [attr.aria-label]="strings.kb_remove_item">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                            </button>
+                          </div>
+                        }
+                      </div>
+                      <label class="ce-field">
+                        <span class="ce-label">{{ strings.kb_item_title }} <span class="ce-lang-code">{{ lang | uppercase }}</span></span>
+                        <input class="ce-input" type="text" [class.ce-input--missing]="isMissing(item.title_i18n)"
+                               [(ngModel)]="item.title_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_ITEM_TITLE"
+                               [readonly]="!canUpdate" [name]="'kb_item_title_' + item.key + '_' + lang">
+                        @if (isMissing(item.title_i18n)) {
+                          <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                        }
+                      </label>
+                      <label class="ce-field">
+                        <span class="ce-label">{{ strings.kb_item_text }} <span class="ce-lang-code">{{ lang | uppercase }}</span></span>
+                        <textarea class="ce-input ce-textarea" rows="3" [class.ce-input--missing]="isMissing(item.text_i18n)"
+                                  [(ngModel)]="item.text_i18n[lang]" (ngModelChange)="changed()" [maxlength]="MAX_ITEM_TEXT"
+                                  [readonly]="!canUpdate" [name]="'kb_item_text_' + item.key + '_' + lang"></textarea>
+                        @if (isMissing(item.text_i18n)) {
+                          <span class="ce-missing-text">{{ strings.missing_field }}</span>
+                        }
+                      </label>
+                    </div>
+                  }
+                  @if (canUpdate && block.items.length < MAX_ITEMS) {
+                    <button type="button" class="ce-add-btn ce-add-btn--small" (click)="addItem(block)">+ {{ strings.kb_add_item }}</button>
+                  }
+                </div>
+
+                <h4 class="ce-group-title">{{ strings.kb_image_heading }} <span class="ce-optional">{{ strings.optional_label }}</span></h4>
+                <div class="ce-subentry ce-image">
+                  @if (block.id === null) {
+                    <p class="ce-field-hint">{{ strings.kb_image_save_first }}</p>
+                  } @else {
+                    @if (imageUrl(block); as url) {
+                      <img class="ce-image-preview" [src]="url" [alt]="strings.kb_image_alt">
+                    } @else {
+                      <div class="ce-image-empty">{{ strings.kb_image_none }}</div>
+                    }
+                    <div class="ce-image-side">
+                      @if (canUpdate) {
+                        <div class="ce-image-actions">
+                          <label class="ce-btn ce-btn-ghost ce-file-btn" [class.ce-file-btn--busy]="imageBusy === block.id">
+                            <input type="file" [accept]="imageAccept" (change)="onImageSelected(block, $event)" [disabled]="imageBusy !== null">
+                            {{ imageBusy === block.id ? strings.kb_image_busy : (imageUrl(block) ? strings.kb_image_change : strings.kb_image_upload) }}
+                          </label>
+                          @if (imageUrl(block)) {
+                            <button type="button" class="ce-btn ce-btn-ghost ce-btn-danger" (click)="removeImage(block)" [disabled]="imageBusy !== null">{{ strings.kb_image_remove }}</button>
+                          }
+                        </div>
+                      }
+                      <span class="ce-field-hint">{{ strings.kb_image_hint }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </section>
+        }
+      }
+
+      @if (canUpdate && blockCount < MAX_BLOCKS) {
+        <button type="button" class="ce-add-btn" (click)="addBlock()">+ {{ strings.kb_add }}</button>
+      }
+
+      <p class="ce-hint">{{ strings.text_hint }}</p>
+    </div>
+  }
+</div>
