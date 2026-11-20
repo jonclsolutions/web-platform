@@ -6,7 +6,7 @@
     @created: 2026
     @description: Maintenance page of the project portal - its texts and data passed to the one
         maintenance look (MaintenanceShellComponent): title, the text of the administrator (or the
-        default text), "Try again", the language switcher and the contacts of the site.
+        default text), the language switcher and the contacts of the site. No action button.
 -->
 <app-maintenance-shell
   [heading]="t('maintenance_title')"
@@ -14,9 +14,6 @@
   [languages]="languages"
   [currentLanguage]="currentLanguage"
   [languageLabel]="t('language_switcher_title')"
-  [actionLabel]="t('maintenance_retry')"
-  [actionBusy]="checking"
-  (action)="check()"
   (languageSelected)="selectLanguage($event)"
   [email]="email"
   [phone]="phone"

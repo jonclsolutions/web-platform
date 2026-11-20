@@ -7,8 +7,8 @@
  * @description Maintenance page of the public project portal (/projects/maintenance) in the one
  *   maintenance look of the application (MaintenanceShellComponent): the text of the
  *   administrator (or the default one), the language switcher of the portal texts, the contacts
- *   of the site and "Try again", which returns to the page the visitor came from once the portal
- *   is online again. One status check on load does the same.
+ *   of the site. One status check on load returns the visitor to the page they came from once
+ *   the portal is online again.
  * @dependencies PublicDataService (status, site settings), ProjectPortalLocalizationService (texts
  *   `maintenance_*`), MaintenanceShellComponent.
  */
@@ -38,8 +38,6 @@ export class PortalMaintenanceComponent implements OnInit {
 
   /** Text of the administrator (null = the default text of the page). */
   message: string | null = null;
-  /** A status check is running. */
-  checking = false;
   /** Contact e-mail / phone of the site settings ('' = none). */
   email = '';
   phone = '';
@@ -95,12 +93,10 @@ export class PortalMaintenanceComponent implements OnInit {
 
   /** @description Asks for the status; online again = back to the page of the visitor. */
   check(): void {
-    this.checking = true;
     this.publicData.getFresh<PortalStatus>(PORTAL_STATUS_ENDPOINT)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {
-          this.checking = false;
           if (res?.is_portal_active && this.returnUrl) {
             this.router.navigateByUrl(this.returnUrl);
             return;
@@ -108,7 +104,7 @@ export class PortalMaintenanceComponent implements OnInit {
           this.message = res?.maintenance_message ?? null;
           this.cdr.markForCheck();
         },
-        error: () => { this.checking = false; this.cdr.markForCheck(); },
+        error: () => this.cdr.markForCheck(),
       });
   }
 }

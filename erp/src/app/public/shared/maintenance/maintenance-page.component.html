@@ -6,8 +6,8 @@
     @created: 2026
     @description: Shared template of the web and e-shop maintenance pages - the texts and data of
         the module passed to the one maintenance look (MaintenanceShellComponent): the notice, the
-        back link (e-shop) or "try again" (web), the language switcher, contacts, social links and
-        the admin sign-in link.
+        language switcher, contacts, social links and the admin sign-in link. No action button (the
+        shell still offers an optional one - actionLabel / actionLink / action).
     @dependencies: BaseMaintenanceComponent (WebMaintenanceComponent, ShopMaintenanceComponent),
         MaintenanceShellComponent
 -->
@@ -18,9 +18,6 @@
   [languages]="switcherLanguages"
   [currentLanguage]="currentLang"
   [languageLabel]="t?.language ?? ''"
-  [actionLabel]="(homeLink ? t?.back_home : t?.retry) ?? ''"
-  [actionLink]="homeLink"
-  (action)="checkStatusAndRedirect()"
   (languageSelected)="selectLanguage($event)"
   [email]="settings?.contact_email ?? ''"
   [phone]="settings?.contact_phone ?? ''"

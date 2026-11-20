@@ -88,10 +88,10 @@ describe('Project portal maintenance', () => {
   /**
    * @description The page shows, in the one maintenance look, the text of the administrator (or
    *   the default text) while the portal is off, the contacts of the site, the switcher of the
-   *   portal languages and "Try again".
-   * @input status off with 'Back at 6 pm'; choose 'en'; retry; then without a text.
-   * @output title key, 'Back at 6 pm'; e-mail, tel:+420777; setLanguage('en');
-   *   a second status request; 'maintenance_text'.
+   *   portal languages; no action button.
+   * @input status off with 'Back at 6 pm'; choose 'en'; then without a text.
+   * @output title key, 'Back at 6 pm'; e-mail, tel:+420777; setLanguage('en'); no .mnt-action;
+   *   'maintenance_text'.
    */
   it('shows the maintenance text', () => {
     setup(of({ is_portal_active: false, maintenance_message: 'Back at 6 pm' }));
@@ -106,8 +106,7 @@ describe('Project portal maintenance', () => {
 
     fixture.componentInstance.selectLanguage('en');
     expect(TestBed.inject(ProjectPortalLocalizationService).setLanguage).toHaveBeenCalledWith('en');
-    (el.querySelector('button.mnt-action') as HTMLButtonElement).click();
-    expect(ctx.publicData.getFresh).toHaveBeenCalledTimes(2);
+    expect(el.querySelector('.mnt-action')).toBeNull();
 
     TestBed.resetTestingModule();
     setup(of({ is_portal_active: false, maintenance_message: null }));

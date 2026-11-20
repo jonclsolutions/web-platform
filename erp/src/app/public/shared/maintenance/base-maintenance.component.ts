@@ -38,9 +38,6 @@ export abstract class BaseMaintenanceComponent extends BasePublicComponent {
 
   /** Where the visitor is sent once the section is active again. */
   protected abstract readonly activeUrl: string;
-  /** Link of the "back to the web" button - null shows the "try again" button instead (the web itself is in maintenance). */
-  readonly homeLink: string | null = null;
-
   /** Active languages of the module (the same list as the header of the main pages). */
   languages: LangMeta[] = [];
 
@@ -63,7 +60,7 @@ export abstract class BaseMaintenanceComponent extends BasePublicComponent {
 
   /**
    * @description Sends the visitor back when the section is active again; an error is only
-   * logged. Run on load and by the "try again" button.
+   * logged. Run once on load.
    */
   checkStatusAndRedirect(): void {
     this.isSectionActive()

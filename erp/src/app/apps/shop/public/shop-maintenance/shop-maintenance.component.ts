@@ -28,7 +28,6 @@ export class ShopMaintenanceComponent extends BaseMaintenanceComponent {
   protected readonly translationKey = 'shop_maintenance';
   protected override readonly translationModule = 'shop';
   protected readonly activeUrl = '/shop/catalog';
-  override readonly homeLink = '/home';
 
   /** @description E-shop status of the API. */
   protected isSectionActive(): Observable<boolean> {

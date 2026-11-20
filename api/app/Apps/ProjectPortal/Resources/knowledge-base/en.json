@@ -443,7 +443,7 @@
                 },
                 {
                   "title": "Portal maintenance",
-                  "text": "A switched-off portal (settings of the application) answers 503 and the client sees the Maintenance page with the text of the settings; Try again returns them where they were once it is on again."
+                  "text": "A switched-off portal (settings of the application) answers 503 and the client sees the Maintenance page with the text of the settings; once it is on again, opening (or reloading) the page returns them where they were."
                 },
                 {
                   "title": "Separated from the administration",

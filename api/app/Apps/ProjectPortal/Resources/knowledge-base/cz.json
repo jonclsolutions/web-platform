@@ -443,7 +443,7 @@
                 },
                 {
                   "title": "Údržba portálu",
-                  "text": "Vypnutý portál (nastavení aplikace) odpovídá 503 a klient vidí stránku Probíhá údržba s textem z nastavení; tlačítko Zkusit znovu ho po zapnutí vrátí tam, kde byl."
+                  "text": "Vypnutý portál (nastavení aplikace) odpovídá 503 a klient vidí stránku Probíhá údržba s textem z nastavení; když je portál znovu zapnutý, otevření stránky (nebo její obnovení) ho vrátí tam, kde byl."
                 },
                 {
                   "title": "Oddělení od administrace",

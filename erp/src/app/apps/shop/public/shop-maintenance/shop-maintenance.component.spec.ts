@@ -26,7 +26,7 @@ describe('ShopMaintenanceComponent', () => {
   let router: Router;
 
   beforeEach(() => {
-    ctx = createPublicPageContext({ translations: { shop_maintenance: { back_home: 'Zpět' } }, settings: { settings: { contact_email: 'shop@x.cz', contact_phone: '+420 777 123 456' }, social_links: [] } });
+    ctx = createPublicPageContext({ translations: { shop_maintenance: { heading: 'Údržba' } }, settings: { settings: { contact_email: 'shop@x.cz', contact_phone: '+420 777 123 456' }, social_links: [] } });
     TestBed.configureTestingModule({ imports: [ShopMaintenanceComponent], providers: ctx.providers });
     router = TestBed.inject(Router);
     spyOn(router, 'navigate').and.resolveTo(true);
@@ -50,7 +50,7 @@ describe('ShopMaintenanceComponent', () => {
     expect(router.navigate).not.toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('shop@x.cz');
     expect(fixture.nativeElement.querySelector('a[href^="tel:"]').getAttribute('href')).toBe('tel:+420777123456');
-    expect(fixture.nativeElement.querySelector('a.mnt-action').getAttribute('href')).toBe('/home');
+    expect(fixture.nativeElement.querySelector('.mnt-action')).toBeNull();
     expect(fixture.nativeElement.querySelector('.mnt-lang')).not.toBeNull();
 
     spyOn(console, 'error');

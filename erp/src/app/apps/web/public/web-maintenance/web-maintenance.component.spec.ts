@@ -26,7 +26,7 @@ describe('WebMaintenanceComponent', () => {
   let router: Router;
 
   beforeEach(() => {
-    ctx = createPublicPageContext({ translations: { web_maintenance: { heading: 'Údržba', language: 'Jazyk', admin_login: 'Admin', retry: 'Znovu' } }, settings: { settings: { contact_email: 'help@x.cz', contact_phone: '777' }, social_links: [{ url: 'https://fb', icon_path: 'fb.svg', name: 'FB' }] } });
+    ctx = createPublicPageContext({ translations: { web_maintenance: { heading: 'Údržba', language: 'Jazyk', admin_login: 'Admin' } }, settings: { settings: { contact_email: 'help@x.cz', contact_phone: '777' }, social_links: [{ url: 'https://fb', icon_path: 'fb.svg', name: 'FB' }] } });
     TestBed.configureTestingModule({ imports: [WebMaintenanceComponent], providers: ctx.providers });
     router = TestBed.inject(Router);
     spyOn(router, 'navigate').and.resolveTo(true);
@@ -56,12 +56,11 @@ describe('WebMaintenanceComponent', () => {
 
   /**
    * @description Translated page in the one maintenance look: heading, the language switcher of
-   *   the main pages (current language, choice calls setLanguage - stored in the browser), "try
-   *   again" (checks the status again), the contacts with the social links, the translated admin
-   *   link; one language → switcher still shown (as in the header), none → hidden.
-   * @input is_web_active false; open the switcher, choose 'en'; retry with the web active;
-   *   languages [cz]; languages [].
-   * @output 'Údržba'; label 'Jazyk', 'CZ', 2 options; setLanguage('en'); retry → navigate(['/home']);
+   *   the main pages (current language, choice calls setLanguage - stored in the browser), no
+   *   action button, the contacts with the social links, the translated admin link; one language
+   *   → switcher still shown (as in the header), none → hidden.
+   * @input is_web_active false; open the switcher, choose 'en'; languages [cz]; languages [].
+   * @output 'Údržba'; label 'Jazyk', 'CZ', 2 options; setLanguage('en'); no .mnt-action;
    *   e-mail, phone, FB icon URL; admin title 'Admin'; switcher with one language; no .mnt-lang.
    */
   it('shows the translated page in the one maintenance look', () => {
@@ -80,11 +79,7 @@ describe('WebMaintenanceComponent', () => {
     (options[1] as HTMLElement).click();
     expect(ctx.localization.setLanguage).toHaveBeenCalledWith('en');
 
-    const retry = el.querySelector('button.mnt-action') as HTMLButtonElement;
-    expect(retry.textContent).toContain('Znovu');
-    ctx.publicData.getFresh.and.returnValue(of({ is_web_active: true }));
-    retry.click();
-    expect(router.navigate).toHaveBeenCalledWith(['/home']);
+    expect(el.querySelector('.mnt-action')).toBeNull();
 
     expect(el.querySelector('.mnt-contacts')?.textContent).toContain('help@x.cz');
     expect(el.querySelector('.mnt-contacts')?.textContent).toContain('777');
