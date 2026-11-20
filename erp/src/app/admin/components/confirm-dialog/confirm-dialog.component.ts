@@ -7,23 +7,24 @@
  * @description A reusable modal dialog component for capturing user confirmation before executing critical or destructive actions.
  * @dependencies
  * - Angular core: Component, EventEmitter, Input, Output decorators.
- * - ScrollLockService: Shared background scroll lock.
+ * - AdminModalComponent: the shared popup frame (prompt layer) - it also locks the page scroll,
+ *   closes on Escape / the backdrop (= cancel) and handles the focus.
  */
 
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
-import { ScrollLockService } from '../../../core/services/scroll-lock.service';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { AdminModalComponent } from '../admin-modal/admin-modal.component';
 
 /**
  * @description Renders a modal confirmation dialog to prevent accidental user actions.
  * @usage Used by ConfirmDialogService to prompt users globally across the application.
- * @note Implements body scroll blocking to maintain focus on the modal while active.
+ * @note The frame is rendered only while visible, so the page scroll is locked exactly then.
  */
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
-  imports: [],
+  imports: [AdminModalComponent],
   templateUrl: './confirm-dialog.component.html',
-  styleUrls: ['./confirm-dialog.component.css']
+  styleUrls: ['../../shared-styles/modal.css', './confirm-dialog.component.css']
 })
 export class ConfirmDialogComponent {
   /** * @description Header text displayed in the dialog. */
@@ -42,23 +43,18 @@ export class ConfirmDialogComponent {
 
   isVisible: boolean = false;
 
-  private scrollLock = inject(ScrollLockService);
-
   /**
-   * @description Displays the dialog and locks the background scroll.
+   * @description Displays the dialog.
    */
   show(): void {
     this.isVisible = true;
-    this.scrollLock.lock();
   }
 
   /**
-   * @description Hides the dialog and restores background scroll.
+   * @description Hides the dialog.
    */
   public hide(): void {
-    if (!this.isVisible) return;
     this.isVisible = false;
-    this.scrollLock.unlock();
   }
 
   /**

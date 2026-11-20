@@ -15,6 +15,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { ConfirmDialogService } from './confirm-dialog.service';
 import { ScrollLockService } from './scroll-lock.service';
+import { AdminLocalizationService } from './admin-localization.service';
 import { ConfirmDialogComponent } from '../../admin/components/confirm-dialog/confirm-dialog.component';
 
 describe('ConfirmDialogService', () => {
@@ -25,14 +26,20 @@ describe('ConfirmDialogService', () => {
 
   beforeEach(() => {
     scrollLock = jasmine.createSpyObj('ScrollLockService', ['lock', 'unlock']);
-    TestBed.configureTestingModule({ providers: [{ provide: ScrollLockService, useValue: scrollLock }] });
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ScrollLockService, useValue: scrollLock },
+        { provide: AdminLocalizationService, useValue: { getValue: (path: string) => path } },
+      ]
+    });
     service = TestBed.inject(ConfirmDialogService);
   });
   afterEach(() => dialogs().forEach(el => el.remove()));
 
   /**
-   * @description Confirm resolves true and removes the dialog; lock / unlock exactly once each.
-   * @input open('Delete?', 'Really?'); confirm().
+   * @description Confirm resolves true and removes the dialog; the rendered popup frame locks
+   *   and releases the page scroll exactly once each.
+   * @input open('Delete?', 'Really?'); render; confirm().
    * @output Mounted with title / message, visible; true; no dialog; lock 1×, unlock 1×.
    */
   it('resolves true on confirm and cleans up', async () => {
@@ -41,6 +48,7 @@ describe('ConfirmDialogService', () => {
     expect(current()!.title).toBe('Delete?');
     expect(current()!.message).toBe('Really?');
     expect(current()!.isVisible).toBeTrue();
+    (service as any).componentRef.changeDetectorRef.detectChanges();
 
     current()!.confirm();
     expect(await result).toBeTrue();

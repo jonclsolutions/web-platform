@@ -1,112 +1,21 @@
-/*     
+/*
     @file: confirm-dialog.component.css
     @path: /src/app/admin/components/confirm-dialog/confirm-dialog.component.css
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Styles of the confirm dialog component.
+    @description: Styles of the confirm dialog - only its question; the frame is AdminModalComponent,
+        the buttons admin/shared-styles/modal.css.
 */
 
-.dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 30000; 
-}
-
-.dialog-container {
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  width: 450px;
-  max-width: 90%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: popIn 0.2s ease-out; 
-}
-
-.dialog-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid #eee;
-  background-color: #f8f9fa;
-}
-
-.dialog-title {
+/*
+    @module: Confirm question
+    @description: The question of the dialog in the body of the popup.
+    @usage: <p class="confirm-message">
+*/
+.confirm-message {
   margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #333;
-}
-
-.dialog-body {
-  padding: 24px 20px;
-  color: #444;
-  line-height: 1.5;
-  font-size: 1rem;
-}
-
-.dialog-footer {
-  padding: 12px 20px;
-  background: #f8f9fa;
-  border-top: 1px solid #eee;
-}
-
-.dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.confirm_button {
-  padding: 8px 24px;
-  background-color: #222;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.confirm_button:hover {
-  background-color: var(--color-black);
-  transform: translateY(-1px);
-}
-
-.neutral_button {
-  padding: 8px 20px;
-  background-color: var(--color-white);
-  color: #444;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.neutral_button:hover {
-  background-color: #f3f4f6;
-  border-color: #ccc;
-}
-
-@keyframes popIn {
-  from { 
-    opacity: 0; 
-    transform: scale(0.95) translateY(10px); 
-  }
-  to { 
-    opacity: 1; 
-    transform: scale(1) translateY(0); 
-  }
-}
-
-:host-context(body.no-scroll) {
-  overflow: hidden;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--color-zinc-600);
 }

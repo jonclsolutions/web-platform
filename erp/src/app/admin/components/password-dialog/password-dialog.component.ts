@@ -11,12 +11,13 @@
  *   PasswordDialogService - the component only collects the password and shows the state
  *   (checking, error); it never stores or sends it itself.
  * @dependencies
- * - ScrollLockService: background scroll locked while open (same counter as other overlays).
+ * - AdminModalComponent: the shared popup frame (prompt layer) - page scroll lock, Escape /
+ *   backdrop / close button (= cancel, not while checking), focus on the password field.
  */
 
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, OnDestroy, Output, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, OnDestroy, Output, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ScrollLockService } from '../../../core/services/scroll-lock.service';
+import { AdminModalComponent } from '../admin-modal/admin-modal.component';
 
 /** @description Texts of the dialog with every optional part resolved (set by PasswordDialogService). */
 export interface PasswordDialogTexts {
@@ -32,8 +33,10 @@ export interface PasswordDialogTexts {
   label: string;
   confirm: string;
   cancel: string;
-  close: string;
 }
+
+/** Counter of the ids of the form and its field (unique on the page). */
+let nextId = 0;
 
 /**
  * @description Password prompt of the administration.
@@ -42,12 +45,12 @@ export interface PasswordDialogTexts {
 @Component({
   selector: 'app-password-dialog',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, AdminModalComponent],
   templateUrl: './password-dialog.component.html',
-  styleUrls: ['./password-dialog.component.css'],
+  styleUrls: ['../../shared-styles/modal.css', './password-dialog.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PasswordDialogComponent implements AfterViewInit, OnDestroy {
+export class PasswordDialogComponent implements OnDestroy {
   /** Texts (neutral English defaults until the service sets the translation). */
   texts: PasswordDialogTexts = {
     title: 'Confirm with your password',
@@ -58,8 +61,13 @@ export class PasswordDialogComponent implements AfterViewInit, OnDestroy {
     label: 'Current password',
     confirm: 'Confirm',
     cancel: 'Cancel',
-    close: 'Close',
   };
+
+  /** Id of the form - the confirm button in the footer of the frame submits it (`form` attribute). */
+  readonly formId = `pwd-form-${++nextId}`;
+  /** Ids of the field and its error (label / aria-describedby). */
+  readonly inputId = `${this.formId}-password`;
+  readonly errorId = `${this.formId}-error`;
 
   /** The typed password - cleared after every submit and on close. */
   password = '';
@@ -75,19 +83,7 @@ export class PasswordDialogComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild('passwordInput') passwordInput?: ElementRef<HTMLInputElement>;
 
-  private readonly scrollLock = inject(ScrollLockService);
   private readonly cd = inject(ChangeDetectorRef);
-  private locked = false;
-
-  constructor() {
-    this.scrollLock.lock();
-    this.locked = true;
-  }
-
-  /** @description Focuses the password field once it is rendered. */
-  ngAfterViewInit(): void {
-    this.passwordInput?.nativeElement.focus();
-  }
 
   /** @description Submits a non-empty password (once at a time). */
   submit(): void {
@@ -127,12 +123,8 @@ export class PasswordDialogComponent implements AfterViewInit, OnDestroy {
     this.cd.markForCheck();
   }
 
-  /** @description Releases the scroll lock (once) and forgets the password. */
+  /** @description Forgets the password. */
   ngOnDestroy(): void {
     this.password = '';
-    if (this.locked) {
-      this.locked = false;
-      this.scrollLock.unlock();
-    }
   }
 }

@@ -23,6 +23,12 @@
             "area": "web",
             "part": "public",
             "text": "The inquiry confirmation e-mail shows the name of the topic (e.g. New project / inquiry) in the subject and the summary instead of its internal key."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Admin popups get one shared frame (first the confirmation, the password prompt and the e-mail editor): fixed header and buttons, Escape or a click outside closes, the cursor moves into the window and back, screen readers announce it as a dialog."
         }
     ],
     "releases": [

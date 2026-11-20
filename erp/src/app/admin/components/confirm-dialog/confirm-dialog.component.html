@@ -1,27 +1,19 @@
-<!-- 
+<!--
     @file: confirm-dialog.component.html
     @path: /src/app/admin/components/confirm-dialog/confirm-dialog.component.html
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Template of the confirm dialog component.
+    @description: Template of the confirm dialog: the question in the shared admin popup frame
+        (AdminModalComponent, prompt layer) with cancel / confirm; closing the frame cancels.
 -->
 
 @if (isVisible) {
-  <div class="dialog-overlay" [class.visible]="isVisible">
-    <div class="dialog-container">
-      <div class="dialog-header">
-        <h2 class="dialog-title">{{ title }}</h2>
-      </div>
-      <div class="dialog-body">
-        <p>{{ message }}</p>
-      </div>
-      <div class="dialog-footer">
-        <div class="dialog-actions">
-          <button class="neutral_button" (click)="cancel()">{{ cancelLabel }}</button>
-          <button class="confirm_button" (click)="confirm()">{{ confirmLabel }}</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <app-admin-modal size="sm" level="prompt" [heading]="title" (dismissed)="cancel()">
+    <p class="confirm-message">{{ message }}</p>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" (click)="cancel()">{{ cancelLabel }}</button>
+      <button type="button" class="am-btn am-btn--primary" (click)="confirm()">{{ confirmLabel }}</button>
+    </ng-container>
+  </app-admin-modal>
 }

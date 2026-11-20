@@ -65,7 +65,7 @@ describe('PasswordConfirmationService', () => {
     expect(dialogs().length).toBe(1);
     expect(current()!.texts).toEqual({
       title: 'password-confirm.title', message: 'password-confirm.message', highlight: '', highlightTone: 'success', warning: '',
-      label: 'password-dialog.label', confirm: 'password-dialog.confirm', cancel: 'password-dialog.cancel', close: 'password-dialog.close',
+      label: 'password-dialog.label', confirm: 'password-dialog.confirm', cancel: 'password-dialog.cancel',
     });
 
     submit('S3cret!');

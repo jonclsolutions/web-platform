@@ -4,24 +4,13 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Modal editor of a confirmation e-mail - language tabs (with the number of empty
-        fields), the texts (an empty field is marked orange), the summary labels and a live
-        preview; the header and the footer stay in place, the body scrolls.
-    @dependencies: EmailTemplateEditorComponent
+    @description: Modal editor of a confirmation e-mail in the shared popup frame (AdminModalComponent:
+        fixed header and footer, scrolling body) - language tabs (with the number of empty fields),
+        the texts (an empty field is marked orange), the summary labels and a live preview.
+    @dependencies: EmailTemplateEditorComponent, AdminModalComponent
 -->
-<div class="email-tpl-overlay"
-     (mousedown)="$event.target === $event.currentTarget && close()">
-<div class="email-tpl-card" (mousedown)="$event.stopPropagation()">
-
-<div class="email-tpl-header">
-<div>
-<h2 class="email-tpl-title">{{ t('email_tpl_title') }}</h2>
-<p class="email-tpl-subtitle">{{ t('email_tpl_subtitle') }}</p>
-</div>
-<button type="button" class="email-tpl-close" (click)="close()" [disabled]="saving">✕</button>
-</div>
-
-<div class="email-tpl-body">
+<app-admin-modal size="md" [heading]="t('email_tpl_title')" [subheading]="t('email_tpl_subtitle')"
+                 [closeDisabled]="saving" (dismissed)="close()">
 
 @if (loading) {
 <p class="email-tpl-loading">{{ t('email_tpl_loading') }}</p>
@@ -150,14 +139,10 @@
 
     }
 
-</div>
-
-<div class="email-tpl-footer">
-<button type="button" class="email-tpl-btn-cancel" (click)="close()" [disabled]="saving">{{ t('email_tpl_cancel') }}</button>
-<button type="button" class="email-tpl-btn-save" (click)="save()" [disabled]="saving || loading">
+<ng-container modal-footer>
+<button type="button" class="am-btn am-btn--secondary" (click)="close()" [disabled]="saving">{{ t('email_tpl_cancel') }}</button>
+<button type="button" class="am-btn am-btn--primary" (click)="save()" [disabled]="saving || loading">
 {{ saving ? t('email_tpl_saving') : t('email_tpl_save') }}
 </button>
-</div>
-
-</div>
-</div>
+</ng-container>
+</app-admin-modal>

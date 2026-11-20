@@ -59,13 +59,13 @@ describe('PasswordDialogService', () => {
     });
     render();
     expect(service.isOpen).toBeTrue();
-    expect(dialogEl().querySelector('.pwd-title')!.textContent).toBe('T');
+    expect(dialogEl().querySelector('.am-title')!.textContent).toBe('T');
     expect(dialogEl().querySelector('.pwd-message')!.textContent).toContain('M');
     expect(dialogEl().querySelector('.pwd-highlight')!.getAttribute('data-tone')).toBe('danger');
     expect(dialogEl().querySelector('.pwd-warning')!.textContent).toBe('W');
     expect(dialogEl().querySelector('label')!.textContent).toBe('L');
-    expect(dialogEl().querySelector('.pwd-btn--primary')!.textContent!.trim()).toBe('OK');
-    expect(dialogEl().querySelector('.pwd-btn--secondary')!.textContent!.trim()).toBe('password-dialog.cancel');
+    expect(dialogEl().querySelector('.am-btn--primary')!.textContent!.trim()).toBe('OK');
+    expect(dialogEl().querySelector('.am-btn--secondary')!.textContent!.trim()).toBe('password-dialog.cancel');
     expect(scrollLock.lock).toHaveBeenCalledTimes(1);
 
     submit('pw');
@@ -79,8 +79,9 @@ describe('PasswordDialogService', () => {
   /**
    * @description Without the optional parts only the title, the default label and buttons; an
    *   empty password is not submitted.
-   * @input title only; submit with an empty password.
-   * @output no message / warning; label password-dialog.label; confirm disabled; submit not called.
+   * @input title only; submit with an empty password; password 'z' + click on confirm.
+   * @output no message / warning; label password-dialog.label; confirm disabled; submit not called;
+   *   with a password the confirm button of the footer submits the form ('z').
    */
   it('uses the defaults and needs a password', () => {
     const submitFn = jasmine.createSpy('submit').and.resolveTo(null);
@@ -89,9 +90,18 @@ describe('PasswordDialogService', () => {
     expect(dialogEl().querySelector('.pwd-message')).toBeNull();
     expect(dialogEl().querySelector('.pwd-warning')).toBeNull();
     expect(dialogEl().querySelector('label')!.textContent).toBe('password-dialog.label');
-    expect((dialogEl().querySelector('.pwd-btn--primary') as HTMLButtonElement).disabled).toBeTrue();
+    expect((dialogEl().querySelector('.am-btn--primary') as HTMLButtonElement).disabled).toBeTrue();
     current()!.submit();
     expect(submitFn).not.toHaveBeenCalled();
+
+    // The confirm button sits in the footer of the frame and submits the form by its id.
+    current()!.password = 'z';
+    (current() as any).cd.markForCheck();
+    render();
+    const confirm = dialogEl().querySelector('.am-btn--primary') as HTMLButtonElement;
+    expect(confirm.getAttribute('form')).toBe(dialogEl().querySelector('form')!.id);
+    confirm.click();
+    expect(submitFn).toHaveBeenCalledOnceWith('z');
   });
 
   /**
@@ -118,7 +128,7 @@ describe('PasswordDialogService', () => {
     expect(current()!.error).toBe('password-dialog.failed');
 
     render();
-    (dialogEl().querySelector('.pwd-close') as HTMLButtonElement).click();
+    (dialogEl().querySelector('.am-close') as HTMLButtonElement).click();
     expect(await result).toBeFalse();
     expect(dialogs().length).toBe(0);
   });
@@ -141,7 +151,9 @@ describe('PasswordDialogService', () => {
     expect(current()!.error).toBeNull();
 
     render();
-    (dialogEl().querySelector('.pwd-overlay') as HTMLElement).click();
+    const overlay = dialogEl().querySelector('.am-overlay') as HTMLElement;
+    overlay.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    overlay.click();
     expect(await b).toBeFalse();
     expect(service.isOpen).toBeFalse();
   });

@@ -1,0 +1,42 @@
+/*
+    @file: modal.css
+    @path: src/app/admin/shared-styles/modal.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Content of the admin popups that is the same in all of them - the buttons of the
+        footer. The frame itself (backdrop, card, header, body, footer) is AdminModalComponent.
+        A popup adds this file to its own styleUrls, because the buttons belong to its template
+        (projected into the frame), and the frame's styles do not reach them.
+    @dependencies: colour tokens (--color-*)
+*/
+
+/*
+    @module: Modal buttons
+    @description: Pill buttons of a popup footer: primary (black - the main action: save, confirm)
+      and secondary (white with a border - cancel).
+    @usage: <button class="am-btn am-btn--primary">, <button class="am-btn am-btn--secondary">
+*/
+.am-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 18px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.2;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.am-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.am-btn:focus-visible { outline: 2px solid var(--color-zinc-900); outline-offset: 2px; }
+
+.am-btn--primary { color: var(--color-white); background: var(--color-zinc-900); }
+.am-btn--primary:hover:not(:disabled) { background: var(--color-black); }
+
+.am-btn--secondary { color: var(--color-zinc-600); background: var(--color-white); border-color: var(--color-zinc-200); }
+.am-btn--secondary:hover:not(:disabled) { background: var(--color-zinc-100); }

@@ -97,7 +97,6 @@ export class PasswordDialogService {
       label: options.label || this.t('label'),
       confirm: options.confirmLabel || this.t('confirm'),
       cancel: options.cancelLabel || this.t('cancel'),
-      close: this.t('close'),
     });
 
     const cancelSub = ref.instance.cancelled.subscribe(() => {

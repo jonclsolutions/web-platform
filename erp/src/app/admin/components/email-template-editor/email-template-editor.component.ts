@@ -16,14 +16,15 @@
  * keys of the section and must match the backend constants). A field left empty in the shown
  * language is marked orange and every language tab counts its empty fields, so that the
  * fallback is not forgotten (shared texts: admin i18n section `email-template-editor`).
- * @note Layout: the header (title, close) and the footer (buttons) stay in place, only the body
- *   scrolls - the same as the record forms (FormBuilder).
+ * @note Layout: the shared popup frame (AdminModalComponent) - the header (title, close) and the
+ *   footer (buttons) stay in place, only the body scrolls; Escape / backdrop close it (not while saving).
  * @usage `<app-email-template-editor endpoint="web/settings/raw-request-email-template"
  *   fieldPrefix="raw_request_email" i18nSection="user-request" [rows]="rows" (closed)="…" />`
  * @dependencies
  * - DataHandler: the languages (`languages/web` by default), GET / PUT of the template endpoint.
  * - AdminLocalizationService: texts of the given section; AlertDialogService: saved message.
  * - RowButtonBuilderComponent: the language tabs.
+ * - AdminModalComponent: the popup frame.
  */
 
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
@@ -33,6 +34,7 @@ import { AdminLocalizationService } from '../../../core/services/admin-localizat
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 import { RowButtonBuilderComponent } from '../builders/row-button-builder/row-button-builder.component';
 import { RowButton, RowButtonItems, languageRowButtons } from '../builders/row-button-builder/row-button';
+import { AdminModalComponent } from '../admin-modal/admin-modal.component';
 
 /** @description One language of `GET languages/web`. */
 export interface EmailTemplateLang {
@@ -69,9 +71,9 @@ type TextField = 'subject' | 'title' | 'intro' | 'outro';
 @Component({
   selector: 'app-email-template-editor',
   standalone: true,
-  imports: [FormsModule, RowButtonBuilderComponent],
+  imports: [FormsModule, RowButtonBuilderComponent, AdminModalComponent],
   templateUrl: './email-template-editor.component.html',
-  styleUrl: './email-template-editor.component.css',
+  styleUrls: ['../../shared-styles/modal.css', './email-template-editor.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmailTemplateEditorComponent implements OnInit {

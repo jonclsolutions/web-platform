@@ -1274,7 +1274,6 @@
   "label": "Current password",
   "confirm": "Confirm",
   "cancel": "Cancel",
-  "close": "Close",
   "failed": "The operation could not be completed. Please try again."
 },
 "password-confirm": {

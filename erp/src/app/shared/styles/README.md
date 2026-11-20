@@ -49,7 +49,10 @@ src/
     │   │   ├── dashboard.css               dashboard header actions      (core, shop, web dashboards)
     │   │   ├── dashboard-cards.css         cards, KPI rows, charts       (dashboard view)
     │   │   ├── settings-page.css           settings / translation editor (core settings, translation editor view)
+    │   │   ├── modal.css                   content shared by the popups: footer buttons (.am-btn …)
     │   │   └── welcome-links.css           link-card grid                (shop + web welcome pages)
+    │   ├── components/admin-modal/admin-modal.component.css   THE frame of every admin popup (backdrop,
+    │   │                                   card, header, scrolling body, footer) - <app-admin-modal>
     │   ├── components/page-header/page-header.component.css   THE header of every admin page (title,
     │   │                                   subtitle, actions, help) - <app-page-header>
     │   ├── components/builders/row-button-builder/row-button-builder.component.css   THE row of buttons
@@ -243,6 +246,28 @@ styleUrls: ['…/shared/styles/base.css', '…/shared/styles/auth-form.css', './
 `<app-maintenance-shell [heading] [text] [note] [actionLabel] [actionLink] [languages] [email] [phone] …>`
 (look: `shared/components/maintenance-shell/maintenance-shell.component.css`).
 
+**Popup (modal window)** – never build your own backdrop, card, header or footer: put the content into
+the shared frame (header and footer stay in place, the body scrolls; Escape, the backdrop and the close
+button ask to close; page scroll lock, focus and screen-reader semantics are included):
+```html
+@if (open) {
+  <app-admin-modal [heading]="…" [subheading]="…" size="md" [closeDisabled]="saving" (dismissed)="close()">
+    … content (an element with data-autofocus gets the focus) …
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" (click)="close()">…</button>
+      <button type="button" class="am-btn am-btn--primary" (click)="save()">…</button>
+    </ng-container>
+  </app-admin-modal>
+}
+```
+```ts
+styleUrls: ['…/admin/shared-styles/modal.css', './my-popup.component.css'],   // the footer buttons are in YOUR template
+```
+`size` sm 440 / md 620 / lg 900 / xl 1100 px; `level="prompt"` for a question that opens over another
+popup. A form with its submit button in the footer links it by id: `<form [id]="formId">` +
+`<button type="submit" [attr.form]="formId">`. Something the frame does not have yet (e.g. buttons in the
+header) is added to the frame as a new slot – never copied into a popup.
+
 **Dialogs** – never build your own modal for a question, a message or a password:
 `ConfirmDialogService.open(title, message)`, `AlertDialogService.open(title, message, type)` and
 `PasswordDialogService.open({ title, message?, highlight?, warning?, label?, confirmLabel?, submit })`
@@ -258,6 +283,7 @@ styleUrls: ['…/shared/styles/base.css', '…/shared/styles/auth-form.css', './
 - Don't put component rules into `src/styles.css` (they become global).
 - Don't put themed names (`--accent`, `--text`, `--border` …) on `:root`.
 - Don't use `::ng-deep` – style the child in the child component.
+- Don't build an own overlay / card / header for a popup – use `<app-admin-modal>` (§6).
 - Don't copy a block from another page – move it to the right `shared-styles/` file and include it.
 - Don't leave unused classes behind when you remove markup from a template.
 

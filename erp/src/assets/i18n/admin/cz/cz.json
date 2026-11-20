@@ -1274,7 +1274,6 @@
   "label": "Aktuální heslo",
   "confirm": "Potvrdit",
   "cancel": "Storno",
-  "close": "Zavřít",
   "failed": "Operaci se nepodařilo dokončit. Zkuste to prosím znovu."
 },
 "password-confirm": {
