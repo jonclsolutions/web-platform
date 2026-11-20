@@ -122,6 +122,10 @@ class UpdateShopProductRequest extends FormRequest
             'variants.*.prices.price_eur_with_vat'    => 'required_with:variants.*.prices|numeric|min:0',
             'variants.*.prices.cost_price_eur'        => 'nullable|numeric|min:0',
 
+            // Images of a variant: the same rules as the images of the product.
+            'variants.*.images'                       => 'nullable|array|max:10',
+            'variants.*.images.*.file'                => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+
             'delete_variants'   => 'nullable|array',
             'delete_variants.*' => 'integer|exists:shop_product_variants,id',
         ];
@@ -141,6 +145,8 @@ class UpdateShopProductRequest extends FormRequest
             'sku.unique'                            => 'This SKU is already used by another product.',
             'images.*.file.image'                   => 'File must be an image.',
             'images.*.file.max'                     => 'Image is too large (max 5MB).',
+            'variants.*.images.*.file.image'        => 'File must be an image.',
+            'variants.*.images.*.file.max'          => 'Image is too large (max 5MB).',
             'variants.*.sku_variant.unique'         => 'Variant SKU already exists.',
         ];
     }

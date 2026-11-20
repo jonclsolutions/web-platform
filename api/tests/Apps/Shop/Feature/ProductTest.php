@@ -229,6 +229,48 @@ class ProductTest extends TestCase
     }
 
     /**
+     * @description SECURITY: a stored product / variant image gets the extension of its real
+     *   content, never the one of the client's file name (the public disk is served from the
+     *   application's origin, a `.html` / `.js` file there would run as a page / script); a
+     *   variant "image" that is not an image is refused - on create and on edit.
+     * @input POST product, images [photo.html (PNG), x.js (WebP that is valid JavaScript)];
+     *        POST product with variant image v.html (HTML); PUT the first product with a variant
+     *        image v.js (JavaScript).
+     * @output 201, the two files stored as *.png and *.webp; 422 variants.0.images.0.file twice,
+     *   nothing more stored.
+     */
+    public function test_stored_images_get_the_extension_of_their_content(): void
+    {
+        $this->signIn($this->userWith(['shop-products-create', 'shop-products-update']));
+        $samples = $this->polyglotSamples();
+        $variantPrice = ['vat_rate' => 21, 'price_eur_without_vat' => 50, 'price_eur_with_vat' => 60.5];
+
+        $id = $this->post('/api/shop/products', $this->payload(['images' => [
+            ['file' => $this->contentUpload('photo.html', $samples['png'])],
+            ['file' => $this->contentUpload('x.js', $samples['webp_js'])],
+        ]]), ['Accept' => 'application/json'])->assertCreated()->json('data.id');
+
+        $paths = ShopProductImage::orderBy('id')->pluck('image_path')->all();
+        $this->assertCount(2, $paths);
+        $this->assertStringEndsWith('.png', $paths[0]);
+        $this->assertStringEndsWith('.webp', $paths[1]);
+        Storage::disk('public')->assertExists('products/' . $paths[0]);
+
+        $this->post('/api/shop/products', $this->payload(['name' => 'Other', 'variants' => [[
+            'variant_name' => 'M', 'prices' => $variantPrice,
+            'images' => [['file' => $this->contentUpload('v.html', '<script>alert(1)</script>')]],
+        ]]]), ['Accept' => 'application/json'])->assertStatus(422)->assertJsonValidationErrors(['variants.0.images.0.file']);
+
+        $this->post("/api/shop/products/{$id}", $this->payload(['_method' => 'PUT', 'variants' => [[
+            'variant_name' => 'M', 'prices' => $variantPrice,
+            'images' => [['file' => $this->contentUpload('v.js', 'alert(document.domain)')]],
+        ]]]), ['Accept' => 'application/json'])->assertStatus(422)->assertJsonValidationErrors(['variants.0.images.0.file']);
+
+        $this->assertSame(2, ShopProductImage::count());
+        $this->assertCount(2, Storage::disk('public')->allFiles('products'));
+    }
+
+    /**
      * @description Edit rules: an edit WITHOUT `category_id` keeps the stored category and the active
      *   state (finding #30); an explicitly emptied category saves the product inactive and it cannot be
      *   switched active without one; a variant SKU must be unique (its own SKU may stay).

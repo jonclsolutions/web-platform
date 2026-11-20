@@ -224,7 +224,8 @@ class TranslationController extends Controller
                 $this->deleteIconFile($mergedCurrent[$idx]['icon_path']);
 
                 $file      = $request->file('icon');
-                $filename  = $code . '_' . \Str::uuid() . '.' . $file->getClientOriginalExtension();
+                // Extension of the real content, never of the client's name (public disk, see storeLanguageIcon()).
+                $filename  = $code . '_' . \Str::uuid() . '.' . $file->guessExtension();
                 $path      = $file->storeAs(self::ICON_FOLDER . '/' . $module, $filename, self::ICON_DISK);
 
                 $mergedCurrent[$idx]['icon_path'] = $path;
@@ -268,7 +269,10 @@ class TranslationController extends Controller
         $this->deleteIconFile($meta[$idx]['icon_path'] ?? null);
 
         $file      = $request->file('icon');
-        $filename  = $code . '_' . \Str::uuid() . '.' . $file->getClientOriginalExtension();
+        // Extension of the real content (the validated image type), never of the client's file
+        // name: the public disk is served from the application's origin, where a `.html` / `.js`
+        // name would turn the upload into a page or a script.
+        $filename  = $code . '_' . \Str::uuid() . '.' . $file->guessExtension();
         $path      = self::ICON_FOLDER . '/' . $module;
 
         $iconPath  = $file->storeAs($path, $filename, self::ICON_DISK);

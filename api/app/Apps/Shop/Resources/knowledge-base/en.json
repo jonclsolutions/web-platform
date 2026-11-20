@@ -343,7 +343,7 @@
                 },
                 {
                   "label": "Variant images",
-                  "text": "Images of its own shown after choosing the variant.",
+                  "text": "Images of its own shown after choosing the variant. The same rules apply as to the images of the product (JPG, PNG or WebP up to 5 MB).",
                   "active": false
                 }
               ]
@@ -363,7 +363,7 @@
               "ordered": true,
               "items": [
                 "The Images button in a row opens the image editor.",
-                "Add product image adds a row: choose the File (JPG or PNG up to 5 MB), fill in the Alt text (a description of the image for blind users and search engines) and the Sort order.",
+                "Add product image adds a row: choose the File (JPG, PNG or WebP up to 5 MB; any other file is refused and a stored image gets the extension of its real content), fill in the Alt text (a description of the image for blind users and search engines) and the Sort order.",
                 "Mark the primary image - it is the main preview of the product in the catalogue.",
                 "Save images saves the changes. Delete an image with the bin icon."
               ]

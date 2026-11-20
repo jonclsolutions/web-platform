@@ -77,6 +77,18 @@
             "area": "project-portal",
             "part": "admin",
             "text": "Project conversations in the administration: an open thread shows new client messages, replies and internal notes of colleagues and “read by the client” within 15 s - before, it showed them only after it was opened again."
+        },
+        {
+            "type": "security",
+            "area": "shop",
+            "part": "admin",
+            "text": "Product and variant images are stored with the extension of their real content, and a variant image that is not a JPG, PNG or WebP is refused - before, an uploaded file could be stored under a name like .html or .js and run in the browser as part of the website."
+        },
+        {
+            "type": "security",
+            "area": "core",
+            "part": "admin",
+            "text": "Language flag icons are stored with the extension of their real content, and every public upload (images, flags) is served so that it can never run as a page or script."
         }
     ],
     "releases": [

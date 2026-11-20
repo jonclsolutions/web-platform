@@ -69,6 +69,37 @@ abstract class TestCase extends BaseTestCase
     }
 
     /**
+     * @description An upload whose MIME type is detected from its CONTENT, as in a real request -
+     *   UploadedFile::fake() reports the type of the file name instead. For tests of uploads whose
+     *   name lies about the content (a PNG called `photo.html`). The temporary file is removed
+     *   with the application of the test.
+     * @param string $name Client file name, e.g. 'photo.html'.
+     * @param string $content Bytes of the file.
+     * @return UploadedFile
+     */
+    protected function contentUpload(string $name, string $content): UploadedFile
+    {
+        $path = (string) tempnam(sys_get_temp_dir(), 'upload');
+        file_put_contents($path, $content);
+        $this->beforeApplicationDestroyed(fn () => @unlink($path));
+
+        return new UploadedFile($path, $name, null, null, true);
+    }
+
+    /**
+     * @description A 1×1 PNG and a WebP header that is also valid JavaScript - the content of
+     *   the uploads of contentUpload() in the upload security tests.
+     * @return array{png: string, webp_js: string}
+     */
+    protected function polyglotSamples(): array
+    {
+        return [
+            'png'     => base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='),
+            'webp_js' => "RIFF=0;\nWEBP=1;alert(document.domain)//",
+        ];
+    }
+
+    /**
      * @description Makes every INSERT, UPDATE or DELETE on a table fail with a database
      *   error (SQLite trigger) - to test the error handling (rollback, 500 answer, error
      *   log) of code that wraps its writes in try/catch.

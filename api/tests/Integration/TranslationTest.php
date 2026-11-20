@@ -303,6 +303,34 @@ class TranslationTest extends TestCase
     }
 
     /**
+     * @description SECURITY: a flag icon gets the extension of its real content, never the one of
+     *   the client's file name - the public disk is served from the application's origin, where a
+     *   `.js` / `.html` file would run as a script / page. Both upload routes (icon of one language,
+     *   icon sent with the language list).
+     * @input shop en; POST languages/shop/en/icon with a WebP that is valid JavaScript named flag.js;
+     *        POST languages/shop with a PNG named flag.html for en.
+     * @output The stored icon paths end with .webp and .png.
+     */
+    public function test_language_icon_gets_the_extension_of_its_content(): void
+    {
+        $this->signIn($this->userWith(self::EDITOR));
+        $this->languages([['code' => 'en', 'name' => 'English', 'module' => 'shop']]);
+        $samples = $this->polyglotSamples();
+
+        $this->post('/api/languages/shop/en/icon', ['icon' => $this->contentUpload('flag.js', $samples['webp_js'])], ['Accept' => 'application/json'])->assertOk();
+        $meta = collect(json_decode(File::get($this->file('languages.json')), true));
+        $this->assertStringEndsWith('.webp', $meta->firstWhere('code', 'en')['icon_path']);
+
+        $this->post('/api/languages/shop', [
+            'languages' => json_encode([['code' => 'en', 'name' => 'English']]),
+            'icon' => $this->contentUpload('flag.html', $samples['png']), 'target_code' => 'en',
+        ], ['Accept' => 'application/json'])->assertNoContent();
+        $meta = collect(json_decode(File::get($this->file('languages.json')), true));
+        $this->assertStringEndsWith('.png', $meta->firstWhere('code', 'en')['icon_path']);
+        Storage::disk('public')->assertExists($meta->firstWhere('code', 'en')['icon_path']);
+    }
+
+    /**
      * @description Deleting a language removes its entry, icon and translation file of that
      *   module; built-in languages and unknown codes are refused; a failing icon delete is only
      *   logged as a warning.

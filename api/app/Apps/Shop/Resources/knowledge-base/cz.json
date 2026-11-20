@@ -343,7 +343,7 @@
                 },
                 {
                   "label": "Obrázky varianty",
-                  "text": "Vlastní obrázky, které se ukážou po výběru varianty.",
+                  "text": "Vlastní obrázky, které se ukážou po výběru varianty. Platí pro ně stejná pravidla jako pro obrázky produktu (JPG, PNG nebo WebP do 5 MB).",
                   "active": false
                 }
               ]
@@ -363,7 +363,7 @@
               "ordered": true,
               "items": [
                 "Tlačítkem Obrázky v řádku otevřete editor obrázků.",
-                "Přidat obrázek produktu přidá řádek: vyberte Soubor (JPG nebo PNG do 5 MB), vyplňte Alt text (popis obrázku pro nevidomé a vyhledávače) a Pořadí.",
+                "Přidat obrázek produktu přidá řádek: vyberte Soubor (JPG, PNG nebo WebP do 5 MB; jiný soubor se odmítne a uložený obrázek dostane příponu podle svého skutečného obsahu), vyplňte Alt text (popis obrázku pro nevidomé a vyhledávače) a Pořadí.",
                 "Označte primární obrázek - je to hlavní náhled produktu v katalogu.",
                 "Uložit obrázky uloží změny. Obrázek smažete ikonou koše."
               ]

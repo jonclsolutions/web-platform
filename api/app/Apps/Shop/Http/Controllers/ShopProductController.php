@@ -37,6 +37,14 @@ class ShopProductController extends Controller
     use LogsActivity, AppliesSafeSorting;
 
     /**
+     * @description Extensions a stored product image may get - the extension is taken from the
+     *   content of the upload (guessExtension()), never from the client's file name: the public
+     *   disk is served from the application's origin, where a `.html` / `.js` name would turn an
+     *   uploaded file into a page or a script.
+     */
+    private const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+
+    /**
      * Retrieves a paginated list of products based on applied filters.
      */
     public function index(Request $request): JsonResponse
@@ -471,7 +479,13 @@ class ShopProductController extends Controller
                 }
             }
 
-            $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            // Extension of the real content (see IMAGE_EXTENSIONS) - anything else is not stored.
+            $extension = $file->guessExtension();
+            if (! in_array($extension, self::IMAGE_EXTENSIONS, true)) {
+                continue;
+            }
+
+            $fileName = Str::uuid() . '.' . $extension;
             $file->storeAs('products', $fileName, 'public');
 
             if ($oldImage) {

@@ -82,8 +82,12 @@ www.{$SITE_DOMAIN} {
 
 		# Public uploads: only storage/app/public of the volume `storage` is mounted (read-only) -
 		# the private files, logs and caches are not even visible to this container. No listing.
+		# The uploads are data (images, translations), never pages: the stricter CSP below replaces
+		# the one of the snippet - a file opened as a document runs no script and gets an opaque
+		# origin (sandbox), so even an upload served as HTML / SVG cannot act on the application.
 		handle_path /storage/* {
 			import security_headers
+			header Content-Security-Policy "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox"
 			root * /srv/storage
 			file_server
 		}

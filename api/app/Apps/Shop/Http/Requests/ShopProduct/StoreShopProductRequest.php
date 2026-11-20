@@ -92,6 +92,10 @@ class StoreShopProductRequest extends FormRequest
             'variants.*.prices.price_eur_without_vat'    => 'required_with:variants.*.prices|numeric|gt:0',
             'variants.*.prices.price_eur_with_vat'       => 'required_with:variants.*.prices|numeric|gt:0',
             'variants.*.prices.cost_price_eur'           => 'nullable|numeric|min:0',
+
+            // Images of a variant: the same rules as the images of the product.
+            'variants.*.images'                          => 'nullable|array|max:10',
+            'variants.*.images.*.file'                   => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ];
     }
 
@@ -104,6 +108,8 @@ class StoreShopProductRequest extends FormRequest
     {
         return [
             'name.required'                            => 'Product name is required.',
+            'variants.*.images.*.file.image'           => 'File must be an image.',
+            'variants.*.images.*.file.max'             => 'Image is too large (max 5MB).',
             'prices.price_eur_without_vat.required'    => 'Price in EUR excluding VAT is required.',
             'prices.price_eur_without_vat.gt'          => 'Price in EUR excluding VAT must be greater than 0.',
             'prices.price_eur_with_vat.gt'             => 'Price in EUR including VAT must be greater than 0.',
