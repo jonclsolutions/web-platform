@@ -88,6 +88,22 @@ class ImportServicesTest extends TestCase
     }
 
     /**
+     * @description The apostrophe the admin export puts before a formula-like value (CSV
+     *   injection guard, erp spreadsheetSafe()) is removed on import, so an exported file imports
+     *   back unchanged; an apostrophe before anything else stays.
+     * @input CSV rows "'=1+1;'-x", "'@a;'abc"; TXT row "'+1\t'".
+     * @output =1+1 / -x, @a / 'abc; +1 / '.
+     */
+    public function test_delimited_files_drop_the_formula_guard(): void
+    {
+        $csv = $this->parse('csv', "name;email\n'=1+1;'-x\n'@a;'abc\n");
+        $this->assertSame([['name' => '=1+1', 'email' => '-x'], ['name' => '@a', 'email' => "'abc"]], $csv['rows']);
+
+        $txt = $this->parse('txt', "name\temail\n'+1\t'\n");
+        $this->assertSame([['name' => '+1', 'email' => "'"]], $txt['rows']);
+    }
+
+    /**
      * @description JSON: array of objects; "" → null, numbers → strings, nested values JSON-encoded.
      * @input [{"name": "", "email": 5}, {"name": {"a": 1}, "email": null}].
      * @output [{name null, email '5'}, {name '{"a":1}', email null}].

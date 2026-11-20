@@ -400,6 +400,10 @@
               "type": "alert",
               "variant": "warning",
               "content": "Exported files often contain personal data (names, e-mails, phone numbers). Keep them only where they are protected, do not send them unprotected and delete them after use. Every export is written to the log."
+            },
+            {
+              "type": "text",
+              "content": "In a CSV and TXT export, a value a spreadsheet (Excel, LibreOffice) would run as a formula - it starts with =, +, -, @ - gets an apostrophe in front, so it is shown as plain text. This protects against formulas slipped in through the public forms. The import removes the apostrophe again; numbers (for example -5) stay unchanged."
             }
           ]
         },

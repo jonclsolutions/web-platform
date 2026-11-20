@@ -27,6 +27,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 import { RoleOptionsService } from '../../../core/services/role-options.service';
 import { ExportPopupBuilderComponent, ExportColumnOption, ExportSelection } from '../../components/builders/export-popup-builder/export-popup-builder.component';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { spreadsheetSafe } from '../../../shared/utils/spreadsheet-safe';
 
 interface CorePermission {
   id: number;
@@ -790,8 +791,10 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   }
 
   private escapeCsvValue(value: string): string {
-    if (/[",\n;]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
-    return value;
+    // Formula starts neutralised first (spreadsheetSafe - CSV injection), then quoted when needed.
+    const safe = spreadsheetSafe(value);
+    if (/[",\n;]/.test(safe)) return `"${safe.replace(/"/g, '""')}"`;
+    return safe;
   }
 
   private downloadCsv(rows: string[][], labels: string[], filename: string): void {

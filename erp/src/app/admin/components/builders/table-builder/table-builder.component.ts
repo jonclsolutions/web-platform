@@ -47,6 +47,7 @@ import { UserAvatarComponent } from '../../user-avatar/user-avatar.component';
 import { ExportPopupBuilderComponent, ExportColumnOption, ExportSelection } from '../export-popup-builder/export-popup-builder.component';
 import { ImportPopupBuilderComponent } from '../import-popup-builder/import-popup-builder.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
+import { spreadsheetSafe } from '../../../../shared/utils/spreadsheet-safe';
 const DEFAULT_EXPORT_EXCLUDED_KEYS = [
   'user_password_hash',
   'user_password_salt',
@@ -753,7 +754,8 @@ get importEnumHints(): ImportEnumHint[] {
     const headers = this.getAllHeaders(rows);
     let csv = headers.join(';') + '\n';
     rows.forEach(row => {
-      csv += headers.map(h => `"${String(row[h] ?? '').replace(/"/g, '""')}"`).join(';') + '\n';
+      // Formula starts neutralised (spreadsheetSafe) - the values often come from public forms.
+      csv += headers.map(h => `"${spreadsheetSafe(row[h]).replace(/"/g, '""')}"`).join(';') + '\n';
     });
     this.triggerDownload(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), `${filename}.csv`);
   }
@@ -762,7 +764,7 @@ get importEnumHints(): ImportEnumHint[] {
     const headers = this.getAllHeaders(rows);
     let txt = headers.join('\t') + '\n';
     rows.forEach(row => {
-      txt += headers.map(h => String(row[h] ?? '')).join('\t') + '\n';
+      txt += headers.map(h => spreadsheetSafe(row[h])).join('\t') + '\n';
     });
     this.triggerDownload(new Blob([txt], { type: 'text/plain;charset=utf-8;' }), `${filename}.txt`);
   }

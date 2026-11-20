@@ -400,6 +400,10 @@
               "type": "alert",
               "variant": "warning",
               "content": "Exportované soubory často obsahují osobní údaje (jména, e-maily, telefony). Ukládejte je jen tam, kde jsou chráněné, neposílejte je nezabezpečeně a po použití je smažte. Každý export se zapisuje do logu."
+            },
+            {
+              "type": "text",
+              "content": "V exportu CSV a TXT má hodnota, kterou by tabulkový procesor (Excel, LibreOffice) spustil jako vzorec - začíná znakem =, +, -, @ - před sebou apostrof, takže se zobrazí jako obyčejný text. Chrání to před vzorci podstrčenými přes veřejné formuláře. Import apostrof zase odstraní; čísla (například -5) zůstávají beze změny."
             }
           ]
         },

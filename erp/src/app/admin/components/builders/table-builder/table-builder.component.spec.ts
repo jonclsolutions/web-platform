@@ -382,6 +382,23 @@ describe('TableBuilderComponent', () => {
     });
 
     /**
+     * @description SECURITY (CSV injection): a value that would start a spreadsheet formula is
+     *   exported as text (apostrophe in front) in CSV and TXT; numbers stay unchanged.
+     * @input  API returns [{ id: -1, name: '=HYPERLINK("http://x","y")' }]; CSV, then TXT, columns id/name
+     * @output CSV cell "'=HYPERLINK(""http://x"",""y"")" and "-1"; TXT line "-1\t'=HYPERLINK(…)"
+     */
+    it('neutralises formulas in CSV and TXT exports', async () => {
+      (ctx.dataHandler as any).getCollection.and.returnValue(of([{ id: -1, name: '=HYPERLINK("http://x","y")' }]));
+      await component.handleExportFormatSelected({ format: 'csv', columnKeys: ['id', 'name'], rawFormat: false });
+      const csv = await downloads[0].blob.text();
+      expect(csv.split('\n')[1]).toBe(`"-1";"'=HYPERLINK(""http://x"",""y"")"`);
+
+      await component.handleExportFormatSelected({ format: 'txt', columnKeys: ['id', 'name'], rawFormat: false });
+      const txt = await downloads[1].blob.text();
+      expect(txt.split('\n')[1]).toBe(`-1\t'=HYPERLINK("http://x","y")`);
+    });
+
+    /**
      * @description Exporting selected rows loads the data from the API with `export` (the server
      *   logs the export), keeps only the selected rows and adds the translated suffix
      *   `table-builder.export_selected_suffix` (finding #50 - was always '-vybrane').

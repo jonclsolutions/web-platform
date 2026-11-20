@@ -137,13 +137,25 @@ class ImportFileParser
                 if (count($line) === 1 && ($line[0] === null || trim((string) $line[0]) === '')) {
                     continue;
                 }
-                $rows[] = $this->combineRow($header, $line);
+                $rows[] = $this->combineRow($header, array_map(fn ($value) => $this->withoutFormulaGuard($value), $line));
             }
 
             return $rows;
         } finally {
             fclose($handle);
         }
+    }
+
+    /**
+     * @description Removes the apostrophe the CSV / TXT export of the administration puts before a
+     *   value that starts like a spreadsheet formula (`=`, `+`, `-`, `@`, tab, CR - erp
+     *   spreadsheetSafe(), against CSV injection), so an exported file imports back unchanged.
+     * @param string|null $value Cell value.
+     * @return string|null The value without the protective apostrophe.
+     */
+    private function withoutFormulaGuard(?string $value): ?string
+    {
+        return $value !== null && preg_match("/^'[=+\\-@\t\r]/", $value) === 1 ? substr($value, 1) : $value;
     }
 
     /**
