@@ -799,7 +799,7 @@
             },
             {
               "type": "text",
-              "content": "The text is filled in for every language of the e-shop; an empty field uses the Czech text, or the default English wording. The live preview shows a simplified e-mail with sample data. Saving requires the permission to edit orders."
+              "content": "The text is filled in for every language of the e-shop; an empty field uses the Czech text, or the default English wording - empty fields are therefore marked orange and every language shows their number. The live preview shows a simplified e-mail with sample data. Saving requires the permission to edit orders."
             }
           ]
         },

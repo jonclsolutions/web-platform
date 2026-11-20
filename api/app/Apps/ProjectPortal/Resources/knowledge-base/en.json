@@ -339,7 +339,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "In the Actions menu choose Edit confirmation e-mail. You edit the text the client receives after sending the form: subject, heading, greeting (the client's name is added), intro message, the heading and labels of the summary (name / company, company ID, e-mail, phone, address, description, attachments, date) and the closing message - separately for every language. An empty field uses the Czech text, or the default wording. The live preview shows the e-mail with sample data."
+              "content": "In the Actions menu choose Edit confirmation e-mail. You edit the text the client receives after sending the form: subject, heading, greeting (the client's name is added), intro message, the heading and labels of the summary (name / company, company ID, e-mail, phone, address, description, attachments, date) and the closing message - separately for every language. An empty field uses the Czech text, or the default English wording - empty fields are therefore marked orange and every language shows their number. The live preview shows the e-mail with sample data."
             }
           ]
         },

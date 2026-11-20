@@ -34,7 +34,7 @@
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #ececea;border-radius:10px;overflow:hidden;margin-bottom:24px;">
 <tr>
 <td style="padding:12px 16px;background:#fafafa;font-size:13px;font-weight:600;color:#52525b;width:38%;border-bottom:1px solid #ececea;">{{ $emailLabelThema }}</td>
-<td style="padding:12px 16px;font-size:13px;color:#18181b;border-bottom:1px solid #ececea;">{{ $requestCommission->thema }}</td>
+<td style="padding:12px 16px;font-size:13px;color:#18181b;border-bottom:1px solid #ececea;">{{ $emailThema ?? $requestCommission->thema }}</td>
 </tr>
 <tr>
 <td style="padding:12px 16px;background:#fafafa;font-size:13px;font-weight:600;color:#52525b;border-bottom:1px solid #ececea;">{{ $emailLabelEmail }}</td>

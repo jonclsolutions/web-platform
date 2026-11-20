@@ -799,7 +799,7 @@
             },
             {
               "type": "text",
-              "content": "Text se vyplňuje pro každý jazyk e-shopu; prázdné pole použije český text, případně výchozí anglické znění. Živý náhled ukazuje zjednodušený e-mail s ukázkovými daty. Uložení vyžaduje oprávnění upravit objednávky."
+              "content": "Text se vyplňuje pro každý jazyk e-shopu; prázdné pole použije český text, případně výchozí anglické znění - nevyplněná pole jsou proto oranžově označená a u každého jazyka je jejich počet. Živý náhled ukazuje zjednodušený e-mail s ukázkovými daty. Uložení vyžaduje oprávnění upravit objednávky."
             }
           ]
         },

@@ -13,7 +13,11 @@
  * with the texts, the languages and the rows of the summary table.
  * @note The preview mirrors the language fallback of the backend (I18nEmailTemplate): text of
  * the language → Czech text → built-in default (the default texts are the `email_tpl_default_*`
- * keys of the section and must match the backend constants).
+ * keys of the section and must match the backend constants). A field left empty in the shown
+ * language is marked orange and every language tab counts its empty fields, so that the
+ * fallback is not forgotten (shared texts: admin i18n section `email-template-editor`).
+ * @note Layout: the header (title, close) and the footer (buttons) stay in place, only the body
+ *   scrolls - the same as the record forms (FormBuilder).
  * @usage `<app-email-template-editor endpoint="web/settings/raw-request-email-template"
  *   fieldPrefix="raw_request_email" i18nSection="user-request" [rows]="rows" (closed)="…" />`
  * @dependencies
@@ -102,6 +106,37 @@ export class EmailTemplateEditorComponent implements OnInit {
     return this.i18n.getValue(`${this.i18nSection}.${key}`);
   }
 
+  /** @description Shared text of the editor (admin i18n section `email-template-editor`). */
+  shared(key: string): string {
+    return this.i18n.getValue(`email-template-editor.${key}`);
+  }
+
+  /**
+   * @description Whether a text is filled in (not only spaces).
+   * @param value Text of a field.
+   */
+  isFilled(value: string | null | undefined): boolean {
+    return !!value && value.trim() !== '';
+  }
+
+  /**
+   * @description Number of the fields of a language that are empty (they would fall back to the
+   *   Czech text or the default wording): the four texts, the greeting, the summary heading and
+   *   every row of the summary.
+   * @param lang Language code.
+   */
+  missingCount(lang: string): number {
+    const texts: Array<string | undefined> = [
+      this.template.subject_i18n[lang], this.template.title_i18n[lang],
+      this.template.intro_i18n[lang], this.template.outro_i18n[lang],
+    ];
+    const labels = this.template.labels_i18n[lang] ?? {};
+    for (const key of ['greeting', 'summary_header', ...this.rows.map(r => r.key)]) {
+      texts.push(labels[key]);
+    }
+    return texts.filter(text => !this.isFilled(text)).length;
+  }
+
   /**
    * @description Loads the active languages and the stored texts in parallel - the labels of
    * a language are prepared whichever answer comes first (the inputs bind to nested properties).
@@ -155,9 +190,12 @@ export class EmailTemplateEditorComponent implements OnInit {
   /** Stable buttons of the language tabs. */
   private readonly langButtons = new RowButtonItems();
 
-  /** @description Language tabs (upper-case code). */
+  /** @description Language tabs (upper-case code) with the number of empty fields. */
   get langItems(): RowButton[] {
-    return this.langButtons.update(languageRowButtons(this.languages));
+    return this.langButtons.update(languageRowButtons(this.languages, {
+      count: code => this.missingCount(code),
+      title: code => this.missingCount(code) ? this.shared('missing_tab_title') : '',
+    }));
   }
 
   /** @description Switches the language tab - only the shown language changes. */

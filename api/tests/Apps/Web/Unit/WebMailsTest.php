@@ -7,7 +7,7 @@
  * @author JS
  * @created 2026
  * @description Unit tests of the web e-mails: subject and rendered content of the raw
- *   request confirmation.
+ *   request confirmation, the topic shown by its name (not the slug).
  * @dependencies
  * - Tests\TestCase, Tests\Apps\Web\Support\WebFixtures; views web::emails.*.
  */
@@ -45,5 +45,42 @@ class WebMailsTest extends TestCase
         $this->assertStringContainsString('We need a new website.', $html);
         $this->assertStringContainsString('brief.pdf', $html);
         $this->assertSame([], $mail->attachments());
+    }
+
+    /**
+     * @description A topic chosen in the public form is stored as a slug - the e-mail shows its
+     *   name from the web translations in the language of the request, else the Czech one; a slug
+     *   without a text and a free-text topic stay as they are.
+     * @input Translations cz (new_project, support) + en (new_project) in a temporary storage;
+     *   requests new_project/en, support/en, careers/cz, 'Website redesign'.
+     * @output subjects '… – New project / inquiry', '… – Podpora', '… – careers', '… – Website
+     *   redesign'; the HTML shows 'New project / inquiry' and not the slug.
+     */
+    public function test_raw_request_topic_is_translated(): void
+    {
+        $storage = sys_get_temp_dir() . '/kb-mail-' . uniqid();
+        mkdir("{$storage}/app/public/translations/web", 0777, true);
+        file_put_contents("{$storage}/app/public/translations/web/cz.json", json_encode(['contact' => ['options' => ['new_project' => 'Nový projekt / poptávka', 'support' => 'Podpora']]]));
+        file_put_contents("{$storage}/app/public/translations/web/en.json", json_encode(['contact' => ['options' => ['new_project' => 'New project / inquiry']]]));
+        $original = $this->app->storagePath();
+        $this->app->useStoragePath($storage);
+
+        try {
+            $mail = new WebRawRequestCommissionReceived($this->rawRequest(['thema' => 'new_project', 'lang' => 'en']));
+            $mail->assertHasSubject('Your request has been received – New project / inquiry');
+            $html = $mail->render();
+            $this->assertStringContainsString('New project / inquiry', $html);
+            $this->assertStringNotContainsString('new_project', $html);
+
+            (new WebRawRequestCommissionReceived($this->rawRequest(['thema' => 'support', 'lang' => 'en'])))
+                ->assertHasSubject('Your request has been received – Podpora');
+            (new WebRawRequestCommissionReceived($this->rawRequest(['thema' => 'careers'])))
+                ->assertHasSubject('Your request has been received – careers');
+            (new WebRawRequestCommissionReceived($this->rawRequest()))
+                ->assertHasSubject('Your request has been received – Website redesign');
+        } finally {
+            $this->app->useStoragePath($original);
+            array_map('unlink', glob("{$storage}/app/public/translations/web/*.json"));
+        }
     }
 }

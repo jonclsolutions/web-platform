@@ -339,7 +339,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "V nabídce Akce zvolte Editovat potvrzovací e-mail. Upravíte text, který klient dostane po odeslání formuláře: předmět, nadpis, pozdrav (doplní se jméno klienta), úvodní zprávu, nadpis a popisky rekapitulace (jméno / firma, IČO, e-mail, telefon, adresa, popis, přílohy, datum) a závěrečnou zprávu - pro každý jazyk zvlášť. Prázdné pole použije český text, případně výchozí znění. Živý náhled ukazuje e-mail s ukázkovými daty."
+              "content": "V nabídce Akce zvolte Editovat potvrzovací e-mail. Upravíte text, který klient dostane po odeslání formuláře: předmět, nadpis, pozdrav (doplní se jméno klienta), úvodní zprávu, nadpis a popisky rekapitulace (jméno / firma, IČO, e-mail, telefon, adresa, popis, přílohy, datum) a závěrečnou zprávu - pro každý jazyk zvlášť. Prázdné pole použije český text, případně výchozí anglické znění - nevyplněná pole jsou proto oranžově označená a u každého jazyka je jejich počet. Živý náhled ukazuje e-mail s ukázkovými daty."
             }
           ]
         },

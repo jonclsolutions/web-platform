@@ -1538,5 +1538,9 @@
       "login_failed": "Sign-in failed.",
       "otp_expired": "The code has expired. Request a new one."
     }
-  }
+  },
+"email-template-editor": {
+  "missing_hint": "Fields marked orange are not filled in for this language. The e-mail uses the Czech text instead, and when that is missing too, the default English wording. Fill them in so that the customer gets the whole e-mail in their language.",
+  "missing_tab_title": "Number of empty fields in this language"
+}
 }

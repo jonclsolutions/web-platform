@@ -26,7 +26,10 @@
   width: 100%;
   max-width: 620px;
   max-height: 88vh;
-  overflow-y: auto;
+  /* Header and footer stay in place, only the body scrolls (as the record forms). */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   box-shadow: 0 20px 50px rgba(24, 24, 27, 0.25);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   position: relative;
@@ -34,6 +37,7 @@
 }
 
 .email-tpl-header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -67,6 +71,9 @@
 .email-tpl-close:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .email-tpl-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   padding: 24px;
   position: relative;
   z-index: 1;
@@ -116,6 +123,30 @@
   resize: vertical;
 }
 
+/*
+    @module: Empty fields
+    @description: A field empty in the shown language (the e-mail would use the Czech text or the
+        default wording) - orange frame and background - and the hint above the fields.
+    @usage: .email-tpl-input--missing on an input / textarea; p.email-tpl-missing-hint
+*/
+.email-tpl-input.email-tpl-input--missing,
+.email-tpl-textarea.email-tpl-input--missing {
+  border-color: var(--color-amber-400, #fbbf24);
+  background: var(--color-amber-50, #fffbeb);
+}
+.email-tpl-input--missing:focus { border-color: var(--color-amber-500, #f59e0b); }
+
+.email-tpl-missing-hint {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-amber-200, #fde68a);
+  background: var(--color-amber-50, #fffbeb);
+  color: var(--color-amber-800, #92400e);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
 .email-tpl-hint {
   margin: 12px 0 0;
   font-size: 12px;
@@ -123,6 +154,7 @@
 }
 
 .email-tpl-footer {
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
   gap: 10px;

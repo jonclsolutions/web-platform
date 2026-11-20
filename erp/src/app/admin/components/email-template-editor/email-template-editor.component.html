@@ -4,7 +4,9 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Modal editor of a confirmation e-mail - language tabs, the texts, the summary labels and a live preview.
+    @description: Modal editor of a confirmation e-mail - language tabs (with the number of empty
+        fields), the texts (an empty field is marked orange), the summary labels and a live
+        preview; the header and the footer stay in place, the body scrolls.
     @dependencies: EmailTemplateEditorComponent
 -->
 <div class="email-tpl-overlay"
@@ -29,10 +31,16 @@
 <app-row-button-builder class="email-tpl-lang-tabs" size="sm" [items]="langItems" [active]="currentLang" (selected)="switchLang($event)" />
       }
 
+<!-- Empty fields of the shown language fall back to Czech / the default wording - marked orange -->
+@if (missingCount(currentLang) > 0) {
+<p class="email-tpl-missing-hint">{{ shared('missing_hint') }}</p>
+}
+
 <div class="email-tpl-field">
 <label class="email-tpl-label">{{ t('email_tpl_subject_label') }} <span class="email-tpl-label-hint">{{ t('email_tpl_subject_hint') }}</span></label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="template.subject_i18n[currentLang]"
+       [class.email-tpl-input--missing]="!isFilled(template.subject_i18n[currentLang])"
        [placeholder]="textPlaceholder('subject')">
 </div>
 
@@ -40,6 +48,7 @@
 <label class="email-tpl-label">{{ t('email_tpl_title_label') }}</label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="template.title_i18n[currentLang]"
+       [class.email-tpl-input--missing]="!isFilled(template.title_i18n[currentLang])"
        [placeholder]="textPlaceholder('title')">
 </div>
 
@@ -47,6 +56,7 @@
 <label class="email-tpl-label">{{ t('email_tpl_greeting_label') }}</label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="template.labels_i18n[currentLang]['greeting']"
+       [class.email-tpl-input--missing]="!isFilled(template.labels_i18n[currentLang]['greeting'])"
        [placeholder]="labelPlaceholder('greeting')">
 </div>
 
@@ -54,6 +64,7 @@
 <label class="email-tpl-label">{{ t('email_tpl_intro_label') }}</label>
 <textarea rows="3" class="email-tpl-textarea"
           [(ngModel)]="template.intro_i18n[currentLang]"
+       [class.email-tpl-input--missing]="!isFilled(template.intro_i18n[currentLang])"
           [placeholder]="textPlaceholder('intro')"></textarea>
 </div>
 
@@ -63,6 +74,7 @@
 <label class="email-tpl-label">{{ t('email_tpl_summary_header_label') }}</label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="template.labels_i18n[currentLang]['summary_header']"
+       [class.email-tpl-input--missing]="!isFilled(template.labels_i18n[currentLang]['summary_header'])"
        [placeholder]="labelPlaceholder('summary_header')">
 </div>
 
@@ -73,10 +85,12 @@
 @if (row.multiline) {
 <textarea rows="3" class="email-tpl-textarea"
           [(ngModel)]="template.labels_i18n[currentLang][row.key]"
+       [class.email-tpl-input--missing]="!isFilled(template.labels_i18n[currentLang][row.key])"
           [placeholder]="labelPlaceholder(row.key)"></textarea>
 } @else {
 <input type="text" class="email-tpl-input"
        [(ngModel)]="template.labels_i18n[currentLang][row.key]"
+       [class.email-tpl-input--missing]="!isFilled(template.labels_i18n[currentLang][row.key])"
        [placeholder]="labelPlaceholder(row.key)">
 }
 </div>
@@ -89,6 +103,7 @@
 <label class="email-tpl-label">{{ t('email_tpl_outro_label') }}</label>
 <textarea rows="2" class="email-tpl-textarea"
           [(ngModel)]="template.outro_i18n[currentLang]"
+       [class.email-tpl-input--missing]="!isFilled(template.outro_i18n[currentLang])"
           [placeholder]="textPlaceholder('outro')"></textarea>
 </div>
 

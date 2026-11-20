@@ -319,7 +319,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "Text vyplňujete pro každý jazyk webu zvlášť. Prázdné pole použije český text, a když není vyplněný ani ten, výchozí znění.",
+                "Text vyplňujete pro každý jazyk webu zvlášť. Prázdné pole použije český text, a když není vyplněný ani ten, výchozí anglické znění. Nevyplněná pole jsou proto oranžově označená a u každého jazyka je počet nevyplněných polí.",
                 "Živý náhled dole ukazuje, jak e-mail vypadá; rekapitulace v náhledu je vyplněná ukázkovými daty.",
                 "Tlačítkem Uložit šablonu uložíte, Zrušit zavře editor bez uložení."
               ]

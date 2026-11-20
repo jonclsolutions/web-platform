@@ -7,7 +7,8 @@
  * @description Unit tests of EmailTemplateEditorComponent (shared confirmation e-mail editor of
  *   the inquiries and the orders): loading of the languages and the stored texts (by the field
  *   prefix), the preview with the fallback to the defaults of the section, language switch,
- *   saving and closing.
+ *   saving and closing; empty fields of the shown language marked orange, their number on the
+ *   language tabs and the hint.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, i18n stub returning `section.key`, alert spy).
  */
@@ -169,5 +170,31 @@ describe('EmailTemplateEditorComponent', () => {
     expect(el.querySelectorAll('.email-tpl-preview-table tr').length).toBe(1);
     expect(Array.from(el.querySelectorAll('.email-tpl-preview-text')).map(p => p.textContent!.trim())).toContain('Odstoupení do 14 dnů.');
     expect(el.querySelector('.email-tpl-field--wide textarea')).not.toBeNull();
+  });
+  /**
+   * @description Empty fields: every field empty in the shown language gets the orange class, the
+   *   hint is shown and each language tab carries its number of empty fields; filling a field
+   *   removes its mark; a language with everything filled has no hint.
+   * @input languages cz, en; stored texts (cz: all but label_email; en: subject only).
+   * @output cz: 1 missing (label_email), 1 marked input, hint 'email-template-editor.missing_hint';
+   *   en: 7 missing; after filling label_email in cz: 0, no mark, no hint.
+   */
+  it('marks the empty fields of a language', () => {
+    create(of([{ code: 'cz', name: 'Čeština' }, { code: 'en', name: 'English' }]), of(JSON.parse(JSON.stringify(stored))));
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(component.missingCount('cz')).toBe(1);
+    expect(component.missingCount('en')).toBe(7);
+    expect(el.querySelectorAll('.email-tpl-input--missing').length).toBe(1);
+    expect(el.querySelector('.email-tpl-missing-hint')!.textContent!.trim()).toBe('email-template-editor.missing_hint');
+    expect(component.langItems.map(i => i.count)).toEqual([1, 7]);
+    expect(component.isFilled('  ')).toBeFalse();
+
+    component.template.labels_i18n['cz']['label_email'] = 'E-mail';
+    (component as any).cd.markForCheck(); // OnPush - typing into the field marks it in the app
+    fixture.detectChanges();
+    expect(component.missingCount('cz')).toBe(0);
+    expect(el.querySelectorAll('.email-tpl-input--missing').length).toBe(0);
+    expect(el.querySelector('.email-tpl-missing-hint')).toBeNull();
   });
 });

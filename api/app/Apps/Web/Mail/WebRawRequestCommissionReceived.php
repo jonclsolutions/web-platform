@@ -23,46 +23,63 @@ use Illuminate\Queue\SerializesModels;
 
 class WebRawRequestCommissionReceived extends Mailable
 {
-use Queueable, SerializesModels;
+    use Queueable, SerializesModels;
 
-/** @var array|null Memoized result of RawRequestEmailTemplate::forLang() (see the file header). */
-private ?array $resolvedTemplate = null;
+    /** @var array|null Memoized result of RawRequestEmailTemplate::forLang() (see the file header). */
+    private ?array $resolvedTemplate = null;
 
-public function __construct(
-public WebRawRequestCommission $requestCommission
+    public function __construct(
+        public WebRawRequestCommission $requestCommission
     ) {}
 
-public function envelope(): Envelope
+    /**
+     * @description Subject: the subject of the template + the name of the topic (not its slug).
+     */
+    public function envelope(): Envelope
     {
-$tpl = $this->template();
+        $tpl = $this->template();
 
-return new Envelope(
-subject: $tpl['emailSubject'] . ' – ' . $this->requestCommission->thema,
+        return new Envelope(
+            subject: $tpl['emailSubject'] . ' – ' . $this->themaLabel(),
         );
     }
 
-public function content(): Content
+    /**
+     * @description Body: company contacts, the template texts and the name of the topic
+     *   (`$emailThema`).
+     */
+    public function content(): Content
     {
-return new Content(
-view: 'web::emails.raw-request-commission-received',
-with: array_merge(
-    CompanyContactInfo::get(),
-    $this->template()
-),
+        return new Content(
+            view: 'web::emails.raw-request-commission-received',
+            with: array_merge(
+                CompanyContactInfo::get(),
+                $this->template(),
+                ['emailThema' => $this->themaLabel()]
+            ),
         );
     }
 
-public function attachments(): array
+    public function attachments(): array
     {
-return [];
+        return [];
     }
 
-/**
- * @description Returns (and computes the first time) the template content for the language of
- * this record - memoized, see the file header.
- */
-private function template(): array
+    /**
+     * @description Name of the topic in the language of the request (see
+     *   RawRequestEmailTemplate::themaLabel()).
+     */
+    private function themaLabel(): string
     {
-return $this->resolvedTemplate ??= RawRequestEmailTemplate::forLang($this->requestCommission->lang);
+        return RawRequestEmailTemplate::themaLabel($this->requestCommission->thema, $this->requestCommission->lang);
+    }
+
+    /**
+     * @description Returns (and computes the first time) the template content for the language of
+     * this record - memoized, see the file header.
+     */
+    private function template(): array
+    {
+        return $this->resolvedTemplate ??= RawRequestEmailTemplate::forLang($this->requestCommission->lang);
     }
 }
