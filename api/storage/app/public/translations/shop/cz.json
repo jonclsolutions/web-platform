@@ -173,7 +173,8 @@
             "shipping_required": "Vyberte způsob dopravy.",
             "payment_required": "Vyberte způsob platby.",
             "terms_required": "Pro dokončení musíte souhlasit s obchodními podmínkami.",
-            "invalid_value": "Zkontrolujte prosím tuto hodnotu."
+            "invalid_value": "Zkontrolujte prosím tuto hodnotu.",
+            "captcha_load": "Ověření, že nejste robot, se nepodařilo načíst. Obnovte prosím stránku, případně povolte obsah z challenges.cloudflare.com."
         },
         "alerts": {
             "form_incomplete_title": "Formulář je nekompletní",
@@ -184,7 +185,9 @@
             "price_invalid_message": "Produkt „{product}“ nemá platnou cenu a nelze ho objednat. Odeberte ho prosím z košíku.",
             "stock_message": "Některá položka košíku už není v požadovaném množství dostupná. Upravte prosím košík.",
             "order_rejected_message": "Objednávku nelze dokončit – některá položka už není dostupná nebo se změnila. Zkontrolujte prosím košík.",
-            "too_many_requests": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu."
+            "too_many_requests": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu.",
+            "captcha_failed": "Ověření, že nejste robot, se nezdařilo nebo vypršelo. Odešlete prosím objednávku znovu.",
+            "email_limit": "Na tuto e-mailovou adresu jsme v poslední době přijali už několik objednávek. Další můžete odeslat později, případně nás kontaktujte."
         },
         "coupon_too_many": "Příliš mnoho pokusů o zadání kódu. Zkuste to prosím za chvíli."
     },

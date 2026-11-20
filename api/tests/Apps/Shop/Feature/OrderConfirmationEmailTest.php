@@ -27,6 +27,7 @@ use App\Apps\Shop\Support\ShopOrderEmailTemplate;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
 use Tests\Apps\Shop\Support\ShopFixtures;
+use Tests\Support\CommonFixtures;
 use Tests\TestCase;
 
 /**
@@ -35,6 +36,7 @@ use Tests\TestCase;
 class OrderConfirmationEmailTest extends TestCase
 {
     use ShopFixtures;
+    use CommonFixtures;
 
     /** @var string Temporary storage directory of the test. */
     private string $storage;
@@ -49,6 +51,7 @@ class OrderConfirmationEmailTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->fakeCaptcha();
         $this->storage = sys_get_temp_dir() . '/shop-mail-test-' . bin2hex(random_bytes(6));
         mkdir($this->storage . '/app/public/translations/shop', 0777, true);
         file_put_contents($this->storage . '/app/public/translations/languages.json', json_encode([
@@ -89,7 +92,7 @@ class OrderConfirmationEmailTest extends TestCase
             'payment_method_id' => $this->ids['payment'], 'shipping_method_id' => $this->ids['shipping'],
             'coupon_code' => 'SAVE10', 'notes' => "Ring twice\nThanks",
             'items' => [['product_id' => $this->ids['mug'], 'quantity' => 2]],
-        ], $overrides));
+        ] + $this->captcha(), $overrides));
     }
 
     /**

@@ -53,6 +53,8 @@ class ShopCheckoutController extends Controller
      *   (Directive 2011/83/EU, Art. 8(7)) - a failed e-mail never fails the order (logged).
      * @param Request $request Checkout form (customer, address, methods, coupon_code, items,
      *   lang = language of the storefront; unknown / missing = cz).
+     * @note The route is guarded like every public form (PublicFormGuard): captcha, honeypot and
+     *   the quota of orders per e-mail of the buyer - the confirmation e-mail goes to that address.
      * @return JsonResponse 201 order | 422 validation / coupon / availability | 500 error.
      */
     public function createOrder(Request $request): JsonResponse

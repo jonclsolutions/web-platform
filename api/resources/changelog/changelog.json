@@ -131,6 +131,12 @@
             "area": "core",
             "part": "admin",
             "text": "A deleted sysadmin account can be restored from the trash only by another sysadmin (the same rule as deleting it), and deleting an account signs it out on every device at once - a restore no longer brings its old sessions back."
+        },
+        {
+            "type": "security",
+            "area": "shop",
+            "part": "public",
+            "text": "The checkout is protected like the other public forms: an invisible bot check, a hidden trap field, at most 5 attempts per minute per visitor and 3 orders per hour (10 per day) to one e-mail - nobody can make the e-shop mail strangers or use up the stock with fake orders."
         }
     ],
     "releases": [

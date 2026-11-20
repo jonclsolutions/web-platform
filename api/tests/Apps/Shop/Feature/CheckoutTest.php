@@ -24,7 +24,9 @@ use App\Apps\Shop\Models\ShopPaymentMethod;
 use App\Apps\Shop\Models\ShopShippingMethod;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Lottery;
+use App\Http\Middleware\PublicFormGuard;
 use Tests\Apps\Shop\Support\ShopFixtures;
+use Tests\Support\CommonFixtures;
 use Tests\TestCase;
 
 /**
@@ -33,6 +35,7 @@ use Tests\TestCase;
 class CheckoutTest extends TestCase
 {
     use ShopFixtures;
+    use CommonFixtures;
 
     /** @var ShopPaymentMethod Payment method of the tests. */
     private ShopPaymentMethod $payment;
@@ -41,12 +44,14 @@ class CheckoutTest extends TestCase
     private ShopShippingMethod $shipping;
 
     /**
-     * @description Payment / shipping methods; payment simulation on, Lottery back to random.
+     * @description Payment / shipping methods; payment simulation on, Lottery back to random;
+     *   the captcha of the public form accepts the test token.
      * @return void
      */
     protected function setUp(): void
     {
         parent::setUp();
+        $this->fakeCaptcha();
         $this->payment = $this->paymentMethod();
         $this->shipping = $this->shippingMethod();
         config(['shop.payment_simulation' => true]);
@@ -63,7 +68,7 @@ class CheckoutTest extends TestCase
     }
 
     /**
-     * @description A valid checkout body.
+     * @description A valid checkout body (with the captcha token of the public form).
      * @param array<int, array<string, mixed>> $items Cart lines.
      * @param array<string, mixed> $overrides Field overrides.
      * @return array<string, mixed>
@@ -74,7 +79,7 @@ class CheckoutTest extends TestCase
             'email' => ' Jan@Example.com ', 'first_name' => 'Jan', 'last_name' => 'Novak', 'phone' => '777111222',
             'address' => 'Main 1', 'city' => 'Praha', 'postal_code' => '11000', 'country' => 'CZ',
             'payment_method_id' => $this->payment->id, 'shipping_method_id' => $this->shipping->id, 'items' => $items,
-        ], $overrides);
+        ] + $this->captcha(), $overrides);
     }
 
     /**
@@ -324,13 +329,13 @@ class CheckoutTest extends TestCase
     /**
      * @description Validation (column lengths, items), database errors answer 500 without SQL
      *   details and leave stock untouched.
-     * @input {} ; postal code 11 chars; order INSERT fails; customer INSERT of a new e-mail fails.
+     * @input Only the captcha token; postal code 11 chars; order INSERT fails; customer INSERT of a new e-mail fails.
      * @output 422 fields; 422 postal_code; 500 "Error creating order." twice; stock 10; shop log 'error'.
      */
     public function test_validation_and_errors(): void
     {
         $p = $this->product(['name' => 'P']);
-        $this->postJson('/api/shop/checkout/create-order', [])->assertStatus(422)
+        $this->postJson('/api/shop/checkout/create-order', $this->captcha())->assertStatus(422)
             ->assertJsonValidationErrors(['email', 'first_name', 'last_name', 'phone', 'address', 'city', 'postal_code', 'country', 'payment_method_id', 'shipping_method_id', 'items']);
         $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 1]], ['postal_code' => str_repeat('1', 11)]))
             ->assertStatus(422)->assertJsonValidationErrors(['postal_code']);
@@ -345,16 +350,52 @@ class CheckoutTest extends TestCase
     }
 
     /**
-     * @description Order creation is limited to 10 per minute per IP.
-     * @input 10 refused requests (invalid body), then one more.
-     * @output 11th answers 429.
+     * @description Order creation is limited like every public form: the named limiter
+     *   `public-form` (5 per minute per IP, the refused requests count too).
+     * @input 5 refused requests (empty body), then one more.
+     * @output 6th answers 429.
      */
     public function test_rate_limit(): void
     {
-        foreach (range(1, 10) as $i) {
+        foreach (range(1, 5) as $i) {
             $this->postJson('/api/shop/checkout/create-order', [])->assertStatus(422);
         }
         $this->postJson('/api/shop/checkout/create-order', [])->assertStatus(429);
+    }
+
+    /**
+     * @description SECURITY (SA-05): the checkout is guarded like the other public forms - the
+     *   confirmation e-mail goes to the address typed in, so without the guard anybody could make
+     *   the shop mail any address (with their own text) and use up the stock with fake orders.
+     *   Without a valid captcha the order is refused, a filled honeypot is dropped silently, and
+     *   one e-mail address gets at most RECIPIENT_PER_HOUR orders an hour (successful ones only);
+     *   another address is not affected.
+     * @input No captcha token; rejected token; honeypot 'website' filled; RECIPIENT_PER_HOUR orders
+     *        for jan@example.com (other IPs), one more; one for eva@example.com.
+     * @output 422 captcha_required ×2; 204; 201 ×3; 429 error_code RECIPIENT_LIMIT; 201; 4 orders, stock 6.
+     */
+    public function test_checkout_is_guarded_like_the_public_forms(): void
+    {
+        $p = $this->product(['name' => 'P']);
+        $line = [['product_id' => $p->id, 'quantity' => 1]];
+        $send = fn (array $overrides, string $ip) => $this->withServerVariables(['REMOTE_ADDR' => $ip])
+            ->postJson('/api/shop/checkout/create-order', $this->payload($line, $overrides));
+
+        $send(['captcha_token' => null], '10.1.0.1')->assertStatus(422)->assertJsonPath('captcha_required', true);
+        $this->fakeCaptcha(false);
+        $send([], '10.1.0.2')->assertStatus(422)->assertJsonPath('captcha_required', true);
+        $this->fakeCaptcha();
+        $send([PublicFormGuard::HONEYPOT_FIELD => 'http://spam.example'], '10.1.0.3')->assertNoContent();
+        $this->assertSame(0, ShopOrder::count());
+
+        for ($i = 0; $i < PublicFormGuard::RECIPIENT_PER_HOUR; $i++) {
+            $send([], "10.1.1.{$i}")->assertCreated();
+        }
+        $send(['email' => 'JAN@example.com'], '10.1.2.1')->assertStatus(429)->assertJsonPath('error_code', 'RECIPIENT_LIMIT');
+        $send(['email' => 'eva@example.com'], '10.1.2.2')->assertCreated();
+
+        $this->assertSame(PublicFormGuard::RECIPIENT_PER_HOUR + 1, ShopOrder::count());
+        $this->assertSame(10 - PublicFormGuard::RECIPIENT_PER_HOUR - 1, $p->fresh()->stock_quantity);
     }
 
     /**

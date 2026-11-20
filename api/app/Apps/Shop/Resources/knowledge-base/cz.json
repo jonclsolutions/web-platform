@@ -547,7 +547,7 @@
                 },
                 {
                   "label": "Kontrola",
-                  "text": "Systém ověří ceny podle katalogu, platnost kupónu a dostupnost zboží.",
+                  "text": "Systém ověří, že objednávku neodesílá robot (neviditelná kontrola jako u formulářů webu), ceny podle katalogu, platnost kupónu a dostupnost zboží. Na jednu e-mailovou adresu přijme nejvýš 3 objednávky za hodinu a 10 za den - další objednávku zákazník odešle později.",
                   "active": false
                 },
                 {

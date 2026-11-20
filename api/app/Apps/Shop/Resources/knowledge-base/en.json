@@ -547,7 +547,7 @@
                 },
                 {
                   "label": "Check",
-                  "text": "The system checks the prices against the catalogue, the validity of the coupon and the availability of the goods.",
+                  "text": "The system checks that the order is not sent by a bot (an invisible check, as on the website forms), the prices against the catalogue, the validity of the coupon and the availability of the goods. It accepts at most 3 orders per hour and 10 per day for one e-mail address - the customer sends another order later.",
                   "active": false
                 },
                 {

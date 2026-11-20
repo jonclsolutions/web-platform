@@ -12,7 +12,8 @@
  *   here is below /api.
  * @dependencies
  * - App\Apps\Shop\Http\Controllers\*; core PageTitleController (browser titles of the e-shop
- *   pages); middleware `shop.active` (ShopApp::middlewareAliases()), `auth:sanctum`, `permission`.
+ *   pages); middleware `shop.active` (ShopApp::middlewareAliases()), core `public.form`
+ *   (checkout), `auth:sanctum`, `permission`; named rate limiter `public-form`.
  */
 
 use App\Http\Controllers\Api\Legal\PageTitleController;
@@ -59,8 +60,10 @@ Route::prefix('shop/public')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('shop/checkout')->middleware('shop.active')->group(function () {
+    // A public form like the others (PublicFormGuard): per-IP limit `public-form`, honeypot,
+    // captcha and the quota of the e-mail the order confirmation is sent to.
     Route::post('create-order', [ShopCheckoutController::class, 'createOrder'])
-        ->middleware('throttle:10,1,shop-checkout-create');
+        ->middleware(['throttle:public-form', 'public.form:shop_checkout,email']);
     Route::post('simulate-payment', [ShopCheckoutController::class, 'simulatePayment'])
         ->middleware('throttle:10,1,shop-checkout-payment');
 });

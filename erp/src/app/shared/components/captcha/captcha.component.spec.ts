@@ -45,7 +45,8 @@ describe('CaptchaComponent', () => {
    *   honeypot is hidden from people and its value is sent; destroy removes the widget.
    * @input render 'w1'; nextToken before / after the success callback; expired; reset; destroy.
    * @output render(container, …, {auto, interaction-only}); tokens 'tok' (awaited) and 'tok'
-   *   (immediate); no token after expiry / reset; reset('w1'); FormData captcha_token + website; remove('w1').
+   *   (immediate); no token after expiry / reset; reset('w1'); FormData captcha_token + website; the
+   *   same two fields for a JSON body (fields()); remove('w1').
    */
   it('supplies the token of the invisible check', async () => {
     create(Promise.resolve('w1'));
@@ -79,6 +80,7 @@ describe('CaptchaComponent', () => {
     const fd = new FormData();
     component.appendTo(fd, 'tok');
     expect([fd.get('captcha_token'), fd.get('website')]).toEqual(['tok', 'bot']);
+    expect(component.fields('tok')).toEqual({ captcha_token: 'tok', website: 'bot' });
 
     fixture.destroy();
     expect(turnstile.remove).toHaveBeenCalledWith('w1');

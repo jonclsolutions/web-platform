@@ -7,12 +7,14 @@
  * @description Unit tests of CheckoutComponent: empty cart redirect, shipping / payment methods with the
  *   first preselected, field validation with translated messages, the order summary (coupon
  *   percent / fixed / capped, shipping, VAT groups), coupon validation, order creation (payload,
- *   success, 422 field and stock errors, generic errors) and the incomplete-form warning.
+ *   success, 422 field and stock errors, generic errors), the invisible captcha of the order
+ *   (token + honeypot sent, guard refusals translated) and the incomplete-form warning.
  * @dependencies
- * - createPublicPageContext (module shop); ShopPublicService and AlertDialogService spies; real CartService.
+ * - createPublicPageContext (module shop, TurnstileService stub); ShopPublicService and AlertDialogService
+ *   spies; real CartService.
  */
 
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
@@ -20,7 +22,8 @@ import { CheckoutComponent } from './checkout.component';
 import { CartService } from '../components/services/cart.service';
 import { ShopPublicService } from '../components/services/public-data.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
-import { createPublicPageContext } from '../../../../../testing/public-test-helpers';
+import { CaptchaUnavailableError } from '../../../../shared/utils/public-form-errors';
+import { PublicPageContext, createPublicPageContext } from '../../../../../testing/public-test-helpers';
 
 describe('CheckoutComponent', () => {
   let fixture: ComponentFixture<CheckoutComponent>;
@@ -29,6 +32,7 @@ describe('CheckoutComponent', () => {
   let alert: jasmine.SpyObj<AlertDialogService>;
   let cart: CartService;
   let router: Router;
+  let ctx: PublicPageContext;
   const errors = {
     email_required: 'E-mail required', email_invalid: 'E-mail invalid', phone_required: 'Phone required',
     first_name_required: 'First name required', first_name_digits: 'No digits', last_name_required: 'Last name required',
@@ -40,7 +44,8 @@ describe('CheckoutComponent', () => {
   const checkout = {
     errors, coupon_applied: 'Coupon {code} applied', coupon_error: 'Coupon error: {message}', coupon_invalid: 'Invalid code', coupon_too_many: 'Slow down',
     alerts: { form_incomplete_title: 'Incomplete', form_incomplete_message: 'Fill in', stock_title: 'Stock', error_title: 'Error', order_failed_message: 'Order failed',
-      stock_message: 'Not in stock', order_rejected_message: 'Order rejected', too_many_requests: 'Too many', price_invalid_message: 'No price: {product}' }
+      stock_message: 'Not in stock', order_rejected_message: 'Order rejected', too_many_requests: 'Too many', price_invalid_message: 'No price: {product}',
+      captcha_failed: 'Robot?', email_limit: 'Enough for this address' }
   };
 
   /** Creates the page; `items` = true puts a 121 EUR (21 % VAT) mug ×1 and a 110 EUR (10 %) book ×1 in the cart. */
@@ -50,7 +55,7 @@ describe('CheckoutComponent', () => {
     shop.getShippingMethods.and.returnValue(of([{ id: 3, name: 'PPL', base_price: 5 }, { id: 4, name: 'Pickup', base_price: 0 }]));
     shop.getPaymentMethods.and.returnValue(of([{ id: 7, name: 'Card' }]));
     alert = jasmine.createSpyObj('AlertDialogService', ['open']);
-    const ctx = createPublicPageContext({ translations: { checkout } });
+    ctx = createPublicPageContext({ translations: { checkout } });
     TestBed.configureTestingModule({
       imports: [CheckoutComponent],
       providers: [...ctx.providers, { provide: ShopPublicService, useValue: shop }, { provide: AlertDialogService, useValue: alert }]
@@ -71,6 +76,8 @@ describe('CheckoutComponent', () => {
   const fill = () => Object.assign(page.formData, {
     email: 'eva@x.cz', firstName: 'Eva', lastName: 'Nová', phone: '777', address: 'Main 1', city: 'Praha', postalCode: '110 00', agreeToTerms: true
   });
+  /** Completes the background captcha check - its token goes with the next order. */
+  const solve = () => ctx.turnstile.render.calls.mostRecent().args[1]('captcha-token');
   afterEach(() => localStorage.removeItem('shop_cart'));
 
   /**
@@ -206,7 +213,8 @@ describe('CheckoutComponent', () => {
    *   VAT, coupon code, final amount, language of the storefront for the confirmation e-mail),
    *   success clears the cart and shows step 5; finish → shop.
    * @input Empty form; filled form + coupon 'P10'; finishCheckout().
-   * @output alert warning; createOrder payload; orderNumber 'O-1', cart empty, step 5; navigate(['/shop']).
+   * @output alert warning; createOrder payload (with captcha_token + empty honeypot website); orderNumber
+   *   'O-1', cart empty, step 5; navigate(['/shop']).
    */
   it('creates the order', fakeAsync(() => {
     create();
@@ -217,12 +225,13 @@ describe('CheckoutComponent', () => {
     fill();
     page.appliedCoupon.set({ code: 'P10', discount_type: 'percent', discount_value: 10 });
     shop.createOrder.and.returnValue(of({ order_number: 'O-1' }));
+    solve();
     page.simulatePayment();
     const payload = shop.createOrder.calls.mostRecent().args[0];
     expect(payload).toEqual(jasmine.objectContaining({
       email: 'eva@x.cz', first_name: 'Eva', last_name: 'Nová', postal_code: '110 00', country: 'Czechia',
       payment_method_id: 7, shipping_method_id: 3, coupon_code: 'P10', currency: 'EUR', company: null, notes: null,
-      lang: 'cz'
+      lang: 'cz', captcha_token: 'captcha-token', website: ''
     }));
     expect(+payload.total_amount.toFixed(2)).toBe(212.9);
     expect(payload.items).toEqual([
@@ -251,6 +260,7 @@ describe('CheckoutComponent', () => {
     shop.createOrder.and.returnValue(throwError(() => ({ status: 422, error: { errors: {
       first_name: ['Too short'], unknown_field: ['x'], 'items.0.quantity': ['Only 1 left']
     } } })));
+    solve();
     page.simulatePayment();
     expect(page.errors['firstName']).toBe('Check this value');
     expect(alert.open).toHaveBeenCalledWith('Stock', 'Not in stock', 'danger');
@@ -258,16 +268,57 @@ describe('CheckoutComponent', () => {
 
     shop.createOrder.and.returnValue(throwError(() => ({ status: 500, error: { message: 'Down' } })));
     page.errors['firstName'] = '';
+    solve();
     page.simulatePayment();
     expect(alert.open).toHaveBeenCalledWith('Error', 'Order failed', 'danger');
     shop.createOrder.and.returnValue(throwError(() => ({ status: 422, error: {} })));
+    solve();
     page.simulatePayment();
     expect(alert.open).toHaveBeenCalledWith('Error', 'Order rejected', 'danger');
     shop.createOrder.and.returnValue(throwError(() => ({ status: 429, error: {} })));
+    solve();
     page.simulatePayment();
     expect(alert.open).toHaveBeenCalledWith('Error', 'Too many', 'danger');
     expect(page.currentStep()).toBe(1);
     expect(page.formatPrice(5).replace(/\s/g, ' ')).toBe('5,00 €');
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description SECURITY (SA-05): the order waits for the invisible captcha and is sent with its
+   *   token; the refusals of the guard (422 captcha_required, 429 error_code RECIPIENT_LIMIT) show
+   *   their translated texts and reset the widget (a token is single-use); a captcha that cannot be
+   *   loaded stops the order without a request.
+   * @input Filled form; simulatePayment() before the token, then the token; refusals 422 captcha /
+   *        429 quota; nextToken() failing with CaptchaUnavailableError (script blocked).
+   * @output No request until solved, then one; 'Robot?' and 'Enough for this address' (danger),
+   *   reset('widget-1') ×2; the failed captcha → 'Robot?', no request, not processing.
+   */
+  it('sends the order with the captcha and reports its refusals', fakeAsync(() => {
+    create();
+    tick();
+    fill();
+    spyOn(console, 'error');
+    shop.createOrder.and.returnValue(throwError(() => ({ status: 422, error: { captcha_required: true } })));
+    page.simulatePayment();
+    expect(shop.createOrder).not.toHaveBeenCalled();
+    solve();
+    expect(shop.createOrder).toHaveBeenCalledTimes(1);
+    expect(alert.open).toHaveBeenCalledWith('Error', 'Robot?', 'danger');
+
+    shop.createOrder.and.returnValue(throwError(() => ({ status: 429, error: { error_code: 'RECIPIENT_LIMIT', retry_after: 60 } })));
+    solve();
+    page.simulatePayment();
+    expect(alert.open).toHaveBeenCalledWith('Error', 'Enough for this address', 'danger');
+    expect(ctx.turnstile.reset).toHaveBeenCalledTimes(2);
+    expect(ctx.turnstile.reset).toHaveBeenCalledWith('widget-1');
+
+    spyOn(page.captcha, 'nextToken').and.returnValue(throwError(() => new CaptchaUnavailableError()));
+    shop.createOrder.calls.reset();
+    page.simulatePayment();
+    expect(shop.createOrder).not.toHaveBeenCalled();
+    expect(alert.open.calls.mostRecent().args).toEqual(['Error', 'Robot?', 'danger']);
+    expect(page.isProcessing()).toBeFalse();
     discardPeriodicTasks();
   }));
 

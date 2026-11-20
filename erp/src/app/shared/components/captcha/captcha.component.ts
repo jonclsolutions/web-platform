@@ -122,8 +122,19 @@ export class CaptchaComponent implements AfterViewInit, OnDestroy {
    * @param token Token from nextToken().
    */
   appendTo(formData: FormData, token: string): void {
-    formData.append('captcha_token', token);
-    formData.append(HONEYPOT_FIELD, this.trap.nativeElement.value);
+    for (const [name, value] of Object.entries(this.fields(token))) {
+      formData.append(name, value);
+    }
+  }
+
+  /**
+   * @description The captcha token and the honeypot value as fields of a JSON body - for a form
+   * that sends JSON instead of multipart (e.g. the e-shop checkout).
+   * @param token Token from nextToken().
+   * @returns `{ captcha_token, website }`.
+   */
+  fields(token: string): Record<string, string> {
+    return { captcha_token: token, [HONEYPOT_FIELD]: this.trap.nativeElement.value };
   }
 
   /**

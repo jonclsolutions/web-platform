@@ -9,9 +9,12 @@
  * - CartService: Provides reactive access to cart items and clearing operations.
  * - ShopPublicService: Handles shipping/payment methods, coupon validation, and order submission.
  * - AlertDialogService: Provides user feedback for submission or validation errors.
+ * - CaptchaComponent: invisible bot protection of the order (Turnstile + honeypot) - the API guards
+ *   the checkout like every public form (PublicFormGuard).
  */
 
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, ViewChild, signal, computed } from '@angular/core';
+import { switchMap } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CartService } from '../components/services/cart.service';
@@ -20,6 +23,8 @@ import { ShippingMethod } from '../components/interfaces/shipping-method.interfa
 import { PaymentMethod } from '../components/interfaces/payment-method.interface';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { BasePublicComponent } from '../../../../public/base-public.component';
+import { CaptchaComponent } from '../../../../shared/components/captcha/captcha.component';
+import { publicFormErrorKey } from '../../../../shared/utils/public-form-errors';
 
 /**
  * @description Component for handling the e-shop checkout flow.
@@ -29,12 +34,14 @@ import { BasePublicComponent } from '../../../../public/base-public.component';
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, CaptchaComponent],
   templateUrl: './checkout.component.html',
   styleUrls: ['../shared-styles/theme.css', './checkout.component.css']
 })
 export class CheckoutComponent extends BasePublicComponent implements OnInit {
   protected readonly translationKey = 'checkout';
+  /** Invisible bot protection (Turnstile + honeypot) - supplies the token of the order. */
+  @ViewChild(CaptchaComponent) captcha!: CaptchaComponent;
 
   currentStep = signal(1); // 1 = Form entry, 5 = Success
   isProcessing = signal(false);
@@ -399,7 +406,10 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
       items: formattedItems
     };
 
-    this.shopPublicService.createOrder(payload)
+    // The token of the background captcha check (usually ready already) and the honeypot value
+    // go with the order - the API refuses an order without them (PublicFormGuard).
+    this.captcha.nextToken()
+      .pipe(switchMap(token => this.shopPublicService.createOrder({ ...payload, ...this.captcha.fields(token) })))
       .subscribe({
         next: (response) => {
           this.orderNumber.set(response.order_number);
@@ -410,7 +420,15 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
         },
         error: (e) => {
           console.error('Chyba při vytváření objednávky:', e);
-          if (e.status === 422 && e.error?.errors) {
+          // The token is single-use - the server consumed it, the next attempt needs a new one.
+          this.captcha.reset();
+          const guard = publicFormErrorKey(e);
+          if (guard) {
+            // Refusals of the bot protection: a failed captcha, or the quota of orders per e-mail.
+            this.alertDialogService.open(this.t?.alerts?.error_title, guard === 'captcha'
+              ? (this.t?.alerts?.captcha_failed ?? this.t?.alerts?.order_failed_message)
+              : (this.t?.alerts?.email_limit ?? this.t?.alerts?.too_many_requests), 'danger');
+          } else if (e.status === 422 && e.error?.errors) {
             const backendErrors = e.error.errors;
             Object.keys(backendErrors).forEach(key => {
               // Translated texts instead of the English API messages (finding #53).

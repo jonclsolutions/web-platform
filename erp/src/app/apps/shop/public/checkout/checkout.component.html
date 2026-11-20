@@ -284,6 +284,8 @@
             }
           </div>
 
+          <app-captcha [loadErrorText]="t?.errors?.captcha_load ?? t?.alerts?.order_failed_message" />
+
           <button
             type="button"
             class="btn-pay-instant"
