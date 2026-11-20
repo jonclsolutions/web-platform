@@ -60,7 +60,7 @@ describe('ProductsComponent', () => {
     component = fixture.componentInstance;
   });
 
-  afterEach(() => { fixture.destroy(); document.body.classList.remove('modal-open'); });
+  afterEach(() => { fixture.destroy(); });
 
   describe('configuration and list', () => {
     /**
@@ -200,7 +200,7 @@ describe('ProductsComponent', () => {
     /**
      * @description Details are loaded and prices of the product and its variants are normalized.
      * @input  handleViewDetails({ id: 5 }) – variant 40 nested prices, 41 flat values, 3rd without prices
-     * @output price_eur 121, cost 80, category 'Telefony', supplier 'ACME'; variants vat 10 / 15 / 21, price 110 / 115 / 0, without VAT 100 / 100 / 0; modal open, body locked
+     * @output price_eur 121, cost 80, category 'Telefony', supplier 'ACME'; variants vat 10 / 15 / 21, price 110 / 115 / 0, without VAT 100 / 100 / 0; modal open
      */
     it('shows the details with normalized prices', () => {
       component.handleViewDetails({ id: 5 });
@@ -208,10 +208,8 @@ describe('ProductsComponent', () => {
       expect([p.price_eur, p.cost_price_eur, p.category_name, p.supplier_name]).toEqual([121, 80, 'Telefony', 'ACME']);
       expect(p.variants.map((v: any) => [v.vat_rate, v.price_with_vat_eur, v.price_without_vat_eur])).toEqual([[10, 110, 100], [15, 115, 100], [21, 0, 0]]);
       expect(component.showDetailsModal).toBeTrue();
-      expect(document.body.classList.contains('modal-open')).toBeTrue();
       component.closeDetailsModal();
       expect(component.selectedProductForDetail).toBeNull();
-      expect(document.body.classList.contains('modal-open')).toBeFalse();
     });
 
     /**
@@ -639,7 +637,6 @@ describe('ProductsComponent', () => {
       component.handleCreateFormOpened();
       expect(component.editingProduct).toEqual(jasmine.objectContaining({ is_active: true, images: [], variants: [], price_eur: 0 }));
       expect(component.showProductForm).toBeTrue();
-      expect(document.body.classList.contains('modal-open')).toBeTrue();
       const item: any = { id: 5, name: 'Pixel', category_id: 1, prices: { price_eur_with_vat: 121, cost_price_eur: 80 }, categories: [categories[0]] };
       component.handleEditFormOpened(item);
       expect([component.editingProduct.price_eur, component.editingProduct.cost_price_eur]).toEqual([121, 80]);
@@ -721,40 +718,44 @@ describe('ProductsComponent', () => {
   });
 
   /**
-   * @description Destroying the page releases the body scroll lock.
-   * @input  body locked; fixture.destroy()
-   * @output body without 'modal-open'
-   */
-  it('unlocks the body scroll on destroy', () => {
-    document.body.classList.add('modal-open');
-    fixture.destroy();
-    expect(document.body.classList.contains('modal-open')).toBeFalse();
-  });
-
-  /**
-   * @description The list and all modals render.
-   * @input  detectChanges(); details modal; product form; variants modal; images modal
-   * @output 'shop-products.table_header'; product name 'Pixel' in the modals (name input in the product form)
+   * @description The list and all modals render - each in the shared popup frame (detail lg
+   *   without body padding, form xl, variants lg, images md); the variant images open over the
+   *   variants as a prompt, and Escape closes only them.
+   * @input  detectChanges(); details modal; product form; variants modal; images modal; variant images over variants; Escape
+   * @output 'shop-products.table_header'; product name 'Pixel' in the modals (name input in the product form);
+   *   sizes lg / xl / lg / md; variant images md + prompt; after Escape the variants stay open
    */
   it('renders the page and its modals', fakeAsync(() => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('shop-products.table_header');
+    const sizes: string[] = [];
     for (const open of [() => component.handleViewDetails({ id: 5 }), () => component.openEditProductForm({ id: 5 } as any),
       () => component.openVariantsModal({ id: 5 } as any), () => component.openImagesModal({ id: 5 } as any)]) {
       open();
       fixture.detectChanges();
       const el: HTMLElement = fixture.nativeElement;
       expect(el.textContent!.includes('Pixel') || !!el.querySelector('input[name="name"]')).toBeTrue();
+      sizes.push(el.querySelector('.am-card')!.getAttribute('data-size')!);
       component.closeDetailsModal();
       component.closeProductForm();
       component.closeVariantsModal();
       component.closeImagesModal();
     }
+    expect(sizes).toEqual(['lg', 'xl', 'lg', 'md']);
     component.editingProduct = full();
     component.showVariantsModal = true;
     component.editVariantImages(0);
-    fixture.componentRef.changeDetectorRef.markForCheck();
+    (component as any).cd.markForCheck();
     fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    const overlays = el.querySelectorAll('.am-overlay');
+    expect(overlays.length).toBe(2);
+    expect(overlays[1].getAttribute('data-level')).toBe('prompt');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    (component as any).cd.markForCheck();
+    fixture.detectChanges();
+    expect(component.editingVariantIdx).toBeNull();
+    expect(component.showVariantsModal).toBeTrue();
     discardPeriodicTasks();
   }));
 });

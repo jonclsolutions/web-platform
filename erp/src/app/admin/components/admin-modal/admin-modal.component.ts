@@ -24,7 +24,9 @@
  *   ```
  *   Buttons in the header (before the close button) are content marked `modal-header-actions`.
  *   A window with its own layout and scrolling (e.g. a side panel + content) sets `[flush]="true"`:
- *   the body has no padding and does not scroll - the content fills it.
+ *   the body has no padding and does not scroll - the content fills it. Content that runs from edge
+ *   to edge (e.g. sections with full-width heading bars) sets `[padded]="false"`: no padding, the
+ *   body still scrolls.
  *   The popup shows / hides the whole element (`@if`); `dismissed` only asks it to close. The
  *   button classes (`am-btn …`) come from `admin/shared-styles/modal.css`, which the popup adds
  *   to its own `styleUrls` (its template owns the projected buttons). An element of the content
@@ -90,6 +92,8 @@ export class AdminModalComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() closeOnBackdrop = true;
   /** The body without padding and its own scrolling - the content lays itself out (fills the body). */
   @Input() flush = false;
+  /** The body with its padding (false = content from edge to edge; it still scrolls). */
+  @Input() padded = true;
   /** The user asked to close the window (close button, Escape, backdrop). */
   @Output() dismissed = new EventEmitter<void>();
 

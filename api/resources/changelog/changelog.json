@@ -47,6 +47,18 @@
             "area": "shop",
             "part": "admin",
             "text": "E-shop order detail, order form and the order history of a customer open in the shared popup frame: status and amount in the header, Escape closes them and the page under them no longer scrolls."
+        },
+        {
+            "type": "changed",
+            "area": "shop",
+            "part": "admin",
+            "text": "E-shop product detail, form, variants, variant images and images open in the shared popup frame; variant images open over the variants and Escape closes only them; the page under a popup no longer scrolls."
+        },
+        {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "On a phone the name of the current section is centred in the header of the administration instead of squeezed next to the menu button."
         }
     ],
     "releases": [

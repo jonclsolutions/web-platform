@@ -10,6 +10,7 @@
  * - ConfirmDialogService: Facilitates user confirmation for deletion actions.
  * - ResourceCacheService: TTL cache of the lookup data (categories, suppliers), 5 min.
  * - Config.create* factory functions: i18n-aware definitions.
+ * - AdminModalComponent: the frame of the product popups (detail, form, variants, variant images, images).
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, inject } from '@angular/core';
@@ -27,13 +28,14 @@ import { GraphBuilderComponent } from '../../../../admin/components/builders/gra
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import * as Config from './products.config';
 import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
+import { AdminModalComponent } from '../../../../admin/components/admin-modal/admin-modal.component';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHeaderComponent],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHeaderComponent, AdminModalComponent],
   templateUrl: './products.component.html',
-  styleUrls: ['../../../../admin/shared-styles/page.css', '../shared-styles/list-page.css', './products.component.css'],
+  styleUrls: ['../../../../admin/shared-styles/page.css', '../shared-styles/list-page.css', '../../../../admin/shared-styles/modal.css', './products.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProductsComponent extends BaseDataComponent<Product> implements OnInit, OnDestroy {
@@ -118,11 +120,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     this.loadSuppliers();
   }
 
-  override ngOnDestroy(): void {
-    super.ngOnDestroy();
-    this.toggleBodyScroll(false);
-  }
-
   /**
    * @description Derives the table columns price_eur / category_name / supplier_name from the
    *   nested API data of a product row.
@@ -133,10 +130,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     row.category_name = row.category?.name ?? '-';
     row.supplier_name = row.supplier?.name ?? '-';
     return row;
-  }
-
-  private toggleBodyScroll(lock: boolean): void {
-    document.body.classList.toggle('modal-open', lock);
   }
 
   override handleToolbarAction(action: string): void {
@@ -242,7 +235,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
 
         this.selectedProductForDetail = fullProduct;
         this.showDetailsModal = true;
-        this.toggleBodyScroll(true);
         this.cd.markForCheck();
       }
     });
@@ -251,7 +243,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
   closeDetailsModal(): void {
     this.showDetailsModal = false;
     this.selectedProductForDetail = null;
-    this.toggleBodyScroll(false);
     this.cd.markForCheck();
   }
 
@@ -282,7 +273,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
         this.editingProduct = { ...fullProduct };
         this.updateFormFieldsOptions();
         this.showProductForm = true;
-        this.toggleBodyScroll(true);
         this.cd.markForCheck();
       }
     });
@@ -313,7 +303,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
         }
         this.editingProduct = { ...fullProduct };
         this.showVariantsModal = true;
-        this.toggleBodyScroll(true);
         this.cd.markForCheck();
       },
       error: () => { this.isProcessing = false; }
@@ -432,7 +421,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     this.showVariantsModal    = false;
     this.editingVariantIdx    = null;
     this.editingVariantImages = [];
-    this.toggleBodyScroll(false);
     this.cd.markForCheck();
   }
 
@@ -463,7 +451,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
         fullProduct.cost_price_eur = fullProduct.prices?.cost_price_eur     ?? 0;
         this.editingProduct = { ...fullProduct };
         this.showImagesModal = true;
-        this.toggleBodyScroll(true);
         this.cd.markForCheck();
       },
       error: () => { this.isProcessing = false; }
@@ -506,7 +493,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
 
   closeImagesModal(): void {
     this.showImagesModal = false;
-    this.toggleBodyScroll(false);
     this.cd.markForCheck();
   }
 
@@ -711,7 +697,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     };
     this.updateFormFieldsOptions();
     this.showProductForm = true;
-    this.toggleBodyScroll(true);
     this.cd.markForCheck();
   }
 

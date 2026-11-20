@@ -7,7 +7,7 @@
     @description: Frame of every admin popup: backdrop, card (dialog), header with the title,
         the optional subtitle, buttons (content marked `modal-header-actions`; hidden when empty)
         and the close button, the scrolling body (default content; `flush` - no padding, no own
-        scrolling) and the footer (content marked `modal-footer`; hidden when empty).
+        scrolling; `padded` false - no padding) and the footer (content marked `modal-footer`; hidden when empty).
     @dependencies: AdminModalComponent
 -->
 <div class="am-overlay" [attr.data-level]="level" [attr.data-size]="size"
@@ -27,7 +27,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </header>
-    <div class="am-body" [class.am-body--flush]="flush"><ng-content /></div>
+    <div class="am-body" [class.am-body--flush]="flush" [class.am-body--unpadded]="!padded"><ng-content /></div>
     <footer class="am-footer"><ng-content select="[modal-footer]" /></footer>
   </div>
 </div>

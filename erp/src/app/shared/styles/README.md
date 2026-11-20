@@ -266,7 +266,10 @@ styleUrls: ['…/admin/shared-styles/modal.css', './my-popup.component.css'],   
 `size` sm 440 / md 620 / lg 900 / xl 1100 px / full (the whole screen - a working window such as reports);
 `level="prompt"` for a question that opens over another popup. Buttons in the header (before the close
 button): `<ng-container modal-header-actions>`. A window with its own layout and scrolling (side panel +
-content) sets `[flush]="true"` - the body has no padding and does not scroll, the content fills it. A form with its submit button in the footer links it by id: `<form [id]="formId">` +
+content) sets `[flush]="true"` - the body has no padding and does not scroll, the content fills it.
+Content from edge to edge (sections with full-width heading bars) sets `[padded]="false"` - no padding,
+the body still scrolls. Delete buttons are `am-btn am-btn--danger`. A page never locks the scroll itself
+(no `modal-open` body class, no ScrollLockService calls) - the frame does it. A form with its submit button in the footer links it by id: `<form [id]="formId">` +
 `<button type="submit" [attr.form]="formId">`. Something the frame does not have yet (e.g. buttons in the
 header) is added to the frame as a new slot – never copied into a popup.
 

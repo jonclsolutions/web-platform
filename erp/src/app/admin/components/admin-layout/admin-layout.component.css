@@ -326,8 +326,10 @@
 
 /*
     @module: Current module (mobile)
-    @description: Name of the module the user is in, next to the menu button - only on mobile,
-        where the tabs and the switcher move into the slide-out panel.
+    @description: Name of the module the user is in, centred in the header - only on mobile,
+        where the tabs and the switcher move into the slide-out panel. Centred on the whole header
+        (not between the buttons), so it stays in the middle whatever is left and right of it; a
+        long name ends with an ellipsis before it reaches the buttons.
     @usage: .header-current-module
 */
 .header-current-module {
@@ -854,7 +856,14 @@
      slide-out panel (see .mobile-actions-panel above). */
   .header-user { display: none; }
   .module-switcher { display: none; }
-  .header-current-module { display: inline; }
+  .admin-header { position: relative; }
+  .header-current-module {
+    display: block;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100% - 150px);
+  }
   .header-action-btn--wiki,
   .header-action-btn--calendar,
   .header-action-btn--bug { display: none; }

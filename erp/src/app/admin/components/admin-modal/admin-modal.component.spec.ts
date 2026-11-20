@@ -28,7 +28,7 @@ import { createI18nStub } from '../../../../testing/admin-test-helpers';
   template: `
     <button id="opener">open</button>
     @if (open()) {
-      <app-admin-modal heading="Title" [subheading]="sub()" [size]="size()" [level]="level()" [flush]="flush()"
+      <app-admin-modal heading="Title" [subheading]="sub()" [size]="size()" [level]="level()" [flush]="flush()" [padded]="padded()"
                        [closeDisabled]="busy()" [closeOnBackdrop]="backdrop()" (dismissed)="dismissed = dismissed + 1">
         <input id="first" [attr.data-autofocus]="autofocus() ? '' : null">
         @if (headerActions()) { <button id="action" modal-header-actions>Action</button> }
@@ -56,6 +56,7 @@ class HostComponent {
   autofocus = signal(true);
   headerActions = signal(false);
   flush = signal(false);
+  padded = signal(true);
   dismissed = 0;
   secondDismissed = 0;
 }
@@ -236,5 +237,16 @@ describe('AdminModalComponent', () => {
     expect(q('.am-card').getBoundingClientRect().width).toBe(q('.am-overlay').getBoundingClientRect().width);
     const body = getComputedStyle(q('.am-body'));
     expect([body.paddingTop, body.overflowY]).toEqual(['0px', 'hidden']);
+  });
+
+  /**
+   * @description An unpadded body has no padding but still scrolls (content from edge to edge).
+   * @input padded false.
+   * @output body padding 0, overflow-y auto.
+   */
+  it('offers a body without padding that still scrolls', () => {
+    create(h => h.padded.set(false));
+    const body = getComputedStyle(q('.am-body'));
+    expect([body.paddingTop, body.paddingLeft, body.overflowY]).toEqual(['0px', '0px', 'auto']);
   });
 });

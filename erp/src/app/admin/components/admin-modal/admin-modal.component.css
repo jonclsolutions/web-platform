@@ -15,9 +15,10 @@
       buttons, round close button), a body that scrolls on its own and a grey footer for the
       buttons. The header and the footer never scroll away. Layers: content popups 10000 (over the
       admin layout and its loading overlay), prompts 30000 (over a content popup). Size full =
-      the whole screen; a flush body has no padding and no scrolling (its content fills it).
+      the whole screen; a flush body has no padding and no scrolling (its content fills it); an
+      unpadded body has no padding but scrolls (content from edge to edge).
     @usage: .am-overlay[data-level][data-size] > .am-card[data-size] > .am-header (.am-heading > .am-title, .am-subtitle;
-      .am-header-actions; .am-close), .am-body(.am-body--flush), .am-footer (header actions and footer hidden when empty)
+      .am-header-actions; .am-close), .am-body(.am-body--flush, .am-body--unpadded), .am-footer (header actions and footer hidden when empty)
 */
 :host { display: contents; }
 
@@ -139,6 +140,7 @@
   padding: 0;
   overflow: hidden;
 }
+.am-body--unpadded { padding: 0; }
 
 .am-footer {
   flex-shrink: 0;
@@ -173,7 +175,7 @@
   }
   .am-header-actions { justify-content: flex-start; }
   .am-header, .am-body, .am-footer { padding-left: 16px; padding-right: 16px; }
-  .am-body--flush { padding: 0; }
+  .am-body--flush, .am-body--unpadded { padding: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
