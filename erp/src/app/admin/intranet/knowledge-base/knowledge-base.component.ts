@@ -7,7 +7,10 @@
  * @description Shell component of the Knowledge Base - own header (home = back to the
  * administration, admin language switcher), responsive side menu and the routed pages. The menu
  * comes from the API (`GET knowledge-base`) - only the pages the signed-in user may open, in the
- * current admin language; it is reloaded after a language switch.
+ * current admin language; it is reloaded after a language switch. A page with chapters (its
+ * headed sections) can be expanded in the menu - the page that is open is expanded by itself and
+ * collapses again when another page opens, unless the user expanded it - and a
+ * chapter link opens the page right at that chapter (fragment `kb-s-N`, see KbArticleComponent).
  * @dependencies
  * - KnowledgeBaseService: menu of the allowed pages.
  * - RouterModule: Nested routing (`:pageId` -> KbArticleComponent).
@@ -17,8 +20,8 @@
  */
 
 import { Component, ChangeDetectorRef, OnDestroy, inject } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
-import { Subscription, switchMap } from 'rxjs';
+import { NavigationEnd, Router, RouterModule } from '@angular/router';
+import { Subscription, filter, switchMap } from 'rxjs';
 import { KbFooterComponent } from './substitutions/kb-footer/kb-footer.component';
 import { KnowledgeBaseService } from './knowledge-base.service';
 import { KBMenuItem } from '../../../shared/interfaces/kb-content';
@@ -70,6 +73,15 @@ export class KnowledgeBaseComponent implements OnDestroy {
   /** Last loaded menu - regrouped when only the texts of the admin UI change. */
   private menu: KBMenuItem[] = [];
 
+  /** Pages whose chapters the user expanded in the menu. */
+  private readonly opened = new Set<string>();
+  /** Pages whose chapters the user collapsed (also the open page, which is otherwise expanded). */
+  private readonly closed = new Set<string>();
+  /** Id of the page that is open (null on the start page of the manual). */
+  activePageId: string | null = null;
+  /** Fragment of the current URL - the chapter that was opened (`kb-s-N`). */
+  activeFragment: string | null = null;
+
   private readonly subscriptions = new Subscription();
 
   /**
@@ -93,6 +105,61 @@ export class KnowledgeBaseComponent implements OnDestroy {
       this.navGroups = this.buildNavGroups();
       this.cd.markForCheck();
     }));
+    this.syncWithUrl();
+    this.subscriptions.add(this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.syncWithUrl();
+        this.cd.markForCheck();
+      }));
+  }
+
+  /**
+   * @description Reads the open page and chapter from the URL; a newly opened page shows its
+   *   chapters even if the user collapsed them before.
+   */
+  private syncWithUrl(): void {
+    const tree = this.router.parseUrl(this.router.url);
+    const segments = tree.root.children['primary']?.segments.map(s => s.path) ?? [];
+    const base = segments.indexOf('knowledge-base');
+    this.activePageId = base >= 0 && segments.length > base + 1 ? segments[base + 1] : null;
+    this.activeFragment = tree.fragment;
+    if (this.activePageId) this.closed.delete(this.activePageId);
+  }
+
+  /**
+   * @description Whether the chapters of a page are shown in the menu.
+   * @param pageId Page id.
+   */
+  isExpanded(pageId: string): boolean {
+    return !this.closed.has(pageId) && (this.opened.has(pageId) || pageId === this.activePageId);
+  }
+
+  /**
+   * @description Shows or hides the chapters of a page in the menu.
+   * @param pageId Page id.
+   */
+  toggleChapters(pageId: string): void {
+    if (this.isExpanded(pageId)) {
+      this.opened.delete(pageId);
+      this.closed.add(pageId);
+    } else {
+      this.closed.delete(pageId);
+      this.opened.add(pageId);
+    }
+  }
+
+  /**
+   * @description A chapter link was clicked: closes the mobile menu; on the page that is already
+   *   open it scrolls to the chapter at once (the router does not navigate to the same address
+   *   again and does not reload the page). Another page jumps to the chapter after it loads.
+   * @param pageId Page of the chapter.
+   * @param anchor Index of the chapter section.
+   */
+  openChapter(pageId: string, anchor: number): void {
+    this.closeMenu();
+    if (pageId !== this.activePageId) return;
+    document.getElementById(`kb-s-${anchor}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   ngOnDestroy(): void {

@@ -255,6 +255,44 @@
 
 .kb-nav a.active-kb .num { color: var(--accent); }
 
+/*
+    @module: Chapters in the side menu
+    @description: A page row with the expand button of its chapters and the indented list of the
+        chapters (headed sections of the page); a chapter link opens the page at that chapter.
+    @usage: .nav-page > a + button.chapter-toggle(.open); ul.kb-chapters > li > a.kb-chapter(.active-chapter)
+*/
+.nav-page { display: flex; align-items: stretch; }
+.nav-page:has(> a.active-kb) { background: var(--accent-dim); } /* highlight under the toggle too */
+.nav-page > a { flex: 1; min-width: 0; }
+
+.chapter-toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.chapter-toggle svg { transition: transform 0.2s ease; }
+.chapter-toggle.open svg { transform: rotate(90deg); }
+.chapter-toggle:hover { color: var(--accent); }
+.chapter-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.kb-chapters { margin: 2px 0 6px; }
+.kb-nav a.kb-chapter {
+  display: block;
+  padding: 5px 16px 5px 46px;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+.kb-nav a.kb-chapter:hover { color: var(--accent); }
+.kb-nav a.kb-chapter.active-chapter { color: var(--accent); font-weight: 600; border-left-color: var(--accent); }
+
 .kb-main-content {
   flex: 1;
   overflow-y: auto;

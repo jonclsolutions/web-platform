@@ -1,56 +1,1036 @@
 {
   "pages": {
     "introductions": {
-      "navLabel": "Introductions",
-      "header": "Vítejte u zrodu RPSoftware",
+      "navLabel": "Úvod a práce s administrací",
+      "header": "Jak pracovat s administrací",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - sem patří úvod"
+              "content": "Tento manuál vás provede celou administrací krok za krokem. Tato úvodní kapitola vysvětluje, jak je administrace uspořádaná a jak se ovládají prvky, které najdete na téměř každé stránce: menu, tabulky, filtry, formuláře, koš, export, import a reporty. Když jí porozumíte, zvládnete i stránky, které vidíte poprvé."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Každá stránka administrace má vpravo nahoře v záhlaví tlačítko s otazníkem. Otevře přesně tu kapitolu manuálu, která danou stránku popisuje. Tlačítko Help v hlavičce administrace otevře úvod manuálu - tuto stránku."
+            }
+          ]
+        },
+        {
+          "heading": "01. Co je administrace a z čeho se skládá",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Administrace je neveřejná část systému, ve které spravujete obsah a provoz všech veřejných aplikací - webové prezentace, e-shopu a projektového portálu pro klienty. Návštěvníci ji nevidí a nedostanou se do ní bez účtu."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Core (systém)",
+                  "text": "Společný základ pro všechny aplikace: uživatelské účty, role a oprávnění, právní dokumenty, firemní údaje, kalendář, logy a bezpečnostní monitoring. Do Core se přepnete záložkou Core v hlavičce."
+                },
+                {
+                  "title": "Aplikace",
+                  "text": "Samostatné části systému, například Web, E-shop nebo Projektový portál. Každá má vlastní menu, vlastní dashboard, vlastní logy a vlastní stránky. Mezi aplikacemi přepínáte tlačítkem Aplikace v hlavičce."
+                },
+                {
+                  "title": "Veřejná část",
+                  "text": "Co vidí návštěvníci - web, e-shop a klientský portál. Většinu toho, co je tam vidět (texty, produkty, kontakty, právní dokumenty), měníte právě v administraci."
+                },
+                {
+                  "title": "Tento manuál",
+                  "text": "Interní nápověda. Vidíte v něm jen kapitoly ke stránkám, ke kterým máte oprávnění. Kapitoly, které vám chybí, popisují stránky, které váš účet nemůže otevřít."
+                }
+              ]
+            },
+            {
+              "type": "note",
+              "highlight": "Co vidíte, záleží na vašem účtu",
+              "content": "Každý účet má roli a případně oprávnění navíc. Podle nich se zobrazují položky menu, tlačítka i celé aplikace. Pokud v administraci nebo v manuálu něco chybí, nejde o chybu - váš účet k tomu nemá oprávnění. O rozšíření požádejte administrátora, který spravuje účty (viz kapitola Kontakty a pomoc)."
+            }
+          ]
+        },
+        {
+          "heading": "02. První přihlášení",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Aktivační e-mail",
+                  "text": "Účet vám založí administrátor. Na váš e-mail přijde aktivační odkaz, který platí 48 hodin.",
+                  "active": true
+                },
+                {
+                  "label": "Nastavení hesla",
+                  "text": "Odkaz otevře stránku, kde si zvolíte vlastní heslo (8 až 64 znaků, alespoň jedno písmeno, jedna číslice a jeden speciální znak). Heslo nikdo jiný nezná - ani administrátor.",
+                  "active": false
+                },
+                {
+                  "label": "Přihlášení",
+                  "text": "Na přihlašovací stránce zadáte e-mail a heslo. Pokud máte zapnuté dvoufázové ověření, přijde vám ještě e-mailem šestimístný kód.",
+                  "active": false
+                },
+                {
+                  "label": "Uvítací stránka",
+                  "text": "Po přihlášení se otevře uvítací stránka s vaším profilem. Pokud k ní váš účet nemá oprávnění, zobrazí se stránka Přístup odepřen - pokračujte z levého menu a požádejte administrátora o oprávnění k uvítací stránce (doporučuje se mít ho zapnuté u každého účtu).",
+                  "active": false
+                },
+                {
+                  "label": "Doporučené první kroky",
+                  "text": "Na stránce Osobní informace si zkontrolujte jméno a e-mail, nahrajte profilovou fotku a zvažte zapnutí dvoufázového ověření.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Podrobnosti o přihlašování, heslech, dvoufázovém ověření a délce přihlášení najdete v kapitole Přístup a bezpečnost."
+            }
+          ]
+        },
+        {
+          "heading": "03. Rozložení obrazovky",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Administrace má vždy stejné rozložení: nahoře hlavička, vlevo menu a uprostřed obsah stránky. Hlavička a menu zůstávají na místě, posouvá se jen obsah stránky. Dlouhé menu se posouvá samostatně."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Tlačítko menu",
+                  "text": "Úplně vlevo v hlavičce. Skryje nebo zobrazí levé menu. Systém si pamatuje, jestli jste menu nechali otevřené."
+                },
+                {
+                  "title": "Název modulu",
+                  "text": "Za nápisem Admin vidíte, ve kterém modulu právě jste (Core nebo název aplikace)."
+                },
+                {
+                  "title": "Váš účet",
+                  "text": "Profilová fotka, e-mail a role. Kliknutím na e-mail otevřete stránku Osobní informace."
+                },
+                {
+                  "title": "Hodiny",
+                  "text": "Aktuální datum a čas. Hodí se při práci s časy v logech a v kalendáři."
+                },
+                {
+                  "title": "Záložka Core",
+                  "text": "Přepne do systémové části. Vidíte ji, jen pokud máte oprávnění k sekci Core."
+                },
+                {
+                  "title": "Tlačítko Aplikace",
+                  "text": "Rozbalí seznam aplikací, ke kterým máte přístup. Na tlačítku je vždy název aplikace, ve které právě jste. Položka Všechny aplikace otevře přehled aplikací se stavem každé z nich."
+                },
+                {
+                  "title": "Kalendář",
+                  "text": "Ikona kalendáře otevře společný kalendář termínů a nevyřízené práce."
+                },
+                {
+                  "title": "Help",
+                  "text": "Otevře úvod tohoto manuálu."
+                },
+                {
+                  "title": "Jazyk",
+                  "text": "Vlajka vpravo přepne jazyk administrace (čeština / angličtina). Volba platí v tomto prohlížeči a použije se i na přihlašovací stránce."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Levé menu je rozdělené do sekcí (například Přehled, Obsah, Uživatelé, Systém). Kliknutím na název sekce ji sbalíte nebo rozbalíte - systém si to zapamatuje. Šířku menu změníte tažením jeho pravého okraje myší. Úplně dole v menu je tlačítko Odhlásit se."
+            },
+            {
+              "type": "note",
+              "highlight": "Na mobilu a tabletu",
+              "content": "Menu se otevírá tlačítkem vlevo nahoře a zavře se klepnutím mimo něj. Údaje o účtu, hodiny, přepínání modulů, jazyk, kalendář a nápověda jsou schované v panelu, který otevřete ikonou vpravo nahoře."
+            }
+          ]
+        },
+        {
+          "heading": "04. Přepínání mezi Core a aplikacemi",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Klikněte v hlavičce na záložku Core, pokud chcete pracovat se systémovými stránkami (účty, nastavení, právní dokumenty, logy).",
+                "Klikněte na tlačítko Aplikace a vyberte aplikaci, pokud chcete pracovat s webem, e-shopem nebo projektovým portálem.",
+                "Levé menu se přepne na stránky zvoleného modulu a otevře se jeho první stránka, kterou smíte otevřít (obvykle uvítací stránka nebo dashboard)."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Aplikace, ke které nemáte oprávnění, se v nabídce vůbec nezobrazí. Přehled všech aplikací s jejich stavem (online, údržba, problém) je na stránce Aplikace."
+            }
+          ]
+        },
+        {
+          "heading": "05. Nápověda a tento manuál",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Otazník v záhlaví každé stránky otevře kapitolu manuálu k této stránce.",
+                "Help v hlavičce otevře úvod manuálu.",
+                "V manuálu vlevo vyberete kapitolu. Kapitoly jsou seřazené do skupin: obecné kapitoly, Core a jednotlivé aplikace.",
+                "Vpravo nahoře v manuálu přepnete jazyk manuálu; vlevo nahoře se tlačítkem Administrace vrátíte zpět do administrace.",
+                "Na mobilu se seznam kapitol otevírá tlačítkem menu manuálu."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Na konci každé kapitoly je kontakt na tvůrce systému pro nahlášení chyby v systému nebo v manuálu."
+            }
+          ]
+        },
+        {
+          "heading": "06. Tabulky - základ většiny stránek",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Většina stránek, kde se spravují záznamy (účty, poptávky, objednávky, produkty, logy …), používá stejnou tabulku. Ovládá se všude stejně:"
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Nabídka Akce",
+                  "text": "Rozbalovací tlačítko nad tabulkou. Obsahuje podle stránky a vašich oprávnění: otevření a skrytí filtrů, přidání záznamu, export dat, import dat, grafy a reporty a přepnutí mezi aktivními záznamy a košem."
+                },
+                {
+                  "title": "Řádek tabulky",
+                  "text": "Jeden řádek = jeden záznam. Dlouhé texty jsou zkrácené, celý obsah uvidíte v detailu záznamu."
+                },
+                {
+                  "title": "Ikony na konci řádku",
+                  "text": "Akce s jedním záznamem: lupa nebo Detaily (zobrazení všech údajů), tužka nebo Upravit (úprava) a koš nebo Smazat (přesun do koše). Některé stránky mají další akce, které popisuje jejich kapitola. Ikonu bez oprávnění neuvidíte."
+                },
+                {
+                  "title": "Zaškrtávací políčka",
+                  "text": "Na stránkách, které to umožňují, je na začátku řádků zaškrtávací políčko. Políčko v záhlaví vybere všechny záznamy na aktuální stránce tabulky."
+                },
+                {
+                  "title": "Stránkování",
+                  "text": "Pod tabulkou je informace „Zobrazuji 1 - 10 z celkem 57 záznamů“, tlačítka stránek a volba počtu položek na stránku."
+                },
+                {
+                  "title": "Aktuálnost dat",
+                  "text": "U tabulky vidíte čas poslední aktualizace a tlačítko pro okamžité načtení aktuálních dat. Data se navíc sama obnovují přibližně každých 15 minut, pokud je karta prohlížeče otevřená a aktivní."
+                },
+                {
+                  "title": "Šířka tabulky",
+                  "text": "Zaškrtnutím volby Zobrazit tabulku na šířce stránky se tabulka roztáhne přes celou šířku - hodí se u tabulek s mnoha sloupci."
+                },
+                {
+                  "title": "Prázdná tabulka",
+                  "text": "Hláška „Nebyla nalezena žádná data.“ znamená, že žádný záznam neodpovídá filtrům, nebo že zatím žádné záznamy nejsou."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "07. Hromadné akce s vybranými záznamy",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Zaškrtněte políčka u záznamů, se kterými chcete pracovat (nebo políčko v záhlaví pro celou stránku).",
+                "Nad tabulkou se objeví lišta s počtem vybraných záznamů.",
+                "Tlačítko Akce v liště nabízí Exportovat vybrané a - pokud je na stránce povolené a máte oprávnění mazat - Smazat vybrané.",
+                "Hromadné smazání potvrdíte v dialogu. Záznamy se přesunou do koše; dialog po dokončení řekne, kolik záznamů se smazalo a kolik se smazat nepodařilo.",
+                "Tlačítko Zrušit výběr odznačí všechny záznamy."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Na některých stránkách je hromadné mazání záměrně vypnuté (například u účtů administrátorů) - záznamy se tam mažou po jednom."
+            }
+          ]
+        },
+        {
+          "heading": "08. Filtry, hledání a řazení",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Otevřete filtry",
+                  "text": "V nabídce Akce zvolte Otevřít filtry. Vpravo se vysune panel filtrů.",
+                  "active": true
+                },
+                {
+                  "label": "Hledat ve všech sloupcích",
+                  "text": "Do horního pole napište libovolný výraz - tabulka ukáže záznamy, které ho obsahují v kterémkoli sloupci.",
+                  "active": false
+                },
+                {
+                  "label": "Filtry jednotlivých sloupců",
+                  "text": "Pod ním jsou pole pro konkrétní sloupce (text, výběr ze seznamu, datum …). Můžete jich vyplnit víc najednou - záznam musí splnit všechny.",
+                  "active": false
+                },
+                {
+                  "label": "Řazení",
+                  "text": "V poli Seřadit podle zvolte sloupec a ve Směru řazení zvolte vzestupně (A-Z, od nejmenšího) nebo sestupně (Z-A, od největšího).",
+                  "active": false
+                },
+                {
+                  "label": "Použít filtry",
+                  "text": "Tlačítko Použít filtry tabulku přefiltruje a vrátí vás na první stránku výsledků.",
+                  "active": false
+                },
+                {
+                  "label": "Vyčistit filtry",
+                  "text": "Tlačítko Vyčistit filtry vymaže všechna pole a zobrazí znovu všechny záznamy.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Panel zavřete křížkem nebo položkou Skrýt filtry v nabídce Akce. Filtry zůstanou použité, dokud je nevyčistíte."
+            }
+          ]
+        },
+        {
+          "heading": "09. Formuláře - přidání a úprava záznamu",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Nový záznam přidáte v nabídce Akce položkou pro vytvoření záznamu, existující upravíte ikonou úpravy v řádku.",
+                "Otevře se formulář. Pole označená hvězdičkou (*) jsou povinná.",
+                "Chybně vyplněné pole se po opuštění zbarví a pod ním se zobrazí důvod (například „Toto pole je povinné.“ nebo „Neplatný formát e-mailu.“).",
+                "Výběrová pole nabízejí jen povolené hodnoty. Pole s více možnostmi zaškrtáváte; možnosti převzaté z role jsou označené a nedají se odškrtnout.",
+                "U příloh vyberete soubory tlačítkem nebo je přetáhnete do vyznačené oblasti. Pod polem je vidět povolený počet souborů, maximální velikost a povolené typy; soubor, který limit nesplní, systém odmítne s vysvětlením.",
+                "Tlačítkem Potvrdit uložíte, tlačítkem Zrušit nebo křížkem formulář zavřete bez uložení."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Pokud po stisku Potvrdit vyskočí hláška Neplatný formulář, některé povinné pole chybí nebo je chybně vyplněné. Formulář zůstane otevřený, nic se neuložilo - opravte vyznačená pole a potvrďte znovu."
+            }
+          ]
+        },
+        {
+          "heading": "10. Detail záznamu",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Ikona detailu (lupa, Detaily) otevře okno se všemi údaji záznamu, včetně těch, které se do tabulky nevejdou, a s datem vytvoření a poslední změny. Detail jen zobrazuje - nic v něm nezměníte. U příloh jsou tlačítka Zobrazit (otevře soubor v prohlížeči) a Stáhnout."
+            }
+          ]
+        },
+        {
+          "heading": "11. Mazání a koš",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Smazání záznamu je ve dvou krocích, aby se omylem nic neztratilo:"
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Smazat",
+                  "text": "Ikona koše v řádku (po potvrzení) přesune záznam do koše. Z tabulky zmizí, ale nic se neztratí.",
+                  "active": true
+                },
+                {
+                  "label": "Koš",
+                  "text": "V nabídce Akce zvolte Zobrazit koš. Uvidíte smazané záznamy s datem smazání. Zpět na aktivní záznamy se dostanete položkou Zobrazit aktivní.",
+                  "active": false
+                },
+                {
+                  "label": "Obnovit",
+                  "text": "Tlačítko Obnovit vrátí záznam zpět mezi aktivní, se všemi údaji.",
+                  "active": false
+                },
+                {
+                  "label": "Smazat trvale",
+                  "text": "Odstraní jeden záznam natrvalo. Tento krok nelze vrátit.",
+                  "active": false
+                },
+                {
+                  "label": "Vysypat koš",
+                  "text": "Trvale smaže všechny záznamy v koši. Záznamy, na které navazují jiná data, která je nutné uchovat (například zákazník s objednávkami), se nesmažou a dialog to oznámí.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "danger",
+              "content": "Trvalé smazání a vysypání koše nejdou vrátit. Než je potvrdíte, ověřte si, že záznamy opravdu nepotřebujete."
+            },
+            {
+              "type": "text",
+              "content": "Koš vidíte jen s oprávněním Zobrazit smazané záznamy v koši (view-deleted). Obnovit a trvale mazat smíte jen s oprávněním mazat záznamy dané stránky. Staré záznamy v koši může také automaticky mazat noční úklid podle nastavené retence (Nastavení → Retence dat)."
+            }
+          ]
+        },
+        {
+          "heading": "12. Export dat",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "V nabídce Akce zvolte Exportovat data (nebo Exportovat vybrané v liště hromadných akcí - pak se exportují jen zaškrtnuté záznamy).",
+                "Vyberte formát: CSV (Excel, Google Sheets), XLSX (sešit Excelu), JSON (pro vývojáře a integrace) nebo TXT (prostý text s tabulátory).",
+                "Zaškrtněte sloupce, které má soubor obsahovat (Vybrat vše / Zrušit vše). Alespoň jeden sloupec musí být vybraný.",
+                "Volba Exportovat v surovém formátu použije technické názvy sloupců a needitované hodnoty - takový soubor jde rovnou znovu naimportovat (do stejné nebo jiné instance systému).",
+                "Potvrďte. Systém připraví soubor a prohlížeč ho stáhne."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Exportované soubory často obsahují osobní údaje (jména, e-maily, telefony). Ukládejte je jen tam, kde jsou chráněné, neposílejte je nezabezpečeně a po použití je smažte. Každý export se zapisuje do logu."
+            }
+          ]
+        },
+        {
+          "heading": "13. Import dat",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Na některých stránkách (například poptávky webu, leady projektového portálu nebo dodavatelé e-shopu) je v nabídce Akce položka Importovat data. Import slouží jen k hromadnému přidání nových záznamů - existující data nikdy nepřepíše ani nesmaže."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Stáhněte šablonu",
+                  "text": "Tlačítko Stáhnout prázdnou šablonu stáhne soubor se správnými hlavičkami sloupců. U sloupců s pevným výběrem hodnot okno ukazuje povolené hodnoty.",
+                  "active": true
+                },
+                {
+                  "label": "Vyplňte soubor",
+                  "text": "Každý řádek = jeden nový záznam. Hlavičky sloupců neměňte.",
+                  "active": false
+                },
+                {
+                  "label": "Nahrajte a zkontrolujte",
+                  "text": "Vyberte soubor a stiskněte Zkontrolovat soubor. Nic se zatím neuloží - uvidíte počet řádků celkem, validních a chybných a u chybných řádků přesný důvod.",
+                  "active": false
+                },
+                {
+                  "label": "Potvrďte",
+                  "text": "Tlačítko Potvrdit a přidat N záznamů přidá jen validní řádky. Řádky, které kolidují s existujícím záznamem, se přeskočí.",
+                  "active": false
+                },
+                {
+                  "label": "Výsledek",
+                  "text": "Okno ukáže, kolik záznamů se přidalo a kolik se přeskočilo. Velký import se zpracuje na pozadí - výsledek pak najdete v logu aplikace.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Pokud není validní žádný řádek, import nejde potvrdit - opravte soubor podle vypsaných chyb a nahrajte ho znovu. Tlačítkem Zpět se vrátíte k výběru souboru."
+            }
+          ]
+        },
+        {
+          "heading": "14. Grafy a reporty",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "V nabídce Akce zvolte Generovat grafy a reporty. Otevře se okno s panelem Nastavení reportu.",
+                "V části Období vyplňte data Od a Do. Prázdné pole znamená bez omezení.",
+                "V části Sloupce a typ grafu zaškrtněte sloupce, které chcete vyhodnotit, a u každého zvolte typ grafu - sloupcový, koláčový, prstencový, radar, polární nebo vývoj v čase. U číselných hodnot volíte spojnicový nebo sloupcový graf a součet či průměr.",
+                "Tlačítkem Hodnoty u sloupce můžete vybrat, které hodnoty se do grafu zahrnou (ostatní se vynechají a report to uvede).",
+                "Volba Celkový vývoj v čase přidá graf celkového počtu záznamů v čase.",
+                "Stiskněte Generovat report. Krok grafu (den, týden, měsíc) se zvolí podle délky období.",
+                "Tlačítkem Exportovat do PDF report uložíte jako dokument s datem vytvoření, obdobím a počtem záznamů."
+              ]
+            },
+            {
+              "type": "note",
+              "highlight": "Proč graf neukazuje nulové hodnoty",
+              "content": "Koláčový a prstencový graf nemohou zobrazit hodnoty s nulovým počtem. Když je potřebujete vidět, zvolte radar, polární graf nebo vývoj v čase."
+            }
+          ]
+        },
+        {
+          "heading": "15. Dialogy, hlášky a potvrzení heslem",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Potvrzovací dialog",
+                  "text": "Před každou akcí, která něco maže nebo mění ve velkém, se systém zeptá. Tlačítko Potvrdit akci provede, Zrušit ji zruší."
+                },
+                {
+                  "title": "Hlášky o výsledku",
+                  "text": "Po uložení nebo smazání se zobrazí krátké potvrzení. Chybová hláška vždy popisuje, co se nepovedlo - nic se v tom případě neuložilo."
+                },
+                {
+                  "title": "Potvrzení heslem",
+                  "text": "Citlivé operace (zapnutí a vypnutí aplikace, operace s účty systémových administrátorů, povolené e-mailové domény, změna vlastního přihlašovacího e-mailu) systém provede až po zadání vašeho aktuálního hesla. Po správném zadání se na stejnou operaci 10 minut znovu neptá."
+                },
+                {
+                  "title": "Chyba připojení",
+                  "text": "Hláška, že se nelze připojit k serveru, znamená výpadek internetu nebo serveru. Zkontrolujte připojení a akci zopakujte."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "16. Stránky „Stránka nenalezena“ a „Přístup odepřen“",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Stránka nenalezena: na zadané adrese v administraci nic není - adresa je chybná nebo stránka byla přesunuta. Pokračujte z menu.",
+                "Přístup odepřen: stránka existuje, ale váš účet nemá oprávnění ji otevřít. Pokud ji potřebujete, požádejte o oprávnění administrátora účtů.",
+                "Obě stránky ukazují požadovanou adresu a nabízejí tlačítka Zpět a Úvod administrace."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "17. Upozornění na novou verzi",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Po aktualizaci systému se nad stránkou krátce objeví pruh „Aktualizováno na verzi … - N změn zde“. Zobrazí se jen v části, ve které pracujete, a jen když ji aktualizace změnila. Tlačítko Co je nového otevře seznam změn, křížek pruh skryje do další aktualizace. Všechny verze a změny najdete na stránce Verze."
+            }
+          ]
+        },
+        {
+          "heading": "18. Zásady, na které myslete",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Svůj účet nikomu nepůjčujte a heslo nikomu nesdělujte - každý člověk má mít vlastní účet.",
+                "Na sdíleném nebo cizím počítači se vždy odhlaste tlačítkem Odhlásit se a nepoužívejte volbu Zapamatovat si mě.",
+                "Každá změna v administraci (vytvoření, úprava, smazání, export, přihlášení) se zapisuje do logu s vaším účtem, časem a IP adresou.",
+                "S osobními údaji zákazníků, klientů a uchazečů pracujte jen v rozsahu, který vaše práce vyžaduje (GDPR).",
+                "Když si nevíte rady, otevřete otazník na dané stránce. Když stále nevíte, obraťte se na kontakty v kapitole Kontakty a pomoc."
+              ]
             }
           ]
         }
       ]
     },
     "security": {
-      "navLabel": "Přístup",
-      "header": "Přístupové údaje a bezpečnost",
+      "navLabel": "Přístup a bezpečnost",
+      "header": "Přihlášení, hesla a bezpečnost účtu",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - sem patří vysvětlení přihlašování, 2FA a politiky hesel."
+              "content": "Tato kapitola vysvětluje vše kolem přístupu do administrace: přihlášení, uložené účty, dvoufázové ověření, pravidla pro hesla, zapomenuté heslo, jak dlouho přihlášení platí, odhlášení a jak systém chrání účty před zneužitím."
+            }
+          ]
+        },
+        {
+          "heading": "01. Přihlášení krok za krokem",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Otevřete přihlašovací stránku",
+                  "text": "Adresa administrace vás přesměruje na přihlášení. Vlevo je logo, vpravo přihlašovací karta, vpravo nahoře volba jazyka.",
+                  "active": true
+                },
+                {
+                  "label": "E-mail a heslo",
+                  "text": "Zadejte přihlašovací e-mail a heslo. Ikonou oka u hesla si ho můžete zobrazit a zkontrolovat.",
+                  "active": false
+                },
+                {
+                  "label": "Zapamatovat si mě",
+                  "text": "Zaškrtněte jen na vlastním počítači - viz kapitola 03.",
+                  "active": false
+                },
+                {
+                  "label": "Přihlásit se",
+                  "text": "Stiskněte Přihlásit se. Pokud nemáte dvoufázové ověření, jste přihlášeni.",
+                  "active": false
+                },
+                {
+                  "label": "Ověřovací kód",
+                  "text": "S dvoufázovým ověřením přijde na váš e-mail šestimístný kód. Zadejte ho a stiskněte Ověřit.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Při chybném e-mailu nebo hesle systém z bezpečnostních důvodů neprozradí, co přesně bylo špatně. Zkontrolujte obojí a zkuste to znovu."
+            }
+          ]
+        },
+        {
+          "heading": "02. Ochrana proti hádání hesla",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Po třech neúspěšných pokusech o přihlášení k jednomu e-mailu během 15 minut systém navíc vyžaduje ověření, že nejste robot (CAPTCHA). Potvrďte ho a přihlaste se znovu.",
+                "Počet pokusů za minutu je omezený (na jeden e-mail i na jednu síť). Při překročení počkejte minutu.",
+                "Každý neúspěšný pokus a každé podezřelé chování se zapisuje do bezpečnostního monitoringu, kde ho vidí správce systému."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Zapamatovat si mě a uložené účty",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Volba Zapamatovat si mě určuje, jak dlouho přihlášení vydrží:"
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Bez zapamatování",
+                  "text": "Přihlášení skončí zavřením prohlížeče, nejpozději po 12 hodinách nečinnosti."
+                },
+                {
+                  "title": "Se zapamatováním",
+                  "text": "Přihlášení vydrží i po zavření prohlížeče. Skončí po 7 dnech, kdy administraci vůbec nepoužijete."
+                },
+                {
+                  "title": "Vždy nejvýš 30 dní",
+                  "text": "Nejpozději 30 dní po přihlášení je nutné přihlásit se znovu - včetně dvoufázového ověření - i když administraci používáte každý den."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Na přihlašovací stránce se zapamatované účty nabízejí v části Pokračovat s uloženým účtem - jedním kliknutím na Pokračovat jako … se přihlásíte bez hesla. Účet, se kterým pracuje aktuální okno, je označený jako Přihlášen v tomto okně. Pokud účet mezitím přestal existovat nebo platit, systém napíše, že už není k dispozici, a je třeba přihlásit se heslem."
+            },
+            {
+              "type": "note",
+              "highlight": "Více účtů v jednom prohlížeči",
+              "content": "V jednom prohlížeči můžete mít přihlášeno více účtů - každá karta (záložka prohlížeče) pracuje s jedním z nich. Přihlášení nebo volba účtu se týká jen aktuální karty, ostatní karty zůstanou u svého účtu."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Na sdíleném, veřejném nebo cizím počítači volbu Zapamatovat si mě nikdy nezaškrtávejte."
+            }
+          ]
+        },
+        {
+          "heading": "04. Dvoufázové ověření (2FA)",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Dvoufázové ověření znamená, že k přihlášení nestačí heslo - je potřeba i kód, který přijde na váš e-mail. Kdo zná jen vaše heslo, se nepřihlásí."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Kód má 6 číslic a platí 10 minut; na přihlašovací stránce vidíte, jak dlouho ještě.",
+                "Kód můžete zadat nejvýše pětkrát. Po vyčerpání pokusů se musíte přihlásit znovu heslem.",
+                "Tlačítkem Odeslat kód znovu si vyžádáte nový kód - nejdříve po 60 sekundách a nejvýše pětkrát během jednoho přihlášení. Nový kód zneplatní ten předchozí.",
+                "Když kód nepřišel, zkontrolujte složku nevyžádané pošty a správnost e-mailu ve svém účtu."
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zapnutí a vypnutí",
+                  "text": "Na stránce Osobní informace si 2FA zapnete nebo vypnete sami zaškrtávacím políčkem Dvoufaktorové ověření (2FA)."
+                },
+                {
+                  "title": "Povinné pro roli",
+                  "text": "Některé role vyžadují 2FA vždy (role sysadmin vždy, další podle nastavení role). Pak políčko nejde vypnout."
+                },
+                {
+                  "title": "Vynucené správcem",
+                  "text": "Správce systému může 2FA vynutit u konkrétního účtu. I pak nejde vypnout - obraťte se na administrátora."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Doporučujeme mít 2FA zapnuté vždy, zvlášť pokud máte přístup k osobním údajům nebo ke správě účtů."
+            }
+          ]
+        },
+        {
+          "heading": "05. Pravidla pro hesla",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Stejná pravidla platí při aktivaci účtu, obnovení zapomenutého hesla i změně hesla:"
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "délka 8 až 64 znaků,",
+                "alespoň jedno písmeno,",
+                "alespoň jedna číslice,",
+                "alespoň jeden speciální znak (například ! ? # % - _ .)."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Při zadávání nového hesla vidíte pod polem seznam požadavků; splněné se zbarví. Potvrzení hesla musí být shodné s heslem."
+            },
+            {
+              "type": "note",
+              "highlight": "Jak zvolit dobré heslo",
+              "content": "Nejbezpečnější je dlouhá fráze z několika slov s číslicí a znakem, nebo heslo vygenerované správcem hesel. Nepoužívejte stejné heslo jako jinde, jméno, datum narození ani název firmy."
+            }
+          ]
+        },
+        {
+          "heading": "06. Zapomenuté heslo",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Zapomněli jste heslo?",
+                  "text": "Na přihlašovací stránce klikněte na odkaz Zapomněli jste heslo?",
+                  "active": true
+                },
+                {
+                  "label": "Zadejte e-mail",
+                  "text": "Napište přihlašovací e-mail a stiskněte Odeslat odkaz pro obnovení.",
+                  "active": false
+                },
+                {
+                  "label": "Zkontrolujte poštu",
+                  "text": "Systém vždy odpoví „Pokud účet existuje, odkaz pro obnovení je na cestě.“ - z bezpečnostních důvodů neprozradí, zda účet existuje. Odkaz platí 60 minut.",
+                  "active": false
+                },
+                {
+                  "label": "Nové heslo",
+                  "text": "Odkaz otevře stránku Nastavte nové heslo. Zadejte heslo podle pravidel, zopakujte ho a stiskněte Nastavit nové heslo.",
+                  "active": false
+                },
+                {
+                  "label": "Přihlášení",
+                  "text": "Po úspěšné změně vás stránka přesměruje na přihlášení.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Odkaz je jednorázový. Pokud vypršel nebo už byl použitý, stránka napíše, že je neplatný - vyžádejte si na přihlašovací stránce nový. Novou žádost lze odeslat nejdříve po minutě."
+            }
+          ]
+        },
+        {
+          "heading": "07. Změna hesla a přihlašovacího e-mailu",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Heslo si změníte na stránce Osobní informace tlačítkem Změnit heslo: zadáte staré heslo, nové heslo a jeho potvrzení.",
+                "Po změně hesla se ukončí všechna ostatní přihlášení vašeho účtu (jiné prohlížeče, jiná zařízení, ostatní karty) - aktuální karta zůstane přihlášená.",
+                "Přihlašovací e-mail mění administrátor účtů. Pokud ho měníte sami (jen s oprávněním), systém nejdřív ověří vaše heslo, ukončí ostatní přihlášení a pošle upozornění na starou i novou adresu.",
+                "Pokud vám přijde upozornění na změnu, kterou jste nedělali, okamžitě kontaktujte administrátora."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "08. Odhlášení",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Tlačítko Odhlásit se je úplně dole v levém menu. Odhlásí účet, se kterým pracuje aktuální karta - na serveru i v prohlížeči. Ostatní karty se stejným účtem se přesunou na přihlašovací stránku; jiné účty přihlášené v tomto prohlížeči zůstanou přihlášené. Když přihlášení vyprší, systém vás sám přesune na přihlašovací stránku a je potřeba přihlásit se znovu."
+            }
+          ]
+        },
+        {
+          "heading": "09. Blokovaný nebo neaktivní účet",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Účet, který ještě nebyl aktivován (nemá nastavené heslo), se nepřihlásí. Použijte aktivační odkaz z e-mailu, případně požádejte administrátora o nový.",
+                "Blokovaný účet se nepřihlásí a jeho probíhající přihlášení jsou ukončena. Zablokovat a odblokovat účet může jen správce systému.",
+                "V obou případech přihlašovací stránka napíše, že přihlášení tohoto účtu není povolené, a doporučí kontaktovat administrátora."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "10. Co systém chrání automaticky",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Šifrované spojení",
+                  "text": "Administrace komunikuje se serverem jen šifrovaně (HTTPS)."
+                },
+                {
+                  "title": "Hesla",
+                  "text": "Heslo se nikde neukládá v čitelné podobě - ani správce systému ho nemůže zjistit, může jen poslat odkaz na nastavení nového."
+                },
+                {
+                  "title": "Krádež přihlášení",
+                  "text": "Když systém zjistí, že stejné přihlášení používají dvě různá místa, ukončí všechna přihlášení účtu a zapíše bezpečnostní událost."
+                },
+                {
+                  "title": "Bezpečnostní monitoring",
+                  "text": "Neúspěšná přihlášení, chybné kódy, roboti a skenování se zapisují do bezpečnostního monitoringu, který kontroluje správce."
+                },
+                {
+                  "title": "Audit",
+                  "text": "Přihlášení, odhlášení, změny hesel a všechny úpravy dat se zapisují do logů."
+                },
+                {
+                  "title": "Potvrzení heslem",
+                  "text": "Nejcitlivější operace vyžadují znovu zadat heslo, i když jste přihlášení."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "11. Co dělat, když …",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Nepřišel aktivační e-mail",
+                  "text": "Zkontrolujte nevyžádanou poštu. Aktivační odkaz platí 48 hodin; pak požádejte administrátora o opětovné odeslání."
+                },
+                {
+                  "title": "Nepřišel ověřovací kód",
+                  "text": "Počkejte minutu, zkontrolujte nevyžádanou poštu a použijte Odeslat kód znovu."
+                },
+                {
+                  "title": "Platnost kódu vypršela",
+                  "text": "Vyžádejte si nový kód tlačítkem Odeslat kód znovu, nebo se přihlaste znovu."
+                },
+                {
+                  "title": "Systém mě odhlásil",
+                  "text": "Přihlášení vypršelo nebo bylo ukončeno (změna hesla, blokace, podezření na krádež přihlášení). Přihlaste se znovu."
+                },
+                {
+                  "title": "Mám podezření na zneužití účtu",
+                  "text": "Okamžitě si změňte heslo, zapněte 2FA a informujte administrátora - ten ověří záznamy v bezpečnostním monitoringu."
+                }
+              ]
             }
           ]
         }
       ]
     },
     "contacts": {
-      "navLabel": "Kontakty",
-      "header": "Kontakty na tým",
+      "navLabel": "Kontakty a pomoc",
+      "header": "Kontakty a kde hledat pomoc",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - sem patří seznam kontaktů na klíčové lidi v týmu."
+              "content": "Kam se obrátit, když si nevíte rady, něco nefunguje nebo potřebujete změnit přístup."
+            }
+          ]
+        },
+        {
+          "heading": "01. Postup, když si nevíte rady",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Otevřete otazník v záhlaví stránky, se kterou pracujete - kapitola manuálu popisuje všechny funkce stránky a obsahuje část Co dělat, když …",
+                "Projděte úvodní kapitolu Jak pracovat s administrací - vysvětluje tabulky, filtry, formuláře, koš, export a import, které jsou na všech stránkách stejné.",
+                "Pokud problém trvá, kontaktujte svého administrátora (kapitola 02).",
+                "Chybu systému nahlaste tvůrci systému (kapitola 03)."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Administrátor vašeho účtu",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Administrátor účtů je člověk ve vaší firmě, který má přístup ke stránce Účty a spravuje uživatele. Obraťte se na něj, když:"
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "potřebujete nový účet pro kolegu nebo zrušit účet odcházejícího zaměstnance,",
+                "vám chybí stránka, tlačítko nebo aplikace (rozšíření oprávnění nebo změna role),",
+                "vám nepřišel nebo vypršel aktivační e-mail,",
+                "je potřeba změnit vaše jméno nebo přihlašovací e-mail,",
+                "je váš účet zablokovaný nebo máte podezření na jeho zneužití."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Úpravy rolí, povolených e-mailových domén, blokace účtů a vynucení dvoufázového ověření smí dělat jen správce systému (role sysadmin)."
+            }
+          ]
+        },
+        {
+          "heading": "03. Tvůrce systému a technická podpora",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Systém vytvořila a technicky spravuje firma JonclSolutions. Kontakt je i na konci každé kapitoly tohoto manuálu."
+            },
+            {
+              "type": "link",
+              "label": "info@jonclsolutions.com",
+              "url": "mailto:info@jonclsolutions.com",
+              "external": true
+            },
+            {
+              "type": "text",
+              "content": "Při nahlášení chyby uveďte co nejvíc podrobností - urychlí to řešení:"
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "adresu stránky (z adresního řádku prohlížeče),",
+                "co jste dělali a co jste očekávali,",
+                "přesné znění chybové hlášky (nejlépe snímek obrazovky),",
+                "datum a přibližný čas, kdy se chyba stala,",
+                "prohlížeč a zařízení (například Chrome na Windows, Safari na iPhonu)."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Do hlášení nikdy nepište hesla, ověřovací kódy ani osobní údaje zákazníků. Nikdo z podpory po vás heslo ani kód nebude chtít."
+            }
+          ]
+        },
+        {
+          "heading": "04. Kontaktní údaje firmy pro návštěvníky",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Kontaktní e-mail, telefon, adresa a sociální sítě, které vidí návštěvníci webu, e-shopu a klientského portálu, se nastavují v Core na stránce Nastavení (záložka Firemní údaje)."
             }
           ]
         }
       ]
     },
     "core-dashboard": {
-      "navLabel": "Dashboard",
-      "header": "Core - Dashboard",
+      "navLabel": "Dashboard systému",
+      "header": "Dashboard systému (Core)",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - přehledová stránka systémového (core) modulu."
+              "content": "Dashboard systému je rychlý přehled sdílených zdrojů, které Core spravuje pro všechny aplikace: uživatelských účtů, rolí, právních dokumentů, externích odkazů a systémových logů. Odsud se jedním kliknutím dostanete na každou správní stránku Core."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Dashboard vidí jen účty s oprávněním k sekci Core (view-core). Jednotlivé dlaždice a karty se zobrazí jen tehdy, když máte oprávnění k příslušné stránce - každý tedy může vidět jiný dashboard."
+            }
+          ]
+        },
+        {
+          "heading": "01. Záhlaví a aktualizace",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "V záhlaví je název Systémový přehled, čas poslední aktualizace a tlačítko Aktualizovat. Údaje se načtou při otevření stránky; tlačítkem je kdykoli načtete znovu."
+            }
+          ]
+        },
+        {
+          "heading": "02. Hlavní metrika a ostatní čísla",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Hlavní dlaždice",
+                  "text": "Velké číslo vlevo nahoře. Kliknutím na její název otevřete nabídku a vyberete, kterou metriku chcete mít zvýrazněnou: Uživatelé systému, Role a oprávnění, Právní dokumenty, Externí odkazy nebo Systémové logy."
+                },
+                {
+                  "title": "Přehled podle modulů",
+                  "text": "Sloupcový přehled ostatních metrik - pro rychlé porovnání velikostí."
+                },
+                {
+                  "title": "Distribuce",
+                  "text": "Barevný pruh, který ukazuje poměr jednotlivých metrik vůči sobě. Zobrazí se, jen když jsou k dispozici aspoň dvě metriky."
+                },
+                {
+                  "title": "Bez přehledů",
+                  "text": "Hláška „Pro váš účet nejsou k dispozici žádné přehledy.“ znamená, že nemáte oprávnění k žádné z měřených stránek."
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Uživatelé systému - počet uživatelských účtů administrace (stránka Účty).",
+                "Role a oprávnění - počet rolí (jen pro správce systému).",
+                "Právní dokumenty - počet sekcí právních dokumentů.",
+                "Externí odkazy - počet vašich externích odkazů.",
+                "Systémové logy - počet záznamů v logu systému."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Rychlá navigace",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Karty s názvem a popisem stránky - Účty, Role a oprávnění, Právní dokumenty, Externí odkazy, Logy systému a Nastavení. Kliknutím kartu otevřete. Karty stránek, ke kterým nemáte oprávnění, se nezobrazí."
+            }
+          ]
+        },
+        {
+          "heading": "04. Poslední systémové události",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Seznam posledních osmi záznamů ze systémového logu (přihlášení, odhlášení, změny účtů, rolí a dokumentů, žádosti o reset hesla …) s časem a uživatelem. Odkaz Zobrazit vše otevře stránku Logy systému s úplnou historií a filtry. Karta Rozložení posledních událostí ukazuje, kolik z těchto záznamů bylo vytvoření, úprav, smazání, obnovení, exportů a chyb."
+            },
+            {
+              "type": "note",
+              "highlight": "K čemu je to dobré",
+              "content": "Na první pohled vidíte, jestli se v systému neděje nic neobvyklého - například série neúspěšných přihlášení nebo nečekané mazání. Podrobnosti pak hledejte v Logy systému a v Bezpečnostním monitoringu."
             }
           ]
         }
@@ -58,13 +1038,201 @@
     },
     "calendar": {
       "navLabel": "Kalendář",
-      "header": "Kalendář",
+      "header": "Kalendář - termíny a nevyřízená práce",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Návod k této stránce se připravuje."
+              "content": "Kalendář shromažďuje na jednom místě důležité termíny ze všech modulů (začátek a konec slevových kupónů, termíny projektů, připomenutí leadů, vypršení odkazů) a nevyřízenou práci (nové poptávky, nové přihlášky, objednávky k vyřízení …). Navíc si do něj můžete zapisovat vlastní osobní připomínky."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Kalendář vidí každý přihlášený uživatel. Termíny a úkoly modulů se ale zobrazují jen z těch stránek, ke kterým máte oprávnění. Osobní události vidíte jen vy."
+            }
+          ]
+        },
+        {
+          "heading": "01. Jak kalendář otevřít",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "ikonou kalendáře v hlavičce administrace (na mobilu v panelu vpravo nahoře),",
+                "položkou Kalendář v menu Core, sekce Přehled."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Panel Čeká na vyřízení",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Nad kalendářem je panel s prací, která na někoho čeká. Každá položka ukazuje počet a stáří nejstaršího čekajícího záznamu (například „nejstarší před 3 dny“). Kliknutím na položku otevřete stránku, kde práci vyřídíte. Když nic nečeká, panel ukáže Vše vyřízeno."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Systém",
+                  "text": "Nové bezpečnostní události, které ještě nikdo nevyhodnotil."
+                },
+                {
+                  "title": "Web",
+                  "text": "Nové poptávky z webu a nové přihlášky uchazečů o práci."
+                },
+                {
+                  "title": "E-shop",
+                  "text": "Objednávky e-shopu k vyřízení a produkty s nízkou zásobou."
+                },
+                {
+                  "title": "Projektový portál",
+                  "text": "Leady bez kontaktu 14 a více dní a objednávky, ke kterým ještě nebyl založen projekt."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Termíny v kalendáři",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Vyprší aktivace",
+                  "text": "Den, kdy přestane platit aktivační odkaz nového účtu (Systém)."
+                },
+                {
+                  "title": "Začíná / končí kupón",
+                  "text": "První a poslední den platnosti slevového kupónu (E-shop)."
+                },
+                {
+                  "title": "Termín projektu",
+                  "text": "Plánované dokončení projektu (Projektový portál)."
+                },
+                {
+                  "title": "Ozvat se",
+                  "text": "Od posledního kontaktu s leadem uplynulo 14 dní (Projektový portál)."
+                },
+                {
+                  "title": "Vyprší formulář",
+                  "text": "Odkaz na objednávkový formulář pro klienta přestane platit (Projektový portál)."
+                },
+                {
+                  "title": "Osobní události",
+                  "text": "Vaše vlastní připomínky (kapitola 05)."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Termíny modulů se doplňují automaticky z dat administrace - v kalendáři je nevytváříte ani neupravujete. Kliknutím na termín otevřete stránku, ke které patří. Termín, který už proběhl a nebyl vyřízený, je označený Po termínu."
+            }
+          ]
+        },
+        {
+          "heading": "04. Ovládání kalendáře",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Měsíc / Seznam",
+                  "text": "Přepínač zobrazení: mřížka měsíce, nebo přehledný seznam termínů měsíce pod sebou."
+                },
+                {
+                  "title": "Šipky a Dnes",
+                  "text": "Šipkami přejdete na předchozí nebo následující měsíc, tlačítko Dnes vás vrátí na aktuální měsíc."
+                },
+                {
+                  "title": "Zobrazené moduly",
+                  "text": "Barevné přepínače modulů (Systém, Osobní, Web, E-shop, Projektový portál). Vypnutím modulu jeho termíny skryjete. Každý modul má v kalendáři vlastní barvu."
+                },
+                {
+                  "title": "Plný den",
+                  "text": "Když se do dne nevejdou všechny termíny, zobrazí se „+N další“. Všechny termíny dne uvidíte v zobrazení Seznam."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "05. Osobní události",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Přidat událost",
+                  "text": "Tlačítkem Přidat událost (nebo přidáním přímo na konkrétní den) otevřete formulář Nová osobní událost.",
+                  "active": true
+                },
+                {
+                  "label": "Název",
+                  "text": "Povinný krátký popis, například „Zavolat dodavateli“.",
+                  "active": false
+                },
+                {
+                  "label": "Datum a čas",
+                  "text": "Datum je povinné. Čas je nepovinný - nevyplněný čas znamená celý den.",
+                  "active": false
+                },
+                {
+                  "label": "Poznámka",
+                  "text": "Nepovinný delší text.",
+                  "active": false
+                },
+                {
+                  "label": "Hotovo",
+                  "text": "Zaškrtnutím událost označíte jako vyřízenou.",
+                  "active": false
+                },
+                {
+                  "label": "Uložit",
+                  "text": "Událost se zobrazí v kalendáři v barvě Osobní.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Kliknutím na vlastní událost ji upravíte (formulář Upravit osobní událost).",
+                "Tlačítky Označit jako hotové / Označit jako nehotové měníte stav bez otevření formuláře.",
+                "Tlačítko Smazat událost po potvrzení trvale odstraní - nejde to vrátit."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Osobní události vidíte jen vy - ani administrátoři je nevidí. Nepište do nich přesto citlivé osobní údaje zákazníků."
+            }
+          ]
+        },
+        {
+          "heading": "06. Co dělat, když …",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Kalendář se nenačetl",
+                  "text": "Zobrazí se hláška „Kalendář se nepodařilo načíst“. Obnovte stránku; pokud to trvá, kontaktujte podporu."
+                },
+                {
+                  "title": "Chybí termíny modulu",
+                  "text": "Nemáte oprávnění ke stránce, ze které termíny pocházejí, nebo je modul vypnutý v přepínači Zobrazené moduly."
+                },
+                {
+                  "title": "Termín je špatně",
+                  "text": "Opravte údaj na stránce, ze které termín pochází (kupón, projekt, lead) - kalendář se upraví sám."
+                }
+              ]
             }
           ]
         }
@@ -72,13 +1240,63 @@
     },
     "welcome-page": {
       "navLabel": "Uvítací stránka",
-      "header": "Uvítací stránka",
+      "header": "Uvítací stránka administrace",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - úvodní stránka po přihlášení do administrace."
+              "content": "Uvítací stránka se otevře hned po přihlášení. Pozdraví vás jménem a ukáže základní údaje vašeho účtu. Neobsahuje žádné citlivé přehledy - ty jsou na dashboardech."
+            }
+          ]
+        },
+        {
+          "heading": "01. Co na stránce najdete",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Pozdrav",
+                  "text": "Nadpis „Vítejte v administraci, …“ s vaším jménem."
+                },
+                {
+                  "title": "Váš profil",
+                  "text": "Celé jméno, přihlašovací e-mail, role a datum vytvoření účtu."
+                },
+                {
+                  "title": "Pomoc",
+                  "text": "Odkaz na technickou podporu a správce systému v zápatí stránky."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Pokud se profil nepodaří načíst, zobrazí se hláška „Nepodařilo se načíst váš profil.“ - obnovte stránku. Údaje upravíte na stránce Osobní informace (kliknutím na svůj e-mail v hlavičce)."
+            }
+          ]
+        },
+        {
+          "heading": "02. Kdo stránku vidí",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Stránka vyžaduje oprávnění Zobrazit uvítací stránku (core-view-welcome-page). Doporučuje se mít ho zapnuté u každého účtu - bez něj uživatel po přihlášení uvidí stránku Přístup odepřen a musí pokračovat z menu."
+            }
+          ]
+        },
+        {
+          "heading": "03. Kam dál",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Levé menu - stránky modulu Core.",
+                "Tlačítko Aplikace v hlavičce - web, e-shop, projektový portál.",
+                "Kalendář v hlavičce - termíny a nevyřízená práce.",
+                "Help v hlavičce - tento manuál."
+              ]
             }
           ]
         }
@@ -86,27 +1304,364 @@
     },
     "edit-legal": {
       "navLabel": "Právní dokumenty",
-      "header": "Editace právních dokumentů (GDPR, TOS...)",
+      "header": "Právní dokumenty - zásady ochrany osobních údajů, obchodní podmínky, cookies",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - editace vícejazyčného obsahu právních dokumentů (GDPR, obchodní podmínky, cookies). Dokumenty platí pro všechny veřejné aplikace: obchodní podmínky a zásady ochrany osobních údajů zobrazuje web i e-shop (ve svém vzhledu), jazyky jsou jazyky všech aplikací dohromady."
+              "content": "Na této stránce upravujete texty právních dokumentů, které návštěvníci vidí na webu a v e-shopu: zásady ochrany osobních údajů (GDPR), obchodní podmínky (TOS) a zásady používání cookies. Každý dokument se skládá ze sekcí a existuje v každém jazyce webu zvlášť."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Právní dokumenty mají právní váhu. Změny konzultujte s právníkem a po úpravě zkontrolujte, že je text ve všech jazycích stejný."
+            }
+          ]
+        },
+        {
+          "heading": "01. Kde se dokumenty zobrazují",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zásady ochrany osobních údajů (GDPR)",
+                  "text": "Web: /privacy-policy, e-shop: /shop/privacy-policy. Odkazují na ně i formuláře, ve kterých návštěvník dává souhlas."
+                },
+                {
+                  "title": "Obchodní podmínky (TOS)",
+                  "text": "Web: /tos, e-shop: /shop/tos."
+                },
+                {
+                  "title": "Cookies",
+                  "text": "Web: /cookies-policy. Na stránce je i tlačítko pro změnu nastavení cookies."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Dokumenty jsou společné pro všechny aplikace: jednou upravený text se zobrazí na webu i v e-shopu (každý ve svém vzhledu). Datum poslední aktualizace pod dokumentem se nastaví samo podle poslední úpravy."
+            }
+          ]
+        },
+        {
+          "heading": "02. Orientace na stránce",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Záložky dokumentů",
+                  "text": "Nahoře volíte dokument: GDPR, TOS, Cookies."
+                },
+                {
+                  "title": "Záložky jazyků",
+                  "text": "Pod nimi volíte jazyk. Jazyky jsou jazyky všech aplikací dohromady. Jazyk, ve kterém chybí některé sekce, má varovnou značku."
+                },
+                {
+                  "title": "Počet chybějících překladů",
+                  "text": "Značka u nadpisu ukazuje, kolik překladů chybí napříč všemi jazyky."
+                },
+                {
+                  "title": "Seznam sekcí",
+                  "text": "Sekce aktuálního dokumentu v aktuálním jazyce v pořadí, v jakém je uvidí návštěvník. Každá má nadpis a obsah."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Jak fungují sekce a jazyky",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Každá sekce má pozici (pořadové číslo). Sekce se stejnou pozicí v různých jazycích jsou překlady téže sekce. Když v některém jazyce sekce na určité pozici chybí, systém to hlásí:"
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "pruh nad sekcemi: „V jazyce … chybí N sekcí, které existují v jiných jazycích“, s tlačítky Doplnit pozici N,",
+                "u sekce v jiném jazyce značka „chybí v N jaz.“ - po najetí myší uvidíte, ve kterých jazycích."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Když v jazyce návštěvníka dokument nemá žádnou sekci, zobrazí se česká verze; když nemá ani českou, zobrazí se jazyk, který existuje. Nová instalace má připravené anglické vzory s údaji v hranatých závorkách (například [Company name], [Contact e-mail]) - ty je nutné nahradit skutečnými údaji."
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "04. Úprava sekce",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Vyberte dokument a jazyk",
+                  "text": "Klikněte na záložku dokumentu a jazyka.",
+                  "active": true
+                },
+                {
+                  "label": "Upravit",
+                  "text": "U sekce stiskněte Upravit. Sekce se přepne do režimu editace.",
+                  "active": false
+                },
+                {
+                  "label": "Nadpis sekce",
+                  "text": "Nepovinný nadpis, například „1. Úvodní ustanovení“.",
+                  "active": false
+                },
+                {
+                  "label": "Obsah sekce",
+                  "text": "Povinný text sekce. Prázdný obsah nejde uložit.",
+                  "active": false
+                },
+                {
+                  "label": "Uložit",
+                  "text": "Tlačítkem Uložit změnu potvrdíte, tlačítkem Zrušit ji zahodíte. Na veřejném webu se změna projeví hned.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "note",
+              "highlight": "Formátování textu",
+              "content": "Obsah sekce je jeden odstavec. Pro další odstavec vytvořte novou sekci (bez nadpisu, pokud nadpis nepotřebujete). Odřádkování uvnitř obsahu se na webu nezobrazí."
+            }
+          ]
+        },
+        {
+          "key": "create",
+          "heading": "05. Přidání sekce",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Pod seznamem sekcí stiskněte Přidat sekci - nová sekce se přidá na konec dokumentu v aktuálním jazyce.",
+                "Chcete-li doplnit chybějící překlad, použijte tlačítko Doplnit pozici N v pruhu chybějících sekcí - sekce vznikne přímo na této pozici.",
+                "Vyplňte nadpis a obsah (při přidání jsou povinné oba) a stiskněte Uložit."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Po přidání sekce v jednom jazyce systém hned ukáže, že v ostatních jazycích chybí. Doplňte ji ve všech jazycích, aby dokument zněl všude stejně."
+            }
+          ]
+        },
+        {
+          "key": "delete",
+          "heading": "06. Smazání sekce",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Ikonou koše u sekce a potvrzením v dialogu sekci smažete. Smazání je nevratné a týká se jen sekce v aktuálním jazyce - překlady v ostatních jazycích zůstanou a systém je pak označí jako sekce, které jinde chybí."
+            }
+          ]
+        },
+        {
+          "heading": "07. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "Zobrazit právní dokumenty (core-legal-documents-view)."
+                },
+                {
+                  "title": "Přidání sekce",
+                  "text": "Vytvořit novou sekci právního dokumentu (core-legal-documents-create)."
+                },
+                {
+                  "title": "Úprava sekce",
+                  "text": "Upravit sekci právního dokumentu (core-legal-documents-update)."
+                },
+                {
+                  "title": "Smazání sekce",
+                  "text": "Smazat sekci právního dokumentu (core-legal-documents-delete)."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Tlačítka, ke kterým nemáte oprávnění, se nezobrazí. Každá změna se zapisuje do logu systému."
             }
           ]
         }
       ]
     },
     "personal-info": {
-      "navLabel": "Osobní údaje",
-      "header": "Osobní údaje a zabezpečení účtu",
+      "navLabel": "Osobní informace",
+      "header": "Osobní informace - váš účet",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - správa vlastního profilu, hesla a dvoufaktorového ověření."
+              "content": "Stránka vašeho vlastního účtu. Vidíte zde své údaje, nastavíte profilovou fotku, zapnete nebo vypnete dvoufázové ověření a změníte heslo. Stránku má k dispozici každý přihlášený uživatel."
+            },
+            {
+              "type": "text",
+              "content": "Otevřete ji kliknutím na svůj e-mail v hlavičce administrace nebo položkou Osobní informace v menu Core."
+            }
+          ]
+        },
+        {
+          "heading": "01. Profilová fotka",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Klikněte na Změnit fotku a vyberte obrázek JPG, PNG nebo WebP o velikosti nejvýš 2 MB.",
+                "Fotka se ihned nahraje (zobrazí se „Nahrávám fotku…“) a objeví se v hlavičce administrace a u vašeho účtu v seznamu účtů.",
+                "Tlačítkem Odstranit fotku ji smažete a zobrazí se výchozí obrázek."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Při chybě se zobrazí důvod: jiný formát než JPG, PNG a WebP, nebo fotka větší než 2 MB."
+            }
+          ]
+        },
+        {
+          "heading": "02. Základní údaje",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Celé jméno",
+                  "text": "Jméno, které se zobrazuje v administraci a v oslovení e-mailů."
+                },
+                {
+                  "title": "Přihlašovací e-mail",
+                  "text": "Adresa, kterou se přihlašujete a na kterou chodí ověřovací kódy a upozornění."
+                },
+                {
+                  "title": "Role",
+                  "text": "Vaše role - určuje, co v administraci smíte. Roli mění administrátor účtů."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Běžný uživatel jméno ani e-mail nemění - u nadpisu stránky je poznámka, že pro změnu má kontaktovat administrátora. Správce systému a uživatel s oprávněním upravovat účty (core-administrators-update) vidí u údajů tlačítka Změnit jméno a Změnit přihlašovací e-mail."
+            }
+          ]
+        },
+        {
+          "key": "edit-profile",
+          "heading": "03. Změna jména a e-mailu (jen s oprávněním)",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Změnit",
+                  "text": "Klikněte na Změnit jméno nebo Změnit přihlašovací e-mail. Údaj se změní na editační pole.",
+                  "active": true
+                },
+                {
+                  "label": "Nová hodnota",
+                  "text": "Jméno může mít nejvýš 255 znaků, e-mail musí mít platný tvar.",
+                  "active": false
+                },
+                {
+                  "label": "Uložit",
+                  "text": "Tlačítkem Uložit potvrdíte, Zrušit vrátí původní hodnotu.",
+                  "active": false
+                },
+                {
+                  "label": "Heslo (jen u e-mailu)",
+                  "text": "Před změnou e-mailu systém požádá o vaše aktuální heslo.",
+                  "active": false
+                },
+                {
+                  "label": "Po změně e-mailu",
+                  "text": "Ostatní přihlášení vašeho účtu se ukončí a na starou i novou adresu přijde upozornění. Nový e-mail se ihned zobrazí v hlavičce; příště se přihlašujete novým e-mailem.",
+                  "active": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "04. Dvoufázové ověření",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "V části Zabezpečení je zaškrtávací políčko Dvoufaktorové ověření (2FA). Změna se uloží hned po kliknutí a platí od dalšího přihlášení. Text pod políčkem vždy říká, v jakém stavu ověření je:"
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Vypnuté",
+                  "text": "„Dvoufaktorové ověření je vypnuté.“ Doporučujeme ho zapnout."
+                },
+                {
+                  "title": "Zapnuté",
+                  "text": "„Dvoufaktorové ověření je aktivní.“ Můžete ho kdykoli vypnout."
+                },
+                {
+                  "title": "Povinné pro roli",
+                  "text": "Vaše role ověření vyžaduje - políčko je uzamčené."
+                },
+                {
+                  "title": "Vynucené správcem",
+                  "text": "Správce systému ověření vynutil pro váš účet - políčko je uzamčené; obraťte se na administrátora."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Jak ověření funguje při přihlášení, popisuje kapitola Přístup a bezpečnost."
+            }
+          ]
+        },
+        {
+          "heading": "05. Změna hesla",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Změnit heslo",
+                  "text": "V části Zabezpečení stiskněte Změnit heslo. Otevře se okno Změna hesla.",
+                  "active": true
+                },
+                {
+                  "label": "Staré heslo",
+                  "text": "Zadejte své současné heslo.",
+                  "active": false
+                },
+                {
+                  "label": "Nové heslo a potvrzení",
+                  "text": "Zadejte nové heslo (8 až 64 znaků, písmeno, číslice a speciální znak) a zopakujte ho. Pod polem vidíte, které požadavky už heslo splňuje; neshodné potvrzení systém hned označí.",
+                  "active": false
+                },
+                {
+                  "label": "Aktualizovat heslo",
+                  "text": "Po uložení se zobrazí potvrzení. Všechna ostatní přihlášení vašeho účtu (jiné prohlížeče, zařízení i karty) se ukončí, aktuální karta zůstane přihlášená.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Hláška „Chyba při změně hesla. Zkontrolujte prosím původní heslo.“ znamená, že staré heslo nesouhlasí, nebo nové heslo nesplňuje pravidla. Heslo se nezměnilo."
+            },
+            {
+              "type": "text",
+              "content": "Zapomenuté heslo si obnovíte na přihlašovací stránce odkazem Zapomněli jste heslo? (kapitola Přístup a bezpečnost)."
             }
           ]
         }
@@ -114,13 +1669,227 @@
     },
     "settings": {
       "navLabel": "Nastavení",
-      "header": "Nastavení systému",
+      "header": "Nastavení - firemní údaje, názvy stránek, retence dat",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - firemní údaje, logo a sociální sítě zobrazované na webu."
+              "content": "Stránka Nastavení má tři záložky: Firemní údaje (logo, údaje o firmě a sociální sítě, které se ukazují návštěvníkům a v e-mailech), Názvy stránek (název administrace v záložce prohlížeče) a Retence dat (jak dlouho se uchovávají osobní údaje)."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Stránku vidí účty s oprávněním Zobrazit firemní údaje (core-legal-config-view). Ukládat smí jen účty s oprávněním upravovat firemní údaje (core-legal-config-update); přidávat a mazat sociální sítě mají vlastní oprávnění."
+            }
+          ]
+        },
+        {
+          "heading": "01. Záložka Firemní údaje - logo",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Vybrat logo",
+                  "text": "V kartě Logo stiskněte Vybrat logo (nebo Změnit logo). Vyberte obrázek JPG, PNG nebo SVG do 2 MB.",
+                  "active": true
+                },
+                {
+                  "label": "Náhled",
+                  "text": "Logo se zobrazí v náhledu se značkou Nové logo připraveno k uložení. Tlačítkem Zrušit výběr ho zahodíte.",
+                  "active": false
+                },
+                {
+                  "label": "Uložení",
+                  "text": "Logo se uloží až tlačítkem Uložit firemní údaje dole (na tlačítku přibude „+ logo“).",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Logo se zobrazuje v hlavičce veřejného webu a e-shopu a jako ikonka v náhledu záložky na záložkách Názvy stránek."
+            }
+          ]
+        },
+        {
+          "heading": "02. Záložka Firemní údaje - údaje o firmě",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Název firmy *",
+                  "text": "Povinný. Zobrazuje se na webu, v e-shopu a v e-mailech."
+                },
+                {
+                  "title": "Kontaktní e-mail *",
+                  "text": "Povinný. Kontakt pro návštěvníky - web, e-shop, stránky údržby, e-maily."
+                },
+                {
+                  "title": "Brand Tagline",
+                  "text": "Slogan firmy - zadává se zvlášť pro každý jazyk."
+                },
+                {
+                  "title": "Copyright Text",
+                  "text": "Text o autorských právech - zvlášť pro každý jazyk."
+                },
+                {
+                  "title": "IČO a DIČ",
+                  "text": "Identifikační a daňové číslo firmy."
+                },
+                {
+                  "title": "Telefon a Adresa",
+                  "text": "Kontaktní telefon a adresa sídla nebo provozovny."
+                },
+                {
+                  "title": "Text patičky webu",
+                  "text": "Text v patičce veřejného webu, například „© 2026 Firma s.r.o. Všechna práva vyhrazena.“"
+                },
+                {
+                  "title": "Google Analytics 4 - Measurement ID",
+                  "text": "Identifikátor měření Google Analytics (začíná G-). Měření se na webu spustí jen u návštěvníka, který souhlasí s analytickými cookies. Prázdné pole = žádné měření."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "U jazykových polí (slogan, copyright) přepínáte jazyk přepínačem Jazyk pro slogan a copyright nad formulářem. Vyplňte je ve všech jazycích."
+            },
+            {
+              "type": "note",
+              "highlight": "Zobrazovat na webu",
+              "content": "Kromě povinných polí má každý údaj u názvu zaškrtávací políčko Zobrazovat na webu. Vypnutý údaj se na webu ani v e-mailech nezobrazí, jeho hodnota ale zůstane uložená. Zapnutý údaj musí být vyplněný - jinak uložení skončí hláškou Chybějící údaje se seznamem polí."
+            },
+            {
+              "type": "text",
+              "content": "Vše uložíte tlačítkem Uložit firemní údaje. Úspěšné uložení potvrdí hláška Uloženo a značka u karty."
+            }
+          ]
+        },
+        {
+          "heading": "03. Záložka Firemní údaje - sociální sítě",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Přidat sociální síť",
+                  "text": "Tlačítkem Přidat sociální síť vytvoříte nový řádek.",
+                  "active": true
+                },
+                {
+                  "label": "Název a adresa",
+                  "text": "Vyplňte název (Facebook, Instagram, LinkedIn …) a celou adresu profilu začínající https://.",
+                  "active": false
+                },
+                {
+                  "label": "Ikonka",
+                  "text": "Tlačítkem Nahrát ikonku vyberte obrázek ikony (do 2 MB) - zobrazí se na webu u odkazu.",
+                  "active": false
+                },
+                {
+                  "label": "Uložit",
+                  "text": "Ikonou uložení u řádku odkaz uložíte. Každý řádek se ukládá samostatně.",
+                  "active": false
+                },
+                {
+                  "label": "Smazat",
+                  "text": "Ikonou koše a potvrzením odkaz smažete i s ikonkou.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Sociální sítě se zobrazují na veřejném webu, v e-shopu, v klientském portálu a na stránkách údržby. Přidávání vyžaduje oprávnění core-legal-config-create, úprava core-legal-config-update a mazání core-legal-config-delete."
+            }
+          ]
+        },
+        {
+          "heading": "04. Záložka Názvy stránek",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Nastavujete zde text, který se zobrazí v záložce prohlížeče pro celou administraci a přihlašovací stránky (řádek Celá administrace a přihlášení), zvlášť pro každý jazyk administrace."
+            },
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Přepínačem Jazyk názvů zvolte jazyk.",
+                "Upravte název v poli. Náhled záložky nad polem ukazuje, jak bude záložka vypadat.",
+                "Tlačítkem Uložit názvy stránek uložíte změny; Zahodit změny je vrátí. Počet neuložených změn vidíte nad tlačítky."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Prázdné pole = použije se název v češtině. Doporučená délka je do 60 znaků. Názvy stránek webu a e-shopu se nastavují v jejich aplikacích (Upravit web, Upravit e-shop)."
+            }
+          ]
+        },
+        {
+          "heading": "05. Záložka Retence dat (GDPR)",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "GDPR vyžaduje, aby se osobní údaje neuchovávaly déle, než je potřeba. Na této záložce pro každý druh údajů nastavíte, za jak dlouho se mají automaticky smazat. Úklid běží každou noc a trvale maže záznamy, které se déle než nastavenou dobu nezměnily - včetně jejich příloh, souborů a položek v koši. Rozpracované (nedávno změněné) záznamy se tedy nemažou."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Záznamy souhlasu s cookies",
+                  "text": "Anonymní doklad souhlasu návštěvníka (bez IP adresy). Obvykle 3 roky."
+                },
+                {
+                  "title": "Auditní logy (core, web, e-shop)",
+                  "text": "Historie změn s e-mailem a IP adresou toho, kdo je provedl, a historie importů. Obvykle 1-2 roky."
+                },
+                {
+                  "title": "Poptávky z webu",
+                  "text": "Předsmluvní komunikace. Obvykle 1-2 roky."
+                },
+                {
+                  "title": "Žádosti o práci (CV)",
+                  "text": "Bez souhlasu uchazeče s delší evidencí obvykle 6 měsíců."
+                },
+                {
+                  "title": "Leady",
+                  "text": "Obchodní příležitosti a jejich kontakty. Obvykle 1-2 roky."
+                },
+                {
+                  "title": "Objednávky (projektový portál)",
+                  "text": "Smluvní vztah - účetní a daňové předpisy mohou vyžadovat až 10 let."
+                },
+                {
+                  "title": "Projekty (klientský portál)",
+                  "text": "Včetně vláken, zpráv a příloh; počítá se i poslední zpráva v portálu."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Řádky aplikací se zobrazí jen u nainstalovaných aplikací. U každého řádku zvolíte dobu (30 dní až 10 let) nebo Nemazat automaticky. Pod kartou vidíte, kdy proběhl poslední úklid a kolik záznamů smazal."
+            },
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Nastavte lhůty a stiskněte Uložit lhůty.",
+                "Úklid proběhne v noci sám. Chcete-li ho spustit hned, stiskněte Spustit úklid nyní a potvrďte - smažou se záznamy starší než ULOŽENÉ lhůty."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "danger",
+              "content": "Úklid maže trvale a nejde vrátit. Před zkrácením lhůty si ověřte, že starší data opravdu nepotřebujete (například kvůli reklamacím, účetnictví nebo sporům)."
+            },
+            {
+              "type": "note",
+              "highlight": "Co se nemaže",
+              "content": "Objednávky a zákazníci e-shopu se automaticky nemažou - podléhají účetním lhůtám. Prošlá přihlášení do klientského portálu se mažou vždy. Bezpečnostní monitoring má vlastní retenci na své stránce."
             }
           ]
         }
@@ -128,13 +1897,103 @@
     },
     "external-links": {
       "navLabel": "Externí odkazy",
-      "header": "Externí odkazy (rychlé odkazy adminu)",
+      "header": "Externí odkazy - vaše záložky nástrojů",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - osobní seznam rychlých odkazů na externí nástroje, viditelný jen tobě."
+              "content": "Externí odkazy jsou vaše osobní záložky na nástroje mimo administraci - například Google Analytics, Search Console, webmail, účetnictví nebo správu domény. Máte je po ruce na jednom místě v administraci."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Odkazy jsou soukromé: každý uživatel vidí a spravuje jen své vlastní odkazy. Kolegové je nevidí a vy nevidíte jejich."
+            }
+          ]
+        },
+        {
+          "heading": "01. Tabulka odkazů",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Tabulka má sloupce ID, Název a URL. Ovládá se jako ostatní tabulky administrace (nabídka Akce, filtry, stránkování, export, grafy a koš - viz úvodní kapitola). Adresu odkazu zkopírujte z tabulky nebo z detailu (ikona lupy) a otevřete ji v nové kartě prohlížeče."
+            }
+          ]
+        },
+        {
+          "key": "create",
+          "heading": "02. Přidání odkazu",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Přidat záznam",
+                  "text": "V nabídce Akce zvolte Přidat záznam.",
+                  "active": true
+                },
+                {
+                  "label": "Název odkazu",
+                  "text": "Krátký název, například „Google Analytics“. Povinný, nejvýš 150 znaků.",
+                  "active": false
+                },
+                {
+                  "label": "URL adresa",
+                  "text": "Celá adresa začínající http:// nebo https://.",
+                  "active": false
+                },
+                {
+                  "label": "Potvrdit",
+                  "text": "Odkaz se uloží a objeví v tabulce.",
+                  "active": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "manage",
+          "heading": "03. Úprava a smazání",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Ikona úpravy v řádku otevře formulář s údaji odkazu; změny uložíte tlačítkem Potvrdit.",
+                "Ikona koše přesune odkaz do koše. V koši ho obnovíte nebo trvale smažete."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "04. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "core-external-links-view"
+                },
+                {
+                  "title": "Přidání",
+                  "text": "core-external-links-create"
+                },
+                {
+                  "title": "Úprava",
+                  "text": "core-external-links-update"
+                },
+                {
+                  "title": "Smazání a obnova z koše",
+                  "text": "core-external-links-delete; koš navíc vyžaduje oprávnění zobrazit smazané záznamy (view-deleted)."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Do odkazů neukládejte přihlašovací jména, hesla ani adresy s tajnými tokeny. Ukládejte jen běžnou adresu stránky nástroje."
             }
           ]
         }
@@ -142,13 +2001,216 @@
     },
     "edit-roles": {
       "navLabel": "Role a oprávnění",
-      "header": "Správa rolí a oprávnění",
+      "header": "Role a oprávnění",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - správa rolí a jejich oprávnění. Přístupné výhradně sysadminovi."
+              "content": "Role je pojmenovaná sada oprávnění, například „Obchodník“ nebo „Správce obsahu“. Každý účet má jednu roli a podle ní smí v administraci otevírat stránky a provádět akce. Na této stránce role vytváříte, upravujete a mažete a určujete, která oprávnění obsahují."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Stránka je dostupná jen správci systému (role sysadmin). Změna role se okamžitě týká všech účtů, které ji mají - dělejte ji uvážlivě."
+            }
+          ]
+        },
+        {
+          "heading": "01. Orientace na stránce",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Seznam rolí (vlevo)",
+                  "text": "Všechny role s vyhledávacím polem Hledat roli…. U každé role vidíte počet účtů, které ji mají, ikonu 2FA (role vyžaduje dvoufázové ověření) a značku Systémová role."
+                },
+                {
+                  "title": "Detail role (vpravo)",
+                  "text": "Název, popis, nastavení 2FA a seznam oprávnění vybrané role. Dokud roli nevyberete, je zde výzva Vyberte roli ze seznamu vlevo, nebo vytvořte novou."
+                },
+                {
+                  "title": "Tlačítka Nová role a Export",
+                  "text": "Vpravo v záhlaví detailu."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Oprávnění - jak je číst",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Oprávnění jsou seskupená podle modulu (Systém (Core), Web, E-shop, Projektový portál …) a uvnitř modulu podle stránky. U každého je srozumitelný popis a technický klíč. Klíč se skládá z modulu, stránky a akce, například:"
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "…-view",
+                  "text": "Zobrazit stránku a její data."
+                },
+                {
+                  "title": "…-create",
+                  "text": "Přidávat záznamy."
+                },
+                {
+                  "title": "…-update",
+                  "text": "Upravovat záznamy."
+                },
+                {
+                  "title": "…-delete",
+                  "text": "Mazat a obnovovat záznamy z koše."
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "view-core a záložky aplikací (například view-web, view-eshop) - bez nich se do modulu vůbec nedostanete.",
+                "core-view-welcome-page - uvítací stránka po přihlášení; doporučeno mít vždy zapnuté.",
+                "view-deleted - přístup do koše napříč moduly.",
+                "Oprávnění k vypnutí a zapnutí aplikace (režim údržby) a k nastavením aplikací mají vlastní klíče u svých aplikací."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Pole Hledat oprávnění podle názvu nebo klíče… zúží seznam na odpovídající oprávnění."
+            }
+          ]
+        },
+        {
+          "heading": "03. Vytvoření nové role",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Nová role",
+                  "text": "Stiskněte Nová role. Otevře se formulář.",
+                  "active": true
+                },
+                {
+                  "label": "Název role",
+                  "text": "Povinný, například „Účetní“.",
+                  "active": false
+                },
+                {
+                  "label": "Popis",
+                  "text": "Nepovinný krátký popis účelu role.",
+                  "active": false
+                },
+                {
+                  "label": "Vyžadovat 2FA pro tuto roli",
+                  "text": "Zaškrtněte, pokud mají všichni s touto rolí povinně používat dvoufázové ověření.",
+                  "active": false
+                },
+                {
+                  "label": "Vytvořit roli",
+                  "text": "Role se objeví v seznamu - zatím bez oprávnění.",
+                  "active": false
+                },
+                {
+                  "label": "Oprávnění",
+                  "text": "Zaškrtněte oprávnění (kapitola 04) a uložte.",
+                  "active": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "04. Nastavení oprávnění role",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Vyberte roli v seznamu vlevo.",
+                "Zaškrtněte nebo odškrtněte oprávnění v detailu. Nahoře se objeví upozornění Máte neuložené změny oprávnění.",
+                "Tlačítkem Uložit oprávnění změny uložíte; tlačítkem Zahodit se vrátíte k uloženému stavu."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Když přepnete na jinou roli s neuloženými změnami, systém se zeptá, zda o ně chcete přijít."
+            },
+            {
+              "type": "text",
+              "content": "Uložené změny se projeví všem uživatelům s touto rolí - nejpozději do 20 minut, ihned po obnovení stránky v jejich prohlížeči. Oprávnění, která má uživatel navíc nad rámec role, se nastavují u účtu na stránce Účty."
+            }
+          ]
+        },
+        {
+          "heading": "05. Úprava názvu, popisu a 2FA",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "U vybrané role stiskněte Upravit název/popis.",
+                "Změňte název, popis nebo volbu Vyžadovat 2FA pro tuto roli.",
+                "Stiskněte Uložit."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Zapnutí 2FA u role znamená, že všichni s touto rolí budou při přihlášení zadávat kód z e-mailu a nebudou ho moci vypnout."
+            }
+          ]
+        },
+        {
+          "heading": "06. Smazání role",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Tlačítkem Smazat roli a potvrzením Ano, smazat roli trvale odstraníte i s přiřazenými oprávněními. Akce je nevratná."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Roli, kterou má přiřazený aspoň jeden účet, smazat nejde - nejdřív účtům přidělte jinou roli.",
+                "Systémovou roli smazat nejde."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "07. Systémová role sysadmin",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Role sysadmin je systémová: má automaticky všechna oprávnění, vždy vyžaduje dvoufázové ověření a její název, popis ani oprávnění nejdou změnit ani smazat. V detailu je označená upozorněním a zaškrtávací políčka jsou uzamčená. Účty s rolí sysadmin smí spravovat jen jiný sysadmin."
+            }
+          ]
+        },
+        {
+          "heading": "08. Export",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Tlačítko Export otevře okno exportu: zvolíte formát a sloupce (název role, popis, systémová role, vynucené 2FA, počet uživatelů a seznam oprávnění). Hodí se jako přehled přístupů pro audit nebo kontrolu."
+            }
+          ]
+        },
+        {
+          "heading": "09. Zásady",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Dávejte rolím jen oprávnění, která lidé opravdu potřebují (princip nejnižších oprávnění).",
+                "Raději víc úzkých rolí než jedna široká pro všechny.",
+                "Mazání a koš (…-delete, view-deleted) a správu účtů svěřte jen důvěryhodným lidem.",
+                "U rolí s přístupem k osobním údajům nebo ke správě účtů zapněte povinné 2FA.",
+                "Pravidelně kontrolujte export rolí a odebírejte oprávnění, která už nejsou potřeba."
+              ]
             }
           ]
         }
@@ -240,7 +2302,7 @@
                 },
                 {
                   "title": "Aktualizace dat",
-                  "text": "U tabulky vidíte čas poslední aktualizace a tlačítko pro okamžité obnovení. Data se navíc sama obnovují přibližně každých 15 minut, pokud máte kartu prohlížeče otevřenou a aktivní. Tlačítko pro aktualizaci všeho v hlavičce administrace obnoví všechny tabulky najednou."
+                  "text": "U tabulky vidíte čas poslední aktualizace a tlačítko pro okamžité obnovení. Data se navíc sama obnovují přibližně každých 15 minut, pokud máte kartu prohlížeče otevřenou a aktivní."
                 }
               ]
             },
@@ -1152,14 +3214,112 @@
       ]
     },
     "core-logs": {
-      "navLabel": "Systémové logy",
-      "header": "Core - Systémové logy",
+      "navLabel": "Logy systému",
+      "header": "Logy systému - auditní záznamy",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - přehled systémových auditních logů."
+              "content": "Log systému je nezměnitelná historie toho, co se v Core stalo: kdo se kdy přihlásil a odhlásil, kdo vytvořil, upravil nebo smazal účet, roli či právní dokument, kdo co exportoval a které akce systém zamítl. Slouží ke kontrole, k dohledání chyb a jako důkaz pro audit."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Záznamy logu nejde upravit ani smazat ručně. Staré záznamy maže jen noční úklid podle retence nastavené v Nastavení → Retence dat."
+            }
+          ]
+        },
+        {
+          "heading": "01. Sloupce tabulky",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "ID",
+                  "text": "Pořadové číslo záznamu."
+                },
+                {
+                  "title": "Čas",
+                  "text": "Kdy se událost stala."
+                },
+                {
+                  "title": "Uživatel",
+                  "text": "Kdo akci provedl (e-mail). Systémové akce nemají uživatele."
+                },
+                {
+                  "title": "Akce",
+                  "text": "Typ události - například Vytvoření, Úprava, Smazání (do koše), Trvalé smazání, Obnova, Přihlášení, Neúspěšné přihlášení, Odhlášení, Heslo změněno, Export, Chyba."
+                },
+                {
+                  "title": "Modul",
+                  "text": "Které části se událost týká: Autentizace, Uživatelé, Role, Právní dokumenty, Core (obecné)."
+                },
+                {
+                  "title": "Popis události",
+                  "text": "Lidsky čitelný popis toho, co se stalo."
+                },
+                {
+                  "title": "IP adresa / Původ",
+                  "text": "Odkud akce přišla."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Akce s příponou zamítnuto (například Úprava zamítnuta) znamenají, že se o akci někdo pokusil, ale systém ji odmítl - typicky kvůli chybějícímu oprávnění."
+            }
+          ]
+        },
+        {
+          "heading": "02. Hledání v logu",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "V nabídce Akce zvolte Filtry.",
+                "Filtrujte podle ID, uživatele nebo e-mailu, typu akce, modulu nebo IP adresy. Řazení zvolíte v poli Seřadit podle.",
+                "Stiskněte Použít filtry."
+              ]
+            },
+            {
+              "type": "note",
+              "highlight": "Typické dotazy",
+              "content": "Kdo smazal účet? - Akce Smazání, modul Uživatelé. Kdo se přihlašoval v noci? - akce Přihlášení a seřazení podle času. Co dělal konkrétní uživatel? - filtr Uživatel."
+            }
+          ]
+        },
+        {
+          "heading": "03. Detail záznamu",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Ikona Detaily ukáže všechny údaje záznamu: čas, IP adresu, typ události, modul, podrobný popis, tabulku a ID dotčeného záznamu, ID a e-mail uživatele a technická data (JSON) - například které hodnoty se změnily."
+            }
+          ]
+        },
+        {
+          "heading": "04. Export a reporty",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Log můžete exportovat (Akce → Exportovat data) a vyhodnotit v grafech (Akce → Generovat grafy a reporty) - například počet přihlášení v čase nebo rozložení typů akcí. Postup je v úvodní kapitole."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Log obsahuje e-maily a IP adresy - jsou to osobní údaje. Exportované soubory chraňte a po použití smažte."
+            }
+          ]
+        },
+        {
+          "heading": "05. Kdo stránku vidí",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Stránka vyžaduje oprávnění k sekci Core (view-core). Logy jednotlivých aplikací (web, e-shop, projektový portál) mají vlastní stránky v těchto aplikacích."
             }
           ]
         }
@@ -1173,7 +3333,213 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - monitoring podezřelé aktivity, triage eventů a nastavení retenční doby."
+              "content": "Bezpečnostní monitoring zaznamenává podezřelou aktivitu: neúspěšná přihlášení, pokusy o hádání hesel, chybné ověřovací kódy, roboty na formulářích, překročení limitů, automatizované skenování a zablokovaný obsah na stránkách. U každého záznamu systém srozumitelně vysvětlí, co se stalo a co doporučuje udělat."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Většina záznamů je neškodná - internet je plný robotů, kteří zkoušejí běžné adresy. Podstatné je sledovat kritické záznamy a záznamy, jejichž počet rychle roste."
+            }
+          ]
+        },
+        {
+          "heading": "01. Graf objemu podezřelé aktivity",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Nahoře je sloupcový graf za posledních 14 dní. Každý sloupec je jeden den rozdělený podle závažnosti (Kritické, Varování, Informativní). Po najetí myší uvidíte počty, kliknutím na sloupec vyfiltrujete tabulku na záznamy z tohoto dne."
+            }
+          ]
+        },
+        {
+          "heading": "02. Tabulka záznamů",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Naposledy",
+                  "text": "Čas posledního výskytu."
+                },
+                {
+                  "title": "Typ události",
+                  "text": "Co se stalo (seznam v kapitole 03)."
+                },
+                {
+                  "title": "Závažnost",
+                  "text": "Informativní, Varování nebo Kritické."
+                },
+                {
+                  "title": "IP adresa",
+                  "text": "Odkud aktivita přišla."
+                },
+                {
+                  "title": "Počet výskytů",
+                  "text": "Kolikrát se stejná událost ze stejné adresy opakovala - opakování se nesčítají do nových řádků."
+                },
+                {
+                  "title": "Stav",
+                  "text": "Nový, Vyřešeno, Falešný poplach nebo Potvrzený útok."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Tabulku filtrujete podle ID, typu události, závažnosti, stavu a IP adresy. Detail záznamu ukáže i prohlížeč (User-Agent), adresu a metodu požadavku, ID uživatele, první a poslední výskyt, poznámku a technický kontext."
+            }
+          ]
+        },
+        {
+          "heading": "03. Typy událostí",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Neúspěšné přihlášení",
+                  "text": "Špatné heslo k účtu. Jednotlivě běžné (překlep)."
+                },
+                {
+                  "title": "Podezření na brute-force útok",
+                  "text": "Opakovaná neúspěšná přihlášení k jednomu účtu - systém od té chvíle vyžaduje CAPTCHA. Ověřte, zda účet nemá slabé heslo."
+                },
+                {
+                  "title": "Selhání CAPTCHA",
+                  "text": "Přihlášení nebo veřejný formulář bez platného ověření, že nejde o robota."
+                },
+                {
+                  "title": "Výpadek captcha služby",
+                  "text": "Externí služba ověření neodpověděla - obvykle dočasný výpadek, ne útok. U formulářů po tu dobu návštěvníci nemohou odesílat."
+                },
+                {
+                  "title": "Honeypot - zachycený bot",
+                  "text": "Robot vyplnil skryté pole formuláře. Nic se neuložilo ani neodeslalo."
+                },
+                {
+                  "title": "Překročen limit požadavků",
+                  "text": "Příliš mnoho požadavků z jedné adresy za minutu (například pokus o zahlcení formuláře)."
+                },
+                {
+                  "title": "Špatný ověřovací kód (2FA)",
+                  "text": "Po správném hesle byl zadán špatný kód. Opakovaně = někdo možná zná heslo."
+                },
+                {
+                  "title": "Vyčerpané pokusy o 2FA kód / žádosti o kód",
+                  "text": "Překročen počet pokusů nebo nových kódů v jednom přihlášení."
+                },
+                {
+                  "title": "Neplatný přihlašovací token",
+                  "text": "Pokus obnovit přihlášení prošlým nebo neplatným tokenem - obvykle jen vypršené přihlášení."
+                },
+                {
+                  "title": "Znovupoužitý přihlašovací token (možná krádež)",
+                  "text": "Kritické. Stejné přihlášení použila dvě místa. Systém ukončil všechna přihlášení účtu - ověřte s uživatelem a nechte ho změnit heslo."
+                },
+                {
+                  "title": "Automatizované skenování",
+                  "text": "Robot zkoušel adresy typické pro zranitelnosti jiných systémů. Takové adresy v systému nejsou."
+                },
+                {
+                  "title": "Zablokováno bezpečnostní politikou (CSP)",
+                  "text": "Prohlížeč návštěvníka zablokoval nepovolený skript nebo zdroj. Často způsobují rozšíření prohlížeče; opakovaná cizí doména může znamenat pokus o vložení škodlivého kódu."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "triage",
+          "heading": "04. Vyhodnocení záznamu (triage)",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Řešit",
+                  "text": "V řádku záznamu stiskněte Řešit. Otevře se okno s vysvětlením Co se stalo a Doporučený postup.",
+                  "active": true
+                },
+                {
+                  "label": "Stav",
+                  "text": "Zvolte Vyřešeno (prověřeno, nic dalšího netřeba), Falešný poplach (nešlo o útok) nebo Potvrzený útok.",
+                  "active": false
+                },
+                {
+                  "label": "Poznámka",
+                  "text": "Nepovinně zapište, co jste zjistili - například „IP patří obchodnímu partnerovi“.",
+                  "active": false
+                },
+                {
+                  "label": "Uložit",
+                  "text": "Stav se uloží. Falešný poplach systém nejdřív potvrdí dialogem - záznam se pak nepočítá mezi aktivní podezřelou aktivitu.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Nové záznamy se zobrazují i v kalendáři v panelu Čeká na vyřízení. Pravidelně je vyhodnocujte, ať je přehled čistý a skutečné útoky nezapadnou."
+            }
+          ]
+        },
+        {
+          "heading": "05. Co dělat při skutečném útoku",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Útok na konkrétní účet (brute-force, chybné 2FA kódy, znovupoužitý token): kontaktujte uživatele, nechte ho změnit heslo, zapněte nebo vynuťte 2FA, případně účet dočasně zablokujte.",
+                "Trvalý nápor z jedné IP adresy: požádejte technickou správu o zablokování adresy na úrovni firewallu, hostingu nebo CDN. Administrace sama IP adresy neblokuje.",
+                "Opakované CSP záznamy s doménou, kterou web skutečně používá (nová analytika, platební brána): předejte vývojářům k povolení v bezpečnostní politice.",
+                "Záznam označte jako Potvrzený útok a do poznámky zapište, co jste udělali."
+              ]
+            }
+          ]
+        },
+        {
+          "key": "purge",
+          "heading": "06. Mazání záznamů a retence (GDPR)",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Záznamy obsahují IP adresy, proto se automaticky mažou. V kartě Retenční doba (GDPR) nastavíte, po kolika dnech se záznamy mažou (7, 14, 30, 60, 90, 180 nebo 365 dní), a uložíte tlačítkem Uložit retenci. Úklid běží každou noc."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Vyčistit staré záznamy nyní - po potvrzení hned trvale smaže záznamy starší než nastavená doba. Když žádné takové nejsou, nic se nesmaže - to je v pořádku.",
+                "Smazat v řádku - trvale smaže jeden záznam."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "danger",
+              "content": "Smazání bezpečnostních záznamů je nevratné. Nemažte záznamy, které mohou sloužit jako důkaz útoku."
+            }
+          ]
+        },
+        {
+          "heading": "07. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "core-security-view"
+                },
+                {
+                  "title": "Vyhodnocení a nastavení retence",
+                  "text": "core-security-update"
+                },
+                {
+                  "title": "Mazání záznamů a okamžitý úklid",
+                  "text": "core-security-delete"
+                }
+              ]
             }
           ]
         }
@@ -1181,29 +3547,121 @@
     },
     "apps": {
       "navLabel": "Aplikace",
-      "header": "Aplikace",
+      "header": "Aplikace - přehled, stav a údržba",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Přehled aplikací, které můžete spravovat (web, e-shop, projektový portál …): stav každé aplikace, lehká diagnostika a tlačítko Spravovat."
+              "content": "Stránka Aplikace ukazuje všechny aplikace, které můžete spravovat (web, e-shop, projektový portál …), jejich aktuální stav a jednoduchou diagnostiku. S oprávněním odsud aplikaci vypnete do režimu údržby a zase zapnete."
             },
             {
               "type": "text",
-              "content": "Aplikace jsou pod sebou. U každé vidíte stav veřejné části - zelená tečka Online, oranžová Online s problémem, červená Offline (údržba) nebo Nedostupné (data aplikace nejdou přečíst) - a diagnostiku: odezvu čtení dat, počet záznamů v logu aplikace za 24 hodin (vytížení), chyby za 24 hodin, poslední aktivitu a poslední chybu."
+              "content": "Stránku vidí každý přihlášený uživatel; kartu aplikace ale uvidí jen ten, kdo má oprávnění k záložce aplikace a aspoň k jedné její stránce. Pokud nemáte přístup k žádné aplikaci, stránka to oznámí."
+            }
+          ]
+        },
+        {
+          "heading": "01. Stav aplikace",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Online (zelená)",
+                  "text": "Veřejná část běží a vše je v pořádku."
+                },
+                {
+                  "title": "Online · problém (oranžová)",
+                  "text": "Běží, ale za posledních 24 hodin hlásí chyby nebo pomalou odezvu - zkontrolujte logy aplikace."
+                },
+                {
+                  "title": "Offline · údržba (červená)",
+                  "text": "Veřejná část je vypnutá - návštěvníci vidí stránku údržby."
+                },
+                {
+                  "title": "Nedostupné",
+                  "text": "Data aplikace se nepodařilo přečíst - problém na serveru; kontaktujte technickou podporu."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Diagnostika",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Odezva dat",
+                  "text": "Jak rychle server odpověděl (v milisekundách). Jednotky až stovky ms jsou běžné."
+                },
+                {
+                  "title": "Záznamy za 24 h",
+                  "text": "Počet záznamů v logu aplikace za posledních 24 hodin - ukazuje vytížení."
+                },
+                {
+                  "title": "Chyby za 24 h",
+                  "text": "Počet chyb za posledních 24 hodin."
+                },
+                {
+                  "title": "Poslední aktivita / Poslední chyba",
+                  "text": "Kdy se v aplikaci naposledy něco dělo a kdy nastala poslední chyba."
+                }
+              ]
             },
             {
               "type": "text",
-              "content": "S oprávněním k režimu údržby dané aplikace je u ní tlačítko Vypnout / Zapnout aplikaci. Změnu potvrdíte svým heslem; vypnutá aplikace ukáže návštěvníkům stránku údržby (web, e-shop i projektový portál), administrace běží dál. Stejné tlačítko je v hlavičce dashboardu aplikace."
+              "content": "Stav a diagnostika se samy obnovují každých 10 sekund, dokud je stránka otevřená a karta prohlížeče aktivní. Tlačítko Aktualizovat stav je načte hned; čas posledního ověření je u tlačítka."
+            }
+          ]
+        },
+        {
+          "heading": "03. Spravovat",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Tlačítko Spravovat u aplikace otevře první stránku aplikace, kterou smíte otevřít. Mezi aplikacemi přepínáte i tlačítkem Aplikace v hlavičce."
+            }
+          ]
+        },
+        {
+          "heading": "04. Vypnutí a zapnutí aplikace (režim údržby)",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Vypnout aplikaci",
+                  "text": "U aplikace stiskněte Vypnout aplikaci (tlačítko je i v záhlaví dashboardu aplikace).",
+                  "active": true
+                },
+                {
+                  "label": "Ověření administrátora",
+                  "text": "Okno ukáže nový stav OFFLINE – REŽIM ÚDRŽBY a co se stane. Zadejte své aktuální heslo.",
+                  "active": false
+                },
+                {
+                  "label": "Potvrdit a uložit",
+                  "text": "Veřejná část se vypne a návštěvníci uvidí stránku údržby s logem, krátkým oznámením, kontakty a přepínačem jazyka. Administrace běží dál.",
+                  "active": false
+                },
+                {
+                  "label": "Zapnout aplikaci",
+                  "text": "Stejným postupem aplikaci zapnete - stav ONLINE – STANDARDNÍ PROVOZ. Návštěvník na stránce údržby se po jejím otevření nebo obnovení vrátí na web.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Vypnutí aplikace okamžitě odstaví její veřejnou část pro všechny návštěvníky (například e-shop nepřijímá objednávky, klienti se nedostanou do portálu). Používejte ho jen na nezbytně nutnou dobu a nezapomeňte aplikaci zase zapnout."
             },
             {
               "type": "text",
-              "content": "Karta se ukáže jen u aplikace, ke které máte oprávnění záložky a aspoň jednu stránku. Tlačítko Spravovat otevře první stránku aplikace, kterou smíte otevřít. Stav a diagnostika se samy obnovují každých 10 sekund, dokud je stránka otevřená a záložka prohlížeče aktivní; tlačítko Aktualizovat stav je načte hned."
-            },
-            {
-              "type": "note",
-              "content": "Mezi aplikacemi přepínáte i v hlavičce: vedle záložky Core je tlačítko Aplikace, které vždy ukazuje název aplikace, ve které právě jste."
+              "content": "Tlačítko vidí jen účty s oprávněním k režimu údržby dané aplikace. Každá změna stavu se zapisuje do logu aplikace."
             }
           ]
         }
@@ -1211,29 +3669,75 @@
     },
     "releases": {
       "navLabel": "Verze",
-      "header": "Verze",
+      "header": "Verze - co je nového",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Verze aplikace, která běží, a co se změnilo v každém vydání - pro jádro a pro aplikace, které můžete spravovat."
+              "content": "Stránka Verze ukazuje, jaká verze systému právě běží, a co se změnilo v každém vydání - v jádru (Core) i v aplikacích, které můžete spravovat."
             },
             {
               "type": "text",
-              "content": "Vydání jsou seřazená od nejnovějšího; nejnovější je rozbalené, kliknutím vydání rozbalíte nebo sbalíte. Každá změna má typ (Bezpečnost, Nové, Změna, Oprava, Odebráno), část, které se týká (jádro nebo aplikace; veřejná část = co vidí návštěvníci), a krátký popis v angličtině, někdy s číslem tiketu (#57)."
-            },
+              "content": "Stránku vidí každý přihlášený uživatel. Texty změn jsou v angličtině."
+            }
+          ]
+        },
+        {
+          "heading": "01. Běžící verze a seznam vydání",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Nahoře je běžící verze ve tvaru vRRRR.MM.N (rok, měsíc, pořadí vydání v měsíci), například v2026.11.3.",
+                "Vydání jsou seřazená od nejnovějšího. Nejnovější je rozbalené, kliknutím na vydání ho rozbalíte nebo sbalíte. Vydání, které běží, je označené Běží; u každého vidíte počet změn."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Jak číst změnu",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Typ",
+                  "text": "Bezpečnost, Nové, Změna, Oprava nebo Odebráno."
+                },
+                {
+                  "title": "Část",
+                  "text": "Jádro nebo název aplikace; označení veřejná část znamená změnu, kterou vidí návštěvníci."
+                },
+                {
+                  "title": "Popis",
+                  "text": "Krátký popis změny, někdy s číslem tiketu (například #57), pod kterým byla změna nahlášena."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Filtr",
+          "blocks": [
             {
               "type": "text",
-              "content": "Tlačítka nad seznamem zobrazí jen změny jádra nebo jedné aplikace. Vidíte jádro a aplikace, ke kterým máte přístup."
-            },
+              "content": "Tlačítka nad seznamem (Vše, jádro, jednotlivé aplikace) zobrazí jen změny vybrané části. Vidíte jen jádro a aplikace, ke kterým máte přístup."
+            }
+          ]
+        },
+        {
+          "heading": "04. Upozornění po aktualizaci",
+          "blocks": [
             {
               "type": "text",
-              "content": "Běžící verze je také dole v levém menu. Po aktualizaci se nad stránkou krátce zobrazí upozornění - jen v části, ve které pracujete, a jen když ji aktualizace změnila (aktualizace e-shopu vás na webu neruší). Co je nového otevře tuto stránku, křížek upozornění skryje do další aktualizace."
+              "content": "Po aktualizaci se nad stránkami administrace objeví pruh „Aktualizováno na … - N změn(y) zde“ - jen v části, ve které pracujete, a jen když ji aktualizace změnila (aktualizace e-shopu vás na webu neruší). Tlačítko Co je nového otevře tuto stránku s filtrem na danou část, Zavřít pruh skryje do další aktualizace."
             },
             {
               "type": "note",
-              "content": "Poznámky k vydání píší vývojáři spolu s každou změnou; vydání bez nich nejde nasadit."
+              "highlight": "Kde se změny berou",
+              "content": "Poznámky k vydání píší vývojáři spolu s každou změnou. Vydání bez poznámek nejde nasadit, takže seznam je vždy úplný."
             }
           ]
         }

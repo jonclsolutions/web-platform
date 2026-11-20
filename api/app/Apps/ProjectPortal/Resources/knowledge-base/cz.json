@@ -8,19 +8,59 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Přehled projektového portálu: počty obchodních leadů, objednávek, projektů a záznamů v logu, rychlá navigace a poslední aktivita."
+              "content": "Dashboard projektového portálu je přehled obchodu a projektů: počty obchodních leadů, objednávek, projektů a záznamů v logu, rychlé odkazy, poslední aktivita a stav veřejné části portálu."
             },
             {
               "type": "text",
-              "content": "Každá dlaždice a zkratka se ukáže jen tehdy, když máte oprávnění k její stránce. Tlačítko Aktualizovat načte data znovu (i stav portálu)."
+              "content": "Celá aplikace funguje v řetězci: obchodní lead → odkaz na objednávkový formulář → objednávka → projekt → klientský portál, ve kterém klient sleduje postup, komunikuje a schvaluje."
+            }
+          ]
+        },
+        {
+          "heading": "01. Záhlaví a stav portálu",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Záhlaví Přehled projektového portálu ukazuje čas poslední aktualizace a tlačítko Aktualizovat (načte znovu i stav portálu). Vpravo je stav veřejné části: Online (zelená), Online · problém (oranžová - chyby v logu za 24 hodin nebo pomalá odezva), Offline · údržba (červená) nebo Nedostupné."
             },
             {
               "type": "text",
-              "content": "Vpravo nahoře je stav veřejné části portálu: zelená tečka Online, oranžová Online s problémem (chyby v logu za posledních 24 hodin nebo pomalá odezva), červená Offline (údržba). S oprávněním k přepínání údržby je vedle tlačítko Vypnout / Zapnout aplikaci - změnu potvrdíte svým heslem."
+              "content": "S oprávněním Vypnout / zapnout veřejný portál a objednávkový formulář (project-portal-set-maintenance-mode) je vedle tlačítko Vypnout aplikaci / Zapnout aplikaci; změnu potvrdíte svým heslem (postup v kapitole Aplikace)."
             },
             {
-              "type": "note",
-              "content": "Vypnutý portál: klientský portál projektu i objednávkový formulář ukážou stránku údržby a jejich API odpovídá kódem 503. Administrace běží dál."
+              "type": "alert",
+              "variant": "warning",
+              "content": "Vypnutý portál: klientský portál projektů i objednávkový formulář ukazují stránku údržby (/projects/maintenance) a klienti se nepřihlásí ani neodešlou objednávku. Po zapnutí se klient otevřením stránky údržby vrátí tam, kde byl. Administrace běží dál."
+            }
+          ]
+        },
+        {
+          "heading": "02. Čísla, navigace a aktivita",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Obchodní leady, Objednávky, Projekty",
+                  "text": "Počet záznamů na příslušných stránkách."
+                },
+                {
+                  "title": "Záznamy v logu",
+                  "text": "Počet záznamů v logu portálu."
+                },
+                {
+                  "title": "Rychlá navigace",
+                  "text": "Karty Obchodní leady, Objednávky, Projekty a Logy portálu."
+                },
+                {
+                  "title": "Poslední aktivita",
+                  "text": "Posledních osm záznamů logu portálu; Zobrazit vše otevře Logy portálu."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Každá dlaždice, karta i aktivita se zobrazí jen s oprávněním k příslušné stránce. Ovládání hlavní dlaždice a přehledů je stejné jako na dashboardu systému."
             }
           ]
         }
@@ -34,33 +74,184 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Obchodní lead je potenciální klient, se kterým obchodník jedná: kontakt, zdroj, priorita, stav a další krok. Když se klient rozhodne objednat, pošlete mu odkaz na objednávkový formulář – z odeslaného formuláře vznikne objednávka a z ní projekt v portálu."
+              "content": "Obchodní lead je potenciální klient, se kterým obchodník jedná. U leadu evidujete kontakt, zdroj oslovení, stav jednání, prioritu, data kontaktů a další krok. Když se klient rozhodne objednat, pošlete mu odkaz na objednávkový formulář - z odeslaného formuláře vznikne objednávka a z ní projekt."
             },
             {
               "type": "flow",
               "steps": [
                 {
                   "label": "Lead",
-                  "text": "Založte lead ručně nebo ho naimportujte (CSV / XLSX). Sledujte datum posledního kontaktu – kalendář připomene lead bez kontaktu 14 a více dní.",
+                  "text": "Založte lead ručně nebo ho naimportujte.",
                   "active": true
                 },
                 {
+                  "label": "Jednání",
+                  "text": "Zapisujte stav, poslední kontakt a další krok.",
+                  "active": false
+                },
+                {
                   "label": "Odkaz na formulář",
-                  "text": "Akce Odkaz vytvoří odkaz na objednávkový formulář s předvyplněným kontaktem leadu. Platí 30 dní od posledního vygenerování a jde použít jen jednou."
+                  "text": "Tlačítko Link vytvoří odkaz na objednávkový formulář pro klienta.",
+                  "active": false
                 },
                 {
                   "label": "Objednávka",
-                  "text": "Klient formulář vyplní a odešle; objednávka se objeví na stránce Objednávky a lead se označí jako odeslaný."
+                  "text": "Klient formulář vyplní a odešle; vznikne objednávka a lead se přepne do stavu Poptávkový formulář odeslán.",
+                  "active": false
                 },
                 {
                   "label": "Projekt",
-                  "text": "Z objednávky založíte projekt (akce Projekt) a klientovi zpřístupníte portál."
+                  "text": "Z objednávky založíte projekt a klientovi zpřístupníte portál.",
+                  "active": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "01. Tabulka leadů",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Sloupce: ID, Subjekt / Firma, Stav, Priorita, Obchodník, Posl. kontakt, Vytvořeno. Filtry podle ID, firmy, stavu, priority a obchodníka. Detail leadu ukáže kontaktní osobu, e-mail, telefon, jiný kontakt, lokalitu, zdroj oslovení a zdrojovou URL, data prvního a posledního kontaktu, následný krok, poznámku a důvod zamítnutí."
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "02. Založení a úprava leadu",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Název subjektu / Firmy",
+                  "text": "Povinný, aspoň 2 znaky."
+                },
+                {
+                  "title": "Kontaktní osoba, Email, Telefon",
+                  "text": "Na koho se obracet."
+                },
+                {
+                  "title": "Lokalita",
+                  "text": "Město nebo region."
+                },
+                {
+                  "title": "Zdroj oslovení",
+                  "text": "Odkud lead přišel - LinkedIn, Facebook, Instagram, X, WhatsApp, Telegram, webový formulář, e-mail, telefon, osobní setkání, networking, doporučení, bývalý klient, poptávkový portál, Google Moje Firma, placená reklama, partner, jiný online / offline kanál."
+                },
+                {
+                  "title": "Aktuální stav",
+                  "text": "Nové, Probíhá komunikace, Příprava nabídky, Nabídka odeslána, Poptávkový formulář odeslán, Vyjednávání, Pozastaveno, Přebírá si dev team, Uzavřeno - Získáno, Čeká se na fakturaci, Čeká se na zaplacení, Uhrazeno - Projekt spuštěn, Uzavřeno - Ztraceno, Jiné."
+                },
+                {
+                  "title": "Priorita",
+                  "text": "Nízká, Podprůměrná, Neutrální, Vysoká, Kritická."
+                },
+                {
+                  "title": "První kontakt / Naposledy kontaktováno",
+                  "text": "Data jednání. Podle data posledního kontaktu kalendář připomene lead, se kterým nikdo nemluvil 14 a více dní."
+                },
+                {
+                  "title": "Další krok",
+                  "text": "Co je potřeba udělat dál."
+                },
+                {
+                  "title": "Poznámka k případu a Důvod zamítnutí",
+                  "text": "Podrobnosti; důvod vyplňte u ztraceného leadu."
                 }
               ]
             },
             {
-              "type": "note",
-              "content": "Odkaz obsahuje jen náhodný token – nikdy interní číslo leadu. Neplatný, použitý nebo prošlý odkaz formulář nepustí dál a zapíše se do bezpečnostních událostí."
+              "type": "text",
+              "content": "Obchodníkem se u nového leadu automaticky stane ten, kdo ho založil."
+            }
+          ]
+        },
+        {
+          "key": "link",
+          "heading": "03. Odkaz na objednávkový formulář",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Link",
+                  "text": "Tlačítko Link v řádku leadu vytvoří odkaz a zkopíruje ho do schránky (hláška „Odkaz zkopírován“ s datem platnosti).",
+                  "active": true
+                },
+                {
+                  "label": "Pošlete klientovi",
+                  "text": "Vložte odkaz do svého e-mailu nebo zprávy klientovi.",
+                  "active": false
+                },
+                {
+                  "label": "Formulář",
+                  "text": "Klient na odkazu vidí objednávkový formulář s předvyplněnými údaji z leadu. Doplní název nebo jméno, IČO, e-mail, telefon, adresu, popis objednávky, přílohy a potvrdí souhlas s obchodními podmínkami a se zpracováním osobních údajů.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Odkaz platí 30 dní; každé nové stisknutí Link platnost prodlouží o dalších 30 dní od této chvíle.",
+                "Z jednoho leadu jde odeslat jen jedna objednávka - použitý odkaz klientovi řekne, že formulář už odeslal.",
+                "Prošlý nepoužitý odkaz se při dalším stisknutí Link nahradí novým (starý přestane fungovat).",
+                "Konec platnosti odkazu ukazuje kalendář (Vyprší formulář).",
+                "Odkaz obsahuje jen náhodný kód, nikdy interní číslo leadu. Neplatné pokusy se zapisují do bezpečnostního monitoringu."
+              ]
+            }
+          ]
+        },
+        {
+          "key": "import",
+          "heading": "04. Import leadů",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Leady z jiné evidence přidáte v nabídce Akce položkou Importovat data (CSV nebo XLSX). Stáhněte šablonu, vyplňte ji, nechte soubor zkontrolovat a potvrďte. Okno ukazuje povolené hodnoty stavů, priorit a zdrojů. Postup je v úvodní kapitole."
+            }
+          ]
+        },
+        {
+          "heading": "05. Mazání a koš",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Leady mažete po jednom nebo hromadně (zaškrtávací políčka → Smazat vybrané) do koše; v koši je obnovíte nebo trvale smažete. Staré leady maže automaticky retence (Nastavení → Retence dat, řádek Leady)."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Leady obsahují osobní údaje kontaktních osob. Exporty chraňte a nepotřebné leady mažte."
+            }
+          ]
+        },
+        {
+          "heading": "06. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "project-portal-sales-leads-view"
+                },
+                {
+                  "title": "Ruční založení a import",
+                  "text": "project-portal-sales-leads-create"
+                },
+                {
+                  "title": "Úprava a odkaz na formulář",
+                  "text": "project-portal-sales-leads-update"
+                },
+                {
+                  "title": "Smazání a obnova",
+                  "text": "project-portal-sales-leads-delete"
+                }
+              ]
             }
           ]
         }
@@ -74,28 +265,121 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Objednávky odeslané klienty přes objednávkový formulář (odkaz z obchodního leadu) i objednávky založené ručně. U každé je kontakt klienta, popis, přílohy a záznam souhlasů s obchodními podmínkami a se zpracováním osobních údajů."
+              "content": "Objednávky, které klienti odeslali přes objednávkový formulář z odkazu obchodního leadu. U každé je kontakt klienta, popis, přílohy a záznam souhlasů. Z objednávky zakládáte projekt v klientském portálu."
             },
             {
-              "type": "grid",
-              "cards": [
+              "type": "alert",
+              "variant": "info",
+              "content": "Objednávky, ze kterých ještě nevznikl projekt, připomíná kalendář v panelu Čeká na vyřízení."
+            }
+          ]
+        },
+        {
+          "heading": "01. Jak objednávka vznikne",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
                 {
-                  "title": "Projekt",
-                  "text": "Ikona složky v řádku otevře projekt objednávky. Když objednávka projekt ještě nemá, otevře se formulář nového projektu s vybranou objednávkou a předvyplněným názvem a kontaktem."
+                  "label": "Odkaz z leadu",
+                  "text": "Obchodník pošle klientovi odkaz (stránka Obchodní leady, tlačítko Link).",
+                  "active": true
                 },
                 {
-                  "title": "Potvrzovací e-mail",
-                  "text": "Klient dostane po odeslání potvrzení v jazyce formuláře. Texty upravíte tlačítkem E-mail v nástrojové liště (pro každý jazyk zvlášť)."
+                  "label": "Formulář",
+                  "text": "Klient na adrese /projects/order/<kód> vyplní objednávku v jazyce stránky a odešle ji. Starší odkazy /order_form/<kód> fungují dál.",
+                  "active": false
                 },
                 {
-                  "title": "Přílohy",
-                  "text": "Soubory od klienta (až 10 souborů, 20 MB na soubor, 50 MB celkem). Další soubory můžete přidat při úpravě objednávky."
+                  "label": "Uložení",
+                  "text": "Vznikne objednávka s obchodníkem leadu; lead se označí jako odeslaný.",
+                  "active": false
+                },
+                {
+                  "label": "Potvrzení",
+                  "text": "Klient dostane potvrzovací e-mail v jazyce formuláře (kapitola 04).",
+                  "active": false
                 }
               ]
             },
             {
+              "type": "note",
+              "highlight": "Když je portál vypnutý",
+              "content": "V režimu údržby formulář objednávky nepřijímá."
+            }
+          ]
+        },
+        {
+          "heading": "02. Tabulka a detail",
+          "blocks": [
+            {
               "type": "text",
-              "content": "Objednávkový formulář je veřejná stránka portálu na adrese /projects/order/<token>. Starší odkazy /order_form/<token> fungují dál (přesměrují se). Připomínka v kalendáři hlídá objednávky, ze kterých ještě nevznikl projekt."
+              "content": "Sloupce: ID, Klient, Obchodník, IČO, Vytvořeno; filtry podle ID, klienta, obchodníka a IČO. Detail ukáže e-mail, telefon, adresu, popis objednávky, souhlas se zpracováním údajů (GDPR), souhlas s obchodními podmínkami, přílohy (Zobrazit / Stáhnout) a data vytvoření a poslední změny."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Záznam souhlasů je doklad pro případ sporu - neupravujte ho a objednávky s ním uchovávejte po dobu, kterou vyžadují účetní a daňové předpisy."
+            }
+          ]
+        },
+        {
+          "key": "project",
+          "heading": "03. Projekt z objednávky",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Tlačítko Projekt (ikona složky) v řádku otevře projekt objednávky. Když ho objednávka ještě nemá, otevře se formulář nového projektu s vybranou objednávkou a předvyplněným názvem a kontaktem klienta. Postup založení projektu a zpřístupnění portálu klientovi je v kapitole Projekty."
+            }
+          ]
+        },
+        {
+          "key": "email",
+          "heading": "04. Potvrzovací e-mail objednávky",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "V nabídce Akce zvolte Editovat potvrzovací e-mail. Upravíte text, který klient dostane po odeslání formuláře: předmět, nadpis, pozdrav (doplní se jméno klienta), úvodní zprávu, nadpis a popisky rekapitulace (jméno / firma, IČO, e-mail, telefon, adresa, popis, přílohy, datum) a závěrečnou zprávu - pro každý jazyk zvlášť. Prázdné pole použije český text, případně výchozí znění. Živý náhled ukazuje e-mail s ukázkovými daty."
+            }
+          ]
+        },
+        {
+          "heading": "05. Úprava, mazání a koš",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Edit otevře formulář: Název klienta / Jméno (povinné), IČO, E-mail klienta, Telefon, Adresa klienta, Popis objednávky (povinný) a Přílohy / Smlouva - můžete přidat další soubory (až 10 souborů, 20 MB na soubor, 50 MB celkem).",
+                "Smazat přesune objednávku do koše (i hromadně); v koši ji obnovíte nebo trvale smažete.",
+                "Retence objednávek se nastavuje v Nastavení → Retence dat (řádek Objednávky) - účetní předpisy mohou vyžadovat uchování až 10 let."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "06. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "project-portal-sales-orders-view"
+                },
+                {
+                  "title": "Úprava a potvrzovací e-mail",
+                  "text": "project-portal-sales-orders-update"
+                },
+                {
+                  "title": "Smazání a obnova",
+                  "text": "project-portal-sales-orders-delete"
+                },
+                {
+                  "title": "Založení projektu z objednávky",
+                  "text": "project-portal-projects-create"
+                }
+              ]
             }
           ]
         }
@@ -109,11 +393,64 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Názvy záložek prohlížeče veřejných stránek portálu – klientského portálu projektu, přihlášení do portálu, objednávkového formuláře a stránky údržby – pro každý jazyk."
+              "content": "Nastavení názvů, které se zobrazují v záložce prohlížeče na veřejných stránkách portálu."
+            }
+          ]
+        },
+        {
+          "heading": "01. Názvy stránek",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Klientský portál projektu",
+                  "text": "Stránka, na které klient sleduje svůj projekt."
+                },
+                {
+                  "title": "Objednávkový formulář",
+                  "text": "Formulář z odkazu obchodního leadu."
+                },
+                {
+                  "title": "Přihlášení do portálu projektu",
+                  "text": "Přihlašovací stránka klienta."
+                },
+                {
+                  "title": "Údržba portálu",
+                  "text": "Stránka údržby (/projects/maintenance)."
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Přepínačem jazyka zvolte jazyk.",
+                "Upravte název - náhled záložky ukazuje výsledek; Google zobrazí zhruba prvních 60 znaků.",
+                "Uložte tlačítkem Uložit názvy stránek; Zahodit změny je vrátí."
+              ]
             },
             {
               "type": "text",
-              "content": "Prázdný název použije výchozí název aplikace. Změny se projeví klientům po načtení stránky."
+              "content": "Prázdný název použije český název stránky. Změny se klientům projeví po načtení stránky."
+            }
+          ]
+        },
+        {
+          "heading": "02. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "project-portal-settings-view"
+                },
+                {
+                  "title": "Úprava",
+                  "text": "project-portal-settings-update"
+                }
+              ]
             }
           ]
         }
@@ -498,11 +835,66 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Auditní log projektového portálu: změny projektů, milníků, šablon, účtů klientů, schvalování a aktualit v administraci a činnost klientů v portálu (přihlášení, vlákna, rozhodnutí)."
+              "content": "Log projektového portálu je historie všech akcí v aplikaci: v administraci (leady, objednávky, projekty, milníky, šablony, účty klientů, schvalování, aktuality, vlákna, nastavení, údržba) i činnost klientů v portálu (přihlášení, nová vlákna, rozhodnutí o schválení, stažení příloh)."
             },
             {
+              "type": "alert",
+              "variant": "info",
+              "content": "Záznamy nejde upravit ani smazat. Texty zpráv klientů log neobsahuje."
+            }
+          ]
+        },
+        {
+          "heading": "01. Co v logu najdete",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Administrace",
+                  "text": "Vytvoření, úpravy, mazání a obnovy; stav a pořadí milníků; nová, upravená, použitá a smazaná šablona; nový, upravený a smazaný účet klienta, nové heslo a pozvánka; žádosti o schválení (nová, úprava, znovuotevření, zrušení, smazání); aktuality; přiřazení, uzavření a znovuotevření vlákna; vygenerování odkazu leadu; importy, exporty a reporty."
+                },
+                {
+                  "title": "Klientský portál",
+                  "text": "Přihlášení a odhlášení klienta, odeslaný přihlašovací kód, nastavení účtu klientem, nové vlákno a změna jeho stavu, rozhodnutí o schválení, stažení přílohy."
+                },
+                {
+                  "title": "Provoz",
+                  "text": "Změna režimu údržby, neautorizovaný pokus o změnu údržby, chyby."
+                },
+                {
+                  "title": "Moduly",
+                  "text": "Projekty, Milníky, Šablony projektů, Účty klientů, Schvalování, Aktuality, Komunikace, Klientský portál, Obchodní leady, Objednávky, Nastavení portálu."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Práce s logem",
+          "blocks": [
+            {
               "type": "text",
-              "content": "Záznamy jde filtrovat podle uživatele, události, modulu a IP adresy, exportovat a vykreslit do grafů. Texty zpráv klientů log neobsahuje."
+              "content": "Záznamy filtrujete podle uživatele, události, modulu a IP adresy, otevřete detail s technickými daty, exportujete a vykreslíte do grafů - stejně jako v Logy systému."
+            },
+            {
+              "type": "note",
+              "highlight": "Typické dotazy",
+              "content": "Kdy se klient naposledy přihlásil? - událost Přihlášení klienta. Kdo schválil změnu? - Rozhodnutí klienta o schválení. Kdo poslal klientovi pozvánku? - Pozvánka klientovi."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Log obsahuje e-maily a IP adresy - exporty chraňte a po použití smažte."
+            }
+          ]
+        },
+        {
+          "heading": "03. Kdo stránku vidí",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Oprávnění Zobrazit historii logů projektového portálu (project-portal-view-logs)."
             }
           ]
         }

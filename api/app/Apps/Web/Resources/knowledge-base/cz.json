@@ -2,99 +2,977 @@
   "pages": {
     "web-welcome-page": {
       "navLabel": "Uvítací stránka webu",
-      "header": "Uvítací stránka webu",
+      "header": "Uvítací stránka aplikace Web",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Návod k této stránce se připravuje."
+              "content": "Rozcestník aplikace Web. Otevře se, když v hlavičce přepnete na aplikaci Web, a v kartách ukazuje, co v této části administrace najdete."
+            }
+          ]
+        },
+        {
+          "heading": "01. Karty stránek",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Texty webu",
+                  "text": "Úprava textů a obsahu veřejných stránek webu - překlady, názvy stránek, FAQ, pracovní pozice, reference a znalostní báze."
+                },
+                {
+                  "title": "Poptávky",
+                  "text": "Poptávky, které návštěvníci odeslali přes kontaktní formulář webu."
+                },
+                {
+                  "title": "Uchazeči",
+                  "text": "Žádosti o práci odeslané z formuláře u pracovní pozice."
+                },
+                {
+                  "title": "Logy webu",
+                  "text": "Historie všech akcí provedených v aplikaci Web."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Kliknutím na kartu stránku otevřete. Karta stránky, ke které nemáte oprávnění, se nezobrazí. Stejné stránky najdete i v levém menu."
+            }
+          ]
+        },
+        {
+          "heading": "02. Kdo stránku vidí",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Stránka vyžaduje oprávnění Zobrazit uvítací stránku webové sekce (web-welcome-page-view). Do aplikace Web se navíc dostanete jen s oprávněním záložky Web (view-web)."
             }
           ]
         }
       ]
     },
     "web-dashboard": {
-      "navLabel": "Dashboard",
-      "header": "Web - Dashboard",
+      "navLabel": "Dashboard webu",
+      "header": "Dashboard webu",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - přehledová stránka webového modulu administrace."
+              "content": "Dashboard webu je přehled provozu veřejné webové prezentace: počty poptávek a uchazečů, aktivita v logu, rychlé odkazy a stav webu. S oprávněním odsud web také vypnete do režimu údržby."
+            }
+          ]
+        },
+        {
+          "heading": "01. Záhlaví a stav webu",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "V záhlaví je název Přehled webu, čas poslední aktualizace a tlačítko Aktualizovat. Vedle je stav veřejného webu (Online, Online · problém, Offline · údržba, Nedostupné) a pro účty s oprávněním Přepnout web do režimu údržby (web-set-maintenance-mode) tlačítko Vypnout aplikaci / Zapnout aplikaci. Postup vypnutí a zapnutí je popsaný v kapitole Aplikace."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Vypnutý web nevidí žádný návštěvník - místo něj se ukáže stránka údržby s kontakty. Kontaktní formulář ani přihlášky během údržby nefungují."
+            }
+          ]
+        },
+        {
+          "heading": "02. Čísla",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Poptávky",
+                  "text": "Počet poptávek ze stránky Poptávky."
+                },
+                {
+                  "title": "Uchazeči",
+                  "text": "Počet žádostí o práci ze stránky Uchazeči."
+                },
+                {
+                  "title": "Záznamy v logu",
+                  "text": "Počet záznamů v logu webu."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Hlavní dlaždici vyberete kliknutím na její název; ostatní čísla jsou v přehledu podle modulů a v barevném pruhu distribuce. Ovládání je stejné jako na dashboardu systému. Čísla vidíte jen u stránek, ke kterým máte oprávnění."
+            }
+          ]
+        },
+        {
+          "heading": "03. Rychlá navigace a poslední aktivita",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Karty Texty webu, Poptávky, Uchazeči a Logy webu otevřou příslušnou stránku.",
+                "Poslední aktivita ukazuje posledních osm záznamů z logu webu (kdo co vytvořil, upravil, smazal, exportoval). Zobrazit vše otevře Logy webu.",
+                "Rozložení posledních událostí ukazuje poměr typů akcí mezi těmito záznamy."
+              ]
             }
           ]
         }
       ]
     },
     "user-request": {
-      "navLabel": "Webový formulář",
-      "header": "Webový formulář (poptávky)",
+      "navLabel": "Poptávky",
+      "header": "Poptávky z webu",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - správa poptávek odeslaných z veřejného webového formuláře."
+              "content": "Na této stránce zpracováváte poptávky, které návštěvníci odeslali přes kontaktní formulář webu. Každá poptávka má téma, kontakt, popis, stav zpracování a prioritu, u ručně zadaných i přílohy. Odsud také upravíte text potvrzovacího e-mailu, který zákazník dostane po odeslání poptávky."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Nové poptávky se ukazují i v kalendáři v panelu Čeká na vyřízení. Neprochází-li je nikdo pravidelně, zákazník čeká - nastavte si, kdo je má na starosti."
+            }
+          ]
+        },
+        {
+          "heading": "01. Jak poptávka vznikne",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Formulář na webu",
+                  "text": "Návštěvník na stránce Kontakt vybere téma, vyplní kontaktní e-mail, telefon a popis požadavku a potvrdí souhlas se zpracováním osobních údajů. Formulář je chráněný proti robotům a proti zahlcení.",
+                  "active": true
+                },
+                {
+                  "label": "Uložení",
+                  "text": "Poptávka se uloží se stavem Nově zadané a objeví se v tabulce.",
+                  "active": false
+                },
+                {
+                  "label": "Potvrzení zákazníkovi",
+                  "text": "Zákazník automaticky dostane potvrzovací e-mail v jazyce, ve kterém byl na webu (kapitola 06).",
+                  "active": false
+                },
+                {
+                  "label": "Zpracování",
+                  "text": "Vy poptávku převezmete, měníte stav a zapisujete interní poznámky.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "note",
+              "highlight": "Když je web vypnutý",
+              "content": "V režimu údržby formulář poptávky nepřijímá."
+            }
+          ]
+        },
+        {
+          "heading": "02. Tabulka poptávek",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "ID",
+                  "text": "Číslo poptávky."
+                },
+                {
+                  "title": "Téma",
+                  "text": "Předmět poptávky - Nový projekt / poptávka, Podpora stávajícího projektu, Spolupráce / kariéra, Jiné, případně vlastní text."
+                },
+                {
+                  "title": "Email",
+                  "text": "Kontaktní e-mail zákazníka."
+                },
+                {
+                  "title": "Stav",
+                  "text": "Nově zadané, Zpracovává se, Dokončeno, Zrušeno."
+                },
+                {
+                  "title": "Priorita",
+                  "text": "Nízká, Neutrální, Vysoká."
+                },
+                {
+                  "title": "Vytvořeno",
+                  "text": "Kdy poptávka přišla."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Filtrovat můžete podle ID, tématu, e-mailu, stavu a priority. Detail poptávky (ikona Detaily) ukáže všechny údaje včetně telefonu, celého popisu, interní poznámky, příloh (Zobrazit / Stáhnout) a data poslední změny."
+            }
+          ]
+        },
+        {
+          "key": "process",
+          "heading": "03. Zpracování poptávky",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Otevřete poptávku",
+                  "text": "Ikonou Detaily si přečtěte celý popis a přílohy.",
+                  "active": true
+                },
+                {
+                  "label": "Upravit",
+                  "text": "Ikonou úpravy (Edit) otevřete formulář.",
+                  "active": false
+                },
+                {
+                  "label": "Stav zpracování",
+                  "text": "Nastavte Zpracovává se, jakmile poptávku převezmete; Dokončeno po vyřízení; Zrušeno, pokud se nebude realizovat.",
+                  "active": false
+                },
+                {
+                  "label": "Priorita",
+                  "text": "Označte důležitost - pomáhá při řazení a filtrování.",
+                  "active": false
+                },
+                {
+                  "label": "Interní poznámka",
+                  "text": "Poznámka pro kolegy (nevidí ji zákazník) - například s kým se jednalo a co bylo dohodnuto.",
+                  "active": false
+                },
+                {
+                  "label": "Potvrdit",
+                  "text": "Změny se uloží a zapíšou do logu webu.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Zákazníkovi se při změně stavu nic neposílá. Odpovídejte mu ze svého e-mailu na adresu z poptávky."
+            }
+          ]
+        },
+        {
+          "key": "create",
+          "heading": "04. Ruční přidání poptávky",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Poptávku, která přišla jinou cestou (telefon, osobní jednání), přidáte v nabídce Akce položkou Přidat záznam. Vyplníte Téma / Předmět (3-255 znaků), Kontaktní e-mail, Telefon, Stav zpracování, Prioritu, Popis požadavku (povinný), Interní poznámku a můžete přiložit soubory (nejvýš 10 souborů, každý do 20 MB, celkem do 50 MB)."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "I ručně přidaná poptávka odešle na zadaný e-mail potvrzovací e-mail zákazníkovi. Zadávejte jen skutečnou adresu zákazníka."
+            }
+          ]
+        },
+        {
+          "key": "import",
+          "heading": "05. Import poptávek",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Více poptávek najednou (například převod z jiného systému) přidáte v nabídce Akce položkou Importovat data. Postup - šablona, kontrola souboru, potvrzení - je v úvodní kapitole. Importované poptávky potvrzovací e-mail neodesílají."
+            }
+          ]
+        },
+        {
+          "key": "email",
+          "heading": "06. Potvrzovací e-mail zákazníkovi",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "V nabídce Akce zvolte Editovat potvrzovací e-mail. Otevře se editor textu, který zákazník dostane po odeslání poptávky:"
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Předmět e-mailu",
+                  "text": "Zobrazí se ve schránce; systém k němu doplní „ – téma poptávky“."
+                },
+                {
+                  "title": "Nadpis e-mailu a Pozdrav",
+                  "text": "Například „Vaše poptávka byla přijata“ a „Dobrý den,“."
+                },
+                {
+                  "title": "Úvodní zpráva",
+                  "text": "Hlavní sdělení - poděkování a co bude následovat."
+                },
+                {
+                  "title": "Rekapitulace",
+                  "text": "Nadpis sekce a popisky tabulky, ve které zákazník uvidí své téma, e-mail, telefon, popis, přílohy a datum přijetí."
+                },
+                {
+                  "title": "Závěrečná zpráva",
+                  "text": "Například „V případě dotazů nás neváhejte kontaktovat.“"
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Text vyplňujete pro každý jazyk webu zvlášť. Prázdné pole použije český text, a když není vyplněný ani ten, výchozí znění.",
+                "Živý náhled dole ukazuje, jak e-mail vypadá; rekapitulace v náhledu je vyplněná ukázkovými daty.",
+                "Tlačítkem Uložit šablonu uložíte, Zrušit zavře editor bez uložení."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Úprava šablony vyžaduje oprávnění upravit poptávky (web-user-requests-update)."
+            }
+          ]
+        },
+        {
+          "heading": "07. Mazání, koš a export",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Ikona Smazat přesune poptávku do koše; v koši ji obnovíte nebo trvale smažete (i s přílohami).",
+                "Poptávky lze mazat i hromadně - vyberte je zaškrtávacími políčky a v liště zvolte Smazat vybrané.",
+                "Export poptávek (Akce → Exportovat data) obsahuje osobní údaje - zacházejte s ním opatrně.",
+                "Staré poptávky se automaticky mažou podle retence nastavené v Nastavení → Retence dat (řádek Poptávky z webu)."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "08. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "web-user-requests-view"
+                },
+                {
+                  "title": "Ruční přidání a import",
+                  "text": "web-user-requests-create"
+                },
+                {
+                  "title": "Úprava poptávky a potvrzovacího e-mailu",
+                  "text": "web-user-requests-update"
+                },
+                {
+                  "title": "Smazání a obnova z koše",
+                  "text": "web-user-requests-delete"
+                }
+              ]
             }
           ]
         }
       ]
     },
     "web-logs": {
-      "navLabel": "Business logy",
-      "header": "Web - Business logy",
+      "navLabel": "Logy webu",
+      "header": "Logy webu",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - auditní log akcí provedených ve webovém modulu."
+              "content": "Log webu je historie všech akcí v aplikaci Web: kdo vytvořil, upravil nebo smazal poptávku či uchazeče, kdo měnil texty webu a překlady, kdo co exportoval, kdy se web vypnul nebo zapnul a které chyby nastaly."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Záznamy nejde upravit ani smazat. Staré záznamy maže noční úklid podle retence auditních logů (Nastavení → Retence dat)."
+            }
+          ]
+        },
+        {
+          "heading": "01. Co v logu najdete",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Akce",
+                  "text": "Vytvoření, Úprava, Smazání (do koše), Trvalé smazání, Obnova, Vyprázdnění koše, Hromadné smazání, Export, Chyba, Změna režimu údržby, Neautorizovaný pokus o změnu údržby."
+                },
+                {
+                  "title": "Modul",
+                  "text": "Poptávky, Žádosti o zaměstnání, Překlady webu, Web (obecné)."
+                },
+                {
+                  "title": "Ostatní sloupce",
+                  "text": "Čas, Uživatel, Popis události a IP adresa."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Chyba u poptávky často znamená, že se nepodařilo odeslat potvrzovací e-mail zákazníkovi - v popisu je důvod. Pokud se chyby opakují, kontaktujte technickou podporu."
+            }
+          ]
+        },
+        {
+          "heading": "02. Práce s logem",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Filtry, detail záznamu s technickými daty, export a grafy fungují stejně jako v Logy systému - viz tamní kapitola a úvodní kapitola. Typické dotazy: kdo změnil stav poptávky (modul Poptávky, akce Úprava), kdo vypnul web (akce Změna režimu údržby)."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Log obsahuje e-maily a IP adresy - exporty chraňte a po použití smažte."
+            }
+          ]
+        },
+        {
+          "heading": "03. Kdo stránku vidí",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Oprávnění Zobrazit historii logů webové sekce (web-view-web-logs)."
             }
           ]
         }
       ]
     },
     "edit-website": {
-      "navLabel": "Editace webu",
-      "header": "Editace obsahu webu",
+      "navLabel": "Texty webu",
+      "header": "Texty a obsah webu",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Texty a obsah veřejného webu: překlady, titulky stránek v prohlížeči, FAQ, pracovní pozice, reference a znalostní báze. Každá část je samostatná záložka nahoře."
+              "content": "Stránka Texty webu spravuje veškerý obsah veřejného webu: texty všech stránek ve všech jazycích, jazyky webu, názvy stránek v prohlížeči, časté dotazy (FAQ), pracovní pozice, reference a veřejnou znalostní bázi. Každá část je samostatná záložka nahoře."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Změny se na webu projeví hned po uložení. S oprávněním jen ke čtení (web-edit-website-view) je stránka pouze pro čtení; ukládat smí účet s oprávněním web-edit-website-update."
+            }
+          ]
+        },
+        {
+          "heading": "01. Záložky stránky",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Překlady",
+                  "text": "Všechny texty webu (nadpisy, odstavce, tlačítka, popisky formulářů) a jazyky webu."
+                },
+                {
+                  "title": "Názvy stránek",
+                  "text": "Text v záložce prohlížeče a ve výsledcích vyhledávání pro každou stránku webu."
+                },
+                {
+                  "title": "FAQ",
+                  "text": "Časté dotazy rozdělené do kategorií."
+                },
+                {
+                  "title": "Pracovní pozice",
+                  "text": "Nabídky práce na stránce Kariéra."
+                },
+                {
+                  "title": "Reference",
+                  "text": "Realizované projekty."
+                },
+                {
+                  "title": "Znalostní báze",
+                  "text": "Veřejná stránka nápovědy (/knowledge-base)."
+                }
+              ]
             },
             {
               "type": "text",
-              "content": "Záložka Znalostní báze upravuje veřejnou stránku Centrum nápovědy (/knowledge-base). Nahoře je úvod stránky - hlavní nadpis a první text. Pod ním jsou bloky v pořadí, v jakém se zobrazí na webu: každý blok má nadpis a text, volitelně libovolný počet podbloků (menší nadpis + text, tlačítko Přidat podblok) a na konci jeden volitelný obrázek. Bloky i podbloky jde přidávat, přesouvat, odebírat a blok skrýt (Zobrazit na webu)."
+              "content": "Záložka, ve které máte neuložené změny, je označená. Každá záložka se ukládá samostatně svým tlačítkem."
+            }
+          ]
+        },
+        {
+          "heading": "02. Překlady - jazyky webu",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Nahoře záložky Překlady je řada jazyků webu s vlajkou. Kliknutím na jazyk zobrazíte jeho texty. Čeština je výchozí jazyk - slouží jako vzor všech textů a nejde vypnout ani smazat."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Přidat jazyk",
+                  "text": "Tlačítkem Přidat jazyk otevřete formulář.",
+                  "active": true
+                },
+                {
+                  "label": "Ikonka jazyka",
+                  "text": "Obrázek vlajky PNG nebo JPG do 512 KB.",
+                  "active": false
+                },
+                {
+                  "label": "Kód jazyka",
+                  "text": "2-5 malých písmen, například sk, de, fr. Každý kód jen jednou.",
+                  "active": false
+                },
+                {
+                  "label": "Název jazyka",
+                  "text": "Například „Slovenčina“.",
+                  "active": false
+                },
+                {
+                  "label": "Jazyk aktivní",
+                  "text": "Zaškrtnutý = jazyk se návštěvníkům nabízí v přepínači jazyků. Nový jazyk nechte neaktivní, dokud nepřeložíte texty.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Ikonou u jazyka jazyk deaktivujete nebo aktivujete - neaktivní jazyk návštěvníci nevidí, texty zůstanou.",
+                "Ikonou koše jazyk smažete ze seznamu (po potvrzení). Soubor s jeho texty na serveru zůstane.",
+                "Ikonou nahrání nahrajete texty jazyka ze souboru JSON (viz kapitola 04)."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Překlady - úprava textů",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Vyberte jazyk",
+                  "text": "Kliknutím na jazyk v řadě jazyků.",
+                  "active": true
+                },
+                {
+                  "label": "Najděte text",
+                  "text": "Tabulka má sloupce Klíč (JSON cesta) - kde se text na webu používá, například navigation.home - a Hodnota v daném jazyce. Pole Vyhledat klíč nebo text… hledá v klíčích i textech.",
+                  "active": false
+                },
+                {
+                  "label": "Upravte",
+                  "text": "Přepište text v poli Hodnota. Pole se zvětšuje podle délky textu.",
+                  "active": false
+                },
+                {
+                  "label": "Uložit změny",
+                  "text": "Tlačítko Uložit změny uloží texty aktuálního jazyka. Tečka na tlačítku upozorňuje na neuložené změny.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "klíčů / vyplněno / chybí",
+                  "text": "Statistiky jazyka: kolik textů web má, kolik je vyplněných a kolik chybí."
+                },
+                {
+                  "title": "Chybějící překlady",
+                  "text": "Text, který v jazyce chybí, má vykřičník. Tlačítko „N chybějících“ (nebo kliknutí na statistiku chybí) zobrazí jen chybějící texty."
+                },
+                {
+                  "title": "Co uvidí návštěvník",
+                  "text": "Místo chybějícího textu se na webu zobrazí „Cannot load text“. Před aktivací jazyka proto doplňte všechny texty."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Klíč neměňte - text pod ním web hledá. Měňte jen hodnotu. Neuložené změny se ztratí, když přepnete jazyk nebo odejdete ze stránky bez uložení."
+            }
+          ]
+        },
+        {
+          "heading": "04. Překlady - stažení a nahrání JSON",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Stáhnout JSON stáhne všechny texty aktuálního jazyka do souboru - hodí se jako záloha nebo pro překladatele.",
+                "Nahrát JSON nahraje soubor se stejnou strukturou klíčů jako český vzor. Klíče, které v souboru chybí, zůstanou prázdné a budou označené jako chybějící.",
+                "Postup s překladatelem: stáhněte český JSON, nechte přeložit jen hodnoty (ne klíče), nahrajte soubor k novému jazyku, zkontrolujte chybějící texty a uložte."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Nahrání JSON přepíše texty jazyka obsahem souboru. Před nahráním si stáhněte zálohu."
+            }
+          ]
+        },
+        {
+          "heading": "05. Názvy stránek",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Záložka Názvy stránek nastavuje text v záložce prohlížeče a nadpis ve výsledcích vyhledávání Google pro každou stránku webu: Hlavní stránka, Služby, Realizované projekty, O nás, Kontakt, Často kladené otázky, Centrum nápovědy, Kariéra (seznam i detail pozice), právní stránky, Údržba webu a Stránka nenalezena (404)."
+            },
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Přepínačem Jazyk názvů zvolte jazyk.",
+                "Upravte názvy - náhled záložky ukazuje výsledek. Google zobrazí zhruba prvních 60 znaků.",
+                "Uložit názvy stránek uloží změny, Zahodit změny je vrátí."
+              ]
             },
             {
               "type": "text",
-              "content": "Texty se zadávají pro každý jazyk webu zvlášť (přepínač jazyků nahoře); u jazyka se ukáže počet chybějících textů. Změny textů se uloží tlačítkem Uložit, tlačítko Zahodit vrátí poslední uložený stav."
+              "content": "Prázdné pole = použije se český název. Dobrý název stránky obsahuje, o čem stránka je, a název firmy, například „Služby | Firma s.r.o.“."
+            }
+          ]
+        },
+        {
+          "heading": "06. FAQ - časté dotazy",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Kategorie se na stránce FAQ zobrazí jako záložky, otázky v daném pořadí. Odpověď je obyčejný text - řádky se zachovají."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Přidat kategorii vytvoří kategorii; vyplňte Název kategorie ve všech jazycích.",
+                "Přidat otázku přidá do kategorie otázku a odpověď.",
+                "Šipkami Posunout výš / Posunout níž měníte pořadí kategorií i otázek; nabídkou Přesunout do… přesunete otázku do jiné kategorie.",
+                "Odebrat otázku, případně Odebrat kategorii i s otázkami.",
+                "Vše uložíte najednou tlačítkem Uložit; Zahodit změny vrátí poslední uložený stav."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "07. Pracovní pozice",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Pozice se zobrazují na stránce Kariéra. Náhled (název a krátký popis) je v seznamu pozic, typ úvazku, místo a bloky textu v detailu pozice, kde je i formulář pro přihlášku."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Přidat pozici",
+                  "text": "Vytvoří novou pozici (zatím Skryto).",
+                  "active": true
+                },
+                {
+                  "label": "Adresa (URL)",
+                  "text": "Část adresy detailu pozice, například ui-designer. Jen malá písmena bez diakritiky, číslice a pomlčky; každá pozice musí mít vlastní adresu. Změna adresy změní odkaz na pozici.",
+                  "active": false
+                },
+                {
+                  "label": "Náhled v seznamu",
+                  "text": "Název a Krátký popis v každém jazyce.",
+                  "active": false
+                },
+                {
+                  "label": "Detail pozice",
+                  "text": "Typ úvazku, Místo a libovolný počet bloků textu (Nadpis bloku + Text), například Co budete dělat, Co nabízíme. Řádky a odrážky (•) se zachovají.",
+                  "active": false
+                },
+                {
+                  "label": "Zobrazit na webu",
+                  "text": "Zaškrtnutím pozici zveřejníte (stav Zobrazeno). Odškrtnutím ji skryjete, aniž byste ji mazali.",
+                  "active": false
+                },
+                {
+                  "label": "Uložit",
+                  "text": "Uloží všechny pozice najednou.",
+                  "active": false
+                }
+              ]
             },
             {
               "type": "text",
-              "content": "Obrázek bloku: jen JPG, PNG nebo WebP do 5 MB - video ani jiné soubory nahrát nejde. Obrázek se uloží hned (bez tlačítka Uložit) a server ho zmenší, převede do WebP a odstraní z něj metadata (např. polohu). Nový blok je potřeba nejdřív uložit, teprve potom jde nahrát obrázek."
+              "content": "Pořadí pozic měníte šipkami, Odebrat pozici ji smaže (po uložení). Přihlášky z formuláře pozice najdete na stránce Uchazeči."
+            }
+          ]
+        },
+        {
+          "heading": "08. Reference",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Projekty se na stránce Realizované projekty zobrazí v pořadí podle editoru. Řádek seznamu ukazuje název, rok a klienta, detail ostatní údaje."
             },
             {
-              "type": "note",
-              "content": "Úpravy vyžadují oprávnění k úpravě webu; s oprávněním jen ke čtení je editor pouze pro čtení."
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Oblast",
+                  "text": "Například Webový vývoj, Audit."
+                },
+                {
+                  "title": "Rok / období a Klient",
+                  "text": "Jsou stejné ve všech jazycích."
+                },
+                {
+                  "title": "Projekt",
+                  "text": "Název projektu, Rozsah, Naše role, Popis a Výsledek - v každém jazyce."
+                },
+                {
+                  "title": "Klíčové funkce",
+                  "text": "Seznam funkcí (Přidat funkci / Odebrat funkci)."
+                },
+                {
+                  "title": "Technologický stack",
+                  "text": "Řádky Vrstva (např. Frontend) + Technologie (např. Angular)."
+                },
+                {
+                  "title": "Obrázek",
+                  "text": "JPG, PNG nebo WebP do 5 MB; na webu je vpravo vedle klíčových funkcí."
+                },
+                {
+                  "title": "Zobrazit na webu",
+                  "text": "Zveřejní nebo skryje referenci."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Obrázek se uloží hned po nahrání (nezávisle na tlačítku Uložit). U nové reference ho nahrajete až po jejím uložení."
+            }
+          ]
+        },
+        {
+          "heading": "09. Znalostní báze (veřejná nápověda)",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Záložka upravuje veřejnou stránku Centrum nápovědy (/knowledge-base), na které se návštěvníci dozvědí, co systém obsahuje a jak funguje."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Úvod stránky",
+                  "text": "Hlavní nadpis a úvodní text stránky.",
+                  "active": true
+                },
+                {
+                  "label": "Bloky",
+                  "text": "Pod úvodem jsou bloky v pořadí, v jakém se zobrazí na webu. Každý má Nadpis bloku a Text bloku.",
+                  "active": false
+                },
+                {
+                  "label": "Podbloky",
+                  "text": "Volitelně libovolný počet podbloků (menší nadpis + text) - tlačítko Přidat podblok.",
+                  "active": false
+                },
+                {
+                  "label": "Obrázek na konci bloku",
+                  "text": "Jeden volitelný obrázek JPG, PNG nebo WebP do 5 MB. Video ani jiné soubory nahrát nejde.",
+                  "active": false
+                },
+                {
+                  "label": "Zobrazit na webu",
+                  "text": "Skryje nebo zobrazí blok bez mazání.",
+                  "active": false
+                },
+                {
+                  "label": "Uložit",
+                  "text": "Uloží celý obsah najednou.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Bloky i podbloky přidáváte, přesouváte šipkami a odebíráte.",
+                "Obrázek se uloží hned a server ho zmenší, převede do formátu WebP a odstraní z něj metadata (například polohu). Nový blok je nutné nejdřív uložit, teprve pak jde nahrát obrázek.",
+                "Text je obyčejný - řádky se zachovají."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "10. Jazyky a chybějící texty v obsahových záložkách",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Záložky FAQ, Pracovní pozice, Reference a Znalostní báze mají vlastní přepínač jazyka. U jazyka je počet chybějících překladů a chybějící pole je zvýrazněné s upozorněním, že se na webu zobrazí „Cannot load text“. Nepovinné pole, které je prázdné ve všech jazycích, se na webu vůbec nezobrazí. Značka Neuložené změny upozorňuje na neuložené úpravy."
+            }
+          ]
+        },
+        {
+          "heading": "11. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "web-edit-website-view - vše jen pro čtení."
+                },
+                {
+                  "title": "Úpravy",
+                  "text": "web-edit-website-update - texty, jazyky, JSON, názvy stránek, FAQ, pozice, reference, znalostní báze a obrázky."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Všechny změny se zapisují do logu webu."
             }
           ]
         }
       ]
     },
     "job-applications": {
-      "navLabel": "Pracovní nabídky",
-      "header": "Pracovní formulář (uchazeči)",
+      "navLabel": "Uchazeči",
+      "header": "Uchazeči o práci",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - přehled odeslaných žádostí z pracovního formuláře."
+              "content": "Na této stránce spravujete žádosti o práci, které uchazeči odeslali z formuláře u pracovní pozice na webu. Změnou stavu informujete kolegy o postupu náboru a do interní poznámky zapisujete výsledky pohovorů."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Žádosti obsahují osobní údaje a životopisy. Pracujte s nimi jen v rámci náboru, nesdílejte je mimo firmu a nepotřebné žádosti mažte. Bez souhlasu uchazeče s delší evidencí se žádosti obvykle uchovávají 6 měsíců (Nastavení → Retence dat)."
+            }
+          ]
+        },
+        {
+          "heading": "01. Jak žádost vznikne",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Uchazeč na detailu pracovní pozice vyplní jméno, příjmení, e-mail, telefon, průvodní zprávu a přiloží životopis (jeden soubor do 20 MB - PDF, Word, ODT, Pages, RTF, TXT, obrázek nebo archiv). Žádost se uloží se stavem Nový uchazeč a pozicí, na kterou reagoval. Uchazeči se automaticky nic neposílá. Formulář je chráněný proti robotům; v režimu údržby webu nefunguje."
+            }
+          ]
+        },
+        {
+          "heading": "02. Tabulka uchazečů",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "ID",
+                  "text": "Číslo žádosti."
+                },
+                {
+                  "title": "Uchazeč",
+                  "text": "Jméno a příjmení."
+                },
+                {
+                  "title": "Pozice",
+                  "text": "Na jakou pozici reagoval."
+                },
+                {
+                  "title": "Stav",
+                  "text": "Nový uchazeč, Pozván na pohovor, Vybrán / Nabídka, Zamítnut, V databázi (do budoucna)."
+                },
+                {
+                  "title": "Doručeno",
+                  "text": "Kdy žádost přišla."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Filtrovat můžete podle ID, příjmení, názvu pozice a stavu. Detail (ikona Detaily) ukáže celé jméno, pozici, e-mail, telefon, stav, průvodní dopis, interní poznámku HR, životopis (Zobrazit / Stáhnout) a datum doručení."
+            }
+          ]
+        },
+        {
+          "key": "process",
+          "heading": "03. Zpracování žádosti",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Přečtěte žádost",
+                  "text": "Ikonou Detaily otevřete průvodní dopis a životopis.",
+                  "active": true
+                },
+                {
+                  "label": "Stav / Poznámka",
+                  "text": "Tlačítko v řádku otevře formulář se dvěma poli: Stav uchazeče a Interní poznámka.",
+                  "active": false
+                },
+                {
+                  "label": "Stav uchazeče",
+                  "text": "Pozván na pohovor → Vybrán / Nabídka nebo Zamítnut. Stav V databázi (do budoucna) použijte jen se souhlasem uchazeče s delší evidencí.",
+                  "active": false
+                },
+                {
+                  "label": "Interní poznámka",
+                  "text": "Výsledek pohovoru, dojem, platové očekávání … Uchazeč ji nevidí.",
+                  "active": false
+                },
+                {
+                  "label": "Potvrdit",
+                  "text": "Změna se uloží a zapíše do logu webu.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Údaje, které uchazeč zadal (jméno, kontakt, zpráva, životopis), měnit nejde. Uchazeči odpovídejte ze svého e-mailu."
+            }
+          ]
+        },
+        {
+          "heading": "04. Mazání, koš a export",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Smazat přesune žádost do koše; v koši ji obnovíte nebo trvale smažete i se životopisem.",
+                "Žádosti lze mazat i hromadně (zaškrtávací políčka → Smazat vybrané).",
+                "Nové žádosti se ukazují v kalendáři v panelu Čeká na vyřízení.",
+                "Export obsahuje osobní údaje - zacházejte s ním opatrně."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "05. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "web-job-applications-view"
+                },
+                {
+                  "title": "Změna stavu a poznámky",
+                  "text": "web-job-applications-update"
+                },
+                {
+                  "title": "Smazání a obnova z koše",
+                  "text": "web-job-applications-delete"
+                }
+              ]
             }
           ]
         }

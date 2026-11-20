@@ -19,7 +19,13 @@
       "group": "web",
       "order": 6,
       "permission": "web-user-requests-view",
-      "devNote": "UserRequestComponent, route 'web/user-request', permission 'web-user-requests-view' (edit/delete vyžadují navíc -update/-delete)."
+      "devNote": "UserRequestComponent, route 'web/user-request', permission 'web-user-requests-view' (edit/delete vyžadují navíc -update/-delete).",
+      "sections": {
+        "process": "web-user-requests-update",
+        "create": "web-user-requests-create",
+        "import": "web-user-requests-create",
+        "email": "web-user-requests-update"
+      }
     },
     {
       "id": "web-logs",
@@ -40,7 +46,10 @@
       "group": "web",
       "order": 13,
       "permission": "web-job-applications-view",
-      "devNote": "JobApplicationsComponent, route 'web/job-applications', permission 'web-job-applications-view'."
+      "devNote": "JobApplicationsComponent, route 'web/job-applications', permission 'web-job-applications-view'.",
+      "sections": {
+        "process": "web-job-applications-update"
+      }
     }
   ]
 }

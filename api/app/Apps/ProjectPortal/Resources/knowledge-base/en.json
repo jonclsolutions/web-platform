@@ -8,19 +8,59 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Overview of the project portal: numbers of sales leads, orders, projects and log entries, quick navigation and the recent activity."
+              "content": "The project portal dashboard is an overview of sales and projects: the numbers of sales leads, orders, projects and log entries, quick links, recent activity and the state of the public part of the portal."
             },
             {
               "type": "text",
-              "content": "Every tile and shortcut is shown only when you have the permission of its page. The Refresh button loads the data again (also the state of the portal)."
+              "content": "The whole application works as a chain: sales lead → link to the order form → order → project → client portal, where the client follows the progress, communicates and approves."
+            }
+          ]
+        },
+        {
+          "heading": "01. Header and state of the portal",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The header Project portal overview shows the time of the last update and the Refresh button (it also reloads the state of the portal). On the right is the state of the public part: Online (green), Online · problem (orange - errors in the log in 24 hours or a slow response), Offline · maintenance (red) or Unavailable."
             },
             {
               "type": "text",
-              "content": "Top right is the state of the public portal: green dot Online, amber Online with a problem (errors in the log in the last 24 hours or a slow response), red Offline (maintenance). With the permission to switch the maintenance there is the button Switch application off / on beside it - you confirm the change with your password."
+              "content": "With the permission to switch the public portal and the order form off / on (project-portal-set-maintenance-mode) there is the button Switch application off / Switch application on next to it; confirm the change with your password (procedure in the chapter Applications)."
             },
             {
-              "type": "note",
-              "content": "A switched-off portal: the client portal of a project and the order form show the maintenance page and their API answers 503. The administration keeps running."
+              "type": "alert",
+              "variant": "warning",
+              "content": "Switched-off portal: the client portal of projects and the order form show the maintenance page (/projects/maintenance) and clients can neither sign in nor send an order. After switching on, a client returns to where they were by opening the maintenance page. The administration keeps running."
+            }
+          ]
+        },
+        {
+          "heading": "02. Numbers, navigation and activity",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Sales leads, Orders, Projects",
+                  "text": "The number of records on those pages."
+                },
+                {
+                  "title": "Log entries",
+                  "text": "The number of entries in the portal log."
+                },
+                {
+                  "title": "Quick navigation",
+                  "text": "Cards Sales leads, Orders, Projects and Portal logs."
+                },
+                {
+                  "title": "Recent activity",
+                  "text": "The last eight entries of the portal log; View all opens Portal logs."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Each tile, card and the activity are shown only with the permission for their page. The main tile and the overviews work the same as on the system dashboard."
             }
           ]
         }
@@ -34,33 +74,184 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "A sales lead is a potential client a salesman deals with: contact, source, priority, status and the next step. When the client decides to order, send them the link to the order form – the sent form becomes an order and the order a project in the portal."
+              "content": "A sales lead is a potential client a salesperson is dealing with. For a lead you record the contact, the source channel, the state of the talks, the priority, contact dates and the next step. When the client decides to order, you send them a link to the order form - the submitted form creates an order and the order a project."
             },
             {
               "type": "flow",
               "steps": [
                 {
                   "label": "Lead",
-                  "text": "Create a lead by hand or import it (CSV / XLSX). Keep the date of the last contact – the calendar reminds you of leads without contact for 14 days or more.",
+                  "text": "Create a lead manually or import it.",
                   "active": true
                 },
                 {
-                  "label": "Form link",
-                  "text": "The Link action creates a link to the order form prefilled with the contact of the lead. It is valid for 30 days from the last generation and can be used once."
+                  "label": "Talks",
+                  "text": "Record the status, the last contact and the next step.",
+                  "active": false
+                },
+                {
+                  "label": "Link to the form",
+                  "text": "The Link button creates a link to the order form for the client.",
+                  "active": false
                 },
                 {
                   "label": "Order",
-                  "text": "The client fills in and sends the form; the order appears on the Orders page and the lead is marked as sent."
+                  "text": "The client fills in and sends the form; an order is created and the lead switches to the status Inquiry form sent.",
+                  "active": false
                 },
                 {
                   "label": "Project",
-                  "text": "Create a project from the order (Project action) and give the client access to the portal."
+                  "text": "From the order you create a project and give the client access to the portal.",
+                  "active": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "01. The table of leads",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Columns: ID, Subject / Company, Status, Priority, Salesperson, Last contact, Created. Filters by ID, company, status, priority and salesperson. The lead details show the contact person, e-mail, phone, other contact, location, source channel and source URL, the dates of the first and last contact, the next step, the note and the rejection reason."
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "02. Creating and editing a lead",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Subject / Company name",
+                  "text": "Required, at least 2 characters."
+                },
+                {
+                  "title": "Contact person, Email, Phone",
+                  "text": "Whom to address."
+                },
+                {
+                  "title": "Location",
+                  "text": "City or region."
+                },
+                {
+                  "title": "Source channel",
+                  "text": "Where the lead came from - LinkedIn, Facebook, Instagram, X, WhatsApp, Telegram, website form, e-mail, phone, in-person meeting, networking, referral, former client, inquiry portal, Google Business Profile, paid ad, partner, other online / offline channel."
+                },
+                {
+                  "title": "Current status",
+                  "text": "New, In communication, Preparing offer, Offer sent, Inquiry form sent, Negotiating, On hold, Handed to dev team, Closed - Won, Awaiting invoicing, Awaiting payment, Paid - Project started, Closed - Lost, Other."
+                },
+                {
+                  "title": "Priority",
+                  "text": "Low, Below average, Neutral, High, Critical."
+                },
+                {
+                  "title": "First contact / Last contacted",
+                  "text": "Dates of the talks. By the date of the last contact the calendar reminds you of a lead nobody has talked to for 14 days or more."
+                },
+                {
+                  "title": "Next step",
+                  "text": "What needs to be done next."
+                },
+                {
+                  "title": "Case note and Rejection reason",
+                  "text": "Details; fill in the reason for a lost lead."
                 }
               ]
             },
             {
-              "type": "note",
-              "content": "The link carries only a random token – never the internal number of the lead. An invalid, used or expired link does not open the form and is recorded in the security events."
+              "type": "text",
+              "content": "The salesperson of a new lead is automatically the person who created it."
+            }
+          ]
+        },
+        {
+          "key": "link",
+          "heading": "03. Link to the order form",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Link",
+                  "text": "The Link button in the row of a lead creates the link and copies it to the clipboard (message “Link copied” with the validity date).",
+                  "active": true
+                },
+                {
+                  "label": "Send it to the client",
+                  "text": "Paste the link into your e-mail or message to the client.",
+                  "active": false
+                },
+                {
+                  "label": "Form",
+                  "text": "On the link the client sees the order form prefilled with the data of the lead. They add the name or company name, company ID, e-mail, phone, address, the order description, attachments and confirm the consent to the terms and conditions and to the processing of personal data.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "The link is valid for 30 days; every new press of Link extends the validity by another 30 days from that moment.",
+                "Only one order can be sent from one lead - a used link tells the client they already sent the form.",
+                "An expired unused link is replaced by a new one on the next press of Link (the old one stops working).",
+                "The end of the link's validity is shown in the calendar (Form expires).",
+                "The link contains only a random code, never the internal number of the lead. Invalid attempts are written to the security monitoring."
+              ]
+            }
+          ]
+        },
+        {
+          "key": "import",
+          "heading": "04. Importing leads",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Add leads from another register with Import data in the Actions menu (CSV or XLSX). Download the template, fill it in, have the file checked and confirm. The window shows the allowed values of statuses, priorities and sources. The procedure is in the introductory chapter."
+            }
+          ]
+        },
+        {
+          "heading": "05. Deleting and the trash",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Delete leads one by one or in bulk (checkboxes → Delete selected) to the trash; in the trash you restore them or delete them permanently. Old leads are deleted automatically by retention (Settings → Data retention, row Leads)."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Leads contain personal data of contact persons. Protect exports and delete leads you no longer need."
+            }
+          ]
+        },
+        {
+          "heading": "06. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "project-portal-sales-leads-view"
+                },
+                {
+                  "title": "Manual creation and import",
+                  "text": "project-portal-sales-leads-create"
+                },
+                {
+                  "title": "Editing and the link to the form",
+                  "text": "project-portal-sales-leads-update"
+                },
+                {
+                  "title": "Deleting and restoring",
+                  "text": "project-portal-sales-leads-delete"
+                }
+              ]
             }
           ]
         }
@@ -74,28 +265,121 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Orders sent by clients through the order form (the link of a sales lead) and orders created by hand. Each has the contact of the client, the description, attachments and the record of the consents to the terms of service and to the processing of personal data."
+              "content": "Orders clients sent through the order form from the link of a sales lead. Each has the client's contact, a description, attachments and the record of consents. From an order you create a project in the client portal."
             },
             {
-              "type": "grid",
-              "cards": [
+              "type": "alert",
+              "variant": "info",
+              "content": "Orders without a project yet are recalled by the calendar in the panel Waiting for you."
+            }
+          ]
+        },
+        {
+          "heading": "01. How an order is created",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
                 {
-                  "title": "Project",
-                  "text": "The folder icon in a row opens the project of the order. When the order has no project yet, the form of a new project opens with the order selected and its name and contact prefilled."
+                  "label": "Link from a lead",
+                  "text": "The salesperson sends the client a link (page Sales leads, button Link).",
+                  "active": true
                 },
                 {
-                  "title": "Confirmation e-mail",
-                  "text": "After sending, the client gets a confirmation in the language of the form. Edit its texts with the E-mail button of the toolbar (per language)."
+                  "label": "Form",
+                  "text": "At the address /projects/order/<code> the client fills in the order in the language of the page and sends it. Older links /order_form/<code> still work.",
+                  "active": false
                 },
                 {
-                  "title": "Attachments",
-                  "text": "Files of the client (up to 10 files, 20 MB per file, 50 MB in total). You can add more files when editing the order."
+                  "label": "Saving",
+                  "text": "An order is created with the salesperson of the lead; the lead is marked as sent.",
+                  "active": false
+                },
+                {
+                  "label": "Confirmation",
+                  "text": "The client receives a confirmation e-mail in the language of the form (chapter 04).",
+                  "active": false
                 }
               ]
             },
             {
+              "type": "note",
+              "highlight": "When the portal is switched off",
+              "content": "In maintenance mode the form accepts no orders."
+            }
+          ]
+        },
+        {
+          "heading": "02. Table and details",
+          "blocks": [
+            {
               "type": "text",
-              "content": "The order form is a public page of the portal at /projects/order/<token>. Older links /order_form/<token> keep working (redirected). A calendar reminder watches orders without a project."
+              "content": "Columns: ID, Client, Salesperson, Company ID, Created; filters by ID, client, salesperson and company ID. The details show the e-mail, phone, address, the order description, the data processing consent (GDPR), the terms and conditions consent, attachments (View / Download) and the dates of creation and the last change."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "The record of consents is evidence in case of a dispute - do not change it and keep orders with it for the period required by accounting and tax rules."
+            }
+          ]
+        },
+        {
+          "key": "project",
+          "heading": "03. Project from an order",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The Project button (folder icon) in a row opens the project of the order. When the order has none yet, the form of a new project opens with the order selected and the name and contact of the client prefilled. Creating a project and giving the client access to the portal are described in the chapter Projects."
+            }
+          ]
+        },
+        {
+          "key": "email",
+          "heading": "04. Order confirmation e-mail",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "In the Actions menu choose Edit confirmation e-mail. You edit the text the client receives after sending the form: subject, heading, greeting (the client's name is added), intro message, the heading and labels of the summary (name / company, company ID, e-mail, phone, address, description, attachments, date) and the closing message - separately for every language. An empty field uses the Czech text, or the default wording. The live preview shows the e-mail with sample data."
+            }
+          ]
+        },
+        {
+          "heading": "05. Editing, deleting and the trash",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Edit opens the form: Client name / Company (required), Company ID, Client e-mail, Phone, Client address, Order description (required) and Attachments / Contract - you can add more files (up to 10 files, 20 MB per file, 50 MB in total).",
+                "Delete moves an order to the trash (also in bulk); in the trash you restore it or delete it permanently.",
+                "The retention of orders is set in Settings → Data retention (row Orders) - accounting rules may require keeping them up to 10 years."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "06. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "project-portal-sales-orders-view"
+                },
+                {
+                  "title": "Editing and the confirmation e-mail",
+                  "text": "project-portal-sales-orders-update"
+                },
+                {
+                  "title": "Deleting and restoring",
+                  "text": "project-portal-sales-orders-delete"
+                },
+                {
+                  "title": "Creating a project from an order",
+                  "text": "project-portal-projects-create"
+                }
+              ]
             }
           ]
         }
@@ -109,11 +393,64 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Browser tab titles of the public pages of the portal – the client portal of a project, the sign-in to the portal, the order form and the maintenance page – per language."
+              "content": "Settings of the titles shown in the browser tab on the public pages of the portal."
+            }
+          ]
+        },
+        {
+          "heading": "01. Page titles",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Client portal of a project",
+                  "text": "The page where the client follows their project."
+                },
+                {
+                  "title": "Order form",
+                  "text": "The form from the link of a sales lead."
+                },
+                {
+                  "title": "Sign-in to the portal of a project",
+                  "text": "The client's sign-in page."
+                },
+                {
+                  "title": "Maintenance of the portal",
+                  "text": "The maintenance page (/projects/maintenance)."
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Choose the language with the language switch.",
+                "Edit the title - the tab preview shows the result; Google shows roughly the first 60 characters.",
+                "Save with Save page titles; Discard changes reverts them."
+              ]
             },
             {
               "type": "text",
-              "content": "An empty title uses the default name of the application. Clients see the change after the page is loaded."
+              "content": "An empty title uses the Czech title of the page. Clients see the changes after the page loads."
+            }
+          ]
+        },
+        {
+          "heading": "02. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "project-portal-settings-view"
+                },
+                {
+                  "title": "Editing",
+                  "text": "project-portal-settings-update"
+                }
+              ]
             }
           ]
         }
@@ -498,11 +835,66 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Audit log of the project portal: changes of projects, checkpoints, templates, client accounts, approvals and updates in the admin and the activity of the clients in the portal (sign-in, threads, decisions)."
+              "content": "The project portal log is the history of all actions in the application: in the administration (leads, orders, projects, milestones, templates, client accounts, approvals, updates, threads, settings, maintenance) and the activity of clients in the portal (sign-ins, new threads, approval decisions, attachment downloads)."
             },
             {
+              "type": "alert",
+              "variant": "info",
+              "content": "Entries cannot be edited or deleted. The log does not contain the texts of clients' messages."
+            }
+          ]
+        },
+        {
+          "heading": "01. What you find in the log",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Administration",
+                  "text": "Creations, edits, deletions and restorations; status and order of milestones; new, edited, applied and deleted templates; new, edited and deleted client accounts, new password and invitation; approval requests (new, edit, reopening, cancelation, deletion); updates; assigning, closing and reopening a thread; generating a lead link; imports, exports and reports."
+                },
+                {
+                  "title": "Client portal",
+                  "text": "Sign-in and logout of a client, a sent sign-in code, account settings by the client, a new thread and a change of its status, an approval decision, an attachment download."
+                },
+                {
+                  "title": "Operation",
+                  "text": "Change of the maintenance mode, an unauthorized maintenance toggle attempt, errors."
+                },
+                {
+                  "title": "Modules",
+                  "text": "Projects, Milestones, Project templates, Client accounts, Approvals, Updates, Communication, Client portal, Sales leads, Orders, Portal settings."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Working with the log",
+          "blocks": [
+            {
               "type": "text",
-              "content": "The entries can be filtered by user, event, module and IP address, exported and charted. The log never holds the texts of client messages."
+              "content": "Filter entries by user, event, module and IP address, open the details with technical data, export them and draw charts - the same as in System logs."
+            },
+            {
+              "type": "note",
+              "highlight": "Typical questions",
+              "content": "When did the client last sign in? - event Client signed in. Who approved a change? - Client approval decision. Who sent the client an invitation? - Client invited."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "The log contains e-mails and IP addresses - protect exports and delete them after use."
+            }
+          ]
+        },
+        {
+          "heading": "03. Who sees the page",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The permission to show the log history of the project portal (project-portal-view-logs)."
             }
           ]
         }

@@ -763,7 +763,8 @@
   "welcome_code": "SYSTEM_READY",
   "welcome_title": "Dokumentace",
   "welcome_text": "Vyberte kapitolu z menu pro pokračování.",
-  "page_not_found": "Stránka nebyla nalezena."
+  "page_not_found": "Stránka nebyla nalezena.",
+  "chapters_toggle_label": "Zobrazit nebo skrýt podkapitoly"
 },
 "kb-footer": {
   "created_by_label": "Vytvořil:",

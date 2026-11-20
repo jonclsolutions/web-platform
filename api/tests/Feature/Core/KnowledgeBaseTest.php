@@ -143,6 +143,39 @@ class KnowledgeBaseTest extends TestCase
     }
 
     /**
+     * @description The menu lists the chapters of every page: exactly the visible sections with a
+     *   heading, each with the index of the section in the page answer (the admin jump target);
+     *   chapters the user may not see are not listed.
+     * @input Account with core-administrators-view; then sysadmin.
+     * @output administrators chapters = headed sections of the page with their indexes; the view
+     *   account gets fewer chapters than the sysadmin; every page of the sysadmin menu matches.
+     */
+    public function test_menu_lists_the_chapters_of_the_pages(): void
+    {
+        $chaptersOf = function (array $page): array {
+            $out = [];
+            foreach ($page['sections'] as $i => $section) {
+                if (($section['heading'] ?? '') !== '') {
+                    $out[] = ['anchor' => $i, 'heading' => $section['heading']];
+                }
+            }
+            return $out;
+        };
+
+        $this->signIn($this->userWith(['core-administrators-view']));
+        $limited = collect($this->getJson('/api/knowledge-base')->json('data'))->firstWhere('id', 'administrators')['sections'];
+        $this->assertSame($chaptersOf($this->getJson('/api/knowledge-base/pages/administrators')->json('data')), $limited);
+
+        $this->signIn($this->sysadmin());
+        $menu = collect($this->getJson('/api/knowledge-base')->json('data'));
+        $this->assertGreaterThan(count($limited), count($menu->firstWhere('id', 'administrators')['sections']));
+        foreach ($menu as $item) {
+            $page = $this->getJson('/api/knowledge-base/pages/' . $item['id'])->json('data');
+            $this->assertSame($chaptersOf($page), $item['sections'], $item['id']);
+        }
+    }
+
+    /**
      * @description Languages: the requested one; an unknown one falls back to English; an invalid
      *   code is Czech; an unknown or malformed page id is 404.
      * @input sysadmin; lang en / xx / '../x'; page 'nope' and 'Bad_Id'.

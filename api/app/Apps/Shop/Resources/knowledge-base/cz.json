@@ -2,27 +2,186 @@
   "pages": {
     "shop-welcome-page": {
       "navLabel": "Uvítací stránka e-shopu",
-      "header": "Uvítací stránka e-shopu",
+      "header": "Uvítací stránka aplikace E-shop",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Návod k této stránce se připravuje."
+              "content": "Rozcestník aplikace E-shop. Otevře se po přepnutí na E-shop v hlavičce a v kartách ukazuje všechny části správy e-shopu."
+            }
+          ]
+        },
+        {
+          "heading": "01. Karty stránek",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Produkty",
+                  "text": "Katalog produktů, varianty a obrázky."
+                },
+                {
+                  "title": "Kategorie",
+                  "text": "Strom kategorií, do kterých se produkty řadí."
+                },
+                {
+                  "title": "Objednávky e-shopu",
+                  "text": "Objednávky zákazníků, jejich stavy a platby."
+                },
+                {
+                  "title": "Zákazníci",
+                  "text": "Zákazníci a historie jejich objednávek."
+                },
+                {
+                  "title": "Způsoby dopravy",
+                  "text": "Doprava, kterou si zákazník volí v pokladně."
+                },
+                {
+                  "title": "Způsoby platby",
+                  "text": "Platební metody nabízené v pokladně."
+                },
+                {
+                  "title": "Dodavatelé",
+                  "text": "Evidence dodavatelů produktů."
+                },
+                {
+                  "title": "Slevové kupóny",
+                  "text": "Slevové kódy a jejich podmínky."
+                },
+                {
+                  "title": "Texty e-shopu",
+                  "text": "Texty a jazyky veřejného e-shopu a názvy jeho stránek."
+                },
+                {
+                  "title": "Logy e-shopu",
+                  "text": "Historie akcí provedených v e-shopu."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Karta se zobrazí jen u stránky, ke které máte oprávnění. Stejné stránky jsou v levém menu ve skupinách Katalog, Transakce, Zákazníci, Logistika, Obsah a Systém."
+            }
+          ]
+        },
+        {
+          "heading": "02. Kdo stránku vidí",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Oprávnění Zobrazit uvítací stránku e-shopu (shop-welcome-page-view); do aplikace se dostanete jen s oprávněním záložky E-shop (view-eshop)."
+            }
+          ]
+        },
+        {
+          "heading": "03. Měna a jazyky - důležité vědět",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Všechny ceny v e-shopu jsou v eurech (EUR).",
+                "Názvy a popisy produktů, kategorií, způsobů dopravy a platby se zadávají jednou a jsou stejné ve všech jazycích e-shopu. Do jiných jazyků se překládají jen texty stránek e-shopu (Texty e-shopu).",
+                "Zákazníci nemají na e-shopu účet ani heslo - nakupují bez registrace."
+              ]
             }
           ]
         }
       ]
     },
     "shop-dashboard": {
-      "navLabel": "Dashboard",
-      "header": "Shop - Dashboard",
+      "navLabel": "Dashboard e-shopu",
+      "header": "Dashboard e-shopu",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - přehledová stránka e-shop modulu administrace."
+              "content": "Dashboard e-shopu ukazuje aktuální stav obchodu: tržby, objednávky, co čeká na vyřízení, zásoby, zákazníky a kupóny. S oprávněním odsud e-shop také vypnete do režimu údržby."
+            }
+          ]
+        },
+        {
+          "heading": "01. Záhlaví a stav e-shopu",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Záhlaví Přehled e-shopu ukazuje čas poslední aktualizace a tlačítko Obnovit. Vedle je stav veřejného e-shopu a pro účty s oprávněním Přepnout e-shop do režimu údržby (shop-set-maintenance-mode) tlačítko Vypnout aplikaci / Zapnout aplikaci (postup v kapitole Aplikace)."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Vypnutý e-shop nepřijímá objednávky a zákazníci místo něj vidí stránku údržby."
+            }
+          ]
+        },
+        {
+          "heading": "02. Ukazatele (KPI)",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Tržby (7 dní)",
+                  "text": "Součet zaplacených objednávek za posledních 7 dní a změna oproti minulému týdnu."
+                },
+                {
+                  "title": "Objednávky (7 dní)",
+                  "text": "Počet objednávek za posledních 7 dní a změna oproti minulému týdnu."
+                },
+                {
+                  "title": "Průměrná hodnota objednávky",
+                  "text": "Průměrná částka objednávky v tomto měsíci."
+                },
+                {
+                  "title": "Čeká na vyřízení",
+                  "text": "Počet objednávek, které ještě nebyly vyřízeny - „Vyžaduje pozornost“, nebo „Vše zpracováno“."
+                },
+                {
+                  "title": "Aktivní produkty",
+                  "text": "Počet aktivních produktů a kolik z nich je pod limitem skladu."
+                },
+                {
+                  "title": "Zákazníci",
+                  "text": "Počet zákazníků."
+                },
+                {
+                  "title": "Aktivní kupóny",
+                  "text": "Počet kupónů, které právě platí."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Grafy a seznamy",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Tržby - posledních 30 dní",
+                  "text": "Graf denních tržeb. Zahrnuje jen zaplacené objednávky (bez zrušených a vrácených)."
+                },
+                {
+                  "title": "Stavy objednávek",
+                  "text": "Kolik objednávek je v jakém stavu (Čeká, Potvrzena, Zpracovává se, Odesláno, Doručeno, Zrušeno, Vráceno)."
+                },
+                {
+                  "title": "Poslední objednávky",
+                  "text": "Zákazník, stav, platba, částka a datum posledních objednávek."
+                },
+                {
+                  "title": "Nízký stav skladu",
+                  "text": "Produkty, jejichž zásoba je na limitu upozornění nebo pod ním, s počtem kusů a limitem. Když je vše v pořádku: „Všechny produkty mají dostatek zásob“."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Pokud se data nenačtou, dashboard zobrazí hlášku o chybě spojení - obnovte stránku nebo se přihlaste znovu."
             }
           ]
         }
@@ -30,13 +189,234 @@
     },
     "shop-products": {
       "navLabel": "Produkty",
-      "header": "Správa produktů",
+      "header": "Produkty - katalog e-shopu",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - správa produktového katalogu, variant a obrázků."
+              "content": "Na této stránce spravujete katalog e-shopu: produkty, jejich ceny, sklad, zařazení do kategorií, dodavatele, varianty (například barva a velikost) a obrázky."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Na e-shopu se zobrazí jen produkt, který je Aktivní a má přiřazenou aspoň jednu aktivní kategorii."
+            }
+          ]
+        },
+        {
+          "heading": "01. Tabulka produktů",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "ID, Produkt, SKU",
+                  "text": "Číslo, název a skladový kód produktu."
+                },
+                {
+                  "title": "Cena EUR",
+                  "text": "Prodejní cena s DPH."
+                },
+                {
+                  "title": "Skladem",
+                  "text": "Počet kusů na skladě (u produktu s variantami součet variant)."
+                },
+                {
+                  "title": "Akce v řádku",
+                  "text": "Detaily, Edit, Varianty, Obrázky a Smazat."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Filtry produktů: hledání podle názvu, kódu a popisu, kategorie, dodavatel, cena od-do, stav skladu (pouze nízký sklad / dostatečné zásoby), doporučené produkty a stav aktivace. Detail produktu ukáže kategorie (s hlavní kategorií), dodavatele, ceny, sklad a limit upozornění, varianty, obrázky a stav."
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "02. Přidání a úprava produktu",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Přidat záznam / Edit",
+                  "text": "Nový produkt přidáte v nabídce Akce, existující upravíte tlačítkem Edit.",
+                  "active": true
+                },
+                {
+                  "label": "Název *",
+                  "text": "Název produktu, jak ho uvidí zákazník.",
+                  "active": false
+                },
+                {
+                  "label": "Slug",
+                  "text": "Část adresy produktu na webu. Nevyplněný slug systém vytvoří z názvu.",
+                  "active": false
+                },
+                {
+                  "label": "SKU *",
+                  "text": "Jedinečný skladový kód, například APPLE-I15P-BLK.",
+                  "active": false
+                },
+                {
+                  "label": "Krátký a Podrobný popis",
+                  "text": "Krátký popis do výpisu, podrobný do detailu produktu.",
+                  "active": false
+                },
+                {
+                  "label": "Kategorie",
+                  "text": "Vyberte kategorie v seznamu -- Přidat do kategorie --. Kliknutím na název přiřazené kategorie ji nastavíte jako hlavní. Aktivní produkt musí mít aspoň jednu kategorii.",
+                  "active": false
+                },
+                {
+                  "label": "Dodavatel",
+                  "text": "Nepovinné - z evidence Dodavatelé.",
+                  "active": false
+                },
+                {
+                  "label": "Ceník (EUR)",
+                  "text": "Prodejní cena s DPH (povinná, větší než 0) a nákupní cena (pro vaši evidenci, zákazník ji nevidí).",
+                  "active": false
+                },
+                {
+                  "label": "Sklad",
+                  "text": "Limit upozornění (ks) - když zásoba klesne na tuto hodnotu, produkt se objeví v Nízkém stavu skladu a v kalendáři. Počet na skladě se u produktu s variantami počítá automaticky ze součtu variant.",
+                  "active": false
+                },
+                {
+                  "label": "Aktivní / Doporučené",
+                  "text": "Aktivní = produkt je v e-shopu. Doporučené = produkt má na e-shopu značku doporučeného produktu.",
+                  "active": false
+                },
+                {
+                  "label": "Uložit",
+                  "text": "Produkt se uloží; při chybě systém vypíše, co chybí (název, SKU, cena, kategorie).",
+                  "active": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "variants",
+          "heading": "03. Varianty",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Varianty jsou provedení jednoho produktu, například „Černá - M“. Tlačítko Varianty v řádku otevře jejich editor."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Přidat variantu",
+                  "text": "Vytvoří nový řádek varianty.",
+                  "active": true
+                },
+                {
+                  "label": "Název varianty",
+                  "text": "Povinný, například „Černá - M“.",
+                  "active": false
+                },
+                {
+                  "label": "Atribut a hodnota",
+                  "text": "Až dva páry, například Barva = Černá, Velikost = M.",
+                  "active": false
+                },
+                {
+                  "label": "SKU varianty",
+                  "text": "Vlastní skladový kód varianty.",
+                  "active": false
+                },
+                {
+                  "label": "Cena & DPH (EUR)",
+                  "text": "Sazba DPH (%) a Cena s DPH (povinná, větší než 0); cena bez DPH se dopočítá sama.",
+                  "active": false
+                },
+                {
+                  "label": "Sklad (ks)",
+                  "text": "Počet kusů varianty. Zásoba produktu je součtem variant.",
+                  "active": false
+                },
+                {
+                  "label": "Obrázky varianty",
+                  "text": "Vlastní obrázky, které se ukážou po výběru varianty.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Variantu smažete ikonou koše (po potvrzení)."
+            }
+          ]
+        },
+        {
+          "key": "images",
+          "heading": "04. Obrázky produktu",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Tlačítkem Obrázky v řádku otevřete editor obrázků.",
+                "Přidat obrázek produktu přidá řádek: vyberte Soubor (JPG nebo PNG do 5 MB), vyplňte Alt text (popis obrázku pro nevidomé a vyhledávače) a Pořadí.",
+                "Označte primární obrázek - je to hlavní náhled produktu v katalogu.",
+                "Uložit obrázky uloží změny. Obrázek smažete ikonou koše."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "05. Sklad a objednávky",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Objednávka zboží ze skladu odečte hned při vytvoření.",
+                "Zrušení nebo vrácení objednávky kusy vrátí na sklad; znovuotevření je opět odečte.",
+                "Smazání objednávky, která nebyla zrušená ani vrácená, kusy vrátí na sklad.",
+                "Více kusů, než je skladem, si zákazník neobjedná - pokladna ohlásí, že zboží bylo mezitím vyprodáno."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "06. Mazání a koš",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Smazat přesune produkt do koše (z e-shopu zmizí). V koši ho obnovíte nebo trvale smažete. Objednávky, ve kterých produkt byl, zůstávají beze změny."
+            }
+          ]
+        },
+        {
+          "heading": "07. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "shop-products-view"
+                },
+                {
+                  "title": "Přidání",
+                  "text": "shop-products-create"
+                },
+                {
+                  "title": "Úprava včetně variant a obrázků",
+                  "text": "shop-products-update"
+                },
+                {
+                  "title": "Smazání a obnova",
+                  "text": "shop-products-delete"
+                }
+              ]
             }
           ]
         }
@@ -44,27 +424,417 @@
     },
     "shop-categories": {
       "navLabel": "Kategorie",
-      "header": "Správa kategorií",
+      "header": "Kategorie produktů",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - hierarchická správa kategorií produktů."
+              "content": "Kategorie tvoří strom, podle kterého zákazníci procházejí katalog. Hlavní kategorie může mít podkategorie (například Oblečení → Trička). Na této stránce kategorie vytváříte, přejmenováváte, zapínáte a vypínáte, mažete a přiřazujete do nich produkty."
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "01. Ovládání stromu",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Rozbalit vše / Sbalit vše rozbalí nebo sbalí všechny podkategorie.",
+                "Hlavní kategorie přidá novou kategorii nejvyšší úrovně.",
+                "U kategorie: Podkategorie (přidá podkategorii), Upravit (přejmenuje - Uložit / Zrušit), Aktivní / Neaktivní (přepne zobrazení na e-shopu) a Smazat.",
+                "Ikonou produktů u kategorie zobrazíte produkty v kategorii."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Neaktivní kategorie a podkategorie neaktivní kategorie se v e-shopu nezobrazí. Název musí být jedinečný a nesmí být prázdný."
+            }
+          ]
+        },
+        {
+          "key": "products",
+          "heading": "02. Produkty v kategorii",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Otevřete produkty kategorie. Uvidíte seznam s názvem, SKU a stavem (Aktivní / Neaktivní) a počtem produktů; pole Hledat produkt… seznam zúží.",
+                "Přidat produkt otevře hledání produktů, které v kategorii ještě nejsou; tlačítkem Přidat produkt zařadíte.",
+                "Ikonou Odebrat z kategorie (po potvrzení) produkt z kategorie vyřadíte - produkt sám se nesmaže."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Produkt může být ve více kategoriích; hlavní kategorii nastavíte u produktu (stránka Produkty)."
+            }
+          ]
+        },
+        {
+          "key": "delete",
+          "heading": "03. Mazání kategorie",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Kategorii s podkategoriemi smazat nejde - smažte nejdřív podkategorie.",
+                "Kategorii s přiřazenými produkty smazat nejde - produkty nejdřív přesuňte nebo smažte.",
+                "Smazání je po potvrzení trvalé."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "04. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "shop-categories-view"
+                },
+                {
+                  "title": "Přidání",
+                  "text": "shop-categories-create"
+                },
+                {
+                  "title": "Úprava a přiřazování produktů",
+                  "text": "shop-categories-update"
+                },
+                {
+                  "title": "Smazání",
+                  "text": "shop-categories-delete"
+                }
+              ]
             }
           ]
         }
       ]
     },
     "shop-orders": {
-      "navLabel": "Objednávky",
-      "header": "Správa objednávek",
+      "navLabel": "Objednávky e-shopu",
+      "header": "Objednávky e-shopu",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - správa e-shopových objednávek, stavů a plateb."
+              "content": "Na této stránce vyřizujete objednávky zákazníků: kontrolujete obsah, měníte stav objednávky a platby, upravujete položky a adresu, zakládáte objednávky ručně a upravujete potvrzovací e-mail, který zákazník dostane po objednání."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Objednávky k vyřízení se ukazují v kalendáři v panelu Čeká na vyřízení a na dashboardu e-shopu."
+            }
+          ]
+        },
+        {
+          "heading": "01. Jak objednávka vznikne",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Košík a pokladna",
+                  "text": "Zákazník v e-shopu vloží zboží do košíku a v pokladně vyplní kontakt, doručovací adresu, způsob dopravy a platby a případně slevový kupón.",
+                  "active": true
+                },
+                {
+                  "label": "Kontrola",
+                  "text": "Systém ověří ceny podle katalogu, platnost kupónu a dostupnost zboží.",
+                  "active": false
+                },
+                {
+                  "label": "Uložení",
+                  "text": "Objednávka dostane číslo ve tvaru RRRRMM + pořadí (například 2026110007), stav Přijata a platbu Čeká se na platbu. Zboží se odečte ze skladu.",
+                  "active": false
+                },
+                {
+                  "label": "Zákazník",
+                  "text": "Podle e-mailu se najde existující zákazník, nebo se založí nový.",
+                  "active": false
+                },
+                {
+                  "label": "Potvrzení",
+                  "text": "Zákazník dostane potvrzovací e-mail v jazyce e-shopu, ve kterém objednával (kapitola 07).",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Platba kartou přes platební bránu zatím není napojená. Platbu převodem kontrolujte na bankovním účtu a stav platby měňte ručně (kapitola 04)."
+            }
+          ]
+        },
+        {
+          "heading": "02. Přehledy objednávek",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Všechny objednávky",
+                  "text": "Seznam všech objednávek."
+                },
+                {
+                  "title": "K vyřízení",
+                  "text": "Jen objednávky ve stavech Přijata, Potvrzena, Zpracovávána a Odeslána."
+                },
+                {
+                  "title": "Koš",
+                  "text": "Smazané objednávky."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Sloupce: ID, Číslo objednávky, Zákazník, Stav, Platba, Celkem, Vytvořeno. Filtry objednávek: hledání (číslo, e-mail, adresa), stav objednávky, stav platby, cena od-do a datum vytvoření."
+            }
+          ]
+        },
+        {
+          "heading": "03. Detail objednávky",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zákazník",
+                  "text": "Jméno, e-mail, telefon, firma a město."
+                },
+                {
+                  "title": "Platba & doprava",
+                  "text": "Způsob platby a dopravy, cena dopravy, kdy byla zaplacena, odeslána a doručena."
+                },
+                {
+                  "title": "Adresa doručení",
+                  "text": "Kam se zboží posílá."
+                },
+                {
+                  "title": "Metadata",
+                  "text": "Číslo objednávky, kdy vznikla a byla naposledy upravena, použitý kupón a poznámka."
+                },
+                {
+                  "title": "Položky objednávky",
+                  "text": "Produkt / varianta, počet kusů, jednotková cena, DPH a celkem; souhrn zboží, dopravy, DPH, slevy a celková částka k úhradě."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Zrušená objednávka má v detailu pruh „Tato objednávka byla zrušena“, vrácená „Zboží z této objednávky bylo vráceno“."
+            }
+          ]
+        },
+        {
+          "heading": "04. Stavy objednávky a platby",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Přijata",
+                  "text": "Nová objednávka, čeká na kontrolu.",
+                  "active": true
+                },
+                {
+                  "label": "Potvrzena",
+                  "text": "Zkontrolovali jste ji a přijímáte ji.",
+                  "active": false
+                },
+                {
+                  "label": "Zpracovávána",
+                  "text": "Zboží se chystá.",
+                  "active": false
+                },
+                {
+                  "label": "Odeslána",
+                  "text": "Zásilka je na cestě.",
+                  "active": false
+                },
+                {
+                  "label": "Doručena",
+                  "text": "Zákazník zboží převzal.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zrušeno",
+                  "text": "Objednávka se nerealizuje - kusy se vrátí na sklad."
+                },
+                {
+                  "title": "Vráceno",
+                  "text": "Zákazník zboží vrátil - kusy se vrátí na sklad."
+                },
+                {
+                  "title": "Stav platby",
+                  "text": "Čeká se na platbu, Zaplacena, Platba selhala, Vráceny peníze, Dobírka, Nezaplaceno."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Změna stavu zákazníkovi automaticky žádný e-mail neposílá. O odeslání nebo zrušení ho informujte sami."
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "05. Úprava objednávky",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Edit",
+                  "text": "Tlačítkem Edit otevřete formulář Editace objednávky.",
+                  "active": true
+                },
+                {
+                  "label": "Základní údaje a kontakt",
+                  "text": "E-mail, telefon, firma, jméno a příjmení, způsob platby a dopravy.",
+                  "active": false
+                },
+                {
+                  "label": "Stavy objednávky",
+                  "text": "Stav objednávky a stav platby.",
+                  "active": false
+                },
+                {
+                  "label": "Adresa doručení",
+                  "text": "Ulice a číslo, město, PSČ, země.",
+                  "active": false
+                },
+                {
+                  "label": "Položky objednávky",
+                  "text": "Varianta produktu, počet a cena za kus (s DPH). Přidat položku přidá řádek, ikona koše položku odebere.",
+                  "active": false
+                },
+                {
+                  "label": "Souhrn cen",
+                  "text": "Součet bez DPH, DPH, s DPH, doprava a sleva - počítají se automaticky.",
+                  "active": false
+                },
+                {
+                  "label": "Interní poznámky",
+                  "text": "Poznámka k objednávce.",
+                  "active": false
+                },
+                {
+                  "label": "Uložit objednávku",
+                  "text": "Uloží změny; sklad se upraví podle změn položek a stavu.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Kupón u existující objednávky už změnit nejde.",
+                "Uložená celková částka = zboží - sleva + základní cena dopravy. Poplatek za způsob platby se zatím do uložené částky nezapočítává, i když ho souhrn ve formuláři ukazuje."
+              ]
+            }
+          ]
+        },
+        {
+          "key": "create",
+          "heading": "06. Ruční založení objednávky",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Objednávku přijatou mimo e-shop (telefon, e-mail) založíte v nabídce Akce položkou Přidat záznam. Vyplníte stejný formulář jako při úpravě, můžete vybrat platný slevový kupón (systém ohlásí, když není aktivní, ještě nezačal, vypršel, je vyčerpaný nebo objednávka nedosahuje minimální hodnoty). Zboží se odečte ze skladu. Objednávka musí mít aspoň jednu položku a kompletní adresu."
+            }
+          ]
+        },
+        {
+          "key": "email",
+          "heading": "07. Potvrzovací e-mail objednávky",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "V nabídce Akce zvolte Editovat potvrzovací e-mail. Tento e-mail je potvrzením uzavřené smlouvy a zákazník ho dostane hned po objednávce. Rekapitulaci (zboží, ceny, doprava, platba, adresa) doplní systém sám."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Předmět e-mailu",
+                  "text": "Doplní se číslo objednávky."
+                },
+                {
+                  "title": "Nadpis, Pozdrav, Úvodní zpráva",
+                  "text": "Pozdrav se doplní jménem zákazníka."
+                },
+                {
+                  "title": "Rekapitulace (popisky)",
+                  "text": "Popisky řádků: číslo a datum objednávky, zboží, množství, ceny, sleva, doprava, platba, celkem k úhradě, DPH, doručovací adresa, kontakt, poznámka."
+                },
+                {
+                  "title": "Poučení o odstoupení od smlouvy",
+                  "text": "Text o právu spotřebitele odstoupit od smlouvy do 14 dnů - je povinný, neodstraňujte ho."
+                },
+                {
+                  "title": "Odkaz na obchodní podmínky",
+                  "text": "Text odkazu na obchodní podmínky e-shopu."
+                },
+                {
+                  "title": "Závěrečná zpráva",
+                  "text": "Poděkování a kontakt."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Text se vyplňuje pro každý jazyk e-shopu; prázdné pole použije český text, případně výchozí anglické znění. Živý náhled ukazuje zjednodušený e-mail s ukázkovými daty. Uložení vyžaduje oprávnění upravit objednávky."
+            }
+          ]
+        },
+        {
+          "heading": "08. Mazání a koš",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Smazat přesune objednávku do koše a vrátí zboží na sklad (pokud nebyla zrušená nebo vrácená). Objednávky jsou účetní doklady - mazejte jen omylem vytvořené. Objednávky se automaticky nemažou ani retencí."
+            }
+          ]
+        },
+        {
+          "heading": "09. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "shop-orders-view"
+                },
+                {
+                  "title": "Ruční založení",
+                  "text": "shop-orders-create"
+                },
+                {
+                  "title": "Úprava a potvrzovací e-mail",
+                  "text": "shop-orders-update"
+                },
+                {
+                  "title": "Smazání a obnova",
+                  "text": "shop-orders-delete"
+                }
+              ]
             }
           ]
         }
@@ -72,13 +842,116 @@
     },
     "shop-customers": {
       "navLabel": "Zákazníci",
-      "header": "Správa zákazníků",
+      "header": "Zákazníci e-shopu",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - správa zákaznických účtů a jejich historie objednávek."
+              "content": "Zákazníci e-shopu a jejich objednávky. Zákazník vznikne automaticky při první objednávce (podle e-mailu); při dalších objednávkách se jeho chybějící údaje doplní. Zákazníky můžete přidat a upravovat i ručně."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Údaje zákazníků jsou osobní údaje. Na žádost zákazníka o výmaz použijte Anonymizovat (kapitola 04)."
+            }
+          ]
+        },
+        {
+          "heading": "01. Tabulka zákazníků",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Sloupce: ID, Příjmení, Jméno, Email, Telefon, Celkem utraceno. Filtr hledá podle jména, e-mailu a telefonu a podle stavu Aktivní. Detail ukáže i firmu, adresu, zemi, datum registrace (první objednávky) a poznámku."
+            }
+          ]
+        },
+        {
+          "heading": "02. Objednávky zákazníka",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Tlačítko Objednávky v řádku otevře přehled objednávek zákazníka: počet objednávek a celková útrata, u každé objednávky položky, doručení (adresa, doprava, platba, kdy zaplaceno a odesláno), poznámka a souhrn cen."
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "03. Přidání a úprava",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Formulář: Jméno a Příjmení (povinné, max. 100 znaků), Email, Telefon, Firma, Ulice a č.p., Město, PSČ, Aktivní a interní Poznámka (max. 1000 znaků). Úpravy zákazníka nemění údaje v již vytvořených objednávkách."
+            }
+          ]
+        },
+        {
+          "key": "anonymize",
+          "heading": "04. Anonymizace (výmaz podle GDPR)",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Kdy",
+                  "text": "Zákazník požádal o výmaz osobních údajů, ale má objednávky, které je nutné uchovat jako účetní doklady.",
+                  "active": true
+                },
+                {
+                  "label": "Anonymizovat",
+                  "text": "Tlačítko v řádku zákazníka a potvrzení v dialogu.",
+                  "active": false
+                },
+                {
+                  "label": "Výsledek",
+                  "text": "Jméno, e-mail, telefon a další osobní údaje zákazníka se nevratně odstraní. Objednávky zůstanou zachované.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "danger",
+              "content": "Anonymizace je nevratná."
+            }
+          ]
+        },
+        {
+          "heading": "05. Mazání",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Zákazníka bez objednávek smažete do koše a z koše trvale.",
+                "Zákazníka s objednávkami trvale smazat nejde - systém ho při vysypání koše ponechá a doporučí anonymizaci."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "06. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "shop-customers-view"
+                },
+                {
+                  "title": "Přidání",
+                  "text": "shop-customers-create"
+                },
+                {
+                  "title": "Úprava",
+                  "text": "shop-customers-update"
+                },
+                {
+                  "title": "Smazání, obnova a anonymizace",
+                  "text": "shop-customers-delete"
+                }
+              ]
             }
           ]
         }
@@ -92,21 +965,160 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - správa dostupných způsobů dopravy."
+              "content": "Způsoby dopravy, ze kterých zákazník vybírá v pokladně (například PPL na adresu, Zásilkovna, osobní odběr). Zákazníkovi se nabízejí jen aktivní způsoby v nastaveném pořadí."
+            }
+          ]
+        },
+        {
+          "heading": "01. Údaje způsobu dopravy",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Kód metody",
+                  "text": "Interní kód: 3-50 znaků, malá písmena, číslice a podtržítka, například ppl_parcel."
+                },
+                {
+                  "title": "Název dopravy a Popis",
+                  "text": "Co uvidí zákazník v pokladně."
+                },
+                {
+                  "title": "Typ dopravy",
+                  "text": "Doručení na adresu, Výdejní místo nebo Osobní odběr."
+                },
+                {
+                  "title": "Základní cena (EUR)",
+                  "text": "Cena dopravy, kterou zákazník zaplatí."
+                },
+                {
+                  "title": "Pořadí",
+                  "text": "Pořadí v nabídce pokladny."
+                },
+                {
+                  "title": "Aktivní",
+                  "text": "Jen aktivní doprava se nabízí zákazníkům."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Další údaje - Podporuje dobírku?, Příplatek za dobírku, Doprava zdarma od, Max. váha, Vyžaduje výdejní místo?, Doručení min / max (dny) a Tracking URL - jsou evidenční. E-shop je zatím při výpočtu ceny ani v pokladně nepoužívá: zákazník vždy platí základní cenu dopravy."
+            }
+          ]
+        },
+        {
+          "heading": "02. Práce se seznamem",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Tabulka (ID, Název, Typ, Cena) se ovládá jako ostatní tabulky - přidání v nabídce Akce, úprava, detail, smazání do koše a obnova. Dopravu, kterou dočasně nenabízíte, raději vypněte (Aktivní) než mažte."
+            }
+          ]
+        },
+        {
+          "heading": "03. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "shop-shipping-methods-view"
+                },
+                {
+                  "title": "Přidání",
+                  "text": "shop-shipping-methods-create"
+                },
+                {
+                  "title": "Úprava",
+                  "text": "shop-shipping-methods-update"
+                },
+                {
+                  "title": "Smazání a obnova",
+                  "text": "shop-shipping-methods-delete"
+                }
+              ]
             }
           ]
         }
       ]
     },
     "shop-payment-methods": {
-      "navLabel": "Platební metody",
-      "header": "Platební metody",
+      "navLabel": "Způsoby platby",
+      "header": "Způsoby platby",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - správa dostupných platebních metod."
+              "content": "Platební metody, které zákazník vidí v pokladně. Seznam metod je pevný (bankovní převod CZ a SEPA, platba kartou online, Apple Pay, Google Pay, PayPal, dobírka, hotovost při osobním odběru) - metody nepřidáváte ani nemažete, jen je upravujete a zapínáte. Po instalaci je zapnutá jen hotovost při osobním odběru."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Online platby (karta, Apple Pay, Google Pay, PayPal) vyžadují napojení platební brány vývojáři. Dokud není napojená, nechte tyto metody neaktivní a nabízejte bankovní převod."
+            }
+          ]
+        },
+        {
+          "heading": "01. Údaje platební metody",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Název platby a Popis pro zákazníka",
+                  "text": "Co zákazník uvidí v pokladně."
+                },
+                {
+                  "title": "Poskytovatel",
+                  "text": "Ruční (bankovní převod), Stripe nebo PayPal - určuje typ metody, nemění se."
+                },
+                {
+                  "title": "Pořadí",
+                  "text": "Pořadí v pokladně."
+                },
+                {
+                  "title": "Aktivní",
+                  "text": "Jen aktivní metody se nabízejí."
+                },
+                {
+                  "title": "Číslo účtu, Kód banky, Variabilní symbol",
+                  "text": "Údaje k bankovnímu převodu; variabilní symbol může být číslo objednávky, telefon zákazníka nebo žádný."
+                },
+                {
+                  "title": "Poplatek (EUR)",
+                  "text": "Poplatek za metodu."
+                },
+                {
+                  "title": "Konfigurace brány (JSON)",
+                  "text": "Technické nastavení platební brány - vyplňuje jen vývojář."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Poplatek za platbu se zatím do ceny objednávky nezapočítává a číslo účtu s variabilním symbolem se zákazníkovi automaticky neposílá. Platební údaje k převodu proto uveďte v textech e-shopu nebo v potvrzovacím e-mailu objednávky."
+            }
+          ]
+        },
+        {
+          "heading": "02. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "shop-payment-methods-view"
+                },
+                {
+                  "title": "Úprava",
+                  "text": "shop-payment-methods-update"
+                }
+              ]
             }
           ]
         }
@@ -114,13 +1126,91 @@
     },
     "shop-suppliers": {
       "navLabel": "Dodavatelé",
-      "header": "Správa dodavatelů",
+      "header": "Dodavatelé",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - evidence dodavatelů produktů."
+              "content": "Evidence dodavatelů, od kterých nakupujete zboží. Dodavatele pak přiřazujete k produktům a podle dodavatele produkty filtrujete. Zákazník dodavatele nevidí."
+            }
+          ]
+        },
+        {
+          "heading": "01. Údaje dodavatele",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Název dodavatele",
+                  "text": "Povinný, 2-200 znaků."
+                },
+                {
+                  "title": "IČO",
+                  "text": "Identifikační číslo (max. 20 znaků)."
+                },
+                {
+                  "title": "Kontaktní osoba, e-mail, telefon",
+                  "text": "Koho a jak kontaktovat."
+                },
+                {
+                  "title": "Adresa",
+                  "text": "Ulice a č.p., Město, PSČ, Země."
+                },
+                {
+                  "title": "Platební podmínky",
+                  "text": "Například „Splatnost 14 dní“."
+                },
+                {
+                  "title": "Aktivní a Poznámka",
+                  "text": "Stav a interní poznámka."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Tabulka: ID, Název firmy, IČO, Email, Vytvořeno; filtry podle ID, názvu, IČO, e-mailu a stavu."
+            }
+          ]
+        },
+        {
+          "heading": "02. Práce se seznamem",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Přidání, úprava, detail, export a grafy - jako v ostatních tabulkách.",
+                "Import dodavatelů ze souboru (Akce → Importovat data) - postup v úvodní kapitole.",
+                "Hromadné mazání vybraných dodavatelů a koš s obnovou."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "shop-suppliers-view"
+                },
+                {
+                  "title": "Přidání a import",
+                  "text": "shop-suppliers-create"
+                },
+                {
+                  "title": "Úprava",
+                  "text": "shop-suppliers-update"
+                },
+                {
+                  "title": "Smazání a obnova",
+                  "text": "shop-suppliers-delete"
+                }
+              ]
             }
           ]
         }
@@ -134,35 +1224,256 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - správa slevových kupónů a jejich podmínek."
+              "content": "Slevové kupóny jsou kódy, které zákazník zadá v pokladně a získá slevu. Nastavujete typ a výši slevy, minimální hodnotu objednávky, počet použití a dobu platnosti."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Začátek a konec platnosti kupónů se ukazují v kalendáři."
+            }
+          ]
+        },
+        {
+          "heading": "01. Vytvoření kupónu",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Přidat záznam",
+                  "text": "V nabídce Akce.",
+                  "active": true
+                },
+                {
+                  "label": "Kód kupónu",
+                  "text": "3-50 znaků: písmena, číslice, _ a -, bez mezer, například LETO20. Tento kód zákazník zadá v pokladně.",
+                  "active": false
+                },
+                {
+                  "label": "Typ a hodnota slevy",
+                  "text": "Procentuální (%) nebo Pevná částka (EUR).",
+                  "active": false
+                },
+                {
+                  "label": "Minimální objednávka (EUR)",
+                  "text": "Kupón platí jen od této hodnoty zboží.",
+                  "active": false
+                },
+                {
+                  "label": "Max. počet použití",
+                  "text": "Kolikrát lze kupón použít celkem; prázdné = neomezeně.",
+                  "active": false
+                },
+                {
+                  "label": "Platnost od / do",
+                  "text": "Období, kdy kupón platí.",
+                  "active": false
+                },
+                {
+                  "label": "Aktivní",
+                  "text": "Neaktivní kupón nejde použít.",
+                  "active": false
+                },
+                {
+                  "label": "Popis",
+                  "text": "Interní poznámka, například k jaké kampani kupón patří.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Volba Platí pro (Vše, Produkty, Kategorie) je zatím jen evidenční - sleva se vždy počítá z celé hodnoty zboží v objednávce."
+            }
+          ]
+        },
+        {
+          "heading": "02. Kdy kupón nejde použít",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "kupón není aktivní,",
+                "platnost ještě nezačala nebo už skončila,",
+                "kupón už byl použit maximální početkrát (sloupec Použito),",
+                "objednávka nedosahuje minimální hodnoty."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Zákazník v těchto případech dostane v pokladně vysvětlení."
+            }
+          ]
+        },
+        {
+          "heading": "03. Tabulka a správa",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Sloupce: ID, Kód, Typ, Sleva, Použito, Aktivní, Platí do. Kupón upravíte (Upravit), smažete do koše a obnovíte. Ukončenou akci stačí vypnout (Aktivní) - kupón zůstane v evidenci."
+            }
+          ]
+        },
+        {
+          "heading": "04. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "shop-coupons-view"
+                },
+                {
+                  "title": "Přidání",
+                  "text": "shop-coupons-create"
+                },
+                {
+                  "title": "Úprava",
+                  "text": "shop-coupons-update"
+                },
+                {
+                  "title": "Smazání a obnova",
+                  "text": "shop-coupons-delete"
+                }
+              ]
             }
           ]
         }
       ]
     },
     "shop-logs": {
-      "navLabel": "Logy",
-      "header": "Shop - Logy",
+      "navLabel": "Logy e-shopu",
+      "header": "Logy e-shopu",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - auditní log akcí provedených v e-shop modulu."
+              "content": "Log e-shopu je historie všech akcí v e-shopu: produkty, kategorie, objednávky (i z pokladny), zákazníci, dodavatelé, kupóny, doprava a platby, importy a změny režimu údržby."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Záznamy nejde upravit ani smazat. Staré záznamy maže noční úklid podle retence auditních logů."
+            }
+          ]
+        },
+        {
+          "heading": "01. Co v logu najdete",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Akce",
+                  "text": "Vytvoření, Úprava, Smazání (do koše), Trvalé smazání, Hromadné smazání, Obnova, Vyprázdnění koše, Import, Platba, Chyba, Změna režimu údržby, Neautorizovaný pokus o změnu údržby."
+                },
+                {
+                  "title": "Modul",
+                  "text": "Produkty, Kategorie, Objednávky, Objednávky (pokladna), Zákazníci, Dodavatelé, Kupóny, Způsoby dopravy, Způsoby platby, E-shop (obecné)."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Chyba u objednávky z pokladny často znamená, že se nepodařilo odeslat potvrzovací e-mail - objednávka sama je v pořádku. Filtry, detail, export a grafy fungují jako v Logy systému."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Log obsahuje osobní údaje zákazníků - exporty chraňte."
+            }
+          ]
+        },
+        {
+          "heading": "02. Kdo stránku vidí",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Oprávnění Zobrazit historii logů e-shopu (shop-view-logs)."
             }
           ]
         }
       ]
     },
     "edit-eshop": {
-      "navLabel": "Nastavení e-shopu",
-      "header": "Globální nastavení e-shopu",
+      "navLabel": "Texty e-shopu",
+      "header": "Texty e-shopu",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Testovací obsah - globální nastavení e-shopu."
+              "content": "Stránka Texty e-shopu spravuje texty veřejného e-shopu ve všech jazycích (nadpisy, tlačítka, popisky košíku a pokladny, hlášky), jazyky e-shopu a názvy stránek e-shopu v prohlížeči."
+            },
+            {
+              "type": "text",
+              "content": "Ovládání je stejné jako u stránky Texty webu (aplikace Web) - kapitoly Překlady a Názvy stránek tam popisují každý krok. Zde jen to, co je pro e-shop jiné."
+            }
+          ]
+        },
+        {
+          "heading": "01. Záložka Překlady",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Řada jazyků e-shopu - přidání jazyka (vlajka, kód, název, aktivní), aktivace a deaktivace, smazání. Čeština je výchozí jazyk.",
+                "Tabulka Klíč (JSON cesta) / Hodnota, hledání, statistika klíčů a chybějících textů, filtr chybějících.",
+                "Stažení a nahrání JSON pro překladatele.",
+                "Tlačítko Uložit změny uloží texty aktuálního jazyka."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Chybějící text se zákazníkovi zobrazí jako „Cannot load text“. Jazyk aktivujte až po doplnění všech textů."
+            }
+          ]
+        },
+        {
+          "heading": "02. Záložka Názvy stránek",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Názvy v záložce prohlížeče a ve výsledcích vyhledávání pro stránky Katalog produktů, Detail produktu, Košík, Pokladna, Údržba e-shopu a Stránka nenalezena (404), v každém jazyce zvlášť (doporučeno do 60 znaků)."
+            }
+          ]
+        },
+        {
+          "heading": "03. Co se zde neupravuje",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Názvy, popisy a ceny produktů - stránka Produkty.",
+                "Potvrzovací e-mail objednávky - stránka Objednávky e-shopu (Akce → Editovat potvrzovací e-mail).",
+                "Obchodní podmínky a zásady ochrany osobních údajů - Core → Právní dokumenty.",
+                "Kontakty a sociální sítě - Core → Nastavení."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "04. Kdo smí co",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazení",
+                  "text": "shop-edit-eshop-view"
+                },
+                {
+                  "title": "Úpravy",
+                  "text": "shop-edit-eshop-update"
+                }
+              ]
             }
           ]
         }

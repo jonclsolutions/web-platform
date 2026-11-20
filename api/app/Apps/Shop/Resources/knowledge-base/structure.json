@@ -19,28 +19,47 @@
       "group": "shop",
       "order": 28,
       "permission": "shop-products-view",
-      "devNote": "ProductsComponent, route 'shop/products', permission 'shop-products-view'. Zahrnuje varianty a obrázky produktu (samostatné modaly)."
+      "devNote": "ProductsComponent, route 'shop/products', permission 'shop-products-view'. Zahrnuje varianty a obrázky produktu (samostatné modaly).",
+      "sections": {
+        "edit": "shop-products-create|shop-products-update",
+        "variants": "shop-products-update",
+        "images": "shop-products-update"
+      }
     },
     {
       "id": "shop-categories",
       "group": "shop",
       "order": 29,
       "permission": "shop-categories-view",
-      "devNote": "CategoriesComponent, route 'shop/categories', permission 'shop-categories-view'. Stromová struktura kategorií + přiřazování produktů."
+      "devNote": "CategoriesComponent, route 'shop/categories', permission 'shop-categories-view'. Stromová struktura kategorií + přiřazování produktů.",
+      "sections": {
+        "edit": "shop-categories-create|shop-categories-update",
+        "products": "shop-categories-update",
+        "delete": "shop-categories-delete"
+      }
     },
     {
       "id": "shop-orders",
       "group": "shop",
       "order": 30,
       "permission": "shop-orders-view",
-      "devNote": "OrdersComponent, route 'shop/orders', permission 'shop-orders-view'."
+      "devNote": "OrdersComponent, route 'shop/orders', permission 'shop-orders-view'.",
+      "sections": {
+        "edit": "shop-orders-update",
+        "create": "shop-orders-create",
+        "email": "shop-orders-update"
+      }
     },
     {
       "id": "shop-customers",
       "group": "shop",
       "order": 31,
       "permission": "shop-customers-view",
-      "devNote": "CustomersComponent, route 'shop/customers', permission 'shop-customers-view'."
+      "devNote": "CustomersComponent, route 'shop/customers', permission 'shop-customers-view'.",
+      "sections": {
+        "edit": "shop-customers-create|shop-customers-update",
+        "anonymize": "shop-customers-delete"
+      }
     },
     {
       "id": "shop-shipping-methods",

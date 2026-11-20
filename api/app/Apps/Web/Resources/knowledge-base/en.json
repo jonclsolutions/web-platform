@@ -1,100 +1,978 @@
 {
   "pages": {
     "web-welcome-page": {
-      "navLabel": "Web Welcome Page",
-      "header": "Web Welcome Page",
+      "navLabel": "Website welcome page",
+      "header": "Welcome page of the Web application",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "The guide for this page is being prepared."
+              "content": "The signpost of the Web application. It opens when you switch to the Web application in the header and its cards show what you find in this part of the administration."
+            }
+          ]
+        },
+        {
+          "heading": "01. Page cards",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Website texts",
+                  "text": "Editing the texts and content of the public pages of the website - translations, page titles, FAQ, jobs, references and the knowledge base."
+                },
+                {
+                  "title": "Inquiries",
+                  "text": "Inquiries visitors sent through the contact form of the website."
+                },
+                {
+                  "title": "Job applicants",
+                  "text": "Job applications sent from the form of a job position."
+                },
+                {
+                  "title": "Web logs",
+                  "text": "History of all actions taken in the Web application."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Click a card to open the page. A card of a page you have no permission for is not shown. The same pages are also in the left menu."
+            }
+          ]
+        },
+        {
+          "heading": "02. Who sees the page",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The page requires the permission to show the welcome page of the web section (web-welcome-page-view). You get into the Web application only with the permission of the Web tab (view-web)."
             }
           ]
         }
       ]
     },
     "web-dashboard": {
-      "navLabel": "Dashboard",
-      "header": "Web - Dashboard",
+      "navLabel": "Website dashboard",
+      "header": "Website dashboard",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - the overview page of the Web admin module."
+              "content": "The website dashboard is an overview of the operation of the public website: numbers of inquiries and applicants, activity in the log, quick links and the state of the website. With the permission you also switch the website into maintenance mode from here."
+            }
+          ]
+        },
+        {
+          "heading": "01. Header and state of the website",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The header shows the title Website overview, the time of the last update and the Refresh button. Next to it is the state of the public website (Online, Online · problem, Offline · maintenance, Unavailable) and, for accounts with the permission to switch the website to maintenance mode (web-set-maintenance-mode), the button Switch application off / Switch application on. Switching off and on is described in the chapter Applications."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "A switched-off website is not seen by any visitor - the maintenance page with contacts is shown instead. The contact form and job applications do not work during maintenance."
+            }
+          ]
+        },
+        {
+          "heading": "02. Numbers",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Inquiries",
+                  "text": "The number of inquiries on the Inquiries page."
+                },
+                {
+                  "title": "Applicants",
+                  "text": "The number of job applications on the Job applicants page."
+                },
+                {
+                  "title": "Log entries",
+                  "text": "The number of entries in the web log."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Choose the main tile by clicking its name; the other numbers are in the overview by module and in the coloured distribution bar. It works the same as the system dashboard. You see numbers only for pages you have permission for."
+            }
+          ]
+        },
+        {
+          "heading": "03. Quick navigation and recent activity",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "The cards Website texts, Inquiries, Job applicants and Web logs open their page.",
+                "Recent activity shows the last eight entries of the web log (who created, edited, deleted or exported what). View all opens Web logs.",
+                "Recent events breakdown shows the share of action types among these entries."
+              ]
             }
           ]
         }
       ]
     },
     "user-request": {
-      "navLabel": "Web Form",
-      "header": "Web Form (Inquiries)",
+      "navLabel": "Inquiries",
+      "header": "Inquiries from the website",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - management of inquiries submitted via the public web form."
+              "content": "On this page you process the inquiries visitors sent through the contact form of the website. Every inquiry has a topic, a contact, a description, a processing status and a priority, and manually added ones also attachments. Here you also edit the text of the confirmation e-mail the customer receives after sending an inquiry."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "New inquiries are also shown in the calendar in the panel Waiting for you. If nobody goes through them regularly, the customer waits - decide who is in charge of them."
+            }
+          ]
+        },
+        {
+          "heading": "01. How an inquiry is created",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Form on the website",
+                  "text": "On the Contact page the visitor chooses a topic, fills in the contact e-mail, phone and a description of the request and confirms the consent to the processing of personal data. The form is protected against robots and flooding.",
+                  "active": true
+                },
+                {
+                  "label": "Saving",
+                  "text": "The inquiry is saved with the status New and appears in the table.",
+                  "active": false
+                },
+                {
+                  "label": "Confirmation to the customer",
+                  "text": "The customer automatically receives a confirmation e-mail in the language they used on the website (chapter 06).",
+                  "active": false
+                },
+                {
+                  "label": "Processing",
+                  "text": "You take the inquiry over, change its status and write internal notes.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "note",
+              "highlight": "When the website is switched off",
+              "content": "In maintenance mode the form accepts no inquiries."
+            }
+          ]
+        },
+        {
+          "heading": "02. The table of inquiries",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "ID",
+                  "text": "The number of the inquiry."
+                },
+                {
+                  "title": "Topic",
+                  "text": "The subject of the inquiry - New project / inquiry, Existing project support, Collaboration / careers, Other, or a custom text."
+                },
+                {
+                  "title": "Email",
+                  "text": "The contact e-mail of the customer."
+                },
+                {
+                  "title": "Status",
+                  "text": "New, In progress, Done, Cancelled."
+                },
+                {
+                  "title": "Priority",
+                  "text": "Low, Neutral, High."
+                },
+                {
+                  "title": "Created",
+                  "text": "When the inquiry arrived."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Filter by ID, topic, e-mail, status and priority. The details of an inquiry (Details icon) show all data including the phone, the full description, the internal note, attachments (View / Download) and the date of the last change."
+            }
+          ]
+        },
+        {
+          "key": "process",
+          "heading": "03. Processing an inquiry",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Open the inquiry",
+                  "text": "Read the full description and the attachments with the Details icon.",
+                  "active": true
+                },
+                {
+                  "label": "Edit",
+                  "text": "The edit icon (Edit) opens the form.",
+                  "active": false
+                },
+                {
+                  "label": "Processing status",
+                  "text": "Set In progress once you take the inquiry over; Done when handled; Cancelled when it will not go ahead.",
+                  "active": false
+                },
+                {
+                  "label": "Priority",
+                  "text": "Mark the importance - it helps with sorting and filtering.",
+                  "active": false
+                },
+                {
+                  "label": "Internal note",
+                  "text": "A note for colleagues (the customer does not see it) - for example who was talked to and what was agreed.",
+                  "active": false
+                },
+                {
+                  "label": "Confirm",
+                  "text": "The changes are saved and written to the web log.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Nothing is sent to the customer when the status changes. Answer them from your own e-mail to the address of the inquiry."
+            }
+          ]
+        },
+        {
+          "key": "create",
+          "heading": "04. Adding an inquiry manually",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "An inquiry that came another way (phone, a meeting) is added with Add record in the Actions menu. Fill in Topic / Subject (3-255 characters), Contact e-mail, Phone, Processing status, Priority, Request description (required), Internal note, and you can attach files (at most 10 files, each up to 20 MB, up to 50 MB in total)."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "A manually added inquiry also sends the confirmation e-mail to the entered address. Enter only the real address of the customer."
+            }
+          ]
+        },
+        {
+          "key": "import",
+          "heading": "05. Importing inquiries",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Add many inquiries at once (for example a transfer from another system) with Import data in the Actions menu. The procedure - template, file check, confirmation - is in the introductory chapter. Imported inquiries send no confirmation e-mail."
+            }
+          ]
+        },
+        {
+          "key": "email",
+          "heading": "06. Confirmation e-mail to the customer",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "In the Actions menu choose Edit confirmation e-mail. An editor opens with the text the customer receives after sending an inquiry:"
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "E-mail subject",
+                  "text": "Shown in the mailbox; the system adds “ – topic of the inquiry” to it."
+                },
+                {
+                  "title": "E-mail heading and Greeting",
+                  "text": "For example “Your inquiry has been received” and “Hello,”."
+                },
+                {
+                  "title": "Intro message",
+                  "text": "The main message - thanks and what happens next."
+                },
+                {
+                  "title": "Summary",
+                  "text": "The heading of the section and the labels of the table in which the customer sees their topic, e-mail, phone, description, attachments and date received."
+                },
+                {
+                  "title": "Closing message",
+                  "text": "For example “If you have any questions, feel free to contact us.”"
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "The text is filled in separately for every language of the website. An empty field uses the Czech text, and when that is empty too, the default wording.",
+                "The Live preview at the bottom shows how the e-mail looks; the summary in the preview is filled with sample data.",
+                "Save stores the template, Cancel closes the editor without saving."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Editing the template requires the permission to edit inquiries (web-user-requests-update)."
+            }
+          ]
+        },
+        {
+          "heading": "07. Deleting, the trash and export",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Delete moves an inquiry to the trash; in the trash you restore it or delete it permanently (with its attachments).",
+                "Inquiries can also be deleted in bulk - select them with the checkboxes and choose Delete selected in the bar.",
+                "The export of inquiries (Actions → export data) contains personal data - handle it with care.",
+                "Old inquiries are deleted automatically according to the retention in Settings → Data retention (row Web inquiries)."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "08. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "web-user-requests-view"
+                },
+                {
+                  "title": "Manual adding and import",
+                  "text": "web-user-requests-create"
+                },
+                {
+                  "title": "Editing an inquiry and the confirmation e-mail",
+                  "text": "web-user-requests-update"
+                },
+                {
+                  "title": "Deleting and restoring from the trash",
+                  "text": "web-user-requests-delete"
+                }
+              ]
             }
           ]
         }
       ]
     },
     "web-logs": {
-      "navLabel": "Business Logs",
-      "header": "Web - Business Logs",
+      "navLabel": "Web logs",
+      "header": "Web logs",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - an audit log of actions performed in the Web module."
+              "content": "The web log is the history of all actions in the Web application: who created, edited or deleted an inquiry or an applicant, who changed the website texts and translations, who exported what, when the website was switched off or on and which errors occurred."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Entries cannot be edited or deleted. Old entries are deleted by the nightly clean-up according to the retention of audit logs (Settings → Data retention)."
+            }
+          ]
+        },
+        {
+          "heading": "01. What you find in the log",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Action",
+                  "text": "Created, Updated, Soft deleted, Permanently deleted, Restored, Trash emptied, Bulk deleted, Exported, Error, Maintenance mode changed, Unauthorized maintenance toggle attempt."
+                },
+                {
+                  "title": "Module",
+                  "text": "Inquiries, Job applications, Website translations, Web (general)."
+                },
+                {
+                  "title": "Other columns",
+                  "text": "Time, User, Event description and IP address."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "An error at an inquiry often means the confirmation e-mail to the customer could not be sent - the description says why. If errors repeat, contact technical support."
+            }
+          ]
+        },
+        {
+          "heading": "02. Working with the log",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Filters, entry details with technical data, export and charts work the same as in System logs - see that chapter and the introductory chapter. Typical questions: who changed the status of an inquiry (module Inquiries, action Updated), who switched the website off (action Maintenance mode changed)."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "The log contains e-mails and IP addresses - protect exports and delete them after use."
+            }
+          ]
+        },
+        {
+          "heading": "03. Who sees the page",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The permission to show the log history of the web section (web-view-web-logs)."
             }
           ]
         }
       ]
     },
     "edit-website": {
-      "navLabel": "Website Editing",
-      "header": "Website Content Editing",
+      "navLabel": "Website texts",
+      "header": "Texts and content of the website",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Texts and content of the public website: translations, browser page titles, FAQ, open positions, references and the knowledge base. Each part is a tab at the top."
+              "content": "The Website texts page manages all content of the public website: the texts of all pages in all languages, the languages of the website, the page titles in the browser, frequently asked questions (FAQ), job positions, references and the public knowledge base. Each part is a separate tab at the top."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Changes show on the website right after saving. With a read-only permission (web-edit-website-view) the page is read-only; an account with web-edit-website-update may save."
+            }
+          ]
+        },
+        {
+          "heading": "01. Tabs of the page",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Translations",
+                  "text": "All texts of the website (headings, paragraphs, buttons, form labels) and the languages of the website."
+                },
+                {
+                  "title": "Page titles",
+                  "text": "The text in the browser tab and in search results for every page of the website."
+                },
+                {
+                  "title": "FAQ",
+                  "text": "Frequently asked questions divided into categories."
+                },
+                {
+                  "title": "Jobs",
+                  "text": "Job offers on the Careers page."
+                },
+                {
+                  "title": "References",
+                  "text": "Completed projects."
+                },
+                {
+                  "title": "Knowledge base",
+                  "text": "The public help page (/knowledge-base)."
+                }
+              ]
             },
             {
               "type": "text",
-              "content": "The tab Knowledge base edits the public Help centre page (/knowledge-base). At the top is the introduction of the page - the main heading and the first text. Below it come the blocks in the order of the website: each block has a heading and a text, optionally any number of sub-blocks (smaller heading + text, button Add sub-block) and one optional image at the end. Blocks and sub-blocks can be added, moved and removed, and a block can be hidden (Show on the website)."
+              "content": "A tab with unsaved changes is marked. Every tab is saved separately with its own button."
+            }
+          ]
+        },
+        {
+          "heading": "02. Translations - languages of the website",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "At the top of the Translations tab is the row of the website languages with flags. Click a language to show its texts. Czech is the default language - it is the template of all texts and cannot be switched off or deleted."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Add language",
+                  "text": "Add language opens the form.",
+                  "active": true
+                },
+                {
+                  "label": "Language icon",
+                  "text": "A flag image PNG or JPG up to 512 KB.",
+                  "active": false
+                },
+                {
+                  "label": "Language code",
+                  "text": "2-5 lower-case letters, for example sk, de, fr. Every code only once.",
+                  "active": false
+                },
+                {
+                  "label": "Language name",
+                  "text": "For example “Slovenčina”.",
+                  "active": false
+                },
+                {
+                  "label": "Language active",
+                  "text": "Ticked = the language is offered to visitors in the language switch. Keep a new language inactive until its texts are translated.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "The icon at a language deactivates or activates it - visitors do not see an inactive language, its texts stay.",
+                "The bin icon deletes the language from the list (after a confirmation). The file with its texts stays on the server.",
+                "The upload icon uploads the texts of the language from a JSON file (see chapter 04)."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Translations - editing texts",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Choose the language",
+                  "text": "Click the language in the row of languages.",
+                  "active": true
+                },
+                {
+                  "label": "Find the text",
+                  "text": "The table has the columns Key (JSON path) - where the text is used on the website, for example navigation.home - and Value in the language. The field Search key or text… searches keys and texts.",
+                  "active": false
+                },
+                {
+                  "label": "Edit",
+                  "text": "Rewrite the text in the Value field. The field grows with the text.",
+                  "active": false
+                },
+                {
+                  "label": "Save changes",
+                  "text": "Save changes stores the texts of the current language. A dot on the button warns of unsaved changes.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "keys / filled / missing",
+                  "text": "Statistics of the language: how many texts the website has, how many are filled and how many are missing."
+                },
+                {
+                  "title": "Missing translations",
+                  "text": "A text missing in the language has an exclamation mark. The button “N missing” (or a click on the missing statistic) shows only the missing texts."
+                },
+                {
+                  "title": "What the visitor sees",
+                  "text": "Instead of a missing text the website shows “Cannot load text”. So fill in all texts before activating a language."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Do not change the key - the website looks the text up by it. Change only the value. Unsaved changes are lost when you switch the language or leave the page without saving."
+            }
+          ]
+        },
+        {
+          "heading": "04. Translations - downloading and uploading JSON",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Download JSON downloads all texts of the current language into a file - useful as a backup or for a translator.",
+                "Upload JSON uploads a file with the same structure of keys as the Czech template. Keys missing in the file stay empty and are marked as missing.",
+                "Working with a translator: download the Czech JSON, have only the values (not the keys) translated, upload the file to the new language, check the missing texts and save."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Uploading JSON replaces the texts of the language with the content of the file. Download a backup before uploading."
+            }
+          ]
+        },
+        {
+          "heading": "05. Page titles",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The Page titles tab sets the text in the browser tab and the headline in Google search results for every page of the website: Home page, Services, Projects, About us, Contact, FAQ, Help center, Careers (job list and job detail), the legal pages, Website maintenance and Page not found (404)."
+            },
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Choose the language with Language of the titles.",
+                "Edit the titles - the tab preview shows the result. Google shows roughly the first 60 characters.",
+                "Save page titles saves the changes, Discard changes reverts them."
+              ]
             },
             {
               "type": "text",
-              "content": "Texts are entered for every language of the website separately (language switch at the top); each language shows the number of missing texts. Text changes are stored with Save, Discard returns the last saved state."
+              "content": "Empty field = the Czech title is used. A good page title says what the page is about and the company name, for example “Services | Company Ltd.”."
+            }
+          ]
+        },
+        {
+          "heading": "06. FAQ - frequently asked questions",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Categories are shown on the FAQ page as tabs, the questions in their order. An answer is plain text - line breaks are kept."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Add category creates a category; fill in the Category name in all languages.",
+                "Add question adds a question and an answer to the category.",
+                "Move up / Move down change the order of categories and questions; Move to… moves a question to another category.",
+                "Remove question, or Remove the category with its questions.",
+                "Save stores everything at once; Discard changes returns the last saved state."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "07. Jobs",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Positions are shown on the Careers page. The preview (title and short description) is in the list of positions, the type of employment, place and text blocks in the detail of the position, which also holds the application form."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Add position",
+                  "text": "Creates a new position (Hidden so far).",
+                  "active": true
+                },
+                {
+                  "label": "Address (URL)",
+                  "text": "Part of the address of the position detail, for example ui-designer. Only lower-case letters without diacritics, digits and hyphens; every position needs its own address. Changing it changes the link of the position.",
+                  "active": false
+                },
+                {
+                  "label": "Preview in the list",
+                  "text": "Title and Short description in every language.",
+                  "active": false
+                },
+                {
+                  "label": "Detail of the position",
+                  "text": "Type of employment, Place and any number of text blocks (Heading of the block + Text), for example What you will do, What we offer. Line breaks and bullets (•) are kept.",
+                  "active": false
+                },
+                {
+                  "label": "Show on the website",
+                  "text": "Ticking it publishes the position (status Shown). Unticking hides it without deleting.",
+                  "active": false
+                },
+                {
+                  "label": "Save",
+                  "text": "Saves all positions at once.",
+                  "active": false
+                }
+              ]
             },
             {
               "type": "text",
-              "content": "Image of a block: only JPG, PNG or WebP up to 5 MB - no video or other files. The image is stored at once (without Save); the server scales it down, converts it to WebP and removes its metadata (e.g. the location). A new block has to be saved first, then its image can be uploaded."
+              "content": "Change the order of positions with the arrows; Remove position deletes it (after saving). Applications from the form of a position are on the Job applicants page."
+            }
+          ]
+        },
+        {
+          "heading": "08. References",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Projects are shown on the Projects page in the order of the editor. A row of the list shows the name, year and client, the detail the rest."
             },
             {
-              "type": "note",
-              "content": "Changes need the permission to edit the website; with read permission only the editor is read-only."
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Category",
+                  "text": "For example Web development, Audit."
+                },
+                {
+                  "title": "Year / period and Client",
+                  "text": "The same in all languages."
+                },
+                {
+                  "title": "Project",
+                  "text": "Project name, Scope, Our role, Description and Result - in every language."
+                },
+                {
+                  "title": "Key features",
+                  "text": "A list of features (Add feature / Remove feature)."
+                },
+                {
+                  "title": "Technology stack",
+                  "text": "Rows Layer (e.g. Frontend) + Technology (e.g. Angular)."
+                },
+                {
+                  "title": "Image",
+                  "text": "JPG, PNG or WebP up to 5 MB; on the website it is on the right next to the key features."
+                },
+                {
+                  "title": "Show on the website",
+                  "text": "Publishes or hides the reference."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "The image is saved right after uploading (independently of the Save button). For a new reference you upload it only after saving the reference."
+            }
+          ]
+        },
+        {
+          "heading": "09. Knowledge base (public help)",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The tab edits the public page Help center (/knowledge-base), where visitors learn what the system contains and how it works."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Introduction of the page",
+                  "text": "Main heading and the introduction text of the page.",
+                  "active": true
+                },
+                {
+                  "label": "Blocks",
+                  "text": "Below the introduction are the blocks in the order they appear on the website. Each has a Heading of the block and a Text of the block.",
+                  "active": false
+                },
+                {
+                  "label": "Sub-blocks",
+                  "text": "Optionally any number of sub-blocks (a smaller heading + text) - the Add sub-block button.",
+                  "active": false
+                },
+                {
+                  "label": "Image at the end of the block",
+                  "text": "One optional JPG, PNG or WebP image up to 5 MB. Videos or other files cannot be uploaded.",
+                  "active": false
+                },
+                {
+                  "label": "Show on the website",
+                  "text": "Hides or shows a block without deleting it.",
+                  "active": false
+                },
+                {
+                  "label": "Save",
+                  "text": "Saves the whole content at once.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Blocks and sub-blocks are added, moved with the arrows and removed.",
+                "The image is saved at once; the server shrinks it, converts it to WebP and strips its metadata (for example the location). A new block must be saved first, only then can an image be uploaded.",
+                "The text is plain - line breaks are kept."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "10. Languages and missing texts in the content tabs",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The tabs FAQ, Jobs, References and Knowledge base have their own language switch. A language shows the number of missing translations and a missing field is highlighted with a warning that the website will show “Cannot load text”. An optional field empty in all languages is not shown on the website at all. The Unsaved changes mark warns of unsaved edits."
+            }
+          ]
+        },
+        {
+          "heading": "11. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "web-edit-website-view - everything read-only."
+                },
+                {
+                  "title": "Editing",
+                  "text": "web-edit-website-update - texts, languages, JSON, page titles, FAQ, jobs, references, knowledge base and images."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "All changes are written to the web log."
             }
           ]
         }
       ]
     },
     "job-applications": {
-      "navLabel": "Job Applications",
-      "header": "Job Application Form (Candidates)",
+      "navLabel": "Job applicants",
+      "header": "Job applicants",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - overview of applications submitted via the job form."
+              "content": "On this page you manage the job applications applicants sent from the form of a job position on the website. By changing the status you tell colleagues how the hiring goes and in the internal note you record the results of interviews."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Applications contain personal data and CVs. Work with them only for hiring, do not share them outside the company and delete applications you no longer need. Without the applicant's consent to a longer record, applications are usually kept 6 months (Settings → Data retention)."
+            }
+          ]
+        },
+        {
+          "heading": "01. How an application is created",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "On the detail of a job position the applicant fills in first name, last name, e-mail, phone, a cover message and attaches a CV (one file up to 20 MB - PDF, Word, ODT, Pages, RTF, TXT, an image or an archive). The application is saved with the status New applicant and the position applied for. Nothing is sent to the applicant automatically. The form is protected against robots; it does not work in the maintenance mode of the website."
+            }
+          ]
+        },
+        {
+          "heading": "02. The table of applicants",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "ID",
+                  "text": "The number of the application."
+                },
+                {
+                  "title": "Applicant",
+                  "text": "First and last name."
+                },
+                {
+                  "title": "Position",
+                  "text": "The position applied for."
+                },
+                {
+                  "title": "Status",
+                  "text": "New applicant, Invited to interview, Selected / Offer, Rejected, In pool (for the future)."
+                },
+                {
+                  "title": "Received",
+                  "text": "When the application arrived."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Filter by ID, last name, position name and status. The details (Details icon) show the full name, position, e-mail, phone, status, cover letter, internal HR note, the CV (View / Download) and the date received."
+            }
+          ]
+        },
+        {
+          "key": "process",
+          "heading": "03. Processing an application",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Read the application",
+                  "text": "The Details icon opens the cover letter and the CV.",
+                  "active": true
+                },
+                {
+                  "label": "Status / Note",
+                  "text": "The button in the row opens a form with two fields: Applicant status and Internal note.",
+                  "active": false
+                },
+                {
+                  "label": "Applicant status",
+                  "text": "Invited to interview → Selected / Offer or Rejected. Use In pool (for the future) only with the applicant's consent to a longer record.",
+                  "active": false
+                },
+                {
+                  "label": "Internal note",
+                  "text": "Interview result, impression, salary expectation … The applicant does not see it.",
+                  "active": false
+                },
+                {
+                  "label": "Confirm",
+                  "text": "The change is saved and written to the web log.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "The data the applicant entered (name, contact, message, CV) cannot be changed. Answer the applicant from your own e-mail."
+            }
+          ]
+        },
+        {
+          "heading": "04. Deleting, the trash and export",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Delete moves an application to the trash; in the trash you restore it or delete it permanently together with the CV.",
+                "Applications can also be deleted in bulk (checkboxes → Delete selected).",
+                "New applications are shown in the calendar in the panel Waiting for you.",
+                "The export contains personal data - handle it with care."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "05. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "web-job-applications-view"
+                },
+                {
+                  "title": "Changing the status and the note",
+                  "text": "web-job-applications-update"
+                },
+                {
+                  "title": "Deleting and restoring from the trash",
+                  "text": "web-job-applications-delete"
+                }
+              ]
             }
           ]
         }

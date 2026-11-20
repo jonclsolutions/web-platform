@@ -136,10 +136,22 @@ export interface KBPage {
   sections: KBSection[];
 }
 
+/**
+ * @description One chapter of a page in the side menu - a visible section with a heading.
+ *   `anchor` = index of the section in `KBPage.sections`; the article renders it with the id
+ *   `kb-s-{anchor}` (jump target of the menu link).
+ */
+export interface KBMenuChapter {
+  anchor: number;
+  heading: string;
+}
+
 /** @description One item of the side menu (`GET knowledge-base`) - only the pages the user may open. */
 export interface KBMenuItem {
   id: string;
   group: KBNavGroupKey;
   order: number;
   label: string;
+  /** Chapters of the page the user may see (empty / missing = the page has none). */
+  sections?: KBMenuChapter[];
 }

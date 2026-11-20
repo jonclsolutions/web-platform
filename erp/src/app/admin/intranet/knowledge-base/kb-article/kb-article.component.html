@@ -19,7 +19,8 @@
     <hr class="section-divider">
 
     @for (section of page.sections; track $index) {
-      <section class="kb-section">
+      <!-- id = jump target of the chapter links of the side menu (anchor = section index) -->
+      <section class="kb-section" [id]="'kb-s-' + $index">
         @if (section.heading) {
           <h2>{{ section.heading }}</h2>
         }

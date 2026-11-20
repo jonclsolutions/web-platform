@@ -1,28 +1,187 @@
 {
   "pages": {
     "shop-welcome-page": {
-      "navLabel": "E-shop Welcome Page",
-      "header": "E-shop Welcome Page",
+      "navLabel": "E-shop welcome page",
+      "header": "Welcome page of the E-shop application",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "The guide for this page is being prepared."
+              "content": "The signpost of the E-shop application. It opens after switching to the E-shop in the header and its cards show all parts of the e-shop management."
+            }
+          ]
+        },
+        {
+          "heading": "01. Page cards",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Products",
+                  "text": "The product catalogue, variants and images."
+                },
+                {
+                  "title": "Categories",
+                  "text": "The tree of categories products are sorted into."
+                },
+                {
+                  "title": "E-shop orders",
+                  "text": "Customer orders, their statuses and payments."
+                },
+                {
+                  "title": "Customers",
+                  "text": "Customers and the history of their orders."
+                },
+                {
+                  "title": "Shipping methods",
+                  "text": "Shipping the customer chooses at checkout."
+                },
+                {
+                  "title": "Payment methods",
+                  "text": "Payment methods offered at checkout."
+                },
+                {
+                  "title": "Suppliers",
+                  "text": "The register of product suppliers."
+                },
+                {
+                  "title": "Discount coupons",
+                  "text": "Discount codes and their conditions."
+                },
+                {
+                  "title": "E-shop texts",
+                  "text": "Texts and languages of the public e-shop and the titles of its pages."
+                },
+                {
+                  "title": "E-shop logs",
+                  "text": "History of actions taken in the e-shop."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "A card is shown only for a page you have permission for. The same pages are in the left menu in the groups Catalog, Transactions, Customers, Logistics, Content and System."
+            }
+          ]
+        },
+        {
+          "heading": "02. Who sees the page",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The permission to show the e-shop welcome page (shop-welcome-page-view); you get into the application only with the permission of the E-shop tab (view-eshop)."
+            }
+          ]
+        },
+        {
+          "heading": "03. Currency and languages - good to know",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "All prices in the e-shop are in euros (EUR).",
+                "Names and descriptions of products, categories, shipping and payment methods are entered once and are the same in all languages of the e-shop. Only the texts of the e-shop pages are translated (E-shop texts).",
+                "Customers have no account or password in the e-shop - they buy without registering."
+              ]
             }
           ]
         }
       ]
     },
     "shop-dashboard": {
-      "navLabel": "Dashboard",
-      "header": "Shop - Dashboard",
+      "navLabel": "E-shop dashboard",
+      "header": "E-shop dashboard",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - the overview page of the Shop admin module."
+              "content": "The e-shop dashboard shows the current state of the shop: revenue, orders, what waits to be processed, stock, customers and coupons. With the permission you also switch the e-shop into maintenance mode from here."
+            }
+          ]
+        },
+        {
+          "heading": "01. Header and state of the e-shop",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The header Shop overview shows the time of the last update and the Refresh button. Next to it is the state of the public e-shop and, for accounts with the permission to switch the e-shop to maintenance mode (shop-set-maintenance-mode), the button Switch application off / Switch application on (procedure in the chapter Applications)."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "A switched-off e-shop takes no orders and customers see the maintenance page instead."
+            }
+          ]
+        },
+        {
+          "heading": "02. Indicators (KPI)",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Revenue (7 days)",
+                  "text": "The sum of paid orders in the last 7 days and the change against the previous week."
+                },
+                {
+                  "title": "Orders (7 days)",
+                  "text": "The number of orders in the last 7 days and the change against the previous week."
+                },
+                {
+                  "title": "Average order value",
+                  "text": "The average order amount this month."
+                },
+                {
+                  "title": "Awaiting processing",
+                  "text": "The number of orders not yet handled - “Needs attention”, or “All processed”."
+                },
+                {
+                  "title": "Active products",
+                  "text": "The number of active products and how many of them are below the stock limit."
+                },
+                {
+                  "title": "Customers",
+                  "text": "The number of customers."
+                },
+                {
+                  "title": "Active coupons",
+                  "text": "The number of coupons valid right now."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Charts and lists",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Revenue — last 30 days",
+                  "text": "A chart of daily revenue. Includes only paid orders (without canceled and returned ones)."
+                },
+                {
+                  "title": "Order statuses",
+                  "text": "How many orders are in which status (Pending, Confirmed, Processing, Shipped, Delivered, Canceled, Returned)."
+                },
+                {
+                  "title": "Recent orders",
+                  "text": "Customer, status, payment, amount and date of the latest orders."
+                },
+                {
+                  "title": "Low stock",
+                  "text": "Products whose stock is at or below the warning threshold, with the number of pieces and the threshold. When all is fine: “All products are sufficiently stocked”."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "If the data does not load, the dashboard shows a connection error - reload the page or sign in again."
             }
           ]
         }
@@ -30,13 +189,234 @@
     },
     "shop-products": {
       "navLabel": "Products",
-      "header": "Product Management",
+      "header": "Products - the e-shop catalogue",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - management of the product catalog, variants, and images."
+              "content": "On this page you manage the e-shop catalogue: products, their prices, stock, categories, supplier, variants (for example colour and size) and images."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "A product is shown in the e-shop only when it is Active and has at least one active category."
+            }
+          ]
+        },
+        {
+          "heading": "01. The table of products",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "ID, Product, SKU",
+                  "text": "Number, name and stock code of the product."
+                },
+                {
+                  "title": "Price EUR",
+                  "text": "Selling price incl. VAT."
+                },
+                {
+                  "title": "In stock",
+                  "text": "The number of pieces in stock (for a product with variants the sum of the variants)."
+                },
+                {
+                  "title": "Row actions",
+                  "text": "Details, Edit, Variants, Images and Delete."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Product filters: search by name, code and description, category, supplier, price from-to, stock state (low stock only / sufficient stock), featured products and activation state. The product details show the categories (with the main one), supplier, prices, stock and warning threshold, variants, images and status."
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "02. Adding and editing a product",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Add record / Edit",
+                  "text": "Add a new product in the Actions menu, edit an existing one with Edit.",
+                  "active": true
+                },
+                {
+                  "label": "Name *",
+                  "text": "The product name as the customer sees it.",
+                  "active": false
+                },
+                {
+                  "label": "Slug",
+                  "text": "Part of the product address on the website. When empty, the system creates it from the name.",
+                  "active": false
+                },
+                {
+                  "label": "SKU *",
+                  "text": "A unique stock code, for example APPLE-I15P-BLK.",
+                  "active": false
+                },
+                {
+                  "label": "Short and Detailed description",
+                  "text": "The short one for the list, the detailed one for the product detail.",
+                  "active": false
+                },
+                {
+                  "label": "Categories",
+                  "text": "Choose categories in the list -- Add to category --. Click the name of an assigned category to make it the main one. An active product needs at least one category.",
+                  "active": false
+                },
+                {
+                  "label": "Supplier",
+                  "text": "Optional - from the Suppliers register.",
+                  "active": false
+                },
+                {
+                  "label": "Pricing (EUR)",
+                  "text": "Selling price incl. VAT (required, greater than 0) and the purchase price (for your records; the customer does not see it).",
+                  "active": false
+                },
+                {
+                  "label": "Stock",
+                  "text": "Warning threshold (pcs) - when stock drops to this value, the product appears in Low stock and in the calendar. For a product with variants the stock is calculated automatically as the sum of the variants.",
+                  "active": false
+                },
+                {
+                  "label": "Active / Featured",
+                  "text": "Active = the product is in the e-shop. Featured = the product carries the featured mark in the e-shop.",
+                  "active": false
+                },
+                {
+                  "label": "Save",
+                  "text": "The product is saved; on an error the system lists what is missing (name, SKU, price, category).",
+                  "active": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "variants",
+          "heading": "03. Variants",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Variants are versions of one product, for example “Black - M”. The Variants button in a row opens their editor."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Add variant",
+                  "text": "Creates a new variant row.",
+                  "active": true
+                },
+                {
+                  "label": "Variant name",
+                  "text": "Required, for example “Black - M”.",
+                  "active": false
+                },
+                {
+                  "label": "Attribute and value",
+                  "text": "Up to two pairs, for example Colour = Black, Size = M.",
+                  "active": false
+                },
+                {
+                  "label": "Variant SKU",
+                  "text": "The variant's own stock code.",
+                  "active": false
+                },
+                {
+                  "label": "Price & VAT (EUR)",
+                  "text": "VAT rate (%) and Price incl. VAT (required, greater than 0); the price without VAT is calculated.",
+                  "active": false
+                },
+                {
+                  "label": "Stock (pcs)",
+                  "text": "Pieces of the variant. The product stock is the sum of the variants.",
+                  "active": false
+                },
+                {
+                  "label": "Variant images",
+                  "text": "Images of its own shown after choosing the variant.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Delete a variant with the bin icon (after a confirmation)."
+            }
+          ]
+        },
+        {
+          "key": "images",
+          "heading": "04. Product images",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "The Images button in a row opens the image editor.",
+                "Add product image adds a row: choose the File (JPG or PNG up to 5 MB), fill in the Alt text (a description of the image for blind users and search engines) and the Sort order.",
+                "Mark the primary image - it is the main preview of the product in the catalogue.",
+                "Save images saves the changes. Delete an image with the bin icon."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "05. Stock and orders",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "An order takes the goods out of stock right when it is created.",
+                "Canceling or returning an order puts the pieces back; reopening takes them out again.",
+                "Deleting an order that was not canceled or returned puts the pieces back.",
+                "A customer cannot order more pieces than are in stock - the checkout says the goods were sold out in the meantime."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "06. Deleting and the trash",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Delete moves a product to the trash (it disappears from the e-shop). In the trash you restore it or delete it permanently. Orders that contained the product stay unchanged."
+            }
+          ]
+        },
+        {
+          "heading": "07. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "shop-products-view"
+                },
+                {
+                  "title": "Adding",
+                  "text": "shop-products-create"
+                },
+                {
+                  "title": "Editing incl. variants and images",
+                  "text": "shop-products-update"
+                },
+                {
+                  "title": "Deleting and restoring",
+                  "text": "shop-products-delete"
+                }
+              ]
             }
           ]
         }
@@ -44,27 +424,417 @@
     },
     "shop-categories": {
       "navLabel": "Categories",
-      "header": "Category Management",
+      "header": "Product categories",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - hierarchical management of product categories."
+              "content": "Categories form the tree customers browse the catalogue by. A main category can have subcategories (for example Clothing → T-shirts). On this page you create, rename, switch on and off and delete categories and assign products to them."
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "01. Using the tree",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Expand all / Collapse all expand or collapse all subcategories.",
+                "Main category adds a new top-level category.",
+                "At a category: Subcategory (adds a subcategory), Edit (rename - Save / Cancel), Active / Inactive (switches the display in the e-shop) and Delete.",
+                "The products icon at a category shows the products in the category."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Inactive categories and subcategories of an inactive category are not shown in the e-shop. A name must be unique and must not be empty."
+            }
+          ]
+        },
+        {
+          "key": "products",
+          "heading": "02. Products in a category",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Open the products of the category. You see the list with the name, SKU and status (Active / Inactive) and the number of products; Search product… narrows the list.",
+                "Add product opens a search of products not yet in the category; Add puts the product in.",
+                "The icon Remove from category (after a confirmation) takes the product out of the category - the product itself is not deleted."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "A product can be in several categories; the main category is set at the product (page Products)."
+            }
+          ]
+        },
+        {
+          "key": "delete",
+          "heading": "03. Deleting a category",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "A category with subcategories cannot be deleted - delete the subcategories first.",
+                "A category with assigned products cannot be deleted - move or delete the products first.",
+                "Deletion after a confirmation is permanent."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "04. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "shop-categories-view"
+                },
+                {
+                  "title": "Adding",
+                  "text": "shop-categories-create"
+                },
+                {
+                  "title": "Editing and assigning products",
+                  "text": "shop-categories-update"
+                },
+                {
+                  "title": "Deleting",
+                  "text": "shop-categories-delete"
+                }
+              ]
             }
           ]
         }
       ]
     },
     "shop-orders": {
-      "navLabel": "Orders",
-      "header": "Order Management",
+      "navLabel": "E-shop orders",
+      "header": "E-shop orders",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - management of e-shop orders, statuses, and payments."
+              "content": "On this page you handle customer orders: check the content, change the order and payment status, edit items and the address, create orders manually and edit the confirmation e-mail the customer receives after ordering."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Orders to process are shown in the calendar in the panel Waiting for you and on the e-shop dashboard."
+            }
+          ]
+        },
+        {
+          "heading": "01. How an order is created",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Cart and checkout",
+                  "text": "In the e-shop the customer puts goods into the cart and at checkout fills in the contact, the delivery address, the shipping and payment method and possibly a discount coupon.",
+                  "active": true
+                },
+                {
+                  "label": "Check",
+                  "text": "The system checks the prices against the catalogue, the validity of the coupon and the availability of the goods.",
+                  "active": false
+                },
+                {
+                  "label": "Saving",
+                  "text": "The order gets a number in the form YYYYMM + sequence (for example 2026110007), the status Received and the payment Awaiting payment. The goods are taken out of stock.",
+                  "active": false
+                },
+                {
+                  "label": "Customer",
+                  "text": "An existing customer is found by e-mail, or a new one is created.",
+                  "active": false
+                },
+                {
+                  "label": "Confirmation",
+                  "text": "The customer receives a confirmation e-mail in the language of the e-shop they ordered in (chapter 07).",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Card payments through a payment gateway are not connected yet. Check bank transfers on the bank account and change the payment status manually (chapter 04)."
+            }
+          ]
+        },
+        {
+          "heading": "02. Order overviews",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "All orders",
+                  "text": "The list of all orders."
+                },
+                {
+                  "title": "To process",
+                  "text": "Only orders in the statuses Received, Confirmed, Processing and Shipped."
+                },
+                {
+                  "title": "Trash",
+                  "text": "Deleted orders."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Columns: ID, Order number, Customer, Status, Payment, Total, Created. Order filters: search (number, e-mail, address), order status, payment status, amount from-to and creation date."
+            }
+          ]
+        },
+        {
+          "heading": "03. Order details",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Customer",
+                  "text": "Name, e-mail, phone, company and city."
+                },
+                {
+                  "title": "Payment & shipping",
+                  "text": "Payment and shipping method, shipping price, when it was paid, shipped and delivered."
+                },
+                {
+                  "title": "Delivery address",
+                  "text": "Where the goods go."
+                },
+                {
+                  "title": "Metadata",
+                  "text": "Order number, when it was created and last edited, the coupon used and the note."
+                },
+                {
+                  "title": "Order items",
+                  "text": "Product / variant, number of pieces, unit price, VAT and total; the summary of goods, shipping, VAT, discount and the total to pay."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "A canceled order shows the bar “This order has been canceled” in its details, a returned one “Goods from this order have been returned”."
+            }
+          ]
+        },
+        {
+          "heading": "04. Order and payment statuses",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Received",
+                  "text": "A new order waiting for a check.",
+                  "active": true
+                },
+                {
+                  "label": "Confirmed",
+                  "text": "You checked and accept it.",
+                  "active": false
+                },
+                {
+                  "label": "Processing",
+                  "text": "The goods are being prepared.",
+                  "active": false
+                },
+                {
+                  "label": "Shipped",
+                  "text": "The parcel is on its way.",
+                  "active": false
+                },
+                {
+                  "label": "Delivered",
+                  "text": "The customer received the goods.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Canceled",
+                  "text": "The order will not go ahead - the pieces go back to stock."
+                },
+                {
+                  "title": "Returned",
+                  "text": "The customer returned the goods - the pieces go back to stock."
+                },
+                {
+                  "title": "Payment status",
+                  "text": "Awaiting payment, Paid, Payment failed, Refunded, Cash on delivery, Unpaid."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "A status change sends no e-mail to the customer automatically. Inform them about shipping or cancelation yourself."
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "05. Editing an order",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Edit",
+                  "text": "The Edit button opens the form Edit order.",
+                  "active": true
+                },
+                {
+                  "label": "Basic details & contact",
+                  "text": "E-mail, phone, company, first and last name, payment and shipping method.",
+                  "active": false
+                },
+                {
+                  "label": "Order statuses",
+                  "text": "Order status and payment status.",
+                  "active": false
+                },
+                {
+                  "label": "Delivery address",
+                  "text": "Street and number, city, postal code, country.",
+                  "active": false
+                },
+                {
+                  "label": "Order items",
+                  "text": "Product variant, quantity and unit price (incl. VAT). Add item adds a row, the bin icon removes an item.",
+                  "active": false
+                },
+                {
+                  "label": "Price summary",
+                  "text": "Total without VAT, VAT, with VAT, shipping and discount - calculated automatically.",
+                  "active": false
+                },
+                {
+                  "label": "Internal notes",
+                  "text": "A note on the order.",
+                  "active": false
+                },
+                {
+                  "label": "Save order",
+                  "text": "Saves the changes; stock is adjusted according to the changes of items and status.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "The coupon of an existing order cannot be changed.",
+                "The saved total = goods - discount + the base shipping price. The fee of the payment method is not added to the saved total yet, even though the summary of the form shows it."
+              ]
+            }
+          ]
+        },
+        {
+          "key": "create",
+          "heading": "06. Creating an order manually",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Create an order received outside the e-shop (phone, e-mail) with Add record in the Actions menu. You fill in the same form as when editing and can choose a valid discount coupon (the system says when it is inactive, not started, expired, used up or the order is below the minimum value). The goods are taken out of stock. The order needs at least one item and a complete address."
+            }
+          ]
+        },
+        {
+          "key": "email",
+          "heading": "07. Order confirmation e-mail",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "In the Actions menu choose Edit confirmation e-mail. This e-mail confirms the concluded contract and the customer receives it right after ordering. The summary (goods, prices, shipping, payment, address) is added by the system."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "E-mail subject",
+                  "text": "The order number is added."
+                },
+                {
+                  "title": "Heading, Greeting, Intro message",
+                  "text": "The greeting gets the customer's name."
+                },
+                {
+                  "title": "Summary (labels)",
+                  "text": "Labels of the rows: order number and date, goods, quantity, prices, discount, shipping, payment, total to pay, VAT, delivery address, contact, note."
+                },
+                {
+                  "title": "Right of withdrawal",
+                  "text": "The text about the consumer's right to withdraw from the contract within 14 days - it is mandatory, do not remove it."
+                },
+                {
+                  "title": "Link to the terms and conditions",
+                  "text": "The text of the link to the terms and conditions of the e-shop."
+                },
+                {
+                  "title": "Closing message",
+                  "text": "Thanks and contact."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "The text is filled in for every language of the e-shop; an empty field uses the Czech text, or the default English wording. The live preview shows a simplified e-mail with sample data. Saving requires the permission to edit orders."
+            }
+          ]
+        },
+        {
+          "heading": "08. Deleting and the trash",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Delete moves an order to the trash and puts the goods back into stock (unless it was canceled or returned). Orders are accounting documents - delete only ones created by mistake. Orders are not deleted automatically, not even by retention."
+            }
+          ]
+        },
+        {
+          "heading": "09. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "shop-orders-view"
+                },
+                {
+                  "title": "Manual creation",
+                  "text": "shop-orders-create"
+                },
+                {
+                  "title": "Editing and the confirmation e-mail",
+                  "text": "shop-orders-update"
+                },
+                {
+                  "title": "Deleting and restoring",
+                  "text": "shop-orders-delete"
+                }
+              ]
             }
           ]
         }
@@ -72,41 +842,283 @@
     },
     "shop-customers": {
       "navLabel": "Customers",
-      "header": "Customer Management",
+      "header": "E-shop customers",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - management of customer accounts and their order history."
+              "content": "E-shop customers and their orders. A customer is created automatically with the first order (by e-mail); later orders fill in missing details. You can also add and edit customers manually."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Customer details are personal data. When a customer asks for erasure, use Anonymise (chapter 04)."
+            }
+          ]
+        },
+        {
+          "heading": "01. The table of customers",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Columns: ID, Last name, First name, Email, Phone, Total spent. The filter searches by name, e-mail and phone and by the Active status. The details also show the company, address, country, registration date (first order) and the note."
+            }
+          ]
+        },
+        {
+          "heading": "02. Orders of a customer",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The Orders button in a row opens the overview of the customer's orders: the number of orders and the total spent, and for every order its items, delivery (address, shipping, payment, when paid and shipped), note and price summary."
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "03. Adding and editing",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Form: First name and Last name (required, max. 100 characters), Email, Phone, Company, street address, City, Postal code, Active and an internal Note (max. 1000 characters). Editing a customer does not change the details in orders already created."
+            }
+          ]
+        },
+        {
+          "key": "anonymize",
+          "heading": "04. Anonymisation (erasure under the GDPR)",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "When",
+                  "text": "The customer asked for erasure of personal data but has orders that must be kept as accounting documents.",
+                  "active": true
+                },
+                {
+                  "label": "Anonymise",
+                  "text": "The button in the customer's row and a confirmation in the dialog.",
+                  "active": false
+                },
+                {
+                  "label": "Result",
+                  "text": "Name, e-mail, phone and other personal details of the customer are removed irreversibly. The orders are kept.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "danger",
+              "content": "Anonymisation cannot be undone."
+            }
+          ]
+        },
+        {
+          "heading": "05. Deleting",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "A customer without orders is deleted to the trash and from the trash permanently.",
+                "A customer with orders cannot be deleted permanently - emptying the trash keeps them and recommends anonymisation."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "06. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "shop-customers-view"
+                },
+                {
+                  "title": "Adding",
+                  "text": "shop-customers-create"
+                },
+                {
+                  "title": "Editing",
+                  "text": "shop-customers-update"
+                },
+                {
+                  "title": "Deleting, restoring and anonymisation",
+                  "text": "shop-customers-delete"
+                }
+              ]
             }
           ]
         }
       ]
     },
     "shop-shipping-methods": {
-      "navLabel": "Shipping Methods",
-      "header": "Shipping Methods",
+      "navLabel": "Shipping methods",
+      "header": "Shipping methods",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - management of available shipping methods."
+              "content": "The shipping methods the customer chooses from at checkout (for example a courier to the address, a pickup point, in-store pickup). Customers are offered only active methods in the set order."
+            }
+          ]
+        },
+        {
+          "heading": "01. Data of a shipping method",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Method code",
+                  "text": "An internal code: 3-50 characters, lower-case letters, digits and underscores, for example ppl_parcel."
+                },
+                {
+                  "title": "Shipping name and Description",
+                  "text": "What the customer sees at checkout."
+                },
+                {
+                  "title": "Shipping type",
+                  "text": "Delivery to address, Pickup point or In-store pickup."
+                },
+                {
+                  "title": "Base price (EUR)",
+                  "text": "The shipping price the customer pays."
+                },
+                {
+                  "title": "Sort order",
+                  "text": "The order in the checkout offer."
+                },
+                {
+                  "title": "Active",
+                  "text": "Only active shipping is offered to customers."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "The other data - Supports cash on delivery?, COD surcharge, Free shipping from, Max. weight, Requires a pickup point?, Delivery min / max (days) and Tracking URL - are for your records. The e-shop does not use them yet for the price or at checkout: the customer always pays the base shipping price."
+            }
+          ]
+        },
+        {
+          "heading": "02. Working with the list",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The table (ID, Name, Type, Price) works like the other tables - adding in the Actions menu, editing, details, deleting to the trash and restoring. Rather switch off (Active) a shipping method you do not offer for a while than delete it."
+            }
+          ]
+        },
+        {
+          "heading": "03. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "shop-shipping-methods-view"
+                },
+                {
+                  "title": "Adding",
+                  "text": "shop-shipping-methods-create"
+                },
+                {
+                  "title": "Editing",
+                  "text": "shop-shipping-methods-update"
+                },
+                {
+                  "title": "Deleting and restoring",
+                  "text": "shop-shipping-methods-delete"
+                }
+              ]
             }
           ]
         }
       ]
     },
     "shop-payment-methods": {
-      "navLabel": "Payment Methods",
-      "header": "Payment Methods",
+      "navLabel": "Payment methods",
+      "header": "Payment methods",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - management of available payment methods."
+              "content": "The payment methods the customer sees at checkout. The list of methods is fixed (bank transfer CZ and SEPA, online card payment, Apple Pay, Google Pay, PayPal, cash on delivery, cash at in-store pickup) - you do not add or delete methods, you only edit and switch them on. After installation only cash at in-store pickup is on."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Online payments (card, Apple Pay, Google Pay, PayPal) need a payment gateway connected by developers. Until it is connected, keep these methods inactive and offer bank transfer."
+            }
+          ]
+        },
+        {
+          "heading": "01. Data of a payment method",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Payment name and Description for customer",
+                  "text": "What the customer sees at checkout."
+                },
+                {
+                  "title": "Provider",
+                  "text": "Manual (bank transfer), Stripe or PayPal - decides the type of the method and does not change."
+                },
+                {
+                  "title": "Sort order",
+                  "text": "The order at checkout."
+                },
+                {
+                  "title": "Active",
+                  "text": "Only active methods are offered."
+                },
+                {
+                  "title": "Account number, Bank code, Variable symbol",
+                  "text": "Details for a bank transfer; the variable symbol can be the order number, the customer's phone or none."
+                },
+                {
+                  "title": "Fee (EUR)",
+                  "text": "The fee of the method."
+                },
+                {
+                  "title": "Gateway configuration (JSON)",
+                  "text": "Technical settings of the payment gateway - filled in only by a developer."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "The payment fee is not added to the order price yet and the account number with the variable symbol is not sent to the customer automatically. So state the payment details for a transfer in the e-shop texts or in the order confirmation e-mail."
+            }
+          ]
+        },
+        {
+          "heading": "02. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "shop-payment-methods-view"
+                },
+                {
+                  "title": "Editing",
+                  "text": "shop-payment-methods-update"
+                }
+              ]
             }
           ]
         }
@@ -114,55 +1126,354 @@
     },
     "shop-suppliers": {
       "navLabel": "Suppliers",
-      "header": "Supplier Management",
+      "header": "Suppliers",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - tracking of product suppliers."
+              "content": "The register of the suppliers you buy goods from. You then assign suppliers to products and filter products by supplier. The customer does not see suppliers."
+            }
+          ]
+        },
+        {
+          "heading": "01. Data of a supplier",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Supplier name",
+                  "text": "Required, 2-200 characters."
+                },
+                {
+                  "title": "Company ID",
+                  "text": "Registration number (max. 20 characters)."
+                },
+                {
+                  "title": "Contact person, e-mail, phone",
+                  "text": "Whom and how to contact."
+                },
+                {
+                  "title": "Address",
+                  "text": "Street address, City, Postal code, Country."
+                },
+                {
+                  "title": "Payment terms",
+                  "text": "For example “Due in 14 days”."
+                },
+                {
+                  "title": "Active and Note",
+                  "text": "Status and an internal note."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Table: ID, Company name, Company ID, Email, Created; filters by ID, name, company ID, e-mail and status."
+            }
+          ]
+        },
+        {
+          "heading": "02. Working with the list",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Adding, editing, details, export and charts - as in the other tables.",
+                "Importing suppliers from a file (Actions → Import data) - procedure in the introductory chapter.",
+                "Bulk deletion of selected suppliers and the trash with restoring."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "shop-suppliers-view"
+                },
+                {
+                  "title": "Adding and import",
+                  "text": "shop-suppliers-create"
+                },
+                {
+                  "title": "Editing",
+                  "text": "shop-suppliers-update"
+                },
+                {
+                  "title": "Deleting and restoring",
+                  "text": "shop-suppliers-delete"
+                }
+              ]
             }
           ]
         }
       ]
     },
     "coupons": {
-      "navLabel": "Discount Coupons",
-      "header": "Discount Coupons",
+      "navLabel": "Discount coupons",
+      "header": "Discount coupons",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - management of discount coupons and their conditions."
+              "content": "Discount coupons are codes the customer enters at checkout to get a discount. You set the type and amount of the discount, the minimum order value, the number of uses and the validity period."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "The start and end of coupons' validity are shown in the calendar."
+            }
+          ]
+        },
+        {
+          "heading": "01. Creating a coupon",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Add record",
+                  "text": "In the Actions menu.",
+                  "active": true
+                },
+                {
+                  "label": "Coupon code",
+                  "text": "3-50 characters: letters, digits, _ and -, no spaces, for example SUMMER20. The customer enters this code at checkout.",
+                  "active": false
+                },
+                {
+                  "label": "Discount type and value",
+                  "text": "Percentage (%) or Fixed amount (EUR).",
+                  "active": false
+                },
+                {
+                  "label": "Minimum order (EUR)",
+                  "text": "The coupon applies only from this value of goods.",
+                  "active": false
+                },
+                {
+                  "label": "Max. number of uses",
+                  "text": "How many times the coupon can be used in total; empty = unlimited.",
+                  "active": false
+                },
+                {
+                  "label": "Valid from / until",
+                  "text": "The period in which the coupon is valid.",
+                  "active": false
+                },
+                {
+                  "label": "Active",
+                  "text": "An inactive coupon cannot be used.",
+                  "active": false
+                },
+                {
+                  "label": "Description",
+                  "text": "An internal note, for example which campaign the coupon belongs to.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "The option Applies to (Everything, Products, Categories) is for your records only so far - the discount is always calculated from the whole value of goods in the order."
+            }
+          ]
+        },
+        {
+          "heading": "02. When a coupon cannot be used",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "the coupon is not active,",
+                "its validity has not started yet or has ended,",
+                "the coupon has been used the maximum number of times (column Used),",
+                "the order is below the minimum value."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "In these cases the customer gets an explanation at checkout."
+            }
+          ]
+        },
+        {
+          "heading": "03. Table and management",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Columns: ID, Code, Type, Discount, Used, Active, Valid until. Edit a coupon (Edit), delete it to the trash and restore it. For a finished campaign it is enough to switch the coupon off (Active) - it stays in the records."
+            }
+          ]
+        },
+        {
+          "heading": "04. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "shop-coupons-view"
+                },
+                {
+                  "title": "Adding",
+                  "text": "shop-coupons-create"
+                },
+                {
+                  "title": "Editing",
+                  "text": "shop-coupons-update"
+                },
+                {
+                  "title": "Deleting and restoring",
+                  "text": "shop-coupons-delete"
+                }
+              ]
             }
           ]
         }
       ]
     },
     "shop-logs": {
-      "navLabel": "Logs",
-      "header": "Shop - Logs",
+      "navLabel": "E-shop logs",
+      "header": "E-shop logs",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - an audit log of actions performed in the Shop module."
+              "content": "The e-shop log is the history of all actions in the e-shop: products, categories, orders (also from checkout), customers, suppliers, coupons, shipping and payments, imports and changes of the maintenance mode."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Entries cannot be edited or deleted. Old entries are deleted by the nightly clean-up according to the retention of audit logs."
+            }
+          ]
+        },
+        {
+          "heading": "01. What you find in the log",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Action",
+                  "text": "Created, Updated, Soft deleted, Permanently deleted, Bulk deleted, Restored, Trash emptied, Imported, Payment, Error, Maintenance mode changed, Unauthorized maintenance toggle attempt."
+                },
+                {
+                  "title": "Module",
+                  "text": "Products, Categories, Orders, Orders (checkout), Customers, Suppliers, Coupons, Shipping methods, Payment methods, E-shop (general)."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "An error at an order from checkout often means the confirmation e-mail could not be sent - the order itself is fine. Filters, details, export and charts work as in System logs."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "The log contains personal data of customers - protect exports."
+            }
+          ]
+        },
+        {
+          "heading": "02. Who sees the page",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The permission to show the log history of the e-shop (shop-view-logs)."
             }
           ]
         }
       ]
     },
     "edit-eshop": {
-      "navLabel": "E-shop Settings",
-      "header": "Global E-shop Settings",
+      "navLabel": "E-shop texts",
+      "header": "E-shop texts",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - global e-shop settings."
+              "content": "The E-shop texts page manages the texts of the public e-shop in all languages (headings, buttons, labels of the cart and checkout, messages), the languages of the e-shop and the titles of its pages in the browser."
+            },
+            {
+              "type": "text",
+              "content": "It works the same as the Website texts page (Web application) - the chapters Translations and Page titles there describe every step. Here only what is different for the e-shop."
+            }
+          ]
+        },
+        {
+          "heading": "01. Tab Translations",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "The row of e-shop languages - adding a language (flag, code, name, active), activating and deactivating, deleting. Czech is the default language.",
+                "The table Key (JSON path) / Value, search, statistics of keys and missing texts, the filter of missing ones.",
+                "Downloading and uploading JSON for a translator.",
+                "Save changes stores the texts of the current language."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "A missing text is shown to the customer as “Cannot load text”. Activate a language only after all texts are filled in."
+            }
+          ]
+        },
+        {
+          "heading": "02. Tab Page titles",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Titles in the browser tab and in search results for the pages Product catalog, Product detail, Cart, Checkout, E-shop maintenance and Page not found (404), separately in every language (recommended up to 60 characters)."
+            }
+          ]
+        },
+        {
+          "heading": "03. What is not edited here",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Names, descriptions and prices of products - page Products.",
+                "The order confirmation e-mail - page E-shop orders (Actions → Edit confirmation e-mail).",
+                "Terms and conditions and the privacy policy - Core → Legal documents.",
+                "Contacts and social media - Core → Settings."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "04. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "shop-edit-eshop-view"
+                },
+                {
+                  "title": "Editing",
+                  "text": "shop-edit-eshop-update"
+                }
+              ]
             }
           ]
         }

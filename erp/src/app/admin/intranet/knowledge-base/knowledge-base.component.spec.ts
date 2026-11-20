@@ -7,7 +7,8 @@
  * @description Unit tests of KnowledgeBaseComponent (the KB shell): the side menu built from the
  *   API menu (only the allowed pages), reloaded after a language switch, translated group
  *   headings; the header (logo of the website, home link, admin language switcher); mobile menu
- *   and the root path.
+ *   and the root path; expandable chapters of a page (the open page expands by itself, a chapter
+ *   link opens the page at the chapter).
  * @dependencies
  * - createAdminTestContext (i18n stub with a language subject); KnowledgeBaseService stub.
  */
@@ -30,7 +31,7 @@ describe('KnowledgeBaseComponent (intranet)', () => {
   let settings$: BehaviorSubject<any>;
 
   const menu: KBMenuItem[] = [
-    { id: 'shop-orders', group: 'shop', order: 40, label: 'Orders' },
+    { id: 'shop-orders', group: 'shop', order: 40, label: 'Orders', sections: [{ anchor: 1, heading: '01. Statuses' }, { anchor: 3, heading: '02. Editing' }] },
     { id: 'contacts', group: 'general', order: 3, label: 'Contacts' },
     { id: 'introductions', group: 'general', order: 1, label: 'Intro' },
     { id: 'administrators', group: 'core', order: 22, label: 'Admins' },
@@ -119,6 +120,60 @@ describe('KnowledgeBaseComponent (intranet)', () => {
     const after = kb.navGroups;
     ctx.i18n.translations$.next({ again: true });
     expect(kb.navGroups).toBe(after);
+  });
+
+  /**
+   * @description Chapters: a page with chapters has a toggle that shows the indented chapter links
+   *   (heading text, link to the page with the fragment kb-s-N); the open page expands by itself
+   *   (also after the user collapsed it before), can be collapsed, and its opened chapter is
+   *   highlighted; a chapter of the open page scrolls at once, a chapter of another page only
+   *   navigates.
+   * @input Menu cz (shop-orders with 2 chapters, contacts without); toggle; navigation to
+   *   shop-orders#kb-s-3; openChapter on the open page and on another one.
+   * @output one toggle; no chapters, then 2 links '01. Statuses' / '02. Editing' with
+   *   href …/shop-orders#kb-s-1; collapsed again; after navigation expanded, activeFragment
+   *   kb-s-3 highlighted; scrollIntoView smooth for the open page only; menu closed.
+   */
+  it('expands the chapters of a page and opens a chapter', async () => {
+    const el: HTMLElement = fixture.nativeElement;
+    const toggles = el.querySelectorAll('.chapter-toggle');
+    expect(toggles.length).toBe(1);
+    expect(el.querySelector('.kb-chapters')).toBeNull();
+
+    (toggles[0] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const links = Array.from(el.querySelectorAll('a.kb-chapter')) as HTMLAnchorElement[];
+    expect(links.map(a => a.textContent!.trim())).toEqual(['01. Statuses', '02. Editing']);
+    expect(links[0].getAttribute('href')).toContain('shop-orders#kb-s-1');
+    kb.toggleChapters('shop-orders');
+    fixture.detectChanges();
+    expect(el.querySelector('.kb-chapters')).toBeNull();
+
+    const router = TestBed.inject(Router);
+    router.resetConfig([{ path: 'admin/intranet/knowledge-base/:pageId', children: [] }]);
+    await router.navigateByUrl('/admin/intranet/knowledge-base/shop-orders#kb-s-3');
+    fixture.detectChanges();
+    expect(kb.activePageId).toBe('shop-orders');
+    expect(kb.activeFragment).toBe('kb-s-3');
+    expect(kb.isExpanded('shop-orders')).toBeTrue();
+    expect(el.querySelector('a.kb-chapter.active-chapter')!.textContent!.trim()).toBe('02. Editing');
+    kb.toggleChapters('shop-orders');
+    expect(kb.isExpanded('shop-orders')).toBeFalse();
+    kb.toggleChapters('shop-orders');
+    expect(kb.isExpanded('shop-orders')).toBeTrue();
+
+    const target = document.createElement('section');
+    target.id = 'kb-s-1';
+    document.body.appendChild(target);
+    const intoView = spyOn(target, 'scrollIntoView');
+    kb.isMenuOpen = true;
+    kb.openChapter('shop-orders', 1);
+    expect(intoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+    expect(kb.isMenuOpen).toBeFalse();
+    intoView.calls.reset();
+    kb.openChapter('contacts', 1);
+    expect(intoView).not.toHaveBeenCalled();
+    target.remove();
   });
 
   /**

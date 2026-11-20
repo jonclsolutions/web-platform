@@ -59,9 +59,12 @@ class KnowledgeBase
     }
 
     /**
-     * @description Menu of the pages the user may open.
+     * @description Menu of the pages the user may open, each with its chapters: the visible
+     *   sections that have a heading, `anchor` = position of the section in the `sections` of
+     *   page() (the admin renders section N with the id `kb-s-N` and jumps to it).
      * @param string $lang Requested language code.
-     * @return array<int, array{id: string, group: string, order: int, label: string}>
+     * @return array<int, array{id: string, group: string, order: int, label: string,
+     *   sections: array<int, array{anchor: int, heading: string}>}>
      */
     public function menu(string $lang): array
     {
@@ -71,11 +74,18 @@ class KnowledgeBase
             if ($texts === null || !$this->allows($page['permission'] ?? null)) {
                 continue;
             }
+            $chapters = [];
+            foreach ($this->visibleSections($page, $texts) as $anchor => $section) {
+                if (($section['heading'] ?? '') !== '') {
+                    $chapters[] = ['anchor' => $anchor, 'heading' => (string) $section['heading']];
+                }
+            }
             $menu[] = [
-                'id'    => $page['id'],
-                'group' => $page['group'],
-                'order' => (int) $page['order'],
-                'label' => (string) ($texts['navLabel'] ?? $page['id']),
+                'id'       => $page['id'],
+                'group'    => $page['group'],
+                'order'    => (int) $page['order'],
+                'label'    => (string) ($texts['navLabel'] ?? $page['id']),
+                'sections' => $chapters,
             ];
         }
 
@@ -99,11 +109,7 @@ class KnowledgeBase
             return null;
         }
 
-        $sectionPermissions = $page['sections'] ?? [];
-        $sections = array_values(array_filter(
-            $texts['sections'] ?? [],
-            fn (array $section) => $this->allows($sectionPermissions[$section['key'] ?? ''] ?? null)
-        ));
+        $sections = $this->visibleSections($page, $texts);
 
         return [
             'id'       => $id,
@@ -113,6 +119,23 @@ class KnowledgeBase
             'header'   => (string) ($texts['header'] ?? ''),
             'sections' => $sections,
         ];
+    }
+
+    /**
+     * @description Sections of a page the user may see, in their order (re-indexed from 0 - the
+     *   index is the chapter anchor of the menu).
+     * @param array<string, mixed> $page Page of structure.json (section permissions).
+     * @param array<string, mixed> $texts Texts of the page in the chosen language.
+     * @return array<int, array<string, mixed>>
+     */
+    private function visibleSections(array $page, array $texts): array
+    {
+        $sectionPermissions = $page['sections'] ?? [];
+
+        return array_values(array_filter(
+            $texts['sections'] ?? [],
+            fn (array $section) => $this->allows($sectionPermissions[$section['key'] ?? ''] ?? null)
+        ));
     }
 
     /**

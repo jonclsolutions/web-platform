@@ -7,12 +7,13 @@
  * @description Unit tests of KbArticleComponent: the page of the route parameter loaded in the
  *   current language (again after a navigation or a language switch), every block type
  *   rendered, breadcrumb, the not-found state (missing / not allowed page) without a flash while
- *   loading.
+ *   loading; a loaded page starts at the top of the manual or at the chapter of the URL fragment.
  * @dependencies
- * - createAdminTestContext (i18n stub); ActivatedRoute paramMap subject; KnowledgeBaseService stub.
+ * - createAdminTestContext (i18n stub); ActivatedRoute paramMap subject + snapshot fragment;
+ *   KnowledgeBaseService stub; a `.kb-main-content` scroll container around the component.
  */
 
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, ParamMap, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject, Subject, of } from 'rxjs';
 
@@ -27,6 +28,8 @@ describe('KbArticleComponent', () => {
   let article: KbArticleComponent;
   let params$: BehaviorSubject<ParamMap>;
   let service: jasmine.SpyObj<KnowledgeBaseService>;
+  /** Snapshot of the route - the fragment is changed by the tests. */
+  let snapshot: { fragment: string | null };
 
   /** A page using every block type. */
   const page = (lang: string): KBPage => ({
@@ -52,10 +55,11 @@ describe('KbArticleComponent', () => {
     service = jasmine.createSpyObj<KnowledgeBaseService>('KnowledgeBaseService', ['menu', 'page']);
     service.page.and.callFake((id: string, lang: string) => of(id === 'guide' ? page(lang) : null));
     params$ = new BehaviorSubject(convertToParamMap({ pageId: 'guide' }));
+    snapshot = { fragment: null };
     TestBed.configureTestingModule({
       imports: [KbArticleComponent],
       providers: [...ctx.providers, provideRouter([]), { provide: KnowledgeBaseService, useValue: service },
-        { provide: ActivatedRoute, useValue: { paramMap: params$ } }],
+        { provide: ActivatedRoute, useValue: { paramMap: params$, snapshot } }],
     });
     fixture = TestBed.createComponent(KbArticleComponent);
     article = fixture.componentInstance;
@@ -116,4 +120,46 @@ describe('KbArticleComponent', () => {
     params$.next(convertToParamMap({ pageId: 'guide' }));
     expect(service.page).not.toHaveBeenCalled();
   });
+
+  /**
+   * @description Every section has the id of its index (jump target of the menu); a loaded page
+   *   scrolls the manual to the top (the component is reused between pages), with a URL fragment
+   *   to that chapter instead; an unknown fragment falls back to the top.
+   * @input Component inside a .kb-main-content container; new page without a fragment; with
+   *   fragment kb-s-1; with fragment kb-s-9.
+   * @output section ids kb-s-0, kb-s-1; container scrollTo({top: 0, behavior: 'instant'});
+   *   kb-s-1 scrollIntoView({block: 'start'}); scrollTo top again.
+   */
+  it('opens a page at its top or at the chapter of the fragment', fakeAsync(() => {
+    const el: HTMLElement = fixture.nativeElement;
+    expect(Array.from(el.querySelectorAll('section.kb-section')).map(s => s.id)).toEqual(['kb-s-0', 'kb-s-1']);
+
+    const container = document.createElement('div');
+    container.className = 'kb-main-content';
+    document.body.appendChild(container);
+    container.appendChild(el);
+    const scrollTo = spyOn(container, 'scrollTo') as jasmine.Spy;
+
+    params$.next(convertToParamMap({ pageId: 'guide' }));
+    fixture.detectChanges();
+    tick();
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'instant' });
+
+    snapshot.fragment = 'kb-s-1';
+    const chapter = el.querySelector('#kb-s-1') as HTMLElement;
+    const intoView = spyOn(chapter, 'scrollIntoView');
+    scrollTo.calls.reset();
+    params$.next(convertToParamMap({ pageId: 'guide' }));
+    fixture.detectChanges();
+    tick();
+    expect(intoView).toHaveBeenCalledWith({ block: 'start' });
+    expect(scrollTo).not.toHaveBeenCalled();
+
+    snapshot.fragment = 'kb-s-9';
+    params$.next(convertToParamMap({ pageId: 'guide' }));
+    fixture.detectChanges();
+    tick();
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'instant' });
+    container.remove();
+  }));
 });

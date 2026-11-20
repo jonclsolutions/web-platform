@@ -1,56 +1,1036 @@
 {
   "pages": {
     "introductions": {
-      "navLabel": "Introductions",
-      "header": "Welcome to the Birth of RPSoftware",
+      "navLabel": "Introduction and working with the admin",
+      "header": "How to work with the administration",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - this is placeholder for intro"
+              "content": "This manual guides you through the whole administration step by step. This introductory chapter explains how the administration is organised and how to use the elements you find on almost every page: the menu, tables, filters, forms, the trash, export, import and reports. Once you understand it, you will manage even pages you see for the first time."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Every admin page has a question-mark button at the top right of its header. It opens exactly the chapter of this manual that describes that page. The Help button in the admin header opens the start of the manual - this page."
+            }
+          ]
+        },
+        {
+          "heading": "01. What the administration is and what it consists of",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The administration is the non-public part of the system where you manage the content and operation of all public applications - the website, the e-shop and the project portal for clients. Visitors do not see it and cannot get into it without an account."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Core (system)",
+                  "text": "The common base of all applications: user accounts, roles and permissions, legal documents, company details, the calendar, logs and security monitoring. Switch to Core with the Core tab in the header."
+                },
+                {
+                  "title": "Applications",
+                  "text": "Separate parts of the system, for example Web, E-shop or Project portal. Each has its own menu, dashboard, logs and pages. Switch between applications with the Applications button in the header."
+                },
+                {
+                  "title": "Public part",
+                  "text": "What visitors see - the website, the e-shop and the client portal. Most of what is shown there (texts, products, contacts, legal documents) is changed here in the administration."
+                },
+                {
+                  "title": "This manual",
+                  "text": "The internal help. You only see the chapters for pages you have permission to. Chapters you miss describe pages your account cannot open."
+                }
+              ]
+            },
+            {
+              "type": "note",
+              "highlight": "What you see depends on your account",
+              "content": "Every account has a role and possibly extra permissions. They decide which menu items, buttons and whole applications are shown. If something is missing in the administration or in the manual, it is not an error - your account lacks the permission. Ask the administrator who manages accounts to extend it (see the chapter Contacts and help)."
+            }
+          ]
+        },
+        {
+          "heading": "02. First sign-in",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Activation e-mail",
+                  "text": "An administrator creates your account. You receive an activation link by e-mail, valid for 48 hours.",
+                  "active": true
+                },
+                {
+                  "label": "Setting the password",
+                  "text": "The link opens a page where you choose your own password (8 to 64 characters, at least one letter, one digit and one special character). Nobody else knows the password - not even the administrator.",
+                  "active": false
+                },
+                {
+                  "label": "Signing in",
+                  "text": "On the sign-in page enter your e-mail and password. With two-factor authentication you also receive a six-digit code by e-mail.",
+                  "active": false
+                },
+                {
+                  "label": "Welcome page",
+                  "text": "After signing in the welcome page with your profile opens. If your account has no permission for it, the Access denied page is shown - continue from the left menu and ask the administrator for the permission of the welcome page (it is recommended for every account).",
+                  "active": false
+                },
+                {
+                  "label": "Recommended first steps",
+                  "text": "On the Personal information page check your name and e-mail, upload a profile photo and consider turning on two-factor authentication.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Details about signing in, passwords, two-factor authentication and how long a sign-in lasts are in the chapter Access and security."
+            }
+          ]
+        },
+        {
+          "heading": "03. Screen layout",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The administration always has the same layout: the header at the top, the menu on the left and the page content in the middle. The header and the menu stay in place, only the page content scrolls. A long menu scrolls on its own."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Menu button",
+                  "text": "At the far left of the header. Hides or shows the left menu. The system remembers whether you left the menu open."
+                },
+                {
+                  "title": "Module name",
+                  "text": "After the word Admin you see which module you are in (Core or the name of an application)."
+                },
+                {
+                  "title": "Your account",
+                  "text": "Profile photo, e-mail and role. Click the e-mail to open the Personal information page."
+                },
+                {
+                  "title": "Clock",
+                  "text": "Current date and time. Handy when working with times in the logs and the calendar."
+                },
+                {
+                  "title": "Core tab",
+                  "text": "Switches to the system part. You only see it with the permission for the Core section."
+                },
+                {
+                  "title": "Applications button",
+                  "text": "Opens the list of applications you have access to. The button always shows the name of the application you are in. The item All applications opens the overview of the applications with the state of each."
+                },
+                {
+                  "title": "Calendar",
+                  "text": "The calendar icon opens the common calendar of dates and open work."
+                },
+                {
+                  "title": "Help",
+                  "text": "Opens the start of this manual."
+                },
+                {
+                  "title": "Language",
+                  "text": "The flag on the right switches the language of the administration (Czech / English). The choice applies in this browser and is also used on the sign-in page."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "The left menu is divided into sections (for example Overview, Content, Users, System). Click the name of a section to collapse or expand it - the system remembers it. Change the width of the menu by dragging its right edge with the mouse. At the very bottom of the menu is the Log out button."
+            },
+            {
+              "type": "note",
+              "highlight": "On a phone or tablet",
+              "content": "The menu opens with the button at the top left and closes with a tap outside it. Account details, the clock, module switching, language, calendar and help are in a panel opened with the icon at the top right."
+            }
+          ]
+        },
+        {
+          "heading": "04. Switching between Core and the applications",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Click the Core tab in the header to work with the system pages (accounts, settings, legal documents, logs).",
+                "Click the Applications button and choose an application to work with the website, the e-shop or the project portal.",
+                "The left menu switches to the pages of the chosen module and its first page you may open is shown (usually the welcome page or the dashboard)."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "An application you have no permission for is not offered at all. The overview of all applications with their state (online, maintenance, problem) is on the Applications page."
+            }
+          ]
+        },
+        {
+          "heading": "05. Help and this manual",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "The question mark in the header of every page opens the chapter of the manual about that page.",
+                "Help in the header opens the start of the manual.",
+                "In the manual, choose a chapter on the left. Chapters are grouped: general chapters, Core and the individual applications.",
+                "At the top right of the manual you switch its language; at the top left the Administration button takes you back to the administration.",
+                "On a phone the list of chapters opens with the menu button of the manual."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "At the end of every chapter is the contact of the system's author for reporting an error in the system or in the manual."
+            }
+          ]
+        },
+        {
+          "heading": "06. Tables - the basis of most pages",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Most pages that manage records (accounts, inquiries, orders, products, logs …) use the same table. It works the same everywhere:"
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Actions menu",
+                  "text": "Drop-down button above the table. Depending on the page and your permissions it offers: open and hide filters, add a record, export data, import data, charts and reports, and switching between active records and the trash."
+                },
+                {
+                  "title": "Table row",
+                  "text": "One row = one record. Long texts are shortened; the full content is in the record details."
+                },
+                {
+                  "title": "Icons at the end of a row",
+                  "text": "Actions with one record: magnifier or Details (show all data), pencil or Edit (edit) and bin or Delete (move to the trash). Some pages have more actions, described in their chapter. You do not see icons you have no permission for."
+                },
+                {
+                  "title": "Checkboxes",
+                  "text": "On pages that allow it, each row starts with a checkbox. The checkbox in the header selects all records on the current page of the table."
+                },
+                {
+                  "title": "Pagination",
+                  "text": "Below the table: the information “Showing 1 - 10 of 57 records”, page buttons and the number of items per page."
+                },
+                {
+                  "title": "Freshness of the data",
+                  "text": "The table shows the time of the last update and a button to load the current data at once. The data also refreshes by itself about every 15 minutes while the browser tab is open and active."
+                },
+                {
+                  "title": "Table width",
+                  "text": "The option Show table at full page width stretches the table over the whole width - useful for tables with many columns."
+                },
+                {
+                  "title": "Empty table",
+                  "text": "The message “No data found.” means that no record matches the filters, or that there are no records yet."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "07. Bulk actions with selected records",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Tick the checkboxes of the records you want to work with (or the checkbox in the header for the whole page).",
+                "A bar with the number of selected records appears above the table.",
+                "The Actions button in the bar offers Export selected and - when the page allows it and you may delete - Delete selected.",
+                "Confirm a bulk deletion in the dialog. The records move to the trash; afterwards the dialog tells you how many were deleted and how many could not be.",
+                "The Clear selection button unticks all records."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "On some pages bulk deletion is switched off on purpose (for example administrator accounts) - records are deleted one by one there."
+            }
+          ]
+        },
+        {
+          "heading": "08. Filters, search and sorting",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Open the filters",
+                  "text": "In the Actions menu choose to open the filters. The filter panel slides out on the right.",
+                  "active": true
+                },
+                {
+                  "label": "Search across all columns",
+                  "text": "Type any term into the top field - the table shows records that contain it in any column.",
+                  "active": false
+                },
+                {
+                  "label": "Column filters",
+                  "text": "Below are fields for individual columns (text, choice from a list, date …). You can fill in several at once - a record must match all of them.",
+                  "active": false
+                },
+                {
+                  "label": "Sorting",
+                  "text": "In Sort by choose a column and in Sort direction choose ascending (A-Z, smallest first) or descending (Z-A, largest first).",
+                  "active": false
+                },
+                {
+                  "label": "Apply filters",
+                  "text": "The Apply filters button filters the table and takes you to the first page of the results.",
+                  "active": false
+                },
+                {
+                  "label": "Clear filters",
+                  "text": "The Clear filters button empties all fields and shows all records again.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Close the panel with the cross or the hide-filters item in the Actions menu. The filters stay applied until you clear them."
+            }
+          ]
+        },
+        {
+          "heading": "09. Forms - adding and editing a record",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Add a new record with the create item in the Actions menu, edit an existing one with the edit icon in its row.",
+                "A form opens. Fields marked with an asterisk (*) are required.",
+                "A wrongly filled field is highlighted when you leave it and the reason is shown below it (for example “This field is required.” or “Invalid email format.”).",
+                "Choice fields offer only allowed values. Fields with several options are ticked; options taken over from a role are marked and cannot be unticked.",
+                "For attachments choose files with the button or drag them into the marked area. Below the field you see the allowed number of files, the maximum size and the allowed types; a file that breaks a limit is refused with an explanation.",
+                "Confirm saves the form, Cancel or the cross closes it without saving."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "If the message Invalid form appears after Confirm, a required field is missing or wrongly filled. The form stays open and nothing was saved - correct the highlighted fields and confirm again."
+            }
+          ]
+        },
+        {
+          "heading": "10. Record details",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The details icon (magnifier, Details) opens a window with all data of the record, including what does not fit into the table, and the dates of creation and last change. The details only show - nothing can be changed there. Attachments have the buttons View (opens the file in the browser) and Download."
+            }
+          ]
+        },
+        {
+          "heading": "11. Deleting and the trash",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Deleting a record has two steps so that nothing is lost by mistake:"
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Delete",
+                  "text": "The bin icon in a row (after confirmation) moves the record to the trash. It disappears from the table, but nothing is lost.",
+                  "active": true
+                },
+                {
+                  "label": "Trash",
+                  "text": "In the Actions menu choose Show trash. You see the deleted records with the date of deletion. Show active takes you back to the active records.",
+                  "active": false
+                },
+                {
+                  "label": "Restore",
+                  "text": "The Restore button returns the record to the active ones with all its data.",
+                  "active": false
+                },
+                {
+                  "label": "Delete permanently",
+                  "text": "Removes one record for good. This step cannot be undone.",
+                  "active": false
+                },
+                {
+                  "label": "Empty trash",
+                  "text": "Permanently deletes all records in the trash. Records that other data depending on them must keep (for example a customer with orders) are not deleted and the dialog says so.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "danger",
+              "content": "Permanent deletion and emptying the trash cannot be undone. Before you confirm, make sure you really do not need the records."
+            },
+            {
+              "type": "text",
+              "content": "You only see the trash with the permission to show deleted records in the trash (view-deleted). Restoring and permanent deletion also need the delete permission of the page. Old records in the trash may also be deleted automatically by the nightly clean-up according to the retention settings (Settings → Data retention)."
+            }
+          ]
+        },
+        {
+          "heading": "12. Exporting data",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "In the Actions menu choose to export data (or Export selected in the bulk actions bar - then only the ticked records are exported).",
+                "Choose the format: CSV (Excel, Google Sheets), XLSX (Excel workbook), JSON (for developers and integrations) or TXT (plain text with tabs).",
+                "Tick the columns the file should contain (Select all / Deselect all). At least one column must be selected.",
+                "The option Export in raw format uses technical column names and unformatted values - such a file can be imported straight back (into this or another instance of the system).",
+                "Confirm. The system prepares the file and the browser downloads it."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Exported files often contain personal data (names, e-mails, phone numbers). Keep them only where they are protected, do not send them unprotected and delete them after use. Every export is written to the log."
+            }
+          ]
+        },
+        {
+          "heading": "13. Importing data",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Some pages (for example the inquiries of the website, the leads of the project portal or the suppliers of the e-shop) have an import item in the Actions menu. Import only bulk-adds new records - it never overwrites or deletes existing data."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Download the template",
+                  "text": "The Download blank template button downloads a file with the correct column headers. For columns with a fixed set of values the window shows the allowed values.",
+                  "active": true
+                },
+                {
+                  "label": "Fill in the file",
+                  "text": "Every row = one new record. Do not change the column headers.",
+                  "active": false
+                },
+                {
+                  "label": "Upload and check",
+                  "text": "Choose the file and press Check file. Nothing is saved yet - you see the number of total, valid and invalid rows and the exact reason for every invalid row.",
+                  "active": false
+                },
+                {
+                  "label": "Confirm",
+                  "text": "The Confirm and add N records button adds only the valid rows. Rows that collide with an existing record are skipped.",
+                  "active": false
+                },
+                {
+                  "label": "Result",
+                  "text": "The window shows how many records were added and how many skipped. A large import runs in the background - its result is then in the log of the application.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "If no row is valid, the import cannot be confirmed - fix the file according to the listed errors and upload it again. The Back button returns you to the file choice."
+            }
+          ]
+        },
+        {
+          "heading": "14. Charts and reports",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "In the Actions menu choose to generate charts and reports. A window with the report settings panel opens.",
+                "In Period fill in the From and To dates. An empty field means no limit.",
+                "In Columns and chart type tick the columns to evaluate and choose a chart type for each - bar, pie, doughnut, radar, polar or trend over time. For numeric values you choose a line or bar chart and the sum or average.",
+                "The Values button of a column lets you choose which values the chart includes (the others are left out and the report says so).",
+                "The option Overall trend over time adds a chart of the total number of records over time.",
+                "Press Generate report. The step of the chart (day, week, month) follows the length of the period.",
+                "Export to PDF saves the report as a document with its date, period and number of records."
+              ]
+            },
+            {
+              "type": "note",
+              "highlight": "Why a chart does not show zero values",
+              "content": "Pie and doughnut charts cannot show values with a zero count. When you need to see them, choose radar, polar or trend over time."
+            }
+          ]
+        },
+        {
+          "heading": "15. Dialogs, messages and password confirmation",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Confirmation dialog",
+                  "text": "Before every action that deletes or changes a lot, the system asks. Confirm performs the action, Cancel cancels it."
+                },
+                {
+                  "title": "Result messages",
+                  "text": "After saving or deleting a short confirmation appears. An error message always says what failed - nothing was saved in that case."
+                },
+                {
+                  "title": "Password confirmation",
+                  "text": "Sensitive operations (switching an application off and on, operations with system administrator accounts, the allowed e-mail domains, changing your own login e-mail) are carried out only after you enter your current password. After a correct password the system does not ask again for the same operation for 10 minutes."
+                },
+                {
+                  "title": "Connection error",
+                  "text": "A message that the server cannot be reached means an internet or server outage. Check the connection and repeat the action."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "16. The pages “Page not found” and “Access denied”",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Page not found: there is nothing at the address in the administration - the address is wrong or the page was moved. Continue from the menu.",
+                "Access denied: the page exists, but your account has no permission to open it. If you need it, ask the accounts administrator for the permission.",
+                "Both pages show the requested address and offer the buttons Back and Administration home."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "17. Notice of a new version",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "After an update of the system a bar “Updated to … - N change(s) here” briefly appears above the page. It is shown only in the part you work in and only when the update changed it. What's new opens the list of changes, the cross hides the bar until the next update. All versions and changes are on the Releases page."
+            }
+          ]
+        },
+        {
+          "heading": "18. Rules to keep in mind",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Never lend your account or tell anybody your password - every person should have an account of their own.",
+                "On a shared or foreign computer always log out with Log out and do not use Remember me.",
+                "Every change in the administration (creating, editing, deleting, exporting, signing in) is written to the log with your account, the time and the IP address.",
+                "Work with the personal data of customers, clients and applicants only as far as your work requires (GDPR).",
+                "When you do not know what to do, open the question mark of the page. If you still do not know, use the contacts in the chapter Contacts and help."
+              ]
             }
           ]
         }
       ]
     },
     "security": {
-      "navLabel": "Access",
-      "header": "Access Credentials and Security",
+      "navLabel": "Access and security",
+      "header": "Signing in, passwords and account security",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - this should explain login, 2FA, and password policy."
+              "content": "This chapter explains everything about access to the administration: signing in, saved accounts, two-factor authentication, password rules, a forgotten password, how long a sign-in lasts, logging out and how the system protects accounts against misuse."
+            }
+          ]
+        },
+        {
+          "heading": "01. Signing in step by step",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Open the sign-in page",
+                  "text": "The address of the administration takes you to the sign-in. The logo is on the left, the sign-in card on the right, the language choice at the top right.",
+                  "active": true
+                },
+                {
+                  "label": "E-mail and password",
+                  "text": "Enter your login e-mail and password. The eye icon shows the password so you can check it.",
+                  "active": false
+                },
+                {
+                  "label": "Remember me",
+                  "text": "Tick it only on your own computer - see chapter 03.",
+                  "active": false
+                },
+                {
+                  "label": "Sign in",
+                  "text": "Press Sign in. Without two-factor authentication you are signed in.",
+                  "active": false
+                },
+                {
+                  "label": "Verification code",
+                  "text": "With two-factor authentication a six-digit code arrives at your e-mail. Enter it and press Verify.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "With a wrong e-mail or password the system does not reveal, for security reasons, what exactly was wrong. Check both and try again."
+            }
+          ]
+        },
+        {
+          "heading": "02. Protection against password guessing",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "After three failed sign-ins to one e-mail within 15 minutes the system also requires a check that you are not a robot (CAPTCHA). Confirm it and sign in again.",
+                "The number of attempts per minute is limited (per e-mail and per network). When you exceed it, wait a minute.",
+                "Every failed attempt and every suspicious behaviour is written to the security monitoring, where the system administrator sees it."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Remember me and saved accounts",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The option Remember me decides how long a sign-in lasts:"
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Without remembering",
+                  "text": "The sign-in ends when the browser is closed, at the latest after 12 hours of inactivity."
+                },
+                {
+                  "title": "With remembering",
+                  "text": "The sign-in survives closing the browser. It ends after 7 days in which you do not use the administration at all."
+                },
+                {
+                  "title": "Always at most 30 days",
+                  "text": "At the latest 30 days after signing in you must sign in again - including two-factor authentication - even if you use the administration every day."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "On the sign-in page remembered accounts are offered under Continue with a saved account - one click on Continue as … signs you in without a password. The account of the current window is marked Signed in in this window. If an account meanwhile stopped existing or being valid, the system says it is no longer available and you have to sign in with the password."
+            },
+            {
+              "type": "note",
+              "highlight": "Several accounts in one browser",
+              "content": "One browser can have several accounts signed in - every tab works with one of them. Signing in or choosing an account affects only the current tab; the other tabs keep their account."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Never tick Remember me on a shared, public or foreign computer."
+            }
+          ]
+        },
+        {
+          "heading": "04. Two-factor authentication (2FA)",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Two-factor authentication means a password is not enough to sign in - you also need a code sent to your e-mail. Someone who knows only your password cannot sign in."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "The code has 6 digits and is valid for 10 minutes; the sign-in page shows how long it remains valid.",
+                "You can enter the code at most five times. After that you must sign in again with your password.",
+                "Resend code requests a new code - at the earliest after 60 seconds and at most five times per sign-in. A new code cancels the previous one.",
+                "When the code does not arrive, check the spam folder and that the e-mail of your account is correct."
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Turning on and off",
+                  "text": "On the Personal information page you turn 2FA on or off yourself with the checkbox Two-factor authentication (2FA)."
+                },
+                {
+                  "title": "Mandatory for a role",
+                  "text": "Some roles always require 2FA (the sysadmin role always, others according to the role settings). The checkbox then cannot be turned off."
+                },
+                {
+                  "title": "Enforced by an administrator",
+                  "text": "The system administrator can enforce 2FA for a specific account. It then cannot be turned off either - contact the administrator."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "We recommend keeping 2FA always on, especially if you have access to personal data or to account management."
+            }
+          ]
+        },
+        {
+          "heading": "05. Password rules",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The same rules apply to account activation, resetting a forgotten password and changing a password:"
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "8 to 64 characters,",
+                "at least one letter,",
+                "at least one digit,",
+                "at least one special character (for example ! ? # % - _ .)."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "While you type a new password, the list of requirements is shown below the field and the met ones are highlighted. The confirmation must match the password."
+            },
+            {
+              "type": "note",
+              "highlight": "How to choose a good password",
+              "content": "Safest is a long phrase of several words with a digit and a symbol, or a password generated by a password manager. Do not reuse a password from elsewhere and do not use your name, date of birth or the company name."
+            }
+          ]
+        },
+        {
+          "heading": "06. Forgotten password",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Forgot password?",
+                  "text": "On the sign-in page click the link Forgot password?",
+                  "active": true
+                },
+                {
+                  "label": "Enter the e-mail",
+                  "text": "Type your login e-mail and press Send reset link.",
+                  "active": false
+                },
+                {
+                  "label": "Check your mail",
+                  "text": "The system always answers “If the account exists, a reset link is on its way.” - for security reasons it does not reveal whether the account exists. The link is valid for 60 minutes.",
+                  "active": false
+                },
+                {
+                  "label": "New password",
+                  "text": "The link opens the page Set a new password. Enter a password according to the rules, repeat it and press Set new password.",
+                  "active": false
+                },
+                {
+                  "label": "Sign in",
+                  "text": "After a successful change the page takes you to the sign-in.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "The link can be used once. If it expired or was used, the page says it is invalid - request a new one on the sign-in page. A new request can be sent after a minute at the earliest."
+            }
+          ]
+        },
+        {
+          "heading": "07. Changing the password and the login e-mail",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Change your password on the Personal information page with Change password: enter the current password, the new password and its confirmation.",
+                "After a password change all other sign-ins of your account end (other browsers, other devices, other tabs) - the current tab stays signed in.",
+                "The login e-mail is changed by the accounts administrator. If you change it yourself (only with the permission), the system first checks your password, ends the other sign-ins and sends a notice to the old and the new address.",
+                "If you receive a notice of a change you did not make, contact the administrator immediately."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "08. Logging out",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The Log out button is at the very bottom of the left menu. It logs out the account of the current tab - on the server and in the browser. Other tabs with the same account go to the sign-in page; other accounts signed in in this browser stay signed in. When a sign-in expires, the system takes you to the sign-in page by itself and you sign in again."
+            }
+          ]
+        },
+        {
+          "heading": "09. Blocked or inactive account",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "An account that has not been activated yet (has no password) cannot sign in. Use the activation link from the e-mail or ask the administrator for a new one.",
+                "A blocked account cannot sign in and its running sign-ins are ended. Only the system administrator can block and unblock an account.",
+                "In both cases the sign-in page says that signing in to this account is not allowed and recommends contacting the administrator."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "10. What the system protects automatically",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Encrypted connection",
+                  "text": "The administration talks to the server only encrypted (HTTPS)."
+                },
+                {
+                  "title": "Passwords",
+                  "text": "A password is never stored in readable form - not even the system administrator can find it out, only send a link to set a new one."
+                },
+                {
+                  "title": "Stolen sign-in",
+                  "text": "When the system finds that the same sign-in is used from two different places, it ends all sign-ins of the account and records a security event."
+                },
+                {
+                  "title": "Security monitoring",
+                  "text": "Failed sign-ins, wrong codes, robots and scans are written to the security monitoring checked by the administrator."
+                },
+                {
+                  "title": "Audit",
+                  "text": "Sign-ins, logouts, password changes and all data changes are written to the logs."
+                },
+                {
+                  "title": "Password confirmation",
+                  "text": "The most sensitive operations require your password again even while you are signed in."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "11. What to do when …",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "The activation e-mail did not arrive",
+                  "text": "Check the spam folder. The activation link is valid for 48 hours; then ask the administrator to resend it."
+                },
+                {
+                  "title": "The verification code did not arrive",
+                  "text": "Wait a minute, check the spam folder and use Resend code."
+                },
+                {
+                  "title": "The code expired",
+                  "text": "Request a new code with Resend code, or sign in again."
+                },
+                {
+                  "title": "The system logged me out",
+                  "text": "The sign-in expired or was ended (password change, blocking, suspected stolen sign-in). Sign in again."
+                },
+                {
+                  "title": "I suspect misuse of my account",
+                  "text": "Change your password immediately, turn on 2FA and tell the administrator - they will check the security monitoring."
+                }
+              ]
             }
           ]
         }
       ]
     },
     "contacts": {
-      "navLabel": "Contacts",
-      "header": "Team Contacts",
+      "navLabel": "Contacts and help",
+      "header": "Contacts and where to get help",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - this should list contacts for key people on the team."
+              "content": "Whom to contact when you do not know what to do, something does not work or you need to change your access."
+            }
+          ]
+        },
+        {
+          "heading": "01. What to do when you are stuck",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Open the question mark in the header of the page you work with - the chapter of the manual describes every function of the page and has a part What to do when …",
+                "Read the introductory chapter How to work with the administration - it explains tables, filters, forms, the trash, export and import, which are the same on all pages.",
+                "If the problem persists, contact your administrator (chapter 02).",
+                "Report an error of the system to its author (chapter 03)."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. The administrator of your account",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The accounts administrator is a person in your company who has access to the Accounts page and manages users. Contact them when:"
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "you need a new account for a colleague or to close the account of a leaving employee,",
+                "a page, button or application is missing (extended permissions or another role),",
+                "your activation e-mail did not arrive or expired,",
+                "your name or login e-mail needs to change,",
+                "your account is blocked or you suspect it was misused."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Only the system administrator (the sysadmin role) may change roles and the allowed e-mail domains, block accounts and enforce two-factor authentication."
+            }
+          ]
+        },
+        {
+          "heading": "03. The author of the system and technical support",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The system was created and is technically maintained by JonclSolutions. The contact is also at the end of every chapter of this manual."
+            },
+            {
+              "type": "link",
+              "label": "info@jonclsolutions.com",
+              "url": "mailto:info@jonclsolutions.com",
+              "external": true
+            },
+            {
+              "type": "text",
+              "content": "When reporting an error give as many details as possible - it speeds up the fix:"
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "the address of the page (from the address bar of the browser),",
+                "what you did and what you expected,",
+                "the exact wording of the error message (ideally a screenshot),",
+                "the date and approximate time of the error,",
+                "the browser and device (for example Chrome on Windows, Safari on an iPhone)."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Never put passwords, verification codes or personal data of customers into a report. Nobody from support will ever ask you for your password or code."
+            }
+          ]
+        },
+        {
+          "heading": "04. Company contact details for visitors",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The contact e-mail, phone, address and social media that visitors of the website, the e-shop and the client portal see are set in Core on the Settings page (tab Company details)."
             }
           ]
         }
       ]
     },
     "core-dashboard": {
-      "navLabel": "Dashboard",
-      "header": "Core - Dashboard",
+      "navLabel": "System dashboard",
+      "header": "System dashboard (Core)",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - the overview page of the Core (system) module."
+              "content": "The system dashboard is a quick overview of the shared resources Core manages for all applications: user accounts, roles, legal documents, external links and system logs. From here one click takes you to every management page of Core."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Only accounts with the permission for the Core section (view-core) see the dashboard. Each tile and card is shown only with the permission for its page - so everyone may see a different dashboard."
+            }
+          ]
+        },
+        {
+          "heading": "01. Header and refreshing",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The header shows the title System overview, the time of the last update and the Refresh button. The data loads when the page opens; the button loads it again at any time."
+            }
+          ]
+        },
+        {
+          "heading": "02. Main metric and other numbers",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Main tile",
+                  "text": "The big number at the top left. Click its name to open a menu and choose which metric is highlighted: System users, Roles & permissions, Legal documents, External links or System logs."
+                },
+                {
+                  "title": "Overview by module",
+                  "text": "Bar overview of the other metrics - for a quick comparison of sizes."
+                },
+                {
+                  "title": "Distribution",
+                  "text": "A coloured bar showing the proportion of the metrics to each other. It is shown only when at least two metrics are available."
+                },
+                {
+                  "title": "No overviews",
+                  "text": "The message “No overview data is available for your account.” means you have no permission for any of the measured pages."
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "System users - the number of user accounts of the administration (page Accounts).",
+                "Roles & permissions - the number of roles (system administrators only).",
+                "Legal documents - the number of sections of the legal documents.",
+                "External links - the number of your external links.",
+                "System logs - the number of entries in the system log."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Quick navigation",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Cards with the name and description of a page - Accounts, Roles & permissions, Legal documents, External links, System logs and Settings. Click a card to open it. Cards of pages you have no permission for are not shown."
+            }
+          ]
+        },
+        {
+          "heading": "04. Recent system events",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "A list of the last eight entries of the system log (sign-ins, logouts, changes of accounts, roles and documents, password reset requests …) with the time and the user. View all opens the System logs page with the full history and filters. The card Recent events breakdown shows how many of these entries were creations, updates, deletions, restorations, exports and errors."
+            },
+            {
+              "type": "note",
+              "highlight": "What it is good for",
+              "content": "You see at a glance whether anything unusual is happening - for example a series of failed sign-ins or unexpected deletions. Look for the details in System logs and in Security monitoring."
             }
           ]
         }
@@ -58,55 +1038,630 @@
     },
     "calendar": {
       "navLabel": "Calendar",
-      "header": "Calendar",
+      "header": "Calendar - dates and open work",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "The guide for this page is being prepared."
+              "content": "The calendar gathers in one place the important dates of all modules (start and end of discount coupons, project deadlines, lead follow-ups, expiring links) and the open work (new inquiries, new applications, orders to process …). You can also add your own personal reminders."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Every signed-in user sees the calendar. The dates and tasks of the modules are shown only from pages you have permission for. Only you see your personal events."
+            }
+          ]
+        },
+        {
+          "heading": "01. How to open the calendar",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "with the calendar icon in the admin header (on a phone in the panel at the top right),",
+                "with the Calendar item in the Core menu, section Overview."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. The panel Waiting for you",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Above the calendar is a panel with work that is waiting for someone. Each item shows the count and the age of the oldest waiting record (for example “oldest 3 days ago”). Click an item to open the page where you handle the work. When nothing waits, the panel shows All done."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "System",
+                  "text": "New security events nobody has evaluated yet."
+                },
+                {
+                  "title": "Web",
+                  "text": "New inquiries from the website and new job applications."
+                },
+                {
+                  "title": "E-shop",
+                  "text": "E-shop orders to process and products with low stock."
+                },
+                {
+                  "title": "Project portal",
+                  "text": "Leads without contact for 14 days or more and orders without a project yet."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Dates in the calendar",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Activation expires",
+                  "text": "The day the activation link of a new account stops working (System)."
+                },
+                {
+                  "title": "Coupon starts / ends",
+                  "text": "The first and the last day a discount coupon is valid (E-shop)."
+                },
+                {
+                  "title": "Project deadline",
+                  "text": "The planned completion of a project (Project portal)."
+                },
+                {
+                  "title": "Follow up",
+                  "text": "14 days have passed since the last contact with a lead (Project portal)."
+                },
+                {
+                  "title": "Form expires",
+                  "text": "The link to the order form for a client stops working (Project portal)."
+                },
+                {
+                  "title": "Personal events",
+                  "text": "Your own reminders (chapter 05)."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "The dates of the modules come automatically from the data of the administration - you do not create or edit them in the calendar. Click a date to open the page it belongs to. A date that has passed without being handled is marked Overdue."
+            }
+          ]
+        },
+        {
+          "heading": "04. Using the calendar",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Month / List",
+                  "text": "View switch: a month grid, or a clear list of the dates of the month."
+                },
+                {
+                  "title": "Arrows and Today",
+                  "text": "The arrows go to the previous or next month, Today returns to the current month."
+                },
+                {
+                  "title": "Shown modules",
+                  "text": "Coloured switches of the modules (System, Personal, Web, E-shop, Project portal). Switching a module off hides its dates. Every module has its own colour in the calendar."
+                },
+                {
+                  "title": "A full day",
+                  "text": "When not all dates fit into a day, “+N more” is shown. All dates of the day are in the List view."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "05. Personal events",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Add event",
+                  "text": "The Add event button (or adding directly on a day) opens the form New personal event.",
+                  "active": true
+                },
+                {
+                  "label": "Title",
+                  "text": "A required short description, for example “Call the supplier”.",
+                  "active": false
+                },
+                {
+                  "label": "Date and time",
+                  "text": "The date is required. The time is optional - an empty time means all day.",
+                  "active": false
+                },
+                {
+                  "label": "Note",
+                  "text": "Optional longer text.",
+                  "active": false
+                },
+                {
+                  "label": "Done",
+                  "text": "Ticking it marks the event as handled.",
+                  "active": false
+                },
+                {
+                  "label": "Save",
+                  "text": "The event appears in the calendar in the Personal colour.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Click your event to edit it (form Edit personal event).",
+                "Mark as done / Mark as not done change the state without opening the form.",
+                "Delete removes the event permanently after confirmation - it cannot be undone."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Only you see your personal events - not even administrators see them. Still, do not write sensitive personal data of customers into them."
+            }
+          ]
+        },
+        {
+          "heading": "06. What to do when …",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "The calendar did not load",
+                  "text": "The message “The calendar could not be loaded” is shown. Reload the page; if it persists, contact support."
+                },
+                {
+                  "title": "Dates of a module are missing",
+                  "text": "You have no permission for the page the dates come from, or the module is switched off in Shown modules."
+                },
+                {
+                  "title": "A date is wrong",
+                  "text": "Correct the data on the page the date comes from (coupon, project, lead) - the calendar follows by itself."
+                }
+              ]
             }
           ]
         }
       ]
     },
     "welcome-page": {
-      "navLabel": "Welcome Page",
-      "header": "Welcome Page",
+      "navLabel": "Welcome page",
+      "header": "Welcome page of the administration",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - the landing page shown after logging into the administration."
+              "content": "The welcome page opens right after signing in. It greets you by name and shows the basic details of your account. It contains no sensitive overviews - those are on the dashboards."
+            }
+          ]
+        },
+        {
+          "heading": "01. What the page shows",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Greeting",
+                  "text": "The heading “Welcome to the administration, …” with your name."
+                },
+                {
+                  "title": "Your profile",
+                  "text": "Full name, login e-mail, role and the date the account was created."
+                },
+                {
+                  "title": "Help",
+                  "text": "A pointer to technical support and the system administrator at the bottom of the page."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "If the profile cannot be loaded, the message “Failed to load your profile.” is shown - reload the page. Change your details on the Personal information page (click your e-mail in the header)."
+            }
+          ]
+        },
+        {
+          "heading": "02. Who sees the page",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The page requires the permission to show the welcome page (core-view-welcome-page). It is recommended for every account - without it the user sees the Access denied page after signing in and has to continue from the menu."
+            }
+          ]
+        },
+        {
+          "heading": "03. Where next",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "The left menu - pages of the Core module.",
+                "The Applications button in the header - website, e-shop, project portal.",
+                "The calendar in the header - dates and open work.",
+                "Help in the header - this manual."
+              ]
             }
           ]
         }
       ]
     },
     "edit-legal": {
-      "navLabel": "Legal Documents",
-      "header": "Editing Legal Documents (GDPR, TOS...)",
+      "navLabel": "Legal documents",
+      "header": "Legal documents - privacy policy, terms of service, cookies",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - editing multilingual content of legal documents (GDPR, terms of service, cookies). The documents apply to every public application: the terms of service and the privacy policy are shown by the web and by the e-shop (in its own look); the languages are those of all applications together."
+              "content": "On this page you edit the texts of the legal documents visitors see on the website and in the e-shop: the privacy policy (GDPR), the terms of service (TOS) and the cookies policy. Each document consists of sections and exists separately in every language of the website."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Legal documents have legal force. Consult changes with a lawyer and after editing check that the text is the same in all languages."
+            }
+          ]
+        },
+        {
+          "heading": "01. Where the documents are shown",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Privacy policy (GDPR)",
+                  "text": "Website: /privacy-policy, e-shop: /shop/privacy-policy. Forms in which a visitor gives consent link to it too."
+                },
+                {
+                  "title": "Terms of service (TOS)",
+                  "text": "Website: /tos, e-shop: /shop/tos."
+                },
+                {
+                  "title": "Cookies",
+                  "text": "Website: /cookies-policy. The page also has a button to change the cookie settings."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "The documents are shared by all applications: a text edited once is shown on the website and in the e-shop (each in its own look). The date of the last update below the document follows the last edit automatically."
+            }
+          ]
+        },
+        {
+          "heading": "02. Finding your way on the page",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Document tabs",
+                  "text": "At the top you choose the document: GDPR, TOS, Cookies."
+                },
+                {
+                  "title": "Language tabs",
+                  "text": "Below them you choose the language. The languages are the languages of all applications together. A language in which some sections are missing has a warning mark."
+                },
+                {
+                  "title": "Number of missing translations",
+                  "text": "The mark next to the title shows how many translations are missing across all languages."
+                },
+                {
+                  "title": "List of sections",
+                  "text": "The sections of the current document in the current language in the order the visitor sees them. Each has a heading and content."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. How sections and languages work",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Every section has a position (order number). Sections with the same position in different languages are translations of the same section. When a section at some position is missing in a language, the system reports it:"
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "a bar above the sections: “In language … N sections missing that exist in other languages”, with Fill position N buttons,",
+                "a mark “missing in N lang.” at a section of another language - hover over it to see in which languages."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "When a document has no section in the visitor's language, the Czech version is shown; when it has no Czech one either, an existing language is shown. A new installation has English templates with details in square brackets (for example [Company name], [Contact e-mail]) - these must be replaced with real details."
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "04. Editing a section",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Choose the document and language",
+                  "text": "Click the tab of the document and of the language.",
+                  "active": true
+                },
+                {
+                  "label": "Edit",
+                  "text": "Press Edit at the section. It switches to editing.",
+                  "active": false
+                },
+                {
+                  "label": "Section heading",
+                  "text": "An optional heading, for example “1. Introductory provisions”.",
+                  "active": false
+                },
+                {
+                  "label": "Section content",
+                  "text": "The required text of the section. Empty content cannot be saved.",
+                  "active": false
+                },
+                {
+                  "label": "Save",
+                  "text": "Save confirms the change, Cancel discards it. The change shows on the public website at once.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "note",
+              "highlight": "Text formatting",
+              "content": "The content of a section is one paragraph. For another paragraph create a new section (without a heading if you do not need one). Line breaks inside the content are not shown on the website."
+            }
+          ]
+        },
+        {
+          "key": "create",
+          "heading": "05. Adding a section",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Below the list of sections press Add section - the new section is added at the end of the document in the current language.",
+                "To fill in a missing translation, use the Fill position N button in the bar of missing sections - the section is created right at that position.",
+                "Fill in the heading and the content (both are required when adding) and press Save."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "After you add a section in one language the system at once shows it is missing in the other languages. Add it in all languages so that the document says the same everywhere."
+            }
+          ]
+        },
+        {
+          "key": "delete",
+          "heading": "06. Deleting a section",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The bin icon at a section and a confirmation in the dialog delete the section. Deletion cannot be undone and affects only the section in the current language - the translations in other languages stay and the system then marks them as missing elsewhere."
+            }
+          ]
+        },
+        {
+          "heading": "07. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "Show legal documents (core-legal-documents-view)."
+                },
+                {
+                  "title": "Adding a section",
+                  "text": "Create a new section of a legal document (core-legal-documents-create)."
+                },
+                {
+                  "title": "Editing a section",
+                  "text": "Edit a section of a legal document (core-legal-documents-update)."
+                },
+                {
+                  "title": "Deleting a section",
+                  "text": "Delete a section of a legal document (core-legal-documents-delete)."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Buttons you have no permission for are not shown. Every change is written to the system log."
             }
           ]
         }
       ]
     },
     "personal-info": {
-      "navLabel": "Personal Information",
-      "header": "Personal Information and Account Security",
+      "navLabel": "Personal information",
+      "header": "Personal information - your account",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - managing your own profile, password, and two-factor authentication."
+              "content": "The page of your own account. You see your details, set your profile photo, turn two-factor authentication on or off and change your password. Every signed-in user has this page."
+            },
+            {
+              "type": "text",
+              "content": "Open it by clicking your e-mail in the admin header or with the Personal information item in the Core menu."
+            }
+          ]
+        },
+        {
+          "heading": "01. Profile photo",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Click Change photo and choose a JPG, PNG or WebP image of at most 2 MB.",
+                "The photo uploads at once (“Uploading the photo…” is shown) and appears in the admin header and at your account in the list of accounts.",
+                "Remove photo deletes it and the default image is shown."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "On an error the reason is shown: a format other than JPG, PNG and WebP, or a photo larger than 2 MB."
+            }
+          ]
+        },
+        {
+          "heading": "02. Basic information",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Full name",
+                  "text": "The name shown in the administration and in the greeting of e-mails."
+                },
+                {
+                  "title": "Login e-mail",
+                  "text": "The address you sign in with and where verification codes and notices go."
+                },
+                {
+                  "title": "Role",
+                  "text": "Your role - it decides what you may do in the administration. The accounts administrator changes it."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "A regular user does not change the name or the e-mail - the page title has a note to contact an administrator. The system administrator and a user with the permission to edit accounts (core-administrators-update) see the buttons Change name and Change login e-mail."
+            }
+          ]
+        },
+        {
+          "key": "edit-profile",
+          "heading": "03. Changing the name and e-mail (with the permission only)",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Change",
+                  "text": "Click Change name or Change login e-mail. The value turns into an input field.",
+                  "active": true
+                },
+                {
+                  "label": "New value",
+                  "text": "The name may have at most 255 characters, the e-mail must be valid.",
+                  "active": false
+                },
+                {
+                  "label": "Save",
+                  "text": "Save confirms, Cancel returns the original value.",
+                  "active": false
+                },
+                {
+                  "label": "Password (e-mail only)",
+                  "text": "Before changing the e-mail the system asks for your current password.",
+                  "active": false
+                },
+                {
+                  "label": "After changing the e-mail",
+                  "text": "The other sign-ins of your account end and the old and the new address receive a notice. The new e-mail shows in the header at once; next time you sign in with the new e-mail.",
+                  "active": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "04. Two-factor authentication",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The Security part has the checkbox Two-factor authentication (2FA). The change is saved right after the click and applies from the next sign-in. The text below the checkbox always says the state of the authentication:"
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Disabled",
+                  "text": "“Two-factor authentication is disabled.” We recommend turning it on."
+                },
+                {
+                  "title": "Enabled",
+                  "text": "“Two-factor authentication is enabled.” You can turn it off at any time."
+                },
+                {
+                  "title": "Mandatory for the role",
+                  "text": "Your role requires the authentication - the checkbox is locked."
+                },
+                {
+                  "title": "Enforced by an administrator",
+                  "text": "The system administrator enforced the authentication for your account - the checkbox is locked; contact the administrator."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "How the authentication works at sign-in is described in the chapter Access and security."
+            }
+          ]
+        },
+        {
+          "heading": "05. Changing the password",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Change password",
+                  "text": "In the Security part press Change password. The Change password window opens.",
+                  "active": true
+                },
+                {
+                  "label": "Current password",
+                  "text": "Enter your current password.",
+                  "active": false
+                },
+                {
+                  "label": "New password and confirmation",
+                  "text": "Enter the new password (8 to 64 characters, a letter, a digit and a special character) and repeat it. Below the field you see which requirements the password already meets; a mismatching confirmation is marked at once.",
+                  "active": false
+                },
+                {
+                  "label": "Update password",
+                  "text": "After saving a confirmation is shown. All other sign-ins of your account (other browsers, devices and tabs) end, the current tab stays signed in.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "The message “Error changing password. Please check your current password.” means the current password does not match or the new password breaks the rules. The password was not changed."
+            },
+            {
+              "type": "text",
+              "content": "Reset a forgotten password on the sign-in page with the link Forgot password? (chapter Access and security)."
             }
           ]
         }
@@ -114,41 +1669,548 @@
     },
     "settings": {
       "navLabel": "Settings",
-      "header": "System Settings",
+      "header": "Settings - company details, page titles, data retention",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - company details, logo, and social media shown on the website."
+              "content": "The Settings page has three tabs: Company details (logo, company details and social media shown to visitors and in e-mails), Page titles (the name of the administration in the browser tab) and Data retention (how long personal data is kept)."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Accounts with the permission to show company details (core-legal-config-view) see the page. Only accounts with the permission to edit company details (core-legal-config-update) may save; adding and deleting social media have permissions of their own."
+            }
+          ]
+        },
+        {
+          "heading": "01. Tab Company details - logo",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Choose logo",
+                  "text": "In the Logo card press Choose logo (or Change logo). Choose a JPG, PNG or SVG image up to 2 MB.",
+                  "active": true
+                },
+                {
+                  "label": "Preview",
+                  "text": "The logo appears in the preview with the mark New logo ready to save. Cancel selection discards it.",
+                  "active": false
+                },
+                {
+                  "label": "Saving",
+                  "text": "The logo is saved only with the Save company details button at the bottom (the button shows “+ logo”).",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "The logo is shown in the header of the public website and the e-shop and as the icon in the tab preview on the Page titles tabs."
+            }
+          ]
+        },
+        {
+          "heading": "02. Tab Company details - company details",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Company name *",
+                  "text": "Required. Shown on the website, in the e-shop and in e-mails."
+                },
+                {
+                  "title": "Contact e-mail *",
+                  "text": "Required. The contact for visitors - website, e-shop, maintenance pages, e-mails."
+                },
+                {
+                  "title": "Brand tagline",
+                  "text": "The company slogan - entered separately for every language."
+                },
+                {
+                  "title": "Copyright text",
+                  "text": "The copyright notice - separately for every language."
+                },
+                {
+                  "title": "Company ID and VAT ID",
+                  "text": "The registration and tax numbers of the company."
+                },
+                {
+                  "title": "Phone and Address",
+                  "text": "The contact phone and the address of the registered office or premises."
+                },
+                {
+                  "title": "Website footer text",
+                  "text": "Text in the footer of the public website, for example “© 2026 Company Ltd. All rights reserved.”"
+                },
+                {
+                  "title": "Google Analytics 4 - Measurement ID",
+                  "text": "The Google Analytics measurement ID (starts with G-). Measuring starts on the website only for a visitor who agrees to analytics cookies. Empty field = no measuring."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "For the language fields (tagline, copyright) switch the language with the switch Language for tagline and copyright above the form. Fill them in for all languages."
+            },
+            {
+              "type": "note",
+              "highlight": "Show on the website",
+              "content": "Apart from the required fields, every detail has the checkbox Show on the website next to its name. A switched-off detail is not shown on the website or in e-mails, but its value stays saved. A switched-on detail must be filled in - otherwise saving ends with the message Missing details and a list of the fields."
+            },
+            {
+              "type": "text",
+              "content": "Save everything with Save company details. A successful save is confirmed by the message and the Saved mark at the card."
+            }
+          ]
+        },
+        {
+          "heading": "03. Tab Company details - social media",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Add social media",
+                  "text": "Add social media creates a new row.",
+                  "active": true
+                },
+                {
+                  "label": "Name and address",
+                  "text": "Fill in the name (Facebook, Instagram, LinkedIn …) and the full address of the profile starting with https://.",
+                  "active": false
+                },
+                {
+                  "label": "Icon",
+                  "text": "Upload icon chooses the icon image (up to 2 MB) - it is shown on the website at the link.",
+                  "active": false
+                },
+                {
+                  "label": "Save",
+                  "text": "The save icon of the row saves the link. Every row is saved on its own.",
+                  "active": false
+                },
+                {
+                  "label": "Delete",
+                  "text": "The bin icon and a confirmation delete the link together with its icon.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Social media are shown on the public website, in the e-shop, in the client portal and on the maintenance pages. Adding requires core-legal-config-create, editing core-legal-config-update and deleting core-legal-config-delete."
+            }
+          ]
+        },
+        {
+          "heading": "04. Tab Page titles",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Here you set the text shown in the browser tab for the whole administration and the sign-in pages (row Whole administration and login), separately for every language of the administration."
+            },
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Choose the language with the switch Language of the titles.",
+                "Edit the title in the field. The tab preview above the field shows how the tab will look.",
+                "Save page titles saves the changes; Discard changes reverts them. The number of unsaved changes is above the buttons."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Empty field = the Czech title is used. The recommended length is up to 60 characters. Page titles of the website and the e-shop are set in their applications (Edit website, Edit e-shop)."
+            }
+          ]
+        },
+        {
+          "heading": "05. Tab Data retention (GDPR)",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The GDPR requires that personal data is not kept longer than necessary. On this tab you set for every kind of data after how long it is deleted automatically. The clean-up runs every night and permanently deletes records that have not changed for longer than the set period - including their attachments, files and items in the trash. Records being worked on (changed recently) are therefore not deleted."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Cookie consent records",
+                  "text": "An anonymous proof of the visitor's consent (without the IP address). Usually 3 years."
+                },
+                {
+                  "title": "Audit logs (core, web, e-shop)",
+                  "text": "History of changes with the e-mail and IP address of who made them, and the history of imports. Usually 1-2 years."
+                },
+                {
+                  "title": "Web inquiries",
+                  "text": "Pre-contract communication. Usually 1-2 years."
+                },
+                {
+                  "title": "Job applications (CV)",
+                  "text": "Without the applicant's consent to a longer record usually 6 months."
+                },
+                {
+                  "title": "Leads",
+                  "text": "Business opportunities and their contacts. Usually 1-2 years."
+                },
+                {
+                  "title": "Orders (project portal)",
+                  "text": "A contractual relationship - accounting and tax rules may require up to 10 years."
+                },
+                {
+                  "title": "Projects (client portal)",
+                  "text": "Including threads, messages and attachments; the last message in the portal counts as well."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Rows of applications are shown only for installed applications. For every row choose a period (30 days to 10 years) or Do not delete automatically. Below the card you see when the last clean-up ran and how many records it deleted."
+            },
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Set the periods and press Save periods.",
+                "The clean-up runs at night by itself. To run it at once, press Run clean-up now and confirm - records older than the SAVED periods are deleted."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "danger",
+              "content": "The clean-up deletes permanently and cannot be undone. Before shortening a period make sure you really do not need the older data (for example for complaints, accounting or disputes)."
+            },
+            {
+              "type": "note",
+              "highlight": "What is not deleted",
+              "content": "E-shop orders and customers are not deleted automatically - they are subject to accounting periods. Expired sign-ins to the client portal are always deleted. Security monitoring has its own retention on its page."
             }
           ]
         }
       ]
     },
     "external-links": {
-      "navLabel": "External Links",
-      "header": "External Links (Admin Quick Links)",
+      "navLabel": "External links",
+      "header": "External links - your bookmarks of tools",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - a personal list of quick links to external tools, visible only to you."
+              "content": "External links are your personal bookmarks of tools outside the administration - for example Google Analytics, Search Console, webmail, accounting or the domain management. You have them at hand in one place in the administration."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "The links are private: every user sees and manages only their own links. Colleagues do not see yours and you do not see theirs."
+            }
+          ]
+        },
+        {
+          "heading": "01. The table of links",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The table has the columns ID, Name and URL. It works like the other tables of the administration (Actions menu, filters, pagination, export, charts and the trash - see the introductory chapter). Copy the address of a link from the table or from the details (magnifier icon) and open it in a new browser tab."
+            }
+          ]
+        },
+        {
+          "key": "create",
+          "heading": "02. Adding a link",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Add record",
+                  "text": "In the Actions menu choose Add record.",
+                  "active": true
+                },
+                {
+                  "label": "Link name",
+                  "text": "A short name, for example “Google Analytics”. Required, at most 150 characters.",
+                  "active": false
+                },
+                {
+                  "label": "URL address",
+                  "text": "The full address starting with http:// or https://.",
+                  "active": false
+                },
+                {
+                  "label": "Confirm",
+                  "text": "The link is saved and appears in the table.",
+                  "active": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "manage",
+          "heading": "03. Editing and deleting",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "The edit icon in a row opens the form with the data of the link; Confirm saves the changes.",
+                "The bin icon moves the link to the trash. In the trash you restore it or delete it permanently."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "04. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "core-external-links-view"
+                },
+                {
+                  "title": "Adding",
+                  "text": "core-external-links-create"
+                },
+                {
+                  "title": "Editing",
+                  "text": "core-external-links-update"
+                },
+                {
+                  "title": "Deleting and restoring from the trash",
+                  "text": "core-external-links-delete; the trash also requires the permission to show deleted records (view-deleted)."
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Do not store user names, passwords or addresses with secret tokens in the links. Store only the normal address of the tool's page."
             }
           ]
         }
       ]
     },
     "edit-roles": {
-      "navLabel": "Roles and Permissions",
-      "header": "Roles and Permissions Management",
+      "navLabel": "Roles & permissions",
+      "header": "Roles & permissions",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - management of roles and their permissions. Accessible exclusively to the sysadmin."
+              "content": "A role is a named set of permissions, for example “Sales” or “Content manager”. Every account has one role and it decides which pages the account may open and which actions it may take. On this page you create, edit and delete roles and decide which permissions they contain."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "The page is available only to the system administrator (the sysadmin role). A change of a role applies at once to all accounts that have it - make it with care."
+            }
+          ]
+        },
+        {
+          "heading": "01. Finding your way on the page",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Role list (left)",
+                  "text": "All roles with the search field Search role…. Each role shows the number of accounts that have it, a 2FA icon (the role requires two-factor authentication) and the System role mark."
+                },
+                {
+                  "title": "Role detail (right)",
+                  "text": "Name, description, the 2FA setting and the list of permissions of the selected role. Until you select a role it shows Select a role from the list on the left, or create a new one."
+                },
+                {
+                  "title": "Buttons New role and Export",
+                  "text": "At the right of the detail header."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Permissions - how to read them",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Permissions are grouped by module (System (Core), Web, E-shop, Project portal …) and inside a module by page. Each has an understandable description and a technical key. The key is made of the module, the page and the action, for example:"
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "…-view",
+                  "text": "Show the page and its data."
+                },
+                {
+                  "title": "…-create",
+                  "text": "Add records."
+                },
+                {
+                  "title": "…-update",
+                  "text": "Edit records."
+                },
+                {
+                  "title": "…-delete",
+                  "text": "Delete records and restore them from the trash."
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "view-core and the application tabs (for example view-web, view-eshop) - without them you cannot get into the module at all.",
+                "core-view-welcome-page - the welcome page after signing in; recommended to keep always on.",
+                "view-deleted - access to the trash across modules.",
+                "Permissions to switch an application off and on (maintenance mode) and for the settings of applications have keys of their own at their applications."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "The field Search permissions by name or key… narrows the list to the matching permissions."
+            }
+          ]
+        },
+        {
+          "heading": "03. Creating a new role",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "New role",
+                  "text": "Press New role. A form opens.",
+                  "active": true
+                },
+                {
+                  "label": "Role name",
+                  "text": "Required, for example “Accountant”.",
+                  "active": false
+                },
+                {
+                  "label": "Description",
+                  "text": "An optional short description of the purpose of the role.",
+                  "active": false
+                },
+                {
+                  "label": "Require 2FA for this role",
+                  "text": "Tick it if everyone with this role must use two-factor authentication.",
+                  "active": false
+                },
+                {
+                  "label": "Create role",
+                  "text": "The role appears in the list - without permissions so far.",
+                  "active": false
+                },
+                {
+                  "label": "Permissions",
+                  "text": "Tick the permissions (chapter 04) and save.",
+                  "active": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "04. Setting the permissions of a role",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Select the role in the list on the left.",
+                "Tick or untick permissions in the detail. The notice You have unsaved permission changes appears at the top.",
+                "Save permissions saves the changes; Discard returns to the saved state."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "When you switch to another role with unsaved changes, the system asks whether you want to lose them."
+            },
+            {
+              "type": "text",
+              "content": "Saved changes apply to all users with this role - at the latest within 20 minutes, at once after the page is reloaded in their browser. Permissions a user has on top of the role are set at the account on the Accounts page."
+            }
+          ]
+        },
+        {
+          "heading": "05. Editing the name, description and 2FA",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "At the selected role press Edit name/description.",
+                "Change the name, the description or the option Require 2FA for this role.",
+                "Press Save."
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Turning 2FA on for a role means everyone with the role enters a code from their e-mail when signing in and cannot turn it off."
+            }
+          ]
+        },
+        {
+          "heading": "06. Deleting a role",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Delete role and the confirmation Yes, delete remove the role permanently together with its permissions. The action cannot be undone."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "A role assigned to at least one account cannot be deleted - give those accounts another role first.",
+                "The system role cannot be deleted."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "07. The system role sysadmin",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The sysadmin role is a system role: it automatically has all permissions, always requires two-factor authentication and its name, description and permissions cannot be changed or deleted. In the detail it is marked with a notice and the checkboxes are locked. Accounts with the sysadmin role may be managed only by another sysadmin."
+            }
+          ]
+        },
+        {
+          "heading": "08. Export",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The Export button opens the export window: choose the format and the columns (role name, description, system role, enforced 2FA, number of users and the list of permissions). Useful as an overview of access for an audit or a review."
+            }
+          ]
+        },
+        {
+          "heading": "09. Principles",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Give roles only the permissions people really need (principle of least privilege).",
+                "Rather several narrow roles than one wide role for everybody.",
+                "Entrust deleting and the trash (…-delete, view-deleted) and account management only to trusted people.",
+                "For roles with access to personal data or account management turn on mandatory 2FA.",
+                "Review the export of roles regularly and remove permissions that are no longer needed."
+              ]
             }
           ]
         }
@@ -240,7 +2302,7 @@
                 },
                 {
                   "title": "Refreshing data",
-                  "text": "Next to the table you see the time of the last update and a button for an immediate refresh. The data also refreshes automatically roughly every 15 minutes while the browser tab is open and active. The refresh-all button in the administration header refreshes all tables at once."
+                  "text": "Next to the table you see the time of the last update and a button for an immediate refresh. The data also refreshes automatically roughly every 15 minutes while the browser tab is open and active."
                 }
               ]
             },
@@ -1152,28 +3214,332 @@
       ]
     },
     "core-logs": {
-      "navLabel": "System Logs",
-      "header": "Core - System Logs",
+      "navLabel": "System logs",
+      "header": "System logs - audit records",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - overview of system audit logs."
+              "content": "The system log is the unchangeable history of what happened in Core: who signed in and out when, who created, edited or deleted an account, a role or a legal document, who exported what and which actions the system refused. It serves for checking, for tracing errors and as evidence for an audit."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Log entries cannot be edited or deleted by hand. Old entries are deleted only by the nightly clean-up according to the retention set in Settings → Data retention."
+            }
+          ]
+        },
+        {
+          "heading": "01. Columns of the table",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "ID",
+                  "text": "The sequence number of the entry."
+                },
+                {
+                  "title": "Time",
+                  "text": "When the event happened."
+                },
+                {
+                  "title": "User",
+                  "text": "Who performed the action (e-mail). System actions have no user."
+                },
+                {
+                  "title": "Action",
+                  "text": "The type of the event - for example Created, Updated, Soft deleted, Permanently deleted, Restored, Login, Failed login, Logout, Password changed, Exported, Error."
+                },
+                {
+                  "title": "Module",
+                  "text": "Which part the event concerns: Authentication, Users, Roles, Legal documents, Core (general)."
+                },
+                {
+                  "title": "Event description",
+                  "text": "A human-readable description of what happened."
+                },
+                {
+                  "title": "IP address / origin",
+                  "text": "Where the action came from."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Actions ending with denied (for example Update denied) mean someone tried the action but the system refused it - typically because of a missing permission."
+            }
+          ]
+        },
+        {
+          "heading": "02. Searching the log",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "In the Actions menu choose Filters.",
+                "Filter by ID, user or e-mail, action type, module or IP address. Choose the order in Sort by.",
+                "Press Apply filters."
+              ]
+            },
+            {
+              "type": "note",
+              "highlight": "Typical questions",
+              "content": "Who deleted an account? - action Soft deleted, module Users. Who signed in at night? - action Login and sorting by time. What did a particular user do? - filter User."
+            }
+          ]
+        },
+        {
+          "heading": "03. Entry details",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The Details icon shows all data of the entry: time, IP address, event type, module, the detailed description, the table and ID of the affected record, the ID and e-mail of the user and the technical data (JSON) - for example which values changed."
+            }
+          ]
+        },
+        {
+          "heading": "04. Export and reports",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "You can export the log (Actions → export data) and evaluate it in charts (Actions → generate charts and reports) - for example the number of sign-ins over time or the breakdown of action types. The procedure is in the introductory chapter."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "The log contains e-mails and IP addresses - these are personal data. Protect exported files and delete them after use."
+            }
+          ]
+        },
+        {
+          "heading": "05. Who sees the page",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The page requires the permission for the Core section (view-core). The logs of the individual applications (website, e-shop, project portal) have their own pages in those applications."
             }
           ]
         }
       ]
     },
     "security-events": {
-      "navLabel": "Security Monitoring",
-      "header": "Security Monitoring",
+      "navLabel": "Security monitoring",
+      "header": "Security monitoring",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Placeholder content - monitoring of suspicious activity, event triage, and retention period settings."
+              "content": "Security monitoring records suspicious activity: failed sign-ins, password guessing, wrong verification codes, robots on forms, exceeded limits, automated scans and blocked content on the pages. For every entry the system explains in plain words what happened and what it recommends doing."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Most entries are harmless - the internet is full of robots trying common addresses. What matters is watching critical entries and entries whose count grows quickly."
+            }
+          ]
+        },
+        {
+          "heading": "01. Chart of the volume of suspicious activity",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "At the top is a bar chart of the last 14 days. Each bar is one day split by severity (Critical, Warning, Info). Hover to see the counts, click a bar to filter the table to the entries of that day."
+            }
+          ]
+        },
+        {
+          "heading": "02. The table of entries",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Last seen",
+                  "text": "The time of the last occurrence."
+                },
+                {
+                  "title": "Event type",
+                  "text": "What happened (list in chapter 03)."
+                },
+                {
+                  "title": "Severity",
+                  "text": "Info, Warning or Critical."
+                },
+                {
+                  "title": "IP address",
+                  "text": "Where the activity came from."
+                },
+                {
+                  "title": "Occurrences",
+                  "text": "How many times the same event repeated from the same address - repetitions do not add new rows."
+                },
+                {
+                  "title": "Status",
+                  "text": "New, Reviewed, False positive or Confirmed attack."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Filter the table by ID, event type, severity, status and IP address. The details of an entry also show the browser (User-Agent), the address and method of the request, the user ID, the first and last occurrence, the note and the technical context."
+            }
+          ]
+        },
+        {
+          "heading": "03. Event types",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Failed login attempt",
+                  "text": "A wrong password for an account. Common on its own (a typo)."
+                },
+                {
+                  "title": "Suspected brute-force attack",
+                  "text": "Repeated failed sign-ins to one account - from then on the system requires CAPTCHA. Check that the account does not have a weak password."
+                },
+                {
+                  "title": "CAPTCHA failure",
+                  "text": "A sign-in or a public form without a valid check that it is not a robot."
+                },
+                {
+                  "title": "CAPTCHA service outage",
+                  "text": "The external verification service did not answer - usually a temporary outage, not an attack. For forms, visitors cannot send them during the outage."
+                },
+                {
+                  "title": "Honeypot – bot caught",
+                  "text": "A robot filled in a hidden field of a form. Nothing was saved or sent."
+                },
+                {
+                  "title": "Request rate limit exceeded",
+                  "text": "Too many requests from one address in a minute (for example an attempt to flood a form)."
+                },
+                {
+                  "title": "Invalid verification code (2FA)",
+                  "text": "After a correct password a wrong code was entered. Repeatedly = someone may know the password."
+                },
+                {
+                  "title": "2FA code attempts / resend requests exhausted",
+                  "text": "The number of attempts or new codes in one sign-in was exceeded."
+                },
+                {
+                  "title": "Invalid login token",
+                  "text": "An attempt to renew a sign-in with an expired or invalid token - usually just an expired sign-in."
+                },
+                {
+                  "title": "Reused login token (possible theft)",
+                  "text": "Critical. The same sign-in was used from two places. The system ended all sign-ins of the account - check with the user and have them change the password."
+                },
+                {
+                  "title": "Automated vulnerability scan",
+                  "text": "A robot tried addresses typical for vulnerabilities of other systems. Such addresses do not exist in this system."
+                },
+                {
+                  "title": "Blocked by the security policy (CSP)",
+                  "text": "A visitor's browser blocked a script or resource that is not allowed. Often caused by browser extensions; a repeated foreign domain may mean an attempt to inject malicious code."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "triage",
+          "heading": "04. Evaluating an entry (triage)",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Triage",
+                  "text": "Press Triage in the row of the entry. A window opens with the explanation What happened and Recommended action.",
+                  "active": true
+                },
+                {
+                  "label": "Status",
+                  "text": "Choose Reviewed (checked, nothing more needed), False positive (it was not an attack) or Confirmed attack.",
+                  "active": false
+                },
+                {
+                  "label": "Note",
+                  "text": "Optionally write what you found - for example “the IP belongs to a business partner”.",
+                  "active": false
+                },
+                {
+                  "label": "Save",
+                  "text": "The status is saved. False positive is first confirmed in a dialog - the entry then no longer counts as active suspicious activity.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "New entries are also shown in the calendar in the panel Waiting for you. Evaluate them regularly so that the overview stays clean and real attacks do not get lost."
+            }
+          ]
+        },
+        {
+          "heading": "05. What to do in a real attack",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "An attack on a specific account (brute force, wrong 2FA codes, reused token): contact the user, have them change the password, turn on or enforce 2FA, or block the account temporarily.",
+                "A lasting flood from one IP address: ask the technical administration to block the address at the firewall, hosting or CDN level. The administration itself does not block IP addresses.",
+                "Repeated CSP entries with a domain the website really uses (new analytics, a payment gateway): pass them to the developers to allow it in the security policy.",
+                "Mark the entry as Confirmed attack and write in the note what you did."
+              ]
+            }
+          ]
+        },
+        {
+          "key": "purge",
+          "heading": "06. Deleting entries and retention (GDPR)",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The entries contain IP addresses, so they are deleted automatically. In the retention card set after how many days entries are deleted (7, 14, 30, 60, 90, 180 or 365 days) and save with Save retention. The clean-up runs every night."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Clean up old records now - after a confirmation it permanently deletes entries older than the set period at once. When there are none, nothing is deleted - that is fine.",
+                "Delete in a row - permanently deletes one entry."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "danger",
+              "content": "Deleting security entries cannot be undone. Do not delete entries that may serve as evidence of an attack."
+            }
+          ]
+        },
+        {
+          "heading": "07. Who may do what",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Viewing",
+                  "text": "core-security-view"
+                },
+                {
+                  "title": "Evaluating and setting the retention",
+                  "text": "core-security-update"
+                },
+                {
+                  "title": "Deleting entries and the immediate clean-up",
+                  "text": "core-security-delete"
+                }
+              ]
             }
           ]
         }
@@ -1181,29 +3547,121 @@
     },
     "apps": {
       "navLabel": "Applications",
-      "header": "Applications",
+      "header": "Applications - overview, status and maintenance",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Overview of the applications you may manage (web, e-shop, project portal …): the state of each application, a light diagnosis and the Manage button."
+              "content": "The Applications page shows all applications you can manage (website, e-shop, project portal …), their current status and a simple diagnosis. With the permission you switch an application off into maintenance mode and on again from here."
             },
             {
               "type": "text",
-              "content": "The applications are listed one below the other. Each shows the state of its public part - green dot Online, amber Online with a problem, red Offline (maintenance) or Unavailable (its data cannot be read) - and a diagnosis: data response time, entries of its log in 24 hours (load), errors in 24 hours, the last activity and the last error."
+              "content": "Every signed-in user sees the page; the card of an application is shown only to someone with the permission for the application tab and at least one of its pages. If you have access to no application, the page says so."
+            }
+          ]
+        },
+        {
+          "heading": "01. Status of an application",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Online (green)",
+                  "text": "The public part runs and all is well."
+                },
+                {
+                  "title": "Online · problem (orange)",
+                  "text": "It runs, but reported errors or a slow response in the last 24 hours - check the logs of the application."
+                },
+                {
+                  "title": "Offline · maintenance (red)",
+                  "text": "The public part is switched off - visitors see the maintenance page."
+                },
+                {
+                  "title": "Unavailable",
+                  "text": "The data of the application could not be read - a server problem; contact technical support."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Diagnosis",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Data response",
+                  "text": "How fast the server answered (in milliseconds). Units to hundreds of ms are normal."
+                },
+                {
+                  "title": "Entries in 24 h",
+                  "text": "The number of entries in the log of the application in the last 24 hours - shows the load."
+                },
+                {
+                  "title": "Errors in 24 h",
+                  "text": "The number of errors in the last 24 hours."
+                },
+                {
+                  "title": "Last activity / Last error",
+                  "text": "When something last happened in the application and when the last error occurred."
+                }
+              ]
             },
             {
               "type": "text",
-              "content": "With the maintenance permission of an application there is the button Switch application off / on. You confirm the change with your password; a switched-off application shows the maintenance page to visitors (web, e-shop and project portal), the administration keeps running. The same button is in the header of the application dashboard."
+              "content": "The status and diagnosis refresh by themselves every 10 seconds while the page is open and the browser tab is active. Refresh status loads them at once; the time of the last check is next to the button."
+            }
+          ]
+        },
+        {
+          "heading": "03. Manage",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The Manage button of an application opens its first page you may open. You can also switch between applications with the Applications button in the header."
+            }
+          ]
+        },
+        {
+          "heading": "04. Switching an application off and on (maintenance mode)",
+          "blocks": [
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Switch application off",
+                  "text": "At the application press Switch application off (the button is also in the header of the application dashboard).",
+                  "active": true
+                },
+                {
+                  "label": "Administrator verification",
+                  "text": "The window shows the new state OFFLINE – MAINTENANCE MODE and what will happen. Enter your current password.",
+                  "active": false
+                },
+                {
+                  "label": "Confirm and save",
+                  "text": "The public part switches off and visitors see the maintenance page with the logo, a short notice, contacts and a language switch. The administration keeps running.",
+                  "active": false
+                },
+                {
+                  "label": "Switch application on",
+                  "text": "The same steps switch the application on - state ONLINE – NORMAL OPERATION. A visitor on the maintenance page returns to the website once they open or reload it.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Switching an application off immediately takes its public part offline for all visitors (for example the e-shop takes no orders, clients cannot get into the portal). Use it only for the time strictly necessary and do not forget to switch the application on again."
             },
             {
               "type": "text",
-              "content": "A card is shown only for an application whose tab permission and at least one page you have. Manage opens the first page of the application you may open. The state and the diagnosis refresh themselves every 10 seconds while the page is open and the browser tab is active; Refresh status loads them at once."
-            },
-            {
-              "type": "note",
-              "content": "You can also switch applications in the header: next to the Core tab is the Applications button, which always shows the name of the application you are in."
+              "content": "Only accounts with the maintenance permission of the application see the button. Every change of the state is written to the log of the application."
             }
           ]
         }
@@ -1211,29 +3669,75 @@
     },
     "releases": {
       "navLabel": "Releases",
-      "header": "Releases",
+      "header": "Releases - what's new",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "The version of the application that runs and what changed in every release - for the core and for the applications you may manage."
+              "content": "The Releases page shows which version of the system is running and what changed in every release - in the core (Core) and in the applications you can manage."
             },
             {
               "type": "text",
-              "content": "The releases are listed from the newest; the newest is open, click a release to open or close it. Each change has its type (Security, Added, Changed, Fixed, Removed), the part it concerns (the core or an application; public part = what visitors see) and a short description in English, sometimes with the number of the ticket (#57)."
-            },
+              "content": "Every signed-in user sees the page. The texts of the changes are in English."
+            }
+          ]
+        },
+        {
+          "heading": "01. Running version and the list of releases",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "At the top is the running version in the form vYYYY.MM.N (year, month, the number of the release in the month), for example v2026.11.3.",
+                "Releases are sorted from the newest. The newest is expanded; click a release to expand or collapse it. The running release is marked Running; each shows its number of changes."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. How to read a change",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Type",
+                  "text": "Security, Added, Changed, Fixed or Removed."
+                },
+                {
+                  "title": "Part",
+                  "text": "The core or the name of an application; the mark public part means a change visitors see."
+                },
+                {
+                  "title": "Description",
+                  "text": "A short description of the change, sometimes with a ticket number (for example #57) under which it was reported."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Filter",
+          "blocks": [
             {
               "type": "text",
-              "content": "The buttons above the list show only the changes of the core or of one application. You see the core and the applications you have access to."
-            },
+              "content": "The buttons above the list (All, the core, the individual applications) show only the changes of the chosen part. You see only the core and the applications you have access to."
+            }
+          ]
+        },
+        {
+          "heading": "04. Notice after an update",
+          "blocks": [
             {
               "type": "text",
-              "content": "The running version is also at the bottom of the left menu. After an update a short notice appears above the page - only in the part you work in and only when the update changed it (an update of the e-shop does not bother you in the web). What's new opens this page, the cross hides the notice until the next update."
+              "content": "After an update the bar “Updated to … - N change(s) here” appears above the admin pages - only in the part you work in and only when the update changed it (an update of the e-shop does not disturb you on the website). What's new opens this page filtered to that part, Close hides the bar until the next update."
             },
             {
               "type": "note",
-              "content": "The release notes are written by the developers together with every change; a release without them cannot be deployed."
+              "highlight": "Where the changes come from",
+              "content": "Developers write the release notes together with every change. A release without notes cannot be deployed, so the list is always complete."
             }
           ]
         }

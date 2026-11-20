@@ -763,7 +763,8 @@
   "welcome_code": "SYSTEM_READY",
   "welcome_title": "Documentation",
   "welcome_text": "Select a chapter from the menu to continue.",
-  "page_not_found": "Page not found."
+  "page_not_found": "Page not found.",
+  "chapters_toggle_label": "Show or hide the chapters"
 },
 "kb-footer": {
   "created_by_label": "Created by:",

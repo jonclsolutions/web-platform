@@ -5,7 +5,8 @@
     @author: JS
     @created: 2026
     @description: Template of the knowledge base component: own header (home, language),
-        side menu of the pages the user may open (from the API), routed content.
+        side menu of the pages the user may open (from the API) with their expandable
+        chapters (a chapter link opens the page at that chapter), routed content.
 -->
 
 <div class="kb-fullscreen-wrapper" [class.menu-open]="isMenuOpen">
@@ -68,9 +69,31 @@
             <ul>
               @for (page of group.pages; track page.id) {
                 <li>
-                  <a [routerLink]="page.id" (click)="closeMenu()" routerLinkActive="active-kb">
-                    <span class="num">{{ page.order }}.</span> {{ page.label }}
-                  </a>
+                  <div class="nav-page">
+                    <a [routerLink]="page.id" (click)="closeMenu()" routerLinkActive="active-kb">
+                      <span class="num">{{ page.order }}.</span> {{ page.label }}
+                    </a>
+                    @if (page.sections?.length) {
+                      <button type="button" class="chapter-toggle" [class.open]="isExpanded(page.id)"
+                              [attr.aria-expanded]="isExpanded(page.id)" [attr.aria-label]="strings.chapters_toggle_label"
+                              [title]="strings.chapters_toggle_label" (click)="toggleChapters(page.id)">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <polyline points="9 6 15 12 9 18"/>
+                        </svg>
+                      </button>
+                    }
+                  </div>
+                  @if (page.sections?.length && isExpanded(page.id)) {
+                    <ul class="kb-chapters">
+                      @for (chapter of page.sections; track chapter.anchor) {
+                        <li>
+                          <a class="kb-chapter" [routerLink]="page.id" [fragment]="'kb-s-' + chapter.anchor"
+                             [class.active-chapter]="page.id === activePageId && activeFragment === 'kb-s-' + chapter.anchor"
+                             (click)="openChapter(page.id, chapter.anchor)">{{ chapter.heading }}</a>
+                        </li>
+                      }
+                    </ul>
+                  }
                 </li>
               }
             </ul>

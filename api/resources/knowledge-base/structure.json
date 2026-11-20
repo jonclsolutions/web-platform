@@ -45,14 +45,22 @@
       "group": "core",
       "order": 18,
       "permission": "core-legal-documents-view|core-legal-config-view",
-      "devNote": "EditLegalComponent, route 'core/edit-legal', permission 'core-legal-documents-view|core-legal-config-view'. Vícejazyčný obsah, typy dokumentů se načítají dynamicky z legal/document-types. Jazyky = jazyky všech aplikací dohromady (GET languages); stránky obchodních podmínek a ochrany OÚ (public/legal) ukazuje web i e-shop (/shop/tos, /shop/privacy-policy)."
+      "devNote": "EditLegalComponent, route 'core/edit-legal', permission 'core-legal-documents-view|core-legal-config-view'. Vícejazyčný obsah, typy dokumentů se načítají dynamicky z legal/document-types. Jazyky = jazyky všech aplikací dohromady (GET languages); stránky obchodních podmínek a ochrany OÚ (public/legal) ukazuje web i e-shop (/shop/tos, /shop/privacy-policy).",
+      "sections": {
+        "edit": "core-legal-documents-update",
+        "create": "core-legal-documents-create",
+        "delete": "core-legal-documents-delete"
+      }
     },
     {
       "id": "personal-info",
       "group": "core",
       "order": 19,
       "permission": null,
-      "devNote": "PersonalInfoComponent, route 'core/personal-info', no permission (every signed-in user; also via the own e-mail in the header). Self-service 2FA toggle a změna hesla."
+      "devNote": "PersonalInfoComponent, route 'core/personal-info', no permission (every signed-in user; also via the own e-mail in the header). Self-service 2FA toggle a změna hesla.",
+      "sections": {
+        "edit-profile": "core-administrators-update"
+      }
     },
     {
       "id": "settings",
@@ -66,7 +74,11 @@
       "group": "core",
       "order": 21,
       "permission": "core-external-links-view",
-      "devNote": "ExternalLinksComponent + CoreExternalLinkController, route 'core/external-links', permission 'core-external-links-view' (create/update/delete zvlášť). Odkazy jsou SOUKROMÉ per-uživatel (scoped na user_id na backendu)."
+      "devNote": "ExternalLinksComponent + CoreExternalLinkController, route 'core/external-links', permission 'core-external-links-view' (create/update/delete zvlášť). Odkazy jsou SOUKROMÉ per-uživatel (scoped na user_id na backendu).",
+      "sections": {
+        "create": "core-external-links-create",
+        "manage": "core-external-links-update|core-external-links-delete"
+      }
     },
     {
       "id": "edit-roles",
@@ -105,7 +117,11 @@
       "group": "core",
       "order": 25,
       "permission": "core-security-view",
-      "devNote": "SecurityEventsComponent, route 'core/security-events', permission 'core-security-view'. Triage podezřelých eventů, retenční politika (GDPR), ruční purge."
+      "devNote": "SecurityEventsComponent, route 'core/security-events', permission 'core-security-view'. Triage podezřelých eventů, retenční politika (GDPR), ruční purge.",
+      "sections": {
+        "triage": "core-security-update",
+        "purge": "core-security-update|core-security-delete"
+      }
     },
     {
       "id": "apps",
