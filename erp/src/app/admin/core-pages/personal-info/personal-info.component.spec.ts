@@ -6,7 +6,8 @@
  * @created 2026
  * @description Unit tests of PersonalInfoComponent – the logged-in admin's profile: 2FA switch
  *   (incl. 2FA forced by role or by an administrator), the change-password popup and the own
- *   name / login e-mail (only for sysadmin / core-administrators-update).
+ *   name / login e-mail (only for sysadmin / core-administrators-update), the switch of the
+ *   pop-up notices of new records (this browser only).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, auth stub, alert spy, i18n stub),
  *   CurrentUserProfileService (real, on top of the DataHandler spy)
@@ -18,6 +19,7 @@ import { of, throwError } from 'rxjs';
 import { PersonalInfoComponent } from './personal-info.component';
 import { CurrentUserProfileService } from '../../../core/services/current-user-profile.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
+import { AdminNotificationsService, NOTIFICATION_TOASTS_STORAGE_KEY } from '../../../core/services/admin-notifications.service';
 
 describe('PersonalInfoComponent', () => {
   let ctx: AdminTestContext;
@@ -314,5 +316,30 @@ describe('PersonalInfoComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Alena Bílá');
     expect(fixture.nativeElement.textContent).toContain('personal-info.security_2fa_disabled');
+  });
+
+  /**
+   * @description The notifications part switches the pop-up notices of this browser; the
+   *   checkbox follows the stored choice.
+   * @input  render (notices on); uncheck the checkbox; check it again.
+   * @output checked; then toastsEnabled false + storage 'off'; then true + 'on'.
+   */
+  it('switches the pop-up notices of new records', () => {
+    localStorage.removeItem(NOTIFICATION_TOASTS_STORAGE_KEY);
+    const notifications = TestBed.inject(AdminNotificationsService);
+    notifications.setToastsEnabled(true);
+    load({ email: 'a@b.cz', enable_2fa: 0 });
+    fixture.detectChanges();
+    const box = Array.from(fixture.nativeElement.querySelectorAll('.security-toggle-label'))
+      .find((label: any) => label.textContent.includes('personal-info.notifications_toasts_label')) as HTMLElement;
+    const input = box.querySelector('input') as HTMLInputElement;
+    expect(input.checked).toBeTrue();
+    input.click();
+    expect(notifications.toastsEnabled()).toBeFalse();
+    expect(localStorage.getItem(NOTIFICATION_TOASTS_STORAGE_KEY)).toBe('off');
+    input.click();
+    expect(notifications.toastsEnabled()).toBeTrue();
+    expect(localStorage.getItem(NOTIFICATION_TOASTS_STORAGE_KEY)).toBe('on');
+    localStorage.removeItem(NOTIFICATION_TOASTS_STORAGE_KEY);
   });
 });

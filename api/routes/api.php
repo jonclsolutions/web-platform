@@ -46,6 +46,7 @@ use App\Http\Controllers\Api\CspReportController;
 use App\Http\Controllers\Api\VersionController;
 use App\Models\Core\CoreSecurityEvent;
 use App\Http\Controllers\Api\Core\CoreAgendaController;
+use App\Http\Controllers\Api\Core\CoreNotificationController;
 use App\Http\Controllers\Api\Core\CoreCalendarEventController;
 use App\Http\Controllers\Api\Core\CoreEmailAccessPolicyController;
 use App\Http\Controllers\Api\Legal\PageTitleController;
@@ -215,6 +216,11 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         // Agenda of the admin calendar (core/calendar): no page permission - every source is
         // filtered by the user's permissions inside (CoreAgendaController).
         Route::get('/agenda', [CoreAgendaController::class, 'index'])->middleware('throttle:60,1');
+        // Notifications of the administration (side menu numbers): no page permission - every
+        // kind is filtered by the user's permissions inside, marks are the user's own
+        // (CoreNotificationController). Asked every minute while an admin page is visible.
+        Route::get('/notifications', [CoreNotificationController::class, 'index'])->middleware('throttle:60,1');
+        Route::post('/notifications/seen', [CoreNotificationController::class, 'seen'])->middleware('throttle:60,1');
         // Own personal events of the calendar (scoped to the owner, no permission - own data).
         Route::post('/calendar-events', [CoreCalendarEventController::class, 'store'])->middleware('throttle:60,1');
         Route::put('/calendar-events/{id}', [CoreCalendarEventController::class, 'update'])->middleware('throttle:60,1');

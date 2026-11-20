@@ -986,5 +986,9 @@
     "shop-edit-eshop-view": "View the management page of the public e-shop texts",
     "shop-edit-eshop-update": "Edit the public e-shop texts (translations, languages)",
     "shop-welcome-page-view": "View the welcome page of the e-shop section"
+  },
+  "notifications": {
+    "kind_shop_orders": "New e-shop orders",
+    "kind_shop_low_stock": "Products below the stock limit"
   }
 }

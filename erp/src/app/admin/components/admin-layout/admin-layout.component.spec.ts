@@ -8,8 +8,8 @@
  *   switcher (core / web / shop / project portal, the name of the current module) incl. sync from
  *   the URL, the sidebar built from the navigation data, sidebar open/resize state in localStorage, mobile scroll lock,
  *   admin language switch, logout, which menu groups the permissions show, collapsible menu
- *   sections, the own profile photo in the header, the scroll reset of the content area and the
- *   "Help" link to the knowledge base.
+ *   sections, the own profile photo in the header, the scroll reset of the content area, the
+ *   "Help" link to the knowledge base and the unread badges (AdminNotificationsService).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (auth, permission, i18n stubs), ScrollLockService (spy)
  */
@@ -24,6 +24,7 @@ import { AdminTestContext, createAdminTestContext } from '../../../../testing/ad
 import { AdminModulesService } from '../../admin-modules.service';
 import { navOf } from '../../admin-navigation.config';
 import { requiresApps } from '../../../../testing/requires-apps';
+import { AdminNotificationsService } from '../../../core/services/admin-notifications.service';
 
 describe('AdminLayoutComponent', () => {
   let ctx: AdminTestContext;
@@ -652,6 +653,62 @@ describe('AdminLayoutComponent', () => {
     expect(header.getAttribute('href')).toBe('/admin/intranet/knowledge-base');
     const mobile = Array.from(fixture.nativeElement.querySelectorAll('.map-links a')) as HTMLAnchorElement[];
     expect(mobile.some(a => a.getAttribute('href') === '/admin/intranet/knowledge-base')).toBeTrue();
+    fixture.destroy();
+  });
+
+  /**
+   * @description Unread badges: the layout starts the notifications for a signed-in user and stops
+   *   them on logout; a page of the sidebar shows its number (link of the page), the core tab and
+   *   the application switcher their totals ("99+" above 99), a collapsed section the sum of its
+   *   pages; a click on the page marks it seen; the menu button shows a dot while the menu is
+   *   closed, the mobile panel button while another module has unread records.
+   * @input  web inquiries 3, core security events 120; module web; collapse the section of the
+   *   inquiries; close the menu; logout.
+   * @output start(); item badge '3' with aria label; core '99+'; switcher '3'; section badge '3';
+   *   markSeenLink('/admin/web/user-request'); dots on both buttons; stop().
+   */
+  it('shows unread badges in the menu and the module switcher', () => {
+    requiresApps('web');
+    ctx.permissions.granted = new Set(['view-web', 'web-user-requests-view', 'view-core', 'core-security-view']);
+    const notifications = TestBed.inject(AdminNotificationsService);
+    spyOn(notifications, 'start');
+    spyOn(notifications, 'stop');
+    spyOn(notifications, 'markSeenLink');
+    fixture.detectChanges();
+    expect(notifications.start).toHaveBeenCalled();
+
+    notifications.kinds.set([
+      { kind: 'web_inquiries', module: 'web', link: '/admin/web/user-request', count: 3 },
+      { kind: 'core_security_events', module: 'core', link: '/admin/core/security-events', count: 120 },
+    ]);
+    component.currentModule = 'web';
+    component.isMenuOpen = true;
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    const link = el.querySelector('.admin-nav a[href="/admin/web/user-request"]') as HTMLAnchorElement;
+    const badge = link.querySelector('.nav-badge') as HTMLElement;
+    expect(badge.textContent!.trim()).toBe('3');
+    expect(badge.getAttribute('aria-label')).toBe('notifications.badge_aria');
+    expect(el.querySelectorAll('.admin-nav .nav-badge').length).toBe(1);
+    expect(el.querySelector('.module-switcher > button .nav-badge')!.textContent!.trim()).toBe('99+');
+    expect(el.querySelector('.apps-switcher-btn .nav-badge')!.textContent!.trim()).toBe('3');
+    expect(el.querySelector('.mobile-actions-toggle .unread-dot')).not.toBeNull();
+    expect(el.querySelector('.menu-toggle-btn .unread-dot')).toBeNull();
+
+    link.click();
+    expect(notifications.markSeenLink).toHaveBeenCalledWith('/admin/web/user-request');
+
+    const group = navOf('web').find(g => g.items.some(i => i.path === 'user-request'))!;
+    component.toggleGroup(group.key);
+    fixture.detectChanges();
+    expect(el.querySelector(`button[aria-controls="nav-group-${group.key}"] .nav-badge`)!.textContent!.trim()).toBe('3');
+
+    component.isMenuOpen = false;
+    fixture.detectChanges();
+    expect(el.querySelector('.menu-toggle-btn .unread-dot')).not.toBeNull();
+
+    component.logout();
+    expect(notifications.stop).toHaveBeenCalled();
     fixture.destroy();
   });
 });

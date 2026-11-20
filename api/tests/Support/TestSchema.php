@@ -288,6 +288,15 @@ final class TestSchema
             $t->timestamps();
             $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });
+        // Notification marks of the administration (migration 2026_11_26_000000_create_core_notification_marks).
+        Schema::create('core_notification_marks', function (Blueprint $t) {
+            $t->increments('id');
+            $t->unsignedInteger('user_id');
+            $t->string('kind', 64);
+            $t->timestamp('seen_at');
+            $t->unique(['user_id', 'kind']);
+            $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+        });
         Schema::create('core_external_links', function (Blueprint $t) {
             $t->increments('id');
             $t->unsignedInteger('user_id');

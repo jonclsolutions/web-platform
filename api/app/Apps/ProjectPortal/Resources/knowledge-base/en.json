@@ -593,7 +593,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Conversations show the threads of this project, split into Mine, Active, Closed and All. A thread with unread messages shows their number; opening it marks it read for the whole administration. An open thread shows Waiting on us or Waiting on the client and the thread assignee. The list refreshes itself every minute."
+              "content": "Conversations show the threads of this project, split into Mine, Active, Closed and All. A thread with unread messages shows their number; opening it marks it read for the whole administration. An open thread shows Waiting on us or Waiting on the client and the thread assignee. The list refreshes itself every minute. An open thread adds its new messages every 15 s - from the client, replies of colleagues and their internal notes - and updates “read by the client”; new client messages are marked read by this. If you scrolled up in the messages, the position stays. A hidden browser tab checks nothing."
             },
             {
               "type": "grid",

@@ -986,5 +986,9 @@
     "shop-edit-eshop-view": "Zobrazit stránku správy veřejných textů e-shopu",
     "shop-edit-eshop-update": "Upravit veřejné texty e-shopu (překlady, jazyky)",
     "shop-welcome-page-view": "Zobrazit uvítací stránku e-shopu"
+  },
+  "notifications": {
+    "kind_shop_orders": "Nové objednávky e-shopu",
+    "kind_shop_low_stock": "Produkty pod skladovým limitem"
   }
 }

@@ -5,7 +5,7 @@
  * @author JS
  * @created 2026
  * @description Unit tests of AlertDialogComponent – the toast stack used by AlertDialogService
- *   (auto-hide for success/info, manual close, exit animation, CSS class per type).
+ *   (auto-hide for success/info, manual close, click action, exit animation, CSS class per type).
  * @dependencies
  * - none (standalone component, no services)
  */
@@ -103,6 +103,26 @@ describe('AlertDialogComponent', () => {
     component.ok(1);
     tick(220);
     expect(closed).toEqual([1]);
+  }));
+
+  /**
+   * @description A click on the body of a toast runs its action once and closes it; the ✕ closes
+   *   without the action.
+   * @input  toast 1 and 2 with actions; ok(1) twice; closeClick(2)
+   * @output action of 1 called once, action of 2 never; both closed
+   */
+  it('ok() runs the action of the toast, the close button does not', fakeAsync(() => {
+    const first = jasmine.createSpy('first');
+    const second = jasmine.createSpy('second');
+    component.addToast({ ...toast(1, 'info'), action: first });
+    component.addToast({ ...toast(2, 'info'), action: second });
+    component.ok(1);
+    component.ok(1);
+    component.closeClick(2, jasmine.createSpyObj<Event>('Event', ['stopPropagation']));
+    tick(220);
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).not.toHaveBeenCalled();
+    expect(component.toasts).toEqual([]);
   }));
 
   /**

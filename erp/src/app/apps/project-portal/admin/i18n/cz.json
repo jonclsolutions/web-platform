@@ -757,5 +757,9 @@
     "module_project_portal_setting": "Nastavení portálu",
     "event_maintenance_status_changed": "Změna režimu údržby",
     "event_unauthorized_maintenance_toggle_attempt": "Neautorizovaný pokus o změnu údržby"
+  },
+  "notifications": {
+    "kind_portal_orders": "Nové objednávky projektového portálu",
+    "kind_portal_leads_overdue": "Leady po termínu kontaktu"
   }
 }

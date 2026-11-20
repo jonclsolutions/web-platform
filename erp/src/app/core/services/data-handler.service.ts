@@ -287,6 +287,20 @@ export class DataHandler {
   }
 
   /**
+   * @description POST of the payload WITHOUT the global error dialog - for background calls
+   *   (e.g. marking notifications as seen), whose failure must not interrupt the user; the
+   *   caller handles the error itself.
+   * @param apiUrl The endpoint path.
+   * @param data The payload.
+   * @returns {Observable<T>} The payload of the answer; errors are passed on unchanged.
+   */
+  postQuietly<T>(apiUrl: string, data: any): Observable<T> {
+    return this.http.post<ApiEnvelope<T>>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
+      map(response => this.unwrap<T>(response))
+    );
+  }
+
+  /**
    * @description Performs a PUT request (full update) and unwraps the result.
    */
   put<T>(apiUrl: string, data: any): Observable<T> {

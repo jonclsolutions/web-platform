@@ -19,6 +19,8 @@
  *   apps.registry: the sidebars and the applications; AdminIconComponent: icons of the menus.
  * - ReleaseNoticeComponent: the notice after an update of the current module (the running
  *   version and the release notes are on the page Core → Releases).
+ * - AdminNotificationsService: unread records - red numbers at the menu items, the module
+ *   switcher and the menu buttons (started while a user is signed in).
  * @note Layout: the header and the sidebar stay in place, only the page content (`<main>`) and,
  * independently, a long sidebar menu scroll. A navigation therefore scrolls `<main>` back to the
  * top itself - the router's scroll restoration only moves the window.
@@ -42,6 +44,7 @@ import { AdminIconComponent } from '../admin-icon/admin-icon.component';
 import { UserAvatarComponent } from '../user-avatar/user-avatar.component';
 import { KNOWLEDGE_BASE_URL } from '../page-help/page-help.component';
 import { ReleaseNoticeComponent } from '../releases/release-notice.component';
+import { AdminNotificationsService } from '../../../core/services/admin-notifications.service';
 
 /**
  * @description localStorage key of the menu sections the user collapsed (JSON array of section
@@ -118,6 +121,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   /** Confirmation dialog - gets the admin button labels while the admin is shown (finding #20). */
   private confirmDialog = inject(ConfirmDialogService);
+
+  /** Unread records of the signed-in admin (numbers in the menus). */
+  readonly notifications = inject(AdminNotificationsService);
 
   /**
    * @description Whether THIS component currently holds a lock in ScrollLockService.
@@ -236,6 +242,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.authSubscription = this.authService.isLoggedIn$.subscribe(loggedIn => {
       this.isLoggedIn = loggedIn;
       this.userRole = loggedIn ? this.authService.getUserRole() : null;
+      if (loggedIn) this.notifications.start();
+      else this.notifications.stop();
       this.cdr.markForCheck();
     });
 
@@ -461,6 +469,75 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /**
+   * @description Click on a page of the sidebar: its unread records are seen (also when the page
+   *   is already open), then the common link handling.
+   * @param item The page.
+   */
+  onNavClick(item: AdminNavItem): void {
+    this.notifications.markSeenLink(this.itemLink(item));
+    this.onLinkClick();
+  }
+
+  /**
+   * @description Address of a page of the sidebar of the current module.
+   * @param item The page.
+   */
+  itemLink(item: AdminNavItem): string {
+    return '/admin/' + this.currentModule + '/' + item.path;
+  }
+
+  /**
+   * @description Badge of a page of the sidebar - its unread records ("99+" above 99, null
+   *   without any).
+   * @param item The page.
+   */
+  itemBadge(item: AdminNavItem): string | null {
+    return this.notifications.badge(this.notifications.countFor(this.itemLink(item)));
+  }
+
+  /**
+   * @description Badge of a collapsed menu section - the unread records of its pages the user
+   *   may open.
+   * @param group The section.
+   */
+  groupBadge(group: AdminNavGroup): string | null {
+    const count = group.items.filter(item => this.canOpen(item))
+      .reduce((sum, item) => sum + this.notifications.countFor(this.itemLink(item)), 0);
+    return this.notifications.badge(count);
+  }
+
+  /**
+   * @description Badge of a module in the switcher - its unread records.
+   * @param module 'core' or an application id.
+   */
+  moduleBadge(module: AdminModule): string | null {
+    return this.notifications.badge(this.notifications.moduleTotal(module));
+  }
+
+  /** @description Badge of the application switcher - unread records of all applications. */
+  get appsBadge(): string | null {
+    return this.notifications.badge(this.notifications.appsTotal());
+  }
+
+  /** @description The current module has unread records (dot on the menu button while it is closed). */
+  get hasUnreadInModule(): boolean {
+    return this.notifications.moduleTotal(this.currentModule) > 0;
+  }
+
+  /** @description Other modules have unread records (dot on the mobile panel button). */
+  get hasUnreadElsewhere(): boolean {
+    return this.notifications.kinds().some(k => k.count > 0 && k.module !== this.currentModule);
+  }
+
+  /**
+   * @description Screen-reader text of a badge, e.g. "3 nepřečtené".
+   * @param badge Text of the badge.
+   */
+  badgeLabel(badge: string): string {
+    return this.i18n.getValue('notifications.badge_aria').replace('{count}', badge);
+  }
+
   onLinkClick(): void {
     if (window.innerWidth <= 768) {
       this.isMenuOpen = false;
@@ -536,6 +613,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
+    this.notifications.stop();
     this.authService.logout().subscribe({
       next: () => {
         this.permissionService.clearPermissions();
@@ -546,6 +624,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.notifications.stop();
     this.authSubscription?.unsubscribe();
     this.userEmailSubscription?.unsubscribe();
     this.avatarSubscription?.unsubscribe();

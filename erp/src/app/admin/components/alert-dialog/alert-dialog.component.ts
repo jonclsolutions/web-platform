@@ -9,6 +9,8 @@ export interface AlertToastItem {
   message: string;
   type: AlertType;
   leaving?: boolean;
+  /** Runs when the user clicks the toast body (e.g. opens the page of a notification). */
+  action?: () => void;
 }
 
 @Component({
@@ -39,7 +41,14 @@ export class AlertDialogComponent implements OnDestroy {
     }
   }
 
+  /**
+   * @description Click on the toast body: runs its action (if it has one) and closes it.
+   * @param id Toast id.
+   */
   ok(id: number): void {
+    const toast = this.toasts.find(t => t.id === id);
+    if (!toast || toast.leaving) return;
+    toast.action?.();
     this.removeToast(id);
   }
 

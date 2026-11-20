@@ -52,7 +52,10 @@
     "password_submit_saving": "Saving...",
     "password_change_success_title": "Password change",
     "password_change_success_message": "Password has been changed successfully. The other sessions of this account were signed out.",
-    "password_change_error": "Error changing password. Please check your current password."
+    "password_change_error": "Error changing password. Please check your current password.",
+    "notifications_heading": "Notifications",
+    "notifications_toasts_label": "Show pop-up notices of new records",
+    "notifications_toasts_hint": "Applies only in this browser. The red numbers of unread records in the menu are always shown."
   },
   "page-help": {
     "title": "Help for this page"
@@ -1538,5 +1541,11 @@
 "email-template-editor": {
   "missing_hint": "Fields marked orange are not filled in for this language. The e-mail uses the Czech text instead, and when that is missing too, the default English wording. Fill them in so that the customer gets the whole e-mail in their language.",
   "missing_tab_title": "Number of empty fields in this language"
-}
+},
+  "notifications": {
+    "kind_generic": "New records",
+    "kind_core_security_events": "New security events",
+    "toast_message": "Unread: {count}. Click to open the page.",
+    "badge_aria": "Unread: {count}"
+  }
 }

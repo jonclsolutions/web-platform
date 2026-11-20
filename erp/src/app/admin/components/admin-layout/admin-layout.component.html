@@ -16,6 +16,10 @@
         <line x1="3" y1="12" x2="21" y2="12"/>
         <line x1="3" y1="18" x2="21" y2="18"/>
       </svg>
+      <!-- Mobile: the closed menu hides the numbers of the module - a dot tells there are some. -->
+      @if (!isMenuOpen && hasUnreadInModule) {
+        <span class="unread-dot" aria-hidden="true"></span>
+      }
     </button>
     
     <!-- placeholder for logo (dont remove) -->
@@ -58,6 +62,9 @@
       <button type="button" [class.active]="currentModule === 'core'" (click)="switchModule('core')">
         <app-admin-icon name="layout" [size]="14" />
         {{ strings.module_core }}
+        @if (moduleBadge('core'); as badge) {
+          <span class="nav-badge" role="img" [attr.aria-label]="badgeLabel(badge)">{{ badge }}</span>
+        }
       </button>
     }
     @if (availableApps.length) {
@@ -66,6 +73,9 @@
                 [attr.aria-expanded]="isAppsMenuOpen" [title]="strings.apps_switcher_title" (click)="toggleAppsMenu()">
           <app-admin-icon [name]="currentApp?.icon ?? 'layers'" [size]="14" />
           <span>{{ currentApp ? currentModuleName : strings.apps_switcher_label }}</span>
+          @if (appsBadge; as badge) {
+            <span class="nav-badge" role="img" [attr.aria-label]="badgeLabel(badge)">{{ badge }}</span>
+          }
           <app-admin-icon name="chevron-down" [size]="11" />
         </button>
         @if (isAppsMenuOpen) {
@@ -75,6 +85,9 @@
               <button type="button" role="menuitem" class="apps-menu-item" [class.active]="app.id === currentModule" (click)="switchModule(app.id)">
                 <app-admin-icon [name]="app.icon" [size]="15" />
                 <span>{{ label(app.nameKey) }}</span>
+                @if (moduleBadge(app.id); as badge) {
+                  <span class="nav-badge nav-badge--end" role="img" [attr.aria-label]="badgeLabel(badge)">{{ badge }}</span>
+                }
               </button>
             }
             <a class="apps-menu-all" routerLink="/admin/core/apps" (click)="closeAppsMenu()">{{ strings.apps_switcher_all }}</a>
@@ -137,6 +150,10 @@
         <line x1="4" y1="12" x2="20" y2="12"/>
         <line x1="4" y1="17" x2="20" y2="17"/>
       </svg>
+      <!-- The other modules (they are in this panel) have unread records. -->
+      @if (hasUnreadElsewhere) {
+        <span class="unread-dot" aria-hidden="true"></span>
+      }
     </button>
   </div>
 
@@ -176,6 +193,9 @@
         <button type="button" [class.active]="currentModule === 'core'" (click)="switchModule('core'); closeMobileActions()">
           <app-admin-icon name="layout" [size]="14" />
           {{ strings.module_core }}
+          @if (moduleBadge('core'); as badge) {
+            <span class="nav-badge" role="img" [attr.aria-label]="badgeLabel(badge)">{{ badge }}</span>
+          }
         </button>
       }
       @if (availableApps.length) {
@@ -184,6 +204,9 @@
           <button type="button" [class.active]="app.id === currentModule" (click)="switchModule(app.id); closeMobileActions()">
             <app-admin-icon [name]="app.icon" [size]="14" />
             {{ label(app.nameKey) }}
+            @if (moduleBadge(app.id); as badge) {
+              <span class="nav-badge" role="img" [attr.aria-label]="badgeLabel(badge)">{{ badge }}</span>
+            }
           </button>
         }
       }
@@ -242,6 +265,10 @@
             <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded(group.key)"
                     [attr.aria-controls]="'nav-group-' + group.key" [title]="strings.nav_group_toggle" (click)="toggleGroup(group.key)">
               <span class="nav-group-title">{{ label(group.labelKey) }}</span>
+              <!-- A collapsed section hides the numbers of its pages - their sum is at its title. -->
+              @if (!isGroupExpanded(group.key) && groupBadge(group); as badge) {
+                <span class="nav-badge" role="img" [attr.aria-label]="badgeLabel(badge)">{{ badge }}</span>
+              }
               <app-admin-icon class="nav-group-chevron" name="chevron-down" [size]="12" [strokeWidth]="2.5" />
             </button>
             <div [id]="'nav-group-' + group.key" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded(group.key)">
@@ -249,9 +276,12 @@
                 @for (item of group.items; track item.path) {
                   @if (canOpen(item)) {
                     <li>
-                      <a [routerLink]="'/admin/' + currentModule + '/' + item.path" routerLinkActive="active" (click)="onLinkClick()" [title]="label(item.titleKey ?? item.labelKey)">
+                      <a [routerLink]="itemLink(item)" routerLinkActive="active" (click)="onNavClick(item)" [title]="label(item.titleKey ?? item.labelKey)">
                         <span class="nav-icon"><app-admin-icon [name]="item.icon" [size]="16" /></span>
                         <span class="nav-text">{{ label(item.labelKey) }}</span>
+                        @if (itemBadge(item); as badge) {
+                          <span class="nav-badge nav-badge--item" role="img" [attr.aria-label]="badgeLabel(badge)">{{ badge }}</span>
+                        }
                       </a>
                     </li>
                   }

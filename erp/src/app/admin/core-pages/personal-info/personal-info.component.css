@@ -239,6 +239,14 @@
   cursor: not-allowed;
 }
 
+/* Explanation under a setting (notifications). */
+.setting-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-zinc-500);
+  line-height: 1.45;
+}
+
 .action_button--secondary {
   background: var(--color-white);
   color: var(--color-zinc-900);

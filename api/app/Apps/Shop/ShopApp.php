@@ -14,6 +14,7 @@
 namespace App\Apps\Shop;
 
 use App\Apps\Shop\Services\ShopAgendaSource;
+use App\Apps\Shop\Services\ShopNotificationSource;
 use App\Apps\Shop\Services\ShopRetentionSource;
 use App\Apps\Shop\Http\Middleware\CheckShopActive;
 use App\Apps\Shop\Models\ShopLog;
@@ -68,6 +69,12 @@ final class ShopApp extends AppManifest
     public function agendaSources(): array
     {
         return [ShopAgendaSource::class];
+    }
+
+    /** @description See AppManifest::notificationSources(). */
+    public function notificationSources(): array
+    {
+        return [ShopNotificationSource::class];
     }
 
     /** @description See AppManifest::translationPermission(). */

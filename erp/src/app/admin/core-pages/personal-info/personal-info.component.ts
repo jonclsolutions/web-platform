@@ -18,6 +18,8 @@
  * sysadmin personally enforced `two_fa_forced_by_admin`; (c) the ordinary self-service toggle.
  * The checkbox is disabled in both enforced states (a) + (b).
  * @note The password change is a popup in the shared frame (AdminModalComponent).
+ * @note Notifications: the pop-up notices of new records can be switched off here - only in this
+ * browser (AdminNotificationsService.setToastsEnabled); the red numbers in the menu stay.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
@@ -41,6 +43,7 @@ import { PermissionService } from '../../../core/auth/services/permission.servic
 import { SYSADMIN_ROLE_NAME } from '../../../core/auth/guards/auth.guard';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { AdminModalComponent } from '../../components/admin-modal/admin-modal.component';
+import { AdminNotificationsService } from '../../../core/services/admin-notifications.service';
 
 /** Permission that lets an account change its own name and login e-mail (and edit accounts). */
 const PROFILE_EDIT_PERMISSION = 'core-administrators-update';
@@ -87,6 +90,8 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
   public readonly alertDialogService = inject(AlertDialogService);
   private readonly profileService = inject(CurrentUserProfileService);
   private readonly permissionService = inject(PermissionService);
+  /** Unread records - the "pop-up notices" choice of this browser. */
+  public readonly notifications = inject(AdminNotificationsService);
 
   private destroy$ = new Subject<void>();
 
@@ -266,6 +271,14 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
   get security2faStatusType(): 'forced' | 'enabled' | 'disabled' {
     if (this.isForced2fa) return 'forced';
     return this.enable2faValue ? 'enabled' : 'disabled';
+  }
+
+  /**
+   * @description Switches the pop-up notices of new records on / off in this browser.
+   * @param event Change of the checkbox.
+   */
+  onToggleToasts(event: Event): void {
+    this.notifications.setToastsEnabled((event.target as HTMLInputElement).checked);
   }
 
   onToggle2fa(): void {

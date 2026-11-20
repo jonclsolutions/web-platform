@@ -15,6 +15,7 @@ namespace App\Apps\Web;
 
 use App\Apps\Web\Http\Middleware\CheckWebActive;
 use App\Apps\Web\Services\WebAgendaSource;
+use App\Apps\Web\Services\WebNotificationSource;
 use App\Apps\Web\Services\WebRetentionSource;
 use App\Apps\Web\Models\WebJobApplication;
 use App\Apps\Web\Models\WebLog;
@@ -91,6 +92,12 @@ final class WebApp extends AppManifest
     public function agendaSources(): array
     {
         return [WebAgendaSource::class];
+    }
+
+    /** @description See AppManifest::notificationSources(). */
+    public function notificationSources(): array
+    {
+        return [WebNotificationSource::class];
     }
 
     /** @description See AppManifest::uploadProfiles(). */

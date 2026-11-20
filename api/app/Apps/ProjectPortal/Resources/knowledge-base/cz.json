@@ -593,7 +593,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Konverzace ukazují vlákna tohoto projektu, rozdělená na Moje, Aktivní, Uzavřené a Vše. Vlákno s nepřečtenými zprávami má u sebe počet; otevřením se označí jako přečtené pro celou administraci. U otevřeného vlákna je štítek Čeká na nás nebo Čeká na klienta a jméno řešitele vlákna. Seznam se sám obnovuje každou minutu."
+              "content": "Konverzace ukazují vlákna tohoto projektu, rozdělená na Moje, Aktivní, Uzavřené a Vše. Vlákno s nepřečtenými zprávami má u sebe počet; otevřením se označí jako přečtené pro celou administraci. U otevřeného vlákna je štítek Čeká na nás nebo Čeká na klienta a jméno řešitele vlákna. Seznam se sám obnovuje každou minutu. Otevřené vlákno se každých 15 s doplní o nové zprávy – klienta, odpovědi kolegů i jejich interní poznámky – a aktualizuje se u něj „přečteno klientem“; nové zprávy klienta se tím označí jako přečtené. Pokud jste v seznamu zpráv odrolovali nahoru, pozice zůstane. Na skryté kartě prohlížeče se nic nekontroluje."
             },
             {
               "type": "grid",

@@ -59,6 +59,24 @@
             "area": "core",
             "part": "admin",
             "text": "On a phone the name of the current section is centred in the header of the administration instead of squeezed next to the menu button."
+        },
+        {
+            "type": "added",
+            "area": "core",
+            "part": "admin",
+            "text": "Red numbers of unread records in the menu (new inquiries, job applications, orders, low stock, overdue leads, security events) - per admin since their last visit of the page, \"99+\" above 99, sums at the module switcher. Checked once a minute while the tab is visible."
+        },
+        {
+            "type": "added",
+            "area": "core",
+            "part": "admin",
+            "text": "A pop-up notice at the top right when new records arrive; a click opens the page. It can be switched off on the Personal information page (only in that browser) - the numbers in the menu stay."
+        },
+        {
+            "type": "fixed",
+            "area": "project-portal",
+            "part": "admin",
+            "text": "Project conversations in the administration: an open thread shows new client messages, replies and internal notes of colleagues and “read by the client” within 15 s - before, it showed them only after it was opened again."
         }
     ],
     "releases": [

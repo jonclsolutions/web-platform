@@ -420,5 +420,9 @@
     "web-edit-website-view": "Zobrazit stránku správy veřejných textů webu",
     "web-edit-website-update": "Upravit veřejné texty webu (překlady, jazyky)",
     "web-welcome-page-view": "Zobrazit uvítací stránku webové sekce"
+  },
+  "notifications": {
+    "kind_web_inquiries": "Nové poptávky",
+    "kind_web_job_applications": "Nové přihlášky uchazečů"
   }
 }

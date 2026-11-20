@@ -8,8 +8,8 @@
  * @created 2026
  * @description Feature tests of the admin view of customer conversation threads
  *   (ProjectThreadController): list across projects, detail with the latest messages
- *   only, "load older messages", admin reply with attachments, internal notes of the team,
- *   client e-mail notifications and the status change.
+ *   only, "load older messages", new messages of an open thread, admin reply with attachments,
+ *   internal notes of the team, client e-mail notifications and the status change.
  * @dependencies
  * - Tests\TestCase, Tests\Apps\ProjectPortal\Support\ProjectFixtures; Storage fake.
  */
@@ -191,6 +191,52 @@ class ProjectThreadTest extends TestCase
         $this->assertPortalLog('thread_reopen', "Reopened thread #{$thread->id}");
         $this->putJson("/api/project-portal/project-threads/{$thread->id}/status", ['status' => 'archived'])->assertStatus(422);
         $this->putJson('/api/project-portal/project-threads/999/status', ['status' => 'closed'])->assertStatus(404);
+    }
+
+    /**
+     * @description New messages of an open thread for the administration: everything newer than
+     *   the newest message the page has - client messages, replies and internal notes of
+     *   colleagues - with the state of the thread; delivered client messages are read by the
+     *   administration, a poll without them changes nothing; permission, validation, 404.
+     * @input Thread read 1 hour ago: client "hi" (#1); client "still there?", colleague's internal
+     *   note, client read the thread; poll after #1; poll after the newest; no permission;
+     *   after_id=-1; unknown thread.
+     * @output admin unread 2 before; 2 messages (client + internal note) oldest first, status
+     *   active, waiting on the supplier, customer_last_read_at set, admin unread 0 afterwards; then 0 messages and
+     *   admin_last_read_at unchanged; 403; 422; 404.
+     */
+    public function test_new_messages_of_an_open_thread(): void
+    {
+        $this->signIn($this->userWith(['project-portal-projects-view']));
+        $thread = $this->thread($this->project(), ['admin_last_read_at' => now()->subHour()], [['customer', 'hi']]);
+        $first = $thread->messages()->first();
+        $thread->messages()->create(['author_type' => 'customer', 'body' => 'still there?']);
+        $thread->messages()->create(['author_type' => 'admin', 'author_label' => 'Colleague', 'is_internal' => true, 'body' => 'I will call them']);
+        $thread->update(['customer_last_read_at' => now()]);
+        $url = "/api/project-portal/project-threads/{$thread->id}/new-messages";
+        $unread = fn () => $this->getJson("/api/project-portal/project-threads?project_id={$thread->project_id}&no_pagination=1")->json('data.0.admin_unread_count');
+        $this->assertSame(2, $unread());
+
+        $response = $this->getJson("{$url}?after_id={$first->id}")->assertOk()
+            ->assertJsonCount(2, 'data.messages')
+            ->assertJsonPath('data.messages.0.body', 'still there?')
+            ->assertJsonPath('data.messages.1.body', 'I will call them')
+            ->assertJsonPath('data.messages.1.is_internal', true)
+            ->assertJsonPath('data.status', 'active')
+            ->assertJsonPath('data.waiting_on', 'supplier');
+        $this->assertNotNull($response->json('data.customer_last_read_at'));
+        $this->assertSame(0, $unread());
+
+        $readAt = $thread->fresh()->admin_last_read_at;
+        $newest = $response->json('data.messages.1.id');
+        $this->travel(5)->minutes();
+        $this->getJson("{$url}?after_id={$newest}")->assertOk()->assertJsonCount(0, 'data.messages');
+        $this->assertEquals($readAt, $thread->fresh()->admin_last_read_at);
+
+        $this->getJson("{$url}?after_id=-1")->assertStatus(422);
+        $this->getJson('/api/project-portal/project-threads/999999/new-messages')->assertNotFound();
+        $this->signIn($this->user());
+        $this->getJson($url)->assertForbidden();
     }
 
     /**

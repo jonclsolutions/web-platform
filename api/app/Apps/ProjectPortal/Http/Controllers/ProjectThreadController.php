@@ -6,9 +6,10 @@
  * @author JS
  * @created 2026
  * @description Admin view of customer conversation threads: list (with unread counts and whose
- * turn it is), detail with ALL messages including the team's internal notes, replies (a reply
- * notifies the client accounts that want it; an internal note never reaches the client and does
- * not change whose turn it is), status changes.
+ * turn it is), detail with ALL messages including the team's internal notes, the new messages of
+ * an open thread (polled by the admin page), replies (a reply notifies the client accounts that
+ * want it; an internal note never reaches the client and does not change whose turn it is),
+ * status changes.
  * @dependencies ProjectNotifier, HandlesAttachments, LogsActivity, AppliesSafeSorting
  */
 
@@ -90,6 +91,36 @@ class ProjectThreadController extends Controller
         [$messages, $hasMore] = $thread->pagedMessages($beforeId ? (int) $beforeId : null, $limit, withInternal: true);
 
         return $this->respond(ProjectThreadMessageResource::collection($messages), 200, ['has_more_older_messages' => $hasMore]);
+    }
+
+    /**
+     * @description New messages of a thread an administrator has open (polled every 15 s while the
+     *   admin page is visible): the messages newer than `after_id` - client messages, replies and
+     *   internal notes of colleagues - with the current state of the thread, so the open thread
+     *   shows the whole conversation without being reopened. New client messages delivered here
+     *   are read by the administration (the admin is looking at the thread).
+     * @param Request $request after_id: id of the newest message the page has (0 = all).
+     * @param int|string $threadId
+     * @return JsonResponse 200 { data: { messages, status, waiting_on, last_message_at,
+     *   customer_last_read_at } }, 404 unknown thread, 422 invalid after_id.
+     */
+    public function newMessages(Request $request, $threadId): JsonResponse
+    {
+        $validated = $request->validate(['after_id' => ['nullable', 'integer', 'min:0']]);
+        $thread = ProjectThread::findOrFail($threadId);
+
+        $messages = $thread->newerMessages((int) ($validated['after_id'] ?? 0), withInternal: true);
+        if ($messages->contains('author_type', 'customer')) {
+            $thread->markReadByAdmin();
+        }
+
+        return $this->respond([
+            'messages'              => ProjectThreadMessageResource::collection($messages)->resolve($request),
+            'status'                => $thread->status,
+            'waiting_on'            => $thread->waitingOn(),
+            'last_message_at'       => $thread->last_message_at?->format('Y-m-d H:i:s'),
+            'customer_last_read_at' => $thread->customer_last_read_at?->format('Y-m-d H:i:s'),
+        ]);
     }
 
     /**

@@ -67,6 +67,22 @@
         </div>
       </div>
 
+      <!-- Notifications: the pop-up notices of new records are a choice of this browser; the red
+           numbers in the menu are always shown. -->
+      <div class="info-group">
+        <h3 class="group-title">{{ strings.notifications_heading }}</h3>
+        <div class="security-row-text">
+          <label class="security-toggle-label">
+            <input
+              type="checkbox"
+              [checked]="notifications.toastsEnabled()"
+              (change)="onToggleToasts($event)">
+            {{ strings.notifications_toasts_label }}
+          </label>
+          <p class="setting-hint">{{ strings.notifications_toasts_hint }}</p>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

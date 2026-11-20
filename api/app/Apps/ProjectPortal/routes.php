@@ -303,6 +303,9 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:project-portal-projects-update');
             Route::get('/{threadId}/messages', [ProjectThreadController::class, 'olderMessages'])
                 ->middleware('permission:project-portal-projects-view');
+            // New messages of an open thread - polled by the admin page every 15 s.
+            Route::get('/{threadId}/new-messages', [ProjectThreadController::class, 'newMessages'])
+                ->middleware('permission:project-portal-projects-view');
         });
     });
 });

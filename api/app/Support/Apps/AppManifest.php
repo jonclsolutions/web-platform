@@ -148,6 +148,15 @@ abstract class AppManifest
     }
 
     /**
+     * @description Sources of the admin notifications (numbers of unread records in the side menu).
+     * @return array<int, class-string<\App\Services\Notifications\NotificationSource>>
+     */
+    public function notificationSources(): array
+    {
+        return [];
+    }
+
+    /**
      * @description Upload profiles of the application (AttachmentPolicy): name => extensions,
      *   max_files, max_file_kb, max_total_bytes. Names must be unique over all applications.
      * @return array<string, array{extensions: list<string>, max_files: int, max_file_kb: int, max_total_bytes: int|null}>

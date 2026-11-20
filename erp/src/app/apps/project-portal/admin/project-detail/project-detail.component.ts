@@ -15,7 +15,9 @@
  *   badges and "waiting on us / on the client", assignee of a thread, messages with "read by the
  *   client", reply or internal note with attachments, thread status), client accounts with
  *   invitations, approvals and updates (child components). New client messages are shown as badges
- *   (header, thread list) and the list refreshes every minute.
+ *   (header, thread list) and the list refreshes every minute; the open thread asks for its new
+ *   messages (client messages, replies and internal notes of colleagues, "read by the client")
+ *   every 15 s while the browser tab is visible.
  * @note The texts are the admin language (section `projects`) - the project data itself is one
  *   language. Opening a thread marks it read for the administration (API). A password of a client
  *   account is shown once after it was set (memory only, VT-08); leaving with an uncopied password
@@ -33,7 +35,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { firstValueFrom, interval, map } from 'rxjs';
+import { EMPTY, catchError, exhaustMap, filter, firstValueFrom, interval, map } from 'rxjs';
 import { DataHandler } from '../../../../core/services/data-handler.service';
 import { GenericTableService } from '../../../../core/services/generic-table.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
@@ -219,6 +221,22 @@ export type ThreadFilter = 'active' | 'closed' | 'all' | 'mine';
 
 /** @description Seconds between two automatic refreshes of the thread list. */
 export const THREAD_REFRESH_SECONDS = 60;
+
+/** @description Seconds between two checks for new messages of the open thread (as the client portal). */
+export const THREAD_MESSAGES_POLL_SECONDS = 15;
+
+/** @description Distance from the bottom (px) within which the message list follows new messages. */
+const FOLLOW_NEW_MESSAGES_PX = 80;
+
+/** @description Answer of `project-portal/project-threads/:id/new-messages`. */
+export interface NewThreadMessages {
+  /** Messages newer than `after_id`, oldest first (with internal notes). */
+  messages: ProjectThreadMessage[];
+  status: string;
+  waiting_on: ProjectThread['waiting_on'];
+  last_message_at: string | null;
+  customer_last_read_at: string | null;
+}
 
 /** Endpoint of the project list (ProjectsComponent) - its cached pages are dropped after a change of the project. */
 const PROJECTS_ENDPOINT = 'project-portal/projects';
@@ -408,6 +426,15 @@ export class ProjectDetailComponent implements OnInit {
     interval(THREAD_REFRESH_SECONDS * 1000)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.loadThreads(true));
+    // New messages of the open thread - only while one is open and loaded and the tab is visible;
+    // a poll still running skips the next tick, a failed one is quiet (the next one tries again).
+    interval(THREAD_MESSAGES_POLL_SECONDS * 1000)
+      .pipe(
+        filter(() => !!this.selectedThread && !this.threadLoading && !document.hidden),
+        exhaustMap(() => this.pollNewMessages()),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe();
   }
 
   // ── Sub-pages ─────────────────────────────────────────────────────────
@@ -1266,6 +1293,36 @@ export class ProjectDetailComponent implements OnInit {
   closeThread(): void {
     this.selectedThread = null;
     this.cd.markForCheck();
+  }
+
+  /**
+   * @description Asks for the messages of the open thread newer than the newest one shown and
+   *   adds them (without duplicates - e.g. an own reply already shown); takes over the state of
+   *   the thread ("read by the client", status, whose turn it is) and clears its unread badge (the
+   *   API marks delivered client messages read). The list follows the new messages only when it
+   *   was scrolled to the bottom - reading older messages is not interrupted. An answer for a
+   *   thread that is no longer open is dropped.
+   * @returns The request (quiet - no error dialog; a failure ends it without a value).
+   */
+  private pollNewMessages() {
+    const id = this.selectedThread!.id;
+    const afterId = Math.max(0, ...(this.selectedThread!.messages ?? []).map(message => message.id));
+    return this.dataHandler.getQuietly<NewThreadMessages>(`project-portal/project-threads/${id}/new-messages?after_id=${afterId}`).pipe(
+      map(answer => {
+        const thread = this.selectedThread;
+        if (!Array.isArray(answer?.messages) || thread?.id !== id) return;
+        const known = new Set((thread.messages ?? []).map(message => message.id));
+        const fresh = (answer.messages ?? []).filter(message => !known.has(message.id));
+        const list = this.messageList?.nativeElement;
+        const atBottom = !list || list.scrollHeight - list.scrollTop - list.clientHeight <= FOLLOW_NEW_MESSAGES_PX;
+        const state = { status: answer.status, waiting_on: answer.waiting_on, last_message_at: answer.last_message_at };
+        this.selectedThread = { ...thread, ...state, customer_last_read_at: answer.customer_last_read_at, messages: [...(thread.messages ?? []), ...fresh] };
+        this.threads = this.threads.map(t => (t.id === id ? { ...t, ...state, admin_unread_count: 0 } : t));
+        this.cd.markForCheck();
+        if (fresh.length && atBottom) this.scrollMessagesToBottom();
+      }),
+      catchError(() => EMPTY),
+    );
   }
 
   /** @description Thread with its newest messages and the `has_more_older_messages` flag of the answer. */

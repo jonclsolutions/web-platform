@@ -764,6 +764,71 @@
   padding-bottom: 10px;
 }
 
+/*
+    @module: Unread badges
+    @description: Red number of unread records (AdminNotificationsService) - at a page of the
+      sidebar (right edge; in the collapsed desktop sidebar on the corner of the icon), at the
+      title of a collapsed menu section, at the modules of the switcher and of the mobile panel.
+      The dot tells that the closed mobile menu / the mobile panel hides some numbers (the menu
+      button shows it only on mobile - the collapsed desktop sidebar shows the numbers itself).
+    @usage: <span class="nav-badge [nav-badge--item | nav-badge--end]" role="img" [attr.aria-label]>3</span>,
+      <span class="unread-dot" aria-hidden="true"></span> inside .menu-toggle-btn / .mobile-actions-toggle
+*/
+.nav-badge {
+  flex-shrink: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--error);
+  color: var(--color-white);
+  font-family: var(--ff);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 18px;
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: none;
+}
+
+.nav-badge--item,
+.nav-badge--end,
+.nav-group-label .nav-badge { margin-left: auto; }
+
+.unread-dot {
+  position: absolute;
+  top: calc(50% - 12px);
+  right: calc(50% - 13px);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--error);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.menu-toggle-btn,
+.mobile-actions-toggle { position: relative; }
+
+.menu-toggle-btn .unread-dot { display: none; }
+
+@media (min-width: 769px) {
+  .collapsed .admin-nav li a { position: relative; }
+  .collapsed .nav-badge--item {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 3px;
+    font-size: 0.6rem;
+    line-height: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .menu-toggle-btn .unread-dot { display: block; }
+}
+
 /* Overlay */
 .sidebar-overlay { display: none; }
 

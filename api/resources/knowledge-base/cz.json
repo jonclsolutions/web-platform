@@ -144,6 +144,10 @@
               "content": "Levé menu je rozdělené do sekcí (například Přehled, Obsah, Uživatelé, Systém). Kliknutím na název sekce ji sbalíte nebo rozbalíte - systém si to zapamatuje. Šířku menu změníte tažením jeho pravého okraje myší. Úplně dole v menu je tlačítko Odhlásit se."
             },
             {
+              "type": "text",
+              "content": "Červené číslo u položky menu říká, kolik je na stránce nových záznamů, které jste ještě neviděli - například nové poptávky, přihlášky uchazečů, objednávky, produkty pod skladovým limitem, leady po termínu kontaktu nebo bezpečnostní události. Číslo je osobní: počítá se od vaší poslední návštěvy stránky a zmizí, jakmile ji otevřete. Nad 99 záznamů se ukazuje „99+“. Součty nepřečtených má i záložka Core, tlačítko Aplikace a sbalená sekce menu; na mobilu upozorní červená tečka na tlačítku menu nebo panelu. Systém se na novinky ptá jednou za minutu, a jen když je karta s administrací otevřená v popředí. Když nějaké číslo vzroste, vpravo nahoře se ukáže upozornění - kliknutím otevřete příslušnou stránku. Čísla vidíte jen u stránek, ke kterým máte oprávnění."
+            },
+            {
               "type": "note",
               "highlight": "Na mobilu a tabletu",
               "content": "Menu se otevírá tlačítkem vlevo nahoře a zavře se klepnutím mimo něj. Údaje o účtu, hodiny, přepínání modulů, jazyk, kalendář a nápověda jsou schované v panelu, který otevřete ikonou vpravo nahoře."
@@ -1504,7 +1508,7 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Stránka vašeho vlastního účtu. Vidíte zde své údaje, nastavíte profilovou fotku, zapnete nebo vypnete dvoufázové ověření a změníte heslo. Stránku má k dispozici každý přihlášený uživatel."
+              "content": "Stránka vašeho vlastního účtu. Vidíte zde své údaje, nastavíte profilovou fotku, zapnete nebo vypnete dvoufázové ověření, změníte heslo a zvolíte, jestli chcete vyskakovací upozornění na nové záznamy. Stránku má k dispozici každý přihlášený uživatel."
             },
             {
               "type": "text",
@@ -1662,6 +1666,24 @@
             {
               "type": "text",
               "content": "Zapomenuté heslo si obnovíte na přihlašovací stránce odkazem Zapomněli jste heslo? (kapitola Přístup a bezpečnost)."
+            }
+          ]
+        },
+        {
+          "heading": "06. Notifikace",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "V části Notifikace je zaškrtávací políčko Zobrazovat vyskakovací upozornění na nové záznamy. Když je zapnuté, vpravo nahoře se ukáže upozornění pokaždé, když přibude nový záznam (například poptávka nebo objednávka); kliknutím na upozornění otevřete příslušnou stránku."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Volba platí jen v tomto prohlížeči - v jiném prohlížeči nebo na jiném zařízení ji nastavíte zvlášť.",
+                "Červená čísla nepřečtených záznamů v menu se zobrazují vždy, i když upozornění vypnete.",
+                "Upozornění obsahuje jen počet a druh záznamů, nikdy jména ani e-maily."
+              ]
             }
           ]
         }

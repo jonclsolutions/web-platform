@@ -164,14 +164,18 @@ class ProjectThread extends Model
         return [$messages, $hasMore];
     }
     /**
- * @description Returns messages STRICTLY NEWER than `$afterId`, oldest-first -
- * used by the customer portal's live-update polling (see
- * `ProjectPublicController::newMessages()`). Deliberately NOT paginated/limited -
- * in practice this returns 0-2 messages per poll (15s interval), never a large batch. Client
- * messages only (no internal notes).
- */
-public function newerMessages(int $afterId): \Illuminate\Support\Collection
-{
-    return $this->clientMessages()->with('attachments')->where('id', '>', $afterId)->reorder()->orderBy('id')->get();
-}
+     * @description Returns messages STRICTLY NEWER than `$afterId`, oldest-first - used by the
+     *   live-update polling of an open thread: the customer portal
+     *   (`ProjectPublicController::newMessages()`, client messages only) and the administration
+     *   (`ProjectThreadController::newMessages()`, with the internal notes of the team).
+     *   Deliberately NOT paginated/limited - in practice 0-2 messages per poll (15 s interval).
+     * @param int $afterId Id of the newest message the caller has.
+     * @param bool $withInternal Include internal notes (administration only - never the portal).
+     * @return \Illuminate\Support\Collection<int, ProjectThreadMessage>
+     */
+    public function newerMessages(int $afterId, bool $withInternal = false): \Illuminate\Support\Collection
+    {
+        return ($withInternal ? $this->messages() : $this->clientMessages())
+            ->with('attachments')->where('id', '>', $afterId)->reorder()->orderBy('id')->get();
+    }
 }

@@ -147,19 +147,21 @@ export function createAuthStub(loggedIn = true): AuthStub {
 
 /**
  * @description Creates a DataHandler spy; every request returns an empty successful response.
- * @returns jasmine spy object (get/getOne/getCollection/getPaginatedCollection/getWithMeta/post/postWithMeta/put/patch/delete/upload/uploadPut);
+ * @returns jasmine spy object (get/getQuietly/getOne/getCollection/getPaginatedCollection/getWithMeta/post/postWithMeta/postQuietly/put/patch/delete/upload/uploadPut);
  *   envelope-returning methods answer `{data, meta}` (finding #6).
  */
 export function createDataHandlerSpy(): jasmine.SpyObj<DataHandler> {
   const spy = jasmine.createSpyObj<DataHandler>('DataHandler',
-    ['get', 'getQuietly', 'getOne', 'getCollection', 'getPaginatedCollection', 'getWithMeta', 'post', 'postWithMeta', 'put', 'patch', 'delete', 'upload', 'uploadPut'] as any);
+    ['get', 'getQuietly', 'getOne', 'getCollection', 'getPaginatedCollection', 'getWithMeta', 'post', 'postWithMeta', 'postQuietly', 'put', 'patch', 'delete', 'upload', 'uploadPut'] as any);
   (spy as any).get.and.returnValue(of({}));
+  (spy as any).getQuietly.and.returnValue(of({}));
   (spy as any).getOne.and.returnValue(of({}));
   (spy as any).getCollection.and.returnValue(of([]));
   (spy as any).getPaginatedCollection.and.returnValue(of({ data: [], meta: { total: 0, per_page: 15, current_page: 1, last_page: 1 } }));
   (spy as any).getWithMeta.and.returnValue(of({ data: {}, meta: {} }));
   (spy as any).post.and.returnValue(of({}));
   (spy as any).postWithMeta.and.returnValue(of({ data: {} }));
+  (spy as any).postQuietly.and.returnValue(of({}));
   (spy as any).put.and.returnValue(of({}));
   (spy as any).patch.and.returnValue(of({}));
   (spy as any).delete.and.returnValue(of(undefined));

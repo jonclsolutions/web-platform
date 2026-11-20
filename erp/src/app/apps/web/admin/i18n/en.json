@@ -420,5 +420,9 @@
     "web-edit-website-view": "View the management page of the public web texts",
     "web-edit-website-update": "Edit the public web texts (translations, languages)",
     "web-welcome-page-view": "View the welcome page of the web section"
+  },
+  "notifications": {
+    "kind_web_inquiries": "New inquiries",
+    "kind_web_job_applications": "New job applications"
   }
 }

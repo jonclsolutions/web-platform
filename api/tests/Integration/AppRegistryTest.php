@@ -55,7 +55,7 @@ class AppRegistryTest extends TestCase
      * @description The configured applications in order; a missing class, a class that is no
      *   manifest and a duplicate id are skipped; everything the core reads comes from them.
      * @input apps = [web, missing class, stdClass, shop, project portal, second manifest with the id 'web'].
-     * @output ids [web, shop, project-portal]; seeders of the three; 3 retention + 3 agenda sources;
+     * @output ids [web, shop, project-portal]; seeders of the three; 3 retention + 3 agenda + 3 notification sources;
      *   upload profiles of web + portal, folders incl. the portal ones; morph aliases of web and
      *   portal; logs WebLog / ShopLog / ProjectPortalLog; translation permissions of web and shop
      *   (the portal has no translations); middleware aliases of the applications registered;
@@ -71,6 +71,7 @@ class AppRegistryTest extends TestCase
         $this->assertSame([WebBaseDataSeeder::class, ShopBaseDataSeeder::class, ProjectPortalBaseDataSeeder::class], AppRegistry::baseDataSeeders());
         $this->assertCount(3, AppRegistry::retentionSources());
         $this->assertSame(['web', 'shop', 'project-portal'], array_map(fn ($pair) => $pair[0]->id(), AppRegistry::agendaSources()));
+        $this->assertSame(['web', 'shop', 'project-portal'], array_map(fn ($pair) => $pair[0]->id(), AppRegistry::notificationSources()));
         $this->assertSame(['raw_request_commission', 'job_application', 'project_thread', 'sales_order'], array_keys(AppRegistry::uploadProfiles()));
         $this->assertContains('web/project_approvals', AppRegistry::uploadFolders());
         $this->assertSame(SalesOrder::class, AppRegistry::morphMap()['sales_order']);

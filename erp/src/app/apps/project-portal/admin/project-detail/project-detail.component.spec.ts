@@ -25,7 +25,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick, flush, discardPeriodicTasks
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 
-import { ProjectDetailComponent, THREAD_REFRESH_SECONDS } from './project-detail.component';
+import { ProjectDetailComponent, THREAD_MESSAGES_POLL_SECONDS, THREAD_REFRESH_SECONDS } from './project-detail.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
 import { TEST_UPLOAD_RULES } from '../../../../../testing/upload-rules-stub';
 
@@ -892,6 +892,63 @@ describe('ProjectDetailComponent', () => {
       component.closeThread();
       expect(component.selectedThread).toBeNull();
       flush();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description The open thread asks for its new messages every 15 s: new ones are added once
+     *   (an own reply already shown is not repeated), the state of the thread and "read by the
+     *   client" are taken over, the unread badge is cleared, the list follows only when it was at
+     *   the bottom; nothing is asked while the tab is hidden or no thread is open; a failure is quiet.
+     * @input  thread 3 open with #10 at the bottom; answer #10, #11 (client), #12 (internal note);
+     *   list scrolled up, answer #13; tab hidden; failing poll; thread closed.
+     * @output new-messages?after_id=10; ids [10, 11, 12], customer_last_read_at, last_message_at,
+     *   badge 0, scrolled down; then #13 added after_id=12 without scrolling; no request while
+     *   hidden; failure keeps the messages; no request after closing.
+     */
+    it('shows new messages of the open thread', fakeAsync(() => {
+      init();
+      const list = scrollList(100);
+      component.messageList = { nativeElement: list.el } as any;
+      list.el.scrollTop = 100;
+      const message = (id: number, author_type: 'customer' | 'admin', body: string, is_internal = false) =>
+        ({ id, author_type, author_label: null, body, is_internal, created_at: '2026-11-20 10:00:00' });
+      component.selectedThread = { ...threads()[0], customer_last_read_at: null, messages: [message(10, 'customer', 'Hi')] };
+      const answer = (...messages: ReturnType<typeof message>[]) => of({
+        messages, status: 'active', waiting_on: 'supplier', last_message_at: '2026-11-20 10:05:00', customer_last_read_at: '2026-11-20 10:04:00',
+      });
+      dh().getQuietly.and.returnValue(answer(message(10, 'customer', 'Hi'), message(11, 'customer', 'Still there?'), message(12, 'admin', 'I will call', true)));
+
+      tick(THREAD_MESSAGES_POLL_SECONDS * 1000);
+      expect(dh().getQuietly).toHaveBeenCalledOnceWith('project-portal/project-threads/3/new-messages?after_id=10');
+      expect(component.selectedThread!.messages!.map(m => m.id)).toEqual([10, 11, 12]);
+      expect(component.selectedThread!.customer_last_read_at).toBe('2026-11-20 10:04:00');
+      expect(component.threads.find(t => t.id === 3)).toEqual(jasmine.objectContaining({ admin_unread_count: 0, last_message_at: '2026-11-20 10:05:00' }));
+      tick();
+      expect(list.sets).toEqual([100, 100]);
+
+      list.el.scrollTop = 0;
+      dh().getQuietly.and.returnValue(answer(message(13, 'customer', 'Hello?')));
+      tick(THREAD_MESSAGES_POLL_SECONDS * 1000);
+      expect(dh().getQuietly).toHaveBeenCalledWith('project-portal/project-threads/3/new-messages?after_id=12');
+      expect(component.selectedThread!.messages!.map(m => m.id)).toEqual([10, 11, 12, 13]);
+      tick();
+      expect(list.sets).toEqual([100, 100, 0]);
+
+      dh().getQuietly.calls.reset();
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+      tick(THREAD_MESSAGES_POLL_SECONDS * 1000);
+      delete (document as any).hidden;
+      expect(dh().getQuietly).not.toHaveBeenCalled();
+
+      dh().getQuietly.and.returnValue(throwError(() => new Error('offline')));
+      tick(THREAD_MESSAGES_POLL_SECONDS * 1000);
+      expect(component.selectedThread!.messages!.length).toBe(4);
+
+      dh().getQuietly.calls.reset();
+      component.closeThread();
+      tick(THREAD_MESSAGES_POLL_SECONDS * 1000);
+      expect(dh().getQuietly).not.toHaveBeenCalled();
       discardPeriodicTasks();
     }));
 

@@ -19,6 +19,7 @@
 namespace App\Support\Apps;
 
 use App\Services\Agenda\AgendaSource;
+use App\Services\Notifications\NotificationSource;
 use App\Services\Retention\RetentionSource;
 use Database\Seeders\ModuleBaseDataSeeder;
 
@@ -77,6 +78,24 @@ final class AppRegistry
         foreach (self::apps() as $app) {
             foreach ($app->agendaSources() as $class) {
                 if (self::valid($class, AgendaSource::class)) {
+                    $sources[] = [$app, app($class)];
+                }
+            }
+        }
+
+        return $sources;
+    }
+
+    /**
+     * @description Notification sources of all applications with the application they belong to.
+     * @return array<int, array{0: AppManifest, 1: NotificationSource}>
+     */
+    public static function notificationSources(): array
+    {
+        $sources = [];
+        foreach (self::apps() as $app) {
+            foreach ($app->notificationSources() as $class) {
+                if (self::valid($class, NotificationSource::class)) {
                     $sources[] = [$app, app($class)];
                 }
             }

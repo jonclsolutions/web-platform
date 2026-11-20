@@ -25,6 +25,7 @@ use App\Apps\ProjectPortal\Models\ProjectThreadMessage;
 use App\Apps\ProjectPortal\Models\ProjectUpdate;
 use App\Apps\ProjectPortal\Models\SalesOrder;
 use App\Apps\ProjectPortal\Services\ProjectPortalAgendaSource;
+use App\Apps\ProjectPortal\Services\ProjectPortalNotificationSource;
 use App\Apps\ProjectPortal\Services\ProjectPortalRetentionSource;
 use App\Apps\ProjectPortal\Models\ProjectPortalSetting;
 use App\Support\Apps\AppAvailability;
@@ -101,6 +102,12 @@ final class ProjectPortalApp extends AppManifest
     public function agendaSources(): array
     {
         return [ProjectPortalAgendaSource::class];
+    }
+
+    /** @description See AppManifest::notificationSources(). */
+    public function notificationSources(): array
+    {
+        return [ProjectPortalNotificationSource::class];
     }
 
     /** @description See AppManifest::uploadProfiles(). */

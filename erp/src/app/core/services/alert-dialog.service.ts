@@ -40,16 +40,18 @@ export class AlertDialogService {
    * @param title The dialog header text.
    * @param message The content body text.
    * @param type The alert classification (e.g., 'info', 'error').
+   * @param action Optional action run when the user clicks the toast body (not the ✕), e.g.
+   *   opening the page of a notification.
    * @returns {Promise<void>} Resolves when this toast is closed.
    */
-  open(title: string, message: string, type: AlertType = 'info'): Promise<void> {
+  open(title: string, message: string, type: AlertType = 'info', action?: () => void): Promise<void> {
     this.ensureContainer();
 
     const id = ++this.nextId;
 
     return new Promise<void>((resolve) => {
       this.pendingResolvers.set(id, resolve);
-      this.componentRef!.instance.addToast({ id, title, message, type });
+      this.componentRef!.instance.addToast({ id, title, message, type, action });
     });
   }
 

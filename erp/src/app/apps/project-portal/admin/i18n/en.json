@@ -757,5 +757,9 @@
     "module_project_portal_setting": "Portal settings",
     "event_maintenance_status_changed": "Maintenance mode changed",
     "event_unauthorized_maintenance_toggle_attempt": "Unauthorized attempt to change maintenance"
+  },
+  "notifications": {
+    "kind_portal_orders": "New project portal orders",
+    "kind_portal_leads_overdue": "Leads overdue for contact"
   }
 }
