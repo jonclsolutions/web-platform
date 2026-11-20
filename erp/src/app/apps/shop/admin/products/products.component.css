@@ -14,11 +14,6 @@
   color: var(--color-zinc-900);
 }
 
-.toolbar-actions {
-  display: flex;
-  gap: 8px;
-}
-
 .pagination-container {
   display: flex;
   justify-content: center;
@@ -755,16 +750,8 @@
 
 @media (max-width: 768px) {
 
-  .toolbar-actions {
-    width: 100%;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
   .form-row-2,
-  .form-row-3,
-  .multi-currency-grid,
-  .multi-currency-variant-paths {
+  .form-row-3 {
     grid-template-columns: 1fr;
   }
 

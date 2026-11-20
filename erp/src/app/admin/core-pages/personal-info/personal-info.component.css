@@ -180,7 +180,7 @@
     flex-direction: column; 
     gap: 16px;
   }
-  .info-card, .password-card-minimal { 
+  .info-card {
     min-width: 100%; 
     width: 100%; 
     max-width: 100%;

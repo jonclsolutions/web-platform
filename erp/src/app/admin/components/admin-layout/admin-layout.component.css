@@ -377,8 +377,7 @@
 }
 
 .header-action-btn--wiki,
-.header-action-btn--calendar,
-.header-action-btn--bug {
+.header-action-btn--calendar {
   color: var(--text-muted);
   border-color: var(--border);
   background: var(--surface);
@@ -848,7 +847,6 @@
    ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
   .time-hide-mobile { display: none !important; }
-  .header-action-label { display: none; }
   .header-lang-switcher{display: none;}
 
   /* On mobile only menu-toggle + logo + hamburger fit into the header row.
@@ -865,8 +863,7 @@
     max-width: calc(100% - 150px);
   }
   .header-action-btn--wiki,
-  .header-action-btn--calendar,
-  .header-action-btn--bug { display: none; }
+  .header-action-btn--calendar { display: none; }
 
   .mobile-actions-toggle { display: flex; }
 

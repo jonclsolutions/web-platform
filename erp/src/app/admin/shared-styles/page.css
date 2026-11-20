@@ -10,8 +10,8 @@
 
 /*
     @module: Admin list page
-    @description: Standard admin list page: toolbar, action buttons, table header, banners and spacing helpers. Shared by every table page of the core and the applications.
-    @usage: .btn-create, .btn-export, .btn-filter, .btn-trash, .error-banner, .info-banner, .filter-side-panel, .filter-side-panel.active, .items-per-page-select, .m-b-10, .m-b-20, .main-content-layout, .p-b-10, .small-btn, .table-and-pagination-container, .table-header, .toolbar-actions, .toolbar-actions-in
+    @description: Standard admin list page: layout with the filter side panel and the table, error banner. Shared by every table page of the core and the applications. The toolbar and its buttons are styled by ButtonBuilderComponent itself.
+    @usage: .error-banner, .main-content-layout, .filter-side-panel, .filter-side-panel.active, .table-and-pagination-container
 */
 
 .error-banner {
@@ -22,33 +22,6 @@
   border-radius: 8px;
   margin-bottom: 16px;
   font-size: 0.9rem;
-}
-
-.table-header {
-  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1f2937;
-  display: flex;
-  align-items: center;
-}
-
-.toolbar-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 15px;
-  padding: 0 7px;
-  margin-bottom: 5px;
-  margin-top: 5px;
-}
-
-.toolbar-actions-in {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
 }
 
 .main-content-layout {
@@ -88,22 +61,6 @@
   overflow-x: auto;
   padding-left: 5px;
   padding-right: 5px;
-}
-
-@media (max-width: 768px) {
-  .toolbar-actions {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-  .toolbar-actions-in {
-    width: 100%;
-    justify-content: flex-start;
-  }
-  .small-btn {
-    flex: 1 1 auto;
-    justify-content: center;
-  }
 }
 
 /*

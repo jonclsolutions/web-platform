@@ -158,14 +158,6 @@
   background: var(--color-emerald-600);
 }
 
-.modal-detail .timeline-step-canceled .timeline-dot {
-  background: var(--color-rose-600);
-  box-shadow: 0 0 0 2px var(--color-rose-600);
-}
-.modal-detail .timeline-step-canceled .timeline-label {
-  color: var(--color-rose-700);
-}
-
 .modal-detail .detail-modal-body {
   display: flex;
   flex-direction: column;

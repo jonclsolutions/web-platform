@@ -603,10 +603,3 @@
   color: var(--color-rose-600);
   font-weight: bold;
 }
-
-/* Same palette as buttons-builder.component.css, so the components do not drift apart,
-   whichever of the ::ng-deep / local styles wins. */
-::ng-deep .btn-filter { background: var(--color-zinc-100); color: var(--color-zinc-700); border-color: var(--color-zinc-200); }
-::ng-deep .btn-trash  { background: var(--color-rose-50); color: var(--color-rose-700); border-color: var(--color-rose-200); }
-::ng-deep .btn-create { background: var(--color-emerald-50); color: var(--color-emerald-700); border-color: var(--color-emerald-200); }
-::ng-deep .btn-export { background: var(--color-indigo-50); color: var(--color-indigo-700); border-color: #c7d2fe; }

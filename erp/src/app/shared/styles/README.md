@@ -44,8 +44,9 @@ src/
     ├── admin/
     │   ├── shared-styles/                  whole admin (core + every application, auth, layout, intranet)
     │   │   ├── theme.css                   admin look tokens (--accent, --text, --border …)
-    │   │   ├── page.css                    standard list page: toolbar, buttons, banners,
-    │   │   │                               info banner, filter panel beside the table (≥ 1024 px)
+    │   │   ├── page.css                    standard list page: layout, error / info banner,
+    │   │   │                               filter panel beside the table (≥ 1024 px); the toolbar
+    │   │   │                               and its buttons style ButtonBuilderComponent itself
     │   │   ├── dashboard.css               dashboard header actions      (core, shop, web dashboards)
     │   │   ├── dashboard-cards.css         cards, KPI rows, charts       (dashboard view)
     │   │   ├── settings-page.css           settings / translation editor (core settings, translation editor view)

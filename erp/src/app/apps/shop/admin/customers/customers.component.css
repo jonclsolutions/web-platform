@@ -8,30 +8,6 @@
         popup (stats in its header, orders, pagination in its footer); the frame is AdminModalComponent.
 */
 
-.toolbar-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 0 4px;
-  margin-bottom: 6px;
-}
-
-.table-header {
-  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.toolbar-actions-in {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
 .main-content-layout {
   display: flex;
   gap: 12px;
