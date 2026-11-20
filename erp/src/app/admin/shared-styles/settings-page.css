@@ -11,7 +11,7 @@
 /*
     @module: Settings page (edit e-shop / edit website)
     @description: Layout of the site-settings editors: top bar, language switcher, sections, fields, image uploads and the save bar. Identical for the e-shop and the website settings.
-    @usage: *, *::before, *::after, .ew-btn, .ew-btn--danger, .ew-btn--danger:hover:not(:disabled), .ew-btn--ghost, .ew-btn--ghost:hover:not(:disabled), .ew-btn--primary, .ew-btn--primary:hover:not(:disabled), .ew-btn--sm, .ew-btn--warn-outline, .ew-btn--warn-outline:hover:not(:disabled), .ew-btn:disabled, .ew-
+    @usage: *, *::before, *::after, .ew-btn, .ew-btn--ghost, .ew-btn--ghost:hover:not(:disabled), .ew-btn--primary, .ew-btn--primary:hover:not(:disabled), .ew-btn--sm, .ew-btn--warn-outline, .ew-btn--warn-outline:hover:not(:disabled), .ew-btn:disabled, .ew-
 */
 
 :host {
@@ -136,14 +136,6 @@
 }
 
 .ew-btn--ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
-
-.ew-btn--danger {
-  background: var(--error);
-  color: var(--color-white);
-  border-color: var(--error);
-}
-
-.ew-btn--danger:hover:not(:disabled) { background: var(--color-rose-800); }
 
 .ew-btn--warn-outline {
   background: var(--warn-dim);
@@ -527,106 +519,7 @@
   gap: 10px;
 }
 
-.ew-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(24, 24, 27, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  padding: 16px;
-  animation: ew-fade-in 0.18s ease both;
-}
-
-@keyframes ew-fade-in { from { opacity: 0; } to { opacity: 1; } }
-
-.ew-modal {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 480px;
-  box-shadow: 0 20px 50px rgba(24, 24, 27, 0.18);
-  animation: ew-slide-up 0.2s ease both;
-  overflow: hidden;
-}
-
-.ew-modal--sm { max-width: 380px; }
-
-@keyframes ew-slide-up {
-  from { transform: translateY(12px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
-}
-
-.ew-modal-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface-2);
-}
-
-.ew-modal-header--danger { background: var(--error-dim); }
-
-.ew-modal-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius);
-  background: var(--accent-dim);
-  border: 1px solid var(--accent-dim2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text);
-  flex-shrink: 0;
-}
-
-.ew-modal-icon--danger {
-  background: var(--error-dim);
-  border-color: var(--error-mid);
-  color: var(--error);
-}
-
-.ew-modal-title {
-  font-size: 0.97rem;
-  font-weight: 700;
-  color: var(--text);
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.ew-modal-lang-badge {
-  font-size: 0.7rem;
-  font-weight: 800;
-  background: var(--accent);
-  color: var(--color-white);
-  padding: 1px 8px;
-  border-radius: 999px;
-  letter-spacing: 0.06em;
-}
-
-.ew-modal-close {
-  background: none;
-  border: none;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  cursor: pointer;
-  color: var(--text-dim);
-  transition: background var(--ease), color var(--ease);
-}
-
-.ew-modal-close:hover { background: var(--border); color: var(--text); }
-
-.ew-modal-body {
-  padding: 20px;
+.ew-modal-content {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -636,15 +529,6 @@
   font-size: 0.87rem;
   color: var(--text-muted);
   line-height: 1.6;
-}
-
-.ew-modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 14px 20px;
-  border-top: 1px solid var(--border);
-  background: var(--surface-2);
 }
 
 .ew-field {

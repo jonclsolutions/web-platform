@@ -4,72 +4,10 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Styles of the "E-mail domains" modal. Same palette as the other inline modals of
- * the project (#18181b / #71717a / #ececea), consistent with the rest of the admin.
+ * @description Styles of the content of the "E-mail domains" popup (primary domain, exceptions,
+ * allowed domains / e-mails); the frame is AdminModalComponent, the footer button
+ * admin/shared-styles/modal.css.
  */
-
-.email-policy-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(24, 24, 27, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1050;
-  padding: 20px;
-}
-
-.email-policy-card {
-  width: 100%;
-  max-width: 520px;
-  max-height: 88vh;
-  overflow-y: auto;
-  background: var(--color-white);
-  border-radius: 18px;
-  box-shadow: 0 20px 60px rgba(24, 24, 27, 0.25);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-}
-
-.email-policy-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 20px 24px 0;
-}
-
-.email-policy-title {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--color-zinc-900);
-}
-
-.email-policy-subtitle {
-  margin: 4px 0 0;
-  font-size: 0.82rem;
-  color: var(--color-zinc-500);
-  max-width: 380px;
-}
-
-.email-policy-close {
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  border: none;
-  background: transparent;
-  border-radius: 999px;
-  color: var(--color-zinc-500);
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-.email-policy-close:hover:not(:disabled) { background: var(--color-zinc-100); color: var(--color-zinc-900); }
-.email-policy-close:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.email-policy-body {
-  padding: 16px 24px 4px;
-}
 
 .email-policy-loading {
   color: var(--color-zinc-500);
@@ -81,6 +19,7 @@
 .email-policy-section {
   margin-bottom: 22px;
 }
+.email-policy-section:last-child { margin-bottom: 0; }
 
 .email-policy-label {
   display: block;
@@ -186,23 +125,3 @@
 }
 .email-policy-btn-remove:hover { background: var(--color-rose-50); color: var(--color-rose-700); }
 
-.email-policy-footer {
-  display: flex;
-  justify-content: flex-end;
-  padding: 12px 24px 20px;
-}
-
-.email-policy-btn-cancel {
-  padding: 9px 18px;
-  border: 1px solid var(--color-zinc-200);
-  border-radius: 8px;
-  background: var(--color-white);
-  color: var(--color-zinc-700);
-  font-size: 0.85rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-.email-policy-btn-cancel:hover:not(:disabled) { background: var(--color-zinc-100); }
-.email-policy-btn-cancel:disabled { opacity: 0.6; cursor: not-allowed; }

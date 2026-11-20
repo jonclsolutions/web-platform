@@ -9,7 +9,8 @@
  *   state and logic and passes itself in; the panels of its extra tabs are its content.
  * @usage `<app-translation-editor-view [e]="this"> …panels of extraTabs… </app-translation-editor-view>`
  * @dependencies BaseTranslationEditorComponent, PageTitlesEditorComponent, PageHeaderComponent,
- *   RowButtonBuilderComponent (page tabs), StickyBarDirective, FormsModule.
+ *   RowButtonBuilderComponent (page tabs), StickyBarDirective, FormsModule, AdminModalComponent
+ *   (frame of the add language / upload JSON / delete language popups).
  */
 
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
@@ -21,13 +22,14 @@ import { PageTitlesEditorComponent } from '../page-titles-editor/page-titles-edi
 import { PageHeaderComponent } from '../page-header/page-header.component';
 import { RowButtonBuilderComponent } from '../builders/row-button-builder/row-button-builder.component';
 import { StickyBarDirective } from '../../../shared/directives/sticky-bar.directive';
+import { AdminModalComponent } from '../admin-modal/admin-modal.component';
 
 @Component({
   selector: 'app-translation-editor-view',
   standalone: true,
-  imports: [AsyncPipe, UpperCasePipe, FormsModule, PageTitlesEditorComponent, PageHeaderComponent, RowButtonBuilderComponent, StickyBarDirective],
+  imports: [AsyncPipe, UpperCasePipe, FormsModule, PageTitlesEditorComponent, PageHeaderComponent, RowButtonBuilderComponent, StickyBarDirective, AdminModalComponent],
   templateUrl: './translation-editor-view.component.html',
-  styleUrls: ['../../shared-styles/theme.css', '../../../shared/styles/base.css', '../../shared-styles/settings-page.css', './translation-editor-view.component.css'],
+  styleUrls: ['../../shared-styles/theme.css', '../../../shared/styles/base.css', '../../shared-styles/settings-page.css', '../../shared-styles/modal.css', './translation-editor-view.component.css'],
   changeDetection: ChangeDetectionStrategy.Default,
 })
 export class TranslationEditorViewComponent {

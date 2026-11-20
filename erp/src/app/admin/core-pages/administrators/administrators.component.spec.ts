@@ -292,17 +292,20 @@ describe('AdministratorsComponent', () => {
     }));
 
     /**
-     * @description The e-mail policy modal: open locks scroll; opening it again uses the cached
+     * @description The e-mail policy modal (shared popup frame): open locks scroll; opening it again uses the cached
      *   policy (no request); domain saved trimmed, rules added and removed - each change drops the
      *   cache, so the next opening reads the policy again.
-     * @input  open; close + open; primaryEmailDomain '  nova.cz '; savePrimaryDomain(); add rule 'x.cz'; remove rule 1; close; open again
+     * @input  open + render; close + open; primaryEmailDomain '  nova.cz '; savePrimaryDomain(); add rule 'x.cz'; remove rule 1; close + render; open again
      * @output lock(); no second GET of the policy; put('core/email-access-policy/primary-domain', { primary_email_domain: 'nova.cz' });
      *   post rule; delete rule 1; unlock(); GET of the policy on the second opening
      */
     it('manages the e-mail access policy', fakeAsync(() => {
       const policyLoads = () => (ctx.dataHandler as any).get.calls.allArgs().filter((a: any[]) => a[0] === 'core/email-access-policy').length;
       component.openEmailAccessPolicyModal();
+      (component as any).cd.markForCheck();
+      fixture.detectChanges();
       expect(scrollLock.lock).toHaveBeenCalled();
+      expect((fixture.nativeElement as HTMLElement).querySelector('.am-card')!.getAttribute('data-size')).toBe('md');
       const loaded = policyLoads();
       component.closeEmailAccessPolicyModal();
       component.openEmailAccessPolicyModal();
@@ -320,6 +323,8 @@ describe('AdministratorsComponent', () => {
       expect((ctx.dataHandler as any).delete).toHaveBeenCalledWith('core/email-access-policy/rules/1');
       expect(component.domainRules.map(r => r.id)).not.toContain(1);
       component.closeEmailAccessPolicyModal();
+      (component as any).cd.markForCheck();
+      fixture.detectChanges();
       expect(scrollLock.unlock).toHaveBeenCalled();
       component.openEmailAccessPolicyModal();
       expect(policyLoads()).toBe(loaded + 1);
@@ -567,6 +572,8 @@ describe('AdministratorsComponent', () => {
       expect(component.showEmailAccessPolicyModal).toBeTrue();
       component.emailAccessPolicySaving = false;
 
+      (component as any).cd.markForCheck();
+      fixture.detectChanges();
       scrollLock.unlock.calls.reset();
       fixture.destroy();
       expect(scrollLock.unlock).toHaveBeenCalled();

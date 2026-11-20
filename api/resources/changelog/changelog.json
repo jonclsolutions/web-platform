@@ -35,6 +35,12 @@
             "area": "core",
             "part": "admin",
             "text": "Record forms, record details, import, export and the charts window use the shared popup frame too: one look, Escape closes them, the cursor stays inside; the charts window has its title and actions in the header."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Calendar events, security event triage, the own password change, e-mail domains of administrators and languages of the text editors open in the shared popup frame too; the delete buttons are red."
         }
     ],
     "releases": [

@@ -214,7 +214,7 @@ describe('CalendarComponent', () => {
    *   day; an empty title is refused; a valid form is POSTed (empty time / note → null) and the
    *   calendar of its month is reloaded with the day selected.
    * @input Click "add"; save empty; fill title + date 2026-12-02; save.
-   * @output form date 2026-11-11; no post + 'title_required' shown; post('core/calendar-events',
+   * @output form date 2026-11-11 in the popup frame (save submits the form by its id); no post + 'title_required' shown; post('core/calendar-events',
    *   {date, time: null, title, note: null, is_done: false}); form closed; month December; day selected.
    */
   it('creates a personal event', () => {
@@ -223,7 +223,9 @@ describe('CalendarComponent', () => {
     (el.querySelector('.cal-add-btn') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(component.form?.date).toBe('2026-11-11');
-    expect(el.querySelector('.cal-modal')).not.toBeNull();
+    expect(el.querySelector('app-admin-modal .cal-form')).not.toBeNull();
+    const submit = el.querySelector('.am-footer button[type="submit"]') as HTMLButtonElement;
+    expect(submit.getAttribute('form')).toBe(el.querySelector('form.cal-form')!.id);
 
     component.saveForm();
     fixture.detectChanges();
@@ -260,7 +262,7 @@ describe('CalendarComponent', () => {
     chip.click();
     fixture.detectChanges();
     expect(component.form).toEqual({ id: 9, date: '2026-11-12', time: '09:30', title: 'Call the accountant', note: 'Invoices', is_done: false });
-    expect(el.querySelector('.cal-btn--danger')).not.toBeNull();
+    expect(el.querySelector('.am-footer .cal-form-delete')).not.toBeNull();
 
     component.form!.is_done = true;
     component.saveForm();

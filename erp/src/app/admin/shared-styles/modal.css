@@ -13,9 +13,10 @@
 
 /*
     @module: Modal buttons
-    @description: Pill buttons of a popup footer: primary (black - the main action: save, confirm)
-      and secondary (white with a border - cancel).
-    @usage: <button class="am-btn am-btn--primary">, <button class="am-btn am-btn--secondary">
+    @description: Pill buttons of a popup footer: primary (black - the main action: save, confirm),
+      secondary (white with a border - cancel) and danger (red - delete).
+    @usage: <button class="am-btn am-btn--primary">, <button class="am-btn am-btn--secondary">,
+      <button class="am-btn am-btn--danger">
 */
 .am-btn {
   display: inline-flex;
@@ -40,3 +41,6 @@
 
 .am-btn--secondary { color: var(--color-zinc-600); background: var(--color-white); border-color: var(--color-zinc-200); }
 .am-btn--secondary:hover:not(:disabled) { background: var(--color-zinc-100); }
+
+.am-btn--danger { color: var(--color-white); background: var(--color-rose-600); }
+.am-btn--danger:hover:not(:disabled) { background: var(--color-rose-700); }

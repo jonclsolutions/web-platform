@@ -72,56 +72,45 @@
 </div>
 
 @if (showPasswordPopup) {
-  <div class="password-popup-overlay" (mousedown)="onOverlayClick($event)">
-    <div class="password-popup-card" (click)="$event.stopPropagation()">
+  <app-admin-modal size="sm" [heading]="strings.password_popup_title" (dismissed)="closePasswordPopup()">
+    <form id="personal-password-form" [formGroup]="passwordForm" (ngSubmit)="onSubmit()" class="minimal-form">
+      @if (errorMessage) {
+        <div class="error-banner">
+          {{ errorMessage }}
+        </div>
+      }
 
-      <div class="password-popup-header">
-        <h2 class="card-title">{{ strings.password_popup_title }}</h2>
-        <button type="button" class="password-popup-close" (click)="closePasswordPopup()" [attr.aria-label]="i18n.getValue('shared.close')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
+      <div class="form-field-minimal">
+        <label for="old_password">{{ strings.password_field_old }}</label>
+        <input id="old_password" type="password" formControlName="old_password" data-autofocus [placeholder]="strings.password_placeholder_old">
       </div>
 
-      <form [formGroup]="passwordForm" (ngSubmit)="onSubmit()" class="minimal-form">
-        @if (errorMessage) {
-          <div class="error-banner">
-            {{ errorMessage }}
-          </div>
+      <div class="form-field-minimal">
+        <label for="new_password">{{ strings.password_field_new }}</label>
+        <input id="new_password" type="password" formControlName="new_password" [placeholder]="passwordPlaceholder" [attr.maxlength]="passwordMaxLength">
+        <app-password-requirements-checklist [password]="passwordForm.get('new_password')?.value || ''"></app-password-requirements-checklist>
+      </div>
+
+      <div class="form-field-minimal">
+        <label for="new_password_confirmation">{{ strings.password_field_confirm }}</label>
+        <input id="new_password_confirmation" type="password" formControlName="new_password_confirmation" [placeholder]="strings.password_placeholder_confirm" [attr.maxlength]="passwordMaxLength">
+        @if (passwordMismatch) {
+          <div class="error-text">{{ strings.password_mismatch }}</div>
         }
-
-        <div class="form-field-minimal">
-          <label for="old_password">{{ strings.password_field_old }}</label>
-          <input id="old_password" type="password" formControlName="old_password" [placeholder]="strings.password_placeholder_old">
-        </div>
-
-        <div class="form-field-minimal">
-          <label for="new_password">{{ strings.password_field_new }}</label>
-          <input id="new_password" type="password" formControlName="new_password" [placeholder]="passwordPlaceholder" [attr.maxlength]="passwordMaxLength">
-          <app-password-requirements-checklist [password]="passwordForm.get('new_password')?.value || ''"></app-password-requirements-checklist>
-        </div>
-
-        <div class="form-field-minimal">
-          <label for="new_password_confirmation">{{ strings.password_field_confirm }}</label>
-          <input id="new_password_confirmation" type="password" formControlName="new_password_confirmation" [placeholder]="strings.password_placeholder_confirm" [attr.maxlength]="passwordMaxLength">
-          @if (passwordMismatch) {
-            <div class="error-text">{{ strings.password_mismatch }}</div>
-          }
-        </div>
-
-        <button class="action_button"
-          type="submit"
-          [disabled]="passwordForm.invalid || (loadingService.isLoading$ | async)">
-          @if ((loadingService.isLoading$ | async)) {
-            <span class="cd-mini-spinner"></span> {{ strings.password_submit_saving }}
-          } @else {
-            {{ strings.password_submit_button }}
-          }
-        </button>
-      </form>
-    </div>
-  </div>
+      </div>
+    </form>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" (click)="closePasswordPopup()">{{ i18n.getValue('shared.cancel') }}</button>
+      <button type="submit" form="personal-password-form" class="am-btn am-btn--primary"
+              [disabled]="passwordForm.invalid || (loadingService.isLoading$ | async)">
+        @if ((loadingService.isLoading$ | async)) {
+          <span class="cd-mini-spinner"></span> {{ strings.password_submit_saving }}
+        } @else {
+          {{ strings.password_submit_button }}
+        }
+      </button>
+    </ng-container>
+  </app-admin-modal>
 }
 
 <!-- Profile value (name / login e-mail): the value with the "change" pictogram button, or - while

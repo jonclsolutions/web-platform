@@ -13,6 +13,7 @@
  * - ResourceCacheService: the retention setting is kept 3 min (dropped after a save); the events
  *   and the chart are always loaded fresh.
  * - Config.create* factory functions: i18n-aware definitions.
+ * - AdminModalComponent: the frame of the triage popup.
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
@@ -31,6 +32,7 @@ import * as Config from './security-events.config';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { AdminModalComponent } from '../../components/admin-modal/admin-modal.component';
 
 interface SecuritySetting {
   id: number;
@@ -54,9 +56,9 @@ interface ChartDay {
 @Component({
   selector: 'app-core-security-events',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHeaderComponent],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHeaderComponent, AdminModalComponent],
   templateUrl: './security-events.component.html',
-  styleUrls: ['../../shared-styles/page.css', './security-events.component.css'],
+  styleUrls: ['../../shared-styles/page.css', '../../shared-styles/modal.css', './security-events.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SecurityEventsComponent extends BaseDataComponent<any> implements OnInit {

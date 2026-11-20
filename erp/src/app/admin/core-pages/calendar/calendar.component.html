@@ -189,67 +189,54 @@
 
 <!-- Form of a personal event (new / edit) -->
 @if (form) {
-  <div class="cal-modal-overlay" (click)="closeForm()" (keydown.escape)="closeForm()">
-    <div class="cal-modal" role="dialog" aria-modal="true" aria-labelledby="cal-form-title" (click)="$event.stopPropagation()">
-      <form (ngSubmit)="saveForm()" novalidate autocomplete="off">
-        <div class="cal-modal-head">
-          <h2 class="cal-modal-title" id="cal-form-title">{{ t(form.id === null ? 'form_new_title' : 'form_edit_title') }}</h2>
-          <button type="button" class="cal-icon-btn" (click)="closeForm()" [title]="t('cancel')" [attr.aria-label]="t('cancel')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          </button>
-        </div>
+  <app-admin-modal size="sm" [heading]="t(form.id === null ? 'form_new_title' : 'form_edit_title')" [closeDisabled]="saving" (dismissed)="closeForm()">
+    <form id="cal-event-form" class="cal-form" (ngSubmit)="saveForm()" novalidate autocomplete="off">
+      <label class="cal-field">
+        <span class="cal-label">{{ t('field_title') }} *</span>
+        <input class="cal-input" type="text" name="title" maxlength="150" required
+               [(ngModel)]="form.title" [disabled]="saving" [attr.aria-invalid]="formSubmitted && !form.title.trim() ? 'true' : null">
+        @if (formSubmitted && !form.title.trim()) {
+          <span class="cal-field-error" role="alert">{{ t('title_required') }}</span>
+        }
+      </label>
 
-        <div class="cal-modal-body">
-          <label class="cal-field">
-            <span class="cal-label">{{ t('field_title') }} *</span>
-            <input class="cal-input" type="text" name="title" maxlength="150" required
-                   [(ngModel)]="form.title" [disabled]="saving" [attr.aria-invalid]="formSubmitted && !form.title.trim() ? 'true' : null">
-            @if (formSubmitted && !form.title.trim()) {
-              <span class="cal-field-error" role="alert">{{ t('title_required') }}</span>
-            }
-          </label>
+      <div class="cal-field-row">
+        <label class="cal-field">
+          <span class="cal-label">{{ t('field_date') }} *</span>
+          <input class="cal-input" type="date" name="date" required min="2000-01-01" max="2100-12-31" [(ngModel)]="form.date" [disabled]="saving">
+        </label>
+        <label class="cal-field">
+          <span class="cal-label">{{ t('field_time') }}</span>
+          <input class="cal-input" type="time" name="time" [(ngModel)]="form.time" [disabled]="saving">
+          <span class="cal-field-hint">{{ t('time_hint') }}</span>
+        </label>
+      </div>
 
-          <div class="cal-field-row">
-            <label class="cal-field">
-              <span class="cal-label">{{ t('field_date') }} *</span>
-              <input class="cal-input" type="date" name="date" required min="2000-01-01" max="2100-12-31" [(ngModel)]="form.date" [disabled]="saving">
-            </label>
-            <label class="cal-field">
-              <span class="cal-label">{{ t('field_time') }}</span>
-              <input class="cal-input" type="time" name="time" [(ngModel)]="form.time" [disabled]="saving">
-              <span class="cal-field-hint">{{ t('time_hint') }}</span>
-            </label>
-          </div>
+      <label class="cal-field">
+        <span class="cal-label">{{ t('field_note') }}</span>
+        <textarea class="cal-input cal-textarea" name="note" rows="4" maxlength="1000" [(ngModel)]="form.note" [disabled]="saving"></textarea>
+      </label>
 
-          <label class="cal-field">
-            <span class="cal-label">{{ t('field_note') }}</span>
-            <textarea class="cal-input cal-textarea" name="note" rows="4" maxlength="1000" [(ngModel)]="form.note" [disabled]="saving"></textarea>
-          </label>
+      @if (form.id !== null) {
+        <label class="cal-check">
+          <input type="checkbox" name="is_done" [(ngModel)]="form.is_done" [disabled]="saving">
+          {{ t('field_done') }}
+        </label>
+      }
 
-          @if (form.id !== null) {
-            <label class="cal-check">
-              <input type="checkbox" name="is_done" [(ngModel)]="form.is_done" [disabled]="saving">
-              {{ t('field_done') }}
-            </label>
-          }
-
-          <p class="cal-private">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-            {{ t('private_note') }}
-          </p>
-        </div>
-
-        <div class="cal-modal-foot">
-          @if (form.id !== null) {
-            <button type="button" class="cal-btn cal-btn--danger" (click)="deleteForm()" [disabled]="saving">{{ t('delete') }}</button>
-          }
-          <span class="cal-modal-spacer"></span>
-          <button type="button" class="cal-btn" (click)="closeForm()" [disabled]="saving">{{ t('cancel') }}</button>
-          <button type="submit" class="cal-btn cal-btn--primary" [disabled]="saving">{{ t('save') }}</button>
-        </div>
-      </form>
-    </div>
-  </div>
+      <p class="cal-private">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        {{ t('private_note') }}
+      </p>
+    </form>
+    <ng-container modal-footer>
+      @if (form.id !== null) {
+        <button type="button" class="am-btn am-btn--danger cal-form-delete" (click)="deleteForm()" [disabled]="saving">{{ t('delete') }}</button>
+      }
+      <button type="button" class="am-btn am-btn--secondary" (click)="closeForm()" [disabled]="saving">{{ t('cancel') }}</button>
+      <button type="submit" form="cal-event-form" class="am-btn am-btn--primary" [disabled]="saving">{{ t('save') }}</button>
+    </ng-container>
+  </app-admin-modal>
 }
 
 <!-- One event as a row (list view and day detail); a personal event: done toggle + edit -->

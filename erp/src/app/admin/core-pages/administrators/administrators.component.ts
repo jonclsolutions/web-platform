@@ -13,7 +13,7 @@
  * - PermissionOptionsService: TTL-cached source of `core/permissions` for the
  *   `permission_ids` multiselect (explicit extra permissions).
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the dashboard.
- * - ScrollLockService: Blocks page scrolling behind the e-mail access policy modal.
+ * - AdminModalComponent: the frame of the e-mail access policy popup (it also locks the page scroll).
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
@@ -28,9 +28,9 @@ import { InputDefinition } from '../../../shared/interfaces/input-definiton';
 import * as Config from './administrators.config';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
-import { ScrollLockService } from '../../../core/services/scroll-lock.service';
 import { PasswordConfirmationService } from '../../../core/services/password-confirmation.service';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { AdminModalComponent } from '../../components/admin-modal/admin-modal.component';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 
 /** Key of the cached e-mail access policy (ResourceCacheService). */
@@ -69,9 +69,9 @@ interface EmailAccessRule {
 @Component({
   selector: 'app-administrators',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHeaderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHeaderComponent, AdminModalComponent],
   templateUrl: './administrators.component.html',
-  styleUrls: ['../../shared-styles/page.css', './email-access-policy-modal.css'],
+  styleUrls: ['../../shared-styles/page.css', '../../shared-styles/modal.css', './email-access-policy-modal.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdministratorsComponent extends BaseDataComponent<any> implements OnInit {
@@ -80,7 +80,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   public override t(key: string): string {
     return this.i18n.getValue(`administrators.${key}`);
   }
-  private scrollLock = inject(ScrollLockService);
   private passwordConfirmation = inject(PasswordConfirmationService);
 
   get tableCaption(): string { return this.t('table_header_accounts'); }
@@ -215,14 +214,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
 
       return updatedBtn;
     });
-  }
-
-    /**
-   * @description Releases the scroll lock when the page is left while the modal is still open.
-   */
-  override ngOnDestroy(): void {
-    if (this.showEmailAccessPolicyModal) this.scrollLock.unlock();
-    super.ngOnDestroy();
   }
 
   override handleToolbarAction(action: string): void {
@@ -755,10 +746,8 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   // ── Email access policy modal ──────────────────────────────────────────
 
   openEmailAccessPolicyModal(): void {
-    // Guard: every lock() must be paired with exactly one unlock().
     if (this.showEmailAccessPolicyModal) return;
 
-    this.scrollLock.lock();
     this.showEmailAccessPolicyModal = true;
     this.newRuleType = 'domain';
     this.newRuleValue = '';
@@ -790,10 +779,10 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     });
   }
 
+  /** @description Closes the policy popup (close buttons, Escape, backdrop) - not while saving. */
   closeEmailAccessPolicyModal(): void {
     if (this.emailAccessPolicySaving) return;
     this.showEmailAccessPolicyModal = false;
-    this.scrollLock.unlock();
   }
 
   savePrimaryDomain(): void {

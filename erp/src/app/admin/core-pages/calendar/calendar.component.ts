@@ -18,6 +18,7 @@
  *   (section `calendar`, date locale), ConfirmDialogService (delete), Router (opening an item).
  * - APPS (apps.registry): the applications - order of the filter and colour (manifest `color`).
  * - RowButtonBuilderComponent: the month / list view switch.
+ * - AdminModalComponent: the frame of the personal event form.
  */
 
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
@@ -30,6 +31,7 @@ import { AdminLocalizationService } from '../../../core/services/admin-localizat
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { RowButtonBuilderComponent } from '../../components/builders/row-button-builder/row-button-builder.component';
+import { AdminModalComponent } from '../../components/admin-modal/admin-modal.component';
 import { RowButton, RowButtonItems } from '../../components/builders/row-button-builder/row-button';
 import { APPS } from '../../../apps/apps.registry';
 
@@ -134,9 +136,9 @@ export function parseIsoDate(iso: string): Date {
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, PageHeaderComponent, RowButtonBuilderComponent],
+  imports: [CommonModule, FormsModule, RouterLink, PageHeaderComponent, RowButtonBuilderComponent, AdminModalComponent],
   templateUrl: './calendar.component.html',
-  styleUrls: ['../../shared-styles/dashboard.css', './calendar.component.css'],
+  styleUrls: ['../../shared-styles/dashboard.css', '../../shared-styles/modal.css', './calendar.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CalendarComponent implements OnInit {

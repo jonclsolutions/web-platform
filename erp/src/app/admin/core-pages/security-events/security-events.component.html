@@ -211,73 +211,63 @@
 
 <!-- ── Triage modal (state + note) ────────────────────────────────────── -->
 @if (triageItem) {
-  <div class="sec-modal-overlay" (mousedown)="$event.target === $event.currentTarget && closeTriageModal()">
-    <div class="sec-modal" (mousedown)="$event.stopPropagation()">
-      <div class="sec-modal-header">
-        <span class="sec-modal-title">{{ t('triage_modal_title') }} #{{ triageItem.id }}</span>
-        <button class="sec-modal-close" (click)="closeTriageModal()" [disabled]="triageSaving" [attr.aria-label]="i18n.getValue('shared.close')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-      <div class="sec-modal-body">
-        <p class="sec-modal-summary">
-          <strong>{{ triageItem.event_type }}</strong> · {{ triageItem.ip_address }} ·
-          {{ triageItem.occurrences }}{{ t('triage_occurrences_suffix') }}
-        </p>
-
-        @if (triageExplanation) {
-          <div class="sec-explanation">
-            <div class="sec-explanation-title">{{ triageExplanation.label }}</div>
-            <div class="sec-explanation-block">
-              <span class="sec-explanation-label">{{ t('explanation_what_happened_label') }}</span>
-              <p class="sec-explanation-text">{{ triageExplanation.whatHappened }}</p>
-            </div>
-            <div class="sec-explanation-block sec-explanation-recommendation">
-              <span class="sec-explanation-label">{{ t('explanation_recommendation_label') }}</span>
-              <p class="sec-explanation-text">{{ triageExplanation.recommendation }}</p>
-            </div>
+  <app-admin-modal size="sm" [heading]="t('triage_modal_title') + ' #' + triageItem.id" [closeDisabled]="triageSaving" (dismissed)="closeTriageModal()">
+    <div class="sec-triage">
+      <p class="sec-triage-summary">
+        <strong>{{ triageItem.event_type }}</strong> · {{ triageItem.ip_address }} ·
+        {{ triageItem.occurrences }}{{ t('triage_occurrences_suffix') }}
+      </p>
+      @if (triageExplanation) {
+        <div class="sec-explanation">
+          <div class="sec-explanation-title">{{ triageExplanation.label }}</div>
+          <div class="sec-explanation-block">
+            <span class="sec-explanation-label">{{ t('explanation_what_happened_label') }}</span>
+            <p class="sec-explanation-text">{{ triageExplanation.whatHappened }}</p>
           </div>
-        }
-
-        <div class="sec-field">
-          <label class="sec-label">{{ t('triage_status_label') }}</label>
-          <select class="sec-select" [(ngModel)]="triageStatus" name="triage_status">
-            @for (opt of statusOptions; track opt.value) {
-              <option [value]="opt.value">{{ opt.label }}</option>
-            }
-          </select>
+          <div class="sec-explanation-block sec-explanation-recommendation">
+            <span class="sec-explanation-label">{{ t('explanation_recommendation_label') }}</span>
+            <p class="sec-explanation-text">{{ triageExplanation.recommendation }}</p>
+          </div>
         </div>
+      }
 
-        <div class="sec-field">
-          <label class="sec-label">{{ t('triage_notes_label') }}</label>
-          <textarea class="sec-textarea" rows="3" [(ngModel)]="triageNotes" name="triage_notes"
-                    [placeholder]="t('triage_notes_placeholder')"></textarea>
-        </div>
-      </div>
-      <div class="sec-modal-footer">
-        <button class="sec-btn sec-btn-ghost" (click)="closeTriageModal()" [disabled]="triageSaving">{{ i18n.getValue('shared.cancel') }}</button>
-        <button class="sec-btn sec-btn-primary" (click)="saveTriage()" [disabled]="triageSaving">
-          @if (triageSaving) {
-            <span class="sec-mini-spin">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-              </svg>
-            </span>
-          } @else {
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-              <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
-            </svg>
+      <div class="sec-field">
+        <label class="sec-label">{{ t('triage_status_label') }}</label>
+        <select class="sec-select" [(ngModel)]="triageStatus" name="triage_status">
+          @for (opt of statusOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
           }
-          {{ i18n.getValue('shared.save') }}
-        </button>
+        </select>
+      </div>
+
+      <div class="sec-field">
+        <label class="sec-label">{{ t('triage_notes_label') }}</label>
+        <textarea class="sec-textarea" rows="3" [(ngModel)]="triageNotes" name="triage_notes"
+                  [placeholder]="t('triage_notes_placeholder')"></textarea>
       </div>
     </div>
-  </div>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" (click)="closeTriageModal()" [disabled]="triageSaving">{{ i18n.getValue('shared.cancel') }}</button>
+      <button type="button" class="am-btn am-btn--primary" (click)="saveTriage()" [disabled]="triageSaving">
+        @if (triageSaving) {
+          <span class="sec-mini-spin">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          </span>
+        } @else {
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+          </svg>
+        }
+        {{ i18n.getValue('shared.save') }}
+      </button>
+    </ng-container>
+  </app-admin-modal>
 }
+
 @if (showGraphBuilder) {
 <app-graph-builder
 [apiEndpoint]="apiEndpoint"

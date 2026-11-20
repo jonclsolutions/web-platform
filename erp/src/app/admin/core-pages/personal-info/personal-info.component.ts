@@ -17,6 +17,7 @@
  * @note Three effective 2FA states: (a) the admin / sysadmin role always enforces it; (b) a
  * sysadmin personally enforced `two_fa_forced_by_admin`; (c) the ordinary self-service toggle.
  * The checkbox is disabled in both enforced states (a) + (b).
+ * @note The password change is a popup in the shared frame (AdminModalComponent).
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
@@ -39,6 +40,7 @@ import { IconComponent } from '../../../shared/components/icon/icon.component';
 import { PermissionService } from '../../../core/auth/services/permission.service';
 import { SYSADMIN_ROLE_NAME } from '../../../core/auth/guards/auth.guard';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { AdminModalComponent } from '../../components/admin-modal/admin-modal.component';
 
 /** Permission that lets an account change its own name and login e-mail (and edit accounts). */
 const PROFILE_EDIT_PERMISSION = 'core-administrators-update';
@@ -57,10 +59,11 @@ const FORCED_2FA_ROLES = ['sysadmin'];
     PasswordRequirementsChecklistComponent,
     AvatarEditorComponent,
     IconComponent,
-    PageHeaderComponent
+    PageHeaderComponent,
+    AdminModalComponent
   ],
   templateUrl: './personal-info.component.html',
-  styleUrl: './personal-info.component.css'
+  styleUrls: ['../../shared-styles/modal.css', './personal-info.component.css']
 })
 export class PersonalInfoComponent implements OnInit, OnDestroy {
   passwordForm: FormGroup;
@@ -297,15 +300,10 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
     this.cd.markForCheck();
   }
 
+  /** @description Closes the password popup (cancel, close button, Escape, backdrop). */
   closePasswordPopup(): void {
     this.showPasswordPopup = false;
     this.cd.markForCheck();
-  }
-
-  onOverlayClick(event: MouseEvent): void {
-    if (event.target === event.currentTarget) {
-      this.closePasswordPopup();
-    }
   }
 
   private passwordsMatchValidator(group: AbstractControl): ValidationErrors | null {

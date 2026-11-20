@@ -113,19 +113,8 @@
 }
 
 @if (showEmailAccessPolicyModal) {
-<div class="email-policy-overlay"
-     (mousedown)="$event.target === $event.currentTarget && closeEmailAccessPolicyModal()">
-<div class="email-policy-card" (mousedown)="$event.stopPropagation()">
-
-<div class="email-policy-header">
-<div>
-<h2 class="email-policy-title">{{ strings.email_policy_title }}</h2>
-<p class="email-policy-subtitle">{{ strings.email_policy_subtitle }}</p>
-</div>
-<button type="button" class="email-policy-close" (click)="closeEmailAccessPolicyModal()" [disabled]="emailAccessPolicySaving">✕</button>
-</div>
-
-<div class="email-policy-body">
+<app-admin-modal size="md" [heading]="strings.email_policy_title" [subheading]="strings.email_policy_subtitle"
+                 [closeDisabled]="emailAccessPolicySaving" (dismissed)="closeEmailAccessPolicyModal()">
 
 @if (emailAccessPolicyLoading) {
 <p class="email-policy-loading">{{ strings.email_policy_loading }}</p>
@@ -195,14 +184,10 @@
 
     }
 
-</div>
-
-<div class="email-policy-footer">
-<button type="button" class="email-policy-btn-cancel" (click)="closeEmailAccessPolicyModal()" [disabled]="emailAccessPolicySaving">{{ strings.btn_close }}</button>
-</div>
-
-</div>
-</div>
+<ng-container modal-footer>
+<button type="button" class="am-btn am-btn--secondary" (click)="closeEmailAccessPolicyModal()" [disabled]="emailAccessPolicySaving">{{ strings.btn_close }}</button>
+</ng-container>
+</app-admin-modal>
 }
 @if (showGraphBuilder) {
 <app-graph-builder

@@ -169,19 +169,33 @@ describe('PersonalInfoComponent', () => {
   });
 
   /**
-   * @description Opening the popup clears old values; overlay click closes it.
-   * @input  form filled; openPasswordPopup(); onOverlayClick(overlay)
-   * @output form values null; errorMessage null; showPasswordPopup false after overlay click
+   * @description Opening the popup clears old values; it is the small shared popup frame with the
+   *   form in the body and cancel / save in the footer (save submits the form by its id); a
+   *   backdrop click closes it.
+   * @input  form filled; openPasswordPopup(); render; backdrop press + click
+   * @output form values null; errorMessage null; size sm; old password focused; submit button
+   *   linked to the form; showPasswordPopup false after the backdrop click
    */
-  it('opens a clean popup and closes on overlay click', () => {
+  it('opens a clean popup and closes on a backdrop click', () => {
     fillPasswords('old', VALID, VALID);
     component.errorMessage = 'x';
     component.openPasswordPopup();
     expect(component.passwordForm.value.old_password).toBeNull();
     expect(component.errorMessage).toBeNull();
-    const overlay = {};
-    component.onOverlayClick({ target: overlay, currentTarget: overlay } as any);
+
+    document.body.appendChild(fixture.nativeElement); // focus works only on attached elements
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect((el.querySelector('.am-card') as HTMLElement).dataset['size']).toBe('sm');
+    expect(document.activeElement!.id).toBe('old_password');
+    const submit = el.querySelector('.am-footer button[type="submit"]') as HTMLButtonElement;
+    expect(submit.getAttribute('form')).toBe(el.querySelector('form.minimal-form')!.id);
+
+    const overlay = el.querySelector('.am-overlay') as HTMLElement;
+    overlay.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    overlay.click();
     expect(component.showPasswordPopup).toBeFalse();
+    fixture.nativeElement.remove();
   });
 
   /**

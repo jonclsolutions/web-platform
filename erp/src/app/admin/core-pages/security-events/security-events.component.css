@@ -267,55 +267,16 @@
 .sec-btn-primary:hover:not(:disabled) { background: var(--color-black); }
 .sec-btn-danger { background: var(--color-rose-50); color: var(--color-rose-700); border-color: var(--color-rose-200); }
 .sec-btn-danger:hover:not(:disabled) { background: #ffe4e6; border-color: var(--color-rose-700); }
-.sec-btn-ghost { background: transparent; color: var(--color-zinc-500); border-color: var(--color-sand-200); }
-.sec-btn-ghost:hover:not(:disabled) { background: var(--color-zinc-100); color: var(--color-zinc-900); }
 .sec-mini-spin { display: inline-block; animation: sec-spin 0.8s linear infinite; }
 @keyframes sec-spin { to { transform: rotate(360deg); } }
 
-/* ── Triage modal ─────────────────────────────────────────────────────── */
-.sec-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(24, 24, 27, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1100;
-  padding: 16px;
-}
-.sec-modal {
-  background: var(--color-white);
-  border-radius: 18px;
-  width: 100%;
-  max-width: 420px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
-  display: flex;
-  flex-direction: column;
-}
-.sec-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 18px;
-  border-bottom: 1px solid var(--color-zinc-100);
-}
-.sec-modal-title { font-size: 0.92rem; font-weight: 700; color: var(--color-zinc-900); }
-.sec-modal-close {
-  background: transparent;
-  border: none;
-  font-size: 1rem;
-  color: var(--color-zinc-400);
-  cursor: pointer;
-  padding: 2px 6px;
-}
-.sec-modal-close:hover:not(:disabled) { color: var(--color-zinc-900); }
-.sec-modal-body {
-  padding: 18px;
+/* ── Triage popup content (the frame is AdminModalComponent) ───────────── */
+.sec-triage {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
-.sec-modal-summary {
+.sec-triage-summary {
   font-size: 0.82rem;
   color: var(--color-zinc-600);
   margin: 0;
@@ -366,13 +327,6 @@
 }
 .sec-explanation-recommendation .sec-explanation-text {
   color: #78350f;
-}
-.sec-modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 14px 18px;
-  border-top: 1px solid var(--color-zinc-100);
 }
 
 @media (max-width: 640px) {
