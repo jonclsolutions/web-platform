@@ -16,6 +16,7 @@
 
 namespace Tests\Apps\Shop\Feature;
 
+use App\Apps\Shop\Models\ShopCoupon;
 use App\Apps\Shop\Models\ShopCustomer;
 use App\Apps\Shop\Models\ShopOrder;
 use App\Apps\Shop\Models\ShopPaymentMethod;
@@ -211,6 +212,42 @@ class CheckoutTest extends TestCase
             $this->travel(61)->seconds();
         }
         $this->assertSame(0, ShopOrder::count());
+    }
+
+    /**
+     * @description SECURITY (coupon limit): the use of a coupon is taken atomically with its
+     *   limit - when a parallel checkout uses the last use after this checkout read the coupon,
+     *   the order is refused instead of exceeding the limit. The parallel use is simulated by the
+     *   `retrieved` event of the coupon (it fires right after the checkout read it).
+     * @input LAST (max 1, used 0) consumed by a "parallel" checkout right after the read; ONCE
+     *        (max 1, used 0) without competition.
+     * @output 422 "The coupon has been exhausted.", no order, LAST never used more than once; 201 with ONCE, used 1,
+     *   stock 9 (only the accepted order took a piece).
+     */
+    public function test_coupon_limit_holds_under_a_parallel_checkout(): void
+    {
+        $p = $this->product(['name' => 'P']);
+        $last = $this->coupon(['code' => 'LAST', 'max_usage' => 1]);
+        $once = $this->coupon(['code' => 'ONCE', 'max_usage' => 1]);
+
+        ShopCoupon::retrieved(function (ShopCoupon $coupon) use ($last) {
+            if ($coupon->id === $last->id) {
+                DB::table('shop_coupons')->where('id', $last->id)->update(['usage_count' => 1]);
+            }
+        });
+
+        $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 1]], ['coupon_code' => 'LAST']))
+            ->assertStatus(422)->assertExactJson(['message' => 'The coupon has been exhausted.']);
+        $this->assertSame(0, ShopOrder::count());
+        // The simulated parallel use ran inside this checkout's transaction, so the rollback undid it
+        // too - what matters is that the limit was never exceeded.
+        $this->assertLessThanOrEqual(1, (int) DB::table('shop_coupons')->where('id', $last->id)->value('usage_count'));
+
+        $this->travel(61)->seconds();
+        $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 1]], ['coupon_code' => 'ONCE']))
+            ->assertCreated();
+        $this->assertSame(1, $once->fresh()->usage_count);
+        $this->assertSame(9, $p->fresh()->stock_quantity);
     }
 
     /**

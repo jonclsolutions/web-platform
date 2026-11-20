@@ -95,6 +95,12 @@
             "area": "shop",
             "part": "public",
             "text": "The checkout checks the stock for the whole quantity of a product even when the order sends it in several lines (such an order could take more pieces than were in stock, the stock went below zero) and saves them as one item; a product with variants can be ordered only as one of its variants."
+        },
+        {
+            "type": "security",
+            "area": "shop",
+            "part": "public",
+            "text": "A coupon with a limited number of uses can no longer be used more times than allowed by orders sent at the same moment - the use is counted together with the check of the limit."
         }
     ],
     "releases": [

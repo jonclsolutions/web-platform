@@ -108,6 +108,16 @@ class ShopCheckoutController extends Controller
                 $discountAmount = ($coupon->discount_type === 'percent')
                     ? ($totalAmount * (float)$coupon->discount_value) / 100
                     : (float)$coupon->discount_value;
+
+                // One use of the coupon is taken atomically with its limit: when a parallel checkout
+                // used the last one after the check above, no row matches and the order is refused.
+                $claimed = ShopCoupon::whereKey($coupon->id)
+                    ->where(fn ($q) => $q->whereNull('max_usage')->orWhere('max_usage', '<=', 0)->orWhereColumn('usage_count', '<', 'max_usage'))
+                    ->increment('usage_count');
+                if ($claimed === 0) {
+                    DB::rollBack();
+                    return response()->json(['message' => 'The coupon has been exhausted.'], 422);
+                }
             }
 
             $shippingAmount = (float) ShopShippingMethod::whereKey($validated['shipping_method_id'])->value('base_price');
@@ -169,10 +179,6 @@ class ShopCheckoutController extends Controller
             }
 
             $order->update(['tax_amount' => $totalTax]);
-
-            if ($coupon) {
-                $coupon->increment('usage_count');
-            }
 
             DB::commit();
 
