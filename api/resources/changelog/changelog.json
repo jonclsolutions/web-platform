@@ -1,69 +1,74 @@
 {
-    "unreleased": [
-        {
-            "type": "changed",
-            "area": "core",
-            "part": "admin",
-            "text": "Tabs, filters and language switches of the administration have one look: a grey bar with icon buttons, the selected one white (settings, releases, calendar, legal documents, translation and content editors, project page, orders)."
-        },
-        {
-            "type": "changed",
-            "area": "core",
-            "part": "admin",
-            "text": "Every confirmation with your password (switching an application on / off, operations on system administrators, the e-mail access policy) uses the same window; a wrong password is shown right under the field."
-        },
-        {
-            "type": "added",
-            "area": "web",
-            "part": "admin",
-            "text": "Edit website has a new tab Knowledge base: the introduction and the blocks of the public help page (heading, text, optional sub-blocks and an image at the end of a block) are edited in every language, blocks can be reordered or hidden.",
-            "ref": "#44"
-        },
-        {
-            "type": "changed",
-            "area": "web",
-            "part": "public",
-            "text": "The help page (/knowledge-base) shows the content edited in the administration, with an optional image at the end of a block; the glossary was removed.",
-            "ref": "#44"
-        },
-        {
-            "type": "changed",
-            "area": "core",
-            "part": "admin",
-            "text": "The Applications page refreshes the state of every application by itself every 10 seconds."
-        },
-        {
-            "type": "changed",
-            "area": "core",
-            "part": "admin",
-            "text": "Account activation and password reset have the same look as the sign-in page: logo on the left, the form on the right, language switcher in the corner."
-        },
-        {
-            "type": "changed",
-            "area": "project-portal",
-            "part": "public",
-            "text": "The sign-in page of the project portal has the same look as the other sign-in pages, with a language switcher."
-        },
-        {
-            "type": "changed",
-            "area": "web",
-            "part": "public",
-            "text": "New maintenance page in the colours of the website: logo, a short notice, language switcher and contacts; the page now has the address /maintenance."
-        },
-        {
-            "type": "changed",
-            "area": "shop",
-            "part": "public",
-            "text": "The maintenance page of the e-shop has the same look as the website and the address /shop/maintenance."
-        },
-        {
-            "type": "changed",
-            "area": "project-portal",
-            "part": "public",
-            "text": "The maintenance page of the project portal has the same look as the website."
-        }
-    ],
+    "unreleased": [],
     "releases": [
+        {
+            "version": "v2026.11.3",
+            "date": "2026-11-20",
+            "changes": [
+                {
+                    "type": "changed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Tabs, filters and language switches of the administration have one look: a grey bar with icon buttons, the selected one white (settings, releases, calendar, legal documents, translation and content editors, project page, orders)."
+                },
+                {
+                    "type": "changed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Every confirmation with your password (switching an application on / off, operations on system administrators, the e-mail access policy) uses the same window; a wrong password is shown right under the field."
+                },
+                {
+                    "type": "added",
+                    "area": "web",
+                    "part": "admin",
+                    "text": "Edit website has a new tab Knowledge base: the introduction and the blocks of the public help page (heading, text, optional sub-blocks and an image at the end of a block) are edited in every language, blocks can be reordered or hidden.",
+                    "ref": "#44"
+                },
+                {
+                    "type": "changed",
+                    "area": "web",
+                    "part": "public",
+                    "text": "The help page (/knowledge-base) shows the content edited in the administration, with an optional image at the end of a block; the glossary was removed.",
+                    "ref": "#44"
+                },
+                {
+                    "type": "changed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "The Applications page refreshes the state of every application by itself every 10 seconds."
+                },
+                {
+                    "type": "changed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Account activation and password reset have the same look as the sign-in page: logo on the left, the form on the right, language switcher in the corner."
+                },
+                {
+                    "type": "changed",
+                    "area": "project-portal",
+                    "part": "public",
+                    "text": "The sign-in page of the project portal has the same look as the other sign-in pages, with a language switcher."
+                },
+                {
+                    "type": "changed",
+                    "area": "web",
+                    "part": "public",
+                    "text": "New maintenance page in the colours of the website: logo, a short notice, language switcher and contacts; the page now has the address /maintenance."
+                },
+                {
+                    "type": "changed",
+                    "area": "shop",
+                    "part": "public",
+                    "text": "The maintenance page of the e-shop has the same look as the website and the address /shop/maintenance."
+                },
+                {
+                    "type": "changed",
+                    "area": "project-portal",
+                    "part": "public",
+                    "text": "The maintenance page of the project portal has the same look as the website."
+                }
+            ]
+        },
         {
             "version": "v2026.11.2",
             "date": "2026-11-19",
