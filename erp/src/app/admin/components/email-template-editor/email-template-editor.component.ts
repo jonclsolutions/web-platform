@@ -162,12 +162,15 @@ export class EmailTemplateEditorComponent implements OnInit {
 
     this.dataHandler.get<any>(this.endpoint).subscribe({
       next: (stored) => {
+        const labels = EmailTemplateEditorComponent.textMap(stored?.[`${this.fieldPrefix}_labels_i18n`]);
         this.template = {
-          subject_i18n: stored?.[`${this.fieldPrefix}_subject_i18n`] ?? {},
-          title_i18n: stored?.[`${this.fieldPrefix}_title_i18n`] ?? {},
-          intro_i18n: stored?.[`${this.fieldPrefix}_intro_i18n`] ?? {},
-          outro_i18n: stored?.[`${this.fieldPrefix}_outro_i18n`] ?? {},
-          labels_i18n: stored?.[`${this.fieldPrefix}_labels_i18n`] ?? {},
+          subject_i18n: EmailTemplateEditorComponent.textMap(stored?.[`${this.fieldPrefix}_subject_i18n`]),
+          title_i18n: EmailTemplateEditorComponent.textMap(stored?.[`${this.fieldPrefix}_title_i18n`]),
+          intro_i18n: EmailTemplateEditorComponent.textMap(stored?.[`${this.fieldPrefix}_intro_i18n`]),
+          outro_i18n: EmailTemplateEditorComponent.textMap(stored?.[`${this.fieldPrefix}_outro_i18n`]),
+          labels_i18n: Object.fromEntries(
+            Object.entries(labels).map(([lang, texts]) => [lang, EmailTemplateEditorComponent.textMap(texts)])
+          ),
         };
         this.ensureLabels(this.currentLang);
         this.loading = false;
@@ -180,9 +183,21 @@ export class EmailTemplateEditorComponent implements OnInit {
     });
   }
 
-  /** @description Makes `labels_i18n[lang]` an object before inputs bind to its properties. */
+  /**
+   * @description A stored text map as a plain object. The API returns a language saved without
+   *   any text as an empty JSON array (`[]` - an empty PHP array), and texts typed into a JS
+   *   array are dropped by JSON.stringify: the save would report success and store nothing.
+   * @param value Stored value (object, `[]`, null …).
+   * @returns A new plain object (texts by key), `{}` for anything else.
+   */
+  private static textMap(value: unknown): Record<string, any> {
+    return value !== null && typeof value === 'object' && !Array.isArray(value) ? { ...(value as Record<string, any>) } : {};
+  }
+
+  /** @description Makes `labels_i18n[lang]` a plain object before inputs bind to its properties. */
   private ensureLabels(lang: string): void {
-    if (!this.template.labels_i18n[lang]) {
+    const labels = this.template.labels_i18n[lang];
+    if (!labels || typeof labels !== 'object' || Array.isArray(labels)) {
       this.template.labels_i18n[lang] = {};
     }
   }

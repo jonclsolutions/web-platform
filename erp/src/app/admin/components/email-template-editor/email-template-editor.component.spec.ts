@@ -8,7 +8,7 @@
  *   the inquiries and the orders): loading of the languages and the stored texts (by the field
  *   prefix), the preview with the fallback to the defaults of the section, language switch,
  *   saving and closing; empty fields of the shown language marked orange, their number on the
- *   language tabs and the hint.
+ *   language tabs and the hint; texts of a language stored as an empty array are saved.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, i18n stub returning `section.key`, alert spy).
  */
@@ -196,5 +196,26 @@ describe('EmailTemplateEditorComponent', () => {
     expect(component.missingCount('cz')).toBe(0);
     expect(el.querySelectorAll('.email-tpl-input--missing').length).toBe(0);
     expect(el.querySelector('.email-tpl-missing-hint')).toBeNull();
+  });
+
+  /**
+   * @description A language saved without any text comes back from the API as an empty JSON
+   *   array (an empty PHP array); texts typed into it must reach the request body (regression:
+   *   the save reported success and stored nothing).
+   * @input stored subject `[]`, labels { cz: {greeting}, en: [] }; en subject + greeting typed; save().
+   * @output the JSON body of the PUT carries subject.en and labels.en.greeting, cz kept.
+   */
+  it('saves the texts of a language stored as an empty array', () => {
+    create(of([{ code: 'cz', name: 'Čeština' }, { code: 'en', name: 'English' }]),
+      of({ sales_order_email_subject_i18n: [], sales_order_email_labels_i18n: { cz: { greeting: 'Dobrý den' }, en: [] } }));
+    dh().put.and.returnValue(of({}));
+    component.switchLang('en');
+    component.template.subject_i18n['en'] = 'Thank you';
+    component.template.labels_i18n['en']['greeting'] = 'Hello';
+    component.save();
+
+    const body = JSON.parse(JSON.stringify(dh().put.calls.mostRecent().args[1]));
+    expect(body.sales_order_email_subject_i18n).toEqual({ en: 'Thank you' });
+    expect(body.sales_order_email_labels_i18n).toEqual({ cz: { greeting: 'Dobrý den' }, en: { greeting: 'Hello' } });
   });
 });

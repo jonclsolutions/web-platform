@@ -1,5 +1,30 @@
 {
-    "unreleased": [],
+    "unreleased": [
+        {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Confirmation e-mail editors (inquiries, e-shop orders, project portal orders): texts typed into a language that had been saved empty before are saved again - the save reported success but kept nothing."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Confirmation e-mail editors mark the fields left empty in a language orange, show their number on the language tabs and explain that an empty field uses the Czech text or the default English wording."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "The header and the buttons of the confirmation e-mail editor stay in place, only its content scrolls."
+        },
+        {
+            "type": "fixed",
+            "area": "web",
+            "part": "public",
+            "text": "The inquiry confirmation e-mail shows the name of the topic (e.g. New project / inquiry) in the subject and the summary instead of its internal key."
+        }
+    ],
     "releases": [
         {
             "version": "v2026.11.3",
