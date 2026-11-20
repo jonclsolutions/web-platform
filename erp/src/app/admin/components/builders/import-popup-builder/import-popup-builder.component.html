@@ -4,24 +4,13 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description Same visual language as export-popup-builder - card choice of the format,
-    then upload, then the dry-run summary with confirm / cancel.
+    @description Import in the shared popup frame (AdminModalComponent, size md), the same visual
+    language as export-popup-builder - card choice of the format, then upload, then the dry-run
+    summary with confirm / cancel; the buttons of every step are in the frame's footer.
 -->
 
-<div class="import-popup-overlay" (mousedown)="onOverlayClick($event)">
-  <div class="import-popup-card" (click)="$event.stopPropagation()">
-
-    <div class="import-popup-header">
-      <div class="import-popup-header-text">
-        <h2 class="import-popup-title">{{ strings.title }}</h2>
-        <p class="import-popup-subtitle">{{ strings.subtitle }}</p>
-      </div>
-      <button class="import-popup-close" (click)="onClose()" [disabled]="isValidating || isCommitting" [attr.aria-label]="strings.close_aria">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
-    </div>
+<app-admin-modal size="md" [heading]="strings.title" [subheading]="strings.subtitle"
+                 [closeDisabled]="isValidating || isCommitting" (dismissed)="onClose()">
 
     <!-- ── Step 1: format ─────────────────────────────────────────────── -->
     @if (step === 'format') {
@@ -82,14 +71,6 @@
           <button type="button" class="import-clear-file-btn" (click)="clearSelectedFile()">{{ strings.clear_file_button }}</button>
         }
       </div>
-
-      <div class="import-popup-footer">
-        <button type="button" class="import-popup-secondary" (click)="backToFormat()" [disabled]="isValidating">{{ strings.back_button }}</button>
-        <button type="button" class="import-popup-primary" (click)="runValidation()" [disabled]="!selectedFile || isValidating">
-          @if (isValidating) { <span class="import-mini-spin"></span> }
-          {{ strings.check_file_button }}
-        </button>
-      </div>
     }
 
     <!-- ── Step 3: dry-run summary ─────────────────────────────────────── -->
@@ -130,14 +111,6 @@
           <p class="import-fatal-warning">{{ strings.fatal_warning }}</p>
         }
       </div>
-
-      <div class="import-popup-footer">
-        <button type="button" class="import-popup-secondary" (click)="backToFormat()" [disabled]="isCommitting">{{ strings.cancel_button }}</button>
-        <button type="button" class="import-popup-primary" (click)="confirmCommit()" [disabled]="!validation.can_commit || isCommitting">
-          @if (isCommitting) { <span class="import-mini-spin"></span> }
-          {{ strings.confirm_commit_button.replace('{count}', validation.valid_rows) }}
-        </button>
-      </div>
     }
 
     <!-- ── Step 4: done ───────────────────────────────────────────────── -->
@@ -149,11 +122,26 @@
           <p class="import-done-text" [innerHTML]="strings.done_text.replace('{imported}', '<strong>' + commitResult.imported_count + '</strong>').replace('{skipped}', '<strong>' + commitResult.skipped_count + '</strong>')"></p>
         }
       </div>
-
-      <div class="import-popup-footer">
-        <button type="button" class="import-popup-primary" (click)="onClose()">{{ strings.close_button }}</button>
-      </div>
     }
 
-  </div>
-</div>
+    <!-- ── Buttons of the step (the format step has none) ──────────────────── -->
+    <ng-container modal-footer>
+      @if (step === 'upload') {
+        <button type="button" class="am-btn am-btn--secondary" (click)="backToFormat()" [disabled]="isValidating">{{ strings.back_button }}</button>
+        <button type="button" class="am-btn am-btn--primary" (click)="runValidation()" [disabled]="!selectedFile || isValidating">
+          @if (isValidating) { <span class="import-mini-spin"></span> }
+          {{ strings.check_file_button }}
+        </button>
+      }
+      @if (step === 'summary' && validation) {
+        <button type="button" class="am-btn am-btn--secondary" (click)="backToFormat()" [disabled]="isCommitting">{{ strings.cancel_button }}</button>
+        <button type="button" class="am-btn am-btn--primary" (click)="confirmCommit()" [disabled]="!validation.can_commit || isCommitting">
+          @if (isCommitting) { <span class="import-mini-spin"></span> }
+          {{ strings.confirm_commit_button.replace('{count}', validation.valid_rows) }}
+        </button>
+      }
+      @if (step === 'done' && commitResult) {
+        <button type="button" class="am-btn am-btn--primary" (click)="onClose()">{{ strings.close_button }}</button>
+      }
+    </ng-container>
+</app-admin-modal>

@@ -4,7 +4,9 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Template of the form builder component.
+    @description: Template of the form builder component: the fields of the record in the shared
+        popup frame (AdminModalComponent, size lg); cancel / save in the footer of the frame - the
+        save button submits the form by its id.
 
 
 
@@ -13,16 +15,8 @@
 
 -->
 
-<div class="popup-overlay" (mousedown)="onOverlayClick($event)">
-  <div class="form-container wide-style" (click)="$event.stopPropagation()">
-
-    <div class="form-header">
-      <h2 class="header-title">{{ displayHeader }}</h2>
-      <button class="close-button" (click)="onCancel()" [attr.aria-label]="strings.close_aria">&times;</button>
-    </div>
-
-    <div class="details-content">
-      <form #genericForm="ngForm" (ngSubmit)="onSubmit(genericForm, $event)" novalidate>
+<app-admin-modal size="lg" [heading]="displayHeader" (dismissed)="onCancel()">
+      <form #genericForm="ngForm" [id]="formId" (ngSubmit)="onSubmit(genericForm, $event)" novalidate>
         <div class="form-grid-layout">
           @for (input of visibleInputDefinitions; track input) {
             <div class="form-row-item" [class.full-width]="input.type === 'textarea' || input.type === 'files' || input.type === 'multiselect' || input.type === 'avatar'">
@@ -153,11 +147,9 @@
           }
         </div>
 
-        <div class="form-footer-actions">
-          <button type="button" class="btn-secondary" (click)="onCancel()">{{ strings.cancel_button }}</button>
-          <button type="submit" class="btn-primary" [disabled]="isSubmitting || genericForm.invalid || hasPasswordMismatch">{{ strings.submit_button }}</button>
-        </div>
       </form>
-    </div>
-  </div>
-</div>
+  <ng-container modal-footer>
+    <button type="button" class="am-btn am-btn--secondary" (click)="onCancel()">{{ strings.cancel_button }}</button>
+    <button type="submit" class="am-btn am-btn--primary" [attr.form]="formId" [disabled]="isSubmitting || genericForm.invalid || hasPasswordMismatch">{{ strings.submit_button }}</button>
+  </ng-container>
+</app-admin-modal>

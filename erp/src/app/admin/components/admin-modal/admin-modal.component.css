@@ -12,11 +12,12 @@
 /*
     @module: Modal frame
     @description: Backdrop over the whole page; white card with a grey header (title, subtitle,
-      round close button), a body that scrolls on its own and a grey footer for the buttons. The
-      header and the footer never scroll away. Layers: content popups 10000 (over the admin
-      layout and its loading overlay), prompts 30000 (over a content popup).
-    @usage: .am-overlay[data-level] > .am-card[data-size] > .am-header (.am-title, .am-subtitle, .am-close),
-      .am-body, .am-footer (hidden when the popup gives no footer)
+      buttons, round close button), a body that scrolls on its own and a grey footer for the
+      buttons. The header and the footer never scroll away. Layers: content popups 10000 (over the
+      admin layout and its loading overlay), prompts 30000 (over a content popup). Size full =
+      the whole screen; a flush body has no padding and no scrolling (its content fills it).
+    @usage: .am-overlay[data-level][data-size] > .am-card[data-size] > .am-header (.am-heading > .am-title, .am-subtitle;
+      .am-header-actions; .am-close), .am-body(.am-body--flush), .am-footer (header actions and footer hidden when empty)
 */
 :host { display: contents; }
 
@@ -52,6 +53,15 @@
 .am-card[data-size="sm"] { max-width: 440px; }
 .am-card[data-size="lg"] { max-width: 900px; }
 .am-card[data-size="xl"] { max-width: 1100px; }
+.am-overlay[data-size="full"] { padding: 0; }
+.am-card[data-size="full"] {
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
 
 @keyframes am-in {
   from { opacity: 0; transform: translateY(12px); }
@@ -60,17 +70,28 @@
 
 .am-header {
   flex-shrink: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: "heading actions close";
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  column-gap: 12px;
   min-height: 60px;
   padding: 16px 24px;
   background: var(--color-zinc-50);
   border-bottom: 1px solid var(--color-zinc-100);
 }
 
-.am-heading { min-width: 0; }
+.am-heading { grid-area: heading; min-width: 0; }
+
+.am-header-actions {
+  grid-area: actions;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.am-header-actions:empty { display: none; }
 
 .am-title {
   margin: 0;
@@ -87,7 +108,7 @@
 }
 
 .am-close {
-  flex-shrink: 0;
+  grid-area: close;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -112,6 +133,12 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+.am-body--flush {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
 
 .am-footer {
   flex-shrink: 0;
@@ -129,7 +156,8 @@
 /*
     @module: Modal frame on a phone
     @description: The small and middle window slides up from the bottom edge; the large ones take
-      the whole screen. Without animation for users who reduce motion.
+      the whole screen. Buttons of the header move under the title. Without animation for users
+      who reduce motion.
     @usage: automatic (max-width 640px, prefers-reduced-motion)
 */
 @media (max-width: 640px) {
@@ -138,7 +166,14 @@
   .am-card[data-size="sm"] { max-width: 100%; }
   .am-card[data-size="lg"],
   .am-card[data-size="xl"] { max-width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+  .am-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "heading close" "actions actions";
+    row-gap: 10px;
+  }
+  .am-header-actions { justify-content: flex-start; }
   .am-header, .am-body, .am-footer { padding-left: 16px; padding-right: 16px; }
+  .am-body--flush { padding: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

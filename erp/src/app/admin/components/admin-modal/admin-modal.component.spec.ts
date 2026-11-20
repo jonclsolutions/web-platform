@@ -6,8 +6,9 @@
  * @created 2026
  * @description Unit tests of AdminModalComponent - the frame of every admin popup: header,
  *   projected body and footer, size and layer, dialog semantics, closing (button, Escape,
- *   backdrop, disabled while busy), scroll lock, focus (initial, kept inside, returned) and two
- *   windows open at once (the keyboard belongs to the top one).
+ *   backdrop, disabled while busy), scroll lock, focus (initial, kept inside, returned), two
+ *   windows open at once (the keyboard belongs to the top one), header buttons, the full-screen
+ *   size and the flush body.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (i18n stub returning the key itself).
  * - ScrollLockService (replaced by a spy).
@@ -27,9 +28,10 @@ import { createI18nStub } from '../../../../testing/admin-test-helpers';
   template: `
     <button id="opener">open</button>
     @if (open()) {
-      <app-admin-modal heading="Title" [subheading]="sub()" [size]="size()" [level]="level()"
+      <app-admin-modal heading="Title" [subheading]="sub()" [size]="size()" [level]="level()" [flush]="flush()"
                        [closeDisabled]="busy()" [closeOnBackdrop]="backdrop()" (dismissed)="dismissed = dismissed + 1">
         <input id="first" [attr.data-autofocus]="autofocus() ? '' : null">
+        @if (headerActions()) { <button id="action" modal-header-actions>Action</button> }
         <ng-container modal-footer>
           @if (footer()) { <button id="cancel">Cancel</button><button id="save">Save</button> }
         </ng-container>
@@ -52,6 +54,8 @@ class HostComponent {
   backdrop = signal(true);
   footer = signal(true);
   autofocus = signal(true);
+  headerActions = signal(false);
+  flush = signal(false);
   dismissed = 0;
   secondDismissed = 0;
 }
@@ -209,5 +213,28 @@ describe('AdminModalComponent', () => {
     expect([host.dismissed, host.secondDismissed]).toEqual([1, 1]);
     expect(scrollLock.lock).toHaveBeenCalledTimes(2);
     expect(scrollLock.unlock).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * @description Header buttons sit between the title and the close button (hidden when there are
+   *   none); full size fills the screen; a flush body has no padding and does not scroll.
+   * @input no header action; then an action, size full, flush.
+   * @output actions box not displayed; then #action inside it; overlay padding 0, card as wide as
+   *   the viewport; body padding 0 and overflow hidden.
+   */
+  it('offers header buttons, the full-screen size and a flush body', () => {
+    create();
+    expect(getComputedStyle(q('.am-header-actions')).display).toBe('none');
+
+    host.headerActions.set(true);
+    host.size.set('full');
+    host.flush.set(true);
+    fixture.detectChanges();
+    expect(q('.am-header-actions #action')).not.toBeNull();
+    expect(q('.am-body #action')).toBeNull();
+    expect(getComputedStyle(q('.am-overlay')).paddingTop).toBe('0px');
+    expect(q('.am-card').getBoundingClientRect().width).toBe(q('.am-overlay').getBoundingClientRect().width);
+    const body = getComputedStyle(q('.am-body'));
+    expect([body.paddingTop, body.overflowY]).toEqual(['0px', 'hidden']);
   });
 });

@@ -335,7 +335,6 @@
   "create_header": "Create new record",
   "edit_header": "Edit record",
   "edit_header_with_id": "Edit record: {id}",
-  "close_aria": "Close",
   "select_placeholder": "-- Select --",
   "multiselect_empty": "No options to choose from.",
   "multiselect_role_badge": "(from role)",
@@ -642,7 +641,6 @@
 "metric_mode_line_desc": "Metric value over time as a line.",
 "metric_mode_bar": "Bar",
 "metric_mode_bar_desc": "Metric value over time as bars.",
-  "close_aria": "Close",
   "sidebar_title": "Report settings",
   "close_settings_aria": "Close settings",
   "period_section_title": "Period",
@@ -713,7 +711,6 @@
   "enum_hints_title": "Allowed values for these columns",
   "title": "Data import",
   "subtitle": "Bulk-add new records from a file. Existing data is never overwritten or deleted.",
-  "close_aria": "Close",
 
   "download_template_button": "Download blank template ({format})",
   "upload_hint": "Upload a file with the same column headers as the template. New rows are added to existing data - nothing is overwritten or deleted. Rows that collide with an existing record are skipped.",

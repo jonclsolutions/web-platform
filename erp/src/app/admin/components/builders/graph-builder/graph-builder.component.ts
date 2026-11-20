@@ -25,7 +25,8 @@
  *   the browser writes no log.
  * - chart.js (`chart.js/auto`, dynamic import): renders one <canvas> per section.
  * - jsPDF + html2canvas (dynamic import): client-side PDF snapshot of the report body.
- * - ScrollLockService: Shared background scroll lock.
+ * - AdminModalComponent: the shared popup frame - full screen, title + actions in its header
+ *   (page scroll lock, Escape / close - not while the PDF is being created).
  * - AdminLocalizationService: Static i18n of the admin UI.
  */
 
@@ -41,8 +42,8 @@ import { Subject, firstValueFrom, takeUntil } from 'rxjs';
 import { DataHandler } from '../../../../core/services/data-handler.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
+import { AdminModalComponent } from '../../admin-modal/admin-modal.component';
 import {
   GraphColumnOption, ColumnChartMode, MetricChartMode, DistributionChartType,
   ChartModeOption, createColumnChartModeOptions, createMetricChartModeOptions
@@ -214,9 +215,9 @@ const OUTSIDE_SLICE_LABELS_PLUGIN = {
 @Component({
   selector: 'app-graph-builder',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminModalComponent],
   templateUrl: './graph-builder.component.html',
-  styleUrl: './graph-builder.component.css',
+  styleUrls: ['../../../shared-styles/modal.css', './graph-builder.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, AfterViewInit {
@@ -297,7 +298,6 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
 
   public alertDialogService = inject(AlertDialogService);
   public authService = inject(AuthService);
-  private scrollLock = inject(ScrollLockService);
 
   constructor(private dataHandler: DataHandler, private cd: ChangeDetectorRef) {
     // After switching the admin language, forces the OnPush component to re-evaluate
@@ -340,13 +340,12 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
     return b.every(c => aKeys.has(c.key));
   }
 
-  /** @description Locks background scroll and auto-generates the report immediately on open (all columns, no date restriction). */
+  /** @description Auto-generates the report immediately on open (all columns, no date restriction). */
   ngOnInit(): void {
     if (!this.dateFieldLabel) {
       this.dateFieldLabel = this.t('default_date_field_label');
     }
 
-    this.scrollLock.lock();
     this.generateReport();
   }
 
@@ -355,7 +354,6 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
   }
 
   ngOnDestroy(): void {
-    this.scrollLock.unlock();
     this.destroyCharts();
     this.destroy$.next();
     this.destroy$.complete();
@@ -1155,12 +1153,15 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
     pdf.text(this.t('pdf_page_label').replace('{current}', String(pageNum)).replace('{total}', String(totalPages)), pageWidth - margin, pageHeight - 12, { align: 'right' });
   }
 
-  // ── Overlay / closing ─────────────────────────────────────────────────
+  // ── Closing ───────────────────────────────────────────────────────────
 
-  onOverlayMouseDown(event: MouseEvent): void {
-    if (event.target === event.currentTarget) this.onClose();
+  /** @description Title of the window: "Charts and analyses — <table>". */
+  get windowTitle(): string {
+    const caption = this.tableCaption ? ` — ${this.tableCaption}` : '';
+    return `${this.strings.report_title_prefix}${caption}`;
   }
 
+  /** @description Closes the window (close button, Escape) - not while the PDF is being created. */
   onClose(): void {
     if (this.isExportingPdf) return;
     this.closed.emit();

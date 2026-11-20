@@ -9,39 +9,38 @@
  * - CommonModule, DatePipe, CurrencyPipe: Formatting utilities.
  * - ItemDetailsColumns: Interface for column metadata.
  * - InputDefinition: Interface for field configuration and options.
- * - ScrollLockService: Shared background scroll lock.
+ * - AdminModalComponent: the shared popup frame (page scroll lock, Escape / backdrop / close).
  * - AdminLocalizationService: Static (bundled) localization of the admin UI.
  * - UserAvatarComponent: `avatar` columns (profile photo).
  */
 
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { ItemDetailsColumns } from '../../../../shared/interfaces/item-details-columns';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
-import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { UserAvatarComponent } from '../../user-avatar/user-avatar.component';
+import { AdminModalComponent } from '../../admin-modal/admin-modal.component';
 
 /**
  * @description Provides a reusable way to display object details in a modal overlay with automatic formatting based on column metadata.
  * @usage Used in admin list components to show expanded information for a selected record.
- * @note Manages DOM overflow state to ensure the modal occupies the screen correctly and uses pipes for data localization.
+ * @note Uses pipes for data localization; the frame (AdminModalComponent) locks the page scroll.
  */
 @Component({
 selector: 'app-details-builder',
 standalone: true,
-imports: [CommonModule, UserAvatarComponent],
+imports: [CommonModule, UserAvatarComponent, AdminModalComponent],
 templateUrl: './details-builder.component.html',
-styleUrl: './details-builder.component.css',
+styleUrls: ['../../../shared-styles/modal.css', './details-builder.component.css'],
 providers: [DatePipe, CurrencyPipe]
 })
-export class DetailsBuilderComponent implements OnInit, OnDestroy {
+export class DetailsBuilderComponent {
   @Input() itemData: any;
   @Input() itemDetailColumns: ItemDetailsColumns[] = [];
   @Input() inputDefinitions: InputDefinition[] = [];
   @Output() closeDetails = new EventEmitter<void>();
 
-  private scrollLock = inject(ScrollLockService);
   public readonly i18n = inject(AdminLocalizationService);
 
   constructor(
@@ -58,27 +57,10 @@ private currencyPipe: CurrencyPipe
   }
 
 /**
-   * @description Locks page scrolling while the detail modal is active.
+   * @description Closes the detail (footer button, close button, Escape, backdrop).
    */
-ngOnInit(): void {
-    this.scrollLock.lock();
-  }
-
-/**
-   * @description Restores page scrolling upon component destruction.
-   */
-ngOnDestroy(): void {
-    this.scrollLock.unlock();
-  }
-
 onClose(): void {
 this.closeDetails.emit();
-  }
-
-onOverlayClick(event: MouseEvent): void {
-if (event.target === event.currentTarget) {
-this.onClose();
-    }
   }
 
 /**

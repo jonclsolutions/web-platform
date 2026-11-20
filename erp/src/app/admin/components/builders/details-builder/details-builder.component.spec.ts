@@ -35,8 +35,8 @@ describe('DetailsBuilderComponent', () => {
   });
 
   /**
-   * @description Opening the popup locks page scrolling, closing it unlocks it.
-   * @input  detectChanges() (ngOnInit), then destroy()
+   * @description Opening the popup (its frame) locks page scrolling, closing it unlocks it.
+   * @input  detectChanges() (render), then destroy()
    * @output scrollLock.lock() once, then scrollLock.unlock() once
    */
   it('locks scrolling while open', () => {
@@ -164,17 +164,25 @@ describe('DetailsBuilderComponent', () => {
   });
 
   /**
-   * @description Clicking the overlay closes the popup, clicking inside it does not.
-   * @input  onOverlayClick with target === currentTarget, then target !== currentTarget
-   * @output closeDetails emitted once
+   * @description The detail sits in the shared popup frame: the backdrop, the close button and
+   *   the footer button close it, a click inside it does not.
+   * @input  render; backdrop press + click; click into the card; close button; footer button
+   * @output closeDetails emitted 3 times; size lg; title 'details-builder.title'
    */
-  it('closes on an overlay click only', () => {
+  it('closes from the frame and its footer', () => {
     let closed = 0;
     component.closeDetails.subscribe(() => closed++);
-    const overlay = {};
-    component.onOverlayClick({ target: overlay, currentTarget: overlay } as any);
-    component.onOverlayClick({ target: {}, currentTarget: overlay } as any);
-    expect(closed).toBe(1);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    const overlay = el.querySelector('.am-overlay') as HTMLElement;
+    overlay.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    overlay.click();
+    (el.querySelector('.am-card') as HTMLElement).click();
+    (el.querySelector('.am-close') as HTMLElement).click();
+    (el.querySelector('.am-footer .am-btn') as HTMLElement).click();
+    expect(closed).toBe(3);
+    expect((el.querySelector('.am-card') as HTMLElement).dataset['size']).toBe('lg');
+    expect(el.querySelector('.am-title')!.textContent!.trim()).toBe('details-builder.title');
   });
 
   /**

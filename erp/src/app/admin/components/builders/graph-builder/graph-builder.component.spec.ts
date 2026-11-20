@@ -89,14 +89,15 @@ describe('GraphBuilderComponent', () => {
   });
 
   /**
-   * @description Opening the popup locks scroll, sets the default date label and generates the report.
-   * @input  ngOnInit() with dateFieldLabel ''
+   * @description Opening the window (its frame) locks scroll, sets the default date label and
+   *   generates the report.
+   * @input  render with dateFieldLabel ''
    * @output scrollLock.lock(); dateFieldLabel 'graph-builder.default_date_field_label'; getCollection called
    */
-  it('ngOnInit() locks scroll and generates the report', async () => {
+  it('opening locks scroll and generates the report', async () => {
     setColumns();
     (ctx.dataHandler as any).getCollection.and.returnValue(of([]));
-    component.ngOnInit();
+    fixture.detectChanges();
     expect(scrollLock.lock).toHaveBeenCalled();
     expect(component.dateFieldLabel).toBe('graph-builder.default_date_field_label');
     expect((ctx.dataHandler as any).getCollection).toHaveBeenCalled();
@@ -272,18 +273,31 @@ describe('GraphBuilderComponent', () => {
   });
 
   /**
-   * @description The popup closes on overlay click but not during a PDF export; destroy unlocks scroll.
-   * @input  onOverlayMouseDown(overlay); isExportingPdf true → onClose(); ngOnDestroy()
-   * @output closed emitted once; scrollLock.unlock() called
+   * @description The window is the full-screen frame with the title and the actions in its
+   *   header; the close button closes it, but not during a PDF export (also Escape does
+   *   nothing then); destroy unlocks scroll.
+   * @input  tableCaption 'Users'; render; close button; isExportingPdf true → onClose(), Escape; destroy
+   * @output size full, flush body; title 'graph-builder.report_title_prefix — Users'; header
+   *   generate + PDF buttons; closed emitted once; scrollLock.unlock() called
    */
   it('closing rules and scroll unlock', () => {
+    setColumns();
+    (ctx.dataHandler as any).getCollection.and.returnValue(of([]));
+    fixture.componentRef.setInput('tableCaption', 'Users');
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect((el.querySelector('.am-card') as HTMLElement).dataset['size']).toBe('full');
+    expect(el.querySelector('.am-body')!.classList).toContain('am-body--flush');
+    expect(el.querySelector('.am-title')!.textContent!.trim()).toBe('graph-builder.report_title_prefix — Users');
+    expect(el.querySelectorAll('.am-header-actions .am-btn').length).toBe(2);
+
     let closed = 0;
     component.closed.subscribe(() => closed++);
-    const overlay = {};
-    component.onOverlayMouseDown({ target: overlay, currentTarget: overlay } as any);
+    (el.querySelector('.am-close') as HTMLElement).click();
     component.isExportingPdf = true;
     component.onClose();
-    component.ngOnDestroy();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.destroy();
     expect(closed).toBe(1);
     expect(scrollLock.unlock).toHaveBeenCalled();
   });

@@ -20,21 +20,22 @@
  * - HttpClient: direct call to download the template as a blob (DataHandler.get() has no
  *   responseType 'blob' variant - the same reason why the XLSX export of TableBuilderComponent
  *   calls SheetJS directly).
- * - ScrollLockService: Shared background scroll lock.
+ * - AdminModalComponent: the shared popup frame (page scroll lock, Escape / backdrop / close -
+ *   not while the file is being checked or imported).
  * - AdminLocalizationService: Static i18n of the admin UI.
  */
 
-import { Component, EventEmitter, Input, Output, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { DataHandler } from '../../../../core/services/data-handler.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
-import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { environment } from '../../../../../environments/environment';
 import { ExportFormat, createExportFormatOptions, ExportFormatOption } from '../../../../shared/interfaces/export-format';
 import { ImportEnumHint } from '../table-builder/table-builder.component';
+import { AdminModalComponent } from '../../admin-modal/admin-modal.component';
 
 /** @description One row of the error summary of the dry-run validation. */
 interface ImportRowError {
@@ -72,12 +73,12 @@ type ImportStep = 'format' | 'upload' | 'summary' | 'done';
 @Component({
   selector: 'app-import-popup-builder',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AdminModalComponent],
   templateUrl: './import-popup-builder.component.html',
-  styleUrl: './import-popup-builder.component.css',
+  styleUrls: ['../../../shared-styles/modal.css', './import-popup-builder.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
+export class ImportPopupBuilderComponent {
   /** @description Resource key - MUST match the `apiEndpoint` of the page and the key of the backend registry exactly. */
   @Input({ required: true }) resource!: string;
 
@@ -88,7 +89,6 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private alertDialogService = inject(AlertDialogService);
   private cd = inject(ChangeDetectorRef);
-  private scrollLock = inject(ScrollLockService);
 
   public readonly i18n = inject(AdminLocalizationService);
   public get strings(): any { return this.i18n.getMergedSection('import-popup'); }
@@ -115,14 +115,6 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
     // After switching the admin language, forces the OnPush component to re-evaluate
     // `strings` / getters - same pattern as TableBuilderComponent / GraphBuilderComponent.
     this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
-  }
-
-  ngOnInit(): void {
-    this.scrollLock.lock();
-  }
-
-  ngOnDestroy(): void {
-    this.scrollLock.unlock();
   }
 
   // ── Step 1: format choice ────────────────────────────────────────────────
@@ -258,12 +250,7 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
     });
   }
 
-  onOverlayClick(event: MouseEvent): void {
-    if (event.target === event.currentTarget) {
-      this.onClose();
-    }
-  }
-
+  /** @description Closes the popup (close button, Escape, backdrop, the last step) - not while working. */
   onClose(): void {
     if (this.isValidating || this.isCommitting) return;
     this.closed.emit();

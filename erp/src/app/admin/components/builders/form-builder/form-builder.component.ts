@@ -12,7 +12,7 @@
  * - InputDefinition: Interface for rendering dynamic form inputs and validation metadata.
  * - PasswordRequirementsChecklistComponent: Live visual checklist of password rules.
  * - MultiFileUploadComponent: Shared drag&drop multi-file upload, see the `'files'` case.
- * - ScrollLockService: Shared background scroll lock.
+ * - AdminModalComponent: the shared popup frame (page scroll lock, Escape / backdrop / close = cancel).
  * - AdminLocalizationService: Static i18n of the admin UI.
  * - AvatarEditorComponent: `avatar` fields (profile photo, saved by its own endpoint).
  */
@@ -25,24 +25,27 @@ import { PasswordRequirementsChecklistComponent } from '../../../../shared/compo
 import { PasswordPolicyDirective } from '../../../../shared/directives/password-policy.directive';
 import { PASSWORD_MAX_LENGTH } from '../../../../shared/constants/password-policy';
 import { MultiFileUploadComponent } from '../../../../shared/components/multi-file-upload/multi-file-upload.component';
-import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { UploadRulesService } from '../../../../shared/services/upload-rules.service';
 import { UploadProfile, UploadRule, extensionsLabel, fileExtension, isExtensionAllowed } from '../../../../shared/utils/upload-rules';
 import { Subject, takeUntil } from 'rxjs';
 import { AvatarEditorComponent } from '../../avatar-editor/avatar-editor.component';
+import { AdminModalComponent } from '../../admin-modal/admin-modal.component';
+
+/** Counter of the form ids (the save button in the frame's footer submits the form by its id). */
+let nextFormId = 0;
 
 /**
  * @description Renders a dynamic form based on an array of field definitions.
  * @usage Used in create and edit modals across the admin panel for data entry.
- * @note Supports file uploads via FormData auto-detection, password matching validation, multi-value checkbox groups, live field-change notifications, externally forced field overrides, and persistent scroll locking.
+ * @note Supports file uploads via FormData auto-detection, password matching validation, multi-value checkbox groups, live field-change notifications and externally forced field overrides; the frame (AdminModalComponent) locks the page scroll.
  */
 @Component({
   selector: 'app-form-builder',
   standalone: true,
-  imports: [FormsModule, PasswordRequirementsChecklistComponent, MultiFileUploadComponent, PasswordPolicyDirective, AvatarEditorComponent],
+  imports: [FormsModule, PasswordRequirementsChecklistComponent, MultiFileUploadComponent, PasswordPolicyDirective, AvatarEditorComponent, AdminModalComponent],
   templateUrl: './form-builder.component.html',
-  styleUrl: './form-builder.component.css',
+  styleUrls: ['../../../shared-styles/modal.css', './form-builder.component.css'],
 })
 export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
   /**
@@ -76,13 +79,14 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
   @Output() avatarChanged = new EventEmitter<{ columnName: string; value: string | null }>();
 
   @ViewChild('genericForm') genericForm!: NgForm;
+  /** Id of the form - the save button in the footer of the frame submits it (`form` attribute). */
+  readonly formId = `fb-form-${++nextFormId}`;
 
   formData: { [key: string]: any } = {};
   confirmPasswordData: { [key: string]: string } = {};
   isSubmitting = false;
   visibleInputDefinitions: InputDefinition[] = [];
 
-  private scrollLock = inject(ScrollLockService);
   private initialized = false;
 
   /** Default maxlength of a password field (the password policy). */
@@ -107,7 +111,6 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
    * @description Initializes the form state based on the provided data or default settings.
    */
   ngOnInit(): void {
-    this.scrollLock.lock();
     this.loadUploadRules();
 
     if (this.formDataToEdit) {
@@ -225,7 +228,6 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnDestroy(): void {
-    this.scrollLock.unlock();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -399,12 +401,6 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
 
   onCancel(): void {
     this.formCanceled.emit();
-  }
-
-  onOverlayClick(event: MouseEvent): void {
-    if (event.target === event.currentTarget) {
-      this.onCancel();
-    }
   }
 
   /**

@@ -12,16 +12,17 @@
  * @dependencies
  * - CommonModule: @if/@for control flow.
  * - DomSanitizer: Safely renders inline SVG icons via [innerHTML].
- * - ScrollLockService: Shared background scroll lock.
+ * - AdminModalComponent: the shared popup frame (page scroll lock, Escape / backdrop / close -
+ *   not while the file is being prepared).
  * - AdminLocalizationService: Static i18n of the admin UI.
  */
 
-import { Component, EventEmitter, Input, Output, OnChanges, OnInit, OnDestroy, SimpleChanges, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ExportFormat, createExportFormatOptions, ExportFormatOption } from '../../../../shared/interfaces/export-format';
-import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
+import { AdminModalComponent } from '../../admin-modal/admin-modal.component';
 /**
  * @description Minimal shape needed to render one row in the column-picker checklist -
  * intentionally NOT the full `ColumnDefinition` (this component has no reason to know
@@ -63,12 +64,12 @@ export interface ExportSelection {
 @Component({
   selector: 'app-export-popup-builder',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AdminModalComponent],
   templateUrl: './export-popup-builder.component.html',
-  styleUrl: './export-popup-builder.component.css',
+  styleUrls: ['../../../shared-styles/modal.css', './export-popup-builder.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ExportPopupBuilderComponent implements OnChanges, OnInit, OnDestroy {
+export class ExportPopupBuilderComponent implements OnChanges {
   /** Number of records that will be exported - shown for context, no functional effect. */
   @Input() itemCount: number = 0;
   /** Disables format buttons and shows a spinner while the parent is building the file. */
@@ -109,7 +110,6 @@ export class ExportPopupBuilderComponent implements OnChanges, OnInit, OnDestroy
   rawFormat = false;
 
   private sanitizer = inject(DomSanitizer);
-  private scrollLock = inject(ScrollLockService);
 
   private get formatOptions(): ExportFormatOption[] {
     return createExportFormatOptions(this.i18n);
@@ -139,14 +139,6 @@ export class ExportPopupBuilderComponent implements OnChanges, OnInit, OnDestroy
    */
   get activeColumnSource(): ExportColumnOption[] {
     return this.rawFormat ? this.importableColumns : this.columns;
-  }
-
-  ngOnInit(): void {
-    this.scrollLock.lock();
-  }
-
-  ngOnDestroy(): void {
-    this.scrollLock.unlock();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -225,14 +217,9 @@ export class ExportPopupBuilderComponent implements OnChanges, OnInit, OnDestroy
     return source.length > 0 && this.selectedColumnKeys.size === 0;
   }
 
-  // ── Overlay / closing ────────────────────────────────────────────────
+  // ── Closing ──────────────────────────────────────────────────────────
 
-  onOverlayClick(event: MouseEvent): void {
-    if (event.target === event.currentTarget) {
-      this.onClose();
-    }
-  }
-
+  /** @description Closes the popup (cancel, close button, Escape, backdrop) - not while exporting. */
   onClose(): void {
     if (this.isExporting) return;
     this.closed.emit();

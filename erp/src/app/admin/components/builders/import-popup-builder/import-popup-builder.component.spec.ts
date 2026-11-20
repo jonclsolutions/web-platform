@@ -212,15 +212,23 @@ describe('ImportPopupBuilderComponent', () => {
     expect(closed).toBe(1);
   });
   /**
-   * @description Remaining wizard paths: scroll lock on open, file cleared, failed commit
-   *   releases the button, overlay click closes only on the backdrop, texts of the section.
-   * @input ngOnInit; clearSelectedFile; commit error; overlay click on the backdrop / inside.
-   * @output lock(); file null; isCommitting false, step not done; closed once; t('x') 'import-popup.x'.
+   * @description Remaining wizard paths: scroll lock of the frame on open, the footer of the
+   *   format step is empty, file cleared, failed commit releases the button, a backdrop click
+   *   closes (a click inside does not), texts of the section.
+   * @input render; clearSelectedFile; commit error; backdrop press + click; click into the card.
+   * @output lock(); footer hidden, then back + check buttons of the upload step; file null; isCommitting false, step not done; closed once;
+   *   t('x') 'import-popup.x'.
    */
   it('handles the remaining wizard paths', () => {
-    component.ngOnInit();
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
     expect(TestBed.inject(ScrollLockService).lock).toHaveBeenCalled();
+    expect(getComputedStyle(el.querySelector('.am-footer')!).display).toBe('none');
     withFile();
+    (component as any).cd.markForCheck();
+    fixture.detectChanges();
+    expect(Array.from(el.querySelectorAll('.am-footer .am-btn')).map(b => b.textContent!.trim()))
+      .toEqual(['import-popup.back_button', 'import-popup.check_file_button']);
     component.clearSelectedFile();
     expect(component.selectedFile).toBeNull();
 
@@ -234,9 +242,10 @@ describe('ImportPopupBuilderComponent', () => {
 
     let closed = 0;
     component.closed.subscribe(() => closed++);
-    const backdrop = {};
-    component.onOverlayClick({ target: backdrop, currentTarget: backdrop } as any);
-    component.onOverlayClick({ target: {}, currentTarget: backdrop } as any);
+    const backdrop = el.querySelector('.am-overlay') as HTMLElement;
+    backdrop.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    backdrop.click();
+    (el.querySelector('.am-card') as HTMLElement).click();
     expect(closed).toBe(1);
     expect(component.t('x')).toBe('import-popup.x');
     expect(component.strings.title).toBe('import-popup.title');

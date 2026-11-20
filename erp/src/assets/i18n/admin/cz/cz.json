@@ -335,7 +335,6 @@
   "create_header": "Vytvořit nový záznam",
   "edit_header": "Upravit záznam",
   "edit_header_with_id": "Upravit záznam: {id}",
-  "close_aria": "Zavřít",
   "select_placeholder": "-- Vyberte --",
   "multiselect_empty": "Žádné možnosti k výběru.",
   "multiselect_role_badge": "(z role)",
@@ -642,7 +641,6 @@
 "metric_mode_line_desc": "Hodnota metriky v čase jako křivka.",
 "metric_mode_bar": "Sloupcový",
 "metric_mode_bar_desc": "Hodnota metriky v čase jako sloupce.",
-  "close_aria": "Zavřít",
   "sidebar_title": "Nastavení reportu",
   "close_settings_aria": "Zavřít nastavení",
   "period_section_title": "Období",
@@ -713,7 +711,6 @@
   "enum_hints_title": "Povolené hodnoty pro tyto sloupce",
   "title": "Import dat",
   "subtitle": "Hromadné přidání nových záznamů ze souboru. Existující data se nikdy nepřepisují ani nemažou.",
-  "close_aria": "Zavřít",
 
   "download_template_button": "Stáhnout prázdnou šablonu ({format})",
   "upload_hint": "Nahrajte soubor se stejnými hlavičkami sloupců, jako má šablona. Nové řádky se přidají k existujícím datům - nic se nepřepíše ani nesmaže. Řádky, které kolidují s existujícím záznamem, se přeskočí.",

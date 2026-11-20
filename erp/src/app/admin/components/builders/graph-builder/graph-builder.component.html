@@ -4,19 +4,30 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Template of the graph builder component.
+    @description: Template of the graph builder component - a full-screen working window in the
+        shared popup frame (AdminModalComponent, size full, flush body): the title and the actions
+        (settings on a phone, generate, PDF) in the frame's header, the settings panel and the
+        report below.
 -->
 
-<div class="graph-popup-overlay" (mousedown)="onOverlayMouseDown($event)">
-  <div class="graph-popup-card" (mousedown)="$event.stopPropagation()">
+<app-admin-modal size="full" [flush]="true" [heading]="windowTitle" [closeDisabled]="isExportingPdf" (dismissed)="onClose()">
 
-    <div class="graph-window-topbar">
-      <button type="button" class="graph-window-close" (click)="onClose()" [disabled]="isExportingPdf" [attr.aria-label]="strings.close_aria">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    <ng-container modal-header-actions>
+      <button type="button" class="graph-mobile-settings-btn" (click)="mobileSidebarOpen = true" [attr.aria-label]="strings.sidebar_title" [title]="strings.sidebar_title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
+          <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
+          <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
         </svg>
       </button>
-    </div>
+      <button type="button" class="am-btn am-btn--primary" [disabled]="!canGenerate" (click)="generateReport()">
+        {{ isLoading ? strings.generating_button : strings.generate_button }}
+      </button>
+      <button type="button" class="am-btn am-btn--secondary" [disabled]="!reportGenerated || isExportingPdf" (click)="exportToPdf()">
+        {{ isExportingPdf ? strings.exporting_pdf_button : strings.export_pdf_button }}
+      </button>
+    </ng-container>
 
     <div class="graph-body-row">
 
@@ -137,28 +148,6 @@
 
       <div class="graph-main">
 
-        <div class="graph-topbar">
-          <button type="button" class="graph-mobile-settings-btn" (click)="mobileSidebarOpen = true" [attr.aria-label]="strings.sidebar_title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
-              <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
-              <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
-              <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
-            </svg>
-          </button>
-
-          <h2 class="graph-topbar-title">{{ strings.report_title_prefix }}{{ tableCaption ? ' — ' + tableCaption : '' }}</h2>
-
-          <div class="graph-topbar-actions">
-            <button type="button" class="graph-generate-btn" [disabled]="!canGenerate" (click)="generateReport()">
-              {{ isLoading ? strings.generating_button : strings.generate_button }}
-            </button>
-            <button type="button" class="graph-popup-export" [disabled]="!reportGenerated || isExportingPdf" (click)="exportToPdf()">
-              {{ isExportingPdf ? strings.exporting_pdf_button : strings.export_pdf_button }}
-            </button>
-          </div>
-        </div>
-
         <div class="graph-report-body">
           @if (isLoading) {
             <div class="graph-empty-state">
@@ -224,5 +213,4 @@
 
     </div>
 
-  </div>
-</div>
+</app-admin-modal>

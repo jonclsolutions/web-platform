@@ -176,19 +176,32 @@ describe('ExportPopupBuilderComponent', () => {
   });
 
   /**
-   * @description Overlay click closes; the popup locks scrolling while open.
-   * @input  detectChanges(); overlay click; destroy()
-   * @output closed emitted; lock and unlock called once
+   * @description The popup sits in the shared frame (middle size, title + record count): a backdrop
+   *   click closes it; while exporting neither Escape nor the close button closes it; the frame
+   *   locks scrolling while open.
+   * @input  render; backdrop press + click; isExporting true; Escape; destroy()
+   * @output size md, subtitle; closed once; close button disabled; lock and unlock once
    */
-  it('closes on overlay click and manages the scroll lock', () => {
+  it('closes from the frame (not while exporting) and manages the scroll lock', () => {
     setColumns();
     fixture.detectChanges();
     let closed = 0;
     component.closed.subscribe(() => closed++);
-    const overlay = {};
-    component.onOverlayClick({ target: overlay, currentTarget: overlay } as any);
-    fixture.destroy();
+    const el: HTMLElement = fixture.nativeElement;
+    expect((el.querySelector('.am-card') as HTMLElement).dataset['size']).toBe('md');
+    expect(el.querySelector('.am-subtitle')!.textContent!.trim()).toBe(component.subtitleText);
+    const overlay = el.querySelector('.am-overlay') as HTMLElement;
+    overlay.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    overlay.click();
     expect(closed).toBe(1);
+
+    fixture.componentRef.setInput('isExporting', true);
+    fixture.detectChanges();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect((el.querySelector('.am-close') as HTMLButtonElement).disabled).toBeTrue();
+    expect(closed).toBe(1);
+
+    fixture.destroy();
     expect(scrollLock.lock).toHaveBeenCalledTimes(1);
     expect(scrollLock.unlock).toHaveBeenCalledTimes(1);
   });

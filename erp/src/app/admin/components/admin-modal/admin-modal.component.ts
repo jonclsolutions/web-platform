@@ -22,6 +22,9 @@
  *     </ng-container>
  *   </app-admin-modal>
  *   ```
+ *   Buttons in the header (before the close button) are content marked `modal-header-actions`.
+ *   A window with its own layout and scrolling (e.g. a side panel + content) sets `[flush]="true"`:
+ *   the body has no padding and does not scroll - the content fills it.
  *   The popup shows / hides the whole element (`@if`); `dismissed` only asks it to close. The
  *   button classes (`am-btn …`) come from `admin/shared-styles/modal.css`, which the popup adds
  *   to its own `styleUrls` (its template owns the projected buttons). An element of the content
@@ -44,8 +47,11 @@ import { ModalStackService } from '../../../core/services/modal-stack.service';
 import { ScrollLockService } from '../../../core/services/scroll-lock.service';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 
-/** @description Width of the window: sm 440 px (prompts), md 620 px, lg 900 px (forms), xl 1100 px. */
-export type AdminModalSize = 'sm' | 'md' | 'lg' | 'xl';
+/**
+ * @description Width of the window: sm 440 px (prompts), md 620 px, lg 900 px (forms), xl 1100 px,
+ *   full - the whole screen (a working window, e.g. reports).
+ */
+export type AdminModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
 /**
  * @description Layer of the window: `content` - a popup of a page (form, editor, import …);
@@ -82,6 +88,8 @@ export class AdminModalComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() closeDisabled = false;
   /** A click on the backdrop closes the window. */
   @Input() closeOnBackdrop = true;
+  /** The body without padding and its own scrolling - the content lays itself out (fills the body). */
+  @Input() flush = false;
   /** The user asked to close the window (close button, Escape, backdrop). */
   @Output() dismissed = new EventEmitter<void>();
 

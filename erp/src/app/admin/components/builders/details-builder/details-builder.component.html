@@ -4,20 +4,11 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Template of the details builder component.
+    @description: Template of the details builder component: the values of a record in the shared
+        popup frame (AdminModalComponent, size lg) with a close button in the footer.
 -->
 
-<div class="popup-overlay" (mousedown)="onOverlayClick($event)">
-<div class="form-container wide-style" (click)="$event.stopPropagation()">
-
-<div class="form-header">
-<h2 class="header-title">{{ strings.title }}</h2>
-<button class="close-button" (click)="onClose()" [attr.aria-label]="strings.close">
-&times;
-</button>
-</div>
-
-<div class="details-content">
+<app-admin-modal size="lg" [heading]="strings.title" (dismissed)="onClose()">
 @if (itemData) {
 <div class="details-grid">
 @for (column of itemDetailColumns; track column) {
@@ -97,10 +88,8 @@
           }
 </div>
       }
-</div>
 
-<div class="form-footer">
-<button class="btn-close-flat" (click)="onClose()">{{ strings.close }}</button>
-</div>
-</div>
-</div>
+<ng-container modal-footer>
+<button type="button" class="am-btn am-btn--secondary" (click)="onClose()">{{ strings.close }}</button>
+</ng-container>
+</app-admin-modal>

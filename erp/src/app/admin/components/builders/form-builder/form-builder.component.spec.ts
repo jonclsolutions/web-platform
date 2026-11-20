@@ -99,13 +99,14 @@ describe('FormBuilderComponent', () => {
     });
 
     /**
-     * @description Opening the form locks scrolling, destroying it unlocks.
-     * @input  ngOnInit(), ngOnDestroy()
+     * @description The rendered form (its popup frame) locks scrolling, destroying it unlocks.
+     * @input  render, destroy
      * @output lock once, unlock once
      */
     it('locks scrolling while open', () => {
       create();
-      component.ngOnDestroy();
+      fixture.detectChanges();
+      fixture.destroy();
       expect(scrollLock.lock).toHaveBeenCalledTimes(1);
       expect(scrollLock.unlock).toHaveBeenCalledTimes(1);
     });
@@ -385,17 +386,27 @@ describe('FormBuilderComponent', () => {
     });
 
     /**
-     * @description Overlay click cancels, a click inside the form does not.
-     * @input  onOverlayClick target === currentTarget, then different target
-     * @output formCanceled emitted once
+     * @description The form sits in the shared popup frame: closing the frame (backdrop, close
+     *   button) cancels, a click inside the form does not; the save button in the frame's footer
+     *   submits the form by its id.
+     * @input  render; backdrop press + click; click into the card; close button
+     * @output formCanceled emitted twice; size lg; submit button form = form id
      */
-    it('cancels on an overlay click only', () => {
+    it('cancels when the frame closes and saves from its footer', () => {
       let cancelled = 0;
       component.formCanceled.subscribe(() => cancelled++);
-      const overlay = {};
-      component.onOverlayClick({ target: overlay, currentTarget: overlay } as any);
-      component.onOverlayClick({ target: {}, currentTarget: overlay } as any);
-      expect(cancelled).toBe(1);
+      create();
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      const overlay = el.querySelector('.am-overlay') as HTMLElement;
+      overlay.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      overlay.click();
+      (el.querySelector('.am-card') as HTMLElement).click();
+      (el.querySelector('.am-close') as HTMLElement).click();
+      expect(cancelled).toBe(2);
+      expect((el.querySelector('.am-card') as HTMLElement).dataset['size']).toBe('lg');
+      const submit = el.querySelector('.am-footer button[type="submit"]') as HTMLButtonElement;
+      expect(submit.getAttribute('form')).toBe(el.querySelector('form')!.id);
     });
 
     /**
