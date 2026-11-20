@@ -17,6 +17,9 @@ import { Router } from '@angular/router';
 import { PublicDataService } from '../../../../../shared/services/public-data.service';
 import { map, catchError, of } from 'rxjs';
 
+/** Address of the maintenance page of the e-shop - inside the e-shop address space (/shop/...). */
+export const SHOP_MAINTENANCE_URL = '/shop/maintenance';
+
 /**
  * @description Functional route guard ensuring users cannot access shop pages during maintenance periods.
  * @usage Applied to routes within the shop module to redirect traffic to the maintenance page when the system is inactive.
@@ -27,7 +30,7 @@ export const shopMaintenanceGuard = () => {
   const router = inject(Router);
 
   // 1. Avoid infinite redirection loops by bypassing the guard if the user is already on the maintenance page
-  if (router.url.includes('/shop-maintenance')) {
+  if (router.url.split(/[?#]/)[0] === SHOP_MAINTENANCE_URL) {
     return true; 
   }
 
@@ -36,7 +39,7 @@ export const shopMaintenanceGuard = () => {
     map(res => {
       // If the shop is inactive, redirect the user to the dedicated maintenance page
       if (!res.is_shop_active) {
-        return router.parseUrl('/shop-maintenance');
+        return router.parseUrl(SHOP_MAINTENANCE_URL);
       }
       return true;
     }),

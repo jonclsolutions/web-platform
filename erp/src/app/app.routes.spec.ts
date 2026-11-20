@@ -82,11 +82,12 @@ describe('app routes', () => {
 
   /**
    * @description Known URLs open their own page, never a 404.
-   * @input '/', '/services', '/jobs/5', '/shop' (redirect), '/shop/products/x', '/shop-maintenance',
+   * @input '/', '/services', '/jobs/5', '/shop' (redirect), '/shop/products/x', '/shop/maintenance',
+   *   '/maintenance',
    *   '/auth/login', '/projects/abc' (no session), '/projects/login/abc', '/404', the legal pages
    *   '/tos', '/shop/tos', '/shop/privacy-policy'.
    * @output '' (home), 'services', 'jobs/:id', 'shop/catalog', 'shop/products/:slugOrId',
-   *   'shop-maintenance', 'auth/login', the portal without a session redirects to its sign-in
+   *   'shop/maintenance', 'maintenance', 'auth/login', the portal without a session redirects to its sign-in
    *   'projects/login/:token' (session resolver), 'projects/login/:token'; '/404' = the web 404 page; the legal pages
    *   in both layouts (the e-shop layout carries the public area of the e-shop).
    */
@@ -97,7 +98,8 @@ describe('app routes', () => {
     expect(await open('/jobs/5')).toBe('jobs/:id');
     expect(await open('/shop')).toBe('shop/catalog');
     expect(await open('/shop/products/x')).toBe('shop/products/:slugOrId');
-    expect(await open('/shop-maintenance')).toBe('shop-maintenance');
+    expect(await open('/shop/maintenance')).toBe('shop/maintenance');
+    expect(await open('/maintenance')).toBe('maintenance');
     expect(await open('/auth/login')).toBe('auth/login');
     expect(await open('/projects/abc')).toBe('projects/login/:token');
     expect(await open('/projects/login/abc')).toBe('projects/login/:token');

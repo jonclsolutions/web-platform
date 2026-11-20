@@ -6,8 +6,8 @@
  * @created 2026
  * @description Public routes of the web application: the website in its layout (home, services,
  *   contact, references, FAQ, knowledge base, about us, jobs, the shared
- *   legal pages and the known 404 address), its maintenance page and the catch-all 404 of the
- *   public web.
+ *   legal pages and the known 404 address), its maintenance page (/maintenance - outside the web
+ *   layout and its maintenance guard) and the catch-all 404 of the public web.
  * @usage `publicRoutes` / `publicFallbackRoutes` of WEB_APP (web.app.ts), composed by app.routes.ts.
  * @note The root path ('') and '/home' both resolve directly to HomeComponent (no redirectTo) so the
  *   browser address bar keeps showing the clean domain root. `title` values are page keys for
@@ -24,6 +24,11 @@ import { legalPageRoute } from '../../../public/legal/legal-page/legal-page.conf
 export const WEB_PUBLIC_AREA: PublicArea = { translationModule: 'web', path: '', theme: 'dark' };
 
 export const WEB_PUBLIC_ROUTES: Routes = [
+  {
+    path: 'maintenance',
+    title: 'web.web-maintenance',
+    loadComponent: () => import('./web-maintenance/web-maintenance.component').then(m => m.WebMaintenanceComponent)
+  },
   {
     path: '',
     canActivateChild: [webMaintenanceGuard],
@@ -55,11 +60,6 @@ export const WEB_PUBLIC_ROUTES: Routes = [
       // Known address of the web 404 page (e.g. for links); unknown URLs use the catch-all at the end.
       { ...publicNotFoundRoute('web'), path: '404' },
     ]
-  },
-  {
-    path: 'web-maintenance',
-    title: 'web.web-maintenance',
-    loadComponent: () => import('./web-maintenance/web-maintenance.component').then(m => m.WebMaintenanceComponent)
   },
 ];
 

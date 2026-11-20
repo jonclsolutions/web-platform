@@ -5,7 +5,9 @@
  * @author JS
  * @created 2026
  * @description Shared base of the maintenance pages of the public web and the e-shop (VT-15):
- * one template (maintenance-page.component.html) and one look for both, with a language dropdown.
+ * one template (maintenance-page.component.html) passing the texts and data of the module to the
+ * one maintenance look of the application (MaintenanceShellComponent, also used by the project
+ * portal), with a language switcher.
  * The dropdown uses the same LocalizationService as the header of the main pages, so the
  * language is the one chosen there, and a choice made here is kept for the next visit
  * (localStorage `selectedLanguage`, shared by the web and the e-shop). While the page is shown
@@ -17,14 +19,17 @@
  * @dependencies
  * - BasePublicComponent: translations, site settings, social links.
  * - LocalizationService: languages of the module, current language, setLanguage().
+ * - MaintenanceShellComponent: the look (imported by the page components).
  */
 
-import { Directive, HostListener, inject } from '@angular/core';
+import { Directive, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { BasePublicComponent } from '../../base-public.component';
 import { LangMeta } from '../../../shared/services/localization.service';
+import { AuthLanguage } from '../../../shared/components/auth-language-switcher/auth-language-switcher.component';
+import { MaintenanceSocialLink } from '../../../shared/components/maintenance-shell/maintenance-shell.component';
 
 @Directive()
 export abstract class BaseMaintenanceComponent extends BasePublicComponent {
@@ -38,8 +43,6 @@ export abstract class BaseMaintenanceComponent extends BasePublicComponent {
 
   /** Active languages of the module (the same list as the header of the main pages). */
   languages: LangMeta[] = [];
-  /** Whether the language dropdown is open. */
-  isLangOpen = false;
 
   /**
    * @description Is the section (web / e-shop) active again?
@@ -73,20 +76,32 @@ export abstract class BaseMaintenanceComponent extends BasePublicComponent {
       });
   }
 
-  /** @description Language shown on the dropdown button. */
-  get activeLang(): LangMeta | undefined {
-    const code = this.localizationService.getCurrentLanguage();
-    return this.languages.find(l => l.code === code);
-  }
-
   /** @description Current language code. */
   get currentLang(): string {
     return this.localizationService.getCurrentLanguage();
   }
 
-  /** @description Opens / closes the language dropdown. */
-  toggleLang(): void {
-    this.isLangOpen = !this.isLangOpen;
+  /** Languages and social links in the shape of the maintenance look (kept stable for OnPush). */
+  private languageCache: { source: LangMeta[]; value: AuthLanguage[] } = { source: [], value: [] };
+  private socialCache: { source: any[]; value: MaintenanceSocialLink[] } = { source: [], value: [] };
+
+  /** @description Languages of the module for the switcher of the maintenance page. */
+  get switcherLanguages(): AuthLanguage[] {
+    if (this.languageCache.source !== this.languages) {
+      this.languageCache = { source: this.languages, value: this.languages.map(l => ({ code: l.code, name: l.label, icon: l.flag })) };
+    }
+    return this.languageCache.value;
+  }
+
+  /** @description Social links of the site settings with the URL of their icon. */
+  get maintenanceSocialLinks(): MaintenanceSocialLink[] {
+    if (this.socialCache.source !== this.socialLinks) {
+      this.socialCache = {
+        source: this.socialLinks,
+        value: (this.socialLinks ?? []).map(link => ({ name: link.name, url: link.url, icon: this.getIconUrl(link.icon_path) })),
+      };
+    }
+    return this.socialCache.value;
   }
 
   /**
@@ -96,18 +111,5 @@ export abstract class BaseMaintenanceComponent extends BasePublicComponent {
    */
   selectLanguage(code: string): void {
     this.localizationService.setLanguage(code);
-    this.isLangOpen = false;
-  }
-
-  /**
-   * @description Closes the dropdown on a click outside it.
-   * @param event Click anywhere on the page.
-   */
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (this.isLangOpen && !(event.target as HTMLElement | null)?.closest('.maintenance-lang')) {
-      this.isLangOpen = false;
-      this.cdr.markForCheck();
-    }
   }
 }

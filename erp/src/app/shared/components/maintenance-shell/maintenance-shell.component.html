@@ -1,0 +1,85 @@
+<!--
+    @file: maintenance-shell.component.html
+    @path: src/app/shared/components/maintenance-shell/maintenance-shell.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Maintenance page: violet shapes, language switcher (top left), logo (top), the
+        notice with its action (middle), contacts and social links (bottom right), admin link.
+-->
+<div class="mnt-page">
+
+  <!-- Decorative violet shapes (top left, bottom right) -->
+  <svg class="mnt-shape mnt-shape--top" viewBox="0 0 600 560" preserveAspectRatio="xMinYMin meet" aria-hidden="true">
+    <path d="M0 0H560C505 18 430 40 360 78C300 110 262 150 240 210C222 262 214 330 186 392C158 452 110 498 58 524C38 534 18 540 0 542Z"/>
+  </svg>
+  <svg class="mnt-shape mnt-shape--bottom" viewBox="0 0 700 520" preserveAspectRatio="xMaxYMax meet" aria-hidden="true">
+    <path d="M700 0V520H70C90 486 128 458 190 448C290 432 380 424 430 382C484 336 512 252 560 170C604 96 650 30 700 0Z"/>
+  </svg>
+
+  @if (languages.length) {
+    <div class="mnt-lang">
+      <app-auth-language-switcher [languages]="languages" [current]="currentLanguage" [label]="languageLabel"
+                                  menuAlign="start" (selected)="languageSelected.emit($event)" />
+    </div>
+  }
+
+  <header class="mnt-header">
+    <img class="mnt-logo" [src]="logo" alt="JONCL SOLUTIONS">
+  </header>
+
+  <main class="mnt-main" role="status">
+    <h1 class="mnt-heading">{{ heading }}</h1>
+    @if (text) {
+      <p class="mnt-text">{{ text }}</p>
+    }
+    @if (note) {
+      <p class="mnt-note">{{ note }}</p>
+    }
+    @if (actionLabel) {
+      @if (actionLink) {
+        <a class="mnt-action" [routerLink]="actionLink">{{ actionLabel }}</a>
+      } @else {
+        <button type="button" class="mnt-action" [disabled]="actionBusy" (click)="action.emit()">{{ actionLabel }}</button>
+      }
+    }
+  </main>
+
+  @if (hasContacts) {
+    <footer class="mnt-contacts">
+      @if (email) {
+        <a class="mnt-contact" [href]="'mailto:' + email">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/>
+          </svg>
+          {{ email }}
+        </a>
+      }
+      @if (phone) {
+        <a class="mnt-contact" [href]="phoneHref">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+          {{ phone }}
+        </a>
+      }
+      @if (socialLinks.length) {
+        <div class="mnt-social">
+          @for (link of socialLinks; track link.url) {
+            <a class="mnt-social-link" [href]="link.url" target="_blank" rel="noopener noreferrer" [title]="link.name" [attr.aria-label]="link.name">
+              <img [src]="link.icon" alt="" width="18" height="18">
+            </a>
+          }
+        </div>
+      }
+    </footer>
+  }
+
+  @if (adminLoginLabel) {
+    <a routerLink="/auth/login" class="mnt-admin" [title]="adminLoginLabel" [attr.aria-label]="adminLoginLabel">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+      </svg>
+    </a>
+  }
+</div>

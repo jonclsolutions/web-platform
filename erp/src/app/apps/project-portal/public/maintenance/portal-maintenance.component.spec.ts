@@ -25,7 +25,7 @@ describe('Project portal maintenance', () => {
 
   /** Configures the module with the status answer and the `return` address. */
   function setup(status: Observable<any>, returnTo: string | null = '/projects/abc'): void {
-    ctx = createPublicPageContext();
+    ctx = createPublicPageContext({ settings: { settings: { contact_email: 'help@x.cz', contact_phone: '+420 777' }, social_links: [] } });
     ctx.publicData.getFresh.and.returnValue(status);
     TestBed.configureTestingModule({
       imports: [PortalMaintenanceComponent],
@@ -86,18 +86,28 @@ describe('Project portal maintenance', () => {
   });
 
   /**
-   * @description The page shows the text of the administrator (or the default text) while the
-   *   portal is off.
-   * @input status off with 'Back at 6 pm'; then without a text.
-   * @output title key, 'Back at 6 pm'; 'maintenance_text'.
+   * @description The page shows, in the one maintenance look, the text of the administrator (or
+   *   the default text) while the portal is off, the contacts of the site, the switcher of the
+   *   portal languages and "Try again".
+   * @input status off with 'Back at 6 pm'; choose 'en'; retry; then without a text.
+   * @output title key, 'Back at 6 pm'; e-mail, tel:+420777; setLanguage('en');
+   *   a second status request; 'maintenance_text'.
    */
   it('shows the maintenance text', () => {
     setup(of({ is_portal_active: false, maintenance_message: 'Back at 6 pm' }));
     let fixture: ComponentFixture<PortalMaintenanceComponent> = TestBed.createComponent(PortalMaintenanceComponent);
     fixture.detectChanges();
     const text = () => (fixture.nativeElement as HTMLElement).textContent!;
-    expect(text()).toContain('maintenance_title');
-    expect(text()).toContain('Back at 6 pm');
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('h1.mnt-heading')!.textContent).toBe('maintenance_title');
+    expect(el.querySelector('.mnt-text')!.textContent).toBe('Back at 6 pm');
+    expect(el.querySelector('.mnt-contacts')!.textContent).toContain('help@x.cz');
+    expect(el.querySelector('.mnt-contacts a[href^="tel:"]')!.getAttribute('href')).toBe('tel:+420777');
+
+    fixture.componentInstance.selectLanguage('en');
+    expect(TestBed.inject(ProjectPortalLocalizationService).setLanguage).toHaveBeenCalledWith('en');
+    (el.querySelector('button.mnt-action') as HTMLButtonElement).click();
+    expect(ctx.publicData.getFresh).toHaveBeenCalledTimes(2);
 
     TestBed.resetTestingModule();
     setup(of({ is_portal_active: false, maintenance_message: null }));

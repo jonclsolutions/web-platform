@@ -42,7 +42,7 @@ return [
     [
         'area' => 'shop',
         'page_key' => 'shop-maintenance',
-        'route_path' => '/shop-maintenance',
+        'route_path' => '/shop/maintenance',
         'title_i18n' => ['cz' => 'E-shop – údržba | Company name', 'en' => 'Shop – maintenance | Company name'],
         'sort_order' => 50,
     ],

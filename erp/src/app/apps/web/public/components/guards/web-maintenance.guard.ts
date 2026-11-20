@@ -20,6 +20,10 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { map, catchError, of } from 'rxjs';
 import { PublicDataService } from '../../../../../shared/services/public-data.service';
+
+/** Address of the maintenance page of the public web (the web lives at the domain root). */
+export const WEB_MAINTENANCE_URL = '/maintenance';
+
 /**
  * @description Functional route guard ensuring visitors cannot access the public web
  * during maintenance periods.
@@ -32,14 +36,14 @@ export const webMaintenanceGuard = () => {
   const router = inject(Router);
 
   // Avoid infinite redirection loops by bypassing the guard if already on the maintenance page.
-  if (router.url.includes('/web-maintenance')) {
+  if (router.url.split(/[?#]/)[0] === WEB_MAINTENANCE_URL) {
     return true;
   }
 
   return dataService.getFresh<{ is_web_active: boolean }>('web/public/status').pipe(
     map(res => {
       if (!res.is_web_active) {
-        return router.parseUrl('/web-maintenance');
+        return router.parseUrl(WEB_MAINTENANCE_URL);
       }
       return true;
     }),

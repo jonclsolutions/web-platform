@@ -98,7 +98,7 @@ return [
     [
         'area' => 'web',
         'page_key' => 'web-maintenance',
-        'route_path' => '/web-maintenance',
+        'route_path' => '/maintenance',
         'title_i18n' => ['cz' => 'Probíhá údržba | Company name', 'en' => 'Under maintenance | Company name'],
         'sort_order' => 140,
     ],

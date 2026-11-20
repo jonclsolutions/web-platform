@@ -10,6 +10,7 @@
  *   and switches the language on `selected`. Closes on a click outside and on Escape.
  * @usage `<app-auth-language-switcher authLang [languages]="languages" [current]="code"
  *          [label]="t.language.label" (selected)="selectLanguage($event)" />`
+ *   In a left corner add `menuAlign="start"`.
  * @dependencies none
  */
 
@@ -37,6 +38,9 @@ export class AuthLanguageSwitcherComponent {
   @Input() current = '';
   /** Accessible name of the button and of the menu (translated by the page). */
   @Input() label = '';
+  /** Side the menu opens to: `end` = aligned to the right edge (switcher in a right corner),
+   *  `start` = aligned to the left edge (switcher in a left corner) - the menu stays in the window. */
+  @Input() menuAlign: 'start' | 'end' = 'end';
 
   /** Code of the chosen language. */
   @Output() selected = new EventEmitter<string>();

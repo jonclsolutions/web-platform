@@ -18,7 +18,7 @@
   </button>
 
   @if (isOpen) {
-    <ul class="lang-menu" role="listbox" [attr.aria-label]="label">
+    <ul class="lang-menu" [class.lang-menu--start]="menuAlign === 'start'" role="listbox" [attr.aria-label]="label">
       @for (lang of languages; track lang.code) {
         <li class="lang-option" [class.lang-option--active]="current === lang.code" role="option" tabindex="0"
             [attr.aria-selected]="current === lang.code" (click)="select(lang.code)" (keydown.enter)="select(lang.code)">

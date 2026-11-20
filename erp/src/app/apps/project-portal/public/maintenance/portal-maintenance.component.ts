@@ -4,12 +4,13 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Maintenance page of the public project portal (/projects/maintenance) in the light
- *   look of the client portal: the text of the administrator (or the default one), the language
- *   switcher and "Try again", which returns to the page the visitor came from once the portal is
- *   online again. One status check on load does the same.
- * @dependencies PublicDataService (status), ProjectPortalLocalizationService (texts
- *   `maintenance_*`), PortalLanguageSwitcherComponent.
+ * @description Maintenance page of the public project portal (/projects/maintenance) in the one
+ *   maintenance look of the application (MaintenanceShellComponent): the text of the
+ *   administrator (or the default one), the language switcher of the portal texts, the contacts
+ *   of the site and "Try again", which returns to the page the visitor came from once the portal
+ *   is online again. One status check on load does the same.
+ * @dependencies PublicDataService (status, site settings), ProjectPortalLocalizationService (texts
+ *   `maintenance_*`), MaintenanceShellComponent.
  */
 
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
@@ -17,15 +18,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PublicDataService } from '../../../../shared/services/public-data.service';
 import { ProjectPortalLocalizationService } from '../project-portal-localization.service';
-import { PortalLanguageSwitcherComponent } from '../language-switcher/portal-language-switcher.component';
+import { MaintenanceShellComponent, MaintenanceSocialLink } from '../../../../shared/components/maintenance-shell/maintenance-shell.component';
 import { PORTAL_MAINTENANCE_URL, PORTAL_STATUS_ENDPOINT, PortalStatus } from './portal-maintenance';
 
 @Component({
   selector: 'app-portal-maintenance',
   standalone: true,
-  imports: [PortalLanguageSwitcherComponent],
+  imports: [MaintenanceShellComponent],
   templateUrl: './portal-maintenance.component.html',
-  styleUrls: ['../../../../admin/shared-styles/theme.css', '../order-form/order-form.component.css', './portal-maintenance.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PortalMaintenanceComponent implements OnInit {
@@ -40,6 +40,14 @@ export class PortalMaintenanceComponent implements OnInit {
   message: string | null = null;
   /** A status check is running. */
   checking = false;
+  /** Contact e-mail / phone of the site settings ('' = none). */
+  email = '';
+  phone = '';
+  /** Social links of the site settings. */
+  socialLinks: MaintenanceSocialLink[] = [];
+
+  /** Languages of the portal texts (switcher). */
+  readonly languages = this.portalI18n.availableLanguages;
 
   /**
    * @description Text of the portal by key.
@@ -51,7 +59,29 @@ export class PortalMaintenanceComponent implements OnInit {
 
   ngOnInit(): void {
     this.portalI18n.translations$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.cdr.markForCheck());
+    // Contacts of the site (cached at the start of the application).
+    this.publicData.siteSettingsValue$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(res => {
+      this.email = res?.settings?.contact_email ?? '';
+      this.phone = res?.settings?.contact_phone ?? '';
+      this.socialLinks = (res?.social_links ?? []).map((link: any) => ({
+        name: link.name, url: link.url, icon: this.publicData.getStorageUrl(link.icon_path),
+      }));
+      this.cdr.markForCheck();
+    });
     this.check();
+  }
+
+  /** @description Code of the current language of the portal texts. */
+  get currentLanguage(): string {
+    return this.portalI18n.getCurrentLanguage();
+  }
+
+  /**
+   * @description Switches the language of the portal texts (remembered in the browser).
+   * @param code Language code.
+   */
+  selectLanguage(code: string): void {
+    this.portalI18n.setLanguage(code);
   }
 
   /**

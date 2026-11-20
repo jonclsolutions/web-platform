@@ -38,6 +38,8 @@ src/
     │   ├── auth-form.css                   dark sign-in look: tokens + controls of the card (login, activation,
     │   │                                   password reset, portal sign-in) - with <app-auth-shell>
     │   └── README.md                       this file
+    ├── shared/components/maintenance-shell/maintenance-shell.component.css   THE maintenance page of
+    │                                       every module (web, e-shop, project portal) - <app-maintenance-shell>
     │
     ├── admin/
     │   ├── shared-styles/                  whole admin (core + every application, auth, layout, intranet)
@@ -58,7 +60,6 @@ src/
     │   └── components/builders/table-style.css  (table builders – unchanged)
     │
     ├── public/
-    │   ├── shared-styles/maintenance.css   maintenance page (web + e-shop)
     │   └── legal/legal-page/legal-page.component.css   GDPR / TOS / cookies page (web + e-shop)
     │
     └── apps/                               every application keeps its own shared sheets
@@ -237,6 +238,10 @@ get tabItems(): RowButton[] {
 ```ts
 styleUrls: ['…/shared/styles/base.css', '…/shared/styles/auth-form.css', './my-page.component.css'],
 ```
+
+**Maintenance page** of a module – never style your own: pass the texts and data of the module to
+`<app-maintenance-shell [heading] [text] [note] [actionLabel] [actionLink] [languages] [email] [phone] …>`
+(look: `shared/components/maintenance-shell/maintenance-shell.component.css`).
 
 **Dialogs** – never build your own modal for a question, a message or a password:
 `ConfirmDialogService.open(title, message)`, `AlertDialogService.open(title, message, type)` and

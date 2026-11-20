@@ -5,7 +5,10 @@
  * @author JS
  * @created 2026
  * @description Public routes of the e-shop: catalogue, product detail, cart, checkout and the
- *   shared legal pages in the e-shop layout (/shop/...) with its own 404, and the maintenance page.
+ *   shared legal pages in the e-shop layout (/shop/...) with its own 404, and the maintenance page
+ *   (/shop/maintenance - outside the e-shop layout and its maintenance guard).
+ * @note The maintenance route MUST stay BEFORE the 'shop' route: otherwise /shop/maintenance would
+ *   end in the 404 of the e-shop (guarded, so a redirect loop while the e-shop is off).
  * @usage `publicRoutes` of SHOP_APP (shop.app.ts), composed by app.routes.ts.
  */
 
@@ -19,6 +22,11 @@ import { legalPageRoute } from '../../../public/legal/legal-page/legal-page.conf
 export const SHOP_PUBLIC_AREA: PublicArea = { translationModule: 'shop', path: 'shop', theme: 'light' };
 
 export const SHOP_PUBLIC_ROUTES: Routes = [
+  {
+    path: 'shop/maintenance',
+    title: 'shop.shop-maintenance',
+    loadComponent: () => import('./shop-maintenance/shop-maintenance.component').then(m => m.ShopMaintenanceComponent)
+  },
   {
     path: 'shop',
     data: { [PUBLIC_AREA_DATA]: SHOP_PUBLIC_AREA },
@@ -55,10 +63,5 @@ export const SHOP_PUBLIC_ROUTES: Routes = [
       // Unknown /shop/... URL - LAST child of the e-shop (404 in the e-shop layout and language).
       publicNotFoundRoute('shop', { canActivate: [shopMaintenanceGuard] })
     ]
-  },
-  {
-    path: 'shop-maintenance',
-    title: 'shop.shop-maintenance',
-    loadComponent: () => import('./shop-maintenance/shop-maintenance.component').then(m => m.ShopMaintenanceComponent)
   },
 ];

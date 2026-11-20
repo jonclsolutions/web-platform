@@ -5,24 +5,23 @@
  * @author JS
  * @created 2026
  * @description Maintenance page of the e-shop - the shared page of BaseMaintenanceComponent
- * (same look and language dropdown as the web one) with a link back to the web; returns to the
+ * (the one maintenance look with a language switcher) with a link back to the web; returns to the
  * catalogue once the e-shop is active.
  * @dependencies
  * - BaseMaintenanceComponent: template, languages, status check.
+ * - MaintenanceShellComponent: the one maintenance look (shared with the e-shop / web and the project portal).
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { UpperCasePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { Observable, map } from 'rxjs';
 import { BaseMaintenanceComponent } from '../../../../public/shared/maintenance/base-maintenance.component';
+import { MaintenanceShellComponent } from '../../../../shared/components/maintenance-shell/maintenance-shell.component';
 
 @Component({
   selector: 'app-shop-maintenance',
   standalone: true,
-  imports: [RouterLink, UpperCasePipe],
+  imports: [MaintenanceShellComponent],
   templateUrl: '../../../../public/shared/maintenance/maintenance-page.component.html',
-  styleUrls: ['../../../../public/shared-styles/maintenance.css', './shop-maintenance.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ShopMaintenanceComponent extends BaseMaintenanceComponent {

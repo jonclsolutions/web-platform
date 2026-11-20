@@ -1,0 +1,250 @@
+/*
+    @file: maintenance-shell.component.css
+    @path: src/app/shared/components/maintenance-shell/maintenance-shell.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: The one look of the maintenance pages - the dark page of the public website,
+        violet shapes in the top-left and bottom-right corners, logo at the top, notice in the middle, contacts in the bottom
+        right. Change the look of every maintenance page here.
+    @dependencies: ../../styles/base.css
+*/
+
+/*
+    @module: Tokens
+    @description: Colours and fonts of the maintenance page - the palette of the public website
+        (apps/web/public/shared-styles/theme.css): dark background, violet accent; --mnt-brand is
+        the colour of the brand wordmark in the footer of the website (assets/images/logos/logo_big.svg),
+        used by the logo and the corner shapes.
+    @usage: :host
+*/
+:host {
+  --mnt-bg: #0d0d1b;
+  --mnt-grid: rgba(166, 125, 255, 0.03);
+  --mnt-brand: #241a4a;
+  --mnt-shape: var(--mnt-brand);
+  /* Text: no pure white on the dark page - soft light heading, muted body (as the hero of the website). */
+  --mnt-heading: #dcdcea;
+  --mnt-text: #a0a0b5;
+  --mnt-text-muted: #6f6f88;
+  --mnt-shape-text: #c4c4d6;
+  --mnt-accent: #a67dff;
+  --mnt-accent-dark: #6b2e91;
+  --mnt-accent-hover: #7d35ae;
+  --mnt-surface: #111128;
+  --mnt-border: rgba(166, 125, 255, 0.22);
+  --mnt-ff: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  display: block;
+}
+
+/*
+    @module: Page
+    @description: Full-screen dark page above everything (the module layouts stay hidden), the
+        content in a column: logo, notice, contacts.
+    @usage: .mnt-page > .mnt-header, .mnt-main, .mnt-contacts
+*/
+.mnt-page {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: auto;
+  background: var(--mnt-bg);
+  font-family: var(--mnt-ff);
+  color: var(--mnt-text);
+}
+
+/* Brand grid of the public website in the background. */
+.mnt-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--mnt-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mnt-grid) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+
+/*
+    @module: Shapes
+    @description: Organic shapes in the brand colour in the top-left and bottom-right corners
+        (decoration).
+    @usage: svg.mnt-shape.mnt-shape--top / --bottom
+*/
+.mnt-shape {
+  position: fixed;
+  fill: var(--mnt-shape);
+  pointer-events: none;
+}
+.mnt-shape--top { top: 0; left: 0; width: min(46vw, 640px); height: auto; }
+.mnt-shape--bottom { right: 0; bottom: 0; width: min(54vw, 760px); height: auto; }
+
+/*
+    @module: Language switcher
+    @description: Top-left corner, on the violet shape.
+    @usage: .mnt-lang > app-auth-language-switcher
+*/
+.mnt-lang { position: fixed; top: 14px; left: 16px; z-index: 2; }
+
+/*
+    @module: Logo and notice
+    @description: Logo at the top, the notice centred in the remaining height, one action.
+    @usage: .mnt-header > img.mnt-logo; .mnt-main > h1.mnt-heading, p.mnt-text, p.mnt-note, .mnt-action
+*/
+.mnt-header { position: relative; z-index: 1; padding: clamp(40px, 9vh, 90px) 24px 0; }
+.mnt-logo {
+  display: block;
+  width: clamp(200px, 30vw, 380px);
+  height: auto; /* Original colour of the file = the brand wordmark of the website footer. */
+}
+
+.mnt-main {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 520px;
+  padding: 40px 24px 120px;
+}
+/* Entry animation on the children, not on the column: the column fills the page exactly, so a
+   moved column would make the page scrollable for the length of the animation - a scrollbar
+   would flash and shift the page sideways. The children move inside the bottom padding. */
+.mnt-main > * { animation: mntFadeUp 0.6s ease-out both; }
+
+.mnt-heading {
+  margin: 0;
+  font-family: var(--mnt-ff);
+  font-size: clamp(1.3rem, 2vw, 1.6rem);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--mnt-heading);
+}
+
+.mnt-text {
+  margin: 0;
+  font-family: var(--mnt-ff);
+  font-size: clamp(0.95rem, 1.2vw, 1.05rem);
+  line-height: 1.65;
+  color: var(--mnt-text);
+  white-space: pre-line;
+}
+
+.mnt-note { margin: 2px 0 0; font-family: var(--mnt-ff); font-size: 0.85rem; line-height: 1.55; color: var(--mnt-text-muted); }
+
+.mnt-action {
+  margin-top: 18px;
+  padding: 10px 22px;
+  background: var(--mnt-accent-dark);
+  border: 1px solid var(--mnt-accent);
+  border-radius: 999px;
+  color: #f0eefa;
+  font: 600 0.85rem var(--mnt-ff);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.15s ease;
+}
+.mnt-action:hover:not(:disabled) { background: var(--mnt-accent-hover); transform: translateY(-1px); }
+.mnt-action:disabled { opacity: 0.6; cursor: default; }
+
+/*
+    @module: Contacts
+    @description: Bottom-right corner on the violet shape: e-mail, phone, social icons.
+    @usage: .mnt-contacts > a.mnt-contact, .mnt-social > a.mnt-social-link
+*/
+.mnt-contacts {
+  position: fixed;
+  right: 28px;
+  bottom: 22px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  color: var(--mnt-shape-text);
+}
+.mnt-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 500 0.85rem var(--mnt-ff);
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+.mnt-contact:hover { color: var(--mnt-heading); }
+.mnt-social { display: flex; gap: 8px; margin-top: 4px; }
+.mnt-social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  transition: background 0.18s ease;
+}
+.mnt-social-link:hover { background: rgba(255, 255, 255, 0.16); }
+.mnt-social-link img { filter: brightness(0) invert(0.8); }
+
+/*
+    @module: Admin sign-in link
+    @description: Quiet round icon in the bottom-left corner.
+    @usage: a.mnt-admin
+*/
+.mnt-admin {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--mnt-text-muted);
+  border: 1px solid var(--mnt-border);
+  background: var(--mnt-surface);
+  transition: color 0.18s ease, border-color 0.18s ease;
+}
+.mnt-admin:hover { color: var(--mnt-accent); border-color: var(--mnt-accent); }
+
+.mnt-action:focus-visible, .mnt-contact:focus-visible, .mnt-social-link:focus-visible, .mnt-admin:focus-visible {
+  outline: 2px solid var(--mnt-accent);
+  outline-offset: 3px;
+}
+.mnt-contacts a:focus-visible { outline-color: #fff; }
+
+@keyframes mntFadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .mnt-main > * { animation: none; }
+  .mnt-action:hover:not(:disabled) { transform: none; }
+}
+
+/* Phone: smaller shapes, centred notice; the contacts leave the corner and close the page
+   under the notice (centred, in the flow of the page). */
+@media (max-width: 640px) {
+  .mnt-shape--top { width: 62vw; }
+  .mnt-shape--bottom { width: 80vw; }
+  .mnt-header { padding-top: 84px; }
+  .mnt-main { align-items: center; text-align: center; padding: 32px 22px 40px; }
+  .mnt-contacts {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    align-items: center;
+    max-width: 100%;
+    padding: 0 22px 72px; /* keeps clear of the admin icon in the corner */
+  }
+  .mnt-contact { font-size: 0.82rem; overflow-wrap: anywhere; }
+}

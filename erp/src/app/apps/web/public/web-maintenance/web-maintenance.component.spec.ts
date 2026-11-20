@@ -55,72 +55,62 @@ describe('WebMaintenanceComponent', () => {
   });
 
   /**
-   * @description Translated page with the language dropdown of the main pages: the current
-   *   language on the button, the menu toggles, a choice calls setLanguage (stored in the
-   *   browser) and closes the menu, a click outside closes it, a click inside keeps it; the web
-   *   has a "try again" button instead of the back link (checks the status again), the admin link
-   *   is translated; one language → dropdown still shown (as in the header), none → hidden.
-   * @input is_web_active false; retry with the web active; toggle; click body; toggle + click
-   *   inside; option 'en'; languages [cz]; languages [].
-   * @output 'Údržba', 'CZ'; retry → navigate(['/home']); menu with 2 options; closed; open;
-   *   setLanguage('en') + 'EN'; dropdown with one language; no .maintenance-lang.
+   * @description Translated page in the one maintenance look: heading, the language switcher of
+   *   the main pages (current language, choice calls setLanguage - stored in the browser), "try
+   *   again" (checks the status again), the contacts with the social links, the translated admin
+   *   link; one language → switcher still shown (as in the header), none → hidden.
+   * @input is_web_active false; open the switcher, choose 'en'; retry with the web active;
+   *   languages [cz]; languages [].
+   * @output 'Údržba'; label 'Jazyk', 'CZ', 2 options; setLanguage('en'); retry → navigate(['/home']);
+   *   e-mail, phone, FB icon URL; admin title 'Admin'; switcher with one language; no .mnt-lang.
    */
-  it('shows the translated page with the language dropdown', () => {
+  it('shows the translated page in the one maintenance look', () => {
     ctx.publicData.getFresh.and.returnValue(of({ is_web_active: false }));
     const fixture = TestBed.createComponent(WebMaintenanceComponent);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
-    const page = fixture.componentInstance;
-    expect(el.querySelector('h1')?.textContent).toContain('Údržba');
-    expect(el.querySelector('.maintenance-lang-trigger')?.getAttribute('aria-label')).toBe('Jazyk');
-    expect(el.querySelector('.maintenance-lang-code')?.textContent).toContain('CZ');
-    expect(page.activeLang).toEqual(STUB_LANGUAGES[0]);
-    const retry = el.querySelector('button.btn-home') as HTMLButtonElement;
+    expect(el.querySelector('h1.mnt-heading')?.textContent).toContain('Údržba');
+    expect(el.querySelector('.mnt-lang .lang-trigger')?.getAttribute('aria-label')).toBe('Jazyk');
+    expect(el.querySelector('.mnt-lang .lang-trigger-code')?.textContent).toContain('CZ');
+
+    (el.querySelector('.mnt-lang .lang-trigger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const options = el.querySelectorAll('.mnt-lang .lang-option');
+    expect(options.length).toBe(2);
+    (options[1] as HTMLElement).click();
+    expect(ctx.localization.setLanguage).toHaveBeenCalledWith('en');
+
+    const retry = el.querySelector('button.mnt-action') as HTMLButtonElement;
     expect(retry.textContent).toContain('Znovu');
     ctx.publicData.getFresh.and.returnValue(of({ is_web_active: true }));
     retry.click();
     expect(router.navigate).toHaveBeenCalledWith(['/home']);
-    expect(el.querySelector('.maintenance-admin-link')?.getAttribute('title')).toBe('Admin');
 
-    (el.querySelector('.maintenance-lang-trigger') as HTMLButtonElement).click();
-    fixture.detectChanges();
-    expect(el.querySelectorAll('.maintenance-lang-option').length).toBe(2);
-    document.body.click();
-    expect(page.isLangOpen).toBeFalse();
-
-    page.toggleLang();
-    page.onDocumentClick({ target: el.querySelector('.maintenance-lang-trigger') } as any);
-    expect(page.isLangOpen).toBeTrue();
-    page.onDocumentClick({ target: null } as any);
-    expect(page.isLangOpen).toBeFalse();
-    page.toggleLang();
-    fixture.detectChanges();
-    (el.querySelectorAll('.maintenance-lang-option')[1] as HTMLElement).click();
-    fixture.detectChanges();
-    expect(ctx.localization.setLanguage).toHaveBeenCalledWith('en');
-    expect(page.isLangOpen).toBeFalse();
-    expect(el.querySelector('.maintenance-lang-code')?.textContent).toContain('EN');
+    expect(el.querySelector('.mnt-contacts')?.textContent).toContain('help@x.cz');
+    expect(el.querySelector('.mnt-contacts')?.textContent).toContain('777');
+    expect(el.querySelector('.mnt-social-link img')?.getAttribute('src')).toContain('fb.svg');
+    expect(el.querySelector('.mnt-admin')?.getAttribute('title')).toBe('Admin');
 
     ctx.localization.fetchLanguages.and.returnValue(of({ languages: [STUB_LANGUAGES[0]] }));
     const single = TestBed.createComponent(WebMaintenanceComponent);
     single.detectChanges();
-    expect(single.nativeElement.querySelector('.maintenance-lang')).not.toBeNull();
+    expect(single.nativeElement.querySelector('.mnt-lang')).not.toBeNull();
     ctx.localization.fetchLanguages.and.returnValue(of({ languages: [] }));
     const none = TestBed.createComponent(WebMaintenanceComponent);
     none.detectChanges();
-    expect(none.nativeElement.querySelector('.maintenance-lang')).toBeNull();
+    expect(none.nativeElement.querySelector('.mnt-lang')).toBeNull();
   });
 
   /**
-   * @description Guard: maintenance URL passes immediately; web off → UrlTree '/web-maintenance';
+   * @description Guard: maintenance URL passes immediately; web off → UrlTree '/maintenance';
    *   web on → true; status error → true (a broken status endpoint must not lock the site).
-   * @input router.url '/web-maintenance'; '/' with off / on / error.
+   * @input router.url '/maintenance'; '/' with off / on / error.
    * @output true (no request); UrlTree; true; true.
    */
   it('guards the web by its maintenance status', () => {
     const run = () => TestBed.runInInjectionContext(() => webMaintenanceGuard());
     const value = (result: any) => { let v: any; (result as Observable<any>).subscribe(r => (v = r)); return v; };
-    const url = spyOnProperty(router, 'url', 'get').and.returnValue('/web-maintenance');
+    const url = spyOnProperty(router, 'url', 'get').and.returnValue('/maintenance');
     expect(run()).toBeTrue();
     expect(ctx.publicData.getFresh).not.toHaveBeenCalled();
 
@@ -128,7 +118,7 @@ describe('WebMaintenanceComponent', () => {
     ctx.publicData.getFresh.and.returnValue(of({ is_web_active: false }));
     const tree = value(run());
     expect(tree instanceof UrlTree).toBeTrue();
-    expect(router.serializeUrl(tree)).toBe('/web-maintenance');
+    expect(router.serializeUrl(tree)).toBe('/maintenance');
 
     ctx.publicData.getFresh.and.returnValue(of({ is_web_active: true }));
     expect(value(run())).toBeTrue();
