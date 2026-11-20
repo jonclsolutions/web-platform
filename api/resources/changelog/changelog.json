@@ -41,6 +41,12 @@
             "area": "core",
             "part": "admin",
             "text": "Calendar events, security event triage, the own password change, e-mail domains of administrators and languages of the text editors open in the shared popup frame too; the delete buttons are red."
+        },
+        {
+            "type": "changed",
+            "area": "shop",
+            "part": "admin",
+            "text": "E-shop order detail, order form and the order history of a customer open in the shared popup frame: status and amount in the header, Escape closes them and the page under them no longer scrolls."
         }
     ],
     "releases": [

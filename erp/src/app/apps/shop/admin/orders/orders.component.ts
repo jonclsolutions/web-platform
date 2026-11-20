@@ -9,6 +9,7 @@
  * - BaseDataComponent: Inherits standard CRUD operations for order management.
  * - ConfirmDialogService: Facilitates user confirmation for sensitive deletions.
  * - Core Providers: Handles API communication and dependency injection.
+ * - AdminModalComponent: the frame of the order detail and the order form popups.
  * - Config.create* factory functions: i18n-aware definitions.
  * - RowButtonBuilderComponent (SHARED_UI_BUILDERS): the tabs all / pending tasks / trash.
  * - EmailTemplateEditorComponent: texts of the order confirmation e-mail (toolbar "Edit
@@ -30,6 +31,7 @@ import { GraphBuilderComponent } from '../../../../admin/components/builders/gra
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../../../admin/components/email-template-editor/email-template-editor.component';
+import { AdminModalComponent } from '../../../../admin/components/admin-modal/admin-modal.component';
 
 interface CouponValidationResult {
   valid: boolean;
@@ -46,9 +48,9 @@ type TableMode = 'all' | 'pending_tasks' | 'trash';
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHeaderComponent, EmailTemplateEditorComponent],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHeaderComponent, EmailTemplateEditorComponent, AdminModalComponent],
   templateUrl: './orders.component.html',
-  styleUrls: ['../../../../admin/shared-styles/page.css', '../shared-styles/list-page.css', './orders.component.css'],
+  styleUrls: ['../../../../admin/shared-styles/page.css', '../shared-styles/list-page.css', '../../../../admin/shared-styles/modal.css', './orders.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OrdersComponent extends BaseDataComponent<Order> implements OnInit, OnDestroy {
@@ -149,23 +151,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     super.ngOnInit();
     this.initWithAuthCheck(this.router);
     this.loadDependencies();
-  }
-
-  override ngOnDestroy(): void {
-    super.ngOnDestroy();
-    this.toggleBodyScroll(false);
-  }
-
-  /**
-   * @description Locks or unlocks background scrolling when modals are active.
-   * @param lock Boolean indicating if the body should be locked.
-   */
-  private toggleBodyScroll(lock: boolean): void {
-    if (lock) {
-      document.body.classList.add('modal-open');
-    } else {
-      document.body.classList.remove('modal-open');
-    }
   }
 
   /**
@@ -389,7 +374,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       next: (fullOrder) => {
         this.selectedOrderForDetail = fullOrder;
         this.showDetailsModal = true;
-        this.toggleBodyScroll(true);
         this.cd.markForCheck();
       },
       error: () => {
@@ -418,7 +402,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   closeDetailsModal(): void {
     this.showDetailsModal = false;
     this.selectedOrderForDetail = null;
-    this.toggleBodyScroll(false);
     this.cd.markForCheck();
   }
 
@@ -459,7 +442,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     };
 
     this.showOrderForm = true;
-    this.toggleBodyScroll(true);
     this.cd.markForCheck();
   }
 
@@ -499,7 +481,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
           company: contact?.company || ''
         };
         this.showOrderForm = true;
-        this.toggleBodyScroll(true);
         this.recalculateTotals();
         this.cd.markForCheck();
       },
@@ -703,7 +684,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
         this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('order_saved_message'), 'success');
         this.showOrderForm = false;
         this.editingOrder = null;
-        this.toggleBodyScroll(false);
         this.refreshData();
 
         if (this.showDetailsModal && this.selectedOrderForDetail?.id) {
@@ -717,7 +697,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
           ).subscribe({
             next: (updatedOrder) => {
               this.selectedOrderForDetail = updatedOrder;
-              this.toggleBodyScroll(true);
             },
             error: () => {
               console.error('Failed to refresh order details after save.');
@@ -893,7 +872,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   closeOrderForm(): void {
     this.showOrderForm = false;
     this.editingOrder = null;
-    this.toggleBodyScroll(false);
     this.cd.markForCheck();
   }
 

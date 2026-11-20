@@ -63,7 +63,7 @@ describe('OrdersComponent', () => {
     component = fixture.componentInstance;
   });
 
-  afterEach(() => { fixture.destroy(); document.body.classList.remove('modal-open'); });
+  afterEach(() => { fixture.destroy(); });
 
   const loadLookups = () => { component.ngOnInit(); };
 
@@ -206,14 +206,13 @@ describe('OrdersComponent', () => {
     /**
      * @description Details are loaded into the modal; failures show an error; guards prevent double loading.
      * @input  handleViewDetails({ id: 4 }); without id; while processing; failing request
-     * @output getOne('shop/orders/4'); modal open, body locked; error 'shop-orders.load_details_failed_message'; one request per allowed call
+     * @output getOne('shop/orders/4'); modal open; error 'shop-orders.load_details_failed_message'; one request per allowed call
      */
     it('shows the order details', () => {
       dh().getOne.and.returnValue(of({ id: 4, status: 'shipped' }));
       component.handleViewDetails({ id: 4 } as any);
       expect(dh().getOne).toHaveBeenCalledWith('shop/orders/4');
       expect(component.showDetailsModal).toBeTrue();
-      expect(document.body.classList.contains('modal-open')).toBeTrue();
       component.handleViewDetails({} as any);
       (component as any).isProcessing = true;
       component.handleViewDetails({ id: 4 } as any);
@@ -224,7 +223,6 @@ describe('OrdersComponent', () => {
       expect(dh().getOne).toHaveBeenCalledTimes(2);
       component.closeDetailsModal();
       expect(component.selectedOrderForDetail).toBeNull();
-      expect(document.body.classList.contains('modal-open')).toBeFalse();
     });
 
     /**
@@ -571,21 +569,12 @@ describe('OrdersComponent', () => {
   });
 
   /**
-   * @description Destroying the page releases the body scroll lock.
-   * @input  body locked; fixture.destroy()
-   * @output body without 'modal-open'
-   */
-  it('unlocks the body scroll on destroy', () => {
-    document.body.classList.add('modal-open');
-    fixture.destroy();
-    expect(document.body.classList.contains('modal-open')).toBeFalse();
-  });
-
-  /**
-   * @description The list, the detail modal and the order form render.
-   * @input  detectChanges(); details of a shipped order; order form with one item and a coupon
+   * @description The list, the detail modal and the order form render - both in the shared popup
+   *   frame: the detail (lg) with the order number in the title and the status / amount in its
+   *   header, the form (xl) with cancel / save in its footer; Escape closes the detail.
+   * @input  detectChanges(); details of a shipped order; Escape; order form with one item and a coupon
    * @output 'shop-orders.table_header'; detail with the order contact (not the customer name) and translated status;
-   *   VAT summary in the form
+   *   title 'shop-orders.detail_modal_title_prefix #OBJ-4'; closed by Escape; form xl with 2 footer buttons
    */
   it('renders the page, details and form', fakeAsync(() => {
     loadLookups();
@@ -602,13 +591,20 @@ describe('OrdersComponent', () => {
     expect(text).not.toContain('Old Name');
     expect(text).toContain('Brno');                // city from the customer record
     expect(text).toContain('shop-orders.status_shipped');
-    component.closeDetailsModal();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.am-card')!.getAttribute('data-size')).toBe('lg');
+    expect(el.querySelector('.am-title')!.textContent!.trim()).toBe('shop-orders.detail_modal_title_prefix #OBJ-4');
+    expect(el.querySelector('.am-header-actions .detail-final-amount')).not.toBeNull();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(component.showDetailsModal).toBeFalse();
     component.handleCreateFormOpened();
     component.editingOrder!.items = [{ product_id: 1, product_variant_id: 11, quantity: 1, unit_price: 100, vat_rate: 21, total_price: 100 } as any];
     component.editingOrder!.coupon_id = 1;
     component.recalculateTotals();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('input, select').length).toBeGreaterThan(0);
+    expect(el.querySelector('.am-card')!.getAttribute('data-size')).toBe('xl');
+    expect(el.querySelectorAll('.am-footer .am-btn').length).toBe(2);
     discardPeriodicTasks();
   }));
 });

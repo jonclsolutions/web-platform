@@ -79,33 +79,26 @@
 </div>
 
 @if (showDetailsModal && selectedOrderForDetail) {
-  <div class="modal-overlay" (click)="closeDetailsModal()">
-    <div class="modal-content modal-detail" (click)="$event.stopPropagation()">
-
-      <div class="detail-modal-header">
-        <div class="detail-modal-header-left">
-          <div class="detail-order-number-badge">
-            #{{ selectedOrderForDetail.order_number }}
-          </div>
-          <div class="detail-status-row">
-            <span class="badge" [ngClass]="'status-' + selectedOrderForDetail.status">
-              {{ getStatusLabel(selectedOrderForDetail.status) }}
-            </span>
-            <span class="badge" [ngClass]="'payment-' + selectedOrderForDetail.payment_status">
-              {{ getPaymentStatusLabel(selectedOrderForDetail.payment_status) }}
-            </span>
-            @if (selectedOrderForDetail.coupon) {
-              <span class="badge badge-coupon">🎫 {{ selectedOrderForDetail.coupon.code }}</span>
-            }
-          </div>
-        </div>
-        <div class="detail-modal-header-right">
-          <div class="detail-final-amount">{{ formatCurrency(selectedOrderForDetail.final_amount) }}</div>
-          <div class="detail-final-label">{{ t('detail_final_amount_label') }}</div>
-        </div>
-        <button class="close-btn" (click)="closeDetailsModal()">✕</button>
+  <app-admin-modal size="lg" [heading]="t('detail_modal_title_prefix') + ' #' + selectedOrderForDetail.order_number" (dismissed)="closeDetailsModal()">
+    <div class="detail-header-meta" modal-header-actions>
+      <div class="detail-status-row">
+        <span class="badge" [ngClass]="'status-' + selectedOrderForDetail.status">
+          {{ getStatusLabel(selectedOrderForDetail.status) }}
+        </span>
+        <span class="badge" [ngClass]="'payment-' + selectedOrderForDetail.payment_status">
+          {{ getPaymentStatusLabel(selectedOrderForDetail.payment_status) }}
+        </span>
+        @if (selectedOrderForDetail.coupon) {
+          <span class="badge badge-coupon">🎫 {{ selectedOrderForDetail.coupon.code }}</span>
+        }
       </div>
+      <div class="detail-modal-header-right">
+        <div class="detail-final-amount">{{ formatCurrency(selectedOrderForDetail.final_amount) }}</div>
+        <div class="detail-final-label">{{ t('detail_final_amount_label') }}</div>
+      </div>
+    </div>
 
+    <div class="modal-detail">
       <div class="detail-timeline">
         @if (selectedOrderForDetail.status === 'canceled' || selectedOrderForDetail.status === 'returned') {
           <div class="timeline-alert-banner" [ngClass]="'banner-' + selectedOrderForDetail.status">
@@ -134,7 +127,7 @@
         }
       </div>
 
-      <div class="modal-body detail-modal-body">
+      <div class="detail-modal-body">
 
         <div class="detail-grid-2">
 
@@ -350,287 +343,280 @@
 
       </div>
 
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeDetailsModal()">{{ i18n.getValue('shared.close') }}</button>
-        <button class="btn btn-primary" (click)="openEditOrderForm(selectedOrderForDetail)">✏️ {{ t('btn_edit_label') }}</button>
-      </div>
     </div>
-  </div>
+
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" (click)="closeDetailsModal()">{{ i18n.getValue('shared.close') }}</button>
+      <button type="button" class="am-btn am-btn--primary" (click)="openEditOrderForm(selectedOrderForDetail)">✏️ {{ t('btn_edit_label') }}</button>
+    </ng-container>
+  </app-admin-modal>
 }
 
 @if (showOrderForm && editingOrder) {
-  <div class="modal-overlay" (click)="closeOrderForm()">
-    <div class="modal-content modal-form" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>{{ editingOrder.id ? ('✏️ ' + t('form_title_edit')) : ('➕ ' + t('form_title_new')) }}</h2>
-        <button class="close-btn" (click)="closeOrderForm()">✕</button>
-      </div>
-      <div class="modal-body">
-        <form class="order-form">
-          <fieldset>
-            <legend>{{ t('legend_basic_contact') }}</legend>
+  <app-admin-modal size="xl" [heading]="editingOrder.id ? ('✏️ ' + t('form_title_edit')) : ('➕ ' + t('form_title_new'))" (dismissed)="closeOrderForm()">
+    <form class="order-form">
+      <fieldset>
+        <legend>{{ t('legend_basic_contact') }}</legend>
 
-            <div class="form-row-3">
-              <div class="form-group">
-                <label>{{ t('label_email_required') }}</label>
-                <input
-                  type="email"
-                  [(ngModel)]="editingOrder.email"
-                  name="email"
-                  [placeholder]="t('placeholder_email')"
-                  required>
-              </div>
-              <div class="form-group">
-                <label>{{ t('label_phone_required') }}</label>
-                <input
-                  type="tel"
-                  [(ngModel)]="editingOrder.phone"
-                  name="phone"
-                  [placeholder]="t('placeholder_phone')"
-                  required>
-              </div>
-              <div class="form-group">
-                <label>{{ t('label_company_optional') }}</label>
-                <input
-                  type="text"
-                  [(ngModel)]="editingOrder.company"
-                  name="company"
-                  [placeholder]="t('placeholder_optional')">
-              </div>
-            </div>
-
-            <div class="form-row-2">
-              <div class="form-group">
-                <label>{{ t('label_first_name_required') }}</label>
-                <input
-                  type="text"
-                  [(ngModel)]="editingOrder.first_name"
-                  name="first_name"
-                  [placeholder]="t('placeholder_first_name')"
-                  required>
-              </div>
-              <div class="form-group">
-                <label>{{ t('label_last_name_required') }}</label>
-                <input
-                  type="text"
-                  [(ngModel)]="editingOrder.last_name"
-                  name="last_name"
-                  [placeholder]="t('placeholder_last_name')"
-                  required>
-              </div>
-            </div>
-
-            <hr class="form-divider" style="border: 0; border-top: 1px solid var(--border-color, #eee); margin: 15px 0;">
-
-            <div class="form-row-2">
-              <div class="form-group">
-                <label>{{ t('label_payment_method_required') }}</label>
-                <select [(ngModel)]="editingOrder.payment_method_id" name="payment_method_id" required (change)="recalculateTotals()">
-                  <option [value]="0">{{ t('select_placeholder') }}</option>
-                  @for (pm of paymentMethods; track pm) {
-                    <option [value]="pm.id">
-                      {{ pm.name }}
-                      @if (pm.price > 0) { ({{ formatCurrency(pm.price) }}) }
-                    </option>
-                  }
-                </select>
-              </div>
-              <div class="form-group">
-                <label>{{ t('label_shipping_method_required') }}</label>
-                <select [(ngModel)]="editingOrder.shipping_method_id" name="shipping_method_id" required (change)="recalculateTotals()">
-                  <option value="">{{ t('select_placeholder') }}</option>
-                  @for (sm of shippingMethods; track sm) {
-                    <option [value]="sm.id">{{ sm.name }} ({{ formatCurrency(sm.base_price) }})</option>
-                  }
-                </select>
-              </div>
-            </div>
-
-            <div class="form-row-2">
-              <div class="form-group">
-                <label>{{ t('label_coupon') }}</label>
-                <select [(ngModel)]="editingOrder.coupon_id"
-                  name="coupon_id"
-                  (change)="recalculateTotals()"
-                  [ngClass]="getCouponValidationClass()"
-                  [disabled]="!!editingOrder.id"
-                  class="form-control"
-                  [class.disabled-coupon]="editingOrder.id">
-                  <option value="">{{ t('select_no_coupon') }}</option>
-                  @for (coup of coupons; track coup) {
-                    <option [value]="coup.id">{{ coup.code }} ({{ getCouponDisplayValue(coup) }})</option>
-                  }
-                </select>
-                @if (editingOrder.id && editingOrder.coupon_id) {
-                  <div class="text-muted small mt-1">ℹ️ {{ t('coupon_locked_hint') }}</div>
-                }
-                @if (editingOrder.coupon_id && !couponValidation.valid) {
-                  <div class="coupon-error-msg">⚠️ {{ couponValidation.error }}</div>
-                }
-              </div>
-              <div class="form-group"></div>
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend>{{ t('legend_order_statuses') }}</legend>
-            <div class="form-row-2">
-              <div class="form-group">
-                <label>{{ t('label_order_status_required') }}</label>
-                <select [(ngModel)]="editingOrder.status" name="status" required>
-                  @for (opt of statusOptions; track opt) {
-                    <option [value]="opt.value">{{ opt.label }}</option>
-                  }
-                </select>
-              </div>
-              <div class="form-group">
-                <label>{{ t('label_payment_status_required') }}</label>
-                <select [(ngModel)]="editingOrder.payment_status" name="payment_status" required>
-                  @for (opt of paymentStatusOptions; track opt) {
-                    <option [value]="opt.value">{{ opt.label }}</option>
-                  }
-                </select>
-              </div>
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend>{{ t('legend_shipping_address') }}</legend>
-            <div class="form-group">
-              <label>{{ t('label_street_required') }}</label>
-              <input type="text" [(ngModel)]="editingOrder.shipping_address" name="shipping_address" required>
-            </div>
-            <div class="form-row-2">
-              <div class="form-group">
-                <label>{{ t('label_city_required') }}</label>
-                <input type="text" [(ngModel)]="editingOrder.shipping_city" name="shipping_city" required>
-              </div>
-              <div class="form-group">
-                <label>{{ t('label_postal_code_required') }}</label>
-                <input type="text" [(ngModel)]="editingOrder.shipping_postal_code" name="shipping_postal_code" required>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>{{ t('label_country_required') }}</label>
-              <input type="text" [(ngModel)]="editingOrder.shipping_country" name="shipping_country" required>
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend>{{ t('legend_order_items') }}</legend>
-            @if (getVisibleItems(editingOrder).length === 0) {
-              <div class="empty-state">{{ t('empty_items') }}</div>
-            }
-            @for (item of editingOrder.items; track item; let i = $index) {
-              <div class="order-item" [class.deleted]="item._delete">
-                <div class="item-header">
-                  <h4>{{ t('item_number_prefix') }} {{ i + 1 }}</h4>
-                  <button type="button" class="btn-icon danger" (click)="deleteOrderItem(i)">🗑️</button>
-                </div>
-                <div class="item-form">
-                  <div class="form-row-3">
-                    <div class="form-group">
-                      <label>{{ t('label_product_variant_required') }}</label>
-                      <select [(ngModel)]="item.product_variant_id" [name]="'variant_' + i"
-                        (change)="onVariantSelected(item, i)" [disabled]="!!item._delete">
-                        <option value="">{{ t('select_variant_placeholder') }}</option>
-                        @for (v of variants; track v) {
-                          <option [value]="v.id">{{ v.product_name }} - {{ v.variant_name }}</option>
-                        }
-                      </select>
-                    </div>
-                    <div class="form-group">
-                      <label>{{ t('label_quantity_required') }}</label>
-                      <input type="number" [(ngModel)]="item.quantity" [name]="'qty_' + i"
-                        (change)="onItemQuantityChange(item)" min="1" [disabled]="!!item._delete">
-                    </div>
-                    <div class="form-group">
-                      <label>{{ t('label_unit_price_required') }}</label>
-                      <input type="number" [(ngModel)]="item.unit_price" [name]="'price_' + i"
-                        (change)="onItemPriceChange(item)" min="0" step="0.01" [disabled]="!!item._delete">
-                    </div>
-                  </div>
-                  <div class="item-total">
-                    <label>{{ t('item_total_label') }}</label>
-                    <span class="amount">{{ formatCurrency(item.total_price) }}</span>
-                  </div>
-                </div>
-              </div>
-            }
-            @if (editingOrder.coupon_id && couponValidation.valid && editingOrder.discount_amount > 0) {
-              <div class="order-item coupon-row">
-                <div class="item-header">
-                  <h4>🎫 {{ t('applied_coupon_title') }}</h4>
-                </div>
-                <div class="item-form">
-                  <div class="coupon-display-flex">
-                    <div class="coupon-info">
-                      <strong>{{ getCouponCode(editingOrder.coupon_id) }}</strong>
-                      <span class="coupon-type-badge">({{ t('discount_prefix') }} {{ getCouponTypeLabel(editingOrder.coupon_id) }})</span>
-                    </div>
-                    <div class="item-total">
-                      <label>{{ t('discount_label') }}</label>
-                      <span class="amount discount-text">-{{ formatCurrency(editingOrder.discount_amount) }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            }
-            <button type="button" class="btn btn-secondary" (click)="addOrderItem()">➕ {{ t('btn_add_item') }}</button>
-          </fieldset>
-          <fieldset class="summary-section">
-            <legend>{{ t('legend_price_summary') }}</legend>
-            <div class="summary-grid">
-              <div class="summary-row">
-                <label>{{ t('summary_without_vat') }}</label>
-                <span>{{ formatCurrency(calculateSummaryTotals().baseAmount) }}</span>
-              </div>
-              @for (group of calculateSummaryTotals().vatGroups; track group) {
-                <div class="summary-row">
-                  <label>{{ t('summary_vat_rate_prefix') }} {{ group.rate }}%:</label>
-                  <span class="vat">{{ formatCurrency(group.amount) }}</span>
-                </div>
-              }
-              <div class="summary-row">
-                <label>{{ t('summary_with_vat') }}</label>
-                <span>{{ formatCurrency(calculateSummaryTotals().withVat) }}</span>
-              </div>
-              <div class="summary-row">
-                <label>{{ t('summary_shipping_price') }}</label>
-                <span>{{ formatCurrency(editingOrder.shipping_amount) }}</span>
-              </div>
-              @if (getPaymentMethodPrice(editingOrder.payment_method_id) > 0) {
-                <div class="summary-row">
-                  <label>{{ t('summary_payment_fee_prefix') }} ({{ getPaymentMethodName(editingOrder.payment_method_id) }})</label>
-                  <span>{{ formatCurrency(getPaymentMethodPrice(editingOrder.payment_method_id)) }}</span>
-                </div>
-              }
-              @if (editingOrder.discount_amount > 0 && couponValidation.valid) {
-                <div class="summary-row">
-                  <label>{{ t('summary_coupon_prefix') }} <span>{{ getCouponCode(editingOrder.coupon_id) }}</span> ({{ getCouponDisplayValue(editingOrder.coupon_id) }})</label>
-                  <span class="discount">-{{ formatCurrency(editingOrder.discount_amount) }}</span>
-                </div>
-              }
-              <div class="summary-row total">
-                <label>{{ t('detail_final_amount_label_upper') }}</label>
-                <span class="total-amount">{{ formatCurrency(editingOrder.final_amount) }}</span>
-              </div>
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend>{{ t('legend_notes') }}</legend>
-            <div class="form-group">
-              <label>{{ t('label_internal_notes') }}</label>
-              <textarea [(ngModel)]="editingOrder.notes" name="notes" rows="3" [placeholder]="t('placeholder_notes')"></textarea>
-            </div>
-          </fieldset>
-          <div class="modal-footer-inline">
-            <button type="button" class="btn btn-secondary" (click)="closeOrderForm()">{{ i18n.getValue('shared.cancel') }}</button>
-            <button type="button" class="btn btn-primary" (click)="saveOrder()" [class.btn-warning]="editingOrder.coupon_id && !couponValidation.valid">
-              💾 {{ t('btn_save_order') }}
-            </button>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>{{ t('label_email_required') }}</label>
+            <input
+              type="email"
+              [(ngModel)]="editingOrder.email"
+              name="email"
+              [placeholder]="t('placeholder_email')"
+              required>
           </div>
-        </form>
-      </div>
-    </div>
-  </div>
+          <div class="form-group">
+            <label>{{ t('label_phone_required') }}</label>
+            <input
+              type="tel"
+              [(ngModel)]="editingOrder.phone"
+              name="phone"
+              [placeholder]="t('placeholder_phone')"
+              required>
+          </div>
+          <div class="form-group">
+            <label>{{ t('label_company_optional') }}</label>
+            <input
+              type="text"
+              [(ngModel)]="editingOrder.company"
+              name="company"
+              [placeholder]="t('placeholder_optional')">
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>{{ t('label_first_name_required') }}</label>
+            <input
+              type="text"
+              [(ngModel)]="editingOrder.first_name"
+              name="first_name"
+              [placeholder]="t('placeholder_first_name')"
+              required>
+          </div>
+          <div class="form-group">
+            <label>{{ t('label_last_name_required') }}</label>
+            <input
+              type="text"
+              [(ngModel)]="editingOrder.last_name"
+              name="last_name"
+              [placeholder]="t('placeholder_last_name')"
+              required>
+          </div>
+        </div>
+
+        <hr class="form-divider" style="border: 0; border-top: 1px solid var(--border-color, #eee); margin: 15px 0;">
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>{{ t('label_payment_method_required') }}</label>
+            <select [(ngModel)]="editingOrder.payment_method_id" name="payment_method_id" required (change)="recalculateTotals()">
+              <option [value]="0">{{ t('select_placeholder') }}</option>
+              @for (pm of paymentMethods; track pm) {
+                <option [value]="pm.id">
+                  {{ pm.name }}
+                  @if (pm.price > 0) { ({{ formatCurrency(pm.price) }}) }
+                </option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label>{{ t('label_shipping_method_required') }}</label>
+            <select [(ngModel)]="editingOrder.shipping_method_id" name="shipping_method_id" required (change)="recalculateTotals()">
+              <option value="">{{ t('select_placeholder') }}</option>
+              @for (sm of shippingMethods; track sm) {
+                <option [value]="sm.id">{{ sm.name }} ({{ formatCurrency(sm.base_price) }})</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>{{ t('label_coupon') }}</label>
+            <select [(ngModel)]="editingOrder.coupon_id"
+              name="coupon_id"
+              (change)="recalculateTotals()"
+              [ngClass]="getCouponValidationClass()"
+              [disabled]="!!editingOrder.id"
+              class="form-control"
+              [class.disabled-coupon]="editingOrder.id">
+              <option value="">{{ t('select_no_coupon') }}</option>
+              @for (coup of coupons; track coup) {
+                <option [value]="coup.id">{{ coup.code }} ({{ getCouponDisplayValue(coup) }})</option>
+              }
+            </select>
+            @if (editingOrder.id && editingOrder.coupon_id) {
+              <div class="text-muted small mt-1">ℹ️ {{ t('coupon_locked_hint') }}</div>
+            }
+            @if (editingOrder.coupon_id && !couponValidation.valid) {
+              <div class="coupon-error-msg">⚠️ {{ couponValidation.error }}</div>
+            }
+          </div>
+          <div class="form-group"></div>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>{{ t('legend_order_statuses') }}</legend>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>{{ t('label_order_status_required') }}</label>
+            <select [(ngModel)]="editingOrder.status" name="status" required>
+              @for (opt of statusOptions; track opt) {
+                <option [value]="opt.value">{{ opt.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label>{{ t('label_payment_status_required') }}</label>
+            <select [(ngModel)]="editingOrder.payment_status" name="payment_status" required>
+              @for (opt of paymentStatusOptions; track opt) {
+                <option [value]="opt.value">{{ opt.label }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>{{ t('legend_shipping_address') }}</legend>
+        <div class="form-group">
+          <label>{{ t('label_street_required') }}</label>
+          <input type="text" [(ngModel)]="editingOrder.shipping_address" name="shipping_address" required>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>{{ t('label_city_required') }}</label>
+            <input type="text" [(ngModel)]="editingOrder.shipping_city" name="shipping_city" required>
+          </div>
+          <div class="form-group">
+            <label>{{ t('label_postal_code_required') }}</label>
+            <input type="text" [(ngModel)]="editingOrder.shipping_postal_code" name="shipping_postal_code" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>{{ t('label_country_required') }}</label>
+          <input type="text" [(ngModel)]="editingOrder.shipping_country" name="shipping_country" required>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>{{ t('legend_order_items') }}</legend>
+        @if (getVisibleItems(editingOrder).length === 0) {
+          <div class="empty-state">{{ t('empty_items') }}</div>
+        }
+        @for (item of editingOrder.items; track item; let i = $index) {
+          <div class="order-item" [class.deleted]="item._delete">
+            <div class="item-header">
+              <h4>{{ t('item_number_prefix') }} {{ i + 1 }}</h4>
+              <button type="button" class="btn-icon danger" (click)="deleteOrderItem(i)">🗑️</button>
+            </div>
+            <div class="item-form">
+              <div class="form-row-3">
+                <div class="form-group">
+                  <label>{{ t('label_product_variant_required') }}</label>
+                  <select [(ngModel)]="item.product_variant_id" [name]="'variant_' + i"
+                    (change)="onVariantSelected(item, i)" [disabled]="!!item._delete">
+                    <option value="">{{ t('select_variant_placeholder') }}</option>
+                    @for (v of variants; track v) {
+                      <option [value]="v.id">{{ v.product_name }} - {{ v.variant_name }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>{{ t('label_quantity_required') }}</label>
+                  <input type="number" [(ngModel)]="item.quantity" [name]="'qty_' + i"
+                    (change)="onItemQuantityChange(item)" min="1" [disabled]="!!item._delete">
+                </div>
+                <div class="form-group">
+                  <label>{{ t('label_unit_price_required') }}</label>
+                  <input type="number" [(ngModel)]="item.unit_price" [name]="'price_' + i"
+                    (change)="onItemPriceChange(item)" min="0" step="0.01" [disabled]="!!item._delete">
+                </div>
+              </div>
+              <div class="item-total">
+                <label>{{ t('item_total_label') }}</label>
+                <span class="amount">{{ formatCurrency(item.total_price) }}</span>
+              </div>
+            </div>
+          </div>
+        }
+        @if (editingOrder.coupon_id && couponValidation.valid && editingOrder.discount_amount > 0) {
+          <div class="order-item coupon-row">
+            <div class="item-header">
+              <h4>🎫 {{ t('applied_coupon_title') }}</h4>
+            </div>
+            <div class="item-form">
+              <div class="coupon-display-flex">
+                <div class="coupon-info">
+                  <strong>{{ getCouponCode(editingOrder.coupon_id) }}</strong>
+                  <span class="coupon-type-badge">({{ t('discount_prefix') }} {{ getCouponTypeLabel(editingOrder.coupon_id) }})</span>
+                </div>
+                <div class="item-total">
+                  <label>{{ t('discount_label') }}</label>
+                  <span class="amount discount-text">-{{ formatCurrency(editingOrder.discount_amount) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+        <button type="button" class="btn btn-secondary" (click)="addOrderItem()">➕ {{ t('btn_add_item') }}</button>
+      </fieldset>
+      <fieldset class="summary-section">
+        <legend>{{ t('legend_price_summary') }}</legend>
+        <div class="summary-grid">
+          <div class="summary-row">
+            <label>{{ t('summary_without_vat') }}</label>
+            <span>{{ formatCurrency(calculateSummaryTotals().baseAmount) }}</span>
+          </div>
+          @for (group of calculateSummaryTotals().vatGroups; track group) {
+            <div class="summary-row">
+              <label>{{ t('summary_vat_rate_prefix') }} {{ group.rate }}%:</label>
+              <span class="vat">{{ formatCurrency(group.amount) }}</span>
+            </div>
+          }
+          <div class="summary-row">
+            <label>{{ t('summary_with_vat') }}</label>
+            <span>{{ formatCurrency(calculateSummaryTotals().withVat) }}</span>
+          </div>
+          <div class="summary-row">
+            <label>{{ t('summary_shipping_price') }}</label>
+            <span>{{ formatCurrency(editingOrder.shipping_amount) }}</span>
+          </div>
+          @if (getPaymentMethodPrice(editingOrder.payment_method_id) > 0) {
+            <div class="summary-row">
+              <label>{{ t('summary_payment_fee_prefix') }} ({{ getPaymentMethodName(editingOrder.payment_method_id) }})</label>
+              <span>{{ formatCurrency(getPaymentMethodPrice(editingOrder.payment_method_id)) }}</span>
+            </div>
+          }
+          @if (editingOrder.discount_amount > 0 && couponValidation.valid) {
+            <div class="summary-row">
+              <label>{{ t('summary_coupon_prefix') }} <span>{{ getCouponCode(editingOrder.coupon_id) }}</span> ({{ getCouponDisplayValue(editingOrder.coupon_id) }})</label>
+              <span class="discount">-{{ formatCurrency(editingOrder.discount_amount) }}</span>
+            </div>
+          }
+          <div class="summary-row total">
+            <label>{{ t('detail_final_amount_label_upper') }}</label>
+            <span class="total-amount">{{ formatCurrency(editingOrder.final_amount) }}</span>
+          </div>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>{{ t('legend_notes') }}</legend>
+        <div class="form-group">
+          <label>{{ t('label_internal_notes') }}</label>
+          <textarea [(ngModel)]="editingOrder.notes" name="notes" rows="3" [placeholder]="t('placeholder_notes')"></textarea>
+        </div>
+      </fieldset>
+    </form>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" (click)="closeOrderForm()">{{ i18n.getValue('shared.cancel') }}</button>
+      <button type="button" class="am-btn am-btn--primary" (click)="saveOrder()" [class.btn-warning]="editingOrder.coupon_id && !couponValidation.valid">
+        💾 {{ t('btn_save_order') }}
+      </button>
+    </ng-container>
+  </app-admin-modal>
 }
 @if (showEmailTemplateModal) {
 <app-email-template-editor

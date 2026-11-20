@@ -520,6 +520,7 @@
     "details_shipped_at": "Odesláno",
     "detail_final_amount_label": "celkem k úhradě",
     "detail_final_amount_label_upper": "CELKEM K ÚHRADĚ:",
+    "detail_modal_title_prefix": "Objednávka",
     "timeline_banner_canceled": "Tato objednávka byla zrušena",
     "timeline_banner_returned": "Zboží z této objednávky bylo vráceno",
     "customer_card_title": "Zákazník",

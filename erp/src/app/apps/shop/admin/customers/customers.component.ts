@@ -9,6 +9,7 @@
  * - BaseDataComponent: Provides base CRUD functionality and pagination state management.
  * - TableBuilderComponent: Used for rendering the primary customer data grid.
  * - Config.create* factory functions: i18n-aware definitions.
+ * - AdminModalComponent: the frame of the order history popup (it also locks the page scroll).
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -23,11 +24,12 @@ import { GraphBuilderComponent } from '../../../../admin/components/builders/gra
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
 import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
+import { AdminModalComponent } from '../../../../admin/components/admin-modal/admin-modal.component';
 
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CommonModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHeaderComponent],
+  imports: [CommonModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHeaderComponent, AdminModalComponent],
   templateUrl: './customers.component.html',
   styleUrl: './customers.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -180,6 +182,18 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
   // ORDER HISTORY MODAL
   // =============================================
 
+  /** @description Title of the order history popup: the name of the customer. */
+  get ordersModalHeading(): string {
+    const c = this.selectedCustomerForOrders;
+    return [c?.first_name, c?.last_name].filter(Boolean).join(' ');
+  }
+
+  /** @description Subtitle of the order history popup: e-mail · phone. */
+  get ordersModalSubheading(): string {
+    const c = this.selectedCustomerForOrders;
+    return [c?.email, c?.phone].filter(Boolean).join(' · ');
+  }
+
   showCustomerOrders(item: any): void {
     this.selectedCustomerForOrders = item;
     this.showOrdersModal = true;
@@ -187,7 +201,6 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     this.customerOrdersError = null;
     this.ordersCurrentPage = 1;
     this.ordersExpandedId = null;
-    document.body.classList.add('modal-open');
     this.loadCustomerOrders(1);
     this.cd.markForCheck();
   }
@@ -198,7 +211,6 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     this.customerOrders = [];
     this.customerOrdersError = null;
     this.ordersExpandedId = null;
-    document.body.classList.remove('modal-open');
     this.cd.markForCheck();
   }
 

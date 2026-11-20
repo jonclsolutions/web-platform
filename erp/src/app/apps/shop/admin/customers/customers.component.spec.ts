@@ -36,7 +36,7 @@ describe('CustomersComponent', () => {
     component = fixture.componentInstance;
   });
 
-  afterEach(() => { fixture.destroy(); document.body.classList.remove('modal-open'); });
+  afterEach(() => { fixture.destroy(); });
 
   /**
    * @description The configuration is built from the 'shop-customers' translations.
@@ -214,20 +214,29 @@ describe('CustomersComponent', () => {
 
   describe('orders of a customer', () => {
     /**
-     * @description Opening the modal loads the first page of the customer's orders, newest first.
-     * @input  showCustomerOrders({ id: 5 }); API { data: [2 orders], meta: {last_page 3, total 25, current_page 1} }
-     * @output getPaginatedCollection(ordersUrl(1)); 2 orders; totals 3 pages / 25 items; body has 'modal-open'; loading false
+     * @description Opening the modal loads the first page of the customer's orders, newest first;
+     *   the popup is the shared frame (lg) with the name as the title, e-mail · phone under it, the
+     *   stats in its header and the pagination in its footer.
+     * @input  showCustomerOrders({ id: 5, Jana Nová, jana@x.cz, 777 }); API { data: [2 orders], meta: {last_page 3, total 25, current_page 1} }
+     * @output getPaginatedCollection(ordersUrl(1)); 2 orders; totals 3 pages / 25 items; loading false;
+     *   title 'Jana Nová', subtitle 'jana@x.cz · 777', stats in the header, pager in the footer
      */
     it('opens the modal with the first page of orders', () => {
       (ctx.dataHandler as any).getPaginatedCollection.and.returnValue(of({ data: [{ id: 1 }, { id: 2 }], meta: { last_page: 3, total: 25, current_page: 1, per_page: 10 } }));
-      component.showCustomerOrders({ id: 5 });
+      component.showCustomerOrders({ id: 5, first_name: 'Jana', last_name: 'Nová', email: 'jana@x.cz', phone: '777' });
       expect((ctx.dataHandler as any).getPaginatedCollection).toHaveBeenCalledWith(ordersUrl(1));
       expect(component.customerOrders.length).toBe(2);
       expect([component.ordersTotalPages, component.ordersTotalItems, component.ordersCurrentPage]).toEqual([3, 25, 1]);
       expect(component.showOrdersModal).toBeTrue();
-      expect(document.body.classList.contains('modal-open')).toBeTrue();
       expect(component.customerOrdersLoading).toBeFalse();
       expect(component.maxDisplayedOrdersCount).toBe(10);
+      fixture.detectChanges();
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('.am-card')!.getAttribute('data-size')).toBe('lg');
+      expect(el.querySelector('.am-title')!.textContent!.trim()).toBe('Jana Nová');
+      expect(el.querySelector('.am-subtitle')!.textContent!.trim()).toBe('jana@x.cz · 777');
+      expect(el.querySelector('.am-header-actions .orders-stats')).not.toBeNull();
+      expect(el.querySelector('.am-footer .orders-pager')).not.toBeNull();
     });
 
     /**
@@ -285,7 +294,7 @@ describe('CustomersComponent', () => {
     /**
      * @description An order row expands and collapses; closing the modal resets everything.
      * @input  toggleOrderExpand(3) twice, then (4); closeOrdersModal()
-     * @output expanded 3 → null → 4; modal closed, customer null, orders [], body without 'modal-open'
+     * @output expanded 3 → null → 4; modal closed, customer null, orders []
      */
     it('expands orders and closes the modal', () => {
       component.showCustomerOrders({ id: 5 });
@@ -299,7 +308,6 @@ describe('CustomersComponent', () => {
       expect(component.selectedCustomerForOrders).toBeNull();
       expect(component.customerOrders).toEqual([]);
       expect(component.ordersExpandedId).toBeNull();
-      expect(document.body.classList.contains('modal-open')).toBeFalse();
     });
 
     /**

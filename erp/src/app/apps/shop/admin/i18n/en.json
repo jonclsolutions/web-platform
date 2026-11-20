@@ -520,6 +520,7 @@
     "details_shipped_at": "Shipped",
     "detail_final_amount_label": "total due",
     "detail_final_amount_label_upper": "TOTAL DUE:",
+    "detail_modal_title_prefix": "Order",
     "timeline_banner_canceled": "This order has been canceled",
     "timeline_banner_returned": "Goods from this order have been returned",
     "customer_card_title": "Customer",
