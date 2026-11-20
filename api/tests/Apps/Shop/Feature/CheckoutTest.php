@@ -150,6 +150,43 @@ class CheckoutTest extends TestCase
     }
 
     /**
+     * @description SECURITY (stock): lines of the same product / variant are checked for their
+     *   total quantity and stored as one item - two lines of 5 pcs never pass against a stock of
+     *   6 (the stock went negative); a product with variants is ordered only as a variant (its own
+     *   stock is the sum of the variants and its price may differ).
+     * @input P 6 pcs: lines P×5 + P×5; lines P×2 + P×3. B with variant V (4 pcs): line B without
+     *        a variant; lines V×1 + V×2.
+     * @output 422 "sold out… 6 pcs", stock 6; 201 one item ×5, stock 1; 422 "Choose a variant of 'B'.";
+     *   201 one item V×3, V stock 1.
+     */
+    public function test_lines_of_one_product_are_checked_together(): void
+    {
+        $p = $this->product(['name' => 'P', 'stock_quantity' => 6]);
+        $b = $this->product(['name' => 'B']);
+        $v = $this->variant($b, ['variant_name' => 'V', 'stock_quantity' => 4]);
+
+        $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 5], ['product_id' => $p->id, 'quantity' => 5]]))
+            ->assertStatus(422)->assertExactJson(['message' => "The product 'P' was sold out in the meantime. Available quantity: 6 pcs."]);
+        $this->assertSame(6, $p->fresh()->stock_quantity);
+
+        $this->travel(61)->seconds();
+        $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 2], ['product_id' => $p->id, 'quantity' => 3]]))
+            ->assertCreated()->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.quantity', 5);
+        $this->assertSame(1, $p->fresh()->stock_quantity);
+
+        $this->travel(61)->seconds();
+        $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $b->id, 'quantity' => 1]]))
+            ->assertStatus(422)->assertExactJson(['message' => "Choose a variant of 'B'."]);
+
+        $this->travel(61)->seconds();
+        $this->postJson('/api/shop/checkout/create-order', $this->payload([
+            ['product_id' => $b->id, 'product_variant_id' => $v->id, 'quantity' => 1],
+            ['product_id' => $b->id, 'product_variant_id' => $v->id, 'quantity' => 2],
+        ]))->assertCreated()->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.quantity', 3);
+        $this->assertSame(1, $v->fresh()->stock_quantity);
+    }
+
+    /**
      * @description Coupon rules of the checkout; the minimum is stated in EUR.
      * @input Codes NOPE, OFF, SOON, OLD, USED, MIN (min 500) on a 121 EUR cart.
      * @output 422 with the message per case; no order.

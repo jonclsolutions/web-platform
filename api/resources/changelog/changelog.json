@@ -89,6 +89,12 @@
             "area": "core",
             "part": "admin",
             "text": "Language flag icons are stored with the extension of their real content, and every public upload (images, flags) is served so that it can never run as a page or script."
+        },
+        {
+            "type": "security",
+            "area": "shop",
+            "part": "public",
+            "text": "The checkout checks the stock for the whole quantity of a product even when the order sends it in several lines (such an order could take more pieces than were in stock, the stock went below zero) and saves them as one item; a product with variants can be ordered only as one of its variants."
         }
     ],
     "releases": [

@@ -80,10 +80,11 @@ class ShopCheckoutController extends Controller
 
             $customer = $this->resolveCustomer($validated);
 
-            // Lock and price every line from the catalogue BEFORE anything else is written.
+            // Lock and price every line from the catalogue BEFORE anything else is written. Lines of
+            // the same product and variant are one line, so the stock is checked for their total.
             $lines = [];
             $totalAmount = 0;
-            foreach ($validated['items'] as $itemData) {
+            foreach ($this->mergedItems($validated['items']) as $itemData) {
                 $line = $this->lockAndPriceLine($itemData);
                 if (is_string($line)) {
                     DB::rollBack();
@@ -263,8 +264,32 @@ class ShopCheckoutController extends Controller
     }
 
     /**
+     * @description Cart lines of the same product and variant joined into one line with the
+     *   summed quantity - the availability check of lockAndPriceLine() then sees the whole
+     *   quantity (two lines of 5 pcs must not pass against a stock of 6).
+     * @param array<int, array<string, mixed>> $items Validated cart lines.
+     * @return array<int, array<string, mixed>> Lines {product_id, product_variant_id, quantity}.
+     */
+    private function mergedItems(array $items): array
+    {
+        $merged = [];
+        foreach ($items as $item) {
+            $variantId = $item['product_variant_id'] ?? null;
+            $key = $item['product_id'] . ':' . ($variantId ?? '');
+            $merged[$key] = [
+                'product_id'         => $item['product_id'],
+                'product_variant_id' => $variantId,
+                'quantity'           => ($merged[$key]['quantity'] ?? 0) + (int) $item['quantity'],
+            ];
+        }
+
+        return array_values($merged);
+    }
+
+    /**
      * @description Loads the product (and variant) of one cart line with a row lock and
-     *   prices it from the catalogue.
+     *   prices it from the catalogue. A product with variants is ordered only as one of its
+     *   variants - its own stock is the sum of the variants.
      * @param array $itemData Validated cart line {product_id, product_variant_id?, quantity}.
      * @return array|string Line {product, variant, quantity, unit_price, line_price, vat_rate}
      *   or the customer-facing reason why the line cannot be ordered.
@@ -293,6 +318,8 @@ class ShopCheckoutController extends Controller
                 return "The product '{$product->name} ({$variant->variant_name})' was sold out in the meantime. Available quantity: {$variant->stock_quantity} pcs.";
             }
             $price = $variant->prices ?? $price;
+        } elseif ($product->variants()->exists()) {
+            return "Choose a variant of '{$product->name}'.";
         } elseif ($product->stock_quantity < $quantity) {
             return "The product '{$product->name}' was sold out in the meantime. Available quantity: {$product->stock_quantity} pcs.";
         }
