@@ -3051,7 +3051,7 @@
                 },
                 {
                   "title": "Účty sysadmin",
-                  "text": "Účet s rolí sysadmin smí smazat jen jiný sysadmin. Při hromadném vyprázdnění koše zůstanou účty sysadmin v koši, pokud koš nevyprazdňuje sysadmin."
+                  "text": "Účet s rolí sysadmin smí smazat i obnovit z koše jen jiný sysadmin. Smazání účtu (i do koše) ho okamžitě odhlásí ze všech zařízení. Při hromadném vyprázdnění koše zůstanou účty sysadmin v koši, pokud koš nevyprazdňuje sysadmin."
                 },
                 {
                   "title": "E-mail účtu v koši je obsazený",

@@ -569,6 +569,9 @@ class UserController extends Controller
 
     /**
      * Restores a soft-deleted user.
+     * @note CRITICAL PROTECTION: an account with the 'sysadmin' role may only be restored by
+     *   another sysadmin (the same rule as its deletion) - a restored sysadmin has every
+     *   permission again - and only after the step-up password confirmation.
      */
     public function restore(string $id): JsonResponse
     {
@@ -577,10 +580,15 @@ class UserController extends Controller
         }
 
         $user = User::withTrashed()->findOrFail($id);
+        $targetIsSysadmin = $user->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists();
+
+        if ($targetIsSysadmin && !$this->actorIsSysadmin(request())) {
+            $this->logAction(request(), CoreLog::class, 'restore_denied', 'User', "Denied attempt to restore a sysadmin account: {$user->user_email}", (int) $id, 'User');
+            return response()->json(['message' => 'Only another sysadmin may restore a sysadmin account.'], 403);
+        }
 
         // A restored sysadmin is a sysadmin again: step-up password confirmation (2026-10-26).
-        if ($user->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists()
-            && ($refusal = $this->requirePasswordConfirmation(request(), "user:{$user->id}"))) {
+        if ($targetIsSysadmin && ($refusal = $this->requirePasswordConfirmation(request(), "user:{$user->id}"))) {
             return $refusal;
         }
 
@@ -599,7 +607,8 @@ class UserController extends Controller
     /**
      * Handles soft or hard deletion of a user.
      * @note A user cannot delete themselves. CRITICAL PROTECTION: an account with the
-     * 'sysadmin' role may only be deleted by another sysadmin.
+     * 'sysadmin' role may only be deleted by another sysadmin. A soft delete ends every session of
+     * the account (access and refresh tokens), so a restore does not bring them back.
      */
     public function destroy(Request $request, string $id): JsonResponse
     {
@@ -633,6 +642,8 @@ class UserController extends Controller
                 UserAvatar::deleteFile($avatar);
             } else {
                 $user->delete();
+                // A deleted account is signed out everywhere - a later restore must not revive its sessions.
+                UserSessions::endAll($user);
             }
 
             $this->logAction($request, CoreLog::class, $force ? 'hard_delete' : 'soft_delete', 'User', "Deleted ID: $id", (int) $id, 'User');

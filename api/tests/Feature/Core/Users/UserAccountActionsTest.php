@@ -17,6 +17,7 @@ namespace Tests\Feature\Core\Users;
 use App\Mail\Auth\AccountActivationMail;
 use App\Mail\Auth\PasswordChangedNotification;
 use App\Models\AccountActivationToken;
+use App\Models\RefreshToken;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -186,6 +187,39 @@ class UserAccountActionsTest extends TestCase
         $this->postJson('/api/core/users/999/restore')->assertStatus(404);
         $this->postJson("/api/core/users/{$deleted->id}/restore")->assertOk()->assertJsonPath('deleted_at', null);
         $this->assertCoreLog('restore', $deleted->user_email);
+    }
+
+    /**
+     * @description SECURITY: a deleted sysadmin can be restored only by another sysadmin (the
+     *   same rule as deleting it) - an account with core-administrators-delete is refused even
+     *   with its own password confirmation; a soft delete ends every session of the account, so
+     *   the restored account starts without its old access / refresh tokens.
+     * @input Deleter (core-administrators-delete, password confirmed for the scope) restores a
+     *        deleted sysadmin; a sysadmin soft-deletes a regular account that has an access token
+     *        and a refresh token.
+     * @output 403 "Only another sysadmin may restore a sysadmin account.", still deleted,
+     *   'restore_denied' log; after the delete no token of the account is left.
+     */
+    public function test_only_a_sysadmin_restores_a_sysadmin_and_delete_ends_sessions(): void
+    {
+        $deleter = $this->signIn($this->userWith(['core-administrators-delete']));
+        $root = $this->sysadmin();
+        $root->delete();
+        $this->confirmPassword("user:{$root->id}");
+
+        $this->postJson("/api/core/users/{$root->id}/restore")->assertStatus(403)
+            ->assertJson(['message' => 'Only another sysadmin may restore a sysadmin account.']);
+        $this->assertSoftDeleted($root);
+        $this->assertCoreLog('restore_denied', $root->user_email);
+
+        $this->signIn($this->sysadmin());
+        $plain = $this->user();
+        $plain->createToken('session');
+        RefreshToken::create(['user_id' => $plain->id, 'token' => hash('sha256', 'r'), 'expires_at' => now()->addDay()]);
+
+        $this->deleteJson("/api/core/users/{$plain->id}")->assertNoContent();
+        $this->assertSame(0, $plain->tokens()->count());
+        $this->assertSame(0, RefreshToken::where('user_id', $plain->id)->count());
     }
 
     /**

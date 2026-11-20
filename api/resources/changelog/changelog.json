@@ -125,6 +125,12 @@
             "area": "core",
             "part": "admin",
             "text": "Exports to CSV and TXT show a value that a spreadsheet would run as a formula (it starts with =, +, -, @) as plain text - an apostrophe is put in front; the import removes it again."
+        },
+        {
+            "type": "security",
+            "area": "core",
+            "part": "admin",
+            "text": "A deleted sysadmin account can be restored from the trash only by another sysadmin (the same rule as deleting it), and deleting an account signs it out on every device at once - a restore no longer brings its old sessions back."
         }
     ],
     "releases": [

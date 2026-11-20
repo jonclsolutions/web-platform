@@ -3051,7 +3051,7 @@
                 },
                 {
                   "title": "Sysadmin accounts",
-                  "text": "An account with the sysadmin role may be deleted only by another sysadmin. When the trash is emptied in bulk, sysadmin accounts stay in the trash unless a sysadmin is emptying it."
+                  "text": "An account with the sysadmin role may be deleted and restored from the trash only by another sysadmin. Deleting an account (also to the trash) signs it out on every device at once. When the trash is emptied in bulk, sysadmin accounts stay in the trash unless a sysadmin is emptying it."
                 },
                 {
                   "title": "The e-mail of a trashed account is taken",
