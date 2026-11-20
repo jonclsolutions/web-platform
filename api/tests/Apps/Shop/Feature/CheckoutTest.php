@@ -18,6 +18,7 @@ namespace Tests\Apps\Shop\Feature;
 
 use App\Apps\Shop\Models\ShopCoupon;
 use App\Apps\Shop\Models\ShopCustomer;
+use App\Apps\Shop\Models\ShopLog;
 use App\Apps\Shop\Models\ShopOrder;
 use App\Apps\Shop\Models\ShopPaymentMethod;
 use App\Apps\Shop\Models\ShopShippingMethod;
@@ -84,7 +85,8 @@ class CheckoutTest extends TestCase
      *        variant V1 (own price 55, 3 pcs) ×1 and variant V2 (no price, 4 pcs) ×1; coupon SAVE10.
      * @output 201 pending; items 121 / 55 / 110; total 407, discount 40.70, final 371.30;
      *   tax = Σ line × 0.9 × rate / (100 + rate); stock P 8, V1 2, V2 3, B 5; coupon used 1;
-     *   customer jan@example.com; no gateway config in the answer.
+     *   customer jan@example.com; no gateway config in the answer; the shop log keeps no copy of
+     *   the buyer's contact (GDPR).
      */
     public function test_order_is_priced_from_the_catalogue(): void
     {
@@ -111,6 +113,9 @@ class CheckoutTest extends TestCase
         $this->assertSame([8, 2, 3, 5], [$p->fresh()->stock_quantity, $v1->fresh()->stock_quantity, $v2->fresh()->stock_quantity, $b->fresh()->stock_quantity]);
         $this->assertSame(1, $coupon->fresh()->usage_count);
         $this->assertShopLog('create', 'Created order: ' . $json['order_number']);
+        $context = ShopLog::latest('id')->first()->context_data;
+        $this->assertSame([], array_values(array_intersect(array_keys($context), ShopCustomer::AUDIT_MASKED)));
+        $this->assertArrayHasKey('items', $context);
     }
 
     /**

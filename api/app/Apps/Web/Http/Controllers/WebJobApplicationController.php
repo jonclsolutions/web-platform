@@ -38,6 +38,12 @@ class WebJobApplicationController extends Controller
     private const CV_FOLDER = 'web/cv_files';
 
     /**
+     * @description Request keys of a new application never copied into the audit log: the
+     *   personal fields of the model (masked in the changes as well) and the CV (its file name).
+     */
+    private const LOG_PRIVATE_KEYS = [...WebJobApplication::AUDIT_MASKED, 'cv_file'];
+
+    /**
      * Retrieves a paginated list of job applications with optional search and filtering.
      */
     public function index(Request $request)
@@ -85,6 +91,8 @@ class WebJobApplicationController extends Controller
 
     /**
      * Persists a new job application and handles CV file storage.
+     * @note The audit log names the position only - no applicant's name, contact or CV file name
+     *   (LOG_PRIVATE_KEYS), so an erased application leaves no copy in the log.
      */
     public function store(StoreWebJobApplicationRequest $request): JsonResponse
     {
@@ -96,12 +104,12 @@ class WebJobApplicationController extends Controller
 
             $this->storeSingleAttachment($request, $application, self::CV_FOLDER, 'cv_file');
 
-            $this->logAction($request, WebLog::class, 'create', 'WebJobApplication', "New job application for position: {$application->position_name} ({$application->first_name} {$application->last_name})", $application->id, 'WebJobApplication');
+            $this->logAction($request, WebLog::class, 'create', 'WebJobApplication', "New job application for position: {$application->position_name}", $application->id, 'WebJobApplication', self::LOG_PRIVATE_KEYS);
 
             return $this->respond(new WebJobApplicationResource($application->load('attachments')), 201);
         } catch (\Exception $e) {
             report($e); // full detail (class, file, trace) to the core log
-            $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Error creating job application: " . $e->getMessage());
+            $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Error creating job application: " . $e->getMessage(), null, null, self::LOG_PRIVATE_KEYS);
             return response()->json(['message' => 'Creation failed.'], 500);
         }
     }

@@ -16,6 +16,7 @@
 namespace Tests\Apps\Web\Feature;
 
 use App\Apps\Web\Models\WebJobApplication;
+use App\Apps\Web\Models\WebLog;
 use Illuminate\Support\Facades\Storage;
 use Tests\Apps\Web\Support\WebFixtures;
 use Tests\TestCase;
@@ -58,7 +59,8 @@ class JobApplicationTest extends TestCase
     /**
      * @description The public form stores the application and its CV (folder web/cv_files).
      * @input POST /api/job_applications with cv.pdf.
-     * @output 201 {full_name 'Eva Kralova', 1 attachment}; file stored; web log 'create'.
+     * @output 201 {full_name 'Eva Kralova', 1 attachment}; file stored; web log 'create' naming the
+     *   position only - no name in the description, no personal field or CV name in the context (GDPR).
      */
     public function test_public_application(): void
     {
@@ -68,7 +70,10 @@ class JobApplicationTest extends TestCase
         $cv = WebJobApplication::sole()->attachments->sole();
         $this->assertStringStartsWith('web/cv_files/', $cv->path);
         Storage::disk('private')->assertExists($cv->path);
-        $this->assertWebLog('create', 'Developer (Eva Kralova)');
+        $this->assertWebLog('create', 'New job application for position: Developer');
+        $log = WebLog::latest('id')->first();
+        $this->assertStringNotContainsString('Kralova', $log->description);
+        $this->assertSame([], array_values(array_intersect(array_keys($log->context_data), [...WebJobApplication::AUDIT_MASKED, 'cv_file'])));
     }
 
     /**

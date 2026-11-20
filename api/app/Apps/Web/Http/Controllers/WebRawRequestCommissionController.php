@@ -45,6 +45,12 @@ class WebRawRequestCommissionController extends Controller
     private const ATTACHMENT_FOLDER = 'web/raw_request_commissions';
 
     /**
+     * @description Request keys of a new request never copied into the audit log: the personal
+     *   fields of the model (masked in the changes as well) and the uploaded files (their names).
+     */
+    private const LOG_PRIVATE_KEYS = [...WebRawRequestCommission::AUDIT_MASKED, 'attachments'];
+
+    /**
      * @description Columns allowed to come from the import file - whitelist. `lang`
      * (defaults to 'cz') and `attachment` (file, tabular import cannot carry it)
      * are INTENTIONALLY excluded, just like in the previous central version.
@@ -107,9 +113,13 @@ class WebRawRequestCommissionController extends Controller
 
     /**
      * Stores a new commission request, handling multiple optional file uploads.
+     * @note The audit log rows of the request carry no copy of the contact data or the file names
+     *   (LOG_PRIVATE_KEYS) - the changes are masked by the model (AUDIT_MASKED), so an erased
+     *   request leaves no copy in the log.
      */
     public function store(StoreWebRawRequestCommissionRequest $request): JsonResponse
     {
+        $private = self::LOG_PRIVATE_KEYS;
         try {
             $data = $request->safe()->except(['attachments']);
 
@@ -117,20 +127,20 @@ class WebRawRequestCommissionController extends Controller
 
             $this->storeAttachments($request, $commission, self::ATTACHMENT_FOLDER);
 
-            $this->logAction($request, WebLog::class, 'create', 'WebRawRequestCommission', "Commission request created: {$commission->thema}", $commission->id, 'WebRawRequestCommission');
+            $this->logAction($request, WebLog::class, 'create', 'WebRawRequestCommission', "Commission request created: {$commission->thema}", $commission->id, 'WebRawRequestCommission', $private);
 
             try {
                 Mail::to($commission->contact_email)
                     ->queue(new WebRawRequestCommissionReceived($commission));
             } catch (\Throwable $e) {
                 report($e); // full detail (class, file, trace) to the core log
-                $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Failed to send confirmation email: " . $e->getMessage(), $commission->id, 'WebRawRequestCommission');
+                $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Failed to send confirmation email: " . $e->getMessage(), $commission->id, 'WebRawRequestCommission', $private);
             }
 
             return $this->respond(new WebRawRequestCommissionResource($commission->load('attachments')), 201);
         } catch (\Exception $e) {
             report($e); // full detail (class, file, trace) to the core log
-            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error creating request: " . $e->getMessage());
+            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error creating request: " . $e->getMessage(), null, null, $private);
             return response()->json(['message' => 'Request creation failed.'], 500);
         }
     }

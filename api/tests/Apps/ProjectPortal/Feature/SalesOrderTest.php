@@ -17,6 +17,7 @@ namespace Tests\Apps\ProjectPortal\Feature;
 
 use App\Apps\ProjectPortal\Mail\SalesOrderReceivedMail;
 use App\Apps\ProjectPortal\Models\SalesOrder;
+use App\Apps\ProjectPortal\Models\ProjectPortalLog;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\Apps\ProjectPortal\Support\ProjectFixtures;
@@ -60,7 +61,8 @@ class SalesOrderTest extends TestCase
      * @description Without a lead link the order is stored with the agreements, the default
      *   salesman text and its attachments; the confirmation e-mail is queued.
      * @input POST /api/project-portal/public/sales-orders with one attachment.
-     * @output 201 {salesman_name 'Order without a lead', agreements true, 1 attachment}; mail queued.
+     * @output 201 {salesman_name 'Order without a lead', agreements true, 1 attachment}; mail queued;
+     *   portal log 'create' by the order id, without a copy of the client's data or the file names (GDPR).
      */
     public function test_public_order_without_lead(): void
     {
@@ -74,7 +76,9 @@ class SalesOrderTest extends TestCase
             ->assertJsonCount(1, 'data.attachments');
 
         Mail::assertQueued(SalesOrderReceivedMail::class, fn ($mail) => $mail->hasTo('order@acme.cz'));
-        $this->assertPortalLog('create', 'Created sales order for: Acme s.r.o.');
+        $this->assertPortalLog('create', 'Created sales order ID: ' . SalesOrder::sole()->id);
+        $context = ProjectPortalLog::latest('id')->first()->context_data;
+        $this->assertSame([], array_values(array_intersect(array_keys($context), [...SalesOrder::AUDIT_MASKED, 'attachments'])));
     }
 
     /**

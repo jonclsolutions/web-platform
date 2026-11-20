@@ -17,6 +17,7 @@ namespace Tests\Apps\Web\Feature;
 
 use App\Apps\Web\Mail\WebRawRequestCommissionReceived;
 use App\Models\Core\CoreAttachment;
+use App\Apps\Web\Models\WebLog;
 use App\Apps\Web\Models\WebRawRequestCommission;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -62,7 +63,7 @@ class RawRequestCommissionTest extends TestCase
      *   queues the confirmation e-mail in the chosen language - no sign-in needed.
      * @input POST /api/raw_request_commissions with 2 PDF attachments, lang 'en'.
      * @output 201 with 2 attachments (signed download URLs); files stored; mail queued to the
-     *   client; web log 'create'.
+     *   client; web log 'create' without a copy of the contact data or the file names (GDPR).
      */
     public function test_public_form_stores_request_and_attachments(): void
     {
@@ -83,6 +84,9 @@ class RawRequestCommissionTest extends TestCase
         }
         Mail::assertQueued(WebRawRequestCommissionReceived::class, fn ($mail) => $mail->hasTo('client@example.com'));
         $this->assertWebLog('create', 'New website');
+        $context = WebLog::latest('id')->first()->context_data;
+        $this->assertSame([], array_values(array_intersect(array_keys($context), [...WebRawRequestCommission::AUDIT_MASKED, 'attachments'])));
+        $this->assertArrayHasKey('thema', $context);
     }
 
     /**

@@ -50,6 +50,12 @@ class SalesOrderController extends Controller
     private const ATTACHMENT_FOLDER = 'web/sales_orders';
 
     /**
+     * @description Request keys of a new order never copied into the audit log: the personal
+     *   fields of the model (masked in the changes as well) and the uploaded files (their names).
+     */
+    private const LOG_PRIVATE_KEYS = [...SalesOrder::AUDIT_MASKED, 'attachments'];
+
+    /**
      * Retrieves a paginated list of sales orders with filtering and eager-loaded lead data.
      */
     public function index(Request $request)
@@ -144,28 +150,28 @@ class SalesOrderController extends Controller
 
             $this->storeAttachments($request, $order, self::ATTACHMENT_FOLDER);
 
-            $this->logAction($request, ProjectPortalLog::class, 'create', 'SalesOrder', "Created sales order for: {$order->client_name}", $order->id, 'SalesOrder');
+            $this->logAction($request, ProjectPortalLog::class, 'create', 'SalesOrder', "Created sales order ID: {$order->id}", $order->id, 'SalesOrder', self::LOG_PRIVATE_KEYS);
 
             try {
                 Mail::to($order->client_email)
                     ->queue(new SalesOrderReceivedMail($order));
             } catch (\Throwable $e) {
                 report($e); // full detail (class, file, trace) to the core log
-                $this->logAction($request, ProjectPortalLog::class, 'error', 'SalesOrder', "Failed to send confirmation email: " . $e->getMessage(), $order->id, 'SalesOrder');
+                $this->logAction($request, ProjectPortalLog::class, 'error', 'SalesOrder', "Failed to send confirmation email: " . $e->getMessage(), $order->id, 'SalesOrder', self::LOG_PRIVATE_KEYS);
             }
 
             return $this->respond(new SalesOrderResource($order->load(['lead', 'attachments'])), 201);
         } catch (HttpException $e) {
-            $this->logAction($request, ProjectPortalLog::class, 'error', 'SalesOrder', "Sales order creation rejected (token): " . $e->getMessage());
+            $this->logAction($request, ProjectPortalLog::class, 'error', 'SalesOrder', "Sales order creation rejected (token): " . $e->getMessage(), null, null, self::LOG_PRIVATE_KEYS);
             return response()->json(['message' => $e->getMessage()], $e->getStatusCode());
         } catch (\Illuminate\Http\Exceptions\HttpResponseException $e) {
             // Expired lead link (410 LINK_EXPIRED) - the prepared answer as it is.
             report($e); // full detail (class, file, trace) to the core log
-            $this->logAction($request, ProjectPortalLog::class, 'error', 'SalesOrder', 'Sales order creation rejected (token): link expired');
+            $this->logAction($request, ProjectPortalLog::class, 'error', 'SalesOrder', 'Sales order creation rejected (token): link expired', null, null, self::LOG_PRIVATE_KEYS);
             return $e->getResponse();
         } catch (\Exception $e) {
             report($e); // full detail (class, file, trace) to the core log
-            $this->logAction($request, ProjectPortalLog::class, 'error', 'SalesOrder', "Error creating sales order: " . $e->getMessage());
+            $this->logAction($request, ProjectPortalLog::class, 'error', 'SalesOrder', "Error creating sales order: " . $e->getMessage(), null, null, self::LOG_PRIVATE_KEYS);
             return response()->json(['message' => 'Sales order creation failed.'], 500);
         }
     }

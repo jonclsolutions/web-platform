@@ -40,6 +40,13 @@ class ShopCheckoutController extends Controller
     use LogsActivity;
 
     /**
+     * @description Checkout fields never copied into the audit log: the contact of the buyer (the
+     *   same fields as the personal data of the customer, ShopCustomer::AUDIT_MASKED) - the order
+     *   and the customer hold them, an anonymised customer leaves no copy in the log.
+     */
+    private const LOG_PRIVATE_KEYS = ShopCustomer::AUDIT_MASKED;
+
+    /**
      * @description Orchestrates the order creation process: customer identification,
      *   catalogue prices, coupon, stock decrement under row locks, tax calculation; after the
      *   commit the confirmation e-mail goes to the buyer in the language of the storefront
@@ -186,13 +193,13 @@ class ShopCheckoutController extends Controller
 
             $order->load(['customer', 'paymentMethod', 'shippingMethod', 'coupon', 'items']);
 
-            $this->logAction($request, ShopLog::class, 'create', 'ShopOrder (Checkout)', "Created order: {$order->order_number}", $order->id, 'ShopOrder');
+            $this->logAction($request, ShopLog::class, 'create', 'ShopOrder (Checkout)', "Created order: {$order->order_number}", $order->id, 'ShopOrder', self::LOG_PRIVATE_KEYS);
 
             try {
                 Mail::to($order->customer_email)->queue(new ShopOrderConfirmation($order));
             } catch (\Throwable $e) {
                 report($e); // full detail (class, file, trace) to the core log
-                $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Failed to send the order confirmation e-mail: " . $e->getMessage(), $order->id, 'ShopOrder');
+                $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Failed to send the order confirmation e-mail: " . $e->getMessage(), $order->id, 'ShopOrder', self::LOG_PRIVATE_KEYS);
             }
 
             // The buyer's token of the payment simulation (dev / test systems only, VT-16).
@@ -203,7 +210,7 @@ class ShopCheckoutController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             report($e); // full detail (class, file, trace) to the core log
-            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Error creating order: " . $e->getMessage());
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Error creating order: " . $e->getMessage(), null, null, self::LOG_PRIVATE_KEYS);
             return response()->json(['message' => 'Error creating order.'], 500);
         }
     }

@@ -101,6 +101,24 @@
             "area": "shop",
             "part": "public",
             "text": "A coupon with a limited number of uses can no longer be used more times than allowed by orders sent at the same moment - the use is counted together with the check of the limit."
+        },
+        {
+            "type": "security",
+            "area": "web",
+            "part": "public",
+            "text": "The audit log keeps no copy of the contact data, messages and file names sent with an inquiry or a job application, and the log of a new application names only the position - an erased inquiry or application leaves no personal data in the log."
+        },
+        {
+            "type": "security",
+            "area": "shop",
+            "part": "public",
+            "text": "The audit log of the checkout keeps no copy of the buyer’s contact data - an anonymised customer leaves no personal data in the log."
+        },
+        {
+            "type": "security",
+            "area": "project-portal",
+            "part": "public",
+            "text": "The audit log of the order form keeps no copy of the client’s data and file names; the log row names the order by its number."
         }
     ],
     "releases": [
