@@ -1,157 +1,162 @@
 {
-    "unreleased": [
-        {
-            "type": "fixed",
-            "area": "core",
-            "part": "admin",
-            "text": "Confirmation e-mail editors (inquiries, e-shop orders, project portal orders): texts typed into a language that had been saved empty before are saved again - the save reported success but kept nothing."
-        },
-        {
-            "type": "changed",
-            "area": "core",
-            "part": "admin",
-            "text": "Confirmation e-mail editors mark the fields left empty in a language orange, show their number on the language tabs and explain that an empty field uses the Czech text or the default English wording."
-        },
-        {
-            "type": "changed",
-            "area": "core",
-            "part": "admin",
-            "text": "The header and the buttons of the confirmation e-mail editor stay in place, only its content scrolls."
-        },
-        {
-            "type": "fixed",
-            "area": "web",
-            "part": "public",
-            "text": "The inquiry confirmation e-mail shows the name of the topic (e.g. New project / inquiry) in the subject and the summary instead of its internal key."
-        },
-        {
-            "type": "changed",
-            "area": "core",
-            "part": "admin",
-            "text": "Admin popups get one shared frame (first the confirmation, the password prompt and the e-mail editor): fixed header and buttons, Escape or a click outside closes, the cursor moves into the window and back, screen readers announce it as a dialog."
-        },
-        {
-            "type": "changed",
-            "area": "core",
-            "part": "admin",
-            "text": "Record forms, record details, import, export and the charts window use the shared popup frame too: one look, Escape closes them, the cursor stays inside; the charts window has its title and actions in the header."
-        },
-        {
-            "type": "changed",
-            "area": "core",
-            "part": "admin",
-            "text": "Calendar events, security event triage, the own password change, e-mail domains of administrators and languages of the text editors open in the shared popup frame too; the delete buttons are red."
-        },
-        {
-            "type": "changed",
-            "area": "shop",
-            "part": "admin",
-            "text": "E-shop order detail, order form and the order history of a customer open in the shared popup frame: status and amount in the header, Escape closes them and the page under them no longer scrolls."
-        },
-        {
-            "type": "changed",
-            "area": "shop",
-            "part": "admin",
-            "text": "E-shop product detail, form, variants, variant images and images open in the shared popup frame; variant images open over the variants and Escape closes only them; the page under a popup no longer scrolls."
-        },
-        {
-            "type": "fixed",
-            "area": "core",
-            "part": "admin",
-            "text": "On a phone the name of the current section is centred in the header of the administration instead of squeezed next to the menu button."
-        },
-        {
-            "type": "added",
-            "area": "core",
-            "part": "admin",
-            "text": "Red numbers of unread records in the menu (new inquiries, job applications, orders, low stock, overdue leads, security events) - per admin since their last visit of the page, \"99+\" above 99, sums at the module switcher. Checked once a minute while the tab is visible."
-        },
-        {
-            "type": "added",
-            "area": "core",
-            "part": "admin",
-            "text": "A pop-up notice at the top right when new records arrive; a click opens the page. It can be switched off on the Personal information page (only in that browser) - the numbers in the menu stay."
-        },
-        {
-            "type": "fixed",
-            "area": "project-portal",
-            "part": "admin",
-            "text": "Project conversations in the administration: an open thread shows new client messages, replies and internal notes of colleagues and “read by the client” within 15 s - before, it showed them only after it was opened again."
-        },
-        {
-            "type": "security",
-            "area": "shop",
-            "part": "admin",
-            "text": "Product and variant images are stored with the extension of their real content, and a variant image that is not a JPG, PNG or WebP is refused - before, an uploaded file could be stored under a name like .html or .js and run in the browser as part of the website."
-        },
-        {
-            "type": "security",
-            "area": "core",
-            "part": "admin",
-            "text": "Language flag icons are stored with the extension of their real content, and every public upload (images, flags) is served so that it can never run as a page or script."
-        },
-        {
-            "type": "security",
-            "area": "shop",
-            "part": "public",
-            "text": "The checkout checks the stock for the whole quantity of a product even when the order sends it in several lines (such an order could take more pieces than were in stock, the stock went below zero) and saves them as one item; a product with variants can be ordered only as one of its variants."
-        },
-        {
-            "type": "security",
-            "area": "shop",
-            "part": "public",
-            "text": "A coupon with a limited number of uses can no longer be used more times than allowed by orders sent at the same moment - the use is counted together with the check of the limit."
-        },
-        {
-            "type": "security",
-            "area": "web",
-            "part": "public",
-            "text": "The audit log keeps no copy of the contact data, messages and file names sent with an inquiry or a job application, and the log of a new application names only the position - an erased inquiry or application leaves no personal data in the log."
-        },
-        {
-            "type": "security",
-            "area": "shop",
-            "part": "public",
-            "text": "The audit log of the checkout keeps no copy of the buyer’s contact data - an anonymised customer leaves no personal data in the log."
-        },
-        {
-            "type": "security",
-            "area": "project-portal",
-            "part": "public",
-            "text": "The audit log of the order form keeps no copy of the client’s data and file names; the log row names the order by its number."
-        },
-        {
-            "type": "security",
-            "area": "core",
-            "part": "admin",
-            "text": "Exports to CSV and TXT show a value that a spreadsheet would run as a formula (it starts with =, +, -, @) as plain text - an apostrophe is put in front; the import removes it again."
-        },
-        {
-            "type": "security",
-            "area": "core",
-            "part": "admin",
-            "text": "A deleted sysadmin account can be restored from the trash only by another sysadmin (the same rule as deleting it), and deleting an account signs it out on every device at once - a restore no longer brings its old sessions back."
-        },
-        {
-            "type": "security",
-            "area": "shop",
-            "part": "public",
-            "text": "The checkout is protected like the other public forms: an invisible bot check, a hidden trap field, at most 5 attempts per minute per visitor and 3 orders per hour (10 per day) to one e-mail - nobody can make the e-shop mail strangers or use up the stock with fake orders."
-        },
-        {
-            "type": "security",
-            "area": "core",
-            "part": "admin",
-            "text": "The core log has its own permission (View the core log): the Core tab alone no longer opens it. Roles with the Core tab get it with the update. A failed sign-in names the e-mail only of an existing account; any other typed text is logged as an unreadable code."
-        },
-        {
-            "type": "security",
-            "area": "core",
-            "part": "admin",
-            "text": "The internal note of an administrator account is shown only to the sysadmin and to accounts that may view the administrators - the account itself no longer receives it."
-        }
-    ],
+    "unreleased": [],
     "releases": [
+        {
+            "version": "v2026.11.4",
+            "date": "2026-11-21",
+            "changes": [
+                {
+                    "type": "fixed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Confirmation e-mail editors (inquiries, e-shop orders, project portal orders): texts typed into a language that had been saved empty before are saved again - the save reported success but kept nothing."
+                },
+                {
+                    "type": "changed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Confirmation e-mail editors mark the fields left empty in a language orange, show their number on the language tabs and explain that an empty field uses the Czech text or the default English wording."
+                },
+                {
+                    "type": "changed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "The header and the buttons of the confirmation e-mail editor stay in place, only its content scrolls."
+                },
+                {
+                    "type": "fixed",
+                    "area": "web",
+                    "part": "public",
+                    "text": "The inquiry confirmation e-mail shows the name of the topic (e.g. New project / inquiry) in the subject and the summary instead of its internal key."
+                },
+                {
+                    "type": "changed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Admin popups get one shared frame (first the confirmation, the password prompt and the e-mail editor): fixed header and buttons, Escape or a click outside closes, the cursor moves into the window and back, screen readers announce it as a dialog."
+                },
+                {
+                    "type": "changed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Record forms, record details, import, export and the charts window use the shared popup frame too: one look, Escape closes them, the cursor stays inside; the charts window has its title and actions in the header."
+                },
+                {
+                    "type": "changed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Calendar events, security event triage, the own password change, e-mail domains of administrators and languages of the text editors open in the shared popup frame too; the delete buttons are red."
+                },
+                {
+                    "type": "changed",
+                    "area": "shop",
+                    "part": "admin",
+                    "text": "E-shop order detail, order form and the order history of a customer open in the shared popup frame: status and amount in the header, Escape closes them and the page under them no longer scrolls."
+                },
+                {
+                    "type": "changed",
+                    "area": "shop",
+                    "part": "admin",
+                    "text": "E-shop product detail, form, variants, variant images and images open in the shared popup frame; variant images open over the variants and Escape closes only them; the page under a popup no longer scrolls."
+                },
+                {
+                    "type": "fixed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "On a phone the name of the current section is centred in the header of the administration instead of squeezed next to the menu button."
+                },
+                {
+                    "type": "added",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Red numbers of unread records in the menu (new inquiries, job applications, orders, low stock, overdue leads, security events) - per admin since their last visit of the page, \"99+\" above 99, sums at the module switcher. Checked once a minute while the tab is visible."
+                },
+                {
+                    "type": "added",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "A pop-up notice at the top right when new records arrive; a click opens the page. It can be switched off on the Personal information page (only in that browser) - the numbers in the menu stay."
+                },
+                {
+                    "type": "fixed",
+                    "area": "project-portal",
+                    "part": "admin",
+                    "text": "Project conversations in the administration: an open thread shows new client messages, replies and internal notes of colleagues and “read by the client” within 15 s - before, it showed them only after it was opened again."
+                },
+                {
+                    "type": "security",
+                    "area": "shop",
+                    "part": "admin",
+                    "text": "Product and variant images are stored with the extension of their real content, and a variant image that is not a JPG, PNG or WebP is refused - before, an uploaded file could be stored under a name like .html or .js and run in the browser as part of the website."
+                },
+                {
+                    "type": "security",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Language flag icons are stored with the extension of their real content, and every public upload (images, flags) is served so that it can never run as a page or script."
+                },
+                {
+                    "type": "security",
+                    "area": "shop",
+                    "part": "public",
+                    "text": "The checkout checks the stock for the whole quantity of a product even when the order sends it in several lines (such an order could take more pieces than were in stock, the stock went below zero) and saves them as one item; a product with variants can be ordered only as one of its variants."
+                },
+                {
+                    "type": "security",
+                    "area": "shop",
+                    "part": "public",
+                    "text": "A coupon with a limited number of uses can no longer be used more times than allowed by orders sent at the same moment - the use is counted together with the check of the limit."
+                },
+                {
+                    "type": "security",
+                    "area": "web",
+                    "part": "public",
+                    "text": "The audit log keeps no copy of the contact data, messages and file names sent with an inquiry or a job application, and the log of a new application names only the position - an erased inquiry or application leaves no personal data in the log."
+                },
+                {
+                    "type": "security",
+                    "area": "shop",
+                    "part": "public",
+                    "text": "The audit log of the checkout keeps no copy of the buyer’s contact data - an anonymised customer leaves no personal data in the log."
+                },
+                {
+                    "type": "security",
+                    "area": "project-portal",
+                    "part": "public",
+                    "text": "The audit log of the order form keeps no copy of the client’s data and file names; the log row names the order by its number."
+                },
+                {
+                    "type": "security",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Exports to CSV and TXT show a value that a spreadsheet would run as a formula (it starts with =, +, -, @) as plain text - an apostrophe is put in front; the import removes it again."
+                },
+                {
+                    "type": "security",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "A deleted sysadmin account can be restored from the trash only by another sysadmin (the same rule as deleting it), and deleting an account signs it out on every device at once - a restore no longer brings its old sessions back."
+                },
+                {
+                    "type": "security",
+                    "area": "shop",
+                    "part": "public",
+                    "text": "The checkout is protected like the other public forms: an invisible bot check, a hidden trap field, at most 5 attempts per minute per visitor and 3 orders per hour (10 per day) to one e-mail - nobody can make the e-shop mail strangers or use up the stock with fake orders."
+                },
+                {
+                    "type": "security",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "The core log has its own permission (View the core log): the Core tab alone no longer opens it. Roles with the Core tab get it with the update. A failed sign-in names the e-mail only of an existing account; any other typed text is logged as an unreadable code."
+                },
+                {
+                    "type": "security",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "The internal note of an administrator account is shown only to the sysadmin and to accounts that may view the administrators - the account itself no longer receives it."
+                }
+            ]
+        },
         {
             "version": "v2026.11.3",
             "date": "2026-11-20",
