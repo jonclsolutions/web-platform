@@ -120,7 +120,12 @@
             "last_name": "Příjmení *",
             "address": "Ulice a číslo popisné *",
             "city": "Město *",
-            "postal_code": "PSČ *"
+            "postal_code": "PSČ *",
+            "is_company": "Nakupuji na firmu",
+            "company": "Název firmy *",
+            "ico": "IČO *",
+            "dic": "DIČ",
+            "notes": "Poznámka k objednávce"
         },
         "placeholders": {
             "email": "vas@email.cz",
@@ -130,7 +135,10 @@
             "address": "Kybernetická 123",
             "city": "Praha",
             "postal_code": "110 00",
-            "coupon": "Slevový kód"
+            "coupon": "Slevový kód",
+            "ico": "12345678",
+            "dic": "CZ12345678",
+            "notes": "Např. kdy vás zastihneme nebo cokoli dalšího k objednávce"
         },
         "summary": {
             "title": "Rekapitulace objednávky",
@@ -174,7 +182,12 @@
             "payment_required": "Vyberte způsob platby.",
             "terms_required": "Pro dokončení musíte souhlasit s obchodními podmínkami.",
             "invalid_value": "Zkontrolujte prosím tuto hodnotu.",
-            "captcha_load": "Ověření, že nejste robot, se nepodařilo načíst. Obnovte prosím stránku, případně povolte obsah z challenges.cloudflare.com."
+            "captcha_load": "Ověření, že nejste robot, se nepodařilo načíst. Obnovte prosím stránku, případně povolte obsah z challenges.cloudflare.com.",
+            "company_required": "Název firmy je povinný.",
+            "ico_required": "IČO je povinné.",
+            "ico_invalid": "Zadejte platné IČO (jen písmena a číslice).",
+            "dic_invalid": "Zadejte platné DIČ s kódem země (např. CZ12345678).",
+            "notes_too_long": "Poznámka může mít maximálně 1000 znaků."
         },
         "alerts": {
             "form_incomplete_title": "Formulář je nekompletní",

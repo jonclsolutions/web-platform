@@ -542,7 +542,7 @@
               "steps": [
                 {
                   "label": "Cart and checkout",
-                  "text": "In the e-shop the customer puts goods into the cart and at checkout fills in the contact, the delivery address, the shipping and payment method and possibly a discount coupon.",
+                  "text": "In the e-shop the customer puts goods into the cart and at checkout fills in the contact, the delivery address, the shipping and payment method and possibly a discount coupon and a note to the order. Buying on a company, they tick Buying on a company and fill in the company name and the company ID (required) and the VAT ID.",
                   "active": true
                 },
                 {
@@ -608,7 +608,7 @@
               "cards": [
                 {
                   "title": "Customer",
-                  "text": "Name, e-mail, phone, company and city."
+                  "text": "Name, e-mail, phone, company, company ID, VAT ID and city."
                 },
                 {
                   "title": "Payment & shipping",
@@ -705,7 +705,7 @@
                 },
                 {
                   "label": "Basic details & contact",
-                  "text": "E-mail, phone, company, first and last name, payment and shipping method.",
+                  "text": "E-mail, phone, company, company ID, VAT ID, first and last name, payment and shipping method.",
                   "active": false
                 },
                 {
@@ -862,7 +862,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Columns: ID, Last name, First name, Email, Phone, Total spent. The filter searches by name, e-mail and phone and by the Active status. The details also show the company, address, country, registration date (first order) and the note."
+              "content": "Columns: ID, Last name, First name, Email, Phone, Total spent. The filter searches by name, e-mail and phone and by the Active status. The details also show the company, company ID, VAT ID, address, country, registration date (first order) and the note."
             }
           ]
         },
@@ -881,7 +881,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Form: First name and Last name (required, max. 100 characters), Email, Phone, Company, street address, City, Postal code, Active and an internal Note (max. 1000 characters). Editing a customer does not change the details in orders already created."
+              "content": "Form: First name and Last name (required, max. 100 characters), Email, Phone, Company, Company ID, VAT ID (spaces are removed, the VAT ID starts with the country code, e.g. CZ12345678), street address, City, Postal code, Active and an internal Note (max. 1000 characters). Editing a customer does not change the details in orders already created."
             }
           ]
         },

@@ -22,6 +22,7 @@ use App\Apps\Shop\Models\ShopCoupon;
 use App\Apps\Shop\Models\ShopLog;
 use App\Apps\Shop\Models\ShopShippingMethod;
 use App\Apps\Shop\Http\Resources\ShopOrderResource;
+use App\Apps\Shop\Support\CompanyIds;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -53,7 +54,8 @@ class ShopCheckoutController extends Controller
      *   commit the confirmation e-mail goes to the buyer in the language of the storefront
      *   (Directive 2011/83/EU, Art. 8(7)) - a failed e-mail never fails the order (logged).
      * @param Request $request Checkout form (customer, address, methods, coupon_code, items,
-     *   lang = language of the storefront; unknown / missing = cz; terms_accepted - the consent
+     *   lang = language of the storefront; unknown / missing = cz; is_company + company, ico
+     *   (required then) and dic - buying on a company; is_company false drops them; terms_accepted - the consent
      *   with the terms and conditions, required; stored with its time and the accepted wording,
      *   TermsVersion).
      * @note The route is guarded like every public form (PublicFormGuard): captcha, honeypot and
@@ -62,13 +64,18 @@ class ShopCheckoutController extends Controller
      */
     public function createOrder(Request $request): JsonResponse
     {
-        // Lengths = column sizes of shop_customers / shop_orders.
+        // Lengths = column sizes of shop_customers / shop_orders. IČO / DIČ normalised first
+        // (spaces removed, upper case); buying on a company needs the company name and the IČO.
+        CompanyIds::normalize($request);
         $validated = $request->validate([
             'email' => 'required|email|max:150',
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',
             'phone' => 'required|string|max:20',
-            'company' => 'nullable|string|max:150',
+            'is_company' => 'sometimes|boolean',
+            'company' => 'nullable|required_if:is_company,true|string|max:150',
+            'ico' => ['required_if:is_company,true', ...CompanyIds::ICO_RULE],
+            'dic' => CompanyIds::DIC_RULE,
             'address' => 'required|string|max:255',
             'city' => 'required|string|max:100',
             'postal_code' => 'required|string|max:10',
@@ -87,7 +94,11 @@ class ShopCheckoutController extends Controller
             'items.*.unit_price' => 'nullable|numeric|min:0',
             'items.*.vat_rate' => 'nullable|integer|between:0,100',
             'lang' => 'sometimes|nullable|string|max:10',
-        ]);
+        ], CompanyIds::MESSAGES);
+        if ($request->has('is_company') && !$request->boolean('is_company')) {
+            // A private buyer: no company data even when the browser sent some.
+            $validated['company'] = $validated['ico'] = $validated['dic'] = null;
+        }
 
         try {
             DB::beginTransaction();
@@ -257,6 +268,8 @@ class ShopCheckoutController extends Controller
             'last_name'   => $validated['last_name'],
             'phone'       => $validated['phone'],
             'company'     => $validated['company'] ?? null,
+            'ico'         => $validated['ico'] ?? null,
+            'dic'         => $validated['dic'] ?? null,
             'address'     => $validated['address'],
             'city'        => $validated['city'],
             'postal_code' => $validated['postal_code'],

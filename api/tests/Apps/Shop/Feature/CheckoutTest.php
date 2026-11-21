@@ -330,6 +330,38 @@ class CheckoutTest extends TestCase
     }
 
     /**
+     * @description Buying on a company (U-03): with `is_company` the company name and the IČO are
+     *   required, the DIČ needs a country prefix; IČO / DIČ are normalised (spaces, upper case) and
+     *   stored on the order (snapshot) and the new customer; a private buyer's company data are
+     *   dropped even when sent.
+     * @input is_company without company / ico; DIČ "X1"; company ACME, ico " 123 456 78", dic
+     *   "cz 12345678"; private buyer (is_company false) sending company / ico.
+     * @output 422 company + ico; 422 dic (message with the prefix); 201 order customer_ico
+     *   12345678, customer_dic CZ12345678, contact.ico in the answer, customer ico / dic; private
+     *   order and customer without company data.
+     */
+    public function test_company_purchase(): void
+    {
+        $p = $this->product(['name' => 'P']);
+        $line = [['product_id' => $p->id, 'quantity' => 1]];
+
+        $this->postJson('/api/shop/checkout/create-order', $this->payload($line, ['is_company' => true]))
+            ->assertStatus(422)->assertJsonValidationErrors(['company', 'ico']);
+        $this->postJson('/api/shop/checkout/create-order', $this->payload($line, ['is_company' => true, 'company' => 'ACME', 'ico' => '12345678', 'dic' => 'X1']))
+            ->assertStatus(422)->assertJsonPath('errors.dic.0', 'Enter a valid VAT ID with the country prefix (e.g. CZ12345678).');
+
+        $id = $this->postJson('/api/shop/checkout/create-order', $this->payload($line, ['is_company' => true, 'company' => 'ACME s.r.o.', 'ico' => ' 123 456 78', 'dic' => 'cz 12345678']))
+            ->assertCreated()->assertJsonPath('data.contact.ico', '12345678')->assertJsonPath('data.contact.dic', 'CZ12345678')->json('data.id');
+        $order = ShopOrder::find($id);
+        $this->assertSame(['ACME s.r.o.', '12345678', 'CZ12345678'], [$order->customer_company, $order->customer_ico, $order->customer_dic]);
+        $this->assertSame(['12345678', 'CZ12345678'], [$order->customer->ico, $order->customer->dic]);
+
+        $private = ShopOrder::find($this->postJson('/api/shop/checkout/create-order', $this->payload($line, ['email' => 'eva@example.com', 'is_company' => false, 'company' => 'X', 'ico' => '87654321']))->assertCreated()->json('data.id'));
+        $this->assertSame([null, null], [$private->customer_company, $private->customer_ico]);
+        $this->assertNull($private->customer->ico);
+    }
+
+    /**
      * @description The consent with the terms and conditions is required and stored with the
      *   order (U-04): its time and the accepted wording of the terms in the order's language -
      *   the last change and the SHA-256 of the text; an edit of the terms changes the version

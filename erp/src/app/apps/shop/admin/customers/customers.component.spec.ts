@@ -41,18 +41,19 @@ describe('CustomersComponent', () => {
   /**
    * @description The configuration is built from the 'shop-customers' translations.
    * @input  component created
-   * @output caption; row buttons details / edit / orders (shop-orders-view) / anonymize / delete; 12 form fields; 7 + 3 columns; filters search + is_active; 14 details
+   * @output caption; row buttons details / edit / orders (shop-orders-view) / anonymize / delete; 14 form fields (incl. IČO / DIČ); 7 + 3 columns; filters search + is_active; 16 details
    */
   it('builds the configuration from translations', () => {
     expect(component.tableCaption).toBe('shop-customers.table_header');
     expect(component.buttons.map(b => [b.action, b.permission])).toEqual([
       ['details', undefined], ['edit', 'shop-customers-update'], ['customer_orders', 'shop-orders-view'], ['anonymize', 'shop-customers-delete'], ['delete', 'shop-customers-delete']
     ]);
-    expect(component.formFields.length).toBe(12);
+    expect(component.formFields.length).toBe(14);
+    expect(component.formFields.filter(f => ['ico', 'dic'].includes(f.column_name)).length).toBe(2);
     expect(component.customerColumns.map(c => c.key)).toEqual(['id', 'last_name', 'first_name', 'email', 'phone', 'total_spent', 'is_active']);
     expect(component.trashCustomerColumns.map(c => c.key)).toEqual(['id', 'email', 'deleted_at']);
     expect(component.filterColumns.map(c => c.key)).toEqual(['search', 'is_active']);
-    expect(component.detailsColumns.length).toBe(14);
+    expect(component.detailsColumns.length).toBe(16);
     expect(component.t('btn_orders')).toBe('shop-customers.btn_orders');
   });
 
@@ -77,13 +78,13 @@ describe('CustomersComponent', () => {
   /**
    * @description Country and state can be charted; personal data columns are importable.
    * @input  graphColumns; detailsColumns
-   * @output country, is_active (['1', '0']); 12 importable columns
+   * @output country, is_active (['1', '0']); 14 importable columns
    */
   it('offers chartable and importable columns', () => {
     expect(component.graphColumns.map(g => [g.key, g.aggregation, g.possibleValues])).toEqual([
       ['country', 'count', undefined], ['is_active', 'count', ['1', '0']]
     ]);
-    expect(component.detailsColumns.filter(c => c.importable).length).toBe(12);
+    expect(component.detailsColumns.filter(c => c.importable).length).toBe(14);
   });
 
   /**

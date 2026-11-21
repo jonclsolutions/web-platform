@@ -11,6 +11,7 @@
 namespace App\Apps\Shop\Http\Requests\ShopOrder;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Apps\Shop\Support\CompanyIds;
 
 /**
  * @description Handles validation for updating shop orders.
@@ -29,6 +30,15 @@ class UpdateShopOrderRequest extends FormRequest
     }
 
     /**
+     * @description IČO / DIČ normalised before validation (spaces removed, upper case) - CompanyIds.
+     * @return void
+     */
+    protected function prepareForValidation(): void
+    {
+        CompanyIds::normalize($this);
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array
@@ -43,6 +53,8 @@ class UpdateShopOrderRequest extends FormRequest
             'last_name'            => ['sometimes', 'required', 'string', 'max:100'],
             'phone'                => ['sometimes', 'required', 'string', 'max:20'],
             'company'              => ['nullable', 'string', 'max:150'],
+            'ico'                  => CompanyIds::ICO_RULE,
+            'dic'                  => CompanyIds::DIC_RULE,
 
             'payment_method_id'    => ['sometimes', 'required', 'exists:shop_payment_methods,id'],
             'shipping_method_id'   => ['sometimes', 'required', 'exists:shop_shipping_methods,id'],
@@ -96,7 +108,7 @@ class UpdateShopOrderRequest extends FormRequest
      */
     public function messages(): array
 {
-    return [
+    return CompanyIds::MESSAGES + [
         'items.min'            => 'The order must contain at least one item.',
         'items.*.quantity.min' => 'Quantity must be at least 1.',
     ];

@@ -54,6 +54,7 @@ class ShopOrderEmailTemplate extends I18nEmailTemplate
         'label_vat'             => 'of which VAT',
         'label_delivery'        => 'Delivery address',
         'label_contact'         => 'Contact',
+        'label_company_ids'     => 'Company ID / VAT ID',
         'label_notes'           => 'Note',
         'withdrawal_info'       => 'As a consumer you may withdraw from the contract within 14 days of receiving the goods without giving any reason. The conditions of the withdrawal are part of our terms and conditions.',
         'terms_link'            => 'Terms and conditions',

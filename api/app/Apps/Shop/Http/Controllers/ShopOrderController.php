@@ -143,6 +143,8 @@ class ShopOrderController extends Controller
                     'last_name'   => $validated['last_name'],
                     'phone'       => $validated['phone'],
                     'company'     => $validated['company'] ?? null,
+                    'ico'         => $validated['ico'] ?? null,
+                    'dic'         => $validated['dic'] ?? null,
                     'is_active'   => true,
                     'address'     => $validated['shipping_address'],
                     'city'        => $validated['shipping_city'],
@@ -256,7 +258,7 @@ class ShopOrderController extends Controller
             $oldStatus = $order->status;
 
             // Contact fields change this order's snapshot only, not the customer master data.
-            $updateData = collect($validated)->except(['items', 'delete_items', 'first_name', 'last_name', 'email', 'phone', 'company'])->toArray();
+            $updateData = collect($validated)->except(['items', 'delete_items', 'first_name', 'last_name', 'email', 'phone', 'company', 'ico', 'dic'])->toArray();
             $order->update(ShopOrder::contactSnapshot($validated) + $updateData);
 
             // Item edits move stock only while the order (still in its old status) holds it;

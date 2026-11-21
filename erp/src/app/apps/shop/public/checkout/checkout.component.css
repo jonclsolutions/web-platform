@@ -121,12 +121,41 @@ h1 {
   transition: var(--transition);
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group textarea:focus {
   outline: none;
   border-color: var(--border-dark);
 }
 
+/* Note of the buyer - the same look as the inputs, grows by hand. */
+.form-group textarea {
+  background: var(--bg-main);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  padding: 8px 12px;
+  border-radius: 0;
+  font-family: inherit;
+  font-size: 0.8rem;
+  box-sizing: border-box;
+  resize: vertical;
+  transition: var(--transition);
+}
+
+/* Buying on a company: the switch under the address, its fields below it. */
+.company-toggle {
+  margin-top: 1rem;
+}
+
+.company-fields {
+  margin-top: 1rem;
+}
+
+.checkout-notes {
+  margin-bottom: 1.5rem;
+}
+
 /* Fields that failed validation */
+.form-group textarea.is-invalid,
 .form-group input.is-invalid,
 .terms-checkbox.is-invalid {
   border-color: var(--error) !important;

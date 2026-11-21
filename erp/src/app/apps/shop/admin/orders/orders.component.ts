@@ -326,6 +326,7 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       { key: 'label_vat', sample: '38.67 €' },
       { key: 'label_delivery', sample: this.t('email_tpl_preview_address') },
       { key: 'label_contact', sample: this.t('email_tpl_preview_contact') },
+      { key: 'label_company_ids', sample: '12345678 / CZ12345678' },
       { key: 'label_notes', sample: this.t('email_tpl_preview_notes') },
       { key: 'withdrawal_info', sample: '', multiline: true },
       { key: 'terms_link', sample: '' },
@@ -418,6 +419,8 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       last_name: '',
       phone: '',
       company: '',
+      ico: '',
+      dic: '',
 
       status: 'pending',
       payment_status: 'unpaid',
@@ -478,7 +481,9 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
           first_name: contact?.first_name || '',
           last_name: contact?.last_name || '',
           phone: contact?.phone || '',
-          company: contact?.company || ''
+          company: contact?.company || '',
+          ico: contact?.ico || '',
+          dic: contact?.dic || ''
         };
         this.showOrderForm = true;
         this.recalculateTotals();
@@ -633,6 +638,8 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       last_name: this.editingOrder.last_name,
       phone: this.editingOrder.phone,
       company: this.editingOrder.company || null,
+      ico: this.editingOrder.ico || null,
+      dic: this.editingOrder.dic || null,
 
       payment_method_id: Number(this.editingOrder.payment_method_id),
       shipping_method_id: Number(this.editingOrder.shipping_method_id),

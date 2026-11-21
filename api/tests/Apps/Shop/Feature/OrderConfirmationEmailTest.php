@@ -127,6 +127,48 @@ class OrderConfirmationEmailTest extends TestCase
     }
 
     /**
+     * @description An order on a company shows the company and its IČO / DIČ in the e-mail (the
+     *   Czech label of the template, U-03).
+     * @input Czech checkout with is_company, ACME, ico 12345678, dic CZ12345678.
+     * @output The e-mail contains "ACME", "IČO / DIČ" and "12345678 / CZ12345678".
+     */
+    public function test_company_ids_are_in_the_email(): void
+    {
+        Mail::fake();
+        $texts = require app_path('Apps/Shop/Database/Seeders/data/shop_order_email.php');
+        ShopSiteSetting::create(['is_shop_active' => true, 'order_email_labels_i18n' => $texts['order_email_labels_i18n']]);
+        $this->checkout(['is_company' => true, 'company' => 'ACME', 'ico' => '12345678', 'dic' => 'CZ12345678'])->assertCreated();
+        Mail::assertQueued(ShopOrderConfirmation::class, function (ShopOrderConfirmation $mail) {
+            $html = $mail->render();
+            foreach (['ACME', 'IČO / DIČ', '12345678 / CZ12345678'] as $expected) {
+                $this->assertStringContainsString($expected, $html, $expected);
+            }
+            return true;
+        });
+    }
+
+    /**
+     * @description The migration of the company IDs adds the Czech label of their e-mail row to
+     *   the stored labels when it is missing, and keeps an edited one.
+     * @input Stored cz labels without the key; down() + up(); then an edited label; up() again
+     *   after down().
+     * @output label_company_ids "IČO / DIČ"; the edited "IČ / DIČ" kept.
+     */
+    public function test_migration_adds_the_company_ids_label(): void
+    {
+        $migration = require app_path('Apps/Shop/Database/Migrations/2026_11_21_000001_shop_company_ids.php');
+        $settings = ShopSiteSetting::create(['is_shop_active' => true, 'order_email_labels_i18n' => ['cz' => ['label_total' => 'Celkem']]]);
+        $migration->down();
+        $migration->up();
+        $this->assertSame(['label_total' => 'Celkem', 'label_company_ids' => 'IČO / DIČ'], $settings->fresh()->order_email_labels_i18n['cz']);
+
+        $settings->update(['order_email_labels_i18n' => ['cz' => ['label_company_ids' => 'IČ / DIČ']]]);
+        $migration->down();
+        $migration->up();
+        $this->assertSame('IČ / DIČ', $settings->fresh()->order_email_labels_i18n['cz']['label_company_ids']);
+    }
+
+    /**
      * @description A language the e-shop does not have (or none) is stored as Czech; Czech
      *   amounts use a decimal comma.
      * @input Checkout with lang 'xx'; without lang.

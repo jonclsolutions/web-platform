@@ -116,6 +116,23 @@ class CustomerTest extends TestCase
     }
 
     /**
+     * @description IČO / DIČ of a customer (U-03): normalised, validated, returned; anonymisation
+     *   clears them.
+     * @input POST with ico " 12 34 56 78", dic "sk1234567890"; PUT dic "123"; anonymise.
+     * @output 201 ico 12345678, dic SK1234567890; 422 dic; after anonymisation both null.
+     */
+    public function test_company_ids(): void
+    {
+        $this->signIn($this->userWith(self::ALL));
+        $id = $this->postJson('/api/shop/customers', $this->payload(['ico' => ' 12 34 56 78', 'dic' => 'sk1234567890']))->assertCreated()
+            ->assertJsonPath('data.ico', '12345678')->assertJsonPath('data.dic', 'SK1234567890')->json('data.id');
+        $this->putJson("/api/shop/customers/{$id}", $this->payload(['dic' => '123']))->assertStatus(422)->assertJsonValidationErrors(['dic']);
+
+        ShopCustomer::find($id)->anonymize();
+        $this->assertSame([null, null], [ShopCustomer::find($id)->ico, ShopCustomer::find($id)->dic]);
+    }
+
+    /**
      * @description Delete (soft / permanent), restore, empty trash, 404s, database errors.
      * @input Customers A, B, C, D; actions in sequence; failing writes.
      * @output 204s; A restored; trash emptied (Count: 1); 404; 500s.

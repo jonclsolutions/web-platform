@@ -60,7 +60,11 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
     firstName: '',
     lastName: '',
     phone: '',
+    /** Buying on a company: the company name, IČO (both required then) and DIČ (U-03). */
+    isCompany: false,
     company: null as string | null,
+    ico: null as string | null,
+    dic: null as string | null,
     address: '',
     city: '',
     postalCode: '',
@@ -81,6 +85,10 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
     postalCode: '',
     shippingMethodId: '',
     paymentMethodId: '',
+    company: '',
+    ico: '',
+    dic: '',
+    notes: '',
     agreeToTerms: ''
   };
 
@@ -307,6 +315,48 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
       case 'agreeToTerms':
         this.errors['agreeToTerms'] = !this.formData.agreeToTerms ? this.t?.errors?.terms_required : '';
         break;
+
+      // Company data only when buying on a company; IČO / DIČ checked like the API (spaces ignored).
+      case 'company':
+        this.errors['company'] = this.formData.isCompany && !this.formData.company?.trim() ? this.t?.errors?.company_required : '';
+        break;
+
+      case 'ico': {
+        const ico = this.normalizedId(this.formData.ico);
+        this.errors['ico'] = !this.formData.isCompany ? ''
+          : !ico ? this.t?.errors?.ico_required
+          : !/^[A-Z0-9]{2,20}$/.test(ico) ? this.t?.errors?.ico_invalid : '';
+        break;
+      }
+
+      case 'dic': {
+        const dic = this.normalizedId(this.formData.dic);
+        this.errors['dic'] = this.formData.isCompany && dic && !/^[A-Z]{2}[A-Z0-9]{2,12}$/.test(dic) ? this.t?.errors?.dic_invalid : '';
+        break;
+      }
+
+      case 'notes':
+        this.errors['notes'] = (this.formData.notes?.length ?? 0) > 1000 ? this.t?.errors?.notes_too_long : '';
+        break;
+    }
+  }
+
+  /**
+   * @description IČO / DIČ as the API stores them: without spaces, upper case (null when empty).
+   * @param value Typed value.
+   */
+  private normalizedId(value: string | null): string | null {
+    const id = (value ?? '').replace(/\s+/g, '').toUpperCase();
+    return id === '' ? null : id;
+  }
+
+  /**
+   * @description Switches buying on a company; switching it off clears the errors of the
+   *   company fields (their values stay typed, but are not sent).
+   */
+  toggleCompany(): void {
+    if (!this.formData.isCompany) {
+      this.errors['company'] = this.errors['ico'] = this.errors['dic'] = '';
     }
   }
 
@@ -327,7 +377,8 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
       this.formData.postalCode &&
       this.formData.shippingMethodId &&
       this.formData.paymentMethodId &&
-      this.formData.agreeToTerms
+      this.formData.agreeToTerms &&
+      (!this.formData.isCompany || (!!this.formData.company?.trim() && !!this.normalizedId(this.formData.ico)))
     );
   }
 
@@ -390,7 +441,10 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
       first_name: this.formData.firstName,
       last_name: this.formData.lastName,
       phone: this.formData.phone,
-      company: null,
+      is_company: this.formData.isCompany,
+      company: this.formData.isCompany ? this.formData.company?.trim() || null : null,
+      ico: this.formData.isCompany ? this.normalizedId(this.formData.ico) : null,
+      dic: this.formData.isCompany ? this.normalizedId(this.formData.dic) : null,
       address: this.formData.address,
       city: this.formData.city,
       postal_code: this.formData.postalCode,
@@ -400,7 +454,7 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
       coupon_code: this.appliedCoupon()?.code || null,
       currency: 'EUR', 
       total_amount: Number(this.orderSummary().finalAmount), 
-      notes: null,
+      notes: this.formData.notes?.trim() || null,
       // Language of the storefront - the confirmation e-mail of the order is sent in it.
       lang: this.localizationService.getCurrentLanguage(),
       // Consent with the terms and conditions - the API stores it with the order (time + wording).

@@ -3,6 +3,12 @@
         {
             "type": "added",
             "area": "shop",
+            "part": "public",
+            "text": "Checkout: buying on a company (company name, company ID and VAT ID) and a note to the order. The company IDs are stored with the order and the customer, shown in the admin and in the confirmation e-mail."
+        },
+        {
+            "type": "added",
+            "area": "shop",
             "part": "admin",
             "text": "The consent of the buyer with the terms and conditions is stored with every e-shop order - its time and the wording of the terms (date of their last change and a fingerprint of the text) - and shown in the order details."
         },

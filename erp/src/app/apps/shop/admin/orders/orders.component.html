@@ -161,6 +161,18 @@
                       <span class="dir-value">{{ (selectedOrderForDetail.contact ?? selectedOrderForDetail.customer)?.company }}</span>
                     </div>
                   }
+                  @if (selectedOrderForDetail.contact?.ico; as ico) {
+                    <div class="detail-info-row">
+                      <span class="dir-label">{{ t('label_ico') }}</span>
+                      <span class="dir-value dir-value-mono">{{ ico }}</span>
+                    </div>
+                  }
+                  @if (selectedOrderForDetail.contact?.dic; as dic) {
+                    <div class="detail-info-row">
+                      <span class="dir-label">{{ t('label_dic') }}</span>
+                      <span class="dir-value dir-value-mono">{{ dic }}</span>
+                    </div>
+                  }
                   @if (selectedOrderForDetail.customer?.city) {
                     <div class="detail-info-row">
                       <span class="dir-label">{{ t('label_city') }}</span>
@@ -398,6 +410,14 @@
               [(ngModel)]="editingOrder.company"
               name="company"
               [placeholder]="t('placeholder_optional')">
+          </div>
+          <div class="form-group">
+            <label>{{ t('label_ico') }}</label>
+            <input type="text" [(ngModel)]="editingOrder.ico" name="ico" maxlength="24" [placeholder]="t('placeholder_optional')">
+          </div>
+          <div class="form-group">
+            <label>{{ t('label_dic') }}</label>
+            <input type="text" [(ngModel)]="editingOrder.dic" name="dic" maxlength="24" [placeholder]="t('placeholder_optional')">
           </div>
         </div>
 

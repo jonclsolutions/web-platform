@@ -10,6 +10,9 @@ export interface Order {
   last_name?: string;
   phone?: string;
   company?: string | null;
+  /** Company ID / VAT ID of the buyer (edit form; stored in the contact snapshot). */
+  ico?: string | null;
+  dic?: string | null;
   status: string;
   status_label?: string;
   payment_status: string;
@@ -32,6 +35,10 @@ export interface Order {
   shipping_postal_code: string;
   shipping_country: string;
   notes?: string | null;
+  /** Consent with the terms and conditions: time, the accepted wording (last change) and its SHA-256. */
+  terms_accepted_at?: string | null;
+  terms_version?: string | null;
+  terms_hash?: string | null;
   items: OrderItem[];
   items_count?: number;
   paid_at?: string;
@@ -50,6 +57,8 @@ export interface OrderContact {
   email: string | null;
   phone: string | null;
   company: string | null;
+  ico?: string | null;
+  dic?: string | null;
 }
 
 export interface OrderItem {
@@ -76,6 +85,8 @@ export interface Customer {
   full_name: string;
   phone?: string;
   company?: string;
+  ico?: string | null;
+  dic?: string | null;
   address?: string;
   city?: string;
   postal_code?: string;

@@ -35,6 +35,8 @@ class ShopCustomerResource extends JsonResource
             'full_name' => $this->getFullName(),
             'phone' => $this->phone,
             'company' => $this->company,
+            'ico' => $this->ico,
+            'dic' => $this->dic,
             'address' => $this->address,
             'city' => $this->city,
             'postal_code' => $this->postal_code,

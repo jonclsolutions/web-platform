@@ -147,6 +147,43 @@
                 }
               </div>
             </div>
+
+            <!-- Buying on a company (U-03): the company name and IČO are required then, DIČ optional. -->
+            <label class="terms-checkbox-label company-toggle">
+              <input type="checkbox" class="terms-checkbox" [(ngModel)]="formData.isCompany" name="isCompany" (change)="toggleCompany()">
+              <span class="terms-text">{{ t?.labels?.is_company }}</span>
+            </label>
+            @if (formData.isCompany) {
+              <div class="form-grid company-fields">
+                <div class="form-group full">
+                  <label>{{ t?.labels?.company }}</label>
+                  <input type="text" [(ngModel)]="formData.company" name="company" maxlength="150"
+                         (blur)="validateField('company')" (input)="errors['company'] ? validateField('company') : null"
+                         [class.is-invalid]="errors['company']">
+                  @if (errors['company']) {
+                    <span class="error-message">{{ errors['company'] }}</span>
+                  }
+                </div>
+                <div class="form-group">
+                  <label>{{ t?.labels?.ico }}</label>
+                  <input type="text" [(ngModel)]="formData.ico" name="ico" maxlength="24" [placeholder]="t?.placeholders?.ico"
+                         (blur)="validateField('ico')" (input)="errors['ico'] ? validateField('ico') : null"
+                         [class.is-invalid]="errors['ico']">
+                  @if (errors['ico']) {
+                    <span class="error-message">{{ errors['ico'] }}</span>
+                  }
+                </div>
+                <div class="form-group">
+                  <label>{{ t?.labels?.dic }}</label>
+                  <input type="text" [(ngModel)]="formData.dic" name="dic" maxlength="24" [placeholder]="t?.placeholders?.dic"
+                         (blur)="validateField('dic')" (input)="errors['dic'] ? validateField('dic') : null"
+                         [class.is-invalid]="errors['dic']">
+                  @if (errors['dic']) {
+                    <span class="error-message">{{ errors['dic'] }}</span>
+                  }
+                </div>
+              </div>
+            }
           </div>
 
           <div class="checkout-section">
@@ -263,6 +300,16 @@
               <span>{{ t?.summary?.total }}</span>
               <strong>{{ formatPrice(orderSummary().finalAmount) }}</strong>
             </div>
+          </div>
+
+          <!-- Note of the buyer to the order (shown to the admin and in the confirmation e-mail). -->
+          <div class="form-group checkout-notes">
+            <label>{{ t?.labels?.notes }}</label>
+            <textarea [(ngModel)]="formData.notes" name="notes" rows="3" maxlength="1000" [placeholder]="t?.placeholders?.notes"
+                      (blur)="validateField('notes')" [class.is-invalid]="errors['notes']"></textarea>
+            @if (errors['notes']) {
+              <span class="error-message">{{ errors['notes'] }}</span>
+            }
           </div>
 
           <div class="checkout-terms-agreement">

@@ -109,12 +109,19 @@
 @if ($order->shipping_country)<br>{{ $order->shipping_country }}@endif
 </td>
 </tr>
+@php($lastContactRow = !$order->notes && !$contact['ico'] && !$contact['dic'])
 <tr>
-<td style="{{ $label }}{{ $order->notes ? '' : 'border-bottom:0;' }}">{{ $l['label_contact'] }}</td>
-<td style="{{ $value }}{{ $order->notes ? '' : 'border-bottom:0;' }}">
+<td style="{{ $label }}{{ $lastContactRow ? 'border-bottom:0;' : '' }}">{{ $l['label_contact'] }}</td>
+<td style="{{ $value }}{{ $lastContactRow ? 'border-bottom:0;' : '' }}">
 {{ $contact['email'] }}@if ($contact['phone'])<br>{{ $contact['phone'] }}@endif
 </td>
 </tr>
+@if ($contact['ico'] || $contact['dic'])
+<tr>
+<td style="{{ $label }}{{ $order->notes ? '' : 'border-bottom:0;' }}">{{ $l['label_company_ids'] }}</td>
+<td style="{{ $value }}{{ $order->notes ? '' : 'border-bottom:0;' }}">{{ $contact['ico'] ?: '–' }} / {{ $contact['dic'] ?: '–' }}</td>
+</tr>
+@endif
 @if ($order->notes)
 <tr>
 <td style="{{ $label }}border-bottom:0;">{{ $l['label_notes'] }}</td>

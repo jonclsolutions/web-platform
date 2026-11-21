@@ -38,7 +38,7 @@ class ShopCustomer extends Model
      * @description Personal data: the audit log notes that these attributes changed, never their
      *   values (App\Support\Audit\ModelChanges) - an erased / purged record leaves no copy in the logs.
      */
-    public const AUDIT_MASKED = ['email', 'first_name', 'last_name', 'phone', 'company', 'address', 'city', 'postal_code', 'notes'];
+    public const AUDIT_MASKED = ['email', 'first_name', 'last_name', 'phone', 'company', 'ico', 'dic', 'address', 'city', 'postal_code', 'notes'];
 
     protected $fillable = [
         'user_id',
@@ -47,6 +47,8 @@ class ShopCustomer extends Model
         'last_name',
         'phone',
         'company',
+        'ico',
+        'dic',
         'address',
         'city',
         'postal_code',
@@ -150,6 +152,8 @@ class ShopCustomer extends Model
             'last_name'   => 'customer',
             'phone'       => null,
             'company'     => null,
+            'ico'         => null,
+            'dic'         => null,
             'address'     => null,
             'city'        => null,
             'postal_code' => null,

@@ -34,6 +34,7 @@ return [
         'label_vat'          => 'z toho DPH',
         'label_delivery'     => 'Doručovací adresa',
         'label_contact'      => 'Kontakt',
+        'label_company_ids'  => 'IČO / DIČ',
         'label_notes'        => 'Poznámka',
         'withdrawal_info'    => 'Jako spotřebitel máte právo od smlouvy odstoupit bez udání důvodu do 14 dnů od převzetí zboží. Podmínky odstoupení jsou součástí našich obchodních podmínek.',
         'terms_link'         => 'Obchodní podmínky',

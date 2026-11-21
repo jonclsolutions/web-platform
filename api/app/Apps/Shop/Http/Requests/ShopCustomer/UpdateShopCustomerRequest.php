@@ -12,6 +12,7 @@ namespace App\Apps\Shop\Http\Requests\ShopCustomer;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Apps\Shop\Support\CompanyIds;
 
 /**
  * @description Handles request validation for updating customer records, ensuring email and user association uniqueness while ignoring the current record ID.
@@ -26,6 +27,15 @@ class UpdateShopCustomerRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    /**
+     * @description IČO / DIČ normalised before validation (spaces removed, upper case) - CompanyIds.
+     * @return void
+     */
+    protected function prepareForValidation(): void
+    {
+        CompanyIds::normalize($this);
     }
 
     /**
@@ -55,6 +65,8 @@ class UpdateShopCustomerRequest extends FormRequest
             'last_name'   => ['required', 'string', 'max:100'],
             'phone'       => ['nullable', 'string', 'max:20', 'regex:/^(\+?[0-9]{1,3})?[\s.-]?[0-9]{3,4}[\s.-]?[0-9]{3,4}[\s.-]?[0-9]{3,4}$/'],
             'company'     => ['nullable', 'string', 'max:150'],
+            'ico'         => CompanyIds::ICO_RULE,
+            'dic'         => CompanyIds::DIC_RULE,
             'address'     => ['nullable', 'string', 'max:255'],
             'city'        => ['nullable', 'string', 'max:100'],
             'postal_code' => ['nullable', 'string', 'max:10'],
@@ -71,7 +83,7 @@ class UpdateShopCustomerRequest extends FormRequest
      */
     public function messages(): array
     {
-        return [
+        return CompanyIds::MESSAGES + [
             'email.required'      => 'E-mail is required.',
             'email.email'         => 'Enter a valid e-mail address.',
             'email.max'           => 'E-mail can be at most 150 characters.',

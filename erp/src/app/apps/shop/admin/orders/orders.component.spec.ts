@@ -155,7 +155,8 @@ describe('OrdersComponent', () => {
       expect(component.showOrderForm).toBeTrue();
       expect(component.showGraphBuilder).toBeTrue();
       expect(component.showEmailTemplateModal).toBeTrue();
-      expect(component.emailTemplateRows.length).toBe(17);
+      expect(component.emailTemplateRows.length).toBe(18);
+      expect(component.emailTemplateRows.find(r => r.key === 'label_company_ids')?.sample).toBe('12345678 / CZ12345678');
       expect(component.emailTemplateRows.find(r => r.key === 'withdrawal_info')).toEqual({ key: 'withdrawal_info', sample: '', multiline: true });
       component.closeEmailTemplateEditor();
       expect(component.showEmailTemplateModal).toBeFalse();

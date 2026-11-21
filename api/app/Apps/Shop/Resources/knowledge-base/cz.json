@@ -542,7 +542,7 @@
               "steps": [
                 {
                   "label": "Košík a pokladna",
-                  "text": "Zákazník v e-shopu vloží zboží do košíku a v pokladně vyplní kontakt, doručovací adresu, způsob dopravy a platby a případně slevový kupón.",
+                  "text": "Zákazník v e-shopu vloží zboží do košíku a v pokladně vyplní kontakt, doručovací adresu, způsob dopravy a platby a případně slevový kupón a poznámku k objednávce. Při nákupu na firmu zaškrtne Nakupuji na firmu a vyplní název firmy a IČO (povinné) a DIČ.",
                   "active": true
                 },
                 {
@@ -608,7 +608,7 @@
               "cards": [
                 {
                   "title": "Zákazník",
-                  "text": "Jméno, e-mail, telefon, firma a město."
+                  "text": "Jméno, e-mail, telefon, firma, IČO, DIČ a město."
                 },
                 {
                   "title": "Platba & doprava",
@@ -705,7 +705,7 @@
                 },
                 {
                   "label": "Základní údaje a kontakt",
-                  "text": "E-mail, telefon, firma, jméno a příjmení, způsob platby a dopravy.",
+                  "text": "E-mail, telefon, firma, IČO, DIČ, jméno a příjmení, způsob platby a dopravy.",
                   "active": false
                 },
                 {
@@ -862,7 +862,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Sloupce: ID, Příjmení, Jméno, Email, Telefon, Celkem utraceno. Filtr hledá podle jména, e-mailu a telefonu a podle stavu Aktivní. Detail ukáže i firmu, adresu, zemi, datum registrace (první objednávky) a poznámku."
+              "content": "Sloupce: ID, Příjmení, Jméno, Email, Telefon, Celkem utraceno. Filtr hledá podle jména, e-mailu a telefonu a podle stavu Aktivní. Detail ukáže i firmu, IČO, DIČ, adresu, zemi, datum registrace (první objednávky) a poznámku."
             }
           ]
         },
@@ -881,7 +881,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Formulář: Jméno a Příjmení (povinné, max. 100 znaků), Email, Telefon, Firma, Ulice a č.p., Město, PSČ, Aktivní a interní Poznámka (max. 1000 znaků). Úpravy zákazníka nemění údaje v již vytvořených objednávkách."
+              "content": "Formulář: Jméno a Příjmení (povinné, max. 100 znaků), Email, Telefon, Firma, IČO, DIČ (mezery se odstraní, DIČ začíná kódem země, např. CZ12345678), Ulice a č.p., Město, PSČ, Aktivní a interní Poznámka (max. 1000 znaků). Úpravy zákazníka nemění údaje v již vytvořených objednávkách."
             }
           ]
         },

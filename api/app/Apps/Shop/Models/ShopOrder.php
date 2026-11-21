@@ -40,7 +40,7 @@ class ShopOrder extends Model
      * @description Personal data: the audit log notes that these attributes changed, never their
      *   values (App\Support\Audit\ModelChanges) - an erased / purged record leaves no copy in the logs.
      */
-    public const AUDIT_MASKED = ['customer_first_name', 'customer_last_name', 'customer_email', 'customer_phone', 'customer_company', 'shipping_address', 'shipping_city', 'shipping_postal_code', 'notes'];
+    public const AUDIT_MASKED = ['customer_first_name', 'customer_last_name', 'customer_email', 'customer_phone', 'customer_company', 'customer_ico', 'customer_dic', 'shipping_address', 'shipping_city', 'shipping_postal_code', 'notes'];
 
     protected $fillable = [
         'customer_id',
@@ -49,6 +49,8 @@ class ShopOrder extends Model
         'customer_email',
         'customer_phone',
         'customer_company',
+        'customer_ico',
+        'customer_dic',
         'order_number',
         'status',
         'payment_status',
@@ -278,14 +280,14 @@ class ShopOrder extends Model
 
     /**
      * @description Snapshot columns from contact form fields (first_name, last_name, email,
-     *   phone, company) - only the keys that are present.
+     *   phone, company, ico, dic) - only the keys that are present.
      * @param array<string, mixed> $data Validated request data.
      * @return array<string, mixed> `customer_*` attributes.
      */
     public static function contactSnapshot(array $data): array
     {
         $snapshot = [];
-        foreach (['first_name', 'last_name', 'email', 'phone', 'company'] as $field) {
+        foreach (['first_name', 'last_name', 'email', 'phone', 'company', 'ico', 'dic'] as $field) {
             if (array_key_exists($field, $data)) {
                 $value = $data[$field];
                 $snapshot["customer_{$field}"] = $field === 'email' && is_string($value) ? trim(strtolower($value)) : $value;
@@ -297,7 +299,7 @@ class ShopOrder extends Model
     /**
      * @description Buyer contact of this order: the snapshot, or the customer record for orders
      *   without one.
-     * @return array{first_name: ?string, last_name: ?string, full_name: string, email: ?string, phone: ?string, company: ?string}
+     * @return array{first_name: ?string, last_name: ?string, full_name: string, email: ?string, phone: ?string, company: ?string, ico: ?string, dic: ?string}
      */
     public function contact(): array
     {
@@ -314,6 +316,8 @@ class ShopOrder extends Model
             'email'      => $hasSnapshot ? $this->customer_email : $source?->email,
             'phone'      => $hasSnapshot ? $this->customer_phone : $source?->phone,
             'company'    => $hasSnapshot ? $this->customer_company : $source?->company,
+            'ico'        => $hasSnapshot ? $this->customer_ico : $source?->ico,
+            'dic'        => $hasSnapshot ? $this->customer_dic : $source?->dic,
         ];
     }
 }

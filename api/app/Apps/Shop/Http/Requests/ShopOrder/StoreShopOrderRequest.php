@@ -13,6 +13,7 @@ namespace App\Apps\Shop\Http\Requests\ShopOrder;
 use App\Apps\Shop\Models\ShopProduct;
 use App\Apps\Shop\Models\ShopProductVariant;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Apps\Shop\Support\CompanyIds;
 
 /**
  * @description Handles request validation for new shop orders.
@@ -31,6 +32,15 @@ class StoreShopOrderRequest extends FormRequest
     }
 
     /**
+     * @description IČO / DIČ normalised before validation (spaces removed, upper case) - CompanyIds.
+     * @return void
+     */
+    protected function prepareForValidation(): void
+    {
+        CompanyIds::normalize($this);
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array
@@ -43,6 +53,8 @@ class StoreShopOrderRequest extends FormRequest
             'last_name'            => ['required', 'string', 'max:100'],
             'phone'                => ['required', 'string', 'max:20'],
             'company'              => ['nullable', 'string', 'max:150'],
+            'ico'                  => CompanyIds::ICO_RULE,
+            'dic'                  => CompanyIds::DIC_RULE,
 
             'payment_method_id'    => ['required', 'exists:shop_payment_methods,id'],
             'shipping_method_id'   => ['required', 'exists:shop_shipping_methods,id'],
@@ -97,7 +109,7 @@ class StoreShopOrderRequest extends FormRequest
      */
     public function messages(): array
 {
-    return [
+    return CompanyIds::MESSAGES + [
         'email.required'            => 'Customer e-mail is required.',
         'first_name.required'       => 'Customer first name is required.',
         'last_name.required'        => 'Customer last name is required.',

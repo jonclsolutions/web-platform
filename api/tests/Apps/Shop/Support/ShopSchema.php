@@ -177,6 +177,8 @@ final class ShopSchema
             $t->string('last_name', 100);
             $t->string('phone', 20)->nullable();
             $t->string('company', 150)->nullable();
+            $t->string('ico', 20)->nullable();                      // 2026_11_21_000001_shop_company_ids
+            $t->string('dic', 20)->nullable();
             $t->string('address')->nullable();
             $t->string('city', 100)->nullable();
             $t->string('postal_code', 10)->nullable();
@@ -241,6 +243,8 @@ final class ShopSchema
             $t->string('customer_email', 150)->nullable();
             $t->string('customer_phone', 20)->nullable();
             $t->string('customer_company', 150)->nullable();
+            $t->string('customer_ico', 20)->nullable();             // 2026_11_21_000001_shop_company_ids
+            $t->string('customer_dic', 20)->nullable();
             $t->string('order_number', 50)->unique();
             $t->string('status', 50)->default('pending');
             $t->string('payment_status', 50)->default('pending');

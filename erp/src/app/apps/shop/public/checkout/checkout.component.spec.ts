@@ -39,7 +39,9 @@ describe('CheckoutComponent', () => {
     last_name_digits: 'No digits (last)', address_required: 'Address required', address_too_long: 'Address too long',
     city_required: 'City required', city_too_long: 'City too long', postal_code_required: 'ZIP required',
     postal_code_too_long: 'ZIP too long', postal_code_invalid: 'ZIP invalid', shipping_required: 'Shipping required',
-    payment_required: 'Payment required', terms_required: 'Terms required', invalid_value: 'Check this value'
+    payment_required: 'Payment required', terms_required: 'Terms required', invalid_value: 'Check this value',
+    company_required: 'Company required', ico_required: 'ICO required', ico_invalid: 'ICO invalid', dic_invalid: 'DIC invalid',
+    notes_too_long: 'Note too long'
   };
   const checkout = {
     errors, coupon_applied: 'Coupon {code} applied', coupon_error: 'Coupon error: {message}', coupon_invalid: 'Invalid code', coupon_too_many: 'Slow down',
@@ -79,6 +81,46 @@ describe('CheckoutComponent', () => {
   /** Completes the background captcha check - its token goes with the next order. */
   const solve = () => ctx.turnstile.render.calls.mostRecent().args[1]('captcha-token');
   afterEach(() => localStorage.removeItem('shop_cart'));
+
+  /**
+   * @description Buying on a company (U-03) and the note: the company fields are checked only
+   *   with the switch on (name + IČO required, DIČ with a country prefix, spaces ignored), sent
+   *   normalised; switching off clears their errors and sends nothing; a too long note is refused.
+   * @input switch on with empty fields; ICO "12 34", DIČ "1234"; valid ACME / " 123 456 78" /
+   *   "cz 12345678" + note; order sent; switch off.
+   * @output company / ICO required; DIČ invalid; payload is_company, ACME, 12345678, CZ12345678,
+   *   the note; after switching off no errors, isFormValid() true; note of 1001 chars refused.
+   */
+  it('handles buying on a company and the note', fakeAsync(() => {
+    create();
+    fill();
+    page.formData.isCompany = true;
+    expect(page.isFormValid()).toBeFalse();
+    ['company', 'ico', 'dic'].forEach(f => page.validateField(f));
+    expect([page.errors['company'], page.errors['ico'], page.errors['dic']]).toEqual(['Company required', 'ICO required', '']);
+    page.formData.ico = '12 34';
+    page.formData.dic = '1234';
+    page.validateField('ico');
+    page.validateField('dic');
+    expect([page.errors['ico'], page.errors['dic']]).toEqual(['', 'DIC invalid']);
+
+    Object.assign(page.formData, { company: ' ACME ', ico: ' 123 456 78', dic: 'cz 12345678', notes: ' Ring twice ' });
+    shop.createOrder.and.returnValue(of({ order_number: 'O-2' }));
+    solve();
+    page.simulatePayment();
+    expect(shop.createOrder.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({
+      is_company: true, company: 'ACME', ico: '12345678', dic: 'CZ12345678', notes: 'Ring twice'
+    }));
+
+    page.formData.isCompany = false;
+    page.errors['ico'] = 'ICO required';
+    page.toggleCompany();
+    expect(page.errors['ico']).toBe('');
+    page.formData.notes = 'x'.repeat(1001);
+    page.validateField('notes');
+    expect(page.errors['notes']).toBe('Note too long');
+    discardPeriodicTasks();
+  }));
 
   /**
    * @description Empty cart → back to the cart page without loading methods.
@@ -232,7 +274,7 @@ describe('CheckoutComponent', () => {
     expect(payload).toEqual(jasmine.objectContaining({
       email: 'eva@x.cz', first_name: 'Eva', last_name: 'Nová', postal_code: '110 00', country: 'Czechia',
       payment_method_id: 7, shipping_method_id: 3, coupon_code: 'P10', currency: 'EUR', company: null, notes: null,
-      lang: 'cz', captcha_token: 'captcha-token', website: '', terms_accepted: true
+      lang: 'cz', captcha_token: 'captcha-token', website: '', terms_accepted: true, is_company: false, ico: null, dic: null
     }));
     expect(+payload.total_amount.toFixed(2)).toBe(212.9);
     expect(payload.items).toEqual([
