@@ -403,6 +403,8 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
       notes: null,
       // Language of the storefront - the confirmation e-mail of the order is sent in it.
       lang: this.localizationService.getCurrentLanguage(),
+      // Consent with the terms and conditions - the API stores it with the order (time + wording).
+      terms_accepted: this.formData.agreeToTerms,
       items: formattedItems
     };
 

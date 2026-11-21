@@ -552,7 +552,7 @@
                 },
                 {
                   "label": "Saving",
-                  "text": "The order gets a number in the form YYYYMM + sequence (for example 2026110007), the status Received and the payment Awaiting payment. The goods are taken out of stock.",
+                  "text": "The order gets a number in the form YYYYMM + sequence (for example 2026110007), the status Received and the payment Awaiting payment. The goods are taken out of stock. The consent of the customer with the terms and conditions is stored too - the time and the wording of the terms agreed to (without the consent the order cannot be sent).",
                   "active": false
                 },
                 {
@@ -620,7 +620,7 @@
                 },
                 {
                   "title": "Metadata",
-                  "text": "Order number, when it was created and last edited, the coupon used and the note."
+                  "text": "Order number, when it was created and last edited, the consent with the terms and conditions (when the customer agreed and to which wording - the date of their last change; the fingerprint of the text on mouse-over), the coupon used and the note."
                 },
                 {
                   "title": "Order items",

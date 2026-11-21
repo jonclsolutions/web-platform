@@ -2,6 +2,12 @@
     "unreleased": [
         {
             "type": "added",
+            "area": "shop",
+            "part": "admin",
+            "text": "The consent of the buyer with the terms and conditions is stored with every e-shop order - its time and the wording of the terms (date of their last change and a fingerprint of the text) - and shown in the order details."
+        },
+        {
+            "type": "added",
             "area": "web",
             "part": "admin",
             "text": "Orange numbers also for the website content: FAQ, jobs, references and knowledge base items missing a text in an active language are counted in the menu and on the tabs of Texty webu until translated."

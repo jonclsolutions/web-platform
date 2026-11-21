@@ -52,6 +52,10 @@ class ShopOrderResource extends JsonResource
             'shipping_postal_code' => $this->shipping_postal_code,
             'shipping_country'     => $this->shipping_country,
             'notes'                => $this->notes,
+            // Consent with the terms and conditions (U-04): time and the accepted wording.
+            'terms_accepted_at'    => $this->terms_accepted_at?->toIso8601String(),
+            'terms_version'        => $this->terms_version,
+            'terms_hash'           => $this->terms_hash,
             'items'                => ShopOrderItemResource::collection($this->whenLoaded('items')),
             'items_count'          => $this->whenLoaded('items', fn() => $this->items->count()),
             'paid_at'              => $this->paid_at?->toIso8601String(),

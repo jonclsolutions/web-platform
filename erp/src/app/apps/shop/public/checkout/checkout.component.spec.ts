@@ -213,7 +213,8 @@ describe('CheckoutComponent', () => {
    *   VAT, coupon code, final amount, language of the storefront for the confirmation e-mail),
    *   success clears the cart and shows step 5; finish → shop.
    * @input Empty form; filled form + coupon 'P10'; finishCheckout().
-   * @output alert warning; createOrder payload (with captcha_token + empty honeypot website); orderNumber
+   * @output alert warning; createOrder payload (with captcha_token + empty honeypot website and the
+   *   consent with the terms, stored by the API with the order); orderNumber
    *   'O-1', cart empty, step 5; navigate(['/shop']).
    */
   it('creates the order', fakeAsync(() => {
@@ -231,7 +232,7 @@ describe('CheckoutComponent', () => {
     expect(payload).toEqual(jasmine.objectContaining({
       email: 'eva@x.cz', first_name: 'Eva', last_name: 'Nová', postal_code: '110 00', country: 'Czechia',
       payment_method_id: 7, shipping_method_id: 3, coupon_code: 'P10', currency: 'EUR', company: null, notes: null,
-      lang: 'cz', captcha_token: 'captcha-token', website: ''
+      lang: 'cz', captcha_token: 'captcha-token', website: '', terms_accepted: true
     }));
     expect(+payload.total_amount.toFixed(2)).toBe(212.9);
     expect(payload.items).toEqual([

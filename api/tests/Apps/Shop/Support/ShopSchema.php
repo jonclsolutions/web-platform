@@ -258,6 +258,9 @@ final class ShopSchema
             $t->string('shipping_country', 50)->nullable();
             $t->text('notes')->nullable();
             $t->string('lang', 10)->nullable();
+            $t->dateTime('terms_accepted_at')->nullable();          // 2026_11_21_000000_shop_orders_terms_consent
+            $t->string('terms_version', 40)->nullable();
+            $t->char('terms_hash', 64)->nullable();
             $t->dateTime('paid_at')->nullable();
             $t->dateTime('shipped_at')->nullable();
             $t->dateTime('delivered_at')->nullable();

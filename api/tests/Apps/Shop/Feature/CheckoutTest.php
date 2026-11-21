@@ -22,6 +22,8 @@ use App\Apps\Shop\Models\ShopLog;
 use App\Apps\Shop\Models\ShopOrder;
 use App\Apps\Shop\Models\ShopPaymentMethod;
 use App\Apps\Shop\Models\ShopShippingMethod;
+use App\Models\Legal\DocumentSection;
+use App\Models\Legal\DocumentType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Lottery;
 use App\Http\Middleware\PublicFormGuard;
@@ -79,6 +81,7 @@ class CheckoutTest extends TestCase
             'email' => ' Jan@Example.com ', 'first_name' => 'Jan', 'last_name' => 'Novak', 'phone' => '777111222',
             'address' => 'Main 1', 'city' => 'Praha', 'postal_code' => '11000', 'country' => 'CZ',
             'payment_method_id' => $this->payment->id, 'shipping_method_id' => $this->shipping->id, 'items' => $items,
+            'terms_accepted' => true,
         ] + $this->captcha(), $overrides);
     }
 
@@ -327,16 +330,53 @@ class CheckoutTest extends TestCase
     }
 
     /**
+     * @description The consent with the terms and conditions is required and stored with the
+     *   order (U-04): its time and the accepted wording of the terms in the order's language -
+     *   the last change and the SHA-256 of the text; an edit of the terms changes the version
+     *   for later orders only.
+     * @input Terms (tos) cz, two sections; order without consent; order with it; terms edited
+     *   a day later; second order.
+     * @output 422 terms_accepted; order: accepted at now, version = last change (UTC), hash =
+     *   sha256 of [[heading, text], …]; resource returns them; second order has another hash,
+     *   the first one is unchanged.
+     */
+    public function test_terms_consent_is_stored_with_the_order(): void
+    {
+        $this->freezeSecond();
+        $tos = DocumentType::create(['slug' => 'tos', 'title' => 'Obchodní podmínky']);
+        DocumentSection::create(['document_type_id' => $tos->id, 'position' => 1, 'heading' => 'Úvod', 'content' => 'Text A', 'lang' => 'cz']);
+        $second = DocumentSection::create(['document_type_id' => $tos->id, 'position' => 2, 'heading' => 'Platby', 'content' => 'Text B', 'lang' => 'cz']);
+        $p = $this->product(['name' => 'P']);
+        $line = [['product_id' => $p->id, 'quantity' => 1]];
+
+        $this->postJson('/api/shop/checkout/create-order', $this->payload($line, ['terms_accepted' => false]))
+            ->assertStatus(422)->assertJsonValidationErrors(['terms_accepted']);
+
+        $first = $this->postJson('/api/shop/checkout/create-order', $this->payload($line))->assertCreated()
+            ->assertJsonPath('data.terms_version', now()->utc()->format('Y-m-d\TH:i:s\Z'))->json('data.id');
+        $order = ShopOrder::find($first);
+        $this->assertSame(now()->format('Y-m-d H:i:s'), $order->terms_accepted_at->format('Y-m-d H:i:s'));
+        $this->assertSame(hash('sha256', json_encode([['Úvod', 'Text A'], ['Platby', 'Text B']], JSON_UNESCAPED_UNICODE)), $order->terms_hash);
+
+        $this->travel(1)->days();
+        $second->update(['content' => 'Text B2']);
+        $other = ShopOrder::find($this->postJson('/api/shop/checkout/create-order', $this->payload($line, ['email' => 'eva@example.com']))->assertCreated()->json('data.id'));
+        $this->assertNotSame($order->terms_hash, $other->terms_hash);
+        $this->assertSame(now()->utc()->format('Y-m-d\TH:i:s\Z'), $other->terms_version);
+        $this->assertSame($order->terms_hash, $order->fresh()->terms_hash);
+    }
+
+    /**
      * @description Validation (column lengths, items), database errors answer 500 without SQL
      *   details and leave stock untouched.
      * @input Only the captcha token; postal code 11 chars; order INSERT fails; customer INSERT of a new e-mail fails.
-     * @output 422 fields; 422 postal_code; 500 "Error creating order." twice; stock 10; shop log 'error'.
+     * @output 422 fields (incl. terms_accepted); 422 postal_code; 500 "Error creating order." twice; stock 10; shop log 'error'.
      */
     public function test_validation_and_errors(): void
     {
         $p = $this->product(['name' => 'P']);
         $this->postJson('/api/shop/checkout/create-order', $this->captcha())->assertStatus(422)
-            ->assertJsonValidationErrors(['email', 'first_name', 'last_name', 'phone', 'address', 'city', 'postal_code', 'country', 'payment_method_id', 'shipping_method_id', 'items']);
+            ->assertJsonValidationErrors(['email', 'first_name', 'last_name', 'phone', 'address', 'city', 'postal_code', 'country', 'payment_method_id', 'shipping_method_id', 'items', 'terms_accepted']);
         $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 1]], ['postal_code' => str_repeat('1', 11)]))
             ->assertStatus(422)->assertJsonValidationErrors(['postal_code']);
 

@@ -253,6 +253,20 @@
                   <span class="dir-label">{{ t('label_updated_at') }}</span>
                   <span class="dir-value">{{ selectedOrderForDetail.updated_at | date: 'medium' }}</span>
                 </div>
+                <!-- Consent with the terms and conditions (U-04): time + the accepted wording (fingerprint in the tooltip). -->
+                <div class="detail-info-row">
+                  <span class="dir-label">{{ t('label_terms_consent') }}</span>
+                  @if (selectedOrderForDetail.terms_accepted_at) {
+                    <span class="dir-value" [title]="selectedOrderForDetail.terms_hash ? 'SHA-256: ' + selectedOrderForDetail.terms_hash : ''">
+                      {{ selectedOrderForDetail.terms_accepted_at | date: 'medium' }}
+                      @if (selectedOrderForDetail.terms_version) {
+                        ({{ t('terms_consent_wording') }} {{ selectedOrderForDetail.terms_version | date: 'medium' }})
+                      }
+                    </span>
+                  } @else {
+                    <span class="dir-value detail-empty">{{ t('terms_consent_not_stored') }}</span>
+                  }
+                </div>
                 @if (selectedOrderForDetail.coupon) {
                   <div class="detail-info-row">
                     <span class="dir-label">{{ t('label_coupon_used') }}</span>

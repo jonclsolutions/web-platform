@@ -90,7 +90,7 @@ class OrderConfirmationEmailTest extends TestCase
             'email' => 'Jan@Example.com', 'first_name' => 'Jan', 'last_name' => 'Novák', 'phone' => '777111222',
             'address' => 'Hlavní 1', 'city' => 'Praha', 'postal_code' => '11000', 'country' => 'CZ',
             'payment_method_id' => $this->ids['payment'], 'shipping_method_id' => $this->ids['shipping'],
-            'coupon_code' => 'SAVE10', 'notes' => "Ring twice\nThanks",
+            'coupon_code' => 'SAVE10', 'notes' => "Ring twice\nThanks", 'terms_accepted' => true,
             'items' => [['product_id' => $this->ids['mug'], 'quantity' => 2]],
         ] + $this->captcha(), $overrides));
     }

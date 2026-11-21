@@ -552,7 +552,7 @@
                 },
                 {
                   "label": "Uložení",
-                  "text": "Objednávka dostane číslo ve tvaru RRRRMM + pořadí (například 2026110007), stav Přijata a platbu Čeká se na platbu. Zboží se odečte ze skladu.",
+                  "text": "Objednávka dostane číslo ve tvaru RRRRMM + pořadí (například 2026110007), stav Přijata a platbu Čeká se na platbu. Zboží se odečte ze skladu. Uloží se i souhlas zákazníka s obchodními podmínkami - čas a znění podmínek, se kterým souhlasil (bez souhlasu objednávku nelze odeslat).",
                   "active": false
                 },
                 {
@@ -620,7 +620,7 @@
                 },
                 {
                   "title": "Metadata",
-                  "text": "Číslo objednávky, kdy vznikla a byla naposledy upravena, použitý kupón a poznámka."
+                  "text": "Číslo objednávky, kdy vznikla a byla naposledy upravena, souhlas s obchodními podmínkami (kdy zákazník souhlasil a se kterým zněním podmínek - datum jejich poslední změny; otisk textu po najetí myší), použitý kupón a poznámka."
                 },
                 {
                   "title": "Položky objednávky",

@@ -30,6 +30,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Lottery;
+use App\Support\Legal\TermsVersion;
 
 /**
  * @description Controller responsible for processing customer checkouts.
@@ -52,7 +53,9 @@ class ShopCheckoutController extends Controller
      *   commit the confirmation e-mail goes to the buyer in the language of the storefront
      *   (Directive 2011/83/EU, Art. 8(7)) - a failed e-mail never fails the order (logged).
      * @param Request $request Checkout form (customer, address, methods, coupon_code, items,
-     *   lang = language of the storefront; unknown / missing = cz).
+     *   lang = language of the storefront; unknown / missing = cz; terms_accepted - the consent
+     *   with the terms and conditions, required; stored with its time and the accepted wording,
+     *   TermsVersion).
      * @note The route is guarded like every public form (PublicFormGuard): captcha, honeypot and
      *   the quota of orders per e-mail of the buyer - the confirmation e-mail goes to that address.
      * @return JsonResponse 201 order | 422 validation / coupon / availability | 500 error.
@@ -74,6 +77,8 @@ class ShopCheckoutController extends Controller
             'shipping_method_id' => 'required|integer|exists:shop_shipping_methods,id',
             'coupon_code' => 'nullable|string',
             'notes' => 'nullable|string|max:1000',
+            // Consent with the terms and conditions - stored with the order (U-04).
+            'terms_accepted' => 'accepted',
             'items' => 'required|array|min:1|max:100',
             'items.*.product_id' => 'required|integer|exists:shop_products,id',
             'items.*.product_variant_id' => 'nullable|integer|exists:shop_product_variants,id',
@@ -130,6 +135,8 @@ class ShopCheckoutController extends Controller
             }
 
             $shippingAmount = (float) ShopShippingMethod::whereKey($validated['shipping_method_id'])->value('base_price');
+            $language = $this->orderLanguage($validated['lang'] ?? null);
+            $terms = TermsVersion::current($language);
             $finalAmount = max(0, $totalAmount + $shippingAmount - $discountAmount);
 
             $order = ShopOrder::create(ShopOrder::contactSnapshot($validated) + [
@@ -150,7 +157,10 @@ class ShopCheckoutController extends Controller
                 'shipping_postal_code' => $validated['postal_code'],
                 'shipping_country' => $validated['country'],
                 'notes' => $validated['notes'] ?? null,
-                'lang' => $this->orderLanguage($validated['lang'] ?? null),
+                'lang' => $language,
+                'terms_accepted_at' => now(),
+                'terms_version' => $terms['version'],
+                'terms_hash' => $terms['hash'],
             ]);
 
             $discountFactor = $totalAmount > 0 ? ($totalAmount - $discountAmount) / $totalAmount : 1;
