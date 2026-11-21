@@ -83,6 +83,41 @@ class TranslationTest extends TestCase
     }
 
     /**
+     * @description Upload of a JSON file (`upload: true`) is compared with the primary language:
+     *   missing / extra keys → 422 with the key lists and counts, nothing written; matching keys →
+     *   saved, empty texts of another language left out (they stay missing), empty Czech texts
+     *   kept; the log says "Upload". Without a primary file nothing is compared; a plain save is
+     *   never compared (the editor saves only what a language has).
+     * @input cz {home: {title, text}, items: [a, b]}; uploads of en with a missing key + an extra
+     *   key; en complete with empty text; cz with empty text; plain save of en with one key.
+     * @output 422 missing [home.text], unexpected [home.extra], counts 1/1, file unchanged; 200
+     *   en {home: {title}, items}; 200 cz keeps the empty "text"; log "Upload en.json"; plain save 200.
+     */
+    public function test_upload_must_match_the_primary_language(): void
+    {
+        $this->signIn($this->userWith(self::EDITOR));
+        $this->postJson('/api/save_translations/web', ['lang' => 'de', 'data' => ['x' => 'y'], 'upload' => true])->assertOk(); // no cz yet
+        File::put($this->file('web/cz.json'), json_encode(['home' => ['title' => 'Domů', 'text' => 'Text'], 'items' => ['a', 'b']]));
+        File::put($this->file('web/en.json'), json_encode(['home' => ['title' => 'Old']]));
+
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'upload' => true, 'data' => ['home' => ['title' => 'Home', 'extra' => 'X'], 'items' => ['a', 'b']]])
+            ->assertStatus(422)
+            ->assertJson(['missing' => ['home.text'], 'unexpected' => ['home.extra'], 'missing_count' => 1, 'unexpected_count' => 1]);
+        $this->assertSame(['home' => ['title' => 'Old']], json_decode(File::get($this->file('web/en.json')), true));
+
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'upload' => true, 'data' => ['home' => ['title' => 'Home', 'text' => ' '], 'items' => ['A', 'B']]])->assertOk();
+        $this->assertSame(['home' => ['title' => 'Home'], 'items' => ['A', 'B']], json_decode(File::get($this->file('web/en.json')), true));
+        $this->assertTrue(\App\Apps\Web\Models\WebLog::where('description', 'like', 'Upload en.json%')->exists());
+
+        $this->postJson('/api/save_translations/web', ['lang' => 'cz', 'upload' => true, 'data' => ['home' => ['title' => 'Domů', 'text' => ''], 'items' => ['a', 'b']]])->assertOk();
+        $czech = json_decode(File::get($this->file('web/cz.json')), true);
+        $this->assertArrayHasKey('text', $czech['home']); // kept as an empty text (null after the request middleware)
+        $this->assertEmpty($czech['home']['text']);
+
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'data' => ['home' => ['title' => 'Only']]])->assertOk();
+    }
+
+    /**
      * @description Saving translations: creates the folder and file, logs a summary of new and
      *   changed keys (nested, cut at 200 chars), says when nothing changed; the public endpoint
      *   returns the file; validation of the language code.

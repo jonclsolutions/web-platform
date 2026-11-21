@@ -55,6 +55,27 @@ final class MissingTranslations
     }
 
     /**
+     * @description Key paths of texts the way the editor sees them (dot paths of every text,
+     *   lists per item) - used to compare an uploaded file with the primary language.
+     * @param array<mixed> $data Texts.
+     * @return array<int, string>
+     */
+    public static function keyPaths(array $data): array
+    {
+        return array_keys(self::flatten($data));
+    }
+
+    /**
+     * @description Texts of the primary language of a module on the server.
+     * @param string $module Module.
+     * @return array<mixed>|null Null when the module has no valid primary file yet.
+     */
+    public static function primary(string $module): ?array
+    {
+        return self::read($module, self::PRIMARY);
+    }
+
+    /**
      * @description Decodes the translation file of a language.
      * @param string $module Module.
      * @param string $code Language code (file name).

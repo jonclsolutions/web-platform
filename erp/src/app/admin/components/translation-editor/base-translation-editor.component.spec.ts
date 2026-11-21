@@ -232,14 +232,18 @@ describe('BaseTranslationEditorComponent', () => {
   }));
 
   /**
-   * @description JSON upload: modal state, invalid JSON error, failed save error, success for
-   *   another language (message only) and for the current language (reloaded from the API).
-   * @input openUploadModal('en') + '{bad'; valid file + save error; valid file ok for en; then for cz (current).
-   * @output invalid_json_error; upload_failed_error; json_uploaded_message; cz requested again.
+   * @description JSON upload: modal state, invalid JSON error, failed save error, keys refused by
+   *   the API (422 - lists and counts shown, "… and N more"), success for another language
+   *   (message only) and for the current language (reloaded from the API). Sent quietly with
+   *   `upload: true` (the API compares the keys with Czech).
+   * @input openUploadModal('en') + '{bad'; valid file + save error; 422 {missing: 2 of 25,
+   *   unexpected: 1}; valid file ok for en; then for cz (current).
+   * @output invalid_json_error; upload_failed_error; upload_keys_mismatch_error + mismatch;
+   *   json_uploaded_message, mismatch cleared; cz requested again.
    */
   it('uploads translation JSON files', async () => {
     component.ngOnInit();
-    const post = (ctx.dataHandler as any).post as jasmine.Spy;
+    const post = (ctx.dataHandler as any).postQuietly as jasmine.Spy;
     const choose = (content: string) => component.onJsonFileSelected({ target: { files: [new File([content], 'x.json')] } } as any);
 
     component.openUploadModal('en');
@@ -253,13 +257,23 @@ describe('BaseTranslationEditorComponent', () => {
     choose('{"a": "b"}');
     await readerDone(() => post.calls.count() === 1);
     expect(component.uploadError).toBe('test-editor.upload_failed_error');
+    expect(component.uploadMismatch).toBeNull();
+
+    post.and.returnValue(throwError(() => ({ status: 422, error: { missing: ['a.b', 'a.c'], unexpected: ['x'], missing_count: 25, unexpected_count: 1 } })));
+    choose('{"x": "y"}');
+    await readerDone(() => component.uploadMismatch !== null);
+    expect(component.uploadError).toBe('test-editor.upload_keys_mismatch_error');
+    expect(component.uploadMismatch).toEqual({ missing: ['a.b', 'a.c'], unexpected: ['x'], missingCount: 25, unexpectedCount: 1 });
+    expect(component.moreKeys(['a.b', 'a.c'], 25)).toBe('test-editor.upload_more_keys');
+    expect(component.moreKeys(['x'], 1)).toBe('');
 
     post.and.returnValue(of({}));
     choose('{"a": "b"}');
     await readerDone(() => component.uploadSuccess !== '');
-    expect(post).toHaveBeenCalledWith('save_translations/test', { lang: 'en', data: { a: 'b' } });
+    expect(post).toHaveBeenCalledWith('save_translations/test', { lang: 'en', data: { a: 'b' }, upload: true });
     expect(component.uploadSuccess).toBe('test-editor.json_uploaded_message');
     expect(component.uploadError).toBe('');
+    expect(component.uploadMismatch).toBeNull();
 
     get.calls.reset();
     component.openUploadModal('cz');
@@ -273,8 +287,8 @@ describe('BaseTranslationEditorComponent', () => {
   /**
    * @description Download saves the current translations as '<lang>.json'; the textarea grows
    *   to its content.
-   * @input downloadJson() with anchor click spied; adjustHeight on a textarea.
-   * @output click on an anchor 'cz.json' with a blob URL; height = scrollHeight px.
+   * @input downloadJson() for cz; adjustHeight on a textarea.
+   * @output anchor 'cz.json' with a blob URL; height = scrollHeight px.
    */
   it('downloads the JSON and auto-sizes textareas', fakeAsync(() => {
     component.ngOnInit();
@@ -286,6 +300,7 @@ describe('BaseTranslationEditorComponent', () => {
     expect(anchor.download).toBe('cz.json');
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:test');
 
+
     const area = document.createElement('textarea');
     document.body.appendChild(area);
     area.value = 'a\nb\nc\nd';
@@ -294,4 +309,26 @@ describe('BaseTranslationEditorComponent', () => {
     area.remove();
     flush();
   }));
+
+  /**
+   * @description The downloaded file of a language is complete: every key of Czech is in it (a
+   *   text the language lacks as ""), its own texts win - so it can be translated and uploaded
+   *   back (an upload must have the keys of Czech).
+   * @input cz {home: {title, subtitle}}; en {home: {title: 'Home'}}; downloadJson() for en.
+   * @output file {"home": {"title": "Home", "subtitle": ""}}, name 'en.json'.
+   */
+  it('downloads a complete file with the keys of Czech', async () => {
+    shared.cz = { home: { title: 'Domů', subtitle: 'Vítejte' } } as any;
+    component.ngOnInit();
+    component.loadLang('en');
+    const click = spyOn(HTMLAnchorElement.prototype, 'click');
+    let blob: Blob | null = null;
+    spyOn(URL, 'createObjectURL').and.callFake((b: any) => { blob = b; return 'blob:test'; });
+    spyOn(URL, 'revokeObjectURL');
+
+    component.downloadJson();
+
+    expect((click.calls.mostRecent().object as HTMLAnchorElement).download).toBe('en.json');
+    expect(JSON.parse(await blob!.text())).toEqual({ home: { title: 'Home', subtitle: '' } });
+  });
 });

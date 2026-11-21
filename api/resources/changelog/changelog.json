@@ -1,6 +1,12 @@
 {
     "unreleased": [
         {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Upload JSON in the text editors is checked against the primary language: a file with missing or extra keys is refused with the list of keys and nothing changes. Download JSON gives a complete file with every key."
+        },
+        {
             "type": "fixed",
             "area": "core",
             "part": "admin",

@@ -85,6 +85,14 @@ const LEGACY_LS_KEY = 'rpsw_languages';
  * @note Implements a recursive diffing mechanism against a 'CZ' reference language to identify
  * untranslated keys.
  */
+/** Keys of a refused JSON upload (API 422): the first ones of each kind and the counts. */
+export interface UploadMismatch {
+  missing: string[];
+  unexpected: string[];
+  missingCount: number;
+  unexpectedCount: number;
+}
+
 @Directive()
 export abstract class BaseTranslationEditorComponent
   extends BaseDataComponent<any>
@@ -215,6 +223,8 @@ export abstract class BaseTranslationEditorComponent
   uploadLangCode: string = '';
   uploadError: string = '';
   uploadSuccess: string = '';
+  /** Keys of a refused upload that do not match the primary language (missing / extra), with counts. */
+  uploadMismatch: UploadMismatch | null = null;
 
   langToDelete: LangMeta | null = null;
 
@@ -415,6 +425,22 @@ export abstract class BaseTranslationEditorComponent
       }
     }
     return map;
+  }
+
+  /**
+   * @description The texts of a language laid over the empty structure of Czech: own texts win,
+   *   keys of Czech the language does not have stay "".
+   * @param empty buildEmptyFromCz() of the Czech texts.
+   * @param texts Texts of the language.
+   */
+  private withMissingKeys(empty: any, texts: any): any {
+    if (typeof texts !== 'object' || texts === null) return texts ?? empty;
+    if (typeof empty !== 'object' || empty === null) return texts;
+    const result: any = { ...empty };
+    for (const key of Object.keys(texts)) {
+      result[key] = this.withMissingKeys(empty[key], texts[key]);
+    }
+    return result;
   }
 
   private buildEmptyFromCz(obj: any): any {
@@ -725,6 +751,7 @@ export abstract class BaseTranslationEditorComponent
     this.uploadLangCode = lang;
     this.uploadError    = '';
     this.uploadSuccess  = '';
+    this.uploadMismatch = null;
     this.showUploadModal = true;
     this.cd.markForCheck();
   }
@@ -745,8 +772,9 @@ export abstract class BaseTranslationEditorComponent
         const parsed = JSON.parse(reader.result as string);
         this.uploadJsonToServer(parsed);
       } catch {
-        this.uploadError   = this.t('invalid_json_error');
-        this.uploadSuccess = '';
+        this.uploadError    = this.t('invalid_json_error');
+        this.uploadSuccess  = '';
+        this.uploadMismatch = null;
         this.cd.markForCheck();
       }
     };
@@ -754,18 +782,23 @@ export abstract class BaseTranslationEditorComponent
   }
 
   /**
-   * @description Uploads the JSON of a language. Invalidates the cache key of the language on
+   * @description Uploads the JSON of a language. The API compares its keys with the primary
+   * language (Czech) and refuses a file with missing or extra keys (422 with the lists) - then
+   * nothing is saved and the keys are shown. Invalidates the cache key of the language on
    * success, so a refresh of the active language never shows the old (pre-upload) data.
    */
   private uploadJsonToServer(data: any): void {
-    this.dataHandler.post(`save_translations/${this.MODULE}`, {
+    // Quietly: a refusal is explained in the upload window itself (no second, global dialog).
+    this.dataHandler.postQuietly(`save_translations/${this.MODULE}`, {
       lang: this.uploadLangCode,
-      data
+      data,
+      upload: true
     }).pipe(Core.takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${this.uploadLangCode}`);
-        this.uploadSuccess = this.t('json_uploaded_message').replace('{lang}', this.uploadLangCode);
-        this.uploadError   = '';
+        this.uploadSuccess  = this.t('json_uploaded_message').replace('{lang}', this.uploadLangCode);
+        this.uploadError    = '';
+        this.uploadMismatch = null;
 
         if (this.uploadLangCode === this.currentLang) {
           this.translations = {};
@@ -774,17 +807,36 @@ export abstract class BaseTranslationEditorComponent
 
         this.cd.markForCheck();
       },
-      error: () => {
-        this.uploadError   = this.t('upload_failed_error');
+      error: (err) => {
+        const body = err?.status === 422 ? err.error : null;
+        this.uploadMismatch = body && Array.isArray(body.missing) && Array.isArray(body.unexpected)
+          ? { missing: body.missing, unexpected: body.unexpected, missingCount: body.missing_count ?? body.missing.length, unexpectedCount: body.unexpected_count ?? body.unexpected.length }
+          : null;
+        this.uploadError   = this.uploadMismatch ? this.t('upload_keys_mismatch_error') : this.t('upload_failed_error');
         this.uploadSuccess = '';
         this.cd.markForCheck();
       }
     });
   }
 
+  /**
+   * @description "… and N more" below a cut list of keys of a refused upload ('' when complete).
+   * @param shown Keys listed.
+   * @param total All of them.
+   */
+  moreKeys(shown: string[], total: number): string {
+    return total > shown.length ? this.t('upload_more_keys').replace('{count}', String(total - shown.length)) : '';
+  }
+
+  /**
+   * @description Downloads the texts of the current language as a complete file: every key of
+   * the primary language (Czech) is there - a missing text as "" - so the file can be translated
+   * and uploaded back (an upload must have the keys of Czech).
+   */
   downloadJson(): void {
+    const complete = this.withMissingKeys(this.buildEmptyFromCz(this.czTranslations), this.translations);
     const blob = new Blob(
-      [JSON.stringify(this.translations, null, 2)],
+      [JSON.stringify(complete, null, 2)],
       { type: 'application/json' }
     );
     const a  = document.createElement('a');

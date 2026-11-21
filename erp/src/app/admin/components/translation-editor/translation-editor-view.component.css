@@ -25,3 +25,45 @@
   outline: none;
   box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.18);
 }
+
+/*
+    @module: Keys of a refused JSON upload
+    @description: Lists under the error of the upload window - the keys the uploaded file lacks
+      or has extra compared with the primary language (Czech); long lists scroll.
+    @usage: .ew-upload-keys > .ew-upload-keys-title + ul.ew-upload-keys-list > li > code, .ew-upload-keys-more
+*/
+.ew-upload-keys {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 10px 13px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+}
+
+.ew-upload-keys-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.ew-upload-keys-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-dim);
+}
+
+.ew-upload-keys-list code {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  word-break: break-all;
+}
+
+.ew-upload-keys-more {
+  margin: 0;
+  color: var(--text-dim);
+}

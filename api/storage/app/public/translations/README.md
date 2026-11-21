@@ -123,6 +123,10 @@ of Czech itself counts too). Inactive languages are not counted (visitors cannot
 - Keep `cz.json` a JSON object of groups and strings (lists are allowed and compared as a whole).
   Do not move a text into a group of the same name or the other way round without need - the
   structure of the release wins and the client's text at that place is dropped.
+- **Upload JSON in the admin** ("Nahrát JSON") must have exactly the keys of `cz.json` on the
+  server (API `save_translations` with `upload: true`, `TranslationController::uploadMismatch()`) - a file
+  with missing / extra keys is refused with the lists, nothing is written; in another language
+  empty texts are left out (= missing). "Download JSON" gives a complete file to translate.
 
 ## Do not
 

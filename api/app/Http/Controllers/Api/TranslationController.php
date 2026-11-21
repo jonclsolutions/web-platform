@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Support\Apps\AppRegistry;
 use Illuminate\Http\JsonResponse;
+use App\Support\I18n\MissingTranslations;
 
 /**
  * @description Controller handling the full lifecycle of language configurations and translation strings.
@@ -78,7 +79,13 @@ class TranslationController extends Controller
     }
 
     /**
-     * Saves translation data to a JSON file for a specific module and language.
+     * @description Saves the texts of one language of a module (editor "Save changes", or the
+     *   upload of a JSON file with `upload: true`).
+     * @note An upload must have exactly the keys of the primary language (Czech on the server;
+     *   for Czech itself its current keys) - missing or extra keys are refused with 422 and the
+     *   lists of keys, nothing is written (a wrong file must never wipe texts). In an uploaded
+     *   other language empty texts are left out (= missing, the editor marks them, the public page
+     *   shows its fallback instead of an empty text).
      */
     public function save(Request $request, string $module): JsonResponse
     {
@@ -87,12 +94,22 @@ class TranslationController extends Controller
         }
 
         $request->validate([
-            'lang' => ['required', 'string', 'max:6', 'regex:/^' . self::LANG_PATTERN . '$/'],
-            'data' => 'required|array',
+            'lang'   => ['required', 'string', 'max:6', 'regex:/^' . self::LANG_PATTERN . '$/'],
+            'data'   => 'required|array',
+            'upload' => 'sometimes|boolean',
         ]);
 
         $lang = $request->input('lang');
         $newData = $request->input('data');
+
+        if ($request->boolean('upload')) {
+            if ($mismatch = $this->uploadMismatch($module, $newData)) {
+                return response()->json(['message' => 'The file does not have the keys of the primary language.'] + $mismatch, 422);
+            }
+            if (strtolower($lang) !== MissingTranslations::PRIMARY) {
+                $newData = self::withoutEmptyTexts($newData);
+            }
+        }
 
         $directory = $this->i18nDirectory($module);
         $filePath  = $directory . '/' . $lang . '.json';
@@ -107,9 +124,10 @@ class TranslationController extends Controller
 
             File::put($filePath, json_encode($newData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
+            $action = $request->boolean('upload') ? 'Upload' : 'Update';
             $description = $changes
-                ? "Update {$lang}.json: " . $this->summarizeDiff($changes)
-                : "Update {$lang}.json (no value changes detected)";
+                ? "{$action} {$lang}.json: " . $this->summarizeDiff($changes)
+                : "{$action} {$lang}.json (no value changes detected)";
 
             $this->logAction($request, $this->logModel($module), 'update', "Translation:{$module}", $description, null, 'Translation');
 
@@ -346,6 +364,65 @@ class TranslationController extends Controller
     public static function languageCodes(string $module): array
     {
         return array_values(array_unique(array_map(fn (array $lang) => strtolower($lang['code']), self::moduleLanguages($module))));
+    }
+
+    /** @description Keys listed per kind in a refused upload (the rest is only counted). */
+    private const UPLOAD_MISMATCH_LIST = 20;
+
+    /**
+     * @description Compares the keys of an uploaded file with the primary language of the module.
+     * @param string $module Module.
+     * @param array $data Uploaded texts.
+     * @return array{missing: array<int, string>, unexpected: array<int, string>, missing_count: int, unexpected_count: int}|null
+     *   Null when the keys match (or the module has no primary texts yet to compare with).
+     */
+    private function uploadMismatch(string $module, array $data): ?array
+    {
+        $primary = MissingTranslations::primary($module);
+        if ($primary === null) {
+            return null;
+        }
+        $expected = MissingTranslations::keyPaths($primary);
+        $given = MissingTranslations::keyPaths($data);
+        $missing = array_values(array_diff($expected, $given));
+        $unexpected = array_values(array_diff($given, $expected));
+        if ($missing === [] && $unexpected === []) {
+            return null;
+        }
+
+        return [
+            'missing'          => array_slice($missing, 0, self::UPLOAD_MISMATCH_LIST),
+            'unexpected'       => array_slice($unexpected, 0, self::UPLOAD_MISMATCH_LIST),
+            'missing_count'    => count($missing),
+            'unexpected_count' => count($unexpected),
+        ];
+    }
+
+    /**
+     * @description Leaves out the empty texts of groups (a missing text is not stored); lists stay
+     *   as they are, a group left empty is dropped.
+     * @param array $data Texts.
+     * @return array
+     */
+    private static function withoutEmptyTexts(array $data): array
+    {
+        if (array_is_list($data)) {
+            return $data;
+        }
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $value = self::withoutEmptyTexts($value);
+                if ($value === []) {
+                    unset($data[$key]);
+                    continue;
+                }
+                $data[$key] = $value;
+            } elseif ($value === null || (is_string($value) && trim($value) === '')) {
+                unset($data[$key]);
+            }
+        }
+
+        return $data;
     }
 
     /**

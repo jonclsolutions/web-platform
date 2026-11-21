@@ -317,6 +317,25 @@
           {{ e.uploadError }}
         </div>
       }
+      <!-- Keys of a refused upload: what the file lacks / has extra compared with Czech. -->
+      @if (e.uploadMismatch; as mismatch) {
+        <div class="ew-upload-keys">
+          @if (mismatch.missingCount) {
+            <p class="ew-upload-keys-title">{{ e.t('upload_missing_keys_label') }} ({{ mismatch.missingCount }})</p>
+            <ul class="ew-upload-keys-list">
+              @for (key of mismatch.missing; track key) { <li><code>{{ key }}</code></li> }
+            </ul>
+            @if (e.moreKeys(mismatch.missing, mismatch.missingCount); as more) { <p class="ew-upload-keys-more">{{ more }}</p> }
+          }
+          @if (mismatch.unexpectedCount) {
+            <p class="ew-upload-keys-title">{{ e.t('upload_unexpected_keys_label') }} ({{ mismatch.unexpectedCount }})</p>
+            <ul class="ew-upload-keys-list">
+              @for (key of mismatch.unexpected; track key) { <li><code>{{ key }}</code></li> }
+            </ul>
+            @if (e.moreKeys(mismatch.unexpected, mismatch.unexpectedCount); as more) { <p class="ew-upload-keys-more">{{ more }}</p> }
+          }
+        </div>
+      }
       @if (e.uploadSuccess) {
         <div class="ew-form-success">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
