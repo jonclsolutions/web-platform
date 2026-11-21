@@ -1,13 +1,18 @@
 {
-    "unreleased": [
-        {
-            "type": "changed",
-            "area": "core",
-            "part": "admin",
-            "text": "Web and e-shop texts: an update adds its new texts and updates the ones nobody edited by itself - texts edited in the admin stay, so uploading the JSON after an update is no longer needed."
-        }
-    ],
+    "unreleased": [],
     "releases": [
+        {
+            "version": "v2026.11.5",
+            "date": "2026-11-21",
+            "changes": [
+                {
+                    "type": "changed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Web and e-shop texts: an update adds its new texts and updates the ones nobody edited by itself - texts edited in the admin stay, so uploading the JSON after an update is no longer needed."
+                }
+            ]
+        },
         {
             "version": "v2026.11.4",
             "date": "2026-11-21",
