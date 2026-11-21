@@ -46,11 +46,12 @@ export class EditWebsiteComponent extends BaseTranslationEditorComponent {
   protected override readonly TRANSLATIONS_CACHE_PREFIX = 'edit-website:translations:';
   protected override readonly UPDATE_PERMISSION = 'web-edit-website-update';
 
-  /** FAQ, open positions, references and the knowledge base of the website. */
+  /** FAQ, open positions, references and the knowledge base of the website (orange number =
+   *  records missing a text in an active language, WebNotificationSource). */
   override readonly extraTabs: TranslationEditorTab[] = [
-    { key: 'faq', labelKey: 'tab_faq', icon: 'help-circle' },
-    { key: 'jobs', labelKey: 'tab_jobs', icon: 'briefcase' },
-    { key: 'references', labelKey: 'tab_references', icon: 'star' },
-    { key: 'knowledge_base', labelKey: 'tab_knowledge_base', icon: 'book' },
+    { key: 'faq', labelKey: 'tab_faq', icon: 'help-circle', attentionKind: 'web_faq_missing' },
+    { key: 'jobs', labelKey: 'tab_jobs', icon: 'briefcase', attentionKind: 'web_jobs_missing' },
+    { key: 'references', labelKey: 'tab_references', icon: 'star', attentionKind: 'web_references_missing' },
+    { key: 'knowledge_base', labelKey: 'tab_knowledge_base', icon: 'book', attentionKind: 'web_kb_missing' },
   ];
 }

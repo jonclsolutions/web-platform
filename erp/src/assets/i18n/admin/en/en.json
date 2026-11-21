@@ -1428,6 +1428,7 @@
   },
   "translation-editor": {
     "tab_translations": "Translations",
+    "tab_missing_texts_title": "Texts missing in active languages: {count}",
     "tab_page_titles": "Page titles",
     "tabs_label": "Page sections",
     "upload_json_title_topbar": "Upload JSON for the current language",

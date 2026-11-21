@@ -32,6 +32,7 @@ import { ResourceCacheService } from '../../../core/services/resource-cache.serv
 import { migrateLegacyKey } from '../../../shared/utils/legacy-storage';
 import { AdminIconName } from '../admin-icon/admin-icon.component';
 import { RowButton, RowButtonItems } from '../builders/row-button-builder/row-button';
+import { AdminNotificationsService } from '../../../core/services/admin-notifications.service';
 
 /** @description Translation section of the texts shared by every translation editor. */
 export const TRANSLATION_EDITOR_SECTION = 'translation-editor';
@@ -43,6 +44,8 @@ export interface TranslationEditorTab {
   /** Key of its label (page section first, then `translation-editor`). */
   labelKey: string;
   icon: AdminIconName;
+  /** Attention kind of the notifications whose orange number the tab shows (missing texts). */
+  attentionKind?: string;
 }
 
 /** @description Tabs of every editor: the texts and the browser page titles of the module. */
@@ -108,6 +111,8 @@ export abstract class BaseTranslationEditorComponent
   protected abstract readonly UPDATE_PERMISSION: string;
 
   private resourceCache = inject(ResourceCacheService);
+  /** Orange numbers of the tabs (texts missing in an active language) - AdminNotificationsService. */
+  private readonly notifications = inject(AdminNotificationsService);
   override apiEndpoint = 'save_translations';
 
   /** Extra page tabs of the application (after the texts and the page titles). */
@@ -152,11 +157,21 @@ export abstract class BaseTranslationEditorComponent
   /** Stable buttons of the page tabs (row button builder). */
   private readonly tabButtons = new RowButtonItems();
 
-  /** @description Page tabs as row buttons: icon, label, dot for unsaved edits. */
+  /**
+   * @description Page tabs as row buttons: icon, label, dot for unsaved edits and the orange
+   *   number of texts missing in an active language (the attention kind of the tab - the texts:
+   *   `<module>_texts_missing`; the same number as in the menu).
+   */
   get tabItems(): RowButton[] {
-    return this.tabButtons.update(this.tabs.map(tab => ({
-      value: tab.key, label: this.t(tab.labelKey), icon: tab.icon, dot: this.isTabDirty(tab.key),
-    })));
+    return this.tabButtons.update(this.tabs.map(tab => {
+      const kind = tab.key === 'translations' ? `${this.MODULE}_texts_missing` : tab.attentionKind;
+      const missing = kind ? this.notifications.kinds().find(k => k.kind === kind)?.count ?? 0 : 0;
+      return {
+        value: tab.key, label: this.t(tab.labelKey), icon: tab.icon, dot: this.isTabDirty(tab.key),
+        count: missing > 0 ? missing : null, countTone: 'attention' as const,
+        title: missing > 0 ? this.t('tab_missing_texts_title').replace('{count}', String(missing)) : undefined,
+      };
+    }));
   }
 
   /**
@@ -539,6 +554,7 @@ export abstract class BaseTranslationEditorComponent
       next: () => {
         this.isDirty = false;
         this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${this.currentLang}`);
+        this.notifications.refresh(); // the orange numbers follow the saved texts at once
         this.alertDialogService.open(
           this.t('admin_title'),
           this.t('translations_saved_message').replace('{lang}', this.currentLang),
@@ -796,6 +812,7 @@ export abstract class BaseTranslationEditorComponent
     }).pipe(Core.takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${this.uploadLangCode}`);
+        this.notifications.refresh();
         this.uploadSuccess  = this.t('json_uploaded_message').replace('{lang}', this.uploadLangCode);
         this.uploadError    = '';
         this.uploadMismatch = null;

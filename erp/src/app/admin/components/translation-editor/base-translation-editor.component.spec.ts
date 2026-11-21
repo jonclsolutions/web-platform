@@ -20,6 +20,7 @@ import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testi
 import { Observable, of, throwError } from 'rxjs';
 
 import { BaseTranslationEditorComponent } from './base-translation-editor.component';
+import { AdminNotificationsService } from '../../../core/services/admin-notifications.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 
 /** Minimal concrete editor without a template. */
@@ -331,4 +332,31 @@ describe('BaseTranslationEditorComponent', () => {
     expect((click.calls.mostRecent().object as HTMLAnchorElement).download).toBe('en.json');
     expect(JSON.parse(await blob!.text())).toEqual({ home: { title: 'Home', subtitle: '' } });
   });
+
+  /**
+   * @description The page tabs show the orange number of texts missing in an active language:
+   *   the texts tab the kind `<module>_texts_missing`, an extra tab its own attention kind; a
+   *   save asks the notifications again, so the number follows at once.
+   * @input kinds test_texts_missing 4, test_faq_missing 0; extra tab with attentionKind
+   *   test_faq_missing; save of the texts.
+   * @output translations tab count 4 (attention, title), extra tab no count; refresh() called.
+   */
+  it('shows missing texts on the page tabs', fakeAsync(() => {
+    const notifications = TestBed.inject(AdminNotificationsService);
+    spyOn(notifications, 'refresh');
+    (component as any).extraTabs.push({ key: 'faq', labelKey: 'tab_faq', icon: 'help-circle', attentionKind: 'test_faq_missing' });
+    notifications.kinds.set([
+      { kind: 'test_texts_missing', module: 'test', link: '/admin/test', count: 4, attention: true },
+      { kind: 'test_faq_missing', module: 'test', link: '/admin/test', count: 0, attention: true },
+    ]);
+    const [texts, , faq] = component.tabItems;
+    expect([texts.count, texts.countTone, texts.title]).toEqual([4, 'attention', 'test-editor.tab_missing_texts_title']);
+    expect(faq.count).toBeNull();
+
+    component.ngOnInit();
+    (ctx.dataHandler as any).post.and.returnValue(of({}));
+    component.onSubmit();
+    expect(notifications.refresh).toHaveBeenCalled();
+    flush();
+  }));
 });

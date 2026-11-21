@@ -20,8 +20,15 @@ namespace Tests\Integration;
 
 use App\Apps\ProjectPortal\Models\SalesLead;
 use App\Apps\ProjectPortal\Models\SalesOrder;
+use App\Apps\Web\Models\WebFaqCategory;
+use App\Apps\Web\Models\WebFaqItem;
+use App\Apps\Web\Models\WebJob;
 use App\Apps\Web\Models\WebJobApplication;
+use App\Apps\Web\Models\WebJobSection;
+use App\Apps\Web\Models\WebKbSection;
 use App\Apps\Web\Models\WebRawRequestCommission;
+use App\Apps\Web\Models\WebReference;
+use App\Apps\Web\Models\WebReferenceFeature;
 use App\Models\Core\CoreNotificationMark;
 use App\Models\Core\CoreSecurityEvent;
 use Illuminate\Support\Carbon;
@@ -38,7 +45,7 @@ class NotificationsTest extends TestCase
     use ShopFixtures;
 
     /** @description Every kind of the sysadmin, in menu order (applications, then the core). */
-    private const ALL_KINDS = ['web_inquiries', 'web_job_applications', 'web_texts_missing', 'shop_orders', 'shop_low_stock', 'shop_texts_missing', 'portal_orders', 'portal_leads_overdue', 'core_security_events'];
+    private const ALL_KINDS = ['web_inquiries', 'web_job_applications', 'web_texts_missing', 'web_faq_missing', 'web_jobs_missing', 'web_references_missing', 'web_kb_missing', 'shop_orders', 'shop_low_stock', 'shop_texts_missing', 'portal_orders', 'portal_leads_overdue', 'core_security_events'];
 
     /**
      * @description Freezes the clock.
@@ -121,11 +128,12 @@ class NotificationsTest extends TestCase
         Carbon::setTestNow('2026-11-13 09:00:00');
         $response = $this->getJson('/api/core/notifications')->assertOk();
         $this->assertSame([
-            'web_inquiries' => 1, 'web_job_applications' => 2, 'web_texts_missing' => 0, 'shop_orders' => 1,
+            'web_inquiries' => 1, 'web_job_applications' => 2, 'web_texts_missing' => 0, 'web_faq_missing' => 0,
+            'web_jobs_missing' => 0, 'web_references_missing' => 0, 'web_kb_missing' => 0, 'shop_orders' => 1,
             'shop_low_stock' => 1, 'shop_texts_missing' => 0, 'portal_orders' => 1, 'portal_leads_overdue' => 1, 'core_security_events' => 1,
         ], collect($response->json('data.kinds'))->pluck('count', 'kind')->all());
         $this->assertSame(['kind' => 'web_inquiries', 'module' => 'web', 'link' => '/admin/web/user-request', 'count' => 1], $response->json('data.kinds.0'));
-        $this->assertSame('/admin/project-portal/sales-leads', $response->json('data.kinds.7.link'));
+        $this->assertSame('/admin/project-portal/sales-leads', $response->json('data.kinds.11.link'));
         $this->assertStringNotContainsString('@x.cz', $response->getContent());
     }
 
@@ -170,6 +178,53 @@ class NotificationsTest extends TestCase
 
             $this->signIn($this->userWith(['view-web', 'web-edit-website-view']));
             $this->assertArrayNotHasKey('web_texts_missing', $this->counts());
+        } finally {
+            File::deleteDirectory($storage);
+        }
+    }
+
+    /**
+     * @description Content of the website in the database missing a text in an active language
+     *   (attention kinds per tab of Texty webu): a text written in some language but empty in an
+     *   active one counts its record; optional texts nobody wrote, inactive records and inactive
+     *   languages do not count; sub-records count while their parent is active.
+     * @input Languages cz + de active, sk inactive. FAQ: item cz+de (complete), item cz only,
+     *   category cz only. Jobs: active job cz only, inactive job cz only, section of the active
+     *   job cz+de. References: active one with a feature cz only. KB: inactive block cz only.
+     * @output faq 2, jobs 1, references 1, knowledge base 0; after the FAQ item and category
+     *   get German texts: faq 0.
+     */
+    public function test_missing_web_content_is_an_attention_kind(): void
+    {
+        $storage = sys_get_temp_dir() . '/rpsw-notification-content-' . uniqid();
+        File::makeDirectory($storage . '/app/public/translations', 0755, true);
+        File::put($storage . '/app/public/translations/languages.json', json_encode([
+            ['code' => 'cz', 'module' => 'web', 'active' => true, 'isBuiltIn' => true],
+            ['code' => 'de', 'module' => 'web', 'active' => true, 'isBuiltIn' => false],
+            ['code' => 'sk', 'module' => 'web', 'active' => false, 'isBuiltIn' => false],
+        ]));
+        $this->app->useStoragePath($storage);
+
+        try {
+            $category = WebFaqCategory::create(['name_i18n' => ['cz' => 'Obecné'], 'sort_order' => 1]);
+            WebFaqItem::create(['category_id' => $category->id, 'question_i18n' => ['cz' => 'Q', 'de' => 'F'], 'answer_i18n' => ['cz' => 'A', 'de' => 'A'], 'sort_order' => 1]);
+            $half = WebFaqItem::create(['category_id' => $category->id, 'question_i18n' => ['cz' => 'Q2'], 'answer_i18n' => ['cz' => 'A2', 'sk' => 'A2'], 'sort_order' => 2]);
+            $job = WebJob::create(['slug' => 'dev', 'title_i18n' => ['cz' => 'Vývojář'], 'is_active' => true, 'sort_order' => 1]);
+            WebJob::create(['slug' => 'old', 'title_i18n' => ['cz' => 'Staré'], 'is_active' => false, 'sort_order' => 2]);
+            WebJobSection::create(['job_id' => $job->id, 'heading_i18n' => [], 'body_i18n' => ['cz' => 'Text', 'de' => 'Text'], 'sort_order' => 1]);
+            $reference = WebReference::create(['name_i18n' => ['cz' => 'Projekt', 'de' => 'Projekt'], 'is_active' => true, 'sort_order' => 1]);
+            WebReferenceFeature::create(['reference_id' => $reference->id, 'text_i18n' => ['cz' => 'Rychlé'], 'sort_order' => 1]);
+            WebKbSection::create(['is_intro' => false, 'heading_i18n' => ['cz' => 'Blok'], 'text_i18n' => ['cz' => 'Text'], 'is_active' => false, 'sort_order' => 1]);
+
+            $this->signIn($this->userWith(['view-web', 'web-edit-website-view', 'web-edit-website-update']));
+            $kinds = collect($this->getJson('/api/core/notifications')->assertOk()->json('data.kinds'))->keyBy('kind');
+            $this->assertSame([2, 1, 1, 0], [$kinds['web_faq_missing']['count'], $kinds['web_jobs_missing']['count'], $kinds['web_references_missing']['count'], $kinds['web_kb_missing']['count']]);
+            $this->assertTrue($kinds['web_faq_missing']['attention']);
+            $this->assertSame('/admin/web/edit-website', $kinds['web_jobs_missing']['link']);
+
+            $half->update(['question_i18n' => ['cz' => 'Q2', 'de' => 'F2'], 'answer_i18n' => ['cz' => 'A2', 'de' => 'A2']]);
+            $category->update(['name_i18n' => ['cz' => 'Obecné', 'de' => 'Allgemein']]);
+            $this->assertSame(0, $this->counts()['web_faq_missing']);
         } finally {
             File::deleteDirectory($storage);
         }

@@ -1,6 +1,12 @@
 {
     "unreleased": [
         {
+            "type": "added",
+            "area": "web",
+            "part": "admin",
+            "text": "Orange numbers also for the website content: FAQ, jobs, references and knowledge base items missing a text in an active language are counted in the menu and on the tabs of Texty webu until translated."
+        },
+        {
             "type": "changed",
             "area": "core",
             "part": "admin",
