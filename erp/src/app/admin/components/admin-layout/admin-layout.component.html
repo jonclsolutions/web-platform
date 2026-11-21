@@ -17,8 +17,8 @@
         <line x1="3" y1="18" x2="21" y2="18"/>
       </svg>
       <!-- Mobile: the closed menu hides the numbers of the module - a dot tells there are some. -->
-      @if (!isMenuOpen && hasUnreadInModule) {
-        <span class="unread-dot" aria-hidden="true"></span>
+      @if (!isMenuOpen && moduleDot; as dot) {
+        <span class="unread-dot" [class.unread-dot--attention]="dot.attention" aria-hidden="true"></span>
       }
     </button>
     
@@ -63,7 +63,7 @@
         <app-admin-icon name="layout" [size]="14" />
         {{ strings.module_core }}
         @if (moduleBadge('core'); as badge) {
-          <span class="nav-badge" role="img" [attr.aria-label]="badgeLabel(badge)">{{ badge }}</span>
+          <span class="nav-badge" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
         }
       </button>
     }
@@ -74,7 +74,7 @@
           <app-admin-icon [name]="currentApp?.icon ?? 'layers'" [size]="14" />
           <span>{{ currentApp ? currentModuleName : strings.apps_switcher_label }}</span>
           @if (appsBadge; as badge) {
-            <span class="nav-badge" role="img" [attr.aria-label]="badgeLabel(badge)">{{ badge }}</span>
+            <span class="nav-badge" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
           }
           <app-admin-icon name="chevron-down" [size]="11" />
         </button>
@@ -86,7 +86,7 @@
                 <app-admin-icon [name]="app.icon" [size]="15" />
                 <span>{{ label(app.nameKey) }}</span>
                 @if (moduleBadge(app.id); as badge) {
-                  <span class="nav-badge nav-badge--end" role="img" [attr.aria-label]="badgeLabel(badge)">{{ badge }}</span>
+                  <span class="nav-badge nav-badge--end" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
                 }
               </button>
             }
@@ -150,9 +150,9 @@
         <line x1="4" y1="12" x2="20" y2="12"/>
         <line x1="4" y1="17" x2="20" y2="17"/>
       </svg>
-      <!-- The other modules (they are in this panel) have unread records. -->
-      @if (hasUnreadElsewhere) {
-        <span class="unread-dot" aria-hidden="true"></span>
+      <!-- The other modules (they are in this panel) have numbers (orange dot: only things needing attention). -->
+      @if (elsewhereDot; as dot) {
+        <span class="unread-dot" [class.unread-dot--attention]="dot.attention" aria-hidden="true"></span>
       }
     </button>
   </div>
@@ -194,7 +194,7 @@
           <app-admin-icon name="layout" [size]="14" />
           {{ strings.module_core }}
           @if (moduleBadge('core'); as badge) {
-            <span class="nav-badge" role="img" [attr.aria-label]="badgeLabel(badge)">{{ badge }}</span>
+            <span class="nav-badge" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
           }
         </button>
       }
@@ -205,7 +205,7 @@
             <app-admin-icon [name]="app.icon" [size]="14" />
             {{ label(app.nameKey) }}
             @if (moduleBadge(app.id); as badge) {
-              <span class="nav-badge" role="img" [attr.aria-label]="badgeLabel(badge)">{{ badge }}</span>
+              <span class="nav-badge" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
             }
           </button>
         }
@@ -267,7 +267,7 @@
               <span class="nav-group-title">{{ label(group.labelKey) }}</span>
               <!-- A collapsed section hides the numbers of its pages - their sum is at its title. -->
               @if (!isGroupExpanded(group.key) && groupBadge(group); as badge) {
-                <span class="nav-badge" role="img" [attr.aria-label]="badgeLabel(badge)">{{ badge }}</span>
+                <span class="nav-badge" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
               }
               <app-admin-icon class="nav-group-chevron" name="chevron-down" [size]="12" [strokeWidth]="2.5" />
             </button>
@@ -280,7 +280,7 @@
                         <span class="nav-icon"><app-admin-icon [name]="item.icon" [size]="16" /></span>
                         <span class="nav-text">{{ label(item.labelKey) }}</span>
                         @if (itemBadge(item); as badge) {
-                          <span class="nav-badge nav-badge--item" role="img" [attr.aria-label]="badgeLabel(badge)">{{ badge }}</span>
+                          <span class="nav-badge nav-badge--item" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
                         }
                       </a>
                     </li>

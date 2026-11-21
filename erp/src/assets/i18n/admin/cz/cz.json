@@ -1547,6 +1547,8 @@
     "kind_generic": "Nové záznamy",
     "kind_core_security_events": "Nové bezpečnostní události",
     "toast_message": "Nepřečtené: {count}. Kliknutím otevřete stránku.",
-    "badge_aria": "Nepřečtené: {count}"
+    "badge_aria": "Nepřečtené: {count}",
+    "attention_toast_message": "Vyžaduje vaši pozornost: {count}. Kliknutím otevřete stránku.",
+    "attention_badge_aria": "Vyžaduje pozornost: {count}"
   }
 }

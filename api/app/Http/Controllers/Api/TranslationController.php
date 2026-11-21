@@ -349,6 +349,19 @@ class TranslationController extends Controller
     }
 
     /**
+     * @description Codes of the active languages of a module (the ones visitors can switch to).
+     * @param string $module Module (application id).
+     * @return string[] Codes as stored (the names of the translation files).
+     */
+    public static function activeLanguageCodes(string $module): array
+    {
+        return array_values(array_unique(array_map(
+            fn (array $lang) => (string) $lang['code'],
+            array_filter(self::moduleLanguages($module), fn (array $lang) => !empty($lang['active']))
+        )));
+    }
+
+    /**
      * Returns absolute directory path for module translations.
      */
     private function i18nDirectory(string $module): string

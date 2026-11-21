@@ -25,6 +25,7 @@ use App\Apps\Web\Models\WebRawRequestCommission;
 use App\Models\Core\CoreNotificationMark;
 use App\Models\Core\CoreSecurityEvent;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Tests\Apps\Shop\Support\ShopFixtures;
 use Tests\TestCase;
@@ -37,7 +38,7 @@ class NotificationsTest extends TestCase
     use ShopFixtures;
 
     /** @description Every kind of the sysadmin, in menu order (applications, then the core). */
-    private const ALL_KINDS = ['web_inquiries', 'web_job_applications', 'shop_orders', 'shop_low_stock', 'portal_orders', 'portal_leads_overdue', 'core_security_events'];
+    private const ALL_KINDS = ['web_inquiries', 'web_job_applications', 'web_texts_missing', 'shop_orders', 'shop_low_stock', 'shop_texts_missing', 'portal_orders', 'portal_leads_overdue', 'core_security_events'];
 
     /**
      * @description Freezes the clock.
@@ -88,7 +89,7 @@ class NotificationsTest extends TestCase
      *   one), low-stock products that changed, leads that became overdue (not those overdue
      *   before, nor closed ones). The answer has only numbers and links.
      * @input old records; GET; +5 min: new records, stock of a low product changed; +2 days: GET.
-     * @output first GET all 0 and 7 marks stored; then inquiries 1, job applications 2, shop
+     * @output first GET all 0 and 7 marks stored (the texts kinds are attention kinds - no mark); then inquiries 1, job applications 2, shop
      *   orders 1, low stock 1, portal orders 1, overdue leads 1, security events 1; links of the
      *   admin pages; no e-mail in the answer.
      */
@@ -120,12 +121,58 @@ class NotificationsTest extends TestCase
         Carbon::setTestNow('2026-11-13 09:00:00');
         $response = $this->getJson('/api/core/notifications')->assertOk();
         $this->assertSame([
-            'web_inquiries' => 1, 'web_job_applications' => 2, 'shop_orders' => 1, 'shop_low_stock' => 1,
-            'portal_orders' => 1, 'portal_leads_overdue' => 1, 'core_security_events' => 1,
+            'web_inquiries' => 1, 'web_job_applications' => 2, 'web_texts_missing' => 0, 'shop_orders' => 1,
+            'shop_low_stock' => 1, 'shop_texts_missing' => 0, 'portal_orders' => 1, 'portal_leads_overdue' => 1, 'core_security_events' => 1,
         ], collect($response->json('data.kinds'))->pluck('count', 'kind')->all());
         $this->assertSame(['kind' => 'web_inquiries', 'module' => 'web', 'link' => '/admin/web/user-request', 'count' => 1], $response->json('data.kinds.0'));
-        $this->assertSame('/admin/project-portal/sales-leads', $response->json('data.kinds.5.link'));
+        $this->assertSame('/admin/project-portal/sales-leads', $response->json('data.kinds.7.link'));
         $this->assertStringNotContainsString('@x.cz', $response->getContent());
+    }
+
+    /**
+     * @description Texts missing in the active languages are an attention kind of the text editor
+     *   page: the count is the current state (empty Czech value + empty or missing key of another
+     *   active language; inactive languages not counted), "seen" does not clear it and stores no
+     *   mark, it drops when the texts are filled; only admins who may edit the texts get it.
+     * @input Temporary storage: web cz {a, g.b, g.c: ''}, de (active) {a, g.b: ''}, sk inactive;
+     *   shop cz complete. Editor (view + update) and viewer (view only).
+     * @output web_texts_missing 3 with attention, shop_texts_missing 0; after seen still 3, no
+     *   mark; after de filled 1; viewer has no texts kind.
+     */
+    public function test_missing_texts_are_an_attention_kind(): void
+    {
+        $storage = sys_get_temp_dir() . '/rpsw-notification-texts-' . uniqid();
+        $dir = $storage . '/app/public/translations';
+        File::makeDirectory($dir . '/web', 0755, true);
+        File::makeDirectory($dir . '/shop', 0755, true);
+        File::put($dir . '/languages.json', json_encode([
+            ['code' => 'cz', 'module' => 'web', 'active' => true, 'isBuiltIn' => true],
+            ['code' => 'de', 'module' => 'web', 'active' => true, 'isBuiltIn' => false],
+            ['code' => 'sk', 'module' => 'web', 'active' => false, 'isBuiltIn' => false],
+            ['code' => 'cz', 'module' => 'shop', 'active' => true, 'isBuiltIn' => true],
+        ]));
+        File::put($dir . '/web/cz.json', json_encode(['a' => 'A', 'g' => ['b' => 'B', 'c' => '']]));
+        File::put($dir . '/web/de.json', json_encode(['a' => 'A de', 'g' => ['b' => ' ']]));
+        File::put($dir . '/shop/cz.json', json_encode(['checkout' => ['title' => 'Pokladna']]));
+        $this->app->useStoragePath($storage);
+
+        try {
+            $editor = $this->signIn($this->userWith(['view-web', 'web-edit-website-view', 'web-edit-website-update', 'view-eshop', 'shop-edit-eshop-view', 'shop-edit-eshop-update']));
+            $kinds = collect($this->getJson('/api/core/notifications')->assertOk()->json('data.kinds'))->keyBy('kind');
+            $this->assertSame(['kind' => 'web_texts_missing', 'module' => 'web', 'link' => '/admin/web/edit-website', 'count' => 3, 'attention' => true], $kinds['web_texts_missing']);
+            $this->assertSame(0, $kinds['shop_texts_missing']['count']);
+
+            $this->assertSame(3, $this->counts('/api/core/notifications/seen', ['kinds' => ['web_texts_missing']])['web_texts_missing']);
+            $this->assertFalse(CoreNotificationMark::where('user_id', $editor->id)->where('kind', 'web_texts_missing')->exists());
+
+            File::put($dir . '/web/de.json', json_encode(['a' => 'A de', 'g' => ['b' => 'B de', 'c' => 'C de']]));
+            $this->assertSame(1, $this->counts()['web_texts_missing']);
+
+            $this->signIn($this->userWith(['view-web', 'web-edit-website-view']));
+            $this->assertArrayNotHasKey('web_texts_missing', $this->counts());
+        } finally {
+            File::deleteDirectory($storage);
+        }
     }
 
     /**

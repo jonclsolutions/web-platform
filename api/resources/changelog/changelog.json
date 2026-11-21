@@ -1,6 +1,12 @@
 {
     "unreleased": [
         {
+            "type": "added",
+            "area": "core",
+            "part": "admin",
+            "text": "Orange numbers in the menu for work waiting for you: website and e-shop texts missing in an active language (e.g. after an update) show at the text pages until they are filled; opening the page does not clear them."
+        },
+        {
             "type": "changed",
             "area": "core",
             "part": "admin",

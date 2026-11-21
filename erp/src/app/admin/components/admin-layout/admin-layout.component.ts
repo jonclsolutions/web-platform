@@ -20,7 +20,8 @@
  * - ReleaseNoticeComponent: the notice after an update of the current module (the running
  *   version and the release notes are on the page Core → Releases).
  * - AdminNotificationsService: unread records - red numbers at the menu items, the module
- *   switcher and the menu buttons (started while a user is signed in).
+ *   switcher and the menu buttons; things needing attention (texts missing in a language …) -
+ *   orange numbers (started while a user is signed in).
  * @note Layout: the header and the sidebar stay in place, only the page content (`<main>`) and,
  * independently, a long sidebar menu scroll. A navigation therefore scrolls `<main>` back to the
  * top itself - the router's scroll restoration only moves the window.
@@ -44,7 +45,7 @@ import { AdminIconComponent } from '../admin-icon/admin-icon.component';
 import { UserAvatarComponent } from '../user-avatar/user-avatar.component';
 import { KNOWLEDGE_BASE_URL } from '../page-help/page-help.component';
 import { ReleaseNoticeComponent } from '../releases/release-notice.component';
-import { AdminNotificationsService } from '../../../core/services/admin-notifications.service';
+import { AdminNotificationsService, NavBadge } from '../../../core/services/admin-notifications.service';
 
 /**
  * @description localStorage key of the menu sections the user collapsed (JSON array of section
@@ -488,54 +489,55 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Badge of a page of the sidebar - its unread records ("99+" above 99, null
-   *   without any).
+   * @description Badge of a page of the sidebar - red unread records, or orange things needing
+   *   attention ("99+" above 99, null without any).
    * @param item The page.
    */
-  itemBadge(item: AdminNavItem): string | null {
-    return this.notifications.badge(this.notifications.countFor(this.itemLink(item)));
+  itemBadge(item: AdminNavItem): NavBadge | null {
+    return this.notifications.badgeFor(this.itemLink(item));
   }
 
   /**
-   * @description Badge of a collapsed menu section - the unread records of its pages the user
-   *   may open.
+   * @description Badge of a collapsed menu section - its pages the user may open.
    * @param group The section.
    */
-  groupBadge(group: AdminNavGroup): string | null {
-    const count = group.items.filter(item => this.canOpen(item))
-      .reduce((sum, item) => sum + this.notifications.countFor(this.itemLink(item)), 0);
-    return this.notifications.badge(count);
+  groupBadge(group: AdminNavGroup): NavBadge | null {
+    return this.notifications.badgeForLinks(group.items.filter(item => this.canOpen(item)).map(item => this.itemLink(item)));
   }
 
   /**
-   * @description Badge of a module in the switcher - its unread records.
+   * @description Badge of a module in the switcher.
    * @param module 'core' or an application id.
    */
-  moduleBadge(module: AdminModule): string | null {
-    return this.notifications.badge(this.notifications.moduleTotal(module));
+  moduleBadge(module: AdminModule): NavBadge | null {
+    return this.notifications.moduleBadge(module);
   }
 
-  /** @description Badge of the application switcher - unread records of all applications. */
-  get appsBadge(): string | null {
-    return this.notifications.badge(this.notifications.appsTotal());
-  }
-
-  /** @description The current module has unread records (dot on the menu button while it is closed). */
-  get hasUnreadInModule(): boolean {
-    return this.notifications.moduleTotal(this.currentModule) > 0;
-  }
-
-  /** @description Other modules have unread records (dot on the mobile panel button). */
-  get hasUnreadElsewhere(): boolean {
-    return this.notifications.kinds().some(k => k.count > 0 && k.module !== this.currentModule);
+  /** @description Badge of the application switcher - all applications. */
+  get appsBadge(): NavBadge | null {
+    return this.notifications.appsBadge();
   }
 
   /**
-   * @description Screen-reader text of a badge, e.g. "3 nepřečtené".
-   * @param badge Text of the badge.
+   * @description Dot on the menu button while it is closed (mobile): the current module has
+   *   numbers - null without any, `attention` when they are only orange ones.
    */
-  badgeLabel(badge: string): string {
-    return this.i18n.getValue('notifications.badge_aria').replace('{count}', badge);
+  get moduleDot(): NavBadge | null {
+    return this.notifications.moduleBadge(this.currentModule);
+  }
+
+  /** @description Dot on the mobile panel button: the other modules have numbers (as moduleDot). */
+  get elsewhereDot(): NavBadge | null {
+    return this.notifications.navBadge(this.notifications.kinds().filter(k => k.module !== this.currentModule));
+  }
+
+  /**
+   * @description Screen-reader text of a badge, e.g. "Nepřečtené: 3" / "Vyžaduje pozornost: 3".
+   * @param badge The badge.
+   */
+  badgeLabel(badge: NavBadge): string {
+    const key = badge.attention ? 'notifications.attention_badge_aria' : 'notifications.badge_aria';
+    return this.i18n.getValue(key).replace('{count}', badge.text);
   }
 
   onLinkClick(): void {

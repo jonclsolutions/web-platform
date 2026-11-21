@@ -1547,6 +1547,8 @@
     "kind_generic": "New records",
     "kind_core_security_events": "New security events",
     "toast_message": "Unread: {count}. Click to open the page.",
-    "badge_aria": "Unread: {count}"
+    "badge_aria": "Unread: {count}",
+    "attention_toast_message": "Needs your attention: {count}. Click to open the page.",
+    "attention_badge_aria": "Needs attention: {count}"
   }
 }

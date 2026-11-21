@@ -423,6 +423,7 @@
   },
   "notifications": {
     "kind_web_inquiries": "Nové poptávky",
-    "kind_web_job_applications": "Nové přihlášky uchazečů"
+    "kind_web_job_applications": "Nové přihlášky uchazečů",
+    "kind_web_texts_missing": "Chybějící texty webu"
   }
 }

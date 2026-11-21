@@ -6,8 +6,8 @@
   @created 2026
   @description Developer guide to the runtime texts of the public website and the e-shop: where
   they live, the primary language, how a release brings new texts to a client without overwriting
-  the client's own edits (translations:sync) and what that means for adding, changing, renaming
-  and removing keys.
+  the client's own edits (translations:sync), the orange "missing texts" number of the admin and
+  what that means for adding, changing, renaming and removing keys.
   @note Only *.json files of this folder are synchronised to the servers - this README never
   reaches a server.
 -->
@@ -89,12 +89,30 @@ text). From the next release on, all the rules above apply.
 A file on the server that is not valid JSON is left as it is (warning in the log); a broken seed
 file fails the command, but the container still starts with the texts it has.
 
+## Missing texts in the admin (orange number)
+
+After a release the client must notice what to translate. The admin menu shows an **orange
+number** at **Texty webu** / **Texty e-shopu** (and in the module switcher) - the count of texts
+missing in the **active** languages of the module, by the same rule as the "Chybí" counter of the
+editor: every key of `cz.json` needs a non-empty value in every active language (an empty value
+of Czech itself counts too). Inactive languages are not counted (visitors cannot switch to them).
+
+- Computed in `api/app/Support/I18n/MissingTranslations.php`, returned by
+  `WebNotificationSource` / `ShopNotificationSource` as an *attention* kind
+  (`NotificationContext::attention()`) - only to admins who may edit the texts
+  (`web-edit-website-update`, `shop-edit-eshop-update`).
+- Unlike the red numbers of unread records it is a current state: opening the page does not
+  clear it, it drops when the texts are filled. When it grows (a release), a warning notice pops
+  up; a red unread number wins in a shared badge (module, menu section).
+- Frontend: `AdminNotificationsService` (`attention` kinds, `NavBadge`), badges in
+  `admin-layout` (`.nav-badge--attention`, `.unread-dot--attention`).
+
 ## Working with keys
 
 - **Add a text:** add the key to `web/cz.json` or `shop/cz.json` (by hand or in the local
   editor), use it in the template with a fallback (`t?.checkout?.alerts?.email_limit ?? …`),
   commit. The release adds it on every server; clients see it as missing in their other
-  languages.
+  languages (orange number in the menu).
 - **Change a default text:** change it in `cz.json`. Clients who never edited it get the new
   text; a client's own wording is kept.
 - **Rename a key** = remove the old one + add a new one. The new key gets your default text; a

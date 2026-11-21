@@ -711,4 +711,46 @@ describe('AdminLayoutComponent', () => {
     expect(notifications.stop).toHaveBeenCalled();
     fixture.destroy();
   });
+
+  /**
+   * @description Attention badges: texts missing in a language show an orange number at the
+   *   text editor page and the module (no unread records there), with their own aria label; the
+   *   dot of the closed menu is orange too. Red unread records of the module win in its badge.
+   * @input web texts missing 4 (attention); module web; close the menu; then inquiries 1.
+   * @output page badge '4' orange (aria attention); switcher orange '4'; orange dot; with the
+   *   inquiry the switcher shows red '1'.
+   */
+  it('shows things needing attention in orange', () => {
+    requiresApps('web');
+    ctx.permissions.granted = new Set(['view-web', 'web-edit-website-view', 'web-user-requests-view']);
+    const notifications = TestBed.inject(AdminNotificationsService);
+    spyOn(notifications, 'start');
+    fixture.detectChanges();
+
+    notifications.kinds.set([
+      { kind: 'web_texts_missing', module: 'web', link: '/admin/web/edit-website', count: 4, attention: true },
+      { kind: 'web_inquiries', module: 'web', link: '/admin/web/user-request', count: 0 },
+    ]);
+    component.currentModule = 'web';
+    component.isMenuOpen = true;
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    const badge = el.querySelector('.admin-nav a[href="/admin/web/edit-website"] .nav-badge') as HTMLElement;
+    expect(badge.textContent!.trim()).toBe('4');
+    expect(badge.classList).toContain('nav-badge--attention');
+    expect(badge.getAttribute('aria-label')).toBe('notifications.attention_badge_aria');
+    const switcher = el.querySelector('.apps-switcher-btn .nav-badge') as HTMLElement;
+    expect(switcher.classList).toContain('nav-badge--attention');
+
+    component.isMenuOpen = false;
+    fixture.detectChanges();
+    expect(el.querySelector('.menu-toggle-btn .unread-dot')!.classList).toContain('unread-dot--attention');
+
+    notifications.kinds.update(kinds => kinds.map(k => (k.kind === 'web_inquiries' ? { ...k, count: 1 } : k)));
+    fixture.detectChanges();
+    const red = el.querySelector('.apps-switcher-btn .nav-badge') as HTMLElement;
+    expect(red.textContent!.trim()).toBe('1');
+    expect(red.classList).not.toContain('nav-badge--attention');
+    fixture.destroy();
+  });
 });

@@ -105,6 +105,21 @@ final class NotificationContext
     }
 
     /**
+     * @description A kind that asks for the admin's attention until something is done - not
+     *   "unread since the last look": the count is the current state (e.g. texts missing in a
+     *   language), opening the page does not clear it, it drops to 0 when the work is done. The
+     *   menu shows it in orange (an unread kind in red wins in a shared badge).
+     * @param string $kind Kind key (KIND_PATTERN, unique over all sources).
+     * @param string $link Admin page where the work is done.
+     * @param int $count Things needing attention now.
+     * @return array{kind: string, module: string, link: string, count: int, attention: true}
+     */
+    public function attention(string $kind, string $link, int $count): array
+    {
+        return ['kind' => $kind, 'module' => $this->module, 'link' => $link, 'count' => max(0, $count), 'attention' => true];
+    }
+
+    /**
      * @description A kind with its own rule of what is unread (e.g. leads that became overdue
      *   after the last look).
      * @param string $kind Kind key (KIND_PATTERN, unique over all sources).

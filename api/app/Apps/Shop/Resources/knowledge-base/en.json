@@ -1426,7 +1426,7 @@
                 "The table Key (JSON path) / Value, search, statistics of keys and missing texts, the filter of missing ones.",
                 "Downloading and uploading JSON for a translator.",
                 "Save changes stores the texts of the current language.",
-                "After an update of the application new texts of the Czech version are added by themselves and texts you have not edited are updated. Texts edited here stay as they are. In other languages the new texts show as missing (filter of missing ones) and texts the application no longer uses are removed."
+                "After an update of the application new texts of the Czech version are added by themselves and texts you have not edited are updated. Texts edited here stay as they are. In other languages the new texts show as missing (filter of missing ones) and texts the application no longer uses are removed. An orange number at this page in the menu shows how many texts are missing in the active languages - it disappears once they are filled."
               ]
             },
             {

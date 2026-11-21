@@ -1426,7 +1426,7 @@
                 "Tabulka Klíč (JSON cesta) / Hodnota, hledání, statistika klíčů a chybějících textů, filtr chybějících.",
                 "Stažení a nahrání JSON pro překladatele.",
                 "Tlačítko Uložit změny uloží texty aktuálního jazyka.",
-                "Po aktualizaci aplikace se nové texty české verze doplní samy a texty, které jste neupravovali, se aktualizují. Texty upravené zde zůstanou beze změny. V ostatních jazycích se nové texty ukážou jako chybějící (filtr chybějících) a texty, které aplikace už nepoužívá, se odeberou."
+                "Po aktualizaci aplikace se nové texty české verze doplní samy a texty, které jste neupravovali, se aktualizují. Texty upravené zde zůstanou beze změny. V ostatních jazycích se nové texty ukážou jako chybějící (filtr chybějících) a texty, které aplikace už nepoužívá, se odeberou. Kolik textů v zapnutých jazycích chybí, ukazuje oranžové číslo u položky Texty e-shopu v menu - zmizí po jejich doplnění."
               ]
             },
             {

@@ -423,6 +423,7 @@
   },
   "notifications": {
     "kind_web_inquiries": "New inquiries",
-    "kind_web_job_applications": "New job applications"
+    "kind_web_job_applications": "New job applications",
+    "kind_web_texts_missing": "Missing website texts"
   }
 }

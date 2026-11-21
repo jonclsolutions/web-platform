@@ -766,13 +766,14 @@
 
 /*
     @module: Unread badges
-    @description: Red number of unread records (AdminNotificationsService) - at a page of the
+    @description: Red number of unread records (AdminNotificationsService), orange
+      (--attention) number of things needing attention (texts missing in a language …) - at a page of the
       sidebar (right edge; in the collapsed desktop sidebar on the corner of the icon), at the
       title of a collapsed menu section, at the modules of the switcher and of the mobile panel.
       The dot tells that the closed mobile menu / the mobile panel hides some numbers (the menu
       button shows it only on mobile - the collapsed desktop sidebar shows the numbers itself).
-    @usage: <span class="nav-badge [nav-badge--item | nav-badge--end]" role="img" [attr.aria-label]>3</span>,
-      <span class="unread-dot" aria-hidden="true"></span> inside .menu-toggle-btn / .mobile-actions-toggle
+    @usage: <span class="nav-badge [nav-badge--item | nav-badge--end] [nav-badge--attention]" role="img" [attr.aria-label]>3</span>,
+      <span class="unread-dot [unread-dot--attention]" aria-hidden="true"></span> inside .menu-toggle-btn / .mobile-actions-toggle
 */
 .nav-badge {
   flex-shrink: 0;
@@ -794,6 +795,9 @@
 .nav-badge--item,
 .nav-badge--end,
 .nav-group-label .nav-badge { margin-left: auto; }
+
+.nav-badge--attention,
+.unread-dot--attention { background: var(--warning); }
 
 .unread-dot {
   position: absolute;

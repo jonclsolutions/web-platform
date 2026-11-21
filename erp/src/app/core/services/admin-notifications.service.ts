@@ -13,6 +13,10 @@
  *   quietly (no error dialog on a failure). Opening the page of a kind (or clicking its menu
  *   item) marks the kind as seen. When a number grows, a notice pops up top right (toast; a click
  *   opens the page) - the admin can switch the notices off in this browser (personal info page).
+ * @note Attention kinds (`attention: true`, e.g. texts missing in a language) are a current state
+ *   that needs work, not unread records: their number is orange, opening the page does not clear
+ *   it (it drops when the work is done) and their notice is a warning. A badge shared by both
+ *   kinds (section, module) shows the red unread number first, the orange one only without it.
  * @usage AdminLayoutComponent calls start() while a user is signed in and stop() otherwise.
  * @dependencies DataHandler (getQuietly / postQuietly), Router, AlertDialogService,
  *   AdminLocalizationService (section `notifications`).
@@ -33,8 +37,18 @@ export interface NotificationKind {
   module: string;
   /** Admin page of the records, e.g. /admin/web/user-request. */
   link: string;
-  /** Unread records. */
+  /** Unread records (attention kind: things needing work now). */
   count: number;
+  /** A current state needing work (orange, never marked as seen) - absent for unread kinds. */
+  attention?: boolean;
+}
+
+/** Badge of a menu item / section / module: its text and whether it is the orange attention one. */
+export interface NavBadge {
+  /** Number ("99+" above NOTIFICATIONS_BADGE_MAX). */
+  text: string;
+  /** Orange attention badge (no unread records behind it, only work to do). */
+  attention: boolean;
 }
 
 /** Answer of `core/notifications` and `core/notifications/seen`. */
@@ -114,24 +128,44 @@ export class AdminNotificationsService {
   }
 
   /**
-   * @description Unread records of the admin page with this link.
+   * @description Badge of the admin page with this link (see navBadge()).
    * @param link Admin page, e.g. /admin/web/user-request.
    */
-  countFor(link: string): number {
-    return this.kinds().filter(k => k.link === link).reduce((sum, k) => sum + k.count, 0);
+  badgeFor(link: string): NavBadge | null {
+    return this.navBadge(this.kinds().filter(k => k.link === link));
   }
 
   /**
-   * @description Unread records of a module ('core' or an application id).
-   * @param module Module id.
+   * @description Badge of several admin pages (a collapsed menu section).
+   * @param links Admin pages.
    */
-  moduleTotal(module: string): number {
-    return this.kinds().filter(k => k.module === module).reduce((sum, k) => sum + k.count, 0);
+  badgeForLinks(links: string[]): NavBadge | null {
+    return this.navBadge(this.kinds().filter(k => links.includes(k.link)));
   }
 
-  /** @description Unread records of all applications (every module but the core). */
-  appsTotal(): number {
-    return this.kinds().filter(k => k.module !== 'core').reduce((sum, k) => sum + k.count, 0);
+  /**
+   * @description Badge of a module ('core' or an application id).
+   * @param module Module id.
+   */
+  moduleBadge(module: string): NavBadge | null {
+    return this.navBadge(this.kinds().filter(k => k.module === module));
+  }
+
+  /** @description Badge of all applications (every module but the core). */
+  appsBadge(): NavBadge | null {
+    return this.navBadge(this.kinds().filter(k => k.module !== 'core'));
+  }
+
+  /**
+   * @description Badge of a set of kinds: the red number of unread records, or - without any -
+   *   the orange number of the attention kinds, null when there is nothing.
+   * @param kinds Kinds behind the badge.
+   */
+  navBadge(kinds: NotificationKind[]): NavBadge | null {
+    const unread = kinds.filter(k => !k.attention).reduce((sum, k) => sum + k.count, 0);
+    if (unread > 0) return { text: this.badge(unread)!, attention: false };
+    const attention = kinds.filter(k => k.attention).reduce((sum, k) => sum + k.count, 0);
+    return attention > 0 ? { text: this.badge(attention)!, attention: true } : null;
   }
 
   /**
@@ -149,7 +183,7 @@ export class AdminNotificationsService {
    * @param link Admin page.
    */
   markSeenLink(link: string): void {
-    this.markSeen(this.kinds().filter(k => k.count > 0 && k.link === link).map(k => k.kind));
+    this.markSeen(this.kinds().filter(k => k.count > 0 && !k.attention && k.link === link).map(k => k.kind));
   }
 
   /**
@@ -185,13 +219,13 @@ export class AdminNotificationsService {
 
   /**
    * @description Marks the kinds of the page at this address as seen (its own records and the
-   *   records of its sub-pages).
+   *   records of its sub-pages) - not the attention kinds, they stay until the work is done.
    * @param url Address of the page (query and fragment ignored).
    */
   private markSeenAt(url: string): void {
     const path = url.split(/[?#]/)[0];
     this.markSeen(this.kinds()
-      .filter(k => k.count > 0 && (path === k.link || path.startsWith(k.link + '/')))
+      .filter(k => k.count > 0 && !k.attention && (path === k.link || path.startsWith(k.link + '/')))
       .map(k => k.kind));
   }
 
@@ -213,15 +247,17 @@ export class AdminNotificationsService {
   }
 
   /**
-   * @description Pops up the notice of a kind; a click opens its page.
+   * @description Pops up the notice of a kind; a click opens its page. An attention kind pops up
+   *   as a warning (orange).
    * @param kind Kind whose number grew.
    */
   private notify(kind: NotificationKind): void {
     const titleKey = `notifications.kind_${kind.kind}`;
     const title = this.i18n.getValue(titleKey);
-    const message = this.i18n.getValue('notifications.toast_message').replace('{count}', String(kind.count));
-    this.alert.open(title && title !== titleKey ? title : this.i18n.getValue('notifications.kind_generic'), message, 'info',
-      () => this.router.navigateByUrl(kind.link));
+    const messageKey = kind.attention ? 'notifications.attention_toast_message' : 'notifications.toast_message';
+    const message = this.i18n.getValue(messageKey).replace('{count}', String(kind.count));
+    this.alert.open(title && title !== titleKey ? title : this.i18n.getValue('notifications.kind_generic'), message,
+      kind.attention ? 'warning' : 'info', () => this.router.navigateByUrl(kind.link));
   }
 
   /** @description The "pop-up notices" choice of this browser (on unless switched off). */

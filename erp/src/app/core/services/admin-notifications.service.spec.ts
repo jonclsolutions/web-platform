@@ -35,6 +35,7 @@ describe('AdminNotificationsService', () => {
     'notifications.kind_web_inquiries': 'Nové poptávky',
     'notifications.kind_generic': 'Nové záznamy',
     'notifications.toast_message': 'Nepřečtené: {count}.',
+    'notifications.attention_toast_message': 'Vyžaduje vaši pozornost: {count}. Kliknutím otevřete stránku.',
   };
 
   const kind = (name: string, count: number, link = `/admin/web/${name}`, module = 'web'): NotificationKind =>
@@ -92,7 +93,7 @@ describe('AdminNotificationsService', () => {
     tick();
     expect(dataHandler.getQuietly).toHaveBeenCalledOnceWith('core/notifications');
     respond(kind('user-request', 2));
-    expect(service.countFor('/admin/web/user-request')).toBe(2);
+    expect(service.badgeFor('/admin/web/user-request')).toEqual({ text: '2', attention: false });
     expect(alert.open).not.toHaveBeenCalled();
     tick(NOTIFICATIONS_POLL_MS);
     expect(dataHandler.getQuietly).toHaveBeenCalledTimes(2);
@@ -137,7 +138,7 @@ describe('AdminNotificationsService', () => {
     tick(NOTIFICATIONS_POLL_MS);
     respond(kind('web_inquiries', 4));
     expect(alert.open).not.toHaveBeenCalled();
-    expect(service.moduleTotal('web')).toBe(4);
+    expect(service.moduleBadge('web')?.text).toBe('4');
     discardPeriodicTasks();
   }));
 
@@ -156,15 +157,49 @@ describe('AdminNotificationsService', () => {
     respond(kind('web_inquiries', 2, '/admin/web/user-request'), kind('web_job_applications', 1, '/admin/web/job-applications'),
       kind('shop_orders', 5, '/admin/shop/orders', 'shop'));
     expect(dataHandler.postQuietly).toHaveBeenCalledWith('core/notifications/seen', { kinds: ['web_inquiries'] });
-    expect(service.countFor('/admin/web/user-request')).toBe(0);
+    expect(service.badgeFor('/admin/web/user-request')).toBeNull();
 
     router.events.next(new NavigationEnd(1, '/admin/web/job-applications/7?tab=a', '/admin/web/job-applications/7?tab=a'));
     expect(dataHandler.postQuietly).toHaveBeenCalledWith('core/notifications/seen', { kinds: ['web_job_applications'] });
 
     service.markSeenLink('/admin/shop/orders');
     expect(dataHandler.postQuietly).toHaveBeenCalledWith('core/notifications/seen', { kinds: ['shop_orders'] });
-    expect(service.appsTotal()).toBe(0);
+    expect(service.appsBadge()).toBeNull();
     expect(dataHandler.postQuietly).toHaveBeenCalledTimes(3);
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description Attention kinds (texts missing in a language): orange badge unless red unread
+   *   records share it, never marked as seen by opening the page, a grown number pops up a
+   *   warning notice.
+   * @input url = text editor page; answer web_texts_missing 3 (attention) + inquiries 0; then
+   *   inquiries 2; then texts 5 and inquiries 0.
+   * @output orange '3' at the page and the module, no seen request; module red '2' while the
+   *   inquiries are unread; notice type 'warning' with the attention message.
+   */
+  it('shows attention kinds in orange and never marks them as seen', fakeAsync(() => {
+    router.url = '/admin/web/edit-website';
+    service.start();
+    tick();
+    const texts = (count: number) => ({ ...kind('web_texts_missing', count, '/admin/web/edit-website'), attention: true });
+    respond(texts(3), kind('web_inquiries', 0, '/admin/web/user-request'));
+    expect(service.badgeFor('/admin/web/edit-website')).toEqual({ text: '3', attention: true });
+    expect(service.moduleBadge('web')).toEqual({ text: '3', attention: true });
+    service.markSeenLink('/admin/web/edit-website');
+    expect(dataHandler.postQuietly).not.toHaveBeenCalled();
+
+    tick(NOTIFICATIONS_POLL_MS);
+    respond(texts(3), kind('web_inquiries', 2, '/admin/web/user-request'));
+    expect(service.moduleBadge('web')).toEqual({ text: '2', attention: false });
+    expect(service.badgeForLinks(['/admin/web/edit-website', '/admin/web/user-request'])?.attention).toBeFalse();
+
+    tick(NOTIFICATIONS_POLL_MS);
+    alert.open.calls.reset();
+    respond(texts(5), kind('web_inquiries', 0, '/admin/web/user-request'));
+    expect(alert.open).toHaveBeenCalledTimes(1);
+    const [, message, type] = alert.open.calls.argsFor(0);
+    expect([message, type]).toEqual(['Vyžaduje vaši pozornost: 5. Kliknutím otevřete stránku.', 'warning']);
     discardPeriodicTasks();
   }));
 
@@ -182,7 +217,7 @@ describe('AdminNotificationsService', () => {
     tick(NOTIFICATIONS_POLL_MS);
     service.markSeenLink('/admin/web/user-request');
     respond(kind('web_inquiries', 3, '/admin/web/user-request'));
-    expect(service.countFor('/admin/web/user-request')).toBe(0);
+    expect(service.badgeFor('/admin/web/user-request')).toBeNull();
     expect(alert.open).not.toHaveBeenCalled();
     discardPeriodicTasks();
   }));
