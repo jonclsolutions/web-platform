@@ -203,15 +203,18 @@ class TranslationSyncTest extends TestCase
 
     /**
      * @description A new installation gets the whole seed and the applied copy is stored.
-     * @input Empty storage; seed languages.json + shop/cz.json.
-     * @output Both files on the server, the applied copy of shop/cz.json in the private storage.
+     * @input Empty storage; seed languages.json + shop/cz.json + README.md.
+     * @output Both JSON files on the server, the applied copy of shop/cz.json in the private
+     *   storage; the README stays in the seed only.
      */
     public function test_new_installation_gets_the_whole_seed(): void
     {
         $this->seedFile('languages.json', [['code' => 'cz', 'module' => 'shop', 'isBuiltIn' => true]]);
         $this->seedFile('shop/cz.json', ['checkout' => ['title' => 'Pokladna']]);
+        File::put($this->seed . '/README.md', '# Guide');
 
         $this->sync()->expectsOutputToContain('translations shop/cz.json: created')->assertExitCode(0);
+        $this->assertFileDoesNotExist($this->storage . '/' . SyncTranslationsCommand::TARGET . '/README.md');
 
         $this->assertSame(['checkout' => ['title' => 'Pokladna']], $this->server('shop/cz.json'));
         $this->assertSame('cz', $this->server('languages.json')[0]['code']);

@@ -350,6 +350,7 @@ Server si pamatuje výchozí texty minulého vydání (`storage/app/private/tran
 toho pozná úpravu v adminu. První vydání s touto funkcí je ještě nemá – jen doplní chybějící
 klíče. Ručně nahrávat JSON po vydání už není potřeba; náhled bez změn:
 `cd /srv/app && docker compose exec app php artisan translations:sync --dry-run`.
+Podrobně pro vývojáře (přidání / přejmenování / smazání klíče): `api/storage/app/public/translations/README.md`.
 
 ---
 

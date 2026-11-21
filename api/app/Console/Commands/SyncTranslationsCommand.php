@@ -14,7 +14,8 @@
  *     the previous sync (kept in storage/app/private/translation-seed) - new keys are added, texts
  *     nobody edited follow the release, edited texts stay, keys removed by the release disappear
  *     unless they were edited. A file missing on the server is copied.
- *   - other files (languages.json - languages edited in the admin): copied only when missing.
+ *   - other JSON files (languages.json - languages edited in the admin): copied only when missing.
+ *   - anything else (README.md - the developer guide of the folder): ignored, never shipped.
  * Languages added in the admin (e.g. de.json, not in the seed) keep their texts; only the keys the
  * Czech texts of the server no longer have are removed from them (the application does not use
  * them). Their new keys are not added - the editor compares with Czech and shows them as missing.
@@ -82,6 +83,9 @@ class SyncTranslationsCommand extends Command
 
         foreach (File::allFiles($seedDir) as $file) {
             $relative = str_replace('\\', '/', $file->getRelativePathname());
+            if (!str_ends_with($relative, '.json')) {
+                continue;
+            }
             $result = preg_match(self::MERGED_FILE, $relative)
                 ? $this->mergeFile($file->getPathname(), $relative, $dryRun)
                 : $this->copyIfMissing($file->getPathname(), $relative, $dryRun);
