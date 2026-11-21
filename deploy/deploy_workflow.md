@@ -179,7 +179,7 @@ Repozitář → **Settings → Environments → New environment** → název `pr
 3. GitHub → **Actions → Release** – sleduj *Tests* → *Images* → *Deploy* (schválení, pokud jsi
    nastavil reviewers).
 4. První vydání: prázdná databáze → migrace vytvoří celé schéma, seed základní data,
-   výchozí překlady webu / shopu se nakopírují do úložiště.
+   výchozí překlady webu / shopu se nakopírují do úložiště (`translations:sync`, viz kapitola 11).
 
 ✔ Ověření:
 ```bash
@@ -328,6 +328,27 @@ GitHub Actions, balíčky composer / npm (bez hlavních verzí) a nové digesty 
 produkce se dostane s dalším vydáním. Nová verze PHP / Node.js / MariaDB (např. 8.6, 26, 11.x)
 je plánovaná změna – v Dockerfilu se přepíše celý odkaz (tag i digest, digest zjistí
 `docker buildx imagetools inspect php:8.6-fpm-trixie`) spolu s `dev/.env.example`.
+
+Lokálně po sloučení PR: `git pull`, pak `./dev.sh composer install` (změnil se `api/composer.lock`)
+a `./dev.sh npm ci` (změnil se `erp/package-lock.json`) a `./dev.sh test`.
+
+**Texty webu a e-shopu (překlady).** V repozitáři jsou výchozí texty
+(`api/storage/app/public/translations/{web,shop}/cz.json` – lokální editor překladů zapisuje přímo
+do nich), na serveru texty upravované v adminu. Při startu každého vydání je kontejner `app`
+sloučí (`php artisan translations:sync`, výpis v `docker compose logs app`):
+
+| Klíč | Co se stane |
+|---|---|
+| nový ve vydání | doplní se |
+| změněný ve vydání, v adminu needitovaný | aktualizuje se |
+| upravený v adminu | zůstane text z adminu |
+| odebraný ve vydání, v adminu needitovaný | odebere se (upravený zůstane) |
+| jazyk přidaný v adminu (např. `en.json`), `languages.json` | beze změny – nové klíče editor ukáže jako chybějící |
+
+Server si pamatuje výchozí texty minulého vydání (`storage/app/private/translation-seed`), podle
+toho pozná úpravu v adminu. První vydání s touto funkcí je ještě nemá – jen doplní chybějící
+klíče. Ručně nahrávat JSON po vydání už není potřeba; náhled bez změn:
+`cd /srv/app && docker compose exec app php artisan translations:sync --dry-run`.
 
 ---
 

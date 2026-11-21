@@ -58,8 +58,8 @@ COPY api/composer.json api/composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --no-progress --prefer-dist
 COPY api/ ./
 # Base translations of the public web / shop (storage/app/public/translations, edited in the
-# admin afterwards) are kept as the seed of a new installation - api-entrypoint.sh copies the
-# missing ones into the volume. Then the storage skeleton, bootstrap/cache, the authoritative
+# admin afterwards) are kept as the seed of the release - api-entrypoint.sh brings them into the
+# volume (translations:sync: new keys and texts added, texts edited in the admin kept). Then the storage skeleton, bootstrap/cache, the authoritative
 # class map and package discovery (no .env needed).
 RUN mkdir -p /opt/seed \
  && mv storage/app/public/translations /opt/seed/translations \

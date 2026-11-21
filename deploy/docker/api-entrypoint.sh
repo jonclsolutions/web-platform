@@ -11,10 +11,10 @@
 #     queue      php artisan queue:work (e-mails, imports)
 #     scheduler  php artisan schedule:work (GDPR clean-up, reminders)
 #     anything else is run as a command (e.g. `php artisan migrate --force`).
-#   Before a role starts, the storage skeleton is completed (a new or older volume), the base
-#   translations missing in the volume are copied from the image (/opt/seed - never over the
-#   ones edited in the admin) and the Laravel caches (config, routes, views, events) are built
-#   from the environment of the container.
+#   Before a role starts, the storage skeleton is completed (a new or older volume), the `app`
+#   container brings the base translations of the release into the volume (translations:sync -
+#   new and updated texts are added, texts edited in the admin are kept) and the Laravel caches
+#   (config, routes, views, events) are built from the environment of the container.
 # @note Migrations do NOT run here - the deploy script runs them once per release (several
 #   containers start at the same time).
 # @security No secret is printed (artisan optimize prints only the cached parts).
@@ -27,10 +27,13 @@ role="${1:-app}"
 mkdir -p storage/logs storage/app/private storage/app/public \
          storage/framework/cache/data storage/framework/sessions storage/framework/views
 
-# Base translations of a new installation (or of a new language / application of a release):
-# only the files that do not exist yet - the texts edited in the admin are kept.
-if [ -d /opt/seed/translations ]; then
-    cp -R --update=none /opt/seed/translations storage/app/public/
+# Base translations of the release (SyncTranslationsCommand): a new installation gets all of them,
+# a release adds its new keys and texts, the texts edited in the admin are kept. Only in `app`
+# (one container, so queue / scheduler starting at the same time never write the same files).
+# A failure is reported but does not stop the start - the app works with the texts it has.
+if [ "$role" = app ] && [ -d /opt/seed/translations ]; then
+    php artisan translations:sync --no-interaction \
+        || echo "api-entrypoint: translations:sync failed - the texts of the release were not synchronised (docker compose logs app)" >&2
 fi
 
 # Caches of this container from its environment. A wrong setting stops the start here (visible in

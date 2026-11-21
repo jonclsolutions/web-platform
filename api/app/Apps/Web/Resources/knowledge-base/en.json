@@ -605,7 +605,8 @@
               "items": [
                 "Download JSON downloads all texts of the current language into a file - useful as a backup or for a translator.",
                 "Upload JSON uploads a file with the same structure of keys as the Czech template. Keys missing in the file stay empty and are marked as missing.",
-                "Working with a translator: download the Czech JSON, have only the values (not the keys) translated, upload the file to the new language, check the missing texts and save."
+                "Working with a translator: download the Czech JSON, have only the values (not the keys) translated, upload the file to the new language, check the missing texts and save.",
+                "After an update of the application new texts of the Czech version are added by themselves and texts you have not edited are updated. Texts edited here stay as they are. In other languages the new texts show as missing."
               ]
             },
             {

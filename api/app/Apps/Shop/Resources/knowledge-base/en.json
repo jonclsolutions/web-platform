@@ -1425,7 +1425,8 @@
                 "The row of e-shop languages - adding a language (flag, code, name, active), activating and deactivating, deleting. Czech is the default language.",
                 "The table Key (JSON path) / Value, search, statistics of keys and missing texts, the filter of missing ones.",
                 "Downloading and uploading JSON for a translator.",
-                "Save changes stores the texts of the current language."
+                "Save changes stores the texts of the current language.",
+                "After an update of the application new texts of the Czech version are added by themselves and texts you have not edited are updated. Texts edited here stay as they are. In other languages the new texts show as missing."
               ]
             },
             {

@@ -1425,7 +1425,8 @@
                 "Řada jazyků e-shopu - přidání jazyka (vlajka, kód, název, aktivní), aktivace a deaktivace, smazání. Čeština je výchozí jazyk.",
                 "Tabulka Klíč (JSON cesta) / Hodnota, hledání, statistika klíčů a chybějících textů, filtr chybějících.",
                 "Stažení a nahrání JSON pro překladatele.",
-                "Tlačítko Uložit změny uloží texty aktuálního jazyka."
+                "Tlačítko Uložit změny uloží texty aktuálního jazyka.",
+                "Po aktualizaci aplikace se nové texty české verze doplní samy a texty, které jste neupravovali, se aktualizují. Texty upravené zde zůstanou beze změny. V ostatních jazycích se nové texty ukážou jako chybějící."
               ]
             },
             {
