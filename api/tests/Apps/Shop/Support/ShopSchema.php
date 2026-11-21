@@ -37,6 +37,10 @@ final class ShopSchema
             $t->increments('id');
             $t->boolean('is_shop_active')->default(true);
             $t->string('maintenance_message')->nullable();
+            // Unpaid orders (migration 2026_11_21_000003_shop_unpaid_orders).
+            $t->unsignedTinyInteger('unpaid_reminder_days')->default(3);
+            $t->unsignedTinyInteger('unpaid_cancel_days')->default(7);
+            $t->dateTime('unpaid_orders_from')->nullable();
             // Confirmation e-mail of an order (migration 2026_11_14_000000_shop_order_confirmation_email).
             foreach (['subject', 'title', 'intro', 'outro', 'labels'] as $field) {
                 $t->json("order_email_{$field}_i18n")->nullable();
@@ -266,6 +270,7 @@ final class ShopSchema
             $t->dateTime('terms_accepted_at')->nullable();          // 2026_11_21_000000_shop_orders_terms_consent
             $t->string('terms_version', 40)->nullable();
             $t->char('terms_hash', 64)->nullable();
+            $t->dateTime('payment_reminder_sent_at')->nullable();   // 2026_11_21_000003_shop_unpaid_orders
             $t->dateTime('paid_at')->nullable();
             $t->dateTime('shipped_at')->nullable();
             $t->dateTime('delivered_at')->nullable();

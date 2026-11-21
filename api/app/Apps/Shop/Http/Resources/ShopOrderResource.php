@@ -56,6 +56,8 @@ class ShopOrderResource extends JsonResource
             'terms_accepted_at'    => $this->terms_accepted_at?->toIso8601String(),
             'terms_version'        => $this->terms_version,
             'terms_hash'           => $this->terms_hash,
+            // Payment reminder of an unpaid bank transfer (B-04, UnpaidOrders).
+            'payment_reminder_sent_at' => $this->payment_reminder_sent_at?->toIso8601String(),
             'items'                => ShopOrderItemResource::collection($this->whenLoaded('items')),
             'items_count'          => $this->whenLoaded('items', fn() => $this->items->count()),
             'paid_at'              => $this->paid_at?->toIso8601String(),

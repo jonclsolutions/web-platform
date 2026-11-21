@@ -10,7 +10,8 @@
  * the prices (goods, discount, shipping, total incl. VAT), shipping / payment method, delivery
  * address and contact, the information on the right of withdrawal and the link to the terms and
  * conditions - the confirmation of the concluded contract on a durable medium (Directive
- * 2011/83/EU, Art. 8(7)). Texts from ShopOrderEmailTemplate.
+ * 2011/83/EU, Art. 8(7)) - and, for a bank transfer, the payment details (account, IBAN, variable
+ * symbol). Texts from ShopOrderEmailTemplate.
  * @dependencies
  * - ShopOrderEmailTemplate: texts of the language and the amount format; CompanyContactInfo: footer.
  */
@@ -70,6 +71,8 @@ class ShopOrderConfirmation extends Mailable
                 'order'   => $order,
                 'contact' => $contact,
                 'tosUrl'  => $tosUrl,
+                // Where to pay a bank transfer (empty for other methods / without an account).
+                'paymentDetails' => $order->paymentMethod ? $order->paymentMethod->paymentDetails($order) : [],
                 'items'   => $order->items->map(fn ($item) => [
                     'name'      => trim($item->product_name . ($item->variant_name ? ' – ' . $item->variant_name : '')),
                     'quantity'  => (int) $item->quantity,

@@ -54,6 +54,13 @@ export interface EmailTemplateRow {
   sample: string;
   /** A longer text (e.g. the information on the right of withdrawal): textarea, full width. */
   multiline?: boolean;
+  /**
+   * false = a text of another e-mail sharing the template (e.g. the payment reminder of an order):
+   * edited here, not part of this preview. Default: in the preview.
+   */
+  preview?: boolean;
+  /** i18n key (of the section) of a heading shown before the row - starts a group of the form. */
+  section?: string;
 }
 
 /** @description i18n texts of the template being edited. */

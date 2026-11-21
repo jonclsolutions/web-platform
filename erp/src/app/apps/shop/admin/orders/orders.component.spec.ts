@@ -89,13 +89,13 @@ describe('OrdersComponent', () => {
     /**
      * @description Toolbar buttons without permission get showIf false; filter columns without status filters stay untouched.
      * @input  granted []; translations$.next({}); then filterColumns without status / payment_status
-     * @output create, reports, e-mail template hidden; no import button (finding #25); export visible; no error without the filters
+     * @output create, reports, e-mail template, unpaid orders hidden; no import button (finding #25); export visible; no error without the filters
      */
     it('hides toolbar buttons without permission', () => {
       ctx.permissions.granted = new Set();
       ctx.i18n.translations$.next({});
       const t = Object.fromEntries(component.toolbarButtons.map(b => [b.action, b]));
-      expect([t['handleCreateFormOpened'].showIf, t['openGraphBuilder'].showIf, t['openEmailTemplateEditor'].showIf]).toEqual([false, false, false]);
+      expect([t['handleCreateFormOpened'].showIf, t['openGraphBuilder'].showIf, t['openEmailTemplateEditor'].showIf, t['openUnpaidSettings'].showIf]).toEqual([false, false, false, false]);
       expect(t['triggerImport']).toBeUndefined();
       expect(t['exportActiveTable'].showIf).toBeTrue();
       component.filterColumns = [];
@@ -144,7 +144,8 @@ describe('OrdersComponent', () => {
      * @description Toolbar actions call their handlers; nothing runs while an order is loading.
      * @input  handleToolbarAction(each action) with an activeTable spy; then while processing
      * @output filter panel toggled; create form open; graph builder open; e-mail template editor
-     *   open (17 labels, withdrawal text multiline without sample) and closed; export on the
+     *   open (28 labels: withdrawal text multiline without sample, reminder / cancellation texts
+     *   outside the preview with their section) and closed; export on the
      *   table; no import; ignored while processing
      */
     it('dispatches the toolbar actions', () => {
@@ -155,9 +156,12 @@ describe('OrdersComponent', () => {
       expect(component.showOrderForm).toBeTrue();
       expect(component.showGraphBuilder).toBeTrue();
       expect(component.showEmailTemplateModal).toBeTrue();
-      expect(component.emailTemplateRows.length).toBe(18);
+      expect(component.emailTemplateRows.length).toBe(28);
+      expect(component.emailTemplateRows.find(r => r.key === 'reminder_subject')).toEqual({ key: 'reminder_subject', sample: '', preview: false, section: 'email_tpl_section_unpaid' });
+      expect(component.emailTemplateRows.filter(r => r.preview === false).map(r => r.key))
+        .toEqual(['payment_details_header', 'reminder_subject', 'label_pay_by', 'reminder_intro', 'canceled_subject', 'canceled_intro']);
       expect(component.emailTemplateRows.find(r => r.key === 'label_company_ids')?.sample).toBe('12345678 / CZ12345678');
-      expect(component.emailTemplateRows.find(r => r.key === 'withdrawal_info')).toEqual({ key: 'withdrawal_info', sample: '', multiline: true });
+      expect(component.emailTemplateRows.find(r => r.key === 'withdrawal_info')).toEqual({ key: 'withdrawal_info', sample: '', multiline: true, section: 'email_tpl_section_contract' });
       component.closeEmailTemplateEditor();
       expect(component.showEmailTemplateModal).toBeFalse();
       expect(table.exportToCSV).toHaveBeenCalled();
@@ -582,7 +586,8 @@ describe('OrdersComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('shop-orders.table_header');
     dh().getOne.and.returnValue(of({ id: 4, order_number: 'OBJ-4', status: 'shipped', payment_status: 'paid', items: [{ id: 1, product_name: 'Pixel', quantity: 1, unit_price: 5, total_price: 5, vat_rate: 21 }],
-      customer: { email: 'old@d.cz', full_name: 'Old Name', city: 'Brno' }, contact: { full_name: 'Eva Malá', email: 'c@d.cz', phone: '1', company: 'ACME' } }));
+      customer: { email: 'old@d.cz', full_name: 'Old Name', city: 'Brno' }, contact: { full_name: 'Eva Malá', email: 'c@d.cz', phone: '1', company: 'ACME' },
+      payment_reminder_sent_at: '2026-11-10T10:00:00+00:00' }));
     component.handleViewDetails({ id: 4 } as any);
     fixture.detectChanges();
     const text = fixture.nativeElement.textContent;
@@ -592,6 +597,7 @@ describe('OrdersComponent', () => {
     expect(text).not.toContain('Old Name');
     expect(text).toContain('Brno');                // city from the customer record
     expect(text).toContain('shop-orders.status_shipped');
+    expect(text).toContain('shop-orders.label_payment_reminder_sent');   // B-04
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('.am-card')!.getAttribute('data-size')).toBe('lg');
     expect(el.querySelector('.am-title')!.textContent!.trim()).toBe('shop-orders.detail_modal_title_prefix #OBJ-4');
@@ -621,5 +627,46 @@ describe('OrdersComponent', () => {
     const legacy = component.countryChoices('Česká republika');
     expect(legacy.length).toBe(33);
     expect(legacy[0]).toEqual({ code: 'Česká republika', name: 'Česká republika' });
+  });
+
+  /**
+   * @description Deadlines of unpaid bank transfers (B-04): the toolbar opens the window with the
+   *   stored days; invalid days and a reminder not before the cancellation are refused without a
+   *   request; saving puts the days, closes the window and confirms; closing waits for the save.
+   * @input  handleToolbarAction('openUnpaidSettings') with 3 / 7; 2.5 / 7; 7 / 7; 61 / 7; 0 / 0
+   *   saved; close while saving.
+   * @output get(shop/settings/unpaid-orders); modal open; errors unpaid_days_invalid /
+   *   unpaid_reminder_after_cancel / unpaid_days_invalid, no put; put {0, 0}; modal closed;
+   *   success alert 'shop-orders.unpaid_saved_message'; close ignored while saving.
+   */
+  it('edits the deadlines of unpaid orders', () => {
+    dh().get.and.returnValue(of({ unpaid_reminder_days: 3, unpaid_cancel_days: 7 }));
+    component.handleToolbarAction('openUnpaidSettings');
+    expect(dh().get).toHaveBeenCalledWith('shop/settings/unpaid-orders');
+    expect([component.showUnpaidModal, component.unpaidDeadlinesError()]).toEqual([true, '']);
+
+    const errorOf = (reminder: number, cancel: number) => {
+      component.unpaidDeadlines = { unpaid_reminder_days: reminder, unpaid_cancel_days: cancel };
+      return component.unpaidDeadlinesError();
+    };
+    expect([errorOf(2.5, 7), errorOf(7, 7), errorOf(61, 7)])
+      .toEqual(['shop-orders.unpaid_days_invalid', 'shop-orders.unpaid_reminder_after_cancel', 'shop-orders.unpaid_days_invalid']);
+    component.saveUnpaidSettings();
+    expect(dh().put).not.toHaveBeenCalled();
+
+    errorOf(0, 0);
+    dh().put.and.returnValue(of({ unpaid_reminder_days: 0, unpaid_cancel_days: 0 }));
+    component.saveUnpaidSettings();
+    expect(dh().put).toHaveBeenCalledWith('shop/settings/unpaid-orders', { unpaid_reminder_days: 0, unpaid_cancel_days: 0 });
+    expect(component.showUnpaidModal).toBeFalse();
+    expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'shop-orders.unpaid_saved_message', 'success');
+
+    component.showUnpaidModal = true;
+    component.unpaidSaving = true;
+    component.closeUnpaidSettings();
+    expect(component.showUnpaidModal).toBeTrue();
+    component.unpaidSaving = false;
+    component.closeUnpaidSettings();
+    expect(component.showUnpaidModal).toBeFalse();
   });
 });

@@ -687,7 +687,7 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "Změna stavu zákazníkovi automaticky žádný e-mail neposílá. O odeslání nebo zrušení ho informujte sami."
+              "content": "Ruční změna stavu zákazníkovi automaticky žádný e-mail neposílá. O odeslání nebo zrušení ho informujte sami. Výjimkou je automatické zrušení nezaplaceného bankovního převodu (kapitola 08)."
             }
           ]
         },
@@ -762,11 +762,11 @@
         },
         {
           "key": "email",
-          "heading": "07. Potvrzovací e-mail objednávky",
+          "heading": "07. E-maily objednávky",
           "blocks": [
             {
               "type": "text",
-              "content": "V nabídce Akce zvolte Editovat potvrzovací e-mail. Tento e-mail je potvrzením uzavřené smlouvy a zákazník ho dostane hned po objednávce. Rekapitulaci (zboží, ceny, doprava, platba, adresa) doplní systém sám."
+              "content": "V nabídce Akce zvolte Editovat e-maily objednávky. Potvrzovací e-mail je potvrzením uzavřené smlouvy a zákazník ho dostane hned po objednávce. Rekapitulaci (zboží, ceny, doprava, platba, adresa) doplní systém sám. Ve stejném okně jsou i texty připomínky platby a zrušení nezaplacené objednávky (kapitola 08)."
             },
             {
               "type": "grid",
@@ -782,6 +782,14 @@
                 {
                   "title": "Rekapitulace (popisky)",
                   "text": "Popisky řádků: číslo a datum objednávky, zboží, množství, ceny, sleva, doprava, platba, celkem k úhradě, DPH, doručovací adresa, kontakt, poznámka."
+                },
+                {
+                  "title": "Platební údaje (bankovní převod)",
+                  "text": "Nadpis a popisky: číslo účtu, IBAN, SWIFT / BIC, variabilní symbol. U bankovního převodu je systém doplní do potvrzovacího e-mailu i do připomínky platby z údajů způsobu platby (variabilní symbol = číslo objednávky, pokud ho způsob platby používá)."
+                },
+                {
+                  "title": "Nezaplacený bankovní převod",
+                  "text": "Předmět a úvodní zpráva připomínky platby, popisek Uhradit do a předmět a úvodní zpráva zrušení objednávky. Do předmětu se doplní číslo objednávky. Tyto texty nejsou v živém náhledu."
                 },
                 {
                   "title": "Poučení o odstoupení od smlouvy",
@@ -804,7 +812,36 @@
           ]
         },
         {
-          "heading": "08. Mazání a koš",
+          "key": "unpaid",
+          "heading": "08. Nezaplacené objednávky",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Objednávky placené bankovním převodem, které jsou ve stavu Přijata a čekají na platbu, hlídá systém sám (každou hodinu)."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Připomínka platby",
+                  "text": "Po zadaném počtu dnů od objednávky (výchozí 3) dostane zákazník e-mail s datem, do kdy má zaplatit, a s platebními údaji. Připomínka se posílá jen jednou.",
+                  "active": true
+                },
+                {
+                  "label": "Zrušení",
+                  "text": "Po zadaném počtu dnů od objednávky (výchozí 7) se objednávka zruší: stav Zrušeno, zboží se vrátí na sklad (i varianty), použití slevového kupónu se vrátí a zákazník dostane e-mail.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Lhůty nastavíte v nabídce Akce → Nezaplacené objednávky (celé dny 0-60, 0 = vypnuto, připomínka musí přijít dřív než zrušení). Objednávky, které jste potvrdili, označili jako zaplacené nebo zrušili, systém nemění - zaplacenou objednávku proto včas označte. Objednávky vytvořené před zavedením této funkce se nepřipomínají ani neruší. Odeslání připomínky je vidět v detailu objednávky, každý krok je v Logu e-shopu."
+            }
+          ]
+        },
+        {
+          "heading": "09. Mazání a koš",
           "blocks": [
             {
               "type": "text",
@@ -813,7 +850,7 @@
           ]
         },
         {
-          "heading": "09. Kdo smí co",
+          "heading": "10. Kdo smí co",
           "blocks": [
             {
               "type": "grid",
@@ -827,7 +864,7 @@
                   "text": "shop-orders-create"
                 },
                 {
-                  "title": "Úprava a potvrzovací e-mail",
+                  "title": "Úprava, e-maily a lhůty nezaplacených objednávek",
                   "text": "shop-orders-update"
                 },
                 {
@@ -1104,7 +1141,7 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "Poplatek za platbu se zatím do ceny objednávky nezapočítává a číslo účtu s variabilním symbolem se zákazníkovi automaticky neposílá. Platební údaje k převodu proto uveďte v textech e-shopu nebo v potvrzovacím e-mailu objednávky."
+              "content": "Poplatek za platbu se zatím do ceny objednávky nezapočítává. Platební údaje bankovního převodu (číslo účtu a kód banky, IBAN, SWIFT / BIC a variabilní symbol) se zákazníkovi posílají v potvrzovacím e-mailu objednávky a v připomínce platby - vyplňte proto alespoň číslo účtu nebo IBAN. Variabilní symbol z telefonu jsou jeho číslice (s předvolbou jen posledních 9)."
             }
           ]
         },

@@ -8,7 +8,8 @@
  * @description Description of one application of the platform for the core. The core never
  * names an application or its classes - it asks the registered manifests (config/apps.php via
  * AppRegistry) for what it needs: base data, retention, calendar entries, upload rules and
- * folders, the audit log, morph aliases, what to do when a language is deleted - and the files
+ * folders, the audit log, morph aliases, Artisan commands and scheduled jobs, what to do when a
+ * language is deleted - and the files
  * of the application found by convention in its folder (app/Apps/<App>/): `routes.php`,
  * `Database/Migrations`, `Resources/views` (view namespace = id), `Resources/knowledge-base`.
  * @usage One final class per application in the root of its folder (e.g.
@@ -19,6 +20,8 @@
  */
 
 namespace App\Support\Apps;
+
+use Illuminate\Console\Scheduling\Schedule;
 
 abstract class AppManifest
 {
@@ -117,6 +120,16 @@ abstract class AppManifest
     public function commands(): array
     {
         return [];
+    }
+
+    /**
+     * @description Scheduled jobs of the application (routes/console.php asks every registered
+     *   application) - e.g. `$schedule->command(MyCommand::class)->hourly()`.
+     * @param Schedule $schedule The scheduler.
+     * @return void
+     */
+    public function schedule(Schedule $schedule): void
+    {
     }
 
     /**

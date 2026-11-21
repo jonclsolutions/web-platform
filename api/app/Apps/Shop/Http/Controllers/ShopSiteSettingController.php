@@ -8,7 +8,8 @@
  * @description Manages e-shop maintenance mode - toggling storefront/checkout availability
  * and the customer-facing maintenance message, with mandatory password re-confirmation
  * for the write action and a public read-only endpoint for the storefront. Also the editable
- * texts of the order confirmation e-mail (per language, ShopOrderEmailTemplate).
+ * texts of the order confirmation e-mail (per language, ShopOrderEmailTemplate) and the deadlines
+ * of the unpaid bank-transfer orders (UnpaidOrders).
  */
 
 namespace App\Apps\Shop\Http\Controllers;
@@ -43,6 +44,10 @@ class ShopSiteSettingController extends Controller
     private const TEMPLATE_LIMITS = ['subject' => 150, 'title' => 150, 'intro' => 2000, 'outro' => 2000];
     private const LABEL_LIMIT = 200;
     private const WITHDRAWAL_LIMIT = 1500;
+    /** @description Labels that are texts of their own (line breaks kept, WITHDRAWAL_LIMIT). */
+    private const LONG_LABELS = ['withdrawal_info', 'reminder_intro', 'canceled_intro'];
+    /** @description Highest deadline of the unpaid orders in days (the column is a tiny integer). */
+    private const UNPAID_DAYS_MAX = 60;
 
     /**
      * Retrieves the current shop settings or creates defaults if none exist.
@@ -150,7 +155,7 @@ class ShopSiteSettingController extends Controller
      * @description Saves the texts of the order confirmation e-mail (all languages at once; no
      *   password re-confirmation - only the permission of the route, editing a text is not
      *   sensitive). Only the languages of the e-shop and the known labels are kept; texts are
-     *   plain text (tags removed, line breaks kept in intro / outro / withdrawal_info), empty
+     *   plain text (tags removed, line breaks kept in intro / outro / LONG_LABELS), empty
      *   texts are dropped (the e-mail then uses the Czech one / the default).
      * @param Request $request { order_email_*_i18n }.
      * @return JsonResponse { data: { order_email_*_i18n } }
@@ -181,9 +186,9 @@ class ShopSiteSettingController extends Controller
                     if (in_array($label, ['subject', 'title', 'intro', 'outro'], true)) {
                         continue;
                     }
-                    $withdrawal = $label === 'withdrawal_info';
+                    $long = in_array($label, self::LONG_LABELS, true);
                     // One text through the same clean-up as the texts per language (key = the language).
-                    $clean = I18nText::clean([$lang => $texts[$label] ?? null], $withdrawal ? self::WITHDRAWAL_LIMIT : self::LABEL_LIMIT, $withdrawal);
+                    $clean = I18nText::clean([$lang => $texts[$label] ?? null], $long ? self::WITHDRAWAL_LIMIT : self::LABEL_LIMIT, $long);
                     if (($clean[strtolower($lang)] ?? '') !== '') {
                         $labels[strtolower($lang)][$label] = $clean[strtolower($lang)];
                     }
@@ -196,6 +201,60 @@ class ShopSiteSettingController extends Controller
         $this->logAction($request, ShopLog::class, 'update', 'Shop', 'Updated the order confirmation e-mail template.', $settings->id, 'ShopSiteSetting');
 
         return $this->respond($this->orderTemplate($settings));
+    }
+
+    /**
+     * @description Deadlines of the unpaid bank-transfer orders (UnpaidOrders, audit B-04): days
+     *   after the order to the payment reminder and to the automatic cancellation (0 = off).
+     * @return JsonResponse { data: { unpaid_reminder_days, unpaid_cancel_days } }
+     */
+    public function showUnpaidOrders(): JsonResponse
+    {
+        return $this->respond($this->unpaidDeadlines(ShopSiteSetting::first()));
+    }
+
+    /**
+     * @description Saves the deadlines of the unpaid orders. Whole days 0-60; with both on, the
+     *   reminder comes before the cancellation. No password re-confirmation - only the permission
+     *   of the route (like the e-mail texts).
+     * @param Request $request { unpaid_reminder_days, unpaid_cancel_days }.
+     * @return JsonResponse { data: { unpaid_reminder_days, unpaid_cancel_days } }
+     */
+    public function updateUnpaidOrders(Request $request): JsonResponse
+    {
+        $days = 'required|integer|min:0|max:' . self::UNPAID_DAYS_MAX;
+        $validated = $request->validate([
+            'unpaid_reminder_days' => $days,
+            'unpaid_cancel_days'   => $days,
+        ]);
+        $reminder = (int) $validated['unpaid_reminder_days'];
+        $cancel = (int) $validated['unpaid_cancel_days'];
+        if ($reminder > 0 && $cancel > 0 && $reminder >= $cancel) {
+            return response()->json([
+                'message' => 'The reminder must come before the cancellation.',
+                'errors'  => ['unpaid_reminder_days' => ['The reminder must come before the cancellation.']],
+            ], 422);
+        }
+
+        $settings = ShopSiteSetting::first() ?? ShopSiteSetting::create(['is_shop_active' => true]);
+        $settings->fill(['unpaid_reminder_days' => $reminder, 'unpaid_cancel_days' => $cancel])->save();
+
+        $this->logAction($request, ShopLog::class, 'update', 'Shop', "Updated the deadlines of unpaid orders: reminder {$reminder} d, cancellation {$cancel} d.", $settings->id, 'ShopSiteSetting');
+
+        return $this->respond($this->unpaidDeadlines($settings));
+    }
+
+    /**
+     * @description The deadlines of a settings row (the defaults without one).
+     * @param ShopSiteSetting|null $settings The row.
+     * @return array{unpaid_reminder_days: int, unpaid_cancel_days: int}
+     */
+    private function unpaidDeadlines(?ShopSiteSetting $settings): array
+    {
+        return [
+            'unpaid_reminder_days' => (int) ($settings->unpaid_reminder_days ?? 3),
+            'unpaid_cancel_days'   => (int) ($settings->unpaid_cancel_days ?? 7),
+        ];
     }
 
     /**

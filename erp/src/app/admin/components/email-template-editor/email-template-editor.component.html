@@ -69,6 +69,9 @@
 
 <div class="email-tpl-labels-grid">
 @for (row of rows; track row.key) {
+@if (row.section) {
+<div class="email-tpl-section-label email-tpl-labels-grid-heading">{{ t(row.section) }}</div>
+}
 <div class="email-tpl-field" [class.email-tpl-field--wide]="row.multiline">
 <label class="email-tpl-label">{{ t('email_tpl_' + row.key) }}</label>
 @if (row.multiline) {
@@ -117,14 +120,14 @@
 <p class="email-tpl-preview-summary-label">{{ previewLabel('summary_header') }}</p>
 <table class="email-tpl-preview-table">
 @for (row of rows; track row.key) {
-@if (row.sample !== '') {
+@if (row.sample !== '' && row.preview !== false) {
 <tr><td class="email-tpl-preview-td-label">{{ previewLabel(row.key) }}</td><td class="email-tpl-preview-td-value">{{ row.sample }}</td></tr>
 }
 }
 </table>
 <!-- Labels without a sample value are texts of their own (e.g. the right of withdrawal) -->
 @for (row of rows; track row.key) {
-@if (row.sample === '') {
+@if (row.sample === '' && row.preview !== false) {
 <p class="email-tpl-preview-text">{{ previewLabel(row.key) }}</p>
 }
 }

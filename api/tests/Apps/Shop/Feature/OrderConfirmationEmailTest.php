@@ -232,9 +232,11 @@ class OrderConfirmationEmailTest extends TestCase
      *   and the known labels, plain text (line breaks only in intro / outro / withdrawal_info) and
      *   drops empty texts; the answer is the stored template.
      * @input No permission: GET; with it: GET empty, PUT with cz / en / de (web-only) / xx texts,
-     *   a tag, an unknown label, a two-line withdrawal text, an empty en intro.
+     *   a tag, an unknown label, a two-line withdrawal text / reminder intro / pay-by label, an
+     *   empty en intro.
      * @output 403; {} objects; saved subject {cz, en}; title without the tag; intro {cz};
-     *   labels cz {label_total, withdrawal_info with its line break}; log entry.
+     *   labels cz {label_total, label_pay_by on one line, reminder_intro and withdrawal_info
+     *   with their line break} (order of DEFAULTS); log entry.
      */
     public function test_admin_template_api(): void
     {
@@ -249,13 +251,13 @@ class OrderConfirmationEmailTest extends TestCase
             'order_email_subject_i18n' => ['cz' => 'Potvrzení', 'en' => 'Confirmation', 'de' => 'Bestätigung', 'xx' => 'X'],
             'order_email_title_i18n'   => ['cz' => '<b>Děkujeme</b>'],
             'order_email_intro_i18n'   => ['cz' => "Řádek 1\nŘádek 2", 'en' => '  '],
-            'order_email_labels_i18n'  => ['cz' => ['label_total' => 'Celkem', 'unknown' => 'x', 'withdrawal_info' => "A\nB"], 'de' => ['label_total' => 'Summe']],
+            'order_email_labels_i18n'  => ['cz' => ['label_total' => 'Celkem', 'unknown' => 'x', 'withdrawal_info' => "A\nB", 'reminder_intro' => "R\nS", 'label_pay_by' => "P\nQ"], 'de' => ['label_total' => 'Summe']],
         ])->assertOk()->json('data');
 
         $this->assertSame(['cz' => 'Potvrzení', 'en' => 'Confirmation'], $data['order_email_subject_i18n']);
         $this->assertSame(['cz' => 'Děkujeme'], $data['order_email_title_i18n']);
         $this->assertSame(['cz' => "Řádek 1\nŘádek 2"], $data['order_email_intro_i18n']);
-        $this->assertSame(['cz' => ['label_total' => 'Celkem', 'withdrawal_info' => "A\nB"]], $data['order_email_labels_i18n']);
+        $this->assertSame(['cz' => ['label_total' => 'Celkem', 'label_pay_by' => 'P Q', 'reminder_intro' => "R\nS", 'withdrawal_info' => "A\nB"]], $data['order_email_labels_i18n']);
         $this->assertShopLog('update', 'order confirmation e-mail template');
     }
 

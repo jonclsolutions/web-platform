@@ -4,6 +4,18 @@
             "type": "added",
             "area": "shop",
             "part": "admin",
+            "text": "Unpaid bank-transfer orders: a payment reminder after 3 days and an automatic cancellation after 7 days (goods back to stock, coupon use returned, e-mail to the customer). The deadlines are set in Orders → Unpaid orders, the e-mail texts in Edit order e-mails."
+        },
+        {
+            "type": "added",
+            "area": "shop",
+            "part": "public",
+            "text": "The order confirmation e-mail and the payment reminder carry the payment details of a bank transfer (account, IBAN, SWIFT / BIC, variable symbol)."
+        },
+        {
+            "type": "added",
+            "area": "shop",
+            "part": "admin",
             "text": "Shipping methods: delivery countries ticked per method. Checkout offers only those countries and, for the chosen country, only the methods delivering there; the order stores the country code and the confirmation e-mail shows its name."
         },
         {

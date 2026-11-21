@@ -94,6 +94,11 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:shop-orders-update');
             Route::put('/order-email-template', [ShopSiteSettingController::class, 'updateOrderEmailTemplate'])
                 ->middleware('permission:shop-orders-update');
+            // Deadlines of the unpaid bank-transfer orders (E-shop orders → Unpaid orders).
+            Route::get('/unpaid-orders', [ShopSiteSettingController::class, 'showUnpaidOrders'])
+                ->middleware('permission:shop-orders-update');
+            Route::put('/unpaid-orders', [ShopSiteSettingController::class, 'updateUnpaidOrders'])
+                ->middleware('permission:shop-orders-update');
         });
 
         // Products

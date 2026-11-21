@@ -39,6 +39,8 @@ export interface Order {
   terms_accepted_at?: string | null;
   terms_version?: string | null;
   terms_hash?: string | null;
+  /** When the payment reminder of an unpaid bank transfer was sent (null = not sent). */
+  payment_reminder_sent_at?: string | null;
   items: OrderItem[];
   items_count?: number;
   paid_at?: string;

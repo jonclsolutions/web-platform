@@ -451,6 +451,21 @@
 .small { font-size: 0.78rem; }
 .mt-1 { margin-top: 4px; }
 
+/* Window of the deadlines of unpaid bank transfers (B-04). */
+.unpaid-hint {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--color-zinc-500);
+}
+
+.unpaid-error {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-rose-700);
+}
+
 .coupon-error-msg {
   color: var(--color-rose-700);
   font-size: 0.78rem;

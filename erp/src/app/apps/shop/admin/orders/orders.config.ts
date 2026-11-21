@@ -49,6 +49,7 @@ export function createToolbarButtons(i18n: AdminLocalizationService): Core.Butto
     { action: 'toggleFilters', label: i18n.getValue(`${SECTION}.toolbar_filters`), icon: '', class: 'btn-filter', isActive: false },
     { action: 'handleCreateFormOpened', label: i18n.getValue(`${SECTION}.toolbar_create_record`), icon: '', class: 'btn-create', showIf: true, permission: 'shop-orders-create' },
     { action: 'openEmailTemplateEditor', label: i18n.getValue(`${SECTION}.toolbar_edit_email_template`), icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-orders-update' },
+    { action: 'openUnpaidSettings', label: i18n.getValue(`${SECTION}.toolbar_unpaid_orders`), icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-orders-update' },
     { action: 'openGraphBuilder', label: i18n.getValue(`${SECTION}.toolbar_generate_reports`), icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-view-reports' },
     { action: 'exportActiveTable', label: i18n.getValue(`${SECTION}.toolbar_export_data`), icon: '', class: 'btn-export', showIf: true },
   ];

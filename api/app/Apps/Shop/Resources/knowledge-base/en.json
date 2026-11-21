@@ -687,7 +687,7 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "A status change sends no e-mail to the customer automatically. Inform them about shipping or cancelation yourself."
+              "content": "A manual status change sends no e-mail to the customer automatically. Inform them about shipping or cancelation yourself. The exception is the automatic cancellation of an unpaid bank transfer (chapter 08)."
             }
           ]
         },
@@ -762,11 +762,11 @@
         },
         {
           "key": "email",
-          "heading": "07. Order confirmation e-mail",
+          "heading": "07. Order e-mails",
           "blocks": [
             {
               "type": "text",
-              "content": "In the Actions menu choose Edit confirmation e-mail. This e-mail confirms the concluded contract and the customer receives it right after ordering. The summary (goods, prices, shipping, payment, address) is added by the system."
+              "content": "In the Actions menu choose Edit order e-mails. The confirmation e-mail confirms the concluded contract and the customer receives it right after ordering. The summary (goods, prices, shipping, payment, address) is added by the system. The same window holds the texts of the payment reminder and of the cancellation of an unpaid order (chapter 08)."
             },
             {
               "type": "grid",
@@ -782,6 +782,14 @@
                 {
                   "title": "Summary (labels)",
                   "text": "Labels of the rows: order number and date, goods, quantity, prices, discount, shipping, payment, total to pay, VAT, delivery address, contact, note."
+                },
+                {
+                  "title": "Payment details (bank transfer)",
+                  "text": "Heading and labels: account number, IBAN, SWIFT / BIC, variable symbol. For a bank transfer the system adds them to the confirmation e-mail and to the payment reminder from the data of the payment method (variable symbol = order number when the payment method uses it)."
+                },
+                {
+                  "title": "Unpaid bank transfer",
+                  "text": "Subject and intro message of the payment reminder, the Pay by label and the subject and intro message of the cancellation. The order number is added to the subject. These texts are not in the live preview."
                 },
                 {
                   "title": "Right of withdrawal",
@@ -804,7 +812,36 @@
           ]
         },
         {
-          "heading": "08. Deleting and the trash",
+          "key": "unpaid",
+          "heading": "08. Unpaid orders",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Orders paid by bank transfer that are Received and wait for the payment are watched by the system itself (every hour)."
+            },
+            {
+              "type": "flow",
+              "steps": [
+                {
+                  "label": "Payment reminder",
+                  "text": "After the set number of days from the order (default 3) the customer gets an e-mail with the date to pay by and the payment details. The reminder is sent only once.",
+                  "active": true
+                },
+                {
+                  "label": "Cancellation",
+                  "text": "After the set number of days from the order (default 7) the order is cancelled: status Canceled, the goods go back to stock (variants too), the use of the discount coupon is returned and the customer gets an e-mail.",
+                  "active": false
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Set the deadlines in the Actions menu → Unpaid orders (whole days 0-60, 0 = off, the reminder must come before the cancellation). Orders you confirmed, marked as paid or cancelled are never changed - so mark a paid order in time. Orders created before this feature was introduced are neither reminded nor cancelled. The sent reminder is shown in the order details, every step is in the E-shop log."
+            }
+          ]
+        },
+        {
+          "heading": "09. Deleting and the trash",
           "blocks": [
             {
               "type": "text",
@@ -813,7 +850,7 @@
           ]
         },
         {
-          "heading": "09. Who may do what",
+          "heading": "10. Who may do what",
           "blocks": [
             {
               "type": "grid",
@@ -827,7 +864,7 @@
                   "text": "shop-orders-create"
                 },
                 {
-                  "title": "Editing and the confirmation e-mail",
+                  "title": "Editing, e-mails and deadlines of unpaid orders",
                   "text": "shop-orders-update"
                 },
                 {
@@ -1104,7 +1141,7 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "The payment fee is not added to the order price yet and the account number with the variable symbol is not sent to the customer automatically. So state the payment details for a transfer in the e-shop texts or in the order confirmation e-mail."
+              "content": "The payment fee is not added to the order price yet. The payment details of a bank transfer (account number and bank code, IBAN, SWIFT / BIC and the variable symbol) are sent to the customer in the order confirmation e-mail and in the payment reminder - so fill in at least the account number or the IBAN. A variable symbol from the phone is its digits (with a country code only the last 9)."
             }
           ]
         },

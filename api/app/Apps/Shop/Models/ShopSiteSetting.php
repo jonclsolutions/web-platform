@@ -39,6 +39,10 @@ class ShopSiteSetting extends Model
     protected $fillable = [
         'is_shop_active',
         'maintenance_message',
+        // Unpaid bank-transfer orders (UnpaidOrders, audit B-04): days after the order, 0 = off.
+        'unpaid_reminder_days',
+        'unpaid_cancel_days',
+        'unpaid_orders_from',
         // Confirmation e-mail of an order, texts per language (ShopOrderEmailTemplate).
         'order_email_subject_i18n',
         'order_email_title_i18n',
@@ -52,6 +56,9 @@ class ShopSiteSetting extends Model
      */
     protected $casts = [
         'is_shop_active' => 'boolean',
+        'unpaid_reminder_days' => 'integer',
+        'unpaid_cancel_days' => 'integer',
+        'unpaid_orders_from' => 'datetime',
         'order_email_subject_i18n' => 'array',
         'order_email_title_i18n' => 'array',
         'order_email_intro_i18n' => 'array',

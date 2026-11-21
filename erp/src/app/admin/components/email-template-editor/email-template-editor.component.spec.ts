@@ -171,6 +171,35 @@ describe('EmailTemplateEditorComponent', () => {
     expect(Array.from(el.querySelectorAll('.email-tpl-preview-text')).map(p => p.textContent!.trim())).toContain('Odstoupení do 14 dnů.');
     expect(el.querySelector('.email-tpl-field--wide textarea')).not.toBeNull();
   });
+
+  /**
+   * @description Texts of another e-mail sharing the template (`preview: false`) are edited but
+   *   not shown in the preview; `section` puts a full-width heading before its row.
+   * @input  rows label_ico (sample), reminder_subject (no sample, preview false, section
+   *   'email_tpl_section_unpaid'), label_pay_by (sample, preview false).
+   * @output 3 fields; 1 table row; no reminder paragraph; heading 'shop-orders.email_tpl_section_unpaid'.
+   */
+  it('edits texts of another e-mail outside the preview', () => {
+    ctx = createAdminTestContext();
+    dh().get.and.callFake((url: string) => url === 'languages/web' ? of([{ code: 'cz', name: 'Čeština' }]) : of({}));
+    TestBed.configureTestingModule({ imports: [EmailTemplateEditorComponent], providers: ctx.providers });
+    fixture = TestBed.createComponent(EmailTemplateEditorComponent);
+    component = fixture.componentInstance;
+    Object.assign(component, { endpoint: 'shop/settings/order-email-template', fieldPrefix: 'order_email', i18nSection: 'shop-orders' });
+    component.rows = [
+      { key: 'label_ico', sample: '123' },
+      { key: 'reminder_subject', sample: '', preview: false, section: 'email_tpl_section_unpaid' },
+      { key: 'label_pay_by', sample: '13.11.2026', preview: false },
+    ];
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelectorAll('.email-tpl-labels-grid .email-tpl-field').length).toBe(3);
+    expect(el.querySelectorAll('.email-tpl-preview-table tr').length).toBe(1);
+    expect(Array.from(el.querySelectorAll('.email-tpl-preview-text')).map(p => p.textContent!.trim()))
+      .not.toContain('shop-orders.email_tpl_default_reminder_subject');
+    expect(el.querySelector('.email-tpl-labels-grid-heading')!.textContent!.trim()).toBe('shop-orders.email_tpl_section_unpaid');
+  });
   /**
    * @description Empty fields: every field empty in the shown language gets the orange class, the
    *   hint is shown and each language tab carries its number of empty fields; filling a field

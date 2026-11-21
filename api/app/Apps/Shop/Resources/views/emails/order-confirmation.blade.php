@@ -7,7 +7,8 @@
     @description Confirmation of an e-shop order (ShopOrderConfirmation), same look as the other
     confirmation e-mails: order number and date, items,
     prices, shipping / payment, delivery address and contact, right of withdrawal and the link to
-    the terms and conditions (Directive 2011/83/EU, Art. 8(7)). All texts come from
+    the terms and conditions (Directive 2011/83/EU, Art. 8(7)); for a bank transfer the payment
+    details (partials/payment-details). All texts come from
     ShopOrderEmailTemplate in the language of the order ($tpl), amounts are formatted ($items,
     $amounts); everything is escaped ({{ }}), the buyer's note keeps its line breaks.
     Shell (header bar, card, company footer): emails/layouts/card.blade.php.
@@ -129,6 +130,9 @@
 </tr>
 @endif
 </table>
+
+{{-- Where to pay a bank transfer (audit B-04) --}}
+@include('shop::emails.partials.payment-details', ['total' => $amounts['total']])
 
 {{-- Right of withdrawal + terms and conditions --}}
 <p style="margin:0 0 12px;font-size:13px;line-height:1.6;color:#52525b;">{{ $l['withdrawal_info'] }}</p>

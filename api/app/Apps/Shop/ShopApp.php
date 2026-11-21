@@ -23,6 +23,8 @@ use App\Support\Apps\AppAvailability;
 use App\Support\Apps\AppManifest;
 use App\Apps\Shop\Support\ShopOrderEmailTemplate;
 use App\Apps\Shop\Database\Seeders\ShopBaseDataSeeder;
+use App\Apps\Shop\Console\UnpaidOrdersCommand;
+use Illuminate\Console\Scheduling\Schedule;
 
 final class ShopApp extends AppManifest
 {
@@ -51,6 +53,24 @@ final class ShopApp extends AppManifest
     public function middlewareAliases(): array
     {
         return ['shop.active' => CheckShopActive::class];
+    }
+
+    /** @description See AppManifest::commands(). */
+    public function commands(): array
+    {
+        return [UnpaidOrdersCommand::class];
+    }
+
+    /**
+     * @description See AppManifest::schedule() - unpaid bank-transfer orders every hour (reminder
+     *   and cancellation on time, audit B-04).
+     */
+    public function schedule(Schedule $schedule): void
+    {
+        $schedule->command(UnpaidOrdersCommand::class)
+            ->hourlyAt(20)
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 
     /** @description See AppManifest::baseDataSeeders(). */

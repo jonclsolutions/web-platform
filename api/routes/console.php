@@ -19,6 +19,7 @@ use App\Console\Commands\PurgeImportBatchesCommand;
 use App\Console\Commands\PurgePersonalDataCommand;
 use App\Console\Commands\PruneAuthDataCommand;
 use App\Console\Commands\PruneOrphanFilesCommand;
+use App\Support\Apps\AppRegistry;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -86,3 +87,11 @@ Schedule::command(PruneOrphanFilesCommand::class)
     ->dailyAt('04:15')
     ->withoutOverlapping()
     ->runInBackground();
+
+/**
+ * @description Scheduled jobs of the registered applications (AppManifest::schedule()) - the core
+ * never names them.
+ */
+foreach (AppRegistry::apps() as $application) {
+    $application->schedule(Schedule::getFacadeRoot());
+}

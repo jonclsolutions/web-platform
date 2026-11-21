@@ -9,11 +9,13 @@
  * - BaseDataComponent: Inherits standard CRUD operations for order management.
  * - ConfirmDialogService: Facilitates user confirmation for sensitive deletions.
  * - Core Providers: Handles API communication and dependency injection.
- * - AdminModalComponent: the frame of the order detail and the order form popups.
+ * - AdminModalComponent: the frame of the order detail, the order form and the deadlines of
+ *   unpaid orders (toolbar "Unpaid orders", API shop/settings/unpaid-orders, audit B-04).
  * - Config.create* factory functions: i18n-aware definitions.
  * - RowButtonBuilderComponent (SHARED_UI_BUILDERS): the tabs all / pending tasks / trash.
- * - EmailTemplateEditorComponent: texts of the order confirmation e-mail (toolbar "Edit
- *   confirmation e-mail", API shop/settings/order-email-template, languages of the e-shop).
+ * - EmailTemplateEditorComponent: texts of the order e-mails - confirmation, payment reminder and
+ *   cancellation of an unpaid order (toolbar "Edit order e-mails", API
+ *   shop/settings/order-email-template, languages of the e-shop).
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
@@ -33,6 +35,17 @@ import { PageHeaderComponent } from '../../../../admin/components/page-header/pa
 import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../../../admin/components/email-template-editor/email-template-editor.component';
 import { AdminModalComponent } from '../../../../admin/components/admin-modal/admin-modal.component';
 import { DELIVERY_COUNTRIES, countryName, countryOptions } from '../../shared/delivery-countries';
+
+/** Deadlines of the unpaid bank transfers in days after the order (0 = off), API shop/settings/unpaid-orders. */
+export interface UnpaidDeadlines {
+  unpaid_reminder_days: number;
+  unpaid_cancel_days: number;
+}
+
+/** API of the deadlines (permission shop-orders-update). */
+const UNPAID_ORDERS_ENDPOINT = 'shop/settings/unpaid-orders';
+/** Highest deadline in days - the same limit as the API. */
+const UNPAID_DAYS_MAX = 60;
 
 interface CouponValidationResult {
   valid: boolean;
@@ -292,6 +305,7 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       openGraphBuilder: () => this.openGraphBuilder(),
       openEmailTemplateEditor: () => this.openEmailTemplateEditor(),
+      openUnpaidSettings: () => this.openUnpaidSettings(),
       exportActiveTable: () => this.exportActiveTable(),
       // The unused `toggleTable` entry was removed (2026-10-22) – the trash is a tab here (setTableMode).
     };
@@ -329,8 +343,20 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       { key: 'label_contact', sample: this.t('email_tpl_preview_contact') },
       { key: 'label_company_ids', sample: '12345678 / CZ12345678' },
       { key: 'label_notes', sample: this.t('email_tpl_preview_notes') },
-      { key: 'withdrawal_info', sample: '', multiline: true },
+      // Payment details of a bank transfer (confirmation and payment reminder).
+      { key: 'payment_details_header', sample: '', preview: false, section: 'email_tpl_section_payment_details' },
+      { key: 'label_account', sample: '123456789/0100' },
+      { key: 'label_iban', sample: 'CZ65 0100 0000 0001 2345 6789' },
+      { key: 'label_swift', sample: 'KOMBCZPP' },
+      { key: 'label_variable_symbol', sample: '2026000123' },
+      { key: 'withdrawal_info', sample: '', multiline: true, section: 'email_tpl_section_contract' },
       { key: 'terms_link', sample: '' },
+      // Other e-mails of an unpaid bank transfer (B-04) - edited here, not in this preview.
+      { key: 'reminder_subject', sample: '', preview: false, section: 'email_tpl_section_unpaid' },
+      { key: 'label_pay_by', sample: '', preview: false },
+      { key: 'reminder_intro', sample: '', preview: false, multiline: true },
+      { key: 'canceled_subject', sample: '', preview: false },
+      { key: 'canceled_intro', sample: '', preview: false, multiline: true },
     ];
     this.showEmailTemplateModal = true;
     this.cd.markForCheck();
@@ -340,6 +366,54 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   closeEmailTemplateEditor(): void {
     this.showEmailTemplateModal = false;
     this.cd.markForCheck();
+  }
+
+  // ── Unpaid bank transfers (modal, B-04): days to the payment reminder / the cancellation ──
+  showUnpaidModal = false;
+  unpaidSaving = false;
+  unpaidDeadlines: UnpaidDeadlines = { unpaid_reminder_days: 3, unpaid_cancel_days: 7 };
+
+  /** @description Loads the deadlines and opens their window. */
+  openUnpaidSettings(): void {
+    this.dataHandler.get<UnpaidDeadlines>(UNPAID_ORDERS_ENDPOINT).subscribe({
+      next: deadlines => {
+        this.unpaidDeadlines = { ...deadlines };
+        this.showUnpaidModal = true;
+        this.cd.markForCheck();
+      }
+    });
+  }
+
+  /** @description Closes the window of the deadlines (not while saving). */
+  closeUnpaidSettings(): void {
+    if (this.unpaidSaving) return;
+    this.showUnpaidModal = false;
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Error of the deadlines as the API checks them ('' = fine): whole days 0-60, the
+   *   reminder before the cancellation when both are on.
+   */
+  unpaidDeadlinesError(): string {
+    const { unpaid_reminder_days: reminder, unpaid_cancel_days: cancel } = this.unpaidDeadlines;
+    const valid = (days: unknown) => Number.isInteger(days) && (days as number) >= 0 && (days as number) <= UNPAID_DAYS_MAX;
+    if (!valid(reminder) || !valid(cancel)) return this.t('unpaid_days_invalid');
+    return reminder > 0 && cancel > 0 && reminder >= cancel ? this.t('unpaid_reminder_after_cancel') : '';
+  }
+
+  /** @description Saves the deadlines; success closes the window with a message. */
+  saveUnpaidSettings(): void {
+    if (this.unpaidSaving || this.unpaidDeadlinesError()) return;
+    this.unpaidSaving = true;
+    this.dataHandler.put<UnpaidDeadlines>(UNPAID_ORDERS_ENDPOINT, this.unpaidDeadlines).pipe(
+      Core.finalize(() => { this.unpaidSaving = false; this.cd.markForCheck(); })
+    ).subscribe({
+      next: () => {
+        this.showUnpaidModal = false;
+        this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('unpaid_saved_message'), 'success');
+      }
+    });
   }
 
   override toggleFilters(): void {

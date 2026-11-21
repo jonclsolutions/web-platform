@@ -11,6 +11,9 @@
  * the confirmation e-mails (I18nEmailTemplate). The texts are edited in the admin
  * (E-shop orders → Edit confirmation e-mail, `shop_site_settings.order_email_*_i18n`); a language
  * without text uses the Czech one, then the built-in default (I18nEmailTemplate).
+ * @note The same texts serve the payment reminder and the cancellation of an unpaid order
+ * (ShopPaymentReminder, ShopOrderCanceled: `reminder_*`, `canceled_*`, `label_pay_by`) - one place
+ * in the admin for all e-mails of an order.
  * @note The e-mail is the confirmation of the concluded contract on a durable medium (Directive
  * 2011/83/EU, Art. 8(7)): besides the order it carries the information on the right of withdrawal
  * (`withdrawal_info`) and the link to the terms and conditions (`terms_link`).
@@ -56,6 +59,18 @@ class ShopOrderEmailTemplate extends I18nEmailTemplate
         'label_contact'         => 'Contact',
         'label_company_ids'     => 'Company ID / VAT ID',
         'label_notes'           => 'Note',
+        // Payment details of a bank transfer (confirmation and reminder).
+        'payment_details_header' => 'Payment details',
+        'label_account'         => 'Account number',
+        'label_iban'            => 'IBAN',
+        'label_swift'           => 'SWIFT / BIC',
+        'label_variable_symbol' => 'Variable symbol',
+        // Payment reminder / automatic cancellation of an unpaid order (UnpaidOrders, audit B-04).
+        'label_pay_by'          => 'Pay by',
+        'reminder_subject'      => 'Payment reminder',
+        'reminder_intro'        => 'we have not received the payment for your order yet. Please pay it by the date below, otherwise we will cancel the order. If you have already paid, please ignore this e-mail.',
+        'canceled_subject'      => 'Order cancelled',
+        'canceled_intro'        => 'we have cancelled your order because we did not receive its payment in time. If you are still interested in the goods, please order them again.',
         'withdrawal_info'       => 'As a consumer you may withdraw from the contract within 14 days of receiving the goods without giving any reason. The conditions of the withdrawal are part of our terms and conditions.',
         'terms_link'            => 'Terms and conditions',
     ];

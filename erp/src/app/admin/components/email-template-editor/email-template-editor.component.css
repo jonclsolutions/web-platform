@@ -107,6 +107,11 @@
 .email-tpl-labels-grid .email-tpl-field--wide {
   grid-column: 1 / -1;
 }
+/* Heading of a group of rows (EmailTemplateRow.section) - full width, less space above. */
+.email-tpl-labels-grid .email-tpl-labels-grid-heading {
+  grid-column: 1 / -1;
+  margin-top: 12px;
+}
 
 .email-tpl-label-hint {
   font-weight: 400;
