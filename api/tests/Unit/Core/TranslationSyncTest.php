@@ -154,6 +154,54 @@ class TranslationSyncTest extends TestCase
     }
 
     /**
+     * @description prune() removes from a client language only the keys Czech no longer has and
+     *   adds nothing; a key whose structure changed in Czech is removed too.
+     * @input de {a, old, g: 'text'}; Czech {a, b, g: {x}}.
+     * @output de {a}; 2 removed.
+     */
+    public function test_prune_removes_only_keys_czech_no_longer_has(): void
+    {
+        $prune = TranslationSeedMerger::prune(
+            ['a' => 'A de', 'old' => 'O de', 'g' => 'text'],
+            ['a' => 'A', 'b' => 'B', 'g' => ['x' => 'X']]
+        );
+
+        $this->assertSame(['a' => 'A de'], $prune['data']);
+        $this->assertSame(2, $prune['removed']);
+    }
+
+    /**
+     * @description A release that removes a key from Czech removes it from the languages of the
+     *   client too; their translations stay and new keys are not added (the editor shows them as
+     *   missing). A dry run reports the removal and writes nothing.
+     * @input Server cz {title, old}, de {title, old}; applied seed = server cz; release: old
+     *   removed, alert added.
+     * @output Dry run: "1 removed (no longer in Czech)" for de, files unchanged. Sync: cz {title,
+     *   alert}, de {title} with its German text.
+     */
+    public function test_release_removes_dropped_keys_from_client_languages(): void
+    {
+        $this->seedFile('shop/cz.json', ['checkout' => ['title' => 'Pokladna', 'old' => 'Staré']]);
+        $this->serverFile('shop/cz.json', ['checkout' => ['title' => 'Pokladna', 'old' => 'Staré']]);
+        $this->serverFile('shop/de.json', ['checkout' => ['title' => 'Kasse', 'old' => 'Alt']]);
+        $this->sync()->assertExitCode(0);
+
+        $this->seedFile('shop/cz.json', ['checkout' => ['title' => 'Pokladna', 'alert' => 'Chyba']]);
+        $this->sync(['--dry-run' => true])
+            ->expectsOutputToContain('[dry run] translations shop/de.json: 1 removed (no longer in Czech)')
+            ->assertExitCode(0);
+        $this->assertSame(['checkout' => ['title' => 'Kasse', 'old' => 'Alt']], $this->server('shop/de.json'));
+
+        $this->sync()
+            ->expectsOutputToContain('translations shop/cz.json: 1 added, 0 updated, 1 removed, 0 kept as edited in the admin')
+            ->expectsOutputToContain('translations shop/de.json: 1 removed (no longer in Czech)')
+            ->assertExitCode(0);
+
+        $this->assertSame(['checkout' => ['title' => 'Pokladna', 'alert' => 'Chyba']], $this->server('shop/cz.json'));
+        $this->assertSame(['checkout' => ['title' => 'Kasse']], $this->server('shop/de.json'));
+    }
+
+    /**
      * @description A new installation gets the whole seed and the applied copy is stored.
      * @input Empty storage; seed languages.json + shop/cz.json.
      * @output Both files on the server, the applied copy of shop/cz.json in the private storage.
@@ -173,7 +221,7 @@ class TranslationSyncTest extends TestCase
     /**
      * @description Two releases in a row: the first sync of an existing server adds the new key,
      *   the next one also updates an untouched text and keeps the one edited in the admin; the
-     *   languages of the admin (languages.json, en.json) are not touched.
+     *   texts of the admin languages (en.json) and languages.json are not touched.
      * @input Server shop/cz.json {title, button (edited)}, en.json, own languages.json;
      *   release 1 adds alert; release 2 changes title and button.
      * @output After release 2: title of the release, button of the admin, alert kept; en.json and

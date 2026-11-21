@@ -606,7 +606,7 @@
                 "Stáhnout JSON stáhne všechny texty aktuálního jazyka do souboru - hodí se jako záloha nebo pro překladatele.",
                 "Nahrát JSON nahraje soubor se stejnou strukturou klíčů jako český vzor. Klíče, které v souboru chybí, zůstanou prázdné a budou označené jako chybějící.",
                 "Postup s překladatelem: stáhněte český JSON, nechte přeložit jen hodnoty (ne klíče), nahrajte soubor k novému jazyku, zkontrolujte chybějící texty a uložte.",
-                "Po aktualizaci aplikace se nové texty české verze doplní samy a texty, které jste neupravovali, se aktualizují. Texty upravené zde zůstanou beze změny. V ostatních jazycích se nové texty ukážou jako chybějící."
+                "Po aktualizaci aplikace se nové texty české verze doplní samy a texty, které jste neupravovali, se aktualizují. Texty upravené zde zůstanou beze změny. V ostatních jazycích se nové texty ukážou jako chybějící (filtr chybějících) a texty, které aplikace už nepoužívá, se odeberou."
               ]
             },
             {

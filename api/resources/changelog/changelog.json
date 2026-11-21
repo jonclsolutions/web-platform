@@ -1,5 +1,12 @@
 {
-    "unreleased": [],
+    "unreleased": [
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Web and e-shop texts: an update also removes the texts it no longer uses from the other languages (e.g. German); their translations stay and new texts show there as missing until translated."
+        }
+    ],
     "releases": [
         {
             "version": "v2026.11.5",

@@ -343,7 +343,8 @@ sloučí (`php artisan translations:sync`, výpis v `docker compose logs app`):
 | změněný ve vydání, v adminu needitovaný | aktualizuje se |
 | upravený v adminu | zůstane text z adminu |
 | odebraný ve vydání, v adminu needitovaný | odebere se (upravený zůstane) |
-| jazyk přidaný v adminu (např. `en.json`), `languages.json` | beze změny – nové klíče editor ukáže jako chybějící |
+| jazyk přidaný v adminu (např. `de.json`) | překlady zůstanou; klíče, které čeština už nemá, se odeberou; nové klíče se nedoplňují – editor je ukáže jako chybějící, dokud je klient nepřeloží |
+| `languages.json` (jazyky z adminu) | beze změny |
 
 Server si pamatuje výchozí texty minulého vydání (`storage/app/private/translation-seed`), podle
 toho pozná úpravu v adminu. První vydání s touto funkcí je ještě nemá – jen doplní chybějící

@@ -14,6 +14,7 @@
  *   - changed on the server (edited in the admin) → kept;
  *   - removed from the seed, unchanged on server → removed; edited on server → kept.
  * Without a base (first sync) nothing is updated or removed - only missing keys are added.
+ * prune() then removes the keys Czech no longer has from the other languages of the module.
  * @note A leaf is a string, a number, a boolean, null or a list (lists are compared as a whole).
  * When the structure of a key differs (text on one side, group of keys on the other), the seed wins.
  * The result follows the order of the seed; keys only on the server follow at the end of their group.
@@ -71,6 +72,32 @@ final class TranslationSeedMerger
         }
 
         return ['data' => self::unflatten($merged)] + $counts;
+    }
+
+    /**
+     * @description Removes from a language of the client (e.g. de.json, not part of the release) the
+     *   keys the Czech reference no longer has - the application does not use them any more. Keys
+     *   missing in the language are not added: the editor compares every language with Czech and
+     *   shows them as missing, the public page shows them as it does today.
+     * @param array<string, mixed> $translation Texts of the language on the server.
+     * @param array<string, mixed> $reference Czech texts on the server (after the merge).
+     * @return array{data: array<string, mixed>, removed: int} The pruned texts and the count.
+     */
+    public static function prune(array $translation, array $reference): array
+    {
+        $keys = self::flatten($reference);
+        $kept = [];
+        $removed = 0;
+
+        foreach (self::flatten($translation) as $key => $value) {
+            if (array_key_exists($key, $keys)) {
+                $kept[$key] = $value;
+            } else {
+                $removed++;
+            }
+        }
+
+        return ['data' => self::unflatten($kept), 'removed' => $removed];
     }
 
     /**
