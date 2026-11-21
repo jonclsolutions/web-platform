@@ -239,6 +239,8 @@
     "confirm_delete_image_message": "Opravdu chcete odstranit tento obrázek?",
     "file_too_large_title": "Příliš velký soubor",
     "file_too_large_message": "Obrázek může mít maximálně 5 MB.",
+    "file_type_title": "Nepodporovaný formát",
+    "file_type_message": "Obrázek musí být ve formátu JPG, PNG nebo WebP.",
     "validation_title": "Validace",
     "validation_name_required": "Zadejte název produktu.",
     "validation_variant_name_required": "Všechny varianty musí mít název.",

@@ -417,15 +417,22 @@ describe('ProductsComponent', () => {
     });
 
     /**
-     * @description Selected image files are limited to 5 MB and shown as a preview.
-     * @input  onFileSelected with 6 MB, empty selection, 1 KB (product with images), 1 KB (no images); same for variant images
-     * @output warning 'shop-products.file_too_large_message' and input cleared; preview data URL set; nothing without a target image
+     * @description Selected image files are limited to JPG / PNG / WebP up to 5 MB (as the API)
+     *   and shown as a preview; the inputs offer only those types.
+     * @input  onFileSelected with 6 MB, a GIF, empty selection, 1 KB (product with images), 1 KB (no images); same for variant images
+     * @output warning 'shop-products.file_too_large_message' / 'file_type_message' and input cleared; preview data URL set;
+     *   nothing without a target image; imageAccept 'image/jpeg,image/png,image/webp'
      */
     it('checks and previews image files', async () => {
       const big = fileInput(6 * 1024 * 1024);
       component.onFileSelected(big, 0);
       expect(ctx.alert.open).toHaveBeenCalledWith('shop-products.file_too_large_title', 'shop-products.file_too_large_message', 'warning');
       expect(big.target.value).toBe('');
+      const gif = { target: { files: [new File(['x'], 'a.gif', { type: 'image/gif' })], value: 'C:\\fake\\a.gif' } };
+      component.onVariantImageFileSelected(gif, 0);
+      expect(ctx.alert.open).toHaveBeenCalledWith('shop-products.file_type_title', 'shop-products.file_type_message', 'warning');
+      expect(gif.target.value).toBe('');
+      expect(component.imageAccept).toBe('image/jpeg,image/png,image/webp');
       component.onFileSelected({ target: { files: [] } }, 0);
       component.editingProduct = { images: [{ image_path: '' }] };
       component.onFileSelected(fileInput(1024), 0);

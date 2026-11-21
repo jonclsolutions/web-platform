@@ -553,6 +553,13 @@ export abstract class BaseTranslationEditorComponent
     const file  = input.files?.[0];
     if (!file) return;
 
+    // The same limits as the API (TranslationController: png, jpg, jpeg, webp, at most 512 kB).
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+      this.addFormError = this.t('icon_type_error');
+      input.value = '';
+      this.cd.markForCheck();
+      return;
+    }
     if (file.size > 512 * 1024) {
       this.addFormError = this.t('icon_size_error');
       this.cd.markForCheck();

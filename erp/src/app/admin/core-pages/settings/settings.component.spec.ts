@@ -460,6 +460,9 @@ describe('SettingsComponent', () => {
       component.onIconSelected(input(), 1);
       component.onIconSelected(input(file('big.png', 'image/png', 3 * 1024 * 1024)), 1);
       component.onIconSelected(input(file('a.txt', 'text/plain')), 1);
+      component.onIconSelected(input(file('a.svg', 'image/svg+xml')), 1);
+      expect(component.socialLinks[1]._iconFile).toBeFalsy();
+      expect(component.socialIconAccept).toBe('image/jpeg,image/png,image/webp,image/gif');
       expect(ctx.alert.open).toHaveBeenCalledWith('settings.logo_too_large_title', 'settings.social_icon_too_large_message', 'warning');
       expect(ctx.alert.open).toHaveBeenCalledWith('settings.logo_invalid_format_title', 'settings.social_icon_invalid_format_message', 'warning');
       component.onIconSelected(input(file('a.png', 'image/png')), 1);

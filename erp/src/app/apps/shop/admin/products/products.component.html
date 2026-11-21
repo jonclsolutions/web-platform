@@ -463,7 +463,7 @@
             <div class="image-form">
               <div class="form-group">
                 <label>{{ t('label_file') }}</label>
-                <input type="file" accept="image/*" (change)="onVariantImageFileSelected($event, i)"
+                <input type="file" [accept]="imageAccept" (change)="onVariantImageFileSelected($event, i)"
                   [disabled]="image._delete" class="file-input">
                 <p class="form-hint">{{ t('hint_file_type_size') }}</p>
               </div>
@@ -526,7 +526,7 @@
               <div class="image-form">
                 <div class="form-group">
                   <label>{{ t('label_file') }}</label>
-                  <input type="file" accept="image/*" (change)="onFileSelected($event, i)"
+                  <input type="file" [accept]="imageAccept" (change)="onFileSelected($event, i)"
                     [disabled]="image._delete" class="file-input">
                   <p class="form-hint">{{ t('hint_file_type_size') }}</p>
                 </div>

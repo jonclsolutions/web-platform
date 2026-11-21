@@ -33,6 +33,9 @@ import { PageHeaderComponent } from '../../components/page-header/page-header.co
 import { RowButtonBuilderComponent } from '../../components/builders/row-button-builder/row-button-builder.component';
 import { RowButton, RowButtonItems, languageRowButtons } from '../../components/builders/row-button-builder/row-button';
 
+/** Icon types of a social network the API takes (`image` rule; SVG is refused - it can carry scripts). */
+export const SOCIAL_ICON_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
 @Component({
   selector: 'app-settings',
   standalone: true,
@@ -42,6 +45,9 @@ import { RowButton, RowButtonItems, languageRowButtons } from '../../components/
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SettingsComponent extends BaseDataComponent<any> implements OnInit {
+  /** `accept` of the social icon input - only the types the API takes. */
+  readonly socialIconAccept = SOCIAL_ICON_TYPES.join(',');
+
   override apiEndpoint = 'legal/config';
   /** One settings object (no paginated list) - loaded by `loadAll()` / `refreshData()`. */
   override usesPaginatedList = false;
@@ -454,7 +460,7 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit 
       (event.target as HTMLInputElement).value = '';
       return;
     }
-    if (!file.type.startsWith('image/')) {
+    if (!SOCIAL_ICON_TYPES.includes(file.type)) {
       this.alertDialogService.open(this.t('logo_invalid_format_title'), this.t('social_icon_invalid_format_message'), 'warning');
       (event.target as HTMLInputElement).value = '';
       return;

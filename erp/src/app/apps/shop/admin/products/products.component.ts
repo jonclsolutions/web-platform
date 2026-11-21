@@ -11,6 +11,9 @@
  * - ResourceCacheService: TTL cache of the lookup data (categories, suppliers), 5 min.
  * - Config.create* factory functions: i18n-aware definitions.
  * - AdminModalComponent: the frame of the product popups (detail, form, variants, variant images, images).
+ * @note Product and variant images: JPG / PNG / WebP up to 5 MB (PRODUCT_IMAGE_TYPES /
+ *   PRODUCT_IMAGE_MAX_BYTES - the same as StoreShopProductRequest / UpdateShopProductRequest), checked
+ *   when the file is chosen, so a wrong file is refused before anything is sent.
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, inject } from '@angular/core';
@@ -30,6 +33,12 @@ import * as Config from './products.config';
 import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 import { AdminModalComponent } from '../../../../admin/components/admin-modal/admin-modal.component';
 
+/** Image types the API takes for product and variant images (`mimes:jpeg,png,jpg,webp`). */
+export const PRODUCT_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+/** Largest product / variant image the API takes (`max:5120` kB). */
+export const PRODUCT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+
 @Component({
   selector: 'app-products',
   standalone: true,
@@ -39,6 +48,9 @@ import { AdminModalComponent } from '../../../../admin/components/admin-modal/ad
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProductsComponent extends BaseDataComponent<Product> implements OnInit, OnDestroy {
+  /** `accept` of the image inputs - only the types the API takes. */
+  readonly imageAccept = PRODUCT_IMAGE_TYPES.join(',');
+
   override apiEndpoint: string = 'shop/products';
 
   protected override translationSection: string = 'shop-products';
@@ -360,14 +372,29 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     this.cd.markForCheck();
   }
 
-  onFileSelected(event: any, index: number): void {
-    const file: File = event.target.files[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      this.alertDialogService.open(this.t('file_too_large_title'), this.t('file_too_large_message'), 'warning');
+  /**
+   * @description The chosen image file when the API takes it (PRODUCT_IMAGE_TYPES, at most
+   *   PRODUCT_IMAGE_MAX_BYTES); otherwise a warning, the input is cleared and null is returned.
+   * @param event Change event of the file input.
+   * @returns The file, or null (nothing chosen / refused).
+   */
+  private acceptedImage(event: any): File | null {
+    const file: File | undefined = event.target.files?.[0];
+    if (!file) return null;
+    const refused = !PRODUCT_IMAGE_TYPES.includes(file.type)
+      ? ['file_type_title', 'file_type_message']
+      : file.size > PRODUCT_IMAGE_MAX_BYTES ? ['file_too_large_title', 'file_too_large_message'] : null;
+    if (refused) {
+      this.alertDialogService.open(this.t(refused[0]), this.t(refused[1]), 'warning');
       event.target.value = '';
-      return;
+      return null;
     }
+    return file;
+  }
+
+  onFileSelected(event: any, index: number): void {
+    const file = this.acceptedImage(event);
+    if (!file) return;
     if (this.editingProduct?.images) {
       this.editingProduct.images[index].file       = file;
       this.editingProduct.images[index].image_path = file.name;
@@ -381,13 +408,8 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
   }
 
   onVariantImageFileSelected(event: any, index: number): void {
-    const file: File = event.target.files[0];
+    const file = this.acceptedImage(event);
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      this.alertDialogService.open(this.t('file_too_large_title'), this.t('file_too_large_message'), 'warning');
-      event.target.value = '';
-      return;
-    }
     if (this.editingVariantImages[index]) {
       this.editingVariantImages[index].file       = file;
       this.editingVariantImages[index].image_path = file.name;

@@ -129,17 +129,22 @@ describe('BaseTranslationEditorComponent', () => {
   }));
 
   /**
-   * @description Icon: none chosen → nothing; > 512 kB → error; valid → preview data URL;
-   *   clear resets; close hides the form.
-   * @input No file; 600 kB file; 1 kB PNG; clearIconSelection(); closeAddForm().
-   * @output Unchanged; 'test-editor.icon_size_error'; preview 'data:image/png…', no error; '' ; false.
+   * @description Icon: none chosen → nothing; not PNG / JPG / WebP → error; > 512 kB → error;
+   *   valid → preview data URL; clear resets; close hides the form.
+   * @input No file; SVG; 600 kB PNG; 1 kB PNG; clearIconSelection(); closeAddForm().
+   * @output Unchanged; 'test-editor.icon_type_error'; 'test-editor.icon_size_error'; preview
+   *   'data:image/png…', no error; '' ; false.
    */
   it('validates and previews the language icon', async () => {
     component.openAddForm();
     component.onIconFileSelected({ target: { files: [] } } as any);
     expect(component.newLangIconPreview).toBe('');
 
-    component.onIconFileSelected({ target: { files: [fileOfSize('big.png', 600 * 1024)] } } as any);
+    component.onIconFileSelected({ target: { files: [fileOfSize('flag.svg', 100, '<svg/>', 'image/svg+xml')], value: 'x' } } as any);
+    expect(component.addFormError).toBe('test-editor.icon_type_error');
+    expect(component.newLangIconPreview).toBe('');
+
+    component.onIconFileSelected({ target: { files: [fileOfSize('big.png', 600 * 1024, 'x', 'image/png')] } } as any);
     expect(component.addFormError).toBe('test-editor.icon_size_error');
 
     component.onIconFileSelected({ target: { files: [fileOfSize('ok.png', 1024, 'png', 'image/png')] } } as any);

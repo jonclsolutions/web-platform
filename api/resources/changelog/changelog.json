@@ -1,6 +1,12 @@
 {
     "unreleased": [
         {
+            "type": "changed",
+            "area": "shop",
+            "part": "admin",
+            "text": "Product and variant images: the file picker offers only JPG, PNG and WebP, and a wrong type or a file over 5 MB is refused at once, before saving. Language and social network icons are checked the same way."
+        },
+        {
             "type": "security",
             "area": "core",
             "part": "admin",
