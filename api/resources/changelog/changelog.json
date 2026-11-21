@@ -1,6 +1,12 @@
 {
     "unreleased": [
         {
+            "type": "security",
+            "area": "core",
+            "part": "admin",
+            "text": "Logs keep no personal data from edits in the admin: personal fields of customers, orders, leads, applicants and other records show as [masked] also in the copy of the request, and database errors no longer quote the saved values."
+        },
+        {
             "type": "added",
             "area": "core",
             "part": "admin",

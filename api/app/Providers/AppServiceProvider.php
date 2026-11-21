@@ -76,11 +76,20 @@ class AppServiceProvider extends ServiceProvider
         // changed attributes; the next audit log row of the request carries them (`changes`).
         // Changes made before the request reached its route (none in production; test fixtures)
         // are not part of its log rows.
-        Event::listen(RouteMatched::class, fn () => $this->app->make(ModelChanges::class)->flush());
+        Event::listen(RouteMatched::class, fn () => $this->app->make(ModelChanges::class)->start());
         foreach (['created', 'updated', 'deleted', 'restored'] as $event) {
             Event::listen("eloquent.{$event}: *", function (string $name, array $payload) use ($event) {
                 if (($payload[0] ?? null) instanceof Model) {
                     $this->app->make(ModelChanges::class)->record($event, $payload[0]);
+                }
+            });
+        }
+        // Personal attributes of the models a request loads / saves / deletes (also when the save
+        // then fails) - masked in the request copy of its audit log rows (LogsActivity, SA-04).
+        foreach (['retrieved', 'saving', 'deleting'] as $event) {
+            Event::listen("eloquent.{$event}: *", function (string $name, array $payload) {
+                if (($payload[0] ?? null) instanceof Model) {
+                    $this->app->make(ModelChanges::class)->notePersonal($payload[0]);
                 }
             });
         }

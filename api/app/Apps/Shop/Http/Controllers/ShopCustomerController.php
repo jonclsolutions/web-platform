@@ -74,7 +74,7 @@ class ShopCustomerController extends Controller
         try {
             $customer = ShopCustomer::create($request->validated());
 
-            $this->logAction($request, ShopLog::class, 'create', 'ShopCustomer', "Created customer: {$customer->getFullName()}", $customer->id, 'ShopCustomer');
+            $this->logAction($request, ShopLog::class, 'create', 'ShopCustomer', "Created customer ID: {$customer->id}", $customer->id, 'ShopCustomer');
             return $this->respond(new ShopCustomerResource($customer), 201);
         } catch (\Exception $e) {
             report($e); // full detail (class, file, trace) to the core log
@@ -102,7 +102,7 @@ class ShopCustomerController extends Controller
         try {
             $customer->update($request->validated());
 
-            $this->logAction($request, ShopLog::class, 'update', 'ShopCustomer', "Updated customer: {$customer->getFullName()}", $customer->id, 'ShopCustomer');
+            $this->logAction($request, ShopLog::class, 'update', 'ShopCustomer', "Updated customer ID: {$customer->id}", $customer->id, 'ShopCustomer');
             return $this->respond(new ShopCustomerResource($customer));
         } catch (\Exception $e) {
             report($e); // full detail (class, file, trace) to the core log

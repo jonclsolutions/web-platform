@@ -16,6 +16,10 @@
  *   log shows THAT it changed, not the value, so an erased record leaves no copy. Values are cut
  *   to 500 characters, at most 100 changes are kept per log row (`_more` counts the rest).
  *   Registered as a scoped singleton (one per request / job) in AppServiceProvider.
+ * @note It also remembers the personal attributes (`AUDIT_MASKED`) of every model the request
+ *   loaded, saved or deleted (personalKeys()) - LogsActivity masks those keys in the copy of the
+ *   request it logs, so an edit in the admin (or a failed one) leaves no personal data in the log
+ *   either (audit SA-04).
  * @dependencies Eloquent model events.
  */
 
@@ -63,6 +67,53 @@ class ModelChanges
     /** @var int Changes not kept because of MAX_ENTRIES. */
     private int $dropped = 0;
 
+    /** @var array<string, true> Personal attributes (AUDIT_MASKED) of the models the request touched. */
+    private array $personal = [];
+
+    /** @var array<string, true> Model classes whose personal attributes are already noted. */
+    private array $notedClasses = [];
+
+    /**
+     * @description Notes the personal attributes (AUDIT_MASKED) of a model the request loaded,
+     *   saves or deletes - once per class.
+     * @param Model $model The model.
+     * @return void
+     */
+    public function notePersonal(Model $model): void
+    {
+        $class = $model::class;
+        if (isset($this->notedClasses[$class])) {
+            return;
+        }
+        $this->notedClasses[$class] = true;
+        if (defined($class . '::AUDIT_MASKED')) {
+            foreach ($class::AUDIT_MASKED as $attribute) {
+                $this->personal[$attribute] = true;
+            }
+        }
+    }
+
+    /**
+     * @description Personal attributes of the models the request touched so far.
+     * @return array<int, string>
+     */
+    public function personalKeys(): array
+    {
+        return array_keys($this->personal);
+    }
+
+    /**
+     * @description Starts a request: forgets the changes and the personal attributes noted
+     *   before its route matched (test fixtures, a previous request of a long-running worker).
+     * @return void
+     */
+    public function start(): void
+    {
+        $this->flush();
+        $this->personal = [];
+        $this->notedClasses = [];
+    }
+
     /**
      * @description Notes one model event.
      * @param string $event created | updated | deleted | restored.
@@ -74,6 +125,7 @@ class ModelChanges
         if (in_array($model::class, self::SKIPPED_MODELS, true) || in_array($model::class, AppRegistry::logModels(), true)) {
             return;
         }
+        $this->notePersonal($model);
 
         $entry = ['model' => class_basename($model), 'id' => $model->getKey(), 'event' => $event];
         if ($event === 'updated') {

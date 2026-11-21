@@ -3336,7 +3336,7 @@
             {
               "type": "alert",
               "variant": "warning",
-              "content": "Log obsahuje e-maily a IP adresy - jsou to osobní údaje. Exportované soubory chraňte a po použití smažte."
+              "content": "Log obsahuje e-maily a IP adresy - jsou to osobní údaje. Exportované soubory chraňte a po použití smažte. Osobní údaje zákazníků, uchazečů, poptávek a dalších záznamů se do logu neukládají: u změn i v kopii odeslaného formuláře je místo hodnoty [masked] - log ukáže, že se pole změnilo, ale ne jeho obsah."
             }
           ]
         },

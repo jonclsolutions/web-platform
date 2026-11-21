@@ -10,6 +10,11 @@
  * columns and an `'array'` cast on `context_data`). Centralizes truncation safety so an oversized description/context_data can
  * never itself throw and mask the original error. Each row also carries the data changes of the
  * request since the previous row (`changes`, App\Support\Audit\ModelChanges).
+ * @note Personal data (audit SA-04, GDPR art. 5(1)(c)(e), art. 17): in the copy of the request the
+ * values of the personal attributes (`AUDIT_MASKED`) of every model the request touched are
+ * replaced by `[masked]` (the row shows THAT a field was sent, not its value), and values a
+ * database error quotes in its message (the SQL with its bindings, a duplicate entry) are cut out
+ * of the description - an erased or anonymised record leaves no copy in the log.
  */
 
 namespace App\Traits;
@@ -73,7 +78,7 @@ trait LogsActivity
                 'origin'               => $request->ip(),
                 'event_type'           => $eventType,
                 'module'               => $module,
-                'description'          => Str::limit($description, 990, '...'),
+                'description'          => Str::limit(self::withoutQueryValues($description), 990, '...'),
                 'affected_entity_type' => $affectedType,
                 'affected_entity_id'   => $affectedId,
                 'user_id'              => $user?->id,
@@ -101,6 +106,7 @@ trait LogsActivity
     {
         $excluded = array_merge(self::SENSITIVE_KEYS, $extraExcludedKeys);
         $data = $this->withoutSecretKeys($this->describeUploadedFiles($request->except($excluded)));
+        $data = $this->withPersonalMasked($data, app(ModelChanges::class)->personalKeys());
 
         $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
         if ($encoded === false) {
@@ -133,6 +139,43 @@ trait LogsActivity
             : ['_omitted' => true, 'count' => count($changes)];
 
         return $context;
+    }
+
+    /**
+     * @description Replaces the values of personal keys (AUDIT_MASKED of the models the request
+     *   touched) by ModelChanges::MASK, also in nested arrays (e.g. `items.*.notes`).
+     * @param array $data Request payload.
+     * @param array<int, string> $personalKeys Keys to mask.
+     * @return array The payload with personal values masked.
+     */
+    private function withPersonalMasked(array $data, array $personalKeys): array
+    {
+        if ($personalKeys === []) {
+            return $data;
+        }
+        foreach ($data as $key => $value) {
+            if (is_string($key) && in_array($key, $personalKeys, true)) {
+                $data[$key] = ModelChanges::MASK;
+            } elseif (is_array($value)) {
+                $data[$key] = $this->withPersonalMasked($value, $personalKeys);
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * @description Cuts the values a database error quotes out of a log description: the SQL
+     *   with its bindings that Laravel appends (`(Connection: …, SQL: insert … values (…))`) and
+     *   the value of a duplicate entry (MySQL / MariaDB) - they may be personal data.
+     * @param string $description Log description (often "… failed: " . $exception->getMessage()).
+     * @return string
+     */
+    public static function withoutQueryValues(string $description): string
+    {
+        $description = (string) preg_replace('/\s*\(Connection: .*SQL: .*\)/s', ' (SQL omitted)', $description);
+
+        return (string) preg_replace("/Duplicate entry '.*?' for key/s", "Duplicate entry '" . ModelChanges::MASK . "' for key", $description);
     }
 
     /**

@@ -3336,7 +3336,7 @@
             {
               "type": "alert",
               "variant": "warning",
-              "content": "The log contains e-mails and IP addresses - these are personal data. Protect exported files and delete them after use."
+              "content": "The log contains e-mails and IP addresses - these are personal data. Protect exported files and delete them after use. Personal data of customers, applicants, inquiries and other records is not stored in the log: in the changes and in the copy of the submitted form the value shows as [masked] - the log tells that a field changed, not its content."
             }
           ]
         },

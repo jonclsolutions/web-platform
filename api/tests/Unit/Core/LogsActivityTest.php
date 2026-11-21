@@ -201,6 +201,40 @@ class LogsActivityTest extends TestCase
     }
 
     /**
+     * @description Personal data of the models the request touched (SA-04): in the request copy
+     *   the AUDIT_MASKED keys of a model the request only loaded (e.g. a failed edit) are masked,
+     *   also nested; other keys stay. start() (a new request) forgets them. Values a database
+     *   error quotes are cut out of the description.
+     * @input Calendar event loaded after start(); request {title, note, color, items[{note}]};
+     *   description with Laravel's "(Connection: …, SQL: …)" and a MySQL duplicate entry; then
+     *   start() and the same request again.
+     * @output title / note / items.0.note [masked], color kept; description "(SQL omitted)" and
+     *   "Duplicate entry '[masked]'", no e-mail; after start() nothing masked.
+     */
+    public function test_personal_values_of_touched_models_are_masked(): void
+    {
+        $owner = $this->user();
+        $event = new CoreCalendarEvent(['date' => '2026-11-20', 'title' => 'Doctor', 'note' => 'private', 'is_done' => false]);
+        $event->user_id = $owner->id;
+        $event->save();
+        $changes = app(ModelChanges::class);
+        $changes->start();
+        CoreCalendarEvent::findOrFail($event->id);
+        $payload = ['title' => 'Dentist', 'note' => 'x', 'color' => 'red', 'items' => [['note' => 'y', 'n' => 1]]];
+
+        $this->log(Request::create('/x', 'POST', $payload),
+            "Update failed: SQLSTATE[23000]: Duplicate entry 'jan@x.cz' for key 'users_email_unique' (Connection: mysql, Host: db, Port: 3306, Database: app, SQL: update `events` set `title` = Dentist, `email` = jan@x.cz where `id` = 1)");
+
+        $row = CoreLog::sole();
+        $this->assertSame(['title' => ModelChanges::MASK, 'note' => ModelChanges::MASK, 'color' => 'red', 'items' => [['note' => ModelChanges::MASK, 'n' => 1]]], $row->context_data);
+        $this->assertSame("Update failed: SQLSTATE[23000]: Duplicate entry '[masked]' for key 'users_email_unique' (SQL omitted)", $row->description);
+
+        $changes->start();
+        $this->log(Request::create('/x', 'POST', ['title' => 'Plain']), 'Next request');
+        $this->assertSame(['title' => 'Plain'], CoreLog::latest('id')->first()->context_data);
+    }
+
+    /**
      * @description At most MAX_ENTRIES changes are kept per row, the rest is counted; the log
      *   models themselves are never collected.
      * @input MAX_ENTRIES + 3 roles created; a core log row created.

@@ -15,6 +15,7 @@
 namespace Tests\Apps\Shop\Feature;
 
 use App\Apps\Shop\Models\ShopCustomer;
+use App\Apps\Shop\Models\ShopLog;
 use App\Apps\Shop\Models\ShopOrder;
 use Tests\Apps\Shop\Support\ShopFixtures;
 use Tests\TestCase;
@@ -69,10 +70,15 @@ class CustomerTest extends TestCase
 
     /**
      * @description Create and edit: unique e-mail (ignoring the edited customer), phone format,
-     *   detail, 404s, database errors without SQL details in the answer.
+     *   detail, 404s, database errors without SQL details in the answer. The log rows carry no
+     *   personal data (SA-04): the description has the ID, not the name; in the request copy the
+     *   personal fields are masked - also in the row of a failed write, whose description has no
+     *   SQL with the values.
      * @input POST valid; POST same e-mail; POST bad phone; GET; PUT own e-mail; PUT other's e-mail;
      *        /999; failing UPDATE / INSERT.
-     * @output 201; 422 "This e-mail is already registered."; 422 phone; 200; 200; 422; 404; 500 / 500.
+     * @output 201; 422 "This e-mail is already registered."; 422 phone; 200; 200; 422; 404; 500 / 500;
+     *   log rows without "Jan", "Novak" or the e-mail; email / first_name / city [masked],
+     *   is_active kept.
      */
     public function test_store_show_update(): void
     {
@@ -80,14 +86,16 @@ class CustomerTest extends TestCase
         $other = $this->customer();
 
         $id = $this->postJson('/api/shop/customers', $this->payload())->assertCreated()->assertJsonPath('data.full_name', 'Jan Novak')->json('data.id');
-        $this->assertShopLog('create', 'Created customer: Jan Novak');
+        $this->assertShopLog('create', "Created customer ID: {$id}");
         $this->postJson('/api/shop/customers', $this->payload())->assertStatus(422)->assertJsonPath('errors.email.0', 'This e-mail is already registered.');
         $this->postJson('/api/shop/customers', $this->payload(['email' => 'x@x.cz', 'phone' => 'call me']))->assertStatus(422)->assertJsonPath('errors.phone.0', 'Enter a valid phone number.');
 
         $this->getJson("/api/shop/customers/{$id}")->assertOk()->assertJsonPath('data.email', 'jan@example.com');
         $this->getJson('/api/shop/customers/999')->assertStatus(404);
         $this->putJson("/api/shop/customers/{$id}", $this->payload(['city' => 'Brno']))->assertOk()->assertJsonPath('data.city', 'Brno');
-        $this->assertShopLog('update', 'Updated customer: Jan Novak');
+        $this->assertShopLog('update', "Updated customer ID: {$id}");
+        $update = ShopLog::where('event_type', 'update')->latest('id')->first();
+        $this->assertSame(['[masked]', '[masked]', '[masked]', true], [$update->context_data['email'], $update->context_data['first_name'], $update->context_data['city'], $update->context_data['is_active']]);
         $this->putJson("/api/shop/customers/{$id}", $this->payload(['email' => $other->email]))->assertStatus(422)->assertJsonPath('errors.email.0', 'This e-mail is already used by another customer.');
         $this->putJson('/api/shop/customers/999', $this->payload(['email' => 'new@x.cz']))->assertStatus(404);
 
@@ -96,6 +104,15 @@ class CustomerTest extends TestCase
         $this->failOn('shop_customers', 'INSERT');
         $this->postJson('/api/shop/customers', $this->payload(['email' => 'new@x.cz']))->assertStatus(500)->assertExactJson(['message' => 'Customer creation failed.']);
         $this->assertShopLog('error', 'Customer creation failed');
+        $failed = ShopLog::where('event_type', 'error')->latest('id')->first();
+        $this->assertSame('[masked]', $failed->context_data['email']);
+
+        foreach (ShopLog::all() as $row) {
+            $text = $row->description . json_encode($row->context_data, JSON_UNESCAPED_UNICODE);
+            foreach (['Jan', 'Novak', 'jan@example.com', 'new@x.cz'] as $personal) {
+                $this->assertStringNotContainsString($personal, $text, "Log row {$row->event_type}: {$row->description}");
+            }
+        }
     }
 
     /**
