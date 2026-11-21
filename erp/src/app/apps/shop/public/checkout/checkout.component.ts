@@ -419,7 +419,7 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
           this.formSubmitted = false;
         },
         error: (e) => {
-          console.error('Chyba při vytváření objednávky:', e);
+          console.error('Error creating the order:', e);
           // The token is single-use - the server consumed it, the next attempt needs a new one.
           this.captcha.reset();
           const guard = publicFormErrorKey(e);

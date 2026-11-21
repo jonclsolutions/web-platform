@@ -41,9 +41,10 @@ describe('CartComponent', () => {
   afterEach(() => localStorage.removeItem('shop_cart'));
 
   /**
-   * @description Items rendered; + up to stock, − down to 1; unknown id logged; net total.
+   * @description Items rendered; + up to stock, − down to 1; unknown id ignored quietly (no
+   *   debug output in the customer's console); net total.
    * @input increase ×2 (stock 3); decrease ×3; increase 'missing'.
-   * @output 3 + max reached; 1 (not 0); console.error; total 12.10 → net 10.
+   * @output 3 + max reached; 1 (not 0); no console output, quantity unchanged; total 12.10 → net 10.
    */
   it('changes quantities within the stock', fakeAsync(() => {
     create();
@@ -62,7 +63,8 @@ describe('CartComponent', () => {
     expect(cart.cartItems()[0].quantity).toBe(1);
     spyOn(console, 'error');
     page.increaseQuantity('missing');
-    expect(console.error).toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
+    expect(cart.cartItems()[0].quantity).toBe(1);
     expect(page.totalPriceWithoutTax()).toBeCloseTo(10, 5);
     discardPeriodicTasks();
   }));

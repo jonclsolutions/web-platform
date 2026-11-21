@@ -161,7 +161,7 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
           this.cd.markForCheck();
         },
         error: (err) => {
-          console.error('Chyba při načítání dat uživatele:', err);
+          console.error('Error loading the user data:', err);
         }
       });
   }

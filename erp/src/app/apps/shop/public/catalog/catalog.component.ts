@@ -65,7 +65,7 @@ export class CatalogComponent extends BasePublicComponent implements OnInit {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => this.categories.set(Array.isArray(res) ? res : []),
-        error: (err) => console.error('Chyba kategorií:', err)
+        error: (err) => console.error('Error loading categories:', err)
       });
 
     this.loadProducts();
@@ -92,7 +92,7 @@ export class CatalogComponent extends BasePublicComponent implements OnInit {
           this.cdr.markForCheck();
         },
         error: (err) => {
-          console.error('Chyba produktů:', err);
+          console.error('Error loading products:', err);
           this.isLoading.set(false);
           this.products.set([]);
           this.cdr.markForCheck();

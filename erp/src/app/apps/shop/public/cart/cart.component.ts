@@ -56,19 +56,14 @@ export class CartComponent extends BasePublicComponent {
   increaseQuantity(itemId: string): void {
     const item = this.cartService.cartItems().find(i => i.id === itemId);
     
-    if (!item) {
-      console.error(`[DEBUG KOŠÍK] Položka s ID ${itemId} nebyla v košíku nalezena!`);
+    if (!item) return; // removed meanwhile (another tab) - nothing to increase
+
+    const quantity = Number(item.quantity);
+    if (quantity >= Number(item.stock_quantity)) {
       return;
     }
 
-    const aktualniMnozstvi = Number(item.quantity);
-    const stropSkladu = Number(item.stock_quantity);
-
-    if (aktualniMnozstvi >= stropSkladu) {
-      return;
-    }
-
-    this.cartService.updateItemQuantity(itemId, aktualniMnozstvi + 1);
+    this.cartService.updateItemQuantity(itemId, quantity + 1);
     this.cdr.markForCheck();
   }
 
