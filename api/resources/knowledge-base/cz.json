@@ -3345,7 +3345,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Stránka vyžaduje oprávnění k sekci Core (view-core). Logy jednotlivých aplikací (web, e-shop, projektový portál) mají vlastní stránky v těchto aplikacích."
+              "content": "Stránka vyžaduje oprávnění Zobrazit log Core (core-logs-view) - log obsahuje e-mailové a IP adresy všech účtů, proto ho nemá automaticky každý, kdo vidí sekci Core. U neúspěšného přihlášení log uvádí e-mail jen u existujícího účtu; jiný zadaný text (překlep, omylem napsané heslo) se zapíše jen jako „unknown account“ s kódem, ze kterého ho nelze přečíst. Logy jednotlivých aplikací (web, e-shop, projektový portál) mají vlastní stránky v těchto aplikacích."
             }
           ]
         }

@@ -83,17 +83,23 @@ class AuthController extends Controller
         $request->merge(['user_agent' => $request->userAgent()]);
 
         $email = User::normalizeEmail((string) $request->input('email'));
-        $failedAttemptsKey = 'login-fail:' . $email;
+        // The typed value is kept out of the cache keys and, unless it is the e-mail of an existing
+        // account, out of the logs (loggedIdentifier()) - it may be a password typed into the e-mail field.
+        $failedAttemptsKey = 'login-fail:' . hash('sha256', $email);
         $attemptsBefore = RateLimiter::attempts($failedAttemptsKey);
         $captchaRequired = $attemptsBefore >= self::CAPTCHA_THRESHOLD;
 
+        // ── Account of the e-mail - also decides how the typed value may be logged ─────────────
+        $targetUser = User::where('user_email', $email)->first();
+        $identifier = $this->loggedIdentifier($email, $targetUser);
+
         if ($captchaRequired) {
             $captchaToken = (string) $request->input('captcha_token');
-            $context = CoreSecurityEvent::contextFromRequest($request, ['email' => $email]);
+            $context = CoreSecurityEvent::contextFromRequest($request, $identifier);
 
             if (!$this->captcha->verify($captchaToken, $request->ip(), $context)) {
                 // A captcha failure is recorded by CaptchaVerificationService::verify() itself.
-                $this->logAction($request, CoreLog::class, 'login_captcha_failed', 'Auth', "Invalid or missing captcha for: {$email}", null, 'User');
+                $this->logAction($request, CoreLog::class, 'login_captcha_failed', 'Auth', 'Invalid or missing captcha for: ' . $this->identifierLabel($identifier), null, 'User', ['email']);
 
                 return response()->json([
                     'message'          => 'Captcha verification failed. Please try again.',
@@ -106,8 +112,6 @@ class AuthController extends Controller
         // ── Blocked / not activated account - MUST be checked BEFORE Auth::attempt() ──────────
         // (an account without a password would reach Hash::check() with an invalid argument
         // instead of a clean JSON answer).
-        $targetUser = User::where('user_email', $email)->first();
-
         if ($targetUser) {
             if ($targetUser->is_blocked) {
                 CoreSecurityEvent::record(
@@ -132,7 +136,7 @@ class AuthController extends Controller
             /** @var User $user */
             $user = Auth::user();
 
-            // Successful attempt - reset the failure counter of this e-mail.
+            // Successful attempt - reset the failure counter of this e-mail (hashed key, see above).
             RateLimiter::clear($failedAttemptsKey);
 
             $user->load('roles.permissions');
@@ -163,7 +167,7 @@ class AuthController extends Controller
         RateLimiter::hit($failedAttemptsKey, self::FAILED_ATTEMPTS_DECAY_SECONDS);
         $attemptsAfter = RateLimiter::attempts($failedAttemptsKey);
 
-        $securityContext = CoreSecurityEvent::contextFromRequest($request, ['email' => $email]);
+        $securityContext = CoreSecurityEvent::contextFromRequest($request, $identifier);
         CoreSecurityEvent::record('login_failed', 'warning', $request->ip(), $securityContext);
 
         // The captcha threshold was crossed right NOW (by this attempt) - a real brute-force
@@ -173,7 +177,7 @@ class AuthController extends Controller
             CoreSecurityEvent::record('login_brute_force_suspected', 'critical', $request->ip(), $securityContext);
         }
 
-        $this->logAction($request, CoreLog::class, 'login_failed', 'Auth', "Failed login attempt for: {$email}", null, 'User');
+        $this->logAction($request, CoreLog::class, 'login_failed', 'Auth', 'Failed login attempt for: ' . $this->identifierLabel($identifier), null, 'User', ['email']);
 
         return response()->json([
             'message'          => 'Invalid credentials.',
@@ -181,7 +185,33 @@ class AuthController extends Controller
         ], 401);
     }
 
-        /**
+    /**
+     * @description How a login identifier typed into the form may appear in the log and the
+     *   security events: the e-mail of an existing account as it is; anything else (a mistyped
+     *   address, a password typed into the e-mail field) only as a keyed hash - it still links the
+     *   attempts with each other, but cannot be read back (CWE-532).
+     * @param string $email Normalised value of the e-mail field.
+     * @param User|null $account Account of that e-mail; null = none exists.
+     * @return array{email: string}|array{identifier: string} Context fields of the security event.
+     */
+    private function loggedIdentifier(string $email, ?User $account): array
+    {
+        return $account !== null
+            ? ['email' => $email]
+            : ['identifier' => 'unknown-' . substr(hash_hmac('sha256', $email, (string) config('app.key')), 0, 16)];
+    }
+
+    /**
+     * @description Text of a logged identifier for the description of an audit log row.
+     * @param array{email?: string, identifier?: string} $identifier Result of loggedIdentifier().
+     * @return string The e-mail, or "unknown account (unknown-…)".
+     */
+    private function identifierLabel(array $identifier): string
+    {
+        return $identifier['email'] ?? "unknown account ({$identifier['identifier']})";
+    }
+
+    /**
      * @description Returns the profile, roles and effective permissions of the signed-in user
      * (the owner of the access token). Same shape as the login response, without tokens.
      * @param Request $request Authenticated request (auth:sanctum).

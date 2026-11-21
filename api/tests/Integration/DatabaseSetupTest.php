@@ -479,9 +479,9 @@ class DatabaseSetupTest extends TestCase
      *   sysadmin role gets the core permissions only.
      * @input config apps.apps = [missing manifest, a non-manifest class]; BaseDataSeeder; then
      *   only the web application registered.
-     * @output modules() []; 22 core permissions incl. view-core, no web-/shop- key; sysadmin 22;
+     * @output modules() []; 23 core permissions incl. view-core, no web-/shop- key; sysadmin 23;
      *   1 page title (admin.panel); no web / shop settings rows; logo, no flags; company details
-     *   + legal types; then web only: 37 permissions incl. view-web (no project-portal-* - they
+     *   + legal types; then web only: 38 permissions incl. view-web (no project-portal-* - they
      *   belong to the project portal), web settings row, no shop row.
      */
     public function test_base_data_seeder_without_modules(): void
@@ -493,10 +493,10 @@ class DatabaseSetupTest extends TestCase
         $this->seed(BaseDataSeeder::class);
 
         $keys = CorePermission::pluck('permission_key')->all();
-        $this->assertCount(22, $keys);
+        $this->assertCount(23, $keys);
         $this->assertContains('view-core', $keys);
         $this->assertSame([], array_values(array_filter($keys, fn ($k) => preg_match('/^(web|shop)-|^view-(web|eshop)$/', $k))));
-        $this->assertSame(22, CoreRole::where('role_name', 'sysadmin')->firstOrFail()->permissions()->count());
+        $this->assertSame(23, CoreRole::where('role_name', 'sysadmin')->firstOrFail()->permissions()->count());
         $this->assertSame(['admin'], DB::table('legal_page_titles')->distinct()->pluck('area')->all());
         $this->assertSame(0, WebSiteSetting::count());
         $this->assertSame(0, ShopSiteSetting::count());
@@ -509,8 +509,8 @@ class DatabaseSetupTest extends TestCase
         config(['apps.apps' => [\App\Apps\Web\WebApp::class]]);
         $this->seed(BaseDataSeeder::class);
 
-        $this->assertSame(37, CorePermission::count());
-        $this->assertSame(37, CoreRole::where('role_name', 'sysadmin')->firstOrFail()->permissions()->count());
+        $this->assertSame(38, CorePermission::count());
+        $this->assertSame(38, CoreRole::where('role_name', 'sysadmin')->firstOrFail()->permissions()->count());
         $this->assertTrue(CorePermission::where('permission_key', 'view-web')->exists());
         $this->assertSame(1, WebSiteSetting::count());
         $this->assertSame(0, ProjectPortalSetting::count());

@@ -88,7 +88,7 @@ export const CORE_NAV: AdminNavGroup[] = [
   {
     key: 'core-system', labelKey: 'nav_group_system',
     items: [
-      { path: 'logs', permission: 'view-core', labelKey: 'nav_core_logs', icon: 'file-lines' },
+      { path: 'logs', permission: 'core-logs-view', labelKey: 'nav_core_logs', icon: 'file-lines' },
       { path: 'security-events', permission: 'core-security-view', labelKey: 'nav_security_events', icon: 'shield' },
     ],
   },

@@ -106,7 +106,7 @@ export const ADMIN_ROUTES: Routes = [
           { path: 'edit-roles', component: EditRolesComponent, data: { help: 'edit-roles' }, canActivate: [sysadminGuard] },
           { path: 'administrators', component: AdministratorsComponent, data: { help: 'administrators', permission: 'core-administrators-view' } },
           // System audit log (core/logs).
-          { path: 'logs', component: AuditLogPageComponent, data: { help: 'core-logs', permission: 'view-core', auditLog: CORE_AUDIT_LOG } },
+          { path: 'logs', component: AuditLogPageComponent, data: { help: 'core-logs', permission: 'core-logs-view', auditLog: CORE_AUDIT_LOG } },
           { path: 'security-events', component: SecurityEventsComponent, data: { help: 'security-events', permission: 'core-security-view' } },
         ]
       },

@@ -515,6 +515,7 @@
   "view-deleted": "View soft-deleted records in the trash across modules",
   "core-view-welcome-page": "[recommended: always on] View the welcome page the user is redirected to right after login",
   "view-core": "[recommended: always on] Show the Core / System tab in the admin menu - without it the section cannot be opened",
+  "core-logs-view": "View the core log (sign-ins, accounts, roles, settings) - it contains e-mail and IP addresses",
   "core-administrators-view": "View the list of administrator accounts",
   "core-administrators-create": "Create an administrator account",
   "core-administrators-update": "Edit an administrator account",

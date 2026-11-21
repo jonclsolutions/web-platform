@@ -3345,7 +3345,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "The page requires the permission for the Core section (view-core). The logs of the individual applications (website, e-shop, project portal) have their own pages in those applications."
+              "content": "The page requires the permission View the core log (core-logs-view) - the log holds the e-mail and IP addresses of every account, so not everybody who sees the Core section has it. A failed sign-in names the e-mail only for an existing account; any other typed text (a typo, a password typed by mistake) is written only as “unknown account” with a code it cannot be read back from. The logs of the individual applications (website, e-shop, project portal) have their own pages in those applications."
             }
           ]
         }

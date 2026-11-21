@@ -109,8 +109,8 @@
       "id": "core-logs",
       "group": "core",
       "order": 24,
-      "permission": "view-core",
-      "devNote": "AuditLogPageComponent with CORE_AUDIT_LOG (core-pages/logs/logs.config.ts), route 'core/logs', permission 'view-core'."
+      "permission": "core-logs-view",
+      "devNote": "AuditLogPageComponent with CORE_AUDIT_LOG (core-pages/logs/logs.config.ts), route 'core/logs', permission 'core-logs-view'. A failed sign-in names only the e-mail of an existing account, any other typed value is a keyed hash (unknown-…)."
     },
     {
       "id": "security-events",

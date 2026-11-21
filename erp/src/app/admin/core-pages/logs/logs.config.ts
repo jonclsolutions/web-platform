@@ -15,7 +15,7 @@ import { AuditLogPageConfig } from '../../components/audit-log-page/audit-log-pa
 export const CORE_AUDIT_LOG: AuditLogPageConfig = {
   endpoint: 'core/logs',
   section: 'core-logs',
-  reportPermission: 'view-core',
+  reportPermission: 'core-logs-view',
   eventTypes: [
     'create', 'create_denied', 'update', 'update_denied', 'soft_delete', 'hard_delete', 'delete',
     'delete_denied', 'restore', 'restore_denied', 'force_delete_all', 'force_delete_all_denied',

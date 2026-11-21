@@ -16,6 +16,8 @@
 namespace Tests\Feature\Core\Auth;
 
 use App\Mail\Auth\TwoFactorCodeMail;
+use App\Models\Core\CoreLog;
+use App\Models\Core\CoreSecurityEvent;
 use App\Models\Core\CoreEmailAccessRule;
 use App\Models\Core\CoreSecuritySetting;
 use App\Models\RefreshToken;
@@ -32,6 +34,17 @@ use Tests\TestCase;
  */
 class LoginTest extends TestCase
 {
+    /**
+     * @description Cache key of the failed-sign-in counter of an e-mail (hashed - the typed value
+     *   may be a password, AuthController::login()).
+     * @param string $email Normalised e-mail.
+     * @return string
+     */
+    private function failKey(string $email): string
+    {
+        return 'login-fail:' . hash('sha256', $email);
+    }
+
     /**
      * @description Login without e-mail and password is rejected by validation.
      * @input POST /api/login {}
@@ -56,7 +69,7 @@ class LoginTest extends TestCase
     public function test_login_success_issues_tokens(): void
     {
         $user = $this->userWith(['core-administrators-view']);
-        RateLimiter::hit('login-fail:' . $user->user_email);
+        RateLimiter::hit($this->failKey($user->user_email));
 
         $response = $this->postJson('/api/login', ['email' => $user->user_email, 'password' => $this->defaultPassword])
             ->assertOk()
@@ -73,7 +86,7 @@ class LoginTest extends TestCase
         $sessionEnd = RefreshToken::where('user_id', $user->id)->sole()->session_expires_at;
         $this->assertLessThan(5, abs(now()->addDays(AuthCookies::SESSION_MAX_DAYS)->diffInSeconds($sessionEnd)));
         $this->assertNotNull($user->fresh()->last_login_at);
-        $this->assertSame(0, RateLimiter::attempts('login-fail:' . $user->user_email));
+        $this->assertSame(0, RateLimiter::attempts($this->failKey($user->user_email)));
         $this->assertCoreLog('login_success', $user->user_email);
     }
 
@@ -91,9 +104,44 @@ class LoginTest extends TestCase
             ->assertStatus(401)
             ->assertJson(['message' => 'Invalid credentials.', 'captcha_required' => false]);
 
-        $this->assertSame(1, RateLimiter::attempts('login-fail:' . $user->user_email));
+        $this->assertSame(1, RateLimiter::attempts($this->failKey($user->user_email)));
         $this->assertSecurityEvent('login_failed', 'warning');
         $this->assertCoreLog('login_failed');
+    }
+
+    /**
+     * @description SECURITY (SA-08): a failed sign-in names the e-mail only for an existing account;
+     *   any other typed value (here a password typed into the e-mail field) appears in the core log
+     *   and the security event only as a keyed hash - never in plain text, not in the context of
+     *   the log row, not in the cache key of the failure counter.
+     * @input POST /api/login with the e-mail of an account + wrong password; POST /api/login with
+     *        'MySecret!Pass1' as the e-mail (from another IP - one event row per IP and time bucket).
+     * @output Log "Failed login attempt for: <e-mail>", event context email; then log
+     *   "unknown account (unknown-…)", no 'email' in the log context, event context `identifier`
+     *   without `email`; the typed value appears nowhere; the same value gives the same reference.
+     */
+    public function test_failed_login_names_only_existing_accounts(): void
+    {
+        $user = $this->user();
+        $this->postJson('/api/login', ['email' => $user->user_email, 'password' => 'wrong'])->assertStatus(401);
+        $this->assertCoreLog('login_failed', 'Failed login attempt for: ' . $user->user_email);
+        $this->assertSame($user->user_email, CoreSecurityEvent::where('event_type', 'login_failed')->latest('id')->first()->context_data['email']);
+
+        $typed = 'MySecret!Pass1';
+        // Another IP: security events of one IP within a time bucket are one row (first context kept).
+        $this->withServerVariables(['REMOTE_ADDR' => '10.9.9.9'])->postJson('/api/login', ['email' => $typed, 'password' => 'x'])->assertStatus(401);
+        $log = CoreLog::where('event_type', 'login_failed')->latest('id')->first();
+        $this->assertMatchesRegularExpression('/^Failed login attempt for: unknown account \(unknown-[0-9a-f]{16}\)$/', $log->description);
+        $this->assertArrayNotHasKey('email', $log->context_data ?? []);
+        $this->assertStringNotContainsStringIgnoringCase($typed, json_encode([$log->description, $log->context_data]));
+
+        $events = CoreSecurityEvent::where('event_type', 'login_failed')->get();
+        $unknown = $events->first(fn ($event) => isset($event->context_data['identifier']));
+        $this->assertNotNull($unknown);
+        $this->assertArrayNotHasKey('email', $unknown->context_data);
+        $this->assertStringContainsString($unknown->context_data['identifier'], $log->description);
+        $this->assertStringNotContainsStringIgnoringCase($typed, json_encode($events->pluck('context_data')));
+        $this->assertSame(1, RateLimiter::attempts($this->failKey(strtolower($typed))));
     }
 
     /**
@@ -104,8 +152,8 @@ class LoginTest extends TestCase
      */
     public function test_third_failure_flags_brute_force(): void
     {
-        RateLimiter::hit('login-fail:nobody@example.com');
-        RateLimiter::hit('login-fail:nobody@example.com');
+        RateLimiter::hit($this->failKey('nobody@example.com'));
+        RateLimiter::hit($this->failKey('nobody@example.com'));
 
         $this->postJson('/api/login', ['email' => 'Nobody@Example.com ', 'password' => 'x'])
             ->assertStatus(401)
@@ -124,7 +172,7 @@ class LoginTest extends TestCase
     {
         $user = $this->user();
         foreach (range(1, 3) as $i) {
-            RateLimiter::hit('login-fail:' . $user->user_email);
+            RateLimiter::hit($this->failKey($user->user_email));
         }
 
         $this->postJson('/api/login', ['email' => $user->user_email, 'password' => $this->defaultPassword])
@@ -146,7 +194,7 @@ class LoginTest extends TestCase
         Http::fake(['*' => Http::response(['success' => true])]);
         $user = $this->user();
         foreach (range(1, 3) as $i) {
-            RateLimiter::hit('login-fail:' . $user->user_email);
+            RateLimiter::hit($this->failKey($user->user_email));
         }
 
         $this->postJson('/api/login', [

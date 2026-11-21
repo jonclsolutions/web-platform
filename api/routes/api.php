@@ -228,10 +228,11 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
 
         // POST without a permission middleware - writes an audit entry of the user's own action (see
         Route::prefix('logs')->group(function () {
+            // Own permission, not the Core tab: the log holds e-mail and IP addresses of every account.
             Route::get('/',     [CoreLogController::class, 'index'])
-                ->middleware('permission:view-core');
+                ->middleware('permission:core-logs-view');
             Route::get('/{id}', [CoreLogController::class, 'show'])
-                ->middleware('permission:view-core');
+                ->middleware('permission:core-logs-view');
         });
 
         // ── core/security_events ────────────────────────────────────────────

@@ -15,6 +15,7 @@
 namespace Tests\Feature\Core;
 
 use App\Models\Core\CoreLog;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -37,17 +38,53 @@ class CoreLogTest extends TestCase
     }
 
     /**
-     * @description Reading the log needs view-core.
-     * @input Account without permissions, GET /api/core/logs and /api/core/logs/1.
-     * @output 403 both.
+     * @description Reading the log needs its own permission core-logs-view - the Core tab
+     *   (view-core) alone is not enough, the log holds e-mail and IP addresses of every account.
+     * @input Account without permissions, then with view-core only; GET /api/core/logs and /api/core/logs/1.
+     * @output 403 for all four requests.
      */
-    public function test_read_requires_view_core(): void
+    public function test_read_requires_core_logs_view(): void
     {
         $log = $this->log();
         $this->signIn($this->user());
-
         $this->getJson('/api/core/logs')->assertStatus(403);
         $this->getJson("/api/core/logs/{$log->id}")->assertStatus(403);
+
+        $this->signIn($this->userWith(['view-core']));
+        $this->getJson('/api/core/logs')->assertStatus(403);
+        $this->getJson("/api/core/logs/{$log->id}")->assertStatus(403);
+    }
+
+    /**
+     * @description The migration adding core-logs-view gives it to every role and account that
+     *   holds view-core, so nobody loses access by the release; down() removes the key again.
+     * @input Role R with view-core, account A with an explicit view-core, role S without; up(), up()
+     *        again, down().
+     * @output R and A have core-logs-view, S not; a second up() changes nothing; after down() the key is gone.
+     */
+    public function test_migration_grants_core_logs_view_to_holders_of_view_core(): void
+    {
+        $migration = require base_path('database/migrations/2026_11_27_000000_add_core_logs_view_permission.php');
+        $viewCore = DB::table('core_permissions')->where('permission_key', 'view-core')->value('id')
+            ?? DB::table('core_permissions')->insertGetId(['permission_key' => 'view-core', 'module' => 'core']);
+        DB::table('core_permissions')->where('permission_key', 'core-logs-view')->delete();
+        $r = $this->role('reader');
+        $s = $this->role('other');
+        DB::table('core_role_permissions')->insert(['role_id' => $r->id, 'permission_id' => $viewCore]);
+        $a = $this->user();
+        DB::table('user_permissions')->insert(['user_id' => $a->id, 'permission_id' => $viewCore]);
+
+        $migration->up();
+        $migration->up();
+
+        $logs = DB::table('core_permissions')->where('permission_key', 'core-logs-view')->value('id');
+        $this->assertNotNull($logs);
+        $this->assertSame([$r->id], DB::table('core_role_permissions')->where('permission_id', $logs)->pluck('role_id')->map(fn ($id) => (int) $id)->all());
+        $this->assertSame([$a->id], DB::table('user_permissions')->where('permission_id', $logs)->pluck('user_id')->map(fn ($id) => (int) $id)->all());
+        $this->assertNotContains($s->id, DB::table('core_role_permissions')->where('permission_id', $logs)->pluck('role_id')->all());
+
+        $migration->down();
+        $this->assertFalse(DB::table('core_permissions')->where('permission_key', 'core-logs-view')->exists());
     }
 
     /**
@@ -57,7 +94,7 @@ class CoreLogTest extends TestCase
      */
     public function test_index_paginated_newest_first(): void
     {
-        $this->signIn($this->userWith(['view-core']));
+        $this->signIn($this->userWith(['core-logs-view']));
         $this->log(['created_at' => now()->subDay()]);
         $today = $this->log(['created_at' => now()]);
 
@@ -75,7 +112,7 @@ class CoreLogTest extends TestCase
      */
     public function test_index_filters_and_search(): void
     {
-        $this->signIn($this->userWith(['view-core']));
+        $this->signIn($this->userWith(['core-logs-view']));
         $a = $this->log(['event_type' => 'login_failed', 'module' => 'Auth', 'user_plain' => 'eve@x.cz', 'origin' => '10.1.1.1', 'description' => 'Bad password']);
         $this->log();
 
@@ -91,7 +128,7 @@ class CoreLogTest extends TestCase
      */
     public function test_index_export(): void
     {
-        $this->signIn($this->userWith(['view-core']));
+        $this->signIn($this->userWith(['core-logs-view']));
         $a = $this->log();
         $b = $this->log();
 
@@ -105,7 +142,7 @@ class CoreLogTest extends TestCase
      */
     public function test_show(): void
     {
-        $this->signIn($this->userWith(['view-core']));
+        $this->signIn($this->userWith(['core-logs-view']));
         $log = $this->log(['context_data' => ['k' => 'v']]);
 
         $this->getJson("/api/core/logs/{$log->id}")->assertOk()->assertJsonPath('data.context_data.k', 'v');
@@ -124,7 +161,7 @@ class CoreLogTest extends TestCase
      */
     public function test_browser_cannot_write_and_exports_are_logged_by_the_server(): void
     {
-        $this->signIn($this->userWith(['view-core']));
+        $this->signIn($this->userWith(['core-logs-view']));
 
         $this->postJson('/api/core/logs', ['event_type' => 'export_csv', 'module' => 'core/users', 'description' => 'Exported'])->assertStatus(405);
         $this->assertSame(0, CoreLog::count());

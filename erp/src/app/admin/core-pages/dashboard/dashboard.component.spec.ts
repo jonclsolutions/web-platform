@@ -43,11 +43,11 @@ describe('CoreDashboardComponent', () => {
 
   /**
    * @description Only statistics the user is allowed to see are requested and shown.
-   * @input  granted ['core-administrators-view', 'view-core'], not sysadmin; ngOnInit()
-   * @output stats users 12 and coreLogs 900 only; no request for roles/legal/links
+   * @input  granted ['core-administrators-view', 'view-core', 'core-logs-view'], not sysadmin; ngOnInit()
+   * @output stats users 12 and coreLogs 900 only (the log statistic needs core-logs-view); no request for roles/legal/links
    */
   it('loads only the allowed statistics', () => {
-    ctx.permissions.granted = new Set(['core-administrators-view', 'view-core']);
+    ctx.permissions.granted = new Set(['core-administrators-view', 'view-core', 'core-logs-view']);
     component.ngOnInit();
     expect(component.quickStats.map(s => [s.key, s.value])).toEqual([['users', 12], ['coreLogs', 900]]);
     const urls = (ctx.dataHandler as any).getPaginatedCollection.calls.allArgs().map((a: any[]) => a[0]);

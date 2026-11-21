@@ -16,6 +16,7 @@ return [
     ['permission_key' => 'view-deleted', 'description' => 'View soft-deleted records in the trash across modules', 'module' => 'core'],
     ['permission_key' => 'core-view-welcome-page', 'description' => '[recommended: always on] View the welcome page the user is redirected to right after login', 'module' => 'core'],
     ['permission_key' => 'view-core', 'description' => '[recommended: always on] Show the Core / System tab in the admin menu - without it the section cannot be opened', 'module' => 'core'],
+    ['permission_key' => 'core-logs-view', 'description' => 'View the audit log of the core (sign-ins, accounts, roles, settings) - it contains e-mail and IP addresses', 'module' => 'core'],
     ['permission_key' => 'core-administrators-view', 'description' => 'View the list of administrator accounts', 'module' => 'core'],
     ['permission_key' => 'core-administrators-create', 'description' => 'Create an administrator account', 'module' => 'core'],
     ['permission_key' => 'core-administrators-update', 'description' => 'Edit an administrator account', 'module' => 'core'],

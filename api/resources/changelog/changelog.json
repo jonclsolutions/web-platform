@@ -137,6 +137,12 @@
             "area": "shop",
             "part": "public",
             "text": "The checkout is protected like the other public forms: an invisible bot check, a hidden trap field, at most 5 attempts per minute per visitor and 3 orders per hour (10 per day) to one e-mail - nobody can make the e-shop mail strangers or use up the stock with fake orders."
+        },
+        {
+            "type": "security",
+            "area": "core",
+            "part": "admin",
+            "text": "The core log has its own permission (View the core log): the Core tab alone no longer opens it. Roles with the Core tab get it with the update. A failed sign-in names the e-mail only of an existing account; any other typed text is logged as an unreadable code."
         }
     ],
     "releases": [

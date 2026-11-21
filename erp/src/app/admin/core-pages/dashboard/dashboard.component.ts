@@ -41,7 +41,7 @@ export class CoreDashboardComponent extends BaseDashboardComponent {
 
   protected readonly logsEndpoint = 'core/logs';
   /** Permission key gating the `core/logs` GET (`CheckPermission` middleware). */
-  readonly logsPermission = 'view-core';
+  readonly logsPermission = 'core-logs-view';
   readonly logsRoute = '/admin/core/logs';
 
   /**

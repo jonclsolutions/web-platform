@@ -515,6 +515,7 @@
   "view-deleted": "Zobrazit smazané záznamy v koši napříč moduly",
   "core-view-welcome-page": "[doporučení: vždy zapnuto] Zobrazit uvítací stránku, na kterou je uživatel přesměrován hned po přihlášení",
   "view-core": "[doporučení: vždy zapnuto] Zobrazit záložku Core / System v menu administrace - bez tohoto práva se do sekce nelze dostat",
+  "core-logs-view": "Zobrazit log Core (přihlášení, účty, role, nastavení) - obsahuje e-mailové a IP adresy",
   "core-administrators-view": "Zobrazit seznam administrátorských účtů",
   "core-administrators-create": "Vytvořit nový administrátorský účet",
   "core-administrators-update": "Upravit administrátorský účet",
