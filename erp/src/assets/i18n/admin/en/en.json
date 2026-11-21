@@ -1461,6 +1461,7 @@
     "code_field_label": "Language code",
     "code_field_hint": "2–5 lowercase letters, e.g. sk, de, fr",
     "name_field_label": "Language name",
+    "name_field_placeholder": "e.g. Slovenčina (the name in the language itself)",
     "active_checkbox_label": "Language active (visible to users)",
     "upload_modal_description": "Select a JSON file with the same key structure as the CZ reference. Keys missing from the file will remain empty and flagged as a warning.",
     "upload_json_button": "Upload JSON",

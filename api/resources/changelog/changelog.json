@@ -2,6 +2,12 @@
     "unreleased": [
         {
             "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Text editor: the sample in the language name field of a new language follows the language of the admin."
+        },
+        {
+            "type": "fixed",
             "area": "shop",
             "part": "public",
             "text": "The cart no longer writes a Czech debug message into the customer's browser console; technical messages of the e-shop are in English."

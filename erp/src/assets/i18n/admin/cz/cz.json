@@ -1461,6 +1461,7 @@
     "code_field_label": "Kód jazyka",
     "code_field_hint": "2–5 malých písmen, např. sk, de, fr",
     "name_field_label": "Název jazyka",
+    "name_field_placeholder": "např. Slovenčina",
     "active_checkbox_label": "Jazyk aktivní (viditelný pro uživatele)",
     "upload_modal_description": "Vyberte JSON soubor se stejnou strukturou klíčů jako CZ vzor. Klíče, které v souboru chybí, zůstanou prázdné a budou označeny varováním.",
     "upload_json_button": "Nahrát JSON",
