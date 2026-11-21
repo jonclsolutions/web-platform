@@ -2415,7 +2415,7 @@
                 },
                 {
                   "label": "9. Interní poznámka (nepovinné)",
-                  "text": "Volný text pro potřeby správců, například pracovní pozice nebo důvod založení účtu. Je vidět v detailu účtu. Nezapisujte do ní citlivé osobní údaje."
+                  "text": "Volný text pro potřeby správců, například pracovní pozice nebo důvod založení účtu. Vidí ji jen sysadmin a účty s oprávněním k seznamu administrátorů (core-administrators-view) - samotný účet ji bez tohoto oprávnění nevidí. Nezapisujte do ní citlivé osobní údaje."
                 },
                 {
                   "label": "10. Uložte",

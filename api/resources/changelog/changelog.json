@@ -143,6 +143,12 @@
             "area": "core",
             "part": "admin",
             "text": "The core log has its own permission (View the core log): the Core tab alone no longer opens it. Roles with the Core tab get it with the update. A failed sign-in names the e-mail only of an existing account; any other typed text is logged as an unreadable code."
+        },
+        {
+            "type": "security",
+            "area": "core",
+            "part": "admin",
+            "text": "The internal note of an administrator account is shown only to the sysadmin and to accounts that may view the administrators - the account itself no longer receives it."
         }
     ],
     "releases": [

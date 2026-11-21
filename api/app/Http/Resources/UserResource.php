@@ -10,6 +10,9 @@
  * calculated effective permission set. `profileOnly()` returns only the profile fields - used
  * by the session answers of AuthController, which send the roles and the effective permissions
  * once at the top level (`user_roles`, `user_permissions`).
+ * `internal_note` (the administrators' note about the account) is sent only to a sysadmin or an
+ * account with `core-administrators-view` - never in the session answers, and not to an account
+ * that reads its own record without that permission.
  * @dependencies App\Support\Images\UserAvatar (signed URL of the profile photo).
  */
 
@@ -23,6 +26,12 @@ class UserResource extends JsonResource
 {
     /** @description Only the profile fields, without roles and permissions (see profileOnly()). */
     private bool $profileOnly = false;
+
+    /** @description Permission that lets an account read the internal note of the accounts. */
+    private const NOTE_PERMISSION = 'core-administrators-view';
+
+    /** @description Request attribute caching whether the signed-in account may read internal notes. */
+    private const NOTE_ACCESS_ATTRIBUTE = 'user_resource.internal_note_access';
 
     /**
      * @description Leaves out the roles, the explicit and the effective permissions.
@@ -53,7 +62,6 @@ class UserResource extends JsonResource
             'two_fa_forced_by_admin' => (bool) $this->two_fa_forced_by_admin,
             'is_blocked' => (bool) $this->is_blocked,
             'activated_at' => $this->activated_at,
-            'internal_note' => $this->internal_note,
             'last_login_at' => $this->last_login_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
@@ -62,6 +70,10 @@ class UserResource extends JsonResource
 
         if ($this->profileOnly) {
             return $profile;
+        }
+
+        if ($this->mayReadInternalNote($request)) {
+            $profile['internal_note'] = $this->internal_note;
         }
 
         return $profile + [
@@ -87,5 +99,25 @@ class UserResource extends JsonResource
             // frontend authorization/UI-gating decisions.
             'permissions' => $this->permissions,
         ];
+    }
+
+    /**
+     * @description Whether the signed-in account may read internal notes: the sysadmin or an account
+     *   with NOTE_PERMISSION. Resolved once per request (a list resolves many resources).
+     * @param Request $request Current request.
+     * @return bool
+     */
+    private function mayReadInternalNote(Request $request): bool
+    {
+        if (!$request->attributes->has(self::NOTE_ACCESS_ATTRIBUTE)) {
+            $viewer = $request->user();
+            $allowed = $viewer !== null && (
+                $viewer->roles()->where('role_name', 'sysadmin')->exists()
+                || in_array(self::NOTE_PERMISSION, (array) ($viewer->permissions ?? []), true)
+            );
+            $request->attributes->set(self::NOTE_ACCESS_ATTRIBUTE, $allowed);
+        }
+
+        return (bool) $request->attributes->get(self::NOTE_ACCESS_ATTRIBUTE);
     }
 }

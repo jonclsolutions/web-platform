@@ -2415,7 +2415,7 @@
                 },
                 {
                   "label": "9. Internal note (optional)",
-                  "text": "Free text for administrators, for example the job position or the reason the account was created. It is visible in the account details. Do not write sensitive personal data into it."
+                  "text": "Free text for administrators, for example the job position or the reason the account was created. Only the sysadmin and accounts with the permission for the list of administrators (core-administrators-view) see it - the account itself does not without that permission. Do not write sensitive personal data into it."
                 },
                 {
                   "label": "10. Save",

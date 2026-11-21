@@ -177,4 +177,30 @@ class UserListTest extends TestCase
 
         $this->getJson("/api/core/users/{$me->id}")->assertOk()->assertJsonPath('data.id', $me->id);
     }
+
+    /**
+     * @description SECURITY (SA-10): the internal note about an account is read only by a sysadmin
+     *   or an account with core-administrators-view - an account reading its own record without
+     *   that permission, and every session answer (/api/user), leave it out.
+     * @input Account A with a note, no permissions: GET own detail, GET /api/user; viewer with
+     *        core-administrators-view: GET A and the list; sysadmin: GET A.
+     * @output No internal_note for A itself (detail and /api/user); the note for the viewer
+     *   (detail and list) and the sysadmin.
+     */
+    public function test_internal_note_only_for_administrators(): void
+    {
+        $a = $this->user(['internal_note' => 'Watch out']);
+
+        $this->signIn($a);
+        $this->getJson("/api/core/users/{$a->id}")->assertOk()->assertJsonMissingPath('data.internal_note');
+        $this->getJson('/api/user')->assertOk()->assertJsonMissingPath('data.user.internal_note');
+
+        $this->signIn($this->userWith(['core-administrators-view']));
+        $this->getJson("/api/core/users/{$a->id}")->assertOk()->assertJsonPath('data.internal_note', 'Watch out');
+        $list = collect($this->getJson('/api/core/users')->assertOk()->json('data'));
+        $this->assertSame('Watch out', $list->firstWhere('id', $a->id)['internal_note']);
+
+        $this->signIn($this->sysadmin());
+        $this->getJson("/api/core/users/{$a->id}")->assertOk()->assertJsonPath('data.internal_note', 'Watch out');
+    }
 }
