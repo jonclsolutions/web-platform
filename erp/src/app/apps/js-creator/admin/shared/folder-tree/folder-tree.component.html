@@ -1,0 +1,72 @@
+<!--
+    @file: folder-tree.component.html
+    @path: src/app/apps/js-creator/admin/shared/folder-tree/folder-tree.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Tree of the folders: the top level, then the nested folders (one template used
+        recursively) - expand button, name (select), actions of the row; rows are drag sources and
+        drop targets.
+-->
+<div class="ft" role="tree" [attr.aria-label]="t('tree_label')">
+  <div class="ft-row ft-row--root" role="treeitem" [attr.aria-selected]="selectedId === null"
+    [class.ft-row--selected]="selectedId === null" [class.ft-row--drop]="dropTarget === null"
+    (dragover)="onDragOver(null, $event)" (dragleave)="onDragLeave()" (drop)="onDrop(null, $event)">
+    <button type="button" class="ft-name" (click)="selected.emit(null)">
+      <app-icon name="folder-open" [size]="16"></app-icon>
+      <span>{{ t('root') }}</span>
+    </button>
+    @if (canCreate) {
+      <span class="ft-actions">
+        <button type="button" class="ws-icon-btn" [title]="t('new_folder')" [attr.aria-label]="t('new_folder')" (click)="createIn.emit(null)">
+          <app-icon name="plus" [size]="15"></app-icon>
+        </button>
+      </span>
+    }
+  </div>
+
+  <ng-container *ngTemplateOutlet="level; context: { $implicit: null, depth: 1 }"></ng-container>
+</div>
+
+<ng-template #level let-parentId let-depth="depth">
+  <ul class="ft-list" role="group">
+    @for (folder of children(parentId); track folder.id) {
+      @let open = expanded.has(folder.id);
+      @let hasChildren = children(folder.id).length > 0;
+      <li role="treeitem" [attr.aria-expanded]="hasChildren ? open : null" [attr.aria-selected]="selectedId === folder.id">
+        <div class="ft-row" [style.padding-left.px]="depth * 14"
+          [class.ft-row--selected]="selectedId === folder.id" [class.ft-row--drop]="dropTarget === folder.id"
+          [class.ft-row--dragging]="draggingId === folder.id"
+          [attr.draggable]="canUpdate" (dragstart)="onDragStart(folder, $event)" (dragend)="onDragEnd()"
+          (dragover)="onDragOver(folder.id, $event)" (dragleave)="onDragLeave()" (drop)="onDrop(folder.id, $event)">
+          <button type="button" class="ft-toggle" [class.ft-toggle--open]="open" [style.visibility]="hasChildren ? 'visible' : 'hidden'"
+            [attr.aria-label]="open ? t('collapse') : t('expand')" (click)="toggle(folder, $event)">▸</button>
+          <button type="button" class="ft-name" (click)="choose(folder)">
+            <app-icon [name]="open ? 'folder-open' : 'folder'" [size]="16"></app-icon>
+            <span class="ft-label">{{ folder.name }}</span>
+          </button>
+          <span class="ft-actions">
+            @if (canCreate && canNest(folder)) {
+              <button type="button" class="ws-icon-btn" [title]="t('new_subfolder')" [attr.aria-label]="t('new_subfolder')" (click)="createIn.emit(folder.id)">
+                <app-icon name="plus" [size]="15"></app-icon>
+              </button>
+            }
+            @if (canUpdate) {
+              <button type="button" class="ws-icon-btn" [title]="t('rename')" [attr.aria-label]="t('rename')" (click)="rename.emit(folder)">
+                <app-icon name="edit" [size]="15"></app-icon>
+              </button>
+            }
+            @if (canDelete) {
+              <button type="button" class="ws-icon-btn ws-icon-btn--danger" [title]="t('delete')" [attr.aria-label]="t('delete')" (click)="remove.emit(folder)">
+                <app-icon name="trash" [size]="15"></app-icon>
+              </button>
+            }
+          </span>
+        </div>
+        @if (open && hasChildren) {
+          <ng-container *ngTemplateOutlet="level; context: { $implicit: folder.id, depth: depth + 1 }"></ng-container>
+        }
+      </li>
+    }
+  </ul>
+</ng-template>

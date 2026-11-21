@@ -1,0 +1,138 @@
+<!--
+    @file: outputs-page.component.html
+    @path: src/app/apps/js-creator/admin/outputs/outputs-page.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Page "Outputs": header with the view switch (folders / trash), the usage bar;
+        folders: the tree beside the content of the selected folder (path, subfolders, the place
+        of the generated posts); trash: deleted folders with restore / delete for good; the popup
+        of a folder (new, rename, move).
+-->
+<div class="ws-page">
+  <app-page-header [title]="t('header')" [subtitle]="t('subtitle')">
+    <app-row-button-builder kind="filter" [items]="viewItems" [active]="view" (selected)="switchView($event)" [ariaLabel]="t('view_label')" />
+  </app-page-header>
+
+  <app-quota-bar />
+
+  @if (view === 'folders') {
+    <div class="op-layout">
+      <aside class="ws-panel op-tree">
+        <div class="op-tree-head">
+          <h2 class="ws-panel-title">{{ t('folders') }}</h2>
+          @if (canCreate) {
+            <button type="button" class="ws-btn ws-btn--sm" (click)="openCreate(selectedId)">
+              <app-icon name="plus" [size]="14"></app-icon>{{ t('new_folder') }}
+            </button>
+          }
+        </div>
+        <app-folder-tree [folders]="folders" [selectedId]="selectedId"
+          [canCreate]="canCreate" [canUpdate]="canUpdate" [canDelete]="canDelete"
+          (selected)="select($event)" (createIn)="openCreate($event)" (rename)="openRename($event)"
+          (remove)="remove($event)" (dropped)="onDrop($event)" />
+        @if (canUpdate && folders.length > 1) {
+          <p class="ws-panel-hint op-drag-hint">{{ t('drag_hint') }}</p>
+        }
+      </aside>
+
+      <section class="ws-panel op-content" [attr.aria-label]="t('content_label')">
+        <div class="op-content-head">
+          <nav class="op-path" [attr.aria-label]="t('path_label')">
+            <button type="button" class="op-crumb" (click)="select(null)">{{ t('root') }}</button>
+            @for (folder of path; track folder.id) {
+              <span class="op-crumb-sep" aria-hidden="true">/</span>
+              <button type="button" class="op-crumb" [class.op-crumb--current]="folder.id === selectedId" (click)="select(folder.id)">{{ folder.name }}</button>
+            }
+          </nav>
+          @if (selectedFolder; as current) {
+            <span class="op-folder-actions">
+              @if (canUpdate) {
+                <button type="button" class="ws-btn ws-btn--sm" (click)="openRename(current)">{{ t('rename') }}</button>
+                <button type="button" class="ws-btn ws-btn--sm" (click)="openMove(current)">{{ t('move') }}</button>
+              }
+              @if (canDelete) {
+                <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="remove(current)">{{ t('delete') }}</button>
+              }
+            </span>
+          }
+        </div>
+
+        @if (subfolders.length) {
+          <div class="op-subfolders">
+            @for (folder of subfolders; track folder.id) {
+              <button type="button" class="op-subfolder" (click)="select(folder.id)">
+                <app-icon name="folder" [size]="18"></app-icon>
+                <span>{{ folder.name }}</span>
+              </button>
+            }
+          </div>
+        }
+
+        <div class="ws-empty">
+          <strong class="op-empty-title">{{ t('empty_title') }}</strong>
+          <span>{{ t('empty_text') }}</span>
+        </div>
+      </section>
+    </div>
+  } @else {
+    <section class="ws-panel">
+      <div class="op-tree-head">
+        <h2 class="ws-panel-title">{{ t('trash_title') }}</h2>
+        @if (canDelete && trashed.length) {
+          <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="emptyTrash()">{{ t('empty_trash') }}</button>
+        }
+      </div>
+      <p class="ws-trash-note">{{ t('trash_note') }}</p>
+      @if (trashed.length) {
+        <ul class="op-trash">
+          @for (folder of trashed; track folder.id) {
+            <li class="op-trash-row">
+              <app-icon name="folder" [size]="16"></app-icon>
+              <span class="op-trash-name">{{ folder.name }}</span>
+              <span class="op-trash-date">{{ t('deleted_at') }} {{ folder.deleted_at | date:'d. M. y HH:mm' }}</span>
+              @if (canDelete) {
+                <span class="op-trash-actions">
+                  <button type="button" class="ws-btn ws-btn--sm" [disabled]="busy" (click)="restore(folder)">{{ t('restore') }}</button>
+                  <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="destroy(folder)">{{ t('destroy') }}</button>
+                </span>
+              }
+            </li>
+          }
+        </ul>
+      } @else {
+        <div class="ws-empty">{{ t('trash_empty') }}</div>
+      }
+    </section>
+  }
+</div>
+
+@if (dialog; as d) {
+  <app-admin-modal [heading]="t('dialog_' + d.kind)" [subheading]="d.kind === 'create' ? '' : d.folder!.name" size="sm"
+    [closeDisabled]="busy" (dismissed)="closeDialog()">
+    <form [id]="formId" (ngSubmit)="submitDialog()">
+      @if (d.kind === 'move') {
+        <div class="ws-field">
+          <label for="jc-folder-target">{{ t('move_target') }}</label>
+          <select id="jc-folder-target" name="target" [(ngModel)]="d.targetId" data-autofocus>
+            @for (target of moveTargets; track target.id) {
+              <option [ngValue]="target.id">{{ target.label }}</option>
+            }
+          </select>
+        </div>
+      } @else {
+        <div class="ws-field">
+          <label for="jc-folder-name">{{ t('name') }}</label>
+          <input id="jc-folder-name" name="name" type="text" maxlength="120" autocomplete="off" [(ngModel)]="d.name" data-autofocus />
+        </div>
+      }
+      @if (d.error) {
+        <p class="ws-field-error" role="alert">{{ d.error }}</p>
+      }
+    </form>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" [disabled]="busy" (click)="closeDialog()">{{ t('cancel') }}</button>
+      <button type="submit" class="am-btn am-btn--primary" [attr.form]="formId" [disabled]="busy">{{ t('save') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}

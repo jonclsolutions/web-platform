@@ -188,7 +188,7 @@ class RetentionTest extends TestCase
 
         $counts = CoreRetentionSetting::pluck('last_deleted_count', 'data_key')->all();
         $this->assertSame(
-            ['job_applications' => 1, 'raw_requests' => 1, 'sales_leads' => 1, 'sales_orders' => 1, 'projects' => 1, 'cookie_consents' => 1, 'audit_logs' => 0],
+            ['job_applications' => 1, 'raw_requests' => 1, 'sales_leads' => 1, 'sales_orders' => 1, 'projects' => 1, 'js_creator_trash' => 0, 'cookie_consents' => 1, 'audit_logs' => 0],
             $counts
         );
         $this->assertNotNull(CoreRetentionSetting::where('data_key', 'raw_requests')->value('last_run_at'));

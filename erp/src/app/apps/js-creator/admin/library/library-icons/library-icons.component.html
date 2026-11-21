@@ -1,0 +1,34 @@
+<!--
+    @file: library-icons.component.html
+    @path: src/app/apps/js-creator/admin/library/library-icons/library-icons.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Tab "Icons": search, number of icons, the grid of the icons with their names,
+        source and licence of the set.
+-->
+<section class="ws-panel">
+  <div class="ws-toolbar">
+    <h2 class="ws-panel-title">{{ t('icons_title') }}</h2>
+    <span class="lc-count">{{ shown.length }} / {{ icons.length }}</span>
+    <span class="ws-toolbar-spacer"></span>
+    <input class="ws-search" type="search" [placeholder]="t('search_icons')" [attr.aria-label]="t('search_icons')" [(ngModel)]="search" />
+  </div>
+  <p class="ws-panel-hint lc-hint">{{ t('icons_hint') }}</p>
+
+  @if (shown.length) {
+    <ul class="ws-grid ws-grid--icons lc-grid">
+      @for (icon of shown; track icon.name) {
+        <li class="lc-icon" [title]="icon.name">
+          <app-creator-icon [nodes]="icon.nodes" [size]="28" />
+          <span class="lc-name">{{ icon.name }}</span>
+        </li>
+      }
+    </ul>
+  } @else {
+    <div class="ws-empty">{{ t('nothing_found') }}</div>
+  }
+  @if (source) {
+    <p class="lc-source">{{ t('icons_source') }} {{ source }}</p>
+  }
+</section>

@@ -47,7 +47,7 @@ class AppStatusTest extends TestCase
      * @description The endpoint needs a signed-in user; a user gets only the applications of his
      *   tab permissions, the sysadmin all of them in the registry order.
      * @input Guest; user with view-web; sysadmin.
-     * @output 401; ['web']; ['web', 'shop', 'project-portal'].
+     * @output 401; ['web']; ['web', 'shop', 'project-portal', 'js-creator'].
      */
     public function test_applications_of_the_user(): void
     {
@@ -57,7 +57,7 @@ class AppStatusTest extends TestCase
         $this->assertSame(['web'], array_column($this->getJson('/api/core/apps/status')->assertOk()->json('data'), 'id'));
 
         $this->signIn($this->sysadmin());
-        $this->assertSame(['web', 'shop', 'project-portal'], array_column($this->getJson('/api/core/apps/status')->json('data'), 'id'));
+        $this->assertSame(['web', 'shop', 'project-portal', 'js-creator'], array_column($this->getJson('/api/core/apps/status')->json('data'), 'id'));
     }
 
     /**

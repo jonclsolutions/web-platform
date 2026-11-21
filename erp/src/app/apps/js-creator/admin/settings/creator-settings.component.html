@@ -1,0 +1,117 @@
+<!--
+    @file: creator-settings.component.html
+    @path: src/app/apps/js-creator/admin/settings/creator-settings.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Page "Settings": the default quota (form), the overview of the accounts (name,
+        access, numbers, used space with a bar, quota, change) and the quota popup of an account.
+-->
+<div class="ws-page">
+  <app-page-header [title]="t('header')" [subtitle]="t('subtitle')"></app-page-header>
+
+  <section class="ws-panel">
+    <h2 class="ws-panel-title">{{ t('default_quota') }}</h2>
+    <p class="ws-panel-hint">{{ t('default_quota_hint') }}</p>
+    <form class="cs-default" (ngSubmit)="saveDefault()">
+      <div class="ws-field">
+        <label for="jc-default-quota">{{ t('quota_mb') }}</label>
+        <input id="jc-default-quota" name="default_quota" type="number" min="1" [max]="maxQuota" step="1"
+          [(ngModel)]="defaultDraft" [disabled]="!canUpdate || defaultQuota === null" />
+        @if (defaultError) {
+          <p class="ws-field-error" role="alert">{{ defaultError }}</p>
+        }
+      </div>
+      @if (canUpdate) {
+        <button type="submit" class="ws-btn ws-btn--primary" [disabled]="busy || defaultQuota === null || defaultDraft === defaultQuota">{{ t('save') }}</button>
+      }
+      @if (saved) {
+        <span class="cs-saved" role="status">{{ t('saved') }}</span>
+      }
+    </form>
+  </section>
+
+  <section class="ws-panel">
+    <h2 class="ws-panel-title">{{ t('accounts') }}</h2>
+    <p class="ws-panel-hint">{{ t('accounts_hint') }}</p>
+    @if (accounts.length) {
+      <div class="cs-table-wrap">
+        <table class="cs-table">
+          <thead>
+            <tr>
+              <th scope="col">{{ t('col_name') }}</th>
+              <th scope="col">{{ t('col_folders') }}</th>
+              <th scope="col">{{ t('col_images') }}</th>
+              <th scope="col">{{ t('col_fonts') }}</th>
+              <th scope="col">{{ t('col_used') }}</th>
+              <th scope="col">{{ t('col_quota') }}</th>
+              @if (canUpdate) {
+                <th scope="col"><span class="cs-sr">{{ t('col_actions') }}</span></th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (account of accounts; track account.id) {
+              <tr>
+                <td>
+                  <span class="cs-name">{{ account.name }}</span>
+                  @if (!account.has_access) {
+                    <span class="cs-badge">{{ t('no_access') }}</span>
+                  }
+                </td>
+                <td>{{ account.counts.folders }}</td>
+                <td>{{ account.counts.images }}</td>
+                <td>{{ account.counts.fonts }}</td>
+                <td>
+                  <span class="cs-used cs-used--{{ level(account) }}">{{ size(account.used_bytes) }} ({{ percent(account) }} %)</span>
+                  <span class="cs-bar cs-bar--{{ level(account) }}"><span [style.width.%]="percent(account)"></span></span>
+                </td>
+                <td>
+                  {{ size(account.quota_bytes) }}
+                  <span class="cs-quota-kind">{{ account.quota_mb === null ? t('quota_default') : t('quota_individual') }}</span>
+                </td>
+                @if (canUpdate) {
+                  <td class="cs-actions">
+                    <button type="button" class="ws-icon-btn" [title]="t('change_quota')" [attr.aria-label]="t('change_quota') + ' – ' + account.name" (click)="openQuota(account)">
+                      <app-icon name="edit" [size]="15"></app-icon>
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="ws-empty">{{ t('accounts_empty') }}</div>
+    }
+  </section>
+</div>
+
+@if (dialog; as d) {
+  <app-admin-modal [heading]="t('change_quota')" [subheading]="d.account.name" size="sm" [closeDisabled]="busy" (dismissed)="closeDialog()">
+    <form [id]="formId" (ngSubmit)="submitQuota()">
+      <label class="ws-choice">
+        <input type="radio" name="kind" [value]="true" [(ngModel)]="d.useDefault" />
+        {{ t('quota_use_default') }} ({{ defaultQuota }} MB)
+      </label>
+      <label class="ws-choice cs-choice">
+        <input type="radio" name="kind" [value]="false" [(ngModel)]="d.useDefault" />
+        {{ t('quota_use_individual') }}
+      </label>
+      @if (!d.useDefault) {
+        <div class="ws-field">
+          <label for="jc-user-quota">{{ t('quota_mb') }}</label>
+          <input id="jc-user-quota" name="quota" type="number" min="1" [max]="maxQuota" step="1" [(ngModel)]="d.quotaMb" data-autofocus />
+        </div>
+      }
+      @if (d.error) {
+        <p class="ws-field-error" role="alert">{{ d.error }}</p>
+      }
+    </form>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" [disabled]="busy" (click)="closeDialog()">{{ t('cancel') }}</button>
+      <button type="submit" class="am-btn am-btn--primary" [attr.form]="formId" [disabled]="busy">{{ t('save') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}

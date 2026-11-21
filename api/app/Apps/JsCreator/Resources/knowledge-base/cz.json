@@ -1,0 +1,233 @@
+{
+  "pages": {
+    "js-creator-outputs": {
+      "navLabel": "Výstupy",
+      "header": "JS Creator – Výstupy",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "JS Creator vyrábí grafiku příspěvků na sociální sítě podle šablon, které si navrhnete sami – bez AI. Stránka Výstupy je místo, kam se vygenerované příspěvky ukládají do vašich složek."
+            },
+            {
+              "type": "alert",
+              "content": "Každý účet má vlastní soukromý pracovní prostor (složky, výstupy, knihovnu, fonty). Nikdo jiný ho nevidí – ani jiný administrátor, ani správce systému.",
+              "variant": "info"
+            }
+          ]
+        },
+        {
+          "heading": "01. Složky",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Vlevo je strom složek. Všechny výstupy je nejvyšší úroveň; složky lze vnořovat až do 10 úrovní. Strom je společný pro všechny druhy výstupů (obrázky teď, videa a GIFy později)."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Nová složka – tlačítko nad stromem (vytvoří ji ve vybrané složce) nebo + u řádku složky.",
+                "Přejmenovat, Přesunout, Smazat – ikony u řádku (na počítači se ukážou po najetí myší).",
+                "Přesunout jde i přetažením složky na jinou složku nebo na Všechny výstupy.",
+                "Názvy ve stejné složce musí být různé (velikost písmen se nerozlišuje)."
+              ]
+            },
+            {
+              "type": "note",
+              "content": "Složku nejde přesunout do ní samotné ani do její podsložky a strom nesmí být hlubší než 10 úrovní.",
+              "highlight": "Pravidla"
+            }
+          ]
+        },
+        {
+          "heading": "02. Obsah složky",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Vpravo je cesta k vybrané složce, její podsložky a vygenerované příspěvky. Příspěvky vznikají generováním ze šablony, při kterém zvolíte cílovou složku."
+            }
+          ]
+        },
+        {
+          "key": "trash",
+          "heading": "03. Koš",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Smazaná složka se přesune do koše i se všemi podsložkami jako jedna položka. V zobrazení Koš ji můžete Obnovit (vrátí se i s podsložkami; pokud nadřazená složka už neexistuje, vrátí se na nejvyšší úroveň, a pokud je název obsazený, dostane „(2)“) nebo Smazat trvale. Vysypat koš smaže natrvalo vše v koši složek."
+            },
+            {
+              "type": "alert",
+              "content": "Položky v koši se automaticky smažou natrvalo po uplynutí lhůty retence (výchozí 30 dní, Core → Nastavení → Retence, „JS Creator – koš“).",
+              "variant": "warning"
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "04. Oprávnění",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazit",
+                  "text": "js-creator-images-view – stránka, strom, koš."
+                },
+                {
+                  "title": "Vytvořit",
+                  "text": "js-creator-images-create – nové složky."
+                },
+                {
+                  "title": "Upravit",
+                  "text": "js-creator-images-update – přejmenování a přesun."
+                },
+                {
+                  "title": "Smazat",
+                  "text": "js-creator-images-delete – koš, obnovení, trvalé smazání."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "js-creator-library": {
+      "navLabel": "Knihovna",
+      "header": "JS Creator – Knihovna",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Knihovna obsahuje obrázky, fonty a ikony, které používáte v šablonách. Je jen vaše – nikdo jiný ji nevidí."
+            },
+            {
+              "type": "text",
+              "content": "Nahoře je ukazatel místa: kolik z vaší kvóty zabírají soubory (včetně koše). Od 80 % se zbarví oranžově, při 100 % nejde nic nahrát ani vygenerovat, dokud nesmažete soubory a nevysypete koš."
+            }
+          ]
+        },
+        {
+          "key": "upload",
+          "heading": "01. Obrázky",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Loga, pozadí a fotky pro pevné prvky šablon. Nahrát obrázky otevře výběr souborů (i více najednou); obrázky můžete také přetáhnout do mřížky. Povolené jsou JPG, PNG a WebP do 15 MB (SVG z bezpečnostních důvodů ne)."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Každý obrázek server přeuloží: odstraní metadata (EXIF, GPS – kde a čím byla fotka pořízena), otočí fotku podle telefonu a zmenší ji na nejvýše 4000 px. Průhlednost PNG / WebP zůstane.",
+                "Kliknutím na náhled otevřete obrázek v plné velikosti; obrázek jde přejmenovat a smazat do koše.",
+                "Nahrávejte jen obrázky, které smíte použít – fotky osob s jejich souhlasem a cizí díla s licencí."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Fonty",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Sada fontů aplikace: 25 rodin s českými znaky (licence SIL Open Font License), uložených na našem serveru – nic se nenačítá z Google ani jiné cizí služby. Ukázková věta ukazuje, jak font vypadá."
+            },
+            {
+              "type": "text",
+              "content": "Moje fonty: firemní nebo vlastní font nahrajete tlačítkem Nahrát font – soubor TTF, OTF, WOFF nebo WOFF2 do 5 MB, název rodiny, váhu (100–900) a styl (normální / kurzíva). Každý řez (např. Bold, Italic) se nahrává zvlášť; stejnou kombinaci rodiny, váhy a stylu lze mít jen jednou."
+            },
+            {
+              "type": "alert",
+              "content": "Nahrávejte jen fonty, které smíte používat – licence fontu musí povolovat jeho použití v grafice.",
+              "variant": "warning"
+            }
+          ]
+        },
+        {
+          "heading": "03. Ikony",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Sada ikon (Lucide, licence ISC) pro šablony – barvu a velikost ikony nastavíte v šabloně. Hledá se podle anglického názvu. Loga značek (sociální sítě) sada neobsahuje; pokud je smíte použít, nahrajte je jako obrázek."
+            }
+          ]
+        },
+        {
+          "key": "trash",
+          "heading": "04. Koš",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Smazané obrázky a fonty jsou v zobrazení Koš své záložky: Obnovit, Smazat trvale, Vysypat koš. Soubory v koši se počítají do vaší kvóty, dokud koš nevysypete; po uplynutí lhůty retence (výchozí 30 dní) se smažou samy."
+            }
+          ]
+        }
+      ]
+    },
+    "js-creator-settings": {
+      "navLabel": "Nastavení",
+      "header": "JS Creator – Nastavení",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Nastavení určuje, kolik místa mají pracovní prostory. Obsah pracovních prostorů tu nevidíte – jen čísla."
+            }
+          ]
+        },
+        {
+          "heading": "01. Výchozí kvóta",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Místo pro soubory jednoho účtu (výstupy, obrázky, fonty – včetně koše), pokud účet nemá vlastní kvótu. Výchozí hodnota je 1024 MB; zadává se v MB (1 až 102 400)."
+            },
+            {
+              "type": "note",
+              "content": "Všechny instalace sdílejí disk serveru s databází, zálohami a ostatními aplikacemi – kvóty nastavujte s rezervou.",
+              "highlight": "Tip"
+            }
+          ]
+        },
+        {
+          "key": "quota",
+          "heading": "02. Účty",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Tabulka ukazuje účty s přístupem k aplikaci (oprávnění Zobrazit aplikaci JS Creator nebo role sysadmin) a účty, které v ní ještě mají data („bez přístupu“): počet složek, obrázků a fontů, obsazené místo a kvótu. Tužkou nastavíte účtu vlastní kvótu, nebo ho vrátíte na výchozí."
+            },
+            {
+              "type": "alert",
+              "content": "Při trvalém smazání účtu se smaže i celý jeho pracovní prostor se všemi soubory. Účet v koši účtů svá data zatím drží (pro případné obnovení).",
+              "variant": "warning"
+            }
+          ]
+        }
+      ]
+    },
+    "js-creator-logs": {
+      "navLabel": "Logy – JS Creator",
+      "header": "JS Creator – logy",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Auditní log aplikace JS Creator: kdo a kdy vytvořil, změnil, smazal nebo obnovil složku, obrázek či font, vysypal koš nebo změnil kvótu."
+            },
+            {
+              "type": "text",
+              "content": "Záznamy obsahují jen druh a číslo položky – nikdy názvy ani obsah pracovního prostoru, aby log neprozradil, na čem kdo pracuje. Záznamy jde filtrovat podle uživatele, události, modulu a IP adresy, exportovat a vykreslit do grafů."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

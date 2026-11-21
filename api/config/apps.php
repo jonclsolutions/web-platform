@@ -20,5 +20,6 @@ return [
         App\Apps\Web\WebApp::class,
         App\Apps\Shop\ShopApp::class,
         App\Apps\ProjectPortal\ProjectPortalApp::class,
+        App\Apps\JsCreator\JsCreatorApp::class,
     ],
 ];

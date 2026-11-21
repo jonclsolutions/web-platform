@@ -1,0 +1,110 @@
+/*
+    @file: creator-settings.component.css
+    @path: src/app/apps/js-creator/admin/settings/creator-settings.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Page "Settings" of JS Creator: the default quota form, the table of the accounts
+        with a small usage bar per account, the quota choice of the popup.
+    @dependencies: shared-styles/workspace.css (.ws-*), shared/styles/tokens.css
+*/
+
+/*
+    @module: Default quota
+    @description: Number field and the save button in one row.
+    @usage: .cs-default > .ws-field, .ws-btn, .cs-saved
+*/
+.cs-default {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cs-default .ws-field { margin-bottom: 0; width: 200px; }
+
+.cs-saved { font-size: 0.8rem; color: var(--color-emerald-700); padding-bottom: 8px; }
+
+/*
+    @module: Accounts table
+    @description: Compact table (scrolls sideways on a phone) with the usage bar of an account
+        (amber from 80 %, red when full) and the kind of its quota.
+    @usage: .cs-table-wrap > .cs-table (.cs-name, .cs-badge, .cs-used(--ok|--warning|--full),
+        .cs-bar(--ok|--warning|--full) > span, .cs-quota-kind, .cs-actions), .cs-sr
+*/
+.cs-table-wrap { overflow-x: auto; }
+
+.cs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.cs-table th {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-sand-200);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-zinc-500);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.cs-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--color-sand-200);
+  color: var(--color-zinc-800);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.cs-table tr:last-child td { border-bottom: none; }
+
+.cs-name { font-weight: 600; color: var(--color-zinc-900); }
+
+.cs-badge {
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--color-zinc-100);
+  font-size: 0.68rem;
+  color: var(--color-zinc-600);
+}
+
+.cs-used { display: block; font-variant-numeric: tabular-nums; }
+.cs-used--warning { color: var(--color-amber-700); }
+.cs-used--full { color: var(--color-rose-700); font-weight: 600; }
+
+.cs-bar {
+  display: block;
+  width: 110px;
+  height: 4px;
+  margin-top: 4px;
+  border-radius: 999px;
+  background: var(--color-zinc-100);
+  overflow: hidden;
+}
+
+.cs-bar span { display: block; height: 100%; background: var(--color-zinc-900); }
+.cs-bar--warning span { background: var(--color-amber-500); }
+.cs-bar--full span { background: var(--color-rose-600); }
+
+.cs-quota-kind { display: block; font-size: 0.7rem; color: var(--color-zinc-500); }
+
+.cs-actions { text-align: right; }
+
+.cs-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/*
+    @module: Quota choice
+    @description: Spacing of the second radio option of the popup.
+    @usage: .cs-choice
+*/
+.cs-choice { margin: 8px 0 14px; }

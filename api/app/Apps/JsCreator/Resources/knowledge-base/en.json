@@ -1,0 +1,233 @@
+{
+  "pages": {
+    "js-creator-outputs": {
+      "navLabel": "Outputs",
+      "header": "JS Creator – Outputs",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "JS Creator makes graphics of social network posts from templates you design yourself – no AI. The page Outputs is where the generated posts are saved into your folders."
+            },
+            {
+              "type": "alert",
+              "content": "Every account has its own private workspace (folders, outputs, library, fonts). Nobody else sees it – no other administrator, not even the system administrator.",
+              "variant": "info"
+            }
+          ]
+        },
+        {
+          "heading": "01. Folders",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The tree of folders is on the left. All outputs is the top level; folders can be nested up to 10 levels. The tree is shared by every kind of output (images now, videos and GIFs later)."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "New folder – the button above the tree (creates it in the selected folder) or + in the row of a folder.",
+                "Rename, Move, Delete – icons in the row (on a computer they show when the pointer is over the row).",
+                "You can also move a folder by dragging it onto another folder or onto All outputs.",
+                "Names in one folder must differ (upper and lower case count as the same)."
+              ]
+            },
+            {
+              "type": "note",
+              "content": "A folder cannot move into itself or into its subfolder, and the tree cannot be deeper than 10 levels.",
+              "highlight": "Rules"
+            }
+          ]
+        },
+        {
+          "heading": "02. Content of a folder",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "On the right is the path to the selected folder, its subfolders and the generated posts. Posts are made by generating from a template, where you choose the target folder."
+            }
+          ]
+        },
+        {
+          "key": "trash",
+          "heading": "03. Trash",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "A deleted folder moves to the trash with all its subfolders as one item. In the view Trash you can Restore it (it comes back with its subfolders; when its parent no longer exists it comes back to the top level, and a taken name gets \"(2)\") or Delete it for good. Empty the trash deletes everything in the folder trash for good."
+            },
+            {
+              "type": "alert",
+              "content": "Items of the trash are deleted for good automatically after the retention period (default 30 days, Core → Settings → Retention, \"JS Creator – trash\").",
+              "variant": "warning"
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "04. Permissions",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "View",
+                  "text": "js-creator-images-view – the page, the tree, the trash."
+                },
+                {
+                  "title": "Create",
+                  "text": "js-creator-images-create – new folders."
+                },
+                {
+                  "title": "Update",
+                  "text": "js-creator-images-update – rename and move."
+                },
+                {
+                  "title": "Delete",
+                  "text": "js-creator-images-delete – trash, restore, delete for good."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "js-creator-library": {
+      "navLabel": "Library",
+      "header": "JS Creator – Library",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "The library holds the images, fonts and icons you use in templates. It is yours only – nobody else sees it."
+            },
+            {
+              "type": "text",
+              "content": "At the top is the usage bar: how much of your quota your files take (trash included). From 80 % it turns amber; at 100 % nothing can be uploaded or generated until you delete files and empty the trash."
+            }
+          ]
+        },
+        {
+          "key": "upload",
+          "heading": "01. Images",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Logos, backgrounds and photos for the fixed elements of templates. Upload images opens the file choice (several at once); you can also drop images onto the grid. Allowed are JPG, PNG and WebP up to 15 MB (no SVG for security reasons)."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "The server re-encodes every image: it drops the metadata (EXIF, GPS – where and with what the photo was taken), turns the photo upright and scales it down to 4000 px at most. Transparency of PNG / WebP stays.",
+                "A click on the thumbnail opens the image in full size; an image can be renamed and deleted to the trash.",
+                "Upload only images you may use – photos of people with their consent, works of others with a licence."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Fonts",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Font set of the application: 25 families with Czech characters (SIL Open Font License), stored on our server – nothing is loaded from Google or any other external service. The sample sentence shows the look of a font."
+            },
+            {
+              "type": "text",
+              "content": "My fonts: upload a brand or own font with Upload a font – a TTF, OTF, WOFF or WOFF2 file up to 5 MB, the family name, the weight (100–900) and the style (normal / italic). Every face (e.g. Bold, Italic) is uploaded separately; one combination of family, weight and style can exist once."
+            },
+            {
+              "type": "alert",
+              "content": "Upload only fonts you may use – the licence of the font must allow its use in graphics.",
+              "variant": "warning"
+            }
+          ]
+        },
+        {
+          "heading": "03. Icons",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Icon set (Lucide, ISC licence) for templates – colour and size of an icon are set in the template. Search by the English name. Brand logos (social networks) are not included; if you may use one, upload it as an image."
+            }
+          ]
+        },
+        {
+          "key": "trash",
+          "heading": "04. Trash",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Deleted images and fonts are in the view Trash of their tab: Restore, Delete for good, Empty the trash. Files in the trash count towards your quota until you empty it; after the retention period (default 30 days) they are deleted automatically."
+            }
+          ]
+        }
+      ]
+    },
+    "js-creator-settings": {
+      "navLabel": "Settings",
+      "header": "JS Creator – Settings",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "The settings decide how much space the workspaces have. You do not see the content of the workspaces here – numbers only."
+            }
+          ]
+        },
+        {
+          "heading": "01. Default quota",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Space for the files of one account (outputs, images, fonts – trash included) unless the account has its own quota. The default is 1024 MB; it is entered in MB (1 to 102 400)."
+            },
+            {
+              "type": "note",
+              "content": "The disk of the server is shared with the database, the backups and the other applications – set quotas with a reserve.",
+              "highlight": "Tip"
+            }
+          ]
+        },
+        {
+          "key": "quota",
+          "heading": "02. Accounts",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The table shows the accounts with access to the application (permission Show the JS Creator application or the sysadmin role) and the accounts that still have data in it (\"no access\"): numbers of folders, images and fonts, used space and quota. The pencil sets an own quota of an account, or returns it to the default."
+            },
+            {
+              "type": "alert",
+              "content": "When an account is deleted for good, its whole workspace with every file is deleted too. An account in the account trash keeps its data for now (for a restore).",
+              "variant": "warning"
+            }
+          ]
+        }
+      ]
+    },
+    "js-creator-logs": {
+      "navLabel": "Logs – JS Creator",
+      "header": "JS Creator – logs",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Audit log of JS Creator: who created, changed, deleted or restored a folder, image or font, emptied a trash or changed a quota, and when."
+            },
+            {
+              "type": "text",
+              "content": "The rows contain only the kind and the number of an item – never names or content of a workspace, so the log does not reveal what anybody works on. Filter by user, event, module and IP address, export and draw charts."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

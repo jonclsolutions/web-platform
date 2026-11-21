@@ -1,0 +1,47 @@
+/*
+    @file: library-icons.component.css
+    @path: src/app/apps/js-creator/admin/library/library-icons/library-icons.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Tab "Icons" of the library: tiles of the icons with their names, the count and
+        the source line.
+    @dependencies: shared-styles/workspace.css (.ws-*), shared/styles/tokens.css
+*/
+
+/*
+    @module: Icon tiles
+    @description: Square-ish tile with the icon above its name (unstyled list).
+    @usage: .lc-grid > .lc-icon > app-creator-icon, .lc-name; .lc-count, .lc-hint, .lc-source
+*/
+.lc-grid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lc-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 14px 6px 10px;
+  border: 1px solid var(--color-sand-200);
+  border-radius: 12px;
+  color: var(--color-zinc-800);
+}
+
+.lc-name {
+  max-width: 100%;
+  font-size: 0.68rem;
+  color: var(--color-zinc-500);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lc-count { font-size: 0.75rem; color: var(--color-zinc-500); }
+
+.lc-hint { margin: 0; }
+
+.lc-source { margin: 0; font-size: 0.72rem; color: var(--color-zinc-400); }

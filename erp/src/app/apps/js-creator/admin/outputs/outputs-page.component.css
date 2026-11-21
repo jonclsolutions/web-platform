@@ -1,0 +1,158 @@
+/*
+    @file: outputs-page.component.css
+    @path: src/app/apps/js-creator/admin/outputs/outputs-page.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Layout of the page "Outputs": the tree panel beside the content panel (stacked
+        on small screens), the path of the selected folder, its subfolders and the rows of the
+        folder trash.
+    @dependencies: shared-styles/workspace.css (.ws-*), shared/styles/tokens.css
+*/
+
+/*
+    @module: Two panels
+    @description: Tree 300 px on the left, content on the right; one column under 900 px.
+    @usage: .op-layout > .op-tree (.op-tree-head, .op-drag-hint - not on touch screens), .op-content
+*/
+.op-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.op-tree-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.op-drag-hint { margin: 0; }
+
+/* Dragging needs a pointer - no hint on touch screens. */
+@media (hover: none) {
+  .op-drag-hint { display: none; }
+}
+
+@media (max-width: 900px) {
+  .op-layout { grid-template-columns: 1fr; }
+}
+
+/*
+    @module: Content of a folder
+    @description: Path (breadcrumbs) of the selected folder with its actions on the right, tiles
+        of its subfolders, the title of the empty state.
+    @usage: .op-content-head > .op-path (.op-crumb(--current), .op-crumb-sep), .op-folder-actions;
+        .op-subfolders > .op-subfolder; .op-empty-title
+*/
+.op-content-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.op-folder-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.op-path {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 0.82rem;
+}
+
+.op-crumb {
+  padding: 3px 6px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--color-zinc-600);
+  cursor: pointer;
+}
+
+.op-crumb:hover,
+.op-crumb:focus-visible { background: var(--color-zinc-100); color: var(--color-zinc-900); }
+
+.op-crumb--current { font-weight: 700; color: var(--color-zinc-900); }
+
+.op-crumb-sep { color: var(--color-zinc-400); }
+
+.op-subfolders {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.op-subfolder {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 11px 13px;
+  border: 1px solid var(--color-sand-200);
+  border-radius: 12px;
+  background: var(--color-zinc-50);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-zinc-900);
+  text-align: left;
+  cursor: pointer;
+}
+
+.op-subfolder span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.op-subfolder:hover,
+.op-subfolder:focus-visible { background: var(--color-white); border-color: var(--color-zinc-300); }
+
+.op-empty-title {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--color-zinc-700);
+}
+
+/*
+    @module: Folder trash
+    @description: One row per deleted folder: icon, name, date, actions (wrap on a phone).
+    @usage: .op-trash > .op-trash-row > .op-trash-name, .op-trash-date, .op-trash-actions
+*/
+.op-trash {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.op-trash-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-sand-200);
+  border-radius: 12px;
+  font-size: 0.82rem;
+}
+
+.op-trash-name {
+  flex: 1;
+  min-width: 120px;
+  font-weight: 600;
+  color: var(--color-zinc-900);
+}
+
+.op-trash-date { font-size: 0.75rem; color: var(--color-zinc-500); }
+
+.op-trash-actions { display: flex; gap: 6px; }

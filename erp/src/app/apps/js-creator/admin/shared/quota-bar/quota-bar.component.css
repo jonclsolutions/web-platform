@@ -1,0 +1,66 @@
+/*
+    @file: quota-bar.component.css
+    @path: src/app/apps/js-creator/admin/shared/quota-bar/quota-bar.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Usage bar of a workspace: label and value on one row, a thin track with the fill,
+        notes under it; amber from 80 %, red when full.
+    @dependencies: shared/styles/tokens.css (--color-*)
+*/
+
+/*
+    @module: Usage bar
+    @description: Compact card under the page header.
+    @usage: .qb(--ok|--warning|--full) > .qb-row (.qb-label, .qb-value), .qb-track > .qb-fill,
+        .qb-note, .qb-trash
+*/
+.qb {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-sand-200);
+  border-radius: 12px;
+  background: var(--color-white);
+  font-size: 0.8rem;
+  color: var(--color-zinc-700, #3f3f46);
+}
+
+.qb-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.qb-label { font-weight: 600; color: var(--color-zinc-900); }
+
+.qb-value { font-variant-numeric: tabular-nums; }
+
+.qb-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-zinc-100);
+  overflow: hidden;
+}
+
+.qb-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-zinc-900);
+  transition: width 0.3s ease;
+}
+
+.qb--warning .qb-fill { background: var(--color-amber-500, #f59e0b); }
+.qb--full .qb-fill { background: var(--color-rose-600, #e11d48); }
+
+.qb-note,
+.qb-trash {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-zinc-500);
+}
+
+.qb--warning .qb-note { color: var(--color-amber-700, #b45309); }
+.qb--full .qb-note { color: var(--color-rose-700, #be123c); font-weight: 600; }

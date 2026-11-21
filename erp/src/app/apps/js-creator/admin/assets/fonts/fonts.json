@@ -1,0 +1,901 @@
+{
+ "families": [
+  {
+   "family": "Inter",
+   "slug": "inter",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/inter@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "inter/inter-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "inter/inter-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "inter/inter-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "inter/inter-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Roboto",
+   "slug": "roboto",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/roboto@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "roboto/roboto-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "roboto/roboto-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "roboto/roboto-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "roboto/roboto-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Open Sans",
+   "slug": "open-sans",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/open-sans@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "open-sans/open-sans-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "open-sans/open-sans-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "open-sans/open-sans-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "open-sans/open-sans-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Montserrat",
+   "slug": "montserrat",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/montserrat@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "montserrat/montserrat-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "montserrat/montserrat-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "montserrat/montserrat-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "montserrat/montserrat-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Poppins",
+   "slug": "poppins",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/poppins@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "poppins/poppins-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "poppins/poppins-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "poppins/poppins-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "poppins/poppins-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Fira Sans",
+   "slug": "fira-sans",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/fira-sans@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "fira-sans/fira-sans-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "fira-sans/fira-sans-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "fira-sans/fira-sans-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "fira-sans/fira-sans-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Source Sans 3",
+   "slug": "source-sans-3",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/source-sans-3@5.3.1",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "source-sans-3/source-sans-3-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "source-sans-3/source-sans-3-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "source-sans-3/source-sans-3-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "source-sans-3/source-sans-3-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Nunito",
+   "slug": "nunito",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/nunito@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "nunito/nunito-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "nunito/nunito-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "nunito/nunito-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "nunito/nunito-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Raleway",
+   "slug": "raleway",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/raleway@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "raleway/raleway-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "raleway/raleway-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "raleway/raleway-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "raleway/raleway-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Work Sans",
+   "slug": "work-sans",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/work-sans@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "work-sans/work-sans-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "work-sans/work-sans-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "work-sans/work-sans-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "work-sans/work-sans-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "DM Sans",
+   "slug": "dm-sans",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/dm-sans@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "dm-sans/dm-sans-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "dm-sans/dm-sans-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "dm-sans/dm-sans-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "dm-sans/dm-sans-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Manrope",
+   "slug": "manrope",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/manrope@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "manrope/manrope-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "manrope/manrope-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "manrope/manrope-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "manrope/manrope-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Rubik",
+   "slug": "rubik",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/rubik@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "rubik/rubik-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "rubik/rubik-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "rubik/rubik-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "rubik/rubik-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Barlow",
+   "slug": "barlow",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/barlow@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "barlow/barlow-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "barlow/barlow-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "barlow/barlow-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "barlow/barlow-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Space Grotesk",
+   "slug": "space-grotesk",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/space-grotesk@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "space-grotesk/space-grotesk-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "space-grotesk/space-grotesk-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "space-grotesk/space-grotesk-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "space-grotesk/space-grotesk-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Oswald",
+   "slug": "oswald",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/oswald@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "oswald/oswald-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "oswald/oswald-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "oswald/oswald-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "oswald/oswald-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Bebas Neue",
+   "slug": "bebas-neue",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/bebas-neue@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "bebas-neue/bebas-neue-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "bebas-neue/bebas-neue-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Anton",
+   "slug": "anton",
+   "category": "sans-serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/anton@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "anton/anton-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "anton/anton-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Playfair Display",
+   "slug": "playfair-display",
+   "category": "serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/playfair-display@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "playfair-display/playfair-display-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "playfair-display/playfair-display-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "playfair-display/playfair-display-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "playfair-display/playfair-display-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Merriweather",
+   "slug": "merriweather",
+   "category": "serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/merriweather@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "merriweather/merriweather-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "merriweather/merriweather-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "merriweather/merriweather-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "merriweather/merriweather-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Lora",
+   "slug": "lora",
+   "category": "serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/lora@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "lora/lora-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "lora/lora-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "lora/lora-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "lora/lora-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "PT Serif",
+   "slug": "pt-serif",
+   "category": "serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/pt-serif@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "pt-serif/pt-serif-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "pt-serif/pt-serif-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "pt-serif/pt-serif-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "pt-serif/pt-serif-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "EB Garamond",
+   "slug": "eb-garamond",
+   "category": "serif",
+   "license": "OFL-1.1",
+   "source": "@fontsource/eb-garamond@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "eb-garamond/eb-garamond-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "eb-garamond/eb-garamond-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "eb-garamond/eb-garamond-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "eb-garamond/eb-garamond-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Dancing Script",
+   "slug": "dancing-script",
+   "category": "handwriting",
+   "license": "OFL-1.1",
+   "source": "@fontsource/dancing-script@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "dancing-script/dancing-script-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "dancing-script/dancing-script-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "dancing-script/dancing-script-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "dancing-script/dancing-script-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "Caveat",
+   "slug": "caveat",
+   "category": "handwriting",
+   "license": "OFL-1.1",
+   "source": "@fontsource/caveat@5.3.0",
+   "faces": [
+    {
+     "weight": 400,
+     "style": "normal",
+     "files": [
+      {
+       "file": "caveat/caveat-latin-400-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "caveat/caveat-latin-ext-400-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    },
+    {
+     "weight": 700,
+     "style": "normal",
+     "files": [
+      {
+       "file": "caveat/caveat-latin-700-normal.woff2",
+       "unicodeRange": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+       "file": "caveat/caveat-latin-ext-700-normal.woff2",
+       "unicodeRange": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

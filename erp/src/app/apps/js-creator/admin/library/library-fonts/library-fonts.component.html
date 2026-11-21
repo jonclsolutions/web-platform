@@ -1,0 +1,118 @@
+<!--
+    @file: library-fonts.component.html
+    @path: src/app/apps/js-creator/admin/library/library-fonts/library-fonts.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Tab "Fonts": own fonts (view switch, upload, list with a preview and the actions;
+        trash), the curated set (preview of every family), the popup of a font (file, family,
+        weight, style).
+-->
+<section class="ws-panel">
+  <div class="ws-toolbar">
+    <h2 class="ws-panel-title">{{ t('own_fonts') }}</h2>
+    <app-row-button-builder kind="filter" size="sm" [items]="viewItems" [active]="view" (selected)="switchView($event)" [ariaLabel]="t('view_label')" />
+    <span class="ws-toolbar-spacer"></span>
+    @if (view === 'active' && canCreate) {
+      <button type="button" class="ws-btn ws-btn--primary" (click)="openUpload()">{{ t('upload_font') }}</button>
+    }
+    @if (view === 'trash' && canDelete && own.length) {
+      <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="emptyTrash()">{{ t('empty_trash') }}</button>
+    }
+  </div>
+  @if (view === 'active') {
+    <p class="ws-panel-hint lf-hint">{{ t('own_fonts_hint') }}</p>
+  } @else {
+    <p class="ws-trash-note">{{ t('trash_note') }}</p>
+  }
+
+  @if (own.length) {
+    <ul class="lf-list">
+      @for (font of own; track font.id) {
+        <li class="lf-row">
+          <div class="lf-main">
+            <span class="lf-sample" [style.font-family]="ownFamily(font)" [style.font-weight]="font.weight" [style.font-style]="font.style">{{ t('sample_text') }}</span>
+            <span class="lf-meta">{{ font.family }} · {{ font.weight }} · {{ t('style_' + font.style) }} · {{ font.format.toUpperCase() }} · {{ size(font.size_bytes) }}</span>
+          </div>
+          <span class="lf-actions">
+            @if (view === 'active') {
+              @if (canUpdate) {
+                <button type="button" class="ws-icon-btn" [title]="t('edit_face')" [attr.aria-label]="t('edit_face')" (click)="openEdit(font)"><app-icon name="edit" [size]="15"></app-icon></button>
+              }
+              @if (canDelete) {
+                <button type="button" class="ws-icon-btn ws-icon-btn--danger" [title]="t('delete')" [attr.aria-label]="t('delete')" [disabled]="busy" (click)="remove(font)"><app-icon name="trash" [size]="15"></app-icon></button>
+              }
+            } @else if (canDelete) {
+              <button type="button" class="ws-icon-btn" [title]="t('restore')" [attr.aria-label]="t('restore')" [disabled]="busy" (click)="restore(font)"><app-icon name="restore" [size]="15"></app-icon></button>
+              <button type="button" class="ws-icon-btn ws-icon-btn--danger" [title]="t('destroy')" [attr.aria-label]="t('destroy')" [disabled]="busy" (click)="destroy(font)"><app-icon name="purge" [size]="15"></app-icon></button>
+            }
+          </span>
+        </li>
+      }
+    </ul>
+  } @else {
+    <div class="ws-empty">{{ view === 'trash' ? t('trash_empty') : t('own_fonts_empty') }}</div>
+  }
+</section>
+
+<section class="ws-panel">
+  <h2 class="ws-panel-title">{{ t('curated_fonts') }}</h2>
+  <p class="ws-panel-hint">{{ t('curated_fonts_hint') }}</p>
+  <ul class="lf-list">
+    @for (family of curated; track family.slug) {
+      <li class="lf-row">
+        <div class="lf-main">
+          <span class="lf-sample" [style.font-family]="curatedFamily(family)">{{ t('sample_text') }}</span>
+          <span class="lf-meta">{{ family.family }} · {{ t('category_' + family.category) }} · {{ t('weights') }} {{ weightsOf(family) }} · {{ family.license }}</span>
+        </div>
+      </li>
+    }
+  </ul>
+</section>
+
+@if (dialog; as d) {
+  <app-admin-modal [heading]="d.font ? t('edit_face') : t('upload_font')" [subheading]="d.font ? d.font.family : ''" size="sm"
+    [closeDisabled]="busy" (dismissed)="closeDialog()">
+    <form [id]="formId" (ngSubmit)="submit()">
+      @if (!d.font) {
+        <div class="ws-field">
+          <label for="jc-font-file">{{ t('font_file') }}</label>
+          <input id="jc-font-file" name="file" type="file" [accept]="accept" (change)="onFileChosen($event)" data-autofocus />
+          <p class="ws-field-hint">{{ uploadHint }}</p>
+        </div>
+      }
+      <div class="ws-field">
+        <label for="jc-font-family">{{ t('font_family') }}</label>
+        <input id="jc-font-family" name="family" type="text" maxlength="80" autocomplete="off" [(ngModel)]="d.family" />
+      </div>
+      <div class="lf-face">
+        <div class="ws-field">
+          <label for="jc-font-weight">{{ t('font_weight') }}</label>
+          <select id="jc-font-weight" name="weight" [(ngModel)]="d.weight">
+            @for (w of weights; track w) {
+              <option [ngValue]="w">{{ w }}</option>
+            }
+          </select>
+        </div>
+        <div class="ws-field">
+          <label for="jc-font-style">{{ t('font_style') }}</label>
+          <select id="jc-font-style" name="style" [(ngModel)]="d.style">
+            @for (s of styles; track s) {
+              <option [ngValue]="s">{{ t('style_' + s) }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      @if (!d.font) {
+        <p class="ws-field-hint">{{ t('font_license_notice') }}</p>
+      }
+      @if (d.error) {
+        <p class="ws-field-error" role="alert">{{ d.error }}</p>
+      }
+    </form>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" [disabled]="busy" (click)="closeDialog()">{{ t('cancel') }}</button>
+      <button type="submit" class="am-btn am-btn--primary" [attr.form]="formId" [disabled]="busy">{{ d.font ? t('save') : t('upload') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}

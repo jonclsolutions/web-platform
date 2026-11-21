@@ -1,5 +1,12 @@
 {
-    "unreleased": [],
+    "unreleased": [
+        {
+            "type": "added",
+            "area": "js-creator",
+            "part": "admin",
+            "text": "New application JS Creator (social network posts from own templates, no AI), part 1: a private workspace per account, output folders with a trash, a library of images, own fonts, 25 fonts with Czech characters, icons, quotas and an audit log."
+        }
+    ],
     "releases": [
         {
             "version": "v2026.11.6",

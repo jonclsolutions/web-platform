@@ -1,0 +1,316 @@
+/*
+    @file: workspace.css
+    @path: src/app/apps/js-creator/admin/shared-styles/workspace.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Shared look of the workspace pages of JS Creator (outputs, library, settings):
+        page column, toolbar, pill buttons, panels, card grid, empty state, form fields of the
+        popups and the note of the trash.
+    @dependencies: admin/shared-styles/theme.css (tokens, included before this file),
+        shared/styles/tokens.css (--color-*)
+*/
+
+/*
+    @module: Page column
+    @description: Column of the page with the header, the usage bar and the content.
+    @usage: .ws-page
+*/
+.ws-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 1240px;
+  padding-bottom: 28px;
+  font-family: var(--ff);
+  color: var(--text);
+}
+
+/*
+    @module: Toolbar and buttons
+    @description: Row of controls above a list; pill buttons - primary (black), ghost (white),
+        danger (red), small; square icon buttons of a card or a tree row.
+    @usage: .ws-toolbar, .ws-toolbar-spacer, .ws-btn(--primary|--ghost|--danger|--sm),
+        .ws-icon-btn(--danger), .ws-search
+*/
+.ws-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ws-toolbar-spacer { flex: 1; }
+
+.ws-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-zinc-200);
+  background: var(--color-white);
+  color: var(--color-zinc-900);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.ws-btn:hover:not(:disabled),
+.ws-btn:focus-visible { background: var(--color-zinc-100); }
+
+.ws-btn:disabled { opacity: 0.55; cursor: default; }
+
+.ws-btn--primary {
+  border-color: var(--color-zinc-900);
+  background: var(--color-zinc-900);
+  color: var(--color-white);
+}
+
+.ws-btn--primary:hover:not(:disabled),
+.ws-btn--primary:focus-visible { background: var(--color-zinc-700); }
+
+.ws-btn--danger {
+  border-color: var(--color-rose-200);
+  color: var(--color-rose-700);
+}
+
+.ws-btn--danger:hover:not(:disabled),
+.ws-btn--danger:focus-visible { background: var(--color-rose-50); }
+
+.ws-btn--sm { padding: 5px 11px; font-size: 0.75rem; }
+
+.ws-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-zinc-600);
+  cursor: pointer;
+}
+
+.ws-icon-btn:hover:not(:disabled),
+.ws-icon-btn:focus-visible {
+  border-color: var(--color-zinc-200);
+  background: var(--color-white);
+  color: var(--color-zinc-900);
+}
+
+.ws-icon-btn--danger:hover:not(:disabled),
+.ws-icon-btn--danger:focus-visible { color: var(--color-rose-700); }
+
+.ws-icon-btn:disabled { opacity: 0.4; cursor: default; }
+
+.ws-search {
+  min-width: 200px;
+  padding: 7px 12px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 999px;
+  background: var(--color-white);
+  font-family: inherit;
+  font-size: 0.8rem;
+  color: var(--color-zinc-900);
+}
+
+/*
+    @module: Panel
+    @description: White card of a block of the page with an optional small title and hint.
+    @usage: .ws-panel > .ws-panel-title, .ws-panel-hint
+*/
+.ws-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--color-sand-200);
+  border-radius: 16px;
+  background: var(--color-white);
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
+}
+
+.ws-panel-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-zinc-900);
+}
+
+.ws-panel-hint {
+  margin: -6px 0 0;
+  font-size: 0.78rem;
+  color: var(--color-zinc-500);
+}
+
+/*
+    @module: Empty state and notes
+    @description: Dashed box of an empty list; the note of the trash (deleted items are removed
+        for good after the retention period).
+    @usage: .ws-empty, .ws-trash-note
+*/
+.ws-empty {
+  padding: 28px 18px;
+  border: 1px dashed var(--color-zinc-300);
+  border-radius: 14px;
+  background: var(--color-zinc-50);
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--color-zinc-500);
+}
+
+.ws-trash-note {
+  margin: 0;
+  padding: 9px 13px;
+  border: 1px solid var(--color-amber-200);
+  border-radius: 12px;
+  background: var(--color-amber-50);
+  font-size: 0.78rem;
+  color: var(--color-amber-800);
+}
+
+/*
+    @module: Card grid
+    @description: Responsive grid of cards (images, fonts, icons): preview, name, details and
+        the actions of a card.
+    @usage: .ws-grid(--icons) > .ws-card > .ws-card-preview, .ws-card-body (.ws-card-name,
+        .ws-card-meta), .ws-card-actions
+*/
+.ws-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+.ws-grid--icons { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+
+.ws-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--color-sand-200);
+  border-radius: 14px;
+  background: var(--color-white);
+  overflow: hidden;
+}
+
+.ws-card-preview {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background-color: var(--color-zinc-50);
+  /* Chequered background - transparent images stay visible. */
+  background-image:
+    linear-gradient(45deg, var(--color-zinc-100) 25%, transparent 25%, transparent 75%, var(--color-zinc-100) 75%),
+    linear-gradient(45deg, var(--color-zinc-100) 25%, transparent 25%, transparent 75%, var(--color-zinc-100) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 8px 8px;
+}
+
+/* The image fills the box of a fixed shape whatever its own proportions. */
+.ws-card-preview img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 8px;
+  object-fit: contain;
+}
+
+.ws-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 4px;
+  min-width: 0;
+}
+
+.ws-card-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-zinc-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-card-meta {
+  font-size: 0.72rem;
+  color: var(--color-zinc-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.ws-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 2px 6px 6px;
+  margin-top: auto;
+}
+
+/*
+    @module: Form fields of the popups
+    @description: Label above the control, hint and error under it; a row of radio options.
+    @usage: .ws-field > label, input, select, .ws-field-hint, .ws-field-error; .ws-choice
+*/
+.ws-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+
+.ws-field label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-zinc-700);
+}
+
+.ws-field input:not([type='radio']):not([type='file']),
+.ws-field select {
+  padding: 8px 11px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 10px;
+  background: var(--color-white);
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--color-zinc-900);
+}
+
+.ws-field-hint {
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--color-zinc-500);
+}
+
+.ws-field-error {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-rose-700);
+}
+
+.ws-choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--color-zinc-800);
+}
+
+/*
+    @module: Small screens
+    @description: Full-width search and smaller cards on a phone.
+    @usage: .ws-search, .ws-grid
+*/
+@media (max-width: 640px) {
+  .ws-search { flex: 1 1 100%; min-width: 0; }
+  .ws-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+}

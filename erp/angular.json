@@ -36,6 +36,12 @@
                 "glob": "*/public/i18n/*.json",
                 "input": "src/app/apps",
                 "output": "assets/i18n/apps"
+              },
+              {
+                "glob": "*/admin/assets/**/*",
+                "input": "src/app/apps",
+                "output": "assets/apps",
+                "ignore": ["**/*.md"]
               }
             ],
             "styles": [
@@ -129,6 +135,12 @@
                 "glob": "*/public/i18n/*.json",
                 "input": "src/app/apps",
                 "output": "assets/i18n/apps"
+              },
+              {
+                "glob": "*/admin/assets/**/*",
+                "input": "src/app/apps",
+                "output": "assets/apps",
+                "ignore": ["**/*.md"]
               }
             ],
             "styles": [

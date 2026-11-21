@@ -15,7 +15,7 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 /** Names of the available icons. */
-export type AdminIconName = 'bar-chart' | 'book' | 'box' | 'briefcase' | 'building' | 'calendar' | 'cart' | 'check-circle' | 'check-square' | 'chevron-down' | 'clock' | 'code' | 'credit-card' | 'dollar' | 'external-link' | 'file-lines' | 'file-text' | 'folder' | 'globe' | 'globe-settings' | 'help-circle' | 'home' | 'languages' | 'layers' | 'layout' | 'list' | 'lock' | 'message' | 'settings' | 'shield' | 'shield-check' | 'shopping-bag' | 'star' | 'tag' | 'trash' | 'truck' | 'user' | 'user-check' | 'users' | 'window';
+export type AdminIconName = 'bar-chart' | 'book' | 'box' | 'briefcase' | 'building' | 'calendar' | 'cart' | 'check-circle' | 'check-square' | 'chevron-down' | 'clock' | 'code' | 'credit-card' | 'dollar' | 'external-link' | 'file-lines' | 'file-text' | 'folder' | 'globe' | 'globe-settings' | 'help-circle' | 'home' | 'image' | 'languages' | 'layers' | 'layout' | 'list' | 'lock' | 'message' | 'settings' | 'shield' | 'shield-check' | 'shopping-bag' | 'star' | 'tag' | 'trash' | 'truck' | 'user' | 'user-check' | 'users' | 'window';
 
 @Component({
   selector: 'app-admin-icon',
@@ -44,6 +44,7 @@ export type AdminIconName = 'bar-chart' | 'book' | 'box' | 'briefcase' | 'buildi
       @case ('globe-settings') { <circle cx="12" cy="12" r="3"/> <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/> <path d="M12 2a10 10 0 0 1 0 20A10 10 0 0 1 12 2z"/> }
       @case ('help-circle') { <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/> }
       @case ('home') { <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/> <polyline points="9 22 9 12 15 12 15 22"/> }
+      @case ('image') { <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/> }
       @case ('languages') { <path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/> }
       @case ('layers') { <polygon points="12 2 2 7 12 12 22 7 12 2"/> <polyline points="2 17 12 22 22 17"/> <polyline points="2 12 12 17 22 12"/> }
       @case ('layout') { <rect x="3" y="3" width="18" height="18" rx="2"/> <path d="M9 3v18"/> <path d="M3 9h6"/> }

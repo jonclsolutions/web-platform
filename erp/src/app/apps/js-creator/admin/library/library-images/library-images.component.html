@@ -1,0 +1,95 @@
+<!--
+    @file: library-images.component.html
+    @path: src/app/apps/js-creator/admin/library/library-images/library-images.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Tab "Images": toolbar (view switch, search, upload with its hint), the grid of
+        the images (drop zone for files) with the actions of a card, "load more", the rename popup.
+-->
+<section class="ws-panel">
+  <div class="ws-toolbar">
+    <app-row-button-builder kind="filter" size="sm" [items]="viewItems" [active]="view" (selected)="switchView($event)" [ariaLabel]="t('view_label')" />
+    <input class="ws-search" type="search" [placeholder]="t('search_placeholder')" [attr.aria-label]="t('search_placeholder')"
+      [(ngModel)]="search" (ngModelChange)="onSearch()" />
+    <span class="ws-toolbar-spacer"></span>
+    @if (view === 'active' && canCreate) {
+      <span class="li-hint">{{ uploadHint }}</span>
+      <label class="ws-btn ws-btn--primary li-upload" [class.li-upload--busy]="!!uploading">
+        {{ t('upload_images') }}
+        <input type="file" multiple [accept]="accept" [disabled]="!!uploading" (change)="onFilesChosen($event)" />
+      </label>
+    }
+    @if (view === 'trash' && canDelete && items.length) {
+      <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="emptyTrash()">{{ t('empty_trash') }}</button>
+    }
+  </div>
+
+  @if (view === 'trash') {
+    <p class="ws-trash-note">{{ t('trash_note') }}</p>
+  }
+  @if (uploading; as u) {
+    <p class="li-progress" role="status">{{ t('uploading') }} {{ u.done }} / {{ u.total }} …</p>
+  }
+
+  <div class="li-drop" [class.li-drop--over]="dragOver" (dragover)="onDragOver($event)" (dragleave)="onDragLeave()" (drop)="onDrop($event)">
+    @if (items.length) {
+      <div class="ws-grid">
+        @for (asset of items; track asset.id) {
+          <article class="ws-card">
+            <a class="ws-card-preview" [href]="asset.url" target="_blank" rel="noopener" [title]="t('open_original')">
+              <img [src]="asset.thumb_url" [alt]="asset.name" loading="lazy" />
+            </a>
+            <div class="ws-card-body">
+              <span class="ws-card-name" [title]="asset.name">{{ asset.name }}</span>
+              <span class="ws-card-meta">{{ asset.width }} × {{ asset.height }} px · {{ size(asset.size_bytes) }}</span>
+            </div>
+            <div class="ws-card-actions">
+              @if (view === 'active') {
+                @if (canUpdate) {
+                  <button type="button" class="ws-icon-btn" [title]="t('rename')" [attr.aria-label]="t('rename')" (click)="openRename(asset)"><app-icon name="edit" [size]="15"></app-icon></button>
+                }
+                @if (canDelete) {
+                  <button type="button" class="ws-icon-btn ws-icon-btn--danger" [title]="t('delete')" [attr.aria-label]="t('delete')" [disabled]="busy" (click)="remove(asset)"><app-icon name="trash" [size]="15"></app-icon></button>
+                }
+              } @else if (canDelete) {
+                <button type="button" class="ws-icon-btn" [title]="t('restore')" [attr.aria-label]="t('restore')" [disabled]="busy" (click)="restore(asset)"><app-icon name="restore" [size]="15"></app-icon></button>
+                <button type="button" class="ws-icon-btn ws-icon-btn--danger" [title]="t('destroy')" [attr.aria-label]="t('destroy')" [disabled]="busy" (click)="destroy(asset)"><app-icon name="purge" [size]="15"></app-icon></button>
+              }
+            </div>
+          </article>
+        }
+      </div>
+      @if (page < lastPage) {
+        <div class="li-more">
+          <button type="button" class="ws-btn" [disabled]="loading" (click)="loadMore()">{{ t('load_more') }} ({{ items.length }} / {{ total }})</button>
+        </div>
+      }
+    } @else if (!loading) {
+      <div class="ws-empty">
+        {{ view === 'trash' ? t('trash_empty') : (search ? t('nothing_found') : t('images_empty')) }}
+        @if (view === 'active' && canCreate && !search) {
+          <br />{{ t('drop_hint') }}
+        }
+      </div>
+    }
+  </div>
+</section>
+
+@if (renaming; as r) {
+  <app-admin-modal [heading]="t('rename_title')" [subheading]="r.asset.name" size="sm" [closeDisabled]="busy" (dismissed)="closeRename()">
+    <form [id]="formId" (ngSubmit)="submitRename()">
+      <div class="ws-field">
+        <label for="jc-asset-name">{{ t('name') }}</label>
+        <input id="jc-asset-name" name="name" type="text" maxlength="150" autocomplete="off" [(ngModel)]="r.name" data-autofocus />
+      </div>
+      @if (r.error) {
+        <p class="ws-field-error" role="alert">{{ r.error }}</p>
+      }
+    </form>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" [disabled]="busy" (click)="closeRename()">{{ t('cancel') }}</button>
+      <button type="submit" class="am-btn am-btn--primary" [attr.form]="formId" [disabled]="busy">{{ t('save') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}

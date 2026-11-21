@@ -1,0 +1,28 @@
+<!--
+    @file: quota-bar.component.html
+    @path: src/app/apps/js-creator/admin/shared/quota-bar/quota-bar.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Usage bar of the workspace: text "used of allowed (percent)", the bar, a note on
+        a full workspace and on the space taken by the trash.
+-->
+@if (usage(); as u) {
+  <div class="qb qb--{{ level() }}">
+    <div class="qb-row">
+      <span class="qb-label">{{ t('quota_label') }}</span>
+      <span class="qb-value">{{ size(u.used_bytes) }} {{ t('quota_of') }} {{ size(u.quota_bytes) }} ({{ percent() }} %)</span>
+    </div>
+    <div class="qb-track" role="progressbar" [attr.aria-valuenow]="percent()" aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="t('quota_label')">
+      <div class="qb-fill" [style.width.%]="percent()"></div>
+    </div>
+    @if (level() === 'full') {
+      <p class="qb-note">{{ t('quota_full') }}</p>
+    } @else if (level() === 'warning') {
+      <p class="qb-note">{{ t('quota_warning') }}</p>
+    }
+    @if (u.trash_bytes > 0) {
+      <p class="qb-trash">{{ t('quota_trash') }} {{ size(u.trash_bytes) }}</p>
+    }
+  </div>
+}

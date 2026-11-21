@@ -38,7 +38,7 @@ export interface AppMaintenance {
 }
 
 /** Ids of the applications (the same as the API registry, config/apps.php). */
-export type AppId = 'web' | 'shop' | 'project-portal';
+export type AppId = 'web' | 'shop' | 'project-portal' | 'js-creator';
 
 /** Manifest of one application. */
 export interface AppManifest {

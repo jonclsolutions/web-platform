@@ -27,6 +27,9 @@
         <testsuite name="ProjectPortal">
             <directory>tests/Apps/ProjectPortal</directory>
         </testsuite>
+        <testsuite name="JsCreator">
+            <directory>tests/Apps/JsCreator</directory>
+        </testsuite>
         <testsuite name="Other">
             <directory>tests/Unit/Other</directory>
             <directory>tests/Feature/Other</directory>

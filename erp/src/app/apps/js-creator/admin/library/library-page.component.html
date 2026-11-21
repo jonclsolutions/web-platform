@@ -1,0 +1,19 @@
+<!--
+    @file: library-page.component.html
+    @path: src/app/apps/js-creator/admin/library/library-page.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Page "Library": header, usage bar, the tabs and the content of the open tab.
+-->
+<div class="ws-page">
+  <app-page-header [title]="t('header')" [subtitle]="t('subtitle')"></app-page-header>
+  <app-quota-bar />
+  <app-row-button-builder kind="tabs" [items]="tabItems" [active]="tab" [stretch]="true" (selected)="switchTab($event)" [ariaLabel]="t('tabs_label')" />
+
+  @switch (tab) {
+    @case ('images') { <app-library-images /> }
+    @case ('fonts') { <app-library-fonts /> }
+    @case ('icons') { <app-library-icons /> }
+  }
+</div>

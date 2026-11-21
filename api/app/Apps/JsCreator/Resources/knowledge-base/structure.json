@@ -1,0 +1,43 @@
+{
+  "pages": [
+    {
+      "id": "js-creator-outputs",
+      "group": "js-creator",
+      "order": 10,
+      "permission": "js-creator-images-view",
+      "devNote": "OutputsPageComponent (apps/js-creator/admin/outputs) + FolderTreeComponent (admin/shared/folder-tree), route 'js-creator/outputs', permission 'js-creator-images-view' (s dalšími sekcemi '…|js-creator-videos-view'). API js-creator/folders (FolderController, FolderTree, tabulka js_creator_folders): GET (?only_trashed=1 = položky koše), POST, PUT {id} (název / parent_id), DELETE {id} (?force=1 = z koše natrvalo), POST {id}/restore, DELETE folders/trash. Pravidla: max. 10 úrovní, unikátní název v nadřazené složce (bez ohledu na velikost písmen), nelze přesunout do vlastní podsložky; smazání přesune celý podstrom do koše jako jednu položku (trash_root_id). Vše jen v pracovním prostoru přihlášeného účtu (ownedBy, cizí ID = 404, ani sysadmin). Vygenerované výstupy přibudou se šablonami (další etapy).",
+      "sections": {
+        "edit": "js-creator-images-create|js-creator-images-update",
+        "trash": "js-creator-images-delete"
+      }
+    },
+    {
+      "id": "js-creator-library",
+      "group": "js-creator",
+      "order": 20,
+      "permission": "js-creator-images-view",
+      "devNote": "LibraryPageComponent (apps/js-creator/admin/library) se záložkami LibraryImagesComponent, LibraryFontsComponent, LibraryIconsComponent; route 'js-creator/library', permission 'js-creator-images-view'. Obrázky: API js-creator/library/assets (AssetController, LibraryImage - přeuložení GD bez metadat, orientace EXIF, max. 4000 px, miniatura WebP 480 px; upload profil js_creator_image), soubory jen přes podepsané URL js-creator/files/assets/{id}/{original|thumb} (FileController, WorkspaceFiles, platnost 1-2 h). Fonty: API js-creator/library/fonts (FontController, typ podle signatury FontFile - TTF/OTF/WOFF/WOFF2, profil js_creator_font), soubor js-creator/files/fonts/{id}; v prohlížeči FontLibraryService (FontFace 'jsc-user-<id>'). Sada fontů: apps/js-creator/admin/assets/fonts (fonts.json, 25 rodin OFL, latin + latin-ext, 'jsc-<slug>'). Ikony: assets/icons/icons.json (Lucide, ISC), IconSetService + CreatorIconComponent. Kvóta: WorkspaceQuota (422 error_code quota_exceeded), GET js-creator/usage + QuotaBarComponent.",
+      "sections": {
+        "upload": "js-creator-images-create",
+        "trash": "js-creator-images-delete"
+      }
+    },
+    {
+      "id": "js-creator-settings",
+      "group": "js-creator",
+      "order": 80,
+      "permission": "js-creator-settings-view",
+      "devNote": "CreatorSettingsComponent (apps/js-creator/admin/settings), route 'js-creator/settings', API GET/PUT js-creator/settings (výchozí kvóta, tabulka js_creator_settings), GET js-creator/settings/users (účty s view-js-creator - role, explicitní oprávnění, sysadmin - a účty s daty; jen čísla), PUT js-creator/settings/users/{id}/quota (js_creator_user_quotas, null = výchozí). SettingsController, oprávnění 'js-creator-settings-view' / '-update'. Retence koše: JsCreatorRetentionSource (klíč js_creator_trash, 30 dní; cleanUp maže soubory bez záznamu starší 1 dne). Trvalé smazání účtu: cizí klíče user_id ON DELETE CASCADE.",
+      "sections": {
+        "quota": "js-creator-settings-update"
+      }
+    },
+    {
+      "id": "js-creator-logs",
+      "group": "js-creator",
+      "order": 900,
+      "permission": "js-creator-view-logs",
+      "devNote": "AuditLogPageComponent (core) with JS_CREATOR_AUDIT_LOG (js-creator-logs.config.ts), route 'js-creator/logs', API GET js-creator/logs (JsCreatorLogController, table js_creator_logs), permission 'js-creator-view-logs'. Záznamy obsahují jen typ a ID (Folder, Asset, Font) a změny kvót / nastavení - nikdy názvy ani obsah pracovního prostoru."
+    }
+  ]
+}

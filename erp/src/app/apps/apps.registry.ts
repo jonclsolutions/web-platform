@@ -18,6 +18,7 @@ import type { AppId, AppManifest } from './app-manifest';
 import { WEB_APP } from './web/web.app';
 import { SHOP_APP } from './shop/shop.app';
 import { PROJECT_PORTAL_APP } from './project-portal/project-portal.app';
+import { JS_CREATOR_APP } from './js-creator/js-creator.app';
 
 export type { AppId, AppManifest } from './app-manifest';
 
@@ -26,6 +27,7 @@ export const APPS: readonly AppManifest[] = [
   WEB_APP,
   SHOP_APP,
   PROJECT_PORTAL_APP,
+  JS_CREATOR_APP,
 ];
 
 /** Ids of the installed applications. */

@@ -1,0 +1,19 @@
+/*
+    @file: creator-icon.component.css
+    @path: src/app/apps/js-creator/admin/shared/creator-icon/creator-icon.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Inline box of an icon of the set.
+    @dependencies: none
+*/
+
+/*
+    @module: Icon box
+    @description: The SVG sits inline without extra line height.
+    @usage: :host, svg
+*/
+:host {
+  display: inline-flex;
+  line-height: 0;
+}

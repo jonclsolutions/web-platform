@@ -1,0 +1,53 @@
+/*
+    @file: library-images.component.css
+    @path: src/app/apps/js-creator/admin/library/library-images/library-images.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Tab "Images" of the library: the upload button with its hidden file input, the
+        hint of the allowed files, the progress line, the drop zone and "load more".
+    @dependencies: shared-styles/workspace.css (.ws-*), shared/styles/tokens.css
+*/
+
+/*
+    @module: Upload
+    @description: A label styled as a button opens the hidden file input; the hint beside it.
+    @usage: .li-upload(--busy) > input[type=file], .li-hint, .li-progress
+*/
+.li-upload { position: relative; }
+
+.li-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.li-upload--busy { opacity: 0.55; }
+
+.li-hint { font-size: 0.72rem; color: var(--color-zinc-500); }
+
+.li-progress { margin: 0; font-size: 0.8rem; color: var(--color-zinc-700); }
+
+/*
+    @module: Drop zone and paging
+    @description: The grid accepts dropped files (dashed outline while a file is over it);
+        "load more" centred under the grid.
+    @usage: .li-drop(--over), .li-more
+*/
+.li-drop {
+  border: 2px dashed transparent;
+  border-radius: 16px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.li-drop--over {
+  border-color: var(--color-zinc-400);
+  background: var(--color-zinc-50);
+}
+
+.li-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}

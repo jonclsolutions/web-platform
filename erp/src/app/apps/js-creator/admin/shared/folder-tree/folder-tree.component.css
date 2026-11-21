@@ -1,0 +1,108 @@
+/*
+    @file: folder-tree.component.css
+    @path: src/app/apps/js-creator/admin/shared/folder-tree/folder-tree.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Rows of the folder tree: expand arrow, icon and name, actions shown on the
+        hovered, focused or selected row, the drop target and the dragged row.
+    @dependencies: shared-styles/workspace.css (.ws-icon-btn), shared/styles/tokens.css
+*/
+
+/*
+    @module: Tree
+    @description: Unstyled nested lists; a row is a flex line with the actions on the right.
+    @usage: .ft > .ft-row(--root|--selected|--drop|--dragging) > .ft-toggle(--open), .ft-name >
+        .ft-label, .ft-actions; .ft-list
+    @note: On a phone (≤ 906 px) AppBootstrapService empties every rule with :hover in its
+        selector - states that must work there (selected, focused) have their own rules.
+*/
+.ft {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.83rem;
+}
+
+.ft-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ft-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 36px;
+  padding-right: 4px;
+  border: 1px dashed transparent;
+  border-radius: 10px;
+}
+
+.ft-row:hover { background: var(--color-zinc-50); }
+
+/* Never in one rule with :hover - on a phone AppBootstrapService empties every rule whose
+   selector contains :hover (and the minifier would merge two rules with the same declarations
+   into one); the doubled class outweighs .ft-row:hover. */
+.ft-row.ft-row--selected { background: var(--color-zinc-100); }
+
+.ft-row--selected .ft-name { font-weight: 700; }
+
+.ft-row--drop {
+  border-color: var(--color-zinc-500);
+  background: var(--color-amber-50);
+}
+
+.ft-row--dragging { opacity: 0.5; }
+
+.ft-toggle {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-zinc-500);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.ft-toggle--open { transform: rotate(90deg); }
+
+.ft-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+  padding: 6px 4px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--color-zinc-900);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ft-row--root .ft-name { padding-left: 8px; }
+
+.ft-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Hidden actions take no room - the names stay readable; a touch selects the row first. */
+.ft-actions {
+  display: none;
+  gap: 1px;
+}
+
+/* inline-flex on hover, flex otherwise: different declarations, so the minifier never merges the
+   hover rule with the selected / focused one (see .ft-row--selected). */
+.ft-row:hover .ft-actions { display: inline-flex; }
+
+.ft-row:focus-within .ft-actions,
+.ft-row--selected .ft-actions { display: flex; }
