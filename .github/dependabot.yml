@@ -1,0 +1,50 @@
+# =============================================================================
+# @file dependabot.yml
+# @path .github/dependabot.yml
+# @project JS web-platform
+# @author JS
+# @created 2026
+# @description Dependabot: once a week it checks the actions of the workflows and the PHP / npm
+#   packages and opens a pull request for each update (grouped). Nothing
+#   is merged or deployed by itself - the pull request runs ci.yml (all unit tests) and waits for
+#   a review; an update reaches production only through the normal release (tag).
+# @note Major versions of packages are ignored here (Angular, Laravel, PHPUnit … are upgraded as a
+#   planned task); security fixes come as Dependabot security updates (repository settings →
+#   Code security), also for major versions.
+# @note The xlsx package comes from the SheetJS CDN (tarball URL) - Dependabot cannot update it,
+#   check https://cdn.sheetjs.com when the SheetJS release notes announce a fix.
+# =============================================================================
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+    labels: ["dependencies"]
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: composer
+    directory: "/api"
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+    labels: ["dependencies"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      composer-minor-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: npm
+    directory: "/erp"
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+    labels: ["dependencies"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]

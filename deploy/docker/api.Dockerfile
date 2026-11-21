@@ -16,7 +16,9 @@
 #   replaces the image.
 # @note PHP_VERSION must stay equal to dev/docker/Dockerfile (same PHP in development and
 #   production) and to the Composer platform of api/composer.json.
-# @security Runs as www-data (no root). No secret is copied in (the build context is limited by
+# @security Runs as www-data (no root). The code belongs to root and is read-only for PHP - only
+#   storage/ and bootstrap/cache are writable, so even a compromised request cannot change the
+#   application. No secret is copied in (the build context is limited by
 #   api.Dockerfile.dockerignore to the code - no .env, no keys, no storage). expose_php off.
 # =============================================================================
 
@@ -68,7 +70,8 @@ RUN mkdir -p /opt/seed \
  && php artisan package:discover --ansi
 
 # -----------------------------------------------------------------------------
-# runtime: the code owned by www-data, run as www-data.
+# runtime: the code owned by root (read-only for PHP), run as www-data; writable only storage/
+# (the volume) and bootstrap/cache (the caches built by the entrypoint).
 # -----------------------------------------------------------------------------
 FROM base AS runtime
 
@@ -81,8 +84,9 @@ LABEL org.opencontainers.image.title="web-platform-api" \
 ENV APP_VERSION=${APP_VERSION}
 
 WORKDIR /var/www/html
-COPY --from=vendor --chown=www-data:www-data /var/www/html /var/www/html
-COPY --from=vendor --chown=www-data:www-data /opt/seed /opt/seed
+COPY --from=vendor /var/www/html /var/www/html
+COPY --from=vendor /opt/seed /opt/seed
+RUN chown -R www-data:www-data storage bootstrap/cache
 COPY --chmod=755 deploy/docker/api-entrypoint.sh /usr/local/bin/api-entrypoint
 # Deployment bundle of this release: deploy/vps/deploy.sh installs compose.yaml and itself from
 # here, so the server always runs the files of the deployed release (deploy_workflow.md).
