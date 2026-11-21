@@ -21,6 +21,9 @@
 #   (vendor/, node_modules/, storage/, build/) belong to you, not to root.
 # @note Versions: PHP_VERSION / NODE_VERSION are build args (compose.yaml passes them from .env).
 #   Keep PHP equal to the hosting (FORPSI: administration → PHP version).
+# @note Unlike the production images (deploy/docker) the base images here are NOT pinned by
+#   digest - a digest would silently override PHP_VERSION / NODE_VERSION of dev/.env. The image
+#   is local only (never deployed); `./dev.sh rebuild` takes the current patch release.
 # @security Base images are official (php, node, composer) or the widely used
 #   mlocati/php-extension-installer; no secrets are copied into the image (the repository is
 #   mounted at run time, never COPY-ed).

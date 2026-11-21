@@ -11,6 +11,11 @@
 # @note Major versions of packages are ignored here (Angular, Laravel, PHPUnit … are upgraded as a
 #   planned task); security fixes come as Dependabot security updates (repository settings →
 #   Code security), also for major versions.
+# @note Docker: the base images of deploy/docker/*.Dockerfile and MariaDB of compose.prod.yaml
+#   are pinned by digest - Dependabot proposes a new digest of the same tag (security fixes of
+#   Debian / PHP / Node.js / Caddy / MariaDB). A new PHP, Node.js or MariaDB version (8.6, 26,
+#   11.x) is a planned change, not a Dependabot update. The development image (dev/) is not
+#   pinned: its versions come from dev/.env of each workspace (equal to the hosting).
 # @note The xlsx package comes from the SheetJS CDN (tarball URL) - Dependabot cannot update it,
 #   check https://cdn.sheetjs.com when the SheetJS release notes announce a fix.
 # =============================================================================
@@ -48,3 +53,24 @@ updates:
     groups:
       npm-minor-patch:
         update-types: ["minor", "patch"]
+
+  - package-ecosystem: docker
+    directory: "/deploy/docker"
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+    labels: ["dependencies"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+    groups:
+      docker-images:
+        patterns: ["*"]
+
+  - package-ecosystem: docker-compose
+    directory: "/deploy"
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+    labels: ["dependencies"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]

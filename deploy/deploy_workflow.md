@@ -321,6 +321,14 @@ aplikací changelog neukazují, pokud ho aplikace v manifestu API nezapne (`publ
 Když vydání selže (migrace, start, smoke test), skript **sám vrátí předchozí verzi a databázi
 ze zálohy těsně před vydáním** – log v Actions i na serveru (`/srv/app/logs/deploy.log`) říká proč.
 
+**Aktualizace závislostí (Dependabot).** Každé pondělí otevře Dependabot pull requesty na
+GitHub Actions, balíčky composer / npm (bez hlavních verzí) a nové digesty Docker image
+(`deploy/docker/*.Dockerfile`, MariaDB v `deploy/compose.prod.yaml` – připnuté jako
+`tag@sha256:…`). Nic se neslučuje ani nenasazuje samo: PR projde CI, po kontrole ho sloučíš a do
+produkce se dostane s dalším vydáním. Nová verze PHP / Node.js / MariaDB (např. 8.6, 26, 11.x)
+je plánovaná změna – v Dockerfilu se přepíše celý odkaz (tag i digest, digest zjistí
+`docker buildx imagetools inspect php:8.6-fpm-trixie`) spolu s `dev/.env.example`.
+
 ---
 
 ## 12. Rollback, stav, obnova
@@ -386,8 +394,9 @@ organizace a soukromý fork by GitHub smazal spolu s originálem.
   do dočasné konfigurace Dockeru, po běhu smazané.
 - **Tajné hodnoty klienta** jen v `/srv/app/.env` (600) a Bitwardenu – nikdy v GitHubu ani v image
   (jeden image pro všechny klienty).
-- **Actions** připnuté na konkrétní commit (SHA), minimální oprávnění každého jobu, jedno nasazení
-  naráz.
+- **Actions** připnuté na konkrétní commit (SHA), **základní Docker image a MariaDB** na digest,
+  minimální oprávnění každého jobu, jedno nasazení naráz. Kód v API image patří rootovi
+  (PHP zapisuje jen do `storage/` a `bootstrap/cache`).
 - **Zálohy** 600 / 700, retence 14 dní, kopie mimo VPS jen přes `rrsync` do jedné složky (GDPR:
   osobní údaje se nedrží déle, než je potřeba).
 - Databáze nemá port ven; firewall pustí jen 22, 80, 443; SSH jen klíčem (bootstrap.sh).

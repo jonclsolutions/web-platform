@@ -14,23 +14,24 @@
 # @note Data are NOT in the image: storage/ (uploads, logs) is the volume `storage`, the settings
 #   come from the environment (/srv/app/.env on the server via env_file). A new release only
 #   replaces the image.
-# @note PHP_VERSION must stay equal to dev/docker/Dockerfile (same PHP in development and
-#   production) and to the Composer platform of api/composer.json.
+# @note Base images are pinned by digest (tag@sha256:...): a build always uses exactly the
+#   reviewed image, an update of the image comes as a Dependabot pull request (dependabot.yml).
+#   The PHP version (8.5 here) must stay equal to PHP_VERSION of dev/.env.example and to the
+#   Composer platform of api/composer.json - to change it, replace the whole reference (tag and
+#   digest): docker buildx imagetools inspect php:<version>-fpm-trixie
 # @security Runs as www-data (no root). The code belongs to root and is read-only for PHP - only
 #   storage/ and bootstrap/cache are writable, so even a compromised request cannot change the
 #   application. No secret is copied in (the build context is limited by
 #   api.Dockerfile.dockerignore to the code - no .env, no keys, no storage). expose_php off.
 # =============================================================================
 
-ARG PHP_VERSION=8.5
-
-FROM composer:2 AS composer
-FROM mlocati/php-extension-installer:2 AS php-ext
+FROM composer:2@sha256:50ea4d33fdcde1adb0f045547295faa1548b33872e5f789dae5b02ce2fb5de93 AS composer
+FROM mlocati/php-extension-installer:2@sha256:4fd45396c16685266d32bf147a24ecd5e81029d3820295895bf4a90131190ac9 AS php-ext
 
 # -----------------------------------------------------------------------------
 # base: PHP-FPM with the extensions and the production php.ini / pool settings.
 # -----------------------------------------------------------------------------
-FROM php:${PHP_VERSION}-fpm-trixie AS base
+FROM php:8.5-fpm-trixie@sha256:7fd2766bd3bb6efcfb49591e4bf014e123c18f01149093bd508525c6bdf0cf9f AS base
 
 # libfcgi-bin = cgi-fcgi for the healthcheck (php-fpm ping); unzip for Composer dist archives.
 RUN apt-get update \

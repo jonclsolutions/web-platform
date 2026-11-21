@@ -12,17 +12,18 @@
 #   docker build -f deploy/docker/web.Dockerfile --build-arg APP_VERSION=v2026.11.1 -t web-platform-web:v2026.11.1 .
 # @note The Turnstile site key is NOT built in - web-entrypoint.sh writes it at start from the
 #   environment, so one image serves every client.
-# @note NODE_VERSION must stay equal to dev/docker/Dockerfile.
+# @note Base images are pinned by digest (tag@sha256:...): a build always uses exactly the
+#   reviewed image, an update of the image comes as a Dependabot pull request (dependabot.yml).
+#   The Node.js version (24 here) must stay equal to NODE_VERSION of dev/.env.example - to change
+#   it, replace the whole reference (tag and digest): docker buildx imagetools inspect node:<version>-trixie-slim
 # @security The build stage (node_modules, sources) is not part of the final image - only the
 #   static files of dist/ and Caddy. Caddy's data (certificates) is the volume `caddy-data`.
 # =============================================================================
 
-ARG NODE_VERSION=24
-
 # -----------------------------------------------------------------------------
 # build: npm ci (cached layer) + ng build --configuration production.
 # -----------------------------------------------------------------------------
-FROM node:${NODE_VERSION}-trixie-slim AS build
+FROM node:24-trixie-slim@sha256:af02d57b57719b9657a45199a79264a9437940cd55b3c7b3fc99615654f124a0 AS build
 ENV NG_CLI_ANALYTICS=false \
     npm_config_update_notifier=false \
     npm_config_fund=false \
@@ -37,7 +38,7 @@ RUN npx ng build --configuration production \
 # -----------------------------------------------------------------------------
 # runtime: Caddy with the built app.
 # -----------------------------------------------------------------------------
-FROM caddy:2-alpine AS runtime
+FROM caddy:2-alpine@sha256:003a97808e781aa9f7e75cc2f43d34d461099031faf5e20faefb9f61126836f0 AS runtime
 
 ARG APP_VERSION=local
 ARG VCS_REF=unknown

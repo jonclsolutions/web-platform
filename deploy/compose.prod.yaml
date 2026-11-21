@@ -20,6 +20,10 @@
 #   web-platform, SITE_DOMAIN=localhost) and run `docker compose up -d` there.
 # @note RELEASE = the tag of both images; IMAGE_PREFIX = their name without -api / -web
 #   (ghcr.io/<organisation>/<repository>). A release changes only RELEASE.
+# @note MariaDB is pinned by digest (tag@sha256:...) like the base images of deploy/docker: the
+#   server runs exactly the reviewed image, an update comes as a Dependabot pull request and
+#   reaches the server with the next release. Keep the version (10.11) equal to MARIADB_VERSION
+#   of dev/.env.example; a new major version is a planned change (backup first).
 # @note Memory limits keep the whole stack within the 4 GB of the FORPSI VPS 2-4 with room for
 #   the system and the backups: db 768 MB, app 512 MB, queue 256 MB, scheduler 192 MB, proxy 128 MB.
 # @security The database is on the network `data` (internal: no way out, no published port).
@@ -95,7 +99,7 @@ services:
     mem_limit: 192m
 
   db:
-    image: mariadb:${MARIADB_VERSION:-10.11}
+    image: mariadb:10.11@sha256:e5fe75b2b9de0eb9f6f9a4d9c97272fb3a7480e389ccd487a786bab2a12cc0d7
     environment:
       MARIADB_DATABASE: ${DB_DATABASE:?set DB_DATABASE in .env}
       MARIADB_USER: ${DB_USERNAME:?set DB_USERNAME in .env}
