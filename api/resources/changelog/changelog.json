@@ -1,85 +1,90 @@
 {
-    "unreleased": [
-        {
-            "type": "added",
-            "area": "shop",
-            "part": "admin",
-            "text": "Unpaid bank-transfer orders: a payment reminder after 3 days and an automatic cancellation after 7 days (goods back to stock, coupon use returned, e-mail to the customer). The deadlines are set in Orders → Unpaid orders, the e-mail texts in Edit order e-mails."
-        },
-        {
-            "type": "added",
-            "area": "shop",
-            "part": "public",
-            "text": "The order confirmation e-mail and the payment reminder carry the payment details of a bank transfer (account, IBAN, SWIFT / BIC, variable symbol)."
-        },
-        {
-            "type": "added",
-            "area": "shop",
-            "part": "admin",
-            "text": "Shipping methods: delivery countries ticked per method. Checkout offers only those countries and, for the chosen country, only the methods delivering there; the order stores the country code and the confirmation e-mail shows its name."
-        },
-        {
-            "type": "added",
-            "area": "shop",
-            "part": "public",
-            "text": "Checkout: buying on a company (company name, company ID and VAT ID) and a note to the order. The company IDs are stored with the order and the customer, shown in the admin and in the confirmation e-mail."
-        },
-        {
-            "type": "added",
-            "area": "shop",
-            "part": "admin",
-            "text": "The consent of the buyer with the terms and conditions is stored with every e-shop order - its time and the wording of the terms (date of their last change and a fingerprint of the text) - and shown in the order details."
-        },
-        {
-            "type": "added",
-            "area": "web",
-            "part": "admin",
-            "text": "Orange numbers also for the website content: FAQ, jobs, references and knowledge base items missing a text in an active language are counted in the menu and on the tabs of Texty webu until translated."
-        },
-        {
-            "type": "changed",
-            "area": "core",
-            "part": "admin",
-            "text": "Upload JSON in the text editors is checked against the primary language: a file with missing or extra keys is refused with the list of keys and nothing changes. Download JSON gives a complete file with every key."
-        },
-        {
-            "type": "fixed",
-            "area": "core",
-            "part": "admin",
-            "text": "Text editor: the sample in the language name field of a new language follows the language of the admin."
-        },
-        {
-            "type": "fixed",
-            "area": "shop",
-            "part": "public",
-            "text": "The cart no longer writes a Czech debug message into the customer's browser console; technical messages of the e-shop are in English."
-        },
-        {
-            "type": "changed",
-            "area": "shop",
-            "part": "admin",
-            "text": "Product and variant images: the file picker offers only JPG, PNG and WebP, and a wrong type or a file over 5 MB is refused at once, before saving. Language and social network icons are checked the same way."
-        },
-        {
-            "type": "security",
-            "area": "core",
-            "part": "admin",
-            "text": "Logs keep no personal data from edits in the admin: personal fields of customers, orders, leads, applicants and other records show as [masked] also in the copy of the request, and database errors no longer quote the saved values."
-        },
-        {
-            "type": "added",
-            "area": "core",
-            "part": "admin",
-            "text": "Orange numbers in the menu for work waiting for you: website and e-shop texts missing in an active language (e.g. after an update) show at the text pages until they are filled; opening the page does not clear them."
-        },
-        {
-            "type": "changed",
-            "area": "core",
-            "part": "admin",
-            "text": "Web and e-shop texts: an update also removes the texts it no longer uses from the other languages (e.g. German); their translations stay and new texts show there as missing until translated."
-        }
-    ],
+    "unreleased": [],
     "releases": [
+        {
+            "version": "v2026.11.6",
+            "date": "2026-11-21",
+            "changes": [
+                {
+                    "type": "added",
+                    "area": "shop",
+                    "part": "admin",
+                    "text": "Unpaid bank-transfer orders: a payment reminder after 3 days and an automatic cancellation after 7 days (goods back to stock, coupon use returned, e-mail to the customer). The deadlines are set in Orders → Unpaid orders, the e-mail texts in Edit order e-mails."
+                },
+                {
+                    "type": "added",
+                    "area": "shop",
+                    "part": "public",
+                    "text": "The order confirmation e-mail and the payment reminder carry the payment details of a bank transfer (account, IBAN, SWIFT / BIC, variable symbol)."
+                },
+                {
+                    "type": "added",
+                    "area": "shop",
+                    "part": "admin",
+                    "text": "Shipping methods: delivery countries ticked per method. Checkout offers only those countries and, for the chosen country, only the methods delivering there; the order stores the country code and the confirmation e-mail shows its name."
+                },
+                {
+                    "type": "added",
+                    "area": "shop",
+                    "part": "public",
+                    "text": "Checkout: buying on a company (company name, company ID and VAT ID) and a note to the order. The company IDs are stored with the order and the customer, shown in the admin and in the confirmation e-mail."
+                },
+                {
+                    "type": "added",
+                    "area": "shop",
+                    "part": "admin",
+                    "text": "The consent of the buyer with the terms and conditions is stored with every e-shop order - its time and the wording of the terms (date of their last change and a fingerprint of the text) - and shown in the order details."
+                },
+                {
+                    "type": "added",
+                    "area": "web",
+                    "part": "admin",
+                    "text": "Orange numbers also for the website content: FAQ, jobs, references and knowledge base items missing a text in an active language are counted in the menu and on the tabs of Texty webu until translated."
+                },
+                {
+                    "type": "changed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Upload JSON in the text editors is checked against the primary language: a file with missing or extra keys is refused with the list of keys and nothing changes. Download JSON gives a complete file with every key."
+                },
+                {
+                    "type": "fixed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Text editor: the sample in the language name field of a new language follows the language of the admin."
+                },
+                {
+                    "type": "fixed",
+                    "area": "shop",
+                    "part": "public",
+                    "text": "The cart no longer writes a Czech debug message into the customer's browser console; technical messages of the e-shop are in English."
+                },
+                {
+                    "type": "changed",
+                    "area": "shop",
+                    "part": "admin",
+                    "text": "Product and variant images: the file picker offers only JPG, PNG and WebP, and a wrong type or a file over 5 MB is refused at once, before saving. Language and social network icons are checked the same way."
+                },
+                {
+                    "type": "security",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Logs keep no personal data from edits in the admin: personal fields of customers, orders, leads, applicants and other records show as [masked] also in the copy of the request, and database errors no longer quote the saved values."
+                },
+                {
+                    "type": "added",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Orange numbers in the menu for work waiting for you: website and e-shop texts missing in an active language (e.g. after an update) show at the text pages until they are filled; opening the page does not clear them."
+                },
+                {
+                    "type": "changed",
+                    "area": "core",
+                    "part": "admin",
+                    "text": "Web and e-shop texts: an update also removes the texts it no longer uses from the other languages (e.g. German); their translations stay and new texts show there as missing until translated."
+                }
+            ]
+        },
         {
             "version": "v2026.11.5",
             "date": "2026-11-21",
