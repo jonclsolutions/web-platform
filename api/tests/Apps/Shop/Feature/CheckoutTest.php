@@ -330,6 +330,33 @@ class CheckoutTest extends TestCase
     }
 
     /**
+     * @description Delivery countries (U-02): the country is an ISO code of a delivery country
+     *   (a legacy name of a cached page is read as its code), the shipping method must deliver
+     *   there; the order stores the code, the e-mail shows its name.
+     * @input Shipping method for CZ + SK (storefront list); order to "US"; to DE; to "sk"; legacy "Czechia"; a
+     *   method without countries (from before) to DE.
+     * @output list carries countries CZ, SK; 422 country; 422 shipping_method_id; 201 shipping_country SK, customer country SK;
+     *   201 CZ; 201 (no countries = everywhere).
+     */
+    public function test_delivery_countries(): void
+    {
+        $this->shipping->update(['countries' => ['CZ', 'SK']]);
+        $this->getJson('/api/shop/public/shipping-methods')->assertOk()->assertJsonPath('data.0.countries', ['CZ', 'SK']);
+        $p = $this->product(['name' => 'P']);
+        $line = [['product_id' => $p->id, 'quantity' => 1]];
+
+        $this->postJson('/api/shop/checkout/create-order', $this->payload($line, ['country' => 'US']))->assertStatus(422)->assertJsonValidationErrors(['country']);
+        $this->postJson('/api/shop/checkout/create-order', $this->payload($line, ['country' => 'DE']))->assertStatus(422)->assertJsonValidationErrors(['shipping_method_id']);
+
+        $order = ShopOrder::find($this->postJson('/api/shop/checkout/create-order', $this->payload($line, ['country' => 'sk']))->assertCreated()->json('data.id'));
+        $this->assertSame(['SK', 'SK'], [$order->shipping_country, $order->customer->country]);
+        $this->assertSame('CZ', ShopOrder::find($this->postJson('/api/shop/checkout/create-order', $this->payload($line, ['email' => 'eva@example.com', 'country' => 'Czechia']))->assertCreated()->json('data.id'))->shipping_country);
+
+        $this->shipping->update(['countries' => null]);
+        $this->postJson('/api/shop/checkout/create-order', $this->payload($line, ['email' => 'ota@example.com', 'country' => 'DE']))->assertCreated();
+    }
+
+    /**
      * @description Buying on a company (U-03): with `is_company` the company name and the IČO are
      *   required, the DIČ needs a country prefix; IČO / DIČ are normalised (spaces, upper case) and
      *   stored on the order (snapshot) and the new customer; a private buyer's company data are

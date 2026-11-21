@@ -6,15 +6,18 @@
  * @created 2026
  * @description Unit tests of ShippingMethodsComponent and shipping-methods.config.ts – shipping
  *   methods: translated configuration, shipping type / yes-no options, code validation,
- *   chartable and importable columns, toolbar by permission and view, sorting by sort_order.
+ *   chartable and importable columns, toolbar by permission and view, sorting by sort_order,
+ *   delivery countries (U-02).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (all admin doubles)
  */
 
 import { ComponentFixture, TestBed, fakeAsync, discardPeriodicTasks } from '@angular/core/testing';
+import { of } from 'rxjs';
 
 import { ShippingMethodsComponent } from './shipping-methods.component';
-import { SHIPPING_TYPE_VALUES } from './shipping-methods.config';
+import { SHIPPING_TYPE_VALUES, countriesLabel } from './shipping-methods.config';
+import { DELIVERY_COUNTRIES } from '../../shared/delivery-countries';
 import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
 
 describe('ShippingMethodsComponent', () => {
@@ -37,16 +40,16 @@ describe('ShippingMethodsComponent', () => {
   /**
    * @description The configuration is built from the 'shop-shipping-methods' translations.
    * @input  component created
-   * @output caption; row buttons with shop-shipping-methods-* permissions; 15 form fields; 6 + 3 columns; 3 filters; 16 detail columns
+   * @output caption; row buttons with shop-shipping-methods-* permissions; 16 form fields; 7 + 3 columns; 3 filters; 17 detail columns
    */
   it('builds the configuration from translations', () => {
     expect(component.tableCaption).toBe('shop-shipping-methods.table_header');
     expect(component.buttons.map(b => b.permission)).toEqual([undefined, 'shop-shipping-methods-update', 'shop-shipping-methods-delete']);
-    expect(component.formFields.length).toBe(15);
-    expect(component.shippingColumns.map(c => c.key)).toEqual(['id', 'name', 'shipping_type', 'base_price', 'is_active', 'sort_order']);
+    expect(component.formFields.length).toBe(16);
+    expect(component.shippingColumns.map(c => c.key)).toEqual(['id', 'name', 'shipping_type', 'base_price', 'countries_label', 'is_active', 'sort_order']);
     expect(component.trashShippingColumns.map(c => c.key)).toEqual(['id', 'name', 'deleted_at']);
     expect(component.filterColumns.map(c => c.key)).toEqual(['id', 'name', 'shipping_type']);
-    expect(component.detailsColumns.length).toBe(16);
+    expect(component.detailsColumns.length).toBe(17);
     expect(component.t('btn_edit')).toBe('shop-shipping-methods.btn_edit');
   });
 
@@ -64,8 +67,33 @@ describe('ShippingMethodsComponent', () => {
     expect(code.test('ppl_cz')).toBeTrue();
     expect(code.test('PPL')).toBeFalse();
     expect(component.formFields.filter(f => f.required).map(f => f.column_name))
-      .toEqual(['code', 'name', 'shipping_type', 'base_price', 'allows_cod', 'requires_pickup_point', 'sort_order', 'is_active']);
+      .toEqual(['code', 'name', 'shipping_type', 'countries', 'base_price', 'allows_cod', 'requires_pickup_point', 'sort_order', 'is_active']);
   });
+
+  /**
+   * @description Delivery countries (U-02): ticked per method from the countries of the shop,
+   *   named in the admin language and sorted by name; rows and details get the names.
+   * @input  countries field (admin cz); a row / details with countries [CZ, SK]; a method of
+   *   before (no countries); English names.
+   * @output multiselect with all DELIVERY_COUNTRIES, "Česko" before "Slovensko"; countries_label
+   *   "Česko, Slovensko" in row and details; '' without countries; "Czechia, Slovakia" in English.
+   */
+  it('ticks the delivery countries of a method', fakeAsync(() => {
+    const countries = field('countries');
+    expect(countries.type).toBe('multiselect');
+    expect(countries.options.map((o: any) => o.value).sort()).toEqual([...DELIVERY_COUNTRIES].sort());
+    const names = countries.options.map((o: any) => o.label);
+    expect(names.indexOf('Česko')).toBeLessThan(names.indexOf('Slovensko'));
+
+    expect((component as any).mapListRow({ id: 1, countries: ['CZ', 'SK'] }).countries_label).toBe('Česko, Slovensko');
+    expect((component as any).mapListRow({ id: 2 }).countries_label).toBe('');
+    ctx.dataHandler.getOne.and.returnValue(of({ id: 1, countries: ['CZ', 'SK'] }) as any);
+    let details: any;
+    component.getItemDetails(1).subscribe(d => details = d);
+    expect(details.countries_label).toBe('Česko, Slovensko');
+    expect(countriesLabel(['CZ', 'SK'], 'en')).toBe('Czechia, Slovakia');
+    discardPeriodicTasks();
+  }));
 
   /**
    * @description Type, cash on delivery, pickup point and state can be charted; all detail columns but id are importable.

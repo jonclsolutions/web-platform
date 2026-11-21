@@ -3,6 +3,12 @@
         {
             "type": "added",
             "area": "shop",
+            "part": "admin",
+            "text": "Shipping methods: delivery countries ticked per method. Checkout offers only those countries and, for the chosen country, only the methods delivering there; the order stores the country code and the confirmation e-mail shows its name."
+        },
+        {
+            "type": "added",
+            "area": "shop",
             "part": "public",
             "text": "Checkout: buying on a company (company name, company ID and VAT ID) and a note to the order. The company IDs are stored with the order and the customer, shown in the admin and in the confirmation e-mail."
         },

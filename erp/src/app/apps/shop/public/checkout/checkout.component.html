@@ -146,6 +146,19 @@
                   <span class="error-message">{{ errors['postalCode'] }}</span>
                 }
               </div>
+              <!-- Delivery country (U-02): only the countries a shipping method delivers to. -->
+              <div class="form-group">
+                <label for="checkout-country">{{ t?.labels?.country }}</label>
+                <select id="checkout-country" name="country" [ngModel]="formData.country" (ngModelChange)="selectCountry($event)"
+                        [class.is-invalid]="errors['country']">
+                  @for (country of countryChoices(); track country.code) {
+                    <option [value]="country.code">{{ country.name }}</option>
+                  }
+                </select>
+                @if (errors['country']) {
+                  <span class="error-message">{{ errors['country'] }}</span>
+                }
+              </div>
             </div>
 
             <!-- Buying on a company (U-03): the company name and IČO are required then, DIČ optional. -->
@@ -189,7 +202,7 @@
           <div class="checkout-section">
             <h3>{{ t?.sections?.shipping }}</h3>
             <div class="shipping-methods-list" [class.is-invalid-container]="errors['shippingMethodId']">
-              @for (method of shippingMethods(); track method) {
+              @for (method of visibleShippingMethods(); track method.id) {
                 <div
                   class="selectable-option shipping"
                   [class.selected]="formData.shippingMethodId === method.id"
@@ -205,6 +218,9 @@
                 </div>
               }
             </div>
+            @if (!visibleShippingMethods().length && shippingMethods().length) {
+              <p class="option-desc">{{ t?.shipping_none_for_country }}</p>
+            }
             @if (errors['shippingMethodId']) {
               <span class="error-message text-space">{{ errors['shippingMethodId'] }}</span>
             }

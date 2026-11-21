@@ -542,7 +542,7 @@
               "steps": [
                 {
                   "label": "Cart and checkout",
-                  "text": "In the e-shop the customer puts goods into the cart and at checkout fills in the contact, the delivery address, the shipping and payment method and possibly a discount coupon and a note to the order. Buying on a company, they tick Buying on a company and fill in the company name and the company ID (required) and the VAT ID.",
+                  "text": "In the e-shop the customer puts goods into the cart and at checkout fills in the contact, the delivery address with the country, the shipping method (only those delivering to the chosen country) and the payment method and possibly a discount coupon and a note to the order. Buying on a company, they tick Buying on a company and fill in the company name and the company ID (required) and the VAT ID.",
                   "active": true
                 },
                 {
@@ -988,6 +988,10 @@
                   "text": "Delivery to address, Pickup point or In-store pickup."
                 },
                 {
+                  "title": "Delivery countries",
+                  "text": "Tick the countries the shipping delivers to (the EU countries and Switzerland, the United Kingdom, Iceland, Liechtenstein, Norway); at least one is required. Checkout offers only the countries some active shipping delivers to and, for the chosen country, only the shipping methods delivering there. Shipping from before the countries delivers to Czechia."
+                },
+                {
                   "title": "Base price (EUR)",
                   "text": "The shipping price the customer pays."
                 },
@@ -1012,7 +1016,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "The table (ID, Name, Type, Price) works like the other tables - adding in the Actions menu, editing, details, deleting to the trash and restoring. Rather switch off (Active) a shipping method you do not offer for a while than delete it."
+              "content": "The table (ID, Name, Type, Price, Delivery countries) works like the other tables - adding in the Actions menu, editing, details, deleting to the trash and restoring. Rather switch off (Active) a shipping method you do not offer for a while than delete it."
             }
           ]
         },

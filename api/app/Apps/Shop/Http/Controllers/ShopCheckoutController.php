@@ -32,6 +32,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Lottery;
 use App\Support\Legal\TermsVersion;
+use Illuminate\Validation\Rule;
+use App\Apps\Shop\Support\DeliveryCountries;
 
 /**
  * @description Controller responsible for processing customer checkouts.
@@ -55,7 +57,8 @@ class ShopCheckoutController extends Controller
      *   (Directive 2011/83/EU, Art. 8(7)) - a failed e-mail never fails the order (logged).
      * @param Request $request Checkout form (customer, address, methods, coupon_code, items,
      *   lang = language of the storefront; unknown / missing = cz; is_company + company, ico
-     *   (required then) and dic - buying on a company; is_company false drops them; terms_accepted - the consent
+     *   (required then) and dic - buying on a company; is_company false drops them; country = ISO
+     *   code of a delivery country the shipping method serves (U-02); terms_accepted - the consent
      *   with the terms and conditions, required; stored with its time and the accepted wording,
      *   TermsVersion).
      * @note The route is guarded like every public form (PublicFormGuard): captcha, honeypot and
@@ -67,6 +70,10 @@ class ShopCheckoutController extends Controller
         // Lengths = column sizes of shop_customers / shop_orders. IČO / DIČ normalised first
         // (spaces removed, upper case); buying on a company needs the company name and the IČO.
         CompanyIds::normalize($request);
+        // The country as its ISO code (U-02); a legacy name of a cached page is read as its code.
+        if ($request->has('country')) {
+            $request->merge(['country' => DeliveryCountries::code($request->input('country')) ?? $request->input('country')]);
+        }
         $validated = $request->validate([
             'email' => 'required|email|max:150',
             'first_name' => 'required|string|max:100',
@@ -79,7 +86,7 @@ class ShopCheckoutController extends Controller
             'address' => 'required|string|max:255',
             'city' => 'required|string|max:100',
             'postal_code' => 'required|string|max:10',
-            'country' => 'required|string|max:50',
+            'country' => ['required', 'string', Rule::in(DeliveryCountries::CODES)],
             'payment_method_id' => 'required|integer|exists:shop_payment_methods,id',
             'shipping_method_id' => 'required|integer|exists:shop_shipping_methods,id',
             'coupon_code' => 'nullable|string',
@@ -98,6 +105,15 @@ class ShopCheckoutController extends Controller
         if ($request->has('is_company') && !$request->boolean('is_company')) {
             // A private buyer: no company data even when the browser sent some.
             $validated['company'] = $validated['ico'] = $validated['dic'] = null;
+        }
+
+        // The chosen shipping method must deliver to the chosen country (U-02).
+        $shippingMethod = ShopShippingMethod::find($validated['shipping_method_id']);
+        if (!$shippingMethod?->deliversTo($validated['country'])) {
+            return response()->json([
+                'message' => 'The shipping method does not deliver to the chosen country.',
+                'errors'  => ['shipping_method_id' => ['The shipping method does not deliver to the chosen country.']],
+            ], 422);
         }
 
         try {
@@ -145,7 +161,7 @@ class ShopCheckoutController extends Controller
                 }
             }
 
-            $shippingAmount = (float) ShopShippingMethod::whereKey($validated['shipping_method_id'])->value('base_price');
+            $shippingAmount = (float) $shippingMethod->base_price;
             $language = $this->orderLanguage($validated['lang'] ?? null);
             $terms = TermsVersion::current($language);
             $finalAmount = max(0, $totalAmount + $shippingAmount - $discountAmount);

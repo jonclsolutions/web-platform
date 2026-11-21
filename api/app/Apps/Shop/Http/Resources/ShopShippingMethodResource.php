@@ -32,6 +32,7 @@ class ShopShippingMethodResource extends JsonResource
             'name'                    => $this->name,
             'description'             => $this->description,
             'shipping_type'           => $this->shipping_type,
+            'countries'               => array_values($this->countries ?? []),
             'base_price'              => $this->base_price,
             'allows_cod'              => (bool)$this->allows_cod,
             'cod_price'               => $this->cod_price,

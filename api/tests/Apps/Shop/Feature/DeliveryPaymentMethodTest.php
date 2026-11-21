@@ -36,7 +36,7 @@ class DeliveryPaymentMethodTest extends TestCase
      */
     private function shipping(array $overrides = []): array
     {
-        return array_merge(['code' => 'dpd', 'name' => 'DPD', 'shipping_type' => 'address', 'base_price' => 4.5], $overrides);
+        return array_merge(['code' => 'dpd', 'name' => 'DPD', 'shipping_type' => 'address', 'base_price' => 4.5, 'countries' => ['CZ', 'SK']], $overrides);
     }
 
     /**
@@ -67,8 +67,9 @@ class DeliveryPaymentMethodTest extends TestCase
     }
 
     /**
-     * @description Shipping create (COD price / free threshold default 0, active by default),
-     *   detail, edit (the code of a system method stays), validation, 404s, database errors.
+     * @description Shipping create (COD price / free threshold default 0, active by default,
+     *   delivery countries required - only the known ones, U-02), detail, edit (the code of a
+     *   system method stays), validation, 404s, database errors.
      * @input POST valid; POST same code; GET; PUT; system 'local_pickup' PUT {code 'x'}; /999; failures.
      * @output 201 cod_price 0, active; 422; 200; 200; code still local_pickup; 404; 500 / 500.
      */
@@ -80,7 +81,9 @@ class DeliveryPaymentMethodTest extends TestCase
             ->assertJsonPath('data.cod_price', '0.00')->assertJsonPath('data.free_shipping_threshold', '0.00')->assertJsonPath('data.is_active', true)->json('data.id');
         $this->assertShopLog('create', 'Created shipping method: DPD');
         $this->postJson('/api/shop/shipping_methods', $this->shipping())->assertStatus(422)->assertJsonValidationErrors(['code']);
-        $this->postJson('/api/shop/shipping_methods', [])->assertStatus(422)->assertJsonValidationErrors(['code', 'name', 'shipping_type', 'base_price']);
+        $this->postJson('/api/shop/shipping_methods', [])->assertStatus(422)->assertJsonValidationErrors(['code', 'name', 'shipping_type', 'base_price', 'countries']);
+        $this->postJson('/api/shop/shipping_methods', $this->shipping(['code' => 'xx', 'countries' => ['CZ', 'US']]))->assertStatus(422)->assertJsonValidationErrors(['countries.1']);
+        $this->getJson("/api/shop/shipping_methods/{$id}")->assertJsonPath('data.countries', ['CZ', 'SK']);
 
         $this->getJson("/api/shop/shipping_methods/{$id}")->assertOk()->assertJsonPath('data.code', 'dpd');
         $this->getJson('/api/shop/shipping_methods/999')->assertStatus(404);

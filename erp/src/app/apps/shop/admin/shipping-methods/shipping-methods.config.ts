@@ -5,10 +5,12 @@
  * @author JS
  * @created 2026
  * @description Static-turned-dynamic configuration for shop shipping method management.
+ *   Delivery countries (U-02): a method serves the ticked countries only (checkout offers it there).
  */
 import * as Core from '../../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { mapLabeledOptions } from '../../../../admin/components/builders/labeled-options';
+import { DELIVERY_COUNTRIES, countryName, countryOptions } from '../../shared/delivery-countries';
 
 const SECTION = 'shop-shipping-methods';
 
@@ -19,6 +21,15 @@ const SHIPPING_TYPE_LABEL_KEYS: Record<string, string> = {
   pickup_point: 'shipping_type_pickup_point',
   store: 'shipping_type_store',
 };
+
+/**
+ * @description Names of the delivery countries of a method in the admin language ("Česko, Slovensko").
+ * @param codes ISO codes from the API (missing = none).
+ * @param lang Admin language.
+ */
+export function countriesLabel(codes: string[] | null | undefined, lang: string): string {
+  return (codes ?? []).map(code => countryName(code, lang)).join(', ');
+}
 
 function yesNoOptions(i18n: AdminLocalizationService) {
   return [
@@ -70,6 +81,15 @@ export function createShippingFormFields(i18n: AdminLocalizationService): Core.I
       label: i18n.getValue(`${SECTION}.field_shipping_type_label`),
       type: 'select',
       options: mapLabeledOptions(SECTION, SHIPPING_TYPE_VALUES, SHIPPING_TYPE_LABEL_KEYS, i18n),
+      required: true,
+      editable: true, show_in_edit: true, show_in_create: true,
+    },
+    {
+      // Ticked countries only - the API refuses a method without any (U-02).
+      column_name: 'countries',
+      label: i18n.getValue(`${SECTION}.field_countries_label`),
+      type: 'multiselect',
+      options: countryOptions(DELIVERY_COUNTRIES, i18n.getCurrentLanguage()).map(c => ({ value: c.code, label: c.name })),
       required: true,
       editable: true, show_in_edit: true, show_in_create: true,
     },
@@ -175,6 +195,7 @@ export function createShippingColumns(i18n: AdminLocalizationService): Core.Colu
     { key: 'name', header: i18n.getValue(`${SECTION}.col_name`), type: 'text' },
     { key: 'shipping_type', header: i18n.getValue(`${SECTION}.col_type`), type: 'text' },
     { key: 'base_price', header: i18n.getValue(`${SECTION}.col_price`), type: 'text' },
+    { key: 'countries_label', header: i18n.getValue(`${SECTION}.field_countries_label`), type: 'text' },
     { key: 'is_active', header: i18n.getValue(`${SECTION}.field_is_active_label`), type: 'boolean' },
     { key: 'sort_order', header: i18n.getValue(`${SECTION}.field_sort_order_label`), type: 'text' },
   ];
@@ -204,6 +225,7 @@ export function createShippingDetailsColumns(i18n: AdminLocalizationService): Co
     { key: 'description', displayName: i18n.getValue(`${SECTION}.field_description_label`), type: 'text', importable: true },
     { key: 'shipping_type', displayName: i18n.getValue(`${SECTION}.field_shipping_type_label`), type: 'text', importable: true, chartable: true, chartPossibleValues: SHIPPING_TYPE_VALUES },
     { key: 'base_price', displayName: i18n.getValue(`${SECTION}.details_base_price`), type: 'text', importable: true },
+    { key: 'countries_label', displayName: i18n.getValue(`${SECTION}.field_countries_label`), type: 'text' },
     { key: 'allows_cod', displayName: i18n.getValue(`${SECTION}.details_allows_cod`), type: 'boolean', importable: true, chartable: true, chartPossibleValues: ['1', '0'] },
     { key: 'cod_price', displayName: i18n.getValue(`${SECTION}.details_cod_price`), type: 'text', importable: true },
     { key: 'free_shipping_threshold', displayName: i18n.getValue(`${SECTION}.details_free_from`), type: 'text', importable: true },

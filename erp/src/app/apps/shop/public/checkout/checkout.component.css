@@ -108,7 +108,8 @@ h1 {
   letter-spacing: 0.5px;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
   background: var(--bg-main);
   border: 1px solid var(--border);
   color: var(--text-main);
@@ -122,6 +123,7 @@ h1 {
 }
 
 .form-group input:focus,
+.form-group select:focus,
 .form-group textarea:focus {
   outline: none;
   border-color: var(--border-dark);
@@ -155,6 +157,7 @@ h1 {
 }
 
 /* Fields that failed validation */
+.form-group select.is-invalid,
 .form-group textarea.is-invalid,
 .form-group input.is-invalid,
 .terms-checkbox.is-invalid {

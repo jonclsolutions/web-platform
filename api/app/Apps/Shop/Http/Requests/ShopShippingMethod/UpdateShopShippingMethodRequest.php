@@ -11,6 +11,8 @@
 namespace App\Apps\Shop\Http\Requests\ShopShippingMethod;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Apps\Shop\Support\DeliveryCountries;
+use Illuminate\Validation\Rule;
 
 /**
  * @description Handles request validation for updating shipping method configurations, ensuring unique codes.
@@ -37,6 +39,8 @@ class UpdateShopShippingMethodRequest extends FormRequest
             'name'                    => 'required|string|max:100',
             'description'             => 'nullable|string',
             'shipping_type'           => 'required|string|max:30',
+            'countries'               => 'sometimes|required|array|min:1',
+            'countries.*'             => ['string', Rule::in(DeliveryCountries::CODES)],
             'base_price'              => 'required|numeric|min:0',
             'allows_cod'              => 'boolean',
             'cod_price'               => 'nullable|numeric|min:0',

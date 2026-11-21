@@ -116,6 +116,23 @@ export class ShippingMethodsComponent extends BaseDataComponent<any> implements 
 
   override refreshData(): void { this.forceFullRefresh(this.filters); }
 
+  /**
+   * @description Table rows get the names of their delivery countries (U-02).
+   * @param row Method as returned by the API.
+   * @returns The row with `countries_label` in the admin language.
+   */
+  protected override mapListRow(row: any): any {
+    return { ...row, countries_label: Config.countriesLabel(row.countries, this.i18n.getCurrentLanguage()) };
+  }
+
+  /**
+   * @description Details carry the names of the delivery countries as well.
+   * @param id Method ID.
+   */
+  override getItemDetails(id: number | undefined): Core.Observable<any> {
+    return super.getItemDetails(id).pipe(Core.map((method: any) => this.mapListRow(method)));
+  }
+
   override clearFilters(): void {
     this.filters = { sort_by: 'sort_order', sort_direction: 'asc' };
     this.currentPage = 1;

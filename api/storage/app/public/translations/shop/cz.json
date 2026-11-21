@@ -125,7 +125,8 @@
             "company": "Název firmy *",
             "ico": "IČO *",
             "dic": "DIČ",
-            "notes": "Poznámka k objednávce"
+            "notes": "Poznámka k objednávce",
+            "country": "Země *"
         },
         "placeholders": {
             "email": "vas@email.cz",
@@ -187,7 +188,8 @@
             "ico_required": "IČO je povinné.",
             "ico_invalid": "Zadejte platné IČO (jen písmena a číslice).",
             "dic_invalid": "Zadejte platné DIČ s kódem země (např. CZ12345678).",
-            "notes_too_long": "Poznámka může mít maximálně 1000 znaků."
+            "notes_too_long": "Poznámka může mít maximálně 1000 znaků.",
+            "country_required": "Vyberte zemi doručení."
         },
         "alerts": {
             "form_incomplete_title": "Formulář je nekompletní",
@@ -202,7 +204,8 @@
             "captcha_failed": "Ověření, že nejste robot, se nezdařilo nebo vypršelo. Odešlete prosím objednávku znovu.",
             "email_limit": "Na tuto e-mailovou adresu jsme v poslední době přijali už několik objednávek. Další můžete odeslat později, případně nás kontaktujte."
         },
-        "coupon_too_many": "Příliš mnoho pokusů o zadání kódu. Zkuste to prosím za chvíli."
+        "coupon_too_many": "Příliš mnoho pokusů o zadání kódu. Zkuste to prosím za chvíli.",
+        "shipping_none_for_country": "Do zvolené země zatím nedoručujeme. Vyberte prosím jinou zemi."
     },
     "api_errors": {
         "generic": "Při komunikaci s e-shopem nastala chyba.",

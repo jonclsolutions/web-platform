@@ -218,6 +218,7 @@ final class ShopSchema
             $t->string('name', 100);
             $t->text('description')->nullable();
             $t->string('shipping_type', 30)->default('address');
+            $t->json('countries')->nullable();                      // 2026_11_21_000002_shop_shipping_countries
             $t->decimal('base_price', 8, 2)->default(0);
             $t->decimal('free_shipping_threshold', 10, 2)->nullable();
             $t->decimal('max_weight', 8, 2)->nullable();

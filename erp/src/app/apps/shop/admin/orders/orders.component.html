@@ -241,7 +241,7 @@
               <div class="detail-address-block">
                 <div class="detail-address-line detail-address-main">{{ selectedOrderForDetail.shipping_address }}</div>
                 <div class="detail-address-line">{{ selectedOrderForDetail.shipping_postal_code }} {{ selectedOrderForDetail.shipping_city }}</div>
-                <div class="detail-address-line detail-address-country">{{ selectedOrderForDetail.shipping_country }}</div>
+                <div class="detail-address-line detail-address-country">{{ countryLabel(selectedOrderForDetail.shipping_country) }}</div>
               </div>
             </div>
           </div>
@@ -532,7 +532,11 @@
         </div>
         <div class="form-group">
           <label>{{ t('label_country_required') }}</label>
-          <input type="text" [(ngModel)]="editingOrder.shipping_country" name="shipping_country" required>
+          <select [(ngModel)]="editingOrder.shipping_country" name="shipping_country" required>
+            @for (country of countryChoices(editingOrder.shipping_country); track country.code) {
+              <option [value]="country.code">{{ country.name }}</option>
+            }
+          </select>
         </div>
       </fieldset>
       <fieldset>

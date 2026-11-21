@@ -106,7 +106,7 @@
 {{ $contact['full_name'] }}@if ($contact['company'])<br>{{ $contact['company'] }}@endif
 <br>{{ $order->shipping_address }}
 <br>{{ trim($order->shipping_postal_code . ' ' . $order->shipping_city) }}
-@if ($order->shipping_country)<br>{{ $order->shipping_country }}@endif
+@if ($order->shipping_country)<br>{{ \App\Apps\Shop\Support\DeliveryCountries::name($order->shipping_country, $order->lang ?: 'cz') }}@endif
 </td>
 </tr>
 @php($lastContactRow = !$order->notes && !$contact['ico'] && !$contact['dic'])

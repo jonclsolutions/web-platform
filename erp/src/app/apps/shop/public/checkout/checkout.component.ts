@@ -25,6 +25,7 @@ import { AlertDialogService } from '../../../../core/services/alert-dialog.servi
 import { BasePublicComponent } from '../../../../public/base-public.component';
 import { CaptchaComponent } from '../../../../shared/components/captcha/captcha.component';
 import { publicFormErrorKey } from '../../../../shared/utils/public-form-errors';
+import { DELIVERY_COUNTRIES, countryOptions, isValidPostalCode } from '../../shared/delivery-countries';
 
 /**
  * @description Component for handling the e-shop checkout flow.
@@ -51,6 +52,19 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
   couponStatus = signal<string | null>(null);
 
   shippingMethods = signal<ShippingMethod[]>([]);
+  /** Delivery country (ISO code, U-02) - the shipping methods offered depend on it. */
+  selectedCountry = signal('CZ');
+  /** Countries some active shipping method delivers to (a method without countries: everywhere). */
+  deliveryCountries = computed(() => {
+    const codes = new Set<string>();
+    for (const method of this.shippingMethods()) {
+      (method.countries?.length ? method.countries : DELIVERY_COUNTRIES).forEach(code => codes.add(code));
+    }
+    return DELIVERY_COUNTRIES.filter(code => codes.has(code));
+  });
+  /** Shipping methods delivering to the selected country. */
+  visibleShippingMethods = computed(() => this.shippingMethods()
+    .filter(method => !method.countries?.length || method.countries.includes(this.selectedCountry())));
   paymentMethods = signal<PaymentMethod[]>([]);
   appliedCoupon = signal<any | null>(null);
   selectedShippingPrice = signal(0);
@@ -68,7 +82,7 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
     address: '',
     city: '',
     postalCode: '',
-    country: 'Czechia',
+    country: 'CZ',
     shippingMethodId: null as number | null,
     paymentMethodId: null as number | null,
     notes: null as string | null,
@@ -83,6 +97,7 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
     address: '',
     city: '',
     postalCode: '',
+    country: '',
     shippingMethodId: '',
     paymentMethodId: '',
     company: '',
@@ -182,11 +197,10 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
   loadShippingMethods(): void {
     this.shopPublicService.getShippingMethods().subscribe({
       next: (response) => {
-        const methods = response ?? [];
-        this.shippingMethods.set(methods);
-        if (methods.length > 0) {
-          this.selectShippingMethod(methods[0].id);
-        }
+        this.shippingMethods.set(response ?? []);
+        // Czechia when a method delivers there, else the first country with a method.
+        const countries = this.deliveryCountries();
+        this.selectCountry(countries.includes(this.formData.country) ? this.formData.country : countries[0] ?? '');
       },
       error: (e) => console.error('Error loading shipping methods:', e)
     });
@@ -212,6 +226,33 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
    * @description Updates selected shipping method and updates calculation state.
    * @param id The method identifier.
    */
+  /**
+   * @description Changes the delivery country: keeps the chosen shipping method when it delivers
+   *   there, otherwise takes the first one that does (none = no method, the step says so); the
+   *   postal code is checked again for the shape of the country.
+   * @param code ISO code of the country ('' = none available).
+   */
+  selectCountry(code: string): void {
+    this.formData.country = code;
+    this.selectedCountry.set(code);
+    const methods = this.visibleShippingMethods();
+    if (!methods.some(method => method.id === this.formData.shippingMethodId)) {
+      if (methods.length) {
+        this.selectShippingMethod(methods[0].id);
+      } else {
+        this.formData.shippingMethodId = null;
+        this.selectedShippingPrice.set(0);
+      }
+    }
+    if (this.formData.postalCode) this.validateField('postalCode');
+    this.validateField('country');
+  }
+
+  /** @description Delivery countries as options sorted by their name in the language of the page. */
+  countryChoices(): { code: string; name: string }[] {
+    return countryOptions(this.deliveryCountries(), this.localizationService.getCurrentLanguage());
+  }
+
   selectShippingMethod(id: number): void {
     this.formData.shippingMethodId = id;
     const method = this.shippingMethods().find(m => m.id === id);
@@ -297,11 +338,15 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
           this.errors['postalCode'] = this.t?.errors?.postal_code_required;
         } else if (this.formData.postalCode.length > 10) {
           this.errors['postalCode'] = this.t?.errors?.postal_code_too_long;
-        } else if (!/^\d{3}\s?\d{2}$/.test(this.formData.postalCode.trim())) {
+        } else if (!isValidPostalCode(this.formData.postalCode, this.formData.country)) {
           this.errors['postalCode'] = this.t?.errors?.postal_code_invalid;
         } else {
           this.errors['postalCode'] = '';
         }
+        break;
+
+      case 'country':
+        this.errors['country'] = !this.formData.country ? this.t?.errors?.country_required : '';
         break;
 
       case 'shippingMethodId':
@@ -375,6 +420,7 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
       this.formData.address &&
       this.formData.city &&
       this.formData.postalCode &&
+      this.formData.country &&
       this.formData.shippingMethodId &&
       this.formData.paymentMethodId &&
       this.formData.agreeToTerms &&

@@ -41,7 +41,7 @@ describe('CheckoutComponent', () => {
     postal_code_too_long: 'ZIP too long', postal_code_invalid: 'ZIP invalid', shipping_required: 'Shipping required',
     payment_required: 'Payment required', terms_required: 'Terms required', invalid_value: 'Check this value',
     company_required: 'Company required', ico_required: 'ICO required', ico_invalid: 'ICO invalid', dic_invalid: 'DIC invalid',
-    notes_too_long: 'Note too long'
+    notes_too_long: 'Note too long', country_required: 'Country required'
   };
   const checkout = {
     errors, coupon_applied: 'Coupon {code} applied', coupon_error: 'Coupon error: {message}', coupon_invalid: 'Invalid code', coupon_too_many: 'Slow down',
@@ -50,11 +50,14 @@ describe('CheckoutComponent', () => {
       captcha_failed: 'Robot?', email_limit: 'Enough for this address' }
   };
 
-  /** Creates the page; `items` = true puts a 121 EUR (21 % VAT) mug ×1 and a 110 EUR (10 %) book ×1 in the cart. */
-  function create(items = true): void {
+  /**
+   * Creates the page; `items` = true puts a 121 EUR (21 % VAT) mug ×1 and a 110 EUR (10 %) book ×1 in the cart;
+   * `methods` = the shipping methods of the API (default: two without countries = everywhere).
+   */
+  function create(items = true, methods: any[] = [{ id: 3, name: 'PPL', base_price: 5 }, { id: 4, name: 'Pickup', base_price: 0 }]): void {
     localStorage.removeItem('shop_cart');
     shop = jasmine.createSpyObj('ShopPublicService', ['getShippingMethods', 'getPaymentMethods', 'validateCoupon', 'createOrder']);
-    shop.getShippingMethods.and.returnValue(of([{ id: 3, name: 'PPL', base_price: 5 }, { id: 4, name: 'Pickup', base_price: 0 }]));
+    shop.getShippingMethods.and.returnValue(of(methods));
     shop.getPaymentMethods.and.returnValue(of([{ id: 7, name: 'Card' }]));
     alert = jasmine.createSpyObj('AlertDialogService', ['open']);
     ctx = createPublicPageContext({ translations: { checkout } });
@@ -119,6 +122,40 @@ describe('CheckoutComponent', () => {
     page.formData.notes = 'x'.repeat(1001);
     page.validateField('notes');
     expect(page.errors['notes']).toBe('Note too long');
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description Delivery countries (U-02): the countries of the active shipping methods (a
+   *   method without countries delivers everywhere), Czechia preselected when served; a change
+   *   of the country offers only its methods and keeps / replaces the chosen one; postal codes
+   *   checked by the country; no country with a method → nothing chosen.
+   * @input Methods PPL (CZ, SK) 5 €, DHL (DE, AT) 9 €; select DE; postal "1010" in DE / CZ;
+   *   select SK; methods without any country served.
+   * @output countries AT, CZ, DE, SK; CZ + PPL; DE → DHL 9 €, visible [DHL]; 1010 valid in DE,
+   *   invalid in CZ; SK → PPL; Czech names sorted ("Česko" …); none → country '' + error.
+   */
+  it('offers the delivery countries of the shipping methods', fakeAsync(() => {
+    create(true, [{ id: 3, name: 'PPL', base_price: 5, countries: ['CZ', 'SK'] }, { id: 8, name: 'DHL', base_price: 9, countries: ['DE', 'AT'] }]);
+    expect(page.deliveryCountries()).toEqual(['AT', 'CZ', 'DE', 'SK']);
+    expect([page.formData.country, page.formData.shippingMethodId]).toEqual(['CZ', 3]);
+    expect(page.countryChoices().map(c => c.code)).toEqual(['CZ', 'DE', 'AT', 'SK']); // Česko, Německo, Rakousko, Slovensko
+
+    page.selectCountry('DE');
+    expect([page.formData.shippingMethodId, page.selectedShippingPrice()]).toEqual([8, 9]);
+    expect(page.visibleShippingMethods().map(m => m.id)).toEqual([8]);
+    page.formData.postalCode = '1010';
+    page.validateField('postalCode');
+    expect(page.errors['postalCode']).toBe('');
+    page.selectCountry('CZ');
+    expect(page.errors['postalCode']).toBe('ZIP invalid');
+
+    page.selectCountry('SK');
+    expect(page.formData.shippingMethodId).toBe(3);
+
+    shop.getShippingMethods.and.returnValue(of([]));
+    page.loadShippingMethods();
+    expect([page.formData.country, page.formData.shippingMethodId, page.errors['country']]).toEqual(['', null, 'Country required']);
     discardPeriodicTasks();
   }));
 
@@ -272,7 +309,7 @@ describe('CheckoutComponent', () => {
     page.simulatePayment();
     const payload = shop.createOrder.calls.mostRecent().args[0];
     expect(payload).toEqual(jasmine.objectContaining({
-      email: 'eva@x.cz', first_name: 'Eva', last_name: 'Nová', postal_code: '110 00', country: 'Czechia',
+      email: 'eva@x.cz', first_name: 'Eva', last_name: 'Nová', postal_code: '110 00', country: 'CZ',
       payment_method_id: 7, shipping_method_id: 3, coupon_code: 'P10', currency: 'EUR', company: null, notes: null,
       lang: 'cz', captcha_token: 'captcha-token', website: '', terms_accepted: true, is_company: false, ico: null, dic: null
     }));

@@ -542,7 +542,7 @@
               "steps": [
                 {
                   "label": "Košík a pokladna",
-                  "text": "Zákazník v e-shopu vloží zboží do košíku a v pokladně vyplní kontakt, doručovací adresu, způsob dopravy a platby a případně slevový kupón a poznámku k objednávce. Při nákupu na firmu zaškrtne Nakupuji na firmu a vyplní název firmy a IČO (povinné) a DIČ.",
+                  "text": "Zákazník v e-shopu vloží zboží do košíku a v pokladně vyplní kontakt, doručovací adresu se zemí, způsob dopravy (jen dopravy, které do zvolené země doručují) a platby a případně slevový kupón a poznámku k objednávce. Při nákupu na firmu zaškrtne Nakupuji na firmu a vyplní název firmy a IČO (povinné) a DIČ.",
                   "active": true
                 },
                 {
@@ -988,6 +988,10 @@
                   "text": "Doručení na adresu, Výdejní místo nebo Osobní odběr."
                 },
                 {
+                  "title": "Země doručení",
+                  "text": "Zaškrtněte země, kam doprava doručuje (země EU a Švýcarsko, Velká Británie, Island, Lichtenštejnsko, Norsko); alespoň jedna je povinná. Pokladna nabízí jen země, kam doručuje některá aktivní doprava, a u zvolené země jen dopravy, které tam doručují. Doprava z doby před zeměmi doručuje do Česka."
+                },
+                {
                   "title": "Základní cena (EUR)",
                   "text": "Cena dopravy, kterou zákazník zaplatí."
                 },
@@ -1012,7 +1016,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Tabulka (ID, Název, Typ, Cena) se ovládá jako ostatní tabulky - přidání v nabídce Akce, úprava, detail, smazání do koše a obnova. Dopravu, kterou dočasně nenabízíte, raději vypněte (Aktivní) než mažte."
+              "content": "Tabulka (ID, Název, Typ, Cena, Země doručení) se ovládá jako ostatní tabulky - přidání v nabídce Akce, úprava, detail, smazání do koše a obnova. Dopravu, kterou dočasně nenabízíte, raději vypněte (Aktivní) než mažte."
             }
           ]
         },

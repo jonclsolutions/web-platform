@@ -32,6 +32,7 @@ import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../../../admin/components/email-template-editor/email-template-editor.component';
 import { AdminModalComponent } from '../../../../admin/components/admin-modal/admin-modal.component';
+import { DELIVERY_COUNTRIES, countryName, countryOptions } from '../../shared/delivery-countries';
 
 interface CouponValidationResult {
   valid: boolean;
@@ -428,7 +429,7 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       shipping_address: '',
       shipping_city: '',
       shipping_postal_code: '',
-      shipping_country: this.t('default_shipping_country'),
+      shipping_country: 'CZ',
 
       payment_method_id: 0,
       shipping_method_id: 0,
@@ -915,6 +916,25 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
    */
   protected override mapListRow(row: any): any {
     return { ...row, status_label: this.getStatusLabel(row.status), payment_status_label: this.getPaymentStatusLabel(row.payment_status) };
+  }
+
+  /**
+   * @description Name of the delivery country in the admin language (U-02); an order from
+   *   before the codes shows its text as it is.
+   * @param value ISO code or a legacy text.
+   */
+  countryLabel(value: string | null | undefined): string {
+    return countryName(value, this.i18n.getCurrentLanguage());
+  }
+
+  /**
+   * @description Countries offered when editing an order: the delivery countries, plus the
+   *   current value when it is a legacy text (so saving does not change it unasked).
+   * @param current Current value of the order.
+   */
+  countryChoices(current: string | null | undefined): { code: string; name: string }[] {
+    const options = countryOptions(DELIVERY_COUNTRIES, this.i18n.getCurrentLanguage());
+    return current && !DELIVERY_COUNTRIES.includes(current) ? [{ code: current, name: current }, ...options] : options;
   }
 
   getVisibleItems(order: Order | null): OrderItem[] {

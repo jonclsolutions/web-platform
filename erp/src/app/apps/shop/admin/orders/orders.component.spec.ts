@@ -255,11 +255,11 @@ describe('OrdersComponent', () => {
     /**
      * @description A new order starts as pending / unpaid with the translated default country.
      * @input  handleCreateFormOpened(); then while processing
-     * @output editingOrder defaults; shipping_country 'shop-orders.default_shipping_country'; form open; nothing while processing
+     * @output editingOrder defaults; shipping_country 'CZ'; form open; nothing while processing
      */
     it('opens an empty order form', () => {
       component.handleCreateFormOpened();
-      expect(component.editingOrder).toEqual(jasmine.objectContaining({ status: 'pending', payment_status: 'unpaid', items: [], shipping_country: 'shop-orders.default_shipping_country' }));
+      expect(component.editingOrder).toEqual(jasmine.objectContaining({ status: 'pending', payment_status: 'unpaid', items: [], shipping_country: 'CZ' }));
       expect(component.showOrderForm).toBeTrue();
       component.closeOrderForm();
       expect([component.showOrderForm, component.editingOrder]).toEqual([false, null]);
@@ -608,4 +608,18 @@ describe('OrdersComponent', () => {
     expect(el.querySelectorAll('.am-footer .am-btn').length).toBe(2);
     discardPeriodicTasks();
   }));
+
+  /**
+   * @description Delivery country (U-02): the detail shows its name in the admin language; the
+   *   edit select offers the delivery countries plus a legacy text of an older order.
+   * @input  countryLabel('CZ' / 'Česká republika' / null); countryChoices('SK' / 'Česká republika').
+   * @output 'Česko' / the text / ''; SK: all codes only; legacy: the text first, then the codes.
+   */
+  it('names the delivery country of an order', () => {
+    expect([component.countryLabel('CZ'), component.countryLabel('Česká republika'), component.countryLabel(null)]).toEqual(['Česko', 'Česká republika', '']);
+    expect(component.countryChoices('SK').length).toBe(32);
+    const legacy = component.countryChoices('Česká republika');
+    expect(legacy.length).toBe(33);
+    expect(legacy[0]).toEqual({ code: 'Česká republika', name: 'Česká republika' });
+  });
 });

@@ -28,6 +28,7 @@ class ShopShippingMethod extends Model
         'name',
         'description',
         'shipping_type',
+        'countries',
         'base_price',
         'free_shipping_threshold',
         'max_weight',
@@ -46,6 +47,7 @@ class ShopShippingMethod extends Model
      * @var array<string, string> The attributes that should be cast to native types.
      */
     protected $casts = [
+        'countries' => 'array',
         'base_price' => 'decimal:2',
         'free_shipping_threshold' => 'decimal:2',
         'max_weight' => 'decimal:2',
@@ -65,5 +67,16 @@ class ShopShippingMethod extends Model
     public function isHardcoded(): bool
     {
         return in_array($this->code, ['local_pickup', 'closest_carrier']);
+    }
+
+    /**
+     * @description Whether the method delivers to the country (no countries stored = everywhere,
+     *   a method from before the countries).
+     * @param string $code ISO code of the country.
+     * @return bool
+     */
+    public function deliversTo(string $code): bool
+    {
+        return empty($this->countries) || in_array($code, $this->countries, true);
     }
 }
