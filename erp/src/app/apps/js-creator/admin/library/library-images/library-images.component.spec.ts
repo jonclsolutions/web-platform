@@ -173,4 +173,38 @@ describe('LibraryImagesComponent', () => {
       }
     }
   });
+
+  /**
+   * @description Multiselect of the images: one image is downloaded under its download URL,
+   *   several as a ZIP; a bulk delete names used images; texts in both languages.
+   * @input checkbox of img1 + download; select all + download; delete answered with a skipped used image
+   * @output link to /api/o/1 (no download_url); POST library/assets/zip [1, 2] → link /zip;
+   *   POST library/assets/bulk {delete, [1, 2]}; alert bulk_skipped_files_title with „img1“ (Post)
+   */
+  it('selects, downloads and deletes images in bulk', async () => {
+    const click = spyOn(HTMLAnchorElement.prototype, 'click');
+    (fixture.nativeElement.querySelector('.ws-card .ws-check input') as HTMLInputElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.ws-card').classList).toContain('ws-card--selected');
+    component.download();
+    expect((click.calls.mostRecent().object as HTMLAnchorElement).getAttribute('href')).toBe('/api/o/1');
+    component.download({ ...asset(2), download_url: '/api/d/2' });
+    expect((click.calls.mostRecent().object as HTMLAnchorElement).getAttribute('href')).toBe('/api/d/2');
+
+    component.toggleAll();
+    ctx.dataHandler.post.and.returnValue(of({ url: '/zip', count: 2, bytes: 4096 }) as never);
+    component.download();
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/library/assets/zip', { ids: [1, 2] });
+    expect((click.calls.mostRecent().object as HTMLAnchorElement).getAttribute('href')).toBe('/zip');
+
+    ctx.dataHandler.post.and.returnValue(of({ count: 1, skipped: [{ id: 1, name: 'img1', reason: 'in_use', used_by: [{ id: 5, kind: 'template', name: 'Post', section: 'images', trashed: false }] }] }) as never);
+    await component.bulk('delete');
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/library/assets/bulk', { action: 'delete', ids: [1, 2] });
+    expect(ctx.alert.open).toHaveBeenCalledWith('js-creator-shared.bulk_skipped_files_title', jasmine.stringContaining('„img1“ (Post)'), 'warning');
+    for (const lang of [cz, en] as Record<string, Record<string, string>>[]) {
+      for (const key of ['download', 'download_zip', 'bulk_skipped_files_title', 'bulk_skipped_files_text']) {
+        expect(lang['js-creator-shared'][key]).withContext(key).toBeTruthy();
+      }
+    }
+  });
 });

@@ -5,11 +5,12 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description One action on several templates, blocks or sets of a section (multiselect of the
- *   lists): `action` delete (to the trash) | restore | destroy (items of the trash for good) and
+ * @description One action on several templates, blocks or sets of a section, or on several files
+ *   of the library - images / own icons, fonts (multiselect of the lists): `action` delete (to the trash) | restore | destroy (items of the trash for good) and
  *   `ids` (1 … MAX_IDS). Items that are not own (or not reachable for the action) are ignored by
  *   the controller.
- * @dependencies TemplateController::bulk(), BlockController::bulk(), SetController::bulk()
+ * @dependencies TemplateController::bulk(), BlockController::bulk(), SetController::bulk(),
+ *   AssetController::bulk(), FontController::bulk()
  */
 
 namespace App\Apps\JsCreator\Http\Requests;

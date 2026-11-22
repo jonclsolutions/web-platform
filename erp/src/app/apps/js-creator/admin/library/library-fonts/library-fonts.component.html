@@ -4,9 +4,10 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Tab "Fonts": own fonts (view switch, upload, list with a preview and the actions;
-        trash), the curated set (preview of every family), the popup of a font (file, family,
-        weight, style).
+    @description: Tab "Fonts": own fonts (view switch, upload, select all, the bar of the selected
+        fonts - download / ZIP, to the trash / restore, delete for good -, list with a checkbox, a
+        preview and the actions; trash), the curated set (preview of every family), the popup of a
+        font (file, family, weight, style).
 -->
 <section class="ws-panel">
   <div class="ws-toolbar">
@@ -19,6 +20,11 @@
     @if (view === 'trash' && canDelete && own.length) {
       <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="emptyTrash()">{{ t('empty_trash') }}</button>
     }
+    @if (own.length) {
+      <label class="ws-select-all">
+        <input type="checkbox" [checked]="allSelected" (change)="toggleAll()" />{{ ts('select_all') }}
+      </label>
+    }
   </div>
   @if (view === 'active') {
     <p class="ws-panel-hint lf-hint">{{ t('own_fonts_hint') }}</p>
@@ -26,16 +32,37 @@
     <p class="ws-trash-note">{{ t('trash_note') }}</p>
   }
 
+  @if (selection.size) {
+    <div class="ws-selection" role="region" [attr.aria-label]="ts('selection_label')">
+      <strong>{{ ts('selected') }} {{ selection.size }}</strong>
+      <span class="ws-toolbar-spacer"></span>
+      @if (view === 'active') {
+        <button type="button" class="ws-btn ws-btn--sm" [disabled]="busy" (click)="download()">{{ ts(selection.size > 1 ? 'download_zip' : 'download') }}</button>
+        @if (canDelete) {
+          <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="bulk('delete')">{{ ts('delete') }}</button>
+        }
+      } @else if (canDelete) {
+        <button type="button" class="ws-btn ws-btn--sm" [disabled]="busy" (click)="bulk('restore')">{{ ts('restore') }}</button>
+        <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="bulk('destroy')">{{ ts('destroy') }}</button>
+      }
+      <button type="button" class="ws-btn ws-btn--sm" (click)="clearSelection()">{{ ts('clear_selection') }}</button>
+    </div>
+  }
+
   @if (own.length) {
     <ul class="lf-list">
       @for (font of own; track font.id) {
-        <li class="lf-row">
+        <li class="lf-row" [class.lf-row--selected]="selection.has(font.id)">
+          <label class="lf-check" [title]="ts('select')">
+            <input type="checkbox" [checked]="selection.has(font.id)" (change)="toggle(font)" [attr.aria-label]="ts('select') + ' ' + font.family" />
+          </label>
           <div class="lf-main">
             <span class="lf-sample" [style.font-family]="ownFamily(font)" [style.font-weight]="font.weight" [style.font-style]="font.style">{{ t('sample_text') }}</span>
             <span class="lf-meta">{{ font.family }} · {{ font.weight }} · {{ t('style_' + font.style) }} · {{ font.format.toUpperCase() }} · {{ size(font.size_bytes) }}</span>
           </div>
           <span class="lf-actions">
             @if (view === 'active') {
+              <button type="button" class="ws-icon-btn" [title]="ts('download')" [attr.aria-label]="ts('download')" (click)="download(font)"><app-creator-icon [nodes]="downloadIcon" [size]="15" /></button>
               @if (canUpdate) {
                 <button type="button" class="ws-icon-btn" [title]="t('edit_face')" [attr.aria-label]="t('edit_face')" (click)="openEdit(font)"><app-icon name="edit" [size]="15"></app-icon></button>
               }

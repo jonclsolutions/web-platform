@@ -5,8 +5,9 @@
     @author: JS
     @created: 2026
     @description: Tab "Images" (and the own icons of the tab "Icons" - with a title): toolbar
-        (view switch, search, upload with its hint), the grid of the images (drop zone for
-        files) with the actions of a card, "load more", the rename popup.
+        (view switch, search, upload with its hint, select all), the bar of the selected files
+        (download / ZIP, to the trash / restore, delete for good), the grid of the images (drop
+        zone for files; checkbox and actions of a card), "load more", the rename popup.
 -->
 <section class="ws-panel">
   @if (kind === 'icon') {
@@ -28,7 +29,29 @@
     @if (view === 'trash' && canDelete && items.length) {
       <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="emptyTrash()">{{ t('empty_trash') }}</button>
     }
+    @if (items.length) {
+      <label class="ws-select-all">
+        <input type="checkbox" [checked]="allSelected" (change)="toggleAll()" />{{ ts('select_all') }}
+      </label>
+    }
   </div>
+
+  @if (selection.size) {
+    <div class="ws-selection" role="region" [attr.aria-label]="ts('selection_label')">
+      <strong>{{ ts('selected') }} {{ selection.size }}</strong>
+      <span class="ws-toolbar-spacer"></span>
+      @if (view === 'active') {
+        <button type="button" class="ws-btn ws-btn--sm" [disabled]="busy" (click)="download()">{{ ts(selection.size > 1 ? 'download_zip' : 'download') }}</button>
+        @if (canDelete) {
+          <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="bulk('delete')">{{ ts('delete') }}</button>
+        }
+      } @else if (canDelete) {
+        <button type="button" class="ws-btn ws-btn--sm" [disabled]="busy" (click)="bulk('restore')">{{ ts('restore') }}</button>
+        <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="bulk('destroy')">{{ ts('destroy') }}</button>
+      }
+      <button type="button" class="ws-btn ws-btn--sm" (click)="clearSelection()">{{ ts('clear_selection') }}</button>
+    </div>
+  }
 
   @if (view === 'trash') {
     <p class="ws-trash-note">{{ t('trash_note') }}</p>
@@ -41,7 +64,10 @@
     @if (items.length) {
       <div class="ws-grid">
         @for (asset of items; track asset.id) {
-          <article class="ws-card">
+          <article class="ws-card" [class.ws-card--selected]="selection.has(asset.id)">
+            <label class="ws-check" [title]="ts('select')">
+              <input type="checkbox" [checked]="selection.has(asset.id)" (change)="toggle(asset)" [attr.aria-label]="ts('select') + ' ' + asset.name" />
+            </label>
             <a class="ws-card-preview" [href]="asset.url" target="_blank" rel="noopener" [title]="t('open_original')">
               <img [src]="asset.thumb_url" [alt]="asset.name" loading="lazy" />
             </a>
@@ -51,6 +77,7 @@
             </div>
             <div class="ws-card-actions">
               @if (view === 'active') {
+                <button type="button" class="ws-icon-btn" [title]="ts('download')" [attr.aria-label]="ts('download')" (click)="download(asset)"><app-creator-icon [nodes]="downloadIcon" [size]="15" /></button>
                 @if (canUpdate) {
                   <button type="button" class="ws-icon-btn" [title]="t('rename')" [attr.aria-label]="t('rename')" (click)="openRename(asset)"><app-icon name="edit" [size]="15"></app-icon></button>
                 }

@@ -11,6 +11,10 @@
  *   used by a template is not deleted - a message names the templates (`used_by` of the list).
  *   With `kind="icon"` the same list shows the OWN ICONS of the tab "Icons" (PNG / JPG only, at
  *   most 1024 px - upload profile js_creator_icon; own trash).
+ *   Multiselect: a checkbox on every card and "select all"; the selection bar downloads the
+ *   selected files (one file under its name, several as one ZIP) and moves them to the trash (in
+ *   the trash: restore, delete for good); used files are skipped with a message. A card is
+ *   downloaded by its own button too.
  * @usage `<app-library-images />`, `<app-library-images kind="icon" />`
  * @dependencies JsCreatorApiService, WorkspaceUsageService, UploadRulesService (profiles
  *   js_creator_image, js_creator_icon), AdminModalComponent, ConfirmDialogService, AlertDialogService,
@@ -32,14 +36,18 @@ import { UploadRulesService } from '../../../../../shared/services/upload-rules.
 import { UploadRule, extensionsLabel, isExtensionAllowed } from '../../../../../shared/utils/upload-rules';
 import { JsCreatorApiService } from '../../shared/js-creator-api.service';
 import { WorkspaceUsageService } from '../../shared/workspace-usage.service';
-import { AssetKind, CreatorAsset, UsedByTemplate } from '../../shared/js-creator.models';
+import { AssetKind, BulkAction, BulkResult, CreatorAsset, UsedByTemplate } from '../../shared/js-creator.models';
+import { CardSelection } from '../../shared/card-selection';
+import { saveUrl } from '../../shared/save-url';
+import { CreatorIconComponent } from '../../shared/creator-icon/creator-icon.component';
+import { uiIcon } from '../../shared/ui-icons';
 import { can } from '../../shared/js-creator-sections';
 import { formatBytes } from '../../shared/workspace-format';
 
 @Component({
   selector: 'app-library-images',
   standalone: true,
-  imports: [FormsModule, AdminModalComponent, RowButtonBuilderComponent, IconComponent],
+  imports: [FormsModule, AdminModalComponent, RowButtonBuilderComponent, IconComponent, CreatorIconComponent],
   templateUrl: './library-images.component.html',
   styleUrls: ['../../../../../admin/shared-styles/modal.css', '../../shared-styles/workspace.css', './library-images.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -91,6 +99,10 @@ export class LibraryImagesComponent implements OnInit, OnDestroy {
   rules: UploadRule | null = null;
   /** Open rename popup. */
   renaming: { asset: CreatorAsset; name: string; error: string } | null = null;
+  /** Icon of the download of a card. */
+  readonly downloadIcon = uiIcon('download');
+  /** Selected cards (multiselect, at most 200 - the limit of the API). */
+  readonly selection = new CardSelection(200);
 
   /** May upload. */
   readonly canCreate = can(this.permissions, 'create');
@@ -163,13 +175,99 @@ export class LibraryImagesComponent implements OnInit, OnDestroy {
    */
   switchView(value: string): void {
     this.view = value === 'trash' ? 'trash' : 'active';
+    this.selection.clear();
     this.load(1);
   }
 
   /** @description Searches after a short pause in typing. */
   onSearch(): void {
     if (this.searchTimer) clearTimeout(this.searchTimer);
-    this.searchTimer = setTimeout(() => this.load(1), 300);
+    this.searchTimer = setTimeout(() => {
+      this.selection.clear();
+      this.load(1);
+    }, 300);
+  }
+
+  /**
+   * @description Text of the multiselect (shared by the lists).
+   * @param key Key in `js-creator-shared`.
+   */
+  ts(key: string): string {
+    return this.i18n.getValue(`js-creator-shared.${key}`);
+  }
+
+  /** @description Every listed card is selected. */
+  get allSelected(): boolean {
+    return this.selection.allOf(this.items);
+  }
+
+  /**
+   * @description Selects a card or takes it out of the selection.
+   * @param asset Image / icon.
+   */
+  toggle(asset: CreatorAsset): void {
+    this.selection.toggle(asset.id);
+    this.cd.markForCheck();
+  }
+
+  /** @description Selects every listed card (or none, when all are selected). */
+  toggleAll(): void {
+    this.selection.toggleAll(this.items);
+    this.cd.markForCheck();
+  }
+
+  /** @description Empties the selection. */
+  clearSelection(): void {
+    this.selection.clear();
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Downloads files: one under its name, several as one ZIP.
+   * @param one A single card (null = the selection).
+   */
+  download(one: CreatorAsset | null = null): void {
+    const ids = one ? [one.id] : this.selection.ids();
+    if (!ids.length || this.busy) return;
+    const single = ids.length === 1 ? (one ?? this.items.find(item => item.id === ids[0])) : undefined;
+    if (single) {
+      saveUrl(single.download_url ?? single.url);
+      return;
+    }
+    this.busy = true;
+    this.cd.markForCheck();
+    this.api.zipAssets(ids).subscribe({
+      next: zip => {
+        this.busy = false;
+        saveUrl(zip.url);
+        this.cd.markForCheck();
+      },
+      error: () => {
+        this.busy = false;
+        this.cd.markForCheck();
+      },
+    });
+  }
+
+  /**
+   * @description Bulk action on the selection (after a confirmation): to the trash, restore,
+   *   delete for good; files used by templates are skipped - a message names them.
+   * @param action delete | restore | destroy.
+   */
+  async bulk(action: BulkAction): Promise<void> {
+    const ids = this.selection.ids();
+    if (!ids.length) return;
+    if (action !== 'restore') {
+      const key = action === 'delete' ? 'bulk_delete' : 'bulk_destroy';
+      if (!(await this.confirm.open(this.ts(`${key}_title`), `${this.ts(`${key}_text`)} ${ids.length}`))) return;
+    }
+    this.run(this.api.bulkAssets(action, ids), (result: BulkResult) => {
+      this.selection.clear();
+      if (result.skipped.length) {
+        const names = result.skipped.map(s => `„${s.name}“ (${s.used_by.map(u => u.name).join(', ')})`).join('; ');
+        this.alert.open(this.ts('bulk_skipped_files_title'), `${this.ts('bulk_skipped_files_text')} ${names}`, 'warning');
+      }
+    });
   }
 
   /** @description Loads the next page and appends it. */
@@ -333,15 +431,15 @@ export class LibraryImagesComponent implements OnInit, OnDestroy {
   /**
    * @description Runs a change, then reloads the first page and the usage.
    * @param request Request of the change.
-   * @param done Called after success, before the reload.
+   * @param done Called with the answer after success, before the reload.
    */
-  private run<T>(request: Observable<T>, done?: () => void): void {
+  private run<T>(request: Observable<T>, done?: (result: T) => void): void {
     this.busy = true;
     this.cd.markForCheck();
     request.subscribe({
-      next: () => {
+      next: result => {
         this.busy = false;
-        done?.();
+        done?.(result);
         this.usage.refresh();
         this.load(1);
       },

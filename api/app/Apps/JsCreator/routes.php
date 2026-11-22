@@ -63,6 +63,8 @@ Route::middleware(['auth:sanctum', 'throttle:300,1,js-creator'])->prefix('js-cre
     Route::get('library/assets', [AssetController::class, 'index'])->middleware($view);
     Route::post('library/assets', [AssetController::class, 'store'])->middleware([$create, $upload]);
     Route::delete('library/assets/trash', [AssetController::class, 'emptyTrash'])->middleware($delete);
+    Route::post('library/assets/bulk', [AssetController::class, 'bulk'])->middleware($delete);
+    Route::post('library/assets/zip', [AssetController::class, 'zip'])->middleware([$view, 'throttle:20,1,js-creator-zip']);
     Route::put('library/assets/{id}', [AssetController::class, 'update'])->middleware($update)->whereNumber('id');
     Route::delete('library/assets/{id}', [AssetController::class, 'destroy'])->middleware($delete)->whereNumber('id');
     Route::post('library/assets/{id}/restore', [AssetController::class, 'restore'])->middleware($delete)->whereNumber('id');
@@ -71,6 +73,8 @@ Route::middleware(['auth:sanctum', 'throttle:300,1,js-creator'])->prefix('js-cre
     Route::get('library/fonts', [FontController::class, 'index'])->middleware($view);
     Route::post('library/fonts', [FontController::class, 'store'])->middleware([$create, $upload]);
     Route::delete('library/fonts/trash', [FontController::class, 'emptyTrash'])->middleware($delete);
+    Route::post('library/fonts/bulk', [FontController::class, 'bulk'])->middleware($delete);
+    Route::post('library/fonts/zip', [FontController::class, 'zip'])->middleware([$view, 'throttle:20,1,js-creator-zip']);
     Route::put('library/fonts/{id}', [FontController::class, 'update'])->middleware($update)->whereNumber('id');
     Route::delete('library/fonts/{id}', [FontController::class, 'destroy'])->middleware($delete)->whereNumber('id');
     Route::post('library/fonts/{id}/restore', [FontController::class, 'restore'])->middleware($delete)->whereNumber('id');
@@ -144,7 +148,7 @@ Route::middleware(['auth:sanctum', 'throttle:300,1,js-creator'])->prefix('js-cre
 
 // ── js-creator/files (signed URLs of WorkspaceFiles only; relative signature) ───────
 Route::get('js-creator/files/assets/{id}/{variant}', [FileController::class, 'asset'])
-    ->middleware('signed:relative')->whereNumber('id')->whereIn('variant', ['original', 'thumb'])
+    ->middleware('signed:relative')->whereNumber('id')->whereIn('variant', ['original', 'thumb', 'download'])
     ->name('js-creator.files.asset');
 Route::get('js-creator/files/fonts/{id}', [FileController::class, 'font'])
     ->middleware('signed:relative')->whereNumber('id')
@@ -161,3 +165,6 @@ Route::get('js-creator/files/outputs/{id}/{variant}', [FileController::class, 'o
 Route::get('js-creator/files/zip', [FileController::class, 'zip'])
     ->middleware(['signed:relative', 'throttle:20,1,js-creator-zip-file'])
     ->name('js-creator.files.zip');
+Route::get('js-creator/files/library-zip', [FileController::class, 'libraryZip'])
+    ->middleware(['signed:relative', 'throttle:20,1,js-creator-zip-file'])
+    ->name('js-creator.files.library-zip');

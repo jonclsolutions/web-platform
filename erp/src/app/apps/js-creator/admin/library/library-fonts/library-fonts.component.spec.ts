@@ -118,4 +118,39 @@ describe('LibraryFontsComponent', () => {
     expect(ctx.alert.open.calls.mostRecent().args[1]).toContain('„Post“');
     expect(ctx.dataHandler.delete).not.toHaveBeenCalled();
   });
+
+  /**
+   * @description Multiselect of the own fonts: one font is downloaded under its URL, several as a
+   *   ZIP; bulk delete; a bulk restore names fonts whose face is taken.
+   * @input fonts Brand 400 (listed) and Brand 700; download of one; select all + download; delete;
+   *   restore answered with a skipped face_taken font
+   * @output link to /api/f/1; POST library/fonts/zip [1, 2] → link to /zip; POST library/fonts/bulk
+   *   {delete, [1, 2]}; alert with error_face_taken „Brand“
+   */
+  it('selects, downloads and deletes fonts in bulk', async () => {
+    const click = spyOn(HTMLAnchorElement.prototype, 'click');
+    (fixture.nativeElement.querySelector('.lf-check input') as HTMLInputElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.ws-selection')).not.toBeNull();
+    component.download();
+    expect((click.calls.mostRecent().object as HTMLAnchorElement).getAttribute('href')).toBe('/api/f/1');
+
+    component.own = [font(1), font(2, 'Brand', 700)];
+    component.toggleAll();
+    expect(component.selection.ids()).toEqual([1, 2]);
+    ctx.dataHandler.post.and.returnValue(of({ url: '/zip', count: 2, bytes: 6000 }) as never);
+    component.download();
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/library/fonts/zip', { ids: [1, 2] });
+    expect((click.calls.mostRecent().object as HTMLAnchorElement).getAttribute('href')).toBe('/zip');
+
+    ctx.dataHandler.post.and.returnValue(of({ count: 2, skipped: [] }) as never);
+    await component.bulk('delete');
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/library/fonts/bulk', { action: 'delete', ids: [1, 2] });
+    expect(component.selection.size).toBe(0);
+
+    component.toggle(font(8));
+    ctx.dataHandler.post.and.returnValue(of({ count: 0, skipped: [{ id: 8, name: 'Brand', reason: 'face_taken', used_by: [] }] }) as never);
+    await component.bulk('restore');
+    expect(ctx.alert.open).toHaveBeenCalledWith('js-creator-shared.bulk_skipped_files_title', 'js-creator-library.error_face_taken „Brand“', 'warning');
+  });
 });

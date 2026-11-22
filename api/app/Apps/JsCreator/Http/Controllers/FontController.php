@@ -19,6 +19,8 @@
 
 namespace App\Apps\JsCreator\Http\Controllers;
 
+use App\Apps\JsCreator\Http\Requests\BulkItemsRequest;
+use App\Apps\JsCreator\Http\Requests\LibraryZipRequest;
 use App\Apps\JsCreator\Http\Requests\StoreFontRequest;
 use App\Apps\JsCreator\Http\Requests\UpdateFontRequest;
 use App\Apps\JsCreator\Http\Resources\FontResource;
@@ -32,6 +34,7 @@ use App\Http\Controllers\Controller;
 use App\Traits\LogsActivity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -142,6 +145,64 @@ class FontController extends Controller
         $this->logAction($request, JsCreatorLog::class, 'restore', 'Font', "Font #{$font->id} restored", $font->id, 'Font');
 
         return $this->respond(new FontResource($font));
+    }
+
+    /**
+     * @description One action on several own fonts (multiselect): `delete` (to the trash),
+     *   `restore` / `destroy` (fonts of the trash for good). A font used by a template or block is
+     *   skipped (`in_use`), as is a restore whose face (family, weight, style) is taken by another
+     *   font (`face_taken`).
+     * @param BulkItemsRequest $request `action`, `ids`.
+     * @return JsonResponse { count, skipped: [{ id, name, reason, used_by }] }.
+     */
+    public function bulk(BulkItemsRequest $request): JsonResponse
+    {
+        $action = (string) $request->input('action');
+        $userId = $request->user()->id;
+        $query = CreatorFont::query()->ownedBy($request->user())->whereIn('id', $request->ids());
+        $items = ($action === 'delete' ? $query : $query->onlyTrashed())->get();
+        $used = $action === 'restore' ? [] : TemplateUsages::usedBy(CreatorUsage::FONT, $items->pluck('id')->all());
+        $skipped = [];
+        $done = 0;
+        $run = function () use ($items, $used, $action, $userId, &$skipped, &$done) {
+            foreach ($items as $font) {
+                if (isset($used[$font->id])) {
+                    $skipped[] = ['id' => $font->id, 'name' => $font->family, 'reason' => 'in_use', 'used_by' => $used[$font->id]];
+                    continue;
+                }
+                if ($action === 'restore') {
+                    try {
+                        $this->ensureFreeFace($userId, $font->only(['family', 'weight', 'style']));
+                    } catch (ValidationException) {
+                        $skipped[] = ['id' => $font->id, 'name' => $font->family, 'reason' => 'face_taken', 'used_by' => []];
+                        continue;
+                    }
+                }
+                match ($action) {
+                    'delete'  => $font->delete(),
+                    'restore' => $font->restore(),
+                    'destroy' => $font->deleteWithFiles(),
+                };
+                $done++;
+            }
+        };
+        // Files of a deleted font are removed at once, so a destroy does not run in a transaction.
+        $action === 'destroy' ? $run() : DB::transaction($run);
+        $this->logAction($request, JsCreatorLog::class, TemplateController::BULK_EVENTS[$action], 'Font', "Fonts in bulk: {$action}. Count: {$done}");
+
+        return $this->respond(['count' => $done, 'skipped' => $skipped]);
+    }
+
+    /**
+     * @description Signed URL of a ZIP with own fonts outside the trash.
+     * @param LibraryZipRequest $request `ids`.
+     * @return JsonResponse { url, count, bytes }; 422 `ids`.
+     */
+    public function zip(LibraryZipRequest $request): JsonResponse
+    {
+        $fonts = CreatorFont::query()->ownedBy($request->user())->whereIn('id', $request->ids())->get(['id', 'size_bytes']);
+
+        return $this->respond(AssetController::zipAnswer($request->user()->id, 'fonts', $fonts->pluck('id')->sort()->values()->all(), (int) $fonts->sum('size_bytes')));
     }
 
     /**

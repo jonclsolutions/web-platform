@@ -10,6 +10,10 @@
  *   every family with the Czech characters). Files of a wrong type / size, a face that already
  *   exists or a full quota are refused here with a translated text before sending. A font used by
  *   a template is not deleted - a message names the templates (`used_by` of the list).
+ *   Multiselect of the own fonts: a checkbox on every row and "select all"; the selection bar
+ *   downloads the selected fonts (one file named after its face, several as one ZIP) and moves
+ *   them to the trash (in the trash: restore, delete for good); used fonts and taken faces are
+ *   skipped with a message. A row is downloaded by its own button too.
  * @dependencies JsCreatorApiService, FontLibraryService, WorkspaceUsageService, UploadRulesService
  *   (profile js_creator_font), AdminModalComponent, ConfirmDialogService, AlertDialogService,
  *   PermissionService, AdminLocalizationService (section `js-creator-library`).
@@ -31,7 +35,11 @@ import { UploadRule, extensionsLabel, isExtensionAllowed } from '../../../../../
 import { JsCreatorApiService } from '../../shared/js-creator-api.service';
 import { FontLibraryService } from '../../shared/font-library.service';
 import { WorkspaceUsageService } from '../../shared/workspace-usage.service';
-import { CreatorFont, CuratedFontFamily, FontStyle, UsedByTemplate } from '../../shared/js-creator.models';
+import { BulkAction, BulkResult, CreatorFont, CuratedFontFamily, FontStyle, UsedByTemplate } from '../../shared/js-creator.models';
+import { CardSelection } from '../../shared/card-selection';
+import { saveUrl } from '../../shared/save-url';
+import { CreatorIconComponent } from '../../shared/creator-icon/creator-icon.component';
+import { uiIcon } from '../../shared/ui-icons';
 import { can } from '../../shared/js-creator-sections';
 import { formatBytes } from '../../shared/workspace-format';
 
@@ -48,7 +56,7 @@ interface FontDialog {
 @Component({
   selector: 'app-library-fonts',
   standalone: true,
-  imports: [FormsModule, AdminModalComponent, RowButtonBuilderComponent, IconComponent],
+  imports: [FormsModule, AdminModalComponent, RowButtonBuilderComponent, IconComponent, CreatorIconComponent],
   templateUrl: './library-fonts.component.html',
   styleUrls: ['../../../../../admin/shared-styles/modal.css', '../../shared-styles/workspace.css', './library-fonts.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,6 +78,10 @@ export class LibraryFontsComponent implements OnInit, OnDestroy {
   readonly styles: FontStyle[] = ['normal', 'italic'];
   /** Id of the font form (submit button in the footer). */
   readonly formId = 'jc-font-form';
+  /** Icon of the download of a row. */
+  readonly downloadIcon = uiIcon('download');
+  /** Selected own fonts (multiselect, at most 200 - the limit of the API). */
+  readonly selection = new CardSelection(200);
 
   /** View of the own fonts: active or the trash. */
   view: 'active' | 'trash' = 'active';
@@ -180,7 +192,94 @@ export class LibraryFontsComponent implements OnInit, OnDestroy {
    */
   switchView(value: string): void {
     this.view = value === 'trash' ? 'trash' : 'active';
+    this.selection.clear();
     this.load();
+  }
+
+  /**
+   * @description Text of the multiselect (shared by the lists).
+   * @param key Key in `js-creator-shared`.
+   */
+  ts(key: string): string {
+    return this.i18n.getValue(`js-creator-shared.${key}`);
+  }
+
+  /** @description Every listed own font is selected. */
+  get allSelected(): boolean {
+    return this.selection.allOf(this.own);
+  }
+
+  /**
+   * @description Selects a font or takes it out of the selection.
+   * @param font Font.
+   */
+  toggle(font: CreatorFont): void {
+    this.selection.toggle(font.id);
+    this.cd.markForCheck();
+  }
+
+  /** @description Selects every listed own font (or none, when all are selected). */
+  toggleAll(): void {
+    this.selection.toggleAll(this.own);
+    this.cd.markForCheck();
+  }
+
+  /** @description Empties the selection. */
+  clearSelection(): void {
+    this.selection.clear();
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Downloads fonts: one file named after its face, several as one ZIP.
+   * @param one A single font (null = the selection).
+   */
+  download(one: CreatorFont | null = null): void {
+    const ids = one ? [one.id] : this.selection.ids();
+    if (!ids.length || this.busy) return;
+    const single = ids.length === 1 ? (one ?? this.own.find(font => font.id === ids[0])) : undefined;
+    if (single) {
+      saveUrl(single.url);
+      return;
+    }
+    this.busy = true;
+    this.cd.markForCheck();
+    this.api.zipFonts(ids).subscribe({
+      next: zip => {
+        this.busy = false;
+        saveUrl(zip.url);
+        this.cd.markForCheck();
+      },
+      error: () => {
+        this.busy = false;
+        this.cd.markForCheck();
+      },
+    });
+  }
+
+  /**
+   * @description Bulk action on the selected fonts (after a confirmation): to the trash, restore,
+   *   delete for good; used fonts and fonts whose face is taken again are skipped - a message
+   *   names them.
+   * @param action delete | restore | destroy.
+   */
+  async bulk(action: BulkAction): Promise<void> {
+    const ids = this.selection.ids();
+    if (!ids.length) return;
+    if (action !== 'restore') {
+      const key = action === 'delete' ? 'bulk_delete' : 'bulk_destroy';
+      if (!(await this.confirm.open(this.ts(`${key}_title`), `${this.ts(`${key}_text`)} ${ids.length}`))) return;
+    }
+    this.run(this.api.bulkFonts(action, ids), (result: BulkResult) => {
+      this.selection.clear();
+      const used = result.skipped.filter(s => s.reason !== 'face_taken');
+      const taken = result.skipped.filter(s => s.reason === 'face_taken');
+      const parts = [
+        used.length ? `${this.ts('bulk_skipped_files_text')} ${used.map(s => `„${s.name}“ (${s.used_by.map(u => u.name).join(', ')})`).join('; ')}` : '',
+        taken.length ? `${this.t('error_face_taken')} ${taken.map(s => `„${s.name}“`).join(', ')}` : '',
+      ].filter(Boolean);
+      if (parts.length) this.alert.open(this.ts('bulk_skipped_files_title'), parts.join(' '), 'warning');
+    });
   }
 
   /** @description Opens the upload popup. */
@@ -307,15 +406,15 @@ export class LibraryFontsComponent implements OnInit, OnDestroy {
   /**
    * @description Runs a change, then reloads the fonts and the usage.
    * @param request Request of the change.
-   * @param done Called after success, before the reload.
+   * @param done Called with the answer after success, before the reload.
    */
-  private run<T>(request: Observable<T>, done?: () => void): void {
+  private run<T>(request: Observable<T>, done?: (result: T) => void): void {
     this.busy = true;
     this.cd.markForCheck();
     request.subscribe({
-      next: () => {
+      next: result => {
         this.busy = false;
-        done?.();
+        done?.(result);
         this.usage.refresh();
         this.load();
       },

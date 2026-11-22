@@ -15,7 +15,7 @@ import { Observable } from 'rxjs';
 import { DataHandler } from '../../../../core/services/data-handler.service';
 import { ApiPage } from '../../../../shared/interfaces/api-envelope';
 import {
-  AssetKind, CreatorAsset, CreatorFolder, CreatorFont, CreatorSettings, FontFaceFields, QuotaAccount, WorkspaceUsage,
+  AssetKind, BulkAction, BulkResult, CreatorAsset, CreatorFolder, LibraryZip, CreatorFont, CreatorSettings, FontFaceFields, QuotaAccount, WorkspaceUsage,
 } from './js-creator.models';
 
 /** Query of the list of library images. */
@@ -122,9 +122,43 @@ export class JsCreatorApiService {
     return this.api.post<CreatorAsset>(`js-creator/library/assets/${id}/restore`, {});
   }
 
+  /**
+   * @description One action on several own images / icons (multiselect); used files are skipped.
+   * @param action delete | restore | destroy.
+   * @param ids Files (at most 200).
+   */
+  bulkAssets(action: BulkAction, ids: number[]): Observable<BulkResult> {
+    return this.api.post<BulkResult>('js-creator/library/assets/bulk', { action, ids: ids.slice(0, 200) });
+  }
+
+  /**
+   * @description Signed URL of a ZIP with own images / icons (at most 200 / 500 MB).
+   * @param ids Files.
+   */
+  zipAssets(ids: number[]): Observable<LibraryZip> {
+    return this.api.post<LibraryZip>('js-creator/library/assets/zip', { ids: ids.slice(0, 200) });
+  }
+
   /** @description Empty the image trash (`kind` icon: the trash of the own icons). */
   emptyAssetTrash(kind: AssetKind = 'image'): Observable<void> {
     return this.api.delete(`js-creator/library/assets/trash${kind === 'icon' ? '?kind=icon' : ''}`);
+  }
+
+  /**
+   * @description One action on several own fonts (multiselect); used fonts and taken faces are skipped.
+   * @param action delete | restore | destroy.
+   * @param ids Fonts (at most 200).
+   */
+  bulkFonts(action: BulkAction, ids: number[]): Observable<BulkResult> {
+    return this.api.post<BulkResult>('js-creator/library/fonts/bulk', { action, ids: ids.slice(0, 200) });
+  }
+
+  /**
+   * @description Signed URL of a ZIP with own fonts.
+   * @param ids Fonts.
+   */
+  zipFonts(ids: number[]): Observable<LibraryZip> {
+    return this.api.post<LibraryZip>('js-creator/library/fonts/zip', { ids: ids.slice(0, 200) });
   }
 
   /** @description Own fonts, or the font trash. */

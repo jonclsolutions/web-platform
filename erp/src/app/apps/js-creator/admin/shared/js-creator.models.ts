@@ -46,6 +46,8 @@ export interface CreatorAsset {
   size_bytes: number;
   url: string;
   thumb_url: string;
+  /** Signed URL saving the image as a file under its name. */
+  download_url?: string;
   created_at: string | null;
   deleted_at: string | null;
   /** Templates using the image (only in the list). */
@@ -297,10 +299,20 @@ export interface OutputZip {
 /** Action on several templates, blocks or sets of a list (multiselect). */
 export type BulkAction = 'delete' | 'restore' | 'destroy';
 
-/** Answer of a bulk action: done items and the skipped ones (blocks used by templates). */
+/**
+ * Answer of a bulk action: done items and the skipped ones - blocks and library files used by
+ * templates (`in_use`), fonts whose face is taken again (`face_taken`, restore).
+ */
 export interface BulkResult {
   count: number;
-  skipped: { id: number; name: string; used_by: UsedByTemplate[] }[];
+  skipped: { id: number; name: string; reason?: 'in_use' | 'face_taken'; used_by: UsedByTemplate[] }[];
+}
+
+/** Signed URL of a ZIP of library files. */
+export interface LibraryZip {
+  url: string;
+  count: number;
+  bytes: number;
 }
 
 /** Selection of an export (ids of own items of the section). */

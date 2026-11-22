@@ -12,7 +12,7 @@
 /*
     @module: Font rows
     @description: A sample sentence in the font itself above its details; actions on the right.
-    @usage: .lf-hint, .lf-list > .lf-row > .lf-main (.lf-sample, .lf-meta), .lf-actions
+    @usage: .lf-hint, .lf-list > .lf-row(--selected) > label.lf-check, .lf-main (.lf-sample, .lf-meta), .lf-actions
 */
 .lf-hint { margin: 0; }
 
@@ -33,6 +33,11 @@
 }
 
 .lf-row:last-child { border-bottom: none; }
+
+.lf-row--selected { background: var(--color-amber-50); }
+
+.lf-check { display: inline-flex; padding: 4px; cursor: pointer; }
+.lf-check input { width: 16px; height: 16px; margin: 0; cursor: pointer; }
 
 .lf-main {
   display: flex;

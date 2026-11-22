@@ -560,8 +560,26 @@
           ]
         },
         {
+          "heading": "04. Výběr a stažení",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Obrázky, vlastní ikony i vlastní fonty mají zaškrtávací políčko (u karty / řádku) a Vybrat vše. Lišta výběru ukáže počet a akce: Stáhnout, Smazat (do koše) a Zrušit výběr; v koši Obnovit a Smazat trvale."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Jeden vybraný soubor se stáhne pod svým názvem (font jako Rodina-váha.woff2), víc souborů najednou jako jeden ZIP (nejvýš 200 souborů a 500 MB). Jeden soubor stáhnete i ikonou šipky na kartě.",
+                "Soubor, který používá šablona nebo blok, se hromadně nesmaže – aplikace vypíše, kde se používá. Font se neobnoví, pokud už máte jiný font se stejnou rodinou, váhou a stylem.",
+                "Stahují se soubory tak, jak jsou uložené na serveru – uložené znovu bez metadat (obrázky a ikony) nebo beze změny (fonty)."
+              ]
+            }
+          ]
+        },
+        {
           "key": "trash",
-          "heading": "04. Koš",
+          "heading": "05. Koš",
           "blocks": [
             {
               "type": "text",

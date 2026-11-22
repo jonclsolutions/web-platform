@@ -560,8 +560,26 @@
           ]
         },
         {
+          "heading": "04. Selection and download",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Images, own icons and own fonts have a checkbox (on a card / row) and Select all. The selection bar shows their number and the actions: Download, Delete (to the trash) and Clear selection; in the trash Restore and Delete for good."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "One selected file is downloaded under its name (a font as Family-weight.woff2), several at once as one ZIP (at most 200 files and 500 MB). One file is downloaded by the arrow icon on its card too.",
+                "A file used by a template or block is not deleted in bulk – the app lists where it is used. A font is not restored while you have another font with the same family, weight and style.",
+                "Files are downloaded as they are stored on the server – stored again without metadata (images and icons) or unchanged (fonts)."
+              ]
+            }
+          ]
+        },
+        {
           "key": "trash",
-          "heading": "04. Trash",
+          "heading": "05. Trash",
           "blocks": [
             {
               "type": "text",

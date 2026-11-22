@@ -83,7 +83,7 @@ final class WorkspaceFiles
     /**
      * @description Signed URL of an image of the library.
      * @param CreatorAsset $asset Image.
-     * @param string $variant `original` | `thumb`.
+     * @param string $variant `original` | `thumb` (shown in the page) | `download` (saved as a file under its name).
      * @return string Relative URL.
      */
     public static function assetUrl(CreatorAsset $asset, string $variant): string
@@ -167,6 +167,20 @@ final class WorkspaceFiles
     {
         return URL::temporarySignedRoute('js-creator.files.zip', Carbon::now()->addMinutes(self::ZIP_MINUTES), [
             'user' => $userId, 'ids' => implode(',', $ids),
+        ], false);
+    }
+
+    /**
+     * @description Signed URL of a ZIP with library files of an account (valid ZIP_MINUTES).
+     * @param int $userId Owner of the files.
+     * @param string $kind `assets` (images / own icons) | `fonts`.
+     * @param array<int, int> $ids Files (already checked to be own).
+     * @return string Relative URL.
+     */
+    public static function libraryZipUrl(int $userId, string $kind, array $ids): string
+    {
+        return URL::temporarySignedRoute('js-creator.files.library-zip', Carbon::now()->addMinutes(self::ZIP_MINUTES), [
+            'user' => $userId, 'kind' => $kind, 'ids' => implode(',', $ids),
         ], false);
     }
 

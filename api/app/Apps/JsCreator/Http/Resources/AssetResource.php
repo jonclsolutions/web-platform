@@ -35,6 +35,7 @@ class AssetResource extends JsonResource
             'size_bytes' => $this->size_bytes,
             'url'        => WorkspaceFiles::assetUrl($this->resource, 'original'),
             'thumb_url'  => WorkspaceFiles::assetUrl($this->resource, 'thumb'),
+            'download_url' => WorkspaceFiles::assetUrl($this->resource, 'download'),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'deleted_at' => $this->deleted_at?->format('Y-m-d H:i:s'),
             // Templates and blocks using the image (only in the list - TemplateUsages::usedBy()).

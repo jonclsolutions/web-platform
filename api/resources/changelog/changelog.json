@@ -4,6 +4,12 @@
             "type": "added",
             "area": "js-creator",
             "part": "admin",
+            "text": "JS Creator library: images, own icons and fonts can be selected together, deleted, restored and downloaded – one file under its name, several as one ZIP."
+        },
+        {
+            "type": "added",
+            "area": "js-creator",
+            "part": "admin",
             "text": "JS Creator: templates, blocks and sets can be selected together and deleted, restored or exported as one JSON file; Import accepts only such a file, checks it strictly and gives a taken name “(2)”. Own icons (PNG / JPG) can be uploaded in the library."
         },
         {

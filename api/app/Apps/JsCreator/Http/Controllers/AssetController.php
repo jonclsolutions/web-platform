@@ -18,6 +18,8 @@
 
 namespace App\Apps\JsCreator\Http\Controllers;
 
+use App\Apps\JsCreator\Http\Requests\BulkItemsRequest;
+use App\Apps\JsCreator\Http\Requests\LibraryZipRequest;
 use App\Apps\JsCreator\Http\Requests\StoreAssetsRequest;
 use App\Apps\JsCreator\Http\Requests\UpdateAssetRequest;
 use App\Apps\JsCreator\Http\Resources\AssetResource;
@@ -184,6 +186,69 @@ class AssetController extends Controller
         $this->logAction($request, JsCreatorLog::class, 'restore', 'Asset', "Library image #{$asset->id} restored", $asset->id, 'Asset');
 
         return $this->respond(new AssetResource($asset));
+    }
+
+    /**
+     * @description One action on several own images / icons of the library (multiselect):
+     *   `delete` (to the trash), `restore` / `destroy` (files of the trash for good). A file used by
+     *   a template or block is skipped (neither to the trash nor deleted) and named in `skipped`.
+     * @param BulkItemsRequest $request `action`, `ids`.
+     * @return JsonResponse { count, skipped: [{ id, name, reason: in_use, used_by }] }.
+     */
+    public function bulk(BulkItemsRequest $request): JsonResponse
+    {
+        $action = (string) $request->input('action');
+        $query = CreatorAsset::query()->ownedBy($request->user())->whereIn('id', $request->ids());
+        $items = ($action === 'delete' ? $query : $query->onlyTrashed())->get();
+        $used = $action === 'restore' ? [] : TemplateUsages::usedBy(CreatorUsage::ASSET, $items->pluck('id')->all());
+        [$skipped, $done] = $items->partition(fn (CreatorAsset $asset) => isset($used[$asset->id]));
+        $run = fn () => $done->each(fn (CreatorAsset $asset) => match ($action) {
+            'delete'  => $asset->delete(),
+            'restore' => $asset->restore(),
+            'destroy' => $asset->deleteWithFiles(),
+        });
+        // Files of a deleted item are removed at once, so a destroy does not run in a transaction.
+        $action === 'destroy' ? $run() : DB::transaction($run);
+        $this->logAction($request, JsCreatorLog::class, TemplateController::BULK_EVENTS[$action], 'Asset', "Library files in bulk: {$action}. Count: {$done->count()}");
+
+        return $this->respond([
+            'count'   => $done->count(),
+            'skipped' => $skipped->map(fn (CreatorAsset $a) => ['id' => $a->id, 'name' => $a->name, 'reason' => 'in_use', 'used_by' => $used[$a->id]])->values()->all(),
+        ]);
+    }
+
+    /**
+     * @description Signed URL of a ZIP with own images / icons outside the trash (at most 200
+     *   files and OutputController::ZIP_MAX_BYTES).
+     * @param LibraryZipRequest $request `ids`.
+     * @return JsonResponse { url, count, bytes }; 422 `ids` (none / too large).
+     */
+    public function zip(LibraryZipRequest $request): JsonResponse
+    {
+        $assets = CreatorAsset::query()->ownedBy($request->user())->whereIn('id', $request->ids())->get(['id', 'size_bytes']);
+
+        return $this->respond(self::zipAnswer($request->user()->id, 'assets', $assets->pluck('id')->sort()->values()->all(), (int) $assets->sum('size_bytes')));
+    }
+
+    /**
+     * @description Answer of a ZIP request of the library (images or fonts).
+     * @param int $userId Owner.
+     * @param string $kind assets | fonts.
+     * @param int[] $ids Own files found.
+     * @param int $bytes Their size.
+     * @return array{url: string, count: int, bytes: int}
+     * @throws ValidationException Nothing to pack, or over the size limit.
+     */
+    public static function zipAnswer(int $userId, string $kind, array $ids, int $bytes): array
+    {
+        if ($ids === []) {
+            throw ValidationException::withMessages(['ids' => 'None of the files can be downloaded.']);
+        }
+        if ($bytes > OutputController::ZIP_MAX_BYTES) {
+            throw ValidationException::withMessages(['ids' => 'The files are too large for one ZIP (at most ' . (OutputController::ZIP_MAX_BYTES / 1024 / 1024) . ' MB) - choose fewer.']);
+        }
+
+        return ['url' => WorkspaceFiles::libraryZipUrl($userId, $kind, $ids), 'count' => count($ids), 'bytes' => $bytes];
     }
 
     /**
