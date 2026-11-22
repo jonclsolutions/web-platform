@@ -10,7 +10,10 @@
  *     of its instances and the library images they use; fonts are loaded with the characters of
  *     the texts before drawing;
  *   - top bar: back, name, undo / redo, zoom (fit, 100 %, ±), grid with snapping, smart guides,
- *     safe zone, state of the save, Save and Generate (templates - opens generating);
+ *     safe zones of a network (TikTok, Reels, Stories, Shorts, Facebook Reels, the Instagram grid
+ *     - remembered in the browser; layers reaching into them are listed), state of the save, Save
+ *     and Generate (templates - opens generating);
+ *   - slides of a carousel (templates): the bar of pages above the canvas (PagesBarComponent);
  *   - left: adding layers (text, image, grid, shape, icon; a template also a block instance) and
  *     the layers; middle: the canvas; right: Properties, Fields, Template;
  *   - blocks (templates): insert a block, scale an instance, open its block, unpack it, make a
@@ -49,7 +52,9 @@ import { IconSetService } from '../../shared/icon-set.service';
 import { WorkspaceUsageService } from '../../shared/workspace-usage.service';
 import { CreatorAsset, CreatorBlock, CreatorBlockDetail, CreatorFont, CreatorTemplateDetail, CuratedFontFamily, IconSet } from '../../shared/js-creator.models';
 import { JsCreatorSectionId, sectionPermission } from '../../shared/js-creator-sections';
-import { DOCUMENT_LIMITS, PlainLayerType, documentBytes, documentReferences, safeZoneOf } from '../../shared/render/document';
+import { DOCUMENT_LIMITS, PlainLayerType, documentBytes, documentReferences } from '../../shared/render/document';
+import { SafeNetwork, rememberNetwork, rememberedNetwork, safeNetworks, safeZoneHits, safeZones } from '../../shared/render/safe-zones';
+import { PagesBarComponent } from './pages-bar/pages-bar.component';
 import { BlockDef, effectiveFields } from '../../shared/render/block-fields';
 import { blockFromSelection } from '../../shared/render/block-instances';
 import { renderThumbnail } from '../../shared/render/thumbnail';
@@ -80,7 +85,7 @@ const MIN_WIDTH = 1024;
   standalone: true,
   imports: [
     CreatorIconComponent, EditorCanvasComponent, LayersPanelComponent, PropertiesPanelComponent, FieldsPanelComponent, TemplatePanelComponent,
-    BlockChooserComponent, AdminModalComponent,
+    BlockChooserComponent, AdminModalComponent, PagesBarComponent,
   ],
   templateUrl: './template-editor.component.html',
   styleUrls: ['../../../../../admin/shared-styles/modal.css', './controls/controls.css', './panels/panels.css', './template-editor.component.css'],
@@ -145,8 +150,8 @@ export class TemplateEditorComponent implements OnInit, LeavablePage {
   readonly grid = signal(0);
   /** Smart guides on. */
   readonly guides = signal(true);
-  /** Safe zone shown. */
-  readonly safeZone = signal(true);
+  /** Network whose safe zones are shown (null = none; remembered in the browser). */
+  readonly safeNetwork = signal<SafeNetwork | null>(null);
   /** Space held (pan). */
   readonly panMode = signal(false);
   /** Tab of the right panel. */
@@ -162,8 +167,15 @@ export class TemplateEditorComponent implements OnInit, LeavablePage {
 
   /** Grid sizes offered. */
   readonly gridSizes = GRID_SIZES;
-  /** The size has a safe zone. */
-  readonly hasSafeZone = computed(() => { const s = this.store(); return !!s && !!safeZoneOf(s.size()); });
+  /** Networks with a guide for the size of the design. */
+  readonly networks = computed<SafeNetwork[]>(() => { const s = this.store(); return s ? safeNetworks(s.size()) : []; });
+  /** Layers of the shown page reaching into the safe zones of the chosen network. */
+  readonly safeHits = computed(() => {
+    const store = this.store();
+    const network = this.safeNetwork();
+    if (!store || !network || !this.networks().includes(network)) return [];
+    return safeZoneHits(store.layers(), store.size(), safeZones(network, store.size()));
+  });
   /** Fields of the generating form (block instance fields included). */
   readonly formFields = computed(() => {
     const store = this.store();
@@ -196,7 +208,7 @@ export class TemplateEditorComponent implements OnInit, LeavablePage {
       if (!store) return;
       this.blocks();
       const doc = this.resources.withBlocks(store.doc());
-      const texts = doc.pages[0].layers.map(l => (l.type === 'text' ? l.text + l.font.family + l.font.weight + l.font.style : '')).join('')
+      const texts = doc.pages.flatMap(p => p.layers).map(l => (l.type === 'text' ? l.text + l.font.family + l.font.weight + l.font.style : '')).join('')
         + doc.fields.map(f => (f.type === 'text' ? f.sample : '')).join('');
       const key = [...new Set(Array.from(texts))].sort().join('');
       if (key === this.fontKey) return;
@@ -229,7 +241,7 @@ export class TemplateEditorComponent implements OnInit, LeavablePage {
         this.addBlocks((template as CreatorTemplateDetail).blocks ?? []);
         store.syncInstances(blockId => this.blocks().get(blockId));
         this.store.set(store);
-        this.safeZone.set(!!safeZoneOf(store.size()));
+        this.safeNetwork.set(rememberedNetwork(store.size()));
         this.loadAssets(documentReferences(this.resources.withBlocks(detail.document)).assets);
         setTimeout(() => this.fit());
       },
@@ -492,6 +504,34 @@ export class TemplateEditorComponent implements OnInit, LeavablePage {
    */
   zoomBy(factor: number): void {
     this.zoom.set(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.round(this.zoom() * factor * 100) / 100)));
+  }
+
+  /**
+   * @description Text shared by the pages (safe zones of networks).
+   * @param key Key in `js-creator-shared`.
+   */
+  ts(key: string): string {
+    return this.i18n.getValue(`js-creator-shared.${key}`);
+  }
+
+  /**
+   * @description Shows the safe zones of a network (remembered in this browser).
+   * @param value Network id, or '' (none).
+   */
+  setSafeNetwork(value: string): void {
+    const network = this.networks().includes(value as SafeNetwork) ? value as SafeNetwork : null;
+    this.safeNetwork.set(network);
+    rememberNetwork(network);
+  }
+
+  /**
+   * @description Name of a layer reaching into a safe zone (its name, text, or its kind).
+   * @param hit Hit of safeHits().
+   */
+  hitName(hit: { layerId: string; name: string; type: string }): string {
+    const layer = this.store()?.layers().find(l => l.id === hit.layerId);
+    const text = layer?.type === 'text' ? layer.text.replace(/\*\*/g, '').split('\n')[0].slice(0, 30) : '';
+    return hit.name || text || this.t('type_' + hit.type);
   }
 
   /**

@@ -60,7 +60,7 @@
     @module: Editor marks
     @description: Strokes of the SVG layer keep 1-2 CSS px at any zoom (non-scaling-stroke).
     @usage: .ec-outline(--locked), .ec-hover, .ec-group, .ec-handle(--rotate), .ec-guide,
-        .ec-marquee, .ec-grid, .ec-safe, .ec-safe-line
+        .ec-marquee, .ec-grid, .ec-safe
 */
 .ec-outline,
 .ec-hover,
@@ -69,7 +69,7 @@
 .ec-guide,
 .ec-marquee,
 .ec-grid,
-.ec-safe-line {
+.ec-safe {
   vector-effect: non-scaling-stroke;
 }
 
@@ -82,5 +82,4 @@
 .ec-guide { stroke: var(--color-rose-600); stroke-width: 1; }
 .ec-marquee { fill: rgb(245 158 11 / 0.1); stroke: var(--color-amber-600); stroke-width: 1; }
 .ec-grid { fill: none; stroke: rgb(0 0 0 / 0.12); stroke-width: 1; }
-.ec-safe { fill: var(--color-rose-600); fill-opacity: 0.1; pointer-events: none; }
-.ec-safe-line { stroke: var(--color-rose-600); stroke-width: 1; stroke-dasharray: 6 4; }
+.ec-safe { fill: var(--color-rose-600); fill-opacity: 0.12; stroke: var(--color-rose-600); stroke-width: 1; stroke-dasharray: 6 4; pointer-events: none; }

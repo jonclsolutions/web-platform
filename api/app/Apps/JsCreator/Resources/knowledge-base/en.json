@@ -192,7 +192,22 @@
           ]
         },
         {
-          "heading": "05. Permissions",
+          "heading": "05. Carousel and safe zones",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "For a carousel the preview has tabs Slide 1, 2 … – filled-in fields show on every slide and the check (texts that do not fit, missing images) goes through all slides.",
+                "Generate draws every slide on its own and uploads it to the server. The output is created only after all slides are uploaded – one output with a picture of each slide. The server cleans up an unfinished upload itself.",
+                "A finished carousel is downloaded as a ZIP (files Name 01, Name 02 …).",
+                "Choosing a network above the preview marks the safe zones and lists the elements reaching into them (for a carousel with the number of the slide). It is only a warning."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "06. Permissions",
           "blocks": [
             {
               "type": "grid",
@@ -316,7 +331,26 @@
           ]
         },
         {
-          "heading": "06. Blocks",
+          "heading": "06. Carousel and safe zones",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "A template can have up to 20 slides – a carousel for Instagram, LinkedIn or Facebook. The Slides bar above the canvas shows a preview of every slide, a click opens the slide. Its buttons add a new empty slide (it takes over the background), a copy of the slide, move the slide earlier or later and delete it (after a confirmation). Elements, the selection and the background always belong to the slide shown."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Fields are shared by the whole carousel – a field used on several slides is filled in once when generating. A field disappears with the last element using it on any slide.",
+                "A block always has a single slide.",
+                "Safe zones: choose a network in the top bar – TikTok, Instagram Reels, Instagram Story, YouTube Shorts and Facebook Reels for the 9:16 format, the Instagram profile grid for square and portrait formats. The canvas marks the places covered by the interface of the network (top bar, caption and buttons at the bottom, icons at the side) or cut off by the profile grid, and the editor lists the elements reaching into a zone.",
+                "Zones are only a warning, they do not stop saving. The chosen network is remembered in this browser."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "07. Blocks",
           "blocks": [
             {
               "type": "list",
@@ -334,7 +368,7 @@
         },
         {
           "key": "save",
-          "heading": "07. Saving",
+          "heading": "08. Saving",
           "blocks": [
             {
               "type": "list",
@@ -349,7 +383,7 @@
           ]
         },
         {
-          "heading": "08. Keyboard shortcuts",
+          "heading": "09. Keyboard shortcuts",
           "blocks": [
             {
               "type": "grid",
@@ -429,6 +463,7 @@
               "ordered": false,
               "items": [
                 "A click on a thumbnail opens the detail: the picture, folder, template, size, file size, date and the text of the post with Copy text.",
+                "A carousel shows the number of slides on its card. The detail switches the slides with arrows, downloads the slide shown or all slides as a ZIP (Name 01.png, Name 02.png …).",
                 "Actions: Download (a file named after the output), Rename, Move, Delete, Generate again (opens generating from the same template).",
                 "A finished output cannot be edited - generate a new variant from the template quickly."
               ]

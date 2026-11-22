@@ -14,13 +14,10 @@
       <h3 class="pn-title">{{ t('format') }}</h3>
       <app-jc-size-picker [size]="store().size()" (sizeChange)="setSize($event)" idPrefix="jc-editor-size" />
       <p class="pn-hint">{{ t('resize_hint') }}</p>
-      @if (safeZone(); as zone) {
-        <p class="pn-hint">{{ t('safe_zone_hint') }} ({{ zone.top }} / {{ zone.bottom }} px)</p>
-      }
     </section>
 
     <section class="pn-section">
-      <h3 class="pn-title">{{ t('background') }}</h3>
+      <h3 class="pn-title">{{ t('background') }}@if (store().pageCount() > 1) { · {{ t('slide') }} {{ store().pageIndex() + 1 }} }</h3>
       <app-jc-fill [fill]="background().fill" idPrefix="jc-bg-fill" [disabled]="!store().editable" (fillChange)="setFill($event)" />
       <label class="pn-check-row"><input type="checkbox" [checked]="!!background().image" (change)="toggleImage($any($event.target).checked)" />{{ t('background_image') }}</label>
       @if (background().image; as image) {

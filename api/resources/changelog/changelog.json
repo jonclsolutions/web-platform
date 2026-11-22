@@ -4,6 +4,12 @@
             "type": "added",
             "area": "js-creator",
             "part": "admin",
+            "text": "JS Creator: carousel templates with up to 20 slides – one output with a picture of each slide, downloaded as a ZIP – and safe zones of TikTok, Instagram, YouTube Shorts and Facebook Reels in the editor and when generating."
+        },
+        {
+            "type": "added",
+            "area": "js-creator",
+            "part": "admin",
             "text": "JS Creator library: images, own icons and fonts can be selected together, deleted, restored and downloaded – one file under its name, several as one ZIP."
         },
         {

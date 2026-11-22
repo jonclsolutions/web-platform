@@ -5,7 +5,7 @@
     @author: JS
     @created: 2026
     @description: Scrollable area with the stage in the middle: the canvas of the renderer and the
-        SVG layer of the editor in template coordinates (grid, safe zone, hover outline,
+        SVG layer of the editor in template coordinates (grid, safe zones of a network, hover outline,
         selection, handles, rotation handle, guides, marquee). Strokes keep 1 CSS px at any zoom.
 -->
 <div #viewport class="ec-viewport" (wheel)="onWheel($event)">
@@ -24,11 +24,8 @@
           </defs>
           <rect x="0" y="0" [attr.width]="size().width" [attr.height]="size().height" fill="url(#jc-grid)" />
         }
-        @if (safe(); as zone) {
-          <rect class="ec-safe" x="0" y="0" [attr.width]="size().width" [attr.height]="zone.top" />
-          <rect class="ec-safe" x="0" [attr.y]="size().height - zone.bottom" [attr.width]="size().width" [attr.height]="zone.bottom" />
-          <line class="ec-safe-line" x1="0" [attr.y1]="zone.top" [attr.x2]="size().width" [attr.y2]="zone.top" />
-          <line class="ec-safe-line" x1="0" [attr.y1]="size().height - zone.bottom" [attr.x2]="size().width" [attr.y2]="size().height - zone.bottom" />
+        @for (zone of safe(); track $index) {
+          <rect class="ec-safe" [attr.x]="zone.x" [attr.y]="zone.y" [attr.width]="zone.w" [attr.height]="zone.h" />
         }
         @if (hoverOutline(); as points) {
           <polygon class="ec-hover" [attr.points]="points" />

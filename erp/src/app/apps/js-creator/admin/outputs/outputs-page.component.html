@@ -128,6 +128,9 @@
                       <img [src]="output.thumb_url" [alt]="output.name" loading="lazy" />
                     }
                   </span>
+                  @if (output.page_count > 1) {
+                    <span class="op-slides" [title]="slideCount(output.page_count)">{{ output.page_count }}</span>
+                  }
                 </button>
                 <div class="ws-card-body">
                   <span class="ws-card-name" [title]="output.name">{{ output.name }}</span>
@@ -138,7 +141,11 @@
                   }
                 </div>
                 <div class="ws-card-actions">
-                  @if (output.download_url) {
+                  @if (output.page_count > 1) {
+                    <button type="button" class="ws-icon-btn" [title]="t('download_slides')" [attr.aria-label]="t('download_slides')" [disabled]="busy" (click)="downloadZip([output.id])">
+                      <app-creator-icon [nodes]="icon('download')" [size]="15" />
+                    </button>
+                  } @else if (output.download_url) {
                     <a class="ws-icon-btn" [href]="output.download_url" download [title]="t('download')" [attr.aria-label]="t('download')">
                       <app-creator-icon [nodes]="icon('download')" [size]="15" />
                     </a>
@@ -252,15 +259,28 @@
   <app-admin-modal [heading]="d.name" [subheading]="d.template_name" size="lg" [closeDisabled]="busy" (dismissed)="closeDetail()">
     <div class="op-detail">
       <div class="op-detail-picture">
-        @if (d.url) {
-          <img [src]="d.url" [alt]="d.name" />
+        @if (detailPage(d); as page) {
+          @if (page.url) {
+            <img [src]="page.url" [alt]="d.name + (d.page_count > 1 ? ' – ' + page.page : '')" />
+          }
+        }
+        @if (d.page_count > 1) {
+          <div class="op-slide-nav">
+            <button type="button" class="ws-icon-btn" [disabled]="slide === 0" [title]="t('slide_previous')" [attr.aria-label]="t('slide_previous')" (click)="showSlide(slide - 1)">
+              <app-creator-icon [nodes]="icon('arrow-left')" [size]="15" />
+            </button>
+            <span>{{ t('slide') }} {{ slide + 1 }} / {{ d.page_count }}</span>
+            <button type="button" class="ws-icon-btn" [disabled]="slide >= d.page_count - 1" [title]="t('slide_next')" [attr.aria-label]="t('slide_next')" (click)="showSlide(slide + 1)">
+              <app-creator-icon [nodes]="icon('arrow-right')" [size]="15" />
+            </button>
+          </div>
         }
       </div>
       <div class="op-detail-info">
         <dl class="op-facts">
           <dt>{{ t('fact_folder') }}</dt><dd>{{ folderPath(d) }}</dd>
           <dt>{{ t('fact_template') }}</dt><dd>{{ d.template_name }}@if (!d.template_id) { <span class="op-muted">({{ t('template_deleted') }})</span> }</dd>
-          <dt>{{ t('fact_size') }}</dt><dd>{{ d.width }} × {{ d.height }} px · {{ d.format === 'jpg' ? 'JPG' : 'PNG' }}</dd>
+          <dt>{{ t('fact_size') }}</dt><dd>{{ d.width }} × {{ d.height }} px · {{ d.format === 'jpg' ? 'JPG' : 'PNG' }}@if (d.page_count > 1) { · {{ slideCount(d.page_count) }} }</dd>
           <dt>{{ t('fact_file') }}</dt><dd>{{ bytes(d.size_bytes) }}</dd>
           <dt>{{ t('fact_created') }}</dt><dd>{{ d.created_at | date: 'd. M. y H:mm' }}</dd>
         </dl>
@@ -292,7 +312,12 @@
       @if (d.template_id) {
         <button type="button" class="am-btn am-btn--secondary" (click)="generateAgain(d)">{{ t('generate_again') }}</button>
       }
-      @if (d.download_url) {
+      @if (d.page_count > 1) {
+        @if (detailPage(d)?.download_url; as url) {
+          <a class="am-btn am-btn--secondary op-download" [href]="url" download>{{ t('download_slide') }}</a>
+        }
+        <button type="button" class="am-btn am-btn--primary" [disabled]="busy" (click)="downloadZip([d.id])">{{ t('download_slides') }}</button>
+      } @else if (d.download_url) {
         <a class="am-btn am-btn--primary op-download" [href]="d.download_url" download>{{ t('download') }}</a>
       }
     </ng-container>

@@ -106,21 +106,26 @@ class FileController extends Controller
     }
 
     /**
-     * @description The first page of an output (also in the trash): `original` inline, `thumb`
-     *   (WebP) inline, `download` as a file named after the output.
+     * @description A page of an output (also in the trash; `page` of the signed URL, the first by
+     *   default): `original` inline, `thumb` (WebP) inline, `download` as a file named after the
+     *   output (a page of a carousel with its number).
+     * @param Request $request Signed request (`page`).
      * @param string $id Output.
      * @param string $variant original | thumb | download (route constraint).
      * @return Response 200; 404.
      */
-    public function output(string $id, string $variant): Response
+    public function output(Request $request, string $id, string $variant): Response
     {
         $output = CreatorOutput::withTrashed()->find((int) $id);
-        $file = $output?->files()->first();
+        $page = max(1, (int) $request->query('page', 1));
+        $file = $output?->files()->where('page', $page)->first();
         $path = $variant === 'thumb' ? $file?->thumb_path : $file?->path;
         abort_unless($path && Storage::disk(WorkspaceFiles::DISK)->exists($path), 404);
 
         if ($variant === 'download') {
-            return Storage::disk(WorkspaceFiles::DISK)->download($path, self::fileName($output->name, $output->format), [
+            $name = $output->page_count > 1 ? $output->name . ' ' . str_pad((string) $page, 2, '0', STR_PAD_LEFT) : $output->name;
+
+            return Storage::disk(WorkspaceFiles::DISK)->download($path, self::fileName($name, $output->format), [
                 'Content-Type' => $file->mime,
             ] + self::HEADERS);
         }
@@ -154,7 +159,7 @@ class FileController extends Controller
                 if (!$disk->exists($file->path)) {
                     continue;
                 }
-                $suffix = $output->page_count > 1 ? " ({$file->page})" : '';
+                $suffix = $output->page_count > 1 ? ' ' . str_pad((string) $file->page, 2, '0', STR_PAD_LEFT) : '';
                 $entry = self::uniqueName(self::fileName($output->name . $suffix, $output->format), $taken);
                 $zip->addFile($disk->path($file->path), $entry);
                 $zip->setCompressionName($entry, ZipArchive::CM_STORE);

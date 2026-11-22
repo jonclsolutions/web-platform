@@ -6,7 +6,8 @@
  * @created 2026
  * @description The canvas of the template editor: the template drawn by the renderer (the same
  *   drawing as the output) at the zoom of the editor, and above it an SVG layer of the editor
- *   only - selection, handles, smart guides, grid, safe zone, marquee. Pointer work:
+ *   only - selection, handles, smart guides, grid, safe zones of a network, marquee. The page shown
+ *   by the store is drawn (slides of a carousel). Pointer work:
  *   - click selects (Shift adds / removes), a drag moves the selection (snapping to the canvas,
  *     other layers and the grid), a drag on the empty canvas selects by a marquee;
  *   - 8 handles resize one layer (Shift keeps the ratio, also for rotated layers; a block instance
@@ -25,7 +26,8 @@ import { EditorStore } from '../editor-store';
 import { RenderResourceStore } from '../../../shared/render/resource-store';
 import { RenderReport, renderPage } from '../../../shared/render/renderer';
 import { renderThumbnail } from '../../../shared/render/thumbnail';
-import { DOCUMENT_LIMITS, Layer, safeZoneOf } from '../../../shared/render/document';
+import { DOCUMENT_LIMITS, Layer } from '../../../shared/render/document';
+import { SafeNetwork, safeZones } from '../../../shared/render/safe-zones';
 import {
   Point, Rect, boundingBox, containsPoint, intersects, layerRect, offsetFor, rotatedCorners, toLocal, unionRect,
 } from '../../../shared/render/geometry';
@@ -81,8 +83,8 @@ export class EditorCanvasComponent implements AfterViewInit, OnDestroy {
   readonly grid = input(0);
   /** Smart guides on. */
   readonly guides = input(true);
-  /** Safe zone of Stories / Reels shown. */
-  readonly safeZone = input(false);
+  /** Network whose safe zones are shown (null = none). */
+  readonly safeNetwork = input<SafeNetwork | null>(null);
   /** Space held: dragging pans. */
   readonly panMode = input(false);
   /** Changes when a resource finished loading (draw again). */
@@ -117,8 +119,11 @@ export class EditorCanvasComponent implements AfterViewInit, OnDestroy {
   readonly stageHeight = computed(() => Math.max(1, Math.round(this.size().height * this.zoom())));
   /** One CSS pixel in template px (sizes of handles and strokes of the SVG layer). */
   readonly px = computed(() => 1 / this.zoom());
-  /** Safe zone bands, when shown. */
-  readonly safe = computed(() => this.safeZone() ? safeZoneOf(this.size()) : null);
+  /** Covered / cropped parts of the canvas of the chosen network. */
+  readonly safe = computed(() => {
+    const network = this.safeNetwork();
+    return network ? safeZones(network, this.size()) : [];
+  });
   /** Outlines of the selected layers (points of a polygon). */
   readonly outlines = computed(() => {
     const size = this.size();
@@ -349,7 +354,7 @@ export class EditorCanvasComponent implements AfterViewInit, OnDestroy {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, width, height);
     ctx.setTransform(width / size.width, 0, 0, height / size.height, 0, 0);
-    const report = renderPage(ctx, this.store().doc(), size, this.resources(), { mode: 'editor' });
+    const report = renderPage(ctx, this.store().doc(), size, this.resources(), { mode: 'editor', page: this.store().pageIndex() });
     this.zone.run(() => this.rendered.emit(report));
   }
 

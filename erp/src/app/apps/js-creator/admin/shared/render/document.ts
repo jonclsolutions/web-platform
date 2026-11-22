@@ -6,9 +6,10 @@
  * @created 2026
  * @description Document of a template or a block (schema version 1) - the JSON the editor saves
  *   and the renderer draws: types, limits, size presets, grid layouts and factories of new layers
- *   with their defaults. A document has fields (filled in when generating) and pages (one now -
- *   carousels later); a page has a background and layers. A template may contain instances of
- *   blocks (layer `block`); a block never does (blocks do not nest).
+ *   with their defaults. A document has fields (filled in when generating, shared by every page)
+ *   and pages - a template 1 … maxPages (slides of a carousel), a block exactly one; a page has a
+ *   background and layers (layer ids are unique in the whole document). A template may contain
+ *   instances of blocks (layer `block`); a block never does (blocks do not nest).
  * @usage `createLayer('text', { width: 1080, height: 1350 })`, `emptyDocument()`.
  * @note The API validates the same shape strictly (api/app/Apps/JsCreator/Support/
  *   TemplateDocument.php) - a new property = both places and the tests of both sides. Every
@@ -27,6 +28,8 @@ export const DOCUMENT_LIMITS = {
   maxSide: 3000,
   /** Most layers of a page. */
   maxLayers: 200,
+  /** Most pages (slides) of a template; a block has one. */
+  maxPages: 20,
   /** Most fields of a template. */
   maxFields: 50,
   /** Longest text of a layer / sample. */
@@ -287,15 +290,13 @@ export interface SizePreset {
   labelKey: string;
   width: number;
   height: number;
-  /** Areas covered by the app interface (px from the top / bottom) - only a guide. */
-  safe?: { top: number; bottom: number };
 }
 
 /** Presets of the size of a template. */
 export const SIZE_PRESETS: readonly SizePreset[] = [
   { id: 'ig-square', labelKey: 'preset_ig_square', width: 1080, height: 1080 },
   { id: 'ig-portrait', labelKey: 'preset_ig_portrait', width: 1080, height: 1350 },
-  { id: 'ig-story', labelKey: 'preset_ig_story', width: 1080, height: 1920, safe: { top: 250, bottom: 340 } },
+  { id: 'ig-story', labelKey: 'preset_ig_story', width: 1080, height: 1920 },
   { id: 'fb-link', labelKey: 'preset_fb_link', width: 1200, height: 630 },
   { id: 'x-post', labelKey: 'preset_x_post', width: 1600, height: 900 },
   { id: 'yt-thumb', labelKey: 'preset_yt_thumb', width: 1280, height: 720 },
@@ -309,20 +310,6 @@ export const SIZE_PRESETS: readonly SizePreset[] = [
  */
 export function presetOf(size: CanvasSize): SizePreset | undefined {
   return SIZE_PRESETS.find(p => p.width === size.width && p.height === size.height);
-}
-
-/**
- * @description Safe zone guide of a size: the preset's, or proportional for any other 9:16 size.
- * @param size Size.
- * @returns Covered areas (px) or null.
- */
-export function safeZoneOf(size: CanvasSize): { top: number; bottom: number } | null {
-  const preset = presetOf(size);
-  if (preset?.safe) return preset.safe;
-  if (Math.abs(size.width / size.height - 9 / 16) < 0.01) {
-    return { top: Math.round(size.height * 0.13), bottom: Math.round(size.height * 0.177) };
-  }
-  return null;
 }
 
 /**

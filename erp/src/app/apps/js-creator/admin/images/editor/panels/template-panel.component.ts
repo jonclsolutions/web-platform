@@ -16,7 +16,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, ViewChild, computed, inject, input, output } from '@angular/core';
 import { AdminLocalizationService } from '../../../../../../core/services/admin-localization.service';
 import { EditorStore, EditorSnapshot } from '../editor-store';
-import { Background, CanvasSize, DOCUMENT_LIMITS, Fill, ImageField, ImageSource, fieldKeyFrom, isValidSize, safeZoneOf } from '../../../shared/render/document';
+import { Background, CanvasSize, DOCUMENT_LIMITS, Fill, ImageField, ImageSource, fieldKeyFrom, isValidSize } from '../../../shared/render/document';
 import { CreatorAsset } from '../../../shared/js-creator.models';
 import { EffectiveField } from '../../../shared/render/block-fields';
 import { SizePickerComponent } from '../../../shared/size-picker/size-picker.component';
@@ -53,12 +53,10 @@ export class TemplatePanelComponent {
   readonly maxCaption = DOCUMENT_LIMITS.maxCaption;
   /** State of the template. */
   readonly state = computed(() => this.store().state());
-  /** Background of the page. */
-  readonly background = computed(() => this.store().doc().pages[0].background);
+  /** Background of the page shown. */
+  readonly background = computed(() => this.store().pageOf(this.store().doc()).background);
   /** Image fields. */
   readonly imageFields = computed(() => this.store().doc().fields.filter((f): f is ImageField => f.type === 'image'));
-  /** Safe zone of the size. */
-  readonly safeZone = computed(() => safeZoneOf(this.store().size()));
 
   /**
    * @description Text of the editor.
@@ -83,7 +81,8 @@ export class TemplatePanelComponent {
    */
   setBackground(patch: Partial<Background>, step: string | null = null): void {
     this.store().mutate(doc => {
-      doc.pages[0].background = { ...doc.pages[0].background, ...patch };
+      const page = this.store().pageOf(doc);
+      page.background = { ...page.background, ...patch };
     }, step);
   }
 
@@ -121,7 +120,7 @@ export class TemplatePanelComponent {
     this.store().mutate(doc => {
       const key = fieldKeyFrom(label, new Set(doc.fields.map(f => f.key)));
       doc.fields.push({ key, type: 'image', label, help: '', required: true, minWidth: 0, minHeight: 0 });
-      const image = doc.pages[0].background.image;
+      const image = this.store().pageOf(doc).background.image;
       if (image) image.source = { kind: 'field', field: key } as ImageSource;
     });
   }

@@ -345,7 +345,7 @@ export class PropertiesPanelComponent {
         key, type: 'text', label, help: '', required: true, sample: layer.text, maxLength: Math.max(200, layer.text.length),
         multiline: layer.text.includes('\n'),
       });
-      const target = doc.pages[0].layers.find(l => l.id === layer.id);
+      const target = this.store().pageOf(doc).layers.find(l => l.id === layer.id);
       if (target?.type === 'text') target.field = key;
     });
   }
@@ -449,7 +449,7 @@ export class PropertiesPanelComponent {
     this.store().mutate(doc => {
       const key = fieldKeyFrom(text, new Set(doc.fields.map(f => f.key)));
       doc.fields.push({ key, type: 'image', label: text, help: '', required: true, minWidth: 0, minHeight: 0 });
-      const target = doc.pages[0].layers.find(l => l.id === layer.id);
+      const target = this.store().pageOf(doc).layers.find(l => l.id === layer.id);
       if (target) apply(target, key);
     });
   }
@@ -482,7 +482,7 @@ export class PropertiesPanelComponent {
   cellsAsFields(layer: GridLayer): void {
     const base = (layer.name || this.t('default_image_field')).slice(0, 70);
     this.store().mutate(doc => {
-      const target = doc.pages[0].layers.find(l => l.id === layer.id);
+      const target = this.store().pageOf(doc).layers.find(l => l.id === layer.id);
       if (target?.type !== 'grid') return;
       target.cells.forEach((cell, i) => {
         if (doc.fields.length >= 50) return;

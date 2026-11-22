@@ -317,4 +317,52 @@ describe('TemplateEditorComponent', () => {
     for (let i = 0; i < 50 && !refresh.calls.count(); i++) await new Promise(r => setTimeout(r, 10));
     expect(refresh).toHaveBeenCalledWith('images', [7]);
   });
+
+  /**
+   * @description Slides and safe zones in the editor: the bar of slides adds a slide, switches
+   *   back and deletes a slide only after a confirmation; a 9:16 template shows the networks, the chosen one is remembered and a layer at the
+   *   top is listed; "none" hides it.
+   * @input template 1080 × 1920 with a text at 10, 10; click "add slide"; click slide 1; delete
+   *   cancelled; delete slide 2 confirmed; network tiktok; none
+   * @output 2 slide buttons, slide 1 shown again; still 2 slides, then 1 with the text; networks with tiktok; warning with the text (zone_top);
+   *   localStorage jsc-safe-zone = tiktok, then none and no warning
+   */
+  it('works with slides and safe zones', async () => {
+    localStorage.removeItem('jsc-safe-zone');
+    const story = testTemplate({ layers: [textLayer('t', { name: 'Hook' })] });
+    story.width = 1080;
+    story.height = 1920;
+    await create('all', 'template', story);
+    const bar = () => fixture.nativeElement.querySelector('app-jc-pages-bar') as HTMLElement;
+    (bar().querySelector('.pb-actions .pb-btn') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(bar().querySelectorAll('.pb-page').length).toBe(2);
+    expect(component.store()!.pageIndex()).toBe(1);
+    (bar().querySelectorAll('.pb-page')[0] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(component.store()!.pageIndex()).toBe(0);
+    ctx.confirm.open.and.resolveTo(false);
+    (bar().querySelector('.pb-btn--danger') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(component.store()!.pageCount()).toBe(2);
+    ctx.confirm.open.and.resolveTo(true);
+    component.store()!.setPage(1);
+    fixture.detectChanges();
+    (bar().querySelector('.pb-btn--danger') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(component.store()!.pageCount()).toBe(1);
+    expect(component.store()!.layers().map(l => l.id)).toEqual(['t']);
+
+    expect(component.networks()).toContain('tiktok');
+    component.setSafeNetwork('tiktok');
+    fixture.detectChanges();
+    expect(localStorage.getItem('jsc-safe-zone')).toBe('tiktok');
+    expect(fixture.nativeElement.querySelector('.te-warning--zone').textContent).toContain('„Hook“ – js-creator-shared.zone_top');
+    component.setSafeNetwork('');
+    fixture.detectChanges();
+    expect(localStorage.getItem('jsc-safe-zone')).toBe('none');
+    expect(fixture.nativeElement.querySelector('.te-warning--zone')).toBeNull();
+    localStorage.removeItem('jsc-safe-zone');
+  });
 });

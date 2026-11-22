@@ -15,7 +15,7 @@
 import { IconNode } from './js-creator.models';
 
 /** Name of an interface icon. */
-export type UiIconName = 'undo' | 'redo' | 'zoom-in' | 'zoom-out' | 'fit' | 'text' | 'image' | 'grid' | 'shape' | 'icon' | 'eye' | 'eye-off' | 'lock' | 'unlock' | 'copy' | 'trash' | 'up' | 'down' | 'front' | 'back' | 'align-left' | 'align-hcenter' | 'align-right' | 'align-top' | 'align-vcenter' | 'align-bottom' | 'distribute-h' | 'distribute-v' | 'snap' | 'save' | 'arrow-left' | 'grip' | 'field' | 'highlight' | 'safe-zone' | 'plus' | 'x' | 'magnet' | 'layers' | 'sliders' | 'settings' | 'keyboard' | 'braces' | 'rect' | 'ellipse' | 'line' | 'hand' | 'ratio' | 'download' | 'folder-input' | 'block' | 'group' | 'ungroup';
+export type UiIconName = 'undo' | 'redo' | 'zoom-in' | 'zoom-out' | 'fit' | 'text' | 'image' | 'grid' | 'shape' | 'icon' | 'eye' | 'eye-off' | 'lock' | 'unlock' | 'copy' | 'trash' | 'up' | 'down' | 'front' | 'back' | 'align-left' | 'align-hcenter' | 'align-right' | 'align-top' | 'align-vcenter' | 'align-bottom' | 'distribute-h' | 'distribute-v' | 'snap' | 'save' | 'arrow-left' | 'arrow-right' | 'grip' | 'field' | 'highlight' | 'safe-zone' | 'plus' | 'x' | 'magnet' | 'layers' | 'sliders' | 'settings' | 'keyboard' | 'braces' | 'rect' | 'ellipse' | 'line' | 'hand' | 'ratio' | 'download' | 'folder-input' | 'block' | 'group' | 'ungroup';
 
 /** Elements of the interface icons (Lucide, 24 × 24 grid). */
 const UI_ICONS: Record<UiIconName, IconNode[]> = {
@@ -55,6 +55,7 @@ const UI_ICONS: Record<UiIconName, IconNode[]> = {
   'snap': [["rect",{"width":"18","height":"18","x":"3","y":"3","rx":"2"}],["path",{"d":"M3 9h18"}],["path",{"d":"M3 15h18"}],["path",{"d":"M9 3v18"}],["path",{"d":"M15 3v18"}]],
   'save': [["path",{"d":"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"}],["path",{"d":"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"}],["path",{"d":"M7 3v4a1 1 0 0 0 1 1h7"}]],
   'arrow-left': [["path",{"d":"m12 19-7-7 7-7"}],["path",{"d":"M19 12H5"}]],
+  'arrow-right': [["path",{"d":"M5 12h14"}],["path",{"d":"m12 5 7 7-7 7"}]],
   'grip': [["circle",{"cx":"9","cy":"12","r":"1"}],["circle",{"cx":"9","cy":"5","r":"1"}],["circle",{"cx":"9","cy":"19","r":"1"}],["circle",{"cx":"15","cy":"12","r":"1"}],["circle",{"cx":"15","cy":"5","r":"1"}],["circle",{"cx":"15","cy":"19","r":"1"}]],
   'field': [["path",{"d":"M12 20h-1a2 2 0 0 1-2-2 2 2 0 0 1-2 2H6"}],["path",{"d":"M13 8h7a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-7"}],["path",{"d":"M5 16H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h1"}],["path",{"d":"M6 4h1a2 2 0 0 1 2 2 2 2 0 0 1 2-2h1"}],["path",{"d":"M9 6v12"}]],
   'highlight': [["path",{"d":"m9 11-6 6v3h9l3-3"}],["path",{"d":"m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"}]],

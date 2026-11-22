@@ -15,6 +15,7 @@
 
 namespace Tests\Apps\JsCreator\Unit;
 
+use App\Apps\JsCreator\Support\EffectiveFields;
 use App\Apps\JsCreator\Support\TemplateDocument;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Apps\JsCreator\Support\JsCreatorFixtures;
@@ -110,7 +111,8 @@ class TemplateDocumentTest extends TestCase
             'duplicate layer id'     => [function (&$d) { $d['pages'][0]['layers'][1]['id'] = $d['pages'][0]['layers'][0]['id']; }, 'document.pages.0.layers.1.id'],
             'duplicate field key'    => [function (&$d) { $d['fields'][1]['key'] = 'title'; }, 'document.fields.1.key'],
             'bad field key'          => [function (&$d) { $d['fields'][0]['key'] = 'Title!'; }, 'document.fields.0.key'],
-            'two pages'              => [function (&$d) { $d['pages'][] = $d['pages'][0]; }, 'document.pages'],
+            'too many pages'         => [function (&$d) { $d['pages'] = array_fill(0, 21, ['background' => $d['pages'][0]['background'], 'layers' => []]); }, 'document.pages'],
+            'layer id on two pages'  => [function (&$d) { $d['pages'][] = $d['pages'][0]; }, 'document.pages.1.layers.0.id'],
             'other schema'           => [function (&$d) { $d['schema'] = 2; }, 'document.schema'],
             'layers as object'       => [function (&$d) { $d['pages'][0]['layers'] = ['a' => 1]; }, 'document.pages.0.layers'],
             'too many layers'        => [function (&$d) {
@@ -166,5 +168,32 @@ class TemplateDocumentTest extends TestCase
         $this->assertArrayHasKey('document.pages.0.layers.2.blockId', $bad);
         $this->assertSame('#ffffff00', TemplateDocument::empty(true)['pages'][0]['background']['fill']['color']);
         $this->assertSame([], TemplateDocument::check(TemplateDocument::empty(true), false)->errors());
+    }
+
+    /**
+     * @description A carousel: a template has 1 … 20 pages sharing the fields (a field used only
+     *   on another page counts), a block exactly one; block fields of instances on any page are
+     *   effective fields.
+     * @input template with 3 pages (field on page 3, block instance on page 2); the same as a
+     *   block; a block document of the instance with a field
+     * @output no errors, blockIds [7]; block: error at document.pages; EffectiveFields title, price
+     */
+    public function test_carousel_pages(): void
+    {
+        $background = ['fill' => ['type' => 'solid', 'color' => '#ffffff'], 'image' => null];
+        $document = $this->document([$this->layer('shape')], [$this->textField()]);
+        $document['pages'][] = ['background' => $background, 'layers' => [$this->layer('block', ['blockId' => 7])]];
+        $document['pages'][] = ['background' => $background, 'layers' => [$this->layer('text', ['field' => 'title'])]];
+
+        $checked = TemplateDocument::check($document);
+        $this->assertSame([], $checked->errors());
+        $this->assertSame([7], $checked->blockIds());
+
+        $block = $this->document([$this->layer('shape')]);
+        $block['pages'][] = ['background' => $background, 'layers' => []];
+        $this->assertArrayHasKey('document.pages', TemplateDocument::check($block, false)->errors());
+
+        $blockDoc = $this->document([$this->layer('text', ['field' => 'price'])], [$this->textField('price')]);
+        $this->assertSame(['title' => 'text', 'price' => 'text'], EffectiveFields::types($document, [7 => $blockDoc]));
     }
 }

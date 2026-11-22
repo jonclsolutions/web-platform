@@ -310,4 +310,41 @@ describe('OutputsPageComponent', () => {
     expect(ctx.dataHandler.delete).toHaveBeenCalledWith('js-creator/folders/trash');
     expect(ctx.dataHandler.delete).toHaveBeenCalledWith('js-creator/outputs/trash');
   });
+
+  /**
+   * @description A carousel output: the card shows the number of slides, the detail switches the
+   *   slides and downloads one slide or all of them as a ZIP.
+   * @input output 4 with 3 pages; detail; next slide twice, once more; download slides
+   * @output badge "3" (title with the word for 2–4); picture /p/1 → /p/3, stays at 3; download link /dp/3; POST outputs/zip {ids [4]}
+   */
+  it('shows the slides of a carousel output', async () => {
+    await create();
+    const carousel: CreatorOutput = {
+      ...output(4, null), page_count: 3,
+      pages: [1, 2, 3].map(n => ({ page: n, url: `/p/${n}`, thumb_url: `/tp/${n}`, download_url: `/dp/${n}` })),
+    };
+    component.outputs = [carousel];
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.op-slides').textContent.trim()).toBe('3');
+    expect(fixture.nativeElement.querySelector('.op-slides').getAttribute('title')).toBe('3 js-creator-outputs.slides_few');
+    expect(component.slideCount(5)).toBe('5 js-creator-outputs.slides');
+
+    component.openDetail(carousel);
+    fixture.detectChanges();
+    const picture = () => (document.querySelector('.op-detail-picture img') as HTMLImageElement).getAttribute('src');
+    expect(picture()).toBe('/p/1');
+    component.showSlide(1);
+    component.showSlide(2);
+    component.showSlide(3);
+    fixture.detectChanges();
+    expect(component.slide).toBe(2);
+    expect(picture()).toBe('/p/3');
+    expect((document.querySelector('a.op-download') as HTMLAnchorElement).getAttribute('href')).toBe('/dp/3');
+
+    spyOn(HTMLAnchorElement.prototype, 'click');
+    ctx.dataHandler.post.and.returnValue(of({ url: '/zip', count: 1, bytes: 10 }) as never);
+    component.downloadZip([carousel.id]);
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/outputs/zip', { ids: [4] });
+    component.closeDetail();
+  });
 });

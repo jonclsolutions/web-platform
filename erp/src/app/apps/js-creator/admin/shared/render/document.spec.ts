@@ -12,7 +12,7 @@
 
 import {
   DOCUMENT_LIMITS, LayerType, PlainLayerType, SIZE_PRESETS, blockIdsOf, createBlockLayer, createLayer, documentBytes, documentReferences,
-  emptyDocument, fieldKeyFrom, gridCells, isValidSize, newLayerId, safeZoneOf, usedFieldKeys,
+  emptyDocument, fieldKeyFrom, gridCells, isValidSize, newLayerId, usedFieldKeys,
 } from './document';
 
 /** Properties of every layer (TemplateDocument::COMMON). */
@@ -91,14 +91,11 @@ describe('document', () => {
   });
 
   /**
-   * @description Sizes, presets, safe zones, ids and the byte size of a document.
-   * @input 1080 × 1920; 720 × 1280; 1080 × 1080; 99 × 100; 3001; taken id set
-   * @output preset safe zone; proportional zone; none; invalid sizes; a new unique id; bytes of JSON
+   * @description Sizes, presets, ids and the byte size of a document.
+   * @input 1080 × 1350; 99 × 100; 3001; taken id set
+   * @output valid / invalid sizes; a new unique id; bytes of JSON
    */
   it('checks sizes, presets and ids', () => {
-    expect(safeZoneOf({ width: 1080, height: 1920 })).toEqual({ top: 250, bottom: 340 });
-    expect(safeZoneOf({ width: 720, height: 1280 })).toEqual({ top: 166, bottom: 227 });
-    expect(safeZoneOf({ width: 1080, height: 1080 })).toBeNull();
     expect(isValidSize({ width: 1080, height: 1350 })).toBeTrue();
     expect(isValidSize({ width: 99, height: 100 })).toBeFalse();
     expect(isValidSize({ width: 1080, height: 3001 })).toBeFalse();

@@ -61,12 +61,28 @@ export class OutputsApiService {
    */
   generate(section: JsCreatorSectionId, upload: OutputUpload): Observable<CreatorOutput> {
     const data = new FormData();
-    data.append('file', upload.file, 'output.png');
+    if (upload.file) data.append('file', upload.file, 'output.png');
+    (upload.pages ?? []).forEach(token => data.append('pages[]', token));
     data.append('template_id', String(upload.template_id));
     if (upload.folder_id !== null) data.append('folder_id', String(upload.folder_id));
     data.append('name', upload.name);
     data.append('caption', upload.caption);
     return this.api.postQuietly<CreatorOutput>(`js-creator/${section}/outputs`, data);
+  }
+
+  /**
+   * @description Stages one slide of a carousel before its output (every slide in its own
+   *   request - a whole carousel would exceed the limit of one request).
+   * @param section Section.
+   * @param templateId Template.
+   * @param file PNG of the slide drawn by the renderer.
+   * @returns Token of the staged slide (sent with the output in `pages`).
+   */
+  stagePage(section: JsCreatorSectionId, templateId: number, file: Blob): Observable<{ token: string; bytes: number }> {
+    const data = new FormData();
+    data.append('file', file, 'page.png');
+    data.append('template_id', String(templateId));
+    return this.api.postQuietly<{ token: string; bytes: number }>(`js-creator/${section}/outputs/pages`, data);
   }
 
   /**

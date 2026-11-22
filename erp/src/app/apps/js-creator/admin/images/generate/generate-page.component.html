@@ -5,7 +5,8 @@
     @author: JS
     @created: 2026
     @description: Page "Generate" (a template or a set): head (back, template / set, size,
-        edit), usage bar; the live preview (a set: tabs of its formats, each with its own crop)
+        edit), usage bar; the live preview (a set: tabs of its formats, each with its own crop; a
+        carousel: tabs of its slides; the safe zones of a network over it with the layers in them)
         beside the form - fields (texts with length, highlight and overflow notes; images from the
         computer or the library with zoom and crop), text of the post, target folder and name,
         what still stops generating, Generate (a set: progress) and the results (open, download,
@@ -51,10 +52,36 @@
             }
           </div>
         }
+        @if (pageCount() > 1) {
+          <div class="gen-tabs gen-slides" role="tablist" [attr.aria-label]="t('slides')">
+            @for (n of slideNumbers(); track n) {
+              <button type="button" role="tab" class="gen-tab" [class.gen-tab--on]="slideIndex() === n - 1" [attr.aria-selected]="slideIndex() === n - 1"
+                (click)="showSlide(n - 1)">{{ t('slide') }} {{ n }}</button>
+            }
+          </div>
+        }
+        @if (networks().length) {
+          <label class="gen-zone-pick" [title]="ts('safe_zone_hint')">
+            <span>{{ ts('safe_zone') }}</span>
+            <select class="ws-select" (change)="setSafeNetwork($any($event.target).value)">
+              <option value="" [selected]="!safeNetwork()">{{ ts('safe_zone_off') }}</option>
+              @for (network of networks(); track network) {
+                <option [value]="network" [selected]="safeNetwork() === network">{{ ts('network_' + network) }}</option>
+              }
+            </select>
+          </label>
+        }
         @if (doc(); as d) {
           <app-jc-generate-preview [doc]="d" [size]="size()" [resources]="resources" [values]="values()" [redraw]="redraw()"
-            [pannable]="filledImages()" [maxHeight]="640" [label]="t('preview')"
+            [pannable]="filledImages()" [maxHeight]="640" [label]="t('preview')" [page]="slideIndex()" [zones]="previewZones()"
             (rendered)="report.set($event)" (pan)="onPan($event)" />
+        }
+        @if (safeHits().length) {
+          <ul class="gen-zone-hits" role="status">
+            @for (hit of safeHits(); track hit.page + ':' + hit.layerId) {
+              <li>@if (pageCount() > 1) { {{ t('slide') }} {{ hit.page }}: }„{{ hitName(hit) }}“ {{ ts('zone_' + hit.part) }}</li>
+            }
+          </ul>
         }
         @if (filledImages().length) {
           <p class="ws-panel-hint gen-preview-hint">{{ t(tabs().length > 1 ? 'drag_hint_set' : 'drag_hint') }}</p>
@@ -206,12 +233,14 @@
               <div class="gen-result-body">
                 <strong>{{ results().length > 1 ? formatOf(output) : t('done_title') }}</strong>
                 <span>{{ output.name }}</span>
-                <span class="ws-card-meta">{{ folderName(output) }} · {{ output.width }} × {{ output.height }} · {{ output.format === 'jpg' ? 'JPG' : 'PNG' }} · {{ bytes(output.size_bytes) }}</span>
+                <span class="ws-card-meta">{{ folderName(output) }} · {{ output.width }} × {{ output.height }} · {{ output.format === 'jpg' ? 'JPG' : 'PNG' }}@if (output.page_count > 1) { · {{ slideCount(output.page_count) }} } · {{ bytes(output.size_bytes) }}</span>
                 <div class="gen-result-actions">
                   <button type="button" class="ws-btn ws-btn--sm" (click)="openInOutputs(output)">
                     {{ t('open_outputs') }}
                   </button>
-                  @if (output.download_url) {
+                  @if (output.page_count > 1) {
+                    <button type="button" class="ws-btn ws-btn--sm" (click)="downloadSlides(output)">{{ t('download_slides') }}</button>
+                  } @else if (output.download_url) {
                     <a class="ws-btn ws-btn--sm" [href]="output.download_url" download>
                       {{ t('download') }}
                     </a>

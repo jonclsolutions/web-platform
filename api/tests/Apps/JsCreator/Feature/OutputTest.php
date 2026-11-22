@@ -441,6 +441,68 @@ class OutputTest extends TestCase
     }
 
     /**
+     * @description A carousel: every page is staged on its own, the output joins them in their
+     *   order (one row, a file per page, staged files moved); the number of pages must be the
+     *   number of the template; a token of another account or a missing one is refused; a ZIP and
+     *   the download of a page carry the number of the page; staged pages count for the quota.
+     * @input template 200 × 100 with 3 pages; 3 staged PNGs; outputs with 2 tokens, with `file`,
+     *   with a foreign token, with the 3 tokens; quota 1 MB with used bytes forced
+     * @output 201 page_count 3 with pages 1-3 and their URLs, staging empty; 422 pages / file /
+     *   pages.1; ZIP names "Slides 01.png" … ; download "Slides 02.png"; staging refused by quota
+     */
+    public function test_carousel_output(): void
+    {
+        $this->signIn($this->creator());
+        $foreignToken = $this->post(self::GENERATE . '/pages', ['template_id' => $this->template('Foreign'), 'file' => $this->png(200, 100)], ['Accept' => 'application/json'])
+            ->assertCreated()->json('data.token');
+        $user = $this->signIn($this->creator());
+        $template = $this->template('Carousel');
+        $document = $this->document();
+        $document['pages'][] = $document['pages'][0];
+        $document['pages'][] = $document['pages'][0];
+        CreatorTemplate::query()->whereKey($template)->update(['document' => json_encode($document)]);
+
+        $tokens = array_map(fn () => $this->post(self::GENERATE . '/pages', ['template_id' => $template, 'file' => $this->png(200, 100)], ['Accept' => 'application/json'])
+            ->assertCreated()->assertJsonStructure(['data' => ['token', 'bytes']])->json('data.token'), range(1, 3));
+        $this->post(self::GENERATE . '/pages', ['template_id' => $template, 'file' => $this->png(300, 100)], ['Accept' => 'application/json'])
+            ->assertStatus(422)->assertJsonValidationErrors('file');
+
+        $this->postJson(self::GENERATE, ['template_id' => $template, 'pages' => array_slice($tokens, 0, 2)])->assertStatus(422)->assertJsonValidationErrors('pages');
+        $this->generate($template, $this->png(200, 100))->assertStatus(422)->assertJsonValidationErrors('file');
+        $this->postJson(self::GENERATE, ['template_id' => $template, 'pages' => [$tokens[0], $foreignToken, $tokens[2]]])
+            ->assertStatus(422)->assertJsonValidationErrors('pages.1');
+
+        $output = $this->postJson(self::GENERATE, ['template_id' => $template, 'pages' => $tokens, 'name' => 'Slides'])->assertCreated()
+            ->assertJsonPath('data.page_count', 3)->assertJsonCount(3, 'data.pages')->assertJsonPath('data.pages.2.page', 3)->json('data');
+        $this->assertSame([], Storage::disk('private')->files("js-creator/{$user->id}/staging"));
+        $files = CreatorOutputFile::query()->where('output_id', $output['id'])->orderBy('page')->get();
+        $this->assertSame([1, 2, 3], $files->pluck('page')->all());
+        $this->assertSame((int) $files->sum('size_bytes'), CreatorOutput::find($output['id'])->size_bytes);
+        $files->each(fn ($f) => Storage::disk('private')->assertExists($f->path));
+
+        $download = $this->get($output['pages'][1]['download_url'])->assertOk();
+        $this->assertStringContainsString('Slides 02.png', (string) $download->headers->get('Content-Disposition'));
+        $url = $this->postJson(self::BASE . '/zip', ['ids' => [$output['id']]])->assertOk()->json('data.url');
+        $response = $this->get($url)->assertOk();
+        $path = tempnam(sys_get_temp_dir(), 'zip-test');
+        file_put_contents($path, $response->streamedContent() ?: file_get_contents($response->baseResponse->getFile()->getPathname()));
+        $zip = new ZipArchive();
+        $this->assertTrue($zip->open($path) === true);
+        $names = [];
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $names[] = $zip->getNameIndex($i);
+        }
+        $zip->close();
+        unlink($path);
+        $this->assertSame(['Slides 01.png', 'Slides 02.png', 'Slides 03.png'], $names);
+
+        CreatorSetting::query()->create(['default_quota_mb' => 1]);
+        CreatorOutput::query()->whereKey($output['id'])->update(['size_bytes' => 1024 * 1024 - 10]);
+        $this->post(self::GENERATE . '/pages', ['template_id' => $template, 'file' => $this->png(200, 100)], ['Accept' => 'application/json'])
+            ->assertStatus(422)->assertJsonPath('error_code', 'quota_exceeded');
+    }
+
+    /**
      * @description Row of a template of an account (created directly, without the API).
      * @param User $user Owner.
      * @param string $name Name.

@@ -5,8 +5,9 @@
     @author: JS
     @created: 2026
     @description: Editor of a template or a block: top bar (back, name, undo / redo, zoom, grid,
-        guides, safe zone, save state, Save, Generate - templates), left column (add a layer -
-        a template also a block, layers), the canvas with the warnings of the drawing, right
+        guides, safe zones of a network, save state, Save, Generate - templates), left column (add a
+        layer - a template also a block, layers), the bar of slides (templates) above the canvas,
+        the canvas with the warnings of the drawing and of the safe zones, right
         column (Properties / Fields / Template or Block); popups choosing a block and naming a
         block made from the selection. A message instead of the editor on screens under 1024 px.
 -->
@@ -65,11 +66,15 @@
         <app-creator-icon [nodes]="icon('magnet')" [size]="16" />
         <span>{{ t('guides') }}</span>
       </label>
-      @if (hasSafeZone()) {
-        <label class="te-toggle" [title]="t('safe_zone')">
-          <input type="checkbox" [checked]="safeZone()" (change)="safeZone.set($any($event.target).checked)" />
+      @if (networks().length) {
+        <label class="te-toggle" [title]="ts('safe_zone_hint')">
           <app-creator-icon [nodes]="icon('safe-zone')" [size]="16" />
-          <span>{{ t('safe_zone') }}</span>
+          <select class="jc-input" [attr.aria-label]="ts('safe_zone')" (change)="setSafeNetwork($any($event.target).value)">
+            <option value="" [selected]="!safeNetwork()">{{ ts('safe_zone_off') }}</option>
+            @for (network of networks(); track network) {
+              <option [value]="network" [selected]="safeNetwork() === network">{{ ts('network_' + network) }}</option>
+            }
+          </select>
         </label>
       }
 
@@ -112,10 +117,16 @@
       </aside>
 
       <main class="te-center">
-        <app-jc-editor-canvas [store]="s" [resources]="resources" [(zoom)]="zoom" [grid]="grid()" [guides]="guides()" [safeZone]="safeZone()"
+        @if (kind === 'template') {
+          <app-jc-pages-bar [store]="s" [resources]="resources" [redraw]="redraw()" />
+        }
+        <app-jc-editor-canvas [store]="s" [resources]="resources" [(zoom)]="zoom" [grid]="grid()" [guides]="guides()" [safeNetwork]="safeNetwork()"
           [panMode]="panMode()" [redraw]="redraw()" (rendered)="report.set($event)" (editText)="editText($event)" />
-        @if (overflows().length || missingImages()) {
+        @if (overflows().length || missingImages() || safeHits().length) {
           <div class="te-warnings" role="status">
+            @for (hit of safeHits(); track hit.layerId) {
+              <span class="te-warning te-warning--zone">„{{ hitName(hit) }}“ – {{ ts('zone_' + hit.part) }} ({{ ts('network_' + safeNetwork()) }})</span>
+            }
             @for (o of overflows(); track o.id) {
               <span class="te-warning" [class.te-warning--block]="o.block">„{{ o.name }}“ – {{ o.block ? t('overflow_blocks') : t('overflow_cut') }}</span>
             }

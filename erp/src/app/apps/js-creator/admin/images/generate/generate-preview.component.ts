@@ -8,7 +8,8 @@
  *   (the same drawing as the output - only image fields without a photo show a placeholder),
  *   scaled to the width of its column and to `maxHeight`. An image of a field can be moved in its
  *   place by dragging (mouse or finger): the component reports the drag, the page changes the
- *   crop. Every drawing reports overflowing texts and missing images.
+ *   crop. Every drawing reports overflowing texts and missing images. One page is drawn (`page` -
+ *   a slide of a carousel); safe zones of a network (`zones`) are drawn over it as marked areas.
  * @usage `<app-jc-generate-preview [doc]="doc" [size]="size" [resources]="resources" [values]="values"
  *   [redraw]="redraw()" [pannable]="keys" (rendered)="report.set($event)" (pan)="onPan($event)" />`
  * @dependencies renderer.ts, field-images.ts, RenderResourceStore.
@@ -18,6 +19,7 @@ import {
   AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, ViewChild, computed, effect, inject, input, output, signal,
 } from '@angular/core';
 import { CanvasSize, TemplateDocument } from '../../shared/render/document';
+import { SafeZone } from '../../shared/render/safe-zones';
 import { RenderReport, RenderValues, renderPage } from '../../shared/render/renderer';
 import { RenderResourceStore } from '../../shared/render/resource-store';
 import { FieldImageBox, boxContains, fieldImageBoxes } from '../../shared/render/field-images';
@@ -39,11 +41,20 @@ const MAX_BITMAP = 9_000_000;
   standalone: true,
   template: `
     <div #wrap class="gp-wrap">
+      <div class="gp-stage" [style.width.px]="cssSize().width" [style.height.px]="cssSize().height">
       <canvas #canvas class="gp-canvas" [class.gp-canvas--pannable]="pannable().length > 0"
         [style.width.px]="cssSize().width" [style.height.px]="cssSize().height" [style.cursor]="cursor()"
         role="img" [attr.aria-label]="label()"
         (pointerdown)="down($event)" (pointermove)="move($event)" (pointerup)="up($event)" (pointercancel)="up($event)"
         (pointerleave)="cursor.set('default')"></canvas>
+      @if (zones().length) {
+        <svg class="gp-zones" [attr.viewBox]="'0 0 ' + size().width + ' ' + size().height" preserveAspectRatio="none" aria-hidden="true">
+          @for (zone of zones(); track $index) {
+            <rect class="gp-zone" [attr.x]="zone.x" [attr.y]="zone.y" [attr.width]="zone.w" [attr.height]="zone.h" />
+          }
+        </svg>
+      }
+      </div>
     </div>
   `,
   styleUrl: './generate-preview.component.css',
@@ -62,6 +73,10 @@ export class GeneratePreviewComponent implements AfterViewInit, OnDestroy {
   readonly values = input.required<RenderValues>();
   /** Changes when a resource finished loading. */
   readonly redraw = input(0);
+  /** Page drawn (a slide of a carousel). */
+  readonly page = input(0);
+  /** Safe zones drawn over the picture (template px). */
+  readonly zones = input<readonly SafeZone[]>([]);
   /** Keys of the image fields that have an image (can be dragged). */
   readonly pannable = input<string[]>([]);
   /** Highest preview (CSS px). */
@@ -100,12 +115,14 @@ export class GeneratePreviewComponent implements AfterViewInit, OnDestroy {
     const doc = this.doc();
     const size = this.size();
     const resources = this.resources();
-    return this.pannable().flatMap(key => fieldImageBoxes(doc, size, key, 0, id => resources.block(id)).map(box => ({ key, box })));
+    const page = this.page();
+    return this.pannable().flatMap(key => fieldImageBoxes(doc, size, key, page, id => resources.block(id)).map(box => ({ key, box })));
   });
 
   constructor() {
     effect(() => {
       this.doc();
+      this.page();
       this.values();
       this.redraw();
       this.cssSize();
@@ -219,7 +236,7 @@ export class GeneratePreviewComponent implements AfterViewInit, OnDestroy {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, width, height);
     ctx.setTransform(width / size.width, 0, 0, height / size.height, 0, 0);
-    const report = renderPage(ctx, this.doc(), size, this.resources(), { mode: 'output', placeholders: true, values: this.values() });
+    const report = renderPage(ctx, this.doc(), size, this.resources(), { mode: 'output', placeholders: true, values: this.values(), page: this.page() });
     this.zone.run(() => this.rendered.emit(report));
   }
 }

@@ -48,15 +48,16 @@ export class FieldsPanelComponent {
   readonly keyErrors = signal<Record<string, string>>({});
   /** Fields in the order of the form. */
   readonly fields = computed(() => this.store().doc().fields);
-  /** Number of layers using each field. */
+  /** Number of layers using each field (every page). */
   readonly uses = computed(() => {
     const count = new Map<string, number>();
     const add = (key: string) => count.set(key, (count.get(key) ?? 0) + 1);
-    const page = this.store().doc().pages[0];
-    if (page.background.image?.source.kind === 'field') add(page.background.image.source.field);
-    for (const layer of page.layers) {
-      if (layer.type === 'text' && layer.field) add(layer.field);
-      layerSources(layer).forEach(s => s.kind === 'field' && add(s.field));
+    for (const page of this.store().doc().pages) {
+      if (page.background.image?.source.kind === 'field') add(page.background.image.source.field);
+      for (const layer of page.layers) {
+        if (layer.type === 'text' && layer.field) add(layer.field);
+        layerSources(layer).forEach(s => s.kind === 'field' && add(s.field));
+      }
     }
     return count;
   });
@@ -168,13 +169,14 @@ export class FieldsPanelComponent {
       const doc = draft.doc;
       const target = doc.fields.find(f => f.key === old);
       if (target) target.key = next;
-      const page = doc.pages[0];
-      const bg = page.background.image?.source;
-      if (bg?.kind === 'field' && bg.field === old) bg.field = next;
-      page.layers.forEach((layer: Layer) => {
-        if (layer.type === 'text' && layer.field === old) layer.field = next;
-        layerSources(layer).forEach(s => { if (s.kind === 'field' && s.field === old) s.field = next; });
-      });
+      for (const page of doc.pages) {
+        const bg = page.background.image?.source;
+        if (bg?.kind === 'field' && bg.field === old) bg.field = next;
+        page.layers.forEach((layer: Layer) => {
+          if (layer.type === 'text' && layer.field === old) layer.field = next;
+          layerSources(layer).forEach(s => { if (s.kind === 'field' && s.field === old) s.field = next; });
+        });
+      }
       draft.caption = draft.caption.split(`{{${old}}}`).join(`{{${next}}}`);
     });
   }

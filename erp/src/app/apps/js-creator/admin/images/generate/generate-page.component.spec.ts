@@ -78,8 +78,9 @@ describe('GeneratePageComponent', () => {
    *   in a 500 × 500 image layer and a shape; caption pattern "{{title}} #tag".
    * @param granted Permissions of the account.
    * @param photoRequired Whether the image field is required.
+   * @param adjust Changes of the served template before the page loads it.
    */
-  async function create(granted: string[] | 'all' = 'all', photoRequired = true): Promise<void> {
+  async function create(granted: string[] | 'all' = 'all', photoRequired = true, adjust?: (template: typeof served) => void): Promise<void> {
     ctx = createAdminTestContext({ granted });
     const photo: ImageLayer = {
       ...(createLayer('image', TEST_SIZE, 'img') as ImageLayer), anchor: 'tl', x: 500, y: 500, w: 500, h: 500, fit: 'cover', source: { kind: 'field', field: 'photo' },
@@ -89,6 +90,7 @@ describe('GeneratePageComponent', () => {
       fields: [{ ...(textField('title') as TextField), maxLength: 20 }, { ...(imageField('photo') as ImageField), required: photoRequired }],
       caption: '{{title}} #tag',
     });
+    adjust?.(served);
     ctx.dataHandler.get.and.callFake(((url: string) => of(url.includes('/templates/') ? served : { used_bytes: 0, quota_bytes: 1e9, trash_bytes: 0, counts: {} })) as never);
     ctx.dataHandler.getCollection.and.callFake(((url: string) => of(url === 'js-creator/folders' ? [folder(2, 'Kampaň'), folder(3, 'Jiné')] : [testFont(3)])) as never);
     ctx.dataHandler.postQuietly.and.returnValue(of(output()) as never);
@@ -408,5 +410,42 @@ describe('GeneratePageComponent', () => {
     bitmap.close();
     expect(component.results().map(o => o.id)).toEqual([40, 41]);
     expect(component.progress()).toBeNull();
+  });
+
+  /**
+   * @description A carousel: the slides are tabs of the preview, every slide is drawn, staged
+   *   on its own and the output joins the tokens; an overflow on a slide that is not shown stops
+   *   generating too.
+   * @input template with a second slide holding the title text (one line of 900 px); slide tab 2;
+   *   title "Léto"; Generate; slide 1 shown and a title of 4 words in big letters
+   * @output 2 slide tabs, slideIndex 1; POST …/outputs/pages twice (template_id 7, file), then
+   *   POST …/outputs with pages[] [tk1, tk2] and no file; problem overflow for the long title
+   */
+  it('generates a carousel slide by slide', async () => {
+    await create('all', false, template => template.document.pages.push({
+      background: template.document.pages[0].background, layers: [textLayer('t2', { field: 'title', w: 900, h: 60, overflow: 'block', autoShrink: false, size: 40 })],
+    }));
+    const tabs = fixture.nativeElement.querySelectorAll('.gen-slides .gen-tab');
+    expect(tabs.length).toBe(2);
+    (tabs[1] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(component.slideIndex()).toBe(1);
+
+    let staged = 0;
+    ctx.dataHandler.postQuietly.and.callFake(((url: string) => of(url.endsWith('/outputs/pages') ? { token: `tk${++staged}`, bytes: 10 } : output({ page_count: 2 }))) as never);
+    component.setText('title', 'Léto');
+    await component.generate();
+    const calls = ctx.dataHandler.postQuietly.calls.allArgs() as [string, FormData][];
+    expect(calls.map(c => c[0])).toEqual(['js-creator/images/outputs/pages', 'js-creator/images/outputs/pages', 'js-creator/images/outputs']);
+    expect(calls[0][1].get('template_id')).toBe('7');
+    expect(calls[0][1].get('file')).toBeTruthy();
+    expect(calls[2][1].getAll('pages[]')).toEqual(['tk1', 'tk2']);
+    expect(calls[2][1].get('file')).toBeNull();
+
+    component.showSlide(0);
+    served.document.pages[1].layers[0] = { ...served.document.pages[1].layers[0], size: 400 } as never;
+    component.setText('title', 'Léto '.repeat(4).trim());
+    fixture.detectChanges();
+    expect(component.problems().some(p => p.kind === 'overflow')).toBeTrue();
   });
 });

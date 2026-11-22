@@ -7,7 +7,7 @@
  * @author JS
  * @created 2026
  * @description Fields of a template as the form of generating shows them: the fields of the
- *   template, then the fields of its block instances (layers of the first page from the bottom,
+ *   template, then the fields of its block instances (pages in their order, layers from the bottom,
  *   each block in the order of its fields). A field of an instance keeps its key while it is
  *   free; a key already taken gets `_2`, `_3` … (at most 40 characters) - so two instances of
  *   one block, or a block field named like a template field, are filled separately.
@@ -37,7 +37,8 @@ final class EffectiveFields
         foreach ($document['fields'] ?? [] as $field) {
             $types[$field['key']] = $field['type'];
         }
-        foreach ($document['pages'][0]['layers'] ?? [] as $layer) {
+        $layers = array_merge(...array_map(fn ($page) => $page['layers'] ?? [], $document['pages'] ?? [[]]));
+        foreach ($layers as $layer) {
             $block = ($layer['type'] ?? null) === 'block' ? ($blocks[$layer['blockId']] ?? null) : null;
             foreach (is_array($block) ? ($block['fields'] ?? []) : [] as $field) {
                 $types[self::freeKey($field['key'], $types)] = $field['type'];

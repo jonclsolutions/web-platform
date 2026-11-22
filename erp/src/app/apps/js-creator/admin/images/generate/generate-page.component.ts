@@ -10,6 +10,11 @@
  *   form with the fields of all its templates (outside the trash; block instance fields
  *   included), the preview of each format in tabs with its own crop of every image, and
  *   Generate makes one output per template (name + format) into the chosen folder.
+ *   A CAROUSEL (a template with more pages) is one output with a picture per slide: the preview
+ *   shows the slides in tabs, overflows of every slide are checked, every slide is drawn and
+ *   staged on its own (OutputsApiService.stagePage) and the output joins them.
+ *   Safe zones of a network (remembered in the browser) are drawn over the preview and the layers
+ *   reaching into them are listed (a warning, generating is not stopped).
  *   - text fields: length, highlight of the selected part (`**…**`), what the template does
  *     when the text does not fit (shrunk / cut / generating refused);
  *   - image fields: a photo from the computer (decoded ONLY in the browser - never uploaded) or
@@ -55,6 +60,8 @@ import { BlockResolver, EffectiveField, effectiveFields } from '../../shared/ren
 import { DrawableImage } from '../../shared/render/paint';
 import { RenderResourceStore } from '../../shared/render/resource-store';
 import { CROP_ZOOM, defaultCrop, fieldImageBoxes, panCrop, requiredScale, zoomCrop } from '../../shared/render/field-images';
+import { SafeNetwork, rememberNetwork, rememberedNetwork, safeNetworks, safeZoneHits, safeZones } from '../../shared/render/safe-zones';
+import { saveUrl } from '../../shared/save-url';
 import { FolderOption, folderOptions } from '../../shared/folder-tree';
 import { formatBytes } from '../../shared/workspace-format';
 import { QuotaBarComponent } from '../../shared/quota-bar/quota-bar.component';
@@ -130,6 +137,10 @@ export class GeneratePageComponent implements OnInit {
   readonly targets = signal<GenerateTarget[]>([]);
   /** Index of the template shown in the preview (tabs of a set). */
   readonly active = signal(0);
+  /** Slide shown in the preview (a carousel). */
+  readonly slide = signal(0);
+  /** Network whose safe zones are drawn over the preview (null = none). */
+  readonly safeNetwork = signal<SafeNetwork | null>(null);
   /** The template shown in the preview. */
   readonly target = computed<GenerateTarget | null>(() => this.targets()[this.active()] ?? this.targets()[0] ?? null);
   /** The template shown in the preview (null while loading). */
@@ -183,6 +194,26 @@ export class GeneratePageComponent implements OnInit {
 
   /** Document of the template. */
   readonly doc = computed(() => this.template()?.document ?? null);
+  /** Slides of the template shown (1 = not a carousel). */
+  readonly pageCount = computed(() => this.doc()?.pages.length ?? 1);
+  /** Numbers of the slides (1 …) for the tabs. */
+  readonly slideNumbers = computed(() => Array.from({ length: this.pageCount() }, (_, i) => i + 1));
+  /** Index of the slide shown (within the slides of the template). */
+  readonly slideIndex = computed(() => Math.min(this.slide(), this.pageCount() - 1));
+  /** Networks with a guide for the size shown. */
+  readonly networks = computed(() => safeNetworks(this.size()));
+  /** Zones of the chosen network over the preview. */
+  readonly previewZones = computed(() => {
+    const network = this.safeNetwork();
+    return network && this.networks().includes(network) ? safeZones(network, this.size()) : [];
+  });
+  /** Layers of every slide of the template shown that reach into the zones (with the number of the slide). */
+  readonly safeHits = computed(() => {
+    const doc = this.doc();
+    const zones = this.previewZones();
+    if (!doc || !zones.length) return [];
+    return doc.pages.flatMap((page, i) => safeZoneHits(page.layers, this.size(), zones).map(hit => ({ ...hit, page: i + 1 })));
+  });
   /** Size of the template. */
   readonly size = computed<CanvasSize>(() => {
     const t = this.template();
@@ -221,12 +252,14 @@ export class GeneratePageComponent implements OnInit {
     if (this.captionEdited()) return this.captionTyped();
     return this.targets().length ? fillCaption(this.captionPattern(), this.fields(), this.texts()).slice(0, MAX_CAPTION) : '';
   });
-  /** Reports of every template (the preview draws one; the others are measured off screen). */
+  /** Reports of every slide of every template (the preview draws one; the others are measured off screen). */
   readonly reports = computed<RenderReport[]>(() => {
     this.redraw();
     const shown = this.report();
     const texts = this.texts();
-    return this.targets().map((t, i) => (i === this.active() ? shown : this.measure(t, texts)));
+    const slide = this.slideIndex();
+    return this.targets().flatMap((t, i) => t.template.document.pages.map((_, page) =>
+      (i === this.active() && page === slide ? shown : this.measure(t, texts, page))));
   });
   /** Reasons that stop generating (over every template of a set). */
   readonly problems = computed<GenerateProblem[]>(() => {
@@ -319,6 +352,7 @@ export class GeneratePageComponent implements OnInit {
     const fields = unionFields(targets.map(t => t.fields)).fields;
     this.texts.set(Object.fromEntries(fields.filter(f => f.type === 'text').map(f => [f.key, ''])));
     this.targets.set(targets);
+    this.safeNetwork.set(rememberedNetwork(templates[0]));
     this.loadAssets([...new Set(templates.flatMap(t => documentReferences(this.resources.withBlocks(t.document)).assets))]);
   }
 
@@ -339,6 +373,54 @@ export class GeneratePageComponent implements OnInit {
     if (index === this.active() || !this.targets()[index]) return;
     this.report.set({ overflows: [], missing: [] });
     this.active.set(index);
+    this.slide.set(0);
+    if (!this.networks().includes(this.safeNetwork() as SafeNetwork)) this.safeNetwork.set(rememberedNetwork(this.size()));
+  }
+
+  /**
+   * @description Number of slides of a carousel with its word ("3 slidy", "5 slidů").
+   * @param count Slides (2 … 20).
+   */
+  slideCount(count: number): string {
+    return `${count} ${this.t(count <= 4 ? 'slides_count_few' : 'slides_count')}`;
+  }
+
+  /**
+   * @description Shows another slide of a carousel in the preview.
+   * @param index Slide (0 = the first).
+   */
+  showSlide(index: number): void {
+    if (index === this.slideIndex() || index < 0 || index >= this.pageCount()) return;
+    this.report.set({ overflows: [], missing: [] });
+    this.slide.set(index);
+  }
+
+  /**
+   * @description Shows the safe zones of a network over the preview (remembered in this browser).
+   * @param value Network id, or '' (none).
+   */
+  setSafeNetwork(value: string): void {
+    const network = this.networks().includes(value as SafeNetwork) ? value as SafeNetwork : null;
+    this.safeNetwork.set(network);
+    rememberNetwork(network);
+  }
+
+  /**
+   * @description Text shared by the pages (safe zones).
+   * @param key Key in `js-creator-shared`.
+   */
+  ts(key: string): string {
+    return this.i18n.getValue(`js-creator-shared.${key}`);
+  }
+
+  /**
+   * @description Name of a layer reaching into a safe zone (its name, its text, or its kind).
+   * @param hit Hit of safeHits().
+   */
+  hitName(hit: { layerId: string; name: string; page: number }): string {
+    const layer = this.doc()?.pages[hit.page - 1]?.layers.find(l => l.id === hit.layerId);
+    const text = layer?.type === 'text' ? layer.text.replace(/\*\*/g, '').split('\n')[0].slice(0, 30) : '';
+    return hit.name || text || this.t('layer');
   }
 
   /**
@@ -503,12 +585,12 @@ export class GeneratePageComponent implements OnInit {
   }
 
   /**
-   * @description Places of an image field in a template (block instances included).
+   * @description Places of an image field in a template - on every slide (block instances included).
    * @param target Template.
    * @param key Field.
    */
   private boxes(target: GenerateTarget, key: string) {
-    return fieldImageBoxes(target.template.document, target.template, key, 0, this.resolve);
+    return target.template.document.pages.flatMap((_, page) => fieldImageBoxes(target.template.document, target.template, key, page, this.resolve));
   }
 
   /**
@@ -648,8 +730,10 @@ export class GeneratePageComponent implements OnInit {
       ];
       if ((await this.resources.assetsReady(assetIds)).length) return this.fail('error_images');
 
-      for (const [index, target] of targets.entries()) {
-        this.progress.set({ done: index, total: targets.length });
+      const total = targets.reduce((sum, t) => sum + t.template.document.pages.length, 0);
+      let done = 0;
+      for (const target of targets) {
+        this.progress.set({ done, total });
         const crops = this.cropsOf()[target.template.id] ?? {};
         const images: Record<string, DrawableImage | undefined> = {};
         for (const [key, value] of Object.entries(this.images())) {
@@ -663,12 +747,33 @@ export class GeneratePageComponent implements OnInit {
           opened.push(bitmap);
           images[key] = { image: bitmap, width: bitmap.width, height: bitmap.height };
         }
-        const blob = await this.draw(target.template, { text: this.texts(), images, crops });
-        if (!blob) return;
-        if (blob.size > MAX_OUTPUT_BYTES) return this.fail('error_too_large');
-        if (!this.usage.fits(blob.size)) return this.fail('error_quota');
         const name = targets.length > 1 ? `${base.slice(0, MAX_OUTPUT_NAME - 14)} – ${target.template.width}×${target.template.height}` : base;
-        if (!(await this.upload(target.template, blob, name))) return;
+        const pages = target.template.document.pages.length;
+        if (pages === 1) {
+          const blob = await this.draw(target.template, { text: this.texts(), images, crops }, 0);
+          if (!blob) return;
+          if (blob.size > MAX_OUTPUT_BYTES) return this.fail('error_too_large');
+          if (!this.usage.fits(blob.size)) return this.fail('error_quota');
+          if (!(await this.upload(target.template, { file: blob }, name))) return;
+          done++;
+        } else {
+          // A carousel: every slide is drawn and staged on its own, then the output joins them.
+          const tokens: string[] = [];
+          let bytes = 0;
+          for (let page = 0; page < pages; page++) {
+            this.progress.set({ done, total });
+            const blob = await this.draw(target.template, { text: this.texts(), images, crops }, page);
+            if (!blob) return;
+            if (blob.size > MAX_OUTPUT_BYTES) return this.fail('error_too_large');
+            bytes += blob.size;
+            if (!this.usage.fits(bytes)) return this.fail('error_quota');
+            const token = await this.stage(target.template, blob);
+            if (!token) return;
+            tokens.push(token);
+            done++;
+          }
+          if (!(await this.upload(target.template, { pages: tokens }, name))) return;
+        }
         opened.splice(0).forEach(bitmap => bitmap.close());
       }
       setTimeout(() => document.querySelector('.gen-result')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
@@ -704,6 +809,14 @@ export class GeneratePageComponent implements OnInit {
   }
 
   /**
+   * @description Downloads a generated output: a carousel as a ZIP of its slides.
+   * @param output Generated output with more pages.
+   */
+  downloadSlides(output: CreatorOutput): void {
+    this.outputsApi.zip([output.id]).subscribe(zip => saveUrl(zip.url));
+  }
+
+  /**
    * @description Size of a file for the result.
    * @param bytes Bytes.
    */
@@ -712,12 +825,13 @@ export class GeneratePageComponent implements OnInit {
   }
 
   /**
-   * @description Draws the template in its exact size for the output and checks the drawing.
+   * @description Draws a page of the template in its exact size for the output and checks the drawing.
    * @param template Template.
    * @param values Values with the full photos.
+   * @param page Page (slide of a carousel).
    * @returns PNG, or null when something is missing (the reason is shown).
    */
-  private async draw(template: CreatorTemplateDetail, values: RenderValues): Promise<Blob | null> {
+  private async draw(template: CreatorTemplateDetail, values: RenderValues, page: number): Promise<Blob | null> {
     const canvas = document.createElement('canvas');
     canvas.width = template.width;
     canvas.height = template.height;
@@ -726,7 +840,7 @@ export class GeneratePageComponent implements OnInit {
       this.fail('error_draw');
       return null;
     }
-    const report = renderPage(ctx, template.document, template, this.resources, { mode: 'output', values });
+    const report = renderPage(ctx, template.document, template, this.resources, { mode: 'output', values, page });
     // An image field without a value is an optional field left empty (required ones are
     // checked by the form) - its place simply stays empty, like in the preview.
     if (report.missing.some(m => !m.startsWith('field:'))) {
@@ -744,16 +858,34 @@ export class GeneratePageComponent implements OnInit {
   }
 
   /**
+   * @description Stages one slide of a carousel (before its output).
+   * @param template Template.
+   * @param blob PNG of the slide.
+   * @returns Token of the staged slide, or null (the refusal is explained).
+   */
+  private stage(template: CreatorTemplateDetail, blob: Blob): Promise<string | null> {
+    return new Promise(resolve => {
+      this.outputsApi.stagePage(this.section, template.id, blob).subscribe({
+        next: staged => resolve(staged.token),
+        error: (error: HttpErrorResponse) => {
+          this.uploadFailed(error);
+          resolve(null);
+        },
+      });
+    });
+  }
+
+  /**
    * @description Sends an output and adds it to the results (or explains a refusal).
    * @param template Template.
-   * @param blob PNG.
+   * @param content The PNG (`file`), or the tokens of the staged slides of a carousel (`pages`).
    * @param name Name of the output.
    * @returns Whether it was stored.
    */
-  private upload(template: CreatorTemplateDetail, blob: Blob, name: string): Promise<boolean> {
+  private upload(template: CreatorTemplateDetail, content: { file: Blob } | { pages: string[] }, name: string): Promise<boolean> {
     return new Promise(resolve => {
       this.outputsApi.generate(this.section, {
-        file: blob, template_id: template.id, folder_id: this.folderId(), name, caption: this.caption(),
+        ...content, template_id: template.id, folder_id: this.folderId(), name, caption: this.caption(),
       }).subscribe({
         next: output => {
           this.results.update(list => [...list, output]);
@@ -769,12 +901,13 @@ export class GeneratePageComponent implements OnInit {
   }
 
   /**
-   * @description Measures a template that is not shown (overflows, missing images) - drawn into a
-   *   1 px canvas, so only the layout runs.
+   * @description Measures a page of a template that is not shown (overflows, missing images) -
+   *   drawn into a 1 px canvas, so only the layout runs.
    * @param target Template.
    * @param texts Values of the text fields.
+   * @param page Page (slide).
    */
-  private measure(target: GenerateTarget, texts: Record<string, string>): RenderReport {
+  private measure(target: GenerateTarget, texts: Record<string, string>, page = 0): RenderReport {
     if (this.measureCtx === undefined) {
       this.measureCtx = typeof document === 'undefined' ? null : document.createElement('canvas').getContext('2d');
     }
@@ -782,7 +915,7 @@ export class GeneratePageComponent implements OnInit {
     if (!ctx) return { overflows: [], missing: [] };
     ctx.setTransform(0.001, 0, 0, 0.001, 0, 0);
     return renderPage(ctx, target.template.document, target.template, this.resources, {
-      mode: 'output', placeholders: true, values: { text: texts, images: {}, crops: {} },
+      mode: 'output', placeholders: true, page, values: { text: texts, images: {}, crops: {} },
     });
   }
 
@@ -794,7 +927,7 @@ export class GeneratePageComponent implements OnInit {
     const errors = (error.error?.errors ?? {}) as Record<string, string[]>;
     if (error.status === 422 && error.error?.error_code === 'quota_exceeded') return this.fail('error_quota');
     if (error.status === 422 && errors['template_id']) return this.fail('error_template_gone');
-    if (error.status === 422 && errors['file']) return this.fail('error_template_changed');
+    if (error.status === 422 && (errors['file'] || Object.keys(errors).some(k => k.startsWith('pages')))) return this.fail('error_template_changed');
     if (error.status === 422 && errors['folder_id']) {
       this.setFolder('');
       this.loadFolders();

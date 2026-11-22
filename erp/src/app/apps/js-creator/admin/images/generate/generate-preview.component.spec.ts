@@ -6,7 +6,8 @@
  * @created 2026
  * @description Unit tests of GeneratePreviewComponent: the template drawn in the output mode with
  *   placeholders (its report emitted), scaled into its column, and dragging the image of a field
- *   reported in template px (nothing outside the draggable places).
+ *   reported in template px (nothing outside the draggable places), another slide of a carousel
+ *   and safe zones over the picture.
  * @dependencies GeneratePreviewComponent, editor-test-data.ts, the canvas of the test browser.
  */
 
@@ -110,5 +111,27 @@ describe('GeneratePreviewComponent', () => {
     pointer('pointermove', 130, 200);
     pointer('pointerup', 130, 200);
     expect(pans.length).toBe(1);
+  });
+
+  /**
+   * @description Another slide of a carousel is drawn when `page` changes, and safe zones are
+   *   laid over the picture in template px.
+   * @input document with an empty second slide; page 1; zones [top 0,0 1000×100]
+   * @output a new report without missing fields (slide 2 has no photo); one rect 0,0 1000 × 100
+   */
+  it('draws another slide and the safe zones', async () => {
+    await create([]);
+    const doc = documentWithPhoto();
+    doc.pages.push({ background: doc.pages[0].background, layers: [] });
+    fixture.componentRef.setInput('doc', doc);
+    fixture.componentRef.setInput('page', 1);
+    fixture.componentRef.setInput('zones', [{ part: 'top', x: 0, y: 0, w: 1000, h: 100 }]);
+    fixture.detectChanges();
+    await frames();
+    fixture.detectChanges();
+    expect(reports[reports.length - 1].missing).toEqual([]);
+    const rects = fixture.nativeElement.querySelectorAll('svg.gp-zones rect');
+    expect(rects.length).toBe(1);
+    expect(['x', 'y', 'width', 'height'].map(a => rects[0].getAttribute(a))).toEqual(['0', '0', '1000', '100']);
   });
 });

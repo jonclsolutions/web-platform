@@ -97,6 +97,7 @@ Route::middleware(['auth:sanctum', 'throttle:300,1,js-creator'])->prefix('js-cre
     foreach (JsCreatorSections::SECTIONS as $section) {
         $can = fn (string $action) => 'permission:' . JsCreatorSections::permission($section, $action);
         Route::post("{$section}/outputs", [OutputController::class, 'store'])->middleware([$can('create'), $upload])->defaults('section', $section);
+        Route::post("{$section}/outputs/pages", [OutputController::class, 'stagePage'])->middleware([$can('create'), 'throttle:240,1,js-creator-stage'])->defaults('section', $section);
         Route::post("{$section}/export", [TransferController::class, 'export'])->middleware([$can('view'), 'throttle:30,1,js-creator-export'])->defaults('section', $section);
         Route::post("{$section}/import", [TransferController::class, 'import'])->middleware([$can('create'), $upload])->defaults('section', $section);
         Route::prefix("{$section}/templates")->group(function () use ($section, $can, $upload) {

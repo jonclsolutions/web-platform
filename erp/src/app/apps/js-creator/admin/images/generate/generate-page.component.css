@@ -330,3 +330,20 @@
 .gen-tab--on { border-color: var(--color-zinc-900); background: var(--color-zinc-900); color: #fff; }
 
 .gen-result + .gen-result { margin-top: 8px; }
+
+/*
+    @module: Slides and safe zones of the preview
+    @description: Choice of the network of the safe zones and the list of layers reaching into them.
+    @usage: label.gen-zone-pick > span + select; ul.gen-zone-hits > li
+*/
+.gen-zone-pick { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 0.75rem; color: var(--color-zinc-600); }
+.gen-zone-pick select { font: inherit; padding: 4px 8px; border: 1px solid var(--color-zinc-300); border-radius: 8px; background: #fff; }
+
+.gen-zone-hits {
+  margin: 10px 0 0;
+  padding: 8px 12px 8px 26px;
+  border: 1px dashed var(--color-rose-600);
+  border-radius: 10px;
+  font-size: 0.75rem;
+  color: var(--color-rose-700);
+}

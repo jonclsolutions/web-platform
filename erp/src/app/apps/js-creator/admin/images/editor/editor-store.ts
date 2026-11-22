@@ -14,6 +14,10 @@
  *   are replaced by an instance) and unpack an instance back to layers; their boxes follow the
  *   current size of their blocks (syncInstances() after loading). A block never gets instances -
  *   pasting skips them.
+ *   Pages (slides of a carousel, templates only - 1 … DOCUMENT_LIMITS.maxPages): the editor shows
+ *   one page at a time (`page`); layers, selection and every change of layers work on it; pages
+ *   can be added (empty with the same background, or a copy), deleted and moved. Fields belong to
+ *   the whole document, layer ids are unique in the whole document.
  * @usage `const store = new EditorStore(template, canEdit); store.updateLayer(id, { x: 10 }, 'x')`;
  *   a block: `new EditorStore(blockAsTemplate(block), canEdit, 'block')`.
  * @dependencies render/document.ts, render/geometry.ts (anchors), render/block-fields.ts,
@@ -22,7 +26,7 @@
 
 import { computed, signal } from '@angular/core';
 import {
-  BlockLayer, CanvasSize, DOCUMENT_LIMITS, Field, Layer, PlainLayerType, TemplateDocument, cloneJson, createBlockLayer, createLayer, layerSources,
+  BlockLayer, CanvasSize, DOCUMENT_LIMITS, Field, Layer, Page, PlainLayerType, TemplateDocument, cloneJson, createBlockLayer, createLayer, layerSources,
   newLayerId, usedFieldKeys,
 } from '../../shared/render/document';
 import { Rect, boundingBox, layerRect, offsetFor, unionRect } from '../../shared/render/geometry';
@@ -102,8 +106,16 @@ export class EditorStore {
   readonly doc = computed(() => this.state().doc);
   /** Size of the canvas. */
   readonly size = computed<CanvasSize>(() => ({ width: this.state().width, height: this.state().height }));
-  /** Layers of the (only) page, bottom first. */
-  readonly layers = computed(() => this.state().doc.pages[0].layers);
+  /** Page (slide) being edited - asked for; see pageIndex. */
+  readonly page = signal(0);
+  /** Number of pages of the document. */
+  readonly pageCount = computed(() => this.state().doc.pages.length);
+  /** Index of the page shown (the asked one within the pages of the document). */
+  readonly pageIndex = computed(() => Math.max(0, Math.min(this.page(), this.state().doc.pages.length - 1)));
+  /** Pages can be added (a template below the limit). */
+  readonly canAddPage = computed(() => this.editable && this.kind === 'template' && this.pageCount() < DOCUMENT_LIMITS.maxPages);
+  /** Layers of the page shown, bottom first. */
+  readonly layers = computed(() => this.state().doc.pages[this.pageIndex()].layers);
   /** Selected layers (bottom first). */
   readonly selectedLayers = computed(() => {
     const ids = new Set(this.selection());
@@ -147,6 +159,7 @@ export class EditorStore {
       this.undoStack.set([]);
       this.redoStack.set([]);
       this.selection.set([]);
+      this.page.set(0);
     }
     this.lastKey = null;
   }
@@ -203,18 +216,21 @@ export class EditorStore {
   syncInstances(resolve: BlockResolver): void {
     const state = this.state();
     let changed = false;
-    const layers = state.doc.pages[0].layers.map(layer => {
-      const block = layer.type === 'block' ? resolve(layer.blockId) : undefined;
-      if (!block || layer.type !== 'block') return layer;
-      const w = block.width * layer.scale;
-      const h = block.height * layer.scale;
-      if (Math.abs(w - layer.w) < 0.01 && Math.abs(h - layer.h) < 0.01) return layer;
-      changed = true;
-      return { ...layer, w, h };
-    });
+    const pages = state.doc.pages.map(page => ({
+      ...page,
+      layers: page.layers.map(layer => {
+        const block = layer.type === 'block' ? resolve(layer.blockId) : undefined;
+        if (!block || layer.type !== 'block') return layer;
+        const w = block.width * layer.scale;
+        const h = block.height * layer.scale;
+        if (Math.abs(w - layer.w) < 0.01 && Math.abs(h - layer.h) < 0.01) return layer;
+        changed = true;
+        return { ...layer, w, h };
+      }),
+    }));
     if (!changed) return;
     const clean = JSON.stringify(state) === this.savedJson();
-    const next = { ...state, doc: { ...state.doc, pages: [{ ...state.doc.pages[0], layers }, ...state.doc.pages.slice(1)] } };
+    const next = { ...state, doc: { ...state.doc, pages } };
     this.state.set(next);
     if (clean) this.savedJson.set(JSON.stringify(next));
   }
@@ -238,7 +254,7 @@ export class EditorStore {
     this.lastKey = key;
     this.lastTime = now;
     this.state.set(draft);
-    const ids = new Set(draft.doc.pages[0].layers.map(l => l.id));
+    const ids = new Set(this.pageOf(draft.doc).layers.map(l => l.id));
     this.selection.update(sel => sel.filter(id => ids.has(id)));
   }
 
@@ -308,7 +324,7 @@ export class EditorStore {
    */
   updateLayer(id: string, patch: Partial<Layer>, key: string | null = null): void {
     this.mutate(doc => {
-      const layers = doc.pages[0].layers;
+      const layers = this.pageOf(doc).layers;
       const index = layers.findIndex(l => l.id === id);
       if (index >= 0) layers[index] = { ...layers[index], ...patch } as Layer;
     }, key ? `${id}:${key}` : null);
@@ -322,7 +338,7 @@ export class EditorStore {
    */
   updateLayers(ids: string[], change: (layer: Layer) => void, key: string | null = null): void {
     const set = new Set(ids);
-    this.mutate(doc => doc.pages[0].layers.filter(l => set.has(l.id)).forEach(change), key);
+    this.mutate(doc => this.pageOf(doc).layers.filter(l => set.has(l.id)).forEach(change), key);
   }
 
   /**
@@ -332,9 +348,9 @@ export class EditorStore {
    * @returns Id of the new layer.
    */
   addLayer(type: PlainLayerType, patch: Partial<Layer> = {}): string {
-    const id = newLayerId(new Set(this.layers().map(l => l.id)));
+    const id = newLayerId(this.layerIds());
     const layer = { ...createLayer(type, this.size(), id), ...patch } as Layer;
-    this.mutate(doc => doc.pages[0].layers.push(layer));
+    this.mutate(doc => this.pageOf(doc).layers.push(layer));
     this.selection.set([id]);
     return id;
   }
@@ -347,9 +363,9 @@ export class EditorStore {
    */
   addBlock(block: Pick<BlockDef, 'id' | 'width' | 'height'>): string | null {
     if (this.kind !== 'template') return null;
-    const id = newLayerId(new Set(this.layers().map(l => l.id)));
+    const id = newLayerId(this.layerIds());
     const layer = createBlockLayer(block, this.size(), id);
-    this.mutate(doc => doc.pages[0].layers.push(layer));
+    this.mutate(doc => this.pageOf(doc).layers.push(layer));
     this.selection.set([id]);
     return id;
   }
@@ -376,7 +392,7 @@ export class EditorStore {
   replaceWithInstance(ids: readonly string[], block: Pick<BlockDef, 'id' | 'width' | 'height'>, box: Rect): string {
     const remove = new Set(ids);
     const layers = this.layers();
-    const id = newLayerId(new Set(layers.map(l => l.id)));
+    const id = newLayerId(this.layerIds());
     const anchor = anchorByPlace(box, this.size());
     const offset = offsetFor(anchor, { ...box, w: block.width, h: block.height }, this.size());
     const instance: BlockLayer = {
@@ -384,10 +400,11 @@ export class EditorStore {
     };
     const index = layers.findIndex(l => remove.has(l.id));
     this.mutate(doc => {
-      const kept = doc.pages[0].layers.filter(l => !remove.has(l.id));
-      const before = doc.pages[0].layers.slice(0, Math.max(0, index)).filter(l => !remove.has(l.id)).length;
+      const page = this.pageOf(doc);
+      const kept = page.layers.filter(l => !remove.has(l.id));
+      const before = page.layers.slice(0, Math.max(0, index)).filter(l => !remove.has(l.id)).length;
       kept.splice(before, 0, instance);
-      doc.pages[0].layers = kept;
+      page.layers = kept;
     });
     this.selection.set([id]);
     return id;
@@ -405,13 +422,14 @@ export class EditorStore {
     const layers = this.layers();
     const instance = layers.find((l): l is BlockLayer => l.id === id && l.type === 'block');
     if (!instance) return false;
-    const unpacked = unpackInstance(instance, block, this.size(), effective, new Set(layers.map(l => l.id)));
+    const unpacked = unpackInstance(instance, block, this.size(), effective, this.layerIds());
     const fields = this.doc().fields;
     const newFields = unpacked.fields.filter(f => !fields.some(existing => existing.key === f.key));
     if (layers.length - 1 + unpacked.layers.length > DOCUMENT_LIMITS.maxLayers || fields.length + newFields.length > DOCUMENT_LIMITS.maxFields) return false;
     this.mutate(doc => {
-      const index = doc.pages[0].layers.findIndex(l => l.id === id);
-      doc.pages[0].layers.splice(index, 1, ...unpacked.layers);
+      const page = this.pageOf(doc);
+      const index = page.layers.findIndex(l => l.id === id);
+      page.layers.splice(index, 1, ...unpacked.layers);
       doc.fields.push(...newFields);
     });
     this.selection.set(unpacked.layers.map(l => l.id));
@@ -423,7 +441,8 @@ export class EditorStore {
     const ids = new Set(this.selection());
     if (!ids.size) return;
     this.mutate(doc => {
-      doc.pages[0].layers = doc.pages[0].layers.filter(l => !ids.has(l.id) || l.locked);
+      const page = this.pageOf(doc);
+      page.layers = page.layers.filter(l => !ids.has(l.id) || l.locked);
     });
   }
 
@@ -431,7 +450,7 @@ export class EditorStore {
   copySelected(): void {
     const layers = this.selectedLayers();
     if (!layers.length) return;
-    const keys = usedFieldKeys({ ...this.doc(), pages: [{ ...this.doc().pages[0], layers }] });
+    const keys = usedFieldKeys({ ...this.doc(), pages: [{ ...this.pageOf(this.doc()), layers }] });
     clipboard = { owner: this.owner(), layers: cloneJson(layers), fields: cloneJson(this.doc().fields.filter(f => keys.has(f.key))) };
   }
 
@@ -469,11 +488,12 @@ export class EditorStore {
     const ids = new Set(this.selection());
     if (!ids.size) return;
     this.mutate(doc => {
-      const layers = doc.pages[0].layers;
+      const page = this.pageOf(doc);
+      const layers = page.layers;
       const moving = layers.filter(l => ids.has(l.id));
       const rest = layers.filter(l => !ids.has(l.id));
-      if (where === 'top') doc.pages[0].layers = [...rest, ...moving];
-      else if (where === 'bottom') doc.pages[0].layers = [...moving, ...rest];
+      if (where === 'top') page.layers = [...rest, ...moving];
+      else if (where === 'bottom') page.layers = [...moving, ...rest];
       else {
         const order = where === 'up' ? [...layers.keys()].reverse() : [...layers.keys()];
         for (const i of order) {
@@ -493,7 +513,7 @@ export class EditorStore {
    */
   moveLayerTo(id: string, index: number): void {
     this.mutate(doc => {
-      const layers = doc.pages[0].layers;
+      const layers = this.pageOf(doc).layers;
       const from = layers.findIndex(l => l.id === id);
       if (from < 0) return;
       const [layer] = layers.splice(from, 1);
@@ -575,6 +595,89 @@ export class EditorStore {
   }
 
   /**
+   * @description Shows another page (the selection is cleared).
+   * @param index Page (0 = the first).
+   */
+  setPage(index: number): void {
+    const next = Math.max(0, Math.min(index, this.pageCount() - 1));
+    if (next === this.pageIndex()) return;
+    this.page.set(next);
+    this.selection.set([]);
+    this.lastKey = null;
+  }
+
+  /**
+   * @description Adds a page after the shown one and shows it: an empty page with the same
+   *   background, or a copy of the shown page (its layers with new ids). Templates only, at most
+   *   DOCUMENT_LIMITS.maxPages.
+   * @param copy Copy the shown page.
+   * @returns Whether a page was added.
+   */
+  addPage(copy = false): boolean {
+    if (!this.canAddPage()) return false;
+    const at = this.pageIndex() + 1;
+    this.mutate(doc => {
+      const current = this.pageOf(doc);
+      const taken = this.layerIds(doc);
+      const layers = copy ? current.layers.map(layer => {
+        const clone = cloneJson(layer);
+        clone.id = newLayerId(taken);
+        taken.add(clone.id);
+        return clone;
+      }) : [];
+      doc.pages.splice(at, 0, { background: cloneJson(current.background), layers });
+    });
+    this.page.set(at);
+    this.selection.set([]);
+    return true;
+  }
+
+  /**
+   * @description Deletes the shown page (one step; the last page cannot be deleted) and shows
+   *   the page before it.
+   */
+  removePage(): void {
+    if (this.pageCount() < 2) return;
+    const at = this.pageIndex();
+    this.mutate(doc => {
+      doc.pages.splice(at, 1);
+    });
+    this.page.set(Math.max(0, at - 1));
+    this.selection.set([]);
+  }
+
+  /**
+   * @description Moves the shown page by one place (one step) and keeps it shown.
+   * @param step -1 = earlier, 1 = later.
+   */
+  movePage(step: -1 | 1): void {
+    const from = this.pageIndex();
+    const to = from + step;
+    if (to < 0 || to >= this.pageCount()) return;
+    this.mutate(doc => {
+      const [page] = doc.pages.splice(from, 1);
+      doc.pages.splice(to, 0, page);
+    });
+    this.page.set(to);
+  }
+
+  /**
+   * @description The shown page of a document (a draft of a change, or the current one).
+   * @param doc Document.
+   */
+  pageOf(doc: TemplateDocument): Page {
+    return doc.pages[Math.max(0, Math.min(this.page(), doc.pages.length - 1))];
+  }
+
+  /**
+   * @description Ids of the layers of every page (ids are unique in the whole document).
+   * @param doc Document (the current one by default).
+   */
+  layerIds(doc: TemplateDocument = this.doc()): Set<string> {
+    return new Set(doc.pages.flatMap(p => p.layers.map(l => l.id)));
+  }
+
+  /**
    * @description Changes the size of the canvas (layers keep their anchors and offsets).
    * @param size New size.
    */
@@ -594,7 +697,7 @@ export class EditorStore {
   private insertCopies(layers: Layer[], fields: Field[], shift: number): void {
     const ids: string[] = [];
     this.mutate(doc => {
-      const taken = new Set(doc.pages[0].layers.map(l => l.id));
+      const taken = this.layerIds(doc);
       const renamed = new Map<string, string>();
       for (const field of fields) {
         const existing = doc.fields.find(f => f.key === field.key);
@@ -615,7 +718,7 @@ export class EditorStore {
         for (const source of layerSources(copy)) {
           if (source.kind === 'field') source.field = renamed.get(source.field) ?? source.field;
         }
-        doc.pages[0].layers.push(copy);
+        this.pageOf(doc).layers.push(copy);
         ids.push(copy.id);
       }
     });

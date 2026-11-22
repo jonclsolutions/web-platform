@@ -150,6 +150,8 @@ export class OutputsPageComponent implements OnInit, OnDestroy {
   selected = new Set<number>();
   /** Output shown in the detail. */
   detail: CreatorOutput | null = null;
+  /** Slide shown in the detail of a carousel (0 = the first). */
+  slide = 0;
   /** Open popup of outputs. */
   outputDialog: OutputDialog | null = null;
   /** The text of the detail was copied. */
@@ -471,7 +473,34 @@ export class OutputsPageComponent implements OnInit, OnDestroy {
    */
   openDetail(output: CreatorOutput): void {
     this.detail = output;
+    this.slide = 0;
     this.copied = false;
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Page shown in the detail (a slide of a carousel; the first page otherwise).
+   * @param output Output of the detail.
+   */
+  detailPage(output: CreatorOutput): { page: number; url: string | null; download_url: string | null } | null {
+    return output.pages?.[this.slide] ?? (output.url ? { page: 1, url: output.url, download_url: output.download_url } : null);
+  }
+
+  /**
+   * @description Number of slides of a carousel with its word ("3 slidy", "5 slidů").
+   * @param count Slides (2 … 20).
+   */
+  slideCount(count: number): string {
+    return `${count} ${this.t(count <= 4 ? 'slides_few' : 'slides')}`;
+  }
+
+  /**
+   * @description Shows another slide of a carousel in the detail.
+   * @param index Slide (0 = the first).
+   */
+  showSlide(index: number): void {
+    const count = this.detail?.page_count ?? 1;
+    this.slide = Math.max(0, Math.min(index, count - 1));
     this.cd.markForCheck();
   }
 

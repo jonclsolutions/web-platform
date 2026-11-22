@@ -18,8 +18,9 @@
  * @note The same shape is in the frontend: apps/js-creator/admin/shared/render/document.ts
  *   (types, defaults, limits). A new property = both places + the schema test of both sides.
  *   Shape of the document:
- *   { schema: 1, fields: Field[], pages: [{ background, layers: Layer[] }] } (one page now -
- *   carousels later).
+ *   { schema: 1, fields: Field[], pages: [{ background, layers: Layer[] }] } - a template has
+ *   1 … MAX_PAGES pages (slides of a carousel; the fields are shared by all of them, layer ids are
+ *   unique in the whole document), a block exactly one.
  */
 
 namespace App\Apps\JsCreator\Support;
@@ -44,8 +45,11 @@ final class TemplateDocument
     /** @description Flags of the stored JSON (and of its size check) - UTF-8 as the browser sends it. */
     public const JSON_FLAGS = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
 
-    /** @description Pages of a document (carousels later). */
-    public const MAX_PAGES = 1;
+    /** @description Pages of a template (slides of a carousel). */
+    public const MAX_PAGES = 20;
+
+    /** @description Pages of a block (blocks are one picture). */
+    public const MAX_BLOCK_PAGES = 1;
 
     /** @description Anchors of a layer: top / middle / bottom × left / center / right. */
     public const ANCHORS = ['tl', 'tc', 'tr', 'ml', 'mc', 'mr', 'bl', 'bc', 'br'];
@@ -208,7 +212,7 @@ final class TemplateDocument
         foreach ($fields ?? [] as $i => $field) {
             $this->field($field, "document.fields.{$i}");
         }
-        $pages = $this->list($doc['pages'], 'document.pages', 1, self::MAX_PAGES);
+        $pages = $this->list($doc['pages'], 'document.pages', 1, $this->allowBlocks ? self::MAX_PAGES : self::MAX_BLOCK_PAGES);
         foreach ($pages ?? [] as $i => $page) {
             $this->page($page, "document.pages.{$i}");
         }

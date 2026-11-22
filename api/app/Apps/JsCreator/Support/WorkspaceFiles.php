@@ -47,7 +47,7 @@ final class WorkspaceFiles
     /**
      * @description New unique path of a file of an account.
      * @param int $userId Owner.
-     * @param string $kind Sub-folder: `library`, `thumbs`, `fonts`, `templates`, `blocks`, `outputs`.
+     * @param string $kind Sub-folder: `library`, `thumbs`, `fonts`, `templates`, `blocks`, `outputs` (`staging` - see stagedPaths()).
      * @param string $extension File extension (from the detected type, never from the upload name).
      * @return string Path on DISK.
      */
@@ -140,21 +140,74 @@ final class WorkspaceFiles
     }
 
     /**
-     * @description Signed URL of the first page of an output.
+     * @description Signed URL of a page of an output (the first page by default).
      * @param CreatorOutput $output Output with its files loaded.
      * @param string $variant `original` (shown in the page), `thumb` (lists), `download` (saved as a file).
-     * @return string|null Relative URL; null when the output has no file.
+     * @param int $page Page (1 = the first; a carousel has more).
+     * @return string|null Relative URL; null when the output has no such page.
      */
-    public static function outputUrl(CreatorOutput $output, string $variant): ?string
+    public static function outputUrl(CreatorOutput $output, string $variant, int $page = 1): ?string
     {
-        $file = $output->files->first();
+        $file = $output->files->firstWhere('page', $page);
         if ($file === null) {
             return null;
         }
+        $params = ['id' => $output->id, 'variant' => $variant, 'v' => pathinfo($variant === 'thumb' ? $file->thumb_path : $file->path, PATHINFO_FILENAME)];
+        if ($page > 1) {
+            $params['page'] = $page;
+        }
 
-        return URL::temporarySignedRoute('js-creator.files.output', self::expiry(), [
-            'id' => $output->id, 'variant' => $variant, 'v' => pathinfo($variant === 'thumb' ? $file->thumb_path : $file->path, PATHINFO_FILENAME),
-        ], false);
+        return URL::temporarySignedRoute('js-creator.files.output', self::expiry(), $params, false);
+    }
+
+    /**
+     * @description A new token of a staged page of a carousel output (the name of its files).
+     * @return string 32 letters / digits.
+     */
+    public static function newStageToken(): string
+    {
+        return Str::random(32);
+    }
+
+    /**
+     * @description Paths of a staged page of an account: the converted picture and its thumbnail.
+     *   Staged files have no row - an unused one is removed by the clean-up of files without a
+     *   record (JsCreatorRetentionSource, after a day).
+     * @param int $userId Owner.
+     * @param string $token Token of the page (STAGE_TOKEN).
+     * @param string $extension Extension of the picture (png | jpg).
+     * @return array{0: string, 1: string} Picture, thumbnail.
+     */
+    public static function stagedPaths(int $userId, string $token, string $extension): array
+    {
+        $base = self::ROOT . "/{$userId}/staging/{$token}";
+
+        return ["{$base}.{$extension}", "{$base}-thumb.webp"];
+    }
+
+    /**
+     * @description Size of the staged pages of an account (they count when a new page is staged,
+     *   so an unfinished carousel cannot fill the disk past the quota).
+     * @param int $userId Owner.
+     * @return int Bytes.
+     */
+    public static function stagedBytes(int $userId): int
+    {
+        $disk = Storage::disk(self::DISK);
+        $folder = self::ROOT . "/{$userId}/staging";
+
+        return $disk->exists($folder) ? array_sum(array_map(fn (string $path) => $disk->size($path), $disk->files($folder))) : 0;
+    }
+
+    /**
+     * @description Moves a file on DISK (a staged page into the outputs).
+     * @param string $from Path.
+     * @param string $to Path.
+     * @return void
+     */
+    public static function move(string $from, string $to): void
+    {
+        Storage::disk(self::DISK)->move($from, $to);
     }
 
     /**

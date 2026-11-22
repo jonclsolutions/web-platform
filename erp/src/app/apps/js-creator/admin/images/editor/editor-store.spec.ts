@@ -284,4 +284,52 @@ describe('EditorStore', () => {
     expect(blockStore.layers().length).toBe(0);
     expect(blockStore.blockSaveBody()).toEqual(jasmine.objectContaining({ name: 'Post', width: 1000, version: 3 }));
   });
+
+  /**
+   * @description Slides of a carousel: a new empty slide keeps the background, a copy gets new
+   *   layer ids, layers and selection belong to the shown slide, slides move and are deleted (one
+   *   step each), a field used only on another slide stays; a block gets no slides; at most 20.
+   * @input template with layers a (text with field title) and b; addPage(); add a shape; addPage(true);
+   *   movePage(-1); removePage(); undo; block store; 19 more slides
+   * @output 2 slides, slide 2 empty with the background; copy with ids ≠ a/b; order after move;
+   *   field title kept; undo brings the slide back; block: false; canAddPage false at 20
+   */
+  it('works with slides of a carousel', () => {
+    const store = new EditorStore(testTemplate({ layers: [textLayer('a', { field: 'title' }), shapeLayer('b')], fields: [textField()] }), true);
+    store.select(['a']);
+    expect(store.addPage()).toBeTrue();
+    expect(store.pageCount()).toBe(2);
+    expect(store.pageIndex()).toBe(1);
+    expect(store.layers()).toEqual([]);
+    expect(store.selection()).toEqual([]);
+    expect(store.doc().pages[1].background).toEqual(store.doc().pages[0].background);
+    const added = store.addLayer('shape');
+    expect(store.doc().pages[1].layers.map(l => l.id)).toEqual([added]);
+    expect(store.doc().pages[0].layers.map(l => l.id)).toEqual(['a', 'b']);
+
+    store.setPage(0);
+    store.select(['a']);
+    store.addPage(true);
+    const copyIds = store.layers().map(l => l.id);
+    expect(copyIds.length).toBe(2);
+    expect(copyIds.some(id => ['a', 'b', added].includes(id))).toBeFalse();
+    expect(store.pageIndex()).toBe(1);
+
+    store.movePage(1);
+    expect(store.pageIndex()).toBe(2);
+    expect(store.doc().pages[1].layers.map(l => l.id)).toEqual([added]);
+    store.setPage(0);
+    store.removePage();
+    expect(store.pageCount()).toBe(2);
+    expect(store.doc().fields.map(f => f.key)).toEqual(['title']);
+    store.undo();
+    expect(store.pageCount()).toBe(3);
+
+    while (store.pageCount() < 20) store.addPage();
+    expect(store.canAddPage()).toBeFalse();
+    expect(store.addPage()).toBeFalse();
+
+    const block = new EditorStore(testTemplate(), true, 'block');
+    expect(block.addPage()).toBeFalse();
+  });
 });

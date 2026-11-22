@@ -253,6 +253,14 @@ export interface TemplateSave {
 }
 
 /** Generated output (post) of the own workspace. */
+/** A page of an output (a slide of a carousel). */
+export interface OutputPage {
+  page: number;
+  url: string | null;
+  thumb_url: string | null;
+  download_url: string | null;
+}
+
 export interface CreatorOutput {
   id: number;
   section: string;
@@ -274,6 +282,8 @@ export interface CreatorOutput {
   url: string | null;
   thumb_url: string | null;
   download_url: string | null;
+  /** Every page (slides of a carousel; one item for a single picture). */
+  pages?: OutputPage[];
   created_at: string | null;
   updated_at: string | null;
   deleted_at: string | null;
@@ -281,8 +291,10 @@ export interface CreatorOutput {
 
 /** Output sent after generating. */
 export interface OutputUpload {
-  /** PNG drawn by the renderer in the size of the template. */
-  file: Blob;
+  /** PNG drawn by the renderer in the size of the template (a single picture). */
+  file?: Blob;
+  /** Tokens of the staged slides of a carousel, in their order (instead of `file`). */
+  pages?: string[];
   template_id: number;
   folder_id: number | null;
   name: string;

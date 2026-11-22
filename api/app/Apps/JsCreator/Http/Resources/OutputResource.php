@@ -43,6 +43,13 @@ class OutputResource extends JsonResource
             'url'           => WorkspaceFiles::outputUrl($this->resource, 'original'),
             'thumb_url'     => WorkspaceFiles::outputUrl($this->resource, 'thumb'),
             'download_url'  => WorkspaceFiles::outputUrl($this->resource, 'download'),
+            // Every page (slides of a carousel; one item for a single picture).
+            'pages'         => $this->resource->files->sortBy('page')->values()->map(fn ($file) => [
+                'page'         => $file->page,
+                'url'          => WorkspaceFiles::outputUrl($this->resource, 'original', $file->page),
+                'thumb_url'    => WorkspaceFiles::outputUrl($this->resource, 'thumb', $file->page),
+                'download_url' => WorkspaceFiles::outputUrl($this->resource, 'download', $file->page),
+            ])->all(),
             'created_at'    => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at'    => $this->updated_at?->format('Y-m-d H:i:s'),
             'deleted_at'    => $this->deleted_at?->format('Y-m-d H:i:s'),

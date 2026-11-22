@@ -61,7 +61,7 @@ export function freeFieldKey(key: string, taken: ReadonlySet<string>): string {
 
 /**
  * @description Fields of the form of a template: its fields, then the fields of its block
- *   instances (layers of the first page from the bottom). A key already taken gets `_2` … and
+ *   instances (pages in their order, layers from the bottom). A key already taken gets `_2` … and
  *   the label the name of the instance (its layer name, otherwise the block name - numbered
  *   when the block has more instances). A missing block is skipped.
  * @param doc Document of the template.
@@ -69,7 +69,7 @@ export function freeFieldKey(key: string, taken: ReadonlySet<string>): string {
  */
 export function effectiveFields(doc: TemplateDocument, resolve?: BlockResolver): EffectiveField[] {
   const fields: EffectiveField[] = doc.fields.map(f => ({ ...f, origin: null }));
-  const instances = (doc.pages[0]?.layers ?? []).filter((l): l is BlockLayer => l.type === 'block');
+  const instances = doc.pages.flatMap(p => p.layers).filter((l): l is BlockLayer => l.type === 'block');
   if (!instances.length || !resolve) return fields;
   const taken = new Set(fields.map(f => f.key));
   const counts = new Map<number, number>();

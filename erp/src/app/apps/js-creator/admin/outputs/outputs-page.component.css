@@ -256,7 +256,7 @@
     @module: Detail of an output
     @description: The picture beside its data (folder, template, size, file, date) and the text of
         the post with Copy; stacked on small screens.
-    @usage: .op-detail > .op-detail-picture > img, .op-detail-info > dl.op-facts, .op-caption
+    @usage: .op-detail > .op-detail-picture > img + .op-slide-nav, .op-detail-info > dl.op-facts, .op-caption
         (.op-caption-head, .op-caption-text); .op-muted; a.op-download
 */
 .op-detail {
@@ -268,6 +268,9 @@
 
 .op-detail-picture {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   justify-content: center;
   padding: 10px;
   border-radius: 12px;
@@ -339,3 +342,25 @@ a.op-download { text-decoration: none; }
   .op-detail { grid-template-columns: 1fr; }
   .op-preview { height: 170px; }
 }
+
+/*
+    @module: Carousel outputs
+    @description: Number of slides on the card of a carousel and the slide switch of the detail.
+    @usage: .op-preview > span.op-slides; .op-slide-nav > button + span + button
+*/
+.op-preview { position: relative; }
+
+.op-slides {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(24, 24, 27, 0.78);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.op-slide-nav { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--color-zinc-700); }
+

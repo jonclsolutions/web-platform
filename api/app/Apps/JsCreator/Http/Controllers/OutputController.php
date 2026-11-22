@@ -28,6 +28,7 @@
 namespace App\Apps\JsCreator\Http\Controllers;
 
 use App\Apps\JsCreator\Http\Requests\OutputSelectionRequest;
+use App\Apps\JsCreator\Http\Requests\StageOutputPageRequest;
 use App\Apps\JsCreator\Http\Requests\StoreOutputRequest;
 use App\Apps\JsCreator\Http\Requests\UpdateOutputRequest;
 use App\Apps\JsCreator\Http\Resources\OutputResource;
@@ -48,6 +49,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use Throwable;
@@ -63,42 +65,95 @@ class OutputController extends Controller
     public const ZIP_MAX_BYTES = 500 * 1024 * 1024;
 
     /**
+     * @description Stages one page of a carousel output (before the output): the PNG of the
+     *   browser converted to the format of the template, with its thumbnail, stored without a row
+     *   under a token. The quota counts the pages staged so far.
+     * @param StageOutputPageRequest $request `file`, `template_id`.
+     * @return JsonResponse 201 { token, bytes }; 422 unknown template, not a PNG, another size, full quota.
+     */
+    public function stagePage(StageOutputPageRequest $request): JsonResponse
+    {
+        $userId = $request->user()->id;
+        $template = $this->ownTemplate($request, $userId);
+        $image = $this->convert($request, $template);
+        $bytes = strlen($image['file']) + strlen($image['thumb']);
+        WorkspaceQuota::ensureRoom($userId, $bytes + WorkspaceFiles::stagedBytes($userId));
+
+        $token = WorkspaceFiles::newStageToken();
+        [$path, $thumb] = WorkspaceFiles::stagedPaths($userId, $token, $image['extension']);
+        try {
+            WorkspaceFiles::put($path, $image['file']);
+            WorkspaceFiles::put($thumb, $image['thumb']);
+        } catch (Throwable $e) {
+            WorkspaceFiles::delete([$path, $thumb]);
+            throw $e;
+        }
+
+        return $this->respond(['token' => $token, 'bytes' => $bytes], 201);
+    }
+
+    /**
      * @description Stores a generated output: the PNG of the browser converted to the format of
-     *   the template, its thumbnail, name, text of the post and the template it was made from.
-     * @param StoreOutputRequest $request `file`, `template_id`, `folder_id`, `name`, `caption`.
+     *   the template, its thumbnail, name, text of the post and the template it was made from. A
+     *   carousel (a template with more pages) sends the tokens of its staged pages instead - one
+     *   per page of the template, in their order; they are moved into the output.
+     * @param StoreOutputRequest $request `file` | `pages`, `template_id`, `folder_id`, `name`, `caption`.
      * @return JsonResponse 201 the output; 422 unknown template / folder, not a PNG, another size
-     *   than the template, full quota.
+     *   than the template, another number of pages, a missing staged page, full quota.
      */
     public function store(StoreOutputRequest $request): JsonResponse
     {
         $userId = $request->user()->id;
         $section = (string) $request->route('section');
-        $template = CreatorTemplate::query()->ownedBy($userId)->where('section', $section)->find((int) $request->input('template_id'));
-        if ($template === null) {
-            throw ValidationException::withMessages(['template_id' => 'The template does not exist (it may have been deleted meanwhile).']);
-        }
+        $template = $this->ownTemplate($request, $userId);
         $folderId = $this->targetFolder($userId, $request->input('folder_id'));
-
-        try {
-            $image = OutputImage::convert(
-                (string) file_get_contents($request->file('file')->getRealPath()),
-                $template->width, $template->height, $template->output_format, $template->output_quality
-            );
-        } catch (RuntimeException $e) {
-            throw ValidationException::withMessages(['file' => $e->getMessage() === 'wrong_size'
-                ? "The picture does not have the size of the template ({$template->width} × {$template->height} px) - the template was probably changed meanwhile, reload the page."
-                : 'The file is not a readable PNG image.']);
+        $expected = count($template->document['pages'] ?? [1]);
+        $tokens = $request->has('pages') ? array_values((array) $request->input('pages')) : null;
+        if (($tokens === null ? 1 : count($tokens)) !== $expected) {
+            throw ValidationException::withMessages([$tokens === null ? 'file' : 'pages' => "The template has {$expected} pages - the template was probably changed meanwhile, reload the page."]);
         }
-        $bytes = strlen($image['file']) + strlen($image['thumb']);
+
+        // Pages: [picture path, thumbnail path, mime, bytes, staged (to move) or content (to write)].
+        $pages = [];
+        if ($tokens === null) {
+            $image = $this->convert($request, $template);
+            $pages[] = ['content' => $image, 'mime' => $image['mime'], 'extension' => $image['extension'], 'bytes' => strlen($image['file']) + strlen($image['thumb'])];
+        } else {
+            $extension = $template->output_format === 'jpg' ? 'jpg' : 'png';
+            $disk = Storage::disk(WorkspaceFiles::DISK);
+            foreach ($tokens as $i => $token) {
+                [$path, $thumb] = WorkspaceFiles::stagedPaths($userId, (string) $token, $extension);
+                if (!$disk->exists($path) || !$disk->exists($thumb)) {
+                    throw ValidationException::withMessages(["pages.{$i}" => 'The page was not staged (or it expired) - generate the carousel again.']);
+                }
+                $pages[] = ['staged' => [$path, $thumb], 'mime' => $extension === 'jpg' ? 'image/jpeg' : 'image/png', 'extension' => $extension,
+                    'bytes' => $disk->size($path) + $disk->size($thumb)];
+            }
+        }
+        $bytes = array_sum(array_column($pages, 'bytes'));
         WorkspaceQuota::ensureRoom($userId, $bytes);
 
-        $path = WorkspaceFiles::newPath($userId, 'outputs', $image['extension']);
-        $thumb = WorkspaceFiles::newPath($userId, 'outputs', 'webp');
         $name = $request->filled('name') ? (string) $request->input('name') : $this->defaultName($template->name);
+        $written = [];
         try {
-            WorkspaceFiles::put($path, $image['file']);
-            WorkspaceFiles::put($thumb, $image['thumb']);
-            $output = DB::transaction(function () use ($request, $userId, $folderId, $section, $name, $template, $image, $bytes, $path, $thumb) {
+            foreach ($pages as $n => $page) {
+                $path = WorkspaceFiles::newPath($userId, 'outputs', $page['extension']);
+                $thumb = WorkspaceFiles::newPath($userId, 'outputs', 'webp');
+                if (isset($page['staged'])) {
+                    WorkspaceFiles::move($page['staged'][0], $path);
+                    $written[] = $path;
+                    WorkspaceFiles::move($page['staged'][1], $thumb);
+                    $written[] = $thumb;
+                } else {
+                    WorkspaceFiles::put($path, $page['content']['file']);
+                    $written[] = $path;
+                    WorkspaceFiles::put($thumb, $page['content']['thumb']);
+                    $written[] = $thumb;
+                }
+                $pages[$n]['path'] = $path;
+                $pages[$n]['thumb'] = $thumb;
+            }
+            $output = DB::transaction(function () use ($request, $userId, $folderId, $section, $name, $template, $pages, $bytes) {
                 $output = CreatorOutput::create([
                     'user_id'       => $userId,
                     'folder_id'     => $folderId,
@@ -110,22 +165,65 @@ class OutputController extends Controller
                     'width'         => $template->width,
                     'height'        => $template->height,
                     'format'        => $template->output_format,
-                    'page_count'    => 1,
+                    'page_count'    => count($pages),
                     'size_bytes'    => $bytes,
                 ]);
-                CreatorOutputFile::create([
-                    'output_id' => $output->id, 'page' => 1, 'path' => $path, 'thumb_path' => $thumb, 'mime' => $image['mime'], 'size_bytes' => $bytes,
-                ]);
+                foreach ($pages as $n => $page) {
+                    CreatorOutputFile::create([
+                        'output_id' => $output->id, 'page' => $n + 1, 'path' => $page['path'], 'thumb_path' => $page['thumb'],
+                        'mime' => $page['mime'], 'size_bytes' => $page['bytes'],
+                    ]);
+                }
 
                 return $output;
             });
         } catch (Throwable $e) {
-            WorkspaceFiles::delete([$path, $thumb]);
+            WorkspaceFiles::delete($written);
             throw $e;
         }
-        $this->logAction($request, JsCreatorLog::class, 'create', 'Output', "Output #{$output->id} generated from template #{$template->id}", $output->id, 'Output', ['file']);
+        $pagesText = count($pages) > 1 ? ' (' . count($pages) . ' pages)' : '';
+        $this->logAction($request, JsCreatorLog::class, 'create', 'Output', "Output #{$output->id} generated from template #{$template->id}{$pagesText}", $output->id, 'Output', ['file', 'pages']);
 
         return $this->respond(new OutputResource($output->load('files')), 201);
+    }
+
+    /**
+     * @description Own template of the section of the request.
+     * @param Request $request `template_id`.
+     * @param int $userId Owner.
+     * @return CreatorTemplate
+     * @throws ValidationException `template_id` unknown (also deleted meanwhile).
+     */
+    private function ownTemplate(Request $request, int $userId): CreatorTemplate
+    {
+        $template = CreatorTemplate::query()->ownedBy($userId)->where('section', (string) $request->route('section'))
+            ->find((int) $request->input('template_id'));
+        if ($template === null) {
+            throw ValidationException::withMessages(['template_id' => 'The template does not exist (it may have been deleted meanwhile).']);
+        }
+
+        return $template;
+    }
+
+    /**
+     * @description The uploaded PNG converted to the format of the template (with its thumbnail).
+     * @param Request $request `file`.
+     * @param CreatorTemplate $template Template (size, format, quality).
+     * @return array{file: string, thumb: string, mime: string, extension: string}
+     * @throws ValidationException `file` not a PNG or of another size.
+     */
+    private function convert(Request $request, CreatorTemplate $template): array
+    {
+        try {
+            return OutputImage::convert(
+                (string) file_get_contents($request->file('file')->getRealPath()),
+                $template->width, $template->height, $template->output_format, $template->output_quality
+            );
+        } catch (RuntimeException $e) {
+            throw ValidationException::withMessages(['file' => $e->getMessage() === 'wrong_size'
+                ? "The picture does not have the size of the template ({$template->width} × {$template->height} px) - the template was probably changed meanwhile, reload the page."
+                : 'The file is not a readable PNG image.']);
+        }
     }
 
     /**

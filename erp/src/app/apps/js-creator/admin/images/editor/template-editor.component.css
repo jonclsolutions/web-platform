@@ -50,7 +50,9 @@
 .te-left { border-right: 1px solid var(--color-zinc-200); }
 .te-right { border-left: 1px solid var(--color-zinc-200); }
 
-.te-center { position: relative; min-width: 0; min-height: 0; }
+.te-center { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+
+.te-center > app-jc-editor-canvas { flex: 1 1 auto; min-height: 0; }
 
 .te-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; }
 
@@ -222,7 +224,7 @@
 /*
     @module: Warnings of the drawing
     @description: Texts that do not fit and missing images, over the bottom of the canvas.
-    @usage: .te-warnings > .te-warning(--block)
+    @usage: .te-warnings > .te-warning(--block, --zone)
 */
 .te-warnings {
   position: absolute;
@@ -245,6 +247,7 @@
 }
 
 .te-warning.te-warning--block { background: var(--color-rose-50); color: var(--color-rose-800); }
+.te-warning.te-warning--zone { background: #fff; color: var(--color-rose-700); border: 1px dashed var(--color-rose-600); }
 
 /*
     @module: Messages
