@@ -9,9 +9,10 @@
  *   document in the coordinates of the template (the caller sets the scale of the canvas):
  *   the background (fill, image, overlay), then every visible layer (text, image, grid, shape,
  *   icon) with its anchor, rotation and opacity.
- *   Values of the fields come from `values` (generating) or from the samples of the fields
- *   (editor); an image field without a value - or a library image not loaded yet - is drawn as a
- *   placeholder in the editor. The report tells which texts overflowed and what was missing.
+ *   Values of the fields come from `values` (generating, with the crops of the images) or from
+ *   the samples of the fields (editor); an image field without a value - or a library image not
+ *   loaded yet - is drawn as a placeholder in the editor (and in the live preview of generating
+ *   with `placeholders`). The report tells which texts overflowed and what was missing.
  * @usage `renderPage(ctx, doc, size, resources, { mode: 'editor' })`.
  * @dependencies document.ts, geometry.ts, text-layout.ts, paint.ts, IconNode (js-creator.models).
  */
@@ -36,10 +37,21 @@ export interface RenderResources {
   icon(name: string): IconNode[] | undefined;
 }
 
+/** Crop of the image of a field chosen when generating (replaces the focus of the template). */
+export interface ImageCrop {
+  /** Focus point 0-1. */
+  focusX: number;
+  focusY: number;
+  /** Extra enlargement (1 = as the template places it). */
+  zoom: number;
+}
+
 /** Values of the fields when generating. */
 export interface RenderValues {
   text: Record<string, string>;
   images: Record<string, DrawableImage | undefined>;
+  /** Crops of image fields (by key); a field without one keeps the focus of the template. */
+  crops?: Record<string, ImageCrop>;
 }
 
 /** How to draw. */
@@ -49,6 +61,8 @@ export interface RenderOptions {
   values?: RenderValues;
   /** Index of the page (0). */
   page?: number;
+  /** Output mode with placeholders of image fields without a value (live preview of generating). */
+  placeholders?: boolean;
 }
 
 /** A text that did not fit. */
@@ -93,7 +107,8 @@ export function renderPage(
   const bg = page.background.image;
   if (bg) {
     const image = resolveImage(scene, bg.source);
-    if (image.drawable) drawImageFit(ctx, image.drawable, canvas, bg.fit, bg.focusX, bg.focusY);
+    const crop = cropOf(scene, bg.source);
+    if (image.drawable) drawImageFit(ctx, image.drawable, canvas, bg.fit, crop?.focusX ?? bg.focusX, crop?.focusY ?? bg.focusY, false, crop?.zoom ?? 1);
     else if (image.label !== null) drawPlaceholder(ctx, canvas, image.label);
     if (bg.overlay) {
       ctx.fillStyle = fillStyle(ctx, bg.overlay, canvas);
@@ -306,9 +321,19 @@ function resolveImage(scene: Scene, source: ImageSource): { drawable?: DrawableI
   if (source.kind === 'field') {
     const drawable = scene.options.values?.images[source.field];
     if (!drawable && !editor) scene.report.missing.push(`field:${source.field}`);
-    return { drawable, label: drawable || !editor ? null : scene.fields.get(source.field)?.label ?? source.field };
+    const placeholder = editor || !!scene.options.placeholders;
+    return { drawable, label: drawable || !placeholder ? null : scene.fields.get(source.field)?.label ?? source.field };
   }
   return { label: editor ? '' : null };
+}
+
+/**
+ * @description Crop chosen for the image of a field (none for library images and fields without one).
+ * @param scene Drawing.
+ * @param source Source of the image.
+ */
+function cropOf(scene: Scene, source: ImageSource): ImageCrop | undefined {
+  return source.kind === 'field' ? scene.options.values?.crops?.[source.field] : undefined;
 }
 
 /**
@@ -359,13 +384,17 @@ function drawImageBox(
   const { ctx } = scene;
   const path = () => style.circle ? ellipsePath(ctx, rect) : roundRectPath(ctx, rect, style.radius);
   const image = resolveImage(scene, source);
+  const crop = cropOf(scene, source);
   if (style.shadow) castShadow(ctx, style.shadow, path);
   ctx.save();
   ctx.beginPath();
   path();
   ctx.clip();
-  if (image.drawable) drawImageFit(ctx, image.drawable, rect, style.fit, style.focusX, style.focusY, style.flipX);
-  else if (image.label !== null) drawPlaceholder(ctx, rect, image.label);
+  if (image.drawable) {
+    drawImageFit(ctx, image.drawable, rect, style.fit, crop?.focusX ?? style.focusX, crop?.focusY ?? style.focusY, style.flipX, crop?.zoom ?? 1);
+  } else if (image.label !== null) {
+    drawPlaceholder(ctx, rect, image.label);
+  }
   if (style.overlay) {
     ctx.fillStyle = fillStyle(ctx, style.overlay, rect);
     ctx.fillRect(rect.x, rect.y, rect.w, rect.h);

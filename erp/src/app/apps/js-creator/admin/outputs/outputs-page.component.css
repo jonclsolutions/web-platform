@@ -5,8 +5,9 @@
     @author: JS
     @created: 2026
     @description: Layout of the page "Outputs": the tree panel beside the content panel (stacked
-        on small screens), the path of the selected folder, its subfolders and the rows of the
-        folder trash.
+        on small screens), the path of the selected folder, its toolbar, subfolders, the bar of
+        the selected outputs, the grid of outputs, the trash (folders and outputs) and the detail
+        of an output.
     @dependencies: shared-styles/workspace.css (.ws-*), shared/styles/tokens.css
 */
 
@@ -156,3 +157,232 @@
 .op-trash-date { font-size: 0.75rem; color: var(--color-zinc-500); }
 
 .op-trash-actions { display: flex; gap: 6px; }
+
+/*
+    @module: Toolbar of the outputs
+    @description: Selects of the type and sorting, "select all", the note of a search in every
+        folder.
+    @usage: .op-select, label.op-select-all, .op-search-note
+*/
+.op-select {
+  padding: 7px 12px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 999px;
+  background: var(--color-white);
+  font-family: inherit;
+  font-size: 0.8rem;
+  color: var(--color-zinc-900);
+}
+
+.op-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--color-zinc-700);
+  cursor: pointer;
+}
+
+.op-search-note { margin: 0; }
+
+/*
+    @module: Selected outputs
+    @description: Bar with the number of selected outputs and their actions (ZIP, move, delete).
+    @usage: .op-selection > strong, .ws-btn
+*/
+.op-selection {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-amber-200);
+  border-radius: 12px;
+  background: var(--color-amber-50);
+  font-size: 0.8rem;
+  color: var(--color-zinc-900);
+}
+
+/*
+    @module: Output cards
+    @description: Card with a checkbox over the thumbnail (the frame keeps the aspect of the
+        output, --op-ratio = width / height), name, date, size, the folder with a search and the
+        actions. A selected card has an amber border (its own rule - not a :hover one, so it also
+        works on phones).
+    @usage: .ws-grid.op-grid > .ws-card.op-card(--selected) > label.op-check, button.op-preview
+        (span.op-preview--static in the trash) > .op-frame > img; .op-card-folder; .op-more
+*/
+.op-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+
+.op-card { position: relative; }
+
+.op-card--selected {
+  border-color: var(--color-amber-500);
+  box-shadow: 0 0 0 1px var(--color-amber-500);
+}
+
+.op-check {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  display: inline-flex;
+  padding: 5px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.15);
+  cursor: pointer;
+}
+
+.op-check input { width: 16px; height: 16px; margin: 0; cursor: pointer; }
+
+.op-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  padding: 12px;
+  border: 0;
+  border-bottom: 1px solid var(--color-zinc-100);
+  background: var(--color-zinc-50);
+  cursor: zoom-in;
+}
+
+.op-preview--static { cursor: default; }
+
+.op-preview:focus-visible {
+  outline: 2px solid var(--color-amber-500);
+  outline-offset: -2px;
+}
+
+.op-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, calc(176px * var(--op-ratio, 1)));
+  background: var(--color-white);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  overflow: hidden;
+}
+
+.op-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.op-card-folder {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.op-card .ws-card-actions a.ws-icon-btn { text-decoration: none; }
+
+.op-more { display: flex; justify-content: center; margin-top: 6px; }
+
+/*
+    @module: Trash
+    @description: Titles of the two parts of the trash (folders, outputs) and their empty states.
+    @usage: h3.op-trash-title, .ws-empty.op-trash-empty
+*/
+.op-trash-title {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-zinc-700);
+}
+
+.op-trash-empty { padding: 16px; }
+
+/*
+    @module: Detail of an output
+    @description: The picture beside its data (folder, template, size, file, date) and the text of
+        the post with Copy; stacked on small screens.
+    @usage: .op-detail > .op-detail-picture > img, .op-detail-info > dl.op-facts, .op-caption
+        (.op-caption-head, .op-caption-text); .op-muted; a.op-download
+*/
+.op-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.op-detail-picture {
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--color-zinc-50);
+}
+
+.op-detail-picture img {
+  display: block;
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+
+.op-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  font-size: 0.82rem;
+}
+
+.op-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  margin: 0;
+}
+
+.op-facts dt { color: var(--color-zinc-500); }
+
+.op-facts dd {
+  margin: 0;
+  color: var(--color-zinc-900);
+  overflow-wrap: anywhere;
+}
+
+.op-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.op-caption-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.op-caption-text {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-sand-200);
+  border-radius: 10px;
+  background: var(--color-zinc-50);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 260px;
+  overflow: auto;
+  color: var(--color-zinc-900);
+}
+
+.op-muted { margin: 0; color: var(--color-zinc-500); }
+
+a.op-download { text-decoration: none; }
+
+@media (max-width: 760px) {
+  .op-detail { grid-template-columns: 1fr; }
+  .op-preview { height: 170px; }
+}

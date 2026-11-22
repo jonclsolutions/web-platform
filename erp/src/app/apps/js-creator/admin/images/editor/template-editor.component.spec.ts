@@ -15,7 +15,7 @@
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { TemplateEditorComponent } from './template-editor.component';
 import { unsavedTemplateGuard } from './unsaved-template.guard';
@@ -142,7 +142,8 @@ describe('TemplateEditorComponent', () => {
     expect(body.version).toBe(3);
     expect(store.version()).toBe(4);
     expect(store.dirty()).toBeFalse();
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // The thumbnail is encoded asynchronously (canvas.toBlob) - wait for it, at most 2 s.
+    for (let i = 0; i < 40 && !ctx.dataHandler.upload.calls.count(); i++) await new Promise(resolve => setTimeout(resolve, 50));
     expect(ctx.dataHandler.upload).toHaveBeenCalledWith('js-creator/images/templates/7/thumbnail', jasmine.any(FormData));
   });
 
@@ -209,5 +210,18 @@ describe('TemplateEditorComponent', () => {
     component.wide.set(false);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.te-narrow')).not.toBeNull();
+  });
+
+  /**
+   * @description Generate in the top bar opens generating from the template (the guard still
+   *   asks about unsaved changes).
+   * @input click on Generate
+   * @output navigate to image-templates/7/generate
+   */
+  it('opens generating from the top bar', async () => {
+    await create();
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    (fixture.nativeElement.querySelector('.te-generate') as HTMLButtonElement).click();
+    expect(navigate).toHaveBeenCalledWith(['/admin/js-creator/image-templates', 7, 'generate']);
   });
 });

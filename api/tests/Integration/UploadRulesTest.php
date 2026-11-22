@@ -29,14 +29,14 @@ class UploadRulesTest extends TestCase
      *   requests validate with; no profile allows a format a browser runs as a page.
      * @input GET /api/upload-rules without login.
      * @output 200; profiles raw_request_commission, sales_order, job_application,
-     *   project_thread, js_creator_image, js_creator_font; e.g. sales_order {max_files 10, 20 MB, 50 MB}, project_thread {5, 15 MB,
+     *   project_thread, js_creator_image, js_creator_font, js_creator_output; e.g. sales_order {max_files 10, 20 MB, 50 MB}, project_thread {5, 15 MB,
      *   total null}; equal to AttachmentPolicy::publicRules(); no svg / html / xml anywhere.
      */
     public function test_public_rules(): void
     {
         $data = $this->getJson('/api/upload-rules')->assertOk()->json('data');
 
-        $this->assertSame(['raw_request_commission', 'job_application', 'project_thread', 'sales_order', 'js_creator_image', 'js_creator_font'], array_keys($data));
+        $this->assertSame(['raw_request_commission', 'job_application', 'project_thread', 'sales_order', 'js_creator_image', 'js_creator_font', 'js_creator_output'], array_keys($data));
         $this->assertSame(AttachmentPolicy::publicRules(), $data);
         $this->assertSame(['max_files' => 10, 'max_file_size_mb' => 20, 'max_total_size_mb' => 50], array_diff_key($data['sales_order'], ['extensions' => 0]));
         $this->assertSame(['max_files' => 5, 'max_file_size_mb' => 15, 'max_total_size_mb' => null], array_diff_key($data['project_thread'], ['extensions' => 0]));

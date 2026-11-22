@@ -5,9 +5,11 @@
     @author: JS
     @created: 2026
     @description: Page "Outputs": header with the view switch (folders / trash), the usage bar;
-        folders: the tree beside the content of the selected folder (path, subfolders, the place
-        of the generated posts); trash: deleted folders with restore / delete for good; the popup
-        of a folder (new, rename, move).
+        folders: the tree beside the content of the selected folder (path and folder actions,
+        toolbar - search in every folder, type, sorting, select all -, subfolders, the bar of the
+        selected outputs, the grid of outputs, "load more"); trash: deleted folders and deleted
+        outputs with restore / delete for good; the detail of an output; the popups of a folder
+        (new, rename, move) and of outputs (rename, move, move the selected ones).
 -->
 <div class="ws-page">
   <app-page-header [title]="t('header')" [subtitle]="t('subtitle')">
@@ -39,7 +41,7 @@
       <section class="ws-panel op-content" [attr.aria-label]="t('content_label')">
         <div class="op-content-head">
           <nav class="op-path" [attr.aria-label]="t('path_label')">
-            <button type="button" class="op-crumb" (click)="select(null)">{{ t('root') }}</button>
+            <button type="button" class="op-crumb" [class.op-crumb--current]="selectedId === null" (click)="select(null)">{{ t('root') }}</button>
             @for (folder of path; track folder.id) {
               <span class="op-crumb-sep" aria-hidden="true">/</span>
               <button type="button" class="op-crumb" [class.op-crumb--current]="folder.id === selectedId" (click)="select(folder.id)">{{ folder.name }}</button>
@@ -58,7 +60,32 @@
           }
         </div>
 
-        @if (subfolders.length) {
+        <div class="ws-toolbar">
+          <input class="ws-search" type="search" [placeholder]="t('search_placeholder')" [attr.aria-label]="t('search_placeholder')"
+            [(ngModel)]="search" (ngModelChange)="onSearch()" />
+          <select class="op-select" [(ngModel)]="sectionFilter" (ngModelChange)="reload()" [attr.aria-label]="t('filter_type')">
+            <option value="">{{ t('all_types') }}</option>
+            @for (section of sections; track section) {
+              <option [value]="section">{{ sectionLabel(section) }}</option>
+            }
+          </select>
+          <select class="op-select" [(ngModel)]="sort" (ngModelChange)="reload()" [attr.aria-label]="t('sort_label')">
+            <option value="newest">{{ t('sort_newest') }}</option>
+            <option value="oldest">{{ t('sort_oldest') }}</option>
+            <option value="name">{{ t('sort_name') }}</option>
+            <option value="largest">{{ t('sort_largest') }}</option>
+          </select>
+          <span class="ws-toolbar-spacer"></span>
+          @if (outputs.length) {
+            <label class="op-select-all">
+              <input type="checkbox" [checked]="allSelected" (change)="toggleAll()" />{{ t('select_all') }}
+            </label>
+          }
+        </div>
+
+        @if (search.trim()) {
+          <p class="ws-panel-hint op-search-note">{{ t('search_note') }}</p>
+        } @else if (subfolders.length) {
           <div class="op-subfolders">
             @for (folder of subfolders; track folder.id) {
               <button type="button" class="op-subfolder" (click)="select(folder.id)">
@@ -69,21 +96,100 @@
           </div>
         }
 
-        <div class="ws-empty">
-          <strong class="op-empty-title">{{ t('empty_title') }}</strong>
-          <span>{{ t('empty_text') }}</span>
-        </div>
+        @if (selected.size) {
+          <div class="op-selection" role="region" [attr.aria-label]="t('selection_title')">
+            <strong>{{ t('selected') }} {{ selected.size }}</strong>
+            <span class="ws-toolbar-spacer"></span>
+            <button type="button" class="ws-btn ws-btn--sm" [disabled]="busy" (click)="downloadZip()">
+              <app-creator-icon [nodes]="icon('download')" [size]="14" />{{ t('download_zip') }}
+            </button>
+            @if (canUpdate) {
+              <button type="button" class="ws-btn ws-btn--sm" [disabled]="busy" (click)="openBulkMove()">
+                <app-creator-icon [nodes]="icon('folder-input')" [size]="14" />{{ t('move') }}
+              </button>
+            }
+            @if (canDelete) {
+              <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="removeSelected()">{{ t('delete') }}</button>
+            }
+            <button type="button" class="ws-btn ws-btn--sm" (click)="clearSelection()">{{ t('clear_selection') }}</button>
+          </div>
+        }
+
+        @if (outputs.length) {
+          <div class="ws-grid op-grid">
+            @for (output of outputs; track output.id) {
+              <article class="ws-card op-card" [class.op-card--selected]="selected.has(output.id)">
+                <label class="op-check" [title]="t('select')">
+                  <input type="checkbox" [checked]="selected.has(output.id)" (change)="toggle(output)" [attr.aria-label]="t('select') + ' ' + output.name" />
+                </label>
+                <button type="button" class="op-preview" [title]="t('open_detail')" (click)="openDetail(output)">
+                  <span class="op-frame" [style.aspect-ratio]="aspect(output)" [style.--op-ratio]="output.width / output.height">
+                    @if (output.thumb_url) {
+                      <img [src]="output.thumb_url" [alt]="output.name" loading="lazy" />
+                    }
+                  </span>
+                </button>
+                <div class="ws-card-body">
+                  <span class="ws-card-name" [title]="output.name">{{ output.name }}</span>
+                  <span class="ws-card-meta">{{ output.created_at | date: 'd. M. y H:mm' }}</span>
+                  <span class="ws-card-meta">{{ output.width }} × {{ output.height }} · {{ output.format === 'jpg' ? 'JPG' : 'PNG' }} · {{ bytes(output.size_bytes) }}</span>
+                  @if (search.trim()) {
+                    <span class="ws-card-meta op-card-folder" [title]="folderPath(output)"><app-icon name="folder" [size]="11"></app-icon> {{ folderPath(output) }}</span>
+                  }
+                </div>
+                <div class="ws-card-actions">
+                  @if (output.download_url) {
+                    <a class="ws-icon-btn" [href]="output.download_url" download [title]="t('download')" [attr.aria-label]="t('download')">
+                      <app-creator-icon [nodes]="icon('download')" [size]="15" />
+                    </a>
+                  }
+                  @if (output.caption) {
+                    <button type="button" class="ws-icon-btn" [title]="t('copy')" [attr.aria-label]="t('copy')" (click)="copyCaption(output)">
+                      <app-creator-icon [nodes]="icon('copy')" [size]="15" />
+                    </button>
+                  }
+                  @if (canUpdate) {
+                    <button type="button" class="ws-icon-btn" [title]="t('move')" [attr.aria-label]="t('move')" [disabled]="busy" (click)="openMoveOutput(output)">
+                      <app-creator-icon [nodes]="icon('folder-input')" [size]="15" />
+                    </button>
+                  }
+                  @if (canDelete) {
+                    <button type="button" class="ws-icon-btn ws-icon-btn--danger" [title]="t('delete')" [attr.aria-label]="t('delete')" [disabled]="busy" (click)="removeOutput(output)">
+                      <app-icon name="trash" [size]="15"></app-icon>
+                    </button>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+          @if (page < lastPage) {
+            <div class="op-more">
+              <button type="button" class="ws-btn" [disabled]="loading" (click)="loadMore()">{{ t('load_more') }} ({{ outputs.length }} / {{ total }})</button>
+            </div>
+          }
+        } @else if (!loading) {
+          <div class="ws-empty">
+            @if (search.trim() || sectionFilter) {
+              {{ t('nothing_found') }}
+            } @else {
+              <strong class="op-empty-title">{{ t('empty_title') }}</strong>
+              <span>{{ t('empty_text') }}</span>
+            }
+          </div>
+        }
       </section>
     </div>
   } @else {
     <section class="ws-panel">
       <div class="op-tree-head">
         <h2 class="ws-panel-title">{{ t('trash_title') }}</h2>
-        @if (canDelete && trashed.length) {
+        @if (canDelete && (trashed.length || outputs.length)) {
           <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="emptyTrash()">{{ t('empty_trash') }}</button>
         }
       </div>
       <p class="ws-trash-note">{{ t('trash_note') }}</p>
+
+      <h3 class="op-trash-title">{{ t('trash_folders') }}</h3>
       @if (trashed.length) {
         <ul class="op-trash">
           @for (folder of trashed; track folder.id) {
@@ -101,11 +207,97 @@
           }
         </ul>
       } @else {
-        <div class="ws-empty">{{ t('trash_empty') }}</div>
+        <div class="ws-empty op-trash-empty">{{ t('trash_folders_empty') }}</div>
+      }
+
+      <h3 class="op-trash-title">{{ t('trash_outputs') }}</h3>
+      @if (outputs.length) {
+        <div class="ws-grid op-grid">
+          @for (output of outputs; track output.id) {
+            <article class="ws-card op-card">
+              <span class="op-preview op-preview--static">
+                <span class="op-frame" [style.aspect-ratio]="aspect(output)" [style.--op-ratio]="output.width / output.height">
+                  @if (output.thumb_url) {
+                    <img [src]="output.thumb_url" [alt]="output.name" loading="lazy" />
+                  }
+                </span>
+              </span>
+              <div class="ws-card-body">
+                <span class="ws-card-name" [title]="output.name">{{ output.name }}</span>
+                <span class="ws-card-meta">{{ t('deleted_at') }} {{ output.deleted_at | date: 'd. M. y H:mm' }}</span>
+                <span class="ws-card-meta">{{ output.width }} × {{ output.height }} · {{ bytes(output.size_bytes) }}</span>
+              </div>
+              @if (canDelete) {
+                <div class="ws-card-actions">
+                  <button type="button" class="ws-icon-btn" [title]="t('restore')" [attr.aria-label]="t('restore')" [disabled]="busy" (click)="restoreOutput(output)"><app-icon name="restore" [size]="15"></app-icon></button>
+                  <button type="button" class="ws-icon-btn ws-icon-btn--danger" [title]="t('destroy')" [attr.aria-label]="t('destroy')" [disabled]="busy" (click)="destroyOutput(output)"><app-icon name="purge" [size]="15"></app-icon></button>
+                </div>
+              }
+            </article>
+          }
+        </div>
+        @if (page < lastPage) {
+          <div class="op-more">
+            <button type="button" class="ws-btn" [disabled]="loading" (click)="loadMore()">{{ t('load_more') }} ({{ outputs.length }} / {{ total }})</button>
+          </div>
+        }
+      } @else if (!loading) {
+        <div class="ws-empty op-trash-empty">{{ t('trash_outputs_empty') }}</div>
       }
     </section>
   }
 </div>
+
+@if (detail; as d) {
+  <app-admin-modal [heading]="d.name" [subheading]="d.template_name" size="lg" [closeDisabled]="busy" (dismissed)="closeDetail()">
+    <div class="op-detail">
+      <div class="op-detail-picture">
+        @if (d.url) {
+          <img [src]="d.url" [alt]="d.name" />
+        }
+      </div>
+      <div class="op-detail-info">
+        <dl class="op-facts">
+          <dt>{{ t('fact_folder') }}</dt><dd>{{ folderPath(d) }}</dd>
+          <dt>{{ t('fact_template') }}</dt><dd>{{ d.template_name }}@if (!d.template_id) { <span class="op-muted">({{ t('template_deleted') }})</span> }</dd>
+          <dt>{{ t('fact_size') }}</dt><dd>{{ d.width }} × {{ d.height }} px · {{ d.format === 'jpg' ? 'JPG' : 'PNG' }}</dd>
+          <dt>{{ t('fact_file') }}</dt><dd>{{ bytes(d.size_bytes) }}</dd>
+          <dt>{{ t('fact_created') }}</dt><dd>{{ d.created_at | date: 'd. M. y H:mm' }}</dd>
+        </dl>
+        <div class="op-caption">
+          <div class="op-caption-head">
+            <strong>{{ t('caption') }}</strong>
+            @if (d.caption) {
+              <button type="button" class="ws-btn ws-btn--sm" (click)="copyCaption(d)">
+                <app-creator-icon [nodes]="icon('copy')" [size]="14" />{{ copied ? t('copied') : t('copy') }}
+              </button>
+            }
+          </div>
+          @if (d.caption) {
+            <p class="op-caption-text">{{ d.caption }}</p>
+          } @else {
+            <p class="op-muted">{{ t('no_caption') }}</p>
+          }
+        </div>
+      </div>
+    </div>
+    <ng-container modal-footer>
+      @if (canDelete) {
+        <button type="button" class="am-btn am-btn--danger" [disabled]="busy" (click)="removeOutput(d)">{{ t('delete') }}</button>
+      }
+      @if (canUpdate) {
+        <button type="button" class="am-btn am-btn--secondary" [disabled]="busy" (click)="openRenameOutput(d)">{{ t('rename') }}</button>
+        <button type="button" class="am-btn am-btn--secondary" [disabled]="busy" (click)="openMoveOutput(d)">{{ t('move') }}</button>
+      }
+      @if (d.template_id) {
+        <button type="button" class="am-btn am-btn--secondary" (click)="generateAgain(d)">{{ t('generate_again') }}</button>
+      }
+      @if (d.download_url) {
+        <a class="am-btn am-btn--primary op-download" [href]="d.download_url" download>{{ t('download') }}</a>
+      }
+    </ng-container>
+  </app-admin-modal>
+}
 
 @if (dialog; as d) {
   <app-admin-modal [heading]="t('dialog_' + d.kind)" [subheading]="d.kind === 'create' ? '' : d.folder!.name" size="sm"
@@ -133,6 +325,37 @@
     <ng-container modal-footer>
       <button type="button" class="am-btn am-btn--secondary" [disabled]="busy" (click)="closeDialog()">{{ t('cancel') }}</button>
       <button type="submit" class="am-btn am-btn--primary" [attr.form]="formId" [disabled]="busy">{{ t('save') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}
+
+@if (outputDialog; as d) {
+  <app-admin-modal [heading]="t('output_dialog_' + d.kind)" [subheading]="d.output?.name ?? (t('selected') + ' ' + selected.size)" size="sm"
+    [level]="detail ? 'prompt' : 'content'" [closeDisabled]="busy" (dismissed)="closeOutputDialog()">
+    <form [id]="outputFormId" (ngSubmit)="submitOutputDialog()">
+      @if (d.kind === 'rename') {
+        <div class="ws-field">
+          <label for="jc-output-name">{{ t('name') }}</label>
+          <input id="jc-output-name" name="name" type="text" maxlength="150" autocomplete="off" [(ngModel)]="d.name" data-autofocus />
+        </div>
+      } @else {
+        <div class="ws-field">
+          <label for="jc-output-target">{{ t('move_target') }}</label>
+          <select id="jc-output-target" name="target" (change)="setOutputTarget($any($event.target).value)" data-autofocus>
+            <option value="" [selected]="d.targetId === null">{{ t('root') }}</option>
+            @for (option of outputTargets; track option.id) {
+              <option [value]="option.id" [selected]="d.targetId === option.id">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+      }
+      @if (d.error) {
+        <p class="ws-field-error" role="alert">{{ d.error }}</p>
+      }
+    </form>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" [disabled]="busy" (click)="closeOutputDialog()">{{ t('cancel') }}</button>
+      <button type="submit" class="am-btn am-btn--primary" [attr.form]="outputFormId" [disabled]="busy">{{ t('save') }}</button>
     </ng-container>
   </app-admin-modal>
 }

@@ -8,7 +8,7 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Šablona je váš návrh příspěvku v jedné velikosti: rozložení textů, obrázků, tvarů a ikon, barvy a písma. Pole šablony vyplníte až při generování (další etapa aplikace) – šablonu si tak navrhnete jednou a použijete mnohokrát."
+              "content": "Šablona je váš návrh příspěvku v jedné velikosti: rozložení textů, obrázků, tvarů a ikon, barvy a písma. Pole šablony vyplníte při generování – šablonu si navrhnete jednou a použijete mnohokrát."
             },
             {
               "type": "alert",
@@ -31,7 +31,7 @@
               "items": [
                 "Duplikovat – kopie ve stejném formátu (i s miniaturou).",
                 "Duplikovat do jiného formátu – kopie v jiné velikosti; prvky si ponechají kotvu a odsazení, takže logo ukotvené vpravo nahoře zůstane vpravo nahoře. V editoru pak jen dolaďte.",
-                "Kliknutím na náhled nebo na tužku otevřete šablonu v editoru."
+                "Generovat (tlačítko na kartě nebo kliknutí na náhled) otevře generování příspěvku ze šablony; tužka otevře šablonu v editoru."
               ]
             }
           ]
@@ -81,6 +81,104 @@
                 {
                   "title": "Smazat",
                   "text": "js-creator-images-delete – koš, obnovení, trvalé smazání."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "js-creator-generate": {
+      "navLabel": "Generování",
+      "header": "JS Creator – Generování příspěvku",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Generování vyplní šablonu skutečnými texty a fotkami a uloží hotový příspěvek do vybrané složky. Vlevo je živý náhled – je to přesně to, co vznikne; vpravo formulář s poli šablony."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Fotky z počítače se zpracují jen ve vašem prohlížeči a na server se vůbec nenahrávají. Uloží se jen hotový obrázek a text příspěvku. Fotky osob a cizí díla používejte jen se souhlasem nebo licencí."
+            }
+          ]
+        },
+        {
+          "heading": "01. Texty",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Šedý text v políčku je ukázka ze šablony – do výstupu se nedostane, pole musíte vyplnit.",
+                "Zvýraznit: označte část textu a klikněte na Zvýraznit – v náhledu se ukáže stylem zvýraznění šablony (barva, tučně, podklad). Opakovaným kliknutím zvýraznění zrušíte. V textu se zvýraznění zapisuje **takto**.",
+                "Počítadlo ukazuje délku a limit pole.",
+                "Když se text nevejde, šablona ho podle svého nastavení zmenší, zkrátí „…“, nebo generování odmítne – pod polem uvidíte, co se stalo."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Fotky a výřez",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Fotka z počítače: JPG, PNG, WebP (HEIC jen v Safari), nejvýše 40 MB. Orientace fotky z telefonu se použije automaticky.",
+                "Z knihovny: obrázek, který máte v Knihovně.",
+                "Výřez posunete tažením fotky přímo v náhledu (myší i prstem), přiblížení nastavíte posuvníkem u pole. Výchozí výřez vrátí nastavení šablony.",
+                "Když je fotka pro své místo malá, formulář upozorní, že výstup může být neostrý."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Text příspěvku",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Text, který k obrázku vložíte na sociální síť. Předvyplní se ze vzoru šablony – místo {{klíč}} se dosadí text pole (bez značek zvýraznění). Můžete ho upravit; Vyplnit ze šablony ho vrátí podle aktuálních polí. U hotového výstupu ho zkopírujete tlačítkem Kopírovat text."
+            }
+          ]
+        },
+        {
+          "key": "generate",
+          "heading": "04. Uložení a Generovat",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Vyberte složku (nabídne se naposledy použitá) a případně název – prázdný název = název šablony s datem a časem.",
+                "Generovat nejdřív ukáže, co ještě chybí (povinná pole, příliš dlouhé texty, texty, které se nevejdou).",
+                "Pak počká na všechny fonty a obrázky – pokud se některý nenačte, výstup nevznikne (nikdy ne s náhradním písmem).",
+                "Šablona se vykreslí v přesné velikosti, server obrázek ověří, převede do formátu šablony (PNG / JPG) a uloží.",
+                "Hotový výstup otevřete ve Výstupech, stáhnete nebo zkopírujete jeho text. Formulář zůstane vyplněný – změnou polí a novým Generovat vytvoříte další variantu."
+              ]
+            },
+            {
+              "type": "note",
+              "highlight": "Místo",
+              "content": "Výstup se počítá do kvóty vašeho prostoru. Když je prostor plný, generování se odmítne – uvolněte místo (smazat a vysypat koš) nebo požádejte správce o větší kvótu."
+            }
+          ]
+        },
+        {
+          "heading": "05. Oprávnění",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazit",
+                  "text": "js-creator-images-view – stránka a náhled."
+                },
+                {
+                  "title": "Vytvořit",
+                  "text": "js-creator-images-create – Generovat."
                 }
               ]
             }
@@ -244,7 +342,7 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "JS Creator vyrábí grafiku příspěvků na sociální sítě podle šablon, které si navrhnete sami – bez AI. Stránka Výstupy je místo, kam se vygenerované příspěvky ukládají do vašich složek."
+              "content": "JS Creator vyrábí grafiku příspěvků na sociální sítě podle šablon, které si navrhnete sami – bez AI. Stránka Výstupy je místo, kam se vygenerované příspěvky ukládají do vašich složek a odkud je stáhnete i s textem příspěvku."
             },
             {
               "type": "alert",
@@ -278,47 +376,65 @@
           ]
         },
         {
-          "heading": "02. Obsah složky",
+          "heading": "02. Výstupy ve složce",
           "blocks": [
             {
               "type": "text",
-              "content": "Vpravo je cesta k vybrané složce, její podsložky a vygenerované příspěvky. Příspěvky vznikají generováním ze šablony, při kterém zvolíte cílovou složku."
+              "content": "Vpravo je cesta k vybrané složce, její podsložky a výstupy jako miniatury s názvem, datem, rozměry, formátem a velikostí. Hledání prochází názvy ve všech složkách (u výsledků je vidět složka), dále můžete filtrovat podle typu a řadit od nejnovějších, nejstarších, podle názvu nebo velikosti."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Kliknutím na miniaturu otevřete detail: obrázek, složka, šablona, rozměry, velikost, datum a text příspěvku s tlačítkem Kopírovat text.",
+                "Akce: Stáhnout (soubor s názvem výstupu), Přejmenovat, Přesunout, Smazat, Generovat znovu (otevře generování z téže šablony).",
+                "Hotový výstup se nedá upravit – novou variantu rychle vygenerujete ze šablony."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Více výstupů najednou",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Zaškrtněte výstupy (nebo Vybrat vše) – v liště výběru je Stáhnout ZIP, Přesunout a Smazat. ZIP obsahuje nejvýše 200 výstupů a 500 MB; výstupy se stejným názvem dostanou „(2)“."
             }
           ]
         },
         {
           "key": "trash",
-          "heading": "03. Koš",
+          "heading": "04. Koš",
           "blocks": [
             {
               "type": "text",
-              "content": "Smazaná složka se přesune do koše i se všemi podsložkami jako jedna položka. V zobrazení Koš ji můžete Obnovit (vrátí se i s podsložkami; pokud nadřazená složka už neexistuje, vrátí se na nejvyšší úroveň, a pokud je název obsazený, dostane „(2)“) nebo Smazat trvale. Vysypat koš smaže natrvalo vše v koši složek."
+              "content": "Smazaná složka se přesune do koše i se všemi podsložkami a výstupy jako jedna položka; smazaný výstup je v koši samostatně. Obnovit vrátí složku i s obsahem (pokud nadřazená složka už neexistuje, na nejvyšší úroveň; obsazený název dostane „(2)“) a výstup do jeho složky (pokud chybí, do Všech výstupů). Smazat trvale a Vysypat koš smažou natrvalo i soubory."
             },
             {
               "type": "alert",
-              "content": "Položky v koši se automaticky smažou natrvalo po uplynutí lhůty retence (výchozí 30 dní, Core → Nastavení → Retence, „JS Creator – koš“).",
-              "variant": "warning"
+              "variant": "warning",
+              "content": "Položky v koši se automaticky smažou natrvalo po uplynutí lhůty retence (výchozí 30 dní, Core → Nastavení → Retence, „JS Creator – koš“). Koš se počítá do místa v prostoru."
             }
           ]
         },
         {
           "key": "edit",
-          "heading": "04. Oprávnění",
+          "heading": "05. Oprávnění",
           "blocks": [
             {
               "type": "grid",
               "cards": [
                 {
                   "title": "Zobrazit",
-                  "text": "js-creator-images-view – stránka, strom, koš."
+                  "text": "js-creator-images-view – stránka, výstupy, detail, stažení i ZIP."
                 },
                 {
                   "title": "Vytvořit",
-                  "text": "js-creator-images-create – nové složky."
+                  "text": "js-creator-images-create – nové složky (výstupy vznikají generováním)."
                 },
                 {
                   "title": "Upravit",
-                  "text": "js-creator-images-update – přejmenování a přesun."
+                  "text": "js-creator-images-update – přejmenování a přesun složek i výstupů."
                 },
                 {
                   "title": "Smazat",

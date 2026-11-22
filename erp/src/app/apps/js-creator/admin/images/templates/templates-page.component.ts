@@ -5,9 +5,10 @@
  * @author JS
  * @created 2026
  * @description Page "Templates" of the section Images: grid of the own templates (thumbnail, name,
- *   size), search, filter by size, sorting, "load more"; new template (name + size) opens the
- *   editor; copy, copy to another size, delete to the trash; the trash with restore, delete for
- *   good and emptying.
+ *   size), search, filter by size, sorting, "load more"; the main action of a card is Generate
+ *   (the thumbnail and the button), the editor is one click further; new template (name + size)
+ *   opens the editor; copy, copy to another size, delete to the trash; the trash with restore,
+ *   delete for good and emptying.
  * @dependencies TemplatesApiService, WorkspaceUsageService, Router, AdminModalComponent,
  *   SizePickerComponent, QuotaBarComponent, ConfirmDialogService, PermissionService,
  *   AdminLocalizationService (section `js-creator-templates`).
@@ -191,6 +192,14 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
    */
   open(template: CreatorTemplate): void {
     if (this.view === 'active') this.router.navigate(['/admin/js-creator/image-templates', template.id, 'edit']);
+  }
+
+  /**
+   * @description Opens generating from a template (the main action of a card).
+   * @param template Template.
+   */
+  generate(template: CreatorTemplate): void {
+    if (this.view === 'active') this.router.navigate(['/admin/js-creator/image-templates', template.id, 'generate']);
   }
 
   /** @description Opens the popup of a new template (Instagram portrait by default). */

@@ -139,4 +139,26 @@ describe('TemplatesPageComponent', () => {
     expect(fixture.nativeElement.querySelector('app-page-header .ws-btn--primary')).toBeNull();
     expect(fixture.nativeElement.querySelectorAll('.tp-card')[0].querySelectorAll('.ws-icon-btn').length).toBe(1);
   });
+
+  /**
+   * @description The main action of a card is Generate: the thumbnail and the button open
+   *   generating; the pencil opens the editor; nothing opens from the trash.
+   * @input click on the preview and on Generate of T1; open(T1); generate in the trash view
+   * @output navigate to image-templates/1/generate (twice) and image-templates/1/edit; no navigation in the trash
+   */
+  it('opens generating as the main action', async () => {
+    await create();
+    const card: HTMLElement = fixture.nativeElement.querySelector('.tp-card');
+    (card.querySelector('.tp-preview') as HTMLButtonElement).click();
+    (card.querySelector('.tp-generate') as HTMLButtonElement).click();
+    expect(navigate.calls.allArgs()).toEqual([
+      [['/admin/js-creator/image-templates', 1, 'generate']], [['/admin/js-creator/image-templates', 1, 'generate']],
+    ]);
+    component.open(template(1));
+    expect(navigate).toHaveBeenCalledWith(['/admin/js-creator/image-templates', 1, 'edit']);
+    navigate.calls.reset();
+    component.view = 'trash';
+    component.generate(template(1));
+    expect(navigate).not.toHaveBeenCalled();
+  });
 });

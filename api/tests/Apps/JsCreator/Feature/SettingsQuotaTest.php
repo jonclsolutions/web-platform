@@ -78,7 +78,7 @@ class SettingsQuotaTest extends TestCase
         $this->assertEqualsCanonicalizing([$roleUser->id, $explicit->id, $sysadmin->id, $former->id], $rows->keys()->all());
         $this->assertTrue($rows[$roleUser->id]['has_access']);
         $this->assertFalse($rows[$former->id]['has_access']);
-        $this->assertSame(['folders' => 1, 'images' => 1, 'fonts' => 0, 'templates' => 0], $rows[$roleUser->id]['counts']);
+        $this->assertSame(['folders' => 1, 'images' => 1, 'fonts' => 0, 'templates' => 0, 'outputs' => 0], $rows[$roleUser->id]['counts']);
         $this->assertSame((int) CreatorAsset::sum('size_bytes'), $rows[$roleUser->id]['used_bytes']);
         $this->assertSame(1024 * 1024 * 1024, $rows[$roleUser->id]['quota_bytes']);
         $this->assertStringNotContainsString('secret', $response->getContent());

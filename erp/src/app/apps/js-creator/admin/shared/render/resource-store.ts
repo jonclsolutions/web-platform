@@ -4,11 +4,13 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Resources of the renderer in one page (editor, later generating): library images
+ * @description Resources of the renderer in one page (editor, generating): library images
  *   loaded from their signed URLs (same origin - the canvas never gets tainted), the fonts of the
  *   texts (registered through FontLibraryService under `jsc-…` names, loaded with the characters
  *   they need) and the icon set. When something finishes loading, `onChange` asks the page to
- *   draw again.
+ *   draw again. Before an output is drawn, generating waits for the images (assetsReady()) and
+ *   checks that every font really loaded (missingFonts()) - a fallback font must never get into
+ *   an output.
  * @usage `const store = new RenderResourceStore(fontLibrary, () => redraw()); store.loadAsset(id, url);
  *   await store.ensureFonts(doc, ownFonts, curated)`.
  * @dependencies FontLibraryService, document.ts, renderer.ts (RenderResources).
@@ -26,8 +28,8 @@ const FONT_SAMPLE = 'AaBbĚěŠšČčŘřŽžÝýÁáÍíÉéŮůÚúŇňŤťĎ�
 export class RenderResourceStore implements RenderResources {
   /** Loaded images (null = failed). */
   private readonly images = new Map<number, DrawableImage | null>();
-  /** Images being loaded. */
-  private readonly loading = new Set<number>();
+  /** Images being loaded (resolve when finished, also on failure). */
+  private readonly loading = new Map<number, Promise<void>>();
   /** Icons of the set. */
   private icons: Record<string, IconNode[]> = {};
 
@@ -73,17 +75,52 @@ export class RenderResourceStore implements RenderResources {
    */
   loadAsset(id: number, url: string): void {
     if (this.images.has(id) || this.loading.has(id)) return;
-    this.loading.add(id);
     const image = new Image();
     image.decoding = 'async';
     image.src = url;
-    image.decode().then(
-      () => this.images.set(id, { image, width: image.naturalWidth, height: image.naturalHeight }),
-      () => this.images.set(id, null),
+    const done = image.decode().then(
+      () => { this.images.set(id, { image, width: image.naturalWidth, height: image.naturalHeight }); },
+      () => { this.images.set(id, null); },
     ).finally(() => {
       this.loading.delete(id);
       this.onChange();
     });
+    this.loading.set(id, done);
+  }
+
+  /**
+   * @description Waits until the library images finished loading.
+   * @param ids Library images (each must have been asked for by loadAsset()).
+   * @returns Ids that are not available (failed or never asked for).
+   */
+  async assetsReady(ids: readonly number[]): Promise<number[]> {
+    await Promise.all(ids.map(id => this.loading.get(id) ?? Promise.resolve()));
+    return ids.filter(id => !this.images.get(id));
+  }
+
+  /**
+   * @description Fonts of the texts that are NOT ready for an output: a family without a
+   *   registered face, a face that failed, or characters of the texts whose face is not loaded.
+   * @param doc Document.
+   * @param texts Values of the text fields.
+   * @returns Font references (`set:<slug>` / `user:<id>`) that would fall back to another font.
+   */
+  missingFonts(doc: TemplateDocument, texts: readonly string[]): string[] {
+    if (typeof document === 'undefined' || !document.fonts) return [];
+    const faces: FontFace[] = [];
+    document.fonts.forEach(face => faces.push(face));
+    const missing = new Set<string>();
+    for (const layer of doc.pages.flatMap(p => p.layers)) {
+      if (layer.type !== 'text' || layer.hidden) continue;
+      const family = this.fontFamily(layer.font.family);
+      const own = faces.filter(face => face.family.replace(/^["']|["']$/g, '') === family);
+      const text = (layer.field ? texts.join('') : layer.text) || 'A';
+      const font = `${layer.font.style} ${layer.font.weight} 16px "${family}"`;
+      if (!own.length || own.every(face => face.status === 'error') || !document.fonts.check(font, text)) {
+        missing.add(layer.font.family);
+      }
+    }
+    return [...missing];
   }
 
   /**

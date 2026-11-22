@@ -5,12 +5,13 @@
  * @author JS
  * @created 2026
  * @description Unit tests of the rules of the folder tree (the same as the API): children, path,
- *   level, height, moves into the own subtree and over the depth limit, free names.
+ *   level, height, moves into the own subtree and over the depth limit, free names, the tree as
+ *   an indented list of options.
  * @dependencies none
  */
 
 import { CreatorFolder } from './js-creator.models';
-import { MAX_FOLDER_DEPTH, canMove, childrenOf, heightOf, isWithin, levelOf, nameTaken, pathOf } from './folder-tree';
+import { MAX_FOLDER_DEPTH, canMove, childrenOf, folderOptions, heightOf, isWithin, levelOf, nameTaken, pathOf } from './folder-tree';
 
 /**
  * @description Folder of a test tree.
@@ -68,5 +69,19 @@ describe('folder-tree', () => {
     expect(nameTaken(tree, 4, ' akce ')).toBeTrue();
     expect(nameTaken(tree, null, 'Akce')).toBeFalse();
     expect(nameTaken(tree, 4, 'Akce', 5)).toBeFalse();
+  });
+
+  /**
+   * @description The options list every folder in tree order (each before its subfolders, by
+   *   name) with the indentation of its level.
+   * @input the test tree
+   * @output Alfa, — Akce, Beta, — F2, — — F3 with depths 1, 2, 1, 2, 3
+   */
+  it('lists the folders as options', () => {
+    const options = folderOptions(tree);
+    expect(options.map(o => o.id)).toEqual([4, 5, 1, 2, 3]);
+    expect(options.map(o => o.depth)).toEqual([1, 2, 1, 2, 3]);
+    expect(options.map(o => o.label)).toEqual(['Alfa', '— Akce', 'Beta', '— F2', '— — F3']);
+    expect(folderOptions([])).toEqual([]);
   });
 });

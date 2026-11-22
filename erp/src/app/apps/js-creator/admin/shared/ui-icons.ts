@@ -4,7 +4,8 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Icons of the interface of the editor (tools, layers, alignment, zoom …), drawn by
+ * @description Icons of the interface of the editor and the workspace pages (tools, layers,
+ *   alignment, zoom, download, move …), drawn by
  *   CreatorIconComponent. They are Lucide icons (ISC licence - assets/icons/LICENSE.txt); the
  *   icons a user puts INTO a template are the separate set of assets/icons/icons.json.
  * @usage `<app-creator-icon [nodes]="uiIcon('undo')" [size]="16" />`
@@ -14,10 +15,12 @@
 import { IconNode } from './js-creator.models';
 
 /** Name of an interface icon. */
-export type UiIconName = 'undo' | 'redo' | 'zoom-in' | 'zoom-out' | 'fit' | 'text' | 'image' | 'grid' | 'shape' | 'icon' | 'eye' | 'eye-off' | 'lock' | 'unlock' | 'copy' | 'trash' | 'up' | 'down' | 'front' | 'back' | 'align-left' | 'align-hcenter' | 'align-right' | 'align-top' | 'align-vcenter' | 'align-bottom' | 'distribute-h' | 'distribute-v' | 'snap' | 'save' | 'arrow-left' | 'grip' | 'field' | 'highlight' | 'safe-zone' | 'plus' | 'x' | 'magnet' | 'layers' | 'sliders' | 'settings' | 'keyboard' | 'braces' | 'rect' | 'ellipse' | 'line' | 'hand' | 'ratio';
+export type UiIconName = 'undo' | 'redo' | 'zoom-in' | 'zoom-out' | 'fit' | 'text' | 'image' | 'grid' | 'shape' | 'icon' | 'eye' | 'eye-off' | 'lock' | 'unlock' | 'copy' | 'trash' | 'up' | 'down' | 'front' | 'back' | 'align-left' | 'align-hcenter' | 'align-right' | 'align-top' | 'align-vcenter' | 'align-bottom' | 'distribute-h' | 'distribute-v' | 'snap' | 'save' | 'arrow-left' | 'grip' | 'field' | 'highlight' | 'safe-zone' | 'plus' | 'x' | 'magnet' | 'layers' | 'sliders' | 'settings' | 'keyboard' | 'braces' | 'rect' | 'ellipse' | 'line' | 'hand' | 'ratio' | 'download' | 'folder-input';
 
 /** Elements of the interface icons (Lucide, 24 × 24 grid). */
 const UI_ICONS: Record<UiIconName, IconNode[]> = {
+  'download': [["path",{"d":"M12 15V3"}],["path",{"d":"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"}],["path",{"d":"m7 10 5 5 5-5"}]],
+  'folder-input': [["path",{"d":"M2 9V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1"}],["path",{"d":"M2 13h10"}],["path",{"d":"m9 16 3-3-3-3"}]],
   'undo': [["path",{"d":"M9 14 4 9l5-5"}],["path",{"d":"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"}]],
   'redo': [["path",{"d":"m15 14 5-5-5-5"}],["path",{"d":"M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13"}]],
   'zoom-in': [["circle",{"cx":"11","cy":"11","r":"8"}],["line",{"x1":"21","x2":"16.65","y1":"21","y2":"16.65"}],["line",{"x1":"11","x2":"11","y1":"8","y2":"14"}],["line",{"x1":"8","x2":"14","y1":"11","y2":"11"}]],

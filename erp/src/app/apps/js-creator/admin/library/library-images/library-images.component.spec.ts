@@ -79,7 +79,7 @@ describe('LibraryImagesComponent', () => {
    * @output alert quota_full_title; no upload
    */
   it('refuses files over the quota', () => {
-    TestBed.inject(WorkspaceUsageService).usage.set({ used_bytes: 1000, quota_bytes: 1000, trash_bytes: 0, counts: { folders: 0, images: 0, fonts: 0, templates: 0 } });
+    TestBed.inject(WorkspaceUsageService).usage.set({ used_bytes: 1000, quota_bytes: 1000, trash_bytes: 0, counts: { folders: 0, images: 0, fonts: 0, templates: 0, outputs: 0 } });
     component.upload([new File(['x'], 'a.png')]);
     expect(ctx.alert.open.calls.mostRecent().args[0]).toBe('js-creator-library.quota_full_title');
     expect(ctx.dataHandler.upload).not.toHaveBeenCalled();

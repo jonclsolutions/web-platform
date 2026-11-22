@@ -8,7 +8,9 @@
  * @created 2026
  * @description Test tables of the application "JS Creator" (SQLite mirror of its migrations):
  *   audit log, folders, library images, own fonts, settings, individual quotas, templates and
- *   their usages - with the same foreign keys (ON DELETE CASCADE from users and from the parent folder).
+ *   their usages, outputs and their files - with the same foreign keys (ON DELETE CASCADE from
+ *   users and from the parent folder / output, SET NULL from the folder and the template of an
+ *   output).
  * @dependencies Tests\Support\TestSchema (audit log shape); run by TestSchema::create() while
  *   the application is in config/apps.php.
  */
@@ -115,6 +117,41 @@ final class JsCreatorSchema
             $t->unsignedBigInteger('target_id');
             $t->unique(['owner_type', 'owner_id', 'target_type', 'target_id']);
             $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+        });
+
+        Schema::create('js_creator_outputs', function (Blueprint $t) {
+            $t->id();
+            $t->unsignedInteger('user_id');
+            $t->unsignedBigInteger('folder_id')->nullable();
+            $t->string('section', 20);
+            $t->string('name', 150);
+            $t->unsignedBigInteger('template_id')->nullable();
+            $t->string('template_name', 120);
+            $t->text('caption')->nullable();
+            $t->unsignedSmallInteger('width');
+            $t->unsignedSmallInteger('height');
+            $t->string('format', 4);
+            $t->unsignedTinyInteger('page_count')->default(1);
+            $t->unsignedBigInteger('size_bytes');
+            $t->unsignedBigInteger('trash_root_id')->nullable();
+            $t->timestamps();
+            $t->softDeletes();
+            $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+            $t->foreign('folder_id')->references('id')->on('js_creator_folders')->nullOnDelete();
+            $t->foreign('template_id')->references('id')->on('js_creator_templates')->nullOnDelete();
+        });
+
+        Schema::create('js_creator_output_files', function (Blueprint $t) {
+            $t->id();
+            $t->unsignedBigInteger('output_id');
+            $t->unsignedTinyInteger('page');
+            $t->string('path', 255);
+            $t->string('thumb_path', 255);
+            $t->string('mime', 32);
+            $t->unsignedBigInteger('size_bytes');
+            $t->timestamps();
+            $t->unique(['output_id', 'page']);
+            $t->foreign('output_id')->references('id')->on('js_creator_outputs')->cascadeOnDelete();
         });
     }
 }

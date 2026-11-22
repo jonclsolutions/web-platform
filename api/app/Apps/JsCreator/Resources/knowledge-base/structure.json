@@ -5,18 +5,28 @@
       "group": "js-creator",
       "order": 5,
       "permission": "js-creator-images-view",
-      "devNote": "TemplatesPageComponent (apps/js-creator/admin/images/templates), route 'js-creator/image-templates' (úvodní stránka aplikace), permission 'js-creator-images-view'. API js-creator/images/templates (TemplateController, routa za každou sekci z JsCreatorSections, sekce v route defaults): GET (only_trashed, search, size=<š>x<v>, sort_by name|updated_at|created_at, meta.sizes), POST (name, width, height → prázdný dokument), GET/PUT {id}, POST {id}/duplicate (name, volitelně width + height), POST {id}/thumbnail, DELETE {id} (?force=1), POST {id}/restore, DELETE trash. Tabulky js_creator_templates (dokument JSON, version, thumb_path/thumb_bytes) a js_creator_usages (šablona → obrázek/font knihovny; použitý soubor nejde smazat, 409 in_use). Miniatura WebP 480 px se počítá do kvóty. Vše jen v pracovním prostoru přihlášeného účtu (ownedBy, cizí ID = 404, ani sysadmin). Retence koše: JsCreatorRetentionSource (klíč js_creator_trash).",
+      "devNote": "TemplatesPageComponent (apps/js-creator/admin/images/templates), route 'js-creator/image-templates' (úvodní stránka aplikace), permission 'js-creator-images-view'. API js-creator/images/templates (TemplateController, routa za každou sekci z JsCreatorSections, sekce v route defaults): GET (only_trashed, search, size=<š>x<v>, sort_by name|updated_at|created_at, meta.sizes), POST (name, width, height → prázdný dokument), GET/PUT {id}, POST {id}/duplicate (name, volitelně width + height), POST {id}/thumbnail, DELETE {id} (?force=1), POST {id}/restore, DELETE trash. Tabulky js_creator_templates (dokument JSON, version, thumb_path/thumb_bytes) a js_creator_usages (šablona → obrázek/font knihovny; použitý soubor nejde smazat, 409 in_use). Miniatura WebP 480 px se počítá do kvóty. Vše jen v pracovním prostoru přihlášeného účtu (ownedBy, cizí ID = 404, ani sysadmin). Retence koše: JsCreatorRetentionSource (klíč js_creator_trash). Hlavní akce karty (náhled, tlačítko Generovat) otevře route 'js-creator/image-templates/:id/generate', tužka editor.",
       "sections": {
         "edit": "js-creator-images-create",
         "trash": "js-creator-images-delete"
       }
     },
     {
-      "id": "js-creator-editor",
+      "id": "js-creator-generate",
       "group": "js-creator",
       "order": 6,
       "permission": "js-creator-images-view",
-      "devNote": "TemplateEditorComponent (apps/js-creator/admin/images/editor), route 'js-creator/image-templates/:id/edit' s canDeactivate unsavedTemplateGuard, permission 'js-creator-images-view' (ukládání jen s 'js-creator-images-update', jinak jen pro čtení). Stav: EditorStore (signály, historie 150 kroků, schránka). Plátno: EditorCanvasComponent (Canvas 2D + SVG vrstva editoru, snapping.ts). Vykreslovací jádro shared/render (document.ts – typy, limity a výchozí hodnoty dokumentu schema 1; geometry.ts – kotvy; text-layout.ts – sazba, zvýraznění **…**, zmenšení, přetečení; renderer.ts; resource-store.ts – obrázky knihovny, fonty jsc-*, ikony). Uložení: PUT js-creator/images/templates/{id} (DataHandler.putQuietly) s version → 409 version_conflict / 422 cesty chyb (TemplateDocument validuje dokument striktně, vlastnictví obrázků a fontů) → POST {id}/thumbnail. Editor je pro obrazovky ≥ 1024 px.",
+      "devNote": "GeneratePageComponent (apps/js-creator/admin/images/generate) + GeneratePreviewComponent, route 'js-creator/image-templates/:id/generate', permission 'js-creator-images-view' (generování 'js-creator-images-create', bez něj jen náhled). Pravidla formuláře generate-form.ts (text příspěvku {{klic}}, zvýraznění **…**, co blokuje generování, výchozí název), fotky z počítače local-image.ts (createImageBitmap s orientací EXIF, náhled max. 2048 px, pro výstup znovu v potřebném rozlišení; na server se NEPOSÍLAJÍ), výřez field-images.ts (fieldImageBoxes, panCrop, zoomCrop 1–4×, requiredScale) a RenderValues.crops v renderer.ts. Generovat: RenderResourceStore.ensureFonts + missingFonts (náhradní font nesmí do výstupu) + assetsReady → renderPage v režimu output v přesné velikosti šablony → PNG → POST js-creator/images/outputs (OutputController::store, DataHandler.postQuietly; upload profil js_creator_output – PNG do 20 MB; OutputImage ověří PNG a přesné rozměry, převede do PNG / JPG šablony, miniatura WebP 480 px; kvóta 422 quota_exceeded; 422 template_id / folder_id / file). Poslední cílová složka v localStorage 'jsc.generate.folder' (jen id).",
+      "sections": {
+        "generate": "js-creator-images-create"
+      }
+    },
+    {
+      "id": "js-creator-editor",
+      "group": "js-creator",
+      "order": 7,
+      "permission": "js-creator-images-view",
+      "devNote": "TemplateEditorComponent (apps/js-creator/admin/images/editor), route 'js-creator/image-templates/:id/edit' s canDeactivate unsavedTemplateGuard, permission 'js-creator-images-view' (ukládání jen s 'js-creator-images-update', jinak jen pro čtení). Stav: EditorStore (signály, historie 150 kroků, schránka). Plátno: EditorCanvasComponent (Canvas 2D + SVG vrstva editoru, snapping.ts). Vykreslovací jádro shared/render (document.ts – typy, limity a výchozí hodnoty dokumentu schema 1; geometry.ts – kotvy; text-layout.ts – sazba, zvýraznění **…**, zmenšení, přetečení; renderer.ts; resource-store.ts – obrázky knihovny, fonty jsc-*, ikony). Uložení: PUT js-creator/images/templates/{id} (DataHandler.putQuietly) s version → 409 version_conflict / 422 cesty chyb (TemplateDocument validuje dokument striktně, vlastnictví obrázků a fontů) → POST {id}/thumbnail. Editor je pro obrazovky ≥ 1024 px. Tlačítko Generovat v horní liště otevře generování (neuložené změny se ptají přes guard).",
       "sections": {
         "save": "js-creator-images-update"
       }
@@ -26,7 +36,7 @@
       "group": "js-creator",
       "order": 10,
       "permission": "js-creator-images-view",
-      "devNote": "OutputsPageComponent (apps/js-creator/admin/outputs) + FolderTreeComponent (admin/shared/folder-tree), route 'js-creator/outputs', permission 'js-creator-images-view' (s dalšími sekcemi '…|js-creator-videos-view'). API js-creator/folders (FolderController, FolderTree, tabulka js_creator_folders): GET (?only_trashed=1 = položky koše), POST, PUT {id} (název / parent_id), DELETE {id} (?force=1 = z koše natrvalo), POST {id}/restore, DELETE folders/trash. Pravidla: max. 10 úrovní, unikátní název v nadřazené složce (bez ohledu na velikost písmen), nelze přesunout do vlastní podsložky; smazání přesune celý podstrom do koše jako jednu položku (trash_root_id). Vše jen v pracovním prostoru přihlášeného účtu (ownedBy, cizí ID = 404, ani sysadmin). Vygenerované výstupy přibudou se šablonami (další etapy).",
+      "devNote": "OutputsPageComponent (apps/js-creator/admin/outputs) + FolderTreeComponent (admin/shared/folder-tree), route 'js-creator/outputs' (?folder=<id|root>&output=<id> otevře složku a detail), permission 'js-creator-images-view' (s dalšími sekcemi '…|js-creator-videos-view'). Složky: API js-creator/folders (FolderController, FolderTree, tabulka js_creator_folders): GET (?only_trashed=1 = položky koše), POST, PUT {id} (název / parent_id), DELETE {id} (?force=1 = z koše natrvalo), POST {id}/restore, DELETE folders/trash. Pravidla: max. 10 úrovní, unikátní název v nadřazené složce (bez ohledu na velikost písmen), nelze přesunout do vlastní podsložky; smazání přesune celý podstrom i s výstupy do koše jako jednu položku (trash_root_id u složek i výstupů), trvalé smazání smaže i výstupy a jejich soubory. Výstupy: API js-creator/outputs (OutputController, OutputsApiService; tabulky js_creator_outputs + js_creator_output_files po stránkách): GET (folder_id, search ve všech složkách, section, sort_by created_at|name|size_bytes, only_trashed = výstupy smazané samostatně), PUT {id} (name / folder_id), DELETE {id} (?force=1), POST {id}/restore (chybí-li složka, do kořene), DELETE outputs/trash, POST outputs/bulk (move|delete|restore|destroy, max. 200 id), POST outputs/zip (max. 200 výstupů / 500 MB → podepsaná URL js-creator/files/zip platná 10 min, ZIP bez komprese s unikátními názvy). Soubory jen přes podepsané URL js-creator/files/outputs/{id}/{original|thumb|download} (download = Content-Disposition attachment s názvem výstupu). Každý výstup potřebuje oprávnění své sekce (JsCreatorSections::allowed). Vše jen v pracovním prostoru přihlášeného účtu (ownedBy, cizí ID = 404, ani sysadmin).",
       "sections": {
         "edit": "js-creator-images-create|js-creator-images-update",
         "trash": "js-creator-images-delete"
@@ -48,7 +58,7 @@
       "group": "js-creator",
       "order": 80,
       "permission": "js-creator-settings-view",
-      "devNote": "CreatorSettingsComponent (apps/js-creator/admin/settings), route 'js-creator/settings', API GET/PUT js-creator/settings (výchozí kvóta, tabulka js_creator_settings), GET js-creator/settings/users (počty složek, obrázků, fontů a šablon; obsazené místo vč. miniatur šablon; účty s view-js-creator - role, explicitní oprávnění, sysadmin - a účty s daty; jen čísla), PUT js-creator/settings/users/{id}/quota (js_creator_user_quotas, null = výchozí). SettingsController, oprávnění 'js-creator-settings-view' / '-update'. Retence koše: JsCreatorRetentionSource (klíč js_creator_trash, 30 dní; cleanUp maže soubory bez záznamu starší 1 dne). Trvalé smazání účtu: cizí klíče user_id ON DELETE CASCADE.",
+      "devNote": "CreatorSettingsComponent (apps/js-creator/admin/settings), route 'js-creator/settings', API GET/PUT js-creator/settings (výchozí kvóta, tabulka js_creator_settings), GET js-creator/settings/users (počty složek, obrázků, fontů, šablon a výstupů; obsazené místo vč. miniatur šablon a výstupů; účty s view-js-creator - role, explicitní oprávnění, sysadmin - a účty s daty; jen čísla), PUT js-creator/settings/users/{id}/quota (js_creator_user_quotas, null = výchozí). SettingsController, oprávnění 'js-creator-settings-view' / '-update'. Retence koše: JsCreatorRetentionSource (klíč js_creator_trash, 30 dní; cleanUp maže soubory bez záznamu starší 1 dne). Trvalé smazání účtu: cizí klíče user_id ON DELETE CASCADE.",
       "sections": {
         "quota": "js-creator-settings-update"
       }
@@ -58,7 +68,7 @@
       "group": "js-creator",
       "order": 900,
       "permission": "js-creator-view-logs",
-      "devNote": "AuditLogPageComponent (core) with JS_CREATOR_AUDIT_LOG (js-creator-logs.config.ts), route 'js-creator/logs', API GET js-creator/logs (JsCreatorLogController, table js_creator_logs), permission 'js-creator-view-logs'. Záznamy obsahují jen typ a ID (Folder, Asset, Font, Template) a změny kvót / nastavení - nikdy názvy ani obsah pracovního prostoru."
+      "devNote": "AuditLogPageComponent (core) with JS_CREATOR_AUDIT_LOG (js-creator-logs.config.ts), route 'js-creator/logs', API GET js-creator/logs (JsCreatorLogController, table js_creator_logs), permission 'js-creator-view-logs'. Záznamy obsahují jen typ a ID (Folder, Asset, Font, Template, Output) a změny kvót / nastavení - nikdy názvy ani obsah pracovního prostoru."
     }
   ]
 }

@@ -8,7 +8,8 @@
  * @description Manifest of the application "JS Creator" - posts for social networks generated
  *   from own templates (no AI, no public part). Everything the core needs to know about it:
  *   permissions, audit log, base data, retention (trash of the workspaces - library, folders,
- *   templates - + clean-up of files without a record) and the upload profiles of the library. Registered in config/apps.php.
+ *   templates, outputs - + clean-up of files without a record) and the upload profiles (library,
+ *   generated outputs). Registered in config/apps.php.
  * @note Every account has its own private workspace - nobody else (not even the sysadmin) sees
  *   it. Its files are NOT in uploadFolders(): the core command storage:prune-orphans knows only
  *   attachments and would delete them; JsCreatorRetentionSource cleans them up instead.
@@ -31,6 +32,9 @@ final class JsCreatorApp extends AppManifest
 
     /** @description Upload profile of the own fonts (StoreFontRequest). */
     public const UPLOAD_FONT = 'js_creator_font';
+
+    /** @description Upload profile of a generated output - the PNG drawn by the browser (StoreOutputRequest). */
+    public const UPLOAD_OUTPUT = 'js_creator_output';
 
     /** @description See AppManifest::id(). */
     public function id(): string
@@ -71,6 +75,7 @@ final class JsCreatorApp extends AppManifest
         return [
             self::UPLOAD_IMAGE => ['extensions' => ['jpg', 'jpeg', 'png', 'webp'], 'max_files' => 10, 'max_file_kb' => 15360, 'max_total_bytes' => null],
             self::UPLOAD_FONT  => ['extensions' => FontFile::EXTENSIONS, 'max_files' => 1, 'max_file_kb' => 5120, 'max_total_bytes' => null],
+            self::UPLOAD_OUTPUT => ['extensions' => ['png'], 'max_files' => 1, 'max_file_kb' => 20480, 'max_total_bytes' => null],
         ];
     }
 }

@@ -8,7 +8,7 @@
  *   - loads the template, the own fonts, the curated font set, the icon set and the library
  *     images the template uses; fonts are loaded with the characters of the texts before drawing;
  *   - top bar: back, name, undo / redo, zoom (fit, 100 %, ±), grid with snapping, smart guides,
- *     safe zone, state of the save and Save;
+ *     safe zone, state of the save, Save and Generate (opens generating from the template);
  *   - left: adding layers (text, image, grid, shape, icon) and the layers; middle: the canvas;
  *     right: Properties, Fields, Template;
  *   - keyboard: Ctrl+S save, Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y, Ctrl+C / Ctrl+V / Ctrl+D, Ctrl+A,
@@ -465,5 +465,11 @@ export class TemplateEditorComponent implements OnInit, LeavablePage {
   /** @description Back to the list of templates (asks about unsaved changes through the guard). */
   back(): void {
     void this.router.navigate(['/admin/js-creator/image-templates']);
+  }
+
+  /** @description Opens generating from this template (asks about unsaved changes through the guard). */
+  generate(): void {
+    const store = this.store();
+    if (store) void this.router.navigate(['/admin/js-creator/image-templates', store.templateId, 'generate']);
   }
 }

@@ -23,7 +23,7 @@ describe('WorkspaceUsageService', () => {
    */
   it('checks whether files fit into the quota', () => {
     const ctx = createAdminTestContext();
-    ctx.dataHandler.get.and.returnValue(of({ used_bytes: 900, quota_bytes: 1000, trash_bytes: 0, counts: { folders: 0, images: 0, fonts: 0, templates: 0 } }));
+    ctx.dataHandler.get.and.returnValue(of({ used_bytes: 900, quota_bytes: 1000, trash_bytes: 0, counts: { folders: 0, images: 0, fonts: 0, templates: 0, outputs: 0 } }));
     TestBed.configureTestingModule({ providers: ctx.providers });
     const service = TestBed.inject(WorkspaceUsageService);
 

@@ -6,14 +6,17 @@
  * @created 2026
  * @description Unit tests of OutputsPageComponent: loads the folders and the trash, creates /
  *   renames / moves a folder (names checked before sending), deletes after a confirmation, works
- *   with the trash, and hides actions without permissions.
+ *   with the trash, hides actions without permissions; lists the outputs of a folder and of a
+ *   search, opens an output from the address, its detail (copy, rename, move, delete, generate
+ *   again), selection (ZIP, move, delete) and the outputs of the trash.
  * @dependencies src/testing/admin-test-helpers.ts (admin doubles).
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { OutputsPageComponent } from './outputs-page.component';
-import { CreatorFolder } from '../shared/js-creator.models';
+import { CreatorFolder, CreatorOutput } from '../shared/js-creator.models';
 import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
 
 /**
@@ -25,6 +28,28 @@ import { AdminTestContext, createAdminTestContext } from '../../../../../testing
  */
 function folder(id: number, parent: number | null, name: string, deleted: string | null = null): CreatorFolder {
   return { id, parent_id: parent, name, created_at: null, updated_at: null, deleted_at: deleted };
+}
+
+/**
+ * @description Output of the workspace.
+ * @param id Id.
+ * @param folderId Folder.
+ * @param deleted Deletion time.
+ */
+function output(id: number, folderId: number | null, deleted: string | null = null): CreatorOutput {
+  return {
+    id, section: 'images', folder_id: folderId, name: `Post ${id}`, template_id: 7, template_name: 'Letní akce', caption: `Text ${id}`,
+    width: 1080, height: 1350, format: 'png', page_count: 1, size_bytes: 2048, url: `/o/${id}`, thumb_url: `/t/${id}`, download_url: `/d/${id}`,
+    created_at: '2026-11-22 10:00:00', updated_at: null, deleted_at: deleted,
+  };
+}
+
+/**
+ * @description Page of outputs answered by the API.
+ * @param data Outputs.
+ */
+function page(data: CreatorOutput[]) {
+  return { data, meta: { total: data.length, per_page: 48, current_page: 1, last_page: 1 } };
 }
 
 describe('OutputsPageComponent', () => {
@@ -40,28 +65,39 @@ describe('OutputsPageComponent', () => {
    * @description Creates the page with the given permissions.
    * @param granted Permissions of the account.
    */
-  async function create(granted: string[] | 'all' = 'all'): Promise<void> {
+  async function create(granted: string[] | 'all' = 'all', query: Record<string, string> = {}): Promise<void> {
     ctx = createAdminTestContext({ granted });
     served = [...folders];
     ctx.dataHandler.getCollection.and.callFake(((url: string, params?: { only_trashed?: number }) =>
       of(url === 'js-creator/folders' ? (params?.only_trashed ? trashed : served) : [])) as never);
+    ctx.dataHandler.getPaginatedCollection.and.callFake(((url: string) => of(
+      url.includes('only_trashed=1') ? page([output(8, null, '2026-11-21 09:00:00')])
+        : url.includes('search=') ? page([output(1, null), output(2, 2)])
+          : url.includes('folder_id=2') ? page([output(2, 2), output(3, 2)])
+            : page([output(1, null)]),
+    )) as never);
     ctx.dataHandler.post.and.returnValue(of(folder(5, 1, 'Nová')));
-    await TestBed.configureTestingModule({ imports: [OutputsPageComponent], providers: ctx.providers }).compileComponents();
+    const providers = [...ctx.providers];
+    if (Object.keys(query).length) {
+      providers.push({ provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(query) } } });
+    }
+    await TestBed.configureTestingModule({ imports: [OutputsPageComponent], providers }).compileComponents();
     fixture = TestBed.createComponent(OutputsPageComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   }
 
   /**
-   * @description The folders and the trash are loaded; the trash count is on its button.
-   * @input folders [Kampaně > Léto], trash [Staré]
-   * @output tree rows; view button of the trash with count 1
+   * @description The folders and the trash are loaded; the trash count (folders and outputs) is
+   *   on its button.
+   * @input folders [Kampaně > Léto], trash [Staré] + one output in the trash
+   * @output tree rows; view button of the trash with count 2
    */
   it('loads the folders and the trash', async () => {
     await create();
     expect(component.folders.length).toBe(2);
     expect(component.trashed.length).toBe(1);
-    expect(component.viewItems[1].count).toBe(1);
+    expect(component.viewItems[1].count).toBe(2);
     expect(fixture.nativeElement.querySelector('app-folder-tree')).not.toBeNull();
   });
 
@@ -152,5 +188,126 @@ describe('OutputsPageComponent', () => {
     await create(['view-js-creator', 'js-creator-images-view']);
     expect([component.canCreate, component.canUpdate, component.canDelete]).toEqual([false, false, false]);
     expect(fixture.nativeElement.querySelector('.op-tree-head .ws-btn')).toBeNull();
+  });
+
+  /**
+   * @description The outputs of the top level are listed; selecting a folder lists its outputs;
+   *   a search looks into every folder and shows the folder of each result.
+   * @input start; select(2); search "a"
+   * @output Post 1; Post 2 + Post 3 (folder_id=2); 2 results, folder path "Kampaně / Léto"
+   */
+  it('lists the outputs of a folder and of a search', async () => {
+    await create();
+    expect(component.outputs.map(o => o.id)).toEqual([1]);
+    expect(ctx.dataHandler.getPaginatedCollection).toHaveBeenCalledWith('js-creator/outputs?page=1&sort_by=created_at&sort_direction=desc');
+    component.select(2);
+    expect(component.outputs.map(o => o.id)).toEqual([2, 3]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.op-card').length).toBe(2);
+
+    jasmine.clock().install();
+    component.search = 'a';
+    component.onSearch();
+    jasmine.clock().tick(400);
+    jasmine.clock().uninstall();
+    expect(component.outputs.length).toBe(2);
+    expect(component.folderPath(component.outputs[1])).toBe('Kampaně / Léto');
+    expect(component.folderPath(component.outputs[0])).toBe('js-creator-outputs.root');
+  });
+
+  /**
+   * @description `?folder=2&output=3` opens the folder and the detail of the output; the detail
+   *   copies the text of the post, renames, moves, deletes and generates again.
+   * @input query folder 2, output 3; copy; rename "Nové"; move to the top; delete; generate again
+   * @output detail of 3; clipboard "Text 3"; PUT outputs/3 {name}; PUT {folder_id: null}; DELETE outputs/3
+   *   after a confirmation and the detail closed; navigate to image-templates/7/generate
+   */
+  it('opens an output from the address and works with its detail', async () => {
+    await create('all', { folder: '2', output: '3' });
+    expect(component.selectedId).toBe(2);
+    expect(component.detail?.id).toBe(3);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.op-detail')).not.toBeNull();
+
+    const clipboard = spyOn(navigator.clipboard, 'writeText').and.resolveTo();
+    await component.copyCaption(component.detail!);
+    expect(clipboard).toHaveBeenCalledWith('Text 3');
+    expect(component.copied).toBeTrue();
+
+    ctx.dataHandler.put.and.returnValue(of(output(3, 2)) as never);
+    component.openRenameOutput(component.detail!);
+    component.outputDialog!.name = ' ';
+    component.submitOutputDialog();
+    expect(component.outputDialog!.error).toBe('js-creator-outputs.error_output_name_required');
+    component.outputDialog!.name = 'Nové';
+    component.submitOutputDialog();
+    expect(ctx.dataHandler.put).toHaveBeenCalledWith('js-creator/outputs/3', { name: 'Nové' });
+    component.openMoveOutput(component.detail!);
+    component.setOutputTarget('');
+    component.submitOutputDialog();
+    expect(ctx.dataHandler.put).toHaveBeenCalledWith('js-creator/outputs/3', { folder_id: null });
+
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    component.generateAgain(component.detail!);
+    expect(navigate).toHaveBeenCalledWith(['/admin/js-creator/image-templates', 7, 'generate']);
+    await component.removeOutput(component.detail!);
+    expect(ctx.confirm.open).toHaveBeenCalled();
+    expect(ctx.dataHandler.delete).toHaveBeenCalledWith('js-creator/outputs/3');
+    expect(component.detail).toBeNull();
+  });
+
+  /**
+   * @description Several outputs: select all, download as a ZIP (the signed URL is opened as a
+   *   download), move them and delete them after a confirmation.
+   * @input folder 2 with outputs 2 and 3; select all; ZIP; move to folder 1; delete
+   * @output POST outputs/zip {ids [2, 3]} and a link clicked; POST outputs/bulk move to 1; bulk delete; selection cleared
+   */
+  it('works with several outputs', async () => {
+    await create();
+    component.select(2);
+    component.toggleAll();
+    expect(component.allSelected).toBeTrue();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.op-selection')).not.toBeNull();
+
+    const click = spyOn(HTMLAnchorElement.prototype, 'click');
+    ctx.dataHandler.post.and.returnValue(of({ url: '/api/js-creator/files/zip?x', count: 2, bytes: 10 }) as never);
+    component.downloadZip();
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/outputs/zip', { ids: [2, 3] });
+    expect(click).toHaveBeenCalled();
+
+    ctx.dataHandler.post.and.returnValue(of({ count: 2 }) as never);
+    component.openBulkMove();
+    component.setOutputTarget('1');
+    component.submitOutputDialog();
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/outputs/bulk', { action: 'move', ids: [2, 3], folder_id: 1 });
+    expect(component.selected.size).toBe(0);
+
+    component.toggle(component.outputs[0]);
+    await component.removeSelected();
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/outputs/bulk', { action: 'delete', ids: [2] });
+  });
+
+  /**
+   * @description The trash lists the deleted outputs beside the folders; an output is restored or
+   *   deleted for good; emptying empties both.
+   * @input switch to the trash; restore / destroy output 8; empty
+   * @output output 8 listed, count 2 on the trash button; POST outputs/8/restore; DELETE outputs/8?force=1;
+   *   DELETE folders/trash and outputs/trash
+   */
+  it('works with the outputs of the trash', async () => {
+    await create();
+    expect(component.viewItems[1].count).toBe(2);
+    component.switchView('trash');
+    expect(component.outputs.map(o => o.id)).toEqual([8]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.op-card').length).toBe(1);
+    component.restoreOutput(component.outputs[0]);
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/outputs/8/restore', {});
+    await component.destroyOutput(component.outputs[0]);
+    expect(ctx.dataHandler.delete).toHaveBeenCalledWith('js-creator/outputs/8?force=1');
+    await component.emptyTrash();
+    expect(ctx.dataHandler.delete).toHaveBeenCalledWith('js-creator/folders/trash');
+    expect(ctx.dataHandler.delete).toHaveBeenCalledWith('js-creator/outputs/trash');
   });
 });

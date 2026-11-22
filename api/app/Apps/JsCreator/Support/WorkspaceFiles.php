@@ -12,17 +12,19 @@
  *     from the origin of the admin, also behind a proxy.
  *   - They are valid until the end of the next full hour and do not change within an hour, so
  *     the browser can cache a thumbnail; `v` (file name) changes with every new file.
+ *   - A ZIP of outputs has its own short-lived URL bound to the account and the chosen outputs.
  * @note The folder is NOT an upload folder of the core (AppManifest::uploadFolders()): the core
  *   command storage:prune-orphans knows only attachments and would delete these files. Files
  *   without a record are removed by JsCreatorRetentionSource::cleanUp().
  * @dependencies private disk; routes `js-creator.files.asset`, `js-creator.files.font`,
- *   `js-creator.files.template`.
+ *   `js-creator.files.template`, `js-creator.files.output`, `js-creator.files.zip`.
  */
 
 namespace App\Apps\JsCreator\Support;
 
 use App\Apps\JsCreator\Models\CreatorAsset;
 use App\Apps\JsCreator\Models\CreatorFont;
+use App\Apps\JsCreator\Models\CreatorOutput;
 use App\Apps\JsCreator\Models\CreatorTemplate;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -37,10 +39,13 @@ final class WorkspaceFiles
     /** @description Root folder of every workspace on DISK. */
     public const ROOT = 'js-creator';
 
+    /** @description Validity of the URL of a ZIP of outputs (minutes). */
+    public const ZIP_MINUTES = 10;
+
     /**
      * @description New unique path of a file of an account.
      * @param int $userId Owner.
-     * @param string $kind Sub-folder: `library`, `thumbs`, `fonts`, `templates`.
+     * @param string $kind Sub-folder: `library`, `thumbs`, `fonts`, `templates`, `outputs`.
      * @param string $extension File extension (from the detected type, never from the upload name).
      * @return string Path on DISK.
      */
@@ -113,6 +118,37 @@ final class WorkspaceFiles
 
         return URL::temporarySignedRoute('js-creator.files.template', self::expiry(), [
             'id' => $template->id, 'v' => pathinfo($template->thumb_path, PATHINFO_FILENAME),
+        ], false);
+    }
+
+    /**
+     * @description Signed URL of the first page of an output.
+     * @param CreatorOutput $output Output with its files loaded.
+     * @param string $variant `original` (shown in the page), `thumb` (lists), `download` (saved as a file).
+     * @return string|null Relative URL; null when the output has no file.
+     */
+    public static function outputUrl(CreatorOutput $output, string $variant): ?string
+    {
+        $file = $output->files->first();
+        if ($file === null) {
+            return null;
+        }
+
+        return URL::temporarySignedRoute('js-creator.files.output', self::expiry(), [
+            'id' => $output->id, 'variant' => $variant, 'v' => pathinfo($variant === 'thumb' ? $file->thumb_path : $file->path, PATHINFO_FILENAME),
+        ], false);
+    }
+
+    /**
+     * @description Signed URL of a ZIP with outputs of an account (valid ZIP_MINUTES).
+     * @param int $userId Owner of the outputs.
+     * @param array<int, int> $ids Outputs (already checked to be own).
+     * @return string Relative URL.
+     */
+    public static function zipUrl(int $userId, array $ids): string
+    {
+        return URL::temporarySignedRoute('js-creator.files.zip', Carbon::now()->addMinutes(self::ZIP_MINUTES), [
+            'user' => $userId, 'ids' => implode(',', $ids),
         ], false);
     }
 

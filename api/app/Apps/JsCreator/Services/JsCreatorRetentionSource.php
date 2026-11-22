@@ -9,13 +9,13 @@
  *   JsCreatorApp::retentionSources():
  *   - `js_creator_trash` (default 30 days): what stays in the trash of a workspace longer than
  *     the period (counted from the deletion) is deleted for good with its files - images and
- *     fonts of the library, templates (with their thumbnails and usages), folders with their
- *     subtree;
+ *     fonts of the library, templates (with their thumbnails and usages), outputs, folders with
+ *     their subtree and the outputs deleted with them;
  *   - the audit log of the application (core `audit_logs` retention);
  *   - always: files of the workspaces without a record (e.g. after an account was deleted for
  *     good - its rows go with the account through the foreign keys, its files here) older than a
  *     day, so an upload in progress is never touched.
- * @dependencies CreatorAsset, CreatorFont, CreatorTemplate (deleteWithFiles), CreatorFolder, FolderTree,
+ * @dependencies CreatorAsset, CreatorFont, CreatorTemplate, CreatorOutput (deleteWithFiles), CreatorFolder, FolderTree,
  *   WorkspaceFiles, JsCreatorLog.
  */
 
@@ -24,6 +24,8 @@ namespace App\Apps\JsCreator\Services;
 use App\Apps\JsCreator\Models\CreatorAsset;
 use App\Apps\JsCreator\Models\CreatorFolder;
 use App\Apps\JsCreator\Models\CreatorFont;
+use App\Apps\JsCreator\Models\CreatorOutput;
+use App\Apps\JsCreator\Models\CreatorOutputFile;
 use App\Apps\JsCreator\Models\CreatorTemplate;
 use App\Apps\JsCreator\Models\JsCreatorLog;
 use App\Apps\JsCreator\Support\WorkspaceFiles;
@@ -70,6 +72,12 @@ final class JsCreatorRetentionSource implements RetentionSource
                 $count++;
             }
         });
+        CreatorOutput::trashItems()->where('deleted_at', '<', $cutoff)->chunkById(200, function ($outputs) use (&$count) {
+            foreach ($outputs as $output) {
+                $output->deleteWithFiles();
+                $count++;
+            }
+        });
         CreatorFolder::trashRoots()->where('deleted_at', '<', $cutoff)->get()->each(function (CreatorFolder $root) use (&$count) {
             (new FolderTree($root->user_id))->forceDelete($root);
             $count++;
@@ -91,7 +99,7 @@ final class JsCreatorRetentionSource implements RetentionSource
     }
 
     /**
-     * @description Deletes files of the workspaces that no image, font or template refers to
+     * @description Deletes files of the workspaces that no image, font, template or output refers to
      *   (trash included) and that are older than ORPHAN_MIN_AGE_HOURS.
      * @return int Number of deleted files.
      */
@@ -107,6 +115,8 @@ final class JsCreatorRetentionSource implements RetentionSource
             ...CreatorAsset::withTrashed()->pluck('thumb_path')->all(),
             ...CreatorFont::withTrashed()->pluck('path')->all(),
             ...CreatorTemplate::withTrashed()->whereNotNull('thumb_path')->pluck('thumb_path')->all(),
+            ...CreatorOutputFile::query()->pluck('path')->all(),
+            ...CreatorOutputFile::query()->pluck('thumb_path')->all(),
         ]);
         $limit = Carbon::now()->subHours(self::ORPHAN_MIN_AGE_HOURS)->getTimestamp();
 

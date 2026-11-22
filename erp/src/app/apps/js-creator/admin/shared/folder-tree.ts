@@ -6,8 +6,10 @@
  * @created 2026
  * @description Pure helpers of the folder tree of a workspace (the same rules as the API,
  *   FolderTree.php): children of a folder, path from the top, level, height of a subtree, whether
- *   a folder lies inside another one, and whether a name is free among the siblings.
- * @usage The folder tree component and the outputs page check a move or a name before sending it.
+ *   a folder lies inside another one, whether a name is free among the siblings, and the tree as
+ *   an indented list (select of a target folder).
+ * @usage The folder tree component and the outputs page check a move or a name before sending it;
+ *   the generator and the outputs page offer target folders with folderOptions().
  */
 
 import { CreatorFolder } from './js-creator.models';
@@ -91,4 +93,31 @@ export function canMove(folders: readonly CreatorFolder[], folderId: number, par
 export function nameTaken(folders: readonly CreatorFolder[], parentId: number | null, name: string, exceptId: number | null = null): boolean {
   const needle = name.trim().toLocaleLowerCase();
   return folders.some(f => f.parent_id === parentId && f.id !== exceptId && f.name.toLocaleLowerCase() === needle);
+}
+
+/** A folder in an indented list. */
+export interface FolderOption {
+  id: number;
+  /** Name with the indentation of its level. */
+  label: string;
+  /** Level (1 = top-level folder). */
+  depth: number;
+}
+
+/**
+ * @description Every folder in the order of the tree (each folder before its subfolders, by
+ *   name), with the indentation of its level - options of a select.
+ * @param folders All folders.
+ * @returns Options (without the top level itself).
+ */
+export function folderOptions(folders: readonly CreatorFolder[]): FolderOption[] {
+  const options: FolderOption[] = [];
+  const walk = (parentId: number | null, depth: number): void => {
+    for (const folder of childrenOf(folders, parentId)) {
+      options.push({ id: folder.id, label: `${'\u2014 '.repeat(depth - 1)}${folder.name}`, depth });
+      if (depth < MAX_FOLDER_DEPTH + 1) walk(folder.id, depth + 1);
+    }
+  };
+  walk(null, 1);
+  return options;
 }

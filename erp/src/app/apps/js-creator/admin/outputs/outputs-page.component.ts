@@ -4,20 +4,28 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Page "Outputs" (js-creator/outputs) of the OWN workspace: the folder tree shared by
- *   every section (new folder, rename, move - also by drag and drop -, delete to the trash with
- *   the subtree), the content of the selected folder (its actions, subfolders; the generated
- *   posts are saved here by the generator) and the folder trash (restore, delete for good, empty). Every action
- *   needs its section permission; names are checked here before sending (the API checks again).
- * @dependencies JsCreatorApiService, WorkspaceUsageService, FolderTreeComponent, QuotaBarComponent,
- *   AdminModalComponent, ConfirmDialogService, AlertDialogService, PermissionService, AdminLocalizationService
- *   (section `js-creator-outputs`).
+ * @description Page "Outputs" (js-creator/outputs) of the OWN workspace:
+ *   - the folder tree shared by every section (new folder, rename, move - also by drag and
+ *     drop -, delete to the trash with the subtree and its outputs);
+ *   - the content of the selected folder: subfolders and the generated outputs (thumbnails,
+ *     search in every folder, filter by type, sorting, "load more"), the detail of an output
+ *     (picture, data, text of the post with Copy, download, rename, move, delete, generate
+ *     again from its template), selection of several outputs (download as a ZIP, move, delete);
+ *   - the trash: deleted folders (with their outputs) and deleted outputs - restore, delete for
+ *     good, empty.
+ *   `?folder=<id|root>&output=<id>` opens a folder and the detail of an output (after generating).
+ *   Every action needs its section permission; names are checked here before sending (the API
+ *   checks again).
+ * @dependencies JsCreatorApiService (folders), OutputsApiService, WorkspaceUsageService,
+ *   FolderTreeComponent, QuotaBarComponent, AdminModalComponent, ConfirmDialogService,
+ *   AlertDialogService, PermissionService, AdminLocalizationService (section `js-creator-outputs`).
  */
 
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Observable, Subscription, forkJoin } from 'rxjs';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
@@ -28,12 +36,16 @@ import { RowButtonBuilderComponent } from '../../../../admin/components/builders
 import { RowButton, RowButtonItems } from '../../../../admin/components/builders/row-button-builder/row-button';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { JsCreatorApiService } from '../shared/js-creator-api.service';
+import { OutputQuery, OutputsApiService } from '../shared/outputs-api.service';
 import { WorkspaceUsageService } from '../shared/workspace-usage.service';
-import { CreatorFolder } from '../shared/js-creator.models';
-import { can } from '../shared/js-creator-sections';
-import { MAX_FOLDER_DEPTH, canMove, childrenOf, levelOf, nameTaken, pathOf } from '../shared/folder-tree';
+import { CreatorFolder, CreatorOutput } from '../shared/js-creator.models';
+import { JS_CREATOR_SECTIONS, JsCreatorSectionId, can } from '../shared/js-creator-sections';
+import { FolderOption, MAX_FOLDER_DEPTH, canMove, childrenOf, folderOptions, levelOf, nameTaken, pathOf } from '../shared/folder-tree';
 import { FolderDrop, FolderTreeComponent } from '../shared/folder-tree/folder-tree.component';
 import { QuotaBarComponent } from '../shared/quota-bar/quota-bar.component';
+import { CreatorIconComponent } from '../shared/creator-icon/creator-icon.component';
+import { UiIconName, uiIcon } from '../shared/ui-icons';
+import { formatBytes } from '../shared/workspace-format';
 
 /** Open popup of a folder. */
 interface FolderDialog {
@@ -45,16 +57,42 @@ interface FolderDialog {
   error: string;
 }
 
+/** Open popup of outputs: rename / move one, move the selected ones. */
+interface OutputDialog {
+  kind: 'rename' | 'move' | 'bulk-move';
+  output: CreatorOutput | null;
+  name: string;
+  targetId: number | null;
+  error: string;
+}
+
 /** Target of the move popup. */
 interface MoveTarget {
   id: number | null;
   label: string;
 }
 
+/** Sorting of the outputs (value of the select). */
+type OutputSort = 'newest' | 'oldest' | 'name' | 'largest';
+
+/** Sorting values of the API. */
+const SORTS: Record<OutputSort, Pick<OutputQuery, 'sortBy' | 'sortDirection'>> = {
+  newest: { sortBy: 'created_at', sortDirection: 'desc' },
+  oldest: { sortBy: 'created_at', sortDirection: 'asc' },
+  name: { sortBy: 'name', sortDirection: 'asc' },
+  largest: { sortBy: 'size_bytes', sortDirection: 'desc' },
+};
+
+/** Most outputs in one bulk action / ZIP (API limit). */
+const MAX_SELECTION = 200;
+
 @Component({
   selector: 'app-js-creator-outputs-page',
   standalone: true,
-  imports: [DatePipe, FormsModule, PageHeaderComponent, AdminModalComponent, RowButtonBuilderComponent, IconComponent, FolderTreeComponent, QuotaBarComponent],
+  imports: [
+    DatePipe, FormsModule, PageHeaderComponent, AdminModalComponent, RowButtonBuilderComponent, IconComponent, FolderTreeComponent,
+    QuotaBarComponent, CreatorIconComponent,
+  ],
   templateUrl: './outputs-page.component.html',
   styleUrls: [
     '../../../../admin/shared-styles/modal.css',
@@ -63,17 +101,23 @@ interface MoveTarget {
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OutputsPageComponent implements OnInit {
+export class OutputsPageComponent implements OnInit, OnDestroy {
   private readonly api = inject(JsCreatorApiService);
+  private readonly outputsApi = inject(OutputsApiService);
   private readonly usage = inject(WorkspaceUsageService);
   private readonly i18n = inject(AdminLocalizationService);
   private readonly confirm = inject(ConfirmDialogService);
   private readonly alert = inject(AlertDialogService);
   private readonly permissions = inject(PermissionService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly cd = inject(ChangeDetectorRef);
 
-  /** Id of the form of the popup (submit button in the footer). */
+  /** Ids of the forms of the popups (submit buttons in the footers). */
   readonly formId = 'jc-folder-form';
+  readonly outputFormId = 'jc-output-form';
+  /** Sections for the type filter. */
+  readonly sections = JS_CREATOR_SECTIONS;
 
   /** View: the folders or the trash. */
   view: 'folders' | 'trash' = 'folders';
@@ -85,21 +129,62 @@ export class OutputsPageComponent implements OnInit {
   selectedId: number | null = null;
   /** A request is running. */
   busy = false;
-  /** Open popup. */
+  /** Open popup of a folder. */
   dialog: FolderDialog | null = null;
+
+  /** Outputs of the folder / search / trash. */
+  outputs: CreatorOutput[] = [];
+  /** Paging of the outputs. */
+  page = 1;
+  lastPage = 1;
+  total = 0;
+  /** Outputs are loading. */
+  loading = false;
+  /** Search in the names of every folder. */
+  search = '';
+  /** Type filter ('' = every section). */
+  sectionFilter: JsCreatorSectionId | '' = '';
+  /** Sorting. */
+  sort: OutputSort = 'newest';
+  /** Selected outputs (ids). */
+  selected = new Set<number>();
+  /** Output shown in the detail. */
+  detail: CreatorOutput | null = null;
+  /** Open popup of outputs. */
+  outputDialog: OutputDialog | null = null;
+  /** The text of the detail was copied. */
+  copied = false;
+  /** Number of outputs in the trash. */
+  trashedOutputs = 0;
 
   /** May create folders. */
   readonly canCreate = can(this.permissions, 'create');
-  /** May rename / move folders. */
+  /** May rename / move. */
   readonly canUpdate = can(this.permissions, 'update');
-  /** May delete / restore folders. */
+  /** May delete / restore. */
   readonly canDelete = can(this.permissions, 'delete');
 
   private readonly viewButtons = new RowButtonItems();
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private listSub?: Subscription;
+  /** Output to open once the list is loaded (`?output=`). */
+  private pendingOutput: number | null = null;
 
-  /** @description Loads the folders. */
+  /** @description Reads the folder / output of the address and loads the folders and outputs. */
   ngOnInit(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const folder = params.get('folder');
+    this.selectedId = folder && folder !== 'root' && Number(folder) > 0 ? Number(folder) : null;
+    this.pendingOutput = Number(params.get('output')) || null;
     this.loadFolders();
+    this.loadOutputs();
+    this.loadTrashCount();
+  }
+
+  /** @description Stops a waiting search. */
+  ngOnDestroy(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.listSub?.unsubscribe();
   }
 
   /**
@@ -110,11 +195,28 @@ export class OutputsPageComponent implements OnInit {
     return this.i18n.getValue(`js-creator-outputs.${key}`);
   }
 
+  /**
+   * @description Elements of an interface icon.
+   * @param name Name.
+   */
+  icon(name: UiIconName) {
+    return uiIcon(name);
+  }
+
+  /**
+   * @description Name of a section (type filter, cards).
+   * @param section Section id.
+   */
+  sectionLabel(section: string): string {
+    return this.t(`type_${section}`);
+  }
+
   /** @description Buttons of the view switch (folders / trash). */
   get viewItems(): RowButton[] {
+    const count = this.trashed.length + this.trashedOutputs;
     return this.viewButtons.update([
       { value: 'folders', label: this.t('view_folders'), icon: 'folder' },
-      { value: 'trash', label: this.t('view_trash'), icon: 'trash', count: this.trashed.length || null },
+      { value: 'trash', label: this.t('view_trash'), icon: 'trash', count: count || null },
     ]);
   }
 
@@ -133,7 +235,7 @@ export class OutputsPageComponent implements OnInit {
     return childrenOf(this.folders, this.selectedId);
   }
 
-  /** @description Targets of the open move popup (the top level and every allowed folder). */
+  /** @description Targets of the open folder move popup (the top level and every allowed folder). */
   get moveTargets(): MoveTarget[] {
     const folder = this.dialog?.folder;
     if (!folder) return [];
@@ -149,13 +251,49 @@ export class OutputsPageComponent implements OnInit {
     return targets;
   }
 
+  /** @description Targets of an output move (every folder). */
+  get outputTargets(): FolderOption[] {
+    return folderOptions(this.folders);
+  }
+
+  /** @description Every listed output is selected. */
+  get allSelected(): boolean {
+    return this.outputs.length > 0 && this.outputs.every(o => this.selected.has(o.id));
+  }
+
+  /**
+   * @description Path of the folder of an output (shown with a search in every folder).
+   * @param output Output.
+   */
+  folderPath(output: CreatorOutput): string {
+    const path = pathOf(this.folders, output.folder_id);
+    return path.length ? path.map(f => f.name).join(' / ') : this.t('root');
+  }
+
+  /**
+   * @description Size of a file.
+   * @param bytes Bytes.
+   */
+  bytes(bytes: number): string {
+    return formatBytes(bytes, this.i18n.getDateLocale());
+  }
+
+  /**
+   * @description Aspect ratio of the thumbnail frame of an output.
+   * @param output Output.
+   */
+  aspect(output: CreatorOutput): string {
+    return `${output.width} / ${output.height}`;
+  }
+
   /**
    * @description Switches between the folders and the trash.
    * @param value 'folders' | 'trash'.
    */
   switchView(value: string): void {
     this.view = value === 'trash' ? 'trash' : 'folders';
-    this.cd.markForCheck();
+    this.selected.clear();
+    this.loadOutputs();
   }
 
   /**
@@ -164,8 +302,12 @@ export class OutputsPageComponent implements OnInit {
    */
   select(id: number | null): void {
     this.selectedId = id;
-    this.cd.markForCheck();
+    this.search = '';
+    this.selected.clear();
+    this.loadOutputs();
   }
+
+  // ── folders ─────────────────────────────────────────────────────────────────
 
   /**
    * @description Opens the popup of a new folder.
@@ -225,7 +367,7 @@ export class OutputsPageComponent implements OnInit {
       : this.api.updateFolder(dialog.folder!.id, dialog.kind === 'rename' ? { name } : { parent_id: parentId });
     this.run(request, created => {
       this.dialog = null;
-      if (dialog.kind === 'create') this.selectedId = created.id;
+      if (dialog.kind === 'create') this.select(created.id);
     });
   }
 
@@ -243,7 +385,7 @@ export class OutputsPageComponent implements OnInit {
   }
 
   /**
-   * @description Moves a folder with its subtree to the trash (after a confirmation).
+   * @description Moves a folder with its subtree and outputs to the trash (after a confirmation).
    * @param folder Folder.
    */
   async remove(folder: CreatorFolder): Promise<void> {
@@ -255,7 +397,7 @@ export class OutputsPageComponent implements OnInit {
   }
 
   /**
-   * @description Restores an item of the trash.
+   * @description Restores a folder of the trash.
    * @param folder Item of the trash.
    */
   restore(folder: CreatorFolder): void {
@@ -263,7 +405,7 @@ export class OutputsPageComponent implements OnInit {
   }
 
   /**
-   * @description Deletes an item of the trash for good (after a confirmation).
+   * @description Deletes a folder of the trash for good (after a confirmation).
    * @param folder Item of the trash.
    */
   async destroy(folder: CreatorFolder): Promise<void> {
@@ -271,14 +413,227 @@ export class OutputsPageComponent implements OnInit {
     this.run(this.api.deleteFolder(folder.id, true), () => undefined);
   }
 
-  /** @description Empties the folder trash (after a confirmation). */
+  /** @description Empties the trash - folders and outputs (after a confirmation). */
   async emptyTrash(): Promise<void> {
     if (!(await this.confirm.open(this.t('empty_trash_title'), this.t('empty_trash_text')))) return;
-    this.run(this.api.emptyFolderTrash(), () => undefined);
+    this.run(forkJoin([this.api.emptyFolderTrash(), this.outputsApi.emptyTrash()]), () => undefined);
+  }
+
+  // ── outputs ─────────────────────────────────────────────────────────────────
+
+  /** @description The search changed: reload after a short pause. */
+  onSearch(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => {
+      this.selected.clear();
+      this.loadOutputs();
+    }, 300);
+  }
+
+  /** @description The filter or sorting changed. */
+  reload(): void {
+    this.selected.clear();
+    this.loadOutputs();
+  }
+
+  /** @description Loads the next page of outputs. */
+  loadMore(): void {
+    if (this.page < this.lastPage && !this.loading) this.loadOutputs(this.page + 1);
   }
 
   /**
-   * @description Runs a change, then reloads the folders, the trash and the usage.
+   * @description Selects / unselects an output.
+   * @param output Output.
+   */
+  toggle(output: CreatorOutput): void {
+    if (this.selected.has(output.id)) this.selected.delete(output.id);
+    else if (this.selected.size < MAX_SELECTION) this.selected.add(output.id);
+    else this.alert.open(this.t('selection_title'), this.t('selection_limit'), 'warning');
+    this.cd.markForCheck();
+  }
+
+  /** @description Selects every listed output (or none, when all are selected). */
+  toggleAll(): void {
+    if (this.allSelected) this.selected.clear();
+    else this.outputs.slice(0, MAX_SELECTION).forEach(o => this.selected.add(o.id));
+    this.cd.markForCheck();
+  }
+
+  /** @description Clears the selection. */
+  clearSelection(): void {
+    this.selected.clear();
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Opens the detail of an output.
+   * @param output Output.
+   */
+  openDetail(output: CreatorOutput): void {
+    this.detail = output;
+    this.copied = false;
+    this.cd.markForCheck();
+  }
+
+  /** @description Closes the detail. */
+  closeDetail(): void {
+    this.detail = null;
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Copies the text of the post of an output.
+   * @param output Output.
+   */
+  async copyCaption(output: CreatorOutput): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(output.caption ?? '');
+      this.copied = true;
+      this.cd.markForCheck();
+      setTimeout(() => {
+        this.copied = false;
+        this.cd.markForCheck();
+      }, 2000);
+    } catch {
+      this.alert.open(this.t('copy'), this.t('copy_failed'), 'warning');
+    }
+  }
+
+  /**
+   * @description Opens generating from the template of an output.
+   * @param output Output.
+   */
+  generateAgain(output: CreatorOutput): void {
+    if (output.template_id) void this.router.navigate(['/admin/js-creator/image-templates', output.template_id, 'generate']);
+  }
+
+  /**
+   * @description Opens the rename popup of an output.
+   * @param output Output.
+   */
+  openRenameOutput(output: CreatorOutput): void {
+    this.outputDialog = { kind: 'rename', output, name: output.name, targetId: null, error: '' };
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Opens the move popup of an output.
+   * @param output Output.
+   */
+  openMoveOutput(output: CreatorOutput): void {
+    this.outputDialog = { kind: 'move', output, name: output.name, targetId: output.folder_id, error: '' };
+    this.cd.markForCheck();
+  }
+
+  /** @description Opens the move popup of the selected outputs. */
+  openBulkMove(): void {
+    if (!this.selected.size) return;
+    this.outputDialog = { kind: 'bulk-move', output: null, name: '', targetId: this.selectedId, error: '' };
+    this.cd.markForCheck();
+  }
+
+  /** @description Closes the popup of outputs (not while saving). */
+  closeOutputDialog(): void {
+    if (!this.busy) this.outputDialog = null;
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Target folder chosen in the popup of outputs.
+   * @param value Value of the select ('' = top level).
+   */
+  setOutputTarget(value: string): void {
+    if (this.outputDialog) this.outputDialog.targetId = value === '' ? null : Number(value);
+  }
+
+  /** @description Saves the popup of outputs: rename, move one or move the selected ones. */
+  submitOutputDialog(): void {
+    const dialog = this.outputDialog;
+    if (!dialog || this.busy) return;
+    if (dialog.kind === 'rename' && dialog.name.trim() === '') {
+      dialog.error = this.t('error_output_name_required');
+      this.cd.markForCheck();
+      return;
+    }
+    if (dialog.kind === 'bulk-move') {
+      this.run(this.outputsApi.bulk('move', [...this.selected], dialog.targetId), () => {
+        this.outputDialog = null;
+        this.selected.clear();
+      });
+      return;
+    }
+    const output = dialog.output!;
+    const changes = dialog.kind === 'rename' ? { name: dialog.name.trim() } : { folder_id: dialog.targetId };
+    this.run(this.outputsApi.update(output.id, changes), updated => {
+      this.outputDialog = null;
+      if (this.detail?.id === updated.id) this.detail = updated;
+    });
+  }
+
+  /**
+   * @description Moves an output to the trash (after a confirmation).
+   * @param output Output.
+   */
+  async removeOutput(output: CreatorOutput): Promise<void> {
+    if (!(await this.confirm.open(this.t('delete_output_title'), `${this.t('delete_output_text')} „${output.name}“`))) return;
+    this.run(this.outputsApi.delete(output.id), () => {
+      this.selected.delete(output.id);
+      if (this.detail?.id === output.id) this.detail = null;
+    });
+  }
+
+  /** @description Moves the selected outputs to the trash (after a confirmation). */
+  async removeSelected(): Promise<void> {
+    const count = this.selected.size;
+    if (!count || !(await this.confirm.open(this.t('delete_output_title'), `${this.t('delete_selected_text')} ${count}`))) return;
+    this.run(this.outputsApi.bulk('delete', [...this.selected]), () => this.selected.clear());
+  }
+
+  /**
+   * @description Restores an output of the trash (to the top level when its folder is gone).
+   * @param output Output.
+   */
+  restoreOutput(output: CreatorOutput): void {
+    this.run(this.outputsApi.restore(output.id), () => undefined);
+  }
+
+  /**
+   * @description Deletes an output of the trash for good (after a confirmation).
+   * @param output Output.
+   */
+  async destroyOutput(output: CreatorOutput): Promise<void> {
+    if (!(await this.confirm.open(this.t('destroy_title'), `${this.t('destroy_output_text')} „${output.name}“`))) return;
+    this.run(this.outputsApi.delete(output.id, true), () => undefined);
+  }
+
+  /**
+   * @description Downloads outputs as one ZIP (the selected ones, or the given ids).
+   * @param ids Outputs (default: the selection).
+   */
+  downloadZip(ids: number[] = [...this.selected]): void {
+    if (!ids.length || this.busy) return;
+    this.busy = true;
+    this.cd.markForCheck();
+    this.outputsApi.zip(ids).subscribe({
+      next: zip => {
+        this.busy = false;
+        this.cd.markForCheck();
+        const link = document.createElement('a');
+        link.href = zip.url;
+        link.download = '';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      },
+      error: () => {
+        this.busy = false;
+        this.cd.markForCheck();
+      },
+    });
+  }
+
+  /**
+   * @description Runs a change, then reloads the folders, the outputs, the trash and the usage.
    * @param request Request of the change.
    * @param done Called with its result before the reload.
    */
@@ -290,6 +645,8 @@ export class OutputsPageComponent implements OnInit {
         this.busy = false;
         done(result);
         this.loadFolders();
+        this.loadOutputs();
+        if (this.view === 'folders') this.loadTrashCount();
         this.usage.refresh();
       },
       error: () => {
@@ -299,16 +656,69 @@ export class OutputsPageComponent implements OnInit {
     });
   }
 
-  /** @description Loads the folders and the trash. */
+  /** @description Loads the folders and the folder trash. */
   private loadFolders(): void {
     this.api.folders().subscribe(folders => {
       this.folders = folders;
-      if (this.selectedId !== null && !folders.some(f => f.id === this.selectedId)) this.selectedId = null;
+      if (this.selectedId !== null && !folders.some(f => f.id === this.selectedId)) {
+        this.selectedId = null;
+        this.loadOutputs();
+      }
       this.cd.markForCheck();
     });
     this.api.folders(true).subscribe(trashed => {
       this.trashed = trashed;
       this.cd.markForCheck();
     });
+  }
+
+  /**
+   * @description Loads a page of outputs of the current view (folder / search / trash).
+   * @param page Page (1 = start again).
+   */
+  private loadOutputs(page = 1): void {
+    this.listSub?.unsubscribe();
+    this.loading = true;
+    this.cd.markForCheck();
+    const search = this.view === 'folders' ? this.search.trim() : '';
+    this.listSub = this.outputsApi.list({
+      page,
+      folderId: this.selectedId,
+      search,
+      section: this.sectionFilter,
+      trashed: this.view === 'trash',
+      ...SORTS[this.view === 'trash' ? 'newest' : this.sort],
+    }).subscribe({
+      next: result => {
+        this.outputs = page === 1 ? result.data : [...this.outputs, ...result.data];
+        this.page = result.meta?.current_page ?? page;
+        this.lastPage = result.meta?.last_page ?? page;
+        this.total = result.meta?.total ?? this.outputs.length;
+        this.loading = false;
+        if (this.view === 'trash') this.trashedOutputs = this.total;
+        this.openPending();
+        this.cd.markForCheck();
+      },
+      error: () => {
+        this.loading = false;
+        this.cd.markForCheck();
+      },
+    });
+  }
+
+  /** @description Loads the number of outputs in the trash (badge of the view switch). */
+  private loadTrashCount(): void {
+    this.outputsApi.list({ page: 1, folderId: null, trashed: true }).subscribe(result => {
+      this.trashedOutputs = result.meta?.total ?? result.data.length;
+      this.cd.markForCheck();
+    });
+  }
+
+  /** @description Opens the detail of the output named by the address once it is listed. */
+  private openPending(): void {
+    if (this.pendingOutput === null) return;
+    const output = this.outputs.find(o => o.id === this.pendingOutput);
+    this.pendingOutput = null;
+    if (output) this.detail = output;
   }
 }

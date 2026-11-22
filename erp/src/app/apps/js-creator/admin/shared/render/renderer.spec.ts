@@ -144,6 +144,45 @@ describe('renderer', () => {
   });
 
   /**
+   * @description The crop of an image field chosen when generating replaces the focus of the
+   *   template and zooms; the live preview of generating (output + placeholders) shows a
+   *   placeholder for an empty image field and still reports it as missing.
+   * @input field image 40 × 20 (left half red, right half blue) in a 20 × 20 box (cover);
+   *   crops focus 0 / focus 1 / focus 1 zoom 2; output with placeholders and no value
+   * @output red / blue / blue in the middle of the box; placeholder grey (not the white
+   *   background) and missing field:photo
+   */
+  it('uses crops of image fields and placeholders of the preview', () => {
+    const halves = document.createElement('canvas');
+    halves.width = 40;
+    halves.height = 20;
+    const hctx = halves.getContext('2d') as CanvasRenderingContext2D;
+    hctx.fillStyle = '#ff0000';
+    hctx.fillRect(0, 0, 20, 20);
+    hctx.fillStyle = '#0000ff';
+    hctx.fillRect(20, 0, 20, 20);
+    const photo: DrawableImage = { image: halves, width: 40, height: 20 };
+    const layer: ImageLayer = { ...(createLayer('image', SIZE, 'i1') as ImageLayer), anchor: 'tl', x: 0, y: 0, w: 20, h: 20, fit: 'cover', source: { kind: 'field', field: 'photo' } };
+    const doc = docWith(layer);
+    doc.fields = [{ key: 'photo', type: 'image', label: 'Photo', help: '', required: true, minWidth: 0, minHeight: 0 }];
+
+    const left = draw(doc, 'output', { text: {}, images: { photo }, crops: { photo: { focusX: 0, focusY: 0.5, zoom: 1 } } });
+    expect(left.pixel(10, 10)).toEqual([255, 0, 0, 255]);
+    const right = draw(doc, 'output', { text: {}, images: { photo }, crops: { photo: { focusX: 1, focusY: 0.5, zoom: 1 } } });
+    expect(right.pixel(10, 10)).toEqual([0, 0, 255, 255]);
+    const zoomed = draw(doc, 'output', { text: {}, images: { photo }, crops: { photo: { focusX: 1, focusY: 0.5, zoom: 2 } } });
+    expect(zoomed.pixel(2, 10)).toEqual([0, 0, 255, 255]);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = SIZE.width;
+    canvas.height = SIZE.height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
+    const report = renderPage(ctx, doc, SIZE, resources, { mode: 'output', placeholders: true, values: { text: {}, images: {} } });
+    expect(Array.from(ctx.getImageData(10, 10, 1, 1).data).slice(0, 3)).not.toEqual([255, 255, 255]);
+    expect(report.missing).toEqual(['field:photo']);
+  });
+
+  /**
    * @description Icons of the set are drawn with their colour; an unknown icon is reported.
    * @input icon "box" (square outline) 100 × 100 at tl; icon "nope"
    * @output coloured pixel on the outline; missing icon:nope

@@ -8,7 +8,7 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "A template is your design of a post in one size: the layout of texts, images, shapes and icons, colours and fonts. Its fields are filled in when generating (the next stage of the application) - you design a template once and use it many times."
+              "content": "A template is your design of a post in one size: the layout of texts, images, shapes and icons, colours and fonts. Its fields are filled in when generating - you design a template once and use it many times."
             },
             {
               "type": "alert",
@@ -31,7 +31,7 @@
               "items": [
                 "Duplicate - a copy in the same format (with its thumbnail).",
                 "Duplicate to another format - a copy in another size; elements keep their anchor and offset, so a logo anchored top right stays top right. Then fine-tune it in the editor.",
-                "A click on the preview or on the pencil opens the template in the editor."
+                "Generate (the button of a card or a click on the preview) opens generating a post from the template; the pencil opens the template in the editor."
               ]
             }
           ]
@@ -81,6 +81,104 @@
                 {
                   "title": "Delete",
                   "text": "js-creator-images-delete - trash, restore, delete for good."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "js-creator-generate": {
+      "navLabel": "Generating",
+      "header": "JS Creator – Generating a post",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Generating fills a template with real texts and photos and saves the finished post into the chosen folder. On the left is the live preview - exactly what will be made; on the right the form with the fields of the template."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Photos from your computer are processed only in your browser and are never uploaded to the server. Only the finished picture and the text of the post are stored. Use photos of people and works of others only with consent or a licence."
+            }
+          ]
+        },
+        {
+          "heading": "01. Texts",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "The grey text in a field is the sample of the template - it never gets into the output, the field must be filled in.",
+                "Highlight: select a part of the text and click Highlight - the preview shows it in the highlight style of the template (colour, bold, background). Another click removes the highlight. In the text a highlight is written **like this**.",
+                "The counter shows the length and the limit of the field.",
+                "When a text does not fit, the template shrinks it, cuts it with “…” or refuses to generate, as it is set - the field tells you what happened."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Photos and the crop",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Photo from the computer: JPG, PNG, WebP (HEIC only in Safari), at most 40 MB. The orientation of a phone photo is applied automatically.",
+                "From the library: an image of your Library.",
+                "Move the crop by dragging the photo right in the preview (mouse or finger), set the zoom with the slider at the field. Default crop returns the setting of the template.",
+                "When a photo is small for its place, the form warns that the output may look blurry."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Text of the post",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The text you post with the picture on the social network. It is pre-filled from the pattern of the template - {{key}} is replaced by the text of the field (without the highlight marks). You can edit it; Fill from template sets it again from the current fields. Copy the text of a finished output with Copy text."
+            }
+          ]
+        },
+        {
+          "key": "generate",
+          "heading": "04. Saving and Generate",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Choose the folder (the last used one is offered) and optionally a name - an empty name = the name of the template with the date and time.",
+                "Generate first shows what is still missing (required fields, too long texts, texts that do not fit).",
+                "Then it waits for every font and image - when one cannot be loaded, no output is made (never with a fallback font).",
+                "The template is drawn in its exact size, the server checks the picture, converts it to the format of the template (PNG / JPG) and saves it.",
+                "Open the finished output in Outputs, download it or copy its text. The form stays filled - change the fields and click Generate again for another variant."
+              ]
+            },
+            {
+              "type": "note",
+              "highlight": "Space",
+              "content": "An output counts towards the quota of your workspace. A full workspace refuses generating - free some space (delete and empty the trash) or ask the administrator for a larger quota."
+            }
+          ]
+        },
+        {
+          "heading": "05. Permissions",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "View",
+                  "text": "js-creator-images-view - the page and the preview."
+                },
+                {
+                  "title": "Create",
+                  "text": "js-creator-images-create - Generate."
                 }
               ]
             }
@@ -244,7 +342,7 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "JS Creator makes graphics of social network posts from templates you design yourself – no AI. The page Outputs is where the generated posts are saved into your folders."
+              "content": "JS Creator makes graphics of social network posts from templates you design yourself – no AI. The page Outputs is where the generated posts are saved into your folders and where you download them with the text of the post."
             },
             {
               "type": "alert",
@@ -278,51 +376,69 @@
           ]
         },
         {
-          "heading": "02. Content of a folder",
+          "heading": "02. Outputs in a folder",
           "blocks": [
             {
               "type": "text",
-              "content": "On the right is the path to the selected folder, its subfolders and the generated posts. Posts are made by generating from a template, where you choose the target folder."
+              "content": "On the right is the path of the selected folder, its subfolders and its outputs as thumbnails with the name, date, size, format and file size. A search looks into the names in every folder (the results show their folder); you can also filter by type and sort by newest, oldest, name or size."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "A click on a thumbnail opens the detail: the picture, folder, template, size, file size, date and the text of the post with Copy text.",
+                "Actions: Download (a file named after the output), Rename, Move, Delete, Generate again (opens generating from the same template).",
+                "A finished output cannot be edited - generate a new variant from the template quickly."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Several outputs at once",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Tick the outputs (or Select all) - the selection bar has Download ZIP, Move and Delete. A ZIP holds at most 200 outputs and 500 MB; outputs with the same name get “(2)”."
             }
           ]
         },
         {
           "key": "trash",
-          "heading": "03. Trash",
+          "heading": "04. Trash",
           "blocks": [
             {
               "type": "text",
-              "content": "A deleted folder moves to the trash with all its subfolders as one item. In the view Trash you can Restore it (it comes back with its subfolders; when its parent no longer exists it comes back to the top level, and a taken name gets \"(2)\") or Delete it for good. Empty the trash deletes everything in the folder trash for good."
+              "content": "A deleted folder moves to the trash with all its subfolders and outputs as one item; a deleted output is a separate item. Restore brings a folder back with its content (to the top level when its parent no longer exists; a taken name gets “(2)”) and an output into its folder (into All outputs when the folder is gone). Delete for good and Empty trash delete the files too."
             },
             {
               "type": "alert",
-              "content": "Items of the trash are deleted for good automatically after the retention period (default 30 days, Core → Settings → Retention, \"JS Creator – trash\").",
-              "variant": "warning"
+              "variant": "warning",
+              "content": "Items of the trash are deleted for good automatically after the retention period (default 30 days, Core → Settings → Retention, “JS Creator – trash”). The trash counts towards the space of the workspace."
             }
           ]
         },
         {
           "key": "edit",
-          "heading": "04. Permissions",
+          "heading": "05. Permissions",
           "blocks": [
             {
               "type": "grid",
               "cards": [
                 {
                   "title": "View",
-                  "text": "js-creator-images-view – the page, the tree, the trash."
+                  "text": "js-creator-images-view - the page, outputs, detail, downloads and ZIP."
                 },
                 {
                   "title": "Create",
-                  "text": "js-creator-images-create – new folders."
+                  "text": "js-creator-images-create - new folders (outputs are made by generating)."
                 },
                 {
-                  "title": "Update",
-                  "text": "js-creator-images-update – rename and move."
+                  "title": "Edit",
+                  "text": "js-creator-images-update - renaming and moving folders and outputs."
                 },
                 {
                   "title": "Delete",
-                  "text": "js-creator-images-delete – trash, restore, delete for good."
+                  "text": "js-creator-images-delete - trash, restore, delete for good."
                 }
               ]
             }

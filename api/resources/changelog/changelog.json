@@ -4,6 +4,12 @@
             "type": "added",
             "area": "js-creator",
             "part": "admin",
+            "text": "JS Creator, part 3: generating posts from templates with a live preview - texts with highlights, photos from the computer (never uploaded) or the library with crop and zoom, text of the post; outputs in folders with a detail, copy, download, ZIP, moves and a trash."
+        },
+        {
+            "type": "added",
+            "area": "js-creator",
+            "part": "admin",
             "text": "JS Creator, part 2: templates of posts and their editor - texts with fields and highlights, fonts, images and image grids, shapes, gradients, icons, anchors, snapping guides, undo / redo, copies to other formats; library files used by a template cannot be deleted."
         },
         {

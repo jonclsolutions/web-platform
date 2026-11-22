@@ -10,15 +10,18 @@
  *   - a folder cannot move into itself or its own subfolder;
  *   - names are unique among the folders of one parent (case-insensitive, trash not counted);
  *   - trash: deleting a folder moves its whole subtree to the trash as one item (every folder
- *     of it gets `trash_root_id` = the deleted folder); a restore brings the subtree back (to the
- *     top level when the parent no longer exists, with " (2)" … when the name is taken), a
- *     permanent deletion removes the subtree (the foreign key deletes the subfolders).
- * @dependencies CreatorFolder.
+ *     of it and every output in it gets `trash_root_id` = the deleted folder); a restore brings
+ *     the subtree back with its outputs (to the top level when the parent no longer exists, with
+ *     " (2)" … when the name is taken), a permanent deletion removes the subtree with its outputs
+ *     and their files (outputs deleted by themselves before stay in the trash and are restored
+ *     to the top level).
+ * @dependencies CreatorFolder, CreatorOutput.
  */
 
 namespace App\Apps\JsCreator\Services;
 
 use App\Apps\JsCreator\Models\CreatorFolder;
+use App\Apps\JsCreator\Models\CreatorOutput;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -91,15 +94,19 @@ final class FolderTree
     }
 
     /**
-     * @description Moves a folder and its subtree to the trash.
+     * @description Moves a folder and its subtree to the trash, with the outputs in them.
      * @param CreatorFolder $folder Folder of the account (not in the trash).
      * @return void
      */
     public function trash(CreatorFolder $folder): void
     {
         $ids = [$folder->id, ...$this->descendantIds($folder->id, false)];
-        CreatorFolder::query()->ownedBy($this->userId)->whereIn('id', $ids)
-            ->update(['deleted_at' => now(), 'trash_root_id' => $folder->id, 'updated_at' => now()]);
+        DB::transaction(function () use ($folder, $ids) {
+            CreatorFolder::query()->ownedBy($this->userId)->whereIn('id', $ids)
+                ->update(['deleted_at' => now(), 'trash_root_id' => $folder->id, 'updated_at' => now()]);
+            CreatorOutput::query()->ownedBy($this->userId)->whereIn('folder_id', $ids)
+                ->update(['deleted_at' => now(), 'trash_root_id' => $folder->id, 'updated_at' => now()]);
+        });
         $this->all = null;
     }
 
@@ -118,6 +125,8 @@ final class FolderTree
 
             CreatorFolder::onlyTrashed()->ownedBy($this->userId)->where('trash_root_id', $root->id)
                 ->update(['deleted_at' => null, 'trash_root_id' => null, 'updated_at' => now()]);
+            CreatorOutput::onlyTrashed()->ownedBy($this->userId)->where('trash_root_id', $root->id)
+                ->update(['deleted_at' => null, 'trash_root_id' => null, 'updated_at' => now()]);
             $this->all = null;
 
             $root->refresh();
@@ -129,12 +138,16 @@ final class FolderTree
     }
 
     /**
-     * @description Deletes a trashed folder and its subtree for good.
+     * @description Deletes a trashed folder and its subtree for good, with the outputs deleted
+     *   together with it (and their files).
      * @param CreatorFolder $root Item of the trash.
      * @return void
      */
     public function forceDelete(CreatorFolder $root): void
     {
+        CreatorOutput::onlyTrashed()->ownedBy($this->userId)->where('trash_root_id', $root->id)->get()
+            ->each(fn (CreatorOutput $output) => $output->deleteWithFiles());
+
         // Deepest folders first (reverse breadth-first order) - no row ever waits for the
         // cascade of its parent key.
         $ids = [$root->id, ...$this->descendantIds($root->id, true)];

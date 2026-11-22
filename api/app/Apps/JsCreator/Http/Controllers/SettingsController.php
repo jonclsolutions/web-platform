@@ -20,6 +20,7 @@ use App\Apps\JsCreator\Http\Requests\UpdateUserQuotaRequest;
 use App\Apps\JsCreator\Models\CreatorAsset;
 use App\Apps\JsCreator\Models\CreatorFolder;
 use App\Apps\JsCreator\Models\CreatorFont;
+use App\Apps\JsCreator\Models\CreatorOutput;
 use App\Apps\JsCreator\Models\CreatorSetting;
 use App\Apps\JsCreator\Models\CreatorTemplate;
 use App\Apps\JsCreator\Models\CreatorUserQuota;
@@ -72,12 +73,12 @@ class SettingsController extends Controller
      * @description Accounts with access to the application or with data in it, by name: usage,
      *   counts and quota.
      * @return JsonResponse list of { id, name, has_access, used_bytes, quota_mb, quota_bytes, counts }
-     *   (counts: folders, images, fonts, templates)
+     *   (counts: folders, images, fonts, templates, outputs)
      */
     public function users(): JsonResponse
     {
         $withAccess = $this->accountsWithAccess()->pluck('id');
-        $withData = collect([CreatorAsset::class, CreatorFont::class, CreatorFolder::class, CreatorTemplate::class])
+        $withData = collect([CreatorAsset::class, CreatorFont::class, CreatorFolder::class, CreatorTemplate::class, CreatorOutput::class])
             ->flatMap(fn (string $model) => $model::withTrashed()->distinct()->pluck('user_id'));
         $users = User::query()->whereIn('id', $withAccess->merge($withData)->unique()->values())->orderBy('full_name')->get(['id', 'full_name']);
 
@@ -136,9 +137,12 @@ class SettingsController extends Controller
             ->selectRaw("user_id, SUM({$column}) AS total")->pluck('total', 'user_id');
         $counts = fn (string $model) => $model::query()->whereIn('user_id', $ids)->groupBy('user_id')
             ->selectRaw('user_id, COUNT(*) AS total')->pluck('total', 'user_id');
-        [$assetBytes, $fontBytes, $thumbBytes] = [$bytes(CreatorAsset::class), $bytes(CreatorFont::class), $bytes(CreatorTemplate::class, 'thumb_bytes')];
-        [$folders, $images, $fonts, $templates] = [
+        [$assetBytes, $fontBytes, $thumbBytes, $outputBytes] = [
+            $bytes(CreatorAsset::class), $bytes(CreatorFont::class), $bytes(CreatorTemplate::class, 'thumb_bytes'), $bytes(CreatorOutput::class),
+        ];
+        [$folders, $images, $fonts, $templates, $outputs] = [
             $counts(CreatorFolder::class), $counts(CreatorAsset::class), $counts(CreatorFont::class), $counts(CreatorTemplate::class),
+            $counts(CreatorOutput::class),
         ];
         $quotas = CreatorUserQuota::query()->whereIn('user_id', $ids)->pluck('quota_mb', 'user_id');
         $defaultMb = CreatorSetting::current()->default_quota_mb;
@@ -147,7 +151,8 @@ class SettingsController extends Controller
             'id'          => $user->id,
             'name'        => $user->full_name,
             'has_access'  => $withAccess->contains($user->id),
-            'used_bytes'  => (int) ($assetBytes[$user->id] ?? 0) + (int) ($fontBytes[$user->id] ?? 0) + (int) ($thumbBytes[$user->id] ?? 0),
+            'used_bytes'  => (int) ($assetBytes[$user->id] ?? 0) + (int) ($fontBytes[$user->id] ?? 0) + (int) ($thumbBytes[$user->id] ?? 0)
+                + (int) ($outputBytes[$user->id] ?? 0),
             'quota_mb'    => isset($quotas[$user->id]) ? (int) $quotas[$user->id] : null,
             'quota_bytes' => (int) ($quotas[$user->id] ?? $defaultMb) * WorkspaceQuota::MB,
             'counts'      => [
@@ -155,6 +160,7 @@ class SettingsController extends Controller
                 'images'    => (int) ($images[$user->id] ?? 0),
                 'fonts'     => (int) ($fonts[$user->id] ?? 0),
                 'templates' => (int) ($templates[$user->id] ?? 0),
+                'outputs'   => (int) ($outputs[$user->id] ?? 0),
             ],
         ])->values()->all();
     }

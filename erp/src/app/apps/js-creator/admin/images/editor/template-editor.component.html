@@ -5,7 +5,7 @@
     @author: JS
     @created: 2026
     @description: Template editor: top bar (back, name, undo / redo, zoom, grid, guides, safe
-        zone, save state, Save), left column (add a layer, layers), the canvas with the warnings of
+        zone, save state, Save, Generate), left column (add a layer, layers), the canvas with the warnings of
         the drawing, right column (Properties / Fields / Template). A message instead of the editor
         on screens under 1024 px.
 -->
@@ -78,6 +78,7 @@
           <app-creator-icon [nodes]="icon('save')" [size]="16" />{{ t('save') }}
         </button>
       }
+      <button type="button" class="te-generate" [title]="t('generate_hint')" (click)="generate()">{{ t('generate') }}</button>
     </header>
 
     <div class="te-body">

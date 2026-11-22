@@ -6,7 +6,8 @@
  * @created 2026
  * @description Canvas helpers of the renderer: fills (colour, linear gradient with a CSS-like
  *   angle, radial gradient), paths of rounded boxes and ellipses, shadows (also "only the
- *   shadow" of a box under an image), drawing of an image with cover / contain and a focus point.
+ *   shadow" of a box under an image), drawing of an image with cover / contain, a focus point and
+ *   an extra zoom.
  * @dependencies document.ts (Fill, Shadow), geometry.ts (Rect).
  */
 
@@ -118,8 +119,24 @@ export function castShadow(ctx: CanvasRenderingContext2D, shadow: Shadow, path: 
 }
 
 /**
+ * @description Scale of an image in a box (template px per image px): `cover` fills the box,
+ *   `contain` shows the whole image; `zoom` (≥ 1) enlarges it further.
+ * @param fit cover | contain.
+ * @param rect Box.
+ * @param iw Width of the image.
+ * @param ih Height of the image.
+ * @param zoom Extra enlargement (1 = none).
+ * @returns Scale.
+ */
+export function fitScale(fit: 'cover' | 'contain', rect: Rect, iw: number, ih: number, zoom = 1): number {
+  const base = fit === 'cover' ? Math.max(rect.w / iw, rect.h / ih) : Math.min(rect.w / iw, rect.h / ih);
+  return base * Math.max(1, zoom);
+}
+
+/**
  * @description Draws an image into a box: `cover` fills it (cropped around the focus point),
- *   `contain` shows the whole image (placed by the focus point).
+ *   `contain` shows the whole image (placed by the focus point); `zoom` enlarges the image
+ *   around the focus point (the crop chosen when generating).
  * @param ctx Context (clipped by the caller).
  * @param drawable Image.
  * @param rect Box.
@@ -127,9 +144,10 @@ export function castShadow(ctx: CanvasRenderingContext2D, shadow: Shadow, path: 
  * @param focusX Focus 0-1.
  * @param focusY Focus 0-1.
  * @param flipX Mirror horizontally.
+ * @param zoom Extra enlargement (1 = none).
  */
 export function drawImageFit(
-  ctx: CanvasRenderingContext2D, drawable: DrawableImage, rect: Rect, fit: 'cover' | 'contain', focusX: number, focusY: number, flipX = false,
+  ctx: CanvasRenderingContext2D, drawable: DrawableImage, rect: Rect, fit: 'cover' | 'contain', focusX: number, focusY: number, flipX = false, zoom = 1,
 ): void {
   const { image, width: iw, height: ih } = drawable;
   if (!iw || !ih || rect.w <= 0 || rect.h <= 0) return;
@@ -138,13 +156,12 @@ export function drawImageFit(
     ctx.translate(rect.x * 2 + rect.w, 0);
     ctx.scale(-1, 1);
   }
+  const scale = fitScale(fit, rect, iw, ih, zoom);
   if (fit === 'cover') {
-    const scale = Math.max(rect.w / iw, rect.h / ih);
     const sw = rect.w / scale;
     const sh = rect.h / scale;
     ctx.drawImage(image, (iw - sw) * focusX, (ih - sh) * focusY, sw, sh, rect.x, rect.y, rect.w, rect.h);
   } else {
-    const scale = Math.min(rect.w / iw, rect.h / ih);
     const dw = iw * scale;
     const dh = ih * scale;
     ctx.drawImage(image, 0, 0, iw, ih, rect.x + (rect.w - dw) * focusX, rect.y + (rect.h - dh) * focusY, dw, dh);

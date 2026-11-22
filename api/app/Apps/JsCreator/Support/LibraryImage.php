@@ -6,7 +6,7 @@
  * @author JS
  * @created 2026
  * @description Processing of an image uploaded to the library of JS Creator (and of the thumbnail
- *   of a template drawn by the editor - thumbnail()). The upload is
+ *   of a template drawn by the editor - thumbnail(); thumbnails of outputs - thumbnailOf()). The upload is
  *   decoded by GD and RE-ENCODED, so only the pixels are kept - EXIF / GPS metadata of a phone
  *   photo and anything hidden in the file are dropped:
  *   - the EXIF orientation of a JPEG is applied first (the photo is stored upright);
@@ -107,7 +107,18 @@ final class LibraryImage
             throw new RuntimeException('unreadable');
         }
 
-        return self::encode(self::scaled($source, self::THUMB_EDGE), 'image/webp', self::THUMB_QUALITY);
+        return self::thumbnailOf($source);
+    }
+
+    /**
+     * @description WebP thumbnail of a decoded image (at most THUMB_EDGE px) - lists of templates
+     *   and outputs.
+     * @param GdImage $image Decoded image.
+     * @return string WebP.
+     */
+    public static function thumbnailOf(GdImage $image): string
+    {
+        return self::encode(self::scaled($image, self::THUMB_EDGE), 'image/webp', self::THUMB_QUALITY);
     }
 
     /**

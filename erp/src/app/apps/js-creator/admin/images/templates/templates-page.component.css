@@ -26,10 +26,11 @@
 
 /*
     @module: Template cards
-    @description: The preview is a button (opens the editor) with a stage of a fixed height
+    @description: The preview is a button (opens generating) with a stage of a fixed height
         (196 px inside); the frame keeps the aspect of the template (--tp-ratio = width / height)
         and is as wide as fits both the stage width and its height.
-    @usage: .ws-grid.tp-grid > .ws-card.tp-card > button.tp-preview > .tp-frame (img | .tp-nothumb)
+    @usage: .ws-grid.tp-grid > .ws-card.tp-card > button.tp-preview > .tp-frame (img | .tp-nothumb);
+        .ws-card-actions > .tp-generate (main action on the left)
 */
 .tp-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 
@@ -75,6 +76,8 @@
   font-size: 0.75rem;
   text-align: center;
 }
+
+.tp-generate { gap: 4px; }
 
 .tp-more { display: flex; justify-content: center; margin-top: 14px; }
 

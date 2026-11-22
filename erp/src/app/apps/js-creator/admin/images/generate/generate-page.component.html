@@ -1,0 +1,222 @@
+<!--
+    @file: generate-page.component.html
+    @path: src/app/apps/js-creator/admin/images/generate/generate-page.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Page "Generate": head (back, template, size, edit), usage bar; the live preview
+        beside the form - fields (texts with length, highlight and overflow notes; images from the
+        computer or the library with zoom and crop), text of the post, target folder and name,
+        what still stops generating, Generate and the result (open, download, copy the text);
+        the library chooser of an image field.
+-->
+<div class="ws-page gen-page">
+  @if (failed()) {
+    <section class="ws-panel">
+      <div class="ws-empty">{{ t('not_found') }}</div>
+      <div><button type="button" class="ws-btn" (click)="back()">{{ t('back') }}</button></div>
+    </section>
+  } @else if (template(); as tpl) {
+    <header class="gen-head">
+      <button type="button" class="ws-icon-btn gen-back" [title]="t('back')" [attr.aria-label]="t('back')" (click)="back()">
+        <app-creator-icon [nodes]="icon('arrow-left')" [size]="18" />
+      </button>
+      <div class="gen-title">
+        <h1>{{ tpl.name }}</h1>
+        <span class="gen-meta">{{ t('generate') }} · {{ sizeLabel() }} · {{ tpl.output_format === 'jpg' ? 'JPG' : 'PNG' }}</span>
+      </div>
+      <span class="ws-toolbar-spacer"></span>
+      @if (canEdit) {
+        <a class="ws-btn ws-btn--sm" [routerLink]="['/admin/js-creator/image-templates', tpl.id, 'edit']">
+          <app-icon name="edit" [size]="14"></app-icon>{{ t('edit_template') }}
+        </a>
+      }
+    </header>
+
+    <app-quota-bar />
+
+    <div class="gen-layout">
+      <section class="ws-panel gen-preview" [attr.aria-label]="t('preview')">
+        @if (doc(); as d) {
+          <app-jc-generate-preview [doc]="d" [size]="size()" [resources]="resources" [values]="values()" [redraw]="redraw()"
+            [pannable]="filledImages()" [maxHeight]="640" [label]="t('preview')"
+            (rendered)="report.set($event)" (pan)="onPan($event)" />
+        }
+        @if (filledImages().length) {
+          <p class="ws-panel-hint gen-preview-hint">{{ t('drag_hint') }}</p>
+        }
+      </section>
+
+      <div class="gen-form">
+        <section class="ws-panel">
+          <h2 class="ws-panel-title">{{ t('fields') }}</h2>
+          @if (!fields().length) {
+            <p class="ws-field-hint">{{ t('no_fields') }}</p>
+          }
+          @for (field of fields(); track field.key) {
+            <div class="gen-field" [attr.data-field]="field.key">
+              @if (isText(field)) {
+                <div class="gen-field-head">
+                  <label [for]="'jc-gen-' + field.key">{{ field.label }}@if (field.required) {<span class="gen-required" aria-hidden="true"> *</span>}</label>
+                  <button type="button" class="ws-btn ws-btn--sm gen-highlight" [title]="t('highlight_hint')"
+                    (mousedown)="$event.preventDefault()" (click)="highlight(field.key)">{{ t('highlight') }}</button>
+                </div>
+                @if (field.multiline) {
+                  <textarea #hl [id]="'jc-gen-' + field.key" rows="3" [placeholder]="field.sample" [value]="texts()[field.key]"
+                    (input)="setText(field.key, hl.value)"></textarea>
+                } @else {
+                  <input #hl type="text" [id]="'jc-gen-' + field.key" autocomplete="off" [placeholder]="field.sample" [value]="texts()[field.key]"
+                    (input)="setText(field.key, hl.value)" (keydown.enter)="$event.preventDefault()" />
+                }
+                <div class="gen-field-foot">
+                  <span class="ws-field-hint">{{ field.help }}</span>
+                  @if (field.maxLength > 0) {
+                    <span class="gen-count" [class.gen-count--over]="lengthOf(field.key) > field.maxLength">{{ lengthOf(field.key) }} / {{ field.maxLength }}</span>
+                  }
+                </div>
+                @switch (overflowOf().get(field.key)) {
+                  @case ('ellipsis') { <p class="gen-note">{{ t('overflow_ellipsis') }}</p> }
+                  @case ('block') { <p class="gen-note gen-note--danger">{{ t('overflow_block') }}</p> }
+                }
+              } @else {
+                <span class="gen-label">{{ field.label }}@if (field.required) {<span class="gen-required" aria-hidden="true"> *</span>}</span>
+                @if (field.help) {
+                  <span class="ws-field-hint">{{ field.help }}</span>
+                }
+                @if (images()[field.key]; as value) {
+                  <div class="gen-image">
+                    @if (thumbOf(value); as thumb) {
+                      <img class="gen-image-thumb" [src]="thumb" alt="" />
+                    } @else {
+                      <span class="gen-image-thumb gen-image-thumb--local"><app-icon name="image" [size]="18"></app-icon></span>
+                    }
+                    <span class="gen-image-name" [title]="describe(value)">{{ describe(value) }}</span>
+                    <button type="button" class="ws-icon-btn ws-icon-btn--danger" [title]="t('remove_image')" [attr.aria-label]="t('remove_image')"
+                      (click)="clearImage(field.key)"><app-icon name="x" [size]="15"></app-icon></button>
+                  </div>
+                  <div class="gen-zoom">
+                    <label [for]="'jc-zoom-' + field.key">{{ t('zoom') }}</label>
+                    <input type="range" [id]="'jc-zoom-' + field.key" [min]="zoomLimits.min" [max]="zoomLimits.max" step="0.05"
+                      [value]="crops()[field.key]?.zoom ?? 1" (input)="setZoom(field.key, $any($event.target).value)" />
+                    <button type="button" class="ws-btn ws-btn--sm" (click)="resetCrop(field.key)">{{ t('reset_crop') }}</button>
+                  </div>
+                  @if (resolutionWarning(asImage(field)); as warning) {
+                    <p class="gen-note">{{ warning }}</p>
+                  }
+                }
+                <div class="gen-image-actions">
+                  <label class="ws-btn ws-btn--sm gen-file" [class.gen-file--busy]="opening() === field.key">
+                    <app-icon name="image" [size]="14"></app-icon>
+                    {{ opening() === field.key ? t('opening') : t(images()[field.key] ? 'replace_photo' : 'choose_photo') }}
+                    <input type="file" [accept]="accept" [disabled]="opening() === field.key" (change)="chooseFile(asImage(field), $event)" />
+                  </label>
+                  <button type="button" class="ws-btn ws-btn--sm" (click)="choosingFor.set(field.key)">
+                    <app-icon name="folder-open" [size]="14"></app-icon>{{ t('from_library') }}
+                  </button>
+                </div>
+              }
+              @if (attempted()) {
+                @for (problem of problems(); track $index) {
+                  @if (problem.field === field.key) {
+                    <p class="ws-field-error" role="alert">{{ problemText(problem) }}</p>
+                  }
+                }
+              }
+            </div>
+          }
+          @if (fields().length) {
+            <p class="gen-privacy">{{ t('photo_privacy') }}</p>
+          }
+        </section>
+
+        <section class="ws-panel">
+          <div class="gen-field-head">
+            <h2 class="ws-panel-title"><label for="jc-gen-caption">{{ t('caption') }}</label></h2>
+            @if (captionEdited() && tpl.caption_template) {
+              <button type="button" class="ws-btn ws-btn--sm" (click)="refillCaption()">{{ t('caption_refill') }}</button>
+            }
+          </div>
+          <textarea #cap id="jc-gen-caption" class="gen-caption" rows="5" [attr.maxlength]="maxCaption" [placeholder]="t('caption_placeholder')"
+            [value]="caption()" (input)="setCaption(cap.value)"></textarea>
+          <div class="gen-field-foot">
+            <span class="ws-field-hint">{{ tpl.caption_template ? t('caption_hint') : t('caption_no_pattern') }}</span>
+            <span class="gen-count">{{ caption().length }}</span>
+          </div>
+        </section>
+
+        <section class="ws-panel">
+          <h2 class="ws-panel-title">{{ t('target') }}</h2>
+          <div class="ws-field">
+            <label for="jc-gen-folder">{{ t('folder') }}</label>
+            <select id="jc-gen-folder" (change)="setFolder($any($event.target).value)">
+              <option value="" [selected]="folderId() === null">{{ t('root') }}</option>
+              @for (option of folderChoices(); track option.id) {
+                <option [value]="option.id" [selected]="folderId() === option.id">{{ option.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="ws-field gen-last-field">
+            <label for="jc-gen-name">{{ t('name') }}</label>
+            <input id="jc-gen-name" type="text" autocomplete="off" [attr.maxlength]="maxName" [placeholder]="namePlaceholder" [value]="name()"
+              (input)="setName($any($event.target).value)" />
+            <span class="ws-field-hint">{{ t('name_hint') }}</span>
+          </div>
+        </section>
+
+        <section class="ws-panel gen-actions">
+          @if (attempted() && problems().length) {
+            <div class="gen-problems" role="alert">
+              <strong>{{ t('problems_title') }}</strong>
+              <ul>
+                @for (problem of problems(); track $index) {
+                  <li>{{ problemText(problem) }}</li>
+                }
+              </ul>
+            </div>
+          }
+          @if (!canCreate) {
+            <p class="ws-trash-note">{{ t('no_permission') }}</p>
+          }
+          <button type="button" class="ws-btn ws-btn--primary gen-generate" [disabled]="generating() || !canCreate" (click)="generate()">
+            <app-icon name="sparkles" [size]="16"></app-icon>{{ generating() ? t('generating') : t('generate_button') }}
+          </button>
+
+          @if (result(); as output) {
+            <div class="gen-result" role="status">
+              @if (output.thumb_url) {
+                <img class="gen-result-thumb" [src]="output.thumb_url" [alt]="output.name" />
+              }
+              <div class="gen-result-body">
+                <strong>{{ t('done_title') }}</strong>
+                <span>{{ output.name }}</span>
+                <span class="ws-card-meta">{{ folderName(output) }} · {{ output.width }} × {{ output.height }} · {{ output.format === 'jpg' ? 'JPG' : 'PNG' }} · {{ bytes(output.size_bytes) }}</span>
+                <div class="gen-result-actions">
+                  <button type="button" class="ws-btn ws-btn--sm" (click)="openInOutputs(output)">
+                    <app-icon name="folder" [size]="14"></app-icon>{{ t('open_outputs') }}
+                  </button>
+                  @if (output.download_url) {
+                    <a class="ws-btn ws-btn--sm" [href]="output.download_url" download>
+                      <app-creator-icon [nodes]="icon('download')" [size]="14" />{{ t('download') }}
+                    </a>
+                  }
+                  @if (output.caption) {
+                    <button type="button" class="ws-btn ws-btn--sm" (click)="copyCaption(output)">
+                      <app-creator-icon [nodes]="icon('copy')" [size]="14" />{{ copied() ? t('copied') : t('copy') }}
+                    </button>
+                  }
+                </div>
+                <span class="ws-field-hint">{{ t('done_hint') }}</span>
+              </div>
+            </div>
+          }
+        </section>
+      </div>
+    </div>
+  } @else {
+    <div class="ws-empty">{{ t('loading') }}</div>
+  }
+</div>
+
+@if (choosingFor()) {
+  <app-jc-asset-chooser (chosen)="useAsset($event)" (dismissed)="choosingFor.set(null)" />
+}

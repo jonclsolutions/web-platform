@@ -75,7 +75,7 @@ export interface WorkspaceUsage {
   used_bytes: number;
   quota_bytes: number;
   trash_bytes: number;
-  counts: { folders: number; images: number; fonts: number; templates: number };
+  counts: { folders: number; images: number; fonts: number; templates: number; outputs: number };
 }
 
 /** Settings of the application. */
@@ -91,7 +91,7 @@ export interface QuotaAccount {
   used_bytes: number;
   quota_mb: number | null;
   quota_bytes: number;
-  counts: { folders: number; images: number; fonts: number; templates: number };
+  counts: { folders: number; images: number; fonts: number; templates: number; outputs: number };
 }
 
 /** One file of a curated font face with the characters it covers. */
@@ -162,4 +162,48 @@ export interface TemplateSave {
   caption_template: string | null;
   version: number;
   document: TemplateDocument;
+}
+
+/** Generated output (post) of the own workspace. */
+export interface CreatorOutput {
+  id: number;
+  section: string;
+  /** Folder (null = top level). */
+  folder_id: number | null;
+  name: string;
+  /** Template it was made from (null after the template was deleted for good). */
+  template_id: number | null;
+  /** Name of the template at the time of generating. */
+  template_name: string;
+  /** Text of the post. */
+  caption: string | null;
+  width: number;
+  height: number;
+  format: 'png' | 'jpg';
+  page_count: number;
+  size_bytes: number;
+  /** Signed URLs of the first page: picture, thumbnail, download. */
+  url: string | null;
+  thumb_url: string | null;
+  download_url: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  deleted_at: string | null;
+}
+
+/** Output sent after generating. */
+export interface OutputUpload {
+  /** PNG drawn by the renderer in the size of the template. */
+  file: Blob;
+  template_id: number;
+  folder_id: number | null;
+  name: string;
+  caption: string;
+}
+
+/** Signed URL of a ZIP of outputs. */
+export interface OutputZip {
+  url: string;
+  count: number;
+  bytes: number;
 }

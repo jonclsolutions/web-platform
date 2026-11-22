@@ -56,9 +56,10 @@
 
 /*
     @module: Top bar
-    @description: Back, name, size, undo / redo, zoom, grid / guides / safe zone, state and Save.
+    @description: Back, name, size, undo / redo, zoom, grid / guides / safe zone, state, Save and
+        Generate.
     @usage: .te-bar > .te-icon-btn, input.te-name, .te-badge, .te-size, .te-sep, .te-zoom, label.te-toggle,
-        .te-spacer, .te-state(--dirty), button.te-save
+        .te-spacer, .te-state(--dirty), button.te-save, button.te-generate
 */
 .te-bar {
   display: flex;
@@ -135,6 +136,20 @@
 
 .te-save:focus-visible { outline: 2px solid var(--color-amber-500); outline-offset: 2px; }
 .te-save:disabled { opacity: 0.45; cursor: default; }
+
+.te-generate {
+  padding: 6px 12px;
+  border: 1px solid var(--color-zinc-300);
+  border-radius: 8px;
+  background: var(--color-white);
+  color: var(--color-zinc-900);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.te-generate:hover,
+.te-generate:focus-visible { background: var(--color-zinc-100); }
 
 /*
     @module: Left column

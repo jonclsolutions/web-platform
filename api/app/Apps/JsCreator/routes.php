@@ -12,10 +12,16 @@
  *     fonts (every controller limits its queries to the signed-in account), the settings
  *     (quotas) and the audit log. The shared parts of the workspace need the action in any
  *     section (JsCreatorSections::any()).
- *   - `js-creator/<section>/templates` (one route group per section of JsCreatorSections, the
- *     section is passed to the controller): templates with the permissions of their section.
- *   - `js-creator/files/…`: files of a workspace, only through the signed URLs issued to their
- *     owner (WorkspaceFiles).
+ *   - `js-creator/<section>/templates` and `js-creator/<section>/outputs` (one route group per
+ *     section of JsCreatorSections, the section is passed to the controller): templates and
+ *     generating with the permissions of their section.
+ *   - `js-creator/outputs`: the outputs of every section in one list; each output needs the
+ *     permission of its section (OutputController).
+ *   - `js-creator/files/…`: files of a workspace (and ZIPs of outputs), only through the signed
+ *     URLs issued to their owner (WorkspaceFiles).
+ * @note The limit of the whole group has its own name (`js-creator`): an unnamed `throttle:N,1`
+ *   shares one counter per account with every other unnamed limit of the API (e.g. the 60 / min
+ *   of the notifications of the core), so working in JS Creator would use them up.
  * @dependencies the controllers of the application; middleware `auth:sanctum`, `permission`,
  *   `signed`, `throttle`.
  */
@@ -25,13 +31,14 @@ use App\Apps\JsCreator\Http\Controllers\FileController;
 use App\Apps\JsCreator\Http\Controllers\FolderController;
 use App\Apps\JsCreator\Http\Controllers\FontController;
 use App\Apps\JsCreator\Http\Controllers\JsCreatorLogController;
+use App\Apps\JsCreator\Http\Controllers\OutputController;
 use App\Apps\JsCreator\Http\Controllers\SettingsController;
 use App\Apps\JsCreator\Http\Controllers\TemplateController;
 use App\Apps\JsCreator\Http\Controllers\UsageController;
 use App\Apps\JsCreator\Support\JsCreatorSections;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:sanctum', 'throttle:300,1'])->prefix('js-creator')->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:300,1,js-creator'])->prefix('js-creator')->group(function () {
     $view = 'permission:' . JsCreatorSections::any('view');
     $create = 'permission:' . JsCreatorSections::any('create');
     $update = 'permission:' . JsCreatorSections::any('update');
@@ -65,9 +72,21 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->prefix('js-creator')->gro
     Route::delete('library/fonts/{id}', [FontController::class, 'destroy'])->middleware($delete)->whereNumber('id');
     Route::post('library/fonts/{id}/restore', [FontController::class, 'restore'])->middleware($delete)->whereNumber('id');
 
+    // ── js-creator/outputs (outputs of every section; each needs its section permission) ──
+    Route::get('outputs', [OutputController::class, 'index'])->middleware($view);
+    Route::delete('outputs/trash', [OutputController::class, 'emptyTrash'])->middleware($delete);
+    Route::post('outputs/bulk', [OutputController::class, 'bulk'])
+        ->middleware('permission:' . JsCreatorSections::any('update') . '|' . JsCreatorSections::any('delete'))->name('js-creator.outputs.bulk');
+    Route::post('outputs/zip', [OutputController::class, 'zip'])->middleware([$view, 'throttle:20,1,js-creator-zip'])->name('js-creator.outputs.zip');
+    Route::put('outputs/{id}', [OutputController::class, 'update'])->middleware($update)->whereNumber('id');
+    Route::delete('outputs/{id}', [OutputController::class, 'destroy'])->middleware($delete)->whereNumber('id');
+    Route::post('outputs/{id}/restore', [OutputController::class, 'restore'])->middleware($delete)->whereNumber('id');
+
     // ── js-creator/<section>/templates (templates of each section) ───────────────
+    // ── js-creator/<section>/outputs (generating from a template of the section) ─
     foreach (JsCreatorSections::SECTIONS as $section) {
         $can = fn (string $action) => 'permission:' . JsCreatorSections::permission($section, $action);
+        Route::post("{$section}/outputs", [OutputController::class, 'store'])->middleware([$can('create'), $upload])->defaults('section', $section);
         Route::prefix("{$section}/templates")->group(function () use ($section, $can, $upload) {
             Route::get('', [TemplateController::class, 'index'])->middleware($can('view'))->defaults('section', $section);
             Route::post('', [TemplateController::class, 'store'])->middleware($can('create'))->defaults('section', $section);
@@ -102,3 +121,9 @@ Route::get('js-creator/files/fonts/{id}', [FileController::class, 'font'])
 Route::get('js-creator/files/templates/{id}', [FileController::class, 'template'])
     ->middleware('signed:relative')->whereNumber('id')
     ->name('js-creator.files.template');
+Route::get('js-creator/files/outputs/{id}/{variant}', [FileController::class, 'output'])
+    ->middleware('signed:relative')->whereNumber('id')->whereIn('variant', ['original', 'thumb', 'download'])
+    ->name('js-creator.files.output');
+Route::get('js-creator/files/zip', [FileController::class, 'zip'])
+    ->middleware(['signed:relative', 'throttle:20,1,js-creator-zip-file'])
+    ->name('js-creator.files.zip');

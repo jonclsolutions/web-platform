@@ -1,0 +1,303 @@
+/*
+    @file: generate-page.component.css
+    @path: src/app/apps/js-creator/admin/images/generate/generate-page.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Layout of the page "Generate": the head, the preview beside the form (the
+        preview stays in view while the form scrolls; one column under 1000 px with the preview
+        first), the fields of the form, images with their zoom, notes, problems, the Generate
+        button and the result.
+    @dependencies: shared-styles/workspace.css (.ws-*), shared/styles/tokens.css (--color-*)
+*/
+
+/*
+    @module: Head
+    @description: Back button, name of the template with its size and format, edit link.
+    @usage: .gen-head > .gen-back, .gen-title (h1, .gen-meta), a.ws-btn
+*/
+.gen-page { max-width: 1320px; }
+
+.gen-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gen-title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.gen-title h1 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-zinc-900);
+  overflow-wrap: anywhere;
+}
+
+.gen-meta {
+  font-size: 0.78rem;
+  color: var(--color-zinc-500);
+}
+
+.gen-head a.ws-btn { text-decoration: none; }
+
+/*
+    @module: Two columns
+    @description: Preview (sticky on wide screens) beside the form; stacked under 1000 px.
+    @usage: .gen-layout > .gen-preview (.gen-preview-hint), .gen-form
+*/
+.gen-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(340px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.gen-preview {
+  position: sticky;
+  top: 12px;
+}
+
+.gen-preview-hint { margin: 0; text-align: center; }
+
+.gen-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+@media (max-width: 1000px) {
+  .gen-layout { grid-template-columns: 1fr; }
+  .gen-preview { position: static; }
+}
+
+/*
+    @module: Fields
+    @description: One block per field: label with the highlight button, input, help and length,
+        notes about overflowing texts; images with a thumbnail, zoom and the pickers.
+    @usage: .gen-field > .gen-field-head, input / textarea, .gen-field-foot (.gen-count(--over)),
+        .gen-note(--danger), .gen-label, .gen-required, .gen-image, .gen-zoom, .gen-image-actions
+        (.gen-file); .gen-privacy
+*/
+.gen-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 0;
+  border-top: 1px solid var(--color-sand-200);
+}
+
+.gen-field:first-of-type { border-top: none; padding-top: 0; }
+
+.gen-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.gen-field-head label,
+.gen-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-zinc-800);
+}
+
+.gen-required { color: var(--color-rose-600); }
+
+.gen-field input[type='text'],
+.gen-field textarea,
+.gen-caption {
+  width: 100%;
+  padding: 8px 11px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 10px;
+  background: var(--color-white);
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: var(--color-zinc-900);
+  resize: vertical;
+}
+
+.gen-field input[type='text']:focus,
+.gen-field textarea:focus,
+.gen-caption:focus {
+  outline: 2px solid var(--color-amber-200);
+  outline-offset: 0;
+  border-color: var(--color-amber-500);
+}
+
+.gen-field-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.gen-count {
+  flex-shrink: 0;
+  font-size: 0.74rem;
+  color: var(--color-zinc-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.gen-count--over { color: var(--color-rose-700); font-weight: 700; }
+
+.gen-note {
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--color-amber-50);
+  font-size: 0.76rem;
+  color: var(--color-amber-800);
+}
+
+.gen-note--danger {
+  background: var(--color-rose-50);
+  color: var(--color-rose-700);
+}
+
+.gen-image {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-sand-200);
+  border-radius: 10px;
+  background: var(--color-zinc-50);
+}
+
+.gen-image-thumb {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: var(--color-white);
+}
+
+.gen-image-thumb--local {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-zinc-500);
+}
+
+.gen-image-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.78rem;
+  color: var(--color-zinc-700);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gen-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: var(--color-zinc-700);
+}
+
+.gen-zoom input[type='range'] { flex: 1; min-width: 80px; accent-color: var(--color-zinc-900); }
+
+.gen-image-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* The file input is hidden inside its label button. */
+.gen-file { position: relative; overflow: hidden; }
+
+.gen-file input[type='file'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.gen-file--busy { opacity: 0.6; }
+
+.gen-privacy {
+  margin: 4px 0 0;
+  font-size: 0.74rem;
+  color: var(--color-zinc-500);
+}
+
+.gen-last-field { margin-bottom: 0; }
+
+/*
+    @module: Generate and result
+    @description: List of what stops generating, the big Generate button and the card of the
+        generated output with its actions.
+    @usage: .gen-actions > .gen-problems, .gen-generate, .gen-result (.gen-result-thumb,
+        .gen-result-body > .gen-result-actions)
+*/
+.gen-problems {
+  padding: 10px 14px;
+  border: 1px solid var(--color-rose-200);
+  border-radius: 12px;
+  background: var(--color-rose-50);
+  font-size: 0.8rem;
+  color: var(--color-rose-800);
+}
+
+.gen-problems ul { margin: 6px 0 0; padding-left: 18px; }
+
+.gen-generate {
+  justify-content: center;
+  padding: 11px 18px;
+  font-size: 0.9rem;
+}
+
+.gen-result {
+  display: flex;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid var(--color-emerald-200);
+  border-radius: 12px;
+  background: var(--color-emerald-50);
+}
+
+.gen-result-thumb {
+  flex-shrink: 0;
+  width: 96px;
+  height: 96px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: var(--color-white);
+}
+
+.gen-result-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: 0.82rem;
+  color: var(--color-zinc-800);
+  overflow-wrap: anywhere;
+}
+
+.gen-result-body strong { color: var(--color-emerald-700); }
+
+.gen-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.gen-result-actions .ws-btn { text-decoration: none; }
+
+@media (max-width: 640px) {
+  .gen-result { flex-direction: column; }
+  .gen-result-thumb { width: 100%; height: 160px; }
+}
