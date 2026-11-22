@@ -25,7 +25,7 @@
           <h2 class="ws-panel-title">{{ t('folders') }}</h2>
           @if (canCreate) {
             <button type="button" class="ws-btn ws-btn--sm" (click)="openCreate(selectedId)">
-              <app-icon name="plus" [size]="14"></app-icon>{{ t('new_folder') }}
+              {{ t('new_folder') }}
             </button>
           }
         </div>
@@ -101,11 +101,11 @@
             <strong>{{ t('selected') }} {{ selected.size }}</strong>
             <span class="ws-toolbar-spacer"></span>
             <button type="button" class="ws-btn ws-btn--sm" [disabled]="busy" (click)="downloadZip()">
-              <app-creator-icon [nodes]="icon('download')" [size]="14" />{{ t('download_zip') }}
+              {{ t('download_zip') }}
             </button>
             @if (canUpdate) {
               <button type="button" class="ws-btn ws-btn--sm" [disabled]="busy" (click)="openBulkMove()">
-                <app-creator-icon [nodes]="icon('folder-input')" [size]="14" />{{ t('move') }}
+                {{ t('move') }}
               </button>
             }
             @if (canDelete) {
@@ -134,7 +134,7 @@
                   <span class="ws-card-meta">{{ output.created_at | date: 'd. M. y H:mm' }}</span>
                   <span class="ws-card-meta">{{ output.width }} × {{ output.height }} · {{ output.format === 'jpg' ? 'JPG' : 'PNG' }} · {{ bytes(output.size_bytes) }}</span>
                   @if (search.trim()) {
-                    <span class="ws-card-meta op-card-folder" [title]="folderPath(output)"><app-icon name="folder" [size]="11"></app-icon> {{ folderPath(output) }}</span>
+                    <span class="ws-card-meta op-card-folder" [title]="folderPath(output)">{{ folderPath(output) }}</span>
                   }
                 </div>
                 <div class="ws-card-actions">
@@ -269,7 +269,7 @@
             <strong>{{ t('caption') }}</strong>
             @if (d.caption) {
               <button type="button" class="ws-btn ws-btn--sm" (click)="copyCaption(d)">
-                <app-creator-icon [nodes]="icon('copy')" [size]="14" />{{ copied ? t('copied') : t('copy') }}
+                {{ copied ? t('copied') : t('copy') }}
               </button>
             }
           </div>

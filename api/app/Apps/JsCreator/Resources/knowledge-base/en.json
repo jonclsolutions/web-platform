@@ -155,7 +155,7 @@
               "items": [
                 "Choose the folder (the last used one is offered) and optionally a name - an empty name = the name of the template with the date and time.",
                 "Generate first shows what is still missing (required fields, too long texts, texts that do not fit).",
-                "Then it waits for every font and image - when one cannot be loaded, no output is made (never with a fallback font).",
+                "Then it waits for every font and image - when one cannot be loaded, no output is made (never with a fallback font). Likewise a text with a character the font of the template does not have (e.g. an arrow or an emoji) is refused - the form lists those characters. An optional image field may stay empty; its place in the output stays empty.",
                 "The template is drawn in its exact size, the server checks the picture, converts it to the format of the template (PNG / JPG) and saves it.",
                 "Open the finished output in Outputs, download it or copy its text. The form stays filled - change the fields and click Generate again for another variant."
               ]

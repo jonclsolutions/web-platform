@@ -1,6 +1,12 @@
 {
     "unreleased": [
         {
+            "type": "fixed",
+            "area": "js-creator",
+            "part": "admin",
+            "text": "JS Creator: an optional image field left empty no longer stops generating, characters the font lacks are refused, punctuation after a highlight stays on its line, no empty label, edits made during a save are kept, library popup buttons have texts, folder trash frees all space."
+        },
+        {
             "type": "added",
             "area": "js-creator",
             "part": "admin",

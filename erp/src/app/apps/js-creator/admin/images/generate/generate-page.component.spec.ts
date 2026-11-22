@@ -7,7 +7,8 @@
  * @description Unit tests of GeneratePageComponent: loading (template, fonts, folders, the last
  *   folder), the text of the post from the pattern, highlights, photos from the computer with
  *   their crop, what stops generating, generating (exact PNG of the template, only the output
- *   sent, the result shown), refused outputs, the page without the create permission and a set
+ *   sent, the result shown, an optional image left empty), refused outputs, characters the font
+ *   does not have, the page without the create permission and a set
  *   (united fields with block fields, tabs of formats with their own crops, one output each).
  * @dependencies admin-test-helpers.ts (admin doubles), editor-test-data.ts, the canvas and
  *   createImageBitmap of the test browser.
@@ -21,7 +22,7 @@ import { GeneratePageComponent } from './generate-page.component';
 import { FontLibraryService } from '../../shared/font-library.service';
 import { IconSetService } from '../../shared/icon-set.service';
 import { CreatorBlockDetail, CreatorFolder, CreatorOutput, CreatorSet, CreatorTemplateDetail } from '../../shared/js-creator.models';
-import { ImageField, ImageLayer, Layer, TextField, createLayer, emptyDocument } from '../../shared/render/document';
+import { ImageField, ImageLayer, Layer, TextField, TextLayer, createLayer, emptyDocument } from '../../shared/render/document';
 import { fieldImageBoxes } from '../../shared/render/field-images';
 import { AdminTestContext, createAdminTestContext } from '../../../../../../testing/admin-test-helpers';
 import { TEST_CURATED, TEST_SIZE, imageField, shapeLayer, testFont, testTemplate, textField, textLayer } from '../editor/editor-test-data';
@@ -76,15 +77,16 @@ describe('GeneratePageComponent', () => {
    * @description Creates the page for template 7: a title field (text layer), an image field
    *   in a 500 × 500 image layer and a shape; caption pattern "{{title}} #tag".
    * @param granted Permissions of the account.
+   * @param photoRequired Whether the image field is required.
    */
-  async function create(granted: string[] | 'all' = 'all'): Promise<void> {
+  async function create(granted: string[] | 'all' = 'all', photoRequired = true): Promise<void> {
     ctx = createAdminTestContext({ granted });
     const photo: ImageLayer = {
       ...(createLayer('image', TEST_SIZE, 'img') as ImageLayer), anchor: 'tl', x: 500, y: 500, w: 500, h: 500, fit: 'cover', source: { kind: 'field', field: 'photo' },
     };
     served = testTemplate({
       layers: [shapeLayer('a'), textLayer('t1', { field: 'title', w: 900, h: 200 }), photo],
-      fields: [{ ...(textField('title') as TextField), maxLength: 20 }, imageField('photo')],
+      fields: [{ ...(textField('title') as TextField), maxLength: 20 }, { ...(imageField('photo') as ImageField), required: photoRequired }],
       caption: '{{title}} #tag',
     });
     ctx.dataHandler.get.and.callFake(((url: string) => of(url.includes('/templates/') ? served : { used_bytes: 0, quota_bytes: 1e9, trash_bytes: 0, counts: {} })) as never);
@@ -285,6 +287,42 @@ describe('GeneratePageComponent', () => {
     const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     component.openInOutputs(output());
     expect(navigate).toHaveBeenCalledWith(['/admin/js-creator/outputs'], { queryParams: { folder: 2, output: 31 } });
+  });
+
+  /**
+   * @description An optional image field left empty does not stop generating - its place stays
+   *   empty in the output like in the preview.
+   * @input photo not required; title "Léto"; no photo; Generate
+   * @output no problem; one upload; no alert
+   */
+  it('generates with an optional image field left empty', async () => {
+    await create('all', false);
+    component.setText('title', 'Léto');
+    expect(component.problems()).toEqual([]);
+    await component.generate();
+    expect(ctx.dataHandler.postQuietly).toHaveBeenCalledTimes(1);
+    expect(ctx.alert.open).not.toHaveBeenCalled();
+  });
+
+  /**
+   * @description Characters the font of the template does not have (outside the unicode-range of
+   *   its faces) are a problem that stops generating - they would be drawn with another font.
+   * @input face of the font of the text layer covering U+0000-017F; title "Akce → 😀"; Generate
+   * @output problem characters "→ 😀"; no upload
+   */
+  it('refuses characters the font does not have', async () => {
+    await create('all', false);
+    const family = component.resources.fontFamily((served.document.pages[0].layers[1] as TextLayer).font.family);
+    const face = new FontFace(family, 'url("/nowhere.woff2")', { unicodeRange: 'U+0000-017F' });
+    document.fonts.add(face);
+    try {
+      component.setText('title', 'Akce → 😀');
+      expect(component.problems()).toEqual([{ kind: 'characters', field: null, label: '→ 😀' }]);
+      await component.generate();
+      expect(ctx.dataHandler.postQuietly).not.toHaveBeenCalled();
+    } finally {
+      document.fonts.delete(face);
+    }
   });
   /**
    * @description A set: one form with the fields of all its templates (the block field of an

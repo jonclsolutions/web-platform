@@ -532,7 +532,8 @@ export class TemplateEditorComponent implements OnInit, LeavablePage {
   // ── save ────────────────────────────────────────────────────────────────────
 
   /**
-   * @description Saves the template (version check), then uploads its thumbnail.
+   * @description Saves the template (version check), then uploads its thumbnail. Changes made
+   *   while the save runs stay as unsaved changes (EditorStore.saved()).
    * @returns Resolves with true when saved.
    */
   async save(): Promise<boolean> {
@@ -548,13 +549,14 @@ export class TemplateEditorComponent implements OnInit, LeavablePage {
       return false;
     }
     this.saving.set(true);
+    const sent = store.stateJson();
     const request: Observable<CreatorTemplateDetail | CreatorBlockDetail> = this.kind === 'block'
       ? this.blocksApi.saveBlock(this.section, store.templateId, store.blockSaveBody())
       : this.api.save(this.section, store.templateId, store.saveBody());
     return new Promise(resolve => {
       request.subscribe({
         next: saved => {
-          store.load(this.kind === 'block' ? blockAsTemplate(saved as CreatorBlockDetail) : saved as CreatorTemplateDetail, true);
+          store.saved(this.kind === 'block' ? blockAsTemplate(saved as CreatorBlockDetail) : saved as CreatorTemplateDetail, sent);
           this.addBlocks((saved as CreatorTemplateDetail).blocks ?? []);
           this.saving.set(false);
           this.savedAt.set(new Date());

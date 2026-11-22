@@ -221,6 +221,30 @@ describe('renderer', () => {
     const { report } = draw(docWith(tiny));
     expect(report.overflows).toEqual([{ layerId: 't2', field: null, mode: 'block' }]);
   });
+
+  /**
+   * @description An optional text field left empty draws no label tight around its text (there
+   *   is no text); a label of the whole element stays (part of the design).
+   * @input text field "badge" with a red label (fit text, padding 10) and a blue label (fit
+   *   element) in a 100 × 40 box at 0, 0; output without a value; output with "Hi"
+   * @output empty: white in the middle of the first box, blue in the second; with a value: red
+   */
+  it('draws no tight label around an empty text', () => {
+    const doc = emptyDocument();
+    doc.fields = [{ key: 'badge', type: 'text', label: 'Badge', help: '', required: false, sample: 'Sample', maxLength: 20, multiline: false }];
+    const base = {
+      ...(createLayer('text', SIZE, 'b1') as TextLayer), field: 'badge', anchor: 'tl' as const, x: 0, y: 0, w: 100, h: 40, size: 20,
+      fill: { type: 'solid' as const, color: '#ffffff' },
+    };
+    const tight: TextLayer = { ...base, box: { fill: { type: 'solid', color: '#ff0000' }, padding: 10, radius: 0, fit: 'text' } };
+    const whole: TextLayer = { ...base, id: 'b2', y: 50, box: { fill: { type: 'solid', color: '#0000ff' }, padding: 10, radius: 0, fit: 'element' } };
+    doc.pages[0].layers = [tight, whole];
+    const empty = draw(doc, 'output', { text: {}, images: {} });
+    expect(empty.pixel(50, 20)).toEqual([255, 255, 255, 255]);
+    expect(empty.pixel(5, 55)).toEqual([0, 0, 255, 255]);
+    const filled = draw(doc, 'output', { text: { badge: 'Hi' }, images: {} });
+    expect(filled.pixel(33, 29)).toEqual([255, 0, 0, 255]);
+  });
   /**
    * @description A block instance draws its block scaled into its box (transparent background,
    *   clipped to the box); its image field takes the value of its form key; overflowing texts

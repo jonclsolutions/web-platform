@@ -271,6 +271,45 @@ class OutputTest extends TestCase
     }
 
     /**
+     * @description A subfolder deleted on its own first and then its parent: deleting the parent
+     *   for good takes the outputs of the subfolder too (they never stay invisible in the trash
+     *   with their space); outputs left behind that way before are purged by the retention.
+     * @input Root / Sub with one output each; Sub to the trash, then Root; Root deleted for good.
+     *   An output in the trash whose trash root folder does not exist, 31 days old.
+     * @output no output and no file left, both folders gone; the purge deletes the left output
+     *   and its files (count 1).
+     */
+    public function test_deleting_a_folder_for_good_takes_outputs_of_subfolders_deleted_before(): void
+    {
+        $user = $this->signIn($this->creator());
+        $template = $this->template('T');
+        $root = CreatorFolder::create(['user_id' => $user->id, 'parent_id' => null, 'name' => 'Root']);
+        $sub = CreatorFolder::create(['user_id' => $user->id, 'parent_id' => $root->id, 'name' => 'Sub']);
+        $inRoot = $this->makeOutput($template, 'In root', $root->id);
+        $inSub = $this->makeOutput($template, 'In sub', $sub->id);
+        $paths = CreatorOutputFile::query()->whereIn('output_id', [$inRoot, $inSub])->get()->flatMap(fn ($f) => [$f->path, $f->thumb_path])->all();
+
+        $this->deleteJson("/api/js-creator/folders/{$sub->id}")->assertNoContent();
+        $this->deleteJson("/api/js-creator/folders/{$root->id}")->assertNoContent();
+        $this->deleteJson("/api/js-creator/folders/{$root->id}?force=1")->assertNoContent();
+
+        $this->assertSame(0, CreatorOutput::withTrashed()->count());
+        $this->assertSame(0, CreatorFolder::withTrashed()->count());
+        foreach ($paths as $path) {
+            Storage::disk('private')->assertMissing($path);
+        }
+
+        $left = $this->makeOutput($template, 'Left behind');
+        $file = CreatorOutputFile::query()->where('output_id', $left)->first();
+        CreatorOutput::query()->whereKey($left)->update(['deleted_at' => Carbon::now()->subDays(31), 'trash_root_id' => 999999]);
+        $this->getJson(self::BASE . '?only_trashed=1')->assertJsonCount(0, 'data');
+        $this->assertSame(1, (new JsCreatorRetentionSource())->purge('js_creator_trash', Carbon::now()->subDays(30)));
+        $this->assertSame(0, CreatorOutput::withTrashed()->count());
+        Storage::disk('private')->assertMissing($file->path);
+        Storage::disk('private')->assertMissing($file->thumb_path);
+    }
+
+    /**
      * @description Bulk actions change only own outputs reachable for the action; a move needs the
      *   update permission, the trash actions the delete permission.
      * @input 3 own outputs + 1 of another account; folder; account with view + update only.

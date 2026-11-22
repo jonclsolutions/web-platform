@@ -79,7 +79,7 @@
           {{ saving() ? t('saving') : s.dirty() ? t('unsaved') : savedAt() ? t('saved_at') + ' ' + savedTime : t('no_changes') }}
         </span>
         <button type="button" class="te-save" [disabled]="saving() || !s.dirty()" [title]="t('save') + ' (Ctrl+S)'" (click)="save()">
-          <app-creator-icon [nodes]="icon('save')" [size]="16" />{{ t('save') }}
+          {{ t('save') }}
         </button>
       }
       @if (kind === 'template') {

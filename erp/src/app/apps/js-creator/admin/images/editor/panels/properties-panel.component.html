@@ -38,7 +38,7 @@
         </div>
         @if (canMakeBlock() && !selectionHasBlock()) {
           <button type="button" class="pn-btn pn-btn--wide" [title]="t('make_block_hint')" (click)="makeBlock.emit()">
-            <app-creator-icon [nodes]="icon('group')" [size]="15" />{{ t('make_block') }}
+            {{ t('make_block') }}
           </button>
         }
       </fieldset>
@@ -121,7 +121,7 @@
             </label>
             <div class="pn-row">
               <button type="button" class="pn-btn" (click)="highlightSelection(tl)">
-                <app-creator-icon [nodes]="icon('highlight')" [size]="14" />{{ t('highlight_selection') }}
+                {{ t('highlight_selection') }}
               </button>
               <span class="pn-hint">{{ t('highlight_hint') }}</span>
             </div>
@@ -364,7 +364,7 @@
               <div class="pn-row">
                 <button type="button" class="pn-btn" (click)="editBlock.emit(bl.blockId)">{{ t('block_edit') }}</button>
                 <button type="button" class="pn-btn" [title]="t('block_unpack_hint')" (click)="unpack.emit(bl.id)">
-                  <app-creator-icon [nodes]="icon('ungroup')" [size]="14" />{{ t('block_unpack') }}</button>
+                  {{ t('block_unpack') }}</button>
               </div>
             } @else {
               <p class="pn-hint">{{ t('block_missing') }}</p>

@@ -139,10 +139,7 @@ export class EditorStore {
    * @param keepHistory Keep undo / redo (after an own save).
    */
   load(template: CreatorTemplateDetail, keepHistory = false): void {
-    const snapshot: EditorSnapshot = {
-      name: template.name, width: template.width, height: template.height, outputFormat: template.output_format,
-      outputQuality: template.output_quality, caption: template.caption_template ?? '', doc: cloneJson(template.document),
-    };
+    const snapshot = snapshotOf(template);
     this.state.set(snapshot);
     this.savedJson.set(JSON.stringify(snapshot));
     this.version.set(template.version);
@@ -151,6 +148,30 @@ export class EditorStore {
       this.redoStack.set([]);
       this.selection.set([]);
     }
+    this.lastKey = null;
+  }
+
+  /**
+   * @description The current state as JSON (what a save sends - compared when its answer comes).
+   */
+  stateJson(): string {
+    return JSON.stringify(this.state());
+  }
+
+  /**
+   * @description An own save was answered: the template of the API becomes the saved state.
+   *   Changes made while the save was running (the canvas stays editable) are kept as unsaved
+   *   changes instead of being replaced by the answer.
+   * @param template Saved template (new version).
+   * @param sent stateJson() of the state that was sent.
+   */
+  saved(template: CreatorTemplateDetail, sent: string): void {
+    if (this.stateJson() === sent) {
+      this.load(template, true);
+      return;
+    }
+    this.savedJson.set(JSON.stringify(snapshotOf(template)));
+    this.version.set(template.version);
     this.lastKey = null;
   }
 
@@ -611,6 +632,17 @@ export class EditorStore {
     const ids = new Set(this.layers().map(l => l.id));
     this.selection.update(sel => sel.filter(id => ids.has(id)));
   }
+}
+
+/**
+ * @description State of the editor made from a template of the API.
+ * @param template Template (a block through blockAsTemplate()).
+ */
+export function snapshotOf(template: CreatorTemplateDetail): EditorSnapshot {
+  return {
+    name: template.name, width: template.width, height: template.height, outputFormat: template.output_format,
+    outputQuality: template.output_quality, caption: template.caption_template ?? '', doc: cloneJson(template.document),
+  };
 }
 
 /**

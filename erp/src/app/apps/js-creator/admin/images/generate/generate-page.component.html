@@ -34,7 +34,7 @@
       <span class="ws-toolbar-spacer"></span>
       @if (canEdit) {
         <a class="ws-btn ws-btn--sm" [routerLink]="['/admin/js-creator/image-templates', tpl.id, 'edit']">
-          <app-icon name="edit" [size]="14"></app-icon>{{ t('edit_template') }}@if (set()) { „{{ tpl.name }}“ }
+          {{ t('edit_template') }}@if (set()) { „{{ tpl.name }}“ }
         </a>
       }
     </header>
@@ -120,12 +120,11 @@
                 }
                 <div class="gen-image-actions">
                   <label class="ws-btn ws-btn--sm gen-file" [class.gen-file--busy]="opening() === field.key">
-                    <app-icon name="image" [size]="14"></app-icon>
                     {{ opening() === field.key ? t('opening') : t(images()[field.key] ? 'replace_photo' : 'choose_photo') }}
                     <input type="file" [accept]="accept" [disabled]="opening() === field.key" (change)="chooseFile(asImage(field), $event)" />
                   </label>
                   <button type="button" class="ws-btn ws-btn--sm" (click)="choosingFor.set(field.key)">
-                    <app-icon name="folder-open" [size]="14"></app-icon>{{ t('from_library') }}
+                    {{ t('from_library') }}
                   </button>
                 </div>
               }
@@ -192,7 +191,6 @@
             <p class="ws-trash-note">{{ t('no_permission') }}</p>
           }
           <button type="button" class="ws-btn ws-btn--primary gen-generate" [disabled]="generating() || !canCreate" (click)="generate()">
-            <app-icon name="sparkles" [size]="16"></app-icon>
             @if (progress(); as p) {
               {{ tf('generating_progress', { done: p.done + 1, total: p.total }) }}
             } @else {
@@ -211,16 +209,16 @@
                 <span class="ws-card-meta">{{ folderName(output) }} · {{ output.width }} × {{ output.height }} · {{ output.format === 'jpg' ? 'JPG' : 'PNG' }} · {{ bytes(output.size_bytes) }}</span>
                 <div class="gen-result-actions">
                   <button type="button" class="ws-btn ws-btn--sm" (click)="openInOutputs(output)">
-                    <app-icon name="folder" [size]="14"></app-icon>{{ t('open_outputs') }}
+                    {{ t('open_outputs') }}
                   </button>
                   @if (output.download_url) {
                     <a class="ws-btn ws-btn--sm" [href]="output.download_url" download>
-                      <app-creator-icon [nodes]="icon('download')" [size]="14" />{{ t('download') }}
+                      {{ t('download') }}
                     </a>
                   }
                   @if (output.caption) {
                     <button type="button" class="ws-btn ws-btn--sm" (click)="copyCaption(output)">
-                      <app-creator-icon [nodes]="icon('copy')" [size]="14" />{{ copied() ? t('copied') : t('copy') }}
+                      {{ copied() ? t('copied') : t('copy') }}
                     </button>
                   }
                 </div>

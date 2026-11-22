@@ -65,15 +65,17 @@ final class WorkspaceQuota
     }
 
     /**
-     * @description Refuses a new file that would not fit into the quota.
+     * @description Refuses a new file that would not fit into the quota. A change that does not
+     *   grow the workspace (a thumbnail replaced by a smaller one) always passes - also over a
+     *   quota that was lowered meanwhile.
      * @param int $userId Account.
-     * @param int $bytes Size of the new files.
+     * @param int $bytes Size of the new files (or the growth of a replaced file).
      * @return void
      * @throws QuotaExceededException
      */
     public static function ensureRoom(int $userId, int $bytes): void
     {
-        if (self::usedBytes($userId) + $bytes > self::quotaBytes($userId)) {
+        if ($bytes > 0 && self::usedBytes($userId) + $bytes > self::quotaBytes($userId)) {
             throw new QuotaExceededException();
         }
     }

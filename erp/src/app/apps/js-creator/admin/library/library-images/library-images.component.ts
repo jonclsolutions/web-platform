@@ -116,8 +116,8 @@ export class LibraryImagesComponent implements OnInit, OnDestroy {
   /** @description Buttons of the view switch. */
   get viewItems(): RowButton[] {
     return this.viewButtons.update([
-      { value: 'active', label: this.t('view_library'), icon: 'layers' },
-      { value: 'trash', label: this.t('view_trash'), icon: 'trash' },
+      { value: 'active', label: this.t('view_library') },
+      { value: 'trash', label: this.t('view_trash') },
     ]);
   }
 

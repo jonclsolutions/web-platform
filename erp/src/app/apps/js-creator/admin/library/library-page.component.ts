@@ -53,9 +53,9 @@ export class LibraryPageComponent {
   /** @description Buttons of the tabs. */
   get tabItems(): RowButton[] {
     return this.tabButtons.update([
-      { value: 'images', label: this.t('tab_images'), icon: 'image' },
-      { value: 'fonts', label: this.t('tab_fonts'), icon: 'file-text' },
-      { value: 'icons', label: this.t('tab_icons'), icon: 'star' },
+      { value: 'images', label: this.t('tab_images') },
+      { value: 'fonts', label: this.t('tab_fonts') },
+      { value: 'icons', label: this.t('tab_icons') },
     ]);
   }
 

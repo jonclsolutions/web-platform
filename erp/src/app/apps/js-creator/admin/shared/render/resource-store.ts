@@ -10,11 +10,13 @@
  *   they need), the icon set and the blocks of the instances (with their documents - their
  *   fonts are loaded and checked with the template). When something finishes loading,
  *   `onChange` asks the page to draw again. Before an output is drawn, generating waits for the
- *   images (assetsReady()) and checks that every font really loaded (missingFonts()) - a
- *   fallback font must never get into an output.
+ *   images (assetsReady()), checks that every font really loaded (missingFonts()) and that the
+ *   fonts have every character of the texts (unsupportedCharacters()) - a fallback font must
+ *   never get into an output.
  * @usage `const store = new RenderResourceStore(fontLibrary, () => redraw()); store.loadAsset(id, url);
  *   await store.ensureFonts(doc, ownFonts, curated)`.
- * @dependencies FontLibraryService, document.ts, block-fields.ts, renderer.ts (RenderResources).
+ * @dependencies FontLibraryService, document.ts, block-fields.ts, text-layout.ts (plainText),
+ *   renderer.ts (RenderResources).
  */
 
 import { FontLibraryService } from '../font-library.service';
@@ -23,6 +25,7 @@ import { DrawableImage } from './paint';
 import { RenderResources } from './renderer';
 import { TemplateDocument, TextLayer } from './document';
 import { BlockDef, resourceDocument } from './block-fields';
+import { plainText } from './text-layout';
 
 /** Characters loaded for every font (Czech letters), so a preview never waits for a subset. */
 const FONT_SAMPLE = 'AaBbĚěŠšČčŘřŽžÝýÁáÍíÉéŮůÚúŇňŤťĎď0123456789';
@@ -150,6 +153,39 @@ export class RenderResourceStore implements RenderResources {
   }
 
   /**
+   * @description Characters of the texts that no registered face of their font covers
+   *   (unicode-range of the faces): the browser would draw them with another font - e.g. arrows
+   *   or emoji with a font of the curated set, whose files cover latin and latin-ext. A field
+   *   layer checks the value of its field (a field of a block instance: every value); own fonts
+   *   declare no range, so they cover everything. Fonts without a face are left to missingFonts().
+   * @param doc Document.
+   * @param texts Values of the text fields by key.
+   * @returns Unique characters in the order found.
+   */
+  unsupportedCharacters(doc: TemplateDocument, texts: Readonly<Record<string, string>>): string[] {
+    if (typeof document === 'undefined' || !document.fonts) return [];
+    const faces: FontFace[] = [];
+    document.fonts.forEach(face => faces.push(face));
+    const all = Object.values(texts).join('');
+    const found = new Set<string>();
+    for (const layer of this.withBlocks(doc).pages.flatMap(p => p.layers)) {
+      if (layer.type !== 'text' || layer.hidden) continue;
+      const family = this.fontFamily(layer.font.family);
+      const ranges = faces
+        .filter(face => face.family.replace(/^["']|["']$/g, '') === family && face.status !== 'error')
+        .flatMap(face => parseUnicodeRange(face.unicodeRange));
+      if (!ranges.length) continue;
+      const text = layer.field ? (texts[layer.field] ?? all) : layer.text;
+      for (const char of Array.from(plainText(text))) {
+        if (/\s/u.test(char)) continue;
+        const code = char.codePointAt(0) ?? 0;
+        if (!ranges.some(([from, to]) => code >= from && code <= to)) found.add(char);
+      }
+    }
+    return [...found];
+  }
+
+  /**
    * @description Registers and loads every font face the texts of a document use (with the
    *   characters of the texts), then asks for a new drawing.
    * @param doc Document.
@@ -181,4 +217,24 @@ export class RenderResourceStore implements RenderResources {
     await Promise.all(loads);
     this.onChange();
   }
+}
+
+/**
+ * @description Code point ranges of a CSS unicode-range ("U+0000-00FF, U+0131, U+4??").
+ * @param value Value of FontFace.unicodeRange (empty = every character).
+ * @returns Inclusive ranges [from, to].
+ */
+export function parseUnicodeRange(value: string): [number, number][] {
+  const ranges: [number, number][] = [];
+  for (const part of (value || 'U+0-10FFFF').split(',')) {
+    const match = /^\s*U\+([0-9A-F?]{1,6})(?:-([0-9A-F]{1,6}))?\s*$/i.exec(part);
+    if (!match) continue;
+    if (match[1].includes('?')) {
+      ranges.push([parseInt(match[1].replace(/\?/g, '0'), 16), parseInt(match[1].replace(/\?/g, 'F'), 16)]);
+    } else {
+      const from = parseInt(match[1], 16);
+      ranges.push([from, match[2] ? parseInt(match[2], 16) : from]);
+    }
+  }
+  return ranges;
 }

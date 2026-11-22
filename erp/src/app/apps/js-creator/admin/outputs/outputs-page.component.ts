@@ -215,8 +215,8 @@ export class OutputsPageComponent implements OnInit, OnDestroy {
   get viewItems(): RowButton[] {
     const count = this.trashed.length + this.trashedOutputs;
     return this.viewButtons.update([
-      { value: 'folders', label: this.t('view_folders'), icon: 'folder' },
-      { value: 'trash', label: this.t('view_trash'), icon: 'trash', count: count || null },
+      { value: 'folders', label: this.t('view_folders') },
+      { value: 'trash', label: this.t('view_trash'), count: count || null },
     ]);
   }
 

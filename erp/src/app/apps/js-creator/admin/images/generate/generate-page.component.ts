@@ -17,7 +17,8 @@
  *     slider; a warning when the photo is too small for its place;
  *   - the text of the post from the pattern of the template (editable, can be filled again);
  *   - target folder (the last used one is remembered in this browser) and name;
- *   - Generate: waits for every font and image (a fallback font never gets into an output),
+ *   - Generate: waits for every font and image (a fallback font never gets into an output -
+ *     characters the fonts do not have stop it too; an optional image left empty stays empty),
  *     draws the template in its exact size to a PNG, sends it to the API (which converts it to
  *     the format of the template) and shows the result with its actions. The form stays filled
  *     (only in the memory of the page) for the next variant.
@@ -233,7 +234,12 @@ export class GeneratePageComponent implements OnInit {
     const reports = this.reports();
     const overflows = reports.flatMap(r => r.overflows);
     const failed = reports.flatMap(r => r.missing).filter(m => m.startsWith('asset:') && this.resources.failed(Number(m.slice(6))));
-    return formProblems(this.fields(), this.texts(), new Set(this.filledImages()), { overflows, missing: failed }, this.united().conflicts);
+    const problems = formProblems(this.fields(), this.texts(), new Set(this.filledImages()), { overflows, missing: failed }, this.united().conflicts);
+    // Characters the fonts do not have would be drawn with another font.
+    const texts = this.texts();
+    const characters = [...new Set(this.targets().flatMap(t => this.resources.unsupportedCharacters(t.template.document, texts)))];
+    if (characters.length) problems.push({ kind: 'characters', field: null, label: characters.join(' ') });
+    return problems;
   });
   /** Overflow of each text field (mode of its layer; a set: the worst of its templates). */
   readonly overflowOf = computed(() => {
@@ -635,6 +641,7 @@ export class GeneratePageComponent implements OnInit {
       const texts = Object.values(this.texts());
       for (const t of targets) await this.resources.ensureFonts(t.template.document, this.ownFonts(), this.curated(), texts);
       if (targets.some(t => this.resources.missingFonts(t.template.document, texts).length)) return this.fail('error_fonts');
+      if (this.problems().some(p => p.kind === 'characters')) return;
       const assetIds = [
         ...new Set(targets.flatMap(t => documentReferences(this.resources.withBlocks(t.template.document)).assets)),
         ...Object.values(this.images()).flatMap(v => (v.kind === 'asset' ? [v.asset.id] : [])),
@@ -720,7 +727,9 @@ export class GeneratePageComponent implements OnInit {
       return null;
     }
     const report = renderPage(ctx, template.document, template, this.resources, { mode: 'output', values });
-    if (report.missing.length) {
+    // An image field without a value is an optional field left empty (required ones are
+    // checked by the form) - its place simply stays empty, like in the preview.
+    if (report.missing.some(m => !m.startsWith('field:'))) {
       this.fail('error_images');
       return null;
     }

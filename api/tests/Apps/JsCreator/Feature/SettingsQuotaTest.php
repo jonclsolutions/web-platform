@@ -16,8 +16,10 @@
 namespace Tests\Apps\JsCreator\Feature;
 
 use App\Apps\JsCreator\Models\CreatorAsset;
+use App\Apps\JsCreator\Models\CreatorBlock;
 use App\Apps\JsCreator\Models\CreatorFolder;
 use App\Apps\JsCreator\Models\JsCreatorLog;
+use App\Apps\JsCreator\Support\TemplateDocument;
 use Tests\Apps\JsCreator\Support\JsCreatorFixtures;
 use Tests\TestCase;
 
@@ -54,8 +56,9 @@ class SettingsQuotaTest extends TestCase
      * @description The overview lists accounts with access (role, explicit grant, sysadmin) and
      *   accounts that still have data, with numbers only; others are not listed.
      * @input role account with a folder and an image; explicit grant; sysadmin; account without
-     *   access but with a folder; unrelated account.
-     * @output 4 rows by name; usage and counts of the role account; no names of folders anywhere.
+     *   access but with a folder; account without access with only a block; unrelated account.
+     * @output 5 rows by name (also an account whose only data is a block); usage and counts of the
+     *   role account; no names of folders anywhere.
      */
     public function test_overview_of_accounts(): void
     {
@@ -69,13 +72,18 @@ class SettingsQuotaTest extends TestCase
         $sysadmin = $this->sysadmin(['full_name' => 'C sysadmin']);
         $former = $this->user(['full_name' => 'D former']);
         CreatorFolder::create(['user_id' => $former->id, 'name' => 'Left behind']);
+        $blocksOnly = $this->user(['full_name' => 'D2 former with a block']);
+        CreatorBlock::create([
+            'user_id' => $blocksOnly->id, 'section' => 'images', 'name' => 'Logo', 'width' => 100, 'height' => 100,
+            'schema_version' => 1, 'document' => TemplateDocument::empty(true), 'version' => 1,
+        ]);
         $this->user(['full_name' => 'E unrelated']);
 
         $this->signIn($this->userWith(['js-creator-settings-view'], ['full_name' => 'F viewer']));
         $response = $this->getJson('/api/js-creator/settings/users')->assertOk();
         $rows = collect($response->json('data'))->keyBy('id');
 
-        $this->assertEqualsCanonicalizing([$roleUser->id, $explicit->id, $sysadmin->id, $former->id], $rows->keys()->all());
+        $this->assertEqualsCanonicalizing([$roleUser->id, $explicit->id, $sysadmin->id, $former->id, $blocksOnly->id], $rows->keys()->all());
         $this->assertTrue($rows[$roleUser->id]['has_access']);
         $this->assertFalse($rows[$former->id]['has_access']);
         $this->assertSame(['folders' => 1, 'images' => 1, 'fonts' => 0, 'templates' => 0, 'outputs' => 0], $rows[$roleUser->id]['counts']);

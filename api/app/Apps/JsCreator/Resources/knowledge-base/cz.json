@@ -155,7 +155,7 @@
               "items": [
                 "Vyberte složku (nabídne se naposledy použitá) a případně název – prázdný název = název šablony s datem a časem.",
                 "Generovat nejdřív ukáže, co ještě chybí (povinná pole, příliš dlouhé texty, texty, které se nevejdou).",
-                "Pak počká na všechny fonty a obrázky – pokud se některý nenačte, výstup nevznikne (nikdy ne s náhradním písmem).",
+                "Pak počká na všechny fonty a obrázky – pokud se některý nenačte, výstup nevznikne (nikdy ne s náhradním písmem). Stejně tak neprojde text se znakem, který písmo šablony nemá (např. šipka nebo emoji) – formulář ty znaky vypíše. Nepovinné obrázkové pole můžete nechat prázdné, jeho místo ve výstupu zůstane prázdné.",
                 "Šablona se vykreslí v přesné velikosti, server obrázek ověří, převede do formátu šablony (PNG / JPG) a uloží.",
                 "Hotový výstup otevřete ve Výstupech, stáhnete nebo zkopírujete jeho text. Formulář zůstane vyplněný – změnou polí a novým Generovat vytvoříte další variantu."
               ]

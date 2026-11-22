@@ -6,7 +6,7 @@
  * @created 2026
  * @description Unit tests of LibraryImagesComponent: the first page and "load more", uploads one
  *   file per request, refuses wrong files and a full quota before sending, rename, trash, a used
- *   image is not deleted.
+ *   image is not deleted; the texts of the popup buttons exist.
  * @dependencies src/testing/admin-test-helpers.ts (admin doubles, upload rules stub).
  */
 
@@ -16,6 +16,8 @@ import { LibraryImagesComponent } from './library-images.component';
 import { CreatorAsset } from '../../shared/js-creator.models';
 import { WorkspaceUsageService } from '../../shared/workspace-usage.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../../../testing/admin-test-helpers';
+import cz from '../../i18n/cz.json';
+import en from '../../i18n/en.json';
 
 /**
  * @description Image of the API.
@@ -126,5 +128,17 @@ describe('LibraryImagesComponent', () => {
     expect(ctx.alert.open.calls.mostRecent().args[1]).toContain('„Post“, „Old“ (js-creator-library.in_use_trashed)');
     expect(ctx.confirm.open).not.toHaveBeenCalled();
     expect(ctx.dataHandler.delete).not.toHaveBeenCalled();
+  });
+
+  /**
+   * @description The buttons of the popups of the library (rename an image, upload / change a
+   *   font) have texts in both languages - a missing key would show "Cannot load text".
+   * @input keys of the section js-creator-library used by the popups.
+   * @output every key is a non-empty text in cz and en.
+   */
+  it('popup buttons have their texts in both languages', () => {
+    for (const lang of [cz, en] as Record<string, Record<string, string>>[]) {
+      for (const key of ['cancel', 'save', 'upload']) expect(lang['js-creator-library'][key]).toBeTruthy();
+    }
   });
 });

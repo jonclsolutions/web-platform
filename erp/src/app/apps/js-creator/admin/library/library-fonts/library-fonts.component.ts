@@ -126,8 +126,8 @@ export class LibraryFontsComponent implements OnInit, OnDestroy {
   /** @description Buttons of the view switch. */
   get viewItems(): RowButton[] {
     return this.viewButtons.update([
-      { value: 'active', label: this.t('view_own_fonts'), icon: 'file-text' },
-      { value: 'trash', label: this.t('view_trash'), icon: 'trash' },
+      { value: 'active', label: this.t('view_own_fonts') },
+      { value: 'trash', label: this.t('view_trash') },
     ]);
   }
 

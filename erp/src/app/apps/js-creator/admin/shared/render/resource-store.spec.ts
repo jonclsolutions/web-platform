@@ -6,12 +6,13 @@
  * @created 2026
  * @description Unit tests of the readiness checks of RenderResourceStore before an output is
  *   drawn: library images that finished loading (failed or never asked = not ready) and fonts
- *   that really loaded (an unregistered family or a failed face would fall back to another font).
+ *   that really loaded (an unregistered family or a failed face would fall back to another font),
+ *   characters the fonts do not have (outside the unicode-range of their faces).
  * @dependencies RenderResourceStore, document.ts, the FontFace API of the test browser.
  */
 
 import { FontLibraryService } from '../font-library.service';
-import { RenderResourceStore } from './resource-store';
+import { RenderResourceStore, parseUnicodeRange } from './resource-store';
 import { CanvasSize, TemplateDocument, TextLayer, createLayer, emptyDocument } from './document';
 
 /** Size of the test canvas. */
@@ -86,5 +87,30 @@ describe('RenderResourceStore readiness', () => {
     expect(store.missingFonts(docWithText('user:7'), [])).toEqual(['user:7']);
     expect(store.missingFonts(docWithText('user:8'), [])).toEqual(['user:8']);
     expect(store.missingFonts(docWithText('user:9', { hidden: true }), [])).toEqual([]);
+  });
+
+  /**
+   * @description Characters outside the unicode-range of every face of their font are reported
+   *   (they would be drawn with another font); a field layer checks the value of its field,
+   *   highlight markers and spaces do not count; an own font (no range) covers everything.
+   * @input set:inter with faces latin (U+0000-00FF) and latin-ext (U+0100-017F); fixed text
+   *   "Žluť → ok"; field "title" = "**Akce** 😀 ok"; user:5 face without a range with "→"
+   * @output ['→']; ['😀']; []; parseUnicodeRange of "U+0041, U+4??, U+0100-017F"
+   */
+  it('finds characters the fonts do not have', () => {
+    const store = new RenderResourceStore(fonts, () => undefined);
+    const latin = new FontFace('jsc-test-inter', 'url("/nowhere.woff2")', { weight: '400', unicodeRange: 'U+0000-00FF' });
+    const latinExt = new FontFace('jsc-test-inter', 'url("/nowhere.woff2")', { weight: '400', unicodeRange: 'U+0100-017F' });
+    const own = new FontFace('jsc-test-user-5', 'url("/nowhere.woff2")');
+    [latin, latinExt, own].forEach(face => {
+      document.fonts.add(face);
+      added.push(face);
+    });
+
+    expect(store.unsupportedCharacters(docWithText('set:inter', { text: 'Žluť → ok' }), {})).toEqual(['→']);
+    const field = docWithText('set:inter', { field: 'title' });
+    expect(store.unsupportedCharacters(field, { title: '**Akce** 😀 ok' })).toEqual(['😀']);
+    expect(store.unsupportedCharacters(docWithText('user:5', { text: '→' }), {})).toEqual([]);
+    expect(parseUnicodeRange('U+0041, U+4??, U+0100-017F')).toEqual([[0x41, 0x41], [0x400, 0x4ff], [0x100, 0x17f]]);
   });
 });

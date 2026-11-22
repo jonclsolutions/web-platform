@@ -186,7 +186,7 @@ class TemplateTest extends TestCase
      *   files and a full workspace are refused.
      * @input PNG 960×600; second PNG; text file; quota of 1 MB filled by another thumbnail.
      * @output WebP 480×300 behind a working signed URL; the first file deleted; thumb_bytes in the
-     *   usage; 422 for the text file; 422 quota_exceeded.
+     *   usage; 422 for the text file; 422 quota_exceeded; a smaller thumbnail over the quota passes.
      */
     public function test_thumbnail(): void
     {
@@ -215,13 +215,16 @@ class TemplateTest extends TestCase
         CreatorTemplate::query()->whereKey($filler)->update(['thumb_bytes' => WorkspaceQuota::MB]);
         $this->post(self::BASE . "/{$id}/thumbnail", ['thumb' => $this->png(960, 960, 'thumb.png')], ['Accept' => 'application/json'])
             ->assertUnprocessable()->assertJsonPath('error_code', 'quota_exceeded');
+        // A replacement that does not grow the workspace passes even over the quota.
+        $this->post(self::BASE . "/{$id}/thumbnail", ['thumb' => $this->png(10, 10, 'thumb.png')], ['Accept' => 'application/json'])->assertOk();
     }
 
     /**
      * @description A copy keeps the document, output and usages; a copy of the same size also
      *   gets its own thumbnail file, a copy to another size none.
      * @input template with an own image and a thumbnail; copy; copy to 1080×1920.
-     * @output 201 version 1 with the same document; thumbnail file copied / null; usages of both copies.
+     * @output 201 version 1 with the same document; thumbnail file copied / null; the copy without a
+     *   thumbnail is marked thumb_stale (the list draws it), the other not; usages of both copies.
      */
     public function test_duplicate_also_to_another_size(): void
     {
@@ -242,6 +245,8 @@ class TemplateTest extends TestCase
 
         $story = $this->postJson(self::BASE . "/{$id}/duplicate", ['name' => 'Post story', 'width' => 1080, 'height' => 1920])->assertCreated()
             ->assertJsonPath('data.height', 1920)->assertJsonPath('data.thumb_url', null)->assertJsonPath('data.document.pages.0.layers.0.x', -40);
+        $this->assertTrue(CreatorTemplate::find($story->json('data.id'))->thumb_stale);
+        $this->assertFalse($copy->thumb_stale);
         $this->postJson(self::BASE . "/{$id}/duplicate", ['name' => 'Half', 'width' => 1080])->assertUnprocessable();
 
         $this->assertSame(3, CreatorUsage::query()->where('target_type', 'asset')->where('target_id', $asset)->count());

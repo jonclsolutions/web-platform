@@ -22,6 +22,7 @@ use App\Apps\JsCreator\Models\CreatorBlock;
 use App\Apps\JsCreator\Models\CreatorFolder;
 use App\Apps\JsCreator\Models\CreatorFont;
 use App\Apps\JsCreator\Models\CreatorOutput;
+use App\Apps\JsCreator\Models\CreatorSet;
 use App\Apps\JsCreator\Models\CreatorSetting;
 use App\Apps\JsCreator\Models\CreatorTemplate;
 use App\Apps\JsCreator\Models\CreatorUserQuota;
@@ -79,7 +80,7 @@ class SettingsController extends Controller
     public function users(): JsonResponse
     {
         $withAccess = $this->accountsWithAccess()->pluck('id');
-        $withData = collect([CreatorAsset::class, CreatorFont::class, CreatorFolder::class, CreatorTemplate::class, CreatorOutput::class])
+        $withData = collect([CreatorAsset::class, CreatorFont::class, CreatorFolder::class, CreatorTemplate::class, CreatorBlock::class, CreatorSet::class, CreatorOutput::class])
             ->flatMap(fn (string $model) => $model::withTrashed()->distinct()->pluck('user_id'));
         $users = User::query()->whereIn('id', $withAccess->merge($withData)->unique()->values())->orderBy('full_name')->get(['id', 'full_name']);
 

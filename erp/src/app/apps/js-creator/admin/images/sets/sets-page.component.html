@@ -4,19 +4,19 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Page "Sets": header with the view switch (sets / trash) and "New set", the usage
+    @description: Page "Sets": header with "New set" and the view switch (sets / trash), the usage
         bar, the toolbar (search, sorting), the cards of the sets (thumbnails of their formats,
         Generate, edit, delete), "load more"; the popup of a set (name, caption pattern, templates
         in their order, adding templates by search, the reason of a refusal).
 -->
 <div class="ws-page">
   <app-page-header [title]="t('header')" [subtitle]="t('subtitle')">
-    <app-row-button-builder kind="filter" [items]="viewItems" [active]="view" (selected)="switchView($event)" [ariaLabel]="t('view_label')" />
     @if (canCreate && view === 'active') {
       <button type="button" class="ws-btn ws-btn--primary" (click)="openCreate()">
-        <app-icon name="plus" [size]="14"></app-icon>{{ t('new_set') }}
+        {{ t('new_set') }}
       </button>
     }
+    <app-row-button-builder kind="filter" [items]="viewItems" [active]="view" (selected)="switchView($event)" [ariaLabel]="t('view_label')" />
   </app-page-header>
 
   <app-quota-bar />
@@ -68,7 +68,7 @@
               @if (view === 'active') {
                 @if (canCreate) {
                   <button type="button" class="ws-btn ws-btn--primary ws-btn--sm st-generate" [disabled]="!active(set).length" (click)="generate(set)">
-                    <app-icon name="sparkles" [size]="13"></app-icon>{{ t('generate') }}
+                    {{ t('generate') }}
                   </button>
                 }
                 <span class="ws-toolbar-spacer"></span>

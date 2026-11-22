@@ -55,6 +55,20 @@ describe('text-layout', () => {
   });
 
   /**
+   * @description A word with a highlighted part is one word: the line never breaks at the
+   *   highlight marker, so punctuation after a highlight does not move to a line of its own.
+   * @input "aaaaaaaaaa bbbbbb **c**?!" in 100 px at 10 px (the highlighted "c" would still fit,
+   *   "c?!" does not); "**50 %**!" in 100 px
+   * @output ["aaaaaaaaaa bbbbbb", "c?!"] with the runs "c" (highlighted) and "?!"; one line "50 %!"
+   */
+  it('keeps a word with a highlighted part together', () => {
+    const layout = layoutText('aaaaaaaaaa bbbbbb **c**?!', box, measure);
+    expect(layout.lines.map(lineText)).toEqual(['aaaaaaaaaa bbbbbb', 'c?!']);
+    expect(layout.lines[1].runs.map(r => [r.text, r.highlight])).toEqual([['c', true], ['?!', false]]);
+    expect(layoutText('**50 %**!', box, measure).lines.map(lineText)).toEqual(['50 %!']);
+  });
+
+  /**
    * @description Highlighted runs are measured in their own style and placed after the others.
    * @input "ab **cd** ef" at 10 px
    * @output runs at x 0 / 15 / 27; line width 42

@@ -5,7 +5,7 @@
  * @author JS
  * @created 2026
  * @description Unit tests of EditorStore: history (undo / redo, coalescing of similar changes,
- *   limit), unsaved changes, selection, adding / deleting / duplicating / copying layers (with
+ *   limit), unsaved changes (also changes made while a save runs), selection, adding / deleting / duplicating / copying layers (with
  *   their fields), order, alignment, spreading, anchors, resize, read-only mode, pruning of
  *   unused fields and block instances (insert, scale, sync with the block, block from the
  *   selection, unpack, no instances pasted into a block).
@@ -43,6 +43,32 @@ describe('EditorStore', () => {
     expect(store.layers().length).toBe(1);
     store.addLayer('text');
     expect(store.canRedo()).toBeFalse();
+  });
+
+  /**
+   * @description The answer of an own save becomes the saved state; changes made while the save
+   *   was running are kept as unsaved changes (not replaced by the answer); the history stays.
+   * @input a shape added, state sent, then moved to x 50 before the answer (version 2 with the
+   *   sent document); a second save answered without further changes (version 3)
+   * @output shape still at x 50, dirty, version 2, undo possible; after the second answer clean
+   *   with version 3
+   */
+  it('keeps changes made while a save runs', () => {
+    const store = new EditorStore(testTemplate(), true);
+    const id = store.addLayer('shape');
+    const sent = store.stateJson();
+    const answer = { ...testTemplate(), version: 2, document: structuredClone(store.saveBody().document) };
+    store.updateLayer(id, { x: 50 });
+    store.saved(answer, sent);
+    expect(store.layers()[0].x).toBe(50);
+    expect(store.dirty()).toBeTrue();
+    expect(store.version()).toBe(2);
+    expect(store.canUndo()).toBeTrue();
+
+    const again = store.stateJson();
+    store.saved({ ...testTemplate(), version: 3, document: structuredClone(store.saveBody().document) }, again);
+    expect(store.dirty()).toBeFalse();
+    expect(store.version()).toBe(3);
   });
 
   /**

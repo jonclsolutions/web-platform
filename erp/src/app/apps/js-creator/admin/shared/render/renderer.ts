@@ -321,7 +321,10 @@ function drawText(scene: Scene, layer: TextLayer, rect: Rect): void {
   const top = layer.valign === 'top' ? inner.y : layer.valign === 'middle' ? inner.y + (inner.h - layout.height) / 2 : inner.y + inner.h - layout.height;
   const lineX = (width: number) => layer.align === 'left' ? inner.x : layer.align === 'center' ? inner.x + (inner.w - width) / 2 : inner.x + inner.w - width;
 
-  if (layer.box) {
+  // A label tight around the text has nothing to wrap when the text is empty (an optional field
+  // left empty): no box then - a label of the whole element is part of the design and stays.
+  const empty = !layout.lines.some(line => line.runs.length);
+  if (layer.box && !(empty && layer.box.fit === 'text')) {
     const box: Rect = layer.box.fit === 'element' || !layout.lines.length
       ? rect
       : { x: lineX(layout.width) - padding, y: top - padding, w: layout.width + padding * 2, h: layout.height + padding * 2 };

@@ -205,7 +205,8 @@ class TemplateController extends Controller
     /**
      * @description Copies an own template (document, output, caption pattern, usages) - also to
      *   another size: layers keep their anchors and offsets, so they stay in their corners. The
-     *   thumbnail is copied only for the same size (within the quota).
+     *   thumbnail is copied only for the same size (within the quota); a copy without one is
+     *   marked `thumb_stale`, so the list of templates draws it.
      * @param DuplicateTemplateRequest $request `name`, optional `width` + `height`.
      * @param string $id Template.
      * @return JsonResponse 201 the copy; 404; 422 full quota.
@@ -242,7 +243,8 @@ class TemplateController extends Controller
                     'caption_template' => $source->caption_template,
                     'thumb_path'       => $path,
                     'thumb_bytes'      => $thumb !== null ? strlen($thumb) : 0,
-                    'thumb_stale'      => $thumb !== null && $source->thumb_stale,
+                    // A copy without a thumbnail (another size) is drawn by the list of templates.
+                    'thumb_stale'      => $thumb === null || $source->thumb_stale,
                     'version'          => 1,
                 ]);
                 TemplateUsages::copy($source, $copy);

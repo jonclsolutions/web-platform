@@ -139,18 +139,21 @@ final class FolderTree
 
     /**
      * @description Deletes a trashed folder and its subtree for good, with the outputs deleted
-     *   together with it (and their files).
+     *   together with it (and their files). A subfolder that was deleted on its own before
+     *   (its own item of the trash) goes with the subtree - so do the outputs deleted with it;
+     *   otherwise they would stay in the trash invisible (their trash root gone) and keep
+     *   their space for ever.
      * @param CreatorFolder $root Item of the trash.
      * @return void
      */
     public function forceDelete(CreatorFolder $root): void
     {
-        CreatorOutput::onlyTrashed()->ownedBy($this->userId)->where('trash_root_id', $root->id)->get()
+        $ids = [$root->id, ...$this->descendantIds($root->id, true)];
+        CreatorOutput::onlyTrashed()->ownedBy($this->userId)->whereIn('trash_root_id', $ids)->get()
             ->each(fn (CreatorOutput $output) => $output->deleteWithFiles());
 
         // Deepest folders first (reverse breadth-first order) - no row ever waits for the
         // cascade of its parent key.
-        $ids = [$root->id, ...$this->descendantIds($root->id, true)];
         DB::transaction(function () use ($ids) {
             foreach (array_reverse($ids) as $id) {
                 CreatorFolder::withTrashed()->ownedBy($this->userId)->whereKey($id)->forceDelete();

@@ -34,6 +34,7 @@ use App\Apps\JsCreator\Models\JsCreatorLog;
 use App\Apps\JsCreator\Support\WorkspaceFiles;
 use App\Services\Retention\RetentionSource;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 
@@ -97,6 +98,17 @@ final class JsCreatorRetentionSource implements RetentionSource
                 $count++;
             }
         });
+        // Outputs deleted with a folder that is gone already (left behind before the folder
+        // took them along - FolderTree::forceDelete()): invisible in the trash, purged here.
+        CreatorOutput::onlyTrashed()->whereNotNull('trash_root_id')->where('deleted_at', '<', $cutoff)
+            ->whereNotExists(fn ($folder) => $folder->select(DB::raw(1))->from('js_creator_folders')
+                ->whereColumn('js_creator_folders.id', 'js_creator_outputs.trash_root_id'))
+            ->chunkById(200, function ($outputs) use (&$count) {
+                foreach ($outputs as $output) {
+                    $output->deleteWithFiles();
+                    $count++;
+                }
+            });
         CreatorFolder::trashRoots()->where('deleted_at', '<', $cutoff)->get()->each(function (CreatorFolder $root) use (&$count) {
             (new FolderTree($root->user_id))->forceDelete($root);
             $count++;

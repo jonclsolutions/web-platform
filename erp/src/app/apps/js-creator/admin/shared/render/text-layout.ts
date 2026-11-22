@@ -158,7 +158,9 @@ interface Piece extends TextRun {
 }
 
 /**
- * @description Wraps paragraphs into lines of a width.
+ * @description Wraps paragraphs into lines of a width. A line breaks only at spaces: a word
+ *   whose part is highlighted (`**50 %**!`, `**Kč**?`) stays together - the highlight marker
+ *   is not a place to break.
  * @param paragraphs Paragraphs of runs.
  * @param maxWidth Width of a line.
  * @param size Font size.
@@ -169,31 +171,37 @@ function wrap(paragraphs: TextRun[][], maxWidth: number, size: number, measure: 
   for (const paragraph of paragraphs) {
     const pieces: Piece[] = paragraph.flatMap(run => run.text.split(/( +)/).filter(Boolean)
       .map(text => ({ text, highlight: run.highlight, space: text.startsWith(' ') })));
+    // Words: neighbouring pieces without a space between them (also across a highlight).
+    const tokens: Piece[][] = [];
+    for (const piece of pieces) {
+      const last = tokens[tokens.length - 1];
+      if (!piece.space && last && !last[0].space) last.push(piece); else tokens.push([piece]);
+    }
     let current: Piece[] = [];
     const flush = () => {
       lines.push(placeLine(current, size, measure));
       current = [];
     };
-    for (const piece of pieces) {
-      if (piece.space) {
-        if (current.length) current.push(piece);
+    for (const word of tokens) {
+      if (word[0].space) {
+        if (current.length) current.push(word[0]);
         continue;
       }
-      const candidate = placeLine([...current, piece], size, measure);
+      const candidate = placeLine([...current, ...word], size, measure);
       if (candidate.width <= maxWidth || !current.some(p => !p.space)) {
         if (candidate.width > maxWidth) {
           // A word longer than the line: broken between letters.
-          for (const chunk of breakWord(piece, maxWidth, size, measure)) {
+          for (const chunk of word.flatMap(piece => breakWord(piece, maxWidth, size, measure))) {
             const next = placeLine([...current, chunk], size, measure);
             if (current.some(p => !p.space) && next.width > maxWidth) flush();
             current.push(chunk);
           }
         } else {
-          current.push(piece);
+          current.push(...word);
         }
       } else {
         flush();
-        current.push(piece);
+        current.push(...word);
       }
     }
     flush();

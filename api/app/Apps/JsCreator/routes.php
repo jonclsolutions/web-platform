@@ -132,7 +132,7 @@ Route::middleware(['auth:sanctum', 'throttle:300,1,js-creator'])->prefix('js-cre
 
     // ── js-creator/logs (audit log of the application) ───────────────────────────
     Route::get('logs', [JsCreatorLogController::class, 'index'])->middleware('permission:js-creator-view-logs');
-    Route::get('logs/{id}', [JsCreatorLogController::class, 'show'])->middleware('permission:js-creator-view-logs');
+    Route::get('logs/{id}', [JsCreatorLogController::class, 'show'])->middleware('permission:js-creator-view-logs')->whereNumber('id');
 });
 
 // ── js-creator/files (signed URLs of WorkspaceFiles only; relative signature) ───────
