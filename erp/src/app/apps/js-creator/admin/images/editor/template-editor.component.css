@@ -58,7 +58,7 @@
     @module: Top bar
     @description: Back, name, size, undo / redo, zoom, grid / guides / safe zone, state, Save and
         Generate.
-    @usage: .te-bar > .te-icon-btn, input.te-name, .te-badge, .te-size, .te-sep, .te-zoom, label.te-toggle,
+    @usage: .te-bar > .te-icon-btn, input.te-name, .te-badge(--block), .te-size, .te-sep, .te-zoom, label.te-toggle,
         .te-spacer, .te-state(--dirty), button.te-save, button.te-generate
 */
 .te-bar {
@@ -97,6 +97,9 @@
   font-size: 0.7rem;
   font-weight: 600;
 }
+
+/* The editor of a block: its own colour, so it is not mistaken for a template. */
+.te-badge--block { background: var(--color-amber-200); color: var(--color-amber-800); }
 
 .te-size { color: var(--color-zinc-500); font-variant-numeric: tabular-nums; }
 
@@ -259,3 +262,11 @@
 }
 
 .te-loading { padding: 40px; color: var(--color-zinc-500); text-align: center; }
+
+/*
+    @module: Block from the selection
+    @description: The name of the new block in its popup.
+    @usage: form.te-make-block > label + input.jc-input + p.pn-hint
+*/
+.te-make-block { display: flex; flex-direction: column; gap: 6px; }
+.te-make-block label { font-size: 0.8125rem; font-weight: 600; color: var(--color-zinc-700); }

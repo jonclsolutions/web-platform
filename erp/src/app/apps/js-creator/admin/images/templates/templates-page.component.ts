@@ -8,19 +8,24 @@
  *   size), search, filter by size, sorting, "load more"; the main action of a card is Generate
  *   (the thumbnail and the button), the editor is one click further; new template (name + size)
  *   opens the editor; copy, copy to another size, delete to the trash; the trash with restore,
- *   delete for good and emptying.
- * @dependencies TemplatesApiService, WorkspaceUsageService, Router, AdminModalComponent,
- *   SizePickerComponent, QuotaBarComponent, ConfirmDialogService, PermissionService,
- *   AdminLocalizationService (section `js-creator-templates`).
+ *   delete for good and emptying. Thumbnails made stale by a changed block are drawn again in
+ *   the background (ThumbnailRefresherService, loaded only when needed).
+ *   The same page lists the BLOCKS (`image-blocks`, route data `kind: 'block'`): the main action
+ *   is the editor of the block, no size filter, and a block used by templates is not deleted - a
+ *   message names the templates.
+ * @dependencies TemplatesApiService / BlocksApiService, WorkspaceUsageService, Router, ActivatedRoute,
+ *   AdminModalComponent, SizePickerComponent, QuotaBarComponent, ConfirmDialogService, AlertDialogService,
+ *   PermissionService, AdminLocalizationService (sections `js-creator-templates`, `js-creator-blocks`).
  */
 
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Injector, OnDestroy, OnInit, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { AdminLocalizationService } from '../../../../../core/services/admin-localization.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
+import { AlertDialogService } from '../../../../../core/services/alert-dialog.service';
 import { PermissionService } from '../../../../../core/auth/services/permission.service';
 import { PageHeaderComponent } from '../../../../../admin/components/page-header/page-header.component';
 import { AdminModalComponent } from '../../../../../admin/components/admin-modal/admin-modal.component';
@@ -28,8 +33,9 @@ import { RowButtonBuilderComponent } from '../../../../../admin/components/build
 import { RowButton, RowButtonItems } from '../../../../../admin/components/builders/row-button-builder/row-button';
 import { IconComponent } from '../../../../../shared/components/icon/icon.component';
 import { TemplateQuery, TemplatesApiService } from '../../shared/templates-api.service';
+import { BlocksApiService } from '../../shared/blocks-api.service';
 import { WorkspaceUsageService } from '../../shared/workspace-usage.service';
-import { CreatorTemplate, TemplateSizeCount } from '../../shared/js-creator.models';
+import { CreatorTemplate, TemplateSizeCount, UsedByTemplate } from '../../shared/js-creator.models';
 import { JsCreatorSectionId, sectionPermission } from '../../shared/js-creator-sections';
 import { CanvasSize, isValidSize, presetOf } from '../../shared/render/document';
 import { QuotaBarComponent } from '../../shared/quota-bar/quota-bar.component';
@@ -61,7 +67,11 @@ type SortKey = 'updated' | 'created' | 'name';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TemplatesPageComponent implements OnInit, OnDestroy {
-  private readonly api = inject(TemplatesApiService);
+  /** Templates or blocks (route data `kind`). */
+  readonly kind: 'template' | 'block' = inject(ActivatedRoute, { optional: true })?.snapshot?.data?.['kind'] === 'block' ? 'block' : 'template';
+  private readonly api: TemplatesApiService = this.kind === 'block' ? inject(BlocksApiService) : inject(TemplatesApiService);
+  private readonly alert = inject(AlertDialogService);
+  private readonly injector = inject(Injector);
   private readonly usage = inject(WorkspaceUsageService);
   private readonly i18n = inject(AdminLocalizationService);
   private readonly confirm = inject(ConfirmDialogService);
@@ -80,8 +90,8 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
 
   /** View: the templates or their trash. */
   view: 'active' | 'trash' = 'active';
-  /** Loaded templates. */
-  items: CreatorTemplate[] = [];
+  /** Loaded templates / blocks (a block has no output fields - only the shared ones are shown). */
+  items: (CreatorTemplate & { used_by?: UsedByTemplate[] })[] = [];
   /** Total of the view. */
   total = 0;
   /** Last loaded page. */
@@ -124,11 +134,16 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Text of the section.
-   * @param key Key in `js-creator-templates`.
+   * @description Text of the page.
+   * @param key Key in `js-creator-templates` (blocks: `js-creator-blocks`).
    */
   t(key: string): string {
-    return this.i18n.getValue(`js-creator-templates.${key}`);
+    return this.i18n.getValue(`js-creator-${this.kind === 'block' ? 'blocks' : 'templates'}.${key}`);
+  }
+
+  /** @description Base of the editor route (templates / blocks). */
+  private get path(): string {
+    return this.kind === 'block' ? '/admin/js-creator/image-blocks' : '/admin/js-creator/image-templates';
   }
 
   /** @description Locale of the dates. */
@@ -150,7 +165,7 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
    */
   sizeLabel(size: CanvasSize): string {
     const preset = presetOf(size);
-    return `${size.width} × ${size.height}${preset ? ' · ' + this.t(preset.labelKey) : ''}`;
+    return `${size.width} × ${size.height}${preset ? ' · ' + this.i18n.getValue(`js-creator-templates.${preset.labelKey}`) : ''}`;
   }
 
   /**
@@ -191,7 +206,7 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
    * @param template Template.
    */
   open(template: CreatorTemplate): void {
-    if (this.view === 'active') this.router.navigate(['/admin/js-creator/image-templates', template.id, 'edit']);
+    if (this.view === 'active') this.router.navigate([this.path, template.id, 'edit']);
   }
 
   /**
@@ -199,12 +214,14 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
    * @param template Template.
    */
   generate(template: CreatorTemplate): void {
+    if (this.kind === 'block') return this.open(template);
     if (this.view === 'active') this.router.navigate(['/admin/js-creator/image-templates', template.id, 'generate']);
   }
 
-  /** @description Opens the popup of a new template (Instagram portrait by default). */
+  /** @description Opens the popup of a new template (Instagram portrait by default) / block (600 × 300). */
   openCreate(): void {
-    this.dialog = { kind: 'create', source: null, name: '', size: { width: 1080, height: 1350 }, error: '' };
+    const size = this.kind === 'block' ? { width: 600, height: 300 } : { width: 1080, height: 1350 };
+    this.dialog = { kind: 'create', source: null, name: '', size, error: '' };
     this.cd.markForCheck();
   }
 
@@ -263,7 +280,7 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
         this.dialog = null;
         this.usage.refresh();
         if (this.canUpdate) {
-          this.router.navigate(['/admin/js-creator/image-templates', template.id, 'edit']);
+          this.router.navigate([this.path, template.id, 'edit']);
         } else {
           this.load(1);
         }
@@ -279,9 +296,22 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
    * @description Moves a template to the trash (after a confirmation).
    * @param template Template.
    */
-  async remove(template: CreatorTemplate): Promise<void> {
+  async remove(template: CreatorTemplate & { used_by?: UsedByTemplate[] }): Promise<void> {
+    if (this.refuseUsed(template.used_by)) return;
     if (!(await this.confirm.open(this.t('delete_title'), `${this.t('delete_text')} „${template.name}“`))) return;
     this.run(this.api.delete(this.section, template.id));
+  }
+
+  /**
+   * @description A block used by templates is not deleted: a message names them.
+   * @param usedBy Templates using the block (list of blocks).
+   * @returns Whether it was refused.
+   */
+  private refuseUsed(usedBy: UsedByTemplate[] | undefined): boolean {
+    if (this.kind !== 'block' || !usedBy?.length) return false;
+    const names = usedBy.map(u => `„${u.name}“${u.trashed ? ` (${this.t('in_use_trashed')})` : ''}`).join(', ');
+    this.alert.open(this.t('in_use_title'), `${this.t('in_use_text')} ${names}`, 'warning');
+    return true;
   }
 
   /**
@@ -296,7 +326,8 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
    * @description Deletes a template of the trash for good (after a confirmation).
    * @param template Template.
    */
-  async destroy(template: CreatorTemplate): Promise<void> {
+  async destroy(template: CreatorTemplate & { used_by?: UsedByTemplate[] }): Promise<void> {
+    if (this.refuseUsed(template.used_by)) return;
     if (!(await this.confirm.open(this.t('destroy_title'), `${this.t('destroy_text')} „${template.name}“`))) return;
     this.run(this.api.delete(this.section, template.id, true));
   }
@@ -328,6 +359,25 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * @description Thumbnails of templates whose block changed are drawn again in the background
+   *   (the renderer is loaded only now); each new thumbnail replaces the old one in the grid.
+   * @param loaded Templates of the loaded page.
+   */
+  private async refreshStale(loaded: readonly CreatorTemplate[]): Promise<void> {
+    const ids = loaded.filter(t => t.thumb_stale && !t.deleted_at).map(t => t.id);
+    if (this.kind !== 'template' || !this.canUpdate || !ids.length) return;
+    try {
+      const { ThumbnailRefresherService } = await import('../../shared/thumbnail-refresher.service');
+      await this.injector.get(ThumbnailRefresherService).refresh(this.section, ids, (id, url) => {
+        this.items = this.items.map(item => (item.id === id ? { ...item, thumb_url: url, thumb_stale: false } : item));
+        this.cd.markForCheck();
+      });
+    } catch {
+      // The old thumbnails stay; the next visit tries again.
+    }
+  }
+
+  /**
    * @description Loads a page of the current view (page 1 replaces the list, others append).
    * @param page Page.
    */
@@ -340,7 +390,8 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.cd.markForCheck();
     this.api.list(this.section, {
-      page, search: this.search.trim(), size: this.view === 'active' ? this.sizeFilter : '', trashed: this.view === 'trash', ...sorting[this.sort],
+      page, search: this.search.trim(), size: this.view === 'active' && this.kind === 'template' ? this.sizeFilter : '', trashed: this.view === 'trash',
+      ...sorting[this.sort],
     }).subscribe({
       next: result => {
         this.items = page === 1 ? result.data : [...this.items, ...result.data];
@@ -350,6 +401,7 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
         this.sizes = result.meta.sizes ?? [];
         this.loading = false;
         this.cd.markForCheck();
+        void this.refreshStale(result.data);
       },
       error: () => {
         this.loading = false;

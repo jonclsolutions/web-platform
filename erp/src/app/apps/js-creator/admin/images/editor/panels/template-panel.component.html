@@ -5,7 +5,8 @@
     @author: JS
     @created: 2026
     @description: Panel "Template": size, background (fill, image, overlay), output format and the
-        pattern of the post text with buttons inserting the fields.
+        pattern of the post text with buttons inserting the fields (block instance fields
+        included). A block has only its size and background.
 -->
 <div class="pn">
   <fieldset class="pn-fieldset" [disabled]="!store().editable">
@@ -45,6 +46,7 @@
       }
     </section>
 
+    @if (kind() === 'template') {
     <section class="pn-section">
       <h3 class="pn-title">{{ t('output') }}</h3>
       <div class="pn-grid2">
@@ -73,13 +75,16 @@
         <span class="pn-hint pn-grow">{{ t('caption_hint') }}</span>
         <span class="pn-hint">{{ length(state().caption) }} / {{ maxCaption }}</span>
       </div>
-      @if (store().doc().fields.length) {
+      @if (captionFields().length) {
         <div class="pn-tools">
-          @for (field of store().doc().fields; track field.key) {
+          @for (field of captionFields(); track field.key) {
             <button type="button" class="pn-btn" [title]="field.label" (click)="insertField(field.key)">{{ token(field.key) }}</button>
           }
         </div>
       }
     </section>
+    } @else {
+      <p class="pn-hint pn-hint--block">{{ t('block_template_hint') }}</p>
+    }
   </fieldset>
 </div>

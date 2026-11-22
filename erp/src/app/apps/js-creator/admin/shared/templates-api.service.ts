@@ -36,11 +36,14 @@ export type TemplatePage = ApiPage<CreatorTemplate> & { meta: ApiPage<CreatorTem
 export class TemplatesApiService {
   private readonly api = inject(DataHandler);
 
+  /** DataHandler of the calls (also for BlocksApiService). */
+  protected readonly data = this.api;
+
   /**
    * @description Base path of the templates of a section.
    * @param section Section.
    */
-  private base(section: JsCreatorSectionId): string {
+  protected base(section: JsCreatorSectionId): string {
     return `js-creator/${section}/templates`;
   }
 
@@ -59,9 +62,14 @@ export class TemplatesApiService {
     return this.api.getPaginatedCollection<CreatorTemplate>(`${this.base(section)}?${params.toString()}`) as Observable<TemplatePage>;
   }
 
-  /** @description A template with its document. */
+  /** @description A template with its document and blocks. */
   get(section: JsCreatorSectionId, id: number): Observable<CreatorTemplateDetail> {
     return this.api.get<CreatorTemplateDetail>(`${this.base(section)}/${id}`);
+  }
+
+  /** @description A template with its document and blocks, without the global error dialog (background work). */
+  getQuietly(section: JsCreatorSectionId, id: number): Observable<CreatorTemplateDetail> {
+    return this.api.getQuietly<CreatorTemplateDetail>(`${this.base(section)}/${id}`);
   }
 
   /**
@@ -88,11 +96,13 @@ export class TemplatesApiService {
    * @param section Section.
    * @param id Template.
    * @param blob PNG / WebP drawn by the editor.
+   * @param quietly Without the global error dialog (background refresh of thumbnails).
    */
-  uploadThumbnail(section: JsCreatorSectionId, id: number, blob: Blob): Observable<{ thumb_url: string }> {
+  uploadThumbnail(section: JsCreatorSectionId, id: number, blob: Blob, quietly = false): Observable<{ thumb_url: string }> {
     const data = new FormData();
     data.append('thumb', blob, blob.type === 'image/webp' ? 'thumb.webp' : 'thumb.png');
-    return this.api.upload<{ thumb_url: string }>(`${this.base(section)}/${id}/thumbnail`, data);
+    const url = `${this.base(section)}/${id}/thumbnail`;
+    return quietly ? this.api.postQuietly<{ thumb_url: string }>(url, data) : this.api.upload<{ thumb_url: string }>(url, data);
   }
 
   /**

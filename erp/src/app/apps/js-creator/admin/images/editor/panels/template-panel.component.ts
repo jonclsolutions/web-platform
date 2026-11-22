@@ -18,6 +18,7 @@ import { AdminLocalizationService } from '../../../../../../core/services/admin-
 import { EditorStore, EditorSnapshot } from '../editor-store';
 import { Background, CanvasSize, DOCUMENT_LIMITS, Fill, ImageField, ImageSource, fieldKeyFrom, isValidSize, safeZoneOf } from '../../../shared/render/document';
 import { CreatorAsset } from '../../../shared/js-creator.models';
+import { EffectiveField } from '../../../shared/render/block-fields';
 import { SizePickerComponent } from '../../../shared/size-picker/size-picker.component';
 import { FillEditorComponent } from '../controls/fill-editor.component';
 import { SourcePickerComponent } from '../controls/source-picker.component';
@@ -39,6 +40,12 @@ export class TemplatePanelComponent {
   readonly assets = input<ReadonlyMap<number, CreatorAsset>>(new Map());
   /** A library image was chosen. */
   readonly assetPicked = output<CreatorAsset>();
+  /** A template or a block (a block has no output and no caption pattern). */
+  readonly kind = input<'template' | 'block'>('template');
+  /** Fields of the generating form (block instance fields included) for the caption buttons. */
+  readonly formFields = input<readonly EffectiveField[] | null>(null);
+  /** Fields offered by the caption buttons. */
+  readonly captionFields = computed(() => this.formFields() ?? this.store().doc().fields);
 
   @ViewChild('caption') private captionArea?: ElementRef<HTMLTextAreaElement>;
 

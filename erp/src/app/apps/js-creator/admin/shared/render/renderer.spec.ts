@@ -6,9 +6,10 @@
  * @created 2026
  * @description Unit tests of the renderer on a real canvas (pixels are read back): background,
  *   anchors, hidden layers, opacity, gradients, library images and image fields (placeholder in
- *   the editor, value when generating), grids, icons, text samples / values and the report of
- *   overflowing texts and missing resources.
- * @dependencies renderer.ts, document.ts
+ *   the editor, value when generating), grids, icons, text samples / values, block instances
+ *   (scaled into their box, fields with the keys of the form) and the report of overflowing
+ *   texts and missing resources.
+ * @dependencies renderer.ts, document.ts, block-fields.ts
  */
 
 import { IconNode } from '../js-creator.models';
@@ -17,6 +18,7 @@ import {
 } from './document';
 import { DrawableImage } from './paint';
 import { RenderResources, renderPage, textValue } from './renderer';
+import { BlockDef } from './block-fields';
 
 /** Size of the test canvas. */
 const SIZE: CanvasSize = { width: 200, height: 100 };
@@ -218,5 +220,48 @@ describe('renderer', () => {
     };
     const { report } = draw(docWith(tiny));
     expect(report.overflows).toEqual([{ layerId: 't2', field: null, mode: 'block' }]);
+  });
+  /**
+   * @description A block instance draws its block scaled into its box (transparent background,
+   *   clipped to the box); its image field takes the value of its form key; overflowing texts
+   *   and missing values are reported with the form key and the id of the instance; a missing
+   *   block is reported.
+   * @input block 40 × 20: blue shape over the left half, image field "logo", fixed text that
+   *   never fits; template field "logo" (text) → the block field is logo_2; instance at 100, 50
+   *   with scale 2; value of logo_2 = red image
+   * @output white outside; blue at 110, 70 (left half), red at 150, 70 (image of the right half);
+   *   output report: overflow of the instance; without a value missing field:logo_2; block:99
+   */
+  it('draws block instances with the fields of the form', () => {
+    const block: BlockDef = { id: 5, name: 'Tag', width: 40, height: 20, document: emptyDocument(true) };
+    block.document.fields = [{ key: 'logo', type: 'image', label: 'Logo', help: '', required: false, minWidth: 0, minHeight: 0 }];
+    block.document.pages[0].layers = [
+      shape({ id: 'b1', anchor: 'tl', x: 0, y: 0, w: 20, h: 20 }),
+      { ...(createLayer('image', SIZE, 'b2') as ImageLayer), anchor: 'tl', x: 20, y: 0, w: 20, h: 20, source: { kind: 'field', field: 'logo' } },
+      { ...(createLayer('text', SIZE, 'b3') as TextLayer), anchor: 'tl', x: 0, y: 0, w: 4, h: 2, size: 12, minSize: 10, overflow: 'block', text: 'Never fits here', fill: { type: 'solid', color: '#ffffff00' } },
+    ];
+    const withBlocks: RenderResources = { ...resources, block: id => (id === 5 ? block : undefined) };
+    const doc = docWith({
+      id: 'inst', name: '', type: 'block', anchor: 'tl', x: 100, y: 50, w: 1, h: 1, rotation: 0, opacity: 1, hidden: false, locked: false, blockId: 5, scale: 2,
+    } as Layer, { ...(createLayer('text', SIZE, 'own') as TextLayer), field: 'logo', hidden: true });
+    doc.fields = [{ key: 'logo', type: 'text', label: 'Logo', help: '', required: false, sample: '', maxLength: 10, multiline: false }];
+
+    const canvas = document.createElement('canvas');
+    canvas.width = SIZE.width;
+    canvas.height = SIZE.height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
+    const report = renderPage(ctx, doc, SIZE, withBlocks, { mode: 'output', values: { text: {}, images: { logo_2: solidImage('#ff0000') } } });
+    const pixel = (x: number, y: number) => Array.from(ctx.getImageData(x, y, 1, 1).data);
+    expect(pixel(95, 70)).toEqual([255, 255, 255, 255]);
+    expect(pixel(110, 70)).toEqual([0, 0, 255, 255]);
+    expect(pixel(150, 70)).toEqual([255, 0, 0, 255]);
+    expect(pixel(150, 95)).toEqual([255, 255, 255, 255]);
+    expect(report.overflows).toEqual([{ layerId: 'inst', field: null, mode: 'block' }]);
+    expect(report.missing).toEqual([]);
+
+    const empty = renderPage(ctx, doc, SIZE, withBlocks, { mode: 'output', values: { text: {}, images: {} } });
+    expect(empty.missing).toEqual(['field:logo_2']);
+    const missing = { ...doc, pages: [{ ...doc.pages[0], layers: [{ ...doc.pages[0].layers[0], blockId: 99 } as Layer] }] };
+    expect(renderPage(ctx, missing, SIZE, withBlocks, { mode: 'output' }).missing).toEqual(['block:99']);
   });
 });

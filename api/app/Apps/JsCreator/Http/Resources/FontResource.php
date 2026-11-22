@@ -34,7 +34,7 @@ class FontResource extends JsonResource
             'url'        => WorkspaceFiles::fontUrl($this->resource),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'deleted_at' => $this->deleted_at?->format('Y-m-d H:i:s'),
-            // Templates using the font (only in the list - TemplateUsages::usedBy()).
+            // Templates and blocks using the font (only in the list - TemplateUsages::usedBy()).
             'used_by'    => $this->when($this->resource->relationLoaded('usedBy'), fn () => $this->resource->getRelation('usedBy')->values()->all()),
         ];
     }

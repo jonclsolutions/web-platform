@@ -9,7 +9,7 @@
  * @description Unit tests of the strict validation of a template document (TemplateDocument):
  *   a complete document of every kind of layer passes; unknown / missing properties, wrong
  *   kinds, ranges, colours, field references, grid cells, ids, limits and texts are refused;
- *   library images and own fonts are collected.
+ *   library images, own fonts and blocks are collected; a block cannot contain a block.
  * @dependencies TemplateDocument, JsCreatorFixtures (documents).
  */
 
@@ -129,5 +129,42 @@ class TemplateDocumentTest extends TestCase
         $layers = array_map(fn ($i) => $this->layer('text', ['id' => "big{$i}", 'text' => str_repeat('ž', 2000)]), range(1, 300));
 
         $this->assertArrayHasKey('document', TemplateDocument::check($this->document($layers))->errors());
+    }
+
+    /**
+     * @description Block instances: allowed in a template (blocks collected), refused inside a
+     *   block (blocks do not nest), the scale and the block id are checked.
+     * @input template with two instances of block 5 and one of block 9; the same document as a
+     *   block; scale 0 and 25; block id "5" (a string).
+     * @output no errors and blocks [5, 9] with the path of the first use; error at `.type` for a
+     *   block; errors at `.scale` and `.blockId`.
+     */
+    public function test_block_instances(): void
+    {
+        $document = $this->document([
+            $this->layer('block', ['blockId' => 5, 'scale' => 0.5]),
+            $this->layer('block', ['blockId' => 9, 'scale' => 2.25, 'anchor' => 'tr']),
+            $this->layer('block', ['blockId' => 5, 'scale' => 1]),
+        ]);
+
+        $template = TemplateDocument::check($document);
+        $this->assertSame([], $template->errors());
+        $this->assertSame([5, 9], $template->blockIds());
+        $this->assertSame('document.pages.0.layers.0.blockId', $template->pathOf('block', 5));
+
+        $block = TemplateDocument::check($document, false);
+        $this->assertArrayHasKey('document.pages.0.layers.0.type', $block->errors());
+        $this->assertSame([], $block->blockIds());
+
+        $bad = TemplateDocument::check($this->document([
+            $this->layer('block', ['scale' => 0]),
+            $this->layer('block', ['scale' => 25]),
+            $this->layer('block', ['blockId' => '5']),
+        ]))->errors();
+        $this->assertArrayHasKey('document.pages.0.layers.0.scale', $bad);
+        $this->assertArrayHasKey('document.pages.0.layers.1.scale', $bad);
+        $this->assertArrayHasKey('document.pages.0.layers.2.blockId', $bad);
+        $this->assertSame('#ffffff00', TemplateDocument::empty(true)['pages'][0]['background']['fill']['color']);
+        $this->assertSame([], TemplateDocument::check(TemplateDocument::empty(true), false)->errors());
     }
 }

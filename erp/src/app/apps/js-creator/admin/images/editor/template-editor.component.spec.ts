@@ -8,7 +8,9 @@
  *   and library images; adding layers; keyboard shortcuts (not while typing); saving with the
  *   version (thumbnail after a save), a version conflict (offer to load the current state), an
  *   invalid document (reasons); leaving with unsaved changes; read-only mode; narrow screens; the
- *   unsaved-changes guard.
+ *   unsaved-changes guard; blocks (the template carries its blocks, inserting a block, block from
+ *   the selection, unpacking) and the same editor for a block (save of the block, refresh of the
+ *   thumbnails of its templates).
  * @dependencies TemplateEditorComponent, admin-test-helpers.ts (DataHandler and dialog doubles),
  *   editor-test-data.ts.
  */
@@ -22,8 +24,10 @@ import { unsavedTemplateGuard } from './unsaved-template.guard';
 import { FontLibraryService } from '../../shared/font-library.service';
 import { IconSetService } from '../../shared/icon-set.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../../../testing/admin-test-helpers';
-import { TEST_CURATED, shapeLayer, testAsset, testFont, testTemplate } from './editor-test-data';
-import { CreatorTemplateDetail } from '../../shared/js-creator.models';
+import { TEST_CURATED, shapeLayer, testAsset, testFont, testTemplate, textField, textLayer } from './editor-test-data';
+import { CreatorBlockDetail, CreatorTemplateDetail } from '../../shared/js-creator.models';
+import { ThumbnailRefresherService } from '../../shared/thumbnail-refresher.service';
+import { emptyDocument } from '../../shared/render/document';
 
 describe('TemplateEditorComponent', () => {
   let fixture: ComponentFixture<TemplateEditorComponent>;
@@ -32,14 +36,29 @@ describe('TemplateEditorComponent', () => {
   let served: CreatorTemplateDetail;
 
   /**
+   * @description Block 3 (200 × 100) with the text field "badge".
+   */
+  function badgeBlock(): CreatorBlockDetail {
+    const document = emptyDocument(true);
+    document.fields = [textField('badge')];
+    document.pages[0].layers = [textLayer('bt', { field: 'badge' })];
+    return {
+      id: 3, section: 'images', name: 'Badge', width: 200, height: 100, thumb_url: null, version: 2, created_at: null, updated_at: null, deleted_at: null,
+      schema_version: 1, document, used_by: [{ id: 7, kind: 'template', name: 'Post', section: 'images', trashed: false }, { id: 8, kind: 'template', name: 'Old', section: 'images', trashed: true }],
+    };
+  }
+
+  /**
    * @description Creates the editor (wide screen) with a template using library image 5.
    * @param granted Permissions of the account.
+   * @param kind A template / a block (route data).
+   * @param template Template to serve instead of the default one.
    */
-  async function create(granted: string[] | 'all' = 'all'): Promise<void> {
+  async function create(granted: string[] | 'all' = 'all', kind: 'template' | 'block' = 'template', template?: CreatorTemplateDetail): Promise<void> {
     ctx = createAdminTestContext({ granted });
     const image = { ...shapeLayer('img'), type: 'image', source: { kind: 'asset', assetId: 5 }, fit: 'cover', focusX: 0.5, focusY: 0.5, mask: 'none', border: null, overlay: null, flipX: false } as never;
-    served = testTemplate({ layers: [shapeLayer('a'), image] });
-    ctx.dataHandler.get.and.callFake(((url: string) => of(url.includes('/templates/') ? served : {})) as never);
+    served = template ?? testTemplate({ layers: [shapeLayer('a'), image] });
+    ctx.dataHandler.get.and.callFake(((url: string) => of(url.includes('/templates/') ? served : url.includes('/blocks/') ? badgeBlock() : {})) as never);
     ctx.dataHandler.getCollection.and.returnValue(of([testFont(3)]) as never);
     ctx.dataHandler.getPaginatedCollection.and.returnValue(of({ data: [testAsset(5)], meta: { total: 1, per_page: 200, current_page: 1, last_page: 1 } }) as never);
     const fonts = {
@@ -51,7 +70,7 @@ describe('TemplateEditorComponent', () => {
       imports: [TemplateEditorComponent],
       providers: [
         ...ctx.providers,
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: '7' }) } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: kind === 'block' ? '3' : '7' }), data: { kind } } } },
         { provide: FontLibraryService, useValue: fonts },
         { provide: IconSetService, useValue: icons },
       ],
@@ -223,5 +242,79 @@ describe('TemplateEditorComponent', () => {
     const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     (fixture.nativeElement.querySelector('.te-generate') as HTMLButtonElement).click();
     expect(navigate).toHaveBeenCalledWith(['/admin/js-creator/image-templates', 7, 'generate']);
+  });
+  /**
+   * @description Blocks in a template: the template carries its blocks (instance boxes follow the
+   *   block, their fields join the form), a chosen block is loaded and inserted, the selection
+   *   becomes a new block (POST with its document) replaced by an instance, an instance unpacks.
+   * @input template with an instance of block 3 stored 400 × 200 at scale 1 and a shape; insert
+   *   block 3 again; select the shape → "Kampaň"; unpack the first instance
+   * @output instance synced to 200 × 100, form fields [badge]; second instance with badge_2;
+   *   POST js-creator/images/blocks {name, 100 × 100, document} → instance in place of the shape;
+   *   unpacked text with the field badge
+   */
+  it('works with blocks in a template', async () => {
+    const template = testTemplate({ layers: [
+      { id: 'inst', name: '', type: 'block', anchor: 'tl', x: 0, y: 0, w: 400, h: 200, rotation: 0, opacity: 1, hidden: false, locked: false, blockId: 3, scale: 1 } as never,
+      shapeLayer('s', 500, 500),
+    ] });
+    template.blocks = [badgeBlock()];
+    await create('all', 'template', template);
+    const store = component.store()!;
+    expect([store.layers()[0].w, store.layers()[0].h]).toEqual([200, 100]);
+    expect(store.dirty()).toBeFalse();
+    expect(component.formFields().map(f => f.key)).toEqual(['badge']);
+
+    component.insertBlock(badgeBlock());
+    expect(store.layers().length).toBe(3);
+    expect(component.formFields().map(f => f.key)).toEqual(['badge', 'badge_2']);
+    store.undo();
+
+    const made: CreatorBlockDetail = { ...badgeBlock(), id: 11, name: 'Kampaň', width: 100, height: 100 };
+    ctx.dataHandler.postQuietly.and.returnValue(of(made) as never);
+    store.select(['s']);
+    component.openMakeBlock();
+    expect(component.blockName()).toBe('');
+    component.setBlockName('Kampaň');
+    component.makeBlock();
+    const [url, body] = ctx.dataHandler.postQuietly.calls.first().args as [string, { name: string; width: number; height: number; document: { pages: { layers: unknown[] }[] } }];
+    expect(url).toBe('js-creator/images/blocks');
+    expect([body.name, body.width, body.height, body.document.pages[0].layers.length]).toEqual(['Kampaň', 100, 100, 1]);
+    expect(store.layers().map(l => l.type)).toEqual(['block', 'block']);
+    expect(component.blockName()).toBeNull();
+
+    component.unpack('inst');
+    expect(store.layers().map(l => l.type)).toEqual(['text', 'block']);
+    expect(store.doc().fields.map(f => f.key)).toEqual(['badge']);
+
+    store.select([store.layers()[1].id]);
+    component.openMakeBlock();
+    expect(ctx.alert.open).toHaveBeenCalledWith('js-creator-editor.make_block', 'js-creator-editor.make_block_has_block', 'warning');
+  });
+
+  /**
+   * @description The same editor edits a block: it loads the block, has no Generate and no block
+   *   button, saves through the blocks API and then draws the thumbnails of its templates (not
+   *   of those in the trash) again.
+   * @input route kind block, block 3; a change; save
+   * @output kind block; no .te-generate; PUT js-creator/images/blocks/3 with version 2; refresh('images', [7])
+   */
+  it('edits a block', async () => {
+    await create('all', 'block');
+    const refresh = spyOn(TestBed.inject(ThumbnailRefresherService), 'refresh').and.resolveTo(1);
+    expect(component.kind).toBe('block');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.te-generate')).toBeNull();
+    expect(component.store()!.layers().length).toBe(1);
+    ctx.dataHandler.putQuietly.and.returnValue(of({ ...badgeBlock(), version: 3 }) as never);
+    ctx.dataHandler.upload.and.returnValue(of({ thumb_url: '/t' }) as never);
+    component.store()!.addLayer('shape');
+    expect(await component.save()).toBeTrue();
+    const [url, body] = ctx.dataHandler.putQuietly.calls.mostRecent().args as [string, { version: number; output_format?: string }];
+    expect(url).toBe('js-creator/images/blocks/3');
+    expect(body.version).toBe(2);
+    expect(body.output_format).toBeUndefined();
+    for (let i = 0; i < 50 && !refresh.calls.count(); i++) await new Promise(r => setTimeout(r, 10));
+    expect(refresh).toHaveBeenCalledWith('images', [7]);
   });
 });

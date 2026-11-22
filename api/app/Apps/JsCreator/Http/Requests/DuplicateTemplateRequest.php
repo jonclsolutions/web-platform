@@ -5,8 +5,8 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Validation of a copy of a template: the name of the copy and optionally another
- *   size ("duplicate to another format" - both width and height, or neither).
+ * @description Validation of a copy of a template or a block: the name of the copy and
+ *   optionally another size ("duplicate to another format" - both width and height, or neither).
  * @dependencies TemplateSize (limits of the size).
  */
 

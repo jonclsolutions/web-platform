@@ -1,0 +1,161 @@
+<!--
+    @file: sets-page.component.html
+    @path: src/app/apps/js-creator/admin/images/sets/sets-page.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Page "Sets": header with the view switch (sets / trash) and "New set", the usage
+        bar, the toolbar (search, sorting), the cards of the sets (thumbnails of their formats,
+        Generate, edit, delete), "load more"; the popup of a set (name, caption pattern, templates
+        in their order, adding templates by search, the reason of a refusal).
+-->
+<div class="ws-page">
+  <app-page-header [title]="t('header')" [subtitle]="t('subtitle')">
+    <app-row-button-builder kind="filter" [items]="viewItems" [active]="view" (selected)="switchView($event)" [ariaLabel]="t('view_label')" />
+    @if (canCreate && view === 'active') {
+      <button type="button" class="ws-btn ws-btn--primary" (click)="openCreate()">
+        <app-icon name="plus" [size]="14"></app-icon>{{ t('new_set') }}
+      </button>
+    }
+  </app-page-header>
+
+  <app-quota-bar />
+
+  <section class="ws-panel">
+    <div class="ws-toolbar">
+      <input class="ws-search" type="search" [placeholder]="t('search_placeholder')" [attr.aria-label]="t('search_placeholder')"
+        [(ngModel)]="search" (ngModelChange)="onSearch()" />
+      <select class="st-select" [(ngModel)]="sort" (ngModelChange)="reload()" [attr.aria-label]="t('sort_label')">
+        <option value="updated">{{ t('sort_updated') }}</option>
+        <option value="created">{{ t('sort_created') }}</option>
+        <option value="name">{{ t('sort_name') }}</option>
+      </select>
+      <span class="ws-toolbar-spacer"></span>
+      @if (view === 'trash' && canDelete && items.length) {
+        <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="emptyTrash()">{{ t('empty_trash') }}</button>
+      }
+    </div>
+
+    @if (view === 'trash') {
+      <p class="ws-trash-note">{{ t('trash_note') }}</p>
+    }
+
+    @if (items.length) {
+      <div class="st-list">
+        @for (set of items; track set.id) {
+          <article class="ws-card st-card">
+            <button type="button" class="st-strip" [disabled]="view === 'trash' || !active(set).length || !canCreate"
+              [title]="view === 'active' ? t('open_generate') : set.name" (click)="generate(set)">
+              @for (template of set.templates; track template.id) {
+                <span class="st-format" [class.st-format--trashed]="template.trashed" [style.--st-ratio]="template.width / template.height"
+                  [title]="template.name + ' · ' + sizeLabel(template)">
+                  @if (template.thumb_url) {
+                    <img [src]="template.thumb_url" [alt]="template.name" loading="lazy" />
+                  } @else {
+                    <span class="st-nothumb">{{ template.width }} × {{ template.height }}</span>
+                  }
+                </span>
+              } @empty {
+                <span class="st-none">{{ t('no_templates') }}</span>
+              }
+            </button>
+            <div class="ws-card-body">
+              <span class="ws-card-name" [title]="set.name">{{ set.name }}</span>
+              <span class="ws-card-meta">{{ tf('formats', { count: active(set).length }) }}@if (set.templates.length > active(set).length) { · {{ tf('in_trash', { count: set.templates.length - active(set).length }) }} }</span>
+              <span class="ws-card-meta">{{ t(view === 'trash' ? 'deleted' : 'updated') }} {{ (view === 'trash' ? set.deleted_at : set.updated_at) | date: 'd. M. y H:mm' : undefined : locale }}</span>
+            </div>
+            <div class="ws-card-actions">
+              @if (view === 'active') {
+                @if (canCreate) {
+                  <button type="button" class="ws-btn ws-btn--primary ws-btn--sm st-generate" [disabled]="!active(set).length" (click)="generate(set)">
+                    <app-icon name="sparkles" [size]="13"></app-icon>{{ t('generate') }}
+                  </button>
+                }
+                <span class="ws-toolbar-spacer"></span>
+                @if (canUpdate) {
+                  <button type="button" class="ws-icon-btn" [title]="t('edit')" [attr.aria-label]="t('edit')" [disabled]="busy" (click)="openDialog(set)"><app-icon name="edit" [size]="15"></app-icon></button>
+                }
+                @if (canDelete) {
+                  <button type="button" class="ws-icon-btn ws-icon-btn--danger" [title]="t('delete')" [attr.aria-label]="t('delete')" [disabled]="busy" (click)="remove(set)"><app-icon name="trash" [size]="15"></app-icon></button>
+                }
+              } @else if (canDelete) {
+                <button type="button" class="ws-icon-btn" [title]="t('restore')" [attr.aria-label]="t('restore')" [disabled]="busy" (click)="restore(set)"><app-icon name="restore" [size]="15"></app-icon></button>
+                <button type="button" class="ws-icon-btn ws-icon-btn--danger" [title]="t('destroy')" [attr.aria-label]="t('destroy')" [disabled]="busy" (click)="destroy(set)"><app-icon name="purge" [size]="15"></app-icon></button>
+              }
+            </div>
+          </article>
+        }
+      </div>
+      @if (page < lastPage) {
+        <div class="st-more">
+          <button type="button" class="ws-btn" [disabled]="loading" (click)="loadMore()">{{ t('load_more') }} ({{ items.length }} / {{ total }})</button>
+        </div>
+      }
+    } @else if (!loading) {
+      <div class="ws-empty">{{ view === 'trash' ? t('trash_empty') : (search ? t('nothing_found') : t('sets_empty')) }}</div>
+    }
+  </section>
+</div>
+
+@if (dialog; as d) {
+  <app-admin-modal [heading]="d.set ? t('edit_title') : t('new_title')" [subheading]="d.set?.name ?? ''" size="lg" [closeDisabled]="busy" (dismissed)="closeDialog()">
+    <form [id]="formId" class="st-form" (ngSubmit)="submitDialog()">
+      <div class="ws-field">
+        <label for="jc-set-name">{{ t('name') }}</label>
+        <input id="jc-set-name" name="name" type="text" maxlength="120" autocomplete="off" [(ngModel)]="d.name" data-autofocus />
+      </div>
+
+      <div class="ws-field">
+        <span class="st-label">{{ t('templates') }} ({{ d.templates.length }} / {{ maxTemplates }})</span>
+        @if (d.templates.length) {
+          <ol class="st-chosen">
+            @for (template of d.templates; track template.id; let i = $index; let first = $first; let last = $last) {
+              <li class="st-chosen-row" [class.st-chosen-row--trashed]="template.trashed">
+                <span class="st-chosen-name">{{ template.name }}</span>
+                <span class="ws-card-meta">{{ sizeLabel(template) }}@if (template.trashed) { · {{ t('trashed') }} }</span>
+                <span class="ws-toolbar-spacer"></span>
+                <button type="button" class="ws-icon-btn" [disabled]="first" [title]="t('move_up')" [attr.aria-label]="t('move_up')" (click)="moveTemplate(i, -1)">↑</button>
+                <button type="button" class="ws-icon-btn" [disabled]="last" [title]="t('move_down')" [attr.aria-label]="t('move_down')" (click)="moveTemplate(i, 1)">↓</button>
+                <button type="button" class="ws-icon-btn ws-icon-btn--danger" [title]="t('remove_template')" [attr.aria-label]="t('remove_template')" (click)="removeTemplate(i)"><app-icon name="x" [size]="14"></app-icon></button>
+              </li>
+            }
+          </ol>
+        } @else {
+          <p class="ws-field-hint">{{ t('templates_hint') }}</p>
+        }
+      </div>
+
+      @if (d.templates.length < maxTemplates) {
+        <div class="ws-field">
+          <label for="jc-set-find">{{ t('add_template') }}</label>
+          <input id="jc-set-find" name="find" type="search" autocomplete="off" [placeholder]="t('find_placeholder')" [(ngModel)]="d.search" (ngModelChange)="onFind()" />
+          <div class="st-candidates">
+            @for (template of candidates; track template.id) {
+              <button type="button" class="st-candidate" (click)="addTemplate(template)">
+                <span class="st-candidate-name">{{ template.name }}</span>
+                <span class="ws-card-meta">{{ sizeLabel(template) }}</span>
+                <app-icon name="plus" [size]="13"></app-icon>
+              </button>
+            } @empty {
+              <p class="ws-field-hint">{{ t('nothing_to_add') }}</p>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="ws-field">
+        <label for="jc-set-caption">{{ t('caption') }}</label>
+        <textarea id="jc-set-caption" name="caption" rows="4" [attr.maxlength]="maxCaption" [placeholder]="t('caption_placeholder')" [(ngModel)]="d.caption"></textarea>
+        <span class="ws-field-hint">{{ t('caption_hint') }}</span>
+      </div>
+      <p class="ws-field-hint">{{ t('fields_hint') }}</p>
+      @if (d.error) {
+        <p class="ws-field-error" role="alert">{{ d.error }}</p>
+      }
+    </form>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" [disabled]="busy" (click)="closeDialog()">{{ t('cancel') }}</button>
+      <button type="submit" class="am-btn am-btn--primary" [attr.form]="formId" [disabled]="busy">{{ t('save') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}

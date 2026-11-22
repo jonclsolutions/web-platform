@@ -9,6 +9,8 @@
  *   caption - renaming it changes every use), help, required; a text field its sample, maximum
  *   length and one / more lines; an image field the recommended minimum resolution. A field is
  *   created from a layer (Properties) and disappears with the last layer that uses it.
+ *   Fields of block instances follow (read only - they are edited in the editor of the block)
+ *   with the key the form gives them.
  * @usage `<app-jc-fields [store]="store" />`
  * @dependencies EditorStore, render/document.ts, AdminLocalizationService (section `js-creator-editor`).
  */
@@ -17,6 +19,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal } f
 import { AdminLocalizationService } from '../../../../../../core/services/admin-localization.service';
 import { EditorStore } from '../editor-store';
 import { Field, ImageField, Layer, TextField, layerSources } from '../../../shared/render/document';
+import { BlockDef, EffectiveField } from '../../../shared/render/block-fields';
 
 /** Valid field key. */
 const KEY = /^[a-z][a-z0-9_]{0,39}$/;
@@ -33,6 +36,13 @@ export class FieldsPanelComponent {
 
   /** State of the editor. */
   readonly store = input.required<EditorStore>();
+  /** Fields of the generating form (with the fields of block instances). */
+  readonly formFields = input<readonly EffectiveField[]>([]);
+  /** Blocks of the instances (names). */
+  readonly blocks = input<ReadonlyMap<number, BlockDef>>(new Map());
+
+  /** Fields of block instances (read only). */
+  readonly instanceFields = computed(() => this.formFields().filter(f => f.origin));
 
   /** Error of a key being typed (field key → message). */
   readonly keyErrors = signal<Record<string, string>>({});
@@ -50,6 +60,14 @@ export class FieldsPanelComponent {
     }
     return count;
   });
+
+  /**
+   * @description Placeholder of a field in the caption pattern.
+   * @param key Field key.
+   */
+  token(key: string): string {
+    return `{{${key}}}`;
+  }
 
   /**
    * @description Text of the editor.

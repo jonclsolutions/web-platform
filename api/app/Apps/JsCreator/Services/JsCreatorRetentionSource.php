@@ -8,25 +8,28 @@
  * @description Retention of JS Creator (GDPR Art. 5(1)(e)), registered in
  *   JsCreatorApp::retentionSources():
  *   - `js_creator_trash` (default 30 days): what stays in the trash of a workspace longer than
- *     the period (counted from the deletion) is deleted for good with its files - images and
- *     fonts of the library, templates (with their thumbnails and usages), outputs, folders with
- *     their subtree and the outputs deleted with them;
+ *     the period (counted from the deletion) is deleted for good with its files - sets, templates
+ *     and blocks (with their thumbnails and usages), images and fonts of the library, outputs,
+ *     folders with their subtree and the outputs deleted with them;
  *   - the audit log of the application (core `audit_logs` retention);
  *   - always: files of the workspaces without a record (e.g. after an account was deleted for
  *     good - its rows go with the account through the foreign keys, its files here) older than a
  *     day, so an upload in progress is never touched.
- * @dependencies CreatorAsset, CreatorFont, CreatorTemplate, CreatorOutput (deleteWithFiles), CreatorFolder, FolderTree,
- *   WorkspaceFiles, JsCreatorLog.
+ * @dependencies CreatorAsset, CreatorFont, CreatorTemplate, CreatorBlock, CreatorOutput (deleteWithFiles), CreatorSet,
+ *   CreatorFolder, FolderTree, TemplateUsages, WorkspaceFiles, JsCreatorLog.
  */
 
 namespace App\Apps\JsCreator\Services;
 
 use App\Apps\JsCreator\Models\CreatorAsset;
+use App\Apps\JsCreator\Models\CreatorBlock;
 use App\Apps\JsCreator\Models\CreatorFolder;
 use App\Apps\JsCreator\Models\CreatorFont;
 use App\Apps\JsCreator\Models\CreatorOutput;
 use App\Apps\JsCreator\Models\CreatorOutputFile;
+use App\Apps\JsCreator\Models\CreatorSet;
 use App\Apps\JsCreator\Models\CreatorTemplate;
+use App\Apps\JsCreator\Models\CreatorUsage;
 use App\Apps\JsCreator\Models\JsCreatorLog;
 use App\Apps\JsCreator\Support\WorkspaceFiles;
 use App\Services\Retention\RetentionSource;
@@ -53,11 +56,27 @@ final class JsCreatorRetentionSource implements RetentionSource
         }
 
         $count = 0;
-        // Templates first: their usages would keep the images and fonts they use.
+        CreatorSet::onlyTrashed()->where('deleted_at', '<', $cutoff)->chunkById(200, function ($sets) use (&$count) {
+            foreach ($sets as $set) {
+                $set->forceDelete();
+                $count++;
+            }
+        });
+        // Templates first: their usages would keep the blocks, images and fonts they use.
         CreatorTemplate::onlyTrashed()->where('deleted_at', '<', $cutoff)->chunkById(200, function ($templates) use (&$count) {
             foreach ($templates as $template) {
                 $template->deleteWithFiles();
                 $count++;
+            }
+        });
+        // Then blocks (a block in the trash is never used; a used one would stay).
+        CreatorBlock::onlyTrashed()->where('deleted_at', '<', $cutoff)->chunkById(200, function ($blocks) use (&$count) {
+            $used = TemplateUsages::usedBy(CreatorUsage::BLOCK, $blocks->pluck('id')->all());
+            foreach ($blocks as $block) {
+                if (!isset($used[$block->id])) {
+                    $block->deleteWithFiles();
+                    $count++;
+                }
             }
         });
         CreatorAsset::onlyTrashed()->where('deleted_at', '<', $cutoff)->chunkById(200, function ($assets) use (&$count) {
@@ -99,7 +118,7 @@ final class JsCreatorRetentionSource implements RetentionSource
     }
 
     /**
-     * @description Deletes files of the workspaces that no image, font, template or output refers to
+     * @description Deletes files of the workspaces that no image, font, template, block or output refers to
      *   (trash included) and that are older than ORPHAN_MIN_AGE_HOURS.
      * @return int Number of deleted files.
      */
@@ -115,6 +134,7 @@ final class JsCreatorRetentionSource implements RetentionSource
             ...CreatorAsset::withTrashed()->pluck('thumb_path')->all(),
             ...CreatorFont::withTrashed()->pluck('path')->all(),
             ...CreatorTemplate::withTrashed()->whereNotNull('thumb_path')->pluck('thumb_path')->all(),
+            ...CreatorBlock::withTrashed()->whereNotNull('thumb_path')->pluck('thumb_path')->all(),
             ...CreatorOutputFile::query()->pluck('path')->all(),
             ...CreatorOutputFile::query()->pluck('thumb_path')->all(),
         ]);

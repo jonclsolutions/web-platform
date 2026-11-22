@@ -16,7 +16,7 @@
       "group": "js-creator",
       "order": 6,
       "permission": "js-creator-images-view",
-      "devNote": "GeneratePageComponent (apps/js-creator/admin/images/generate) + GeneratePreviewComponent, route 'js-creator/image-templates/:id/generate', permission 'js-creator-images-view' (generování 'js-creator-images-create', bez něj jen náhled). Pravidla formuláře generate-form.ts (text příspěvku {{klic}}, zvýraznění **…**, co blokuje generování, výchozí název), fotky z počítače local-image.ts (createImageBitmap s orientací EXIF, náhled max. 2048 px, pro výstup znovu v potřebném rozlišení; na server se NEPOSÍLAJÍ), výřez field-images.ts (fieldImageBoxes, panCrop, zoomCrop 1–4×, requiredScale) a RenderValues.crops v renderer.ts. Generovat: RenderResourceStore.ensureFonts + missingFonts (náhradní font nesmí do výstupu) + assetsReady → renderPage v režimu output v přesné velikosti šablony → PNG → POST js-creator/images/outputs (OutputController::store, DataHandler.postQuietly; upload profil js_creator_output – PNG do 20 MB; OutputImage ověří PNG a přesné rozměry, převede do PNG / JPG šablony, miniatura WebP 480 px; kvóta 422 quota_exceeded; 422 template_id / folder_id / file). Poslední cílová složka v localStorage 'jsc.generate.folder' (jen id).",
+      "devNote": "GeneratePageComponent (apps/js-creator/admin/images/generate) + GeneratePreviewComponent, route 'js-creator/image-templates/:id/generate', permission 'js-creator-images-view' (generování 'js-creator-images-create', bez něj jen náhled). Pravidla formuláře generate-form.ts (text příspěvku {{klic}}, zvýraznění **…**, co blokuje generování, výchozí název), fotky z počítače local-image.ts (createImageBitmap s orientací EXIF, náhled max. 2048 px, pro výstup znovu v potřebném rozlišení; na server se NEPOSÍLAJÍ), výřez field-images.ts (fieldImageBoxes, panCrop, zoomCrop 1–4×, requiredScale) a RenderValues.crops v renderer.ts. Generovat: RenderResourceStore.ensureFonts + missingFonts (náhradní font nesmí do výstupu) + assetsReady → renderPage v režimu output v přesné velikosti šablony → PNG → POST js-creator/images/outputs (OutputController::store, DataHandler.postQuietly; upload profil js_creator_output – PNG do 20 MB; OutputImage ověří PNG a přesné rozměry, převede do PNG / JPG šablony, miniatura WebP 480 px; kvóta 422 quota_exceeded; 422 template_id / folder_id / file). Poslední cílová složka v localStorage 'jsc.generate.folder' (jen id). Pole instancí bloků: effectiveFields (block-fields.ts), výřez i uvnitř instance (fieldImageBoxes s resolverem bloků). Sada: stejná stránka s route data kind 'set' (viz js-creator-sets).",
       "sections": {
         "generate": "js-creator-images-create"
       }
@@ -26,9 +26,31 @@
       "group": "js-creator",
       "order": 7,
       "permission": "js-creator-images-view",
-      "devNote": "TemplateEditorComponent (apps/js-creator/admin/images/editor), route 'js-creator/image-templates/:id/edit' s canDeactivate unsavedTemplateGuard, permission 'js-creator-images-view' (ukládání jen s 'js-creator-images-update', jinak jen pro čtení). Stav: EditorStore (signály, historie 150 kroků, schránka). Plátno: EditorCanvasComponent (Canvas 2D + SVG vrstva editoru, snapping.ts). Vykreslovací jádro shared/render (document.ts – typy, limity a výchozí hodnoty dokumentu schema 1; geometry.ts – kotvy; text-layout.ts – sazba, zvýraznění **…**, zmenšení, přetečení; renderer.ts; resource-store.ts – obrázky knihovny, fonty jsc-*, ikony). Uložení: PUT js-creator/images/templates/{id} (DataHandler.putQuietly) s version → 409 version_conflict / 422 cesty chyb (TemplateDocument validuje dokument striktně, vlastnictví obrázků a fontů) → POST {id}/thumbnail. Editor je pro obrazovky ≥ 1024 px. Tlačítko Generovat v horní liště otevře generování (neuložené změny se ptají přes guard).",
+      "devNote": "TemplateEditorComponent (apps/js-creator/admin/images/editor), route 'js-creator/image-templates/:id/edit' s canDeactivate unsavedTemplateGuard, permission 'js-creator-images-view' (ukládání jen s 'js-creator-images-update', jinak jen pro čtení). Stav: EditorStore (signály, historie 150 kroků, schránka). Plátno: EditorCanvasComponent (Canvas 2D + SVG vrstva editoru, snapping.ts). Vykreslovací jádro shared/render (document.ts – typy, limity a výchozí hodnoty dokumentu schema 1; geometry.ts – kotvy; text-layout.ts – sazba, zvýraznění **…**, zmenšení, přetečení; renderer.ts; resource-store.ts – obrázky knihovny, fonty jsc-*, ikony). Uložení: PUT js-creator/images/templates/{id} (DataHandler.putQuietly) s version → 409 version_conflict / 422 cesty chyb (TemplateDocument validuje dokument striktně, vlastnictví obrázků a fontů) → POST {id}/thumbnail. Bloky (etapa 4): vrstva block, vložení BlockChooserComponent, měřítko (setScale, úchyty drží poměr), Upravit blok, Rozpojit (unpackInstance), Vytvořit blok z výběru (blockFromSelection + POST js-creator/images/blocks s dokumentem); stejná komponenta edituje bloky (route data kind 'block'). Editor je pro obrazovky ≥ 1024 px. Tlačítko Generovat v horní liště otevře generování (neuložené změny se ptají přes guard).",
       "sections": {
         "save": "js-creator-images-update"
+      }
+    },
+    {
+      "id": "js-creator-sets",
+      "group": "js-creator",
+      "order": 8,
+      "permission": "js-creator-images-view",
+      "devNote": "SetsPageComponent (apps/js-creator/admin/images/sets), route 'js-creator/image-sets', permission 'js-creator-images-view'; generování sady GeneratePageComponent s route data kind 'set', route 'js-creator/image-sets/:id/generate' (generovat 'js-creator-images-create'). API js-creator/images/sets (SetController): GET (only_trashed, search, sort_by), POST/PUT (name, caption_template, template_ids – max. 10, vlastní šablony sekce; šablona v koši jen pokud už v sadě je), GET {id}, DELETE {id} (?force=1), POST {id}/restore, DELETE trash. Tabulky js_creator_sets a js_creator_set_templates (pořadí; šablona smazaná natrvalo ze sady zmizí – FK cascade). Kontrola druhů polí EffectiveFields (PHP) = block-fields.ts (TS): pole šablony + pole instancí bloků, obsazený klíč dostane _2, _3 …; stejný klíč s jiným druhem → 422 field_conflict (conflict: key, template_id, type, other_id, other_type). Formulář sady: unionFields (generate-form.ts – povinné, pokud je povinné kdekoli; nejkratší limit; největší doporučené rozlišení), výřez zvlášť pro každou šablonu (cropsOf), ostatní formáty se měří mimo obrazovku (přetečení), výstupy postupně přes POST js-creator/images/outputs, název + ' – <š>×<v>'. Vzor textu: sady, jinak první šablony.",
+      "sections": {
+        "edit": "js-creator-images-create|js-creator-images-update",
+        "trash": "js-creator-images-delete"
+      }
+    },
+    {
+      "id": "js-creator-blocks",
+      "group": "js-creator",
+      "order": 9,
+      "permission": "js-creator-images-view",
+      "devNote": "TemplatesPageComponent s route data kind 'block' (route 'js-creator/image-blocks') a TemplateEditorComponent s kind 'block' (route 'js-creator/image-blocks/:id/edit', canDeactivate unsavedTemplateGuard), permission 'js-creator-images-view'. API js-creator/images/blocks (BlockController): GET (only_trashed, search, sort_by; každý blok s used_by), POST (name, width, height, volitelně document – blok z výběru), GET/PUT {id} (version, 409 version_conflict; dokument bez vrstev block – bloky se nevnořují; DocumentCheck ověří vlastnictví obrázků a fontů), POST {id}/thumbnail, POST {id}/duplicate, DELETE {id} (?force=1; použitý blok 409 in_use se šablonami), POST {id}/restore, DELETE trash. Tabulka js_creator_blocks; js_creator_usages: owner_type block → asset/font, šablona → target_type block. Vrstva block v dokumentu šablony (blockId, scale 0,05–20; w/h = velikost bloku × měřítko, renderer bere aktuální velikost bloku). TemplateDetailResource posílá bloky instancí (blocks). Uložení bloku nastaví js_creator_templates.thumb_stale; miniatury překreslí ThumbnailRefresherService (editor bloku po uložení, seznam šablon pro thumb_stale). Editor: blockFromSelection / unpackInstance (block-instances.ts), BlockChooserComponent.",
+      "sections": {
+        "edit": "js-creator-images-create|js-creator-images-update",
+        "trash": "js-creator-images-delete"
       }
     },
     {

@@ -9,7 +9,9 @@
  *     own font faces, moving to an edge, grid cells as fields, locked layers disabled;
  *   - Fields: renaming a key changes every use (layers and caption), invalid / taken keys, order;
  *   - Layers: top first, labels, selection with Shift, lock / hide, rename, drop reorder;
- *   - Template: size, background image with a new field, output quality, caption field insert.
+ *   - Template: size, background image with a new field, output quality, caption field insert;
+ *   - blocks: the section of an instance (scale, edit, unpack), "block from the selection", the
+ *     fields of instances (read only), the label of an instance, a block without output / caption.
  * @dependencies the panels, EditorStore, editor-test-data.ts, admin-test-helpers.ts.
  */
 
@@ -21,7 +23,8 @@ import { FieldsPanelComponent } from './fields-panel.component';
 import { LayersPanelComponent } from './layers-panel.component';
 import { TemplatePanelComponent } from './template-panel.component';
 import { TEST_CURATED, imageField, shapeLayer, testFont, testTemplate, textField, textLayer } from '../editor-test-data';
-import { GridLayer, TextLayer, createLayer } from '../../../shared/render/document';
+import { BlockLayer, GridLayer, TextLayer, createLayer, emptyDocument } from '../../../shared/render/document';
+import { BlockDef, effectiveFields } from '../../../shared/render/block-fields';
 import { createAdminTestContext } from '../../../../../../../testing/admin-test-helpers';
 
 /**
@@ -230,6 +233,85 @@ describe('editor panels', () => {
       fixture.detectChanges();
       panel.insertField('title');
       expect(store.state().caption).toBe('Hi {{title}}');
+    });
+  });
+  describe('blocks', () => {
+    /** Block 3 (200 × 100) with the field "badge". */
+    const block: BlockDef = { id: 3, name: 'Badge', width: 200, height: 100, document: emptyDocument(true) };
+    block.document.fields = [textField('badge')];
+    const instance: BlockLayer = {
+      id: 'inst', name: '', type: 'block', anchor: 'tl', x: 0, y: 0, w: 200, h: 100, rotation: 0, opacity: 1, hidden: false, locked: false, blockId: 3, scale: 1,
+    };
+
+    /**
+     * @description Properties of an instance: the block, its scale in %, the width keeps the
+     *   ratio, Edit / Unpack emit; "block from the selection" only for selections without instances.
+     * @input selected instance; scale 50 %; width 300; buttons; then a shape selected
+     * @output block name shown; 100 × 50; 300 × 150; editBlock 3 / unpack inst; makeBlock emitted for the shape only
+     */
+    it('shows an instance and makes blocks of the selection', () => {
+      const store = new EditorStore(testTemplate({ layers: [instance, shapeLayer('s')] }), true);
+      store.select(['inst']);
+      const fixture = TestBed.createComponent(PropertiesPanelComponent);
+      fixture.componentRef.setInput('store', store);
+      fixture.componentRef.setInput('blocks', new Map([[3, block]]));
+      fixture.componentRef.setInput('canMakeBlock', true);
+      fixture.detectChanges();
+      const panel = fixture.componentInstance;
+      const edits: number[] = [];
+      const unpacks: string[] = [];
+      let made = 0;
+      panel.editBlock.subscribe(id => edits.push(id));
+      panel.unpack.subscribe(id => unpacks.push(id));
+      panel.makeBlock.subscribe(() => made++);
+      expect(fixture.nativeElement.querySelector('.pn-block-name').textContent).toContain('Badge');
+      expect(fixture.nativeElement.querySelector('.pn-btn--wide')).toBeNull();
+      panel.setScale(instance, { target: { valueAsNumber: 50 } } as unknown as Event);
+      expect([store.layers()[0].w, store.layers()[0].h]).toEqual([100, 50]);
+      panel.setInstanceSize(store.layers()[0] as BlockLayer, 'w', { target: { valueAsNumber: 300 } } as unknown as Event);
+      expect([store.layers()[0].w, store.layers()[0].h]).toEqual([300, 150]);
+      fixture.detectChanges();
+      const buttons = Array.from(fixture.nativeElement.querySelectorAll('.pn-section .pn-row .pn-btn')) as HTMLButtonElement[];
+      buttons.find(b => b.textContent?.includes('block_edit'))!.click();
+      buttons.find(b => b.textContent?.includes('block_unpack'))!.click();
+      expect([edits, unpacks]).toEqual([[3], ['inst']]);
+
+      store.select(['s']);
+      fixture.detectChanges();
+      (fixture.nativeElement.querySelector('.pn-btn--wide') as HTMLButtonElement).click();
+      expect(made).toBe(1);
+    });
+
+    /**
+     * @description Fields of instances are listed read only with their form keys; the layer of an
+     *   instance is labelled by its block; a block has no output and no caption.
+     * @input template field badge + instance of the block (field badge → badge_2); kind block
+     * @output instance field "badge_2"; layer label "type_block: Badge"; no output section for a block
+     */
+    it('lists instance fields and labels instances', () => {
+      const store = new EditorStore(testTemplate({ layers: [instance, textLayer('t', { field: 'badge' })], fields: [textField('badge')] }), true);
+      const blocks = new Map([[3, block]]);
+      const fields = mount(FieldsPanelComponent, store);
+      fields.componentRef.setInput('formFields', effectiveFields(store.doc(), id => blocks.get(id)));
+      fields.componentRef.setInput('blocks', blocks);
+      fields.detectChanges();
+      const items = fields.nativeElement.querySelectorAll('.pn-instance-field');
+      expect(items.length).toBe(1);
+      expect(items[0].textContent).toContain('{{badge_2}}');
+      expect(items[0].textContent).toContain('Badge');
+
+      const layers = mount(LayersPanelComponent, store);
+      layers.componentRef.setInput('blocks', blocks);
+      layers.detectChanges();
+      expect(layers.componentInstance.label(instance)).toBe('js-creator-editor.type_block: Badge');
+      expect(layers.componentInstance.isField(instance)).toBeTrue();
+
+      const template = mount(TemplatePanelComponent, store);
+      const sections = () => template.nativeElement.querySelectorAll('.pn-section').length;
+      const before = sections();
+      template.componentRef.setInput('kind', 'block');
+      template.detectChanges();
+      expect(sections()).toBe(before - 2);
     });
   });
 });

@@ -12,7 +12,9 @@
  *   - by kind: text (field or fixed text with highlights, font, size, colour / gradient, lines,
  *     alignment, uppercase, shrinking and overflow, outline, shadow, label box, highlight style),
  *     image (source, fit, focus, corners / circle, border, shadow, overlay, mirror), grid
- *     (layout, gap, corners, cells and their sources), shape, icon.
+ *     (layout, gap, corners, cells and their sources), shape, icon, block instance (its block,
+ *     scale - the size keeps the ratio of the block, edit the block, unpack);
+ *   - "Block from the selection" (templates; the editor asks for the name and creates it).
  *   Every change is one step of the history (typing in one input = one step).
  * @usage `<app-jc-properties [store]="store" [curated]="families" [ownFonts]="fonts" [assets]="assets" (assetPicked)="…" />`
  * @dependencies EditorStore, the controls (colour, fill, anchor, source, choosers), render/document.ts,
@@ -28,6 +30,8 @@ import {
   fieldKeyFrom, gridCells,
 } from '../../../shared/render/document';
 import { anchorFractions } from '../../../shared/render/geometry';
+import { BlockDef } from '../../../shared/render/block-fields';
+import { BlockLayer } from '../../../shared/render/document';
 import { plainText } from '../../../shared/render/text-layout';
 import { CreatorAsset, CreatorFont, CuratedFontFamily, IconSet } from '../../../shared/js-creator.models';
 import { CreatorIconComponent } from '../../../shared/creator-icon/creator-icon.component';
@@ -67,6 +71,16 @@ export class PropertiesPanelComponent {
   readonly iconSet = input<IconSet | null>(null);
   /** A library image was chosen (the editor loads it). */
   readonly assetPicked = output<CreatorAsset>();
+  /** Blocks of the instances (by id). */
+  readonly blocks = input<ReadonlyMap<number, BlockDef>>(new Map());
+  /** The selection may become a block (a template and the create permission). */
+  readonly canMakeBlock = input(false);
+  /** "Block from the selection" clicked. */
+  readonly makeBlock = output<void>();
+  /** "Edit the block" of an instance (block id). */
+  readonly editBlock = output<number>();
+  /** "Unpack" of an instance (layer id). */
+  readonly unpack = output<string>();
 
   @ViewChild('textArea') private textArea?: ElementRef<HTMLTextAreaElement>;
 
@@ -88,6 +102,9 @@ export class PropertiesPanelComponent {
   readonly gridLayer = computed(() => { const l = this.layer(); return l?.type === 'grid' ? l : null; });
   readonly shapeLayer = computed(() => { const l = this.layer(); return l?.type === 'shape' ? l : null; });
   readonly iconLayer = computed(() => { const l = this.layer(); return l?.type === 'icon' ? l : null; });
+  readonly blockLayer = computed(() => { const l = this.layer(); return l?.type === 'block' ? l : null; });
+  /** The selection contains a block instance (it cannot become a block - blocks do not nest). */
+  readonly selectionHasBlock = computed(() => this.store().selectedLayers().some(l => l.type === 'block'));
   /** Number of selected layers. */
   readonly count = computed(() => this.store().selection().length);
   /** Changes are disabled (read only, or the layer is locked - only the lock can change). */
@@ -172,6 +189,37 @@ export class PropertiesPanelComponent {
   setNum(prop: string, event: Event, min: number, max: number, scale = 1): void {
     const value = this.num(event);
     if (value !== null) this.set(prop, Math.min(max, Math.max(min, value / scale)));
+  }
+
+  /**
+   * @description Block of an instance.
+   * @param layer Instance.
+   */
+  blockOf(layer: BlockLayer): BlockDef | undefined {
+    return this.blocks().get(layer.blockId);
+  }
+
+  /**
+   * @description Scale of an instance typed in % (5-2000).
+   * @param layer Instance.
+   * @param event Event of the input.
+   */
+  setScale(layer: BlockLayer, event: Event): void {
+    const value = this.num(event);
+    const block = this.blockOf(layer);
+    if (value !== null && block) this.store().setScale(layer.id, value / 100, block);
+  }
+
+  /**
+   * @description Width or height of an instance typed: the other side follows the ratio of the block.
+   * @param layer Instance.
+   * @param side w | h.
+   * @param event Event of the input.
+   */
+  setInstanceSize(layer: BlockLayer, side: 'w' | 'h', event: Event): void {
+    const value = this.num(event);
+    const block = this.blockOf(layer);
+    if (value !== null && value > 0 && block) this.store().setScale(layer.id, value / (side === 'w' ? block.width : block.height), block);
   }
 
   /**

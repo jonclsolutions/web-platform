@@ -7,13 +7,14 @@
  * @description Resources of the renderer in one page (editor, generating): library images
  *   loaded from their signed URLs (same origin - the canvas never gets tainted), the fonts of the
  *   texts (registered through FontLibraryService under `jsc-…` names, loaded with the characters
- *   they need) and the icon set. When something finishes loading, `onChange` asks the page to
- *   draw again. Before an output is drawn, generating waits for the images (assetsReady()) and
- *   checks that every font really loaded (missingFonts()) - a fallback font must never get into
- *   an output.
+ *   they need), the icon set and the blocks of the instances (with their documents - their
+ *   fonts are loaded and checked with the template). When something finishes loading,
+ *   `onChange` asks the page to draw again. Before an output is drawn, generating waits for the
+ *   images (assetsReady()) and checks that every font really loaded (missingFonts()) - a
+ *   fallback font must never get into an output.
  * @usage `const store = new RenderResourceStore(fontLibrary, () => redraw()); store.loadAsset(id, url);
  *   await store.ensureFonts(doc, ownFonts, curated)`.
- * @dependencies FontLibraryService, document.ts, renderer.ts (RenderResources).
+ * @dependencies FontLibraryService, document.ts, block-fields.ts, renderer.ts (RenderResources).
  */
 
 import { FontLibraryService } from '../font-library.service';
@@ -21,6 +22,7 @@ import { CreatorFont, CuratedFontFamily, IconNode, IconSet } from '../js-creator
 import { DrawableImage } from './paint';
 import { RenderResources } from './renderer';
 import { TemplateDocument, TextLayer } from './document';
+import { BlockDef, resourceDocument } from './block-fields';
 
 /** Characters loaded for every font (Czech letters), so a preview never waits for a subset. */
 const FONT_SAMPLE = 'AaBbĚěŠšČčŘřŽžÝýÁáÍíÉéŮůÚúŇňŤťĎď0123456789';
@@ -32,6 +34,8 @@ export class RenderResourceStore implements RenderResources {
   private readonly loading = new Map<number, Promise<void>>();
   /** Icons of the set. */
   private icons: Record<string, IconNode[]> = {};
+  /** Blocks of the instances (by id). */
+  private readonly blocks = new Map<number, BlockDef>();
 
   /**
    * @param fonts Font library (registration of faces, family names).
@@ -66,6 +70,28 @@ export class RenderResourceStore implements RenderResources {
   /** @description See RenderResources.icon(). */
   icon(name: string): IconNode[] | undefined {
     return this.icons[name];
+  }
+
+  /** @description See RenderResources.block(). */
+  block(id: number): BlockDef | undefined {
+    return this.blocks.get(id);
+  }
+
+  /**
+   * @description Adds or replaces blocks (with their documents) and asks for a new drawing.
+   * @param blocks Blocks.
+   */
+  setBlocks(blocks: readonly BlockDef[]): void {
+    for (const block of blocks) this.blocks.set(block.id, block);
+    this.onChange();
+  }
+
+  /**
+   * @description The document with the layers of its blocks (fonts / images to load).
+   * @param doc Document of a template or a block.
+   */
+  withBlocks(doc: TemplateDocument): TemplateDocument {
+    return resourceDocument(doc, id => this.block(id));
   }
 
   /**
@@ -110,7 +136,7 @@ export class RenderResourceStore implements RenderResources {
     const faces: FontFace[] = [];
     document.fonts.forEach(face => faces.push(face));
     const missing = new Set<string>();
-    for (const layer of doc.pages.flatMap(p => p.layers)) {
+    for (const layer of this.withBlocks(doc).pages.flatMap(p => p.layers)) {
       if (layer.type !== 'text' || layer.hidden) continue;
       const family = this.fontFamily(layer.font.family);
       const own = faces.filter(face => face.family.replace(/^["']|["']$/g, '') === family);
@@ -134,6 +160,7 @@ export class RenderResourceStore implements RenderResources {
    */
   async ensureFonts(doc: TemplateDocument, own: readonly CreatorFont[], curated: readonly CuratedFontFamily[], texts: string[] = []): Promise<void> {
     if (typeof document === 'undefined' || !document.fonts) return;
+    doc = this.withBlocks(doc);
     const layers = doc.pages.flatMap(p => p.layers).filter((l): l is TextLayer => l.type === 'text');
     const loads: Promise<unknown>[] = [];
     for (const layer of layers) {

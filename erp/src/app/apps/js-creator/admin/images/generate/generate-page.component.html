@@ -4,31 +4,37 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Page "Generate": head (back, template, size, edit), usage bar; the live preview
+    @description: Page "Generate" (a template or a set): head (back, template / set, size,
+        edit), usage bar; the live preview (a set: tabs of its formats, each with its own crop)
         beside the form - fields (texts with length, highlight and overflow notes; images from the
         computer or the library with zoom and crop), text of the post, target folder and name,
-        what still stops generating, Generate and the result (open, download, copy the text);
-        the library chooser of an image field.
+        what still stops generating, Generate (a set: progress) and the results (open, download,
+        copy the text); the library chooser of an image field.
 -->
 <div class="ws-page gen-page">
   @if (failed()) {
     <section class="ws-panel">
-      <div class="ws-empty">{{ t('not_found') }}</div>
-      <div><button type="button" class="ws-btn" (click)="back()">{{ t('back') }}</button></div>
+      <div class="ws-empty">{{ t(mode === 'set' ? 'set_not_found' : 'not_found') }}</div>
+      <div><button type="button" class="ws-btn" (click)="back()">{{ t(mode === 'set' ? 'back_sets' : 'back') }}</button></div>
     </section>
   } @else if (template(); as tpl) {
     <header class="gen-head">
-      <button type="button" class="ws-icon-btn gen-back" [title]="t('back')" [attr.aria-label]="t('back')" (click)="back()">
+      <button type="button" class="ws-icon-btn gen-back" [title]="t(mode === 'set' ? 'back_sets' : 'back')" [attr.aria-label]="t(mode === 'set' ? 'back_sets' : 'back')" (click)="back()">
         <app-creator-icon [nodes]="icon('arrow-left')" [size]="18" />
       </button>
       <div class="gen-title">
-        <h1>{{ tpl.name }}</h1>
-        <span class="gen-meta">{{ t('generate') }} · {{ sizeLabel() }} · {{ tpl.output_format === 'jpg' ? 'JPG' : 'PNG' }}</span>
+        @if (set(); as st) {
+          <h1>{{ st.name }}</h1>
+          <span class="gen-meta">{{ t('generate_set') }} · {{ tf('set_formats', { count: targets().length }) }}</span>
+        } @else {
+          <h1>{{ tpl.name }}</h1>
+          <span class="gen-meta">{{ t('generate') }} · {{ sizeLabel() }} · {{ tpl.output_format === 'jpg' ? 'JPG' : 'PNG' }}</span>
+        }
       </div>
       <span class="ws-toolbar-spacer"></span>
       @if (canEdit) {
         <a class="ws-btn ws-btn--sm" [routerLink]="['/admin/js-creator/image-templates', tpl.id, 'edit']">
-          <app-icon name="edit" [size]="14"></app-icon>{{ t('edit_template') }}
+          <app-icon name="edit" [size]="14"></app-icon>{{ t('edit_template') }}@if (set()) { „{{ tpl.name }}“ }
         </a>
       }
     </header>
@@ -37,13 +43,21 @@
 
     <div class="gen-layout">
       <section class="ws-panel gen-preview" [attr.aria-label]="t('preview')">
+        @if (tabs().length > 1) {
+          <div class="gen-tabs" role="tablist" [attr.aria-label]="t('formats')">
+            @for (tab of tabs(); track tab.id; let i = $index) {
+              <button type="button" role="tab" class="gen-tab" [class.gen-tab--on]="active() === i" [attr.aria-selected]="active() === i"
+                [title]="tab.name" (click)="showTarget(i)">{{ tab.label }}</button>
+            }
+          </div>
+        }
         @if (doc(); as d) {
           <app-jc-generate-preview [doc]="d" [size]="size()" [resources]="resources" [values]="values()" [redraw]="redraw()"
             [pannable]="filledImages()" [maxHeight]="640" [label]="t('preview')"
             (rendered)="report.set($event)" (pan)="onPan($event)" />
         }
         @if (filledImages().length) {
-          <p class="ws-panel-hint gen-preview-hint">{{ t('drag_hint') }}</p>
+          <p class="ws-panel-hint gen-preview-hint">{{ t(tabs().length > 1 ? 'drag_hint_set' : 'drag_hint') }}</p>
         }
       </section>
 
@@ -95,7 +109,7 @@
                       (click)="clearImage(field.key)"><app-icon name="x" [size]="15"></app-icon></button>
                   </div>
                   <div class="gen-zoom">
-                    <label [for]="'jc-zoom-' + field.key">{{ t('zoom') }}</label>
+                    <label [for]="'jc-zoom-' + field.key">{{ t('zoom') }}@if (tabs().length > 1) { ({{ tabs()[active()].label }}) }</label>
                     <input type="range" [id]="'jc-zoom-' + field.key" [min]="zoomLimits.min" [max]="zoomLimits.max" step="0.05"
                       [value]="crops()[field.key]?.zoom ?? 1" (input)="setZoom(field.key, $any($event.target).value)" />
                     <button type="button" class="ws-btn ws-btn--sm" (click)="resetCrop(field.key)">{{ t('reset_crop') }}</button>
@@ -132,14 +146,14 @@
         <section class="ws-panel">
           <div class="gen-field-head">
             <h2 class="ws-panel-title"><label for="jc-gen-caption">{{ t('caption') }}</label></h2>
-            @if (captionEdited() && tpl.caption_template) {
+            @if (captionEdited() && captionPattern()) {
               <button type="button" class="ws-btn ws-btn--sm" (click)="refillCaption()">{{ t('caption_refill') }}</button>
             }
           </div>
           <textarea #cap id="jc-gen-caption" class="gen-caption" rows="5" [attr.maxlength]="maxCaption" [placeholder]="t('caption_placeholder')"
             [value]="caption()" (input)="setCaption(cap.value)"></textarea>
           <div class="gen-field-foot">
-            <span class="ws-field-hint">{{ tpl.caption_template ? t('caption_hint') : t('caption_no_pattern') }}</span>
+            <span class="ws-field-hint">{{ captionPattern() ? t('caption_hint') : t('caption_no_pattern') }}</span>
             <span class="gen-count">{{ caption().length }}</span>
           </div>
         </section>
@@ -159,7 +173,7 @@
             <label for="jc-gen-name">{{ t('name') }}</label>
             <input id="jc-gen-name" type="text" autocomplete="off" [attr.maxlength]="maxName" [placeholder]="namePlaceholder" [value]="name()"
               (input)="setName($any($event.target).value)" />
-            <span class="ws-field-hint">{{ t('name_hint') }}</span>
+            <span class="ws-field-hint">{{ t(set() ? 'name_hint_set' : 'name_hint') }}</span>
           </div>
         </section>
 
@@ -178,16 +192,21 @@
             <p class="ws-trash-note">{{ t('no_permission') }}</p>
           }
           <button type="button" class="ws-btn ws-btn--primary gen-generate" [disabled]="generating() || !canCreate" (click)="generate()">
-            <app-icon name="sparkles" [size]="16"></app-icon>{{ generating() ? t('generating') : t('generate_button') }}
+            <app-icon name="sparkles" [size]="16"></app-icon>
+            @if (progress(); as p) {
+              {{ tf('generating_progress', { done: p.done + 1, total: p.total }) }}
+            } @else {
+              {{ generating() ? t('generating') : (targets().length > 1 ? tf('generate_set_button', { count: targets().length }) : t('generate_button')) }}
+            }
           </button>
 
-          @if (result(); as output) {
+          @for (output of results(); track output.id) {
             <div class="gen-result" role="status">
               @if (output.thumb_url) {
                 <img class="gen-result-thumb" [src]="output.thumb_url" [alt]="output.name" />
               }
               <div class="gen-result-body">
-                <strong>{{ t('done_title') }}</strong>
+                <strong>{{ results().length > 1 ? formatOf(output) : t('done_title') }}</strong>
                 <span>{{ output.name }}</span>
                 <span class="ws-card-meta">{{ folderName(output) }} · {{ output.width }} × {{ output.height }} · {{ output.format === 'jpg' ? 'JPG' : 'PNG' }} · {{ bytes(output.size_bytes) }}</span>
                 <div class="gen-result-actions">
@@ -205,7 +224,9 @@
                     </button>
                   }
                 </div>
-                <span class="ws-field-hint">{{ t('done_hint') }}</span>
+                @if ($last) {
+                  <span class="ws-field-hint">{{ t('done_hint') }}</span>
+                }
               </div>
             </div>
           }

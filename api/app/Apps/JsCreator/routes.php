@@ -12,9 +12,9 @@
  *     fonts (every controller limits its queries to the signed-in account), the settings
  *     (quotas) and the audit log. The shared parts of the workspace need the action in any
  *     section (JsCreatorSections::any()).
- *   - `js-creator/<section>/templates` and `js-creator/<section>/outputs` (one route group per
- *     section of JsCreatorSections, the section is passed to the controller): templates and
- *     generating with the permissions of their section.
+ *   - `js-creator/<section>/templates`, `…/blocks`, `…/sets` and `…/outputs` (one route group per
+ *     section of JsCreatorSections, the section is passed to the controller): templates, blocks,
+ *     sets and generating with the permissions of their section.
  *   - `js-creator/outputs`: the outputs of every section in one list; each output needs the
  *     permission of its section (OutputController).
  *   - `js-creator/files/…`: files of a workspace (and ZIPs of outputs), only through the signed
@@ -27,11 +27,13 @@
  */
 
 use App\Apps\JsCreator\Http\Controllers\AssetController;
+use App\Apps\JsCreator\Http\Controllers\BlockController;
 use App\Apps\JsCreator\Http\Controllers\FileController;
 use App\Apps\JsCreator\Http\Controllers\FolderController;
 use App\Apps\JsCreator\Http\Controllers\FontController;
 use App\Apps\JsCreator\Http\Controllers\JsCreatorLogController;
 use App\Apps\JsCreator\Http\Controllers\OutputController;
+use App\Apps\JsCreator\Http\Controllers\SetController;
 use App\Apps\JsCreator\Http\Controllers\SettingsController;
 use App\Apps\JsCreator\Http\Controllers\TemplateController;
 use App\Apps\JsCreator\Http\Controllers\UsageController;
@@ -83,6 +85,8 @@ Route::middleware(['auth:sanctum', 'throttle:300,1,js-creator'])->prefix('js-cre
     Route::post('outputs/{id}/restore', [OutputController::class, 'restore'])->middleware($delete)->whereNumber('id');
 
     // ── js-creator/<section>/templates (templates of each section) ───────────────
+    // ── js-creator/<section>/blocks (blocks of each section) ──────────────────────
+    // ── js-creator/<section>/sets (sets of templates of each section) ─────────────
     // ── js-creator/<section>/outputs (generating from a template of the section) ─
     foreach (JsCreatorSections::SECTIONS as $section) {
         $can = fn (string $action) => 'permission:' . JsCreatorSections::permission($section, $action);
@@ -97,6 +101,26 @@ Route::middleware(['auth:sanctum', 'throttle:300,1,js-creator'])->prefix('js-cre
             Route::post('{id}/duplicate', [TemplateController::class, 'duplicate'])->middleware($can('create'))->whereNumber('id')->defaults('section', $section);
             Route::delete('{id}', [TemplateController::class, 'destroy'])->middleware($can('delete'))->whereNumber('id')->defaults('section', $section);
             Route::post('{id}/restore', [TemplateController::class, 'restore'])->middleware($can('delete'))->whereNumber('id')->defaults('section', $section);
+        });
+        Route::prefix("{$section}/blocks")->group(function () use ($section, $can, $upload) {
+            Route::get('', [BlockController::class, 'index'])->middleware($can('view'))->defaults('section', $section);
+            Route::post('', [BlockController::class, 'store'])->middleware($can('create'))->defaults('section', $section);
+            Route::delete('trash', [BlockController::class, 'emptyTrash'])->middleware($can('delete'))->defaults('section', $section);
+            Route::get('{id}', [BlockController::class, 'show'])->middleware($can('view'))->whereNumber('id')->defaults('section', $section);
+            Route::put('{id}', [BlockController::class, 'update'])->middleware($can('update'))->whereNumber('id')->defaults('section', $section);
+            Route::post('{id}/thumbnail', [BlockController::class, 'thumbnail'])->middleware([$can('update'), $upload])->whereNumber('id')->defaults('section', $section);
+            Route::post('{id}/duplicate', [BlockController::class, 'duplicate'])->middleware($can('create'))->whereNumber('id')->defaults('section', $section);
+            Route::delete('{id}', [BlockController::class, 'destroy'])->middleware($can('delete'))->whereNumber('id')->defaults('section', $section);
+            Route::post('{id}/restore', [BlockController::class, 'restore'])->middleware($can('delete'))->whereNumber('id')->defaults('section', $section);
+        });
+        Route::prefix("{$section}/sets")->group(function () use ($section, $can) {
+            Route::get('', [SetController::class, 'index'])->middleware($can('view'))->defaults('section', $section);
+            Route::post('', [SetController::class, 'store'])->middleware($can('create'))->defaults('section', $section);
+            Route::delete('trash', [SetController::class, 'emptyTrash'])->middleware($can('delete'))->defaults('section', $section);
+            Route::get('{id}', [SetController::class, 'show'])->middleware($can('view'))->whereNumber('id')->defaults('section', $section);
+            Route::put('{id}', [SetController::class, 'update'])->middleware($can('update'))->whereNumber('id')->defaults('section', $section);
+            Route::delete('{id}', [SetController::class, 'destroy'])->middleware($can('delete'))->whereNumber('id')->defaults('section', $section);
+            Route::post('{id}/restore', [SetController::class, 'restore'])->middleware($can('delete'))->whereNumber('id')->defaults('section', $section);
         });
     }
 
@@ -121,6 +145,9 @@ Route::get('js-creator/files/fonts/{id}', [FileController::class, 'font'])
 Route::get('js-creator/files/templates/{id}', [FileController::class, 'template'])
     ->middleware('signed:relative')->whereNumber('id')
     ->name('js-creator.files.template');
+Route::get('js-creator/files/blocks/{id}', [FileController::class, 'block'])
+    ->middleware('signed:relative')->whereNumber('id')
+    ->name('js-creator.files.block');
 Route::get('js-creator/files/outputs/{id}/{variant}', [FileController::class, 'output'])
     ->middleware('signed:relative')->whereNumber('id')->whereIn('variant', ['original', 'thumb', 'download'])
     ->name('js-creator.files.output');

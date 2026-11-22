@@ -6,12 +6,15 @@
  * @created 2026
  * @description Unit tests of EditorStore: history (undo / redo, coalescing of similar changes,
  *   limit), unsaved changes, selection, adding / deleting / duplicating / copying layers (with
- *   their fields), order, alignment, spreading, anchors, resize, read-only mode and pruning of
- *   unused fields.
+ *   their fields), order, alignment, spreading, anchors, resize, read-only mode, pruning of
+ *   unused fields and block instances (insert, scale, sync with the block, block from the
+ *   selection, unpack, no instances pasted into a block).
  * @dependencies EditorStore, editor-test-data.ts.
  */
 
-import { EditorStore, HISTORY_LIMIT } from './editor-store';
+import { EditorStore, HISTORY_LIMIT, blockAsTemplate } from './editor-store';
+import { BlockDef } from '../../shared/render/block-fields';
+import { BlockLayer, TextLayer, emptyDocument } from '../../shared/render/document';
 import { imageField, shapeLayer, testTemplate, textField, textLayer } from './editor-test-data';
 import { layerRect } from '../../shared/render/geometry';
 
@@ -204,5 +207,55 @@ describe('EditorStore', () => {
     store.commit(draft => { draft.name = ' A '; draft.caption = ''; });
     const body = store.saveBody();
     expect([body.name, body.caption_template, body.version, body.width]).toEqual(['A', null, 3, 1000]);
+  });
+  /**
+   * @description Instances: inserted fitted and selected, scaled with their box, their boxes follow
+   *   the current size of the block after loading (without unsaved changes), selected layers are
+   *   replaced by an instance in one step (undo brings them back), an instance unpacks into layers
+   *   with its fields; a block never takes instances (not even pasted).
+   * @input block 200 × 100 with a text of the field price; insert; scale 0.5; a stored instance
+   *   400 × 200 at scale 1; two shapes → block; unpack; paste of an instance into a block
+   * @output instance 200 × 100 selected; 100 × 50; synced to 200 × 100 and clean; one instance in
+   *   place of the shapes, undo → shapes; unpacked text with the field price; paste skips 1
+   */
+  it('works with block instances', () => {
+    const block: BlockDef = { id: 9, name: 'Tag', width: 200, height: 100, document: emptyDocument(true) };
+    block.document.pages[0].layers = [textLayer('bt', { field: 'price', w: 200, h: 100, x: 0, y: 0 })];
+    block.document.fields = [textField('price')];
+
+    const store = new EditorStore(testTemplate(), true);
+    const id = store.addBlock(block) as string;
+    expect(store.selectedLayer()).toEqual(jasmine.objectContaining({ type: 'block', blockId: 9, w: 200, h: 100, scale: 1 }));
+    store.setScale(id, 0.5, block);
+    expect([store.layers()[0].w, store.layers()[0].h]).toEqual([100, 50]);
+
+    const stored = { ...(store.layers()[0] as BlockLayer), id: 'old', w: 400, h: 200, scale: 1 };
+    const loaded = new EditorStore(testTemplate({ layers: [stored] }), true);
+    loaded.syncInstances(blockId => (blockId === 9 ? block : undefined));
+    expect([loaded.layers()[0].w, loaded.layers()[0].h]).toEqual([200, 100]);
+    expect(loaded.dirty()).toBeFalse();
+
+    const shapes = new EditorStore(testTemplate({ layers: [shapeLayer('a', 10, 10), shapeLayer('b', 50, 50), shapeLayer('c', 500, 500)] }), true);
+    shapes.select(['a', 'b']);
+    const instanceId = shapes.replaceWithInstance(['a', 'b'], { id: 9, width: 140, height: 140 }, { x: 10, y: 10, w: 140, h: 140 });
+    expect(shapes.layers().map(l => l.type)).toEqual(['block', 'shape']);
+    expect(layerRect(shapes.layers()[0], shapes.size())).toEqual({ x: 10, y: 10, w: 140, h: 140 });
+    expect(shapes.selection()).toEqual([instanceId]);
+    shapes.undo();
+    expect(shapes.layers().map(l => l.id)).toEqual(['a', 'b', 'c']);
+
+    const unpacking = new EditorStore(testTemplate({ layers: [{ ...stored, w: 200, h: 100 }] }), true);
+    expect(unpacking.unpack('old', block, [{ ...textField('price'), origin: { layerId: 'old', blockId: 9, key: 'price' } }])).toBeTrue();
+    expect(unpacking.layers().map(l => l.type)).toEqual(['text']);
+    expect((unpacking.layers()[0] as TextLayer).field).toBe('price');
+    expect(unpacking.doc().fields.map(f => f.key)).toEqual(['price']);
+
+    store.select([id]);
+    store.copySelected();
+    const blockStore = new EditorStore(blockAsTemplate({ ...testTemplate({ id: 9 }), used_by: [] } as never), true, 'block');
+    expect(blockStore.addBlock(block)).toBeNull();
+    expect(blockStore.paste()).toBe(1);
+    expect(blockStore.layers().length).toBe(0);
+    expect(blockStore.blockSaveBody()).toEqual(jasmine.objectContaining({ name: 'Post', width: 1000, version: 3 }));
   });
 });

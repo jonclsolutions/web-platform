@@ -115,7 +115,8 @@
                 "The grey text in a field is the sample of the template - it never gets into the output, the field must be filled in.",
                 "Highlight: select a part of the text and click Highlight - the preview shows it in the highlight style of the template (colour, bold, background). Another click removes the highlight. In the text a highlight is written **like this**.",
                 "The counter shows the length and the limit of the field.",
-                "When a text does not fit, the template shrinks it, cuts it with “…” or refuses to generate, as it is set - the field tells you what happened."
+                "When a text does not fit, the template shrinks it, cuts it with “…” or refuses to generate, as it is set - the field tells you what happened.",
+                "Fields of inserted blocks are in the form together with the fields of the template; a key that collides with another field has the name of the instance in its label. A set of templates has its own generating – see Sets."
               ]
             }
           ]
@@ -291,8 +292,25 @@
           ]
         },
         {
+          "heading": "06. Blocks",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Insert a block with the button Block on the left – choose from the blocks on the page Blocks. An instance behaves like a layer: anchor, offset, rotation and opacity.",
+                "The size of an instance is a scale of the block – the handles and the Width / Height fields keep the ratio of the block; the panel Properties also takes it in per cent.",
+                "The content of an instance is not changed in the template – Edit the block opens the block editor and the change shows in every template.",
+                "Unpack replaces the instance by independent layers of the template (with its fields); later changes of the block no longer apply to it.",
+                "Block from the selection: select layers (no block instances), choose a name – the layers move into a new block and its instance replaces them. The step can be undone (Ctrl+Z); the block stays on the page Blocks.",
+                "Fields of inserted blocks are in the panel Fields under the fields of the template (read only) – with the key for the post text pattern."
+              ]
+            }
+          ]
+        },
+        {
           "key": "save",
-          "heading": "06. Saving",
+          "heading": "07. Saving",
           "blocks": [
             {
               "type": "list",
@@ -307,7 +325,7 @@
           ]
         },
         {
-          "heading": "07. Keyboard shortcuts",
+          "heading": "08. Keyboard shortcuts",
           "blocks": [
             {
               "type": "grid",
@@ -581,6 +599,171 @@
             {
               "type": "text",
               "content": "The rows contain only the kind and the number of an item – never names or content of a workspace, so the log does not reveal what anybody works on. Filter by user, event, module and IP address, export and draw charts."
+            }
+          ]
+        }
+      ]
+    },
+    "js-creator-sets": {
+      "navLabel": "Sets",
+      "header": "JS Creator – Sets of templates",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "A set joins templates of different sizes (e.g. a 1080 × 1350 post and a 1080 × 1920 story) that have the same fields. One filling then generates an output in every size at once."
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "01. New set and changes",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "New set: enter a name and add templates – search them by name and order them with the arrows (outputs are made in this order). A set has at most 10 templates.",
+                "The post text pattern is optional – left empty, the pattern of the first template is used.",
+                "Fields with the same key (e.g. title) are filled once for every template. They must have the same kind in all templates – when it is a text in one and an image in another, the set is not saved and the message names the field and the templates. Change the key of the field in one template.",
+                "Fields of inserted blocks count too (with the key they have in the form of the template)."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Generating a set",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Generate on the card of a set opens one form with the united fields. A field is required when any template requires it; a text keeps the shortest length limit.",
+                "The preview has tabs – one per format. The crop and zoom of a photo are set for each format separately (switch the tab and drag the photo).",
+                "Generate draws and stores one output per template in the chosen folder. The name of an output = the name typed (or the name of the set with the date) and its format, e.g. “Sale – 1080×1350”.",
+                "A template of the set that is in the trash is skipped. A template deleted for good disappears from the set."
+              ]
+            }
+          ]
+        },
+        {
+          "key": "trash",
+          "heading": "03. Trash",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "A deleted set goes to the trash – its templates stay as they are. Restore it, delete it for good or empty the trash; after the retention period (30 days by default) it is deleted automatically."
+            }
+          ]
+        },
+        {
+          "heading": "04. Permissions",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "View",
+                  "text": "js-creator-images-view – list of sets and the preview of generating."
+                },
+                {
+                  "title": "Create",
+                  "text": "js-creator-images-create – new sets and generating."
+                },
+                {
+                  "title": "Update",
+                  "text": "js-creator-images-update – changing a set."
+                },
+                {
+                  "title": "Delete",
+                  "text": "js-creator-images-delete – trash, restore, delete for good."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "js-creator-blocks": {
+      "navLabel": "Blocks",
+      "header": "JS Creator – Blocks",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "A block is a reusable group of layers – a logo in a corner, a footer with contacts, a price label. Templates use it as an instance; when you change the block, every template using it changes. Outputs already generated stay as they are."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "A block has its own canvas (the size of the block) and a transparent background, so the template shows under it. It can contain the same layers and fields as a template – only no other block (blocks do not nest)."
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "01. New block and the block editor",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "New block: a name and a size (100–3000 px a side) – the block editor opens. It works like the template editor, only without an output and a post text.",
+                "A block can also be made in the template editor: select layers and choose Block from the selection (see Template editor).",
+                "Duplicate / Duplicate in another size makes a copy of the block; layers keep their anchors and offsets.",
+                "After a block is saved, the thumbnails of the templates using it are drawn again by themselves."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Fields in blocks",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "A block can have fields (e.g. the price of a label). They appear in the generating form together with the fields of the template.",
+                "When the key of a block field collides with another field (the same key in the template, or a second instance of the same block), it gets a number (price_2) and its label the name of the instance. Use this key in the post text pattern too: {{price_2}}."
+              ]
+            }
+          ]
+        },
+        {
+          "key": "trash",
+          "heading": "03. Trash",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "A block used by a template (also one in the trash) cannot be deleted – the message names the templates. Unpack or remove it there first, or delete the templates for good. Restore a block from the trash, delete it for good or empty the trash; after the retention period (30 days by default) it is deleted automatically."
+            }
+          ]
+        },
+        {
+          "heading": "04. Permissions",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "View",
+                  "text": "js-creator-images-view – list of blocks and the editor read only."
+                },
+                {
+                  "title": "Create",
+                  "text": "js-creator-images-create – new blocks, copies and block from the selection."
+                },
+                {
+                  "title": "Update",
+                  "text": "js-creator-images-update – saving in the block editor."
+                },
+                {
+                  "title": "Delete",
+                  "text": "js-creator-images-delete – trash, restore, delete for good."
+                }
+              ]
             }
           ]
         }

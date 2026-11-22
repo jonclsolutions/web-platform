@@ -104,7 +104,7 @@ trait JsCreatorFixtures
 
     /**
      * @description Complete layer of a kind with its default properties.
-     * @param string $type text | image | grid | shape | icon.
+     * @param string $type text | image | grid | shape | icon | block.
      * @param array<string, mixed> $overrides Properties to change.
      * @return array<string, mixed>
      */
@@ -133,6 +133,7 @@ trait JsCreatorFixtures
             ],
             'shape' => ['shape' => 'rect', 'fill' => ['type' => 'solid', 'color' => '#f59e0b'], 'radius' => 12, 'stroke' => null, 'shadow' => null],
             'icon'  => ['icon' => 'star', 'color' => '#111111', 'strokeWidth' => 2, 'shadow' => null],
+            'block' => ['blockId' => 1, 'scale' => 1],
         };
 
         return array_replace($common, $specific, $overrides);

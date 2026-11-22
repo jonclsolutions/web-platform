@@ -4,10 +4,11 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Document of a template (schema version 1) - the JSON the editor saves and the
- *   renderer draws: types, limits, size presets, grid layouts and factories of new layers with
- *   their defaults. A document has fields (filled in when generating) and pages (one now -
- *   carousels later); a page has a background and layers.
+ * @description Document of a template or a block (schema version 1) - the JSON the editor saves
+ *   and the renderer draws: types, limits, size presets, grid layouts and factories of new layers
+ *   with their defaults. A document has fields (filled in when generating) and pages (one now -
+ *   carousels later); a page has a background and layers. A template may contain instances of
+ *   blocks (layer `block`); a block never does (blocks do not nest).
  * @usage `createLayer('text', { width: 1080, height: 1350 })`, `emptyDocument()`.
  * @note The API validates the same shape strictly (api/app/Apps/JsCreator/Support/
  *   TemplateDocument.php) - a new property = both places and the tests of both sides. Every
@@ -34,6 +35,9 @@ export const DOCUMENT_LIMITS = {
   maxCaption: 5000,
   /** Largest JSON of a document (bytes, UTF-8). */
   maxBytes: 1_048_576,
+  /** Smallest / largest scale of a block instance. */
+  minScale: 0.05,
+  maxScale: 20,
 } as const;
 
 /** Anchor of a layer: t / m / b (vertical) + l / c / r (horizontal). */
@@ -204,11 +208,25 @@ export interface IconLayer extends LayerBase {
   shadow: Shadow | null;
 }
 
+/**
+ * Instance of a block (templates only). The block is drawn into the box of the layer: its size
+ * × scale (w, h follow it - the editor keeps them, the renderer always takes the current size
+ * of the block).
+ */
+export interface BlockLayer extends LayerBase {
+  type: 'block';
+  blockId: number;
+  scale: number;
+}
+
 /** Any layer. */
-export type Layer = TextLayer | ImageLayer | GridLayer | ShapeLayer | IconLayer;
+export type Layer = TextLayer | ImageLayer | GridLayer | ShapeLayer | IconLayer | BlockLayer;
 
 /** Kind of a layer. */
 export type LayerType = Layer['type'];
+
+/** Kind of a layer made from its defaults (an instance needs its block - createBlockLayer()). */
+export type PlainLayerType = Exclude<LayerType, 'block'>;
 
 /** Text field. */
 export interface TextField {
@@ -317,10 +335,12 @@ export function isValidSize(size: CanvasSize): boolean {
 }
 
 /**
- * @description An empty document: white background, no layers, no fields.
+ * @description An empty document: white background (a block: transparent), no layers, no fields.
+ * @param transparent Transparent background (a block shows the template under it).
  */
-export function emptyDocument(): TemplateDocument {
-  return { schema: DOCUMENT_SCHEMA, fields: [], pages: [{ background: { fill: { type: 'solid', color: '#ffffff' }, image: null }, layers: [] }] };
+export function emptyDocument(transparent = false): TemplateDocument {
+  const color = transparent ? '#ffffff00' : '#ffffff';
+  return { schema: DOCUMENT_SCHEMA, fields: [], pages: [{ background: { fill: { type: 'solid', color }, image: null }, layers: [] }] };
 }
 
 /**
@@ -356,7 +376,7 @@ export function documentBytes(doc: TemplateDocument): number {
  * @param canvas Size of the canvas.
  * @param id Id of the layer.
  */
-export function createLayer(type: LayerType, canvas: CanvasSize, id: string): Layer {
+export function createLayer(type: PlainLayerType, canvas: CanvasSize, id: string): Layer {
   const short = Math.min(canvas.width, canvas.height);
   const box = (w: number, h: number): Omit<LayerBase, 'id' | 'name'> => ({
     anchor: 'mc', x: 0, y: 0, w: Math.round(w), h: Math.round(h), rotation: 0, opacity: 1, hidden: false, locked: false,
@@ -388,6 +408,32 @@ export function createLayer(type: LayerType, canvas: CanvasSize, id: string): La
     case 'icon':
       return { id, name: '', type, ...box(short * 0.12, short * 0.12), icon: 'star', color: '#18181b', strokeWidth: 2, shadow: null };
   }
+}
+
+/**
+ * @description New instance of a block, centred on the canvas: in its own size, or reduced to
+ *   fit 80 % of the canvas.
+ * @param block Id and size of the block.
+ * @param canvas Size of the canvas.
+ * @param id Id of the layer.
+ */
+export function createBlockLayer(block: { id: number; width: number; height: number }, canvas: CanvasSize, id: string): BlockLayer {
+  const fit = Math.min(1, (canvas.width * 0.8) / block.width, (canvas.height * 0.8) / block.height);
+  const scale = Math.max(DOCUMENT_LIMITS.minScale, Math.floor(fit * 100) / 100);
+  return {
+    id, name: '', type: 'block', anchor: 'mc', x: 0, y: 0, w: Math.round(block.width * scale), h: Math.round(block.height * scale),
+    rotation: 0, opacity: 1, hidden: false, locked: false, blockId: block.id, scale,
+  };
+}
+
+/**
+ * @description Ids of the blocks of the instances of a document.
+ * @param doc Document.
+ */
+export function blockIdsOf(doc: TemplateDocument): number[] {
+  const ids = new Set<number>();
+  for (const page of doc.pages) for (const layer of page.layers) if (layer.type === 'block') ids.add(layer.blockId);
+  return [...ids];
 }
 
 /**

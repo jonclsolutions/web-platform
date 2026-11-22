@@ -4,8 +4,8 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Popups choosing a library image or an icon: search bar with the upload button,
-        grid of images / icons, "load more", empty state.
+    @description: Popups choosing a library image, an icon or a block: search bar with the upload
+        button, grid of images / icons / blocks, "load more", empty state.
     @dependencies: controls.css, shared/styles/tokens.css
 */
 
@@ -72,6 +72,17 @@
   object-fit: contain;
   background: var(--color-zinc-50);
   border-radius: 6px;
+}
+
+.jc-chooser-size {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  background: var(--color-zinc-50);
+  color: var(--color-zinc-500);
+  font-variant-numeric: tabular-nums;
 }
 
 .jc-chooser-item span,

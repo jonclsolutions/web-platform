@@ -1,0 +1,167 @@
+/*
+    @file: sets-page.component.css
+    @path: src/app/apps/js-creator/admin/images/sets/sets-page.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Page "Sets": the cards of the sets with a strip of the thumbnails of their
+        formats, and the popup of a set (chosen templates, templates to add).
+    @dependencies: workspace.css, shared/styles/tokens.css
+*/
+
+/*
+    @module: Toolbar
+    @description: Sorting select.
+    @usage: select.st-select
+*/
+.st-select {
+  padding: 6px 10px;
+  border: 1px solid var(--color-zinc-300);
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.8125rem;
+}
+
+/*
+    @module: Set cards
+    @description: Wide cards; the strip shows each format in its aspect (--st-ratio = width /
+        height, 120 px high); a template in the trash is faded. The strip opens generating.
+    @usage: .st-list > .ws-card.st-card > button.st-strip > .st-format(--trashed) (img | .st-nothumb)
+*/
+.st-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+.st-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 150px;
+  padding: 14px;
+  overflow-x: auto;
+  border: 0;
+  border-bottom: 1px solid var(--color-zinc-100);
+  background: var(--color-zinc-50);
+  cursor: pointer;
+}
+
+.st-strip:disabled { cursor: default; }
+.st-strip:focus-visible { outline: 2px solid var(--color-amber-500); outline-offset: -2px; }
+
+.st-format {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  height: 120px;
+  width: calc(120px * var(--st-ratio, 1));
+  max-width: 220px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  overflow: hidden;
+}
+
+.st-format img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.st-format--trashed { opacity: 0.35; }
+
+.st-nothumb,
+.st-none {
+  padding: 4px;
+  color: var(--color-zinc-400);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.st-generate { gap: 4px; }
+
+.st-more { display: flex; justify-content: center; margin-top: 14px; }
+
+/*
+    @module: Popup of a set
+    @description: Chosen templates in their order (up / down / remove) and the templates found
+        to add (click = add).
+    @usage: form.st-form (textarea of the caption pattern); ol.st-chosen > li.st-chosen-row(--trashed);
+        .st-candidates > button.st-candidate
+*/
+.st-form { display: flex; flex-direction: column; gap: 14px; }
+
+.st-label { font-size: 0.8125rem; font-weight: 600; color: var(--color-zinc-700); }
+
+.st-form textarea {
+  width: 100%;
+  padding: 8px 11px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 10px;
+  background: var(--color-white);
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--color-zinc-900);
+  resize: vertical;
+}
+
+.st-form textarea:focus { outline: 2px solid var(--color-amber-200); border-color: var(--color-amber-500); }
+
+.st-chosen {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: st;
+}
+
+.st-chosen-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 8px;
+  counter-increment: st;
+}
+
+.st-chosen-row::before {
+  content: counter(st) '.';
+  color: var(--color-zinc-500);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.st-chosen-row--trashed { opacity: 0.6; }
+
+.st-chosen-name,
+.st-candidate-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-zinc-800);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.st-candidates {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.st-candidate {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px dashed var(--color-zinc-300);
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.st-candidate .ws-card-meta { flex: 1 1 auto; }
+.st-candidate:focus-visible { outline: 2px solid var(--color-amber-500); }

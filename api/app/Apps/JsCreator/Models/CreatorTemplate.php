@@ -7,8 +7,9 @@
  * @created 2026
  * @description Template of an account (js_creator_templates): one section, one size, the document
  *   of the editor (validated by TemplateDocument), output format, caption pattern and a WebP
- *   thumbnail (made by the browser, re-encoded by the API). `version` rises with every save of
- *   the editor; a save based on an older version is refused.
+ *   thumbnail (made by the browser, re-encoded by the API; `thumb_stale` = a block it uses
+ *   changed since). `version` rises with every save of the editor; a save based on an older
+ *   version is refused.
  * @dependencies BelongsToWorkspace, SoftDeletes, CreatorUsage, WorkspaceFiles.
  */
 
@@ -34,6 +35,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $caption_template Pattern of the post text (`{{key}}` = value of a field).
  * @property string|null $thumb_path Thumbnail (WebP) on the private disk.
  * @property int $thumb_bytes Size of the thumbnail (quota).
+ * @property bool $thumb_stale A block of the template changed after the thumbnail was drawn.
  * @property int $version
  */
 class CreatorTemplate extends Model
@@ -52,17 +54,17 @@ class CreatorTemplate extends Model
     /** @var array<int, string> The attributes that are mass assignable. */
     protected $fillable = [
         'user_id', 'section', 'name', 'width', 'height', 'schema_version', 'document', 'output_format', 'output_quality',
-        'caption_template', 'thumb_path', 'thumb_bytes', 'version',
+        'caption_template', 'thumb_path', 'thumb_bytes', 'thumb_stale', 'version',
     ];
 
     /** @var array<string, string> The attributes that should be cast. */
     protected $casts = [
         'user_id' => 'integer', 'width' => 'integer', 'height' => 'integer', 'schema_version' => 'integer', 'document' => 'array',
-        'output_quality' => 'integer', 'thumb_bytes' => 'integer', 'version' => 'integer',
+        'output_quality' => 'integer', 'thumb_bytes' => 'integer', 'thumb_stale' => 'boolean', 'version' => 'integer',
     ];
 
     /**
-     * @description Library images and own fonts the template uses.
+     * @description Library images, own fonts and blocks the template uses.
      * @return HasMany
      */
     public function usages(): HasMany

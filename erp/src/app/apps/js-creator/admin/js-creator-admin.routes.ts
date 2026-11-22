@@ -10,13 +10,16 @@
  * @usage `adminRoutes` of JS_CREATOR_APP; `help` = id of a page of the internal manual
  *   (api/app/Apps/JsCreator/Resources/knowledge-base).
  * @note Page paths have no slash (`image-templates`; videos later `video-templates`), sub-pages
- *   start with the path of their page (`image-templates/:id/edit`, `image-templates/:id/generate`).
+ *   start with the path of their page (`image-templates/:id/edit`, `image-templates/:id/generate`,
+ *   `image-sets/:id/generate`, `image-blocks/:id/edit`).
  *   The pages shared by the sections (outputs, library) are open with the view permission of
  *   any section - written out as `js-creator-images-view` (later `…|js-creator-videos-view`), the
  *   same expression as anySectionPermission('view') and as their manual pages. The pages of a
  *   section (`image-…`) need the view permission of the section; the editor saves only with its
  *   update permission and asks before leaving unsaved changes (unsavedTemplateGuard); generating
- *   (`image-templates/:id/generate`) needs the create permission of the section.
+ *   (`image-templates/:id/generate`, `image-sets/:id/generate`) needs the create permission of
+ *   the section. Blocks reuse the page of templates and the editor (`data.kind: 'block'`), a set
+ *   reuses generating (`data.kind: 'set'`).
  */
 
 import { Routes } from '@angular/router';
@@ -28,6 +31,10 @@ export const JS_CREATOR_ADMIN_ROUTES: Routes = [
   { path: 'image-templates', loadComponent: () => import('./images/templates/templates-page.component').then(m => m.TemplatesPageComponent), data: { help: 'js-creator-templates', permission: 'js-creator-images-view' } },
   { path: 'image-templates/:id/generate', loadComponent: () => import('./images/generate/generate-page.component').then(m => m.GeneratePageComponent), data: { help: 'js-creator-generate', permission: 'js-creator-images-view' } },
   { path: 'image-templates/:id/edit', loadComponent: () => import('./images/editor/template-editor.component').then(m => m.TemplateEditorComponent), canDeactivate: [unsavedTemplateGuard], data: { help: 'js-creator-editor', permission: 'js-creator-images-view' } },
+  { path: 'image-sets', loadComponent: () => import('./images/sets/sets-page.component').then(m => m.SetsPageComponent), data: { help: 'js-creator-sets', permission: 'js-creator-images-view' } },
+  { path: 'image-sets/:id/generate', loadComponent: () => import('./images/generate/generate-page.component').then(m => m.GeneratePageComponent), data: { help: 'js-creator-sets', permission: 'js-creator-images-view', kind: 'set' } },
+  { path: 'image-blocks', loadComponent: () => import('./images/templates/templates-page.component').then(m => m.TemplatesPageComponent), data: { help: 'js-creator-blocks', permission: 'js-creator-images-view', kind: 'block' } },
+  { path: 'image-blocks/:id/edit', loadComponent: () => import('./images/editor/template-editor.component').then(m => m.TemplateEditorComponent), canDeactivate: [unsavedTemplateGuard], data: { help: 'js-creator-blocks', permission: 'js-creator-images-view', kind: 'block' } },
   { path: 'outputs', loadComponent: () => import('./outputs/outputs-page.component').then(m => m.OutputsPageComponent), data: { help: 'js-creator-outputs', permission: 'js-creator-images-view' } },
   { path: 'library', loadComponent: () => import('./library/library-page.component').then(m => m.LibraryPageComponent), data: { help: 'js-creator-library', permission: 'js-creator-images-view' } },
   { path: 'settings', loadComponent: () => import('./settings/creator-settings.component').then(m => m.CreatorSettingsComponent), data: { help: 'js-creator-settings', permission: 'js-creator-settings-view' } },

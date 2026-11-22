@@ -5,11 +5,11 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description What a template uses (js_creator_usages): a library image (`asset`) or an own font
- *   (`font`). Kept by TemplateUsages on every save, so the library can refuse to delete a used
- *   file and list where it is used - also for templates in the trash (they can be restored).
- * @note Owner type `template` now; blocks (stage 4) add their own owner / target type.
- * @dependencies BelongsToWorkspace, CreatorTemplate.
+ * @description What a template or a block uses (js_creator_usages): a library image (`asset`), an
+ *   own font (`font`) or - templates only - a block (`block`, through its instances). Kept by
+ *   TemplateUsages on every save, so the library and the blocks can refuse to delete what is
+ *   used and list where - also for templates and blocks in the trash (they can be restored).
+ * @dependencies BelongsToWorkspace, CreatorTemplate, CreatorBlock.
  */
 
 namespace App\Apps\JsCreator\Models;
@@ -21,9 +21,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property int $id
  * @property int $user_id Owner.
- * @property string $owner_type template.
+ * @property string $owner_type template | block.
  * @property int $owner_id
- * @property string $target_type asset | font.
+ * @property string $target_type asset | font | block.
  * @property int $target_id
  */
 class CreatorUsage extends Model
@@ -35,6 +35,9 @@ class CreatorUsage extends Model
 
     /** @description Target type of an own font. */
     public const FONT = 'font';
+
+    /** @description Target type of a block (instances of a template). */
+    public const BLOCK = 'block';
 
     /** @var string The table of the model. */
     protected $table = 'js_creator_usages';
@@ -49,11 +52,20 @@ class CreatorUsage extends Model
     protected $casts = ['user_id' => 'integer', 'owner_id' => 'integer', 'target_id' => 'integer'];
 
     /**
-     * @description The template that uses the target (also in the trash).
+     * @description The template that uses the target (also in the trash) - owner type `template`.
      * @return BelongsTo
      */
     public function template(): BelongsTo
     {
         return $this->belongsTo(CreatorTemplate::class, 'owner_id')->withTrashed();
+    }
+
+    /**
+     * @description The block that uses the target (also in the trash).
+     * @return BelongsTo
+     */
+    public function block(): BelongsTo
+    {
+        return $this->belongsTo(CreatorBlock::class, 'owner_id')->withTrashed();
     }
 }

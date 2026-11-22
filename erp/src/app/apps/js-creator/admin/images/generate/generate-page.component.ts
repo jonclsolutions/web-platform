@@ -6,6 +6,10 @@
  * @created 2026
  * @description Page "Generate" of the section Images (`image-templates/:id/generate`): the form
  *   of the fields of a template beside the live preview (the same drawing as the output).
+ *   The same page generates a SET (`image-sets/:id/generate`, route data `kind: 'set'`): one
+ *   form with the fields of all its templates (outside the trash; block instance fields
+ *   included), the preview of each format in tabs with its own crop of every image, and
+ *   Generate makes one output per template (name + format) into the chosen folder.
  *   - text fields: length, highlight of the selected part (`**…**`), what the template does
  *     when the text does not fit (shrunk / cut / generating refused);
  *   - image fields: a photo from the computer (decoded ONLY in the browser - never uploaded) or
@@ -18,10 +22,10 @@
  *     the format of the template) and shows the result with its actions. The form stays filled
  *     (only in the memory of the page) for the next variant.
  * @note Generating needs the create permission of the section; without it the page is a preview.
- * @dependencies TemplatesApiService, OutputsApiService, JsCreatorApiService (fonts, folders),
+ * @dependencies TemplatesApiService, SetsApiService, OutputsApiService, JsCreatorApiService (fonts, folders),
  *   FontLibraryService, IconSetService, WorkspaceUsageService, RenderResourceStore,
  *   GeneratePreviewComponent, AssetChooserComponent, QuotaBarComponent, generate-form.ts,
- *   local-image.ts, field-images.ts, AlertDialogService, PermissionService, AdminLocalizationService
+ *   local-image.ts, field-images.ts, block-fields.ts, AlertDialogService, PermissionService, AdminLocalizationService
  *   (section `js-creator-generate`).
  */
 
@@ -34,17 +38,19 @@ import { AlertDialogService } from '../../../../../core/services/alert-dialog.se
 import { PermissionService } from '../../../../../core/auth/services/permission.service';
 import { IconComponent } from '../../../../../shared/components/icon/icon.component';
 import { TemplatesApiService } from '../../shared/templates-api.service';
+import { SetsApiService } from '../../shared/sets-api.service';
 import { OutputsApiService } from '../../shared/outputs-api.service';
 import { JsCreatorApiService } from '../../shared/js-creator-api.service';
 import { FontLibraryService } from '../../shared/font-library.service';
 import { IconSetService } from '../../shared/icon-set.service';
 import { WorkspaceUsageService } from '../../shared/workspace-usage.service';
 import {
-  CreatorAsset, CreatorFolder, CreatorFont, CreatorOutput, CreatorTemplateDetail, CuratedFontFamily,
+  CreatorAsset, CreatorFolder, CreatorFont, CreatorOutput, CreatorSet, CreatorTemplateDetail, CuratedFontFamily,
 } from '../../shared/js-creator.models';
 import { JsCreatorSectionId, sectionPermission } from '../../shared/js-creator-sections';
 import { CanvasSize, Field, ImageField, TextField, documentReferences, presetOf } from '../../shared/render/document';
 import { ImageCrop, RenderReport, RenderValues, renderPage } from '../../shared/render/renderer';
+import { BlockResolver, EffectiveField, effectiveFields } from '../../shared/render/block-fields';
 import { DrawableImage } from '../../shared/render/paint';
 import { RenderResourceStore } from '../../shared/render/resource-store';
 import { CROP_ZOOM, defaultCrop, fieldImageBoxes, panCrop, requiredScale, zoomCrop } from '../../shared/render/field-images';
@@ -56,12 +62,19 @@ import { UiIconName, uiIcon } from '../../shared/ui-icons';
 import { AssetChooserComponent } from '../editor/controls/asset-chooser.component';
 import { GeneratePreviewComponent, PreviewPan } from './generate-preview.component';
 import {
-  GenerateProblem, MAX_CAPTION, MAX_OUTPUT_NAME, defaultOutputName, fillCaption, formProblems, toggleHighlight, visibleLength,
+  GenerateProblem, MAX_CAPTION, MAX_OUTPUT_NAME, defaultOutputName, fillCaption, formProblems, toggleHighlight, unionFields, visibleLength,
 } from './generate-form';
 import { LOCAL_IMAGE_ACCEPT, LocalImage, LocalImageError, openLocalImage, outputBitmap } from './local-image';
 
 /** Value of an image field: a photo from the computer or an image of the library. */
 export type ImageValue = { kind: 'local'; image: LocalImage } | { kind: 'asset'; asset: CreatorAsset };
+
+/** One template being generated (a set has more, in its order). */
+export interface GenerateTarget {
+  template: CreatorTemplateDetail;
+  /** Fields of its form (block instance fields with their form keys). */
+  fields: EffectiveField[];
+}
 
 /** Key of the last target folder in this browser (only an id - nothing personal). */
 const LAST_FOLDER_KEY = 'jsc.generate.folder';
@@ -84,6 +97,7 @@ export class GeneratePageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly templatesApi = inject(TemplatesApiService);
+  private readonly setsApi = inject(SetsApiService);
   private readonly outputsApi = inject(OutputsApiService);
   private readonly creatorApi = inject(JsCreatorApiService);
   private readonly fontLibrary = inject(FontLibraryService);
@@ -96,6 +110,8 @@ export class GeneratePageComponent implements OnInit {
 
   /** Section of the page. */
   readonly section: JsCreatorSectionId = 'images';
+  /** One template or a set (route data `kind`). */
+  readonly mode: 'template' | 'set' = this.route.snapshot.data?.['kind'] === 'set' ? 'set' : 'template';
   /** May generate. */
   readonly canCreate = this.permissions.hasPermission(sectionPermission(this.section, 'create'));
   /** May open the editor. */
@@ -107,9 +123,17 @@ export class GeneratePageComponent implements OnInit {
   readonly maxCaption = MAX_CAPTION;
   readonly zoomLimits = CROP_ZOOM;
 
-  /** The template (null while loading). */
-  readonly template = signal<CreatorTemplateDetail | null>(null);
-  /** The template could not be loaded. */
+  /** The set (set mode). */
+  readonly set = signal<CreatorSet | null>(null);
+  /** Templates being generated (one; a set: its templates outside the trash). */
+  readonly targets = signal<GenerateTarget[]>([]);
+  /** Index of the template shown in the preview (tabs of a set). */
+  readonly active = signal(0);
+  /** The template shown in the preview. */
+  readonly target = computed<GenerateTarget | null>(() => this.targets()[this.active()] ?? this.targets()[0] ?? null);
+  /** The template shown in the preview (null while loading). */
+  readonly template = computed(() => this.target()?.template ?? null);
+  /** The template / set could not be loaded (or the set has no template). */
   readonly failed = signal(false);
   /** Resources of the renderer. */
   readonly resources = new RenderResourceStore(this.fontLibrary, () => this.redraw.update(v => v + 1));
@@ -123,8 +147,10 @@ export class GeneratePageComponent implements OnInit {
   readonly texts = signal<Record<string, string>>({});
   /** Values of the image fields. */
   readonly images = signal<Record<string, ImageValue>>({});
-  /** Crops of the image fields. */
-  readonly crops = signal<Record<string, ImageCrop>>({});
+  /** Crops of the image fields of each template (by template id) - every format has its own. */
+  readonly cropsOf = signal<Record<number, Record<string, ImageCrop>>>({});
+  /** Crops of the image fields of the template in the preview. */
+  readonly crops = computed<Record<string, ImageCrop>>(() => this.cropsOf()[this.template()?.id ?? 0] ?? {});
   /** Report of the last drawing of the preview. */
   readonly report = signal<RenderReport>({ overflows: [], missing: [] });
   /** Text of the post typed by the user (used once edited). */
@@ -141,8 +167,12 @@ export class GeneratePageComponent implements OnInit {
   readonly generating = signal(false);
   /** Generating was tried (show the problems). */
   readonly attempted = signal(false);
+  /** Outputs of the last Generate (one per template). */
+  readonly results = signal<CreatorOutput[]>([]);
   /** Last generated output. */
-  readonly result = signal<CreatorOutput | null>(null);
+  readonly result = computed<CreatorOutput | null>(() => this.results()[this.results().length - 1] ?? null);
+  /** Template being drawn / sent (progress of a set). */
+  readonly progress = signal<{ done: number; total: number } | null>(null);
   /** The text of the result was copied. */
   readonly copied = signal(false);
   /** Field whose library chooser is open. */
@@ -163,8 +193,14 @@ export class GeneratePageComponent implements OnInit {
     const preset = presetOf(size);
     return `${size.width} × ${size.height}${preset ? ' · ' + this.i18n.getValue(`js-creator-templates.${preset.labelKey}`) : ''}`;
   });
-  /** Text fields and image fields in the order of the template. */
-  readonly fields = computed<Field[]>(() => this.doc()?.fields ?? []);
+  /** Fields of the form: of the template / united over the templates of a set. */
+  readonly united = computed(() => unionFields(this.targets().map(t => t.fields)));
+  /** Text fields and image fields in the order of the form. */
+  readonly fields = computed<Field[]>(() => this.united().fields);
+  /** Labels of the formats (tabs of a set). */
+  readonly tabs = computed(() => this.targets().map(t => ({ id: t.template.id, name: t.template.name, label: this.formatLabel(t.template) })));
+  /** Finds the blocks of instances (loaded with the templates). */
+  readonly resolve: BlockResolver = id => this.resources.block(id);
   /** Keys of the image fields with an image (draggable in the preview). */
   readonly filledImages = computed(() => Object.keys(this.images()));
   /** Values for the renderer (preview copies of photos). */
@@ -174,25 +210,35 @@ export class GeneratePageComponent implements OnInit {
     for (const [key, value] of Object.entries(this.images())) images[key] = this.drawable(value);
     return { text: this.texts(), images, crops: this.crops() };
   });
+  /** Caption pattern: of the set (or its first template) / of the template. */
+  readonly captionPattern = computed(() => {
+    const set = this.set();
+    return set ? set.caption_template ?? this.targets()[0]?.template.caption_template ?? null : this.template()?.caption_template ?? null;
+  });
   /** Text of the post (from the pattern until edited by hand). */
   readonly caption = computed(() => {
     if (this.captionEdited()) return this.captionTyped();
-    const doc = this.doc();
-    return doc ? fillCaption(this.template()?.caption_template ?? null, doc.fields, this.texts()).slice(0, MAX_CAPTION) : '';
+    return this.targets().length ? fillCaption(this.captionPattern(), this.fields(), this.texts()).slice(0, MAX_CAPTION) : '';
   });
-  /** Reasons that stop generating. */
-  readonly problems = computed<GenerateProblem[]>(() => {
-    const doc = this.doc();
-    if (!doc) return [];
+  /** Reports of every template (the preview draws one; the others are measured off screen). */
+  readonly reports = computed<RenderReport[]>(() => {
     this.redraw();
-    const report = this.report();
-    const failed = report.missing.filter(m => m.startsWith('asset:') && this.resources.failed(Number(m.slice(6))));
-    return formProblems(doc, this.texts(), new Set(this.filledImages()), { overflows: report.overflows, missing: failed });
+    const shown = this.report();
+    const texts = this.texts();
+    return this.targets().map((t, i) => (i === this.active() ? shown : this.measure(t, texts)));
   });
-  /** Overflow of each text field in the preview (mode of its layer). */
+  /** Reasons that stop generating (over every template of a set). */
+  readonly problems = computed<GenerateProblem[]>(() => {
+    if (!this.targets().length) return [];
+    const reports = this.reports();
+    const overflows = reports.flatMap(r => r.overflows);
+    const failed = reports.flatMap(r => r.missing).filter(m => m.startsWith('asset:') && this.resources.failed(Number(m.slice(6))));
+    return formProblems(this.fields(), this.texts(), new Set(this.filledImages()), { overflows, missing: failed }, this.united().conflicts);
+  });
+  /** Overflow of each text field (mode of its layer; a set: the worst of its templates). */
   readonly overflowOf = computed(() => {
     const map = new Map<string, 'ellipsis' | 'block'>();
-    for (const o of this.report().overflows) if (o.field) map.set(o.field, map.get(o.field) === 'block' ? 'block' : o.mode);
+    for (const o of this.reports().flatMap(r => r.overflows)) if (o.field) map.set(o.field, map.get(o.field) === 'block' ? 'block' : o.mode);
     return map;
   });
   /** Target folders. */
@@ -200,16 +246,18 @@ export class GeneratePageComponent implements OnInit {
 
   /** Signature of the characters in use (fonts are loaded again when it changes). */
   private fontKey = '';
+  /** Context of the off-screen measuring of the templates not shown. */
+  private measureCtx: CanvasRenderingContext2D | null | undefined;
 
   constructor() {
     effect(() => {
-      const doc = this.doc();
-      if (!doc) return;
+      const targets = this.targets();
+      if (!targets.length) return;
       const texts = Object.values(this.texts());
       const key = [...new Set(Array.from(texts.join('')))].sort().join('');
       if (key === this.fontKey) return;
       this.fontKey = key;
-      void this.resources.ensureFonts(doc, this.ownFonts(), this.curated(), texts);
+      for (const t of targets) void this.resources.ensureFonts(t.template.document, this.ownFonts(), this.curated(), texts);
     });
     if (typeof document !== 'undefined' && document.fonts) {
       const done = () => this.redraw.update(v => v + 1);
@@ -219,27 +267,72 @@ export class GeneratePageComponent implements OnInit {
     this.destroyRef.onDestroy(() => Object.values(this.images()).forEach(v => this.release(v)));
   }
 
-  /** @description Loads the template, fonts, icons, folders and the library images it uses. */
+  /** @description Loads the template (or the set and its templates), fonts, icons, folders and the library images. */
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
-    forkJoin({
-      template: this.templatesApi.get(this.section, id),
-      fonts: this.creatorApi.fonts(),
-      curated: this.fontLibrary.curatedFamilies(),
-      icons: this.iconSets.iconSet(),
-    }).subscribe({
-      next: ({ template, fonts, curated, icons }) => {
-        this.ownFonts.set(fonts);
-        this.curated.set(curated);
-        this.resources.setIcons(icons);
-        this.texts.set(Object.fromEntries(template.document.fields.filter(f => f.type === 'text').map(f => [f.key, ''])));
-        this.template.set(template);
-        this.loadAssets(documentReferences(template.document).assets);
-      },
-      error: () => this.failed.set(true),
-    });
+    const shared = { fonts: this.creatorApi.fonts(), curated: this.fontLibrary.curatedFamilies(), icons: this.iconSets.iconSet() };
+    if (this.mode === 'set') {
+      forkJoin({ set: this.setsApi.get(this.section, id), ...shared }).subscribe({
+        next: ({ set, fonts, curated, icons }) => {
+          const ids = set.templates.filter(t => !t.trashed).map(t => t.id);
+          if (!ids.length) return this.failed.set(true);
+          forkJoin(ids.map(templateId => this.templatesApi.get(this.section, templateId))).subscribe({
+            next: templates => {
+              this.set.set(set);
+              this.start(templates, fonts, curated, icons);
+            },
+            error: () => this.failed.set(true),
+          });
+        },
+        error: () => this.failed.set(true),
+      });
+    } else {
+      forkJoin({ template: this.templatesApi.get(this.section, id), ...shared }).subscribe({
+        next: ({ template, fonts, curated, icons }) => this.start([template], fonts, curated, icons),
+        error: () => this.failed.set(true),
+      });
+    }
     this.loadFolders();
     this.usage.refresh();
+  }
+
+  /**
+   * @description Sets up the form for the loaded templates: their blocks, fields, empty texts
+   *   and the library images they need.
+   * @param templates Templates in their order.
+   * @param fonts Own fonts.
+   * @param curated Curated set.
+   * @param icons Icon set.
+   */
+  private start(templates: CreatorTemplateDetail[], fonts: CreatorFont[], curated: CuratedFontFamily[], icons: Parameters<RenderResourceStore['setIcons']>[0]): void {
+    this.ownFonts.set(fonts);
+    this.curated.set(curated);
+    this.resources.setIcons(icons);
+    this.resources.setBlocks(templates.flatMap(t => t.blocks ?? []));
+    const targets = templates.map(template => ({ template, fields: effectiveFields(template.document, this.resolve) }));
+    const fields = unionFields(targets.map(t => t.fields)).fields;
+    this.texts.set(Object.fromEntries(fields.filter(f => f.type === 'text').map(f => [f.key, ''])));
+    this.targets.set(targets);
+    this.loadAssets([...new Set(templates.flatMap(t => documentReferences(this.resources.withBlocks(t.document)).assets))]);
+  }
+
+  /**
+   * @description Label of a format: W × H and its preset.
+   * @param size Size of a template.
+   */
+  formatLabel(size: CanvasSize): string {
+    const preset = presetOf(size);
+    return `${size.width} × ${size.height}${preset ? ' · ' + this.i18n.getValue(`js-creator-templates.${preset.labelKey}`) : ''}`;
+  }
+
+  /**
+   * @description Shows another format in the preview (tabs of a set).
+   * @param index Index of the template.
+   */
+  showTarget(index: number): void {
+    if (index === this.active() || !this.targets()[index]) return;
+    this.report.set({ overflows: [], missing: [] });
+    this.active.set(index);
   }
 
   /**
@@ -276,7 +369,7 @@ export class GeneratePageComponent implements OnInit {
    */
   setText(key: string, value: string): void {
     this.texts.update(texts => ({ ...texts, [key]: value }));
-    this.result.set(null);
+    this.results.set([]);
   }
 
   /**
@@ -354,12 +447,12 @@ export class GeneratePageComponent implements OnInit {
       delete next[key];
       return next;
     });
-    this.crops.update(crops => {
+    this.cropsOf.update(all => Object.fromEntries(Object.entries(all).map(([id, crops]) => {
       const next = { ...crops };
       delete next[key];
-      return next;
-    });
-    this.result.set(null);
+      return [id, next];
+    })));
+    this.results.set([]);
   }
 
   /**
@@ -369,27 +462,47 @@ export class GeneratePageComponent implements OnInit {
    */
   setZoom(key: string, value: string): void {
     const crop = this.crops()[key];
-    if (crop) this.crops.update(crops => ({ ...crops, [key]: zoomCrop(crop, Number(value) || 1) }));
+    if (crop) this.setCrop(key, zoomCrop(crop, Number(value) || 1));
   }
 
   /**
-   * @description The crop of a field back to the focus of the template.
+   * @description The crop of a field (in the format shown) back to the focus of the template.
    * @param key Field.
    */
   resetCrop(key: string): void {
-    const doc = this.doc();
-    if (doc) this.crops.update(crops => ({ ...crops, [key]: defaultCrop(fieldImageBoxes(doc, this.size(), key)) }));
+    const target = this.target();
+    if (target) this.setCrop(key, defaultCrop(this.boxes(target, key)));
   }
 
   /**
-   * @description An image was dragged in the preview: move its crop.
+   * @description An image was dragged in the preview: move its crop (of the format shown).
    * @param pan Field, place and distance.
    */
   onPan(pan: PreviewPan): void {
     const value = this.images()[pan.key];
     const crop = this.crops()[pan.key];
     if (!value || !crop) return;
-    this.crops.update(crops => ({ ...crops, [pan.key]: panCrop(crop, pan.box, this.naturalSize(value), pan.dx, pan.dy) }));
+    this.setCrop(pan.key, panCrop(crop, pan.box, this.naturalSize(value), pan.dx, pan.dy));
+  }
+
+  /**
+   * @description Sets the crop of a field in the format shown.
+   * @param key Field.
+   * @param crop Crop.
+   */
+  private setCrop(key: string, crop: ImageCrop): void {
+    const id = this.template()?.id;
+    if (id === undefined) return;
+    this.cropsOf.update(all => ({ ...all, [id]: { ...(all[id] ?? {}), [key]: crop } }));
+  }
+
+  /**
+   * @description Places of an image field in a template (block instances included).
+   * @param target Template.
+   * @param key Field.
+   */
+  private boxes(target: GenerateTarget, key: string) {
+    return fieldImageBoxes(target.template.document, target.template, key, 0, this.resolve);
   }
 
   /**
@@ -424,13 +537,14 @@ export class GeneratePageComponent implements OnInit {
    */
   resolutionWarning(field: ImageField): string {
     const value = this.images()[field.key];
-    const doc = this.doc();
-    if (!value || !doc) return '';
+    if (!value || !this.targets().length) return '';
     const size = this.naturalSize(value);
     if ((field.minWidth > 0 && size.width < field.minWidth) || (field.minHeight > 0 && size.height < field.minHeight)) {
       return this.tf('resolution_min', { width: field.minWidth || '–', height: field.minHeight || '–' });
     }
-    const scale = requiredScale(fieldImageBoxes(doc, this.size(), field.key), size, this.crops()[field.key]?.zoom ?? 1);
+    const all = this.cropsOf();
+    const scale = Math.max(0, ...this.targets().map(t =>
+      requiredScale(this.boxes(t, field.key), size, all[t.template.id]?.[field.key]?.zoom ?? 1)));
     return scale > BLUR_SCALE ? this.t('resolution_low') : '';
   }
 
@@ -472,9 +586,9 @@ export class GeneratePageComponent implements OnInit {
     this.name.set(value.slice(0, MAX_OUTPUT_NAME));
   }
 
-  /** @description Placeholder of the name: the default name. */
+  /** @description Placeholder of the name: the default name (a set: its name - each output adds its format). */
   get namePlaceholder(): string {
-    return defaultOutputName(this.template()?.name ?? '', new Date(), this.i18n.getDateLocale());
+    return defaultOutputName(this.set()?.name ?? this.template()?.name ?? '', new Date(), this.i18n.getDateLocale());
   }
 
   /**
@@ -483,6 +597,14 @@ export class GeneratePageComponent implements OnInit {
    */
   problemText(problem: GenerateProblem): string {
     return this.tf(`problem_${problem.kind}`, { field: problem.label });
+  }
+
+  /**
+   * @description Name of the template of a generated output (results of a set).
+   * @param output Output.
+   */
+  formatOf(output: CreatorOutput): string {
+    return `${output.width} × ${output.height}`;
   }
 
   /**
@@ -495,47 +617,59 @@ export class GeneratePageComponent implements OnInit {
 
   // ── generating ──────────────────────────────────────────────────────────────
 
-  /** @description Generates the output and stores it in the chosen folder. */
+  /**
+   * @description Generates the output (a set: one output per template, in its order) and stores
+   *   it in the chosen folder. Waits for every font and image first; a failure stops the rest
+   *   (outputs already made stay and are shown).
+   */
   async generate(): Promise<void> {
-    const template = this.template();
-    const doc = this.doc();
-    if (!template || !doc || !this.canCreate || this.generating()) return;
+    const targets = this.targets();
+    if (!targets.length || !this.canCreate || this.generating()) return;
     this.attempted.set(true);
     if (this.problems().length) return;
     this.generating.set(true);
-    this.result.set(null);
+    this.results.set([]);
     const opened: ImageBitmap[] = [];
+    const base = this.name().trim() || defaultOutputName(this.set()?.name ?? targets[0].template.name, new Date(), this.i18n.getDateLocale());
     try {
       const texts = Object.values(this.texts());
-      await this.resources.ensureFonts(doc, this.ownFonts(), this.curated(), texts);
-      if (this.resources.missingFonts(doc, texts).length) return this.fail('error_fonts');
+      for (const t of targets) await this.resources.ensureFonts(t.template.document, this.ownFonts(), this.curated(), texts);
+      if (targets.some(t => this.resources.missingFonts(t.template.document, texts).length)) return this.fail('error_fonts');
       const assetIds = [
-        ...documentReferences(doc).assets,
+        ...new Set(targets.flatMap(t => documentReferences(this.resources.withBlocks(t.template.document)).assets)),
         ...Object.values(this.images()).flatMap(v => (v.kind === 'asset' ? [v.asset.id] : [])),
       ];
       if ((await this.resources.assetsReady(assetIds)).length) return this.fail('error_images');
 
-      const images: Record<string, DrawableImage | undefined> = {};
-      for (const [key, value] of Object.entries(this.images())) {
-        if (value.kind === 'asset') {
-          images[key] = this.resources.asset(value.asset.id);
-          continue;
+      for (const [index, target] of targets.entries()) {
+        this.progress.set({ done: index, total: targets.length });
+        const crops = this.cropsOf()[target.template.id] ?? {};
+        const images: Record<string, DrawableImage | undefined> = {};
+        for (const [key, value] of Object.entries(this.images())) {
+          if (value.kind === 'asset') {
+            images[key] = this.resources.asset(value.asset.id);
+            continue;
+          }
+          const scale = requiredScale(this.boxes(target, key), value.image, crops[key]?.zoom ?? 1);
+          if (!scale) continue;
+          const bitmap = await outputBitmap(value.image, scale);
+          opened.push(bitmap);
+          images[key] = { image: bitmap, width: bitmap.width, height: bitmap.height };
         }
-        const scale = requiredScale(fieldImageBoxes(doc, this.size(), key), value.image, this.crops()[key]?.zoom ?? 1);
-        const bitmap = await outputBitmap(value.image, scale);
-        opened.push(bitmap);
-        images[key] = { image: bitmap, width: bitmap.width, height: bitmap.height };
+        const blob = await this.draw(target.template, { text: this.texts(), images, crops });
+        if (!blob) return;
+        if (blob.size > MAX_OUTPUT_BYTES) return this.fail('error_too_large');
+        if (!this.usage.fits(blob.size)) return this.fail('error_quota');
+        const name = targets.length > 1 ? `${base.slice(0, MAX_OUTPUT_NAME - 14)} – ${target.template.width}×${target.template.height}` : base;
+        if (!(await this.upload(target.template, blob, name))) return;
+        opened.splice(0).forEach(bitmap => bitmap.close());
       }
-
-      const blob = await this.draw(template, { text: this.texts(), images, crops: this.crops() });
-      if (!blob) return;
-      if (blob.size > MAX_OUTPUT_BYTES) return this.fail('error_too_large');
-      if (!this.usage.fits(blob.size)) return this.fail('error_quota');
-      await this.upload(template, blob);
+      setTimeout(() => document.querySelector('.gen-result')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
     } catch {
       this.fail('error_draw');
     } finally {
       opened.forEach(bitmap => bitmap.close());
+      this.progress.set(null);
       this.generating.set(false);
     }
   }
@@ -585,7 +719,7 @@ export class GeneratePageComponent implements OnInit {
       this.fail('error_draw');
       return null;
     }
-    const report = renderPage(ctx, template.document, this.size(), this.resources, { mode: 'output', values });
+    const report = renderPage(ctx, template.document, template, this.resources, { mode: 'output', values });
     if (report.missing.length) {
       this.fail('error_images');
       return null;
@@ -601,27 +735,45 @@ export class GeneratePageComponent implements OnInit {
   }
 
   /**
-   * @description Sends the output and shows the result (or explains a refusal).
+   * @description Sends an output and adds it to the results (or explains a refusal).
    * @param template Template.
    * @param blob PNG.
+   * @param name Name of the output.
+   * @returns Whether it was stored.
    */
-  private upload(template: CreatorTemplateDetail, blob: Blob): Promise<void> {
-    const name = this.name().trim() || defaultOutputName(template.name, new Date(), this.i18n.getDateLocale());
+  private upload(template: CreatorTemplateDetail, blob: Blob, name: string): Promise<boolean> {
     return new Promise(resolve => {
       this.outputsApi.generate(this.section, {
         file: blob, template_id: template.id, folder_id: this.folderId(), name, caption: this.caption(),
       }).subscribe({
         next: output => {
-          this.result.set(output);
+          this.results.update(list => [...list, output]);
           this.usage.refresh();
-          setTimeout(() => document.querySelector('.gen-result')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
-          resolve();
+          resolve(true);
         },
         error: (error: HttpErrorResponse) => {
           this.uploadFailed(error);
-          resolve();
+          resolve(false);
         },
       });
+    });
+  }
+
+  /**
+   * @description Measures a template that is not shown (overflows, missing images) - drawn into a
+   *   1 px canvas, so only the layout runs.
+   * @param target Template.
+   * @param texts Values of the text fields.
+   */
+  private measure(target: GenerateTarget, texts: Record<string, string>): RenderReport {
+    if (this.measureCtx === undefined) {
+      this.measureCtx = typeof document === 'undefined' ? null : document.createElement('canvas').getContext('2d');
+    }
+    const ctx = this.measureCtx;
+    if (!ctx) return { overflows: [], missing: [] };
+    ctx.setTransform(0.001, 0, 0, 0.001, 0, 0);
+    return renderPage(ctx, target.template.document, target.template, this.resources, {
+      mode: 'output', placeholders: true, values: { text: texts, images: {}, crops: {} },
     });
   }
 
@@ -661,8 +813,12 @@ export class GeneratePageComponent implements OnInit {
     const current = this.images()[key];
     if (current) this.release(current);
     this.images.update(images => ({ ...images, [key]: value }));
-    this.resetCrop(key);
-    this.result.set(null);
+    this.cropsOf.update(all => {
+      const next = { ...all };
+      for (const t of this.targets()) next[t.template.id] = { ...(next[t.template.id] ?? {}), [key]: defaultCrop(this.boxes(t, key)) };
+      return next;
+    });
+    this.results.set([]);
   }
 
   /**
@@ -709,9 +865,9 @@ export class GeneratePageComponent implements OnInit {
     });
   }
 
-  /** @description Back to the templates. */
+  /** @description Back to the templates / sets. */
   back(): void {
-    void this.router.navigate(['/admin/js-creator/image-templates']);
+    void this.router.navigate([this.mode === 'set' ? '/admin/js-creator/image-sets' : '/admin/js-creator/image-templates']);
   }
 
   /**

@@ -8,20 +8,23 @@
  *   - the text of the post from the pattern of the template (`{{key}}` = value of a text field,
  *     without the highlight markers);
  *   - highlighting of the selected part of a text (`**…**` added / removed);
+ *   - the fields of a set: one form field per key over all its templates (required if any of
+ *     them requires it, the shortest maximum length …); a key with two kinds is a conflict;
  *   - what stops generating: an empty required field, a too long text, a text that does not fit
- *     where the template refuses to generate (`block`), a missing library image;
+ *     where the template refuses to generate (`block`), a missing library image, a field with
+ *     two kinds in a set;
  *   - the default name of an output (template + date and time);
  *   - the length of a text as the user sees it (without the markers).
  * @dependencies document.ts (Field, TemplateDocument), renderer.ts (RenderReport),
  *   text-layout.ts (plainText).
  */
 
-import { Field, TemplateDocument } from '../../shared/render/document';
+import { Field } from '../../shared/render/document';
 import { RenderReport } from '../../shared/render/renderer';
 import { plainText } from '../../shared/render/text-layout';
 
 /** Why generating is not possible yet. */
-export type ProblemKind = 'required' | 'too_long' | 'overflow' | 'overflow_fixed' | 'missing_asset';
+export type ProblemKind = 'required' | 'too_long' | 'overflow' | 'overflow_fixed' | 'missing_asset' | 'conflict';
 
 /** One reason that stops generating. */
 export interface GenerateProblem {
@@ -95,20 +98,71 @@ export function toggleHighlight(value: string, start: number, end: number): High
   return { value: `${value.slice(0, start)}**${clean}**${value.slice(end)}`, start, end: start + clean.length + 4 };
 }
 
+/** Fields of the form of several templates (a set). */
+export interface UnitedFields {
+  /** One field per key, in the order of the first template that has it. */
+  fields: Field[];
+  /** Keys with a text field in one template and an image field in another. */
+  conflicts: string[];
+}
+
+/**
+ * @description One form for several templates: a key appears once (label, help and sample of
+ *   the first template that has it); it is required when any template requires it, a text keeps
+ *   the shortest maximum length and is multi-line when any is, an image asks for the largest
+ *   recommended resolution. A key with two kinds is reported (generating is refused).
+ * @param lists Fields of each template (block instance fields included).
+ * @returns United fields and conflicts.
+ */
+export function unionFields(lists: readonly (readonly Field[])[]): UnitedFields {
+  const map = new Map<string, Field>();
+  const conflicts = new Set<string>();
+  for (const list of lists) {
+    for (const field of list) {
+      const known = map.get(field.key);
+      if (!known) {
+        const { key, type, label, help, required } = field;
+        map.set(key, field.type === 'text'
+          ? { key, type: 'text', label, help, required, sample: field.sample, maxLength: field.maxLength, multiline: field.multiline }
+          : { key, type: 'image', label, help, required, minWidth: field.minWidth, minHeight: field.minHeight });
+        continue;
+      }
+      if (known.type !== field.type) {
+        conflicts.add(field.key);
+        continue;
+      }
+      known.required = known.required || field.required;
+      if (known.type === 'text' && field.type === 'text') {
+        // 0 = no limit: the shortest real limit wins.
+        known.maxLength = !known.maxLength ? field.maxLength : !field.maxLength ? known.maxLength : Math.min(known.maxLength, field.maxLength);
+        known.multiline = known.multiline || field.multiline;
+        known.sample = known.sample || field.sample;
+      } else if (known.type === 'image' && field.type === 'image') {
+        known.minWidth = Math.max(known.minWidth, field.minWidth);
+        known.minHeight = Math.max(known.minHeight, field.minHeight);
+      }
+    }
+  }
+  return { fields: [...map.values()], conflicts: [...conflicts] };
+}
+
 /**
  * @description Reasons that stop generating, in the order of the fields.
- * @param doc Document of the template.
+ * @param fields Fields of the form.
  * @param texts Values of the text fields.
  * @param images Keys of the image fields that have an image.
- * @param report Report of the last drawing of the preview.
+ * @param report Report of the drawings (of every template of a set).
+ * @param conflicts Keys with two kinds in a set.
  * @returns Problems (empty = ready).
  */
 export function formProblems(
-  doc: TemplateDocument, texts: Readonly<Record<string, string>>, images: ReadonlySet<string>, report: RenderReport,
+  fields: readonly Field[], texts: Readonly<Record<string, string>>, images: ReadonlySet<string>, report: RenderReport,
+  conflicts: readonly string[] = [],
 ): GenerateProblem[] {
   const problems: GenerateProblem[] = [];
   const blocked = new Set(report.overflows.filter(o => o.mode === 'block').map(o => o.field));
-  for (const field of doc.fields) {
+  for (const key of conflicts) problems.push({ kind: 'conflict', field: null, label: key });
+  for (const field of fields) {
     if (field.type === 'text') {
       const value = texts[field.key] ?? '';
       if (field.required && plainText(value).trim() === '') problems.push({ kind: 'required', field: field.key, label: field.label });

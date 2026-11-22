@@ -115,7 +115,8 @@
                 "Šedý text v políčku je ukázka ze šablony – do výstupu se nedostane, pole musíte vyplnit.",
                 "Zvýraznit: označte část textu a klikněte na Zvýraznit – v náhledu se ukáže stylem zvýraznění šablony (barva, tučně, podklad). Opakovaným kliknutím zvýraznění zrušíte. V textu se zvýraznění zapisuje **takto**.",
                 "Počítadlo ukazuje délku a limit pole.",
-                "Když se text nevejde, šablona ho podle svého nastavení zmenší, zkrátí „…“, nebo generování odmítne – pod polem uvidíte, co se stalo."
+                "Když se text nevejde, šablona ho podle svého nastavení zmenší, zkrátí „…“, nebo generování odmítne – pod polem uvidíte, co se stalo.",
+                "Pole vložených bloků jsou ve formuláři spolu s poli šablony; když se klíč střetne s jiným polem, má popisek doplněný o název instance. Sada šablon má vlastní generování – viz Sady."
               ]
             }
           ]
@@ -291,8 +292,25 @@
           ]
         },
         {
+          "heading": "06. Bloky",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Blok vložíte tlačítkem Blok vlevo – vyberete z bloků, které máte na stránce Bloky. Instance se chová jako prvek: má kotvu, odsazení, otočení a průhlednost.",
+                "Velikost instance je měřítko bloku – úchyty i pole Šířka / Výška drží poměr stran bloku, v panelu Vlastnosti ho zadáte i v procentech.",
+                "Obsah instance se v šabloně nemění – Upravit blok otevře editor bloku a změna se projeví ve všech šablonách.",
+                "Rozpojit nahradí instanci samostatnými prvky šablony (i s poli); další změny bloku se jí už netýkají.",
+                "Vytvořit blok z výběru: označte prvky (bez instancí bloků), zvolte název – prvky se přesunou do nového bloku a v šabloně je nahradí jeho instance. Krok jde vrátit (Ctrl+Z), blok zůstane na stránce Bloky.",
+                "Pole vložených bloků najdete v panelu Pole pod poli šablony (jen pro čtení) – i s klíčem pro vzor textu příspěvku."
+              ]
+            }
+          ]
+        },
+        {
           "key": "save",
-          "heading": "06. Uložení",
+          "heading": "07. Uložení",
           "blocks": [
             {
               "type": "list",
@@ -307,7 +325,7 @@
           ]
         },
         {
-          "heading": "07. Klávesové zkratky",
+          "heading": "08. Klávesové zkratky",
           "blocks": [
             {
               "type": "grid",
@@ -581,6 +599,171 @@
             {
               "type": "text",
               "content": "Záznamy obsahují jen druh a číslo položky – nikdy názvy ani obsah pracovního prostoru, aby log neprozradil, na čem kdo pracuje. Záznamy jde filtrovat podle uživatele, události, modulu a IP adresy, exportovat a vykreslit do grafů."
+            }
+          ]
+        }
+      ]
+    },
+    "js-creator-sets": {
+      "navLabel": "Sady",
+      "header": "JS Creator – Sady šablon",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Sada spojuje šablony různých formátů (např. příspěvek 1080 × 1350 a story 1080 × 1920), které mají stejná pole. Jedním vyplněním pak vygenerujete výstup do všech formátů naráz."
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "01. Nová sada a úpravy",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Nová sada: zadejte název a přidejte šablony – vyhledáte je podle názvu, šipkami určíte pořadí (v tomto pořadí vzniknou výstupy). Sada může mít nejvýše 10 šablon.",
+                "Vzor textu příspěvku je volitelný – když ho necháte prázdný, použije se vzor první šablony.",
+                "Pole se stejným klíčem (např. nadpis) se vyplní jednou pro všechny šablony. Musí mít ve všech šablonách stejný druh – když je v jedné text a v jiné obrázek, sada se neuloží a hláška řekne, které pole a které šablony to jsou. Pak stačí v jedné šabloně změnit klíč pole.",
+                "Počítají se i pole vložených bloků (s klíčem, který mají ve formuláři šablony)."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Generování sady",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Generovat na kartě sady otevře jeden formulář se sjednocenými poli. Pole je povinné, když je povinné v kterékoli šabloně; u textu platí nejkratší limit délky.",
+                "Náhled má záložky – jedna za každý formát. Výřez a přiblížení fotky nastavíte zvlášť pro každý formát (přepněte záložku a fotku posuňte tažením).",
+                "Generovat postupně vykreslí a uloží jeden výstup za každou šablonu do zvolené složky. Název výstupu = zadaný název (nebo název sady s datem) a formát, např. „Akce – 1080×1350“.",
+                "Šablona sady, která je v koši, se při generování přeskočí. Šablona smazaná natrvalo ze sady zmizí."
+              ]
+            }
+          ]
+        },
+        {
+          "key": "trash",
+          "heading": "03. Koš",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Smazaná sada jde do koše – šablony zůstanou beze změny. Z koše ji obnovíte, smažete natrvalo nebo koš vysypete; po uplynutí lhůty retence (výchozí 30 dní) se smaže sama."
+            }
+          ]
+        },
+        {
+          "heading": "04. Oprávnění",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazit",
+                  "text": "js-creator-images-view – seznam sad a náhled generování."
+                },
+                {
+                  "title": "Vytvořit",
+                  "text": "js-creator-images-create – nové sady a generování."
+                },
+                {
+                  "title": "Upravit",
+                  "text": "js-creator-images-update – úpravy sady."
+                },
+                {
+                  "title": "Smazat",
+                  "text": "js-creator-images-delete – koš, obnovení, trvalé smazání."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "js-creator-blocks": {
+      "navLabel": "Bloky",
+      "header": "JS Creator – Bloky",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Blok je znovupoužitelná skupina prvků – logo v rohu, patička s kontakty, štítek s cenou. Do šablon se vkládá jako instance; když blok upravíte, změna se projeví ve všech šablonách, které ho používají. Hotové výstupy se nemění."
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Blok má vlastní plátno (velikost bloku) a průhledné pozadí, aby pod ním byla vidět šablona. Může obsahovat stejné prvky a pole jako šablona – jen ne další blok (bloky se nevnořují)."
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "01. Nový blok a editor bloku",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Nový blok: název a velikost (100–3000 px na stranu) – otevře se editor bloku. Funguje stejně jako editor šablony, jen bez výstupu a textu příspěvku.",
+                "Blok vznikne i přímo v editoru šablony: označte prvky a zvolte Vytvořit blok z výběru (viz Editor šablon).",
+                "Duplikovat / Duplikovat v jiné velikosti vytvoří kopii bloku; prvky si ponechají kotvu a odsazení.",
+                "Po uložení bloku se miniatury šablon, které ho používají, překreslí samy."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Pole v blocích",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Blok může mít pole (např. cena na štítku). Ve formuláři generování se objeví spolu s poli šablony.",
+                "Když se klíč pole bloku střetne s jiným polem (stejný klíč v šabloně nebo druhá instance téhož bloku), dostane číslo (cena_2) a popisek název instance. Tento klíč použijete i ve vzoru textu příspěvku {{cena_2}}."
+              ]
+            }
+          ]
+        },
+        {
+          "key": "trash",
+          "heading": "03. Koš",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Blok, který používá nějaká šablona (i šablona v koši), nejde smazat – hláška vyjmenuje šablony. Nejdřív ho v nich rozpojte nebo odeberte, případně šablony smažte natrvalo. Blok v koši obnovíte, smažete natrvalo nebo koš vysypete; po lhůtě retence (výchozí 30 dní) se smaže sám."
+            }
+          ]
+        },
+        {
+          "heading": "04. Oprávnění",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazit",
+                  "text": "js-creator-images-view – seznam bloků a editor jen pro čtení."
+                },
+                {
+                  "title": "Vytvořit",
+                  "text": "js-creator-images-create – nové bloky, kopie a blok z výběru."
+                },
+                {
+                  "title": "Upravit",
+                  "text": "js-creator-images-update – ukládání v editoru bloku."
+                },
+                {
+                  "title": "Smazat",
+                  "text": "js-creator-images-delete – koš, obnovení, trvalé smazání."
+                }
+              ]
             }
           ]
         }

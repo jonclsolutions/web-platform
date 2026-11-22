@@ -8,23 +8,28 @@
  *   the thumbnails and the generated output, so the preview is the output. It draws a page of a
  *   document in the coordinates of the template (the caller sets the scale of the canvas):
  *   the background (fill, image, overlay), then every visible layer (text, image, grid, shape,
- *   icon) with its anchor, rotation and opacity.
+ *   icon, block instance) with its anchor, rotation and opacity.
+ *   A block instance draws the current document of its block (from the resources) into its box -
+ *   the size of the block × scale - clipped to it; the fields of the block are filled with the
+ *   values of the keys the form gives them (effectiveFields(): `price`, `price_2` …) and the
+ *   report names those keys and the instance.
  *   Values of the fields come from `values` (generating, with the crops of the images) or from
  *   the samples of the fields (editor); an image field without a value - or a library image not
  *   loaded yet - is drawn as a placeholder in the editor (and in the live preview of generating
  *   with `placeholders`). The report tells which texts overflowed and what was missing.
  * @usage `renderPage(ctx, doc, size, resources, { mode: 'editor' })`.
- * @dependencies document.ts, geometry.ts, text-layout.ts, paint.ts, IconNode (js-creator.models).
+ * @dependencies document.ts, geometry.ts, text-layout.ts, paint.ts, block-fields.ts, IconNode (js-creator.models).
  */
 
 import {
-  CanvasSize, Field, GridLayer, IconLayer, ImageLayer, ImageSource, Layer, ShapeLayer, TemplateDocument, TextLayer,
+  BlockLayer, CanvasSize, Field, GridLayer, IconLayer, ImageLayer, ImageSource, Layer, Page, ShapeLayer, TemplateDocument, TextLayer,
 } from './document';
 import { Rect, gridCellRects, layerRect } from './geometry';
 import { TextLayout, layoutText } from './text-layout';
 import {
   DrawableImage, applyShadow, castShadow, drawImageFit, ellipsePath, fillStyle, roundRectPath,
 } from './paint';
+import { BlockDef, EffectiveField, effectiveFields, instanceKeys, instanceLayer } from './block-fields';
 import { IconNode } from '../js-creator.models';
 
 /** What the renderer needs from outside: loaded images, font names, icons. */
@@ -35,6 +40,8 @@ export interface RenderResources {
   fontFamily(ref: string): string;
   /** Nodes of an icon, or undefined. */
   icon(name: string): IconNode[] | undefined;
+  /** Block of an instance with its document, or undefined (not loaded / missing). */
+  block?(id: number): BlockDef | undefined;
 }
 
 /** Crop of the image of a field chosen when generating (replaces the focus of the template). */
@@ -75,7 +82,7 @@ export interface TextOverflow {
 /** Result of a drawing. */
 export interface RenderReport {
   overflows: TextOverflow[];
-  /** Missing things: `asset:<id>`, `field:<key>`, `icon:<name>`. */
+  /** Missing things: `asset:<id>`, `field:<key>`, `icon:<name>`, `block:<id>`. */
   missing: string[];
 }
 
@@ -97,10 +104,41 @@ export function renderPage(
   const report: RenderReport = { overflows: [], missing: [] };
   const page = doc.pages[options.page ?? 0];
   if (!page) return report;
-  const fields = new Map(doc.fields.map(f => [f.key, f] as [string, Field]));
-  const scene: Scene = { ctx, size, resources, options, fields, report };
+  const effective = page.layers.some(l => l.type === 'block')
+    ? effectiveFields(doc, id => resources.block?.(id))
+    : doc.fields.map(f => ({ ...f, origin: null }));
+  const fields = new Map(effective.map(f => [f.key, f] as [string, Field]));
+  const scene: Scene = { ctx, size, resources, options, fields, effective, report };
 
   ctx.save();
+  drawBackground(scene, page);
+  for (const layer of page.layers) {
+    if (!layer.hidden) drawLayer(scene, layer);
+  }
+  ctx.restore();
+  return report;
+}
+
+/** State of one drawing (of the template, or of the block of an instance). */
+interface Scene {
+  ctx: CanvasRenderingContext2D;
+  size: CanvasSize;
+  resources: RenderResources;
+  options: RenderOptions;
+  /** Fields by the key their layers use. */
+  fields: Map<string, Field>;
+  /** Fields of the form with the instance keys (template scene only). */
+  effective: EffectiveField[];
+  report: RenderReport;
+}
+
+/**
+ * @description Background of a page: fill, image (of the library or of a field) and its overlay.
+ * @param scene Drawing.
+ * @param page Page.
+ */
+function drawBackground(scene: Scene, page: Page): void {
+  const { ctx, size } = scene;
   const canvas: Rect = { x: 0, y: 0, w: size.width, h: size.height };
   ctx.fillStyle = fillStyle(ctx, page.background.fill, canvas);
   ctx.fillRect(0, 0, size.width, size.height);
@@ -115,21 +153,6 @@ export function renderPage(
       ctx.fillRect(0, 0, size.width, size.height);
     }
   }
-  for (const layer of page.layers) {
-    if (!layer.hidden) drawLayer(scene, layer);
-  }
-  ctx.restore();
-  return report;
-}
-
-/** State of one drawing. */
-interface Scene {
-  ctx: CanvasRenderingContext2D;
-  size: CanvasSize;
-  resources: RenderResources;
-  options: RenderOptions;
-  fields: Map<string, Field>;
-  report: RenderReport;
 }
 
 /**
@@ -139,7 +162,9 @@ interface Scene {
  */
 function drawLayer(scene: Scene, layer: Layer): void {
   const { ctx } = scene;
-  const rect = layerRect(layer, scene.size);
+  const rect = layer.type === 'block'
+    ? layerRect(instanceLayer(layer, scene.resources.block?.(layer.blockId)), scene.size)
+    : layerRect(layer, scene.size);
   if (rect.w <= 0 || rect.h <= 0 || layer.opacity <= 0) return;
   ctx.save();
   ctx.globalAlpha *= layer.opacity;
@@ -154,8 +179,74 @@ function drawLayer(scene: Scene, layer: Layer): void {
     case 'grid': drawGrid(scene, layer, rect); break;
     case 'shape': drawShape(scene, layer, rect); break;
     case 'icon': drawIcon(scene, layer, rect); break;
+    case 'block': drawBlock(scene, layer, rect); break;
   }
   ctx.restore();
+}
+
+/**
+ * @description An instance of a block: the background and layers of the block scaled into the
+ *   box of the instance (clipped to it). Its fields take the values of their keys in the form;
+ *   overflows and missing fields are reported with those keys and the id of the instance.
+ *   A block that is not available is reported (`block:<id>`) and shown as a placeholder in the
+ *   editor / live preview.
+ * @param scene Drawing of the template.
+ * @param layer Instance.
+ * @param rect Box of the instance.
+ */
+function drawBlock(scene: Scene, layer: BlockLayer, rect: Rect): void {
+  const { ctx } = scene;
+  const block = scene.resources.block?.(layer.blockId);
+  const page = block?.document.pages[0];
+  if (!block || !page) {
+    scene.report.missing.push(`block:${layer.blockId}`);
+    if (scene.options.mode === 'editor' || scene.options.placeholders) drawPlaceholder(ctx, rect, '?');
+    return;
+  }
+  const keys = instanceKeys(scene.effective, layer.id);
+  const fields = new Map<string, Field>();
+  for (const field of block.document.fields) {
+    const outer = scene.fields.get(keys.get(field.key) ?? '');
+    fields.set(field.key, outer ? { ...outer, key: field.key } : field);
+  }
+  const values = scene.options.values;
+  const sub: Scene = {
+    ctx, size: { width: block.width, height: block.height }, resources: scene.resources, fields, effective: [],
+    options: { ...scene.options, values: values && innerValues(values, keys) }, report: { overflows: [], missing: [] },
+  };
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(rect.x, rect.y, rect.w, rect.h);
+  ctx.clip();
+  ctx.translate(rect.x, rect.y);
+  ctx.scale(rect.w / block.width, rect.h / block.height);
+  drawBackground(sub, page);
+  for (const inner of page.layers) {
+    if (!inner.hidden && inner.type !== 'block') drawLayer(sub, inner);
+  }
+  ctx.restore();
+  for (const o of sub.report.overflows) {
+    scene.report.overflows.push({ layerId: layer.id, field: o.field ? keys.get(o.field) ?? o.field : null, mode: o.mode });
+  }
+  for (const m of sub.report.missing) {
+    scene.report.missing.push(m.startsWith('field:') ? `field:${keys.get(m.slice(6)) ?? m.slice(6)}` : m);
+  }
+}
+
+/**
+ * @description Values of the form seen from inside an instance (by the keys of the block).
+ * @param values Values of the form.
+ * @param keys Key in the block → key of the form.
+ */
+function innerValues(values: RenderValues, keys: ReadonlyMap<string, string>): RenderValues {
+  const inner: RenderValues = { text: {}, images: {}, crops: {} };
+  for (const [blockKey, formKey] of keys) {
+    if (formKey in values.text) inner.text[blockKey] = values.text[formKey];
+    if (formKey in values.images) inner.images[blockKey] = values.images[formKey];
+    const crop = values.crops?.[formKey];
+    if (crop) inner.crops![blockKey] = crop;
+  }
+  return inner;
 }
 
 /**

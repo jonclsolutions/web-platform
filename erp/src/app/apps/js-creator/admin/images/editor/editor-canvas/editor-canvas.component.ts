@@ -9,12 +9,13 @@
  *   only - selection, handles, smart guides, grid, safe zone, marquee. Pointer work:
  *   - click selects (Shift adds / removes), a drag moves the selection (snapping to the canvas,
  *     other layers and the grid), a drag on the empty canvas selects by a marquee;
- *   - 8 handles resize one layer (Shift keeps the ratio, also for rotated layers), the round
+ *   - 8 handles resize one layer (Shift keeps the ratio, also for rotated layers; a block instance
+ *     always keeps it - its size is a scale of the block), the round
  *     handle rotates it (Shift = steps of 15°);
  *   - Space + drag or the middle button pans, Ctrl + wheel zooms around the pointer.
  *   Locked and hidden layers are not picked on the canvas.
  * @usage `<app-jc-editor-canvas [store]="store" [resources]="resources" [(zoom)]="zoom" … />`
- * @dependencies EditorStore, RenderResourceStore, renderer, geometry, snapping.
+ * @dependencies EditorStore, RenderResourceStore, renderer, thumbnail, geometry, snapping.
  */
 
 import {
@@ -23,7 +24,8 @@ import {
 import { EditorStore } from '../editor-store';
 import { RenderResourceStore } from '../../../shared/render/resource-store';
 import { RenderReport, renderPage } from '../../../shared/render/renderer';
-import { Layer, safeZoneOf } from '../../../shared/render/document';
+import { renderThumbnail } from '../../../shared/render/thumbnail';
+import { DOCUMENT_LIMITS, Layer, safeZoneOf } from '../../../shared/render/document';
 import {
   Point, Rect, boundingBox, containsPoint, intersects, layerRect, offsetFor, rotatedCorners, toLocal, unionRect,
 } from '../../../shared/render/geometry';
@@ -186,17 +188,8 @@ export class EditorCanvasComponent implements AfterViewInit, OnDestroy {
    * @param edge Longest side (px).
    * @returns PNG / WebP blob.
    */
-  async thumbnail(edge = 480): Promise<Blob | null> {
-    const size = this.size();
-    const scale = Math.min(1, edge / Math.max(size.width, size.height));
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.round(size.width * scale));
-    canvas.height = Math.max(1, Math.round(size.height * scale));
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-    ctx.setTransform(scale, 0, 0, scale, 0, 0);
-    renderPage(ctx, this.store().doc(), size, this.resources(), { mode: 'editor' });
-    return new Promise(resolve => canvas.toBlob(blob => resolve(blob), 'image/webp', 0.85));
+  thumbnail(edge = 480): Promise<Blob | null> {
+    return renderThumbnail(this.store().doc(), this.size(), this.resources(), edge);
   }
 
   /**
@@ -454,6 +447,10 @@ export class EditorCanvasComponent implements AfterViewInit, OnDestroy {
     const fixed = { x: -horizontal * rect.w / 2, y: -vertical * rect.h / 2 };
     let w = horizontal ? Math.max(1, (lx - fixed.x) * horizontal) : rect.w;
     let h = vertical ? Math.max(1, (ly - fixed.y) * vertical) : rect.h;
+    const layer = this.store().layers().find(l => l.id === drag.id);
+    if (!layer) return;
+    // A block instance always keeps the ratio of its block (its size is a scale).
+    const instance = layer.type === 'block' ? layer : null;
 
     const guides: GuideLine[] = [];
     if (!rotation && !free) {
@@ -474,8 +471,12 @@ export class EditorCanvasComponent implements AfterViewInit, OnDestroy {
         if (snapped.guide !== null) guides.push({ x1: 0, y1: snapped.guide, x2: size.width, y2: snapped.guide });
       }
     }
-    if (keepRatio && horizontal && vertical) {
+    if ((keepRatio || instance) && horizontal && vertical) {
       if (w / h > drag.ratio) h = w / drag.ratio; else w = h * drag.ratio;
+    } else if (instance && horizontal) {
+      h = w / drag.ratio;
+    } else if (instance && vertical) {
+      w = h * drag.ratio;
     }
     this.guideLines.set(guides);
 
@@ -487,8 +488,16 @@ export class EditorCanvasComponent implements AfterViewInit, OnDestroy {
       x: center.x + cx * Math.cos(rad) - cy * Math.sin(rad),
       y: center.y + cx * Math.sin(rad) + cy * Math.cos(rad),
     };
-    const layer = this.store().layers().find(l => l.id === drag.id);
-    if (!layer) return;
+    if (instance) {
+      const blockWidth = rect.w / instance.scale;
+      const blockHeight = rect.h / instance.scale;
+      const scale = Math.round(Math.min(DOCUMENT_LIMITS.maxScale, Math.max(DOCUMENT_LIMITS.minScale, w / blockWidth)) * 10000) / 10000;
+      const sw = blockWidth * scale;
+      const sh = blockHeight * scale;
+      const offset = offsetFor(instance.anchor, { x: worldCenter.x - sw / 2, y: worldCenter.y - sh / 2, w: sw, h: sh }, this.size());
+      this.store().updateLayer(drag.id, { x: Math.round(offset.x), y: Math.round(offset.y), w: sw, h: sh, scale } as Partial<Layer>, 'drag-resize');
+      return;
+    }
     const rw = Math.max(1, Math.round(w));
     const rh = Math.max(1, Math.round(h));
     const box = { x: worldCenter.x - rw / 2, y: worldCenter.y - rh / 2, w: rw, h: rh };

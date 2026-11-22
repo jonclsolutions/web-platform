@@ -21,9 +21,11 @@ export interface CreatorFolder {
   deleted_at: string | null;
 }
 
-/** Template using a library file (also one in the trash). */
+/** Template or block using a library file or a block (also one in the trash). */
 export interface UsedByTemplate {
   id: number;
+  /** A template or a block (library files only - a block is used by templates). */
+  kind?: 'template' | 'block';
   name: string;
   section: string;
   trashed: boolean;
@@ -133,16 +135,93 @@ export interface CreatorTemplate {
   caption_template: string | null;
   /** Signed URL of the thumbnail (null until the editor saves one). */
   thumb_url: string | null;
+  /** A block of the template changed after the thumbnail was drawn (the list draws it again). */
+  thumb_stale?: boolean;
   version: number;
   created_at: string | null;
   updated_at: string | null;
   deleted_at: string | null;
 }
 
-/** Template with its document (editor). */
+/** Template with its document and the blocks of its instances (editor, generating). */
 export interface CreatorTemplateDetail extends CreatorTemplate {
   schema_version: number;
   document: TemplateDocument;
+  /** Blocks of the instances with their documents (absent in older answers = none). */
+  blocks?: CreatorBlockDetail[];
+}
+
+/** Block of a section in a list (without its document). */
+export interface CreatorBlock {
+  id: number;
+  section: string;
+  name: string;
+  width: number;
+  height: number;
+  /** Signed URL of the thumbnail (null until the editor saves one). */
+  thumb_url: string | null;
+  version: number;
+  /** Templates using the block (such a block cannot be deleted). */
+  used_by?: UsedByTemplate[];
+  created_at: string | null;
+  updated_at: string | null;
+  deleted_at: string | null;
+}
+
+/** Block with its document (editor of the block, instances of templates). */
+export interface CreatorBlockDetail extends CreatorBlock {
+  schema_version: number;
+  document: TemplateDocument;
+}
+
+/** Save of the block editor. */
+export interface BlockSave {
+  name: string;
+  width: number;
+  height: number;
+  version: number;
+  document: TemplateDocument;
+}
+
+/** Template of a set. */
+export interface SetTemplate {
+  id: number;
+  name: string;
+  width: number;
+  height: number;
+  output_format: 'png' | 'jpg';
+  thumb_url: string | null;
+  /** In the trash - skipped when generating. */
+  trashed: boolean;
+}
+
+/** Set of templates of a section (one filling → one output per template). */
+export interface CreatorSet {
+  id: number;
+  section: string;
+  name: string;
+  /** Caption pattern of the set (null = the pattern of the first template). */
+  caption_template: string | null;
+  templates: SetTemplate[];
+  created_at: string | null;
+  updated_at: string | null;
+  deleted_at: string | null;
+}
+
+/** New set / save of a set. */
+export interface SetSave {
+  name: string;
+  caption_template: string | null;
+  template_ids: number[];
+}
+
+/** Refusal of a set: a field has another kind in another template (422 `field_conflict`). */
+export interface SetFieldConflict {
+  key: string;
+  template_id: number;
+  type: 'text' | 'image';
+  other_id: number;
+  other_type: 'text' | 'image';
 }
 
 /** A size used by templates (filter of the list). */

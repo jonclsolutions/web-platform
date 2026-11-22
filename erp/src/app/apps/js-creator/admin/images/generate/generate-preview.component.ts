@@ -99,7 +99,8 @@ export class GeneratePreviewComponent implements AfterViewInit, OnDestroy {
   private readonly boxes = computed(() => {
     const doc = this.doc();
     const size = this.size();
-    return this.pannable().flatMap(key => fieldImageBoxes(doc, size, key).map(box => ({ key, box })));
+    const resources = this.resources();
+    return this.pannable().flatMap(key => fieldImageBoxes(doc, size, key, 0, id => resources.block(id)).map(box => ({ key, box })));
   });
 
   constructor() {

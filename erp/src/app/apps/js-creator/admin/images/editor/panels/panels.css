@@ -188,3 +188,36 @@
 .pn-check-row--end { align-self: end; padding-bottom: 6px; }
 
 .pn .ws-field-error { color: var(--color-rose-700); }
+
+/*
+    @module: Blocks
+    @description: "Block from the selection" across the whole panel; the block of an instance
+        (icon, name, size and fields); read-only fields of block instances in the panel Fields.
+    @usage: button.pn-btn.pn-btn--wide; p.pn-block-name; .pn-instance-field
+*/
+.pn-btn--wide { align-self: stretch; justify-content: center; margin-top: 8px; }
+
+.pn-block-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-zinc-800);
+}
+
+.pn-block-name .pn-hint { flex-basis: 100%; }
+
+.pn-instance-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  border: 1px dashed var(--color-zinc-200);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  color: var(--color-zinc-700);
+}
+
+.pn-instance-field code { font-size: 0.7rem; color: var(--color-zinc-600); }

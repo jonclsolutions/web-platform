@@ -345,12 +345,12 @@ export class LibraryFontsComponent implements OnInit, OnDestroy {
 
   /**
    * @description Explains that a font used by templates cannot be deleted.
-   * @param usedBy Templates using the font.
+   * @param usedBy Templates and blocks using the font.
    * @returns true when refused.
    */
   private refuseUsed(usedBy: UsedByTemplate[] | undefined): boolean {
     if (!usedBy?.length) return false;
-    const names = usedBy.map(u => `„${u.name}“${u.trashed ? ` (${this.t('in_use_trashed')})` : ''}`).join(', ');
+    const names = usedBy.map(u => `${u.kind === 'block' ? this.t('in_use_block') + ' ' : ''}„${u.name}“${u.trashed ? ` (${this.t('in_use_trashed')})` : ''}`).join(', ');
     this.alert.open(this.t('in_use_title'), `${this.t('in_use_font')} ${names}`, 'warning');
     return true;
   }

@@ -14,6 +14,7 @@
 namespace App\Apps\JsCreator\Http\Controllers;
 
 use App\Apps\JsCreator\Models\CreatorAsset;
+use App\Apps\JsCreator\Models\CreatorBlock;
 use App\Apps\JsCreator\Models\CreatorFolder;
 use App\Apps\JsCreator\Models\CreatorFont;
 use App\Apps\JsCreator\Models\CreatorOutput;
@@ -40,6 +41,7 @@ class UsageController extends Controller
             'trash_bytes' => (int) CreatorAsset::onlyTrashed()->ownedBy($userId)->sum('size_bytes')
                 + (int) CreatorFont::onlyTrashed()->ownedBy($userId)->sum('size_bytes')
                 + (int) CreatorTemplate::onlyTrashed()->ownedBy($userId)->sum('thumb_bytes')
+                + (int) CreatorBlock::onlyTrashed()->ownedBy($userId)->sum('thumb_bytes')
                 + (int) CreatorOutput::onlyTrashed()->ownedBy($userId)->sum('size_bytes'),
             'counts'      => [
                 'folders'   => CreatorFolder::query()->ownedBy($userId)->count(),

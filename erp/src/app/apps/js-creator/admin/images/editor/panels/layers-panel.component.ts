@@ -16,12 +16,13 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal } f
 import { AdminLocalizationService } from '../../../../../../core/services/admin-localization.service';
 import { EditorStore } from '../editor-store';
 import { Layer } from '../../../shared/render/document';
+import { BlockDef } from '../../../shared/render/block-fields';
 import { plainText } from '../../../shared/render/text-layout';
 import { CreatorIconComponent } from '../../../shared/creator-icon/creator-icon.component';
 import { UiIconName, uiIcon } from '../../../shared/ui-icons';
 
 /** Interface icon of each kind of layer. */
-const TYPE_ICONS: Record<Layer['type'], UiIconName> = { text: 'text', image: 'image', grid: 'grid', shape: 'shape', icon: 'icon' };
+const TYPE_ICONS: Record<Layer['type'], UiIconName> = { text: 'text', image: 'image', grid: 'grid', shape: 'shape', icon: 'icon', block: 'block' };
 
 @Component({
   selector: 'app-jc-layers',
@@ -67,6 +68,8 @@ export class LayersPanelComponent {
 
   /** State of the editor. */
   readonly store = input.required<EditorStore>();
+  /** Blocks of the instances (names, fields). */
+  readonly blocks = input<ReadonlyMap<number, BlockDef>>(new Map());
 
   /** Layer being renamed. */
   readonly renaming = signal<string | null>(null);
@@ -115,6 +118,7 @@ export class LayersPanelComponent {
       return (field ? field.label : plainText(layer.text).replace(/\n/g, ' ')).slice(0, 40) || this.t('type_text');
     }
     if (layer.type === 'icon') return `${this.t('type_icon')}: ${layer.icon}`;
+    if (layer.type === 'block') return `${this.t('type_block')}: ${this.blocks().get(layer.blockId)?.name ?? '?'}`;
     return this.t('type_' + layer.type);
   }
 
@@ -126,6 +130,7 @@ export class LayersPanelComponent {
     if (layer.type === 'text') return !!layer.field;
     if (layer.type === 'image') return layer.source.kind === 'field';
     if (layer.type === 'grid') return layer.cells.some(c => c.source.kind === 'field');
+    if (layer.type === 'block') return !!this.blocks().get(layer.blockId)?.document.fields.length;
     return false;
   }
 

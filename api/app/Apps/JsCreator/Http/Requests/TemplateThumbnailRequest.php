@@ -5,7 +5,7 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Validation of the thumbnail of a template: one PNG / WebP drawn by the editor
+ * @description Validation of the thumbnail of a template or a block: one PNG / WebP drawn by the editor
  *   (type checked by the content and the name, at most 2 MB); its pixels are re-encoded by
  *   LibraryImage::thumbnail().
  */

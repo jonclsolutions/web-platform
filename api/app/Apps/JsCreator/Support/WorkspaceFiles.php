@@ -17,12 +17,14 @@
  *   command storage:prune-orphans knows only attachments and would delete these files. Files
  *   without a record are removed by JsCreatorRetentionSource::cleanUp().
  * @dependencies private disk; routes `js-creator.files.asset`, `js-creator.files.font`,
- *   `js-creator.files.template`, `js-creator.files.output`, `js-creator.files.zip`.
+ *   `js-creator.files.template`, `js-creator.files.block`, `js-creator.files.output`,
+ *   `js-creator.files.zip`.
  */
 
 namespace App\Apps\JsCreator\Support;
 
 use App\Apps\JsCreator\Models\CreatorAsset;
+use App\Apps\JsCreator\Models\CreatorBlock;
 use App\Apps\JsCreator\Models\CreatorFont;
 use App\Apps\JsCreator\Models\CreatorOutput;
 use App\Apps\JsCreator\Models\CreatorTemplate;
@@ -45,7 +47,7 @@ final class WorkspaceFiles
     /**
      * @description New unique path of a file of an account.
      * @param int $userId Owner.
-     * @param string $kind Sub-folder: `library`, `thumbs`, `fonts`, `templates`, `outputs`.
+     * @param string $kind Sub-folder: `library`, `thumbs`, `fonts`, `templates`, `blocks`, `outputs`.
      * @param string $extension File extension (from the detected type, never from the upload name).
      * @return string Path on DISK.
      */
@@ -118,6 +120,22 @@ final class WorkspaceFiles
 
         return URL::temporarySignedRoute('js-creator.files.template', self::expiry(), [
             'id' => $template->id, 'v' => pathinfo($template->thumb_path, PATHINFO_FILENAME),
+        ], false);
+    }
+
+    /**
+     * @description Signed URL of the thumbnail of a block.
+     * @param CreatorBlock $block Block with a thumbnail.
+     * @return string|null Relative URL; null without a thumbnail.
+     */
+    public static function blockThumbUrl(CreatorBlock $block): ?string
+    {
+        if ($block->thumb_path === null) {
+            return null;
+        }
+
+        return URL::temporarySignedRoute('js-creator.files.block', self::expiry(), [
+            'id' => $block->id, 'v' => pathinfo($block->thumb_path, PATHINFO_FILENAME),
         ], false);
     }
 

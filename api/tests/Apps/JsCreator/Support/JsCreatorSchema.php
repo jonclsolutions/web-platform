@@ -7,10 +7,10 @@
  * @author JS
  * @created 2026
  * @description Test tables of the application "JS Creator" (SQLite mirror of its migrations):
- *   audit log, folders, library images, own fonts, settings, individual quotas, templates and
- *   their usages, outputs and their files - with the same foreign keys (ON DELETE CASCADE from
- *   users and from the parent folder / output, SET NULL from the folder and the template of an
- *   output).
+ *   audit log, folders, library images, own fonts, settings, individual quotas, templates,
+ *   blocks, sets with their templates, usages, outputs and their files - with the same foreign
+ *   keys (ON DELETE CASCADE from users, from the parent folder / output and from the set /
+ *   template of a set row, SET NULL from the folder and the template of an output).
  * @dependencies Tests\Support\TestSchema (audit log shape); run by TestSchema::create() while
  *   the application is in config/apps.php.
  */
@@ -102,10 +102,49 @@ final class JsCreatorSchema
             $t->text('caption_template')->nullable();
             $t->string('thumb_path', 255)->nullable();
             $t->unsignedBigInteger('thumb_bytes')->default(0);
+            $t->boolean('thumb_stale')->default(false);
             $t->unsignedInteger('version')->default(1);
             $t->timestamps();
             $t->softDeletes();
             $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+        });
+
+        Schema::create('js_creator_blocks', function (Blueprint $t) {
+            $t->id();
+            $t->unsignedInteger('user_id');
+            $t->string('section', 20);
+            $t->string('name', 120);
+            $t->unsignedSmallInteger('width');
+            $t->unsignedSmallInteger('height');
+            $t->unsignedTinyInteger('schema_version');
+            $t->longText('document');
+            $t->string('thumb_path', 255)->nullable();
+            $t->unsignedBigInteger('thumb_bytes')->default(0);
+            $t->unsignedInteger('version')->default(1);
+            $t->timestamps();
+            $t->softDeletes();
+            $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+        });
+
+        Schema::create('js_creator_sets', function (Blueprint $t) {
+            $t->id();
+            $t->unsignedInteger('user_id');
+            $t->string('section', 20);
+            $t->string('name', 120);
+            $t->text('caption_template')->nullable();
+            $t->timestamps();
+            $t->softDeletes();
+            $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+        });
+
+        Schema::create('js_creator_set_templates', function (Blueprint $t) {
+            $t->id();
+            $t->unsignedBigInteger('set_id');
+            $t->unsignedBigInteger('template_id');
+            $t->unsignedSmallInteger('position');
+            $t->unique(['set_id', 'template_id']);
+            $t->foreign('set_id')->references('id')->on('js_creator_sets')->cascadeOnDelete();
+            $t->foreign('template_id')->references('id')->on('js_creator_templates')->cascadeOnDelete();
         });
 
         Schema::create('js_creator_usages', function (Blueprint $t) {

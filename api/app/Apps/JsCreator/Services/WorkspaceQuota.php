@@ -6,8 +6,8 @@
  * @author JS
  * @created 2026
  * @description Disk space of the workspace of an account: what it uses (every stored file -
- *   images of the library with their thumbnails, fonts, thumbnails of templates and outputs with
- *   their thumbnails - INCLUDING
+ *   images of the library with their thumbnails, fonts, thumbnails of templates and blocks and
+ *   outputs with their thumbnails - INCLUDING
  *   the trash, which frees space only when emptied) and its quota (individual quota, otherwise the default of the settings).
  *   Uploads ask ensureRoom() first; a full workspace refuses them with 422 `quota_exceeded`.
  * @note Two uploads running at the same moment may together exceed the quota a little - the
@@ -18,6 +18,7 @@
 namespace App\Apps\JsCreator\Services;
 
 use App\Apps\JsCreator\Models\CreatorAsset;
+use App\Apps\JsCreator\Models\CreatorBlock;
 use App\Apps\JsCreator\Models\CreatorFont;
 use App\Apps\JsCreator\Models\CreatorOutput;
 use App\Apps\JsCreator\Models\CreatorSetting;
@@ -39,6 +40,7 @@ final class WorkspaceQuota
         return (int) CreatorAsset::withTrashed()->ownedBy($userId)->sum('size_bytes')
             + (int) CreatorFont::withTrashed()->ownedBy($userId)->sum('size_bytes')
             + (int) CreatorTemplate::withTrashed()->ownedBy($userId)->sum('thumb_bytes')
+            + (int) CreatorBlock::withTrashed()->ownedBy($userId)->sum('thumb_bytes')
             + (int) CreatorOutput::withTrashed()->ownedBy($userId)->sum('size_bytes');
     }
 

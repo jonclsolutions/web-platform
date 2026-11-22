@@ -10,9 +10,11 @@
  *   layers and their properties, ranges of numbers, lengths of texts (plain text, never HTML),
  *   colours, the number of layers and fields, the size of the JSON; an unknown or missing
  *   property is refused. Field references must point to a field of the right kind; library
- *   images and own fonts are collected (assetIds(), fontIds()) for the ownership check of the
- *   controller and the usage table.
- * @usage `$doc = TemplateDocument::check($input); if ($doc->errors()) …; $doc->assetIds()`.
+ *   images, own fonts and blocks (instances, templates only - blocks do not nest) are collected
+ *   (assetIds(), fontIds(), blockIds()) for the ownership check of the controller and the usage
+ *   table.
+ * @usage `$doc = TemplateDocument::check($input); if ($doc->errors()) …; $doc->assetIds()`;
+ *   a block: `TemplateDocument::check($input, false)`.
  * @note The same shape is in the frontend: apps/js-creator/admin/shared/render/document.ts
  *   (types, defaults, limits). A new property = both places + the schema test of both sides.
  *   Shape of the document:
@@ -65,7 +67,11 @@ final class TemplateDocument
         'grid'  => ['layout', 'gap', 'radius', 'fit', 'cells', 'border', 'overlay'],
         'shape' => ['shape', 'fill', 'radius', 'stroke', 'shadow'],
         'icon'  => ['icon', 'color', 'strokeWidth', 'shadow'],
+        'block' => ['blockId', 'scale'],
     ];
+
+    /** @description Smallest / largest scale of a block instance. */
+    public const BLOCK_SCALE = [0.05, 20];
 
     /** @description At most this many errors are reported. */
     private const MAX_ERRORS = 20;
@@ -82,17 +88,28 @@ final class TemplateDocument
     /** @var array<int, string> Own font id → path of its first use. */
     private array $fonts = [];
 
+    /** @var array<int, string> Block id → path of its first instance. */
+    private array $blocks = [];
+
     /** @var array<string, true> Layer ids already seen. */
     private array $layerIds = [];
 
     /**
+     * @param bool $allowBlocks Block instances are allowed (a template; never a block).
+     */
+    private function __construct(private readonly bool $allowBlocks)
+    {
+    }
+
+    /**
      * @description Validates a document.
      * @param mixed $document Decoded JSON of the request.
-     * @return self Result (errors(), assetIds(), fontIds()).
+     * @param bool $allowBlocks Document of a template (true) or of a block (false - no instances).
+     * @return self Result (errors(), assetIds(), fontIds(), blockIds()).
      */
-    public static function check(mixed $document): self
+    public static function check(mixed $document, bool $allowBlocks = true): self
     {
-        $result = new self();
+        $result = new self($allowBlocks);
         $json = json_encode($document, self::JSON_FLAGS);
         if ($json === false || strlen($json) > self::MAX_BYTES) {
             $result->error('document', 'The document is too large (at most 1 MB).');
@@ -105,15 +122,18 @@ final class TemplateDocument
     }
 
     /**
-     * @description An empty document: white background, no layers, no fields.
+     * @description An empty document: white background (a block: transparent), no layers, no fields.
+     * @param bool $transparent Transparent background (a block shows the template under it).
      * @return array<string, mixed>
      */
-    public static function empty(): array
+    public static function empty(bool $transparent = false): array
     {
+        $color = $transparent ? '#ffffff00' : '#ffffff';
+
         return [
             'schema' => self::SCHEMA,
             'fields' => [],
-            'pages'  => [['background' => ['fill' => ['type' => 'solid', 'color' => '#ffffff'], 'image' => null], 'layers' => []]],
+            'pages'  => [['background' => ['fill' => ['type' => 'solid', 'color' => $color], 'image' => null], 'layers' => []]],
         ];
     }
 
@@ -145,14 +165,27 @@ final class TemplateDocument
     }
 
     /**
-     * @description Path of the first use of an image / font (for an error message).
-     * @param string $kind `asset` | `font`.
+     * @description Ids of the blocks the document uses (instances).
+     * @return int[]
+     */
+    public function blockIds(): array
+    {
+        return array_keys($this->blocks);
+    }
+
+    /**
+     * @description Path of the first use of an image / font / block (for an error message).
+     * @param string $kind `asset` | `font` | `block`.
      * @param int $id Id.
      * @return string
      */
     public function pathOf(string $kind, int $id): string
     {
-        return ($kind === 'asset' ? $this->assets[$id] : $this->fonts[$id]) ?? 'document';
+        return match ($kind) {
+            'asset' => $this->assets[$id] ?? null,
+            'font'  => $this->fonts[$id] ?? null,
+            default => $this->blocks[$id] ?? null,
+        } ?? 'document';
     }
 
     /**
@@ -298,6 +331,7 @@ final class TemplateDocument
             'grid'  => $this->gridLayer($l, $path),
             'shape' => $this->shapeLayer($l, $path),
             'icon'  => $this->iconLayer($l, $path),
+            'block' => $this->blockLayer($l, $path),
         };
     }
 
@@ -428,6 +462,27 @@ final class TemplateDocument
         $this->color($l['color'], "{$path}.color");
         $this->number($l['strokeWidth'], "{$path}.strokeWidth", 0.25, 4);
         $this->nullable($l['shadow'], fn ($v) => $this->shadow($v, "{$path}.shadow"));
+    }
+
+    /**
+     * @description Instance of a block (templates only): the block and its scale. The box of the
+     *   layer (w, h) follows the size of the block × scale (kept by the editor; the renderer
+     *   always uses the current size of the block).
+     * @param array<string, mixed> $l Layer.
+     * @param string $path
+     * @return void
+     */
+    private function blockLayer(array $l, string $path): void
+    {
+        if (!$this->allowBlocks) {
+            $this->error("{$path}.type", 'A block cannot contain another block.');
+
+            return;
+        }
+        if ($this->int($l['blockId'], "{$path}.blockId", 1, PHP_INT_MAX)) {
+            $this->blocks[$l['blockId']] ??= "{$path}.blockId";
+        }
+        $this->number($l['scale'], "{$path}.scale", self::BLOCK_SCALE[0], self::BLOCK_SCALE[1]);
     }
 
     /**

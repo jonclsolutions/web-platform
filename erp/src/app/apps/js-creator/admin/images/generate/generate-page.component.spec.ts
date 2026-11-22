@@ -7,7 +7,8 @@
  * @description Unit tests of GeneratePageComponent: loading (template, fonts, folders, the last
  *   folder), the text of the post from the pattern, highlights, photos from the computer with
  *   their crop, what stops generating, generating (exact PNG of the template, only the output
- *   sent, the result shown), refused outputs and the page without the create permission.
+ *   sent, the result shown), refused outputs, the page without the create permission and a set
+ *   (united fields with block fields, tabs of formats with their own crops, one output each).
  * @dependencies admin-test-helpers.ts (admin doubles), editor-test-data.ts, the canvas and
  *   createImageBitmap of the test browser.
  */
@@ -19,8 +20,8 @@ import { of, throwError } from 'rxjs';
 import { GeneratePageComponent } from './generate-page.component';
 import { FontLibraryService } from '../../shared/font-library.service';
 import { IconSetService } from '../../shared/icon-set.service';
-import { CreatorFolder, CreatorOutput, CreatorTemplateDetail } from '../../shared/js-creator.models';
-import { ImageField, ImageLayer, TextField, createLayer } from '../../shared/render/document';
+import { CreatorBlockDetail, CreatorFolder, CreatorOutput, CreatorSet, CreatorTemplateDetail } from '../../shared/js-creator.models';
+import { ImageField, ImageLayer, Layer, TextField, createLayer, emptyDocument } from '../../shared/render/document';
 import { fieldImageBoxes } from '../../shared/render/field-images';
 import { AdminTestContext, createAdminTestContext } from '../../../../../../testing/admin-test-helpers';
 import { TEST_CURATED, TEST_SIZE, imageField, shapeLayer, testFont, testTemplate, textField, textLayer } from '../editor/editor-test-data';
@@ -284,5 +285,90 @@ describe('GeneratePageComponent', () => {
     const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     component.openInOutputs(output());
     expect(navigate).toHaveBeenCalledWith(['/admin/js-creator/outputs'], { queryParams: { folder: 2, output: 31 } });
+  });
+  /**
+   * @description A set: one form with the fields of all its templates (the block field of an
+   *   instance included, templates in the trash skipped), tabs of the formats, a crop per format,
+   *   and Generate makes one output per template named with its format.
+   * @input set 4 with template 7 (title, photo 500 × 500), template 8 (500 × 1000: title, photo,
+   *   an instance of block 3 with the field badge) and template 9 in the trash; title "Léto",
+   *   badge "Nové", a photo; tab 8 with zoom 2; Generate with the name "Akce"
+   * @output fields title, photo, badge; 2 tabs; crop zoom 2 only for template 8; two uploads
+   *   (7 then 8) named "Akce – 1000×1000" / "Akce – 500×1000" with PNGs of their sizes; 2 results
+   */
+  it('generates a set', async () => {
+    ctx = createAdminTestContext();
+    const photo: ImageLayer = {
+      ...(createLayer('image', TEST_SIZE, 'img') as ImageLayer), anchor: 'tl', x: 500, y: 500, w: 500, h: 500, source: { kind: 'field', field: 'photo' },
+    };
+    const first = testTemplate({ id: 7, layers: [textLayer('t1', { field: 'title' }), photo], fields: [textField('title'), imageField('photo')], caption: '{{title}} {{badge}}' });
+    const block: CreatorBlockDetail = {
+      id: 3, section: 'images', name: 'Badge', width: 200, height: 100, thumb_url: null, version: 1, created_at: null, updated_at: null, deleted_at: null,
+      schema_version: 1, document: emptyDocument(true),
+    };
+    block.document.fields = [{ ...(textField('badge') as TextField), required: false }];
+    block.document.pages[0].layers = [textLayer('bt', { field: 'badge' })];
+    const instance = {
+      id: 'inst', name: '', type: 'block', anchor: 'tl', x: 0, y: 0, w: 200, h: 100, rotation: 0, opacity: 1, hidden: false, locked: false, blockId: 3, scale: 1,
+    } as Layer;
+    const second: CreatorTemplateDetail = {
+      ...testTemplate({ id: 8, layers: [textLayer('t2', { field: 'title' }), { ...photo, w: 250, h: 250, x: 100, y: 600 }, instance], fields: [textField('title'), imageField('photo')] }),
+      width: 500, height: 1000, blocks: [block],
+    };
+    const theSet: CreatorSet = {
+      id: 4, section: 'images', name: 'Léto', caption_template: null, created_at: null, updated_at: null, deleted_at: null,
+      templates: [7, 8, 9].map(id => ({ id, name: `T${id}`, width: 1000, height: 1000, output_format: 'png' as const, thumb_url: null, trashed: id === 9 })),
+    };
+    ctx.dataHandler.get.and.callFake(((url: string) => of(url.endsWith('/sets/4') ? theSet : url.endsWith('/templates/7') ? first
+      : url.endsWith('/templates/8') ? second : { used_bytes: 0, quota_bytes: 1e9, trash_bytes: 0, counts: {} })) as never);
+    ctx.dataHandler.getCollection.and.callFake(((url: string) => of(url === 'js-creator/folders' ? [] : [testFont(3)])) as never);
+    let next = 40;
+    ctx.dataHandler.postQuietly.and.callFake((() => of(output({ id: next++ }))) as never);
+    const fonts = {
+      curatedFamilies: () => of(TEST_CURATED), curatedName: (s: string) => `jsc-${s}`, ownName: (id: number) => `jsc-user-${id}`,
+      registerCurated: () => undefined, registerOwn: () => undefined,
+    };
+    await TestBed.configureTestingModule({
+      imports: [GeneratePageComponent],
+      providers: [
+        ...ctx.providers,
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: '4' }), data: { kind: 'set' } } } },
+        { provide: FontLibraryService, useValue: fonts },
+        { provide: IconSetService, useValue: { iconSet: () => of({ source: '', license: '', viewBox: '0 0 24 24', icons: {} }) } },
+      ],
+    }).compileComponents();
+    fixture = TestBed.createComponent(GeneratePageComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    spyOn(component.resources, 'ensureFonts').and.resolveTo();
+    spyOn(component.resources, 'missingFonts').and.returnValue([]);
+
+    expect(component.fields().map(f => f.key)).toEqual(['title', 'photo', 'badge']);
+    expect(component.targets().map(t => t.template.id)).toEqual([7, 8]);
+    expect(component.tabs().length).toBe(2);
+    expect(fixture.nativeElement.querySelectorAll('.gen-tab').length).toBe(2);
+
+    component.setText('title', 'Léto');
+    component.setText('badge', 'Nové');
+    expect(component.caption()).toBe('Léto Nové');
+    await component.chooseFile(component.fields()[1] as ImageField, { target: { files: [await pngFile(1200, 1200)], value: '' } } as unknown as Event);
+    component.showTarget(1);
+    expect(component.template()?.id).toBe(8);
+    component.setZoom('photo', '2');
+    expect(component.cropsOf()[8]['photo'].zoom).toBe(2);
+    expect(component.cropsOf()[7]['photo'].zoom).toBe(1);
+
+    component.setName('Akce');
+    await component.generate();
+    const calls = ctx.dataHandler.postQuietly.calls.allArgs() as [string, FormData][];
+    expect(calls.length).toBe(2);
+    expect(calls.map(([, data]) => [data.get('template_id'), data.get('name'), data.get('caption')])).toEqual([
+      ['7', 'Akce – 1000×1000', 'Léto Nové'], ['8', 'Akce – 500×1000', 'Léto Nové'],
+    ]);
+    const bitmap = await createImageBitmap(calls[1][1].get('file') as File);
+    expect([bitmap.width, bitmap.height]).toEqual([500, 1000]);
+    bitmap.close();
+    expect(component.results().map(o => o.id)).toEqual([40, 41]);
+    expect(component.progress()).toBeNull();
   });
 });

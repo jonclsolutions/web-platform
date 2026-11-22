@@ -6,15 +6,17 @@
  * @created 2026
  * @description Unit tests of TemplatesPageComponent: list with the sizes in use and "load more",
  *   filter and sorting in the request, a new template opens the editor, a copy and a copy to
- *   another size, the trash (delete, restore, delete for good, empty) and the permissions.
+ *   another size, the trash (delete, restore, delete for good, empty) and the permissions; the
+ *   same page for blocks (route data kind 'block') and the background refresh of stale thumbnails.
  * @dependencies TemplatesPageComponent, admin-test-helpers.ts.
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { TemplatesPageComponent } from './templates-page.component';
 import { CreatorTemplate } from '../../shared/js-creator.models';
+import { ThumbnailRefresherService } from '../../shared/thumbnail-refresher.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../../../testing/admin-test-helpers';
 
 /**
@@ -38,15 +40,21 @@ describe('TemplatesPageComponent', () => {
   /**
    * @description Creates the page.
    * @param granted Permissions.
+   * @param kind Templates / blocks (route data).
+   * @param before Called before the page is created (spies on services).
    */
-  async function create(granted: string[] | 'all' = 'all'): Promise<void> {
+  async function create(granted: string[] | 'all' = 'all', kind: 'template' | 'block' = 'template', before?: () => void): Promise<void> {
     ctx = createAdminTestContext({ granted });
     ctx.dataHandler.getPaginatedCollection.and.callFake(((url: string) => of(url.includes('page=2')
       ? { data: [template(3)], meta: { total: 3, per_page: 2, current_page: 2, last_page: 2 } }
       : { data: [template(1), template(2, [1080, 1920])], meta: { total: 3, per_page: 2, current_page: 1, last_page: 2, sizes: [{ width: 1080, height: 1350, count: 2 }, { width: 1080, height: 1920, count: 1 }] } })) as never);
     ctx.dataHandler.post.and.returnValue(of({ ...template(9), document: {} }) as never);
-    await TestBed.configureTestingModule({ imports: [TemplatesPageComponent], providers: ctx.providers }).compileComponents();
+    await TestBed.configureTestingModule({
+      imports: [TemplatesPageComponent],
+      providers: [...ctx.providers, { provide: ActivatedRoute, useValue: { snapshot: { data: kind === 'block' ? { kind } : {} } } }],
+    }).compileComponents();
     navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    before?.();
     fixture = TestBed.createComponent(TemplatesPageComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -160,5 +168,49 @@ describe('TemplatesPageComponent', () => {
     component.view = 'trash';
     component.generate(template(1));
     expect(navigate).not.toHaveBeenCalled();
+  });
+  /**
+   * @description The page of blocks: blocks API, no size filter, the card opens the editor of the
+   *   block, a block used by templates is not deleted (a message names them), an unused one is.
+   * @input kind block; block 1 used by template "Post" (in the trash), block 2 unused; delete both
+   * @output request js-creator/images/blocks?; no size select; navigate image-blocks/1/edit; alert
+   *   with "Post" and no DELETE for 1; DELETE js-creator/images/blocks/2
+   */
+  it('lists blocks with the same page', async () => {
+    await create('all', 'block');
+    expect(ctx.dataHandler.getPaginatedCollection.calls.mostRecent().args[0]).toContain('js-creator/images/blocks?');
+    expect(fixture.nativeElement.querySelectorAll('.tp-select').length).toBe(1);
+    (fixture.nativeElement.querySelector('.tp-preview') as HTMLButtonElement).click();
+    expect(navigate).toHaveBeenCalledWith(['/admin/js-creator/image-blocks', 1, 'edit']);
+    expect(component.t('header')).toBe('js-creator-blocks.header');
+
+    ctx.dataHandler.delete.and.returnValue(of(undefined) as never);
+    await component.remove({ ...template(1), used_by: [{ id: 5, kind: 'template', name: 'Post', section: 'images', trashed: true }] });
+    expect(ctx.alert.open).toHaveBeenCalledWith('js-creator-blocks.in_use_title', jasmine.stringContaining('„Post“'), 'warning');
+    expect(ctx.dataHandler.delete).not.toHaveBeenCalled();
+    await component.remove({ ...template(2), used_by: [] });
+    expect(ctx.dataHandler.delete).toHaveBeenCalledWith('js-creator/images/blocks/2');
+  });
+
+  /**
+   * @description Thumbnails made stale by a changed block are drawn again in the background and
+   *   replaced in the grid.
+   * @input template 1 with thumb_stale; the refresher answers a new URL
+   * @output refresh('images', [1]); the card shows /new-thumb
+   */
+  it('draws stale thumbnails again', async () => {
+    let refresh: jasmine.Spy | undefined;
+    const stale = template(1);
+    stale.thumb_stale = true;
+    await create('all', 'template', () => {
+      ctx.dataHandler.getPaginatedCollection.and.returnValue(of({ data: [stale, template(2)], meta: { total: 2, per_page: 48, current_page: 1, last_page: 1 } }) as never);
+      refresh = spyOn(TestBed.inject(ThumbnailRefresherService), 'refresh').and.callFake(async (_section, _ids, done) => {
+        done?.(1, '/new-thumb');
+        return 1;
+      });
+    });
+    for (let i = 0; i < 50 && component.items[0]?.thumb_url !== '/new-thumb'; i++) await new Promise(r => setTimeout(r, 10));
+    expect(refresh).toHaveBeenCalledWith('images', [1], jasmine.any(Function));
+    expect(component.items[0].thumb_url).toBe('/new-thumb');
   });
 });

@@ -8,17 +8,18 @@
  * @description Files of the workspaces - reachable ONLY through the signed URLs that
  *   WorkspaceFiles issues to the owner (route middleware `signed:relative`; a changed or expired
  *   URL is refused and recorded as a security event by the core). Images are served inline with
- *   their detected type (thumbnails of templates as WebP), fonts as a download (FontFace loads them with fetch); never sniffed,
+ *   their detected type (thumbnails of templates and blocks as WebP), fonts as a download (FontFace loads them with fetch); never sniffed,
  *   never run as a page (CSP sandbox). An output is shown inline or saved as a file under its
  *   own name; a ZIP of outputs is made on request from the outputs the signed URL names (only
  *   those of the account the URL was issued to).
- * @dependencies CreatorAsset, CreatorFont, CreatorTemplate, CreatorOutput, WorkspaceFiles, FontFile
+ * @dependencies CreatorAsset, CreatorFont, CreatorTemplate, CreatorBlock, CreatorOutput, WorkspaceFiles, FontFile
  *   (content types), ZipArchive (ext-zip).
  */
 
 namespace App\Apps\JsCreator\Http\Controllers;
 
 use App\Apps\JsCreator\Models\CreatorAsset;
+use App\Apps\JsCreator\Models\CreatorBlock;
 use App\Apps\JsCreator\Models\CreatorFont;
 use App\Apps\JsCreator\Models\CreatorOutput;
 use App\Apps\JsCreator\Models\CreatorOutputFile;
@@ -81,6 +82,19 @@ class FileController extends Controller
     public function template(string $id): Response
     {
         $path = CreatorTemplate::withTrashed()->find((int) $id)?->thumb_path;
+        abort_unless($path && Storage::disk(WorkspaceFiles::DISK)->exists($path), 404);
+
+        return Storage::disk(WorkspaceFiles::DISK)->response($path, null, ['Content-Type' => 'image/webp'] + self::HEADERS);
+    }
+
+    /**
+     * @description The thumbnail of a block (also in the trash).
+     * @param string $id Block.
+     * @return Response 200; 404.
+     */
+    public function block(string $id): Response
+    {
+        $path = CreatorBlock::withTrashed()->find((int) $id)?->thumb_path;
         abort_unless($path && Storage::disk(WorkspaceFiles::DISK)->exists($path), 404);
 
         return Storage::disk(WorkspaceFiles::DISK)->response($path, null, ['Content-Type' => 'image/webp'] + self::HEADERS);

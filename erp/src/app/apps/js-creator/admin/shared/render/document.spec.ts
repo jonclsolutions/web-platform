@@ -11,8 +11,8 @@
  */
 
 import {
-  DOCUMENT_LIMITS, LayerType, SIZE_PRESETS, createLayer, documentBytes, documentReferences, emptyDocument, fieldKeyFrom,
-  gridCells, isValidSize, newLayerId, safeZoneOf, usedFieldKeys,
+  DOCUMENT_LIMITS, LayerType, PlainLayerType, SIZE_PRESETS, blockIdsOf, createBlockLayer, createLayer, documentBytes, documentReferences,
+  emptyDocument, fieldKeyFrom, gridCells, isValidSize, newLayerId, safeZoneOf, usedFieldKeys,
 } from './document';
 
 /** Properties of every layer (TemplateDocument::COMMON). */
@@ -26,6 +26,7 @@ const LAYER_KEYS: Record<LayerType, string[]> = {
   grid: ['layout', 'gap', 'radius', 'fit', 'cells', 'border', 'overlay'],
   shape: ['shape', 'fill', 'radius', 'stroke', 'shadow'],
   icon: ['icon', 'color', 'strokeWidth', 'shadow'],
+  block: ['blockId', 'scale'],
 };
 
 describe('document', () => {
@@ -37,7 +38,9 @@ describe('document', () => {
    */
   it('creates layers with the properties the API expects', () => {
     for (const type of Object.keys(LAYER_KEYS) as LayerType[]) {
-      const layer = createLayer(type, { width: 1080, height: 1350 }, 'x1');
+      const layer = type === 'block'
+        ? createBlockLayer({ id: 1, width: 400, height: 200 }, { width: 1080, height: 1350 }, 'x1')
+        : createLayer(type as PlainLayerType, { width: 1080, height: 1350 }, 'x1');
       expect(Object.keys(layer).sort()).withContext(type).toEqual([...COMMON, ...LAYER_KEYS[type]].sort());
       expect([layer.anchor, layer.x, layer.y]).toEqual(['mc', 0, 0]);
       expect(layer.w).toBeLessThanOrEqual(1080);
@@ -103,5 +106,21 @@ describe('document', () => {
     const id = newLayerId(new Set(['a']));
     expect(id).toMatch(/^[A-Za-z0-9_-]{1,32}$/);
     expect(documentBytes(emptyDocument())).toBeLessThan(DOCUMENT_LIMITS.maxBytes);
+  });
+  /**
+   * @description A new block instance is centred and fitted to 80 % of the canvas; the blocks of
+   *   a document are listed once; an empty block document is transparent.
+   * @input block 600 × 300 on 1080 × 1350; block 2000 × 500; document with two instances of 4 and one of 6
+   * @output scale 1 (600 × 300, anchor mc); scale 0.43 (860 × 215); [4, 6]; colour #ffffff00
+   */
+  it('creates block instances', () => {
+    const fit = createBlockLayer({ id: 4, width: 600, height: 300 }, { width: 1080, height: 1350 }, 'b');
+    expect([fit.type, fit.anchor, fit.scale, fit.w, fit.h, fit.blockId]).toEqual(['block', 'mc', 1, 600, 300, 4]);
+    const wide = createBlockLayer({ id: 6, width: 2000, height: 500 }, { width: 1080, height: 1350 }, 'c');
+    expect([wide.scale, wide.w, wide.h]).toEqual([0.43, 860, 215]);
+    const doc = emptyDocument();
+    doc.pages[0].layers = [fit, wide, { ...fit, id: 'd' }];
+    expect(blockIdsOf(doc)).toEqual([4, 6]);
+    expect(emptyDocument(true).pages[0].background.fill).toEqual({ type: 'solid', color: '#ffffff00' });
   });
 });

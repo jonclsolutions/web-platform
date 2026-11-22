@@ -4,22 +4,34 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description State of the template editor (one instance per opened template): the template
- *   (name, size, output, caption pattern, document), the selection of layers, the history of
- *   undo / redo (at least 100 steps) and the clipboard. Every change goes through mutate() /
+ * @description State of the editor of a template or a block (one instance per opened design):
+ *   name, size, output, caption pattern (templates), document, the selection of layers, the
+ *   history of undo / redo (150 steps) and the clipboard. Every change goes through mutate() /
  *   commit(): a step of the history is recorded first (similar changes in a row - typing,
  *   nudging, dragging - become one step), then the document is replaced (never changed in place,
  *   so the signals see every change) and fields no layer uses any more are dropped.
- * @usage `const store = new EditorStore(template, canEdit); store.updateLayer(id, { x: 10 }, 'x')`.
- * @dependencies render/document.ts, render/geometry.ts (anchors), Angular signals.
+ *   Block instances (templates only): insert, scale, make a block of the selection (the layers
+ *   are replaced by an instance) and unpack an instance back to layers; their boxes follow the
+ *   current size of their blocks (syncInstances() after loading). A block never gets instances -
+ *   pasting skips them.
+ * @usage `const store = new EditorStore(template, canEdit); store.updateLayer(id, { x: 10 }, 'x')`;
+ *   a block: `new EditorStore(blockAsTemplate(block), canEdit, 'block')`.
+ * @dependencies render/document.ts, render/geometry.ts (anchors), render/block-fields.ts,
+ *   render/block-instances.ts, Angular signals.
  */
 
 import { computed, signal } from '@angular/core';
 import {
-  CanvasSize, Field, Layer, LayerType, TemplateDocument, cloneJson, createLayer, layerSources, newLayerId, usedFieldKeys,
+  BlockLayer, CanvasSize, DOCUMENT_LIMITS, Field, Layer, PlainLayerType, TemplateDocument, cloneJson, createBlockLayer, createLayer, layerSources,
+  newLayerId, usedFieldKeys,
 } from '../../shared/render/document';
-import { boundingBox, layerRect, offsetFor, unionRect } from '../../shared/render/geometry';
-import { CreatorTemplateDetail, TemplateSave } from '../../shared/js-creator.models';
+import { Rect, boundingBox, layerRect, offsetFor, unionRect } from '../../shared/render/geometry';
+import { BlockDef, BlockResolver, EffectiveField } from '../../shared/render/block-fields';
+import { anchorByPlace, unpackInstance } from '../../shared/render/block-instances';
+import { BlockSave, CreatorBlockDetail, CreatorTemplateDetail, TemplateSave } from '../../shared/js-creator.models';
+
+/** What the editor edits. */
+export type EditorKind = 'template' | 'block';
 
 /** Everything of a template that the editor changes (one step of the history). */
 export interface EditorSnapshot {
@@ -34,7 +46,8 @@ export interface EditorSnapshot {
 
 /** Layers copied to the clipboard with the fields they use. */
 interface ClipboardContent {
-  templateId: number;
+  /** `template:<id>` / `block:<id>` - pasting into the same design shifts the copies. */
+  owner: string;
   layers: Layer[];
   fields: Field[];
 }
@@ -48,11 +61,26 @@ const COALESCE_MS = 1200;
 /** Clipboard shared by the editors of the session (copy in one template, paste in another). */
 let clipboard: ClipboardContent | null = null;
 
+/**
+ * @description A block in the shape the editor opens (the output and caption of a template are
+ *   not used for a block).
+ * @param block Block of the API.
+ */
+export function blockAsTemplate(block: CreatorBlockDetail): CreatorTemplateDetail {
+  return {
+    id: block.id, section: block.section, name: block.name, width: block.width, height: block.height, output_format: 'png', output_quality: 90,
+    caption_template: null, thumb_url: block.thumb_url, version: block.version, created_at: block.created_at, updated_at: block.updated_at,
+    deleted_at: block.deleted_at, schema_version: block.schema_version, document: block.document,
+  };
+}
+
 export class EditorStore {
-  /** Id of the template. */
+  /** Id of the template / block. */
   readonly templateId: number;
   /** Changes are allowed (update permission). */
   readonly editable: boolean;
+  /** A template or a block. */
+  readonly kind: EditorKind;
 
   /** Current state. */
   readonly state = signal<EditorSnapshot>(null as unknown as EditorSnapshot);
@@ -93,12 +121,14 @@ export class EditorStore {
   readonly canRedo = computed(() => this.redoStack().length > 0);
 
   /**
-   * @param template Template loaded from the API.
+   * @param template Template loaded from the API (a block through blockAsTemplate()).
    * @param editable Whether the account may save it.
+   * @param kind A template or a block.
    */
-  constructor(template: CreatorTemplateDetail, editable: boolean) {
+  constructor(template: CreatorTemplateDetail, editable: boolean, kind: EditorKind = 'template') {
     this.templateId = template.id;
     this.editable = editable;
+    this.kind = kind;
     this.load(template);
   }
 
@@ -133,6 +163,39 @@ export class EditorStore {
       name: s.name.trim(), width: s.width, height: s.height, output_format: s.outputFormat, output_quality: s.outputQuality,
       caption_template: s.caption.trim() ? s.caption : null, version: this.version(), document: s.doc,
     };
+  }
+
+  /**
+   * @description Body of the save of a block.
+   */
+  blockSaveBody(): BlockSave {
+    const s = this.state();
+    return { name: s.name.trim(), width: s.width, height: s.height, version: this.version(), document: s.doc };
+  }
+
+  /**
+   * @description Boxes of the instances follow the current size of their blocks × scale (after
+   *   loading - a block may have changed its size). Not a step of the history; a state without
+   *   unsaved changes stays without them.
+   * @param resolve Blocks of the instances.
+   */
+  syncInstances(resolve: BlockResolver): void {
+    const state = this.state();
+    let changed = false;
+    const layers = state.doc.pages[0].layers.map(layer => {
+      const block = layer.type === 'block' ? resolve(layer.blockId) : undefined;
+      if (!block || layer.type !== 'block') return layer;
+      const w = block.width * layer.scale;
+      const h = block.height * layer.scale;
+      if (Math.abs(w - layer.w) < 0.01 && Math.abs(h - layer.h) < 0.01) return layer;
+      changed = true;
+      return { ...layer, w, h };
+    });
+    if (!changed) return;
+    const clean = JSON.stringify(state) === this.savedJson();
+    const next = { ...state, doc: { ...state.doc, pages: [{ ...state.doc.pages[0], layers }, ...state.doc.pages.slice(1)] } };
+    this.state.set(next);
+    if (clean) this.savedJson.set(JSON.stringify(next));
   }
 
   /**
@@ -247,12 +310,91 @@ export class EditorStore {
    * @param patch Further properties.
    * @returns Id of the new layer.
    */
-  addLayer(type: LayerType, patch: Partial<Layer> = {}): string {
+  addLayer(type: PlainLayerType, patch: Partial<Layer> = {}): string {
     const id = newLayerId(new Set(this.layers().map(l => l.id)));
     const layer = { ...createLayer(type, this.size(), id), ...patch } as Layer;
     this.mutate(doc => doc.pages[0].layers.push(layer));
     this.selection.set([id]);
     return id;
+  }
+
+  /**
+   * @description Adds an instance of a block on top (centred, fitted to the canvas) and selects it
+   *   (templates only).
+   * @param block Block.
+   * @returns Id of the new layer, or null in a block.
+   */
+  addBlock(block: Pick<BlockDef, 'id' | 'width' | 'height'>): string | null {
+    if (this.kind !== 'template') return null;
+    const id = newLayerId(new Set(this.layers().map(l => l.id)));
+    const layer = createBlockLayer(block, this.size(), id);
+    this.mutate(doc => doc.pages[0].layers.push(layer));
+    this.selection.set([id]);
+    return id;
+  }
+
+  /**
+   * @description New scale of an instance (its box follows: block size × scale, anchor offset kept).
+   * @param id Instance.
+   * @param scale Scale (kept within the limits).
+   * @param block Its block (size).
+   */
+  setScale(id: string, scale: number, block: Pick<BlockDef, 'width' | 'height'>): void {
+    const value = Math.round(Math.min(DOCUMENT_LIMITS.maxScale, Math.max(DOCUMENT_LIMITS.minScale, scale)) * 10000) / 10000;
+    this.updateLayer(id, { scale: value, w: block.width * value, h: block.height * value } as Partial<BlockLayer>, 'scale');
+  }
+
+  /**
+   * @description Replaces layers by an instance of the block made from them (one step): the
+   *   instance takes the place of the lowest of them, scale 1, anchored by where it lies.
+   * @param ids Layers that became the block.
+   * @param block The new block.
+   * @param box Place of the instance (the box around the layers).
+   * @returns Id of the instance.
+   */
+  replaceWithInstance(ids: readonly string[], block: Pick<BlockDef, 'id' | 'width' | 'height'>, box: Rect): string {
+    const remove = new Set(ids);
+    const layers = this.layers();
+    const id = newLayerId(new Set(layers.map(l => l.id)));
+    const anchor = anchorByPlace(box, this.size());
+    const offset = offsetFor(anchor, { ...box, w: block.width, h: block.height }, this.size());
+    const instance: BlockLayer = {
+      ...createBlockLayer(block, this.size(), id), anchor, x: Math.round(offset.x), y: Math.round(offset.y), w: block.width, h: block.height, scale: 1,
+    };
+    const index = layers.findIndex(l => remove.has(l.id));
+    this.mutate(doc => {
+      const kept = doc.pages[0].layers.filter(l => !remove.has(l.id));
+      const before = doc.pages[0].layers.slice(0, Math.max(0, index)).filter(l => !remove.has(l.id)).length;
+      kept.splice(before, 0, instance);
+      doc.pages[0].layers = kept;
+    });
+    this.selection.set([id]);
+    return id;
+  }
+
+  /**
+   * @description Unpacks an instance into independent layers in its place (one step); the fields
+   *   of the block become fields of the template with the keys they had in the form.
+   * @param id Instance.
+   * @param block Its block.
+   * @param effective Fields of the form of the template.
+   * @returns false when the template would exceed the limits of layers / fields (nothing changes).
+   */
+  unpack(id: string, block: BlockDef, effective: readonly EffectiveField[]): boolean {
+    const layers = this.layers();
+    const instance = layers.find((l): l is BlockLayer => l.id === id && l.type === 'block');
+    if (!instance) return false;
+    const unpacked = unpackInstance(instance, block, this.size(), effective, new Set(layers.map(l => l.id)));
+    const fields = this.doc().fields;
+    const newFields = unpacked.fields.filter(f => !fields.some(existing => existing.key === f.key));
+    if (layers.length - 1 + unpacked.layers.length > DOCUMENT_LIMITS.maxLayers || fields.length + newFields.length > DOCUMENT_LIMITS.maxFields) return false;
+    this.mutate(doc => {
+      const index = doc.pages[0].layers.findIndex(l => l.id === id);
+      doc.pages[0].layers.splice(index, 1, ...unpacked.layers);
+      doc.fields.push(...newFields);
+    });
+    this.selection.set(unpacked.layers.map(l => l.id));
+    return true;
   }
 
   /** @description Deletes the selected layers. */
@@ -269,7 +411,7 @@ export class EditorStore {
     const layers = this.selectedLayers();
     if (!layers.length) return;
     const keys = usedFieldKeys({ ...this.doc(), pages: [{ ...this.doc().pages[0], layers }] });
-    clipboard = { templateId: this.templateId, layers: cloneJson(layers), fields: cloneJson(this.doc().fields.filter(f => keys.has(f.key))) };
+    clipboard = { owner: this.owner(), layers: cloneJson(layers), fields: cloneJson(this.doc().fields.filter(f => keys.has(f.key))) };
   }
 
   /** @description Whether the clipboard holds layers. */
@@ -278,14 +420,18 @@ export class EditorStore {
   }
 
   /**
-   * @description Pastes the clipboard on top (shifted by 20 px in the same template) and selects
-   *   it; missing fields are added (a key used by another kind of field gets a new key).
+   * @description Pastes the clipboard on top (shifted by 20 px in the same design) and selects
+   *   it; missing fields are added (a key used by another kind of field gets a new key). A block
+   *   skips block instances (blocks do not nest).
+   * @returns Number of layers skipped.
    */
-  paste(): void {
+  paste(): number {
     const content = clipboard;
-    if (!content?.layers.length) return;
-    const shift = content.templateId === this.templateId ? 20 : 0;
-    this.insertCopies(content.layers, content.fields, shift);
+    if (!content?.layers.length) return 0;
+    const shift = content.owner === this.owner() ? 20 : 0;
+    const layers = this.kind === 'block' ? content.layers.filter(l => l.type !== 'block') : content.layers;
+    if (layers.length) this.insertCopies(layers, content.fields, shift);
+    return content.layers.length - layers.length;
   }
 
   /** @description Duplicates the selected layers (shifted by 20 px). */
@@ -453,6 +599,11 @@ export class EditorStore {
       }
     });
     this.selection.set(ids);
+  }
+
+  /** @description Owner key of the clipboard (`template:<id>` / `block:<id>`). */
+  private owner(): string {
+    return `${this.kind}:${this.templateId}`;
   }
 
   /** @description Drops ids of layers that no longer exist from the selection. */

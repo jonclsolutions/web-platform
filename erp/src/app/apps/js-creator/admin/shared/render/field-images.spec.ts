@@ -5,12 +5,14 @@
  * @author JS
  * @created 2026
  * @description Unit tests of the places of image fields and their crop: places on the background,
- *   in image layers and in cells of grids (hidden layers skipped), hit testing with rotation,
- *   dragging (also mirrored and rotated), zoom limits and the scale a place needs.
- * @dependencies field-images.ts, document.ts
+ *   in image layers and in cells of grids (hidden layers skipped), inside block instances
+ *   (scaled and turned with the instance), hit testing with rotation, dragging (also mirrored
+ *   and rotated), zoom limits and the scale a place needs.
+ * @dependencies field-images.ts, document.ts, block-fields.ts
  */
 
-import { CanvasSize, GridLayer, ImageLayer, TemplateDocument, createLayer, emptyDocument } from './document';
+import { BlockLayer, CanvasSize, GridLayer, ImageLayer, TemplateDocument, createLayer, emptyDocument } from './document';
+import { BlockDef } from './block-fields';
 import { CROP_ZOOM, boxContains, defaultCrop, fieldImageBoxes, panCrop, requiredScale, zoomCrop } from './field-images';
 
 /** Size of the test canvas. */
@@ -114,5 +116,42 @@ describe('field-images', () => {
     expect(requiredScale(boxes, { width: 2000, height: 1000 }, 1)).toBeCloseTo(0.5);
     expect(requiredScale(boxes, { width: 2000, height: 1000 }, 3)).toBeCloseTo(1.5);
     expect(requiredScale([], { width: 2000, height: 1000 }, 1)).toBe(0);
+  });
+  /**
+   * @description An image field of a block is found inside its instance under its form key:
+   *   scaled into the box of the instance, and with the instance rotated its frame centre turns
+   *   around the instance centre and the rotations add up; hit testing works there.
+   * @input block 100 × 100 with an image field "photo" at 50, 0 (50 × 50); template field photo
+   *   (so the block field is photo_2); instance at 200, 100 with scale 2; the same rotated by 180°
+   * @output photo_2: rect 300, 100 (100 × 100), rotation 0; rotated: rect 200, 200, rotation 180,
+   *   contains 250, 250; nothing for photo inside the instance; nothing without the resolver
+   */
+  it('finds the places of a field inside block instances', () => {
+    const block: BlockDef = { id: 2, name: 'B', width: 100, height: 100, document: emptyDocument(true) };
+    block.document.fields = [{ key: 'photo', type: 'image', label: 'P', help: '', required: false, minWidth: 0, minHeight: 0 }];
+    block.document.pages[0].layers = [{
+      ...(createLayer('image', SIZE, 'bi') as ImageLayer), anchor: 'tl', x: 50, y: 0, w: 50, h: 50, source: { kind: 'field', field: 'photo' },
+    }];
+    const instance: BlockLayer = {
+      id: 'inst', name: '', type: 'block', anchor: 'tl', x: 200, y: 100, w: 200, h: 200, rotation: 0, opacity: 1, hidden: false, locked: false, blockId: 2, scale: 2,
+    };
+    const doc = emptyDocument();
+    doc.fields = [{ key: 'photo', type: 'image', label: 'P', help: '', required: false, minWidth: 0, minHeight: 0 }];
+    doc.pages[0].background.image = { source: { kind: 'field', field: 'photo' }, fit: 'cover', focusX: 0.5, focusY: 0.5, overlay: null };
+    doc.pages[0].layers = [instance];
+    const resolve = (id: number) => (id === 2 ? block : undefined);
+
+    const straight = fieldImageBoxes(doc, SIZE, 'photo_2', 0, resolve);
+    expect(straight.map(b => [b.rect, b.rotation])).toEqual([[{ x: 300, y: 100, w: 100, h: 100 }, 0]]);
+    expect(fieldImageBoxes(doc, SIZE, 'photo', 0, resolve).length).toBe(1);
+    expect(fieldImageBoxes(doc, SIZE, 'photo_2').length).toBe(0);
+
+    doc.pages[0].layers = [{ ...instance, rotation: 180 }];
+    const [turned] = fieldImageBoxes(doc, SIZE, 'photo_2', 0, resolve);
+    expect(turned.rotation).toBe(180);
+    expect(Math.round(turned.rect.x)).toBe(200);
+    expect(Math.round(turned.rect.y)).toBe(200);
+    expect(boxContains(turned, { x: 250, y: 250 })).toBeTrue();
+    expect(boxContains(turned, { x: 350, y: 150 })).toBeFalse();
   });
 });

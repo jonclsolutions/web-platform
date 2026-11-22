@@ -5,12 +5,13 @@
  * @author JS
  * @created 2026
  * @description Unit tests of the rules of the form of generating: the text of the post from the
- *   pattern, highlighting the selected part, what stops generating and the default name.
+ *   pattern, highlighting the selected part, the united fields of a set, what stops generating
+ *   and the default name.
  * @dependencies generate-form.ts, document.ts
  */
 
 import { Field, emptyDocument } from '../../shared/render/document';
-import { defaultOutputName, fillCaption, formProblems, toggleHighlight, visibleLength } from './generate-form';
+import { defaultOutputName, fillCaption, formProblems, toggleHighlight, unionFields, visibleLength } from './generate-form';
 
 /** Fields of a test template. */
 const FIELDS: Field[] = [
@@ -68,10 +69,10 @@ describe('generate-form', () => {
     const doc = emptyDocument();
     doc.fields = FIELDS;
     const clean = { overflows: [], missing: [] };
-    expect(formProblems(doc, {}, new Set(), clean).map(p => [p.kind, p.field])).toEqual([['required', 'title'], ['required', 'photo']]);
-    expect(formProblems(doc, { title: '** **' }, new Set(['photo']), clean).map(p => p.kind)).toEqual(['required']);
-    expect(formProblems(doc, { title: '12345678901' }, new Set(['photo']), clean).map(p => p.kind)).toEqual(['too_long']);
-    expect(formProblems(doc, { title: '**1234567890**' }, new Set(['photo']), clean)).toEqual([]);
+    expect(formProblems(doc.fields, {}, new Set(), clean).map(p => [p.kind, p.field])).toEqual([['required', 'title'], ['required', 'photo']]);
+    expect(formProblems(doc.fields, { title: '** **' }, new Set(['photo']), clean).map(p => p.kind)).toEqual(['required']);
+    expect(formProblems(doc.fields, { title: '12345678901' }, new Set(['photo']), clean).map(p => p.kind)).toEqual(['too_long']);
+    expect(formProblems(doc.fields, { title: '**1234567890**' }, new Set(['photo']), clean)).toEqual([]);
 
     const report = {
       overflows: [
@@ -81,9 +82,35 @@ describe('generate-form', () => {
       ],
       missing: ['asset:4', 'field:logo'],
     };
-    expect(formProblems(doc, { title: 'Akce' }, new Set(['photo']), report).map(p => [p.kind, p.field, p.label])).toEqual([
+    expect(formProblems(doc.fields, { title: 'Akce' }, new Set(['photo']), report).map(p => [p.kind, p.field, p.label])).toEqual([
       ['overflow', 'title', 'Nadpis'], ['overflow_fixed', null, ''], ['missing_asset', null, ''],
     ]);
+  });
+
+  /**
+   * @description A set has one form: a key once, required by any template, the shortest text
+   *   limit, multi-line by any, the largest recommended resolution; a key with two kinds is a
+   *   conflict that stops generating.
+   * @input template A: title (required, 40, one line) + photo (800 × 0); template B: title
+   *   (optional, 20, multi-line) + photo (0 × 900) + note; template C: note as an image
+   * @output title required / 20 / multi-line; photo 800 × 900; note text; conflict note → problem
+   */
+  it('unites the fields of a set', () => {
+    const a = [{ ...FIELDS[0], required: true, maxLength: 40, multiline: false }, { ...FIELDS[2], minWidth: 800, minHeight: 0 }] as Field[];
+    const b = [
+      { ...FIELDS[0], required: false, maxLength: 20, multiline: true, label: 'Jiný' }, { ...FIELDS[2], minWidth: 0, minHeight: 900 },
+      { key: 'note', type: 'text', label: 'Pozn.', help: '', required: false, sample: '', maxLength: 100, multiline: false },
+    ] as Field[];
+    const c = [{ key: 'note', type: 'image', label: 'Pozn.', help: '', required: true, minWidth: 0, minHeight: 0 }] as Field[];
+    const united = unionFields([a, b, c]);
+    expect(united.fields.map(f => f.key)).toEqual(['title', 'photo', 'note']);
+    expect(united.fields[0]).toEqual(jasmine.objectContaining({ label: 'Nadpis', required: true, maxLength: 20, multiline: true }));
+    expect(united.fields[1]).toEqual(jasmine.objectContaining({ minWidth: 800, minHeight: 900 }));
+    expect(united.fields[2].type).toBe('text');
+    expect(united.conflicts).toEqual(['note']);
+    expect(a[0]).toEqual(jasmine.objectContaining({ maxLength: 40 }));
+    const problems = formProblems(united.fields, { title: 'x' }, new Set(['photo']), { overflows: [], missing: [] }, united.conflicts);
+    expect(problems.map(p => [p.kind, p.label])).toEqual([['conflict', 'note']]);
   });
 
   /**

@@ -5,7 +5,8 @@
     @author: JS
     @created: 2026
     @description: Panel "Fields": one card per field in the order of the generating form with its
-        label, key, help, required, the properties of its kind and the up / down buttons.
+        label, key, help, required, the properties of its kind and the up / down buttons; then the
+        fields of block instances (read only, with their keys in the form).
 -->
 <div class="pn">
   <section class="pn-section">
@@ -56,7 +57,21 @@
         }
       </section>
     } @empty {
-      <p class="pn-empty">{{ t('no_fields') }}</p>
+      @if (!instanceFields().length) {
+        <p class="pn-empty">{{ t('no_fields') }}</p>
+      }
     }
   </fieldset>
+  @if (instanceFields().length) {
+    <section class="pn-section">
+      <h3 class="pn-title">{{ t('block_fields_title') }}</h3>
+      <p class="pn-hint">{{ t('block_fields_hint') }}</p>
+      @for (field of instanceFields(); track field.key) {
+        <div class="pn-instance-field">
+          <strong>{{ field.label }}</strong>
+          <span>{{ t(field.type === 'text' ? 'field_text' : 'field_image') }} · {{ blocks().get(field.origin!.blockId)?.name }} · <code>{{ token(field.key) }}</code></span>
+        </div>
+      }
+    </section>
+  }
 </div>

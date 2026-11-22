@@ -4,19 +4,21 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Places of an image field in a template (background, image layers, cells of grids)
- *   and the crop of its image chosen when generating: the starting crop, moving the image in
+ * @description Places of an image field in a template (background, image layers, cells of grids,
+ *   the same inside block instances - scaled and turned with the instance) and the crop of its
+ *   image chosen when generating: the starting crop, moving the image in
  *   its box by dragging (also in rotated and mirrored boxes), zooming, finding the place under
  *   the pointer and how much of the image a place needs (resolution warning, the size the photo
  *   is decoded at for the output).
  * @usage `const boxes = fieldImageBoxes(doc, size, 'photo'); crop = panCrop(crop, boxes[0], image, dx, dy)`.
- * @dependencies document.ts, geometry.ts, paint.ts (fitScale), renderer.ts (ImageCrop).
+ * @dependencies document.ts, geometry.ts, paint.ts (fitScale), renderer.ts (ImageCrop), block-fields.ts.
  */
 
 import { CanvasSize, ImageFit, TemplateDocument } from './document';
-import { Point, Rect, gridCellRects, layerRect, toLocal } from './geometry';
+import { Point, Rect, gridCellRects, layerRect, rotatePoint, toLocal } from './geometry';
 import { fitScale } from './paint';
 import { ImageCrop } from './renderer';
+import { BlockResolver, EffectiveField, effectiveFields, instanceKeys, instanceLayer } from './block-fields';
 
 /** Smallest / largest zoom of a crop. */
 export const CROP_ZOOM = { min: 1, max: 4 } as const;
@@ -46,13 +48,15 @@ export interface ImageSize {
  * @description Every visible place of an image field on a page, in drawing order (background first).
  * @param doc Document.
  * @param size Size of the template.
- * @param key Key of the field.
+ * @param key Key of the field (of the form - an instance field has its form key).
  * @param page Index of the page.
+ * @param resolve Blocks of the instances (without it instances are skipped).
  * @returns Places.
  */
-export function fieldImageBoxes(doc: TemplateDocument, size: CanvasSize, key: string, page = 0): FieldImageBox[] {
+export function fieldImageBoxes(doc: TemplateDocument, size: CanvasSize, key: string, page = 0, resolve?: BlockResolver): FieldImageBox[] {
   const current = doc.pages[page];
   if (!current) return [];
+  let effective: EffectiveField[] | null = null;
   const boxes: FieldImageBox[] = [];
   const canvas: Rect = { x: 0, y: 0, w: size.width, h: size.height };
   const bg = current.background.image;
@@ -61,6 +65,33 @@ export function fieldImageBoxes(doc: TemplateDocument, size: CanvasSize, key: st
   }
   for (const layer of current.layers) {
     if (layer.hidden) continue;
+    if (layer.type === 'block') {
+      const block = resolve?.(layer.blockId);
+      if (!block) continue;
+      effective ??= effectiveFields(doc, resolve);
+      const inner = [...instanceKeys(effective, layer.id)].filter(([, formKey]) => formKey === key).map(([blockKey]) => blockKey);
+      if (!inner.length) continue;
+      const box = layerRect(instanceLayer(layer, block), size);
+      const scale = box.w / block.width;
+      const centre = { x: box.x + box.w / 2, y: box.y + box.h / 2 };
+      const place = (r: Rect): Rect => ({ x: box.x + r.x * scale, y: box.y + r.y * scale, w: r.w * scale, h: r.h * scale });
+      for (const blockKey of inner) {
+        for (const b of fieldImageBoxes(block.document, block, blockKey)) {
+          // The frame keeps its own rotation; its centre turns with the instance around the instance centre.
+          const frame = place(b.frame);
+          const middle = { x: frame.x + frame.w / 2, y: frame.y + frame.h / 2 };
+          const moved = rotatePoint(middle, centre, layer.rotation);
+          const dx = moved.x - middle.x;
+          const dy = moved.y - middle.y;
+          const rect = place(b.rect);
+          boxes.push({
+            ...b, rect: { ...rect, x: rect.x + dx, y: rect.y + dy }, frame: { ...frame, x: frame.x + dx, y: frame.y + dy },
+            rotation: b.rotation + layer.rotation,
+          });
+        }
+      }
+      continue;
+    }
     const frame = layerRect(layer, size);
     if (layer.type === 'image' && layer.source.kind === 'field' && layer.source.field === key) {
       boxes.push({ rect: frame, frame, rotation: layer.rotation, fit: layer.fit, focusX: layer.focusX, focusY: layer.focusY, flipX: layer.flipX });

@@ -6,8 +6,8 @@
  * @author JS
  * @created 2026
  * @description Template in a list: name, size, output format, caption pattern, signed URL of the
- *   thumbnail (null until the editor saves one) and the version. Without the document -
- *   TemplateDetailResource adds it.
+ *   thumbnail (null until the editor saves one; `thumb_stale` = a block it uses changed since)
+ *   and the version. Without the document - TemplateDetailResource adds it.
  * @dependencies CreatorTemplate, WorkspaceFiles.
  */
 
@@ -36,6 +36,8 @@ class TemplateResource extends JsonResource
             'output_quality'   => $this->output_quality,
             'caption_template' => $this->caption_template,
             'thumb_url'        => WorkspaceFiles::templateThumbUrl($this->resource),
+            // A block of the template changed after the thumbnail was drawn (the list draws it again).
+            'thumb_stale'      => (bool) $this->thumb_stale,
             'version'          => $this->version,
             'created_at'       => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at'       => $this->updated_at?->format('Y-m-d H:i:s'),

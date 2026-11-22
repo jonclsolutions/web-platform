@@ -119,6 +119,20 @@ export function containsPoint(point: Point, rect: Rect, rotation: number): boole
 }
 
 /**
+ * @description Point turned around a centre (degrees, clockwise - the direction of the canvas).
+ * @param point Point.
+ * @param center Centre of the rotation.
+ * @param rotation Degrees.
+ */
+export function rotatePoint(point: Point, center: Point, rotation: number): Point {
+  if (!rotation) return { ...point };
+  const rad = (rotation * Math.PI) / 180;
+  const dx = point.x - center.x;
+  const dy = point.y - center.y;
+  return { x: center.x + dx * Math.cos(rad) - dy * Math.sin(rad), y: center.y + dx * Math.sin(rad) + dy * Math.cos(rad) };
+}
+
+/**
  * @description Point turned back by the rotation of a box (into its unrotated coordinates).
  * @param point Point on the canvas.
  * @param rect Box before rotation.

@@ -6,17 +6,17 @@
  * @author JS
  * @created 2026
  * @description OWN templates of one section (`<section>/templates`, the section comes from the
- *   route): list (search, size, sorting, trash, the sizes in use), detail with the document, new
- *   (empty document), save of the editor (document validated by TemplateDocument, files of the
- *   document must be own and outside the trash, version check), thumbnail, copy (also to another
- *   size), delete to the trash, restore, delete for good, empty the trash.
+ *   route): list (search, size, sorting, trash, the sizes in use), detail with the document and
+ *   the blocks of its instances, new (empty document), save of the editor (document validated by
+ *   DocumentCheck - images, fonts and blocks must be own; version check), thumbnail, copy (also
+ *   to another size), delete to the trash, restore, delete for good, empty the trash.
  *   Every query is limited to the signed-in account and the section (another account's template
  *   = 404, also for the sysadmin).
  * @note A save based on an older version (the template saved meanwhile in another tab) is
  *   refused with 409 `version_conflict` - compare-and-set in one UPDATE, so two saves never both
  *   win. The audit log names only the id of a template, never its name.
- * @dependencies TemplateDocument, TemplateUsages, WorkspaceQuota, WorkspaceFiles, LibraryImage,
- *   CreatorTemplate, CreatorAsset, CreatorFont, TemplateResource, TemplateDetailResource,
+ * @dependencies TemplateDocument, DocumentCheck, TemplateUsages, WorkspaceQuota, WorkspaceFiles,
+ *   LibraryImage, CreatorTemplate, CreatorBlock, TemplateResource, TemplateDetailResource,
  *   AppliesSafeSorting, LogsActivity (JsCreatorLog).
  */
 
@@ -28,13 +28,13 @@ use App\Apps\JsCreator\Http\Requests\TemplateThumbnailRequest;
 use App\Apps\JsCreator\Http\Requests\UpdateTemplateRequest;
 use App\Apps\JsCreator\Http\Resources\TemplateDetailResource;
 use App\Apps\JsCreator\Http\Resources\TemplateResource;
-use App\Apps\JsCreator\Models\CreatorAsset;
-use App\Apps\JsCreator\Models\CreatorFont;
+use App\Apps\JsCreator\Models\CreatorBlock;
 use App\Apps\JsCreator\Models\CreatorTemplate;
 use App\Apps\JsCreator\Models\CreatorUsage;
 use App\Apps\JsCreator\Models\JsCreatorLog;
 use App\Apps\JsCreator\Services\TemplateUsages;
 use App\Apps\JsCreator\Services\WorkspaceQuota;
+use App\Apps\JsCreator\Support\DocumentCheck;
 use App\Apps\JsCreator\Support\LibraryImage;
 use App\Apps\JsCreator\Support\TemplateDocument;
 use App\Apps\JsCreator\Support\WorkspaceFiles;
@@ -88,14 +88,15 @@ class TemplateController extends Controller
     }
 
     /**
-     * @description An own template outside the trash with its document (editor).
+     * @description An own template outside the trash with its document and the blocks of its
+     *   instances (editor, generating).
      * @param Request $request
      * @param string $id Template.
      * @return JsonResponse 200; 404.
      */
     public function show(Request $request, string $id): JsonResponse
     {
-        return $this->respond(new TemplateDetailResource($this->templates($request)->findOrFail((int) $id)));
+        return $this->respond(new TemplateDetailResource(self::withBlocks($this->templates($request)->findOrFail((int) $id))));
     }
 
     /**
@@ -119,13 +120,13 @@ class TemplateController extends Controller
         ]);
         $this->logAction($request, JsCreatorLog::class, 'create', 'Template', "Template #{$template->id} created", $template->id, 'Template');
 
-        return $this->respond(new TemplateDetailResource($template->refresh()), 201);
+        return $this->respond(new TemplateDetailResource(self::withBlocks($template->refresh())), 201);
     }
 
     /**
      * @description Saves the editor: every property and the document. Refused when the template
      *   was saved meanwhile (another tab) or when the document is invalid / uses a file that is
-     *   not in the own library.
+     *   not in the own library / a block that is not an own block of the section.
      * @param UpdateTemplateRequest $request
      * @param string $id Template.
      * @return JsonResponse 200 the template with its document (new version); 404; 409
@@ -135,7 +136,7 @@ class TemplateController extends Controller
     {
         $template = $this->templates($request)->findOrFail((int) $id);
         $document = $request->document();
-        $checked = $this->checkedDocument($document, $request->user()->id);
+        $checked = DocumentCheck::validate($document, $request->user()->id, $template->section, true);
 
         $saved = DB::transaction(function () use ($request, $template, $document, $checked) {
             $updated = CreatorTemplate::query()->whereKey($template->id)->where('version', (int) $request->input('version'))->update([
@@ -151,7 +152,7 @@ class TemplateController extends Controller
                 'updated_at'       => now(),
             ]);
             if ($updated === 1) {
-                TemplateUsages::sync($template, $checked->assetIds(), $checked->fontIds());
+                TemplateUsages::sync($template, $checked->assetIds(), $checked->fontIds(), $checked->blockIds());
             }
 
             return $updated === 1;
@@ -166,12 +167,13 @@ class TemplateController extends Controller
         }
         $this->logAction($request, JsCreatorLog::class, 'update', 'Template', "Template #{$template->id} saved", $template->id, 'Template');
 
-        return $this->respond(new TemplateDetailResource($template->refresh()));
+        return $this->respond(new TemplateDetailResource(self::withBlocks($template->refresh())));
     }
 
     /**
-     * @description Replaces the thumbnail of an own template (a PNG / WebP drawn by the editor,
-     *   re-encoded to WebP of at most 480 px; within the quota). Does not change the version.
+     * @description Replaces the thumbnail of an own template (a PNG / WebP drawn by the editor or by
+     *   the list after a block changed, re-encoded to WebP of at most 480 px; within the quota).
+     *   Does not change the version; the thumbnail is no longer stale.
      * @param TemplateThumbnailRequest $request `thumb`.
      * @param string $id Template.
      * @return JsonResponse 200 { thumb_url }; 404; 422 unreadable image / full quota.
@@ -190,7 +192,7 @@ class TemplateController extends Controller
         $path = WorkspaceFiles::newPath($template->user_id, 'templates', 'webp');
         WorkspaceFiles::put($path, $thumb);
         try {
-            $template->forceFill(['thumb_path' => $path, 'thumb_bytes' => strlen($thumb)])->saveQuietly();
+            $template->forceFill(['thumb_path' => $path, 'thumb_bytes' => strlen($thumb), 'thumb_stale' => false])->saveQuietly();
         } catch (Throwable $e) {
             WorkspaceFiles::delete([$path]);
             throw $e;
@@ -240,11 +242,10 @@ class TemplateController extends Controller
                     'caption_template' => $source->caption_template,
                     'thumb_path'       => $path,
                     'thumb_bytes'      => $thumb !== null ? strlen($thumb) : 0,
+                    'thumb_stale'      => $thumb !== null && $source->thumb_stale,
                     'version'          => 1,
                 ]);
-                $usages = $source->usages()->get();
-                TemplateUsages::sync($copy, $usages->where('target_type', CreatorUsage::ASSET)->pluck('target_id')->all(),
-                    $usages->where('target_type', CreatorUsage::FONT)->pluck('target_id')->all());
+                TemplateUsages::copy($source, $copy);
 
                 return $copy;
             });
@@ -254,7 +255,7 @@ class TemplateController extends Controller
         }
         $this->logAction($request, JsCreatorLog::class, 'create', 'Template', "Template #{$copy->id} copied from #{$source->id}", $copy->id, 'Template');
 
-        return $this->respond(new TemplateDetailResource($copy->refresh()), 201);
+        return $this->respond(new TemplateDetailResource(self::withBlocks($copy->refresh())), 201);
     }
 
     /**
@@ -328,31 +329,16 @@ class TemplateController extends Controller
     }
 
     /**
-     * @description Validates a document and the ownership of the library images and own fonts it
-     *   uses (outside the trash).
-     * @param mixed $document Document of the request.
-     * @param int $userId Owner.
-     * @return TemplateDocument The checked document.
-     * @throws ValidationException 422 with the paths of the errors (`document.…`).
+     * @description Loads the blocks of the instances of a template (relation `blocks`, used by
+     *   TemplateDetailResource) - the own blocks its usages name.
+     * @param CreatorTemplate $template Template.
+     * @return CreatorTemplate The same template.
      */
-    private function checkedDocument(mixed $document, int $userId): TemplateDocument
+    public static function withBlocks(CreatorTemplate $template): CreatorTemplate
     {
-        $checked = TemplateDocument::check($document);
-        $errors = $checked->errors();
-        if ($errors === []) {
-            $assets = CreatorAsset::query()->ownedBy($userId)->whereIn('id', $checked->assetIds())->pluck('id')->all();
-            foreach (array_diff($checked->assetIds(), $assets) as $missing) {
-                $errors[$checked->pathOf('asset', $missing)] = 'The image is not in your library.';
-            }
-            $fonts = CreatorFont::query()->ownedBy($userId)->whereIn('id', $checked->fontIds())->pluck('id')->all();
-            foreach (array_diff($checked->fontIds(), $fonts) as $missing) {
-                $errors[$checked->pathOf('font', $missing)] = 'The font is not among your fonts.';
-            }
-        }
-        if ($errors !== []) {
-            throw ValidationException::withMessages($errors);
-        }
+        $ids = $template->usages()->where('target_type', CreatorUsage::BLOCK)->pluck('target_id')->all();
+        $blocks = $ids === [] ? collect() : CreatorBlock::withTrashed()->ownedBy($template->user_id)->whereIn('id', $ids)->orderBy('id')->get();
 
-        return $checked;
+        return $template->setRelation('blocks', $blocks);
     }
 }

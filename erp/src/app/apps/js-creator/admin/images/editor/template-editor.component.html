@@ -4,32 +4,36 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Template editor: top bar (back, name, undo / redo, zoom, grid, guides, safe
-        zone, save state, Save, Generate), left column (add a layer, layers), the canvas with the warnings of
-        the drawing, right column (Properties / Fields / Template). A message instead of the editor
-        on screens under 1024 px.
+    @description: Editor of a template or a block: top bar (back, name, undo / redo, zoom, grid,
+        guides, safe zone, save state, Save, Generate - templates), left column (add a layer -
+        a template also a block, layers), the canvas with the warnings of the drawing, right
+        column (Properties / Fields / Template or Block); popups choosing a block and naming a
+        block made from the selection. A message instead of the editor on screens under 1024 px.
 -->
 @if (!wide()) {
   <div class="te-narrow" role="status">
     <app-creator-icon [nodes]="icon('fit')" [size]="28" />
     <p>{{ t('narrow_screen') }}</p>
-    <button type="button" class="pn-btn" (click)="back()">{{ t('back_to_templates') }}</button>
+    <button type="button" class="pn-btn" (click)="back()">{{ backLabel }}</button>
   </div>
 } @else if (failed()) {
   <div class="te-narrow" role="alert">
     <p>{{ t('load_failed') }}</p>
-    <button type="button" class="pn-btn" (click)="back()">{{ t('back_to_templates') }}</button>
+    <button type="button" class="pn-btn" (click)="back()">{{ backLabel }}</button>
   </div>
 } @else if (store(); as s) {
   <div class="te">
     <header class="te-bar">
-      <button type="button" class="te-icon-btn" [title]="t('back_to_templates')" [attr.aria-label]="t('back_to_templates')" (click)="back()">
+      <button type="button" class="te-icon-btn" [title]="backLabel" [attr.aria-label]="backLabel" (click)="back()">
         <app-creator-icon [nodes]="icon('arrow-left')" [size]="18" />
       </button>
-      <input class="jc-input te-name" type="text" maxlength="120" [value]="s.state().name" [disabled]="!s.editable" [attr.aria-label]="t('template_name')"
+      <input class="jc-input te-name" type="text" maxlength="120" [value]="s.state().name" [disabled]="!s.editable" [attr.aria-label]="t(kind === 'block' ? 'block_name' : 'template_name')"
         (input)="setName($any($event.target).value)" />
       @if (!s.editable) {
         <span class="te-badge">{{ t('read_only') }}</span>
+      }
+      @if (kind === 'block') {
+        <span class="te-badge te-badge--block">{{ t('type_block') }}</span>
       }
       <span class="te-size">{{ s.size().width }} × {{ s.size().height }}</span>
 
@@ -78,7 +82,9 @@
           <app-creator-icon [nodes]="icon('save')" [size]="16" />{{ t('save') }}
         </button>
       }
-      <button type="button" class="te-generate" [title]="t('generate_hint')" (click)="generate()">{{ t('generate') }}</button>
+      @if (kind === 'template') {
+        <button type="button" class="te-generate" [title]="t('generate_hint')" (click)="generate()">{{ t('generate') }}</button>
+      }
     </header>
 
     <div class="te-body">
@@ -91,11 +97,17 @@
                 <span>{{ t('type_' + kind[0]) }}</span>
               </button>
             }
+            @if (kind === 'template') {
+              <button type="button" class="te-add-btn" [disabled]="blockBusy()" [title]="t('insert_block_hint')" (click)="openBlockChooser()">
+                <app-creator-icon [nodes]="icon('block')" [size]="18" />
+                <span>{{ t('type_block') }}</span>
+              </button>
+            }
           </div>
         }
         <h2 class="te-col-title">{{ t('layers') }} <span>({{ s.layers().length }})</span></h2>
         <div class="te-scroll">
-          <app-jc-layers [store]="s" />
+          <app-jc-layers [store]="s" [blocks]="blocks()" />
         </div>
       </aside>
 
@@ -117,21 +129,40 @@
       <aside class="te-right">
         <div class="te-tabs" role="tablist">
           <button type="button" role="tab" class="te-tab" [class.te-tab--on]="tab() === 'properties'" [attr.aria-selected]="tab() === 'properties'" (click)="tab.set('properties')">{{ t('tab_properties') }}</button>
-          <button type="button" role="tab" class="te-tab" [class.te-tab--on]="tab() === 'fields'" [attr.aria-selected]="tab() === 'fields'" (click)="tab.set('fields')">{{ t('tab_fields') }} ({{ s.doc().fields.length }})</button>
-          <button type="button" role="tab" class="te-tab" [class.te-tab--on]="tab() === 'template'" [attr.aria-selected]="tab() === 'template'" (click)="tab.set('template')">{{ t('tab_template') }}</button>
+          <button type="button" role="tab" class="te-tab" [class.te-tab--on]="tab() === 'fields'" [attr.aria-selected]="tab() === 'fields'" (click)="tab.set('fields')">{{ t('tab_fields') }} ({{ formFields().length }})</button>
+          <button type="button" role="tab" class="te-tab" [class.te-tab--on]="tab() === 'template'" [attr.aria-selected]="tab() === 'template'" (click)="tab.set('template')">{{ t(kind === 'block' ? 'tab_block' : 'tab_template') }}</button>
         </div>
         <div class="te-scroll" role="tabpanel">
           @switch (tab()) {
             @case ('properties') {
-              <app-jc-properties [store]="s" [curated]="curated()" [ownFonts]="ownFonts()" [assets]="assets()" [iconSet]="iconSet()" (assetPicked)="useAsset($event)" />
+              <app-jc-properties [store]="s" [curated]="curated()" [ownFonts]="ownFonts()" [assets]="assets()" [iconSet]="iconSet()" (assetPicked)="useAsset($event)"
+                [blocks]="blocks()" [canMakeBlock]="kind === 'template' && canCreate" (makeBlock)="openMakeBlock()" (editBlock)="editBlock($event)" (unpack)="unpack($event)" />
             }
-            @case ('fields') { <app-jc-fields [store]="s" /> }
-            @case ('template') { <app-jc-template-panel [store]="s" [assets]="assets()" (assetPicked)="useAsset($event)" /> }
+            @case ('fields') { <app-jc-fields [store]="s" [formFields]="formFields()" [blocks]="blocks()" /> }
+            @case ('template') { <app-jc-template-panel [store]="s" [assets]="assets()" [kind]="kind" [formFields]="formFields()" (assetPicked)="useAsset($event)" /> }
           }
         </div>
       </aside>
     </div>
   </div>
+
+  @if (choosingBlock()) {
+    <app-jc-block-chooser [section]="section" (chosen)="insertBlock($event)" (dismissed)="choosingBlock.set(false)" />
+  }
+  @if (blockName() !== null) {
+    <app-admin-modal [heading]="t('make_block')" size="sm" [closeDisabled]="blockBusy()" (dismissed)="blockName.set(null)">
+      <form id="jc-make-block" class="te-make-block" (submit)="$event.preventDefault(); makeBlock()">
+        <label for="jc-block-name">{{ t('block_name') }}</label>
+        <input id="jc-block-name" class="jc-input" type="text" maxlength="120" autocomplete="off" [value]="blockName()" data-autofocus
+          (input)="setBlockName($any($event.target).value)" />
+        <p class="pn-hint">{{ t('make_block_text') }}</p>
+      </form>
+      <ng-container modal-footer>
+        <button type="button" class="am-btn am-btn--secondary" [disabled]="blockBusy()" (click)="blockName.set(null)">{{ t('cancel') }}</button>
+        <button type="submit" class="am-btn am-btn--primary" form="jc-make-block" [disabled]="blockBusy() || !blockName()?.trim()">{{ t('make_block_submit') }}</button>
+      </ng-container>
+    </app-admin-modal>
+  }
 } @else {
   <p class="te-loading" role="status">{{ t('loading') }}</p>
 }

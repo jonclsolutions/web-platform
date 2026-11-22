@@ -301,3 +301,32 @@
   .gen-result { flex-direction: column; }
   .gen-result-thumb { width: 100%; height: 160px; }
 }
+
+/*
+    @module: Formats of a set
+    @description: Tabs above the preview - one per template of the set (its size); the active one
+        is filled. Each format keeps its own crop of every image.
+    @usage: .gen-tabs > button.gen-tab(--on)
+*/
+.gen-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.gen-tab {
+  padding: 5px 10px;
+  border: 1px solid var(--color-zinc-300);
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--color-zinc-700);
+  cursor: pointer;
+}
+
+.gen-tab:focus-visible { outline: 2px solid var(--color-amber-500); }
+.gen-tab--on { border-color: var(--color-zinc-900); background: var(--color-zinc-900); color: #fff; }
+
+.gen-result + .gen-result { margin-top: 8px; }

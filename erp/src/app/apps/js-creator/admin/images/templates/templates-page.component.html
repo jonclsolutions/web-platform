@@ -4,10 +4,11 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Page "Templates": header with the view switch (templates / trash) and "New
-        template", the usage bar, the toolbar (search, size, sorting), the grid of the template
-        cards (thumbnail in the aspect of the template - a click opens the editor) with their
-        actions, "load more", the popup of a new template / copy / copy to another size.
+    @description: Page "Templates" (and "Blocks"): header with the view switch (items / trash)
+        and "New …", the usage bar, the toolbar (search, size - templates, sorting), the grid of
+        the cards (thumbnail in the aspect of the template / block - a click opens generating, a
+        block its editor) with their actions, "load more", the popup of a new item / copy / copy
+        to another size.
 -->
 <div class="ws-page">
   <app-page-header [title]="t('header')" [subtitle]="t('subtitle')">
@@ -25,7 +26,7 @@
     <div class="ws-toolbar">
       <input class="ws-search" type="search" [placeholder]="t('search_placeholder')" [attr.aria-label]="t('search_placeholder')"
         [(ngModel)]="search" (ngModelChange)="onSearch()" />
-      @if (view === 'active') {
+      @if (view === 'active' && kind === 'template') {
         <select class="tp-select" [(ngModel)]="sizeFilter" (ngModelChange)="reload()" [attr.aria-label]="t('filter_size')">
           <option value="">{{ t('all_sizes') }}</option>
           @for (size of sizes; track size.width + 'x' + size.height) {
@@ -51,7 +52,7 @@
     @if (items.length) {
       <div class="ws-grid tp-grid">
         @for (template of items; track template.id) {
-          <article class="ws-card tp-card">
+          <article class="ws-card tp-card" [class.tp-card--block]="kind === 'block'">
             <button type="button" class="tp-preview" [disabled]="view === 'trash'" [title]="view === 'active' ? t('open_generate') : template.name"
               (click)="generate(template)">
               <span class="tp-frame" [style.aspect-ratio]="aspect(template)" [style.--tp-ratio]="template.width / template.height">
@@ -65,15 +66,25 @@
             <div class="ws-card-body">
               <span class="ws-card-name" [title]="template.name">{{ template.name }}</span>
               <span class="ws-card-meta">{{ sizeLabel(template) }}</span>
+              @if (kind === 'block' && template.used_by?.length) {
+                <span class="ws-card-meta">{{ t('used_in') }}: {{ template.used_by!.length }}</span>
+              }
               <span class="ws-card-meta">{{ t(view === 'trash' ? 'deleted' : 'updated') }} {{ (view === 'trash' ? template.deleted_at : template.updated_at) | date: 'd. M. y H:mm' : undefined : locale }}</span>
             </div>
             <div class="ws-card-actions">
               @if (view === 'active') {
-                <button type="button" class="ws-btn ws-btn--primary ws-btn--sm tp-generate" (click)="generate(template)">
-                  <app-icon name="sparkles" [size]="13"></app-icon>{{ t('generate') }}
-                </button>
-                <span class="ws-toolbar-spacer"></span>
-                <button type="button" class="ws-icon-btn" [title]="t(canUpdate ? 'edit' : 'open')" [attr.aria-label]="t(canUpdate ? 'edit' : 'open')" (click)="open(template)"><app-icon name="edit" [size]="15"></app-icon></button>
+                @if (kind === 'template') {
+                  <button type="button" class="ws-btn ws-btn--primary ws-btn--sm tp-generate" (click)="generate(template)">
+                    <app-icon name="sparkles" [size]="13"></app-icon>{{ t('generate') }}
+                  </button>
+                  <span class="ws-toolbar-spacer"></span>
+                  <button type="button" class="ws-icon-btn" [title]="t(canUpdate ? 'edit' : 'open')" [attr.aria-label]="t(canUpdate ? 'edit' : 'open')" (click)="open(template)"><app-icon name="edit" [size]="15"></app-icon></button>
+                } @else {
+                  <button type="button" class="ws-btn ws-btn--primary ws-btn--sm tp-generate" (click)="open(template)">
+                    <app-icon name="edit" [size]="13"></app-icon>{{ t(canUpdate ? 'edit' : 'open') }}
+                  </button>
+                  <span class="ws-toolbar-spacer"></span>
+                }
                 @if (canCreate) {
                   <button type="button" class="ws-icon-btn" [title]="t('duplicate')" [attr.aria-label]="t('duplicate')" [disabled]="busy" (click)="openDuplicate(template, 'duplicate')"><app-creator-icon [nodes]="copyIcon" [size]="15" /></button>
                   <button type="button" class="ws-icon-btn" [title]="t('duplicate_format')" [attr.aria-label]="t('duplicate_format')" [disabled]="busy" (click)="openDuplicate(template, 'format')"><app-creator-icon [nodes]="formatIcon" [size]="15" /></button>
