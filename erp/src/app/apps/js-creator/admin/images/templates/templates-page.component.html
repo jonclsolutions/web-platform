@@ -73,6 +73,28 @@
       <p class="ws-trash-note">{{ t('trash_note') }}</p>
     }
 
+    @if (showStrips) {
+      @for (strip of [{ key: 'favorites', items: favorites }, { key: 'recent', items: recent }]; track strip.key) {
+        @if (strip.items.length) {
+          <div class="tp-strip" [attr.aria-label]="t('strip_' + strip.key)">
+            <span class="tp-strip-title">{{ t('strip_' + strip.key) }}</span>
+            <div class="tp-strip-list">
+              @for (template of strip.items; track template.id) {
+                <button type="button" class="tp-strip-item" [title]="t('open_generate') + ': ' + template.name" (click)="generate(template)">
+                  <span class="tp-strip-thumb">
+                    @if (template.thumb_url) {
+                      <img [src]="template.thumb_url" [alt]="" loading="lazy" />
+                    }
+                  </span>
+                  <span class="tp-strip-name">{{ template.name }}</span>
+                </button>
+              }
+            </div>
+          </div>
+        }
+      }
+    }
+
     @if (items.length) {
       <div class="ws-grid tp-grid">
         @for (template of items; track template.id) {
@@ -80,6 +102,11 @@
             <label class="ws-check" [title]="ts('select')">
               <input type="checkbox" [checked]="selection.has(template.id)" (change)="toggle(template)" [attr.aria-label]="ts('select') + ' ' + template.name" />
             </label>
+            @if (kind === 'template' && view === 'active') {
+              <button type="button" class="tp-star" [class.tp-star--on]="template.favorite" [attr.aria-pressed]="!!template.favorite"
+                [title]="t(template.favorite ? 'unstar' : 'star')" [attr.aria-label]="t(template.favorite ? 'unstar' : 'star') + ' ' + template.name"
+                (click)="toggleFavorite(template)">{{ template.favorite ? '★' : '☆' }}</button>
+            }
             <button type="button" class="tp-preview" [disabled]="view === 'trash'" [title]="view === 'active' ? t('open_generate') : template.name"
               (click)="generate(template)">
               <span class="tp-frame" [style.aspect-ratio]="aspect(template)" [style.--tp-ratio]="template.width / template.height">

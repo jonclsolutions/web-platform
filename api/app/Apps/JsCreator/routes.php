@@ -34,6 +34,7 @@ use App\Apps\JsCreator\Http\Controllers\FolderController;
 use App\Apps\JsCreator\Http\Controllers\FontController;
 use App\Apps\JsCreator\Http\Controllers\JsCreatorLogController;
 use App\Apps\JsCreator\Http\Controllers\OutputController;
+use App\Apps\JsCreator\Http\Controllers\PreferenceController;
 use App\Apps\JsCreator\Http\Controllers\PresetController;
 use App\Apps\JsCreator\Http\Controllers\SetController;
 use App\Apps\JsCreator\Http\Controllers\SettingsController;
@@ -52,6 +53,10 @@ Route::middleware(['auth:sanctum', 'throttle:300,1,js-creator'])->prefix('js-cre
 
     // ── js-creator/usage (usage bar of the own workspace) ────────────────────────
     Route::get('usage', [UsageController::class, 'show'])->middleware($view);
+
+    // ── js-creator/preferences (personal settings: brand colours, hashtag sets) ──
+    Route::get('preferences', [PreferenceController::class, 'show'])->middleware($view);
+    Route::put('preferences', [PreferenceController::class, 'update'])->middleware($view);
 
     // ── js-creator/folders (one tree for every section) ──────────────────────────
     Route::get('folders', [FolderController::class, 'index'])->middleware($view);
@@ -83,6 +88,7 @@ Route::middleware(['auth:sanctum', 'throttle:300,1,js-creator'])->prefix('js-cre
 
     // ── js-creator/outputs (outputs of every section; each needs its section permission) ──
     Route::get('outputs', [OutputController::class, 'index'])->middleware($view);
+    Route::get('outputs/templates', [OutputController::class, 'templates'])->middleware($view);
     Route::delete('outputs/trash', [OutputController::class, 'emptyTrash'])->middleware($delete);
     Route::post('outputs/bulk', [OutputController::class, 'bulk'])
         ->middleware('permission:' . JsCreatorSections::any('update') . '|' . JsCreatorSections::any('delete'))->name('js-creator.outputs.bulk');
@@ -114,6 +120,8 @@ Route::middleware(['auth:sanctum', 'throttle:300,1,js-creator'])->prefix('js-cre
             Route::post('bulk', [TemplateController::class, 'bulk'])->middleware($can('delete'))->defaults('section', $section);
             Route::get('{id}', [TemplateController::class, 'show'])->middleware($can('view'))->whereNumber('id')->defaults('section', $section);
             Route::put('{id}', [TemplateController::class, 'update'])->middleware($can('update'))->whereNumber('id')->defaults('section', $section);
+            Route::put('{id}/favorite', [TemplateController::class, 'favorite'])->middleware($can('view'))->whereNumber('id')->defaults('section', $section);
+            Route::put('{id}/default-folder', [TemplateController::class, 'defaultFolder'])->middleware($can('create'))->whereNumber('id')->defaults('section', $section);
             Route::post('{id}/thumbnail', [TemplateController::class, 'thumbnail'])->middleware([$can('update'), $upload])->whereNumber('id')->defaults('section', $section);
             Route::post('{id}/duplicate', [TemplateController::class, 'duplicate'])->middleware($can('create'))->whereNumber('id')->defaults('section', $section);
             Route::delete('{id}', [TemplateController::class, 'destroy'])->middleware($can('delete'))->whereNumber('id')->defaults('section', $section);

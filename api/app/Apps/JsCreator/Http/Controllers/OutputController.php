@@ -168,6 +168,8 @@ class OutputController extends Controller
                     'page_count'    => count($pages),
                     'size_bytes'    => $bytes,
                 ]);
+                // Recently used templates (a personal mark - the template itself stays as it is).
+                CreatorTemplate::query()->whereKey($template->id)->toBase()->update(['last_used_at' => now()]);
                 foreach ($pages as $n => $page) {
                     CreatorOutputFile::create([
                         'output_id' => $output->id, 'page' => $n + 1, 'path' => $page['path'], 'thumb_path' => $page['thumb'],
@@ -228,8 +230,10 @@ class OutputController extends Controller
 
     /**
      * @description Page of the own outputs: of one folder (`folder_id`, none = the top level), or
-     *   with `search` in the names of every folder; `section` = only one section; `only_trashed=1`
-     *   = the items of the trash; `sort_by` created_at | name | size_bytes, `sort_direction`, `page`.
+     *   with `search` in the names of every folder; `template_id` = generated from one template and
+     *   `period` today | week | month (also over every folder); `section` = only one section;
+     *   `only_trashed=1` = the items of the trash; `sort_by` created_at | name | size_bytes,
+     *   `sort_direction`, `page`.
      * @param Request $request
      * @return JsonResponse
      */
@@ -239,7 +243,7 @@ class OutputController extends Controller
         $search = trim((string) $request->query('search', ''));
         if (filter_var($request->query('only_trashed', false), FILTER_VALIDATE_BOOLEAN)) {
             $query->onlyTrashed()->whereNull('trash_root_id');
-        } elseif ($search === '') {
+        } elseif ($search === '' && !$this->filtered($request)) {
             $folderId = (int) $request->query('folder_id', 0);
             $folderId > 0 ? $query->where('folder_id', $folderId) : $query->whereNull('folder_id');
         }
@@ -250,9 +254,48 @@ class OutputController extends Controller
         if (in_array($section, JsCreatorSections::SECTIONS, true)) {
             $query->where('section', $section);
         }
+        $templateId = (int) $request->query('template_id', 0);
+        if ($templateId > 0) {
+            $query->where('template_id', $templateId);
+        }
+        $since = match ((string) $request->query('period', '')) {
+            'today' => now()->startOfDay(),
+            'week'  => now()->subDays(7),
+            'month' => now()->subDays(30),
+            default => null,
+        };
+        if ($since !== null) {
+            $query->where('created_at', '>=', $since);
+        }
         $this->applySorting($query, $request, 'created_at');
 
         return $this->respondPaginated($query->orderByDesc('id')->paginate(self::PER_PAGE), OutputResource::class);
+    }
+
+    /**
+     * @description Templates the own outputs (outside the trash) were generated from - for the
+     *   filter of the page Outputs; the name at the time of generating, newest first.
+     * @param Request $request
+     * @return JsonResponse [{ id, name }].
+     */
+    public function templates(Request $request): JsonResponse
+    {
+        $rows = $this->outputs($request, 'view')->whereNotNull('template_id')
+            ->selectRaw('template_id, MAX(template_name) AS name, MAX(created_at) AS latest')->groupBy('template_id')
+            ->orderByDesc('latest')->limit(200)->get();
+
+        return $this->respond($rows->map(fn ($row) => ['id' => (int) $row->template_id, 'name' => (string) $row->name])->values()->all());
+    }
+
+    /**
+     * @description Whether the list is filtered by a template or a period (then it searches every
+     *   folder, like a search).
+     * @param Request $request
+     * @return bool
+     */
+    private function filtered(Request $request): bool
+    {
+        return (int) $request->query('template_id', 0) > 0 || in_array((string) $request->query('period', ''), ['today', 'week', 'month'], true);
     }
 
     /**

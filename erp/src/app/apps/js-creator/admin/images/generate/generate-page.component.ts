@@ -21,6 +21,11 @@
  *   BULK: the dialog "From a table" generates one output per row of a CSV / XLSX table read only
  *   in the browser (BulkGenerateComponent); the page checks and generates each row the same way
  *   as the form (produce()), waiting when the server asks to slow down (429).
+ *   EVERYDAY HELPERS: lengths of the text of the post against the limits of the networks, hashtag
+ *   sets of the account (inserted at the end of the text, managed in a dialog), the default
+ *   folder of the template's outputs, the preview in a phone frame (remembered in this browser)
+ *   and the unfinished filling kept in this tab (sessionStorage - texts, text of the post, name;
+ *   never photos) and restored after a reload.
  *   - text fields: length, highlight of the selected part (`**…**`), what the template does
  *     when the text does not fit (shrunk / cut / generating refused);
  *   - image fields: a photo from the computer (decoded ONLY in the browser - never uploaded) or
@@ -34,7 +39,8 @@
  *     the format of the template) and shows the result with its actions. The form stays filled
  *     (only in the memory of the page) for the next variant.
  * @note Generating needs the create permission of the section; without it the page is a preview.
- * @dependencies TemplatesApiService, SetsApiService, OutputsApiService, PresetsApiService, JsCreatorApiService (fonts, folders),
+ * @dependencies TemplatesApiService, SetsApiService, OutputsApiService, PresetsApiService, PreferencesService,
+ *   JsCreatorApiService (fonts, folders),
  *   FontLibraryService, IconSetService, WorkspaceUsageService, RenderResourceStore,
  *   GeneratePreviewComponent, AssetChooserComponent, QuotaBarComponent, generate-form.ts,
  *   local-image.ts, field-images.ts, block-fields.ts, BulkGenerateComponent, AdminModalComponent,
@@ -55,6 +61,7 @@ import { TemplatesApiService } from '../../shared/templates-api.service';
 import { SetsApiService } from '../../shared/sets-api.service';
 import { OutputsApiService } from '../../shared/outputs-api.service';
 import { PresetOwner, PresetsApiService } from '../../shared/presets-api.service';
+import { MAX_HASHTAGS, MAX_HASHTAG_SETS, PreferencesService } from '../../shared/preferences.service';
 import { AdminModalComponent } from '../../../../../admin/components/admin-modal/admin-modal.component';
 import { JsCreatorApiService } from '../../shared/js-creator-api.service';
 import { FontLibraryService } from '../../shared/font-library.service';
@@ -81,7 +88,8 @@ import { AssetChooserComponent } from '../editor/controls/asset-chooser.componen
 import { GeneratePreviewComponent, PreviewPan } from './generate-preview.component';
 import { BulkGenerateComponent, BulkRunInput, BulkRunner } from './bulk-generate.component';
 import {
-  GenerateProblem, MAX_CAPTION, MAX_OUTPUT_NAME, defaultOutputName, fillCaption, formProblems, toggleHighlight, unionFields, visibleLength,
+  CAPTION_LIMITS, GenerateProblem, MAX_CAPTION, MAX_OUTPUT_NAME, appendHashtags, captionLength, defaultOutputName, fillCaption, formProblems,
+  toggleHighlight, unionFields, visibleLength,
 } from './generate-form';
 import { LOCAL_IMAGE_ACCEPT, LocalImage, LocalImageError, openLocalImage, outputBitmap } from './local-image';
 
@@ -103,6 +111,12 @@ const MAX_OUTPUT_BYTES = 20 * 1024 * 1024;
 
 /** Enlargement over which a photo is called too small for its place. */
 const BLUR_SCALE = 1.05;
+
+/** Key of the phone frame of the preview in this browser (on / off - nothing personal). */
+const PHONE_KEY = 'jsc.generate.phone';
+
+/** Prefix of the unfinished filling of a page in this tab (sessionStorage - gone with the tab). */
+const DRAFT_PREFIX = 'jsc.generate.draft.';
 
 /** Tries of a request the server asked to slow down (429) when generating in bulk. */
 const RETRIES = 5;
@@ -137,6 +151,7 @@ export class GeneratePageComponent implements OnInit {
   private readonly outputsApi = inject(OutputsApiService);
   private readonly presetsApi = inject(PresetsApiService);
   private readonly confirm = inject(ConfirmDialogService);
+  private readonly prefs = inject(PreferencesService);
   private readonly creatorApi = inject(JsCreatorApiService);
   private readonly fontLibrary = inject(FontLibraryService);
   private readonly iconSets = inject(IconSetService);
@@ -221,6 +236,39 @@ export class GeneratePageComponent implements OnInit {
   readonly waiting = signal<number | null>(null);
   /** The dialog "Generate from a table" is open. */
   readonly bulkOpen = signal(false);
+  /** Limits of the text of a post of the networks. */
+  readonly captionLimits = CAPTION_LIMITS;
+  /** Length of the text of the post as the networks count it. */
+  readonly captionChars = computed(() => captionLength(this.caption()));
+  /** Hashtag sets of the account. */
+  readonly hashtagSets = computed(() => this.prefs.preferences().hashtag_sets);
+  /** Dialog managing the hashtag sets (rows being edited; null = closed). */
+  readonly hashtagDialog = signal<{ rows: { name: string; tags: string }[]; error: string | null } | null>(null);
+  /** Limits of the hashtag sets. */
+  readonly maxHashtagSets = MAX_HASHTAG_SETS;
+  readonly maxHashtags = MAX_HASHTAGS;
+  /** The preview is shown in a phone frame (remembered in this browser). */
+  readonly phone = signal(this.readPhone());
+  /** First lines of the text of the post under the phone frame. */
+  readonly phoneCaption = computed(() => {
+    const text = this.caption().trim();
+    return text.length > 125 ? `${text.slice(0, 125).trimEnd()}…` : text;
+  });
+  /** An unfinished filling of this page was restored from this tab. */
+  readonly restoredDraft = signal(false);
+  /** The draft may be written (after the restore - never before). */
+  private draftReady = false;
+  /** The target folder was chosen by hand (the default of the template does not override it). */
+  private folderChosen = false;
+  /** The default folder of the template is being saved. */
+  readonly defaultFolderBusy = signal(false);
+  /** The chosen folder is the default folder of the template. */
+  readonly isDefaultFolder = computed(() => {
+    const template = this.mode === 'template' ? this.targets()[0]?.template : null;
+    return !!template && this.defaultFolderId() !== null && this.defaultFolderId() === this.folderId();
+  });
+  /** Default folder of the template (as saved). */
+  private readonly defaultFolderId = signal<number | null>(null);
   /** Presets (saved fillings) of the template / set. */
   readonly presets = signal<CreatorPreset[]>([]);
   /** Preset chosen in the list. */
@@ -343,6 +391,14 @@ export class GeneratePageComponent implements OnInit {
 
   constructor() {
     effect(() => {
+      // The unfinished filling is kept in this tab (sessionStorage) on every change.
+      this.texts();
+      this.caption();
+      this.captionEdited();
+      this.name();
+      this.writeDraft();
+    });
+    effect(() => {
       const targets = this.targets();
       if (!targets.length) return;
       const texts = Object.values(this.texts());
@@ -408,6 +464,10 @@ export class GeneratePageComponent implements OnInit {
     this.safeNetwork.set(rememberedNetwork(templates[0]));
     this.loadAssets([...new Set(templates.flatMap(t => documentReferences(this.resources.withBlocks(t.document)).assets))]);
     this.loadPresets();
+    this.defaultFolderId.set(this.mode === 'template' ? templates[0]?.default_folder_id ?? null : null);
+    this.applyDefaultFolder();
+    this.restoreDraft();
+    void this.prefs.load();
   }
 
   /**
@@ -712,6 +772,7 @@ export class GeneratePageComponent implements OnInit {
    */
   setFolder(value: string): void {
     const id = value === '' ? null : Number(value);
+    this.folderChosen = true;
     this.folderId.set(id);
     try {
       localStorage.setItem(LAST_FOLDER_KEY, id === null ? '' : String(id));
@@ -755,6 +816,164 @@ export class GeneratePageComponent implements OnInit {
    */
   folderName(output: CreatorOutput): string {
     return this.folders().find(f => f.id === output.folder_id)?.name ?? this.t('root');
+  }
+
+  // ── helpers of everyday work ────────────────────────────────────────────────
+
+  /**
+   * @description Adds a hashtag set at the end of the text of the post.
+   * @param tags Hashtags of the set.
+   */
+  insertHashtags(tags: string): void {
+    this.setCaption(appendHashtags(this.caption(), tags));
+  }
+
+  /** @description Opens the dialog managing the hashtag sets. */
+  openHashtags(): void {
+    this.hashtagDialog.set({ rows: this.hashtagSets().map(s => ({ ...s })), error: null });
+  }
+
+  /**
+   * @description Changes a row of the dialog.
+   * @param index Row.
+   * @param key Name / hashtags.
+   * @param value Text.
+   */
+  setHashtagRow(index: number, key: 'name' | 'tags', value: string): void {
+    this.hashtagDialog.update(d => (d ? { rows: d.rows.map((r, i) => (i === index ? { ...r, [key]: value } : r)), error: null } : d));
+  }
+
+  /** @description New empty row of the dialog. */
+  addHashtagRow(): void {
+    this.hashtagDialog.update(d => (d && d.rows.length < MAX_HASHTAG_SETS ? { rows: [...d.rows, { name: '', tags: '' }], error: null } : d));
+  }
+
+  /**
+   * @description Removes a row of the dialog.
+   * @param index Row.
+   */
+  removeHashtagRow(index: number): void {
+    this.hashtagDialog.update(d => (d ? { rows: d.rows.filter((_, i) => i !== index), error: null } : d));
+  }
+
+  /** @description Saves the hashtag sets (empty rows left out; names must be unique). */
+  async saveHashtags(): Promise<void> {
+    const dialog = this.hashtagDialog();
+    if (!dialog) return;
+    const rows = dialog.rows.map(r => ({ name: r.name.trim().replace(/\s+/g, ' '), tags: r.tags.trim().replace(/\s+/g, ' ') })).filter(r => r.name || r.tags);
+    const names = rows.map(r => r.name.toLocaleLowerCase('cs-CZ'));
+    if (rows.some(r => !r.name || !r.tags) || new Set(names).size !== names.length) {
+      this.hashtagDialog.set({ ...dialog, error: this.t('hashtags_invalid') });
+      return;
+    }
+    if (await this.prefs.saveHashtagSets(rows)) this.hashtagDialog.set(null);
+    else this.hashtagDialog.set({ ...dialog, error: this.t('hashtags_save_failed') });
+  }
+
+  /** @description Shows / hides the phone frame of the preview (remembered in this browser). */
+  togglePhone(): void {
+    const on = !this.phone();
+    this.phone.set(on);
+    try {
+      localStorage.setItem(PHONE_KEY, on ? '1' : '0');
+    } catch {
+      // Storage may be unavailable - the frame is only a convenience.
+    }
+  }
+
+  /**
+   * @description Makes the chosen folder the default folder of the template's outputs (or clears it).
+   * @param on Default or not.
+   */
+  setDefaultFolder(on: boolean): void {
+    const template = this.mode === 'template' ? this.targets()[0]?.template : null;
+    if (!template || !this.canCreate) return;
+    const folderId = on ? this.folderId() : null;
+    this.defaultFolderBusy.set(true);
+    this.templatesApi.setDefaultFolder(this.section, template.id, folderId).subscribe({
+      next: result => {
+        this.defaultFolderId.set(result.default_folder_id);
+        this.defaultFolderBusy.set(false);
+      },
+      error: () => {
+        this.defaultFolderBusy.set(false);
+        this.fail('default_folder_failed');
+      },
+    });
+  }
+
+  /** @description Clears the restored filling (texts, text of the post, name) and its copy in this tab. */
+  discardDraft(): void {
+    this.texts.update(texts => Object.fromEntries(Object.keys(texts).map(key => [key, ''])));
+    this.refillCaption();
+    this.name.set('');
+    this.restoredDraft.set(false);
+    this.removeDraft();
+  }
+
+  /** Key of the draft of this page in sessionStorage. */
+  private draftKey(): string | null {
+    const id = this.set()?.id ?? this.targets()[0]?.template.id;
+    return id ? `${DRAFT_PREFIX}${this.mode}.${id}` : null;
+  }
+
+  /**
+   * @description Restores the unfinished filling of this page from this tab (texts, text of the
+   *   post typed by hand, name - never photos), then starts keeping it.
+   */
+  private restoreDraft(): void {
+    const key = this.draftKey();
+    try {
+      const raw = key ? sessionStorage.getItem(key) : null;
+      const draft = raw ? (JSON.parse(raw) as { texts?: Record<string, unknown>; caption?: unknown; name?: unknown }) : null;
+      if (draft && typeof draft === 'object') {
+        const texts = this.texts();
+        const restored = Object.fromEntries(Object.keys(texts).map(k => [k, typeof draft.texts?.[k] === 'string' ? String(draft.texts[k]).slice(0, 2000) : '']));
+        const any = Object.values(restored).some(v => v) || typeof draft.caption === 'string' || (typeof draft.name === 'string' && draft.name !== '');
+        if (any) {
+          this.texts.set(restored);
+          if (typeof draft.caption === 'string') this.setCaption(draft.caption);
+          if (typeof draft.name === 'string') this.name.set(draft.name.slice(0, MAX_OUTPUT_NAME));
+          this.restoredDraft.set(true);
+        }
+      }
+    } catch {
+      // A broken or unavailable draft is ignored.
+    }
+    this.draftReady = true;
+  }
+
+  /** @description Keeps the filling of this page in this tab (called on every change). */
+  private writeDraft(): void {
+    const key = this.draftKey();
+    if (!key || !this.draftReady) return;
+    const texts = this.texts();
+    const empty = !Object.values(texts).some(v => v) && !this.captionEdited() && !this.name();
+    try {
+      if (empty) sessionStorage.removeItem(key);
+      else sessionStorage.setItem(key, JSON.stringify({ texts, caption: this.captionEdited() ? this.caption() : undefined, name: this.name() }));
+    } catch {
+      // Storage may be full or unavailable - the draft is only a convenience.
+    }
+  }
+
+  /** @description Removes the draft of this page from this tab. */
+  private removeDraft(): void {
+    const key = this.draftKey();
+    try {
+      if (key) sessionStorage.removeItem(key);
+    } catch {
+      // Nothing to remove.
+    }
+  }
+
+  /** @description Phone frame remembered in this browser. */
+  private readPhone(): boolean {
+    try {
+      return localStorage.getItem(PHONE_KEY) === '1';
+    } catch {
+      return false;
+    }
   }
 
   // ── bulk from a table ───────────────────────────────────────────────────────
@@ -1293,8 +1512,15 @@ export class GeneratePageComponent implements OnInit {
         last = null;
       }
       const id = last ? Number(last) : null;
-      this.folderId.set(id !== null && folders.some(f => f.id === id) ? id : null);
+      if (!this.folderChosen) this.folderId.set(id !== null && folders.some(f => f.id === id) ? id : null);
+      this.applyDefaultFolder();
     });
+  }
+
+  /** @description Uses the default folder of the template (when it exists and nothing was chosen by hand). */
+  private applyDefaultFolder(): void {
+    const id = this.defaultFolderId();
+    if (!this.folderChosen && id !== null && this.folders().some(f => f.id === id)) this.folderId.set(id);
   }
 
   /** @description Back to the templates / sets. */

@@ -8,7 +8,8 @@
  * @created 2026
  * @description Test tables of the application "JS Creator" (SQLite mirror of its migrations):
  *   audit log, folders, library images, own fonts, settings, individual quotas, templates,
- *   blocks, sets with their templates, usages, outputs and their files, presets of generating -
+ *   blocks, sets with their templates, usages, outputs and their files, presets of generating,
+ *   personal preferences -
  *   with the same foreign keys (ON DELETE CASCADE from users, from the parent folder / output,
  *   from the set / template of a set row and of a preset, SET NULL from the folder and the
  *   template of an output).
@@ -106,9 +107,13 @@ final class JsCreatorSchema
             $t->unsignedBigInteger('thumb_bytes')->default(0);
             $t->boolean('thumb_stale')->default(false);
             $t->unsignedInteger('version')->default(1);
+            $t->boolean('favorite')->default(false);
+            $t->timestamp('last_used_at')->nullable();
+            $t->unsignedBigInteger('default_folder_id')->nullable();
             $t->timestamps();
             $t->softDeletes();
             $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+            $t->foreign('default_folder_id')->references('id')->on('js_creator_folders')->nullOnDelete();
         });
 
         Schema::create('js_creator_blocks', function (Blueprint $t) {
@@ -208,6 +213,14 @@ final class JsCreatorSchema
             $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
             $t->foreign('template_id')->references('id')->on('js_creator_templates')->cascadeOnDelete();
             $t->foreign('set_id')->references('id')->on('js_creator_sets')->cascadeOnDelete();
+        });
+
+        Schema::create('js_creator_preferences', function (Blueprint $t) {
+            $t->id();
+            $t->unsignedInteger('user_id')->unique();
+            $t->text('payload');
+            $t->timestamps();
+            $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });
     }
 }

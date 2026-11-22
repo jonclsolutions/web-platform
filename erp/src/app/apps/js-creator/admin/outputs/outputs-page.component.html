@@ -6,7 +6,7 @@
     @created: 2026
     @description: Page "Outputs": header with the view switch (folders / trash), the usage bar;
         folders: the tree beside the content of the selected folder (path and folder actions,
-        toolbar - search in every folder, type, sorting, select all -, subfolders, the bar of the
+        toolbar - search in every folder, type, sorting, template and period (every folder), select all -, subfolders, the bar of the
         selected outputs, the grid of outputs, "load more"); trash: deleted folders and deleted
         outputs with restore / delete for good; the detail of an output; the popups of a folder
         (new, rename, move) and of outputs (rename, move, move the selected ones).
@@ -75,6 +75,20 @@
             <option value="name">{{ t('sort_name') }}</option>
             <option value="largest">{{ t('sort_largest') }}</option>
           </select>
+          @if (templateRefs.length) {
+            <select class="op-select op-template-filter" [(ngModel)]="templateFilter" (ngModelChange)="reload()" [attr.aria-label]="t('filter_template')">
+              <option value="">{{ t('all_templates') }}</option>
+              @for (ref of templateRefs; track ref.id) {
+                <option [ngValue]="ref.id">{{ ref.name }}</option>
+              }
+            </select>
+          }
+          <select class="op-select" [(ngModel)]="periodFilter" (ngModelChange)="reload()" [attr.aria-label]="t('filter_period')">
+            <option value="">{{ t('period_any') }}</option>
+            <option value="today">{{ t('period_today') }}</option>
+            <option value="week">{{ t('period_week') }}</option>
+            <option value="month">{{ t('period_month') }}</option>
+          </select>
           <span class="ws-toolbar-spacer"></span>
           @if (outputs.length) {
             <label class="ws-select-all">
@@ -83,8 +97,8 @@
           }
         </div>
 
-        @if (search.trim()) {
-          <p class="ws-panel-hint op-search-note">{{ t('search_note') }}</p>
+        @if (acrossFolders) {
+          <p class="ws-panel-hint op-search-note">{{ t(search.trim() ? 'search_note' : 'filter_note') }}</p>
         } @else if (subfolders.length) {
           <div class="op-subfolders">
             @for (folder of subfolders; track folder.id) {
@@ -136,7 +150,7 @@
                   <span class="ws-card-name" [title]="output.name">{{ output.name }}</span>
                   <span class="ws-card-meta">{{ output.created_at | date: 'd. M. y H:mm' }}</span>
                   <span class="ws-card-meta">{{ output.width }} × {{ output.height }} · {{ output.format === 'jpg' ? 'JPG' : 'PNG' }} · {{ bytes(output.size_bytes) }}</span>
-                  @if (search.trim()) {
+                  @if (acrossFolders) {
                     <span class="ws-card-meta op-card-folder" [title]="folderPath(output)">{{ folderPath(output) }}</span>
                   }
                 </div>
@@ -176,7 +190,7 @@
           }
         } @else if (!loading) {
           <div class="ws-empty">
-            @if (search.trim() || sectionFilter) {
+            @if (acrossFolders || sectionFilter) {
               {{ t('nothing_found') }}
             } @else {
               <strong class="op-empty-title">{{ t('empty_title') }}</strong>

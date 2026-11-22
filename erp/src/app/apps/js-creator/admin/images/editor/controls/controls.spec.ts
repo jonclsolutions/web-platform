@@ -17,12 +17,16 @@ import { FillEditorComponent } from './fill-editor.component';
 import { AnchorPickerComponent } from './anchor-picker.component';
 import { SourcePickerComponent } from './source-picker.component';
 import { Fill, ImageSource } from '../../../shared/render/document';
-import { createAdminTestContext } from '../../../../../../../testing/admin-test-helpers';
+import { AdminTestContext, createAdminTestContext } from '../../../../../../../testing/admin-test-helpers';
+import { of } from 'rxjs';
+import { PreferencesService } from '../../../shared/preferences.service';
 import { imageField, testAsset } from '../editor-test-data';
 
 describe('editor controls', () => {
+  let ctx: AdminTestContext;
+
   beforeEach(async () => {
-    const ctx = createAdminTestContext();
+    ctx = createAdminTestContext();
     await TestBed.configureTestingModule({
       imports: [ColorInputComponent, FillEditorComponent, AnchorPickerComponent, SourcePickerComponent],
       providers: ctx.providers,
@@ -139,5 +143,33 @@ describe('editor controls', () => {
     expect(newFields).toBe(2);
     expect(picked).toEqual([5]);
     expect(component.choosing).toBeFalse();
+  });
+
+  /**
+   * @description Brand colours under a colour input: a click uses one (the opacity stays), +
+   *   saves the current colour (not when it is there already).
+   * @input brand colours [#1e1b4b]; value #ff000080; click the swatch; +
+   * @output value #1e1b4b80; PUT preferences with [#1e1b4b, #ff0000]; no + for #1e1b4b
+   */
+  it('offers the brand colours', async () => {
+    const prefs = TestBed.inject(PreferencesService);
+    prefs.preferences.set({ colors: ['#1e1b4b'], hashtag_sets: [] });
+    const fixture = TestBed.createComponent(ColorInputComponent);
+    fixture.componentInstance.value = '#ff000080';
+    const values: string[] = [];
+    fixture.componentInstance.valueChange.subscribe(v => values.push(v));
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.jc-swatch:not(.jc-swatch--add)') as HTMLButtonElement).click();
+    expect(values).toEqual(['#1e1b4b80']);
+    ctx.dataHandler.putQuietly.and.returnValue(of({ colors: ['#1e1b4b', '#ff0000'], hashtag_sets: [] }) as never);
+    (fixture.nativeElement.querySelector('.jc-swatch--add') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(ctx.dataHandler.putQuietly).toHaveBeenCalledWith('js-creator/preferences', { colors: ['#1e1b4b', '#ff0000'], hashtag_sets: [] });
+    expect(prefs.preferences().colors).toEqual(['#1e1b4b', '#ff0000']);
+    fixture.componentInstance.value = '#1e1b4b';
+    fixture.componentRef.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.jc-swatch--add')).toBeNull();
+    prefs.preferences.set({ colors: [], hashtag_sets: [] });
   });
 });

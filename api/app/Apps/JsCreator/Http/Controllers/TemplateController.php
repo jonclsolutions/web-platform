@@ -30,6 +30,7 @@ use App\Apps\JsCreator\Http\Requests\UpdateTemplateRequest;
 use App\Apps\JsCreator\Http\Resources\TemplateDetailResource;
 use App\Apps\JsCreator\Http\Resources\TemplateResource;
 use App\Apps\JsCreator\Models\CreatorBlock;
+use App\Apps\JsCreator\Models\CreatorFolder;
 use App\Apps\JsCreator\Models\CreatorTemplate;
 use App\Apps\JsCreator\Models\CreatorUsage;
 use App\Apps\JsCreator\Models\JsCreatorLog;
@@ -63,8 +64,9 @@ class TemplateController extends Controller
 
     /**
      * @description Page of the own templates of the section (`only_trashed`, `search` in the name,
-     *   `size` = `<width>x<height>`, `sort_by` name | updated_at | created_at, `sort_direction`,
-     *   `page`); meta `sizes` = the sizes of the templates outside the trash (most used first).
+     *   `size` = `<width>x<height>`, `favorite=1` starred only, `used=1` only templates generated
+     *   from, `sort_by` name | updated_at | created_at | last_used_at, `sort_direction`, `page`);
+     *   meta `sizes` = the sizes of the templates outside the trash (most used first).
      * @param Request $request
      * @return JsonResponse
      */
@@ -81,6 +83,13 @@ class TemplateController extends Controller
         if (preg_match('/^(\d{3,4})x(\d{3,4})$/', (string) $request->query('size', ''), $size)) {
             $query->where('width', (int) $size[1])->where('height', (int) $size[2]);
         }
+        // Strips above the list: starred templates / templates generated from (sorted by last_used_at).
+        if (filter_var($request->query('favorite', false), FILTER_VALIDATE_BOOLEAN)) {
+            $query->where('favorite', true);
+        }
+        if (filter_var($request->query('used', false), FILTER_VALIDATE_BOOLEAN)) {
+            $query->whereNotNull('last_used_at');
+        }
         $this->applySorting($query, $request, 'updated_at');
 
         $sizes = $this->templates($request)
@@ -89,6 +98,44 @@ class TemplateController extends Controller
             ->map(fn ($row) => ['width' => (int) $row->width, 'height' => (int) $row->height, 'count' => (int) $row->total])->all();
 
         return $this->respondPaginated($query->paginate(self::PER_PAGE), TemplateResource::class, ['sizes' => $sizes]);
+    }
+
+    /**
+     * @description Stars / unstars an own template (a personal mark - the template, its version
+     *   and its time of change stay as they are).
+     * @param Request $request `favorite` (boolean).
+     * @param string $id Template.
+     * @return JsonResponse 200 { favorite }; 404; 422.
+     */
+    public function favorite(Request $request, string $id): JsonResponse
+    {
+        $request->validate(['favorite' => ['required', 'boolean']]);
+        $template = $this->templates($request)->findOrFail((int) $id);
+        $favorite = $request->boolean('favorite');
+        CreatorTemplate::query()->whereKey($template->id)->toBase()->update(['favorite' => $favorite]);
+
+        return $this->respond(['favorite' => $favorite]);
+    }
+
+    /**
+     * @description Default target folder of the outputs of an own template (null = none; the
+     *   generating page then offers the last used folder). Must be an own folder outside the
+     *   trash; the template, its version and its time of change stay as they are.
+     * @param Request $request `folder_id` (null or id).
+     * @param string $id Template.
+     * @return JsonResponse 200 { default_folder_id }; 404; 422 `folder_id`.
+     */
+    public function defaultFolder(Request $request, string $id): JsonResponse
+    {
+        $request->validate(['folder_id' => ['present', 'nullable', 'integer', 'min:1']]);
+        $template = $this->templates($request)->findOrFail((int) $id);
+        $folderId = $request->input('folder_id');
+        if ($folderId !== null && !CreatorFolder::query()->ownedBy($request->user())->whereKey((int) $folderId)->exists()) {
+            throw ValidationException::withMessages(['folder_id' => 'The folder is not among your folders.']);
+        }
+        CreatorTemplate::query()->whereKey($template->id)->toBase()->update(['default_folder_id' => $folderId === null ? null : (int) $folderId]);
+
+        return $this->respond(['default_folder_id' => $folderId === null ? null : (int) $folderId]);
     }
 
     /**

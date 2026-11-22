@@ -145,6 +145,12 @@ export interface CreatorTemplate {
   /** A block of the template changed after the thumbnail was drawn (the list draws it again). */
   thumb_stale?: boolean;
   version: number;
+  /** Starred by the owner (templates only; absent in older answers = no). */
+  favorite?: boolean;
+  /** Last output generated from it. */
+  last_used_at?: string | null;
+  /** Default target folder of its outputs. */
+  default_folder_id?: number | null;
   created_at: string | null;
   updated_at: string | null;
   deleted_at: string | null;
@@ -400,3 +406,20 @@ export interface PresetSave {
   values: PresetValues;
 }
 
+/** Saved set of hashtags (inserted into the text of the post). */
+export interface HashtagSet {
+  name: string;
+  tags: string;
+}
+
+/** Personal settings of the account: brand colours and hashtag sets. */
+export interface CreatorPreferences {
+  colors: string[];
+  hashtag_sets: HashtagSet[];
+}
+
+/** Template an output was generated from (filter of the page Outputs). */
+export interface OutputTemplateRef {
+  id: number;
+  name: string;
+}

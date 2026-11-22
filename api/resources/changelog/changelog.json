@@ -4,6 +4,12 @@
             "type": "added",
             "area": "js-creator",
             "part": "admin",
+            "text": "JS Creator helpers: starred and recent templates, a default folder per template, length limits and hashtag sets for the post, brand colours, a phone preview, output filters and a kept unfinished form."
+        },
+        {
+            "type": "added",
+            "area": "js-creator",
+            "part": "admin",
             "text": "JS Creator generating: saved presets of the form (texts, library images, crops, text of the post – never photos) and bulk generating from a CSV or XLSX table read only in the browser – one output per row, photos matched by file name or library images by name."
         },
         {

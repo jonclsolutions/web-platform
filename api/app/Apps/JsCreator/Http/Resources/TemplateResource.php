@@ -39,6 +39,10 @@ class TemplateResource extends JsonResource
             // A block of the template changed after the thumbnail was drawn (the list draws it again).
             'thumb_stale'      => (bool) $this->thumb_stale,
             'version'          => $this->version,
+            // Personal helpers: starred, last generated, default folder of its outputs.
+            'favorite'          => (bool) $this->favorite,
+            'last_used_at'      => $this->last_used_at?->format('Y-m-d H:i:s'),
+            'default_folder_id' => $this->default_folder_id,
             'created_at'       => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at'       => $this->updated_at?->format('Y-m-d H:i:s'),
             'deleted_at'       => $this->deleted_at?->format('Y-m-d H:i:s'),

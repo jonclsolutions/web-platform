@@ -16,7 +16,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { DataHandler } from '../../../../core/services/data-handler.service';
 import { ApiPage } from '../../../../shared/interfaces/api-envelope';
-import { CreatorOutput, OutputUpload, OutputZip } from './js-creator.models';
+import { CreatorOutput, OutputTemplateRef, OutputUpload, OutputZip } from './js-creator.models';
 import { JsCreatorSectionId } from './js-creator-sections';
 
 /** Query of the list of outputs. */
@@ -29,7 +29,14 @@ export interface OutputQuery {
   sortBy?: 'created_at' | 'name' | 'size_bytes';
   sortDirection?: 'asc' | 'desc';
   trashed?: boolean;
+  /** Only outputs of one template (every folder). */
+  templateId?: number | null;
+  /** Only outputs of today / the last 7 / 30 days (every folder). */
+  period?: OutputPeriod | '';
 }
+
+/** Period filter of outputs. */
+export type OutputPeriod = 'today' | 'week' | 'month';
 
 /** Bulk action on outputs. */
 export type OutputBulkAction = 'move' | 'delete' | 'restore' | 'destroy';
@@ -50,7 +57,14 @@ export class OutputsApiService {
     if (query.section) params.set('section', query.section);
     if (query.sortBy) params.set('sort_by', query.sortBy);
     if (query.sortDirection) params.set('sort_direction', query.sortDirection);
+    if (query.templateId) params.set('template_id', String(query.templateId));
+    if (query.period) params.set('period', query.period);
     return this.api.getPaginatedCollection<CreatorOutput>(`js-creator/outputs?${params.toString()}`);
+  }
+
+  /** @description Templates the own outputs were generated from (filter of the page Outputs). */
+  templates(): Observable<OutputTemplateRef[]> {
+    return this.api.getCollection<OutputTemplateRef>('js-creator/outputs/templates');
   }
 
   /**

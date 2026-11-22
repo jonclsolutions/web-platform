@@ -140,3 +140,34 @@
 .jc-anchor-dot.jc-anchor-dot--on span { border-color: var(--color-amber-600); background: var(--color-amber-500); }
 
 .jc-anchor-dot:disabled { cursor: default; }
+
+/*
+    @module: Brand colours
+    @description: Brand colours of the account under a colour input (a click uses one) and the
+        button saving the current colour; the list of the template panel with removing.
+    @usage: .jc-swatches > button.jc-swatch(.jc-swatch--on | .jc-swatch--add)
+*/
+.jc-swatches { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+
+.jc-swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid rgba(24, 24, 27, 0.2);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.jc-swatch--on { box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--color-amber-500); }
+
+.jc-swatch--add { display: inline-flex; align-items: center; justify-content: center; background: #fff; color: var(--color-zinc-500); font-size: 0.8rem; line-height: 1; }
+
+.jc-swatch:focus-visible { outline: 2px solid var(--color-amber-500); outline-offset: 1px; }
+
+.jc-brand-list { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.jc-brand-item { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 2px; border: 1px solid var(--color-zinc-200); border-radius: 6px; font-size: 0.7rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+.jc-brand-item .jc-swatch { cursor: default; }
+
+.jc-brand-remove { padding: 0 2px; border: 0; background: none; color: var(--color-rose-600); cursor: pointer; }

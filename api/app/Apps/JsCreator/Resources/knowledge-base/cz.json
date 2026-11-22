@@ -42,6 +42,13 @@
             {
               "type": "text",
               "content": "Karty ukazují miniaturu (vznikne při uložení v editoru), název, formát a datum poslední úpravy. Hledat můžete podle názvu, filtrovat podle formátu (nabídnou se formáty, které máte) a řadit podle data úpravy, vytvoření nebo názvu."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Hvězdička v rohu karty označí šablonu jako oblíbenou (jen pro vás – šablona se tím nemění). Nad seznamem jsou pruhy Oblíbené a Naposledy použité (šablony, ze kterých jste naposledy generovali); kliknutím rovnou otevřete generování."
+              ]
             }
           ]
         },
@@ -251,14 +258,30 @@
           ]
         },
         {
-          "heading": "08. Oprávnění",
+          "heading": "08. Další pomocníci",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Pod textem příspěvku je délka textu proti limitům sítí (Instagram 2 200, TikTok 4 000, LinkedIn 3 000, X 280 znaků; emoji = jeden znak). Překročený limit se zvýrazní – limity jsou orientační.",
+                "Hashtagy: uložené sady hashtagů se jedním klikem přidají na konec textu příspěvku. Sady spravujete tlačítkem Spravovat (nejvýš 30 sad); platí pro všechny šablony.",
+                "Výchozí složka: zaškrtnutím „Ukládat výstupy této šablony vždy do této složky“ si šablona vybranou složku zapamatuje a příště ji nabídne místo naposledy použité.",
+                "Náhled v telefonu: tlačítko nad náhledem ho zobrazí v rámečku telefonu s prvními řádky textu příspěvku a tečkami slidů karuselu. Volba se pamatuje v tomto prohlížeči.",
+                "Rozpracované vyplnění (texty, ručně upravený text příspěvku, název – bez fotek) se drží v této kartě prohlížeče; po obnovení stránky se samo vrátí a tlačítkem Zahodit ho vymažete. Zavřením karty zmizí."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "09. Oprávnění",
           "blocks": [
             {
               "type": "grid",
               "cards": [
                 {
                   "title": "Zobrazit",
-                  "text": "js-creator-images-view – stránka, náhled a výběr předvolby."
+                  "text": "js-creator-images-view – stránka, náhled, výběr předvolby, sady hashtagů."
                 },
                 {
                   "title": "Vytvořit",
@@ -375,6 +398,10 @@
             {
               "type": "text",
               "content": "Karta Šablona: formát (předvolba nebo vlastní velikost), pozadí (barva, přechod, obrázek s překryvem), formát výstupu (PNG, nebo JPG s kvalitou) a text příspěvku – tlačítka vloží pole, při generování se nahradí jejich hodnotou."
+            },
+            {
+              "type": "text",
+              "content": "Barvy značky: pod každým výběrem barvy jsou vaše barvy značky – kliknutím barvu použijete (průhlednost zůstane), tlačítkem + uložíte aktuální barvu. Seznam barev s odebráním je na kartě Šablona. Barvy platí pro všechny šablony a bloky (nejvýš 16)."
             }
           ]
         },
@@ -513,7 +540,8 @@
                 "Kliknutím na miniaturu otevřete detail: obrázek, složka, šablona, rozměry, velikost, datum a text příspěvku s tlačítkem Kopírovat text.",
                 "Karusel má na kartě počet slidů. Detail přepíná slidy šipkami, stáhne zobrazený slide nebo všechny slidy jako ZIP (Název 01.png, Název 02.png …).",
                 "Akce: Stáhnout (soubor s názvem výstupu), Přejmenovat, Přesunout, Smazat, Generovat znovu (otevře generování z téže šablony).",
-                "Hotový výstup se nedá upravit – novou variantu rychle vygenerujete ze šablony."
+                "Hotový výstup se nedá upravit – novou variantu rychle vygenerujete ze šablony.",
+                "Filtry Šablona a Období (dnes, 7 dní, 30 dní) hledají ve všech složkách – u výstupu je vidět jeho složka."
               ]
             }
           ]

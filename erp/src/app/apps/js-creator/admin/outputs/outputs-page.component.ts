@@ -8,7 +8,8 @@
  *   - the folder tree shared by every section (new folder, rename, move - also by drag and
  *     drop -, delete to the trash with the subtree and its outputs);
  *   - the content of the selected folder: subfolders and the generated outputs (thumbnails,
- *     search in every folder, filter by type, sorting, "load more"), the detail of an output
+ *     search in every folder, filter by type, by template and by period - both over every
+ *     folder -, sorting, "load more"), the detail of an output
  *     (picture, data, text of the post with Copy, download, rename, move, delete, generate
  *     again from its template), selection of several outputs (download as a ZIP, move, delete);
  *   - the trash: deleted folders (with their outputs) and deleted outputs - restore, delete for
@@ -36,9 +37,9 @@ import { RowButtonBuilderComponent } from '../../../../admin/components/builders
 import { RowButton, RowButtonItems } from '../../../../admin/components/builders/row-button-builder/row-button';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { JsCreatorApiService } from '../shared/js-creator-api.service';
-import { OutputQuery, OutputsApiService } from '../shared/outputs-api.service';
+import { OutputPeriod, OutputQuery, OutputsApiService } from '../shared/outputs-api.service';
 import { WorkspaceUsageService } from '../shared/workspace-usage.service';
-import { CreatorFolder, CreatorOutput } from '../shared/js-creator.models';
+import { CreatorFolder, CreatorOutput, OutputTemplateRef } from '../shared/js-creator.models';
 import { JS_CREATOR_SECTIONS, JsCreatorSectionId, can } from '../shared/js-creator-sections';
 import { FolderOption, MAX_FOLDER_DEPTH, canMove, childrenOf, folderOptions, levelOf, nameTaken, pathOf } from '../shared/folder-tree';
 import { FolderDrop, FolderTreeComponent } from '../shared/folder-tree/folder-tree.component';
@@ -144,6 +145,12 @@ export class OutputsPageComponent implements OnInit, OnDestroy {
   search = '';
   /** Type filter ('' = every section). */
   sectionFilter: JsCreatorSectionId | '' = '';
+  /** Template filter ('' = every template; outputs of every folder). */
+  templateFilter: number | '' = '';
+  /** Period filter ('' = any time; outputs of every folder). */
+  periodFilter: OutputPeriod | '' = '';
+  /** Templates the outputs were generated from (options of the template filter). */
+  templateRefs: OutputTemplateRef[] = [];
   /** Sorting. */
   sort: OutputSort = 'newest';
   /** Selected outputs (ids). */
@@ -181,6 +188,18 @@ export class OutputsPageComponent implements OnInit, OnDestroy {
     this.loadFolders();
     this.loadOutputs();
     this.loadTrashCount();
+    this.outputsApi.templates().subscribe({
+      next: refs => {
+        this.templateRefs = refs;
+        this.cd.markForCheck();
+      },
+      error: () => undefined,
+    });
+  }
+
+  /** The list shows outputs of every folder (a search, a template or a period filter). */
+  get acrossFolders(): boolean {
+    return this.view === 'folders' && (!!this.search.trim() || !!this.templateFilter || !!this.periodFilter);
   }
 
   /** @description Stops a waiting search. */
@@ -715,6 +734,8 @@ export class OutputsPageComponent implements OnInit, OnDestroy {
       folderId: this.selectedId,
       search,
       section: this.sectionFilter,
+      templateId: this.view === 'folders' && this.templateFilter ? Number(this.templateFilter) : null,
+      period: this.view === 'folders' ? this.periodFilter : '',
       trashed: this.view === 'trash',
       ...SORTS[this.view === 'trash' ? 'newest' : this.sort],
     }).subscribe({

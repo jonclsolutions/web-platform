@@ -15,6 +15,7 @@
 
 import { ChangeDetectionStrategy, Component, ElementRef, ViewChild, computed, inject, input, output } from '@angular/core';
 import { AdminLocalizationService } from '../../../../../../core/services/admin-localization.service';
+import { PreferencesService } from '../../../shared/preferences.service';
 import { EditorStore, EditorSnapshot } from '../editor-store';
 import { Background, CanvasSize, DOCUMENT_LIMITS, Fill, ImageField, ImageSource, fieldKeyFrom, isValidSize } from '../../../shared/render/document';
 import { CreatorAsset } from '../../../shared/js-creator.models';
@@ -33,6 +34,17 @@ import { SourcePickerComponent } from '../controls/source-picker.component';
 })
 export class TemplatePanelComponent {
   private readonly i18n = inject(AdminLocalizationService);
+  private readonly prefs = inject(PreferencesService);
+  /** Brand colours of the account (offered by every colour input). */
+  readonly brandColors = computed(() => this.prefs.preferences().colors);
+
+  /**
+   * @description Removes a brand colour of the account.
+   * @param color `#rrggbb`.
+   */
+  removeBrandColor(color: string): void {
+    void this.prefs.removeColor(color);
+  }
 
   /** State of the editor. */
   readonly store = input.required<EditorStore>();

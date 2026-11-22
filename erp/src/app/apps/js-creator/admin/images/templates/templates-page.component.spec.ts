@@ -299,4 +299,35 @@ describe('TemplatesPageComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-jc-import-dialog')).toBeNull();
   });
+
+  /**
+   * @description Starred and recently used templates: the strips ask for them, a click opens
+   *   generating, the star of a card toggles the mark and reloads the strips; blocks have none.
+   * @input strips answer [A] / [B]; click on the strip item; star of template 1
+   * @output requests favorite=1 and used=1&sort_by=last_used_at; navigate to generate; PUT favorite true; star on
+   */
+  it('shows starred and recently used templates', async () => {
+    await create('all', 'template', () => {
+      ctx.dataHandler.getPaginatedCollection.and.callFake(((url: string) => of(
+        url.includes('favorite=1') ? { data: [{ ...template(5), name: 'A', favorite: true }], meta: { total: 1, per_page: 48, current_page: 1, last_page: 1 } }
+          : url.includes('used=1') ? { data: [{ ...template(6), name: 'B' }], meta: { total: 1, per_page: 48, current_page: 1, last_page: 1 } }
+            : { data: [template(1), template(2)], meta: { total: 2, per_page: 48, current_page: 1, last_page: 1, sizes: [] } },
+      )) as never);
+    });
+    fixture.detectChanges();
+    const urls = ctx.dataHandler.getPaginatedCollection.calls.allArgs().map(a => String(a[0]));
+    expect(urls.some(u => u.includes('favorite=1'))).toBeTrue();
+    expect(urls.some(u => u.includes('used=1') && u.includes('sort_by=last_used_at'))).toBeTrue();
+    const strips = fixture.nativeElement.querySelectorAll('.tp-strip');
+    expect(strips.length).toBe(2);
+    (strips[1].querySelector('.tp-strip-item') as HTMLButtonElement).click();
+    expect(navigate).toHaveBeenCalledWith(['/admin/js-creator/image-templates', 6, 'generate']);
+
+    ctx.dataHandler.put.and.returnValue(of({ favorite: true }) as never);
+    (fixture.nativeElement.querySelector('.tp-star') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(ctx.dataHandler.put).toHaveBeenCalledWith('js-creator/images/templates/1/favorite', { favorite: true });
+    expect(component.items[0].favorite).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.tp-star--on')).not.toBeNull();
+  });
 });

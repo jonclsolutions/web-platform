@@ -72,10 +72,35 @@
             </select>
           </label>
         }
+        <div class="gen-phone-toggle">
+          <button type="button" class="ws-btn ws-btn--sm" [attr.aria-pressed]="phone()" (click)="togglePhone()">{{ t(phone() ? 'phone_off' : 'phone_on') }}</button>
+        </div>
         @if (doc(); as d) {
-          <app-jc-generate-preview [doc]="d" [size]="size()" [resources]="resources" [values]="values()" [redraw]="redraw()"
-            [pannable]="filledImages()" [maxHeight]="640" [label]="t('preview')" [page]="slideIndex()" [zones]="previewZones()"
-            (rendered)="report.set($event)" (pan)="onPan($event)" />
+          <div [class.gen-phone]="phone()">
+            @if (phone()) {
+              <div class="gen-phone-bar" aria-hidden="true">
+                <span class="gen-phone-avatar"></span>
+                <span class="gen-phone-account">{{ texts()['ucet'] || t('phone_account') }}</span>
+                <span class="gen-phone-dots">•••</span>
+              </div>
+            }
+            <app-jc-generate-preview [doc]="d" [size]="size()" [resources]="resources" [values]="values()" [redraw]="redraw()"
+              [pannable]="filledImages()" [maxHeight]="phone() ? 520 : 640" [label]="t('preview')" [page]="slideIndex()" [zones]="previewZones()"
+              (rendered)="report.set($event)" (pan)="onPan($event)" />
+            @if (phone()) {
+              <div class="gen-phone-foot">
+                <span class="gen-phone-icons" aria-hidden="true">♡ 💬 ↗</span>
+                @if (pageCount() > 1) {
+                  <span class="gen-phone-dotsbar" aria-hidden="true">
+                    @for (n of slideNumbers(); track n) { <span [class.gen-phone-dot--on]="slideIndex() === n - 1" class="gen-phone-dot"></span> }
+                  </span>
+                }
+                @if (phoneCaption()) {
+                  <p class="gen-phone-caption">{{ phoneCaption() }}</p>
+                }
+              </div>
+            }
+          </div>
         }
         @if (safeHits().length) {
           <ul class="gen-zone-hits" role="status">
@@ -90,6 +115,12 @@
       </section>
 
       <div class="gen-form">
+        @if (restoredDraft()) {
+          <div class="gen-draft" role="status">
+            <span>{{ t('draft_restored') }}</span>
+            <button type="button" class="ws-btn ws-btn--sm" (click)="discardDraft()">{{ t('draft_discard') }}</button>
+          </div>
+        }
         <section class="ws-panel gen-presets" [attr.aria-label]="t('presets')">
           <div class="gen-presets-row">
             <label for="jc-gen-preset" class="gen-presets-label">{{ t('presets') }}</label>
@@ -202,6 +233,22 @@
             <span class="ws-field-hint">{{ captionPattern() ? t('caption_hint') : t('caption_no_pattern') }}</span>
             <span class="gen-count">{{ caption().length }}</span>
           </div>
+          <div class="gen-limits" [attr.aria-label]="t('caption_limits')">
+            @for (limit of captionLimits; track limit.network) {
+              <span class="gen-limit" [class.gen-limit--over]="captionChars() > limit.max" [title]="t('caption_limits_hint')">
+                {{ limit.label }} {{ captionChars() }} / {{ limit.max }}
+              </span>
+            }
+          </div>
+          <div class="gen-hashtags">
+            <span class="gen-presets-label">{{ t('hashtags') }}</span>
+            @for (set of hashtagSets(); track set.name) {
+              <button type="button" class="gen-hashtag" [title]="set.tags" (click)="insertHashtags(set.tags)">+ {{ set.name }}</button>
+            } @empty {
+              <span class="ws-field-hint">{{ t('hashtags_none') }}</span>
+            }
+            <button type="button" class="ws-btn ws-btn--sm" (click)="openHashtags()">{{ t('hashtags_manage') }}</button>
+          </div>
         </section>
 
         <section class="ws-panel">
@@ -214,6 +261,12 @@
                 <option [value]="option.id" [selected]="folderId() === option.id">{{ option.label }}</option>
               }
             </select>
+            @if (mode === 'template' && canCreate) {
+              <label class="gen-default-folder">
+                <input type="checkbox" [checked]="isDefaultFolder()" [disabled]="defaultFolderBusy()" (change)="setDefaultFolder($any($event.target).checked)" />
+                {{ t('default_folder') }}
+              </label>
+            }
           </div>
           <div class="ws-field gen-last-field">
             <label for="jc-gen-name">{{ t('name') }}</label>
@@ -297,6 +350,34 @@
 
 @if (bulkOpen()) {
   <app-jc-bulk-generate [runner]="bulkRunner" [folderLabel]="folderLabel()" [waiting]="waiting()" (openOutputs)="openTargetFolder()" (dismissed)="bulkOpen.set(false)" />
+}
+
+@if (hashtagDialog(); as h) {
+  <app-admin-modal [heading]="t('hashtags_title')" size="md" (dismissed)="hashtagDialog.set(null)">
+    <div class="gen-hashtag-rows">
+      @for (row of h.rows; track $index; let i = $index) {
+        <div class="gen-hashtag-row">
+          <input type="text" maxlength="60" autocomplete="off" [placeholder]="t('hashtags_name')" [attr.aria-label]="t('hashtags_name')" [value]="row.name"
+            (input)="setHashtagRow(i, 'name', $any($event.target).value)" />
+          <input type="text" [attr.maxlength]="maxHashtags" autocomplete="off" [placeholder]="t('hashtags_tags')" [attr.aria-label]="t('hashtags_tags')" [value]="row.tags"
+            (input)="setHashtagRow(i, 'tags', $any($event.target).value)" />
+          <button type="button" class="ws-icon-btn ws-icon-btn--danger" [title]="t('hashtags_remove')" [attr.aria-label]="t('hashtags_remove')" (click)="removeHashtagRow(i)">×</button>
+        </div>
+      } @empty {
+        <p class="ws-field-hint">{{ t('hashtags_none') }}</p>
+      }
+      @if (h.rows.length < maxHashtagSets) {
+        <button type="button" class="ws-btn ws-btn--sm" (click)="addHashtagRow()">{{ t('hashtags_add') }}</button>
+      }
+      @if (h.error) {
+        <p class="ws-field-error" role="alert">{{ h.error }}</p>
+      }
+    </div>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" (click)="hashtagDialog.set(null)">{{ t('preset_cancel') }}</button>
+      <button type="button" class="am-btn am-btn--primary" (click)="saveHashtags()">{{ t('hashtags_save') }}</button>
+    </ng-container>
+  </app-admin-modal>
 }
 
 @if (presetDialog(); as d) {

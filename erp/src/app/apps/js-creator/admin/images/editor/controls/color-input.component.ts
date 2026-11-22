@@ -5,12 +5,16 @@
  * @author JS
  * @created 2026
  * @description Colour of the editor: the colour picker of the browser, the hex code and the
- *   opacity (0-100 %). The value is `#rrggbb` (opaque) or `#rrggbbaa`.
+ *   opacity (0-100 %), and under them the brand colours of the account (a click uses one and
+ *   keeps the opacity; + saves the current colour among them). The value is `#rrggbb` (opaque)
+ *   or `#rrggbbaa`.
  * @usage `<app-jc-color [value]="layer.color" (valueChange)="set('color', $event)" [label]="t('color')" inputId="jc-c1" />`
- * @dependencies none.
+ * @dependencies PreferencesService (brand colours), AdminLocalizationService (section `js-creator-editor`).
  */
 
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { AdminLocalizationService } from '../../../../../../core/services/admin-localization.service';
+import { MAX_BRAND_COLORS, PreferencesService } from '../../../shared/preferences.service';
 
 /** Valid colour of a document. */
 const COLOR = /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/;
@@ -28,11 +32,47 @@ const COLOR = /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/;
         [attr.aria-label]="alphaLabel" [title]="alphaLabel" (change)="setAlpha($any($event.target).valueAsNumber)" />
       <span class="jc-color-unit">%</span>
     </div>
+    @if (!disabled) {
+      <div class="jc-swatches">
+        @for (color of brand().colors; track color) {
+          <button type="button" class="jc-swatch" [class.jc-swatch--on]="color === rgb" [style.background]="color" [title]="color"
+            [attr.aria-label]="tr('brand_use') + ' ' + color" (click)="pick(color)"></button>
+        }
+        @if (canSave()) {
+          <button type="button" class="jc-swatch jc-swatch--add" [title]="tr('brand_add')" [attr.aria-label]="tr('brand_add')" (click)="saveColor()">+</button>
+        }
+      </div>
+    }
   `,
   styleUrl: './controls.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ColorInputComponent {
+  private readonly prefs = inject(PreferencesService);
+  private readonly i18n = inject(AdminLocalizationService);
+
+  /** Brand colours of the account. */
+  readonly brand = this.prefs.preferences;
+
+  /**
+   * @description Text of the editor.
+   * @param key Key in `js-creator-editor`.
+   */
+  tr(key: string): string {
+    return this.i18n.getValue(`js-creator-editor.${key}`);
+  }
+
+  /** @description The current colour may be saved among the brand colours. */
+  canSave(): boolean {
+    const colors = this.brand().colors;
+    return !colors.includes(this.rgb) && colors.length < MAX_BRAND_COLORS;
+  }
+
+  /** @description Saves the current colour (without the opacity) among the brand colours. */
+  saveColor(): void {
+    void this.prefs.addColor(this.rgb);
+  }
+
   /** Colour `#rrggbb(aa)`. */
   @Input({ required: true }) value = '#000000';
   /** Accessible name. */

@@ -11,7 +11,9 @@
  */
 
 import { Field, emptyDocument } from '../../shared/render/document';
-import { defaultOutputName, fillCaption, formProblems, toggleHighlight, unionFields, visibleLength } from './generate-form';
+import {
+  CAPTION_LIMITS, appendHashtags, captionLength, defaultOutputName, fillCaption, formProblems, toggleHighlight, unionFields, visibleLength,
+} from './generate-form';
 
 /** Fields of a test template. */
 const FIELDS: Field[] = [
@@ -124,5 +126,19 @@ describe('generate-form', () => {
     expect(name.startsWith('Letní akce 22. 11. 2026')).toBeTrue();
     expect(name).toContain('15:54');
     expect(defaultOutputName('x'.repeat(200), new Date(), 'cs-CZ').length).toBe(150);
+  });
+
+  /**
+   * @description Lengths for the networks count an emoji as one character; hashtags go to the
+   *   end after an empty line, not twice, and fill an empty text.
+   * @input "Ahoj 😀"; appendHashtags of "Text\n", "" and a text ending with the same tags
+   * @output 6; "Text\n\n#a #b"; "#a #b"; unchanged; X has the limit 280
+   */
+  it('counts the text of a post and adds hashtags', () => {
+    expect(captionLength('Ahoj 😀')).toBe(6);
+    expect(appendHashtags('Text\n', ' #a #b ')).toBe('Text\n\n#a #b');
+    expect(appendHashtags('', '#a #b')).toBe('#a #b');
+    expect(appendHashtags('Text\n\n#a #b', '#a #b')).toBe('Text\n\n#a #b');
+    expect(CAPTION_LIMITS.find(l => l.network === 'x')?.max).toBe(280);
   });
 });

@@ -13,6 +13,9 @@
  *   The same page lists the BLOCKS (`image-blocks`, route data `kind: 'block'`): the main action
  *   is the editor of the block, no size filter, and a block used by templates is not deleted - a
  *   message names the templates.
+ *   Templates can be starred (a personal mark, the template stays as it is); above the list are
+ *   the starred and the recently used templates (outputs generated from them) - one click opens
+ *   generating.
  *   Multiselect: a checkbox on every card and "select all"; the bar of the selection exports the
  *   selected items as one JSON file and moves them to the trash (in the trash: restore, delete
  *   for good); a card exports itself too. Import of a JSON file of an export (ImportDialogComponent).
@@ -140,6 +143,50 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
   /** @description Loads the first page. */
   ngOnInit(): void {
     this.load(1);
+    this.loadStrips();
+  }
+
+  /** Starred templates (strip above the list). */
+  favorites: CreatorTemplate[] = [];
+  /** Recently used templates (strip above the list). */
+  recent: CreatorTemplate[] = [];
+
+  /** The strips are shown: templates, the active list, no search. */
+  get showStrips(): boolean {
+    return this.kind === 'template' && this.view === 'active' && !this.search.trim() && (this.favorites.length > 0 || this.recent.length > 0);
+  }
+
+  /**
+   * @description Stars / unstars a template and refreshes the strips.
+   * @param template Template.
+   */
+  toggleFavorite(template: CreatorTemplate): void {
+    if (this.kind !== 'template') return;
+    const favorite = !template.favorite;
+    this.api.setFavorite(this.section, template.id, favorite).subscribe(() => {
+      this.items = this.items.map(t => (t.id === template.id ? { ...t, favorite } : t));
+      this.loadStrips();
+      this.cd.markForCheck();
+    });
+  }
+
+  /** @description Loads the starred and the recently used templates (at most 8 each). */
+  private loadStrips(): void {
+    if (this.kind !== 'template') return;
+    this.api.list(this.section, { page: 1, favorite: true, sortBy: 'name', sortDirection: 'asc' }).subscribe({
+      next: result => {
+        this.favorites = result.data.slice(0, 8);
+        this.cd.markForCheck();
+      },
+      error: () => undefined,
+    });
+    this.api.list(this.section, { page: 1, used: true, sortBy: 'last_used_at', sortDirection: 'desc' }).subscribe({
+      next: result => {
+        this.recent = result.data.slice(0, 8);
+        this.cd.markForCheck();
+      },
+      error: () => undefined,
+    });
   }
 
   /** @description Stops the pending search. */

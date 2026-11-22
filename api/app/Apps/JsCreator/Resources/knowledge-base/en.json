@@ -42,6 +42,13 @@
             {
               "type": "text",
               "content": "Cards show the thumbnail (made when you save in the editor), the name, the format and the date of the last change. Search by name, filter by format (the formats you use are offered) and sort by the date of change, of creation or by name."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "The star in the corner of a card marks the template as a favourite (only for you – the template does not change). Above the list are the strips Starred and Recently used (templates you generated from last); a click opens generating."
+              ]
             }
           ]
         },
@@ -251,14 +258,30 @@
           ]
         },
         {
-          "heading": "08. Permissions",
+          "heading": "08. More helpers",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Under the text of the post is its length against the limits of the networks (Instagram 2,200, TikTok 4,000, LinkedIn 3,000, X 280 characters; an emoji = one character). An exceeded limit is highlighted – the limits are approximate.",
+                "Hashtags: saved hashtag sets are added to the end of the text of the post with one click. Manage the sets with Manage (at most 30 sets); they apply to every template.",
+                "Default folder: ticking “Always store the outputs of this template in this folder” makes the template remember the chosen folder and offer it next time instead of the last used one.",
+                "Phone preview: the button above the preview shows it in a phone frame with the first lines of the post and the dots of the carousel slides. The choice is remembered in this browser.",
+                "The unfinished filling (texts, the text of the post edited by hand, the name – no photos) is kept in this browser tab; after a reload it comes back by itself and Discard clears it. Closing the tab removes it."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "09. Permissions",
           "blocks": [
             {
               "type": "grid",
               "cards": [
                 {
                   "title": "View",
-                  "text": "js-creator-images-view - the page, the preview and choosing a preset."
+                  "text": "js-creator-images-view - the page, the preview, choosing a preset, hashtag sets."
                 },
                 {
                   "title": "Create",
@@ -375,6 +398,10 @@
             {
               "type": "text",
               "content": "The tab Template: format (preset or custom size), background (colour, gradient, image with an overlay), output format (PNG, or JPG with its quality) and the post text - the buttons insert fields, generating replaces them with their values."
+            },
+            {
+              "type": "text",
+              "content": "Brand colours: under every colour picker are your brand colours – a click uses a colour (the opacity stays), + saves the current colour. The list of colours with removing is on the tab Template. The colours apply to every template and block (at most 16)."
             }
           ]
         },
@@ -513,7 +540,8 @@
                 "A click on a thumbnail opens the detail: the picture, folder, template, size, file size, date and the text of the post with Copy text.",
                 "A carousel shows the number of slides on its card. The detail switches the slides with arrows, downloads the slide shown or all slides as a ZIP (Name 01.png, Name 02.png …).",
                 "Actions: Download (a file named after the output), Rename, Move, Delete, Generate again (opens generating from the same template).",
-                "A finished output cannot be edited - generate a new variant from the template quickly."
+                "A finished output cannot be edited - generate a new variant from the template quickly.",
+                "The filters Template and Period (today, 7 days, 30 days) search every folder – an output shows its folder."
               ]
             }
           ]

@@ -362,3 +362,51 @@
 
 .gen-bulk { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding-top: 4px; border-top: 1px dashed var(--color-zinc-200); }
 
+/*
+    @module: Helpers of everyday work
+    @description: Limits of the networks under the text of the post, hashtag sets, the default
+        folder, the restored filling and the phone frame of the preview.
+    @usage: .gen-limits > .gen-limit(.gen-limit--over); .gen-hashtags > button.gen-hashtag;
+        label.gen-default-folder; .gen-draft; .gen-phone > .gen-phone-bar + preview + .gen-phone-foot
+*/
+.gen-limits { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+.gen-limit { padding: 2px 8px; border-radius: 999px; background: var(--color-zinc-100); color: var(--color-zinc-600); font-size: 0.72rem; }
+
+.gen-limit--over { background: #ffe4e6; color: var(--color-rose-700); font-weight: 600; }
+
+.gen-hashtags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
+
+.gen-hashtag { padding: 4px 10px; border: 1px solid var(--color-zinc-200); border-radius: 999px; background: #fff; font-size: 0.75rem; cursor: pointer; }
+
+.gen-hashtag:focus-visible { outline: 2px solid var(--color-amber-500); }
+
+.gen-hashtag-rows { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+
+.gen-hashtag-row { display: grid; grid-template-columns: minmax(100px, 1fr) minmax(160px, 2fr) auto; gap: 6px; width: 100%; }
+
+.gen-default-folder { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 0.78rem; color: var(--color-zinc-700); }
+
+.gen-draft { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; background: #fffbeb; font-size: 0.8rem; color: var(--color-zinc-800); }
+
+.gen-phone-toggle { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+
+.gen-phone { max-width: 360px; margin: 0 auto; padding: 14px 10px 16px; border: 10px solid #18181b; border-radius: 36px; background: #fff; }
+
+.gen-phone-bar { display: flex; align-items: center; gap: 8px; padding: 0 4px 8px; font-size: 0.75rem; font-weight: 600; color: #18181b; }
+
+.gen-phone-avatar { width: 26px; height: 26px; border-radius: 999px; background: linear-gradient(135deg, #f59e0b, #e11d48); }
+
+.gen-phone-dots { margin-left: auto; color: var(--color-zinc-500); }
+
+.gen-phone-foot { display: flex; flex-direction: column; gap: 6px; padding: 8px 4px 0; font-size: 0.75rem; color: #18181b; }
+
+.gen-phone-icons { letter-spacing: 6px; }
+
+.gen-phone-dotsbar { display: flex; justify-content: center; gap: 4px; }
+
+.gen-phone-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--color-zinc-300); }
+
+.gen-phone-dot--on { background: #3b82f6; }
+
+.gen-phone-caption { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }

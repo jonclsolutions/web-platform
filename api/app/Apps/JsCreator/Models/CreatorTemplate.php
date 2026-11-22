@@ -37,6 +37,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $thumb_bytes Size of the thumbnail (quota).
  * @property bool $thumb_stale A block of the template changed after the thumbnail was drawn.
  * @property int $version
+ * @property bool $favorite Starred by the owner.
+ * @property \Illuminate\Support\Carbon|null $last_used_at Last output generated from it.
+ * @property int|null $default_folder_id Default target folder of its outputs.
  */
 class CreatorTemplate extends Model
 {
@@ -54,13 +57,14 @@ class CreatorTemplate extends Model
     /** @var array<int, string> The attributes that are mass assignable. */
     protected $fillable = [
         'user_id', 'section', 'name', 'width', 'height', 'schema_version', 'document', 'output_format', 'output_quality',
-        'caption_template', 'thumb_path', 'thumb_bytes', 'thumb_stale', 'version',
+        'caption_template', 'thumb_path', 'thumb_bytes', 'thumb_stale', 'version', 'favorite', 'last_used_at', 'default_folder_id',
     ];
 
     /** @var array<string, string> The attributes that should be cast. */
     protected $casts = [
         'user_id' => 'integer', 'width' => 'integer', 'height' => 'integer', 'schema_version' => 'integer', 'document' => 'array',
         'output_quality' => 'integer', 'thumb_bytes' => 'integer', 'thumb_stale' => 'boolean', 'version' => 'integer',
+        'favorite' => 'boolean', 'last_used_at' => 'datetime', 'default_folder_id' => 'integer',
     ];
 
     /**

@@ -43,6 +43,21 @@
       }
     </section>
 
+    <section class="pn-section">
+      <h3 class="pn-title">{{ t('brand_colors') }}</h3>
+      @if (brandColors().length) {
+        <div class="jc-brand-list">
+          @for (color of brandColors(); track color) {
+            <span class="jc-brand-item">
+              <span class="jc-swatch" [style.background]="color"></span>{{ color }}
+              <button type="button" class="jc-brand-remove" [title]="t('brand_remove')" [attr.aria-label]="t('brand_remove') + ' ' + color" (click)="removeBrandColor(color)">×</button>
+            </span>
+          }
+        </div>
+      }
+      <p class="pn-hint">{{ t('brand_hint') }}</p>
+    </section>
+
     @if (kind() === 'template') {
     <section class="pn-section">
       <h3 class="pn-title">{{ t('output') }}</h3>

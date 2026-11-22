@@ -7,7 +7,8 @@
  * @description Calls of the templates of a section (`/api/js-creator/<section>/templates`) through
  *   DataHandler. Every template belongs to the OWN workspace. The save of the editor goes without
  *   the global error dialog (putQuietly): the editor explains a version conflict (409) and an
- *   invalid document (422) itself.
+ *   invalid document (422) itself. Personal marks: star (favorite) and the default folder of the
+ *   outputs of a template; lists of starred / recently used templates.
  * @dependencies DataHandler; js-creator.models.ts; js-creator-sections.ts.
  */
 
@@ -24,9 +25,13 @@ export interface TemplateQuery {
   search?: string;
   /** `<width>x<height>`. */
   size?: string;
-  sortBy?: 'updated_at' | 'created_at' | 'name';
+  sortBy?: 'updated_at' | 'created_at' | 'name' | 'last_used_at';
   sortDirection?: 'asc' | 'desc';
   trashed?: boolean;
+  /** Only starred templates. */
+  favorite?: boolean;
+  /** Only templates generated from. */
+  used?: boolean;
 }
 
 /** Page of templates with the sizes in use. */
@@ -59,7 +64,29 @@ export class TemplatesApiService {
     if (query.sortBy) params.set('sort_by', query.sortBy);
     if (query.sortDirection) params.set('sort_direction', query.sortDirection);
     if (query.trashed) params.set('only_trashed', '1');
+    if (query.favorite) params.set('favorite', '1');
+    if (query.used) params.set('used', '1');
     return this.api.getPaginatedCollection<CreatorTemplate>(`${this.base(section)}?${params.toString()}`) as Observable<TemplatePage>;
+  }
+
+  /**
+   * @description Stars / unstars a template (a personal mark - the template stays as it is).
+   * @param section Section.
+   * @param id Template.
+   * @param favorite Starred.
+   */
+  setFavorite(section: JsCreatorSectionId, id: number, favorite: boolean): Observable<{ favorite: boolean }> {
+    return this.api.put<{ favorite: boolean }>(`${this.base(section)}/${id}/favorite`, { favorite });
+  }
+
+  /**
+   * @description Default target folder of the outputs of a template (null = none; 422 explained by the page).
+   * @param section Section.
+   * @param id Template.
+   * @param folderId Folder.
+   */
+  setDefaultFolder(section: JsCreatorSectionId, id: number, folderId: number | null): Observable<{ default_folder_id: number | null }> {
+    return this.api.putQuietly<{ default_folder_id: number | null }>(`${this.base(section)}/${id}/default-folder`, { folder_id: folderId });
   }
 
   /** @description A template with its document and blocks. */

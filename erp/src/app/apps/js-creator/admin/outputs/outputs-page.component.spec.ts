@@ -347,4 +347,30 @@ describe('OutputsPageComponent', () => {
     expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/outputs/zip', { ids: [4] });
     component.closeDetail();
   });
+
+  /**
+   * @description Filters by template and period list outputs of every folder (their folder is
+   *   shown, a note says so); the templates of the filter come from the API.
+   * @input outputs/templates [Letní akce]; template 7; period week
+   * @output request with template_id=7; then period=week; filter note shown
+   */
+  it('filters outputs by template and period', async () => {
+    await create();
+    ctx.dataHandler.getCollection.and.callFake(((url: string) => of(url === 'js-creator/outputs/templates' ? [{ id: 7, name: 'Letní akce' }] : [])) as never);
+    component.ngOnInit();
+    fixture.detectChanges();
+    expect(component.templateRefs.map(r => r.name)).toEqual(['Letní akce']);
+
+    component.templateFilter = 7;
+    component.reload();
+    let url = String(ctx.dataHandler.getPaginatedCollection.calls.mostRecent().args[0]);
+    expect(url).toContain('template_id=7');
+    component.periodFilter = 'week';
+    component.reload();
+    fixture.detectChanges();
+    url = String(ctx.dataHandler.getPaginatedCollection.calls.mostRecent().args[0]);
+    expect(url).toContain('period=week');
+    expect(component.acrossFolders).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.op-search-note').textContent).toContain('js-creator-outputs.filter_note');
+  });
 });

@@ -188,3 +188,31 @@ export function defaultOutputName(template: string, at: Date, locale: string): s
   const stamp = at.toLocaleString(locale, { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   return `${template} ${stamp}`.slice(0, MAX_OUTPUT_NAME);
 }
+
+/** Lengths of the text of a post the networks accept (orientation values, November 2026). */
+export const CAPTION_LIMITS: readonly { network: string; label: string; max: number }[] = [
+  { network: 'instagram', label: 'Instagram', max: 2200 },
+  { network: 'tiktok', label: 'TikTok', max: 4000 },
+  { network: 'linkedin', label: 'LinkedIn', max: 3000 },
+  { network: 'x', label: 'X', max: 280 },
+];
+
+/**
+ * @description Length of a text of a post as the networks count it (characters, an emoji = one).
+ * @param text Text of the post.
+ */
+export function captionLength(text: string): number {
+  return Array.from(text).length;
+}
+
+/**
+ * @description Text of the post with a set of hashtags added at its end (after an empty line;
+ *   nothing when the text already ends with the same hashtags).
+ * @param caption Text of the post.
+ * @param tags Hashtags.
+ */
+export function appendHashtags(caption: string, tags: string): string {
+  const text = caption.replace(/\s+$/, '');
+  if (!tags.trim() || text.endsWith(tags.trim())) return caption;
+  return text ? `${text}\n\n${tags.trim()}` : tags.trim();
+}

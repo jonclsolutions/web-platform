@@ -43,6 +43,7 @@ import { AlertDialogService } from '../../../../../core/services/alert-dialog.se
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
 import { PermissionService } from '../../../../../core/auth/services/permission.service';
 import { TemplatesApiService } from '../../shared/templates-api.service';
+import { PreferencesService } from '../../shared/preferences.service';
 import { BlocksApiService } from '../../shared/blocks-api.service';
 import { ThumbnailRefresherService } from '../../shared/thumbnail-refresher.service';
 import { AdminModalComponent } from '../../../../../admin/components/admin-modal/admin-modal.component';
@@ -93,6 +94,7 @@ const MIN_WIDTH = 1024;
 })
 export class TemplateEditorComponent implements OnInit, LeavablePage {
   private readonly route = inject(ActivatedRoute);
+  private readonly prefs = inject(PreferencesService);
   private readonly router = inject(Router);
   private readonly api = inject(TemplatesApiService);
   private readonly blocksApi = inject(BlocksApiService);
@@ -224,6 +226,7 @@ export class TemplateEditorComponent implements OnInit, LeavablePage {
 
   /** @description Loads the template / block and everything it needs. */
   ngOnInit(): void {
+    void this.prefs.load();
     const id = Number(this.route.snapshot.paramMap.get('id'));
     forkJoin({
       template: this.kind === 'block' ? this.blocksApi.block(this.section, id) : this.api.get(this.section, id),

@@ -99,3 +99,60 @@
     @usage: form.tp-form
 */
 .tp-form { display: flex; flex-direction: column; gap: 12px; }
+
+/*
+    @module: Favorites and recently used
+    @description: The star of a card and the strips of starred / recently used templates above
+        the list (thumbnail + name, a click opens generating).
+    @usage: .tp-card > button.tp-star(.tp-star--on); .tp-strip > .tp-strip-title + .tp-strip-list > button.tp-strip-item
+*/
+.tp-card { position: relative; }
+
+.tp-star {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--color-zinc-500);
+  font-size: 1.05rem;
+  line-height: 30px;
+  cursor: pointer;
+}
+
+.tp-star--on { color: var(--color-amber-500); }
+
+.tp-star:focus-visible { outline: 2px solid var(--color-amber-500); }
+
+.tp-strip { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+
+.tp-strip-title { font-size: 0.78rem; font-weight: 600; color: var(--color-zinc-600); }
+
+.tp-strip-list { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+
+.tp-strip-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  max-width: 220px;
+  padding: 4px 10px 4px 4px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--color-zinc-800);
+}
+
+.tp-strip-item:focus-visible { outline: 2px solid var(--color-amber-500); }
+
+.tp-strip-thumb { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 6px; overflow: hidden; background: var(--color-zinc-100); }
+
+.tp-strip-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.tp-strip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
