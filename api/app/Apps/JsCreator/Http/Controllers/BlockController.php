@@ -24,6 +24,7 @@
 
 namespace App\Apps\JsCreator\Http\Controllers;
 
+use App\Apps\JsCreator\Http\Requests\BulkItemsRequest;
 use App\Apps\JsCreator\Http\Requests\DuplicateTemplateRequest;
 use App\Apps\JsCreator\Http\Requests\StoreBlockRequest;
 use App\Apps\JsCreator\Http\Requests\TemplateThumbnailRequest;
@@ -198,7 +199,7 @@ class BlockController extends Controller
         $path = WorkspaceFiles::newPath($block->user_id, 'blocks', 'webp');
         WorkspaceFiles::put($path, $thumb);
         try {
-            $block->forceFill(['thumb_path' => $path, 'thumb_bytes' => strlen($thumb)])->saveQuietly();
+            $block->forceFill(['thumb_path' => $path, 'thumb_bytes' => strlen($thumb), 'thumb_stale' => false])->saveQuietly();
         } catch (Throwable $e) {
             WorkspaceFiles::delete([$path]);
             throw $e;
@@ -296,6 +297,35 @@ class BlockController extends Controller
         $this->logAction($request, JsCreatorLog::class, 'restore', 'Block', "Block #{$block->id} restored", $block->id, 'Block');
 
         return $this->respond(new BlockResource($block));
+    }
+
+    /**
+     * @description One action on several own blocks (multiselect): `delete` (to the trash),
+     *   `restore` / `destroy` (items of the trash for good). A block used by a template is
+     *   skipped (neither to the trash nor deleted) and named in `skipped` with its templates.
+     * @param BulkItemsRequest $request `action`, `ids`.
+     * @return JsonResponse { count, skipped: [{ id, name, used_by }] }.
+     */
+    public function bulk(BulkItemsRequest $request): JsonResponse
+    {
+        $action = (string) $request->input('action');
+        $query = $this->blocks($request)->whereIn('id', $request->ids());
+        $items = ($action === 'delete' ? $query : $query->onlyTrashed())->get();
+        $used = $action === 'restore' ? [] : TemplateUsages::usedBy(CreatorUsage::BLOCK, $items->pluck('id')->all());
+        [$skipped, $done] = $items->partition(fn (CreatorBlock $block) => isset($used[$block->id]));
+        $run = fn () => $done->each(fn (CreatorBlock $block) => match ($action) {
+            'delete'  => $block->delete(),
+            'restore' => $block->restore(),
+            'destroy' => $block->deleteWithFiles(),
+        });
+        // Files of a deleted item are removed at once, so a destroy does not run in a transaction.
+        $action === 'destroy' ? $run() : DB::transaction($run);
+        $this->logAction($request, JsCreatorLog::class, TemplateController::BULK_EVENTS[$action], 'Block', "Blocks in bulk: {$action}. Count: {$done->count()}");
+
+        return $this->respond([
+            'count'   => $done->count(),
+            'skipped' => $skipped->map(fn (CreatorBlock $block) => ['id' => $block->id, 'name' => $block->name, 'used_by' => $used[$block->id]])->values()->all(),
+        ]);
     }
 
     /**

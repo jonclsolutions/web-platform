@@ -4,10 +4,32 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Popups choosing a library image, an icon or a block: search bar with the upload
+    @description: Popups choosing a library image (tabs images / own icons), an icon or a block: search bar with the upload
         button, grid of images / icons / blocks, "load more", empty state.
     @dependencies: controls.css, shared/styles/tokens.css
 */
+
+/*
+    @module: Tabs
+    @description: Tabs of the image chooser: images of the library / own icons.
+    @usage: .jc-chooser-tabs > button.jc-chooser-tab(--active)
+*/
+.jc-chooser-tabs { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--color-zinc-200); }
+
+.jc-chooser-tab {
+  padding: 6px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-zinc-500);
+  cursor: pointer;
+}
+
+.jc-chooser-tab--active { border-bottom-color: var(--color-amber-500); color: var(--color-zinc-900); }
+.jc-chooser-tab:focus-visible { outline: 2px solid var(--color-amber-500); }
 
 /*
     @module: Bar

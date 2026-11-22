@@ -268,7 +268,7 @@ describe('OutputsPageComponent', () => {
     component.toggleAll();
     expect(component.allSelected).toBeTrue();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.op-selection')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.ws-selection')).not.toBeNull();
 
     const click = spyOn(HTMLAnchorElement.prototype, 'click');
     ctx.dataHandler.post.and.returnValue(of({ url: '/api/js-creator/files/zip?x', count: 2, bytes: 10 }) as never);

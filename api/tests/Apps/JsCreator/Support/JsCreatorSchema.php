@@ -49,6 +49,7 @@ final class JsCreatorSchema
         Schema::create('js_creator_assets', function (Blueprint $t) {
             $t->id();
             $t->unsignedInteger('user_id');
+            $t->string('kind', 10)->default('image');
             $t->string('name', 150);
             $t->string('path', 255);
             $t->string('thumb_path', 255);
@@ -120,6 +121,7 @@ final class JsCreatorSchema
             $t->longText('document');
             $t->string('thumb_path', 255)->nullable();
             $t->unsignedBigInteger('thumb_bytes')->default(0);
+            $t->boolean('thumb_stale')->default(false);
             $t->unsignedInteger('version')->default(1);
             $t->timestamps();
             $t->softDeletes();

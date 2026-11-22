@@ -46,8 +46,32 @@
           ]
         },
         {
+          "heading": "03. Výběr, export a import",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Zaškrtávací políčko v rohu karty (nebo Vybrat vše) vybere šablony. Lišta výběru ukáže jejich počet a akce: Exportovat (vybrané šablony do jednoho souboru JSON), Smazat (do koše) a Zrušit výběr; v koši Obnovit a Smazat trvale. Jednu šablonu exportujete i ikonou šipky na její kartě."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Export obsahuje vše, co šablony potřebují: použité bloky, obrázky a vlastní ikony z knihovny a vlastní fonty. Neobsahuje nic o vašem účtu – jméno, e-mail, složky ani vygenerované výstupy.",
+                "Importovat (tlačítko vedle Nové šablony) přijme jen soubor .json z exportu JS Creatoru do 20 MB. Soubor se celý zkontroluje: když v něm cokoli nesedí, nic se neuloží a aplikace vypíše, co je špatně.",
+                "Šablona, blok, sada nebo obrázek se stejným názvem, jaký už máte (i v koši), dostane na konec „(2)“, případně další volné číslo. Font, který už v knihovně máte, se znovu nenahraje; jiný soubor se stejným názvem rodiny dostane „Rodina 2“.",
+                "Miniatury importovaných šablon a bloků vykreslí prohlížeč po otevření seznamu. Import se počítá do místa v prostoru."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Soubor exportu předávejte jen lidem, kteří smí jeho obsah použít – obsahuje i vaše obrázky a fonty (licence fontu musí předání dovolovat)."
+            }
+          ]
+        },
+        {
           "key": "trash",
-          "heading": "03. Koš",
+          "heading": "04. Koš",
           "blocks": [
             {
               "type": "text",
@@ -61,7 +85,7 @@
           ]
         },
         {
-          "heading": "04. Oprávnění",
+          "heading": "05. Oprávnění",
           "blocks": [
             {
               "type": "grid",
@@ -527,7 +551,11 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Sada ikon (Lucide, licence ISC) pro šablony – barvu a velikost ikony nastavíte v šabloně. Hledá se podle anglického názvu. Loga značek (sociální sítě) sada neobsahuje; pokud je smíte použít, nahrajte je jako obrázek."
+              "content": "Sada ikon (Lucide, licence ISC) pro šablony – barvu a velikost ikony nastavíte v šabloně. Hledá se podle anglického názvu. Loga značek (sociální sítě) sada neobsahuje; pokud je smíte použít, nahrajte je do Mých ikon."
+            },
+            {
+              "type": "text",
+              "content": "Moje ikony (nahoře v záložce Ikony): vlastní ikony a loga – jen PNG nebo JPG do 5 MB. Server je přeuloží bez metadat a delší stranu zmenší na nejvýše 1024 px; průhlednost PNG zůstane. V šabloně je vložíte jako obrázek: zdroj „Obrázek z knihovny“ → záložka Moje ikony. Ikonu, kterou šablona používá, nejde smazat; smazané ikony mají vlastní koš."
             }
           ]
         },
@@ -537,7 +565,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Smazané obrázky a fonty jsou v zobrazení Koš své záložky: Obnovit, Smazat trvale, Vysypat koš. Soubory v koši se počítají do vaší kvóty, dokud koš nevysypete; po uplynutí lhůty retence (výchozí 30 dní) se smažou samy."
+              "content": "Smazané obrázky, vlastní ikony a fonty jsou v zobrazení Koš své záložky: Obnovit, Smazat trvale, Vysypat koš. Soubory v koši se počítají do vaší kvóty, dokud koš nevysypete; po uplynutí lhůty retence (výchozí 30 dní) se smažou samy."
             }
           ]
         }
@@ -648,8 +676,26 @@
           ]
         },
         {
+          "heading": "03. Výběr, export a import",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Zaškrtávací políčko na kartě (nebo Vybrat vše) vybere sady; lišta výběru nabídne Exportovat, Smazat (do koše) a Zrušit výběr, v koši Obnovit a Smazat trvale. Jednu sadu exportujete i ikonou šipky na její kartě."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Export sady obsahuje sadu s jejími šablonami (bez šablon v koši) a vším, co šablony potřebují – bloky, obrázky, vlastní ikony a fonty.",
+                "Jiný uživatel na stránce Sady klikne na Importovat, vybere soubor .json a dostane celou sadu i se šablonami. Shodné názvy dostanou „(2)“.",
+                "Soubor se před uložením celý zkontroluje; nesprávný soubor se odmítne a nic se neuloží."
+              ]
+            }
+          ]
+        },
+        {
           "key": "trash",
-          "heading": "03. Koš",
+          "heading": "04. Koš",
           "blocks": [
             {
               "type": "text",
@@ -658,7 +704,7 @@
           ]
         },
         {
-          "heading": "04. Oprávnění",
+          "heading": "05. Oprávnění",
           "blocks": [
             {
               "type": "grid",
@@ -732,8 +778,21 @@
           ]
         },
         {
+          "heading": "03. Výběr, export a import",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Zaškrtávací políčko na kartě (nebo Vybrat vše) vybere bloky; lišta výběru nabídne Exportovat, Smazat (do koše) a Zrušit výběr, v koši Obnovit a Smazat trvale. Blok, který používá šablona, se hromadně nesmaže – aplikace vypíše, které šablony ho používají."
+            },
+            {
+              "type": "text",
+              "content": "Export bloků obsahuje i obrázky, vlastní ikony a fonty, které bloky používají. Importovat přijme jen soubor .json z exportu JS Creatoru; shodné názvy dostanou „(2)“."
+            }
+          ]
+        },
+        {
           "key": "trash",
-          "heading": "03. Koš",
+          "heading": "04. Koš",
           "blocks": [
             {
               "type": "text",
@@ -742,7 +801,7 @@
           ]
         },
         {
-          "heading": "04. Oprávnění",
+          "heading": "05. Oprávnění",
           "blocks": [
             {
               "type": "grid",

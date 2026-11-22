@@ -1,0 +1,62 @@
+<!--
+    @file: import-dialog.component.html
+    @path: src/app/apps/js-creator/admin/shared/import-dialog/import-dialog.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Popup of an import: explanation, choice of the .json file (name and size),
+        problems of a refused file (paths of the API), the result of a finished import (counts,
+        renamed items); footer Cancel / Import, after the import Close.
+-->
+<app-admin-modal [heading]="t('import_title')" size="md" [closeDisabled]="busy" (dismissed)="close()">
+  @if (!result) {
+    <p class="ws-field-hint im-text">{{ t('import_text') }}</p>
+    <p class="ws-field-hint im-text">{{ t('import_names_hint') }}</p>
+    <div class="im-file">
+      <label class="ws-btn im-choose" [class.im-choose--busy]="busy">
+        {{ t('import_choose') }}
+        <input type="file" accept=".json,application/json" [disabled]="busy" (change)="choose($event)" />
+      </label>
+      @if (file) {
+        <span class="im-file-name" [title]="file.name">{{ file.name }} · {{ size(file.size) }}</span>
+      } @else {
+        <span class="ws-field-hint">{{ hint }}</span>
+      }
+    </div>
+    @if (busy) {
+      <p class="ws-field-hint" role="status">{{ t('import_running') }}</p>
+    }
+  } @else {
+    <p class="im-done" role="status">{{ t('import_done') }}</p>
+    <ul class="im-counts">
+      @for (row of resultRows; track row) {
+        <li>{{ row }}</li>
+      }
+    </ul>
+    @if (result.renamed.length) {
+      <p class="ws-field-hint">{{ t('import_renamed') }}</p>
+      <ul class="im-renamed">
+        @for (item of result.renamed; track $index) {
+          <li><span class="im-type">{{ typeLabel(item.type) }}</span> „{{ item.from }}“ → „{{ item.to }}“</li>
+        }
+      </ul>
+    }
+  }
+
+  @if (problems.length) {
+    <ul class="im-problems" role="alert">
+      @for (problem of problems; track $index) {
+        <li>@if (problem.path) { <code>{{ problem.path }}</code> }{{ problem.message }}</li>
+      }
+    </ul>
+  }
+
+  <ng-container modal-footer>
+    @if (result) {
+      <button type="button" class="am-btn am-btn--primary" (click)="close()">{{ t('import_close') }}</button>
+    } @else {
+      <button type="button" class="am-btn am-btn--secondary" [disabled]="busy" (click)="close()">{{ t('import_cancel') }}</button>
+      <button type="button" class="am-btn am-btn--primary" [disabled]="busy || !file" (click)="submit()">{{ t('import_submit') }}</button>
+    }
+  </ng-container>
+</app-admin-modal>

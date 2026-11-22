@@ -6,7 +6,8 @@
  * @created 2026
  * @description Unit tests of ThumbnailRefresherService: the templates are loaded quietly with
  *   their blocks, drawn and their thumbnails uploaded quietly one after another; a failed
- *   template keeps its old thumbnail and the others go on.
+ *   template keeps its old thumbnail and the others go on; blocks (imported) the same way on
+ *   their own paths.
  * @dependencies ThumbnailRefresherService, admin-test-helpers.ts, editor-test-data.ts.
  */
 
@@ -52,6 +53,22 @@ describe('ThumbnailRefresherService', () => {
     expect(url).toBe('js-creator/images/templates/6/thumbnail');
     expect((form.get('thumb') as File).size).toBeGreaterThan(0);
     expect(done).toHaveBeenCalledOnceWith(6, '/new');
+    expect(count).toBe(1);
+  });
+
+  /**
+   * @description Blocks are loaded and uploaded on the paths of the blocks.
+   * @input refresh('images', [4], done, 'block'); GET answers a block with a shape
+   * @output getQuietly js-creator/images/blocks/4; POST …/blocks/4/thumbnail; done(4, url)
+   */
+  it('draws the thumbnails of blocks', async () => {
+    ctx.dataHandler.getQuietly.and.returnValue(of(testTemplate({ id: 4, layers: [shapeLayer('a')] })) as never);
+    ctx.dataHandler.postQuietly.and.returnValue(of({ thumb_url: '/block' }) as never);
+    const done = jasmine.createSpy('done');
+    const count = await TestBed.inject(ThumbnailRefresherService).refresh('images', [4], done, 'block');
+    expect(ctx.dataHandler.getQuietly).toHaveBeenCalledWith('js-creator/images/blocks/4');
+    expect(ctx.dataHandler.postQuietly.calls.mostRecent().args[0]).toBe('js-creator/images/blocks/4/thumbnail');
+    expect(done).toHaveBeenCalledOnceWith(4, '/block');
     expect(count).toBe(1);
   });
 });

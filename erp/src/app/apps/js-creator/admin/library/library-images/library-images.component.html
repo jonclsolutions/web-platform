@@ -4,10 +4,15 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Tab "Images": toolbar (view switch, search, upload with its hint), the grid of
-        the images (drop zone for files) with the actions of a card, "load more", the rename popup.
+    @description: Tab "Images" (and the own icons of the tab "Icons" - with a title): toolbar
+        (view switch, search, upload with its hint), the grid of the images (drop zone for
+        files) with the actions of a card, "load more", the rename popup.
 -->
 <section class="ws-panel">
+  @if (kind === 'icon') {
+    <h2 class="ws-panel-title">{{ t('own_icons_title') }}</h2>
+    <p class="ws-panel-hint">{{ t('own_icons_hint') }}</p>
+  }
   <div class="ws-toolbar">
     <app-row-button-builder kind="filter" size="sm" [items]="viewItems" [active]="view" (selected)="switchView($event)" [ariaLabel]="t('view_label')" />
     <input class="ws-search" type="search" [placeholder]="t('search_placeholder')" [attr.aria-label]="t('search_placeholder')"
@@ -80,8 +85,8 @@
   <app-admin-modal [heading]="t('rename_title')" [subheading]="r.asset.name" size="sm" [closeDisabled]="busy" (dismissed)="closeRename()">
     <form [id]="formId" (ngSubmit)="submitRename()">
       <div class="ws-field">
-        <label for="jc-asset-name">{{ t('name') }}</label>
-        <input id="jc-asset-name" name="name" type="text" maxlength="150" autocomplete="off" [(ngModel)]="r.name" data-autofocus />
+        <label [for]="formId + '-name'">{{ t('name') }}</label>
+        <input [id]="formId + '-name'" name="name" type="text" maxlength="150" autocomplete="off" [(ngModel)]="r.name" data-autofocus />
       </div>
       @if (r.error) {
         <p class="ws-field-error" role="alert">{{ r.error }}</p>

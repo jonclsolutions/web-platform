@@ -32,8 +32,13 @@ export interface UsedByTemplate {
 }
 
 /** Image of the own library. */
+/** Kind of a file of the library: an image, or an own icon (PNG / JPG, at most 1024 px). */
+export type AssetKind = 'image' | 'icon';
+
 export interface CreatorAsset {
   id: number;
+  /** Image of the library or own icon (missing in old answers = image). */
+  kind?: AssetKind;
   name: string;
   mime: string;
   width: number;
@@ -160,6 +165,8 @@ export interface CreatorBlock {
   height: number;
   /** Signed URL of the thumbnail (null until the editor saves one). */
   thumb_url: string | null;
+  /** The thumbnail has to be drawn again (an imported block - the list draws it). */
+  thumb_stale?: boolean;
   version: number;
   /** Templates using the block (such a block cannot be deleted). */
   used_by?: UsedByTemplate[];
@@ -285,4 +292,57 @@ export interface OutputZip {
   url: string;
   count: number;
   bytes: number;
+}
+
+/** Action on several templates, blocks or sets of a list (multiselect). */
+export type BulkAction = 'delete' | 'restore' | 'destroy';
+
+/** Answer of a bulk action: done items and the skipped ones (blocks used by templates). */
+export interface BulkResult {
+  count: number;
+  skipped: { id: number; name: string; used_by: UsedByTemplate[] }[];
+}
+
+/** Selection of an export (ids of own items of the section). */
+export interface ExportSelection {
+  template_ids?: number[];
+  block_ids?: number[];
+  set_ids?: number[];
+}
+
+/**
+ * Export / import file of JS Creator (format `js-creator`, version 1) - checked strictly by the
+ * API; the browser only saves it and sends it back.
+ */
+export interface TransferPackage {
+  format: 'js-creator';
+  version: number;
+  section: string;
+  exported_at: string;
+  templates: unknown[];
+  blocks: unknown[];
+  sets: unknown[];
+  assets: unknown[];
+  fonts: unknown[];
+}
+
+/** Item imported under another name (its name was taken). */
+export interface ImportRenamed {
+  type: 'template' | 'block' | 'set' | 'asset' | 'font';
+  from: string;
+  to: string;
+}
+
+/** Answer of an import. */
+export interface ImportSummary {
+  templates: number;
+  blocks: number;
+  sets: number;
+  assets: number;
+  fonts: number;
+  fonts_reused: number;
+  renamed: ImportRenamed[];
+  /** New templates and blocks (their thumbnails are drawn by the browser). */
+  template_ids: number[];
+  block_ids: number[];
 }

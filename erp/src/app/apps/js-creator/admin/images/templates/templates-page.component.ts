@@ -13,9 +13,14 @@
  *   The same page lists the BLOCKS (`image-blocks`, route data `kind: 'block'`): the main action
  *   is the editor of the block, no size filter, and a block used by templates is not deleted - a
  *   message names the templates.
- * @dependencies TemplatesApiService / BlocksApiService, WorkspaceUsageService, Router, ActivatedRoute,
- *   AdminModalComponent, SizePickerComponent, QuotaBarComponent, ConfirmDialogService, AlertDialogService,
- *   PermissionService, AdminLocalizationService (sections `js-creator-templates`, `js-creator-blocks`).
+ *   Multiselect: a checkbox on every card and "select all"; the bar of the selection exports the
+ *   selected items as one JSON file and moves them to the trash (in the trash: restore, delete
+ *   for good); a card exports itself too. Import of a JSON file of an export (ImportDialogComponent).
+ * @dependencies TemplatesApiService / BlocksApiService, TransferApiService, CardSelection,
+ *   WorkspaceUsageService, Router, ActivatedRoute, AdminModalComponent, SizePickerComponent,
+ *   QuotaBarComponent, ImportDialogComponent, ConfirmDialogService, AlertDialogService,
+ *   PermissionService, AdminLocalizationService (sections `js-creator-templates`,
+ *   `js-creator-blocks`, `js-creator-shared`).
  */
 
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Injector, OnDestroy, OnInit, inject } from '@angular/core';
@@ -35,13 +40,16 @@ import { IconComponent } from '../../../../../shared/components/icon/icon.compon
 import { TemplateQuery, TemplatesApiService } from '../../shared/templates-api.service';
 import { BlocksApiService } from '../../shared/blocks-api.service';
 import { WorkspaceUsageService } from '../../shared/workspace-usage.service';
-import { CreatorTemplate, TemplateSizeCount, UsedByTemplate } from '../../shared/js-creator.models';
+import { BulkAction, BulkResult, CreatorTemplate, ImportSummary, TemplateSizeCount, UsedByTemplate } from '../../shared/js-creator.models';
 import { JsCreatorSectionId, sectionPermission } from '../../shared/js-creator-sections';
 import { CanvasSize, isValidSize, presetOf } from '../../shared/render/document';
 import { QuotaBarComponent } from '../../shared/quota-bar/quota-bar.component';
 import { SizePickerComponent } from '../../shared/size-picker/size-picker.component';
 import { CreatorIconComponent } from '../../shared/creator-icon/creator-icon.component';
 import { uiIcon } from '../../shared/ui-icons';
+import { BulkList, MAX_SELECTION, TransferApiService, exportErrorKey, exportFileName } from '../../shared/transfer-api.service';
+import { CardSelection } from '../../shared/card-selection';
+import { ImportDialogComponent } from '../../shared/import-dialog/import-dialog.component';
 
 /** Open popup: new template, copy, copy to another size. */
 interface TemplateDialog {
@@ -60,7 +68,7 @@ type SortKey = 'updated' | 'created' | 'name';
   standalone: true,
   imports: [
     DatePipe, FormsModule, PageHeaderComponent, AdminModalComponent, RowButtonBuilderComponent, IconComponent, QuotaBarComponent, SizePickerComponent,
-    CreatorIconComponent,
+    CreatorIconComponent, ImportDialogComponent,
   ],
   templateUrl: './templates-page.component.html',
   styleUrls: ['../../../../../admin/shared-styles/modal.css', '../../shared-styles/workspace.css', './templates-page.component.css'],
@@ -71,6 +79,7 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
   readonly kind: 'template' | 'block' = inject(ActivatedRoute, { optional: true })?.snapshot?.data?.['kind'] === 'block' ? 'block' : 'template';
   private readonly api: TemplatesApiService = this.kind === 'block' ? inject(BlocksApiService) : inject(TemplatesApiService);
   private readonly alert = inject(AlertDialogService);
+  private readonly transfer = inject(TransferApiService);
   private readonly injector = inject(Injector);
   private readonly usage = inject(WorkspaceUsageService);
   private readonly i18n = inject(AdminLocalizationService);
@@ -82,6 +91,7 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
   /** Icons of the copy actions. */
   readonly copyIcon = uiIcon('copy');
   readonly formatIcon = uiIcon('ratio');
+  readonly exportIcon = uiIcon('download');
 
   /** Section of the page. */
   readonly section: JsCreatorSectionId = 'images';
@@ -112,6 +122,10 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
   busy = false;
   /** Open popup. */
   dialog: TemplateDialog | null = null;
+  /** Selected cards (multiselect). */
+  readonly selection = new CardSelection(MAX_SELECTION);
+  /** The import popup is open. */
+  importing = false;
 
   /** May create and copy. */
   readonly canCreate = this.permissions.hasPermission(sectionPermission(this.section, 'create'));
@@ -139,6 +153,19 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
    */
   t(key: string): string {
     return this.i18n.getValue(`js-creator-${this.kind === 'block' ? 'blocks' : 'templates'}.${key}`);
+  }
+
+  /**
+   * @description Text of the multiselect, export and import (shared by the lists).
+   * @param key Key in `js-creator-shared`.
+   */
+  ts(key: string): string {
+    return this.i18n.getValue(`js-creator-shared.${key}`);
+  }
+
+  /** @description List of the API of the page (templates / blocks). */
+  private get list(): BulkList {
+    return this.kind === 'block' ? 'blocks' : 'templates';
   }
 
   /** @description Base of the editor route (templates / blocks). */
@@ -182,13 +209,17 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
    */
   switchView(value: string): void {
     this.view = value === 'trash' ? 'trash' : 'active';
+    this.selection.clear();
     this.load(1);
   }
 
   /** @description Searches after a short pause in typing. */
   onSearch(): void {
     if (this.searchTimer) clearTimeout(this.searchTimer);
-    this.searchTimer = setTimeout(() => this.load(1), 300);
+    this.searchTimer = setTimeout(() => {
+      this.selection.clear();
+      this.load(1);
+    }, 300);
   }
 
   /** @description Filter or sorting changed. */
@@ -292,6 +323,100 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** @description Every listed card is selected. */
+  get allSelected(): boolean {
+    return this.selection.allOf(this.items);
+  }
+
+  /**
+   * @description Selects a card or takes it out of the selection.
+   * @param template Template / block.
+   */
+  toggle(template: CreatorTemplate): void {
+    this.selection.toggle(template.id);
+    this.cd.markForCheck();
+  }
+
+  /** @description Selects every listed card (or none, when all are selected). */
+  toggleAll(): void {
+    this.selection.toggleAll(this.items);
+    this.cd.markForCheck();
+  }
+
+  /** @description Empties the selection. */
+  clearSelection(): void {
+    this.selection.clear();
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Exports templates / blocks as one JSON file (with the images, icons, fonts and
+   *   blocks they need) saved by the browser.
+   * @param one A single card (null = the selection).
+   */
+  exportItems(one: CreatorTemplate | null = null): void {
+    const ids = one ? [one.id] : this.selection.ids();
+    if (!ids.length || this.busy) return;
+    this.busy = true;
+    this.cd.markForCheck();
+    this.transfer.export(this.section, this.kind === 'block' ? { block_ids: ids } : { template_ids: ids }).subscribe({
+      next: pkg => {
+        this.busy = false;
+        const single = ids.length === 1 ? (one ?? this.items.find(item => item.id === ids[0]))?.name ?? null : null;
+        this.transfer.download(pkg, exportFileName(this.list, single));
+        this.cd.markForCheck();
+      },
+      error: (error: unknown) => {
+        this.busy = false;
+        this.alert.open(this.ts('export_failed_title'), this.ts(exportErrorKey(error)), 'warning');
+        this.cd.markForCheck();
+      },
+    });
+  }
+
+  /**
+   * @description Bulk action on the selection (after a confirmation): to the trash, restore,
+   *   delete for good. Blocks used by templates are skipped - a message names them.
+   * @param action delete | restore | destroy.
+   */
+  async bulk(action: BulkAction): Promise<void> {
+    const ids = this.selection.ids();
+    if (!ids.length) return;
+    if (action !== 'restore') {
+      const key = action === 'delete' ? 'bulk_delete' : 'bulk_destroy';
+      if (!(await this.confirm.open(this.ts(`${key}_title`), `${this.ts(`${key}_text`)} ${ids.length}`))) return;
+    }
+    this.run(this.transfer.bulk(this.section, this.list, action, ids), (result: BulkResult) => {
+      this.selection.clear();
+      if (result.skipped.length) {
+        const names = result.skipped.map(s => `„${s.name}“ (${s.used_by.map(u => u.name).join(', ')})`).join('; ');
+        this.alert.open(this.ts('bulk_skipped_title'), `${this.ts('bulk_skipped_text')} ${names}`, 'warning');
+      }
+    });
+  }
+
+  /** @description Opens the import popup. */
+  openImport(): void {
+    this.importing = true;
+    this.cd.markForCheck();
+  }
+
+  /** @description Closes the import popup. */
+  closeImport(): void {
+    this.importing = false;
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description An import finished: the list is loaded again (new thumbnails are drawn by
+   *   refreshStale()).
+   * @param _summary Result of the import.
+   */
+  onImported(_summary: ImportSummary): void {
+    this.selection.clear();
+    this.load(1);
+  }
+
   /**
    * @description Moves a template to the trash (after a confirmation).
    * @param template Template.
@@ -341,13 +466,15 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
   /**
    * @description Runs a change, then reloads the first page and the usage.
    * @param request Request of the change.
+   * @param done Called with the answer after success, before the reload.
    */
-  private run<T>(request: Observable<T>): void {
+  private run<T>(request: Observable<T>, done?: (result: T) => void): void {
     this.busy = true;
     this.cd.markForCheck();
     request.subscribe({
-      next: () => {
+      next: result => {
         this.busy = false;
+        done?.(result);
         this.usage.refresh();
         this.load(1);
       },
@@ -359,19 +486,20 @@ export class TemplatesPageComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Thumbnails of templates whose block changed are drawn again in the background
-   *   (the renderer is loaded only now); each new thumbnail replaces the old one in the grid.
-   * @param loaded Templates of the loaded page.
+   * @description Thumbnails of templates whose block changed (and of imported templates and
+   *   blocks) are drawn again in the background (the renderer is loaded only now); each new
+   *   thumbnail replaces the old one in the grid.
+   * @param loaded Templates / blocks of the loaded page.
    */
   private async refreshStale(loaded: readonly CreatorTemplate[]): Promise<void> {
     const ids = loaded.filter(t => t.thumb_stale && !t.deleted_at).map(t => t.id);
-    if (this.kind !== 'template' || !this.canUpdate || !ids.length) return;
+    if (!this.canUpdate || !ids.length) return;
     try {
       const { ThumbnailRefresherService } = await import('../../shared/thumbnail-refresher.service');
       await this.injector.get(ThumbnailRefresherService).refresh(this.section, ids, (id, url) => {
         this.items = this.items.map(item => (item.id === id ? { ...item, thumb_url: url, thumb_stale: false } : item));
         this.cd.markForCheck();
-      });
+      }, this.kind);
     } catch {
       // The old thumbnails stay; the next visit tries again.
     }

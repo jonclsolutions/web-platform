@@ -22,6 +22,7 @@
 
 namespace App\Apps\JsCreator\Http\Controllers;
 
+use App\Apps\JsCreator\Http\Requests\BulkItemsRequest;
 use App\Apps\JsCreator\Http\Requests\DuplicateTemplateRequest;
 use App\Apps\JsCreator\Http\Requests\StoreTemplateRequest;
 use App\Apps\JsCreator\Http\Requests\TemplateThumbnailRequest;
@@ -56,6 +57,9 @@ class TemplateController extends Controller
 
     /** @description Templates per page of the list. */
     private const PER_PAGE = 48;
+
+    /** @description Audit events of the bulk actions of templates, blocks and sets. */
+    public const BULK_EVENTS = ['delete' => 'soft_delete', 'restore' => 'restore', 'destroy' => 'hard_delete'];
 
     /**
      * @description Page of the own templates of the section (`only_trashed`, `search` in the name,
@@ -293,6 +297,29 @@ class TemplateController extends Controller
         $this->logAction($request, JsCreatorLog::class, 'restore', 'Template', "Template #{$template->id} restored", $template->id, 'Template');
 
         return $this->respond(new TemplateResource($template));
+    }
+
+    /**
+     * @description One action on several own templates (multiselect): `delete` (to the trash),
+     *   `restore` / `destroy` (items of the trash, destroy with their thumbnails and usages).
+     * @param BulkItemsRequest $request `action`, `ids`.
+     * @return JsonResponse { count, skipped: [] }.
+     */
+    public function bulk(BulkItemsRequest $request): JsonResponse
+    {
+        $action = (string) $request->input('action');
+        $query = $this->templates($request)->whereIn('id', $request->ids());
+        $items = ($action === 'delete' ? $query : $query->onlyTrashed())->get();
+        $run = fn () => $items->each(fn (CreatorTemplate $template) => match ($action) {
+            'delete'  => $template->delete(),
+            'restore' => $template->restore(),
+            'destroy' => $template->deleteWithFiles(),
+        });
+        // Files of a deleted item are removed at once, so a destroy does not run in a transaction.
+        $action === 'destroy' ? $run() : DB::transaction($run);
+        $this->logAction($request, JsCreatorLog::class, self::BULK_EVENTS[$action], 'Template', "Templates in bulk: {$action}. Count: {$items->count()}");
+
+        return $this->respond(['count' => $items->count(), 'skipped' => []]);
     }
 
     /**

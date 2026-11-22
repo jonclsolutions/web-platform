@@ -11,7 +11,8 @@
  */
 
 /** @description Upload profiles of the API (keys of `GET upload-rules`). */
-export type UploadProfile = 'raw_request_commission' | 'sales_order' | 'job_application' | 'project_thread' | 'js_creator_image' | 'js_creator_font' | 'js_creator_output';
+export type UploadProfile = 'raw_request_commission' | 'sales_order' | 'job_application' | 'project_thread' | 'js_creator_image' | 'js_creator_font' | 'js_creator_output'
+  | 'js_creator_icon' | 'js_creator_import';
 
 /** @description Rules of one upload profile. */
 export interface UploadRule {

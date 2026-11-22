@@ -162,7 +162,7 @@
     @module: Toolbar of the outputs
     @description: Selects of the type and sorting, "select all", the note of a search in every
         folder.
-    @usage: .op-select, label.op-select-all, .op-search-note
+    @usage: .op-select, .op-search-note (select all: label.ws-select-all of workspace.css)
 */
 .op-select {
   padding: 7px 12px;
@@ -174,34 +174,7 @@
   color: var(--color-zinc-900);
 }
 
-.op-select-all {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  color: var(--color-zinc-700);
-  cursor: pointer;
-}
-
 .op-search-note { margin: 0; }
-
-/*
-    @module: Selected outputs
-    @description: Bar with the number of selected outputs and their actions (ZIP, move, delete).
-    @usage: .op-selection > strong, .ws-btn
-*/
-.op-selection {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 8px;
-  padding: 8px 12px;
-  border: 1px solid var(--color-amber-200);
-  border-radius: 12px;
-  background: var(--color-amber-50);
-  font-size: 0.8rem;
-  color: var(--color-zinc-900);
-}
 
 /*
     @module: Output cards
@@ -209,32 +182,12 @@
         output, --op-ratio = width / height), name, date, size, the folder with a search and the
         actions. A selected card has an amber border (its own rule - not a :hover one, so it also
         works on phones).
-    @usage: .ws-grid.op-grid > .ws-card.op-card(--selected) > label.op-check, button.op-preview
+    @usage: .ws-grid.op-grid > .ws-card.op-card(.ws-card--selected) > label.ws-check, button.op-preview
         (span.op-preview--static in the trash) > .op-frame > img; .op-card-folder; .op-more
 */
 .op-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 
 .op-card { position: relative; }
-
-.op-card--selected {
-  border-color: var(--color-amber-500);
-  box-shadow: 0 0 0 1px var(--color-amber-500);
-}
-
-.op-check {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  z-index: 1;
-  display: inline-flex;
-  padding: 5px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.15);
-  cursor: pointer;
-}
-
-.op-check input { width: 16px; height: 16px; margin: 0; cursor: pointer; }
 
 .op-preview {
   display: flex;

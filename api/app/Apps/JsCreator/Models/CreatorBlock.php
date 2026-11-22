@@ -33,6 +33,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property array<string, mixed> $document
  * @property string|null $thumb_path Thumbnail (WebP) on the private disk.
  * @property int $thumb_bytes Size of the thumbnail (quota).
+ * @property bool $thumb_stale The thumbnail has to be drawn again (imported block).
  * @property int $version
  */
 class CreatorBlock extends Model
@@ -49,11 +50,11 @@ class CreatorBlock extends Model
     protected $table = 'js_creator_blocks';
 
     /** @var array<int, string> The attributes that are mass assignable. */
-    protected $fillable = ['user_id', 'section', 'name', 'width', 'height', 'schema_version', 'document', 'thumb_path', 'thumb_bytes', 'version'];
+    protected $fillable = ['user_id', 'section', 'name', 'width', 'height', 'schema_version', 'document', 'thumb_path', 'thumb_bytes', 'thumb_stale', 'version'];
 
     /** @var array<string, string> The attributes that should be cast. */
     protected $casts = [
-        'user_id' => 'integer', 'width' => 'integer', 'height' => 'integer', 'schema_version' => 'integer', 'document' => 'array',
+        'user_id' => 'integer', 'width' => 'integer', 'height' => 'integer', 'schema_version' => 'integer', 'document' => 'array', 'thumb_stale' => 'boolean',
         'thumb_bytes' => 'integer', 'version' => 'integer',
     ];
 

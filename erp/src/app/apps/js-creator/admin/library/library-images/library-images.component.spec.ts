@@ -141,4 +141,36 @@ describe('LibraryImagesComponent', () => {
       for (const key of ['cancel', 'save', 'upload']) expect(lang['js-creator-library'][key]).toBeTruthy();
     }
   });
+
+  /**
+   * @description The own icons (kind icon): their own list, upload and trash; PNG / JPG only;
+   *   texts of the icons in both languages.
+   * @input component with kind "icon"; upload a.png, b.webp; empty the trash
+   * @output list with kind=icon; one upload with kind icon (b.webp refused); DELETE …/trash?kind=icon;
+   *   icon texts in cz and en
+   */
+  it('manages the own icons', async () => {
+    const icons = TestBed.createComponent(LibraryImagesComponent);
+    icons.componentInstance.kind = 'icon';
+    icons.detectChanges();
+    expect(ctx.dataHandler.getPaginatedCollection.calls.mostRecent().args[0]).toContain('kind=icon');
+    expect(icons.nativeElement.querySelector('.ws-panel-title').textContent).toContain('js-creator-library.own_icons_title');
+    expect(icons.componentInstance.t('upload_images')).toBe('js-creator-library.icon_upload_images');
+
+    icons.componentInstance.upload([new File(['x'], 'a.png'), new File(['x'], 'b.webp')]);
+    expect(ctx.dataHandler.upload).toHaveBeenCalledTimes(1);
+    const form = ctx.dataHandler.upload.calls.mostRecent().args[1] as FormData;
+    expect(form.get('kind')).toBe('icon');
+    expect(ctx.alert.open.calls.mostRecent().args[1]).toContain('b.webp');
+
+    ctx.dataHandler.delete.and.returnValue(of(undefined) as never);
+    await icons.componentInstance.emptyTrash();
+    expect(ctx.dataHandler.delete).toHaveBeenCalledWith('js-creator/library/assets/trash?kind=icon');
+    for (const lang of [cz, en] as Record<string, Record<string, string>>[]) {
+      for (const key of ['own_icons_title', 'own_icons_hint', 'icon_max_edge', 'icon_upload_images', 'icon_images_empty', 'icon_delete_image_text',
+        'icon_empty_images_trash_text', 'icon_in_use_image', 'icon_drop_hint']) {
+        expect(lang['js-creator-library'][key]).withContext(key).toBeTruthy();
+      }
+    }
+  });
 });

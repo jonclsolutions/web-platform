@@ -15,7 +15,7 @@ import { Observable } from 'rxjs';
 import { DataHandler } from '../../../../core/services/data-handler.service';
 import { ApiPage } from '../../../../shared/interfaces/api-envelope';
 import {
-  CreatorAsset, CreatorFolder, CreatorFont, CreatorSettings, FontFaceFields, QuotaAccount, WorkspaceUsage,
+  AssetKind, CreatorAsset, CreatorFolder, CreatorFont, CreatorSettings, FontFaceFields, QuotaAccount, WorkspaceUsage,
 } from './js-creator.models';
 
 /** Query of the list of library images. */
@@ -23,6 +23,8 @@ export interface AssetQuery {
   page: number;
   search?: string;
   trashed?: boolean;
+  /** Images (default) or own icons. */
+  kind?: AssetKind;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -80,13 +82,14 @@ export class JsCreatorApiService {
   }
 
   /**
-   * @description Page of the own library images.
-   * @param query Page, search, trash.
+   * @description Page of the own library images (or own icons).
+   * @param query Page, search, trash, kind.
    */
   assets(query: AssetQuery): Observable<ApiPage<CreatorAsset>> {
     const params = new URLSearchParams({ page: String(query.page) });
     if (query.search) params.set('search', query.search);
     if (query.trashed) params.set('only_trashed', '1');
+    if (query.kind === 'icon') params.set('kind', 'icon');
     return this.api.getPaginatedCollection<CreatorAsset>(`js-creator/library/assets?${params.toString()}`);
   }
 
@@ -94,11 +97,13 @@ export class JsCreatorApiService {
    * @description Upload one image to the library (one file per request - the request limit of
    *   the server is 25 MB).
    * @param file Image.
+   * @param kind Image of the library (default) or own icon (PNG / JPG).
    * @returns The new image.
    */
-  uploadAsset(file: File): Observable<CreatorAsset[]> {
+  uploadAsset(file: File, kind: AssetKind = 'image'): Observable<CreatorAsset[]> {
     const data = new FormData();
     data.append('files[]', file, file.name);
+    if (kind === 'icon') data.append('kind', 'icon');
     return this.api.upload<CreatorAsset[]>('js-creator/library/assets', data);
   }
 
@@ -117,9 +122,9 @@ export class JsCreatorApiService {
     return this.api.post<CreatorAsset>(`js-creator/library/assets/${id}/restore`, {});
   }
 
-  /** @description Empty the image trash. */
-  emptyAssetTrash(): Observable<void> {
-    return this.api.delete('js-creator/library/assets/trash');
+  /** @description Empty the image trash (`kind` icon: the trash of the own icons). */
+  emptyAssetTrash(kind: AssetKind = 'image'): Observable<void> {
+    return this.api.delete(`js-creator/library/assets/trash${kind === 'icon' ? '?kind=icon' : ''}`);
   }
 
   /** @description Own fonts, or the font trash. */

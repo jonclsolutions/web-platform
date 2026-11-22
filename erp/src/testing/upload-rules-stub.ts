@@ -39,6 +39,8 @@ export const TEST_UPLOAD_RULES: Record<UploadProfile, UploadRule> = {
   js_creator_image: { extensions: ['jpg', 'jpeg', 'png', 'webp'], max_files: 10, max_file_size_mb: 15, max_total_size_mb: null },
   js_creator_font: { extensions: ['ttf', 'otf', 'woff', 'woff2'], max_files: 1, max_file_size_mb: 5, max_total_size_mb: null },
   js_creator_output: { extensions: ['png'], max_files: 1, max_file_size_mb: 20, max_total_size_mb: null },
+  js_creator_icon: { extensions: ['png', 'jpg', 'jpeg'], max_files: 10, max_file_size_mb: 5, max_total_size_mb: null },
+  js_creator_import: { extensions: ['json'], max_files: 1, max_file_size_mb: 20, max_total_size_mb: null },
 };
 
 /**

@@ -257,6 +257,58 @@
 }
 
 /*
+    @module: Multiselect of the cards
+    @description: Selection of several cards (outputs, templates, blocks, sets): the checkbox in
+        the corner of a card, the highlighted selected card, "select all" in the toolbar and the
+        bar of the selected items with their actions.
+    @usage: .ws-card(.ws-card--selected) > label.ws-check > input[type=checkbox];
+        label.ws-select-all > input; .ws-selection > strong, .ws-toolbar-spacer, .ws-btn
+*/
+.ws-card:has(> .ws-check) { position: relative; }
+
+.ws-card--selected {
+  border-color: var(--color-amber-500);
+  box-shadow: 0 0 0 1px var(--color-amber-500);
+}
+
+.ws-check {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  display: inline-flex;
+  padding: 5px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.15);
+  cursor: pointer;
+}
+
+.ws-check input { width: 16px; height: 16px; margin: 0; cursor: pointer; }
+
+.ws-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--color-zinc-700);
+  cursor: pointer;
+}
+
+.ws-selection {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-amber-200);
+  border-radius: 12px;
+  background: var(--color-amber-50);
+  font-size: 0.8rem;
+  color: var(--color-zinc-900);
+}
+
+/*
     @module: Form fields of the popups
     @description: Label above the control, hint and error under it; a row of radio options.
     @usage: .ws-field > label, input, select, .ws-field-hint, .ws-field-error; .ws-choice

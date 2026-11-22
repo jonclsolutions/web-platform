@@ -9,7 +9,8 @@
  * @description Feature tests of the images of the library (AssetController, LibraryImage,
  *   FileController): re-encoding (EXIF orientation applied, metadata dropped, transparency kept,
  *   large images scaled down, WebP thumbnail), refused files, the quota, the trash, the signed
- *   file URLs, the isolation of workspaces and the images of a template by their ids.
+ *   file URLs, the isolation of workspaces, the images of a template by their ids and the own
+ *   icons (kind icon: PNG / JPG only, at most 1024 px, own list and trash).
  * @dependencies Tests\TestCase, JsCreatorFixtures, fake private disk.
  */
 
@@ -214,5 +215,40 @@ class LibraryAssetTest extends TestCase
 
         $listed = $this->getJson('/api/js-creator/library/assets?ids=' . implode(',', [$ids[0], $ids[2], $foreign]))->assertOk()->json('data.*.id');
         $this->assertEqualsCanonicalizing([$ids[0], $ids[2]], $listed);
+    }
+
+    /**
+     * @description Own icons: PNG / JPG only (a WebP is refused), scaled to 1024 px, listed apart
+     *   from the images; a template can use them; the trash is emptied per kind; `ids` finds both kinds.
+     * @input PNG 2000×1000 as an icon; WebP as an icon; an image; list of each kind; trash of both
+     *   kinds and emptying the icon trash.
+     * @output icon 1024×512 kind icon; 422 for WebP; lists of one kind each; `ids` lists both;
+     *   after emptying the icon trash the image is still in its trash.
+     */
+    public function test_own_icons(): void
+    {
+        $this->signIn($this->creator());
+        $icon = $this->post('/api/js-creator/library/assets', ['kind' => 'icon', 'files' => [$this->png(2000, 1000, 'arrow.png')]], ['Accept' => 'application/json'])
+            ->assertCreated()->assertJsonPath('data.0.kind', 'icon')->assertJsonPath('data.0.width', 1024)->assertJsonPath('data.0.height', 512)->json('data.0.id');
+        $image = imagecreatetruecolor(20, 20);
+        ob_start();
+        imagewebp($image);
+        $webp = UploadedFile::fake()->createWithContent('icon.webp', (string) ob_get_clean());
+        $this->post('/api/js-creator/library/assets', ['kind' => 'icon', 'files' => [$webp]], ['Accept' => 'application/json'])
+            ->assertStatus(422)->assertJsonValidationErrors('files.0');
+        $this->post('/api/js-creator/library/assets', ['kind' => 'other', 'files' => [$this->png()]], ['Accept' => 'application/json'])
+            ->assertStatus(422)->assertJsonValidationErrors('kind');
+        $photo = $this->post('/api/js-creator/library/assets', ['files' => [$this->png()]], ['Accept' => 'application/json'])
+            ->assertCreated()->assertJsonPath('data.0.kind', 'image')->json('data.0.id');
+
+        $this->getJson('/api/js-creator/library/assets')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $photo);
+        $this->getJson('/api/js-creator/library/assets?kind=icon')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $icon);
+        $this->getJson("/api/js-creator/library/assets?ids={$icon},{$photo}")->assertOk()->assertJsonCount(2, 'data');
+
+        $this->deleteJson("/api/js-creator/library/assets/{$icon}")->assertNoContent();
+        $this->deleteJson("/api/js-creator/library/assets/{$photo}")->assertNoContent();
+        $this->deleteJson('/api/js-creator/library/assets/trash?kind=icon')->assertNoContent();
+        $this->assertNull(CreatorAsset::withTrashed()->find($icon));
+        $this->assertTrue(CreatorAsset::withTrashed()->find($photo)->trashed());
     }
 }

@@ -7,8 +7,9 @@
  * @description Unit tests of SetsPageComponent: list with the formats of the sets, generating as
  *   the main action, the popup (name, templates added / ordered / removed, the limit of 10,
  *   caption), saving, the explanation of a field of another kind (422 field_conflict), the trash
- *   and the permissions.
- * @dependencies SetsPageComponent, admin-test-helpers.ts.
+ *   and the permissions; the multiselect (bulk actions), export of a set / the selection and the
+ *   import (thumbnails of the imported blocks and templates drawn afterwards).
+ * @dependencies SetsPageComponent, TransferApiService, ThumbnailRefresherService, admin-test-helpers.ts.
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -17,6 +18,8 @@ import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { MAX_SET_TEMPLATES, SetsPageComponent } from './sets-page.component';
 import { CreatorSet, CreatorTemplate } from '../../shared/js-creator.models';
+import { TransferApiService } from '../../shared/transfer-api.service';
+import { ThumbnailRefresherService } from '../../shared/thumbnail-refresher.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../../../testing/admin-test-helpers';
 
 /**
@@ -160,7 +163,7 @@ describe('SetsPageComponent', () => {
 
   /**
    * @description Trash: delete (confirmed), restore, delete for good, empty; without permissions
-   *   no New set, no edit / delete buttons and no Generate.
+   *   no New set / Import, no edit / delete buttons and no Generate (export stays).
    * @input remove S1; restore / destroy S2; empty trash; view-only account
    * @output DELETE sets/1, POST sets/2/restore, DELETE sets/2?force=1, DELETE sets/trash; hidden buttons
    */
@@ -177,8 +180,63 @@ describe('SetsPageComponent', () => {
 
     TestBed.resetTestingModule();
     await create(['view-js-creator', 'js-creator-images-view']);
-    expect(fixture.nativeElement.querySelector('app-page-header .ws-btn--primary')).toBeNull();
-    expect(fixture.nativeElement.querySelectorAll('.st-card .ws-icon-btn').length).toBe(0);
+    expect(fixture.nativeElement.querySelector('app-page-header .ws-btn')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('.st-card .ws-icon-btn').length).toBe(2);
+    expect(fixture.nativeElement.querySelector('.st-card .ws-icon-btn').getAttribute('title')).toBe('js-creator-shared.export_one');
     expect(fixture.nativeElement.querySelector('.st-generate')).toBeNull();
+  });
+
+  /**
+   * @description Multiselect of sets: select all, export of the selection and of one set, bulk
+   *   delete / restore / delete for good; the view switch clears the selection.
+   * @input toggleAll; export; export of S1; bulk delete; trash: select S2, restore, destroy
+   * @output POST export {set_ids: [1, 2]} → download "js-creator-sets-<date>"; "js-creator-sets-s1-<date>";
+   *   POST sets/bulk {delete, [1, 2]}; {restore, [2]}; {destroy, [2]}
+   */
+  it('selects, exports and deletes sets in bulk', async () => {
+    await create();
+    const pkg = { format: 'js-creator', version: 1, section: 'images', exported_at: '', templates: [], blocks: [], sets: [], assets: [], fonts: [] };
+    ctx.dataHandler.postQuietly.and.returnValue(of(pkg) as never);
+    const download = spyOn(TestBed.inject(TransferApiService), 'download');
+    component.toggleAll();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.st-card.ws-card--selected').length).toBe(2);
+    component.exportSets();
+    expect(ctx.dataHandler.postQuietly).toHaveBeenCalledWith('js-creator/images/export', { set_ids: [1, 2] });
+    expect(download.calls.mostRecent().args[1]).toMatch(/^js-creator-sets-\d{4}-\d{2}-\d{2}$/);
+    component.exportSets(component.items[0]);
+    expect(download.calls.mostRecent().args[1]).toMatch(/^js-creator-sets-s1-\d{4}/);
+
+    ctx.dataHandler.post.and.returnValue(of({ count: 2, skipped: [] }) as never);
+    await component.bulk('delete');
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/images/sets/bulk', { action: 'delete', ids: [1, 2] });
+    expect(component.selection.size).toBe(0);
+    component.switchView('trash');
+    component.toggle(component.items[1]);
+    await component.bulk('restore');
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/images/sets/bulk', { action: 'restore', ids: [2] });
+    component.toggle(component.items[1]);
+    await component.bulk('destroy');
+    expect(ctx.confirm.open).toHaveBeenCalledWith('js-creator-shared.bulk_destroy_title', 'js-creator-shared.bulk_destroy_text 1');
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/images/sets/bulk', { action: 'destroy', ids: [2] });
+  });
+
+  /**
+   * @description After an import the list is loaded again and the thumbnails of the new blocks,
+   *   then templates are drawn; a new thumbnail replaces the size label of the set.
+   * @input import of template 1 and block 4; the refresher answers /t1.webp for template 1
+   * @output refresh(blocks [4], 'block') then refresh(templates [1]); S1 shows /t1.webp
+   */
+  it('draws the thumbnails of an import', async () => {
+    await create();
+    const refresh = spyOn(TestBed.inject(ThumbnailRefresherService), 'refresh').and.callFake(async (_section, ids, done) => {
+      if (ids[0] === 1) done?.(1, '/t1.webp');
+      return 1;
+    });
+    component.onImported({ templates: 1, blocks: 1, sets: 1, assets: 0, fonts: 0, fonts_reused: 0, renamed: [], template_ids: [1], block_ids: [4] });
+    for (let i = 0; i < 50 && component.items[0]?.templates[0]?.thumb_url !== '/t1.webp'; i++) await new Promise(r => setTimeout(r, 10));
+    expect(refresh.calls.argsFor(0)).toEqual(['images', [4], undefined, 'block']);
+    expect(refresh.calls.argsFor(1)[1]).toEqual([1]);
+    expect(component.items[0].templates[0].thumb_url).toBe('/t1.webp');
   });
 });

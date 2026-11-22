@@ -34,6 +34,7 @@ class BlockResource extends JsonResource
             'width'      => $this->width,
             'height'     => $this->height,
             'thumb_url'  => WorkspaceFiles::blockThumbUrl($this->resource),
+            'thumb_stale' => (bool) $this->thumb_stale,
             'version'    => $this->version,
             // Templates using the block (TemplateUsages::usedBy()).
             'used_by'    => $this->when($this->resource->relationLoaded('usedBy'), fn () => $this->resource->getRelation('usedBy')->values()->all()),

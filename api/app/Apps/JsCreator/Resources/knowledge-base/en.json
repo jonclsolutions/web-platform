@@ -46,8 +46,32 @@
           ]
         },
         {
+          "heading": "03. Selection, export and import",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The checkbox in the corner of a card (or Select all) selects templates. The selection bar shows their number and the actions: Export (the selected templates into one JSON file), Delete (to the trash) and Clear selection; in the trash Restore and Delete for good. One template is exported by the arrow icon on its card too."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "An export holds everything the templates need: the blocks they use, images and own icons of the library and own fonts. It holds nothing about your account – name, e-mail, folders or generated outputs.",
+                "Import (button next to New template) accepts only a .json file of an export of JS Creator up to 20 MB. The whole file is checked: when anything in it is wrong, nothing is stored and the app lists what is wrong.",
+                "A template, block, set or image with a name you already have (also in the trash) gets “(2)” at the end, or the next free number. A font you already have in the library is not uploaded again; another file with the same family name gets “Family 2”.",
+                "Thumbnails of imported templates and blocks are drawn by the browser when the list is opened. An import counts towards the space of the workspace."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Give an export file only to people who may use its content – it holds your images and fonts too (the font licence must allow passing it on)."
+            }
+          ]
+        },
+        {
           "key": "trash",
-          "heading": "03. Trash",
+          "heading": "04. Trash",
           "blocks": [
             {
               "type": "text",
@@ -61,7 +85,7 @@
           ]
         },
         {
-          "heading": "04. Permissions",
+          "heading": "05. Permissions",
           "blocks": [
             {
               "type": "grid",
@@ -527,7 +551,11 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Icon set (Lucide, ISC licence) for templates – colour and size of an icon are set in the template. Search by the English name. Brand logos (social networks) are not included; if you may use one, upload it as an image."
+              "content": "Icon set (Lucide, ISC licence) for templates – colour and size of an icon are set in the template. Search by the English name. Brand logos (social networks) are not included; if you may use one, upload it to My icons."
+            },
+            {
+              "type": "text",
+              "content": "My icons (at the top of the tab Icons): own icons and logos – PNG or JPG only, up to 5 MB. The server stores them again without metadata and scales the longer side to at most 1024 px; transparency of a PNG stays. In a template you insert them as an image: source “Image of the library” → tab My icons. An icon used by a template cannot be deleted; deleted icons have their own trash."
             }
           ]
         },
@@ -537,7 +565,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Deleted images and fonts are in the view Trash of their tab: Restore, Delete for good, Empty the trash. Files in the trash count towards your quota until you empty it; after the retention period (default 30 days) they are deleted automatically."
+              "content": "Deleted images, own icons and fonts are in the view Trash of their tab: Restore, Delete for good, Empty the trash. Files in the trash count towards your quota until you empty it; after the retention period (default 30 days) they are deleted automatically."
             }
           ]
         }
@@ -648,8 +676,26 @@
           ]
         },
         {
+          "heading": "03. Selection, export and import",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The checkbox on a card (or Select all) selects sets; the selection bar offers Export, Delete (to the trash) and Clear selection, in the trash Restore and Delete for good. One set is exported by the arrow icon on its card too."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "An export of a set holds the set with its templates (not those in the trash) and everything the templates need – blocks, images, own icons and fonts.",
+                "Another user clicks Import on the page Sets, chooses the .json file and gets the whole set with its templates. Equal names get “(2)”.",
+                "The whole file is checked before anything is stored; a wrong file is refused and nothing is stored."
+              ]
+            }
+          ]
+        },
+        {
           "key": "trash",
-          "heading": "03. Trash",
+          "heading": "04. Trash",
           "blocks": [
             {
               "type": "text",
@@ -658,7 +704,7 @@
           ]
         },
         {
-          "heading": "04. Permissions",
+          "heading": "05. Permissions",
           "blocks": [
             {
               "type": "grid",
@@ -732,8 +778,21 @@
           ]
         },
         {
+          "heading": "03. Selection, export and import",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The checkbox on a card (or Select all) selects blocks; the selection bar offers Export, Delete (to the trash) and Clear selection, in the trash Restore and Delete for good. A block used by a template is not deleted in bulk – the app lists the templates using it."
+            },
+            {
+              "type": "text",
+              "content": "An export of blocks holds the images, own icons and fonts the blocks use too. Import accepts only a .json file of an export of JS Creator; equal names get “(2)”."
+            }
+          ]
+        },
+        {
           "key": "trash",
-          "heading": "03. Trash",
+          "heading": "04. Trash",
           "blocks": [
             {
               "type": "text",
@@ -742,7 +801,7 @@
           ]
         },
         {
-          "heading": "04. Permissions",
+          "heading": "05. Permissions",
           "blocks": [
             {
               "type": "grid",

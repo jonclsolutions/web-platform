@@ -4,11 +4,12 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Page "Templates" (and "Blocks"): header with "New …" and the view switch (items / trash),
-        the usage bar, the toolbar (search, size - templates, sorting), the grid of
-        the cards (thumbnail in the aspect of the template / block - a click opens generating, a
-        block its editor) with their actions, "load more", the popup of a new item / copy / copy
-        to another size.
+    @description: Page "Templates" (and "Blocks"): header with "New …", "Import" and the view switch
+        (items / trash), the usage bar, the toolbar (search, size - templates, sorting, select all),
+        the bar of the selected cards (export, to the trash / restore, delete for good), the grid
+        of the cards (checkbox, thumbnail in the aspect of the template / block - a click opens
+        generating, a block its editor) with their actions, "load more", the popup of a new
+        item / copy / copy to another size and the import popup.
 -->
 <div class="ws-page">
   <app-page-header [title]="t('header')" [subtitle]="t('subtitle')">
@@ -16,6 +17,7 @@
       <button type="button" class="ws-btn ws-btn--primary" (click)="openCreate()">
         {{ t('new_template') }}
       </button>
+      <button type="button" class="ws-btn" (click)="openImport()">{{ ts('import') }}</button>
     }
     <app-row-button-builder kind="filter" [items]="viewItems" [active]="view" (selected)="switchView($event)" [ariaLabel]="t('view_label')" />
   </app-page-header>
@@ -43,7 +45,29 @@
       @if (view === 'trash' && canDelete && items.length) {
         <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="emptyTrash()">{{ t('empty_trash') }}</button>
       }
+      @if (items.length) {
+        <label class="ws-select-all">
+          <input type="checkbox" [checked]="allSelected" (change)="toggleAll()" />{{ ts('select_all') }}
+        </label>
+      }
     </div>
+
+    @if (selection.size) {
+      <div class="ws-selection" role="region" [attr.aria-label]="ts('selection_label')">
+        <strong>{{ ts('selected') }} {{ selection.size }}</strong>
+        <span class="ws-toolbar-spacer"></span>
+        @if (view === 'active') {
+          <button type="button" class="ws-btn ws-btn--sm" [disabled]="busy" (click)="exportItems()">{{ ts('export') }}</button>
+          @if (canDelete) {
+            <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="bulk('delete')">{{ ts('delete') }}</button>
+          }
+        } @else if (canDelete) {
+          <button type="button" class="ws-btn ws-btn--sm" [disabled]="busy" (click)="bulk('restore')">{{ ts('restore') }}</button>
+          <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="bulk('destroy')">{{ ts('destroy') }}</button>
+        }
+        <button type="button" class="ws-btn ws-btn--sm" (click)="clearSelection()">{{ ts('clear_selection') }}</button>
+      </div>
+    }
 
     @if (view === 'trash') {
       <p class="ws-trash-note">{{ t('trash_note') }}</p>
@@ -52,7 +76,10 @@
     @if (items.length) {
       <div class="ws-grid tp-grid">
         @for (template of items; track template.id) {
-          <article class="ws-card tp-card" [class.tp-card--block]="kind === 'block'">
+          <article class="ws-card tp-card" [class.tp-card--block]="kind === 'block'" [class.ws-card--selected]="selection.has(template.id)">
+            <label class="ws-check" [title]="ts('select')">
+              <input type="checkbox" [checked]="selection.has(template.id)" (change)="toggle(template)" [attr.aria-label]="ts('select') + ' ' + template.name" />
+            </label>
             <button type="button" class="tp-preview" [disabled]="view === 'trash'" [title]="view === 'active' ? t('open_generate') : template.name"
               (click)="generate(template)">
               <span class="tp-frame" [style.aspect-ratio]="aspect(template)" [style.--tp-ratio]="template.width / template.height">
@@ -85,6 +112,7 @@
                   </button>
                   <span class="ws-toolbar-spacer"></span>
                 }
+                <button type="button" class="ws-icon-btn" [title]="ts('export_one')" [attr.aria-label]="ts('export_one')" [disabled]="busy" (click)="exportItems(template)"><app-creator-icon [nodes]="exportIcon" [size]="15" /></button>
                 @if (canCreate) {
                   <button type="button" class="ws-icon-btn" [title]="t('duplicate')" [attr.aria-label]="t('duplicate')" [disabled]="busy" (click)="openDuplicate(template, 'duplicate')"><app-creator-icon [nodes]="copyIcon" [size]="15" /></button>
                   <button type="button" class="ws-icon-btn" [title]="t('duplicate_format')" [attr.aria-label]="t('duplicate_format')" [disabled]="busy" (click)="openDuplicate(template, 'format')"><app-creator-icon [nodes]="formatIcon" [size]="15" /></button>
@@ -135,4 +163,8 @@
       <button type="submit" class="am-btn am-btn--primary" [attr.form]="formId" [disabled]="busy">{{ t(d.kind === 'create' ? 'create' : 'duplicate_submit') }}</button>
     </ng-container>
   </app-admin-modal>
+}
+
+@if (importing) {
+  <app-jc-import-dialog [section]="section" (imported)="onImported($event)" (dismissed)="closeImport()" />
 }

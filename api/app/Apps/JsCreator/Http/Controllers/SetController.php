@@ -23,6 +23,7 @@
 
 namespace App\Apps\JsCreator\Http\Controllers;
 
+use App\Apps\JsCreator\Http\Requests\BulkItemsRequest;
 use App\Apps\JsCreator\Http\Requests\SaveSetRequest;
 use App\Apps\JsCreator\Http\Resources\SetResource;
 use App\Apps\JsCreator\Models\CreatorBlock;
@@ -158,6 +159,29 @@ class SetController extends Controller
         $this->logAction($request, JsCreatorLog::class, 'restore', 'Set', "Set #{$set->id} restored", $set->id, 'Set');
 
         return $this->respond(new SetResource($set->load('templates')));
+    }
+
+    /**
+     * @description One action on several own sets (multiselect): `delete` (to the trash),
+     *   `restore` / `destroy` (items of the trash for good - their templates stay).
+     * @param BulkItemsRequest $request `action`, `ids`.
+     * @return JsonResponse { count, skipped: [] }.
+     */
+    public function bulk(BulkItemsRequest $request): JsonResponse
+    {
+        $action = (string) $request->input('action');
+        $query = $this->sets($request)->whereIn('id', $request->ids());
+        $items = ($action === 'delete' ? $query : $query->onlyTrashed())->get();
+        $run = fn () => $items->each(fn (CreatorSet $set) => match ($action) {
+            'delete'  => $set->delete(),
+            'restore' => $set->restore(),
+            'destroy' => $set->forceDelete(),
+        });
+        // Files of a deleted item are removed at once, so a destroy does not run in a transaction.
+        $action === 'destroy' ? $run() : DB::transaction($run);
+        $this->logAction($request, JsCreatorLog::class, TemplateController::BULK_EVENTS[$action], 'Set', "Sets in bulk: {$action}. Count: {$items->count()}");
+
+        return $this->respond(['count' => $items->count(), 'skipped' => []]);
     }
 
     /**

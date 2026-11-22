@@ -11,12 +11,18 @@
  *   down, remove). The API refuses a template whose field has another kind than the same key in
  *   another template (422 `field_conflict`) - the popup explains which field and templates.
  *   Trash with restore, delete for good and emptying.
- * @dependencies SetsApiService, TemplatesApiService (adding templates), Router, AdminModalComponent,
- *   QuotaBarComponent, ConfirmDialogService, PermissionService, AdminLocalizationService (section
- *   `js-creator-sets`).
+ *   Multiselect: a checkbox on every card and "select all"; the bar of the selection exports the
+ *   selected sets (with their templates, blocks, images, icons and fonts) as one JSON file and
+ *   moves them to the trash (in the trash: restore, delete for good); a card exports itself too.
+ *   Import of a JSON file of an export (ImportDialogComponent) - the thumbnails of the imported
+ *   templates and blocks are drawn in the background (ThumbnailRefresherService).
+ * @dependencies SetsApiService, TemplatesApiService (adding templates), TransferApiService,
+ *   CardSelection, Router, AdminModalComponent, QuotaBarComponent, ImportDialogComponent,
+ *   ConfirmDialogService, AlertDialogService, PermissionService, AdminLocalizationService
+ *   (sections `js-creator-sets`, `js-creator-shared`).
  */
 
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Injector, OnDestroy, OnInit, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -24,6 +30,7 @@ import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { AdminLocalizationService } from '../../../../../core/services/admin-localization.service';
 import { ConfirmDialogService } from '../../../../../core/services/confirm-dialog.service';
+import { AlertDialogService } from '../../../../../core/services/alert-dialog.service';
 import { PermissionService } from '../../../../../core/auth/services/permission.service';
 import { PageHeaderComponent } from '../../../../../admin/components/page-header/page-header.component';
 import { AdminModalComponent } from '../../../../../admin/components/admin-modal/admin-modal.component';
@@ -32,10 +39,15 @@ import { RowButton, RowButtonItems } from '../../../../../admin/components/build
 import { IconComponent } from '../../../../../shared/components/icon/icon.component';
 import { SetQuery, SetsApiService } from '../../shared/sets-api.service';
 import { TemplatesApiService } from '../../shared/templates-api.service';
-import { CreatorSet, CreatorTemplate, SetFieldConflict, SetTemplate } from '../../shared/js-creator.models';
+import { BulkAction, CreatorSet, CreatorTemplate, ImportSummary, SetFieldConflict, SetTemplate } from '../../shared/js-creator.models';
 import { JsCreatorSectionId, sectionPermission } from '../../shared/js-creator-sections';
 import { presetOf } from '../../shared/render/document';
 import { QuotaBarComponent } from '../../shared/quota-bar/quota-bar.component';
+import { MAX_SELECTION, TransferApiService, exportErrorKey, exportFileName } from '../../shared/transfer-api.service';
+import { CardSelection } from '../../shared/card-selection';
+import { ImportDialogComponent } from '../../shared/import-dialog/import-dialog.component';
+import { CreatorIconComponent } from '../../shared/creator-icon/creator-icon.component';
+import { uiIcon } from '../../shared/ui-icons';
 
 /** Most templates of a set (API limit). */
 export const MAX_SET_TEMPLATES = 10;
@@ -63,7 +75,10 @@ type SortKey = 'updated' | 'created' | 'name';
 @Component({
   selector: 'app-js-creator-sets-page',
   standalone: true,
-  imports: [DatePipe, FormsModule, PageHeaderComponent, AdminModalComponent, RowButtonBuilderComponent, IconComponent, QuotaBarComponent],
+  imports: [
+    DatePipe, FormsModule, PageHeaderComponent, AdminModalComponent, RowButtonBuilderComponent, IconComponent, QuotaBarComponent, ImportDialogComponent,
+    CreatorIconComponent,
+  ],
   templateUrl: './sets-page.component.html',
   styleUrls: ['../../../../../admin/shared-styles/modal.css', '../../shared-styles/workspace.css', './sets-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,6 +88,9 @@ export class SetsPageComponent implements OnInit, OnDestroy {
   private readonly templatesApi = inject(TemplatesApiService);
   private readonly i18n = inject(AdminLocalizationService);
   private readonly confirm = inject(ConfirmDialogService);
+  private readonly alert = inject(AlertDialogService);
+  private readonly transfer = inject(TransferApiService);
+  private readonly injector = inject(Injector);
   private readonly permissions = inject(PermissionService);
   private readonly router = inject(Router);
   private readonly cd = inject(ChangeDetectorRef);
@@ -105,6 +123,12 @@ export class SetsPageComponent implements OnInit, OnDestroy {
   busy = false;
   /** Open popup. */
   dialog: SetDialog | null = null;
+  /** Selected cards (multiselect). */
+  readonly selection = new CardSelection(MAX_SELECTION);
+  /** The import popup is open. */
+  importing = false;
+  /** Icon of the export of a card. */
+  readonly exportIcon = uiIcon('download');
 
   /** May create sets and generate. */
   readonly canCreate = this.permissions.hasPermission(sectionPermission(this.section, 'create'));
@@ -181,13 +205,17 @@ export class SetsPageComponent implements OnInit, OnDestroy {
    */
   switchView(value: string): void {
     this.view = value === 'trash' ? 'trash' : 'active';
+    this.selection.clear();
     this.load(1);
   }
 
   /** @description Searches after a short pause in typing. */
   onSearch(): void {
     if (this.searchTimer) clearTimeout(this.searchTimer);
-    this.searchTimer = setTimeout(() => this.load(1), 300);
+    this.searchTimer = setTimeout(() => {
+      this.selection.clear();
+      this.load(1);
+    }, 300);
   }
 
   /** @description Sorting changed. */
@@ -344,6 +372,123 @@ export class SetsPageComponent implements OnInit, OnDestroy {
   // ── trash ───────────────────────────────────────────────────────────────────
 
   /**
+   * @description Text of the multiselect, export and import (shared by the lists).
+   * @param key Key in `js-creator-shared`.
+   */
+  ts(key: string): string {
+    return this.i18n.getValue(`js-creator-shared.${key}`);
+  }
+
+  /** @description Every listed card is selected. */
+  get allSelected(): boolean {
+    return this.selection.allOf(this.items);
+  }
+
+  /**
+   * @description Selects a card or takes it out of the selection.
+   * @param set Set.
+   */
+  toggle(set: CreatorSet): void {
+    this.selection.toggle(set.id);
+    this.cd.markForCheck();
+  }
+
+  /** @description Selects every listed card (or none, when all are selected). */
+  toggleAll(): void {
+    this.selection.toggleAll(this.items);
+    this.cd.markForCheck();
+  }
+
+  /** @description Empties the selection. */
+  clearSelection(): void {
+    this.selection.clear();
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Exports sets as one JSON file with their templates (not those in the trash)
+   *   and everything the templates need; the browser saves it.
+   * @param one A single card (null = the selection).
+   */
+  exportSets(one: CreatorSet | null = null): void {
+    const ids = one ? [one.id] : this.selection.ids();
+    if (!ids.length || this.busy) return;
+    this.busy = true;
+    this.cd.markForCheck();
+    this.transfer.export(this.section, { set_ids: ids }).subscribe({
+      next: pkg => {
+        this.busy = false;
+        const single = ids.length === 1 ? (one ?? this.items.find(item => item.id === ids[0]))?.name ?? null : null;
+        this.transfer.download(pkg, exportFileName('sets', single));
+        this.cd.markForCheck();
+      },
+      error: (error: unknown) => {
+        this.busy = false;
+        this.alert.open(this.ts('export_failed_title'), this.ts(exportErrorKey(error)), 'warning');
+        this.cd.markForCheck();
+      },
+    });
+  }
+
+  /**
+   * @description Bulk action on the selected sets (after a confirmation): to the trash, restore,
+   *   delete for good (their templates stay).
+   * @param action delete | restore | destroy.
+   */
+  async bulk(action: BulkAction): Promise<void> {
+    const ids = this.selection.ids();
+    if (!ids.length) return;
+    if (action !== 'restore') {
+      const key = action === 'delete' ? 'bulk_delete' : 'bulk_destroy';
+      if (!(await this.confirm.open(this.ts(`${key}_title`), `${this.ts(`${key}_text`)} ${ids.length}`))) return;
+    }
+    this.run(this.transfer.bulk(this.section, 'sets', action, ids), () => this.selection.clear());
+  }
+
+  /** @description Opens the import popup. */
+  openImport(): void {
+    this.importing = true;
+    this.cd.markForCheck();
+  }
+
+  /** @description Closes the import popup. */
+  closeImport(): void {
+    this.importing = false;
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description An import finished: the list is loaded again and the thumbnails of the new
+   *   blocks and templates are drawn in the background (each new one replaces the size label).
+   * @param summary Result of the import.
+   */
+  onImported(summary: ImportSummary): void {
+    this.selection.clear();
+    this.load(1);
+    if (this.canUpdate && (summary.template_ids.length || summary.block_ids.length)) void this.drawThumbnails(summary);
+  }
+
+  /**
+   * @description Draws the thumbnails of imported blocks and templates (renderer loaded now).
+   * @param summary Result of the import.
+   */
+  private async drawThumbnails(summary: ImportSummary): Promise<void> {
+    try {
+      const { ThumbnailRefresherService } = await import('../../shared/thumbnail-refresher.service');
+      const refresher = this.injector.get(ThumbnailRefresherService);
+      await refresher.refresh(this.section, summary.block_ids, undefined, 'block');
+      await refresher.refresh(this.section, summary.template_ids, (id, url) => {
+        this.items = this.items.map(set => set.templates.some(t => t.id === id)
+          ? { ...set, templates: set.templates.map(t => (t.id === id ? { ...t, thumb_url: url } : t)) }
+          : set);
+        this.cd.markForCheck();
+      });
+    } catch {
+      // The thumbnails stay missing; the lists of templates and blocks draw them later.
+    }
+  }
+
+  /**
    * @description Moves a set to the trash (after a confirmation; its templates stay).
    * @param set Set.
    */
@@ -378,13 +523,15 @@ export class SetsPageComponent implements OnInit, OnDestroy {
   /**
    * @description Runs a change, then reloads the first page.
    * @param request Request of the change.
+   * @param done Called after success, before the reload.
    */
-  private run<T>(request: Observable<T>): void {
+  private run<T>(request: Observable<T>, done?: () => void): void {
     this.busy = true;
     this.cd.markForCheck();
     request.subscribe({
       next: () => {
         this.busy = false;
+        done?.();
         this.load(1);
       },
       error: () => {

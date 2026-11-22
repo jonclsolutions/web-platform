@@ -27,6 +27,7 @@ class AssetResource extends JsonResource
     {
         return [
             'id'         => $this->id,
+            'kind'       => $this->kind ?? 'image',
             'name'       => $this->name,
             'mime'       => $this->mime,
             'width'      => $this->width,

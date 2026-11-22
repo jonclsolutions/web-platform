@@ -20,6 +20,7 @@
 
 namespace App\Apps\JsCreator\Support;
 
+use App\Apps\JsCreator\Models\CreatorAsset;
 use GdImage;
 use RuntimeException;
 
@@ -49,14 +50,16 @@ final class LibraryImage
     /**
      * @description Re-encodes an uploaded image and makes its thumbnail.
      * @param string $binary Raw file.
+     * @param int $maxEdge Longest side of the stored image (own icons: smaller).
+     * @param string[]|null $mimes Allowed types (null = every type of TYPES; own icons: PNG / JPEG).
      * @return array{image: string, thumb: string, mime: string, extension: string, width: int, height: int}
-     * @throws RuntimeException `unreadable` (not an image of TYPES) or `too_large` (over MAX_PIXELS).
+     * @throws RuntimeException `unreadable` (not an image of the allowed types) or `too_large` (over MAX_PIXELS).
      */
-    public static function process(string $binary): array
+    public static function process(string $binary, int $maxEdge = self::MAX_EDGE, ?array $mimes = null): array
     {
         $info = @getimagesizefromstring($binary);
         $mime = $info['mime'] ?? null;
-        if (!$info || !isset(self::TYPES[$mime])) {
+        if (!$info || !isset(self::TYPES[$mime]) || ($mimes !== null && !in_array($mime, $mimes, true))) {
             throw new RuntimeException('unreadable');
         }
         if ($info[0] * $info[1] > self::MAX_PIXELS) {
@@ -71,7 +74,7 @@ final class LibraryImage
             $source = self::applyOrientation($source, self::orientation($binary));
         }
 
-        $image = self::scaled($source, self::MAX_EDGE);
+        $image = self::scaled($source, $maxEdge);
         $thumb = self::scaled($image, self::THUMB_EDGE);
         $result = [
             'image'     => self::encode($image, $mime),
@@ -84,6 +87,21 @@ final class LibraryImage
         unset($source, $image, $thumb);
 
         return $result;
+    }
+
+    /**
+     * @description Re-encodes a file of the library of a kind: an image (JPG / PNG / WebP, at
+     *   most MAX_EDGE px) or an own icon (PNG / JPG, at most CreatorAsset::ICON_EDGE px).
+     * @param string $binary Raw file.
+     * @param string $kind CreatorAsset::KIND_IMAGE | KIND_ICON.
+     * @return array{image: string, thumb: string, mime: string, extension: string, width: int, height: int}
+     * @throws RuntimeException See process().
+     */
+    public static function processKind(string $binary, string $kind): array
+    {
+        return $kind === CreatorAsset::KIND_ICON
+            ? self::process($binary, CreatorAsset::ICON_EDGE, ['image/png', 'image/jpeg'])
+            : self::process($binary);
     }
 
     /**

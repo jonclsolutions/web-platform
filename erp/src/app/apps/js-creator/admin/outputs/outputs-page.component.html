@@ -77,7 +77,7 @@
           </select>
           <span class="ws-toolbar-spacer"></span>
           @if (outputs.length) {
-            <label class="op-select-all">
+            <label class="ws-select-all">
               <input type="checkbox" [checked]="allSelected" (change)="toggleAll()" />{{ t('select_all') }}
             </label>
           }
@@ -97,7 +97,7 @@
         }
 
         @if (selected.size) {
-          <div class="op-selection" role="region" [attr.aria-label]="t('selection_title')">
+          <div class="ws-selection" role="region" [attr.aria-label]="t('selection_title')">
             <strong>{{ t('selected') }} {{ selected.size }}</strong>
             <span class="ws-toolbar-spacer"></span>
             <button type="button" class="ws-btn ws-btn--sm" [disabled]="busy" (click)="downloadZip()">
@@ -118,8 +118,8 @@
         @if (outputs.length) {
           <div class="ws-grid op-grid">
             @for (output of outputs; track output.id) {
-              <article class="ws-card op-card" [class.op-card--selected]="selected.has(output.id)">
-                <label class="op-check" [title]="t('select')">
+              <article class="ws-card op-card" [class.ws-card--selected]="selected.has(output.id)">
+                <label class="ws-check" [title]="t('select')">
                   <input type="checkbox" [checked]="selected.has(output.id)" (change)="toggle(output)" [attr.aria-label]="t('select') + ' ' + output.name" />
                 </label>
                 <button type="button" class="op-preview" [title]="t('open_detail')" (click)="openDetail(output)">

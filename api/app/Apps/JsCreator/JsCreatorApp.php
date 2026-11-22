@@ -36,6 +36,12 @@ final class JsCreatorApp extends AppManifest
     /** @description Upload profile of a generated output - the PNG drawn by the browser (StoreOutputRequest). */
     public const UPLOAD_OUTPUT = 'js_creator_output';
 
+    /** @description Upload profile of the own icons of the library - PNG / JPG only (StoreAssetsRequest). */
+    public const UPLOAD_ICON = 'js_creator_icon';
+
+    /** @description Upload profile of an imported package of templates, blocks and sets - JSON only (ImportRequest). */
+    public const UPLOAD_IMPORT = 'js_creator_import';
+
     /** @description See AppManifest::id(). */
     public function id(): string
     {
@@ -76,6 +82,8 @@ final class JsCreatorApp extends AppManifest
             self::UPLOAD_IMAGE => ['extensions' => ['jpg', 'jpeg', 'png', 'webp'], 'max_files' => 10, 'max_file_kb' => 15360, 'max_total_bytes' => null],
             self::UPLOAD_FONT  => ['extensions' => FontFile::EXTENSIONS, 'max_files' => 1, 'max_file_kb' => 5120, 'max_total_bytes' => null],
             self::UPLOAD_OUTPUT => ['extensions' => ['png'], 'max_files' => 1, 'max_file_kb' => 20480, 'max_total_bytes' => null],
+            self::UPLOAD_ICON  => ['extensions' => ['png', 'jpg', 'jpeg'], 'max_files' => 10, 'max_file_kb' => 5120, 'max_total_bytes' => null],
+            self::UPLOAD_IMPORT => ['extensions' => ['json'], 'max_files' => 1, 'max_file_kb' => 20480, 'max_total_bytes' => null],
         ];
     }
 }

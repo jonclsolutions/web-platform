@@ -18,6 +18,6 @@ export const JS_CREATOR_AUDIT_LOG: AuditLogPageConfig = {
   endpoint: 'js-creator/logs',
   section: 'js-creator-logs',
   reportPermission: 'js-creator-view-logs',
-  eventTypes: ['create', 'update', 'soft_delete', 'hard_delete', 'restore', 'force_delete_all', 'error'],
-  modules: ['Folder', 'Asset', 'Font', 'Template', 'Block', 'Set', 'Output', 'Settings', 'Quota'],
+  eventTypes: ['create', 'update', 'soft_delete', 'hard_delete', 'restore', 'force_delete_all', 'export', 'import', 'error'],
+  modules: ['Folder', 'Asset', 'Font', 'Template', 'Block', 'Set', 'Transfer', 'Output', 'Settings', 'Quota'],
 };

@@ -1,0 +1,70 @@
+/*
+    @file: import-dialog.component.css
+    @path: src/app/apps/js-creator/admin/shared/import-dialog/import-dialog.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Popup of an import: file choice, problems, result.
+    @dependencies: shared-styles/workspace.css, shared/styles/tokens.css
+*/
+
+/*
+    @module: File choice
+    @description: Explanation, the button opening the file dialog (hidden input over it), name
+        and size of the chosen file.
+    @usage: p.im-text; .im-file > label.ws-btn.im-choose(--busy) > input[type=file], span.im-file-name
+*/
+.im-text { margin: 0 0 8px; }
+
+.im-file { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+
+.im-choose { position: relative; cursor: pointer; }
+.im-choose input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.im-choose--busy { opacity: 0.6; pointer-events: none; }
+
+.im-file-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-zinc-900);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+    @module: Problems and result
+    @description: List of the problems of a refused file (path in code), result of an import
+        (counts, renamed items with their kind).
+    @usage: ul.im-problems > li > code; p.im-done; ul.im-counts; ul.im-renamed > li > span.im-type
+*/
+.im-problems {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 14px 0 0;
+  padding: 10px 12px 10px 28px;
+  border: 1px solid var(--color-rose-200);
+  border-radius: 10px;
+  background: var(--color-rose-50);
+  font-size: 0.78rem;
+  color: var(--color-rose-700);
+}
+
+.im-problems li:first-child { font-weight: 600; }
+
+.im-problems code {
+  margin-right: 6px;
+  font-size: 0.72rem;
+  word-break: break-all;
+  color: var(--color-zinc-700);
+}
+
+.im-done { margin: 0 0 8px; font-weight: 600; color: var(--color-zinc-900); }
+
+.im-counts,
+.im-renamed { margin: 0 0 10px; padding-left: 18px; font-size: 0.8rem; color: var(--color-zinc-700); }
+
+.im-renamed { max-height: 200px; overflow: auto; }
+
+.im-type { color: var(--color-zinc-500); }

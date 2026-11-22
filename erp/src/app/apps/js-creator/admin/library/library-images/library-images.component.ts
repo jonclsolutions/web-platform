@@ -9,12 +9,15 @@
  *   wrong type / size or over the quota are refused here with a translated text before sending),
  *   rename, delete to the trash; the trash with restore, delete for good and emptying. An image
  *   used by a template is not deleted - a message names the templates (`used_by` of the list).
- * @dependencies JsCreatorApiService, WorkspaceUsageService, UploadRulesService (profile
- *   js_creator_image), AdminModalComponent, ConfirmDialogService, AlertDialogService,
+ *   With `kind="icon"` the same list shows the OWN ICONS of the tab "Icons" (PNG / JPG only, at
+ *   most 1024 px - upload profile js_creator_icon; own trash).
+ * @usage `<app-library-images />`, `<app-library-images kind="icon" />`
+ * @dependencies JsCreatorApiService, WorkspaceUsageService, UploadRulesService (profiles
+ *   js_creator_image, js_creator_icon), AdminModalComponent, ConfirmDialogService, AlertDialogService,
  *   PermissionService, AdminLocalizationService (section `js-creator-library`).
  */
 
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable, Subscription, catchError, concatMap, from, of, tap, toArray } from 'rxjs';
 import { AdminLocalizationService } from '../../../../../core/services/admin-localization.service';
@@ -29,7 +32,7 @@ import { UploadRulesService } from '../../../../../shared/services/upload-rules.
 import { UploadRule, extensionsLabel, isExtensionAllowed } from '../../../../../shared/utils/upload-rules';
 import { JsCreatorApiService } from '../../shared/js-creator-api.service';
 import { WorkspaceUsageService } from '../../shared/workspace-usage.service';
-import { CreatorAsset, UsedByTemplate } from '../../shared/js-creator.models';
+import { AssetKind, CreatorAsset, UsedByTemplate } from '../../shared/js-creator.models';
 import { can } from '../../shared/js-creator-sections';
 import { formatBytes } from '../../shared/workspace-format';
 
@@ -51,8 +54,18 @@ export class LibraryImagesComponent implements OnInit, OnDestroy {
   private readonly permissions = inject(PermissionService);
   private readonly cd = inject(ChangeDetectorRef);
 
+  /** Images of the library (default) or own icons. */
+  @Input() kind: AssetKind = 'image';
+
+  /** Texts with another wording for the own icons (`icon_<key>`). */
+  private static readonly ICON_KEYS = new Set([
+    'upload_images', 'images_empty', 'delete_image_text', 'empty_images_trash_text', 'in_use_image', 'drop_hint',
+  ]);
+
   /** Id of the rename form (submit button in the footer). */
-  readonly formId = 'jc-asset-form';
+  get formId(): string {
+    return `jc-${this.kind}-form`;
+  }
 
   /** View: the library or its trash. */
   view: 'active' | 'trash' = 'active';
@@ -92,7 +105,7 @@ export class LibraryImagesComponent implements OnInit, OnDestroy {
 
   /** @description Loads the rules of the upload and the first page. */
   ngOnInit(): void {
-    this.rulesSub = this.uploadRules.rules('js_creator_image').subscribe(rules => {
+    this.rulesSub = this.uploadRules.rules(this.kind === 'icon' ? 'js_creator_icon' : 'js_creator_image').subscribe(rules => {
       this.rules = rules;
       this.cd.markForCheck();
     });
@@ -106,11 +119,12 @@ export class LibraryImagesComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Text of the section.
+   * @description Text of the section (own icons: `icon_<key>` where the wording differs).
    * @param key Key in `js-creator-library`.
    */
   t(key: string): string {
-    return this.i18n.getValue(`js-creator-library.${key}`);
+    const own = this.kind === 'icon' && LibraryImagesComponent.ICON_KEYS.has(key) ? `icon_${key}` : key;
+    return this.i18n.getValue(`js-creator-library.${own}`);
   }
 
   /** @description Buttons of the view switch. */
@@ -123,13 +137,16 @@ export class LibraryImagesComponent implements OnInit, OnDestroy {
 
   /** @description Value of the accept attribute of the file input. */
   get accept(): string {
-    return (this.rules?.extensions ?? ['jpg', 'jpeg', 'png', 'webp']).map(e => `.${e}`).join(',');
+    const fallback = this.kind === 'icon' ? ['png', 'jpg', 'jpeg'] : ['jpg', 'jpeg', 'png', 'webp'];
+    return (this.rules?.extensions ?? fallback).map(e => `.${e}`).join(',');
   }
 
-  /** @description Hint of the allowed files. */
+  /** @description Hint of the allowed files (icons: with the largest side). */
   get uploadHint(): string {
     const rules = this.rules;
-    return rules ? `${extensionsLabel(rules.extensions)} · ${this.t('max_size')} ${rules.max_file_size_mb} MB` : '';
+    if (!rules) return '';
+    const hint = `${extensionsLabel(rules.extensions)} · ${this.t('max_size')} ${rules.max_file_size_mb} MB`;
+    return this.kind === 'icon' ? `${hint} · ${this.t('icon_max_edge')}` : hint;
   }
 
   /**
@@ -218,7 +235,7 @@ export class LibraryImagesComponent implements OnInit, OnDestroy {
     this.cd.markForCheck();
     // One file after another; a refused file (dialog of DataHandler) does not stop the others.
     from(accepted).pipe(
-      concatMap(file => this.api.uploadAsset(file).pipe(catchError(() => of(null)))),
+      concatMap(file => this.api.uploadAsset(file, this.kind).pipe(catchError(() => of(null)))),
       tap(() => {
         if (this.uploading) this.uploading = { ...this.uploading, done: this.uploading.done + 1 };
         this.cd.markForCheck();
@@ -291,7 +308,7 @@ export class LibraryImagesComponent implements OnInit, OnDestroy {
   /** @description Empties the image trash (after a confirmation). */
   async emptyTrash(): Promise<void> {
     if (!(await this.confirm.open(this.t('empty_trash_title'), this.t('empty_images_trash_text')))) return;
-    this.run(this.api.emptyAssetTrash());
+    this.run(this.api.emptyAssetTrash(this.kind));
   }
 
   /**
@@ -342,7 +359,7 @@ export class LibraryImagesComponent implements OnInit, OnDestroy {
   private load(page: number): void {
     this.loading = true;
     this.cd.markForCheck();
-    this.api.assets({ page, search: this.search.trim(), trashed: this.view === 'trash' }).subscribe({
+    this.api.assets({ page, search: this.search.trim(), trashed: this.view === 'trash', kind: this.kind }).subscribe({
       next: result => {
         this.items = page === 1 ? result.data : [...this.items, ...result.data];
         this.total = result.meta.total;

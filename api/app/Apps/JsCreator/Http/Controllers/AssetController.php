@@ -47,9 +47,10 @@ class AssetController extends Controller
     private const PER_PAGE = 48;
 
     /**
-     * @description Page of the own images (`only_trashed`, `search` in the name, `ids` = only these
-     *   images (comma separated, at most 200 - the images a template uses), `sort_by`,
-     *   `sort_direction`, `page`), each with the templates that use it (`used_by`).
+     * @description Page of the own images (`only_trashed`, `search` in the name, `kind` = image
+     *   (default) | icon, `ids` = only these images of any kind (comma separated, at most 200 - the
+     *   images a template uses), `sort_by`, `sort_direction`, `page`), each with the templates that
+     *   use it (`used_by`).
      * @param Request $request
      * @return JsonResponse
      */
@@ -66,6 +67,8 @@ class AssetController extends Controller
         $ids = $request->query('ids');
         if (is_string($ids) && $ids !== '') {
             $query->whereIn('id', array_slice(array_map('intval', explode(',', $ids)), 0, 200));
+        } else {
+            $query->where('kind', self::kindOf($request));
         }
         $this->applySorting($query, $request, 'created_at');
         $page = $query->paginate(is_string($ids) && $ids !== '' ? 200 : self::PER_PAGE);
@@ -78,18 +81,20 @@ class AssetController extends Controller
     }
 
     /**
-     * @description Uploads images to the library: all files are processed first, the quota is
-     *   checked for their total size, then they are stored together.
-     * @param StoreAssetsRequest $request `files[]`.
+     * @description Uploads images to the library (`kind=icon`: own icons - PNG / JPG, at most
+     *   CreatorAsset::ICON_EDGE px): all files are processed first, the quota is checked for their
+     *   total size, then they are stored together.
+     * @param StoreAssetsRequest $request `files[]`, `kind`.
      * @return JsonResponse 201 the new images; 422 unreadable / too large image or full quota.
      */
     public function store(StoreAssetsRequest $request): JsonResponse
     {
         $userId = $request->user()->id;
+        $kind = $request->kind();
         $processed = [];
         foreach ($request->file('files') as $index => $file) {
             try {
-                $processed[] = ['name' => $this->displayName($file)] + LibraryImage::process((string) file_get_contents($file->getRealPath()));
+                $processed[] = ['name' => $this->displayName($file)] + LibraryImage::processKind((string) file_get_contents($file->getRealPath()), $kind);
             } catch (RuntimeException $e) {
                 throw ValidationException::withMessages(["files.{$index}" => $e->getMessage() === 'too_large'
                     ? 'The image has too many pixels (at most ' . (LibraryImage::MAX_PIXELS / 1_000_000) . ' megapixels).'
@@ -100,8 +105,8 @@ class AssetController extends Controller
 
         $stored = [];
         try {
-            $assets = DB::transaction(function () use ($processed, $userId, &$stored) {
-                return array_map(function (array $p) use ($userId, &$stored) {
+            $assets = DB::transaction(function () use ($processed, $userId, $kind, &$stored) {
+                return array_map(function (array $p) use ($userId, $kind, &$stored) {
                     $path = WorkspaceFiles::newPath($userId, 'library', $p['extension']);
                     $thumb = WorkspaceFiles::newPath($userId, 'thumbs', 'webp');
                     WorkspaceFiles::put($path, $p['image']);
@@ -110,7 +115,7 @@ class AssetController extends Controller
                     $stored[] = $thumb;
 
                     return CreatorAsset::create([
-                        'user_id' => $userId, 'name' => $p['name'], 'path' => $path, 'thumb_path' => $thumb, 'mime' => $p['mime'],
+                        'user_id' => $userId, 'kind' => $kind, 'name' => $p['name'], 'path' => $path, 'thumb_path' => $thumb, 'mime' => $p['mime'],
                         'width' => $p['width'], 'height' => $p['height'], 'size_bytes' => strlen($p['image']) + strlen($p['thumb']),
                     ]);
                 }, $processed);
@@ -121,7 +126,7 @@ class AssetController extends Controller
         }
 
         foreach ($assets as $asset) {
-            $this->logAction($request, JsCreatorLog::class, 'create', 'Asset', "Library image #{$asset->id} uploaded", $asset->id, 'Asset', ['files']);
+            $this->logAction($request, JsCreatorLog::class, 'create', 'Asset', ($kind === CreatorAsset::KIND_ICON ? 'Own icon' : 'Library image') . " #{$asset->id} uploaded", $asset->id, 'Asset', ['files']);
         }
 
         return $this->respond(AssetResource::collection($assets), 201);
@@ -182,13 +187,13 @@ class AssetController extends Controller
     }
 
     /**
-     * @description Deletes every image of the own trash for good.
-     * @param Request $request
+     * @description Deletes every image (`kind=icon`: every own icon) of the own trash for good.
+     * @param Request $request `kind`.
      * @return JsonResponse 204.
      */
     public function emptyTrash(Request $request): JsonResponse
     {
-        $assets = CreatorAsset::onlyTrashed()->ownedBy($request->user())->get();
+        $assets = CreatorAsset::onlyTrashed()->ownedBy($request->user())->where('kind', self::kindOf($request))->get();
         $assets->each(fn (CreatorAsset $asset) => $asset->deleteWithFiles());
         $this->logAction($request, JsCreatorLog::class, 'force_delete_all', 'Asset', "Library image trash emptied. Count: {$assets->count()}");
 
@@ -207,5 +212,15 @@ class AssetController extends Controller
         $name = trim((string) preg_replace('/[\x00-\x1F\x7F]+/', '', pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)));
 
         return mb_substr($name !== '' ? $name : 'image', 0, 150);
+    }
+
+    /**
+     * @description Kind of the library files of a request (`kind` query; image by default).
+     * @param Request $request
+     * @return string CreatorAsset::KIND_IMAGE | KIND_ICON.
+     */
+    private static function kindOf(Request $request): string
+    {
+        return $request->query('kind') === CreatorAsset::KIND_ICON ? CreatorAsset::KIND_ICON : CreatorAsset::KIND_IMAGE;
     }
 }

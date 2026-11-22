@@ -5,11 +5,12 @@
  * @author JS
  * @created 2026
  * @description Popup choosing a library image for a fixed image of a template (logo, background,
- *   photo): grid of the own images with search and "load more", upload of a new image (one file,
- *   type, size and quota checked before sending). A click on an image chooses it.
+ *   photo): tabs Images / My icons (own icons - PNG / JPG), grid of the own images (or icons) with
+ *   search and "load more", upload of a new image / icon (one file, type, size and quota checked
+ *   before sending). A click on an image chooses it.
  * @usage `@if (choosing) { <app-jc-asset-chooser (chosen)="use($event)" (dismissed)="choosing = false" /> }`
  * @dependencies AdminModalComponent, JsCreatorApiService, WorkspaceUsageService,
- *   UploadRulesService (js_creator_image), AlertDialogService, PermissionService,
+ *   UploadRulesService (js_creator_image, js_creator_icon), AlertDialogService, PermissionService,
  *   AdminLocalizationService (section `js-creator-editor`).
  */
 
@@ -24,7 +25,7 @@ import { UploadRulesService } from '../../../../../../shared/services/upload-rul
 import { UploadRule, isExtensionAllowed } from '../../../../../../shared/utils/upload-rules';
 import { JsCreatorApiService } from '../../../shared/js-creator-api.service';
 import { WorkspaceUsageService } from '../../../shared/workspace-usage.service';
-import { CreatorAsset } from '../../../shared/js-creator.models';
+import { AssetKind, CreatorAsset } from '../../../shared/js-creator.models';
 import { can } from '../../../shared/js-creator-sections';
 
 @Component({
@@ -33,12 +34,18 @@ import { can } from '../../../shared/js-creator-sections';
   imports: [FormsModule, AdminModalComponent],
   template: `
     <app-admin-modal [heading]="t('choose_image')" size="lg" [closeDisabled]="uploading" (dismissed)="dismissed.emit()">
+      <div class="jc-chooser-tabs" role="tablist">
+        <button type="button" role="tab" class="jc-chooser-tab" [class.jc-chooser-tab--active]="kind === 'image'" [attr.aria-selected]="kind === 'image'"
+          (click)="setKind('image')">{{ t('chooser_images') }}</button>
+        <button type="button" role="tab" class="jc-chooser-tab" [class.jc-chooser-tab--active]="kind === 'icon'" [attr.aria-selected]="kind === 'icon'"
+          (click)="setKind('icon')">{{ t('chooser_icons') }}</button>
+      </div>
       <div class="jc-chooser-bar">
         <input class="jc-input jc-chooser-search" type="search" [placeholder]="t('search')" [attr.aria-label]="t('search')"
           [(ngModel)]="search" (ngModelChange)="onSearch()" />
         @if (canUpload) {
           <label class="jc-upload" [class.jc-upload--busy]="uploading">
-            {{ uploading ? t('uploading') : t('upload_image') }}
+            {{ uploading ? t('uploading') : t(kind === 'icon' ? 'upload_icon' : 'upload_image') }}
             <input type="file" [accept]="accept" [disabled]="uploading" (change)="upload($event)" />
           </label>
         }
@@ -58,7 +65,7 @@ import { can } from '../../../shared/js-creator-sections';
           </div>
         }
       } @else if (!loading) {
-        <p class="jc-chooser-empty">{{ search ? t('nothing_found') : t('library_empty') }}</p>
+        <p class="jc-chooser-empty">{{ search ? t('nothing_found') : t(kind === 'icon' ? 'icons_empty' : 'library_empty') }}</p>
       }
     </app-admin-modal>
   `,
@@ -79,6 +86,8 @@ export class AssetChooserComponent implements OnInit, OnDestroy {
   /** The popup was closed. */
   @Output() readonly dismissed = new EventEmitter<void>();
 
+  /** Open tab: images of the library or own icons. */
+  kind: AssetKind = 'image';
   /** Loaded images. */
   items: CreatorAsset[] = [];
   /** Last loaded page. */
@@ -91,27 +100,43 @@ export class AssetChooserComponent implements OnInit, OnDestroy {
   loading = false;
   /** Upload running. */
   uploading = false;
-  /** Rules of the upload. */
-  rules: UploadRule | null = null;
+  /** Rules of the upload of each kind. */
+  private rulesOf: Partial<Record<AssetKind, UploadRule | null>> = {};
   /** May upload. */
   readonly canUpload = can(this.permissions, 'create');
 
   private timer: ReturnType<typeof setTimeout> | null = null;
-  private rulesSub?: Subscription;
+  private readonly rulesSubs: Subscription[] = [];
 
   /** @description Loads the first page and the upload rules. */
   ngOnInit(): void {
-    this.rulesSub = this.uploadRules.rules('js_creator_image').subscribe(rules => {
-      this.rules = rules;
-      this.cd.markForCheck();
-    });
+    this.rulesSubs.push(
+      this.uploadRules.rules('js_creator_image').subscribe(rules => (this.rulesOf.image = rules)),
+      this.uploadRules.rules('js_creator_icon').subscribe(rules => (this.rulesOf.icon = rules)),
+    );
     this.load(1);
   }
 
   /** @description Stops the pending search. */
   ngOnDestroy(): void {
     if (this.timer) clearTimeout(this.timer);
-    this.rulesSub?.unsubscribe();
+    this.rulesSubs.forEach(sub => sub.unsubscribe());
+  }
+
+  /** @description Rules of the upload of the open tab. */
+  get rules(): UploadRule | null {
+    return this.rulesOf[this.kind] ?? null;
+  }
+
+  /**
+   * @description Switches between the images and the own icons.
+   * @param kind image | icon.
+   */
+  setKind(kind: AssetKind): void {
+    if (kind === this.kind) return;
+    this.kind = kind;
+    this.items = [];
+    this.load(1);
   }
 
   /**
@@ -124,7 +149,8 @@ export class AssetChooserComponent implements OnInit, OnDestroy {
 
   /** @description Accept attribute of the file input. */
   get accept(): string {
-    return (this.rules?.extensions ?? ['jpg', 'jpeg', 'png', 'webp']).map(e => `.${e}`).join(',');
+    const fallback = this.kind === 'icon' ? ['png', 'jpg', 'jpeg'] : ['jpg', 'jpeg', 'png', 'webp'];
+    return (this.rules?.extensions ?? fallback).map(e => `.${e}`).join(',');
   }
 
   /** @description Searches after a short pause. */
@@ -140,8 +166,10 @@ export class AssetChooserComponent implements OnInit, OnDestroy {
   load(page: number): void {
     this.loading = true;
     this.cd.markForCheck();
-    this.api.assets({ page, search: this.search.trim() }).subscribe({
+    const kind = this.kind;
+    this.api.assets({ page, search: this.search.trim(), kind }).subscribe({
       next: result => {
+        if (kind !== this.kind) return;
         this.items = page === 1 ? result.data : [...this.items, ...result.data];
         this.page = result.meta.current_page;
         this.lastPage = result.meta.last_page;
@@ -166,7 +194,7 @@ export class AssetChooserComponent implements OnInit, OnDestroy {
     if (!file) return;
     const rules = this.rules;
     if (rules && (!isExtensionAllowed(file.name, rules.extensions) || file.size > rules.max_file_size_mb * 1024 * 1024)) {
-      this.alert.open(this.t('upload_refused_title'), `${this.t('upload_refused_text')} ${file.name}`, 'warning');
+      this.alert.open(this.t('upload_refused_title'), `${this.t(this.kind === 'icon' ? 'upload_icon_refused_text' : 'upload_refused_text')} ${file.name}`, 'warning');
       return;
     }
     if (!this.usage.fits(file.size)) {
@@ -175,7 +203,7 @@ export class AssetChooserComponent implements OnInit, OnDestroy {
     }
     this.uploading = true;
     this.cd.markForCheck();
-    this.api.uploadAsset(file).subscribe({
+    this.api.uploadAsset(file, this.kind).subscribe({
       next: assets => {
         this.uploading = false;
         this.usage.refresh();

@@ -7,16 +7,19 @@
  * @description Unit tests of TemplatesPageComponent: list with the sizes in use and "load more",
  *   filter and sorting in the request, a new template opens the editor, a copy and a copy to
  *   another size, the trash (delete, restore, delete for good, empty) and the permissions; the
- *   same page for blocks (route data kind 'block') and the background refresh of stale thumbnails.
- * @dependencies TemplatesPageComponent, admin-test-helpers.ts.
+ *   same page for blocks (route data kind 'block') and the background refresh of stale thumbnails;
+ *   the multiselect (bulk actions, skipped blocks), export of a card / the selection and import.
+ * @dependencies TemplatesPageComponent, TransferApiService, admin-test-helpers.ts.
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { TemplatesPageComponent } from './templates-page.component';
 import { CreatorTemplate } from '../../shared/js-creator.models';
 import { ThumbnailRefresherService } from '../../shared/thumbnail-refresher.service';
+import { TransferApiService } from '../../shared/transfer-api.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../../../testing/admin-test-helpers';
 
 /**
@@ -140,12 +143,12 @@ describe('TemplatesPageComponent', () => {
   /**
    * @description A view-only account sees the templates without the actions that change them.
    * @input permissions view only
-   * @output no "New template", no copy / delete buttons, open (pencil) stays
+   * @output no "New template" / "Import", no copy / delete buttons, open (pencil) and export stay
    */
   it('hides changes without permissions', async () => {
     await create(['view-js-creator', 'js-creator-images-view']);
-    expect(fixture.nativeElement.querySelector('app-page-header .ws-btn--primary')).toBeNull();
-    expect(fixture.nativeElement.querySelectorAll('.tp-card')[0].querySelectorAll('.ws-icon-btn').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('app-page-header .ws-btn')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('.tp-card')[0].querySelectorAll('.ws-icon-btn').length).toBe(2);
   });
 
   /**
@@ -210,7 +213,90 @@ describe('TemplatesPageComponent', () => {
       });
     });
     for (let i = 0; i < 50 && component.items[0]?.thumb_url !== '/new-thumb'; i++) await new Promise(r => setTimeout(r, 10));
-    expect(refresh).toHaveBeenCalledWith('images', [1], jasmine.any(Function));
+    expect(refresh).toHaveBeenCalledWith('images', [1], jasmine.any(Function), 'template');
     expect(component.items[0].thumb_url).toBe('/new-thumb');
+  });
+
+  /**
+   * @description Multiselect: a checkbox selects a card (bar with the count), "select all" every
+   *   listed card; the bar moves them to the trash after a confirmation; in the trash restore and
+   *   delete for good; switching the view clears the selection.
+   * @input click on the checkbox of T1; toggleAll; bulk delete; trash view, select T1, restore, destroy
+   * @output .ws-selection "2"; POST …/templates/bulk {delete, [1, 2]}; {restore, [1]}; {destroy, [1]}
+   */
+  it('selects cards and runs bulk actions', async () => {
+    await create();
+    ctx.dataHandler.post.and.returnValue(of({ count: 2, skipped: [] }) as never);
+    (fixture.nativeElement.querySelector('.tp-card .ws-check input') as HTMLInputElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.ws-selection')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.tp-card').classList).toContain('ws-card--selected');
+    component.toggleAll();
+    expect(component.selection.ids()).toEqual([1, 2]);
+    await component.bulk('delete');
+    expect(ctx.confirm.open).toHaveBeenCalledWith('js-creator-shared.bulk_delete_title', 'js-creator-shared.bulk_delete_text 2');
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/images/templates/bulk', { action: 'delete', ids: [1, 2] });
+    expect(component.selection.size).toBe(0);
+
+    component.switchView('trash');
+    component.toggle(template(1));
+    await component.bulk('restore');
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/images/templates/bulk', { action: 'restore', ids: [1] });
+    component.toggle(template(1));
+    await component.bulk('destroy');
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/images/templates/bulk', { action: 'destroy', ids: [1] });
+    component.toggle(template(2));
+    component.switchView('active');
+    expect(component.selection.size).toBe(0);
+  });
+
+  /**
+   * @description Blocks used by templates are skipped by a bulk delete - a message names them.
+   * @input page of blocks; answer with a skipped block "B1" used by "Post"
+   * @output POST …/blocks/bulk; alert bulk_skipped_title with „B1“ (Post)
+   */
+  it('names skipped blocks of a bulk delete', async () => {
+    await create('all', 'block');
+    ctx.dataHandler.post.and.returnValue(of({ count: 0, skipped: [{ id: 1, name: 'B1', used_by: [{ id: 5, kind: 'template', name: 'Post', section: 'images', trashed: false }] }] }) as never);
+    component.toggle(template(1));
+    await component.bulk('delete');
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('js-creator/images/blocks/bulk', { action: 'delete', ids: [1] });
+    expect(ctx.alert.open).toHaveBeenCalledWith('js-creator-shared.bulk_skipped_title', jasmine.stringContaining('„B1“ (Post)'), 'warning');
+  });
+
+  /**
+   * @description Export of one card and of the selection saves the JSON package; a refused export
+   *   is explained; Import opens the popup and an import reloads the list.
+   * @input export of T1; selection [1, 2] exported; export answered 422 export_too_large; Import; imported
+   * @output POST export {template_ids: [1]} → download(…, "js-creator-templates-t1-<date>");
+   *   {template_ids: [1, 2]}; alert export_too_large; app-jc-import-dialog shown; list loaded again
+   */
+  it('exports and imports templates', async () => {
+    await create();
+    const pkg = { format: 'js-creator', version: 1, section: 'images', exported_at: '', templates: [], blocks: [], sets: [], assets: [], fonts: [] };
+    ctx.dataHandler.postQuietly.and.returnValue(of(pkg) as never);
+    const download = spyOn(TestBed.inject(TransferApiService), 'download');
+    component.exportItems(template(1));
+    expect(ctx.dataHandler.postQuietly).toHaveBeenCalledWith('js-creator/images/export', { template_ids: [1] });
+    expect(download).toHaveBeenCalledWith(pkg as never, jasmine.stringMatching(/^js-creator-templates-t1-\d{4}-\d{2}-\d{2}$/));
+
+    component.toggleAll();
+    component.exportItems();
+    expect(ctx.dataHandler.postQuietly).toHaveBeenCalledWith('js-creator/images/export', { template_ids: [1, 2] });
+    expect(download.calls.mostRecent().args[1]).toMatch(/^js-creator-templates-\d{4}/);
+
+    ctx.dataHandler.postQuietly.and.returnValue(throwError(() => new HttpErrorResponse({ status: 422, error: { error_code: 'export_too_large' } })) as never);
+    component.exportItems(template(2));
+    expect(ctx.alert.open).toHaveBeenCalledWith('js-creator-shared.export_failed_title', 'js-creator-shared.export_too_large', 'warning');
+
+    (fixture.nativeElement.querySelectorAll('app-page-header .ws-btn')[1] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-jc-import-dialog')).not.toBeNull();
+    const before = ctx.dataHandler.getPaginatedCollection.calls.count();
+    component.onImported({ templates: 1, blocks: 0, sets: 0, assets: 0, fonts: 0, fonts_reused: 0, renamed: [], template_ids: [9], block_ids: [] });
+    expect(ctx.dataHandler.getPaginatedCollection.calls.count()).toBe(before + 1);
+    component.closeImport();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-jc-import-dialog')).toBeNull();
   });
 });

@@ -14,7 +14,7 @@
  *     section (JsCreatorSections::any()).
  *   - `js-creator/<section>/templates`, `…/blocks`, `…/sets` and `…/outputs` (one route group per
  *     section of JsCreatorSections, the section is passed to the controller): templates, blocks,
- *     sets and generating with the permissions of their section.
+ *     sets, generating and export / import (one JSON file) with the permissions of their section.
  *   - `js-creator/outputs`: the outputs of every section in one list; each output needs the
  *     permission of its section (OutputController).
  *   - `js-creator/files/…`: files of a workspace (and ZIPs of outputs), only through the signed
@@ -36,6 +36,7 @@ use App\Apps\JsCreator\Http\Controllers\OutputController;
 use App\Apps\JsCreator\Http\Controllers\SetController;
 use App\Apps\JsCreator\Http\Controllers\SettingsController;
 use App\Apps\JsCreator\Http\Controllers\TemplateController;
+use App\Apps\JsCreator\Http\Controllers\TransferController;
 use App\Apps\JsCreator\Http\Controllers\UsageController;
 use App\Apps\JsCreator\Support\JsCreatorSections;
 use Illuminate\Support\Facades\Route;
@@ -58,7 +59,7 @@ Route::middleware(['auth:sanctum', 'throttle:300,1,js-creator'])->prefix('js-cre
     Route::delete('folders/{id}', [FolderController::class, 'destroy'])->middleware($delete)->whereNumber('id');
     Route::post('folders/{id}/restore', [FolderController::class, 'restore'])->middleware($delete)->whereNumber('id');
 
-    // ── js-creator/library/assets (images of the library) ────────────────────────
+    // ── js-creator/library/assets (images and own icons of the library, `kind`) ─────
     Route::get('library/assets', [AssetController::class, 'index'])->middleware($view);
     Route::post('library/assets', [AssetController::class, 'store'])->middleware([$create, $upload]);
     Route::delete('library/assets/trash', [AssetController::class, 'emptyTrash'])->middleware($delete);
@@ -88,13 +89,17 @@ Route::middleware(['auth:sanctum', 'throttle:300,1,js-creator'])->prefix('js-cre
     // ── js-creator/<section>/blocks (blocks of each section) ──────────────────────
     // ── js-creator/<section>/sets (sets of templates of each section) ─────────────
     // ── js-creator/<section>/outputs (generating from a template of the section) ─
+    // ── js-creator/<section>/export, …/import (templates, blocks, sets as one JSON file) ─
     foreach (JsCreatorSections::SECTIONS as $section) {
         $can = fn (string $action) => 'permission:' . JsCreatorSections::permission($section, $action);
         Route::post("{$section}/outputs", [OutputController::class, 'store'])->middleware([$can('create'), $upload])->defaults('section', $section);
+        Route::post("{$section}/export", [TransferController::class, 'export'])->middleware([$can('view'), 'throttle:30,1,js-creator-export'])->defaults('section', $section);
+        Route::post("{$section}/import", [TransferController::class, 'import'])->middleware([$can('create'), $upload])->defaults('section', $section);
         Route::prefix("{$section}/templates")->group(function () use ($section, $can, $upload) {
             Route::get('', [TemplateController::class, 'index'])->middleware($can('view'))->defaults('section', $section);
             Route::post('', [TemplateController::class, 'store'])->middleware($can('create'))->defaults('section', $section);
             Route::delete('trash', [TemplateController::class, 'emptyTrash'])->middleware($can('delete'))->defaults('section', $section);
+            Route::post('bulk', [TemplateController::class, 'bulk'])->middleware($can('delete'))->defaults('section', $section);
             Route::get('{id}', [TemplateController::class, 'show'])->middleware($can('view'))->whereNumber('id')->defaults('section', $section);
             Route::put('{id}', [TemplateController::class, 'update'])->middleware($can('update'))->whereNumber('id')->defaults('section', $section);
             Route::post('{id}/thumbnail', [TemplateController::class, 'thumbnail'])->middleware([$can('update'), $upload])->whereNumber('id')->defaults('section', $section);
@@ -106,6 +111,7 @@ Route::middleware(['auth:sanctum', 'throttle:300,1,js-creator'])->prefix('js-cre
             Route::get('', [BlockController::class, 'index'])->middleware($can('view'))->defaults('section', $section);
             Route::post('', [BlockController::class, 'store'])->middleware($can('create'))->defaults('section', $section);
             Route::delete('trash', [BlockController::class, 'emptyTrash'])->middleware($can('delete'))->defaults('section', $section);
+            Route::post('bulk', [BlockController::class, 'bulk'])->middleware($can('delete'))->defaults('section', $section);
             Route::get('{id}', [BlockController::class, 'show'])->middleware($can('view'))->whereNumber('id')->defaults('section', $section);
             Route::put('{id}', [BlockController::class, 'update'])->middleware($can('update'))->whereNumber('id')->defaults('section', $section);
             Route::post('{id}/thumbnail', [BlockController::class, 'thumbnail'])->middleware([$can('update'), $upload])->whereNumber('id')->defaults('section', $section);
@@ -117,6 +123,7 @@ Route::middleware(['auth:sanctum', 'throttle:300,1,js-creator'])->prefix('js-cre
             Route::get('', [SetController::class, 'index'])->middleware($can('view'))->defaults('section', $section);
             Route::post('', [SetController::class, 'store'])->middleware($can('create'))->defaults('section', $section);
             Route::delete('trash', [SetController::class, 'emptyTrash'])->middleware($can('delete'))->defaults('section', $section);
+            Route::post('bulk', [SetController::class, 'bulk'])->middleware($can('delete'))->defaults('section', $section);
             Route::get('{id}', [SetController::class, 'show'])->middleware($can('view'))->whereNumber('id')->defaults('section', $section);
             Route::put('{id}', [SetController::class, 'update'])->middleware($can('update'))->whereNumber('id')->defaults('section', $section);
             Route::delete('{id}', [SetController::class, 'destroy'])->middleware($can('delete'))->whereNumber('id')->defaults('section', $section);
