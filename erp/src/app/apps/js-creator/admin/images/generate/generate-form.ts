@@ -24,7 +24,7 @@ import { RenderReport } from '../../shared/render/renderer';
 import { plainText } from '../../shared/render/text-layout';
 
 /** Why generating is not possible yet. */
-export type ProblemKind = 'required' | 'too_long' | 'overflow' | 'overflow_fixed' | 'missing_asset' | 'conflict' | 'characters';
+export type ProblemKind = 'required' | 'too_long' | 'overflow' | 'overflow_fixed' | 'missing_asset' | 'conflict' | 'characters' | 'image_not_found';
 
 /** One reason that stops generating. */
 export interface GenerateProblem {

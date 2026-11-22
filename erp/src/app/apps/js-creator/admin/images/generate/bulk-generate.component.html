@@ -1,0 +1,133 @@
+<!--
+    @file: bulk-generate.component.html
+    @path: src/app/apps/js-creator/admin/images/generate/bulk-generate.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Dialog "Generate from a table": the table and the photos (read only in the
+        browser), the columns of the fields, the rows with their problems or results, the target
+        folder; Generate / Stop, progress and the summary of the run.
+-->
+<app-admin-modal [heading]="t('bulk_title')" [subheading]="fileName()" size="xl" [closeDisabled]="running()" (dismissed)="close()">
+  <div class="bk">
+    <section class="bk-files">
+      <div class="ws-field">
+        <label for="jc-bulk-table">{{ t('bulk_table') }}</label>
+        <input id="jc-bulk-table" type="file" [accept]="tableAccept" [disabled]="running()" (change)="chooseTable($event)" />
+        <span class="ws-field-hint">{{ tf('bulk_table_hint', { rows: limits.rows }) }}</span>
+      </div>
+      <div class="ws-field">
+        <label for="jc-bulk-photos">{{ t('bulk_photos') }}</label>
+        <input id="jc-bulk-photos" type="file" multiple [accept]="photoAccept" [disabled]="running()" (change)="choosePhotos($event)" />
+        <span class="ws-field-hint">{{ photos().length ? tf('bulk_photos_count', { count: photos().length }) : t('bulk_photos_hint') }}</span>
+      </div>
+      <div class="bk-sample">
+        <button type="button" class="ws-btn ws-btn--sm" (click)="downloadSample()">{{ t('bulk_sample') }}</button>
+        <span class="ws-field-hint">{{ t('bulk_privacy') }}</span>
+      </div>
+    </section>
+
+    @if (tableError(); as error) {
+      <p class="ws-field-error" role="alert">{{ error }}</p>
+    }
+
+    @if (table()) {
+      <section class="bk-map" [attr.aria-label]="t('bulk_columns')">
+        <h3 class="bk-heading">{{ t('bulk_columns') }}</h3>
+        <div class="bk-map-grid">
+          @for (field of fields(); track field.key) {
+            <label class="bk-map-row">
+              <span>{{ field.label }}@if (field.required) {<span class="bk-required" aria-hidden="true"> *</span>}
+                <span class="ws-card-meta">{{ field.type === 'image' ? t('bulk_image_column') : field.key }}</span></span>
+              <select class="ws-select" [disabled]="running()" (change)="setColumn(field.key, $any($event.target).value)">
+                <option value="" [selected]="mapping()[field.key] == null">{{ t('bulk_unused') }}</option>
+                @for (column of columns(); track column.index) {
+                  <option [value]="column.index" [selected]="mapping()[field.key] === column.index">{{ column.name }}</option>
+                }
+              </select>
+            </label>
+          }
+          @for (special of [nameColumn, captionColumn]; track special) {
+            <label class="bk-map-row">
+              <span>{{ t(special === nameColumn ? 'bulk_name_column' : 'bulk_caption_column') }}
+                <span class="ws-card-meta">{{ t(special === nameColumn ? 'bulk_name_hint' : 'bulk_caption_hint') }}</span></span>
+              <select class="ws-select" [disabled]="running()" (change)="setColumn(special, $any($event.target).value)">
+                <option value="" [selected]="mapping()[special] == null">{{ t('bulk_unused') }}</option>
+                @for (column of columns(); track column.index) {
+                  <option [value]="column.index" [selected]="mapping()[special] === column.index">{{ column.name }}</option>
+                }
+              </select>
+            </label>
+          }
+        </div>
+      </section>
+
+      <section class="bk-rows" [attr.aria-label]="t('bulk_rows')">
+        <h3 class="bk-heading">
+          {{ tf('bulk_ready', { ready: readyRows().length, total: checked().length }) }}
+          @if (loading()) { <span class="ws-card-meta">· {{ t('bulk_checking') }}</span> }
+        </h3>
+        <div class="bk-table-wrap">
+          <table class="bk-table">
+            <thead>
+              <tr><th scope="col">#</th><th scope="col">{{ t('name') }}</th><th scope="col">{{ t('bulk_state') }}</th></tr>
+            </thead>
+            <tbody>
+              @for (item of checked(); track item.row.index) {
+                <tr [class.bk-row--bad]="item.problems.length">
+                  <td>{{ item.row.index }}</td>
+                  <td class="bk-name">{{ nameOf(item.row) }}</td>
+                  <td>
+                    @if (resultOf(item.row.index); as result) {
+                      @if (result.error) {
+                        <span class="bk-state bk-state--bad">{{ result.error }}</span>
+                      } @else {
+                        <span class="bk-state bk-state--done">{{ t('bulk_done_row') }}</span>
+                      }
+                    } @else if (item.problems.length) {
+                      <ul class="bk-problems">
+                        @for (text of problemsOf(item); track $index) { <li>{{ text }}</li> }
+                      </ul>
+                    } @else {
+                      <span class="bk-state">{{ t('bulk_ok_row') }}</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="ws-field-hint">{{ tf('bulk_target', { folder: folderLabel() }) }}</p>
+    }
+
+    @if (running() || results().length) {
+      <div class="bk-status" role="status">
+        @if (running()) {
+          <strong>{{ tf('bulk_progress', { done: doneCount(), total: readyRows().length }) }}</strong>
+          @if (waiting(); as seconds) { <span>{{ tf('bulk_waiting', { seconds: seconds }) }}</span> }
+          @if (stopping()) { <span>{{ t('bulk_stopping') }}</span> }
+        } @else {
+          <strong>{{ tf('bulk_summary', { outputs: madeCount(), rows: doneCount() - failedRows().length }) }}</strong>
+          @if (failedRows().length) { <span>{{ tf('bulk_failed', { count: failedRows().length }) }}</span> }
+          @if (stoppedBy(); as reason) { <span class="bk-state--bad">{{ tf('bulk_stopped', { reason: reason }) }}</span> }
+        }
+      </div>
+    }
+  </div>
+
+  <ng-container modal-footer>
+    @if (running()) {
+      <button type="button" class="am-btn am-btn--secondary" [disabled]="stopping()" (click)="stop()">{{ t('bulk_stop') }}</button>
+    } @else {
+      <button type="button" class="am-btn am-btn--secondary" (click)="close()">{{ t('bulk_close') }}</button>
+      @if (madeCount()) {
+        <button type="button" class="am-btn am-btn--secondary" (click)="openOutputs.emit()">{{ t('open_outputs') }}</button>
+      }
+    }
+    <button type="button" class="am-btn am-btn--primary" [disabled]="running() || loading() || !readyRows().length" (click)="generate()">
+      {{ tf('bulk_generate', { count: outputCount() }) }}
+    </button>
+  </ng-container>
+</app-admin-modal>

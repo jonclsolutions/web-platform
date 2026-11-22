@@ -10,7 +10,8 @@
         beside the form - fields (texts with length, highlight and overflow notes; images from the
         computer or the library with zoom and crop), text of the post, target folder and name,
         what still stops generating, Generate (a set: progress) and the results (open, download,
-        copy the text); the library chooser of an image field.
+        copy the text); presets (saved fillings) above the fields and the dialog saving one; the
+        dialog "Generate from a table" (bulk); the library chooser of an image field.
 -->
 <div class="ws-page gen-page">
   @if (failed()) {
@@ -89,6 +90,25 @@
       </section>
 
       <div class="gen-form">
+        <section class="ws-panel gen-presets" [attr.aria-label]="t('presets')">
+          <div class="gen-presets-row">
+            <label for="jc-gen-preset" class="gen-presets-label">{{ t('presets') }}</label>
+            <select id="jc-gen-preset" class="ws-select" [disabled]="presetBusy() || generating()" (change)="applyPreset($any($event.target).value)">
+              <option value="" [selected]="presetId() === null">{{ t(presets().length ? 'preset_choose' : 'preset_none') }}</option>
+              @for (preset of presets(); track preset.id) {
+                <option [value]="preset.id" [selected]="presetId() === preset.id">{{ preset.name }}</option>
+              }
+            </select>
+            @if (canCreate) {
+              <button type="button" class="ws-btn ws-btn--sm" [disabled]="presetBusy() || generating()" (click)="openSavePreset()">{{ t('preset_save') }}</button>
+            }
+            @if (canDelete && presetId() !== null) {
+              <button type="button" class="ws-btn ws-btn--sm" [disabled]="presetBusy()" (click)="deletePreset()">{{ t('preset_delete') }}</button>
+            }
+          </div>
+          <span class="ws-field-hint">{{ t('preset_hint') }}</span>
+        </section>
+
         <section class="ws-panel">
           <h2 class="ws-panel-title">{{ t('fields') }}</h2>
           @if (!fields().length) {
@@ -224,6 +244,12 @@
               {{ generating() ? t('generating') : (targets().length > 1 ? tf('generate_set_button', { count: targets().length }) : t('generate_button')) }}
             }
           </button>
+          @if (canCreate) {
+            <div class="gen-bulk">
+              <button type="button" class="ws-btn" [disabled]="generating()" (click)="openBulk()">{{ t('bulk_open') }}</button>
+              <span class="ws-field-hint">{{ t('bulk_open_hint') }}</span>
+            </div>
+          }
 
           @for (output of results(); track output.id) {
             <div class="gen-result" role="status">
@@ -267,4 +293,33 @@
 
 @if (choosingFor()) {
   <app-jc-asset-chooser (chosen)="useAsset($event)" (dismissed)="choosingFor.set(null)" />
+}
+
+@if (bulkOpen()) {
+  <app-jc-bulk-generate [runner]="bulkRunner" [folderLabel]="folderLabel()" [waiting]="waiting()" (openOutputs)="openTargetFolder()" (dismissed)="bulkOpen.set(false)" />
+}
+
+@if (presetDialog(); as d) {
+  <app-admin-modal [heading]="t('preset_save_title')" size="sm" [closeDisabled]="presetBusy()" (dismissed)="presetDialog.set(null)">
+    <form id="jc-preset-form" (submit)="$event.preventDefault(); savePreset()">
+      <div class="ws-field">
+        <label for="jc-preset-name">{{ t('preset_name') }}</label>
+        <input id="jc-preset-name" type="text" maxlength="120" autocomplete="off" list="jc-preset-names" [value]="d.name"
+          (input)="setPresetName($any($event.target).value)" data-autofocus />
+        <datalist id="jc-preset-names">
+          @for (preset of presets(); track preset.id) {
+            <option [value]="preset.name"></option>
+          }
+        </datalist>
+        <span class="ws-field-hint">{{ t('preset_save_hint') }}</span>
+        @if (d.error) {
+          <p class="ws-field-error" role="alert">{{ d.error }}</p>
+        }
+      </div>
+    </form>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" [disabled]="presetBusy()" (click)="presetDialog.set(null)">{{ t('preset_cancel') }}</button>
+      <button type="submit" form="jc-preset-form" class="am-btn am-btn--primary" [disabled]="presetBusy()">{{ t('preset_save') }}</button>
+    </ng-container>
+  </app-admin-modal>
 }

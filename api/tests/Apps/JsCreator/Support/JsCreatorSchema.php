@@ -8,9 +8,10 @@
  * @created 2026
  * @description Test tables of the application "JS Creator" (SQLite mirror of its migrations):
  *   audit log, folders, library images, own fonts, settings, individual quotas, templates,
- *   blocks, sets with their templates, usages, outputs and their files - with the same foreign
- *   keys (ON DELETE CASCADE from users, from the parent folder / output and from the set /
- *   template of a set row, SET NULL from the folder and the template of an output).
+ *   blocks, sets with their templates, usages, outputs and their files, presets of generating -
+ *   with the same foreign keys (ON DELETE CASCADE from users, from the parent folder / output,
+ *   from the set / template of a set row and of a preset, SET NULL from the folder and the
+ *   template of an output).
  * @dependencies Tests\Support\TestSchema (audit log shape); run by TestSchema::create() while
  *   the application is in config/apps.php.
  */
@@ -193,6 +194,20 @@ final class JsCreatorSchema
             $t->timestamps();
             $t->unique(['output_id', 'page']);
             $t->foreign('output_id')->references('id')->on('js_creator_outputs')->cascadeOnDelete();
+        });
+
+        Schema::create('js_creator_presets', function (Blueprint $t) {
+            $t->id();
+            $t->unsignedInteger('user_id');
+            $t->string('section', 20);
+            $t->unsignedBigInteger('template_id')->nullable();
+            $t->unsignedBigInteger('set_id')->nullable();
+            $t->string('name', 120);
+            $t->text('payload');
+            $t->timestamps();
+            $t->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+            $t->foreign('template_id')->references('id')->on('js_creator_templates')->cascadeOnDelete();
+            $t->foreign('set_id')->references('id')->on('js_creator_sets')->cascadeOnDelete();
         });
     }
 }

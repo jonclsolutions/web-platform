@@ -207,18 +207,66 @@
           ]
         },
         {
-          "heading": "06. Permissions",
+          "heading": "06. Presets",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "A preset saves the filling of the form under a name, so you do not have to type it again – e.g. a regular sale with a price and a partner logo. Presets belong to the template (for a set to the set) and only you see them."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Save preset: enter a name. The same name (ignoring upper and lower case) overwrites an existing preset – the application asks first.",
+                "The texts of the fields, the library images with their crop and the text of the post edited by hand are saved. Photos from the computer are never saved in a preset (they are never uploaded).",
+                "Choosing a preset fills the form: texts of the fields, library images and their crop. Photos from the computer already in the form stay. An image removed from the library meanwhile is named and its field left as it was.",
+                "Delete preset deletes the chosen preset for good (after a confirmation). A template or a set has at most 50 presets; deleting the template or set for good removes its presets too."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "07. Bulk from a table",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The button From a table… under Generate makes an output from every row of a CSV or XLSX table (for a set one per template) – all into the folder chosen in the form."
+            },
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Choose the table: the first row holds the names of the columns, every further row is one output (at most 200 rows, 5 MB). A sample with the fields of the template is downloaded by Download a sample CSV.",
+                "Columns are matched to fields by the key or the label of the field (case and diacritics do not matter) – you can change the matching. Special columns: name of the output (empty = name of the template with the date and the row number) and text of the post (empty = from the pattern of the template).",
+                "Image fields: write the file name of a photo (with or without the extension) into the cell and choose the photos in Photos for the table, or write the name of a library image.",
+                "Every row is checked like the form (required fields, length, texts that do not fit, characters the font lacks, images not found) and the row says what is missing. Only rows without problems are generated.",
+                "Generate makes the outputs row by row; Stop ends after the finished row. A full quota or a deleted folder stops the rest, an error of one row (e.g. a broken photo) is only shown at the row."
+              ]
+            },
+            {
+              "type": "note",
+              "highlight": "Privacy",
+              "content": "The table and the photos are read only in your browser – they are never uploaded. Only the finished outputs and their texts are stored."
+            }
+          ]
+        },
+        {
+          "heading": "08. Permissions",
           "blocks": [
             {
               "type": "grid",
               "cards": [
                 {
                   "title": "View",
-                  "text": "js-creator-images-view - the page and the preview."
+                  "text": "js-creator-images-view - the page, the preview and choosing a preset."
                 },
                 {
                   "title": "Create",
-                  "text": "js-creator-images-create - Generate."
+                  "text": "js-creator-images-create - Generate, bulk from a table, saving a preset."
+                },
+                {
+                  "title": "Delete",
+                  "text": "js-creator-images-delete - deleting a preset."
                 }
               ]
             }

@@ -347,3 +347,18 @@
   font-size: 0.75rem;
   color: var(--color-rose-700);
 }
+
+/*
+    @module: Presets and bulk
+    @description: The row of saved fillings above the fields and the button of bulk generating
+        under Generate.
+    @usage: section.gen-presets > .gen-presets-row > label + select + buttons; .gen-actions > .gen-bulk
+*/
+.gen-presets-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+.gen-presets-label { font-size: 0.8rem; font-weight: 600; color: var(--color-zinc-700); }
+
+.gen-presets-row .ws-select { flex: 1 1 180px; min-width: 0; }
+
+.gen-bulk { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding-top: 4px; border-top: 1px dashed var(--color-zinc-200); }
+

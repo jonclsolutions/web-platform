@@ -207,18 +207,66 @@
           ]
         },
         {
-          "heading": "06. Oprávnění",
+          "heading": "06. Předvolby",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Předvolba uloží vyplnění formuláře pod názvem, abyste ho příště nemuseli psát znovu – třeba pravidelnou akci s cenou a logem partnera. Předvolby patří k šabloně (u sady k sadě) a vidíte je jen vy."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Uložit předvolbu: zadejte název. Stejný název (bez ohledu na velká a malá písmena) přepíše existující předvolbu – aplikace se nejdřív zeptá.",
+                "Uloží se texty polí, obrázky z knihovny s jejich výřezem a text příspěvku, pokud jste ho upravili ručně. Fotky z počítače se do předvolby nikdy neukládají (na server se nenahrávají).",
+                "Výběr předvolby vyplní formulář: texty polí, obrázky z knihovny a výřez. Fotky z počítače, které už ve formuláři máte, zůstanou. Obrázek, který mezitím z knihovny zmizel, aplikace vypíše a pole nechá beze změny.",
+                "Smazat předvolbu: smaže vybranou předvolbu natrvalo (po potvrzení). Šablona nebo sada má nejvýš 50 předvoleb; smazáním šablony nebo sady natrvalo zmizí i její předvolby."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "07. Hromadně z tabulky",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Tlačítko Hromadně z tabulky… pod Generovat vytvoří výstup z každého řádku tabulky CSV nebo XLSX (u sady jeden za každou šablonu) – všechny do složky zvolené ve formuláři."
+            },
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Vyberte tabulku: první řádek jsou názvy sloupců, každý další řádek je jeden výstup (nejvýš 200 řádků, 5 MB). Vzor s poli šablony stáhnete tlačítkem Stáhnout vzor CSV.",
+                "Sloupce se přiřadí k polím podle klíče nebo popisku pole (velikost písmen a diakritika nevadí) – přiřazení můžete změnit. Zvláštní sloupce: název výstupu (prázdný = název šablony s datem a číslem řádku) a text příspěvku (prázdný = podle vzoru šablony).",
+                "Obrázková pole: do buňky napište název souboru fotky (s příponou i bez ní) a fotky vyberte v poli Fotky k tabulce, nebo název obrázku z knihovny.",
+                "Aplikace zkontroluje každý řádek stejně jako formulář (povinná pole, délka, texty, které se nevejdou, znaky, které písmo nemá, nenalezené obrázky) a u řádku vypíše, co chybí. Generují se jen řádky bez problémů.",
+                "Generovat vytvoří výstupy řádek po řádku; Zastavit skončí po dokončeném řádku. Plná kvóta nebo smazaná složka zastaví zbytek, chyba jednoho řádku (např. poškozená fotka) se jen vypíše u řádku."
+              ]
+            },
+            {
+              "type": "note",
+              "highlight": "Soukromí",
+              "content": "Tabulka i fotky se čtou jen ve vašem prohlížeči – na server se nenahrávají. Uloží se jen hotové výstupy a jejich texty."
+            }
+          ]
+        },
+        {
+          "heading": "08. Oprávnění",
           "blocks": [
             {
               "type": "grid",
               "cards": [
                 {
                   "title": "Zobrazit",
-                  "text": "js-creator-images-view – stránka a náhled."
+                  "text": "js-creator-images-view – stránka, náhled a výběr předvolby."
                 },
                 {
                   "title": "Vytvořit",
-                  "text": "js-creator-images-create – Generovat."
+                  "text": "js-creator-images-create – Generovat, hromadně z tabulky, uložení předvolby."
+                },
+                {
+                  "title": "Smazat",
+                  "text": "js-creator-images-delete – smazání předvolby."
                 }
               ]
             }

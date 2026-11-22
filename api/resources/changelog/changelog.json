@@ -4,6 +4,12 @@
             "type": "added",
             "area": "js-creator",
             "part": "admin",
+            "text": "JS Creator generating: saved presets of the form (texts, library images, crops, text of the post – never photos) and bulk generating from a CSV or XLSX table read only in the browser – one output per row, photos matched by file name or library images by name."
+        },
+        {
+            "type": "added",
+            "area": "js-creator",
+            "part": "admin",
             "text": "JS Creator: carousel templates with up to 20 slides – one output with a picture of each slide, downloaded as a ZIP – and safe zones of TikTok, Instagram, YouTube Shorts and Facebook Reels in the editor and when generating."
         },
         {

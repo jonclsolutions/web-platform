@@ -12,9 +12,10 @@
  *     fonts (every controller limits its queries to the signed-in account), the settings
  *     (quotas) and the audit log. The shared parts of the workspace need the action in any
  *     section (JsCreatorSections::any()).
- *   - `js-creator/<section>/templates`, `…/blocks`, `…/sets` and `…/outputs` (one route group per
- *     section of JsCreatorSections, the section is passed to the controller): templates, blocks,
- *     sets, generating and export / import (one JSON file) with the permissions of their section.
+ *   - `js-creator/<section>/templates`, `…/blocks`, `…/sets`, `…/outputs` and `…/presets` (one route
+ *     group per section of JsCreatorSections, the section is passed to the controller): templates,
+ *     blocks, sets, generating, saved fillings of generating (presets - saving one needs the
+ *     permission to generate) and export / import (one JSON file) with the permissions of their section.
  *   - `js-creator/outputs`: the outputs of every section in one list; each output needs the
  *     permission of its section (OutputController).
  *   - `js-creator/files/…`: files of a workspace (and ZIPs of outputs), only through the signed
@@ -33,6 +34,7 @@ use App\Apps\JsCreator\Http\Controllers\FolderController;
 use App\Apps\JsCreator\Http\Controllers\FontController;
 use App\Apps\JsCreator\Http\Controllers\JsCreatorLogController;
 use App\Apps\JsCreator\Http\Controllers\OutputController;
+use App\Apps\JsCreator\Http\Controllers\PresetController;
 use App\Apps\JsCreator\Http\Controllers\SetController;
 use App\Apps\JsCreator\Http\Controllers\SettingsController;
 use App\Apps\JsCreator\Http\Controllers\TemplateController;
@@ -94,10 +96,15 @@ Route::middleware(['auth:sanctum', 'throttle:300,1,js-creator'])->prefix('js-cre
     // ── js-creator/<section>/sets (sets of templates of each section) ─────────────
     // ── js-creator/<section>/outputs (generating from a template of the section) ─
     // ── js-creator/<section>/export, …/import (templates, blocks, sets as one JSON file) ─
+    // ── js-creator/<section>/presets (saved fillings of the form of generating) ──────
     foreach (JsCreatorSections::SECTIONS as $section) {
         $can = fn (string $action) => 'permission:' . JsCreatorSections::permission($section, $action);
         Route::post("{$section}/outputs", [OutputController::class, 'store'])->middleware([$can('create'), $upload])->defaults('section', $section);
         Route::post("{$section}/outputs/pages", [OutputController::class, 'stagePage'])->middleware([$can('create'), 'throttle:240,1,js-creator-stage'])->defaults('section', $section);
+        Route::get("{$section}/presets", [PresetController::class, 'index'])->middleware($can('view'))->defaults('section', $section);
+        Route::post("{$section}/presets", [PresetController::class, 'store'])->middleware($can('create'))->defaults('section', $section);
+        Route::put("{$section}/presets/{id}", [PresetController::class, 'update'])->middleware($can('create'))->whereNumber('id')->defaults('section', $section);
+        Route::delete("{$section}/presets/{id}", [PresetController::class, 'destroy'])->middleware($can('delete'))->whereNumber('id')->defaults('section', $section);
         Route::post("{$section}/export", [TransferController::class, 'export'])->middleware([$can('view'), 'throttle:30,1,js-creator-export'])->defaults('section', $section);
         Route::post("{$section}/import", [TransferController::class, 'import'])->middleware([$can('create'), $upload])->defaults('section', $section);
         Route::prefix("{$section}/templates")->group(function () use ($section, $can, $upload) {

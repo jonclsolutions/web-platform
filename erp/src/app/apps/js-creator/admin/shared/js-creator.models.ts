@@ -370,3 +370,33 @@ export interface ImportSummary {
   template_ids: number[];
   block_ids: number[];
 }
+
+/** Values of a preset: texts, library images (ids), crops by template id, text of the post typed by hand. */
+export interface PresetValues {
+  texts: Record<string, string>;
+  images: Record<string, number>;
+  crops: Record<string, Record<string, { focusX: number; focusY: number; zoom: number }>>;
+  /** Text of the post typed by hand (null = filled from the pattern). */
+  caption: string | null;
+}
+
+/** Saved filling of the form of generating of a template or a set. */
+export interface CreatorPreset {
+  id: number;
+  section: string;
+  template_id: number | null;
+  set_id: number | null;
+  name: string;
+  values: PresetValues;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+/** New preset / overwrite (the owner only when creating). */
+export interface PresetSave {
+  name: string;
+  template_id?: number;
+  set_id?: number;
+  values: PresetValues;
+}
+

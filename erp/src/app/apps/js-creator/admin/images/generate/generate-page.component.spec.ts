@@ -8,24 +8,26 @@
  *   folder), the text of the post from the pattern, highlights, photos from the computer with
  *   their crop, what stops generating, generating (exact PNG of the template, only the output
  *   sent, the result shown, an optional image left empty), refused outputs, characters the font
- *   does not have, the page without the create permission and a set
- *   (united fields with block fields, tabs of formats with their own crops, one output each).
+ *   does not have, the page without the create permission, a set (united fields with block
+ *   fields, tabs of formats with their own crops, one output each), a carousel slide by slide,
+ *   presets (apply, save without photos, overwrite after a confirmation, delete) and the rows of
+ *   bulk generating (checks, names, captions, photos of a row, waiting on 429).
  * @dependencies admin-test-helpers.ts (admin doubles), editor-test-data.ts, the canvas and
  *   createImageBitmap of the test browser.
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { GeneratePageComponent } from './generate-page.component';
 import { FontLibraryService } from '../../shared/font-library.service';
 import { IconSetService } from '../../shared/icon-set.service';
-import { CreatorBlockDetail, CreatorFolder, CreatorOutput, CreatorSet, CreatorTemplateDetail } from '../../shared/js-creator.models';
+import { CreatorBlockDetail, CreatorFolder, CreatorOutput, CreatorPreset, CreatorSet, CreatorTemplateDetail } from '../../shared/js-creator.models';
 import { ImageField, ImageLayer, Layer, TextField, TextLayer, createLayer, emptyDocument } from '../../shared/render/document';
 import { fieldImageBoxes } from '../../shared/render/field-images';
 import { AdminTestContext, createAdminTestContext } from '../../../../../../testing/admin-test-helpers';
-import { TEST_CURATED, TEST_SIZE, imageField, shapeLayer, testFont, testTemplate, textField, textLayer } from '../editor/editor-test-data';
+import { TEST_CURATED, TEST_SIZE, imageField, shapeLayer, testAsset, testFont, testTemplate, textField, textLayer } from '../editor/editor-test-data';
 
 /** Key of the last folder in the browser storage. */
 const LAST_FOLDER_KEY = 'jsc.generate.folder';
@@ -72,6 +74,8 @@ describe('GeneratePageComponent', () => {
   let component: GeneratePageComponent;
   let ctx: AdminTestContext;
   let served: CreatorTemplateDetail;
+  /** Presets the API answers with. */
+  let presets: CreatorPreset[] = [];
 
   /**
    * @description Creates the page for template 7: a title field (text layer), an image field
@@ -92,7 +96,9 @@ describe('GeneratePageComponent', () => {
     });
     adjust?.(served);
     ctx.dataHandler.get.and.callFake(((url: string) => of(url.includes('/templates/') ? served : { used_bytes: 0, quota_bytes: 1e9, trash_bytes: 0, counts: {} })) as never);
-    ctx.dataHandler.getCollection.and.callFake(((url: string) => of(url === 'js-creator/folders' ? [folder(2, 'Kampaň'), folder(3, 'Jiné')] : [testFont(3)])) as never);
+    ctx.dataHandler.getCollection.and.callFake(((url: string) => of(
+      url === 'js-creator/folders' ? [folder(2, 'Kampaň'), folder(3, 'Jiné')] : url.startsWith('js-creator/images/presets') ? presets : [testFont(3)],
+    )) as never);
     ctx.dataHandler.postQuietly.and.returnValue(of(output()) as never);
     const fonts = {
       curatedFamilies: () => of(TEST_CURATED), curatedName: (s: string) => `jsc-${s}`, ownName: (id: number) => `jsc-user-${id}`,
@@ -361,7 +367,7 @@ describe('GeneratePageComponent', () => {
     };
     ctx.dataHandler.get.and.callFake(((url: string) => of(url.endsWith('/sets/4') ? theSet : url.endsWith('/templates/7') ? first
       : url.endsWith('/templates/8') ? second : { used_bytes: 0, quota_bytes: 1e9, trash_bytes: 0, counts: {} })) as never);
-    ctx.dataHandler.getCollection.and.callFake(((url: string) => of(url === 'js-creator/folders' ? [] : [testFont(3)])) as never);
+    ctx.dataHandler.getCollection.and.callFake(((url: string) => of(url === 'js-creator/folders' || url.includes('/presets') ? [] : [testFont(3)])) as never);
     let next = 40;
     ctx.dataHandler.postQuietly.and.callFake((() => of(output({ id: next++ }))) as never);
     const fonts = {
@@ -447,5 +453,118 @@ describe('GeneratePageComponent', () => {
     component.setText('title', 'Léto '.repeat(4).trim());
     fixture.detectChanges();
     expect(component.problems().some(p => p.kind === 'overflow')).toBeTrue();
+  });
+
+  /**
+   * @description Presets: the list of the template is loaded; applying fills texts, a library
+   *   image with its crop and the typed text of the post; saving sends the values without
+   *   photos of the computer; the same name overwrites only after a confirmation; a taken name is
+   *   explained in the dialog; deleting asks first.
+   * @input preset Léto (title, image 5 with a crop, caption); apply; save "Zima"; local photo;
+   *   save "léto" cancelled / confirmed; 422 name; delete
+   * @output texts / image / crop / caption of the preset; POST presets {name Zima, template_id 7, values};
+   *   images {} with a photo; PUT presets/1 only after yes; dialog error preset_name_taken; DELETE presets/1
+   */
+  it('saves, applies and deletes presets', async () => {
+    const crop = { focusX: 0.2, focusY: 0.8, zoom: 2 };
+    const leto: CreatorPreset = {
+      id: 1, section: 'images', template_id: 7, set_id: null, name: 'Léto', created_at: null, updated_at: null,
+      values: { texts: { title: 'Léto **50 %**' }, images: { photo: 5 }, crops: { '7': { photo: crop } }, caption: 'Vlastní' },
+    };
+    presets = [leto];
+    await create();
+    presets = [];
+    expect(component.presets().map(p => p.name)).toEqual(['Léto']);
+    expect(ctx.dataHandler.getCollection).toHaveBeenCalledWith('js-creator/images/presets?template_id=7');
+
+    ctx.dataHandler.getPaginatedCollection.and.returnValue(of({ data: [testAsset(5)], meta: { total: 1, per_page: 200, current_page: 1, last_page: 1 } }) as never);
+    await component.applyPreset('1');
+    expect(component.texts()['title']).toBe('Léto **50 %**');
+    expect(component.images()['photo']).toEqual({ kind: 'asset', asset: jasmine.objectContaining({ id: 5 }) as never });
+    expect(component.crops()['photo']).toEqual(crop);
+    expect(component.caption()).toBe('Vlastní');
+
+    component.setText('title', 'Zima');
+    component.openSavePreset();
+    expect(component.presetDialog()?.name).toBe('Léto');
+    component.setPresetName('Zima');
+    ctx.dataHandler.postQuietly.and.returnValue(of({ ...leto, id: 2, name: 'Zima' }) as never);
+    await component.savePreset();
+    const [url, body] = ctx.dataHandler.postQuietly.calls.mostRecent().args as [string, unknown];
+    expect(url).toBe('js-creator/images/presets');
+    expect(body).toEqual({ name: 'Zima', template_id: 7, values: { texts: { title: 'Zima' }, images: { photo: 5 }, crops: { '7': { photo: crop } }, caption: 'Vlastní' } });
+    expect(component.presets().map(p => p.name)).toEqual(['Léto', 'Zima']);
+    expect(component.presetDialog()).toBeNull();
+
+    await component.chooseFile(served.document.fields[1] as ImageField, { target: { files: [await pngFile(800, 800)], value: '' } } as unknown as Event);
+    component.openSavePreset();
+    component.setPresetName('léto');
+    ctx.confirm.open.and.resolveTo(false);
+    await component.savePreset();
+    expect(ctx.dataHandler.putQuietly).not.toHaveBeenCalled();
+    ctx.confirm.open.and.resolveTo(true);
+    ctx.dataHandler.putQuietly.and.returnValue(of({ ...leto, name: 'léto' }) as never);
+    await component.savePreset();
+    const [putUrl, putBody] = ctx.dataHandler.putQuietly.calls.mostRecent().args as [string, { name: string; values: { images: object } }];
+    expect(putUrl).toBe('js-creator/images/presets/1');
+    expect(putBody.name).toBe('léto');
+    expect(putBody.values.images).toEqual({});
+
+    component.openSavePreset();
+    component.setPresetName('Jaro');
+    ctx.dataHandler.postQuietly.and.returnValue(throwError(() => new HttpErrorResponse({ status: 422, error: { errors: { name: ['taken'] } } })) as never);
+    await component.savePreset();
+    expect(component.presetDialog()?.error).toBe('js-creator-generate.preset_name_taken');
+    component.presetDialog.set(null);
+
+    component.presetId.set(1);
+    ctx.dataHandler.delete.and.returnValue(of(undefined) as never);
+    await component.deletePreset();
+    expect(ctx.dataHandler.delete).toHaveBeenCalledWith('js-creator/images/presets/1');
+    expect(component.presets().map(p => p.name)).toEqual(['Zima']);
+  });
+
+  /**
+   * @description The runner of bulk generating checks a row like the form and generates it: the
+   *   text of the post from the pattern (or its column), the default name with the number of the
+   *   row, a photo of the row decoded only in the browser, a bad photo refused without stopping,
+   *   a 429 waited for and tried again; the dialog opens.
+   * @input row 7 (title Léto); row 8 with a photo, name and caption; row 9 with a broken photo; 429 once
+   * @output problems required / too_long; caption "Léto #tag", name "… – 007"; name "Vlastní",
+   *   caption "Text", file only the output; error photo_unsupported (stop false); ok after the retry
+   */
+  it('generates rows of a table', async () => {
+    await create('all', false);
+    const runner = component.bulkRunner;
+    expect(runner.targetCount()).toBe(1);
+    expect(runner.check({ title: '' }, new Set()).map(p => p.kind)).toEqual(['required']);
+    expect(runner.check({ title: 'x'.repeat(30) }, new Set()).map(p => p.kind)).toContain('too_long');
+
+    expect((await runner.run({ index: 7, texts: { title: 'Léto' }, images: {}, name: '', caption: null })).ok).toBeTrue();
+    let [, data] = ctx.dataHandler.postQuietly.calls.mostRecent().args as [string, FormData];
+    expect(data.get('caption')).toBe('Léto #tag');
+    expect(String(data.get('name'))).toMatch(/^Post .* – 007$/);
+
+    const photo = await pngFile(1200, 1200);
+    expect((await runner.run({ index: 8, texts: { title: 'A' }, images: { photo: { kind: 'local', file: photo } }, name: 'Vlastní', caption: 'Text' })).ok).toBeTrue();
+    [, data] = ctx.dataHandler.postQuietly.calls.mostRecent().args as [string, FormData];
+    expect([data.get('name'), data.get('caption'), (data.get('file') as File).name]).toEqual(['Vlastní', 'Text', 'output.png']);
+
+    const bad = await runner.run({ index: 9, texts: { title: 'A' }, images: { photo: { kind: 'local', file: new File(['x'], 'x.png') } }, name: '', caption: null });
+    expect(bad).toEqual({ ok: false, error: 'photo_unsupported', stop: false });
+
+    let calls = 0;
+    ctx.dataHandler.postQuietly.and.callFake((() => (++calls === 1
+      ? throwError(() => new HttpErrorResponse({ status: 429, headers: new HttpHeaders({ 'Retry-After': '1' }) }))
+      : of(output()))) as never);
+    expect((await runner.run({ index: 10, texts: { title: 'B' }, images: {}, name: '', caption: null })).ok).toBeTrue();
+    expect(calls).toBe(2);
+    expect(component.waiting()).toBeNull();
+
+    component.openBulk();
+    fixture.detectChanges();
+    expect(document.querySelector('app-jc-bulk-generate')).not.toBeNull();
+    component.bulkOpen.set(false);
+    fixture.detectChanges();
   });
 });
