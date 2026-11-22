@@ -6,7 +6,10 @@
  * @created 2026
  * @description Shapes of the API answers of JS Creator (`/api/js-creator/…`) and of its static
  *   font and icon sets. File URLs are signed and relative (same origin as the admin).
+ * @dependencies render/document.ts (document of a template).
  */
+
+import { TemplateDocument } from './render/document';
 
 /** Folder of the own workspace (the tree is built from `parent_id`). */
 export interface CreatorFolder {
@@ -16,6 +19,14 @@ export interface CreatorFolder {
   created_at: string | null;
   updated_at: string | null;
   deleted_at: string | null;
+}
+
+/** Template using a library file (also one in the trash). */
+export interface UsedByTemplate {
+  id: number;
+  name: string;
+  section: string;
+  trashed: boolean;
 }
 
 /** Image of the own library. */
@@ -30,6 +41,8 @@ export interface CreatorAsset {
   thumb_url: string;
   created_at: string | null;
   deleted_at: string | null;
+  /** Templates using the image (only in the list). */
+  used_by?: UsedByTemplate[];
 }
 
 /** Style of a font face. */
@@ -46,6 +59,8 @@ export interface CreatorFont {
   url: string;
   created_at: string | null;
   deleted_at: string | null;
+  /** Templates using the font (only in the list). */
+  used_by?: UsedByTemplate[];
 }
 
 /** Face of a font sent to the API (upload / change). */
@@ -60,7 +75,7 @@ export interface WorkspaceUsage {
   used_bytes: number;
   quota_bytes: number;
   trash_bytes: number;
-  counts: { folders: number; images: number; fonts: number };
+  counts: { folders: number; images: number; fonts: number; templates: number };
 }
 
 /** Settings of the application. */
@@ -76,7 +91,7 @@ export interface QuotaAccount {
   used_bytes: number;
   quota_mb: number | null;
   quota_bytes: number;
-  counts: { folders: number; images: number; fonts: number };
+  counts: { folders: number; images: number; fonts: number; templates: number };
 }
 
 /** One file of a curated font face with the characters it covers. */
@@ -104,4 +119,47 @@ export interface IconSet {
   license: string;
   viewBox: string;
   icons: Record<string, IconNode[]>;
+}
+
+/** Template of a section in a list (without its document). */
+export interface CreatorTemplate {
+  id: number;
+  section: string;
+  name: string;
+  width: number;
+  height: number;
+  output_format: 'png' | 'jpg';
+  output_quality: number;
+  caption_template: string | null;
+  /** Signed URL of the thumbnail (null until the editor saves one). */
+  thumb_url: string | null;
+  version: number;
+  created_at: string | null;
+  updated_at: string | null;
+  deleted_at: string | null;
+}
+
+/** Template with its document (editor). */
+export interface CreatorTemplateDetail extends CreatorTemplate {
+  schema_version: number;
+  document: TemplateDocument;
+}
+
+/** A size used by templates (filter of the list). */
+export interface TemplateSizeCount {
+  width: number;
+  height: number;
+  count: number;
+}
+
+/** Save of the editor. */
+export interface TemplateSave {
+  name: string;
+  width: number;
+  height: number;
+  output_format: 'png' | 'jpg';
+  output_quality: number;
+  caption_template: string | null;
+  version: number;
+  document: TemplateDocument;
 }

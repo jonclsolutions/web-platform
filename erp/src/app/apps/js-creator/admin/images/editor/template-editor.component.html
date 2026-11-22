@@ -1,0 +1,136 @@
+<!--
+    @file: template-editor.component.html
+    @path: src/app/apps/js-creator/admin/images/editor/template-editor.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Template editor: top bar (back, name, undo / redo, zoom, grid, guides, safe
+        zone, save state, Save), left column (add a layer, layers), the canvas with the warnings of
+        the drawing, right column (Properties / Fields / Template). A message instead of the editor
+        on screens under 1024 px.
+-->
+@if (!wide()) {
+  <div class="te-narrow" role="status">
+    <app-creator-icon [nodes]="icon('fit')" [size]="28" />
+    <p>{{ t('narrow_screen') }}</p>
+    <button type="button" class="pn-btn" (click)="back()">{{ t('back_to_templates') }}</button>
+  </div>
+} @else if (failed()) {
+  <div class="te-narrow" role="alert">
+    <p>{{ t('load_failed') }}</p>
+    <button type="button" class="pn-btn" (click)="back()">{{ t('back_to_templates') }}</button>
+  </div>
+} @else if (store(); as s) {
+  <div class="te">
+    <header class="te-bar">
+      <button type="button" class="te-icon-btn" [title]="t('back_to_templates')" [attr.aria-label]="t('back_to_templates')" (click)="back()">
+        <app-creator-icon [nodes]="icon('arrow-left')" [size]="18" />
+      </button>
+      <input class="jc-input te-name" type="text" maxlength="120" [value]="s.state().name" [disabled]="!s.editable" [attr.aria-label]="t('template_name')"
+        (input)="setName($any($event.target).value)" />
+      @if (!s.editable) {
+        <span class="te-badge">{{ t('read_only') }}</span>
+      }
+      <span class="te-size">{{ s.size().width }} × {{ s.size().height }}</span>
+
+      <span class="te-sep"></span>
+      <button type="button" class="te-icon-btn" [disabled]="!s.canUndo()" [title]="t('undo') + ' (Ctrl+Z)'" [attr.aria-label]="t('undo')" (click)="s.undo()">
+        <app-creator-icon [nodes]="icon('undo')" [size]="17" />
+      </button>
+      <button type="button" class="te-icon-btn" [disabled]="!s.canRedo()" [title]="t('redo') + ' (Ctrl+Shift+Z)'" [attr.aria-label]="t('redo')" (click)="s.redo()">
+        <app-creator-icon [nodes]="icon('redo')" [size]="17" />
+      </button>
+
+      <span class="te-sep"></span>
+      <button type="button" class="te-icon-btn" [title]="t('zoom_out')" [attr.aria-label]="t('zoom_out')" (click)="zoomBy(1 / 1.25)"><app-creator-icon [nodes]="icon('zoom-out')" [size]="17" /></button>
+      <button type="button" class="te-zoom" [title]="t('zoom_100')" (click)="zoom.set(1)">{{ zoomPercent() }} %</button>
+      <button type="button" class="te-icon-btn" [title]="t('zoom_in')" [attr.aria-label]="t('zoom_in')" (click)="zoomBy(1.25)"><app-creator-icon [nodes]="icon('zoom-in')" [size]="17" /></button>
+      <button type="button" class="te-icon-btn" [title]="t('zoom_fit')" [attr.aria-label]="t('zoom_fit')" (click)="fit()"><app-creator-icon [nodes]="icon('fit')" [size]="17" /></button>
+
+      <span class="te-sep"></span>
+      <label class="te-toggle" [title]="t('grid_snap')">
+        <app-creator-icon [nodes]="icon('snap')" [size]="16" />
+        <select class="jc-input" [attr.aria-label]="t('grid_snap')" (change)="setGrid($any($event.target).value)">
+          @for (size of gridSizes; track size) {
+            <option [value]="size" [selected]="grid() === size">{{ size ? size + ' px' : t('grid_off') }}</option>
+          }
+        </select>
+      </label>
+      <label class="te-toggle" [title]="t('smart_guides')">
+        <input type="checkbox" [checked]="guides()" (change)="guides.set($any($event.target).checked)" />
+        <app-creator-icon [nodes]="icon('magnet')" [size]="16" />
+        <span>{{ t('guides') }}</span>
+      </label>
+      @if (hasSafeZone()) {
+        <label class="te-toggle" [title]="t('safe_zone')">
+          <input type="checkbox" [checked]="safeZone()" (change)="safeZone.set($any($event.target).checked)" />
+          <app-creator-icon [nodes]="icon('safe-zone')" [size]="16" />
+          <span>{{ t('safe_zone') }}</span>
+        </label>
+      }
+
+      <span class="te-spacer"></span>
+      @if (s.editable) {
+        <span class="te-state" [class.te-state--dirty]="s.dirty()" role="status">
+          {{ saving() ? t('saving') : s.dirty() ? t('unsaved') : savedAt() ? t('saved_at') + ' ' + savedTime : t('no_changes') }}
+        </span>
+        <button type="button" class="te-save" [disabled]="saving() || !s.dirty()" [title]="t('save') + ' (Ctrl+S)'" (click)="save()">
+          <app-creator-icon [nodes]="icon('save')" [size]="16" />{{ t('save') }}
+        </button>
+      }
+    </header>
+
+    <div class="te-body">
+      <aside class="te-left">
+        @if (s.editable) {
+          <div class="te-add" role="group" [attr.aria-label]="t('add_layer')">
+            @for (kind of [['text', 'text'], ['image', 'image'], ['grid', 'grid'], ['shape', 'shape'], ['icon', 'icon']]; track kind[0]) {
+              <button type="button" class="te-add-btn" (click)="add($any(kind[0]))">
+                <app-creator-icon [nodes]="icon($any(kind[1]))" [size]="18" />
+                <span>{{ t('type_' + kind[0]) }}</span>
+              </button>
+            }
+          </div>
+        }
+        <h2 class="te-col-title">{{ t('layers') }} <span>({{ s.layers().length }})</span></h2>
+        <div class="te-scroll">
+          <app-jc-layers [store]="s" />
+        </div>
+      </aside>
+
+      <main class="te-center">
+        <app-jc-editor-canvas [store]="s" [resources]="resources" [(zoom)]="zoom" [grid]="grid()" [guides]="guides()" [safeZone]="safeZone()"
+          [panMode]="panMode()" [redraw]="redraw()" (rendered)="report.set($event)" (editText)="editText($event)" />
+        @if (overflows().length || missingImages()) {
+          <div class="te-warnings" role="status">
+            @for (o of overflows(); track o.id) {
+              <span class="te-warning" [class.te-warning--block]="o.block">„{{ o.name }}“ – {{ o.block ? t('overflow_blocks') : t('overflow_cut') }}</span>
+            }
+            @if (missingImages()) {
+              <span class="te-warning te-warning--block">{{ t('missing_images') }}: {{ missingImages() }}</span>
+            }
+          </div>
+        }
+      </main>
+
+      <aside class="te-right">
+        <div class="te-tabs" role="tablist">
+          <button type="button" role="tab" class="te-tab" [class.te-tab--on]="tab() === 'properties'" [attr.aria-selected]="tab() === 'properties'" (click)="tab.set('properties')">{{ t('tab_properties') }}</button>
+          <button type="button" role="tab" class="te-tab" [class.te-tab--on]="tab() === 'fields'" [attr.aria-selected]="tab() === 'fields'" (click)="tab.set('fields')">{{ t('tab_fields') }} ({{ s.doc().fields.length }})</button>
+          <button type="button" role="tab" class="te-tab" [class.te-tab--on]="tab() === 'template'" [attr.aria-selected]="tab() === 'template'" (click)="tab.set('template')">{{ t('tab_template') }}</button>
+        </div>
+        <div class="te-scroll" role="tabpanel">
+          @switch (tab()) {
+            @case ('properties') {
+              <app-jc-properties [store]="s" [curated]="curated()" [ownFonts]="ownFonts()" [assets]="assets()" [iconSet]="iconSet()" (assetPicked)="useAsset($event)" />
+            }
+            @case ('fields') { <app-jc-fields [store]="s" /> }
+            @case ('template') { <app-jc-template-panel [store]="s" [assets]="assets()" (assetPicked)="useAsset($event)" /> }
+          }
+        </div>
+      </aside>
+    </div>
+  </div>
+} @else {
+  <p class="te-loading" role="status">{{ t('loading') }}</p>
+}

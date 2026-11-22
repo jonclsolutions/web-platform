@@ -40,6 +40,7 @@
           <thead>
             <tr>
               <th scope="col">{{ t('col_name') }}</th>
+              <th scope="col">{{ t('col_templates') }}</th>
               <th scope="col">{{ t('col_folders') }}</th>
               <th scope="col">{{ t('col_images') }}</th>
               <th scope="col">{{ t('col_fonts') }}</th>
@@ -59,6 +60,7 @@
                     <span class="cs-badge">{{ t('no_access') }}</span>
                   }
                 </td>
+                <td>{{ account.counts.templates }}</td>
                 <td>{{ account.counts.folders }}</td>
                 <td>{{ account.counts.images }}</td>
                 <td>{{ account.counts.fonts }}</td>

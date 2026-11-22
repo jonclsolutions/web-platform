@@ -1,0 +1,390 @@
+<!--
+    @file: properties-panel.component.html
+    @path: src/app/apps/js-creator/admin/images/editor/panels/properties-panel.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Panel "Properties": tools of the selection (align, spread, order, duplicate,
+        delete); for one layer its name, position (anchor, move to the edge, offset, size,
+        rotation, opacity, hidden, locked) and the sections of its kind. A locked layer (or a
+        read-only editor) shows the values disabled.
+-->
+<div class="pn">
+  @if (count() === 0) {
+    <p class="pn-empty">{{ t('nothing_selected') }}</p>
+  } @else {
+    <section class="pn-section">
+      <fieldset class="pn-fieldset" [disabled]="readOnly()">
+        <div class="pn-tools" role="group" [attr.aria-label]="t('align')">
+          @for (a of [['align-left', 'left'], ['align-hcenter', 'hcenter'], ['align-right', 'right'], ['align-top', 'top'], ['align-vcenter', 'vcenter'], ['align-bottom', 'bottom']]; track a[1]) {
+            <button type="button" class="pn-tool" [title]="t('align_' + a[1])" [attr.aria-label]="t('align_' + a[1])" (click)="store().align($any(a[1]))">
+              <app-creator-icon [nodes]="icon($any(a[0]))" [size]="16" />
+            </button>
+          }
+          @if (count() > 2) {
+            <button type="button" class="pn-tool" [title]="t('distribute_h')" [attr.aria-label]="t('distribute_h')" (click)="store().distribute('horizontal')"><app-creator-icon [nodes]="icon('distribute-h')" [size]="16" /></button>
+            <button type="button" class="pn-tool" [title]="t('distribute_v')" [attr.aria-label]="t('distribute_v')" (click)="store().distribute('vertical')"><app-creator-icon [nodes]="icon('distribute-v')" [size]="16" /></button>
+          }
+        </div>
+        <div class="pn-tools" role="group" [attr.aria-label]="t('arrange')">
+          <button type="button" class="pn-tool" [title]="t('arrange_top')" [attr.aria-label]="t('arrange_top')" (click)="store().arrange('top')"><app-creator-icon [nodes]="icon('front')" [size]="16" /></button>
+          <button type="button" class="pn-tool" [title]="t('arrange_up')" [attr.aria-label]="t('arrange_up')" (click)="store().arrange('up')"><app-creator-icon [nodes]="icon('up')" [size]="16" /></button>
+          <button type="button" class="pn-tool" [title]="t('arrange_down')" [attr.aria-label]="t('arrange_down')" (click)="store().arrange('down')"><app-creator-icon [nodes]="icon('down')" [size]="16" /></button>
+          <button type="button" class="pn-tool" [title]="t('arrange_bottom')" [attr.aria-label]="t('arrange_bottom')" (click)="store().arrange('bottom')"><app-creator-icon [nodes]="icon('back')" [size]="16" /></button>
+          <span class="pn-tools-gap"></span>
+          <button type="button" class="pn-tool" [title]="t('duplicate')" [attr.aria-label]="t('duplicate')" (click)="store().duplicateSelected()"><app-creator-icon [nodes]="icon('copy')" [size]="16" /></button>
+          <button type="button" class="pn-tool pn-tool--danger" [title]="t('delete')" [attr.aria-label]="t('delete')" (click)="store().removeSelected()"><app-creator-icon [nodes]="icon('trash')" [size]="16" /></button>
+        </div>
+      </fieldset>
+    </section>
+
+    @if (layer(); as l) {
+      <section class="pn-section">
+        <div class="pn-row pn-row--head">
+          <input class="jc-input pn-grow" type="text" maxlength="80" [value]="l.name" [placeholder]="t('type_' + l.type)" [attr.aria-label]="t('layer_name')"
+            [disabled]="readOnly()" (input)="set('name', $any($event.target).value)" />
+          <label class="pn-check" [title]="t('lock')">
+            <input type="checkbox" [checked]="l.locked" [disabled]="readOnly()" (change)="set('locked', $any($event.target).checked)" />
+            <app-creator-icon [nodes]="icon(l.locked ? 'lock' : 'unlock')" [size]="15" [label]="t('lock')" />
+          </label>
+          <label class="pn-check" [title]="t('hide')">
+            <input type="checkbox" [checked]="l.hidden" [disabled]="readOnly()" (change)="set('hidden', $any($event.target).checked)" />
+            <app-creator-icon [nodes]="icon(l.hidden ? 'eye-off' : 'eye')" [size]="15" [label]="t('hide')" />
+          </label>
+        </div>
+        @if (l.locked) {
+          <p class="pn-hint">{{ t('locked_hint') }}</p>
+        }
+      </section>
+
+      <fieldset class="pn-fieldset" [disabled]="readOnly() || l.locked">
+        <section class="pn-section">
+          <h3 class="pn-title">{{ t('position') }}</h3>
+          <div class="pn-anchors">
+            <div>
+              <span class="pn-label">{{ t('anchor') }}</span>
+              <app-jc-anchor [value]="l.anchor" [labels]="anchorLabels()" [label]="t('anchor')" [disabled]="readOnly() || l.locked" (picked)="setAnchor($event)" />
+            </div>
+            <div>
+              <span class="pn-label">{{ t('place_at') }}</span>
+              <app-jc-anchor [labels]="anchorLabels()" [label]="t('place_at')" [disabled]="readOnly() || l.locked" (picked)="placeAt($event)" />
+              <label class="jc-inline pn-margin">{{ t('margin') }}
+                <input class="jc-input jc-input--num" type="number" min="0" max="2000" [value]="margin()" (change)="setMargin($event)" />
+              </label>
+            </div>
+          </div>
+          <p class="pn-hint">{{ t('anchor_hint') }}</p>
+          <div class="pn-grid2">
+            <label class="pn-field"><span>X</span><input class="jc-input" type="number" step="1" [value]="show(l.x)" (change)="setNum('x', $event, -20000, 20000)" /></label>
+            <label class="pn-field"><span>Y</span><input class="jc-input" type="number" step="1" [value]="show(l.y)" (change)="setNum('y', $event, -20000, 20000)" /></label>
+            <label class="pn-field"><span>{{ t('width') }}</span><input class="jc-input" type="number" min="1" step="1" [value]="show(l.w)" (change)="setNum('w', $event, 1, 20000)" /></label>
+            <label class="pn-field"><span>{{ t('height') }}</span><input class="jc-input" type="number" min="1" step="1" [value]="show(l.h)" (change)="setNum('h', $event, 1, 20000)" /></label>
+            <label class="pn-field"><span>{{ t('rotation') }} °</span><input class="jc-input" type="number" min="-360" max="360" step="1" [value]="show(l.rotation, 1)" (change)="setNum('rotation', $event, -360, 360)" /></label>
+            <label class="pn-field"><span>{{ t('opacity') }} %</span><input class="jc-input" type="number" min="0" max="100" step="1" [value]="show(l.opacity * 100)" (change)="setNum('opacity', $event, 0, 1, 100)" /></label>
+          </div>
+        </section>
+
+        <!-- ── Text ───────────────────────────────────────────────────────── -->
+        @if (textLayer(); as tl) {
+          <section class="pn-section">
+            <h3 class="pn-title">{{ t('text') }}</h3>
+            <label class="pn-field">
+              <span>{{ t('content') }}</span>
+              <select class="jc-input" (change)="setTextField(tl, $any($event.target).value)">
+                <option value="" [selected]="!tl.field">{{ t('fixed_text') }}</option>
+                @for (field of textFields(); track field.key) {
+                  <option [value]="field.key" [selected]="tl.field === field.key">{{ t('field') }}: {{ field.label }}</option>
+                }
+                <option [value]="newField">+ {{ t('new_text_field') }}</option>
+              </select>
+            </label>
+            @if (fieldOf(tl); as field) {
+              <label class="pn-field">
+                <span>{{ t('field_label') }}</span>
+                <input class="jc-input" type="text" maxlength="80" [value]="field.label" (input)="updateField(field.key, { label: $any($event.target).value }, 'label')" />
+              </label>
+            }
+            <label class="pn-field">
+              <span>{{ tl.field ? t('sample_text') : t('text') }}</span>
+              <textarea #textArea class="jc-input pn-textarea" rows="3" maxlength="2000" [value]="textOf(tl)" (input)="setText(tl, $any($event.target).value)"></textarea>
+            </label>
+            <div class="pn-row">
+              <button type="button" class="pn-btn" (click)="highlightSelection(tl)">
+                <app-creator-icon [nodes]="icon('highlight')" [size]="14" />{{ t('highlight_selection') }}
+              </button>
+              <span class="pn-hint">{{ t('highlight_hint') }}</span>
+            </div>
+
+            <h4 class="pn-subtitle">{{ t('font') }}</h4>
+            <label class="pn-field">
+              <span>{{ t('font_family') }}</span>
+              <select class="jc-input" (change)="setFamily(tl, $any($event.target).value)">
+                <optgroup [label]="t('font_set')">
+                  @for (family of curated(); track family.slug) {
+                    <option [value]="'set:' + family.slug" [selected]="familyValue(tl) === 'set:' + family.slug">{{ family.family }}</option>
+                  }
+                </optgroup>
+                @if (ownFamilies().length) {
+                  <optgroup [label]="t('font_own')">
+                    @for (family of ownFamilies(); track family.family) {
+                      <option [value]="'own:' + family.family" [selected]="familyValue(tl) === 'own:' + family.family">{{ family.family }}</option>
+                    }
+                  </optgroup>
+                }
+              </select>
+            </label>
+            <div class="pn-grid2">
+              <label class="pn-field">
+                <span>{{ t('font_face') }}</span>
+                <select class="jc-input" (change)="setFace(tl, $any($event.target).value)">
+                  @for (face of faces(tl); track face.value) {
+                    <option [value]="face.value" [selected]="faceValue(tl) === face.value">{{ face.label }}</option>
+                  }
+                </select>
+              </label>
+              <label class="pn-field"><span>{{ t('font_size') }}</span><input class="jc-input" type="number" min="4" max="1000" step="1" [value]="show(tl.size, 1)" (change)="setNum('size', $event, 4, 1000)" /></label>
+              <label class="pn-field"><span>{{ t('line_height') }}</span><input class="jc-input" type="number" min="0.5" max="4" step="0.05" [value]="show(tl.lineHeight, 2)" (change)="setNum('lineHeight', $event, 0.5, 4)" /></label>
+              <label class="pn-field"><span>{{ t('letter_spacing') }}</span><input class="jc-input" type="number" min="-100" max="500" step="0.5" [value]="show(tl.letterSpacing, 1)" (change)="setNum('letterSpacing', $event, -100, 500)" /></label>
+              <label class="pn-field">
+                <span>{{ t('align_text') }}</span>
+                <select class="jc-input" (change)="set('align', $any($event.target).value)">
+                  @for (a of ['left', 'center', 'right']; track a) { <option [value]="a" [selected]="tl.align === a">{{ t('text_align_' + a) }}</option> }
+                </select>
+              </label>
+              <label class="pn-field">
+                <span>{{ t('valign_text') }}</span>
+                <select class="jc-input" (change)="set('valign', $any($event.target).value)">
+                  @for (a of ['top', 'middle', 'bottom']; track a) { <option [value]="a" [selected]="tl.valign === a">{{ t('text_valign_' + a) }}</option> }
+                </select>
+              </label>
+            </div>
+            <label class="pn-check-row"><input type="checkbox" [checked]="tl.uppercase" (change)="set('uppercase', $any($event.target).checked)" />{{ t('uppercase') }}</label>
+            <div class="pn-field">
+              <span>{{ t('text_color') }}</span>
+              <app-jc-fill [fill]="tl.fill" idPrefix="jc-text-fill" [disabled]="readOnly() || l.locked" (fillChange)="$event && setFill('fill', $event)" />
+            </div>
+
+            <h4 class="pn-subtitle">{{ t('fitting') }}</h4>
+            <div class="pn-grid2">
+              <label class="pn-field"><span>{{ t('max_lines') }}</span><input class="jc-input" type="number" min="0" max="100" step="1" [value]="tl.maxLines" (change)="setNum('maxLines', $event, 0, 100)" /></label>
+              <label class="pn-field"><span>{{ t('min_size') }}</span><input class="jc-input" type="number" min="4" max="1000" step="1" [value]="show(tl.minSize, 1)" (change)="setNum('minSize', $event, 4, 1000)" /></label>
+            </div>
+            <label class="pn-check-row"><input type="checkbox" [checked]="tl.autoShrink" (change)="set('autoShrink', $any($event.target).checked)" />{{ t('auto_shrink') }}</label>
+            <label class="pn-field">
+              <span>{{ t('overflow') }}</span>
+              <select class="jc-input" (change)="set('overflow', $any($event.target).value)">
+                <option value="ellipsis" [selected]="tl.overflow === 'ellipsis'">{{ t('overflow_ellipsis') }}</option>
+                <option value="block" [selected]="tl.overflow === 'block'">{{ t('overflow_block') }}</option>
+              </select>
+            </label>
+            <p class="pn-hint">{{ t('max_lines_hint') }}</p>
+
+            <h4 class="pn-subtitle">{{ t('effects') }}</h4>
+            <label class="pn-check-row"><input type="checkbox" [checked]="!!tl.stroke" (change)="toggle('stroke', $any($event.target).checked, { color: '#000000', width: 2 })" />{{ t('outline') }}</label>
+            @if (tl.stroke; as stroke) {
+              <div class="pn-sub">
+                <app-jc-color [value]="stroke.color" [label]="t('color')" [alphaLabel]="t('opacity')" [disabled]="readOnly() || l.locked" (valueChange)="patch('stroke', { color: $event })" />
+                <label class="jc-inline">{{ t('thickness') }}<input class="jc-input jc-input--num" type="number" min="0" max="200" step="0.5" [value]="stroke.width" (change)="patchNum('stroke', 'width', $event, 0, 200)" /></label>
+              </div>
+            }
+            <ng-container [ngTemplateOutlet]="shadowEditor" [ngTemplateOutletContext]="{ shadow: tl.shadow }" />
+            <label class="pn-check-row"><input type="checkbox" [checked]="!!tl.box" (change)="toggle('box', $any($event.target).checked, { fill: { type: 'solid', color: '#ffffff' }, padding: 16, radius: 12, fit: 'text' })" />{{ t('label_box') }}</label>
+            @if (tl.box; as box) {
+              <div class="pn-sub pn-sub--col">
+                <app-jc-fill [fill]="box.fill" idPrefix="jc-box-fill" [disabled]="readOnly() || l.locked" (fillChange)="$event && patch('box', { fill: $event })" />
+                <div class="pn-grid2">
+                  <label class="pn-field"><span>{{ t('padding') }}</span><input class="jc-input" type="number" min="0" max="500" [value]="box.padding" (change)="patchNum('box', 'padding', $event, 0, 500)" /></label>
+                  <label class="pn-field"><span>{{ t('radius') }}</span><input class="jc-input" type="number" min="0" max="1000" [value]="box.radius" (change)="patchNum('box', 'radius', $event, 0, 1000)" /></label>
+                </div>
+                <label class="pn-field">
+                  <span>{{ t('box_fit') }}</span>
+                  <select class="jc-input" (change)="patch('box', { fit: $any($event.target).value })">
+                    <option value="text" [selected]="box.fit === 'text'">{{ t('box_fit_text') }}</option>
+                    <option value="element" [selected]="box.fit === 'element'">{{ t('box_fit_element') }}</option>
+                  </select>
+                </label>
+              </div>
+            }
+
+            <h4 class="pn-subtitle">{{ t('highlight_style') }}</h4>
+            <label class="pn-check-row"><input type="checkbox" [checked]="!!tl.highlight.color" (change)="patch('highlight', { color: $any($event.target).checked ? '#e11d48' : null })" />{{ t('highlight_color') }}</label>
+            @if (tl.highlight.color; as color) {
+              <div class="pn-sub"><app-jc-color [value]="color" [label]="t('highlight_color')" [alphaLabel]="t('opacity')" [disabled]="readOnly() || l.locked" (valueChange)="patch('highlight', { color: $event })" /></div>
+            }
+            <label class="pn-check-row"><input type="checkbox" [checked]="tl.highlight.bold" (change)="patch('highlight', { bold: $any($event.target).checked })" />{{ t('highlight_bold') }}</label>
+            <label class="pn-check-row"><input type="checkbox" [checked]="!!tl.highlight.background" (change)="patch('highlight', { background: $any($event.target).checked ? '#fde68a' : null })" />{{ t('highlight_background') }}</label>
+            @if (tl.highlight.background; as bg) {
+              <div class="pn-sub"><app-jc-color [value]="bg" [label]="t('highlight_background')" [alphaLabel]="t('opacity')" [disabled]="readOnly() || l.locked" (valueChange)="patch('highlight', { background: $event })" /></div>
+            }
+          </section>
+        }
+
+        <!-- ── Image ──────────────────────────────────────────────────────── -->
+        @if (imageLayer(); as il) {
+          <section class="pn-section">
+            <h3 class="pn-title">{{ t('image') }}</h3>
+            <div class="pn-field">
+              <span>{{ t('source') }}</span>
+              <app-jc-source [source]="il.source" [fields]="imageFields()" [asset]="assetOf(il.source)" idPrefix="jc-image-src"
+                [disabled]="readOnly() || l.locked" (sourceChange)="set('source', $event)" (newField)="newImageLayerField()" (assetPicked)="assetPicked.emit($event)" />
+            </div>
+            @if (il.source.kind === 'field') {
+              <p class="pn-hint">{{ t('image_field_hint') }}</p>
+            }
+            <ng-container [ngTemplateOutlet]="fitEditor" [ngTemplateOutletContext]="{ fit: il.fit, focusX: il.focusX, focusY: il.focusY, prefix: '' }" />
+            <div class="pn-grid2">
+              <label class="pn-field"><span>{{ t('radius') }}</span><input class="jc-input" type="number" min="0" max="10000" [value]="il.radius" (change)="setNum('radius', $event, 0, 10000)" /></label>
+              <label class="pn-field">
+                <span>{{ t('mask') }}</span>
+                <select class="jc-input" (change)="set('mask', $any($event.target).value)">
+                  <option value="none" [selected]="il.mask === 'none'">{{ t('mask_none') }}</option>
+                  <option value="circle" [selected]="il.mask === 'circle'">{{ t('mask_circle') }}</option>
+                </select>
+              </label>
+            </div>
+            <label class="pn-check-row"><input type="checkbox" [checked]="il.flipX" (change)="set('flipX', $any($event.target).checked)" />{{ t('flip') }}</label>
+            <ng-container [ngTemplateOutlet]="borderEditor" [ngTemplateOutletContext]="{ border: il.border }" />
+            <ng-container [ngTemplateOutlet]="shadowEditor" [ngTemplateOutletContext]="{ shadow: il.shadow }" />
+            <div class="pn-field">
+              <span>{{ t('overlay') }}</span>
+              <app-jc-fill [fill]="il.overlay" [allowNone]="true" idPrefix="jc-image-overlay" [disabled]="readOnly() || l.locked" (fillChange)="setFill('overlay', $event)" />
+            </div>
+          </section>
+        }
+
+        <!-- ── Grid ───────────────────────────────────────────────────────── -->
+        @if (gridLayer(); as gl) {
+          <section class="pn-section">
+            <h3 class="pn-title">{{ t('grid') }}</h3>
+            <div class="pn-grid2">
+              <label class="pn-field">
+                <span>{{ t('layout') }}</span>
+                <select class="jc-input" (change)="setLayout(gl, $any($event.target).value)">
+                  @for (layout of layouts; track layout) { <option [value]="layout" [selected]="gl.layout === layout">{{ t('layout_' + layout) }}</option> }
+                </select>
+              </label>
+              <label class="pn-field"><span>{{ t('gap') }}</span><input class="jc-input" type="number" min="0" max="500" [value]="gl.gap" (change)="setNum('gap', $event, 0, 500)" /></label>
+              <label class="pn-field"><span>{{ t('radius') }}</span><input class="jc-input" type="number" min="0" max="10000" [value]="gl.radius" (change)="setNum('radius', $event, 0, 10000)" /></label>
+              <label class="pn-field">
+                <span>{{ t('fit') }}</span>
+                <select class="jc-input" (change)="set('fit', $any($event.target).value)">
+                  <option value="cover" [selected]="gl.fit === 'cover'">{{ t('fit_cover') }}</option>
+                  <option value="contain" [selected]="gl.fit === 'contain'">{{ t('fit_contain') }}</option>
+                </select>
+              </label>
+            </div>
+            <button type="button" class="pn-btn" (click)="cellsAsFields(gl)">{{ t('cells_as_fields') }}</button>
+            @for (cell of gl.cells; track $index; let i = $index) {
+              <div class="pn-cell">
+                <span class="pn-label">{{ t('cell') }} {{ i + 1 }}</span>
+                <app-jc-source [source]="cell.source" [fields]="imageFields()" [asset]="assetOf(cell.source)" [idPrefix]="'jc-cell-' + i"
+                  [disabled]="readOnly() || l.locked" (sourceChange)="setCell(gl, i, { source: $event })" (newField)="newCellField(i)" (assetPicked)="assetPicked.emit($event)" />
+                <div class="pn-focus">
+                  <label class="jc-inline">{{ t('focus_x') }}<input type="range" min="0" max="100" [value]="show(cell.focusX * 100)" (input)="setCell(gl, i, { focusX: (num($event) ?? 50) / 100 })" /></label>
+                  <label class="jc-inline">{{ t('focus_y') }}<input type="range" min="0" max="100" [value]="show(cell.focusY * 100)" (input)="setCell(gl, i, { focusY: (num($event) ?? 50) / 100 })" /></label>
+                </div>
+              </div>
+            }
+            <ng-container [ngTemplateOutlet]="borderEditor" [ngTemplateOutletContext]="{ border: gl.border }" />
+            <div class="pn-field">
+              <span>{{ t('overlay') }}</span>
+              <app-jc-fill [fill]="gl.overlay" [allowNone]="true" idPrefix="jc-grid-overlay" [disabled]="readOnly() || l.locked" (fillChange)="setFill('overlay', $event)" />
+            </div>
+          </section>
+        }
+
+        <!-- ── Shape ──────────────────────────────────────────────────────── -->
+        @if (shapeLayer(); as sl) {
+          <section class="pn-section">
+            <h3 class="pn-title">{{ t('shape') }}</h3>
+            <label class="pn-field">
+              <span>{{ t('shape_kind') }}</span>
+              <select class="jc-input" (change)="set('shape', $any($event.target).value)">
+                @for (kind of ['rect', 'ellipse', 'line']; track kind) { <option [value]="kind" [selected]="sl.shape === kind">{{ t('shape_' + kind) }}</option> }
+              </select>
+            </label>
+            <div class="pn-field">
+              <span>{{ sl.shape === 'line' ? t('line_color') : t('fill') }}</span>
+              <app-jc-fill [fill]="sl.fill" [allowNone]="true" idPrefix="jc-shape-fill" [disabled]="readOnly() || l.locked" (fillChange)="setFill('fill', $event)" />
+            </div>
+            @if (sl.shape === 'rect') {
+              <label class="pn-field"><span>{{ t('radius') }}</span><input class="jc-input" type="number" min="0" max="10000" [value]="sl.radius" (change)="setNum('radius', $event, 0, 10000)" /></label>
+            }
+            <label class="pn-check-row"><input type="checkbox" [checked]="!!sl.stroke" (change)="toggle('stroke', $any($event.target).checked, { color: '#18181b', width: 4, dash: false })" />{{ t('outline') }}</label>
+            @if (sl.stroke; as stroke) {
+              <div class="pn-sub">
+                <app-jc-color [value]="stroke.color" [label]="t('color')" [alphaLabel]="t('opacity')" [disabled]="readOnly() || l.locked" (valueChange)="patch('stroke', { color: $event })" />
+                <label class="jc-inline">{{ t('thickness') }}<input class="jc-input jc-input--num" type="number" min="0" max="200" step="0.5" [value]="stroke.width" (change)="patchNum('stroke', 'width', $event, 0, 200)" /></label>
+                <label class="jc-inline"><input type="checkbox" [checked]="stroke.dash" (change)="patch('stroke', { dash: $any($event.target).checked })" />{{ t('dashed') }}</label>
+              </div>
+            }
+            <ng-container [ngTemplateOutlet]="shadowEditor" [ngTemplateOutletContext]="{ shadow: sl.shadow }" />
+          </section>
+        }
+
+        <!-- ── Icon ───────────────────────────────────────────────────────── -->
+        @if (iconLayer(); as ic) {
+          <section class="pn-section">
+            <h3 class="pn-title">{{ t('icon') }}</h3>
+            <div class="pn-row">
+              <span class="pn-icon-preview"><app-creator-icon [nodes]="iconNodes(ic.icon)" [size]="32" [strokeWidth]="ic.strokeWidth" /></span>
+              <span class="pn-grow">{{ ic.icon }}</span>
+              <button type="button" class="pn-btn" (click)="choosingIcon.set(true)">{{ t('change') }}</button>
+            </div>
+            <div class="pn-field">
+              <span>{{ t('color') }}</span>
+              <app-jc-color [value]="ic.color" [label]="t('color')" [alphaLabel]="t('opacity')" [disabled]="readOnly() || l.locked" (valueChange)="set('color', $event)" />
+            </div>
+            <label class="pn-field"><span>{{ t('stroke_width') }}</span><input class="jc-input" type="number" min="0.25" max="4" step="0.25" [value]="ic.strokeWidth" (change)="setNum('strokeWidth', $event, 0.25, 4)" /></label>
+            <ng-container [ngTemplateOutlet]="shadowEditor" [ngTemplateOutletContext]="{ shadow: ic.shadow }" />
+          </section>
+        }
+      </fieldset>
+    } @else {
+      <p class="pn-hint pn-hint--block">{{ t('many_selected') }}: {{ count() }}</p>
+    }
+  }
+</div>
+
+<!-- Shared editors of a shadow, a border and the fit of an image (props of the selected layer). -->
+<ng-template #shadowEditor let-shadow="shadow">
+  <label class="pn-check-row"><input type="checkbox" [checked]="!!shadow" (change)="toggle('shadow', $any($event.target).checked, defaultShadow)" />{{ t('shadow') }}</label>
+  @if (shadow) {
+    <div class="pn-sub pn-sub--col">
+      <app-jc-color [value]="shadow.color" [label]="t('shadow')" [alphaLabel]="t('opacity')" [disabled]="readOnly()" (valueChange)="patch('shadow', { color: $event })" />
+      <div class="pn-grid3">
+        <label class="pn-field"><span>{{ t('blur') }}</span><input class="jc-input" type="number" min="0" max="200" [value]="shadow.blur" (change)="patchNum('shadow', 'blur', $event, 0, 200)" /></label>
+        <label class="pn-field"><span>X</span><input class="jc-input" type="number" min="-500" max="500" [value]="shadow.x" (change)="patchNum('shadow', 'x', $event, -500, 500)" /></label>
+        <label class="pn-field"><span>Y</span><input class="jc-input" type="number" min="-500" max="500" [value]="shadow.y" (change)="patchNum('shadow', 'y', $event, -500, 500)" /></label>
+      </div>
+    </div>
+  }
+</ng-template>
+
+<ng-template #borderEditor let-border="border">
+  <label class="pn-check-row"><input type="checkbox" [checked]="!!border" (change)="toggle('border', $any($event.target).checked, { color: '#ffffff', width: 6 })" />{{ t('border') }}</label>
+  @if (border) {
+    <div class="pn-sub">
+      <app-jc-color [value]="border.color" [label]="t('border')" [alphaLabel]="t('opacity')" [disabled]="readOnly()" (valueChange)="patch('border', { color: $event })" />
+      <label class="jc-inline">{{ t('thickness') }}<input class="jc-input jc-input--num" type="number" min="0" max="200" step="0.5" [value]="border.width" (change)="patchNum('border', 'width', $event, 0, 200)" /></label>
+    </div>
+  }
+</ng-template>
+
+<ng-template #fitEditor let-fit="fit" let-focusX="focusX" let-focusY="focusY">
+  <label class="pn-field">
+    <span>{{ t('fit') }}</span>
+    <select class="jc-input" (change)="set('fit', $any($event.target).value)">
+      <option value="cover" [selected]="fit === 'cover'">{{ t('fit_cover') }}</option>
+      <option value="contain" [selected]="fit === 'contain'">{{ t('fit_contain') }}</option>
+    </select>
+  </label>
+  <div class="pn-focus">
+    <label class="jc-inline">{{ t('focus_x') }}<input type="range" min="0" max="100" [value]="show(focusX * 100)" (input)="setNum('focusX', $event, 0, 1, 100)" /></label>
+    <label class="jc-inline">{{ t('focus_y') }}<input type="range" min="0" max="100" [value]="show(focusY * 100)" (input)="setNum('focusY', $event, 0, 1, 100)" /></label>
+  </div>
+</ng-template>
+
+@if (choosingIcon()) {
+  <app-jc-icon-chooser (chosen)="setIcon($event)" (dismissed)="choosingIcon.set(false)" />
+}

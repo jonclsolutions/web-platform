@@ -152,7 +152,7 @@ export function createAuthStub(loggedIn = true): AuthStub {
  */
 export function createDataHandlerSpy(): jasmine.SpyObj<DataHandler> {
   const spy = jasmine.createSpyObj<DataHandler>('DataHandler',
-    ['get', 'getQuietly', 'getOne', 'getCollection', 'getPaginatedCollection', 'getWithMeta', 'post', 'postWithMeta', 'postQuietly', 'put', 'patch', 'delete', 'upload', 'uploadPut'] as any);
+    ['get', 'getQuietly', 'getOne', 'getCollection', 'getPaginatedCollection', 'getWithMeta', 'post', 'postWithMeta', 'postQuietly', 'put', 'putQuietly', 'patch', 'delete', 'upload', 'uploadPut'] as any);
   (spy as any).get.and.returnValue(of({}));
   (spy as any).getQuietly.and.returnValue(of({}));
   (spy as any).getOne.and.returnValue(of({}));
@@ -163,6 +163,7 @@ export function createDataHandlerSpy(): jasmine.SpyObj<DataHandler> {
   (spy as any).postWithMeta.and.returnValue(of({ data: {} }));
   (spy as any).postQuietly.and.returnValue(of({}));
   (spy as any).put.and.returnValue(of({}));
+  (spy as any).putQuietly.and.returnValue(of({}));
   (spy as any).patch.and.returnValue(of({}));
   (spy as any).delete.and.returnValue(of(undefined));
   (spy as any).upload.and.returnValue(of({}));

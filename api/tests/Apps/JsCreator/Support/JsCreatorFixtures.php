@@ -7,8 +7,8 @@
  * @author JS
  * @created 2026
  * @description Test helpers of JS Creator: accounts with the permissions of the section Images,
- *   generated uploads (PNG, JPEG with an EXIF orientation, fonts by their signature) and a fake
- *   private disk.
+ *   generated uploads (PNG, JPEG with an EXIF orientation, fonts by their signature), a fake
+ *   private disk and complete template documents (every kind of layer, fields, fills).
  * @dependencies Tests\Support\InteractsWithAccounts (userWith), GD.
  */
 
@@ -85,5 +85,76 @@ trait JsCreatorFixtures
     protected function font(string $signature = 'wOF2', string $name = 'brand.woff2', int $size = 2048): UploadedFile
     {
         return UploadedFile::fake()->createWithContent($name, $signature . str_repeat("\x00", max(0, $size - 4)));
+    }
+
+    /**
+     * @description Complete document of schema 1 with one page.
+     * @param array<int, array<string, mixed>> $layers Layers of the page.
+     * @param array<int, array<string, mixed>> $fields Fields.
+     * @return array<string, mixed>
+     */
+    protected function document(array $layers = [], array $fields = []): array
+    {
+        return [
+            'schema' => 1,
+            'fields' => $fields,
+            'pages'  => [['background' => ['fill' => ['type' => 'solid', 'color' => '#ffffff'], 'image' => null], 'layers' => $layers]],
+        ];
+    }
+
+    /**
+     * @description Complete layer of a kind with its default properties.
+     * @param string $type text | image | grid | shape | icon.
+     * @param array<string, mixed> $overrides Properties to change.
+     * @return array<string, mixed>
+     */
+    protected function layer(string $type, array $overrides = []): array
+    {
+        static $counter = 0;
+        $counter++;
+        $common = [
+            'id' => "l{$counter}", 'type' => $type, 'name' => '', 'anchor' => 'tl', 'x' => 40, 'y' => 40, 'w' => 300, 'h' => 200,
+            'rotation' => 0, 'opacity' => 1, 'hidden' => false, 'locked' => false,
+        ];
+        $specific = match ($type) {
+            'text' => [
+                'field' => null, 'text' => 'Hello', 'font' => ['family' => 'set:inter', 'weight' => 700, 'style' => 'normal'], 'size' => 64,
+                'fill' => ['type' => 'solid', 'color' => '#111111'], 'lineHeight' => 1.2, 'letterSpacing' => 0, 'align' => 'left', 'valign' => 'top',
+                'uppercase' => false, 'maxLines' => 0, 'autoShrink' => true, 'minSize' => 24, 'overflow' => 'ellipsis', 'stroke' => null,
+                'shadow' => null, 'box' => null, 'highlight' => ['color' => '#e11d48', 'bold' => true, 'background' => null],
+            ],
+            'image' => [
+                'source' => ['kind' => 'none'], 'fit' => 'cover', 'focusX' => 0.5, 'focusY' => 0.5, 'radius' => 0, 'mask' => 'none',
+                'border' => null, 'shadow' => null, 'overlay' => null, 'flipX' => false,
+            ],
+            'grid' => [
+                'layout' => '2x2', 'gap' => 8, 'radius' => 0, 'fit' => 'cover', 'border' => null, 'overlay' => null,
+                'cells' => array_fill(0, 4, ['source' => ['kind' => 'none'], 'focusX' => 0.5, 'focusY' => 0.5]),
+            ],
+            'shape' => ['shape' => 'rect', 'fill' => ['type' => 'solid', 'color' => '#f59e0b'], 'radius' => 12, 'stroke' => null, 'shadow' => null],
+            'icon'  => ['icon' => 'star', 'color' => '#111111', 'strokeWidth' => 2, 'shadow' => null],
+        };
+
+        return array_replace($common, $specific, $overrides);
+    }
+
+    /**
+     * @description Text field of a template.
+     * @param string $key Key.
+     * @return array<string, mixed>
+     */
+    protected function textField(string $key = 'title'): array
+    {
+        return ['key' => $key, 'type' => 'text', 'label' => 'Title', 'help' => '', 'required' => true, 'sample' => 'Sample', 'maxLength' => 120, 'multiline' => false];
+    }
+
+    /**
+     * @description Image field of a template.
+     * @param string $key Key.
+     * @return array<string, mixed>
+     */
+    protected function imageField(string $key = 'photo'): array
+    {
+        return ['key' => $key, 'type' => 'image', 'label' => 'Photo', 'help' => '', 'required' => true, 'minWidth' => 0, 'minHeight' => 0];
     }
 }

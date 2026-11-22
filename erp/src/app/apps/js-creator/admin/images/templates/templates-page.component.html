@@ -1,0 +1,123 @@
+<!--
+    @file: templates-page.component.html
+    @path: src/app/apps/js-creator/admin/images/templates/templates-page.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Page "Templates": header with the view switch (templates / trash) and "New
+        template", the usage bar, the toolbar (search, size, sorting), the grid of the template
+        cards (thumbnail in the aspect of the template - a click opens the editor) with their
+        actions, "load more", the popup of a new template / copy / copy to another size.
+-->
+<div class="ws-page">
+  <app-page-header [title]="t('header')" [subtitle]="t('subtitle')">
+    <app-row-button-builder kind="filter" [items]="viewItems" [active]="view" (selected)="switchView($event)" [ariaLabel]="t('view_label')" />
+    @if (canCreate && view === 'active') {
+      <button type="button" class="ws-btn ws-btn--primary" (click)="openCreate()">
+        <app-icon name="plus" [size]="14"></app-icon>{{ t('new_template') }}
+      </button>
+    }
+  </app-page-header>
+
+  <app-quota-bar />
+
+  <section class="ws-panel">
+    <div class="ws-toolbar">
+      <input class="ws-search" type="search" [placeholder]="t('search_placeholder')" [attr.aria-label]="t('search_placeholder')"
+        [(ngModel)]="search" (ngModelChange)="onSearch()" />
+      @if (view === 'active') {
+        <select class="tp-select" [(ngModel)]="sizeFilter" (ngModelChange)="reload()" [attr.aria-label]="t('filter_size')">
+          <option value="">{{ t('all_sizes') }}</option>
+          @for (size of sizes; track size.width + 'x' + size.height) {
+            <option [value]="size.width + 'x' + size.height">{{ sizeLabel(size) }} ({{ size.count }})</option>
+          }
+        </select>
+      }
+      <select class="tp-select" [(ngModel)]="sort" (ngModelChange)="reload()" [attr.aria-label]="t('sort_label')">
+        <option value="updated">{{ t('sort_updated') }}</option>
+        <option value="created">{{ t('sort_created') }}</option>
+        <option value="name">{{ t('sort_name') }}</option>
+      </select>
+      <span class="ws-toolbar-spacer"></span>
+      @if (view === 'trash' && canDelete && items.length) {
+        <button type="button" class="ws-btn ws-btn--danger ws-btn--sm" [disabled]="busy" (click)="emptyTrash()">{{ t('empty_trash') }}</button>
+      }
+    </div>
+
+    @if (view === 'trash') {
+      <p class="ws-trash-note">{{ t('trash_note') }}</p>
+    }
+
+    @if (items.length) {
+      <div class="ws-grid tp-grid">
+        @for (template of items; track template.id) {
+          <article class="ws-card tp-card">
+            <button type="button" class="tp-preview" [disabled]="view === 'trash'" [title]="view === 'active' ? t('open_editor') : template.name"
+              (click)="open(template)">
+              <span class="tp-frame" [style.aspect-ratio]="aspect(template)" [style.--tp-ratio]="template.width / template.height">
+                @if (template.thumb_url) {
+                  <img [src]="template.thumb_url" [alt]="template.name" loading="lazy" />
+                } @else {
+                  <span class="tp-nothumb">{{ template.width }} × {{ template.height }}</span>
+                }
+              </span>
+            </button>
+            <div class="ws-card-body">
+              <span class="ws-card-name" [title]="template.name">{{ template.name }}</span>
+              <span class="ws-card-meta">{{ sizeLabel(template) }}</span>
+              <span class="ws-card-meta">{{ t(view === 'trash' ? 'deleted' : 'updated') }} {{ (view === 'trash' ? template.deleted_at : template.updated_at) | date: 'd. M. y H:mm' : undefined : locale }}</span>
+            </div>
+            <div class="ws-card-actions">
+              @if (view === 'active') {
+                <button type="button" class="ws-icon-btn" [title]="t(canUpdate ? 'edit' : 'open')" [attr.aria-label]="t(canUpdate ? 'edit' : 'open')" (click)="open(template)"><app-icon name="edit" [size]="15"></app-icon></button>
+                @if (canCreate) {
+                  <button type="button" class="ws-icon-btn" [title]="t('duplicate')" [attr.aria-label]="t('duplicate')" [disabled]="busy" (click)="openDuplicate(template, 'duplicate')"><app-creator-icon [nodes]="copyIcon" [size]="15" /></button>
+                  <button type="button" class="ws-icon-btn" [title]="t('duplicate_format')" [attr.aria-label]="t('duplicate_format')" [disabled]="busy" (click)="openDuplicate(template, 'format')"><app-creator-icon [nodes]="formatIcon" [size]="15" /></button>
+                }
+                @if (canDelete) {
+                  <button type="button" class="ws-icon-btn ws-icon-btn--danger" [title]="t('delete')" [attr.aria-label]="t('delete')" [disabled]="busy" (click)="remove(template)"><app-icon name="trash" [size]="15"></app-icon></button>
+                }
+              } @else if (canDelete) {
+                <button type="button" class="ws-icon-btn" [title]="t('restore')" [attr.aria-label]="t('restore')" [disabled]="busy" (click)="restore(template)"><app-icon name="restore" [size]="15"></app-icon></button>
+                <button type="button" class="ws-icon-btn ws-icon-btn--danger" [title]="t('destroy')" [attr.aria-label]="t('destroy')" [disabled]="busy" (click)="destroy(template)"><app-icon name="purge" [size]="15"></app-icon></button>
+              }
+            </div>
+          </article>
+        }
+      </div>
+      @if (page < lastPage) {
+        <div class="tp-more">
+          <button type="button" class="ws-btn" [disabled]="loading" (click)="loadMore()">{{ t('load_more') }} ({{ items.length }} / {{ total }})</button>
+        </div>
+      }
+    } @else if (!loading) {
+      <div class="ws-empty">
+        {{ view === 'trash' ? t('trash_empty') : (search || sizeFilter ? t('nothing_found') : t('templates_empty')) }}
+      </div>
+    }
+  </section>
+</div>
+
+@if (dialog; as d) {
+  <app-admin-modal [heading]="dialogTitle" [subheading]="d.source?.name ?? ''" size="sm" [closeDisabled]="busy" (dismissed)="closeDialog()">
+    <form [id]="formId" class="tp-form" (ngSubmit)="submitDialog()">
+      <div class="ws-field">
+        <label for="jc-template-name">{{ t('name') }}</label>
+        <input id="jc-template-name" name="name" type="text" maxlength="120" autocomplete="off" [(ngModel)]="d.name" data-autofocus />
+      </div>
+      @if (d.kind !== 'duplicate') {
+        <app-jc-size-picker [size]="d.size" (sizeChange)="setDialogSize($event)" idPrefix="jc-template-size" />
+      }
+      @if (d.kind === 'format') {
+        <p class="ws-field-hint">{{ t('format_hint') }}</p>
+      }
+      @if (d.error) {
+        <p class="ws-field-error" role="alert">{{ d.error }}</p>
+      }
+    </form>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" [disabled]="busy" (click)="closeDialog()">{{ t('cancel') }}</button>
+      <button type="submit" class="am-btn am-btn--primary" [attr.form]="formId" [disabled]="busy">{{ t(d.kind === 'create' ? 'create' : 'duplicate_submit') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}

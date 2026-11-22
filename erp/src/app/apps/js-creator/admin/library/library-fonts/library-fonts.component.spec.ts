@@ -6,7 +6,7 @@
  * @created 2026
  * @description Unit tests of LibraryFontsComponent: own fonts and the curated set are listed with
  *   previews, the font popup checks the file, family and face before sending, the face changes,
- *   restore refuses a taken face.
+ *   restore refuses a taken face, a used font is not deleted.
  * @dependencies src/testing/admin-test-helpers.ts (admin doubles), HttpTestingController.
  */
 
@@ -105,5 +105,17 @@ describe('LibraryFontsComponent', () => {
     component.restore(font(8));
     expect(ctx.alert.open.calls.mostRecent().args[0]).toBe('js-creator-library.restore_title');
     expect(ctx.dataHandler.post).not.toHaveBeenCalled();
+  });
+
+  /**
+   * @description A font used by a template is not deleted: a message names the template.
+   * @input font with used_by [Post]; remove
+   * @output alert in_use_title with „Post“; no DELETE
+   */
+  it('refuses to delete a used font', async () => {
+    await component.remove({ ...font(1), used_by: [{ id: 3, name: 'Post', section: 'images', trashed: false }] });
+    expect(ctx.alert.open.calls.mostRecent().args[0]).toBe('js-creator-library.in_use_title');
+    expect(ctx.alert.open.calls.mostRecent().args[1]).toContain('„Post“');
+    expect(ctx.dataHandler.delete).not.toHaveBeenCalled();
   });
 });

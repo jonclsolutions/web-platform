@@ -22,7 +22,7 @@ import { AdminTestContext, createAdminTestContext } from '../../../../../testing
  * @param quotaMb Individual quota.
  */
 function account(id: number, quotaMb: number | null = null): QuotaAccount {
-  return { id, name: `User ${id}`, has_access: id !== 3, used_bytes: 900 * 1024 * 1024, quota_mb: quotaMb, quota_bytes: (quotaMb ?? 1024) * 1024 * 1024, counts: { folders: 2, images: 5, fonts: 1 } };
+  return { id, name: `User ${id}`, has_access: id !== 3, used_bytes: 900 * 1024 * 1024, quota_mb: quotaMb, quota_bytes: (quotaMb ?? 1024) * 1024 * 1024, counts: { folders: 2, images: 5, fonts: 1, templates: 3 } };
 }
 
 describe('CreatorSettingsComponent', () => {

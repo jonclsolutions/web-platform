@@ -8,7 +8,8 @@
  *   face with its family / weight / style, change of the face, delete to the trash; the trash with
  *   restore, delete for good, emptying) and the curated font set of the application (preview of
  *   every family with the Czech characters). Files of a wrong type / size, a face that already
- *   exists or a full quota are refused here with a translated text before sending.
+ *   exists or a full quota are refused here with a translated text before sending. A font used by
+ *   a template is not deleted - a message names the templates (`used_by` of the list).
  * @dependencies JsCreatorApiService, FontLibraryService, WorkspaceUsageService, UploadRulesService
  *   (profile js_creator_font), AdminModalComponent, ConfirmDialogService, AlertDialogService,
  *   PermissionService, AdminLocalizationService (section `js-creator-library`).
@@ -30,7 +31,7 @@ import { UploadRule, extensionsLabel, isExtensionAllowed } from '../../../../../
 import { JsCreatorApiService } from '../../shared/js-creator-api.service';
 import { FontLibraryService } from '../../shared/font-library.service';
 import { WorkspaceUsageService } from '../../shared/workspace-usage.service';
-import { CreatorFont, CuratedFontFamily, FontStyle } from '../../shared/js-creator.models';
+import { CreatorFont, CuratedFontFamily, FontStyle, UsedByTemplate } from '../../shared/js-creator.models';
 import { can } from '../../shared/js-creator-sections';
 import { formatBytes } from '../../shared/workspace-format';
 
@@ -239,6 +240,7 @@ export class LibraryFontsComponent implements OnInit, OnDestroy {
    * @param font Font.
    */
   async remove(font: CreatorFont): Promise<void> {
+    if (this.refuseUsed(font.used_by)) return;
     if (!(await this.confirm.open(this.t('delete_title'), `${this.t('delete_font_text')} „${font.family}“`))) return;
     this.run(this.api.deleteFont(font.id));
   }
@@ -260,6 +262,7 @@ export class LibraryFontsComponent implements OnInit, OnDestroy {
    * @param font Font.
    */
   async destroy(font: CreatorFont): Promise<void> {
+    if (this.refuseUsed(font.used_by)) return;
     if (!(await this.confirm.open(this.t('destroy_title'), `${this.t('destroy_text')} „${font.family}“`))) return;
     this.run(this.api.deleteFont(font.id, true));
   }
@@ -338,5 +341,17 @@ export class LibraryFontsComponent implements OnInit, OnDestroy {
         this.cd.markForCheck();
       });
     }
+  }
+
+  /**
+   * @description Explains that a font used by templates cannot be deleted.
+   * @param usedBy Templates using the font.
+   * @returns true when refused.
+   */
+  private refuseUsed(usedBy: UsedByTemplate[] | undefined): boolean {
+    if (!usedBy?.length) return false;
+    const names = usedBy.map(u => `„${u.name}“${u.trashed ? ` (${this.t('in_use_trashed')})` : ''}`).join(', ');
+    this.alert.open(this.t('in_use_title'), `${this.t('in_use_font')} ${names}`, 'warning');
+    return true;
   }
 }

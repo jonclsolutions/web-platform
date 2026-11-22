@@ -7,8 +7,8 @@
  * @created 2026
  * @description Manifest of the application "JS Creator" - posts for social networks generated
  *   from own templates (no AI, no public part). Everything the core needs to know about it:
- *   permissions, audit log, base data, retention (trash of the workspaces + clean-up of files
- *   without a record) and the upload profiles of the library. Registered in config/apps.php.
+ *   permissions, audit log, base data, retention (trash of the workspaces - library, folders,
+ *   templates - + clean-up of files without a record) and the upload profiles of the library. Registered in config/apps.php.
  * @note Every account has its own private workspace - nobody else (not even the sysadmin) sees
  *   it. Its files are NOT in uploadFolders(): the core command storage:prune-orphans knows only
  *   attachments and would delete them; JsCreatorRetentionSource cleans them up instead.

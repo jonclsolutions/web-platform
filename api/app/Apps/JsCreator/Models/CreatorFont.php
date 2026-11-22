@@ -38,6 +38,9 @@ class CreatorFont extends Model
     /** @description Allowed styles. */
     public const STYLES = ['normal', 'italic'];
 
+    /** @description Family names never reach the audit log (content of the private workspace). */
+    public const AUDIT_MASKED = ['family'];
+
     /** @var string The table of the model. */
     protected $table = 'js_creator_fonts';
 

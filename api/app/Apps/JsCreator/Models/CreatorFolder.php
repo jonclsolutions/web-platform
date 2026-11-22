@@ -33,6 +33,9 @@ class CreatorFolder extends Model
     /** @description Deepest allowed level (a top-level folder is level 1). */
     public const MAX_DEPTH = 10;
 
+    /** @description Names of folders never reach the audit log (they are content of the private workspace). */
+    public const AUDIT_MASKED = ['name'];
+
     /** @var string The table of the model. */
     protected $table = 'js_creator_folders';
 

@@ -5,7 +5,8 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Processing of an image uploaded to the library of JS Creator. The upload is
+ * @description Processing of an image uploaded to the library of JS Creator (and of the thumbnail
+ *   of a template drawn by the editor - thumbnail()). The upload is
  *   decoded by GD and RE-ENCODED, so only the pixels are kept - EXIF / GPS metadata of a phone
  *   photo and anything hidden in the file are dropped:
  *   - the EXIF orientation of a JPEG is applied first (the photo is stored upright);
@@ -32,6 +33,9 @@ final class LibraryImage
 
     /** @description Largest accepted image (pixels) - 160 MB when decoded. */
     public const MAX_PIXELS = 40_000_000;
+
+    /** @description Largest accepted thumbnail of a template (pixels). */
+    public const THUMB_MAX_PIXELS = 4_000_000;
 
     /** @description Accepted types with the extension of the stored file. */
     public const TYPES = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
@@ -80,6 +84,30 @@ final class LibraryImage
         unset($source, $image, $thumb);
 
         return $result;
+    }
+
+    /**
+     * @description Re-encodes the thumbnail of a template made by the browser (PNG / WebP of the
+     *   canvas) to a WebP of at most THUMB_EDGE px - only its pixels are kept.
+     * @param string $binary Raw file.
+     * @return string WebP.
+     * @throws RuntimeException `unreadable` (not a PNG / WebP) or `too_large` (over THUMB_MAX_PIXELS).
+     */
+    public static function thumbnail(string $binary): string
+    {
+        $info = @getimagesizefromstring($binary);
+        if (!$info || !in_array($info['mime'] ?? null, ['image/png', 'image/webp'], true)) {
+            throw new RuntimeException('unreadable');
+        }
+        if ($info[0] * $info[1] > self::THUMB_MAX_PIXELS) {
+            throw new RuntimeException('too_large');
+        }
+        $source = @imagecreatefromstring($binary);
+        if (!$source instanceof GdImage) {
+            throw new RuntimeException('unreadable');
+        }
+
+        return self::encode(self::scaled($source, self::THUMB_EDGE), 'image/webp', self::THUMB_QUALITY);
     }
 
     /**

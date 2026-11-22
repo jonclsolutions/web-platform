@@ -1,0 +1,86 @@
+/*
+    @file: editor-canvas.component.css
+    @path: src/app/apps/js-creator/admin/images/editor/editor-canvas/editor-canvas.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: The scrollable area around the stage (checkered background so transparency is
+        visible), the stage with the canvas and the SVG layer of the editor.
+    @dependencies: shared/styles/tokens.css
+*/
+
+/*
+    @module: Area and stage
+    @description: The area fills its parent and scrolls; the stage keeps its size in the middle
+        with a margin, the canvas and the SVG lie on top of each other.
+    @usage: .ec-viewport > .ec-area > .ec-stage > canvas.ec-canvas + svg.ec-overlay
+*/
+:host { display: block; min-height: 0; height: 100%; }
+
+.ec-viewport {
+  height: 100%;
+  overflow: auto;
+  background-color: var(--color-zinc-200);
+  background-image:
+    linear-gradient(45deg, var(--color-zinc-300) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--color-zinc-300) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--color-zinc-300) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--color-zinc-300) 75%);
+  background-size: 24px 24px;
+  background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+}
+
+.ec-area {
+  display: grid;
+  place-items: center;
+  min-width: 100%;
+  min-height: 100%;
+  width: max-content;
+  padding: 48px;
+  box-sizing: border-box;
+}
+
+.ec-stage {
+  position: relative;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.18);
+  touch-action: none;
+  user-select: none;
+}
+
+.ec-canvas,
+.ec-overlay {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.ec-overlay { overflow: visible; }
+
+/*
+    @module: Editor marks
+    @description: Strokes of the SVG layer keep 1-2 CSS px at any zoom (non-scaling-stroke).
+    @usage: .ec-outline(--locked), .ec-hover, .ec-group, .ec-handle(--rotate), .ec-guide,
+        .ec-marquee, .ec-grid, .ec-safe, .ec-safe-line
+*/
+.ec-outline,
+.ec-hover,
+.ec-group,
+.ec-handle,
+.ec-guide,
+.ec-marquee,
+.ec-grid,
+.ec-safe-line {
+  vector-effect: non-scaling-stroke;
+}
+
+.ec-outline { fill: none; stroke: var(--color-amber-500); stroke-width: 2; }
+.ec-outline--locked { stroke: var(--color-zinc-500); stroke-dasharray: 4 3; }
+.ec-hover { fill: none; stroke: var(--color-amber-500); stroke-width: 1; opacity: 0.7; }
+.ec-group { fill: none; stroke: var(--color-amber-600); stroke-width: 1; stroke-dasharray: 5 4; }
+.ec-handle { fill: #fff; stroke: var(--color-amber-600); stroke-width: 1.5; }
+.ec-handle--rotate { fill: var(--color-amber-500); }
+.ec-guide { stroke: var(--color-rose-600); stroke-width: 1; }
+.ec-marquee { fill: rgb(245 158 11 / 0.1); stroke: var(--color-amber-600); stroke-width: 1; }
+.ec-grid { fill: none; stroke: rgb(0 0 0 / 0.12); stroke-width: 1; }
+.ec-safe { fill: var(--color-rose-600); fill-opacity: 0.1; pointer-events: none; }
+.ec-safe-line { stroke: var(--color-rose-600); stroke-width: 1; stroke-dasharray: 6 4; }

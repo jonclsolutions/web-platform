@@ -4,6 +4,12 @@
             "type": "added",
             "area": "js-creator",
             "part": "admin",
+            "text": "JS Creator, part 2: templates of posts and their editor - texts with fields and highlights, fonts, images and image grids, shapes, gradients, icons, anchors, snapping guides, undo / redo, copies to other formats; library files used by a template cannot be deleted."
+        },
+        {
+            "type": "added",
+            "area": "js-creator",
+            "part": "admin",
             "text": "New application JS Creator (social network posts from own templates, no AI), part 1: a private workspace per account, output folders with a trash, a library of images, own fonts, 25 fonts with Czech characters, icons, quotas and an audit log."
         }
     ],

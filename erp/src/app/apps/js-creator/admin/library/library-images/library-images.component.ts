@@ -7,7 +7,8 @@
  * @description Tab "Images" of the library: grid of the own images (thumbnail, name, size),
  *   search, "load more", upload (button or drag and drop - one file per request, files of a
  *   wrong type / size or over the quota are refused here with a translated text before sending),
- *   rename, delete to the trash; the trash with restore, delete for good and emptying.
+ *   rename, delete to the trash; the trash with restore, delete for good and emptying. An image
+ *   used by a template is not deleted - a message names the templates (`used_by` of the list).
  * @dependencies JsCreatorApiService, WorkspaceUsageService, UploadRulesService (profile
  *   js_creator_image), AdminModalComponent, ConfirmDialogService, AlertDialogService,
  *   PermissionService, AdminLocalizationService (section `js-creator-library`).
@@ -28,7 +29,7 @@ import { UploadRulesService } from '../../../../../shared/services/upload-rules.
 import { UploadRule, extensionsLabel, isExtensionAllowed } from '../../../../../shared/utils/upload-rules';
 import { JsCreatorApiService } from '../../shared/js-creator-api.service';
 import { WorkspaceUsageService } from '../../shared/workspace-usage.service';
-import { CreatorAsset } from '../../shared/js-creator.models';
+import { CreatorAsset, UsedByTemplate } from '../../shared/js-creator.models';
 import { can } from '../../shared/js-creator-sections';
 import { formatBytes } from '../../shared/workspace-format';
 
@@ -264,6 +265,7 @@ export class LibraryImagesComponent implements OnInit, OnDestroy {
    * @param asset Image.
    */
   async remove(asset: CreatorAsset): Promise<void> {
+    if (this.refuseUsed(asset.used_by)) return;
     if (!(await this.confirm.open(this.t('delete_title'), `${this.t('delete_image_text')} „${asset.name}“`))) return;
     this.run(this.api.deleteAsset(asset.id));
   }
@@ -281,6 +283,7 @@ export class LibraryImagesComponent implements OnInit, OnDestroy {
    * @param asset Image.
    */
   async destroy(asset: CreatorAsset): Promise<void> {
+    if (this.refuseUsed(asset.used_by)) return;
     if (!(await this.confirm.open(this.t('destroy_title'), `${this.t('destroy_text')} „${asset.name}“`))) return;
     this.run(this.api.deleteAsset(asset.id, true));
   }
@@ -289,6 +292,18 @@ export class LibraryImagesComponent implements OnInit, OnDestroy {
   async emptyTrash(): Promise<void> {
     if (!(await this.confirm.open(this.t('empty_trash_title'), this.t('empty_images_trash_text')))) return;
     this.run(this.api.emptyAssetTrash());
+  }
+
+  /**
+   * @description Explains that an image used by templates cannot be deleted.
+   * @param usedBy Templates using the image.
+   * @returns true when refused.
+   */
+  private refuseUsed(usedBy: UsedByTemplate[] | undefined): boolean {
+    if (!usedBy?.length) return false;
+    const names = usedBy.map(u => `„${u.name}“${u.trashed ? ` (${this.t('in_use_trashed')})` : ''}`).join(', ');
+    this.alert.open(this.t('in_use_title'), `${this.t('in_use_image')} ${names}`, 'warning');
+    return true;
   }
 
   /** @description End of an upload: reload the list and the usage. */

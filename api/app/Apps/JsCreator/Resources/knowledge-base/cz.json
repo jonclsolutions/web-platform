@@ -1,5 +1,241 @@
 {
   "pages": {
+    "js-creator-templates": {
+      "navLabel": "Šablony",
+      "header": "JS Creator – Šablony",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "Šablona je váš návrh příspěvku v jedné velikosti: rozložení textů, obrázků, tvarů a ikon, barvy a písma. Pole šablony vyplníte až při generování (další etapa aplikace) – šablonu si tak navrhnete jednou a použijete mnohokrát."
+            },
+            {
+              "type": "alert",
+              "content": "Šablony vidíte jen vy. Nikdo jiný – ani jiný administrátor, ani správce systému – je nevidí ani neupraví.",
+              "variant": "info"
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "01. Nová šablona a kopie",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Nová šablona: zadejte název a formát (předvolby Instagram, Story / Reels, Facebook / LinkedIn, X, YouTube, Pinterest nebo vlastní velikost 100–3000 px). Šablona se vytvoří prázdná a otevře se v editoru."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Duplikovat – kopie ve stejném formátu (i s miniaturou).",
+                "Duplikovat do jiného formátu – kopie v jiné velikosti; prvky si ponechají kotvu a odsazení, takže logo ukotvené vpravo nahoře zůstane vpravo nahoře. V editoru pak jen dolaďte.",
+                "Kliknutím na náhled nebo na tužku otevřete šablonu v editoru."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Seznam",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Karty ukazují miniaturu (vznikne při uložení v editoru), název, formát a datum poslední úpravy. Hledat můžete podle názvu, filtrovat podle formátu (nabídnou se formáty, které máte) a řadit podle data úpravy, vytvoření nebo názvu."
+            }
+          ]
+        },
+        {
+          "key": "trash",
+          "heading": "03. Koš",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Smazaná šablona jde do koše: Obnovit, Smazat trvale, Vysypat koš. Šablona v koši dál drží obrázky a fonty knihovny, které používá – ty nejde smazat, dokud šablonu nesmažete trvale."
+            },
+            {
+              "type": "alert",
+              "content": "Šablony v koši se automaticky smažou natrvalo po uplynutí lhůty retence (výchozí 30 dní, Core → Nastavení → Retence, „JS Creator – koš“).",
+              "variant": "warning"
+            }
+          ]
+        },
+        {
+          "heading": "04. Oprávnění",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Zobrazit",
+                  "text": "js-creator-images-view – seznam a editor jen pro čtení."
+                },
+                {
+                  "title": "Vytvořit",
+                  "text": "js-creator-images-create – nové šablony a kopie."
+                },
+                {
+                  "title": "Upravit",
+                  "text": "js-creator-images-update – ukládání v editoru."
+                },
+                {
+                  "title": "Smazat",
+                  "text": "js-creator-images-delete – koš, obnovení, trvalé smazání."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "js-creator-editor": {
+      "navLabel": "Editor šablon",
+      "header": "JS Creator – Editor šablon",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "V editoru navrhnete rozložení šablony. Co vidíte na plátně, to bude ve výstupu – náhled i výstup kreslí stejný kód."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Nahoře: zpět na šablony, název, zpět / znovu, přiblížení, mřížka, vodítka, bezpečná zóna a Uložit.",
+                "Vlevo: přidání prvku (Text, Obrázek, Mřížka, Tvar, Ikona) a vrstvy – horní vrstva je nahoře.",
+                "Vpravo: Vlastnosti vybraného prvku, Pole k vyplnění a Šablona (formát, pozadí, výstup, text příspěvku)."
+              ]
+            },
+            {
+              "type": "note",
+              "content": "Editor je pro obrazovky široké alespoň 1024 px. Seznam šablon funguje i na mobilu.",
+              "highlight": "Obrazovka"
+            }
+          ]
+        },
+        {
+          "heading": "01. Výběr a posun",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Klik vybere prvek, Shift + klik přidá další; tažením po prázdném místě vyberete více prvků obdélníkem.",
+                "Tažením prvek posunete. Přichytí se k okrajům a středům plátna i ostatních prvků (růžová vodítka), s mřížkou k mřížce. Alt = bez přichytávání.",
+                "Úchyty mění velikost (Shift = zachovat poměr stran), kulatý úchyt nahoře prvek otáčí (Shift = po 15°).",
+                "Zamčený prvek nejde na plátně vybrat ani posunout – vyberete ho ve vrstvách. Skrytý prvek se nekreslí ani do výstupu.",
+                "Ctrl + kolečko přibližuje, mezerník + tažení posouvá pohled."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Kotvy a umístění",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Každý prvek je připnutý ke kotvě – jednomu z 9 bodů plátna (rohy, středy hran, střed). X a Y jsou odsazení od kotvy. Když šablonu zkopírujete do jiného formátu nebo změníte velikost, prvek zůstane u svého rohu či hrany."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Kotva – změní bod, ke kterému je prvek připnutý, prvek se přitom nepohne.",
+                "Přesunout k okraji – přesune prvek k vybranému rohu, hraně nebo do středu s odsazením (např. logo vpravo nahoře 40 px od okrajů).",
+                "Zarovnání a rozmístění: jeden prvek se zarovná k plátnu, více prvků k sobě; tři a více prvků jde rozmístit rovnoměrně."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Text",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Obsah: pevný text, nebo pole k vyplnění – u pole píšete ukázkový text, který se ukazuje v editoru.",
+                "Zvýraznění: označte část textu a klikněte Zvýraznit výběr – část se uzavře do dvou hvězdiček na každé straně a vykreslí se stylem zvýraznění (jiná barva, tučně, podklad).",
+                "Písmo: font ze sady nebo vlastní font z knihovny, řez, velikost, výška řádku, prostrkání, zarovnání, velká písmena, barva nebo přechod.",
+                "Když se text nevejde: nejdřív se zmenší až na minimální velikost, potom se zkrátí „…“, nebo se generování nepovolí (podle nastavení). Pod plátnem se ukáže upozornění.",
+                "Efekty: obrys, stín a podklad (štítek) podle textu nebo celého prvku."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "04. Obrázky, mřížky, tvary a ikony",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Obrázek: pole k vyplnění (vyberete až při generování, v editoru je šedý zástupce), nebo pevný obrázek z knihovny (logo, pozadí). Vyplnění oříznout / celý, ohnisko, zaoblení, kruh, rámeček, stín, překryv barvou či přechodem, zrcadlení.",
+                "Mřížka: rozložení (2 vedle sebe, 2 × 2, 1 velký + 2 …), mezera a zaoblení; každá buňka má svůj zdroj – tlačítko Všechny buňky jako pole vytvoří pole pro každou buňku.",
+                "Tvar: obdélník se zaoblením, elipsa / kruh nebo čára; výplň barvou či přechodem, obrys (i přerušovaný), stín.",
+                "Ikona: ze sady ikon, barva a tloušťka čar."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "05. Pole a šablona",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Karta Pole ukazuje pole k vyplnění v pořadí formuláře generování: popisek, klíč (změna klíče se propíše všude), nápovědu, povinnost, u textu ukázku, max. délku a více řádků, u obrázku doporučené minimální rozlišení. Pole zmizí s posledním prvkem, který ho používá."
+            },
+            {
+              "type": "text",
+              "content": "Karta Šablona: formát (předvolba nebo vlastní velikost), pozadí (barva, přechod, obrázek s překryvem), formát výstupu (PNG, nebo JPG s kvalitou) a text příspěvku – tlačítka vloží pole, při generování se nahradí jejich hodnotou."
+            }
+          ]
+        },
+        {
+          "key": "save",
+          "heading": "06. Uložení",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Uložit (Ctrl + S) uloží šablonu a vytvoří její miniaturu pro seznam.",
+                "Pokud byla šablona mezitím uložena v jiné kartě či okně, editor uložení odmítne a nabídne načíst aktuální stav.",
+                "Při odchodu s neuloženými změnami se editor zeptá.",
+                "Bez oprávnění js-creator-images-update je editor jen pro čtení."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "07. Klávesové zkratky",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Ctrl + Z / Ctrl + Shift + Z",
+                  "text": "Zpět / znovu (i Ctrl + Y)."
+                },
+                {
+                  "title": "Ctrl + C / X / V / D",
+                  "text": "Kopírovat, vyjmout, vložit (i do jiné šablony), duplikovat."
+                },
+                {
+                  "title": "Delete, Escape",
+                  "text": "Smazat vybrané, zrušit výběr; Ctrl + A vybere vše."
+                },
+                {
+                  "title": "Šipky",
+                  "text": "Posun o 1 px, se Shiftem o 10 px."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
     "js-creator-outputs": {
       "navLabel": "Výstupy",
       "header": "JS Creator – Výstupy",
@@ -124,7 +360,8 @@
               "items": [
                 "Každý obrázek server přeuloží: odstraní metadata (EXIF, GPS – kde a čím byla fotka pořízena), otočí fotku podle telefonu a zmenší ji na nejvýše 4000 px. Průhlednost PNG / WebP zůstane.",
                 "Kliknutím na náhled otevřete obrázek v plné velikosti; obrázek jde přejmenovat a smazat do koše.",
-                "Nahrávejte jen obrázky, které smíte použít – fotky osob s jejich souhlasem a cizí díla s licencí."
+                "Nahrávejte jen obrázky, které smíte použít – fotky osob s jejich souhlasem a cizí díla s licencí.",
+                "Obrázek, který používá nějaká šablona (i šablona v koši), nejde smazat – aplikace vypíše, které šablony ho používají. Nejdřív ho v šablonách nahraďte, nebo šablony smažte natrvalo."
               ]
             }
           ]
@@ -139,6 +376,10 @@
             {
               "type": "text",
               "content": "Moje fonty: firemní nebo vlastní font nahrajete tlačítkem Nahrát font – soubor TTF, OTF, WOFF nebo WOFF2 do 5 MB, název rodiny, váhu (100–900) a styl (normální / kurzíva). Každý řez (např. Bold, Italic) se nahrává zvlášť; stejnou kombinaci rodiny, váhy a stylu lze mít jen jednou."
+            },
+            {
+              "type": "text",
+              "content": "Font, který používá nějaká šablona, nejde smazat – aplikace vypíše, které šablony ho používají."
             },
             {
               "type": "alert",

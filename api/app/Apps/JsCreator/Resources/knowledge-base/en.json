@@ -1,5 +1,241 @@
 {
   "pages": {
+    "js-creator-templates": {
+      "navLabel": "Templates",
+      "header": "JS Creator – Templates",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "A template is your design of a post in one size: the layout of texts, images, shapes and icons, colours and fonts. Its fields are filled in when generating (the next stage of the application) - you design a template once and use it many times."
+            },
+            {
+              "type": "alert",
+              "content": "Only you see your templates. Nobody else - neither another administrator nor the system administrator - sees or changes them.",
+              "variant": "info"
+            }
+          ]
+        },
+        {
+          "key": "edit",
+          "heading": "01. New template and copies",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "New template: enter a name and a format (presets Instagram, Story / Reels, Facebook / LinkedIn, X, YouTube, Pinterest or a custom size of 100-3000 px). The template is created empty and opens in the editor."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Duplicate - a copy in the same format (with its thumbnail).",
+                "Duplicate to another format - a copy in another size; elements keep their anchor and offset, so a logo anchored top right stays top right. Then fine-tune it in the editor.",
+                "A click on the preview or on the pencil opens the template in the editor."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. The list",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Cards show the thumbnail (made when you save in the editor), the name, the format and the date of the last change. Search by name, filter by format (the formats you use are offered) and sort by the date of change, of creation or by name."
+            }
+          ]
+        },
+        {
+          "key": "trash",
+          "heading": "03. Trash",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "A deleted template goes to the trash: Restore, Delete for good, Empty the trash. A template in the trash still holds the library images and fonts it uses - they cannot be deleted until the template is deleted for good."
+            },
+            {
+              "type": "alert",
+              "content": "Templates in the trash are deleted for good after the retention period (30 days by default, Core → Settings → Retention, \"JS Creator - trash\").",
+              "variant": "warning"
+            }
+          ]
+        },
+        {
+          "heading": "04. Permissions",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "View",
+                  "text": "js-creator-images-view - the list and the editor read only."
+                },
+                {
+                  "title": "Create",
+                  "text": "js-creator-images-create - new templates and copies."
+                },
+                {
+                  "title": "Update",
+                  "text": "js-creator-images-update - saving in the editor."
+                },
+                {
+                  "title": "Delete",
+                  "text": "js-creator-images-delete - trash, restore, delete for good."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "js-creator-editor": {
+      "navLabel": "Template editor",
+      "header": "JS Creator – Template editor",
+      "sections": [
+        {
+          "blocks": [
+            {
+              "type": "lead",
+              "content": "In the editor you design the layout of a template. What you see on the canvas is what the output will be - the preview and the output are drawn by the same code."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Top: back to the templates, name, undo / redo, zoom, grid, guides, safe zone and Save.",
+                "Left: adding an element (Text, Image, Grid, Shape, Icon) and the layers - the top layer is first.",
+                "Right: Properties of the selected element, Fields to fill in and Template (format, background, output, post text)."
+              ]
+            },
+            {
+              "type": "note",
+              "content": "The editor needs a screen at least 1024 px wide. The list of templates works on a phone too.",
+              "highlight": "Screen"
+            }
+          ]
+        },
+        {
+          "heading": "01. Selecting and moving",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "A click selects an element, Shift + click adds another; dragging over an empty place selects more elements by a rectangle.",
+                "Drag an element to move it. It snaps to the edges and centres of the canvas and of other elements (pink guides), with the grid to the grid. Alt = no snapping.",
+                "Handles change the size (Shift = keep the ratio), the round handle on the top rotates the element (Shift = by 15°).",
+                "A locked element cannot be picked or moved on the canvas - select it in the layers. A hidden element is not drawn, not even in the output.",
+                "Ctrl + wheel zooms, Space + drag moves the view."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "02. Anchors and placement",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Every element is pinned to an anchor - one of 9 points of the canvas (corners, middles of the edges, centre). X and Y are the offset from the anchor. When you copy a template to another format or change its size, the element stays at its corner or edge."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Anchor - changes the point the element is pinned to, the element does not move.",
+                "Move to the edge - moves the element to the chosen corner, edge or the centre with a margin (e.g. a logo top right 40 px from the edges).",
+                "Alignment and distribution: one element aligns to the canvas, more elements to each other; three and more elements can be spread evenly."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "03. Text",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Content: a fixed text, or a field to fill in - for a field you type a sample text shown in the editor.",
+                "Highlights: select part of the text and click Highlight the selection - the part is wrapped in two asterisks on each side and drawn in the highlight style (other colour, bold, background).",
+                "Font: a font of the set or an own font of the library, style, size, line height, letter spacing, alignment, uppercase, colour or gradient.",
+                "When the text does not fit: it is shrunk down to the minimum size first, then cut with \"…\", or generating is refused (by the setting). A warning appears under the canvas.",
+                "Effects: outline, shadow and a background box (label) around the text or the whole element."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "04. Images, grids, shapes and icons",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Image: a field to fill in (chosen when generating, a grey placeholder in the editor), or a fixed image of the library (logo, background). Fit crop / whole, focus, corner radius, circle, border, shadow, colour or gradient overlay, mirror.",
+                "Grid: layout (2 side by side, 2 × 2, 1 big + 2 …), gap and corner radius; each cell has its own source - All cells as fields creates a field for every cell.",
+                "Shape: rectangle with a corner radius, ellipse / circle or a line; colour or gradient fill, outline (also dashed), shadow.",
+                "Icon: from the icon set, colour and line width."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "05. Fields and template",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The tab Fields shows the fields to fill in in the order of the generating form: label, key (a changed key is changed everywhere), help, required, for a text its sample, max. length and more lines, for an image the recommended minimum resolution. A field disappears with the last element using it."
+            },
+            {
+              "type": "text",
+              "content": "The tab Template: format (preset or custom size), background (colour, gradient, image with an overlay), output format (PNG, or JPG with its quality) and the post text - the buttons insert fields, generating replaces them with their values."
+            }
+          ]
+        },
+        {
+          "key": "save",
+          "heading": "06. Saving",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Save (Ctrl + S) saves the template and makes its thumbnail for the list.",
+                "If the template was saved meanwhile in another tab or window, the editor refuses the save and offers to load the current state.",
+                "Leaving with unsaved changes asks first.",
+                "Without the permission js-creator-images-update the editor is read only."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "07. Keyboard shortcuts",
+          "blocks": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Ctrl + Z / Ctrl + Shift + Z",
+                  "text": "Undo / redo (also Ctrl + Y)."
+                },
+                {
+                  "title": "Ctrl + C / X / V / D",
+                  "text": "Copy, cut, paste (also into another template), duplicate."
+                },
+                {
+                  "title": "Delete, Escape",
+                  "text": "Delete the selection, clear the selection; Ctrl + A selects all."
+                },
+                {
+                  "title": "Arrows",
+                  "text": "Move by 1 px, with Shift by 10 px."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
     "js-creator-outputs": {
       "navLabel": "Outputs",
       "header": "JS Creator – Outputs",
@@ -124,7 +360,8 @@
               "items": [
                 "The server re-encodes every image: it drops the metadata (EXIF, GPS – where and with what the photo was taken), turns the photo upright and scales it down to 4000 px at most. Transparency of PNG / WebP stays.",
                 "A click on the thumbnail opens the image in full size; an image can be renamed and deleted to the trash.",
-                "Upload only images you may use – photos of people with their consent, works of others with a licence."
+                "Upload only images you may use – photos of people with their consent, works of others with a licence.",
+                "An image used by a template (also one in the trash) cannot be deleted - the application lists the templates using it. Replace it in the templates first, or delete the templates for good."
               ]
             }
           ]
@@ -139,6 +376,10 @@
             {
               "type": "text",
               "content": "My fonts: upload a brand or own font with Upload a font – a TTF, OTF, WOFF or WOFF2 file up to 5 MB, the family name, the weight (100–900) and the style (normal / italic). Every face (e.g. Bold, Italic) is uploaded separately; one combination of family, weight and style can exist once."
+            },
+            {
+              "type": "text",
+              "content": "A font used by a template cannot be deleted - the application lists the templates using it."
             },
             {
               "type": "alert",

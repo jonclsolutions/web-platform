@@ -6,8 +6,8 @@
  * @created 2026
  * @description Manifest of the application "JS Creator" - posts for social networks generated
  *   from own templates (no AI, admin only, no public part). Every account has its own private
- *   workspace. The sidebar: the shared files of the workspace (outputs, library) and the system
- *   pages; the sections (images now, videos / GIFs later) add their own groups.
+ *   workspace. The sidebar: the groups of the sections (Images: templates; videos / GIFs later),
+ *   the shared files of the workspace (outputs, library) and the system pages.
  * @dependencies AppManifest; its admin route table.
  */
 
@@ -23,6 +23,12 @@ export const JS_CREATOR_APP: AppManifest = {
   tabPermission: 'view-js-creator',
   adminI18n: true,
   nav: [
+    {
+      key: 'js-creator-images', labelKey: 'nav_group_js_creator_images',
+      items: [
+        { path: 'image-templates', permission: 'js-creator-images-view', labelKey: 'nav_js_creator_templates', icon: 'layout' },
+      ],
+    },
     {
       key: 'js-creator-files', labelKey: 'nav_group_js_creator_files',
       items: [

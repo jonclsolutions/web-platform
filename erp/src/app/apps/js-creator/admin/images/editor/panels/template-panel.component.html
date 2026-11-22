@@ -1,0 +1,85 @@
+<!--
+    @file: template-panel.component.html
+    @path: src/app/apps/js-creator/admin/images/editor/panels/template-panel.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Panel "Template": size, background (fill, image, overlay), output format and the
+        pattern of the post text with buttons inserting the fields.
+-->
+<div class="pn">
+  <fieldset class="pn-fieldset" [disabled]="!store().editable">
+    <section class="pn-section">
+      <h3 class="pn-title">{{ t('format') }}</h3>
+      <app-jc-size-picker [size]="store().size()" (sizeChange)="setSize($event)" idPrefix="jc-editor-size" />
+      <p class="pn-hint">{{ t('resize_hint') }}</p>
+      @if (safeZone(); as zone) {
+        <p class="pn-hint">{{ t('safe_zone_hint') }} ({{ zone.top }} / {{ zone.bottom }} px)</p>
+      }
+    </section>
+
+    <section class="pn-section">
+      <h3 class="pn-title">{{ t('background') }}</h3>
+      <app-jc-fill [fill]="background().fill" idPrefix="jc-bg-fill" [disabled]="!store().editable" (fillChange)="setFill($event)" />
+      <label class="pn-check-row"><input type="checkbox" [checked]="!!background().image" (change)="toggleImage($any($event.target).checked)" />{{ t('background_image') }}</label>
+      @if (background().image; as image) {
+        <div class="pn-sub pn-sub--col">
+          <app-jc-source [source]="image.source" [fields]="imageFields()" [asset]="assetOf(image.source)" idPrefix="jc-bg-src" [disabled]="!store().editable"
+            (sourceChange)="setImage({ source: $event })" (newField)="newBackgroundField()" (assetPicked)="assetPicked.emit($event)" />
+          <label class="pn-field">
+            <span>{{ t('fit') }}</span>
+            <select class="jc-input" (change)="setImage({ fit: $any($event.target).value })">
+              <option value="cover" [selected]="image.fit === 'cover'">{{ t('fit_cover') }}</option>
+              <option value="contain" [selected]="image.fit === 'contain'">{{ t('fit_contain') }}</option>
+            </select>
+          </label>
+          <div class="pn-focus">
+            <label class="jc-inline">{{ t('focus_x') }}<input type="range" min="0" max="100" [value]="image.focusX * 100" (input)="setImage({ focusX: $any($event.target).valueAsNumber / 100 }, 'bg-fx')" /></label>
+            <label class="jc-inline">{{ t('focus_y') }}<input type="range" min="0" max="100" [value]="image.focusY * 100" (input)="setImage({ focusY: $any($event.target).valueAsNumber / 100 }, 'bg-fy')" /></label>
+          </div>
+          <div class="pn-field">
+            <span>{{ t('overlay') }}</span>
+            <app-jc-fill [fill]="image.overlay" [allowNone]="true" idPrefix="jc-bg-overlay" [disabled]="!store().editable" (fillChange)="setImage({ overlay: $event })" />
+          </div>
+        </div>
+      }
+    </section>
+
+    <section class="pn-section">
+      <h3 class="pn-title">{{ t('output') }}</h3>
+      <div class="pn-grid2">
+        <label class="pn-field">
+          <span>{{ t('output_format') }}</span>
+          <select class="jc-input" (change)="setTemplate({ outputFormat: $any($event.target).value })">
+            <option value="png" [selected]="state().outputFormat === 'png'">PNG</option>
+            <option value="jpg" [selected]="state().outputFormat === 'jpg'">JPG</option>
+          </select>
+        </label>
+        @if (state().outputFormat === 'jpg') {
+          <label class="pn-field">
+            <span>{{ t('quality') }} {{ state().outputQuality }} %</span>
+            <input type="range" min="40" max="100" [value]="state().outputQuality" (input)="setQuality($event)" />
+          </label>
+        }
+      </div>
+      <p class="pn-hint">{{ t('output_hint') }}</p>
+    </section>
+
+    <section class="pn-section">
+      <h3 class="pn-title">{{ t('caption') }}</h3>
+      <textarea #caption class="jc-input pn-textarea" rows="6" [attr.maxlength]="maxCaption" [value]="state().caption" [attr.aria-label]="t('caption')"
+        (input)="setTemplate({ caption: $any($event.target).value }, 'caption')"></textarea>
+      <div class="pn-row">
+        <span class="pn-hint pn-grow">{{ t('caption_hint') }}</span>
+        <span class="pn-hint">{{ length(state().caption) }} / {{ maxCaption }}</span>
+      </div>
+      @if (store().doc().fields.length) {
+        <div class="pn-tools">
+          @for (field of store().doc().fields; track field.key) {
+            <button type="button" class="pn-btn" [title]="field.label" (click)="insertField(field.key)">{{ token(field.key) }}</button>
+          }
+        </div>
+      }
+    </section>
+  </fieldset>
+</div>

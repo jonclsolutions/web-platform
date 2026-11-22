@@ -36,6 +36,8 @@ class AssetResource extends JsonResource
             'thumb_url'  => WorkspaceFiles::assetUrl($this->resource, 'thumb'),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'deleted_at' => $this->deleted_at?->format('Y-m-d H:i:s'),
+            // Templates using the image (only in the list - TemplateUsages::usedBy()).
+            'used_by'    => $this->when($this->resource->relationLoaded('usedBy'), fn () => $this->resource->getRelation('usedBy')->values()->all()),
         ];
     }
 }

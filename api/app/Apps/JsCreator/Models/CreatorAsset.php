@@ -34,6 +34,9 @@ class CreatorAsset extends Model
 {
     use BelongsToWorkspace, SoftDeletes;
 
+    /** @description Names of images never reach the audit log (content of the private workspace). */
+    public const AUDIT_MASKED = ['name'];
+
     /** @var string The table of the model. */
     protected $table = 'js_creator_assets';
 

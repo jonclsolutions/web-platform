@@ -9,7 +9,7 @@
  * @description Feature tests of the images of the library (AssetController, LibraryImage,
  *   FileController): re-encoding (EXIF orientation applied, metadata dropped, transparency kept,
  *   large images scaled down, WebP thumbnail), refused files, the quota, the trash, the signed
- *   file URLs and the isolation of workspaces.
+ *   file URLs, the isolation of workspaces and the images of a template by their ids.
  * @dependencies Tests\TestCase, JsCreatorFixtures, fake private disk.
  */
 
@@ -196,5 +196,23 @@ class LibraryAssetTest extends TestCase
         }
 
         $this->assertSame(2, CreatorAsset::withTrashed()->count());
+    }
+
+    /**
+     * @description `ids` lists only the given own images (the images a template uses), never those
+     *   of another account.
+     * @input own images A, B, C; image D of another account; ids=A,C,D
+     * @output A and C only.
+     */
+    public function test_images_by_ids(): void
+    {
+        $owner = $this->signIn($this->creator());
+        $ids = array_map(fn () => $this->post('/api/js-creator/library/assets', ['files' => [$this->png()]], ['Accept' => 'application/json'])->json('data.0.id'), range(1, 3));
+        $this->signIn($this->creator());
+        $foreign = $this->post('/api/js-creator/library/assets', ['files' => [$this->png()]], ['Accept' => 'application/json'])->json('data.0.id');
+        $this->signIn($owner);
+
+        $listed = $this->getJson('/api/js-creator/library/assets?ids=' . implode(',', [$ids[0], $ids[2], $foreign]))->assertOk()->json('data.*.id');
+        $this->assertEqualsCanonicalizing([$ids[0], $ids[2]], $listed);
     }
 }

@@ -1,0 +1,142 @@
+/*
+    @file: controls.css
+    @path: src/app/apps/js-creator/admin/images/editor/controls/controls.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Small controls of the panels of the editor: colour (picker, hex, opacity), fill
+        (kind, angle, stops), anchor grid, inputs and small buttons.
+    @dependencies: shared/styles/tokens.css
+*/
+
+/*
+    @module: Inputs
+    @description: Compact inputs and selects of the panels; numbers narrow.
+    @usage: .jc-input(--num), .jc-inline (label with an input), .jc-unit
+*/
+.jc-input {
+  min-width: 0;
+  padding: 5px 7px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--color-zinc-800);
+}
+
+.jc-input:focus-visible { outline: 2px solid var(--color-amber-500); outline-offset: 0; }
+
+.jc-input--num { width: 64px; }
+
+.jc-inline { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--color-zinc-600); }
+
+.jc-unit { font-size: 0.75rem; color: var(--color-zinc-500); }
+
+/*
+    @module: Colour
+    @description: Swatch (native picker), hex code, opacity in %.
+    @usage: .jc-color > input.jc-color-pick, input.jc-color-hex, input.jc-color-alpha, .jc-color-unit
+*/
+.jc-color { display: flex; align-items: center; gap: 5px; min-width: 0; }
+
+.jc-color-pick {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 28px;
+  padding: 1px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.jc-color-hex,
+.jc-color-alpha {
+  min-width: 0;
+  padding: 5px 6px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.jc-color-hex { width: 84px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.jc-color-alpha { width: 52px; }
+.jc-color-unit { font-size: 0.75rem; color: var(--color-zinc-500); }
+
+/*
+    @module: Fill
+    @description: Kind select, colour or angle and the stops of a gradient.
+    @usage: .jc-fill > select, app-jc-color | .jc-inline, .jc-stop…, .jc-link-btn
+*/
+.jc-fill { display: flex; flex-direction: column; gap: 6px; }
+
+.jc-stop { display: flex; align-items: center; gap: 5px; }
+
+.jc-mini-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--color-zinc-600);
+  cursor: pointer;
+}
+
+.jc-mini-btn:disabled { opacity: 0.4; cursor: default; }
+
+.jc-link-btn {
+  align-self: flex-start;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--color-amber-700);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.jc-link-btn:disabled { opacity: 0.5; cursor: default; }
+
+/*
+    @module: Anchor grid
+    @description: 3 × 3 points of a layer; the selected one is filled.
+    @usage: .jc-anchor > button.jc-anchor-dot(--on) > span
+*/
+.jc-anchor {
+  display: grid;
+  grid-template-columns: repeat(3, 22px);
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 8px;
+  background: var(--color-zinc-50);
+  width: max-content;
+}
+
+.jc-anchor-dot {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.jc-anchor-dot span {
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid var(--color-zinc-400);
+  border-radius: 2px;
+  background: #fff;
+}
+
+.jc-anchor-dot:focus-visible { outline: 2px solid var(--color-amber-500); }
+
+.jc-anchor-dot.jc-anchor-dot--on span { border-color: var(--color-amber-600); background: var(--color-amber-500); }
+
+.jc-anchor-dot:disabled { cursor: default; }

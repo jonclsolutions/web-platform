@@ -1,0 +1,94 @@
+/*
+    @file: chooser.css
+    @path: src/app/apps/js-creator/admin/images/editor/controls/chooser.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Popups choosing a library image or an icon: search bar with the upload button,
+        grid of images / icons, "load more", empty state.
+    @dependencies: controls.css, shared/styles/tokens.css
+*/
+
+/*
+    @module: Bar
+    @description: Search and upload in one row.
+    @usage: .jc-chooser-bar > input.jc-chooser-search, label.jc-upload(--busy) > input[type=file]
+*/
+.jc-chooser-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+
+.jc-chooser-search { flex: 1 1 auto; }
+
+.jc-upload {
+  position: relative;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--color-zinc-900);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.jc-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.jc-upload--busy { opacity: 0.6; }
+
+/*
+    @module: Grids
+    @description: Images (thumbnail + name) and icons (glyph + name); a focused tile is marked.
+    @usage: .jc-chooser-grid > button.jc-chooser-item; .jc-chooser-icons > button.jc-chooser-icon
+*/
+.jc-chooser-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.jc-chooser-item,
+.jc-chooser-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  color: var(--color-zinc-700);
+  min-width: 0;
+}
+
+.jc-chooser-item:focus-visible,
+.jc-chooser-icon:focus-visible { outline: 2px solid var(--color-amber-500); }
+
+.jc-chooser-item img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: var(--color-zinc-50);
+  border-radius: 6px;
+}
+
+.jc-chooser-item span,
+.jc-chooser-icon span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jc-chooser-icons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 8px;
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.jc-chooser-more { display: flex; justify-content: center; margin-top: 12px; }
+.jc-chooser-empty { margin: 16px 0; color: var(--color-zinc-500); text-align: center; }

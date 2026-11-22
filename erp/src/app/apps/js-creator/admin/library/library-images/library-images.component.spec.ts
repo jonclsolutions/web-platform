@@ -5,7 +5,8 @@
  * @author JS
  * @created 2026
  * @description Unit tests of LibraryImagesComponent: the first page and "load more", uploads one
- *   file per request, refuses wrong files and a full quota before sending, rename, trash.
+ *   file per request, refuses wrong files and a full quota before sending, rename, trash, a used
+ *   image is not deleted.
  * @dependencies src/testing/admin-test-helpers.ts (admin doubles, upload rules stub).
  */
 
@@ -78,7 +79,7 @@ describe('LibraryImagesComponent', () => {
    * @output alert quota_full_title; no upload
    */
   it('refuses files over the quota', () => {
-    TestBed.inject(WorkspaceUsageService).usage.set({ used_bytes: 1000, quota_bytes: 1000, trash_bytes: 0, counts: { folders: 0, images: 0, fonts: 0 } });
+    TestBed.inject(WorkspaceUsageService).usage.set({ used_bytes: 1000, quota_bytes: 1000, trash_bytes: 0, counts: { folders: 0, images: 0, fonts: 0, templates: 0 } });
     component.upload([new File(['x'], 'a.png')]);
     expect(ctx.alert.open.calls.mostRecent().args[0]).toBe('js-creator-library.quota_full_title');
     expect(ctx.dataHandler.upload).not.toHaveBeenCalled();
@@ -108,5 +109,22 @@ describe('LibraryImagesComponent', () => {
     expect(ctx.dataHandler.delete).toHaveBeenCalledWith('js-creator/library/assets/1?force=1');
     await component.emptyTrash();
     expect(ctx.dataHandler.delete).toHaveBeenCalledWith('js-creator/library/assets/trash');
+  });
+
+  /**
+   * @description An image used by templates is not deleted (to the trash or for good): a message
+   *   names the templates, a trashed one marked.
+   * @input image with used_by [Post, Old (trashed)]; remove; destroy
+   * @output alert in_use_title naming „Post“ and „Old“ (in_use_trashed); no DELETE, no confirmation
+   */
+  it('refuses to delete a used image', async () => {
+    const used = { ...asset(1), used_by: [{ id: 3, name: 'Post', section: 'images', trashed: false }, { id: 4, name: 'Old', section: 'images', trashed: true }] };
+    await component.remove(used);
+    await component.destroy(used);
+    expect(ctx.alert.open).toHaveBeenCalledTimes(2);
+    expect(ctx.alert.open.calls.mostRecent().args[0]).toBe('js-creator-library.in_use_title');
+    expect(ctx.alert.open.calls.mostRecent().args[1]).toContain('„Post“, „Old“ (js-creator-library.in_use_trashed)');
+    expect(ctx.confirm.open).not.toHaveBeenCalled();
+    expect(ctx.dataHandler.delete).not.toHaveBeenCalled();
   });
 });

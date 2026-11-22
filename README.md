@@ -73,7 +73,7 @@ The platform is a **core** with **applications** plugged into it:
 | Web | `api/app/Apps/Web` | `erp/src/app/apps/web` | public website, inquiries, job applications, texts and content of the website |
 | E-shop | `api/app/Apps/Shop` | `erp/src/app/apps/shop` | catalogue, cart and checkout, orders, customers, coupons, shipping and payment |
 | Project portal | `api/app/Apps/ProjectPortal` | `erp/src/app/apps/project-portal` | sales leads, orders with the public order form, customer projects and their client portal |
-| JS Creator | `api/app/Apps/JsCreator` | `erp/src/app/apps/js-creator` | graphics of social network posts from own templates (no AI, admin only); a private workspace per account – folders, library (images, own fonts, the font and icon sets of `admin/assets`), quotas |
+| JS Creator | `api/app/Apps/JsCreator` | `erp/src/app/apps/js-creator` | graphics of social network posts from own templates (no AI, admin only); a private workspace per account – templates with their editor (Canvas 2D renderer `admin/shared/render`, document validated by `TemplateDocument`), folders, library (images, own fonts, the font and icon sets of `admin/assets`), quotas |
 
 - **The core never depends on an application** – it reads them only from the registries
   `api/config/apps.php` (manifests `AppManifest`: routes, migrations, views, permissions, logs,

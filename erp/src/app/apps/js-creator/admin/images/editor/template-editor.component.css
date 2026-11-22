@@ -1,0 +1,246 @@
+/*
+    @file: template-editor.component.css
+    @path: src/app/apps/js-creator/admin/images/editor/template-editor.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Layout of the template editor: full-height column inside the admin, top bar,
+        three columns (layers 248 px, canvas, panels 320 px) each scrolling on its own, warnings
+        under the canvas; the message for narrow screens.
+    @dependencies: panels/panels.css, controls/controls.css, shared/styles/tokens.css
+*/
+
+/*
+    @module: Editor frame
+    @description: The editor fills the visible height under the admin header.
+    @usage: .te > .te-bar + .te-body > .te-left, .te-center, .te-right
+*/
+:host { display: block; }
+
+.te,
+.te-narrow,
+.te-loading { font-family: var(--ff); }
+
+.te {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--jc-editor-top, 96px));
+  min-height: 560px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.te-body {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr) 320px;
+  min-height: 0;
+}
+
+.te-left,
+.te-right {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #fff;
+}
+
+.te-left { border-right: 1px solid var(--color-zinc-200); }
+.te-right { border-left: 1px solid var(--color-zinc-200); }
+
+.te-center { position: relative; min-width: 0; min-height: 0; }
+
+.te-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; }
+
+/*
+    @module: Top bar
+    @description: Back, name, size, undo / redo, zoom, grid / guides / safe zone, state and Save.
+    @usage: .te-bar > .te-icon-btn, input.te-name, .te-badge, .te-size, .te-sep, .te-zoom, label.te-toggle,
+        .te-spacer, .te-state(--dirty), button.te-save
+*/
+.te-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-zinc-200);
+  background: var(--color-zinc-50);
+  font-size: 0.8rem;
+}
+
+.te-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-zinc-700);
+  cursor: pointer;
+}
+
+.te-icon-btn:focus-visible { outline: 2px solid var(--color-amber-500); }
+.te-icon-btn:disabled { opacity: 0.35; cursor: default; }
+
+.te-name { width: 240px; font-weight: 600; font-size: 0.9rem; }
+
+.te-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-zinc-200);
+  color: var(--color-zinc-700);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.te-size { color: var(--color-zinc-500); font-variant-numeric: tabular-nums; }
+
+.te-sep { width: 1px; height: 22px; margin: 0 4px; background: var(--color-zinc-200); }
+
+.te-zoom {
+  min-width: 56px;
+  padding: 5px 6px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 7px;
+  background: #fff;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.te-toggle { display: inline-flex; align-items: center; gap: 5px; color: var(--color-zinc-700); cursor: pointer; }
+
+.te-spacer { flex: 1 1 auto; }
+
+.te-state { color: var(--color-zinc-500); white-space: nowrap; }
+.te-state.te-state--dirty { color: var(--color-amber-700); font-weight: 600; }
+
+.te-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--color-zinc-900);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.te-save:focus-visible { outline: 2px solid var(--color-amber-500); outline-offset: 2px; }
+.te-save:disabled { opacity: 0.45; cursor: default; }
+
+/*
+    @module: Left column
+    @description: Buttons adding layers (5 in a grid) and the title of the layer list.
+    @usage: .te-add > button.te-add-btn > app-creator-icon + span; h2.te-col-title
+*/
+.te-add {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  padding: 10px;
+  border-bottom: 1px solid var(--color-zinc-100);
+}
+
+.te-add-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 2px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-zinc-700);
+  font: inherit;
+  font-size: 0.66rem;
+  cursor: pointer;
+}
+
+.te-add-btn:focus-visible { outline: 2px solid var(--color-amber-500); }
+
+.te-col-title {
+  margin: 0;
+  padding: 10px 14px 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-zinc-500);
+}
+
+.te-col-title span { font-weight: 500; }
+
+/*
+    @module: Tabs of the right column
+    @description: Properties / Fields / Template.
+    @usage: .te-tabs > button.te-tab(--on)
+*/
+.te-tabs { display: flex; border-bottom: 1px solid var(--color-zinc-200); }
+
+.te-tab {
+  flex: 1 1 0;
+  padding: 10px 6px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-zinc-500);
+  cursor: pointer;
+}
+
+.te-tab.te-tab--on { color: var(--color-zinc-900); border-bottom-color: var(--color-amber-500); }
+.te-tab:focus-visible { outline: 2px solid var(--color-amber-500); outline-offset: -2px; }
+
+/*
+    @module: Warnings of the drawing
+    @description: Texts that do not fit and missing images, over the bottom of the canvas.
+    @usage: .te-warnings > .te-warning(--block)
+*/
+.te-warnings {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.te-warning {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--color-amber-100);
+  color: var(--color-amber-800);
+  font-size: 0.75rem;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+
+.te-warning.te-warning--block { background: var(--color-rose-50); color: var(--color-rose-800); }
+
+/*
+    @module: Messages
+    @description: Narrow screen / failed load / loading.
+    @usage: .te-narrow > p + button; .te-loading
+*/
+.te-narrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 20px;
+  text-align: center;
+  color: var(--color-zinc-600);
+}
+
+.te-loading { padding: 40px; color: var(--color-zinc-500); text-align: center; }

@@ -10,8 +10,10 @@
  *   (family + weight + style, case-insensitive) exists at most once outside the trash. Every
  *   query is limited to the signed-in account (another account's font = 404, also for the
  *   sysadmin).
- * @note The audit log names only the id of a font, never its family.
- * @dependencies StoreFontRequest (format), WorkspaceFiles, WorkspaceQuota, CreatorFont,
+ * @note The audit log names only the id of a font, never its family. A font used by a template
+ *   (also one in the trash) cannot be deleted - 409 `in_use` (TemplateUsages); the list sends the
+ *   templates as `used_by` of every font.
+ * @dependencies StoreFontRequest (format), WorkspaceFiles, WorkspaceQuota, TemplateUsages, CreatorFont,
  *   FontResource, LogsActivity (JsCreatorLog).
  */
 
@@ -21,7 +23,9 @@ use App\Apps\JsCreator\Http\Requests\StoreFontRequest;
 use App\Apps\JsCreator\Http\Requests\UpdateFontRequest;
 use App\Apps\JsCreator\Http\Resources\FontResource;
 use App\Apps\JsCreator\Models\CreatorFont;
+use App\Apps\JsCreator\Models\CreatorUsage;
 use App\Apps\JsCreator\Models\JsCreatorLog;
+use App\Apps\JsCreator\Services\TemplateUsages;
 use App\Apps\JsCreator\Services\WorkspaceQuota;
 use App\Apps\JsCreator\Support\WorkspaceFiles;
 use App\Http\Controllers\Controller;
@@ -36,7 +40,8 @@ class FontController extends Controller
     use LogsActivity;
 
     /**
-     * @description Own fonts (`only_trashed=1` = the trash), by family, weight and style.
+     * @description Own fonts (`only_trashed=1` = the trash), by family, weight and style, each
+     *   with the templates that use it (`used_by`).
      * @param Request $request
      * @return JsonResponse
      */
@@ -46,8 +51,11 @@ class FontController extends Controller
         if (filter_var($request->query('only_trashed', false), FILTER_VALIDATE_BOOLEAN)) {
             $query->onlyTrashed();
         }
+        $fonts = $query->orderBy('family')->orderBy('weight')->orderBy('style')->get();
+        $usedBy = TemplateUsages::usedBy(CreatorUsage::FONT, $fonts->pluck('id')->all());
+        $fonts->each(fn (CreatorFont $font) => $font->setRelation('usedBy', collect($usedBy[$font->id] ?? [])));
 
-        return $this->respond(FontResource::collection($query->orderBy('family')->orderBy('weight')->orderBy('style')->get()));
+        return $this->respond(FontResource::collection($fonts));
     }
 
     /**
@@ -74,7 +82,7 @@ class FontController extends Controller
             WorkspaceFiles::delete([$path]);
             throw $e;
         }
-        $this->logAction($request, JsCreatorLog::class, 'create', 'Font', "Font #{$font->id} uploaded", $font->id, 'Font');
+        $this->logAction($request, JsCreatorLog::class, 'create', 'Font', "Font #{$font->id} uploaded", $font->id, 'Font', ['file']);
 
         return $this->respond(new FontResource($font), 201);
     }
@@ -98,18 +106,22 @@ class FontController extends Controller
 
     /**
      * @description Moves an own font to the trash, or (`force=1`) deletes a font of the trash for
-     *   good with its file.
+     *   good with its file. A used font stays.
      * @param Request $request `force`.
      * @param string $id Font.
-     * @return JsonResponse 204; 404.
+     * @return JsonResponse 204; 404; 409 `in_use` (used by a template).
      */
     public function destroy(Request $request, string $id): JsonResponse
     {
         if (filter_var($request->query('force', false), FILTER_VALIDATE_BOOLEAN)) {
-            CreatorFont::onlyTrashed()->ownedBy($request->user())->findOrFail((int) $id)->deleteWithFiles();
+            $font = CreatorFont::onlyTrashed()->ownedBy($request->user())->findOrFail((int) $id);
+            TemplateUsages::ensureUnused(CreatorUsage::FONT, $font->id);
+            $font->deleteWithFiles();
             $this->logAction($request, JsCreatorLog::class, 'hard_delete', 'Font', "Font #{$id} deleted for good", (int) $id, 'Font');
         } else {
-            CreatorFont::query()->ownedBy($request->user())->findOrFail((int) $id)->delete();
+            $font = CreatorFont::query()->ownedBy($request->user())->findOrFail((int) $id);
+            TemplateUsages::ensureUnused(CreatorUsage::FONT, $font->id);
+            $font->delete();
             $this->logAction($request, JsCreatorLog::class, 'soft_delete', 'Font', "Font #{$id} moved to the trash", (int) $id, 'Font');
         }
 

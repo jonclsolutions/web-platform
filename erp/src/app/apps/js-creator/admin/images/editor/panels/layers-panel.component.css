@@ -1,0 +1,73 @@
+/*
+    @file: layers-panel.component.css
+    @path: src/app/apps/js-creator/admin/images/editor/panels/layers-panel.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Rows of the layer panel: kind icon, name (or rename input), field badge, lock and
+        visibility switches; selected, hidden and drop-target states.
+    @dependencies: controls/controls.css, shared/styles/tokens.css
+*/
+
+/*
+    @module: Layer rows
+    @description: One row per layer, the top layer first. The selected row is never styled
+        together with a :hover rule (see the manual - :hover rules are emptied on small screens).
+    @usage: .ly > .ly-row(--selected|--hidden|--over) > .ly-type, .ly-name | .ly-name-input, .ly-badge, button.ly-btn(--on)
+*/
+.ly { display: flex; flex-direction: column; padding: 6px; gap: 2px; font-size: 0.8rem; }
+
+.ly-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 2px 4px 2px 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--color-zinc-800);
+}
+
+.ly-row:hover { background: var(--color-zinc-50); }
+
+.ly-row.ly-row--selected { background: var(--color-amber-50); border-color: var(--color-amber-200); }
+
+.ly-row--hidden .ly-name,
+.ly-row--hidden .ly-type { opacity: 0.45; }
+
+.ly-row.ly-row--over { border-top: 2px solid var(--color-amber-500); }
+
+.ly-type { display: grid; place-items: center; color: var(--color-zinc-500); }
+
+.ly-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.ly-name-input { flex: 1 1 auto; }
+
+.ly-badge {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--color-indigo-50);
+  color: var(--color-indigo-700);
+  font-size: 0.66rem;
+  font-weight: 600;
+}
+
+.ly-btn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--color-zinc-400);
+  cursor: pointer;
+}
+
+.ly-btn.ly-btn--on { color: var(--color-zinc-800); }
+.ly-btn:focus-visible { outline: 2px solid var(--color-amber-500); }
+.ly-btn:disabled { cursor: default; }
+
+.ly-empty { margin: 0; padding: 12px 8px; color: var(--color-zinc-500); }

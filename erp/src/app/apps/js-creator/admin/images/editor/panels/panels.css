@@ -1,0 +1,190 @@
+/*
+    @file: panels.css
+    @path: src/app/apps/js-creator/admin/images/editor/panels/panels.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Panels of the editor (properties, layers, fields, template): sections with
+        titles, rows of fields, two / three column grids, checkboxes, small tool buttons, hints.
+    @dependencies: controls/controls.css (.jc-*), shared/styles/tokens.css
+*/
+
+/*
+    @module: Panel and sections
+    @description: Column of sections divided by lines; a fieldset that only disables.
+    @usage: .pn > .pn-section (.pn-title, .pn-subtitle); fieldset.pn-fieldset; .pn-empty, .pn-hint(--block)
+*/
+.pn { display: flex; flex-direction: column; font-size: 0.8rem; color: var(--color-zinc-800); }
+
+.pn-fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+
+.pn-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-zinc-100);
+}
+
+.pn-title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-zinc-500);
+}
+
+.pn-subtitle {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-zinc-700);
+}
+
+.pn-empty { margin: 0; padding: 18px 14px; color: var(--color-zinc-500); }
+
+.pn-hint { margin: 0; font-size: 0.72rem; line-height: 1.35; color: var(--color-zinc-500); }
+.pn-hint--block { padding: 12px 14px; }
+
+/*
+    @module: Fields
+    @description: Label above an input; rows; grids of 2 / 3 columns; checkbox rows; nested
+        options of a switched-on effect.
+    @usage: .pn-field > span + input; .pn-row(--head) > .pn-grow; .pn-grid2, .pn-grid3;
+        label.pn-check-row; .pn-sub(--col); .pn-label; .pn-textarea
+*/
+.pn-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.pn-field > span,
+.pn-label {
+  font-size: 0.72rem;
+  color: var(--color-zinc-600);
+}
+
+.pn-field > .jc-input { width: 100%; box-sizing: border-box; }
+
+.pn-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.pn-row--head .jc-input { font-weight: 600; }
+.pn-grow { flex: 1 1 auto; min-width: 0; }
+
+.pn-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pn-grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+
+.pn-check-row { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+.pn-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--color-zinc-50);
+}
+
+.pn-sub--col { flex-direction: column; align-items: stretch; }
+
+.pn-textarea { width: 100%; box-sizing: border-box; resize: vertical; min-height: 64px; line-height: 1.35; }
+
+/*
+    @module: Anchors, focus, cells
+    @description: The anchor picker beside "move to the edge" with its margin; focus sliders;
+        one cell of a grid.
+    @usage: .pn-anchors > div; .pn-margin; .pn-focus; .pn-cell
+*/
+.pn-anchors { display: flex; gap: 18px; flex-wrap: wrap; }
+.pn-anchors > div { display: flex; flex-direction: column; gap: 4px; }
+.pn-margin { margin-top: 2px; }
+
+.pn-focus { display: flex; flex-direction: column; gap: 4px; }
+.pn-focus input[type='range'] { flex: 1 1 auto; min-width: 80px; }
+.pn-focus .jc-inline { display: flex; }
+
+.pn-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--color-zinc-100);
+  border-radius: 8px;
+}
+
+/*
+    @module: Tools and buttons
+    @description: Square tool buttons (align, order, duplicate, delete), text buttons, the
+        lock / hide switches (checkbox hidden behind an icon), icon preview.
+    @usage: .pn-tools > button.pn-tool(--danger), .pn-tools-gap; button.pn-btn; label.pn-check;
+        .pn-icon-preview
+*/
+.pn-tools { display: flex; flex-wrap: wrap; gap: 4px; }
+.pn-tools-gap { flex: 1 1 auto; }
+
+.pn-tool {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--color-zinc-700);
+  cursor: pointer;
+}
+
+.pn-tool:focus-visible { outline: 2px solid var(--color-amber-500); }
+.pn-tool:disabled { opacity: 0.4; cursor: default; }
+.pn-tool--danger { color: var(--color-rose-700); }
+
+.pn-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 5px 10px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 7px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--color-zinc-800);
+  cursor: pointer;
+}
+
+.pn-btn:focus-visible { outline: 2px solid var(--color-amber-500); }
+.pn-btn:disabled { opacity: 0.5; cursor: default; }
+
+.pn-check {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 7px;
+  color: var(--color-zinc-600);
+  cursor: pointer;
+}
+
+.pn-check input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.pn-check:focus-within { outline: 2px solid var(--color-amber-500); }
+
+.pn-icon-preview {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--color-zinc-200);
+  border-radius: 8px;
+  background: var(--color-zinc-50);
+}
+
+/*
+    @module: Field cards
+    @description: A checkbox aligned with the inputs of its grid row; an error under a key.
+    @usage: label.pn-check-row--end; .ws-field-error.pn-hint
+*/
+.pn-check-row--end { align-self: end; padding-bottom: 6px; }
+
+.pn .ws-field-error { color: var(--color-rose-700); }

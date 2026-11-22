@@ -1,0 +1,31 @@
+/*
+    @file: size-picker.component.css
+    @path: src/app/apps/js-creator/admin/shared/size-picker/size-picker.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Layout of the size picker: the select, below it the custom width × height.
+    @dependencies: shared-styles/workspace.css (.ws-field)
+*/
+
+/*
+    @module: Custom size
+    @description: Two number inputs side by side with the × sign and the unit.
+    @usage: .sp > .ws-field (select), .sp-custom > .ws-field ×2, .sp-times, .sp-unit
+*/
+.sp { display: flex; flex-direction: column; gap: 4px; }
+
+.sp-custom {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.sp-custom .ws-field { flex: 1 1 0; min-width: 0; }
+
+.sp-times,
+.sp-unit {
+  padding-bottom: 9px;
+  color: var(--color-zinc-500);
+  font-size: 0.85rem;
+}

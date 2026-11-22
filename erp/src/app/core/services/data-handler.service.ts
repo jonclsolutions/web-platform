@@ -314,6 +314,20 @@ export class DataHandler {
   }
 
   /**
+   * @description PUT of a JSON payload WITHOUT the global error dialog - for saves whose errors
+   *   the caller explains itself (e.g. a conflict with a newer version saved in another tab);
+   *   the caller handles every error.
+   * @param apiUrl The endpoint path.
+   * @param data The JSON payload.
+   * @returns {Observable<T>} The payload of the answer; errors are passed on unchanged.
+   */
+  putQuietly<T>(apiUrl: string, data: any): Observable<T> {
+    return this.http.put<ApiEnvelope<T>>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
+      map(response => this.unwrap<T>(response))
+    );
+  }
+
+  /**
    * @description Performs a PATCH request (partial update) and unwraps the result.
    */
   patch<T>(apiUrl: string, data: any): Observable<T> {

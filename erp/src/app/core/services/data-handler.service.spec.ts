@@ -133,6 +133,27 @@ describe('DataHandler', () => {
   });
 
   /**
+   * @description putQuietly sends a JSON PUT, returns the payload and passes an error on WITHOUT
+   *   the error dialog (the caller explains e.g. a version conflict itself).
+   * @input putQuietly({n: 1}) → {data: 'saved'}; putQuietly → 409.
+   * @output Method PUT with the body; 'saved'; the error reaches the subscriber (status 409); alert not opened.
+   */
+  it('putQuietly does not open the error dialog', () => {
+    const results: any[] = [];
+    let status = 0;
+    service.putQuietly('t/1', { n: 1 }).subscribe(r => results.push(r));
+    const req = http.expectOne(`${base}/t/1`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({ n: 1 });
+    req.flush({ data: 'saved' });
+    service.putQuietly('t/1', { n: 2 }).subscribe({ error: e => (status = e.status) });
+    http.expectOne(`${base}/t/1`).flush({ error_code: 'version_conflict' }, { status: 409, statusText: 'Conflict' });
+    expect(results).toEqual(['saved']);
+    expect(status).toBe(409);
+    expect(alert.open).not.toHaveBeenCalled();
+  });
+
+  /**
    * @description post / put / patch send JSON and return `data`; delete sends DELETE and returns
    *   null for 204 or the payload of an answer with a body (e.g. kept trash records).
    * @input post({n: 1}), put({n: 2}), patch({n: 3}) answered {data: …}; delete ×2 (204; {data: {skipped_count: 1}}).

@@ -22,7 +22,7 @@ describe('QuotaBarComponent', () => {
    */
   async function render(used: number, trash = 0): Promise<HTMLElement> {
     const ctx = createAdminTestContext();
-    ctx.dataHandler.get.and.returnValue(of({ used_bytes: used, quota_bytes: 1024 * 1024, trash_bytes: trash, counts: { folders: 0, images: 0, fonts: 0 } }));
+    ctx.dataHandler.get.and.returnValue(of({ used_bytes: used, quota_bytes: 1024 * 1024, trash_bytes: trash, counts: { folders: 0, images: 0, fonts: 0, templates: 0 } }));
     await TestBed.configureTestingModule({ imports: [QuotaBarComponent], providers: ctx.providers }).compileComponents();
     const fixture = TestBed.createComponent(QuotaBarComponent);
     fixture.detectChanges();

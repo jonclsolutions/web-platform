@@ -1,0 +1,62 @@
+<!--
+    @file: fields-panel.component.html
+    @path: src/app/apps/js-creator/admin/images/editor/panels/fields-panel.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Panel "Fields": one card per field in the order of the generating form with its
+        label, key, help, required, the properties of its kind and the up / down buttons.
+-->
+<div class="pn">
+  <section class="pn-section">
+    <p class="pn-hint">{{ t('fields_hint') }}</p>
+  </section>
+  <fieldset class="pn-fieldset" [disabled]="!store().editable">
+    @for (field of fields(); track field.key; let i = $index; let first = $first; let last = $last) {
+      <section class="pn-section">
+        <div class="pn-row">
+          <span class="pn-title pn-grow">{{ t(field.type === 'text' ? 'field_text' : 'field_image') }} · {{ uses().get(field.key) ?? 0 }}×</span>
+          <button type="button" class="pn-tool" [disabled]="first" [title]="t('move_up')" [attr.aria-label]="t('move_up')" (click)="move(i, -1)">↑</button>
+          <button type="button" class="pn-tool" [disabled]="last" [title]="t('move_down')" [attr.aria-label]="t('move_down')" (click)="move(i, 1)">↓</button>
+        </div>
+        <div class="pn-grid2">
+          <label class="pn-field">
+            <span>{{ t('field_label') }}</span>
+            <input class="jc-input" type="text" maxlength="80" [value]="field.label" (input)="update(field.key, { label: $any($event.target).value }, 'label')" />
+          </label>
+          <label class="pn-field">
+            <span>{{ t('field_key') }}</span>
+            <input #keyInput class="jc-input" type="text" maxlength="40" spellcheck="false" [value]="field.key" (change)="renameKey(field, keyInput)" />
+          </label>
+        </div>
+        @if (keyErrors()[field.key]; as error) {
+          <p class="ws-field-error pn-hint" role="alert">{{ error }}</p>
+        }
+        <label class="pn-field">
+          <span>{{ t('field_help') }}</span>
+          <input class="jc-input" type="text" maxlength="200" [value]="field.help" (input)="update(field.key, { help: $any($event.target).value }, 'help')" />
+        </label>
+        <label class="pn-check-row"><input type="checkbox" [checked]="field.required" (change)="update(field.key, { required: $any($event.target).checked })" />{{ t('required') }}</label>
+        @if (asText(field); as tf) {
+          <label class="pn-field">
+            <span>{{ t('sample_text') }}</span>
+            <textarea class="jc-input pn-textarea" rows="2" maxlength="2000" [value]="tf.sample" (input)="update(tf.key, { sample: $any($event.target).value }, 'sample')"></textarea>
+          </label>
+          <div class="pn-grid2">
+            <label class="pn-field"><span>{{ t('max_length') }}</span><input class="jc-input" type="number" min="1" max="2000" [value]="tf.maxLength" (change)="setNum(tf.key, 'maxLength', $event, 1, 2000)" /></label>
+            <label class="pn-check-row pn-check-row--end"><input type="checkbox" [checked]="tf.multiline" (change)="update(tf.key, { multiline: $any($event.target).checked })" />{{ t('multiline') }}</label>
+          </div>
+        }
+        @if (asImage(field); as imf) {
+          <div class="pn-grid2">
+            <label class="pn-field"><span>{{ t('min_width') }}</span><input class="jc-input" type="number" min="0" max="10000" [value]="imf.minWidth" (change)="setNum(imf.key, 'minWidth', $event, 0, 10000)" /></label>
+            <label class="pn-field"><span>{{ t('min_height') }}</span><input class="jc-input" type="number" min="0" max="10000" [value]="imf.minHeight" (change)="setNum(imf.key, 'minHeight', $event, 0, 10000)" /></label>
+          </div>
+          <p class="pn-hint">{{ t('min_resolution_hint') }}</p>
+        }
+      </section>
+    } @empty {
+      <p class="pn-empty">{{ t('no_fields') }}</p>
+    }
+  </fieldset>
+</div>

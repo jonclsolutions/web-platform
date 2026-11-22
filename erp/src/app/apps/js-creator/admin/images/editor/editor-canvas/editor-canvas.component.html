@@ -1,0 +1,59 @@
+<!--
+    @file: editor-canvas.component.html
+    @path: src/app/apps/js-creator/admin/images/editor/editor-canvas/editor-canvas.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Scrollable area with the stage in the middle: the canvas of the renderer and the
+        SVG layer of the editor in template coordinates (grid, safe zone, hover outline,
+        selection, handles, rotation handle, guides, marquee). Strokes keep 1 CSS px at any zoom.
+-->
+<div #viewport class="ec-viewport" (wheel)="onWheel($event)">
+  <div class="ec-area">
+    <div #stage class="ec-stage" [style.width.px]="stageWidth()" [style.height.px]="stageHeight()" [style.cursor]="cursor()"
+      (pointerdown)="onPointerDown($event)" (pointermove)="onPointerMove($event)" (pointerup)="onPointerUp($event)"
+      (pointercancel)="onPointerUp($event)" (pointerleave)="hovered.set(null)" (dblclick)="onDoubleClick($event)">
+      <canvas #canvas class="ec-canvas" [style.width.px]="stageWidth()" [style.height.px]="stageHeight()" aria-hidden="true"></canvas>
+      <svg class="ec-overlay" [attr.viewBox]="'0 0 ' + size().width + ' ' + size().height" [attr.width]="stageWidth()" [attr.height]="stageHeight()"
+        aria-hidden="true">
+        @if (grid() > 0 && grid() * zoom() >= 4) {
+          <defs>
+            <pattern id="jc-grid" [attr.width]="grid()" [attr.height]="grid()" patternUnits="userSpaceOnUse">
+              <path [attr.d]="'M ' + grid() + ' 0 L 0 0 0 ' + grid()" class="ec-grid" />
+            </pattern>
+          </defs>
+          <rect x="0" y="0" [attr.width]="size().width" [attr.height]="size().height" fill="url(#jc-grid)" />
+        }
+        @if (safe(); as zone) {
+          <rect class="ec-safe" x="0" y="0" [attr.width]="size().width" [attr.height]="zone.top" />
+          <rect class="ec-safe" x="0" [attr.y]="size().height - zone.bottom" [attr.width]="size().width" [attr.height]="zone.bottom" />
+          <line class="ec-safe-line" x1="0" [attr.y1]="zone.top" [attr.x2]="size().width" [attr.y2]="zone.top" />
+          <line class="ec-safe-line" x1="0" [attr.y1]="size().height - zone.bottom" [attr.x2]="size().width" [attr.y2]="size().height - zone.bottom" />
+        }
+        @if (hoverOutline(); as points) {
+          <polygon class="ec-hover" [attr.points]="points" />
+        }
+        @for (outline of outlines(); track outline.id) {
+          <polygon class="ec-outline" [class.ec-outline--locked]="outline.locked" [attr.points]="outline.points" />
+        }
+        @if (groupBox(); as box) {
+          <rect class="ec-group" [attr.x]="box.x" [attr.y]="box.y" [attr.width]="box.w" [attr.height]="box.h" />
+        }
+        @if (handles(); as h) {
+          <line class="ec-outline" [attr.x1]="h.top.x" [attr.y1]="h.top.y" [attr.x2]="h.rotate.x" [attr.y2]="h.rotate.y" />
+          <circle class="ec-handle ec-handle--rotate" data-handle="rotate" [attr.cx]="h.rotate.x" [attr.cy]="h.rotate.y" [attr.r]="handleSize * 0.6" />
+          @for (handle of h.handles; track handle.handle) {
+            <rect class="ec-handle" [attr.data-handle]="handle.handle" [attr.x]="handle.at.x - handleSize / 2" [attr.y]="handle.at.y - handleSize / 2"
+              [attr.width]="handleSize" [attr.height]="handleSize" />
+          }
+        }
+        @for (line of guideLines(); track $index) {
+          <line class="ec-guide" [attr.x1]="line.x1" [attr.y1]="line.y1" [attr.x2]="line.x2" [attr.y2]="line.y2" />
+        }
+        @if (marquee(); as box) {
+          <rect class="ec-marquee" [attr.x]="box.x" [attr.y]="box.y" [attr.width]="box.w" [attr.height]="box.h" />
+        }
+      </svg>
+    </div>
+  </div>
+</div>

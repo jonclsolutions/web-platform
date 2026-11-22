@@ -1,0 +1,35 @@
+<!--
+    @file: size-picker.component.html
+    @path: src/app/apps/js-creator/admin/shared/size-picker/size-picker.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Select of the presets with "custom size"; for a custom size two inputs
+        width × height in px.
+-->
+<div class="sp">
+  <div class="ws-field">
+    <label [for]="idPrefix + '-preset'">{{ t('format') }}</label>
+    <select [id]="idPrefix + '-preset'" [ngModel]="selected" (ngModelChange)="choose($event)">
+      @for (preset of presets; track preset.id) {
+        <option [value]="preset.id">{{ label(preset) }}</option>
+      }
+      <option value="custom">{{ t('preset_custom') }}</option>
+    </select>
+  </div>
+  @if (selected === 'custom') {
+    <div class="sp-custom">
+      <div class="ws-field">
+        <label [for]="idPrefix + '-width'">{{ t('width') }}</label>
+        <input [id]="idPrefix + '-width'" type="number" [min]="min" [max]="max" step="1" [ngModel]="size.width" (ngModelChange)="setSide('width', $event)" />
+      </div>
+      <span class="sp-times" aria-hidden="true">×</span>
+      <div class="ws-field">
+        <label [for]="idPrefix + '-height'">{{ t('height') }}</label>
+        <input [id]="idPrefix + '-height'" type="number" [min]="min" [max]="max" step="1" [ngModel]="size.height" (ngModelChange)="setSide('height', $event)" />
+      </div>
+      <span class="sp-unit">px</span>
+    </div>
+    <p class="ws-field-hint">{{ t('size_hint') }}</p>
+  }
+</div>

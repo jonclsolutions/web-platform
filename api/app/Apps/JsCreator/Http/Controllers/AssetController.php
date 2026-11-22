@@ -9,9 +9,11 @@
  *   LibraryImage, within the quota), rename, delete to the trash, restore, delete for good, empty
  *   the trash. Every query is limited to the signed-in account (another account's image = 404,
  *   also for the sysadmin).
- * @note The audit log names only the id of an image, never its name.
- * @dependencies LibraryImage, WorkspaceFiles, WorkspaceQuota, CreatorAsset, AssetResource,
- *   AppliesSafeSorting, LogsActivity (JsCreatorLog).
+ * @note The audit log names only the id of an image, never its name. An image used by a template
+ *   (also one in the trash) cannot be deleted - 409 `in_use` with the templates (TemplateUsages);
+ *   the list sends them as `used_by` of every image.
+ * @dependencies LibraryImage, WorkspaceFiles, WorkspaceQuota, TemplateUsages, CreatorAsset,
+ *   AssetResource, AppliesSafeSorting, LogsActivity (JsCreatorLog).
  */
 
 namespace App\Apps\JsCreator\Http\Controllers;
@@ -20,7 +22,9 @@ use App\Apps\JsCreator\Http\Requests\StoreAssetsRequest;
 use App\Apps\JsCreator\Http\Requests\UpdateAssetRequest;
 use App\Apps\JsCreator\Http\Resources\AssetResource;
 use App\Apps\JsCreator\Models\CreatorAsset;
+use App\Apps\JsCreator\Models\CreatorUsage;
 use App\Apps\JsCreator\Models\JsCreatorLog;
+use App\Apps\JsCreator\Services\TemplateUsages;
 use App\Apps\JsCreator\Services\WorkspaceQuota;
 use App\Apps\JsCreator\Support\LibraryImage;
 use App\Apps\JsCreator\Support\WorkspaceFiles;
@@ -43,8 +47,9 @@ class AssetController extends Controller
     private const PER_PAGE = 48;
 
     /**
-     * @description Page of the own images (`only_trashed`, `search` in the name, `sort_by`,
-     *   `sort_direction`, `page`).
+     * @description Page of the own images (`only_trashed`, `search` in the name, `ids` = only these
+     *   images (comma separated, at most 200 - the images a template uses), `sort_by`,
+     *   `sort_direction`, `page`), each with the templates that use it (`used_by`).
      * @param Request $request
      * @return JsonResponse
      */
@@ -58,9 +63,18 @@ class AssetController extends Controller
         if ($search !== '') {
             $query->where('name', 'like', '%' . addcslashes(mb_substr($search, 0, 100), '%_\\') . '%');
         }
+        $ids = $request->query('ids');
+        if (is_string($ids) && $ids !== '') {
+            $query->whereIn('id', array_slice(array_map('intval', explode(',', $ids)), 0, 200));
+        }
         $this->applySorting($query, $request, 'created_at');
+        $page = $query->paginate(is_string($ids) && $ids !== '' ? 200 : self::PER_PAGE);
+        $usedBy = TemplateUsages::usedBy(CreatorUsage::ASSET, collect($page->items())->pluck('id')->all());
+        foreach ($page->items() as $asset) {
+            $asset->setRelation('usedBy', collect($usedBy[$asset->id] ?? []));
+        }
 
-        return $this->respondPaginated($query->paginate(self::PER_PAGE), AssetResource::class);
+        return $this->respondPaginated($page, AssetResource::class);
     }
 
     /**
@@ -107,7 +121,7 @@ class AssetController extends Controller
         }
 
         foreach ($assets as $asset) {
-            $this->logAction($request, JsCreatorLog::class, 'create', 'Asset', "Library image #{$asset->id} uploaded", $asset->id, 'Asset');
+            $this->logAction($request, JsCreatorLog::class, 'create', 'Asset', "Library image #{$asset->id} uploaded", $asset->id, 'Asset', ['files']);
         }
 
         return $this->respond(AssetResource::collection($assets), 201);
@@ -130,18 +144,22 @@ class AssetController extends Controller
 
     /**
      * @description Moves an own image to the trash, or (`force=1`) deletes an image of the trash
-     *   for good with its files.
+     *   for good with its files. A used image stays.
      * @param Request $request `force`.
      * @param string $id Image.
-     * @return JsonResponse 204; 404.
+     * @return JsonResponse 204; 404; 409 `in_use` (used by a template).
      */
     public function destroy(Request $request, string $id): JsonResponse
     {
         if (filter_var($request->query('force', false), FILTER_VALIDATE_BOOLEAN)) {
-            CreatorAsset::onlyTrashed()->ownedBy($request->user())->findOrFail((int) $id)->deleteWithFiles();
+            $asset = CreatorAsset::onlyTrashed()->ownedBy($request->user())->findOrFail((int) $id);
+            TemplateUsages::ensureUnused(CreatorUsage::ASSET, $asset->id);
+            $asset->deleteWithFiles();
             $this->logAction($request, JsCreatorLog::class, 'hard_delete', 'Asset', "Library image #{$id} deleted for good", (int) $id, 'Asset');
         } else {
-            CreatorAsset::query()->ownedBy($request->user())->findOrFail((int) $id)->delete();
+            $asset = CreatorAsset::query()->ownedBy($request->user())->findOrFail((int) $id);
+            TemplateUsages::ensureUnused(CreatorUsage::ASSET, $asset->id);
+            $asset->delete();
             $this->logAction($request, JsCreatorLog::class, 'soft_delete', 'Asset', "Library image #{$id} moved to the trash", (int) $id, 'Asset');
         }
 
