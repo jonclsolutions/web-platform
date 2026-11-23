@@ -72,35 +72,10 @@
             </select>
           </label>
         }
-        <div class="gen-phone-toggle">
-          <button type="button" class="ws-btn ws-btn--sm" [attr.aria-pressed]="phone()" (click)="togglePhone()">{{ t(phone() ? 'phone_off' : 'phone_on') }}</button>
-        </div>
         @if (doc(); as d) {
-          <div [class.gen-phone]="phone()">
-            @if (phone()) {
-              <div class="gen-phone-bar" aria-hidden="true">
-                <span class="gen-phone-avatar"></span>
-                <span class="gen-phone-account">{{ texts()['ucet'] || t('phone_account') }}</span>
-                <span class="gen-phone-dots">•••</span>
-              </div>
-            }
-            <app-jc-generate-preview [doc]="d" [size]="size()" [resources]="resources" [values]="values()" [redraw]="redraw()"
-              [pannable]="filledImages()" [maxHeight]="phone() ? 520 : 640" [label]="t('preview')" [page]="slideIndex()" [zones]="previewZones()"
-              (rendered)="report.set($event)" (pan)="onPan($event)" />
-            @if (phone()) {
-              <div class="gen-phone-foot">
-                <span class="gen-phone-icons" aria-hidden="true">♡ 💬 ↗</span>
-                @if (pageCount() > 1) {
-                  <span class="gen-phone-dotsbar" aria-hidden="true">
-                    @for (n of slideNumbers(); track n) { <span [class.gen-phone-dot--on]="slideIndex() === n - 1" class="gen-phone-dot"></span> }
-                  </span>
-                }
-                @if (phoneCaption()) {
-                  <p class="gen-phone-caption">{{ phoneCaption() }}</p>
-                }
-              </div>
-            }
-          </div>
+          <app-jc-generate-preview [doc]="d" [size]="size()" [resources]="resources" [values]="values()" [redraw]="redraw()"
+            [pannable]="filledImages()" [maxHeight]="640" [label]="t('preview')" [page]="slideIndex()" [zones]="previewZones()"
+            (rendered)="report.set($event)" (pan)="onPan($event)" />
         }
         @if (safeHits().length) {
           <ul class="gen-zone-hits" role="status">

@@ -267,7 +267,6 @@
                 "Under the text of the post is its length against the limits of the networks (Instagram 2,200, TikTok 4,000, LinkedIn 3,000, X 280 characters; an emoji = one character). An exceeded limit is highlighted – the limits are approximate.",
                 "Hashtags: saved hashtag sets are added to the end of the text of the post with one click. Manage the sets with Manage (at most 30 sets); they apply to every template.",
                 "Default folder: ticking “Always store the outputs of this template in this folder” makes the template remember the chosen folder and offer it next time instead of the last used one.",
-                "Phone preview: the button above the preview shows it in a phone frame with the first lines of the post and the dots of the carousel slides. The choice is remembered in this browser.",
                 "The unfinished filling (texts, the text of the post edited by hand, the name – no photos) is kept in this browser tab; after a reload it comes back by itself and Discard clears it. Closing the tab removes it."
               ]
             }

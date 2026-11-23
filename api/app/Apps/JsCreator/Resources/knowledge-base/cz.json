@@ -267,7 +267,6 @@
                 "Pod textem příspěvku je délka textu proti limitům sítí (Instagram 2 200, TikTok 4 000, LinkedIn 3 000, X 280 znaků; emoji = jeden znak). Překročený limit se zvýrazní – limity jsou orientační.",
                 "Hashtagy: uložené sady hashtagů se jedním klikem přidají na konec textu příspěvku. Sady spravujete tlačítkem Spravovat (nejvýš 30 sad); platí pro všechny šablony.",
                 "Výchozí složka: zaškrtnutím „Ukládat výstupy této šablony vždy do této složky“ si šablona vybranou složku zapamatuje a příště ji nabídne místo naposledy použité.",
-                "Náhled v telefonu: tlačítko nad náhledem ho zobrazí v rámečku telefonu s prvními řádky textu příspěvku a tečkami slidů karuselu. Volba se pamatuje v tomto prohlížeči.",
                 "Rozpracované vyplnění (texty, ručně upravený text příspěvku, název – bez fotek) se drží v této kartě prohlížeče; po obnovení stránky se samo vrátí a tlačítkem Zahodit ho vymažete. Zavřením karty zmizí."
               ]
             }

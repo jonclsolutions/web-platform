@@ -23,8 +23,7 @@
  *   as the form (produce()), waiting when the server asks to slow down (429).
  *   EVERYDAY HELPERS: lengths of the text of the post against the limits of the networks, hashtag
  *   sets of the account (inserted at the end of the text, managed in a dialog), the default
- *   folder of the template's outputs, the preview in a phone frame (remembered in this browser)
- *   and the unfinished filling kept in this tab (sessionStorage - texts, text of the post, name;
+ *   folder of the template's outputs and the unfinished filling kept in this tab (sessionStorage - texts, text of the post, name;
  *   never photos) and restored after a reload.
  *   - text fields: length, highlight of the selected part (`**…**`), what the template does
  *     when the text does not fit (shrunk / cut / generating refused);
@@ -111,9 +110,6 @@ const MAX_OUTPUT_BYTES = 20 * 1024 * 1024;
 
 /** Enlargement over which a photo is called too small for its place. */
 const BLUR_SCALE = 1.05;
-
-/** Key of the phone frame of the preview in this browser (on / off - nothing personal). */
-const PHONE_KEY = 'jsc.generate.phone';
 
 /** Prefix of the unfinished filling of a page in this tab (sessionStorage - gone with the tab). */
 const DRAFT_PREFIX = 'jsc.generate.draft.';
@@ -247,13 +243,6 @@ export class GeneratePageComponent implements OnInit {
   /** Limits of the hashtag sets. */
   readonly maxHashtagSets = MAX_HASHTAG_SETS;
   readonly maxHashtags = MAX_HASHTAGS;
-  /** The preview is shown in a phone frame (remembered in this browser). */
-  readonly phone = signal(this.readPhone());
-  /** First lines of the text of the post under the phone frame. */
-  readonly phoneCaption = computed(() => {
-    const text = this.caption().trim();
-    return text.length > 125 ? `${text.slice(0, 125).trimEnd()}…` : text;
-  });
   /** An unfinished filling of this page was restored from this tab. */
   readonly restoredDraft = signal(false);
   /** The draft may be written (after the restore - never before). */
@@ -870,17 +859,6 @@ export class GeneratePageComponent implements OnInit {
     else this.hashtagDialog.set({ ...dialog, error: this.t('hashtags_save_failed') });
   }
 
-  /** @description Shows / hides the phone frame of the preview (remembered in this browser). */
-  togglePhone(): void {
-    const on = !this.phone();
-    this.phone.set(on);
-    try {
-      localStorage.setItem(PHONE_KEY, on ? '1' : '0');
-    } catch {
-      // Storage may be unavailable - the frame is only a convenience.
-    }
-  }
-
   /**
    * @description Makes the chosen folder the default folder of the template's outputs (or clears it).
    * @param on Default or not.
@@ -964,15 +942,6 @@ export class GeneratePageComponent implements OnInit {
       if (key) sessionStorage.removeItem(key);
     } catch {
       // Nothing to remove.
-    }
-  }
-
-  /** @description Phone frame remembered in this browser. */
-  private readPhone(): boolean {
-    try {
-      return localStorage.getItem(PHONE_KEY) === '1';
-    } catch {
-      return false;
     }
   }
 

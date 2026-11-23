@@ -577,15 +577,14 @@ describe('GeneratePageComponent', () => {
   /**
    * @description Helpers of everyday work: limits of the networks, hashtag sets (inserted, saved
    *   whole), the default folder of the template (used on load over the last folder, saved by the
-   *   checkbox), the phone frame and the filling kept in this tab (restored, discarded).
+   *   checkbox) and the filling kept in this tab (restored, discarded).
    * @input draft of template 7 in sessionStorage; default folder 3 with last folder 2; a 300-character
-   *   text; set "Léto"; checkbox; phone toggle; discard
+   *   text; set "Léto"; checkbox; discard
    * @output title restored and notice; folderId 3; X over its limit; text + "#leto"; PUT preferences;
-   *   PUT templates/7/default-folder {folder_id 3 / null}; phone on and remembered; texts empty, draft gone
+   *   PUT templates/7/default-folder {folder_id 3 / null}; texts empty, draft gone
    */
   it('helps with everyday work', async () => {
     localStorage.setItem(LAST_FOLDER_KEY, '2');
-    localStorage.removeItem('jsc.generate.phone');
     await create('all', true, template => {
       template.default_folder_id = 3;
       sessionStorage.setItem('jsc.generate.draft.template.7', JSON.stringify({ texts: { title: 'Rozepsané', unknown: 'x' }, name: 'Můj název' }));
@@ -618,15 +617,8 @@ describe('GeneratePageComponent', () => {
     expect(ctx.dataHandler.putQuietly).toHaveBeenCalledWith('js-creator/images/templates/7/default-folder', { folder_id: null });
     expect(component.isDefaultFolder()).toBeFalse();
 
-    component.togglePhone();
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.gen-phone')).not.toBeNull();
-    expect(localStorage.getItem('jsc.generate.phone')).toBe('1');
-    component.togglePhone();
-
     component.discardDraft();
     expect(component.texts()['title']).toBe('');
     expect(sessionStorage.getItem('jsc.generate.draft.template.7')).toBeNull();
-    localStorage.removeItem('jsc.generate.phone');
   });
 });
