@@ -1,6 +1,24 @@
 {
     "unreleased": [
         {
+            "type": "changed",
+            "area": "web",
+            "part": "public",
+            "text": "New home page: a pinned hero where the admin screen rises and lands flat, content sliding over it, tiles arriving row by row. All web pages get calm scroll motion, off with reduced motion."
+        },
+        {
+            "type": "changed",
+            "area": "project-portal",
+            "part": "public",
+            "text": "The public order form has the dark look of the website (colours and fonts); fields and sending are unchanged."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "public",
+            "text": "Sign-in, 404 and legal pages of the website use the colours and fonts of the website; small grey texts have a readable contrast."
+        },
+        {
             "type": "added",
             "area": "js-creator",
             "part": "admin",

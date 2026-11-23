@@ -73,7 +73,6 @@
   color: inherit;
   cursor: pointer;
   transition: border-color var(--ease), background var(--ease), transform 0.18s ease;
-  animation: fadeUp 0.5s ease-out both;
 }
 
 .job-card:hover {
@@ -118,13 +117,6 @@
   text-overflow: ellipsis;
 }
 
-/* Staggered animation */
-.jobs-list .job-card:nth-child(1) { animation-delay: 0.05s; }
-.jobs-list .job-card:nth-child(2) { animation-delay: 0.10s; }
-.jobs-list .job-card:nth-child(3) { animation-delay: 0.15s; }
-.jobs-list .job-card:nth-child(4) { animation-delay: 0.20s; }
-.jobs-list .job-card:nth-child(5) { animation-delay: 0.25s; }
-.jobs-list .job-card:nth-child(6) { animation-delay: 0.30s; }
 
 /* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 640px) {

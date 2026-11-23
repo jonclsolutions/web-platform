@@ -4,7 +4,9 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Styles of the home component.
+    @description: Styles of the home component – pinned hero, content sheet, about, system
+        features (cascade), tech stack, FAQ and CTA.
+    @dependencies: apps/web/public/shared-styles/theme.css (tokens)
 */
 
 :host {
@@ -36,94 +38,138 @@
 /* ═══════════════════════════════════════════════════
    HERO SECTION
    ═══════════════════════════════════════════════════ */
-/* Full-bleed background; content aligned to the shared 1200px column
-   (side padding = space outside the column, min. --gutter). */
-.hero-section {
+/*
+  @module: hero
+  @description: Centred headline, lead, CTAs and stats over a planet horizon with a violet rim
+    light, and the admin screenshot in a browser frame. Static layout with reduced motion: the
+    frame sits under the text. `.hero--pinned` (motion allowed, phones included) turns the
+    section into a 200vh pinned stage; HomeComponent.renderHero() then moves the frame from tilted
+    to flat and the text away while the page scrolls.
+  @usage: section.hero(.hero--pinned) > .hero-stage > .hero-beam, .hero-planet, .hero-content,
+    .hero-device-in > .hero-device, .hero-hint
+  @note: Only transform / opacity change per frame. The stage carries the page grid itself
+    (it covers the fixed grid of .main-content). No blur is animated.
+*/
+.hero {
     position: relative;
     z-index: 1;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 64px;
-    padding: var(--hero-top) max(var(--gutter), (100% - var(--max-w)) / 2) var(--section-y);
-    box-sizing: border-box;
+}
+
+.hero-stage {
+    position: relative;
     overflow: hidden;
+    padding: var(--hero-top) var(--gutter) 0;
     background-color: #0d0d1b;
-    border-bottom-left-radius: 10%;
-    border-bottom-right-radius: 10%;
-    border-bottom: 2px solid rgba(166, 125, 255, 0.22);
+    background-image:
+        linear-gradient(rgba(166, 125, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(166, 125, 255, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
 }
 
-.hero-bg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: 50% 100%;
-    z-index: 0;
-    pointer-events: none;
-    user-select: none;
-    -webkit-user-drag: none;
-
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0, var(--color-black) 200px);
-    mask-image: linear-gradient(to bottom, transparent 0, var(--color-black) 200px);
-    filter: saturate(1.15) contrast(1.08) brightness(0.95);
+.hero--pinned {
+    height: 200vh;
 }
 
-.hero-section::before {
-    content: '';
+.hero--pinned .hero-stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    padding: 0;
+    perspective: 1700px;
+    perspective-origin: 50% 28%;
+}
+
+/* Planet horizon with a violet rim light */
+.hero-planet {
     position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: radial-gradient(ellipse 60% 70% at 30% 50%, rgba(13, 13, 27, 0.55) 0%, transparent 70%);
+    left: 50%;
+    top: 100%;
+    width: 3200px;
+    height: 3200px;
+    margin-left: -1600px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 0%, #1a1036 0%, #0a0a16 18%, #06060e 40%);
+    transform: translateY(-300px);
+    box-shadow:
+        0 0 0 1px rgba(200, 175, 255, 0.4),
+        0 -10px 40px rgba(166, 125, 255, 0.22),
+        0 -60px 160px rgba(107, 46, 145, 0.25);
     pointer-events: none;
+}
+
+.hero-beam {
+    position: absolute;
+    left: 50%;
+    bottom: -150px;
+    width: 1500px;
+    height: 760px;
+    margin-left: -750px;
+    background: radial-gradient(ellipse 50% 46% at 50% 62%, rgba(166, 125, 255, 0.26) 0%, rgba(107, 46, 145, 0.14) 40%, transparent 72%);
+    filter: blur(30px);
+    pointer-events: none;
+    animation: heroBeamPulse 7s ease-in-out infinite;
+}
+
+@keyframes heroBeamPulse {
+    50% { opacity: 0.8; }
 }
 
 .hero-content {
     position: relative;
-    z-index: 2;
-    flex: 0 1 580px;
-    max-width: 580px;
-    width: 100%;
-    opacity: 0;
-    transform: translateY(-16px);
-    animation: heroFadeIn 0.8s ease-out 0.2s forwards;
+    z-index: 3;
+    width: min(1100px, 100%);
+    margin: 0 auto;
+    text-align: center;
+}
+
+.hero--pinned .hero-content {
+    padding: 196px var(--gutter) 0;
 }
 
 .hero-heading {
-    font-size: 3.2rem;
-    text-align: left;
-    color: #e0e0e0;
-    margin-bottom: 22px;
+    font-size: clamp(2rem, 4.6vw, 4.4rem);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: var(--heading);
+    margin: 0 0 26px;
+}
+
+/* Gradient per word – background-clip: text does not reach into inline-block children */
+.hero-heading .rv-word {
+    background: linear-gradient(180deg, #ffffff 0%, #e6dcff 60%, #b89aff 120%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .hero-lead {
-    font-size: 1.08rem;
+    font-size: 1.22rem;
     color: #a0a0b5;
     line-height: 1.65;
-    max-width: 480px;
-    margin: 0 0 36px;
+    max-width: 620px;
+    margin: 0 auto 38px;
 }
 
 .hero-cta-row {
     display: flex;
     gap: 16px;
     flex-wrap: wrap;
-    margin-bottom: 48px;
+    justify-content: center;
+    margin-bottom: 44px;
 }
 
 .hero-stats {
     display: flex;
     align-items: center;
-    gap: 20px;
+    justify-content: center;
+    gap: 22px;
     flex-wrap: wrap;
 }
 
 .hero-stat {
     display: flex;
     flex-direction: column;
+    align-items: center;
 }
 
 .hero-stat-num {
@@ -143,93 +189,220 @@
     background: rgba(166, 125, 255, 0.25);
 }
 
-/*
-  @module: hero-visual
-  @description: Right-hand product mockup (browser + phone + floating cards) with a
-    subtle 3D tilt towards the text and a slow "float" animation. Fades in slightly
-    after the text column.
-  @usage: .hero-visual > img.hero-visual-img
-  @note: The tilt lives inside the float keyframes (not as a static transform) because a
-    running animation would otherwise override it. Disabled under prefers-reduced-motion.
-*/
-.hero-visual {
-    position: relative;
-    z-index: 2;
-    flex: 1 1 0;
-    min-width: 0;
-    display: flex;
-    justify-content: center;
-    perspective: 1400px;
+/* Lead, CTAs and stats follow the headline (its words take ~0.85 s) */
+.hero-in {
     opacity: 0;
-    transform: translateY(-16px);
-    animation: heroFadeIn 0.8s ease-out 0.45s forwards;
+    transform: translateY(18px);
+    animation: heroIn 0.7s var(--ease-out) forwards;
+}
+.hero-lead.hero-in { animation-delay: 0.85s; }
+.hero-cta-row.hero-in { animation-delay: 1.05s; }
+.hero-stats.hero-in { animation-delay: 1.25s; }
+
+@keyframes heroIn {
+    to { opacity: 1; transform: none; }
 }
 
-.hero-visual-img {
+/*
+  @module: hero-device
+  @description: Browser frame with the admin screenshot. Outer wrapper = one-time entrance (CSS);
+    inner .hero-device = scroll-driven pose when pinned (inline transform from the component).
+  @usage: .hero-device-in > .hero-device > .hero-device-frame > .hero-device-bar + .hero-device-screen
+  @note: When pinned the width fits both the viewport width and its height (the flat screen must
+    fit below the header): min(1360px, 100vw − 80px, (88vh − 60px) × 1.648).
+    The frame is decorative (aria-hidden) and, when pinned, its box sits over the hero text from
+    the top of the stage – it must never take clicks, or the hero CTAs stop working.
+*/
+.hero-device-in {
+    position: relative;
+    z-index: 4;
+    pointer-events: none;
+    width: min(1100px, 100%);
+    margin: 56px auto 0;
+    opacity: 0;
+    animation: heroDeviceIn 1.2s var(--ease-out) 1.1s forwards;
+}
+
+@keyframes heroDeviceIn {
+    from { opacity: 0; transform: translateY(120px); }
+    to { opacity: 1; transform: none; }
+}
+
+.hero--pinned .hero-device-in {
+    --device-w: min(1360px, calc(100vw - 80px), calc((88vh - 60px) * 1.648));
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: var(--device-w);
+    margin: 0 0 0 calc(var(--device-w) / -2);
+}
+
+.hero-device {
+    position: relative;
+    transform-origin: 50% 0%;
+}
+
+.hero--pinned .hero-device {
+    transform: translateY(68vh) rotateX(30deg) scale(0.8);
+    will-change: transform;
+}
+
+.hero-device-frame {
+    border-radius: 22px;
+    padding: 10px;
+    background: linear-gradient(180deg, #1d1d3e, #111128);
+    border: 1px solid rgba(166, 125, 255, 0.35);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 60px 140px rgba(0, 0, 0, 0.7);
+}
+
+.hero-device-bar {
+    height: 34px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 14px;
+}
+
+.hero-device-bar i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(166, 125, 255, 0.35);
+}
+
+.hero-device-bar i:first-child {
+    background: #a67dff;
+}
+
+.hero-device-url {
+    margin-left: 18px;
+    height: 20px;
+    flex: 0 1 360px;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    border-radius: 999px;
+    background: rgba(166, 125, 255, 0.08);
+    border: 1px solid rgba(166, 125, 255, 0.15);
+    font: 600 11px/18px 'Inter', sans-serif;
+    color: #8585a0;
+    text-align: center;
+    letter-spacing: 0.02em;
+}
+
+.hero-device-screen {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 1600 / 971;
+    background: #f4f4f2;
+}
+
+.hero-device-screen img {
     display: block;
     width: 100%;
-    max-width: 860px;
-    height: auto;
-    transform: rotateY(-10deg) rotateX(4deg);
-    animation: heroFloat 8s ease-in-out infinite;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
     user-select: none;
     -webkit-user-drag: none;
 }
 
-@keyframes heroFadeIn {
-    to { opacity: 1; transform: translateY(0); }
+/* Glass glare that slides away while the screen flattens (pinned only) */
+.hero-device-glare {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.22) 45%, transparent 60%);
+    transform: translateX(-60%);
+    pointer-events: none;
 }
 
-@keyframes heroFloat {
-    0%, 100% { transform: rotateY(-10deg) rotateX(4deg) translateY(0); }
-    50%      { transform: rotateY(-10deg) rotateX(4deg) translateY(-12px); }
+.hero:not(.hero--pinned) .hero-device-glare {
+    display: none;
 }
 
-/* Narrower desktop / landscape tablet - mockup under the text */
-@media (max-width: 1100px) {
-    .hero-section {
-        flex-direction: column;
-        justify-content: center;
-        gap: 16px; /* SVG has its own empty top margin (glow), so the gap looks smaller */
-    }
-
-    .hero-visual {
-        flex: none;
-        width: 100%;
-        max-width: 640px;
-    }
-
-    /* Text above the mockup is centered, same as on mobile */
-    .hero-content { flex: none; }
-    .hero-brand-logo { margin: 0 auto 26px; }
-    .hero-heading { text-align: center; }
-    .hero-lead { margin: 0 auto 36px; }
-    .hero-cta-row, .hero-stats { justify-content: center; }
-
-    .hero-visual-img {
-        animation-name: heroFloatFlat;
-    }
+/* Scroll hint – fades out with the first scroll (pinned only) */
+.hero-hint {
+    display: none;
 }
 
-@keyframes heroFloatFlat {
-    0%, 100% { transform: rotateX(4deg) translateY(0); }
-    50%      { transform: rotateX(4deg) translateY(-10px); }
+.hero--pinned .hero-hint {
+    display: block;
+    position: absolute;
+    pointer-events: none;
+    left: 50%;
+    bottom: 34px;
+    z-index: 5;
+    width: 26px;
+    height: 42px;
+    margin-left: -13px;
+    border: 1.5px solid rgba(166, 125, 255, 0.45);
+    border-radius: 999px;
+}
+
+.hero--pinned .hero-hint::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 8px;
+    width: 4px;
+    height: 8px;
+    margin-left: -2px;
+    border-radius: 2px;
+    background: #a67dff;
+    animation: heroHintDot 1.8s var(--ease-in-out) infinite;
+}
+
+@keyframes heroHintDot {
+    0% { transform: translateY(0); opacity: 1; }
+    70% { transform: translateY(14px); opacity: 0; }
+    100% { opacity: 0; }
 }
 
 @media (max-width: 905px) {
-    .hero-section { justify-content: center; }
-    .hero-content { text-align: center; margin: 0 auto; }
-    .hero-brand-logo { margin: 0 auto 26px; }
-    .hero-lead { margin: 0 auto 36px; font-size: 1rem; }
-    .hero-cta-row, .hero-stats { justify-content: center; }
-    .hero-heading { font-size: 2.3rem; text-align: center; }
-    .hero-section::before { background: radial-gradient(ellipse 90% 45% at 50% 38%, rgba(13, 13, 27, 0.72) 0%, transparent 75%); }
-    .hero-bg { opacity: 0.85; }
+    .hero-lead { font-size: 1rem; }
+    .hero-device-in { margin-top: 40px; }
+    .hero-device-frame { border-radius: 14px; padding: 6px; }
+    .hero-device-bar { height: 24px; padding: 0 8px; gap: 5px; }
+    .hero-device-bar i { width: 7px; height: 7px; }
+    .hero-device-url { display: none; }
+    .hero-device-screen { border-radius: 8px; }
+}
+
+/*
+  @module: hero-pinned-phone
+  @description: Pinned hero on phones and tablets. The stage follows the visible viewport (dvh –
+    the mobile address bar), the text starts higher (smaller header), the frame is nearly full
+    width and starts at the bottom edge of the screen; HomeComponent.renderCompactHero() moves it
+    to the middle below the header. The pose below is the first frame before the script measures.
+  @usage: automatic under 905 px with motion allowed (.hero--pinned)
+*/
+@media (max-width: 905px) {
+    .hero--pinned .hero-stage {
+        height: 100vh;
+        height: 100dvh;
+        perspective: 1200px;
+    }
+    .hero--pinned .hero-content { padding: 112px var(--gutter) 0; }
+    .hero--pinned .hero-device-in { --device-w: min(600px, calc(100vw - 32px)); }
+    .hero--pinned .hero-device { transform: translateY(80vh) rotateX(28deg) scale(0.92); }
+}
+
+/* Short desktop screens (laptops, system font scaling): less air above the hero text, so the
+   stats stay clear of the rising screen (HomeComponent.measureWideHero moves it lower if needed) */
+@media (min-width: 906px) and (max-height: 860px) {
+    .hero--pinned .hero-content { padding-top: 140px; }
+    /* the screen peeks out where the scroll hint would sit */
+    .hero--pinned .hero-hint { display: none; }
+}
+
+/* No mouse on touch screens and phones – no scroll-wheel hint */
+@media (max-width: 905px), (hover: none) {
+    .hero--pinned .hero-hint { display: none; }
 }
 
 @media (max-width: 480px) {
-    .hero-brand-logo { width: 210px; }
-    .hero-heading { font-size: 1.9rem; }
     .hero-stats { gap: 14px; }
 
     /* CTAs side by side (primary + secondary), smaller inner padding
@@ -253,8 +426,77 @@
     .hero-cta-row { flex-direction: column; align-items: stretch; }
     .hero-cta-row > * { justify-content: center; }
 }
+
 @media (prefers-reduced-motion: reduce) {
-    .hero-visual-img { animation: none; }
+    .hero-in,
+    .hero-device-in {
+        opacity: 1;
+        transform: none;
+        animation: none;
+    }
+    .hero-beam { animation: none; }
+}
+
+/*
+  @module: content sheet
+  @description: Rounded panel with every section of the page. It overlaps the end of the pinned
+    hero (−14vh; on phones HomeComponent sets a measured margin so the sheet ends 28 px under the
+    flat screen), so the content slides over the screen; on the static hero only slightly. The
+    page grid is a sticky viewport-sized layer inside it (the sheet background covers the fixed
+    grid of .main-content).
+  @usage: .main-content > .hero + .sheet > sections
+*/
+.sheet {
+    position: relative;
+    z-index: 5;
+    margin-top: -48px;
+    padding-top: 40px;
+    background: #0d0d1b;
+    border-radius: 56px 56px 0 0;
+    border-top: 1px solid rgba(166, 125, 255, 0.22);
+    overflow-x: clip;
+}
+
+.hero--pinned + .sheet {
+    margin-top: -14vh;
+}
+
+.sheet::before {
+    content: '';
+    display: block;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    margin-bottom: -100vh;
+    background-image:
+        linear-gradient(rgba(166, 125, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(166, 125, 255, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+}
+
+@media (max-width: 905px) {
+    /* clip: the about glow may now reach above its section, but never past the rounded edge */
+    .sheet { border-radius: 32px 32px 0 0; overflow: clip; padding-top: 12px; }
+}
+
+/*
+  @module: section separator
+  @description: 1px violet line between sections, drawn from the centre while it scrolls in
+    (appScrollEffect="draw-x").
+  @usage: .gradient-seep-wrp > .gradient-line-separator
+*/
+.gradient-seep-wrp {
+    position: relative;
+    z-index: 1;
+    max-width: var(--max-w);
+    margin: 24px auto;
+    padding: 0 var(--gutter);
+}
+
+.gradient-line-separator {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(166, 125, 255, 0.35), transparent);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -388,16 +630,9 @@
 }
 
 @media (max-width: 905px) {
-  /* Section is pulled 48px under the rounded hero -> +48px padding keeps the visual gap */
-  .about-section {
-    padding-top: calc(var(--section-y) / 2 + 48px);
-    margin-top: -48px;
-  }
-  .hero-section {
-    z-index: 2;
-    border-bottom-left-radius: 40px;
-    border-bottom-right-radius: 40px;
-  }
+  /* Narrow screens: the glow is wider than the section – clip only the sides, otherwise its top
+     is cut by the section edge into a hard horizontal band */
+  .about-section { overflow-x: clip; overflow-y: visible; }
   .about-heading { font-size: 2.1rem; }
   .about-story-media {
     width: 70vw;
@@ -461,6 +696,20 @@
   text-align: justify;
   max-width: none;
   margin: 0 auto 0 0;
+  color: var(--text-soft);
+}
+
+/*
+  @module: about photo turn
+  @description: Wrapper that turns the photo in from the side while it scrolls in
+    (appScrollEffect="tilt"); the photo keeps its own rest tilt inside it.
+  @usage: .about-story-media > .about-story-turn > .about-story-photo-placeholder
+*/
+.about-story-turn {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  transform-style: preserve-3d;
 }
 
 /* ── Photo: narrower, portrait, with a 3D tilt ─────────────
@@ -480,7 +729,6 @@
   justify-content: center;
   gap: 10px;
   color: #7a7a8c;
-  transition: transform 0.4s ease, box-shadow 0.4s ease;
   overflow: hidden;
 }
 
@@ -502,20 +750,6 @@
   box-shadow:
     -18px 22px 40px -18px rgba(0, 0, 0, 0.55),
     8px 0 26px -14px rgba(166, 125, 255, 0.28);
-}
-
-.about-story-row > .about-story-text:first-child ~ .about-story-media:hover .about-story-photo-placeholder {
-  transform: rotateY(-6deg) rotateX(2deg) rotate(-1deg) translateY(-4px);
-  box-shadow:
-    14px 26px 46px -18px rgba(0, 0, 0, 0.6),
-    -8px 0 30px -12px rgba(166, 125, 255, 0.36);
-}
-
-.about-story-row > .about-story-media:first-child:hover .about-story-photo-placeholder {
-  transform: rotateY(6deg) rotateX(2deg) rotate(1deg) translateY(-4px);
-  box-shadow:
-    -14px 26px 46px -18px rgba(0, 0, 0, 0.6),
-    8px 0 30px -12px rgba(166, 125, 255, 0.36);
 }
 
 /* ── Responsive ─────────────────────────────────────────────── */
@@ -550,12 +784,6 @@
 
   .about-story-heading {
     font-size: 1.5rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .about-story-photo-placeholder {
-    transition: none;
   }
 }
 
@@ -602,19 +830,41 @@
   position: relative;
   z-index: 1;
   padding: calc(var(--section-y) / 2) var(--gutter) 0;
-  overflow: hidden;
+  overflow-x: clip;
 }
 
+/*
+  @module: feature tiles
+  @description: 2 × 4 grid of tiles with inner separators. While it scrolls in, the tiles arrive
+    row by row from both sides (appScrollEffect="cascade"); the outer border is a separate layer
+    that fades in once the last row has landed, so a tile outside the box never shows a cut border.
+  @usage: .sys-features-list_temp_new > .sys-features-frame + .sys-feature-item_temp_new × 8
+  @note: The tiles travel outside the box, so the list does not clip and the corner tiles carry
+    the corner radius. The frame is the first child – the item selectors count with it.
+*/
 .sys-features-list_temp_new {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0;
   max-width: var(--max-w);
   margin: 0 auto 40px;
+  border-radius: 16px;
+}
+
+.sys-features-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
   border: 1px solid rgba(166, 125, 255, 0.1);
   border-radius: 16px;
-  overflow: hidden;
+  pointer-events: none;
 }
+
+.sys-feature-item_temp_new:nth-child(2) { border-top-left-radius: 16px; }
+.sys-feature-item_temp_new:nth-child(3) { border-top-right-radius: 16px; }
+.sys-feature-item_temp_new:nth-last-child(2) { border-bottom-left-radius: 16px; }
+.sys-feature-item_temp_new:last-child { border-bottom-right-radius: 16px; }
 
 .sys-feature-item_temp_new {
   display: flex;
@@ -628,8 +878,8 @@
   position: relative;
 }
 
-/* Every second column - no right border */
-.sys-feature-item_temp_new:nth-child(2n) {
+/* Right column (children 3, 5, 7, 9 – the frame is child 1) - no right border */
+.sys-feature-item_temp_new:nth-child(2n + 3) {
   border-right: none;
 }
 
@@ -645,7 +895,6 @@
   width: 2px;
   background: #a67dff;
   opacity: 0;
-  transition: opacity 0.2s ease;
 }
 
 .sys-feature-body_temp_new {
@@ -668,7 +917,7 @@
 
 .sys-feature-desc_temp_new {
   font-size: 0.8rem;
-  color: #6a6a7c;
+  color: var(--text-lead);
   line-height: 1.5;
   margin: 0;
 }
@@ -689,6 +938,11 @@
   .sys-feature-item_temp_new:last-child {
     border-bottom: none;
   }
+
+  .sys-feature-item_temp_new:nth-child(2) { border-top-right-radius: 16px; }
+  .sys-feature-item_temp_new:nth-child(3) { border-top-right-radius: 0; }
+  .sys-feature-item_temp_new:nth-last-child(2) { border-bottom-left-radius: 0; }
+  .sys-feature-item_temp_new:last-child { border-bottom-left-radius: 16px; }
 }
 
 .sys-demo-video_temp_new {
@@ -776,12 +1030,6 @@
   .smoke-bg {
     width: 102%;
   }
-}
-
-.home-cta-btn-wrp {
-  display: flex;
-  width: 100%;
-  justify-content: center;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -881,11 +1129,6 @@
   animation-direction: normal;
 }
 
-/* Pause: only via the button for the whole section (hover does not stop it) */
-.tech-stack-section--paused .tech-stack-track {
-  animation-play-state: paused;
-}
-
 @keyframes techStackMarquee {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
@@ -904,7 +1147,6 @@
   border-radius: 18px;
   border: 1px solid rgba(166, 125, 255, 0.14);
   background: rgba(17, 17, 40, 0.55);
-  transition: border-color 0.25s ease, background 0.25s ease;
 }
 
 /* Real logo - uniformly muted */
@@ -914,7 +1156,6 @@
   object-fit: contain;
   opacity: 0.7;
   filter: grayscale(1);
-  transition: opacity 0.25s ease, filter 0.25s ease;
   user-select: none;
   -webkit-user-drag: none;
 }
@@ -959,14 +1200,12 @@
 /*
   @module: tech-stack-reduced-motion
   @description: Users who prefer reduced motion get static rows they can scroll
-    horizontally; the pause toggle is hidden because there is nothing to pause.
+    horizontally.
   @usage: automatic via prefers-reduced-motion
 */
 @media (prefers-reduced-motion: reduce) {
   .tech-stack-track { animation: none; }
   .tech-stack-row { overflow-x: auto; }
-  .tech-stack-controls { display: none; }
-  .tech-stack-card, .tech-stack-logo { transition: none; }
 }
 
 /* ═══════════════════════════════════════════════════

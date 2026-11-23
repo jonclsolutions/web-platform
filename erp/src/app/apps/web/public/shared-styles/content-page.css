@@ -12,7 +12,7 @@
     @module: Content page frame
     @description: Page wrapper and hero block shared by the content pages. Page-specific parts (hero title, subtitle, background) stay in each page.
     @usage: <section class="about-page content-page"> … <header class="about-hero content-page-hero">
-    @note: Each page keeps its own class next to the shared one (about-page, faq-hero, …) for its specific rules. Hero titles differ between pages and stay in the pages.
+    @note: Each page keeps its own class next to the shared one (about-page, faq-hero, …) for its specific rules. Hero titles differ between pages and stay in the pages. The entrance of the hero is done by the motion directives in the templates (title: appRevealText load, subtitle: appReveal).
 */
 
 .content-page {
@@ -30,5 +30,4 @@
   align-items: center;
   text-align: center;
   padding: var(--hero-top) var(--gutter) var(--hero-bottom);
-  animation: fadeUp 0.7s ease-out both;
 }

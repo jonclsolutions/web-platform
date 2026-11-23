@@ -33,3 +33,24 @@
   --ease: 0.25s ease;
   --gutter: 24px;
 }
+
+/*
+    @module: public web layout, text and motion tokens
+    @description: Content column, vertical rhythm, text colours of the hierarchy and motion curves
+        of the design rules (shared-styles/DESIGN.md, chapters 1, 3, 7).
+    @usage: :host – var(--max-w), var(--section-y), var(--head-gap), var(--title-gap),
+        var(--heading), var(--text-soft), var(--text-lead), var(--ease-out), var(--ease-in-out)
+    @note: --text-lead (#888899) is the lightest grey allowed for small text (contrast 5.5 : 1
+        on --bg, WCAG AA). Pages that define the same names keep their local values after this file.
+*/
+:host {
+  --max-w: 1200px;
+  --section-y: 96px;
+  --head-gap: 48px;
+  --title-gap: 16px;
+  --heading: #eeeef7;
+  --text-soft: #b4b4c8;
+  --text-lead: #888899;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}

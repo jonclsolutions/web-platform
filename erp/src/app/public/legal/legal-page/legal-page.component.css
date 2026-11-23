@@ -21,14 +21,14 @@
   --hero-top:   180px;  /* navbar height + air above page title */
 
   /* ── Colours: dark look (default) ── */
-  --legal-heading: var(--color-white);
+  --legal-heading: #eeeef7;
   --legal-text:    #a0a0b0;
   --legal-body:    #8a8a9c;
   --legal-strong:  #b0b0c0;
   --legal-em:      #9090a8;
   --legal-link:    #a67dff;
   --legal-link-hover: #c09fff;
-  --legal-muted:   #55556a;
+  --legal-muted:   #888899;  /* contrast 5.5 : 1 (WCAG AA) */
   --legal-line:    rgba(166, 125, 255, 0.2);
   --legal-grid:    rgba(166, 125, 255, 0.03);
 }

@@ -56,7 +56,6 @@
   position: relative;
   z-index: 1;
   padding: 0 var(--gutter);
-  animation: fadeUp 0.6s 0.15s ease-out both;
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -89,7 +88,6 @@
   max-width: calc(var(--max-w) + var(--gutter) * 2);
   margin: 0 auto;
   padding: var(--section-y) var(--gutter);
-  animation: fadeUp 0.6s ease-out both;
 }
 
 .milestones-header {
@@ -182,7 +180,6 @@
   margin: 0 auto;
   /* cta-block has its own vertical padding -> half section spacing here */
   padding: 0 var(--gutter) calc(var(--section-y) / 2);
-  animation: fadeUp 0.6s ease-out both;
 }
 
 .cta-block {
@@ -281,10 +278,4 @@
   }
 
   .about-hero-title { font-size: 2rem; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .about-hero, .about-sidebar, .about-main, .milestones-section, .about-cta-section {
-    animation: none;
-  }
 }

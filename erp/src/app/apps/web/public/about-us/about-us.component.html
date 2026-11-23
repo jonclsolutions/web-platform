@@ -11,12 +11,12 @@
 <div class="about-page content-page">
 
   <section class="about-hero content-page-hero">
-    <h1 class="about-hero-title">{{ t?.header }}</h1>
-    <p class="about-hero-sub">{{ t?.hero_sub }}</p>
+    <h1 class="about-hero-title" [appRevealText]="t?.header" revealTextMode="load"></h1>
+    <p class="about-hero-sub" appReveal [revealDelay]="0.35">{{ t?.hero_sub }}</p>
   </section>
 
 
-    <main class="about-main">
+    <main class="about-main" appReveal>
 
       <div class="about-content">
         <p class="about-paragraph">{{ t?.paragraph_1 }}</p>
@@ -29,10 +29,10 @@
   <!-- Milestones — timeline from the founding of the division until now -->
   <section class="milestones-section">
     <div class="milestones-header">
-      <h2 class="milestones-heading">{{ t?.milestones?.heading}}</h2>
+      <h2 class="milestones-heading" [appRevealText]="t?.milestones?.heading"></h2>
     </div>
 
-    <div class="milestones-track">
+    <div class="milestones-track" appReveal="group">
       <div class="milestone-item">
         <div class="milestone-connector">
           <div class="milestone-line milestone-line--hidden" aria-hidden="true"></div>
@@ -79,18 +79,18 @@
     </div>
   </section>
 
-  <div class="about-divider" aria-hidden="true"></div>
+  <div class="about-divider" aria-hidden="true" appScrollEffect="draw-x"></div>
 
   <section class="about-cta-section">
     <div class="cta-row">
-      <div class="cta-block">
+      <div class="cta-block" appReveal>
         <p class="cta-text">{{ t?.cta?.ref_text }}</p>
         <a routerLink="/references" class="cta-btn">
           {{ t?.cta?.ref_btn }} 
         </a>
       </div>
-      <div class="cta-divider" aria-hidden="true"></div>
-      <div class="cta-block">
+      <div class="cta-divider" aria-hidden="true" appScrollEffect="draw-y"></div>
+      <div class="cta-block" appReveal [revealDelay]="0.14">
         <p class="cta-text">{{ t?.cta?.contact_text }}</p>
         <a routerLink="/contact" class="cta-btn cta-btn--accent">
           {{ t?.cta?.contact_btn }}

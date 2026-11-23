@@ -11,7 +11,7 @@
 -->
 <div class="of-page">
   <div class="of-lang">
-    <app-portal-language-switcher [label]="t('language_switcher_title')"></app-portal-language-switcher>
+    <app-portal-language-switcher class="pp-lang--dark" [label]="t('language_switcher_title')"></app-portal-language-switcher>
   </div>
 
   <main class="of-center">
@@ -67,7 +67,7 @@
                 <textarea class="of-input of-textarea" rows="5" formControlName="order_description" [class.of-input--error]="fieldInvalid('order_description')"></textarea>
               </label>
 
-              <app-multi-file-upload class="mfu--light"
+              <app-multi-file-upload
                 [label]="t('order_attachments_label')"
                 [maxFiles]="attachmentRules?.max_files ?? 10"
                 [maxFileSizeMb]="attachmentRules?.max_file_size_mb ?? 20"

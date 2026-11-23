@@ -62,7 +62,7 @@ function goneState(err: any): OrderLinkState {
   standalone: true,
   imports: [ReactiveFormsModule, MultiFileUploadComponent, CaptchaComponent, LegalDocumentDialogComponent, PortalLanguageSwitcherComponent],
   templateUrl: './order-form.component.html',
-  styleUrls: ['../../../../admin/shared-styles/theme.css', './order-form.component.css'],
+  styleUrls: ['./order-form.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrderFormComponent implements OnInit {

@@ -15,6 +15,7 @@
  * @dependencies
  * - BasePublicComponent (translations, current language), WebContentService (the content),
  *   PublicDataService (URL of an image).
+ * - RevealDirective, RevealTextDirective (public web motion).
  */
 
 import { Component, ChangeDetectionStrategy, HostListener, inject } from '@angular/core';
@@ -23,6 +24,8 @@ import { combineLatest } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { BasePublicComponent } from '../../../../public/base-public.component';
 import { WebContentService, localizedText } from '../web-content.service';
+import { RevealDirective } from '../motion/reveal.directive';
+import { RevealTextDirective } from '../motion/reveal-text.directive';
 
 /** One block of the page in the current language. */
 export interface KbBlockView {
@@ -40,7 +43,7 @@ export interface KbBlockView {
   templateUrl: './knowledge-base.component.html',
   styleUrl: './knowledge-base.component.css',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, RevealDirective, RevealTextDirective],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KnowledgeBaseComponent extends BasePublicComponent {

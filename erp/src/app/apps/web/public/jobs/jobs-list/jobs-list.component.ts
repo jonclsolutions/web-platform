@@ -10,6 +10,7 @@
  * @note A text missing in the current language shows 'Cannot load text' (WebContentService).
  * @dependencies
  * - BasePublicComponent (translations, site settings, current language), WebContentService.
+ * - RevealDirective, RevealTextDirective (public web motion).
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -20,13 +21,15 @@ import { JobItem } from './';
 import { combineLatest } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { WebContentService, localizedText } from '../../web-content.service';
+import { RevealDirective } from '../../motion/reveal.directive';
+import { RevealTextDirective } from '../../motion/reveal-text.directive';
 
 @Component({
   selector: 'app-jobs-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, RevealDirective, RevealTextDirective],
   templateUrl: './jobs-list.component.html',
-  styleUrls: ['../../shared-styles/theme.css', '../../../../../shared/styles/base.css', '../../shared-styles/animations.css', '../../shared-styles/content-page.css', './jobs-list.component.css'],
+  styleUrls: ['../../shared-styles/theme.css', '../../../../../shared/styles/base.css', '../../shared-styles/content-page.css', './jobs-list.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class JobsListComponent extends BasePublicComponent {

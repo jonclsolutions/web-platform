@@ -13,12 +13,12 @@
 <div class="panel-left-content">
 <span class="side-label" aria-hidden="true">{{ t.side_label }}</span>
 <div class="brand-block">
-<h1 class="brand-headline" [innerHTML]="t.brand_headline"></h1>
-<p class="brand-sub">{{ t.brand_sub }}</p>
+<h1 class="brand-headline" [appRevealText]="t.brand_headline" revealTextMode="load" [revealTextBreaks]="true"></h1>
+<p class="brand-sub" appReveal [revealDelay]="0.3">{{ t.brand_sub }}</p>
 </div>
 
 @if (settings) {
-<ul class="info-list">
+<ul class="info-list" appReveal="group" [revealDelay]="0.4">
 <li class="info-item">
 <span class="info-icon" aria-hidden="true">
 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -66,7 +66,7 @@
 
 @if (!isSubmitted()) {
 
-<div class="form-wrapper">
+<div class="form-wrapper" appReveal [revealDelay]="0.25">
 <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" novalidate class="form-body">
 
 <div class="field-group">

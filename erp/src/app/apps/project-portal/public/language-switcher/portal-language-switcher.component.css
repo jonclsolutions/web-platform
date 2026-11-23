@@ -5,7 +5,8 @@
     @author: JS
     @created: 2026
     @description: Language switcher of the public portal pages: round flag button (like the header
-        buttons of the portal) and the menu below it aligned to the right.
+        buttons of the portal) and the menu below it aligned to the right; a dark variant for
+        pages in the website look.
     @dependencies: admin/shared-styles/theme.css (tokens, first in styleUrls)
 */
 
@@ -16,6 +17,22 @@
     @usage: .pp-lang-switcher > .pp-lang-btn (.pp-lang-btn-flag, .pp-lang-chevron) + .pp-lang-menu > .pp-lang-menu-item
 */
 :host { display: inline-block; }
+
+/*
+    @module: Dark variant
+    @description: Colours of the public website look for pages in the dark look (order form).
+    @usage: <app-portal-language-switcher class="pp-lang--dark">
+    @note: Same values as the order form tokens; the class on the host beats the admin theme tokens.
+*/
+:host(.pp-lang--dark) {
+  --surface: #111128;
+  --surface-2: #18183a;
+  --border: rgba(166, 125, 255, 0.22);
+  --border-mid: rgba(166, 125, 255, 0.4);
+  --accent: #a67dff;
+  --text: #e0e0f0;
+  --text-muted: #888899;
+}
 .pp-lang-switcher { position: relative; }
 .pp-lang-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 34px; height: 34px; padding: 0 9px;

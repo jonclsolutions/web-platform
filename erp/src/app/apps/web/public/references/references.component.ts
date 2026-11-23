@@ -14,6 +14,7 @@
  * @dependencies
  * - BasePublicComponent (translations, current language), WebContentService (the projects),
  *   PublicDataService (URL of the image).
+ * - RevealDirective, RevealTextDirective (public web motion).
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -23,6 +24,8 @@ import { takeUntil } from 'rxjs/operators';
 import { RouterModule } from '../web-providers';
 import { BasePublicComponent } from '../../../../public/base-public.component';
 import { WebContentService, localizedText, optionalText } from '../web-content.service';
+import { RevealDirective } from '../motion/reveal.directive';
+import { RevealTextDirective } from '../motion/reveal-text.directive';
 
 /** One project of the page in the current language. */
 export interface ReferenceView {
@@ -48,9 +51,9 @@ export interface ReferenceView {
 @Component({
   selector: 'app-references',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, RevealDirective, RevealTextDirective],
   templateUrl: './references.component.html',
-  styleUrls: ['../shared-styles/theme.css', '../shared-styles/animations.css', '../shared-styles/cta.css', '../../../../shared/styles/base.css', '../shared-styles/content-page.css', './references.component.css'],
+  styleUrls: ['../shared-styles/theme.css', '../shared-styles/cta.css', '../../../../shared/styles/base.css', '../shared-styles/content-page.css', './references.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReferencesComponent extends BasePublicComponent {

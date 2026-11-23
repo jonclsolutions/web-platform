@@ -14,8 +14,8 @@
 <div class="ref-page content-page">
 
   <section class="ref-hero content-page-hero">
-    <h1 class="ref-hero-title">{{ t.header_1 }}</h1>
-    <p class="ref-hero-sub">{{ t.hero_sub }}</p>
+    <h1 class="ref-hero-title" [appRevealText]="t.header_1" revealTextMode="load"></h1>
+    <p class="ref-hero-sub" appReveal [revealDelay]="0.35">{{ t.hero_sub }}</p>
   </section>
 
   <div class="ref-layout">
@@ -29,12 +29,11 @@
         <span class="ref-col-client">{{ t.table_header_client }}</span>
       </div>
 
-      <div class="ref-list" role="list">
+      <div class="ref-list" role="list" appReveal="group">
         @for (project of projects; track project.id; let i = $index) {
           <div
             class="ref-item"
             [class.ref-item--open]="project.isActive"
-            [style.animation-delay]="i * 0.06 + 's'"
             role="listitem">
 
             <!-- Accordion trigger (WAI-ARIA accordion pattern: heading > button) -->

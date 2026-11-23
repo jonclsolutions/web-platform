@@ -10,8 +10,8 @@
 <div class="svc-page content-page">
 
   <section class="svc-hero content-page-hero">
-    <h1 class="svc-hero-title">{{ t.header_1_text }}</h1>
-    <p class="svc-hero-sub">{{ t.hero_sub }}</p>
+    <h1 class="svc-hero-title" [appRevealText]="t.header_1_text" revealTextMode="load"></h1>
+    <p class="svc-hero-sub" appReveal [revealDelay]="0.35">{{ t.hero_sub }}</p>
   </section>
 
   <section class="svc-content-section">
@@ -19,22 +19,22 @@
 
       <div class="svc-main-col">
         <div class="svc-panel-header">
-          <h2 class="svc-panel-title">{{ t.info_header }}</h2>
+          <h2 class="svc-panel-title" [appRevealText]="t.info_header"></h2>
         </div>
-        <div class="svc-body-text" [innerHTML]="t.service_main_text"></div>
+        <div class="svc-body-text" [innerHTML]="t.service_main_text" appReveal></div>
           <!-- Devices illustration with decorative smoke centered behind it -->
-<div class="svc-devices">
+<div class="svc-devices" appScrollEffect="zoom">
   <img [src]="smoke" class="smoke-bg_hero" alt="" aria-hidden="true"
        decoding="async" draggable="false">
   <img [src]="services_main" class="svc-devices-img" alt="..." >
 </div>
 
-<h2 class="svc-panel-title paddint-top-18-px">{{ t.info_header_2 }}</h2>
+<h2 class="svc-panel-title paddint-top-18-px" [appRevealText]="t.info_header_2"></h2>
 <div class="features-bento">
 
   <!-- Row 1: cards on the left + image on the right -->
   <div class="features-row">
-    <div class="features-col-cards">
+    <div class="features-col-cards" appReveal="group">
       <div class="feature-card">
         <h3 class="feature-card-title">{{ featureCards[0]?.title }}</h3>
         <p class="feature-card-text">{{ featureCards[0]?.text }}</p>
@@ -44,14 +44,14 @@
         <p class="feature-card-text">{{ featureCards[1]?.text }}</p>
       </div>
     </div>
-    <div class="features-col-img">
+    <div class="features-col-img" appScrollEffect="tilt" [scrollEffectDir]="1">
       <img [src]="services_1">
     </div>
   </div>
 
   <!-- Row 2: cards first in the DOM, CSS swaps them visually (image on the left) -->
   <div class="features-row features-row--reverse">
-    <div class="features-col-cards">
+    <div class="features-col-cards" appReveal="group">
       <div class="feature-card">
         <h3 class="feature-card-title">{{ featureCards[2]?.title }}</h3>
         <p class="feature-card-text">{{ featureCards[2]?.text }}</p>
@@ -62,14 +62,14 @@
         <p class="feature-card-text">{{ featureCards[3]?.text }}</p>
       </div>
     </div>
-    <div class="features-col-img">
+    <div class="features-col-img" appScrollEffect="tilt" [scrollEffectDir]="-1">
      <img [src]="services_2">
     </div>
   </div>
 
   <!-- Row 3: cards on the left + image on the right -->
   <div class="features-row">
-    <div class="features-col-cards">
+    <div class="features-col-cards" appReveal="group">
       <div class="feature-card">
         <h3 class="feature-card-title">{{ featureCards[4]?.title }}</h3>
         <p class="feature-card-text">{{ featureCards[4]?.text }}</p>
@@ -79,14 +79,14 @@
         <p class="feature-card-text">{{ featureCards[5]?.text }}</p>
       </div>
     </div>
-    <div class="features-col-img">
+    <div class="features-col-img" appScrollEffect="tilt" [scrollEffectDir]="1">
     <img [src]="services_3">
     </div>
   </div>
 
   <!-- Row 4: cards first in the DOM, CSS swaps them visually (image on the left) -->
   <div class="features-row features-row--reverse">
-    <div class="features-col-cards">
+    <div class="features-col-cards" appReveal="group">
       <div class="feature-card">
         <h3 class="feature-card-title">{{ featureCards[6]?.title }}</h3>
         <p class="feature-card-text">{{ featureCards[6]?.text }}</p>
@@ -96,7 +96,7 @@
         <p class="feature-card-text">{{ featureCards[7]?.text }}</p>
       </div>
     </div>
-    <div class="features-col-img">
+    <div class="features-col-img" appScrollEffect="tilt" [scrollEffectDir]="-1">
       <img [src]="services_4">
     </div>
   </div>
@@ -109,13 +109,13 @@
 
   <section class="svc-workflow-section">
     <div class="svc-section-header">
-      <h2 class="section-title">{{ t.colab?.colab_procces_header }}</h2>
+      <h2 class="section-title" [appRevealText]="t.colab?.colab_procces_header"></h2>
     </div>
 
 
     <!-- DESKTOP VERZE -->
     <div class="wf-desktop">
-      <div class="wf-desktop-connector">
+      <div class="wf-desktop-connector" appReveal="group">
         @for (step of workflowSteps; track step; let i = $index; let last = $last) {
           <div class="wfd-col">
             <div class="wfd-num">
@@ -185,7 +185,7 @@
     </div>
 
     <!-- MOBILE VERSION -->
-    <div class="wf-mobile">
+    <div class="wf-mobile" appReveal="group">
       @for (step of workflowSteps; track step; let i = $index; let last = $last) {
         <div class="wfm-step">
           <div class="wfm-rail">
@@ -256,11 +256,11 @@
 
   <section class="svc-prices-section">
     <div class="svc-section-header">
-      <h2 class="section-title">{{ t.pricing?.header }}</h2>
-      <p class="section-subtitle">{{ t.pricing?.subheader }}</p>
+      <h2 class="section-title" [appRevealText]="t.pricing?.header"></h2>
+      <p class="section-subtitle" appReveal>{{ t.pricing?.subheader }}</p>
     </div>
 
-    <div class="pricing-matrix-wrap">
+    <div class="pricing-matrix-wrap" appReveal>
       <table class="pricing-matrix">
         <thead>
           <tr>
@@ -332,10 +332,10 @@
 
   <section class="svc-consultation-section">
     <div class="svc-section-header">
-      <h2 class="section-title">{{ t.consultation?.header }}</h2>
+      <h2 class="section-title" [appRevealText]="t.consultation?.header"></h2>
     </div>
 
-    <div class="consultation-row">
+    <div class="consultation-row" appReveal="group">
       <div class="consultation-card">
         <div class="consultation-icon">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">

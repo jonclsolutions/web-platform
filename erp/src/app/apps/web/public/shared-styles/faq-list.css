@@ -60,3 +60,15 @@
   line-height: 1.6;
   max-width: 240px;
 }
+
+/*
+    @module: FAQ item entrance – reduced motion
+    @description: The items of a category fade up when the category is shown; visitors who prefer
+        reduced motion get them in place.
+    @usage: automatic via prefers-reduced-motion
+*/
+@media (prefers-reduced-motion: reduce) {
+  .faq-item {
+    animation: none;
+  }
+}

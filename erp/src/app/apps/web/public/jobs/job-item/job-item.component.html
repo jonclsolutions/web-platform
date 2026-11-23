@@ -18,9 +18,9 @@
   @if (job) {
 
     <section class="job-hero">
-      <h1 class="job-hero-title">{{ job.title }}</h1>
+      <h1 class="job-hero-title" [appRevealText]="job.title" revealTextMode="load"></h1>
       @if (job.type || job.location) {
-        <div class="job-hero-meta">
+        <div class="job-hero-meta" appReveal [revealDelay]="0.3">
           @if (job.type) {
             <span class="job-meta-tag">{{ job.type }}</span>
           }
@@ -33,7 +33,7 @@
 
     <div class="job-layout">
 
-      <article class="job-description">
+      <article class="job-description" appReveal [revealDelay]="0.2">
         <div class="job-desc-label">{{ t?.item_desc_label }}</div>
         <div class="job-desc-body">
           @for (section of job.sections; track $index) {
@@ -53,7 +53,7 @@
         }
       </article>
 
-      <aside class="job-form-aside">
+      <aside class="job-form-aside" appReveal [revealDelay]="0.3">
         <div class="form-card">
 
           @if (!isSubmitted) {

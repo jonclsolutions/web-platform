@@ -13,6 +13,7 @@
  * @dependencies
  * - BasePublicComponent (translations, site settings), PublicDataService (submit), LoadingService,
  *   WebContentService (the position).
+ * - RevealDirective, RevealTextDirective (public web motion).
  */
 
 import { Component, ChangeDetectionStrategy, ViewChild, inject } from '@angular/core';
@@ -28,6 +29,8 @@ import { publicFormErrorKey } from '../../../../../shared/utils/public-form-erro
 import { CaptchaComponent } from '../../../../../shared/components/captcha/captcha.component';
 import { combineLatest, switchMap } from 'rxjs';
 import { WebContentService, localizedText, optionalText } from '../../web-content.service';
+import { RevealDirective } from '../../motion/reveal.directive';
+import { RevealTextDirective } from '../../motion/reveal-text.directive';
 
 /** One position of the detail page in the current language. */
 export interface JobDetail {
@@ -65,9 +68,9 @@ const DEFAULT_MAX_FILE_SIZE_MB = 20;
 @Component({
   selector: 'app-job-item',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, CaptchaComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, CaptchaComponent, RevealDirective, RevealTextDirective],
   templateUrl: './job-item.component.html',
-  styleUrls: ['../../shared-styles/theme.css', '../../shared-styles/form-fields.css', '../../../../../shared/styles/base.css', '../../shared-styles/animations.css', './job-item.component.css'],
+  styleUrls: ['../../shared-styles/theme.css', '../../shared-styles/form-fields.css', '../../../../../shared/styles/base.css', './job-item.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class JobItemComponent extends BasePublicComponent {

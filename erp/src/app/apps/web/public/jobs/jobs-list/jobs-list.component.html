@@ -11,12 +11,12 @@
 <div class="jobs-page content-page">
 
   <section class="jobs-hero content-page-hero">
-    <h1 class="jobs-hero-title">{{ t?.list_header_1 }}</h1>
-    <p class="jobs-hero-sub">{{ t?.list_hero_sub }}</p>
+    <h1 class="jobs-hero-title" [appRevealText]="t?.list_header_1" revealTextMode="load"></h1>
+    <p class="jobs-hero-sub" appReveal [revealDelay]="0.35">{{ t?.list_hero_sub }}</p>
   </section>
 
   <div class="jobs-body">
-    <div class="jobs-list" role="list">
+    <div class="jobs-list" role="list" appReveal="group">
       @for (job of availableJobs; track job.id; let i = $index) {
         <a class="job-card" [routerLink]="['/jobs', job.id]" role="listitem">
           <span class="job-card-num" aria-hidden="true">{{ (i + 1).toString().padStart(2, '0') }}</span>

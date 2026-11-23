@@ -141,8 +141,8 @@ The app has four looks that use the **same token names with different values**:
 
 | Look | File | Used by |
 |---|---|---|
-| admin (light, zinc) | `admin/shared-styles/theme.css` | admin layout, edit-roles, knowledge base, translation editor (texts of the web / e-shop), **public project portal** |
-| public web (dark, violet) | `apps/web/public/shared-styles/theme.css` | about, FAQ, references, services, jobs, job detail, order form, footer |
+| admin (light, zinc) | `admin/shared-styles/theme.css` | admin layout, edit-roles, knowledge base, translation editor (texts of the web / e-shop), **public project portal** (except the order form) |
+| public web (dark, violet) | `apps/web/public/shared-styles/theme.css` | home, about, FAQ, references, services, jobs, job detail, footer; the order form of the project portal repeats the values in its own `:host` (an application never includes another application's files) |
 | public e-shop (light, black) | `apps/shop/public/shared-styles/theme.css` | cart, catalog, checkout, product detail, header, footer, builders |
 | sign-in (dark, violet) | `shared/styles/auth-form.css` | admin login, account activation, password reset, sign-in of the project portal (`<app-auth-shell>`) |
 
@@ -163,7 +163,9 @@ looks never clash.
   component just because it uses `var(--accent)` – if it already inherits the right value, adding the
   theme can change what its children inherit.
 - **Project portal** is a public page in the admin look; it includes the admin `theme.css`. This is
-  the only place where public code uses an admin shared file (an explicit project decision).
+  the only place where public code uses an admin shared file (an explicit project decision). Its
+  public order form (`/projects/order/:token`) uses the dark look of the public web instead; the
+  portal language switcher has a dark variant for it (`class="pp-lang--dark"`).
 - Maintenance pages (`public/*/…-maintenance`) keep their own palette on purpose.
 
 ---

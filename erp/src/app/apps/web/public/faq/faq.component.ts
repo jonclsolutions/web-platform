@@ -11,6 +11,7 @@
  * Answers are plain text - their line breaks are kept (CSS `white-space: pre-line`), never HTML.
  * @dependencies
  * - BasePublicComponent (translations, site settings, current language), WebContentService.
+ * - RevealDirective, RevealTextDirective (public web motion).
  */
 
 import {
@@ -25,11 +26,13 @@ import { FaqItem, FaqCategory } from './';
 import { combineLatest } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { PublicFaqCategory, WebContentService, localizedText } from '../web-content.service';
+import { RevealDirective } from '../motion/reveal.directive';
+import { RevealTextDirective } from '../motion/reveal-text.directive';
 
 @Component({
   selector: 'app-faq',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, RevealDirective, RevealTextDirective],
   templateUrl: './faq.component.html',
   styleUrls: ['../shared-styles/theme.css', '../shared-styles/animations.css', '../shared-styles/cta.css', '../../../../shared/styles/base.css', '../shared-styles/faq-list.css', '../shared-styles/content-page.css', './faq.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

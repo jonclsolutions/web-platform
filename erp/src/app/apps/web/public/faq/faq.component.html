@@ -11,9 +11,9 @@
 @if (t && settings) {
 <div class="faq-page content-page">
   <section class="faq-hero content-page-hero">
-    <h1 class="faq-hero-title">{{ t?.header_1 }}</h1>
-    <p class="faq-hero-sub">{{ t?.hero_sub }}</p>
-    <div class="faq-tags" role="tablist">
+    <h1 class="faq-hero-title" [appRevealText]="t?.header_1" revealTextMode="load"></h1>
+    <p class="faq-hero-sub" appReveal [revealDelay]="0.35">{{ t?.hero_sub }}</p>
+    <div class="faq-tags" role="tablist" appReveal [revealDelay]="0.5">
       @for (cat of categories; track cat.id) {
         <button
           class="faq-tag"
@@ -26,7 +26,7 @@
   </section>
 
   <div class="faq-layout">
-    <aside class="faq-sidebar">
+    <aside class="faq-sidebar" appReveal [revealDelay]="0.2">
       <div class="sidebar-card">
         <h3 class="sidebar-card-title">{{ t?.sidebar_title }}</h3>
         <p class="sidebar-card-text">{{ t?.sidebar_text }}</p>
@@ -66,7 +66,7 @@
       </div>
     </aside>
 
-    <main class="faq-main">
+    <main class="faq-main" appReveal>
       <div class="faq-section-label">{{ t?.section_label }}</div>
 
       @if (filteredItems.length > 0) {

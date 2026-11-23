@@ -14,21 +14,22 @@
 
 /*
     @module: Design tokens
-    @description: Dark palette with the violet accent of the brand, radii, fonts, motion.
+    @description: Dark palette with the violet accent of the brand, radii, fonts, motion – the
+        values of the public web look (background, borders, accent, Poppins / Source Sans Pro).
     @usage: :host of the shell and of every page using it
 */
 :host {
-  --bg: #0a0a1a;
+  --bg: #0d0d1b;
   --panel: #111128;
   --surface-2: rgba(255, 255, 255, 0.025);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-mid: rgba(255, 255, 255, 0.11);
+  --border: rgba(166, 125, 255, 0.1);
+  --border-mid: rgba(166, 125, 255, 0.22);
   --white: #fff;
   --text: #e8e8f2;
   --text-muted: #9a9ab5;
-  --text-dim: #555566;
+  --text-dim: #6a6a80;
   --accent: #a67dff;
-  --accent-dark: #6a2ca0;
+  --accent-dark: #6b2e91;
   --accent-hover: #7d35ae;
   --accent-dim: rgba(166, 125, 255, 0.1);
   --accent-dim-2: rgba(166, 125, 255, 0.25);
@@ -43,8 +44,8 @@
   --radius-lg: 20px;
   --ease: 0.18s ease;
   --focus-ring: 0 0 0 3px rgba(166, 125, 255, 0.2);
-  --ff-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-  --ff-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ff-display: 'Poppins', 'Inter', system-ui, sans-serif;
+  --ff-body: 'Source Sans Pro', 'Segoe UI', system-ui, sans-serif;
   /* Password requirements checklist (shared component) on the dark card. */
   --pw-check-muted: var(--text-muted);
   --pw-check-met: var(--success);

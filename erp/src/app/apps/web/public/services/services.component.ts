@@ -5,12 +5,17 @@
  * @author JS
  * @created 2025
  * @description Services page of the public web.
+ * @dependencies BasePublicComponent, CommonModule, RouterModule, RevealDirective,
+ *   RevealTextDirective, ScrollEffectDirective (public web motion)
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { BasePublicComponent } from '../../../../public/base-public.component';
+import { RevealDirective } from '../motion/reveal.directive';
+import { RevealTextDirective } from '../motion/reveal-text.directive';
+import { ScrollEffectDirective } from '../motion/scroll-effect.directive';
 
 export interface PricingPackage {
   id: string;
@@ -38,7 +43,7 @@ export interface PricingMatrix {
 @Component({
   selector: 'app-main-content',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, RevealDirective, RevealTextDirective, ScrollEffectDirective],
   templateUrl: './services.component.html',
   styleUrls: ['../shared-styles/theme.css', '../shared-styles/animations.css', '../shared-styles/cta.css', '../shared-styles/faq-list.css', '../shared-styles/content-page.css', './services.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

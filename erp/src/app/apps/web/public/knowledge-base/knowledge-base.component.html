@@ -17,15 +17,15 @@
     <!-- Hero / page introduction -->
     @if (intro) {
       <section class="kb-hero">
-        <h1 class="kb-hero-heading">{{ intro.heading }}</h1>
-        <p class="kb-hero-lead">{{ intro.text }}</p>
+        <h1 class="kb-hero-heading" [appRevealText]="intro.heading" revealTextMode="load"></h1>
+        <p class="kb-hero-lead" appReveal [revealDelay]="0.35">{{ intro.text }}</p>
       </section>
     }
 
     <div class="kb-layout">
 
       <!-- Side list of the blocks (desktop) - "scrollspy": highlights the current block -->
-      <aside class="kb-sidebar">
+      <aside class="kb-sidebar" appReveal [revealDelay]="0.4">
         <nav class="kb-sidebar-nav" [attr.aria-label]="intro?.heading">
           @for (block of blocks; track block.anchor) {
             <a [href]="'#' + block.anchor" (click)="scrollToSection($event, block.anchor)" class="kb-sidebar-link" [class.active]="activeSectionId === block.anchor">{{ block.heading }}</a>
@@ -47,12 +47,12 @@
           <section [id]="block.anchor" class="kb-section" [class.kb-section--alt]="odd">
             <div class="kb-section-head">
               <div>
-                <h2 class="kb-section-header">{{ block.heading }}</h2>
+                <h2 class="kb-section-header" [appRevealText]="block.heading"></h2>
               </div>
             </div>
-            <p class="kb-section-lead">{{ block.text }}</p>
+            <p class="kb-section-lead" appReveal>{{ block.text }}</p>
             @if (block.items.length) {
-              <div class="kb-points-grid">
+              <div class="kb-points-grid" appReveal="group">
                 @for (item of block.items; track $index) {
                   <div class="kb-point">
                     <div class="kb-point-title">{{ item.title }}</div>
@@ -62,7 +62,7 @@
               </div>
             }
             @if (block.image) {
-              <figure class="kb-section-figure">
+              <figure class="kb-section-figure" appReveal>
                 <img class="kb-section-image" [src]="block.image" [alt]="block.heading" loading="lazy" decoding="async">
               </figure>
             }
@@ -71,7 +71,7 @@
 
         <!-- CTA at the end of the page -->
         <section class="kb-cta-section">
-          <div class="kb-cta-block">
+          <div class="kb-cta-block" appReveal>
             <p class="kb-cta-text">{{ t?.cta?.text }}</p>
             <a routerLink="/contact" class="kb-cta-btn">
               {{ t?.cta?.btn }}

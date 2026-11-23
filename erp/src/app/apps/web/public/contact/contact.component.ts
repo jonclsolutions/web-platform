@@ -12,11 +12,13 @@ import { publicFormErrorKey } from '../../../../shared/utils/public-form-errors'
 import { switchMap } from 'rxjs';
 import * as Web from '../web-providers';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
+import { RevealDirective } from '../motion/reveal.directive';
+import { RevealTextDirective } from '../motion/reveal-text.directive';
 
 @Component({
 selector: 'app-contact',
 standalone: true,
-imports: [CommonModule, RouterModule, ReactiveFormsModule, MultiFileUploadComponent, CaptchaComponent],
+imports: [CommonModule, RouterModule, ReactiveFormsModule, MultiFileUploadComponent, CaptchaComponent, RevealDirective, RevealTextDirective],
 templateUrl: './contact.component.html',
 styleUrls: ['../shared-styles/form-fields.css', './contact.component.css'],
 changeDetection: ChangeDetectionStrategy.OnPush,

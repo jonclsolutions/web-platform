@@ -68,7 +68,6 @@
 .svc-main-col {
   padding-left: 0;
   padding-right: 0;
-  animation: fadeUp 0.6s 0.15s ease-out both;
 }
 
 .svc-panel-header { margin-bottom: 24px; }
@@ -119,7 +118,6 @@
   background: var(--surface);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
-  animation: fadeUp 0.7s 0.2s ease-out both;
 }
 
 .wf-desktop { display: block; }
@@ -282,7 +280,6 @@
   max-width: calc(var(--max-w) + var(--gutter) * 2);
   margin: 0 auto;
   padding: var(--section-y) var(--gutter);
-  animation: fadeUp 0.7s 0.2s ease-out both;
 }
 
 /* Header already provides --head-gap below it -> no extra top margin */
@@ -608,6 +605,7 @@ tbody tr:last-child .pm-value-col { border-bottom: none; }
   grid-template-columns: 1fr 0.65fr;
   gap: var(--head-gap);
   align-items: stretch;
+  perspective: 1300px; /* depth for the image turning in (appScrollEffect="tilt") */
 }
 
 /* Column with two cards */
