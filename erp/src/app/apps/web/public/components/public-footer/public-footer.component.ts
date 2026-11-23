@@ -5,13 +5,16 @@
  * @author JS
  * @created 2025
  * @description Public site footer – brand block, grouped quick links
- *   (offer / company / support), contact, copyright bar with legal links and login.
+ *   (offer / company / support), contact, bottom bar with the language switcher, copyright,
+ *   legal links and login.
+ * @dependencies BasePublicComponent, FooterLanguageSwitcherComponent, apps.registry
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { BasePublicComponent } from '../../../../../public/base-public.component';
 import { hasApp } from '../../../../apps.registry';
+import { FooterLanguageSwitcherComponent } from '../../../../../shared/components/footer-language-switcher/footer-language-switcher.component';
 
 /** Single footer link after translation. */
 interface FooterNavLink {
@@ -38,7 +41,7 @@ interface FooterLinkDef {
   standalone: true,
   templateUrl: './public-footer.component.html',
   styleUrls: ['../../shared-styles/theme.css', '../../../../../shared/styles/base.css', './public-footer.component.css'],
-  imports: [RouterModule],
+  imports: [RouterModule, FooterLanguageSwitcherComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PublicFooterComponent extends BasePublicComponent {

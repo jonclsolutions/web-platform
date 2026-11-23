@@ -21,7 +21,8 @@
         "phone_label": "Telefon",
         "legal_info_header": "Právní informace",
         "secure_payments_header": "Bezpečné platby",
-        "copyright_text": "© {year} Všechna práva vyhrazena."
+        "copyright_text": "© {year} Všechna práva vyhrazena.",
+        "language_label": "Jazyk"
     },
     "not_found": {
         "header": "Stránka nenalezena",

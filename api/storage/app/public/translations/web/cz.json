@@ -96,7 +96,8 @@
         "group_support": "Podpora",
         "ico_label": "IČO",
         "dic_label": "DIČ",
-        "contact_header": "Kontakt"
+        "contact_header": "Kontakt",
+        "language_label": "Jazyk"
     },
     "legal": {
         "privacy_policy": "Zásady ochrany osobních údajů",

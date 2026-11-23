@@ -4,9 +4,8 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Unit tests of ShopHeaderComponent: shop module texts, languages and site data, scrolled
- *   state, the language dropdown (closed by outside clicks), language
- *   switch and opening the cart.
+ * @description Unit tests of ShopHeaderComponent: shop module texts and site data, no language
+ *   switcher (it is in the footer since 2026-11), scrolled state and opening the cart.
  * @dependencies
  * - createPublicPageContext (get spy answers the site config); real CartService.
  */
@@ -17,7 +16,7 @@ import { throwError } from 'rxjs';
 import { of } from 'rxjs';
 
 import { ShopHeaderComponent } from './shop-header.component';
-import { PublicPageContext, STUB_LANGUAGES, createPublicPageContext } from '../../../../../../testing/public-test-helpers';
+import { PublicPageContext, createPublicPageContext } from '../../../../../../testing/public-test-helpers';
 
 describe('ShopHeaderComponent', () => {
   let ctx: PublicPageContext;
@@ -36,16 +35,18 @@ describe('ShopHeaderComponent', () => {
   }
 
   /**
-   * @description Start: shop module, header texts, languages, site settings; missing header
-   *   section → null; failing config is logged.
+   * @description Start: shop module, header texts, site settings, no language switcher (languages
+   *   not loaded); missing header section → null; failing config is logged.
    * @input Default; translations without header; config error.
-   * @output setModule('shop'); t {cart}; languages; settings; t null; console.error.
+   * @output setModule('shop'); t {cart}; settings; no .custom-dropdown / select, fetchLanguages not
+   *   called; t null; console.error.
    */
-  it('loads texts, languages and site data', fakeAsync(() => {
+  it('loads texts and site data without a language switcher', fakeAsync(() => {
     create();
     expect(ctx.localization.setModule).toHaveBeenCalledWith('shop');
     expect(header.t).toEqual({ cart: 'Cart' });
-    expect(header.availableLanguages).toEqual(STUB_LANGUAGES);
+    expect((fixture.nativeElement as HTMLElement).querySelector('.custom-dropdown, select')).toBeNull();
+    expect(ctx.localization.fetchLanguages).not.toHaveBeenCalled();
     expect(header.siteSettings.logo_path).toBe('l.svg');
     ctx.setTranslations({});
     expect(header.t).toBeNull();
@@ -60,24 +61,12 @@ describe('ShopHeaderComponent', () => {
   }));
 
   /**
-   * @description Language dropdown; outside click closes it, click inside keeps it; scrolled flag;
-   *   language and cart actions; no currency switch any more (finding #43).
-   * @input toggleLang, click body / inside .custom-dropdown; scrollY 30 / 0; selectLang; openCart; render.
-   * @output open; closed; kept; scrolled true / false; setLanguage('en'); navigate cart; no CZK in the header.
+   * @description Scrolled flag and the cart action; no currency switch any more (finding #43).
+   * @input scrollY 30 / 0; openCart; render.
+   * @output scrolled true / false; navigate cart; no CZK in the header.
    */
-  it('handles dropdowns, scrolling and actions', fakeAsync(() => {
+  it('handles scrolling and the cart', fakeAsync(() => {
     create();
-    header.toggleLang();
-    expect(header.showLang).toBeTrue();
-    header.clickout({ target: document.body });
-    expect(header.showLang).toBeFalse();
-    const inside = document.createElement('div');
-    inside.className = 'custom-dropdown';
-    const child = inside.appendChild(document.createElement('span'));
-    header.toggleLang();
-    header.clickout({ target: child });
-    expect(header.showLang).toBeTrue();
-
     const scrollY = spyOnProperty(window, 'scrollY', 'get').and.returnValue(30);
     header.onWindowScroll();
     expect(header.isScrolled).toBeTrue();
@@ -85,8 +74,6 @@ describe('ShopHeaderComponent', () => {
     header.onWindowScroll();
     expect(header.isScrolled).toBeFalse();
 
-    header.selectLang('en');
-    expect(ctx.localization.setLanguage).toHaveBeenCalledWith('en');
     expect(fixture.nativeElement.textContent).not.toContain('CZK');
     expect((header as any).selectCurrency).toBeUndefined();
     const router = TestBed.inject(Router);

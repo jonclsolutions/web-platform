@@ -1,0 +1,146 @@
+/*
+    @file: footer-language-switcher.component.css
+    @path: src/app/shared/components/footer-language-switcher/footer-language-switcher.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Pill trigger and the upward menu of the footer language switcher - the look of
+      the former header dropdown (dark panel, 12 px radius, round flags, check of the active
+      language). Colours come from the footer (CSS custom properties --fls-*); the fallbacks inside
+      var() are the dark web footer - declared on :host they would override the footer's values.
+*/
+
+/*
+  @module: footer-language-switcher
+  @description: .fls > button.fls-trigger + ul.fls-menu (role listbox, above the trigger).
+  @usage: <app-footer-language-switcher [label]="…"> ; set --fls-* on the footer
+*/
+:host {
+  display: inline-flex;
+}
+
+.fls {
+  position: relative;
+}
+
+.fls-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 12px 0 8px;
+  background-color: var(--fls-bg, rgba(13, 13, 27, 0.5));
+  border: 1px solid var(--fls-border, rgba(166, 125, 255, 0.22));
+  border-radius: var(--fls-radius, 999px);
+  color: var(--fls-color, #a0a0b5);
+  font: 600 0.8rem/1 'Inter', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.25s ease, background-color 0.25s ease, color 0.25s ease;
+}
+
+.fls-trigger:hover,
+.fls--open .fls-trigger {
+  border-color: var(--fls-border-hover, #a67dff);
+  background-color: var(--fls-bg-hover, rgba(107, 46, 145, 0.7));
+  color: var(--fls-color-hover, #ffffff);
+}
+
+.fls-trigger:focus-visible {
+  outline: 2px solid var(--fls-focus, #a67dff);
+  outline-offset: 2px;
+}
+
+/* Inside the menu the focus ring stays within the row (does not touch its neighbours) */
+.fls-option:focus-visible {
+  outline: 1.5px solid var(--fls-focus, #a67dff);
+  outline-offset: -1.5px;
+}
+
+.fls-flag,
+.fls-option-flag {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--fls-flag-border, rgba(166, 125, 255, 0.4));
+  flex-shrink: 0;
+}
+
+/* Globe instead of a missing / broken flag - same box, no border */
+.fls-globe {
+  border: none;
+  border-radius: 0;
+  opacity: 0.85;
+}
+
+.fls-chevron {
+  opacity: 0.7;
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+.fls--open .fls-chevron {
+  transform: rotate(180deg);
+}
+
+/* The menu opens upwards - the switcher sits at the bottom of the page */
+.fls-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  min-width: max(100%, 150px);
+  margin: 0;
+  padding: 5px;
+  list-style: none;
+  text-align: left; /* footers centre their bottom bar on phones */
+  background-color: var(--fls-menu-bg, rgba(13, 13, 27, 0.98));
+  border: 1px solid var(--fls-menu-border, rgba(166, 125, 255, 0.25));
+  border-radius: var(--fls-menu-radius, 12px);
+  box-shadow: var(--fls-menu-shadow, 0 -8px 32px rgba(0, 0, 0, 0.5));
+  animation: flsMenuUp 0.2s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}
+
+@keyframes flsMenuUp {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.fls-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--fls-option-radius, 8px);
+  color: var(--fls-option-color, #8585a0);
+  font: 600 0.82rem/1.2 'Inter', sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.fls-option:hover,
+.fls-option:focus-visible {
+  background-color: var(--fls-option-bg-hover, rgba(166, 125, 255, 0.12));
+  color: var(--fls-option-color-active, #e8e8f0);
+}
+
+.fls-option--active {
+  background-color: var(--fls-option-bg-active, rgba(166, 125, 255, 0.25));
+  color: var(--fls-option-color-active, #e8e8f0);
+}
+
+.fls-option-label {
+  flex: 1;
+}
+
+.fls-option-check {
+  color: var(--fls-check, #a67dff);
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fls-menu { animation: none; }
+  .fls-chevron { transition: none; }
+}

@@ -4,7 +4,8 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Unit tests of the public LocalizationService: stored language, initial load,
+ * @description Unit tests of the public LocalizationService: stored language, first-visit language
+ *   from the browser (not stored; English / first active language as fallbacks), initial load,
  *   fallback to Czech (not cached under the failed language - bugfix 2026-10-23), translation
  *   cache, module switching (stale responses dropped), out-of-order language responses (bugfix
  *   2026-10-23), key lookup and the active-language list.
@@ -38,6 +39,8 @@ describe('LocalizationService', () => {
    *  cached, no languages). */
   function enterModule(service: LocalizationService, module: string): void {
     service.setModule(module);
+    // Nothing stored: the default language (English) - its texts fail, then the Czech base fails too.
+    http.expectOne(`${API}/translations/${module}/en`).flush('x', { status: 500, statusText: 'Error' });
     http.expectOne(`${API}/translations/${module}/cz`).flush('x', { status: 500, statusText: 'Error' });
     http.expectOne(`${API}/languages/${module}`).flush({ data: [] });
   }
@@ -65,6 +68,71 @@ describe('LocalizationService', () => {
     expect(await done).toEqual({ home: { title: 'Home' } });
     expect(service.getText('home.title')).toBe('Home');
     expect(service.getText('home.x')).toBe('home.x');
+  });
+
+  /**
+   * @description First visit (nothing stored): the languages of the module are loaded first and
+   *   the browser's first offered language is used - not stored, the visitor did not choose it.
+   * @input no stored language; browser ['de-DE', 'cs-CZ']; languages cz + en active.
+   * @output GET languages/web, then translations/web/cz; current 'cz'; localStorage still empty.
+   */
+  it('picks the first-visit language from the browser without storing it', async () => {
+    spyOnProperty(navigator, 'languages').and.returnValue(['de-DE', 'cs-CZ']);
+    const service = create();
+    const done = service.initTranslations('web');
+    http.expectOne(`${API}/languages/web`).flush({ data: [
+      { code: 'cz', name: 'Čeština', active: true }, { code: 'en', name: 'English', active: true }
+    ] });
+    await Promise.resolve();
+    http.expectOne(`${API}/translations/web/cz`).flush({ data: { t: 'CZ' } });
+    expect(await done).toEqual({ t: 'CZ' });
+    expect(service.getCurrentLanguage()).toBe('cz');
+    expect(localStorage.getItem('selectedLanguage')).toBeNull();
+  });
+
+  /**
+   * @description First visit with a browser language the web does not offer: English; without
+   *   English the first active language.
+   * @input browser ['fr']; languages cz + en → 'en'; new service, languages cz + de (inactive en).
+   * @output translations/web/en; then translations/web/cz.
+   */
+  it('falls back to English, then to the first active language, on a first visit', async () => {
+    spyOnProperty(navigator, 'languages').and.returnValue(['fr']);
+    let service = create();
+    let done = service.initTranslations('web');
+    http.expectOne(`${API}/languages/web`).flush({ data: [{ code: 'cz', name: 'Čeština', active: true }, { code: 'en', name: 'English', active: true }] });
+    await Promise.resolve();
+    http.expectOne(`${API}/translations/web/en`).flush({ data: { t: 'EN' } });
+    expect(await done).toEqual({ t: 'EN' });
+
+    TestBed.resetTestingModule();
+    service = create();
+    done = service.initTranslations('web');
+    http.expectOne(`${API}/languages/web`).flush({ data: [
+      { code: 'cz', name: 'Čeština', active: true }, { code: 'de', name: 'Deutsch', active: true }, { code: 'en', name: 'English', active: false }
+    ] });
+    await Promise.resolve();
+    http.expectOne(`${API}/translations/web/cz`).flush({ data: { t: 'CZ' } });
+    expect(await done).toEqual({ t: 'CZ' });
+  });
+
+  /**
+   * @description A language chosen in the switcher is stored and wins on the next start (no
+   *   language list needed before the texts).
+   * @input setLanguage('en') on a fresh service; a new service initTranslations('web').
+   * @output localStorage 'en'; new service asks translations/web/en directly.
+   */
+  it('remembers the language chosen in the switcher', async () => {
+    let service = create();
+    service.setLanguage('en');
+    http.match(() => true).forEach(req => req.flush({ data: {} }));
+    expect(localStorage.getItem('selectedLanguage')).toBe('en');
+
+    TestBed.resetTestingModule();
+    service = create();
+    const done = service.initTranslations('web');
+    http.expectOne(`${API}/translations/web/en`).flush({ data: { t: 'EN' } });
+    expect(await done).toEqual({ t: 'EN' });
   });
 
   /**
@@ -128,7 +196,7 @@ describe('LocalizationService', () => {
 
     service.setModule('shop');
     expect(texts).toBeNull();
-    http.expectOne(`${API}/translations/shop/cz`).flush({ data: { m: 'shop' } });
+    http.expectOne(`${API}/translations/shop/en`).flush({ data: { m: 'shop' } });
     http.expectOne(`${API}/languages/shop`).flush({ data: [] });
     web.flush({ data: { m: 'web' } });
     expect(texts).toEqual({ m: 'shop' });

@@ -57,6 +57,26 @@ describe('ShopFooterComponent', () => {
   });
 
   /**
+   * @description The language switcher sits in the bottom bar (moved from the header 2026-11),
+   *   named by the shop translation.
+   * @input translations footer.language_label 'Language'; languages cz / en.
+   * @output .footer-bottom contains the switcher button with aria-label 'Language'; opened, two
+   *   languages.
+   */
+  it('shows the language switcher in the bottom bar', () => {
+    create(of({ settings: {}, social_links: [] }));
+    ctx.setTranslations({ footer: { title: 'Shop', language_label: 'Language' }, navigation: {}, legal: {} });
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const trigger = root.querySelector('.footer-bottom app-footer-language-switcher .fls-trigger') as HTMLButtonElement;
+    expect(trigger).not.toBeNull();
+    expect(trigger.getAttribute('aria-label')).toBe('Language');
+    trigger.click();
+    fixture.detectChanges();
+    expect(root.querySelectorAll('.footer-bottom .fls-option').length).toBe(2);
+  });
+
+  /**
    * @description Settings without footer text are kept as they are; a failing config is logged.
    * @input settings {}; config error.
    * @output siteSettings {}; console.error + siteSettings null.

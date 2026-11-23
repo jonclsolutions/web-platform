@@ -68,15 +68,24 @@ s okrajem 24 px nahoře a dole. Při scrollu se vykreslí od středu.
 
 ### 1.4 Skladba stránky
 ```
-[ fixní header – pill nahoře uprostřed, logo vlevo, Projekty/FAQ/jazyk vpravo ]
+[ fixní header – pill nahoře uprostřed, logo vlevo, Projekty/FAQ vpravo ]
 [ hero / úvod stránky ]
 [ obsahový panel (sheet) – sekce oddělené čarou ]
     hlavička sekce: nadpis (H2) + lead, centrované
     obsah sekce
 [ CTA řádek (dva bloky + svislý dělič) ]
-[ footer – beze změny ]
+[ footer – dole lišta: přepínač jazyka · copyright | právní odkazy · přihlášení ]
 ```
-- Header a footer se **nemění** (1:1 komponenty `public-header`, `public-footer`).
+- Header a footer se **nemění** (1:1 komponenty `public-header`, `public-footer`), s jednou
+  výjimkou (2026-11): **přepínač jazyka je ve footeru**, ne v headeru – používá se zřídka (jako na
+  GitHubu). Sdílená komponenta `app-footer-language-switcher` (web i e-shop): pill s vlajkou a
+  jménem jazyka, menu se otevírá **nahoru** ve stylu bývalého dropdownu z headeru (tmavý panel,
+  radius 12 px, kulaté vlajky, zaškrtnutí aktivního jazyka); jazyky svým jménem („Čeština“,
+  „English“) s atributem `lang`; chybějící / nenačtená vlajka → glóbus. Ovládání klávesnicí
+  (šipky, Home / End, Enter, Escape), zavření klikem mimo. S jediným jazykem se nezobrazí. Barvy
+  přes `--fls-*` z footeru (e-shop: světlé, hranaté).
+- Jazyk první návštěvy: první jazyk prohlížeče, který web má, jinak **angličtina**, jinak první
+  aktivní jazyk. Uloží se jen ruční volba ve footeru (funkční nastavení, bez souhlasu).
 - Fixní header zabírá nahoře ~92 px (top 20 + výška 52 + rezerva). První obsah stránky
   musí začínat níž – na homepage má hero `padding-top: 196px`, obsahové stránky
   mají rezervu aspoň 140 px.
@@ -184,7 +193,7 @@ Dlouhé řádky max. ~75 znaků (proto úzký sloupec 720 px pro čistý text).
 ### 5.1 Zaoblení
 | Prvek | Radius |
 |---|---|
-| Tlačítka, štítky, menu, přepínač jazyka | `999px` (pill) |
+| Tlačítka, štítky, menu, přepínač jazyka ve footeru | `999px` (pill; v e-shopu `0`) |
 | Karty FAQ, malé karty | `12px` |
 | Panely, mřížka dlaždic | `16px` |
 | Obrázky v sekcích, karty technologií | `18px` |
@@ -326,7 +335,7 @@ rozložení, routy, formuláře a texty ostatních stránek zůstávají).
 - Ověření: v DevTools → Performance při scrollu nesmí být každý snímek fialové „Layout“
   ani zelené „Paint“ (jen „Composite Layers“).
 - Velké rozmazání (`filter: blur`) jen na statických vrstvách, nikdy animované.
-- `backdrop-filter` jen v headeru (pill, logo, jazyk) – jinde ne.
+- `backdrop-filter` jen v headeru (pill, logo, odkazy vpravo) – jinde ne.
 - Obrázky WebP, lazy pod zlomem, rozměry v atributech (bez skoku layoutu).
 
 ---

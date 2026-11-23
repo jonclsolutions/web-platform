@@ -4,6 +4,18 @@
             "type": "changed",
             "area": "web",
             "part": "public",
+            "text": "The language switcher moved from the header to the bottom of the footer (languages by name, no flags). On a first visit the website is shown in the language of the visitor's browser if it has it, otherwise in English; a language picked in the footer is remembered."
+        },
+        {
+            "type": "changed",
+            "area": "shop",
+            "part": "public",
+            "text": "The language switcher moved from the header to the bottom of the footer. On a first visit the e-shop is shown in the language of the visitor's browser if it has it, otherwise in English; a language picked in the footer is remembered."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "public",
             "text": "New home page: a pinned hero where the admin screen rises and lands flat, content sliding over it, tiles arriving row by row. All web pages get calm scroll motion, off with reduced motion."
         },
         {

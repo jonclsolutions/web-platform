@@ -119,8 +119,13 @@
   height: 22px;
 }
 
-/* Bottom bar */
+/* Bottom bar: language switcher left, footer text centred in the rest (stacked on phones) */
 .footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px 24px;
+  flex-wrap: wrap;
   text-align: center;
   margin-top: 40px;
   padding-top: 20px;
@@ -128,6 +133,30 @@
   font-size: 0.75em;
   font-weight: 500;
   color: var(--text-dim);
+  /* Light shop colours of the shared switcher - square like every control of the shop */
+  --fls-color: var(--text-dim);
+  --fls-color-hover: var(--text-main);
+  --fls-bg: var(--color-white);
+  --fls-bg-hover: var(--color-white);
+  --fls-border: var(--border);
+  --fls-border-hover: var(--border-dark);
+  --fls-radius: 0;
+  --fls-focus: var(--text-main);
+  --fls-flag-border: var(--border);
+  --fls-menu-bg: var(--color-white);
+  --fls-menu-border: var(--border-dark);
+  --fls-menu-radius: 0;
+  --fls-menu-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+  --fls-option-radius: 0;
+  --fls-option-color: var(--text-dim);
+  --fls-option-color-active: var(--text-main);
+  --fls-option-bg-hover: #f5f5f5;
+  --fls-option-bg-active: #f5f5f5;
+  --fls-check: var(--text-main);
+}
+
+.footer-bottom p {
+  margin: 0;
 }
 
 /* Desktop hover - subtle contrast change without glow */

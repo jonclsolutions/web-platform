@@ -11,6 +11,11 @@
  * @note Nothing is loaded in the constructor: AppBootstrapService calls initTranslations()
  *   with the module of the first URL during APP_INITIALIZER (no render before the texts are
  *   ready); a public page then switches the module with setModule().
+ * @note Language: the visitor's own choice (localStorage `selectedLanguage`, written only by
+ *   setLanguage() - the switcher in the footer) wins. Without one, initTranslations() picks the
+ *   first language of the browser the area offers, otherwise English, otherwise the first active
+ *   language (pickInitialLanguage) - that guess is not stored, so a later visit guesses again.
+ *   Storing the explicit choice is a functional preference the visitor asked for (no consent).
  */
 
 import { Injectable } from '@angular/core';
@@ -19,6 +24,12 @@ import { BehaviorSubject, Observable, of, firstValueFrom } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ApiEnvelope } from '../interfaces/api-envelope';
+import { DEFAULT_PUBLIC_LANGUAGE, browserLanguages, pickInitialLanguage } from '../utils/language-preference';
+
+/** localStorage key of the language the visitor chose in the switcher. */
+const LANGUAGE_STORAGE_KEY = 'selectedLanguage';
+/** Language every public area has (the seed of the translations) - texts fall back to it. */
+const BASE_LANGUAGE = 'cz';
 
 export interface ApiLanguage {
   code: string;
@@ -50,7 +61,7 @@ export class LocalizationService {
   private translationsCache = new Map<string, any>();
   private languagesCache: LangMeta[] = [];
 
-  private currentLanguageSource = new BehaviorSubject<string>('cz');
+  private currentLanguageSource = new BehaviorSubject<string>(DEFAULT_PUBLIC_LANGUAGE);
   public currentLanguage$ = this.currentLanguageSource.asObservable();
 
   private currentTranslationsSource = new BehaviorSubject<any>(null);
@@ -62,19 +73,29 @@ export class LocalizationService {
    */
   private languagesSource = new BehaviorSubject<LangMeta[]>([]);
 
+  /** The visitor chose the language in the switcher (stored); false = guessed from the browser. */
+  private chosenByVisitor = false;
+
   constructor(private http: HttpClient) {
-    const stored = localStorage.getItem('selectedLanguage') || 'cz';
-    this.currentLanguageSource.next(stored);
+    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    this.chosenByVisitor = !!stored;
+    this.currentLanguageSource.next(stored || DEFAULT_PUBLIC_LANGUAGE);
   }
 
   /**
    * @description Loads the texts of a module before the first render (AppBootstrapService) -
-   *   the module of the public area of the first URL.
+   *   the module of the public area of the first URL. Without a language chosen by the visitor
+   *   the languages of the module are loaded first and the language is picked from the browser
+   *   preferences (one extra small request on such visits only).
    * @param module Translation module.
    * @returns The translations (null when they could not be loaded).
    */
-  public initTranslations(module: string): Promise<any> {
+  public async initTranslations(module: string): Promise<any> {
     this.currentModule = module;
+    if (!this.chosenByVisitor) {
+      const { languages } = await firstValueFrom(this.fetchLanguages());
+      this.currentLanguageSource.next(pickInitialLanguage(languages.map(l => l.code), browserLanguages()));
+    }
     const lang = this.currentLanguageSource.getValue();
     return firstValueFrom(this.loadTranslations$(lang)).then(data => {
       if (data) {
@@ -149,8 +170,8 @@ export class LocalizationService {
       map(res => res.data),  // translation dictionary in `data` (finding #6)
       tap(data => { if (module === this.currentModule) this.translationsCache.set(lang, data); }),
       catchError(() => {
-        if (lang !== 'cz') {
-          return this.loadTranslations$('cz');
+        if (lang !== BASE_LANGUAGE) {
+          return this.loadTranslations$(BASE_LANGUAGE);
         }
         return of(null);
       })
@@ -167,8 +188,14 @@ export class LocalizationService {
     });
   }
 
+  /**
+   * @description Switches to the language the visitor chose (language switcher) and remembers it
+   *   for later visits.
+   * @param code Language code.
+   */
   public setLanguage(code: string): void {
-    localStorage.setItem('selectedLanguage', code);
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, code);
+    this.chosenByVisitor = true;
     this.currentLanguageSource.next(code);
     this.loadTranslations(code);
   }

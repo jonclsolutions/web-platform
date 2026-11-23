@@ -284,6 +284,14 @@
   flex-wrap: wrap;
 }
 
+/* Language switcher + copyright, side by side (stacked and centred on phones) */
+.footer-bottom-start {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
 .footer-copy {
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -385,6 +393,11 @@
 
   .footer-bottom-links {
     justify-content: center;
+  }
+
+  .footer-bottom-start {
+    flex-direction: column;
+    gap: 12px;
   }
 }
 

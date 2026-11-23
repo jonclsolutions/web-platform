@@ -4,7 +4,8 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Template of the public header component.
+    @description: Template of the public header component (navigation pill, logo, References /
+      FAQ links, mobile header and drawer). The language switcher is in the footer.
 -->
 
 <header [class.scrolled]="scrolled">
@@ -36,42 +37,9 @@
   }
 </a>
 
-<div class="lang-wrp">
+<div class="header-side-links">
   <a routerLink="/references" class="nav-link">{{ t?.navigation?.references }}</a>
   <a routerLink="/faq" class="nav-link">{{ t?.navigation?.faq }}</a>
-
-  <div class="lang-dropdown" [class.lang-dropdown--open]="isLangOpen">
-    <button class="lang-trigger" (click)="toggleLangDropdown()" [attr.aria-expanded]="isLangOpen" aria-haspopup="listbox">
-      @if (getActiveLang(); as activeLang) {
-        <img [src]="activeLang.flag" [alt]="activeLang.code" class="lang-trigger-flag">
-      }
-      <span class="lang-trigger-code">{{ (getActiveLang()?.code ?? 'cz') | uppercase }}</span>
-      <svg class="lang-trigger-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
-        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
-
-    @if (isLangOpen) {
-      <ul class="lang-menu" role="listbox">
-        @for (lang of availableLanguages; track lang.code) {
-          <li
-            class="lang-option"
-            [class.lang-option--active]="(currentLanguage$ | async) === lang.code"
-            role="option"
-            [attr.aria-selected]="(currentLanguage$ | async) === lang.code"
-            (click)="selectLanguage(lang.code); closeLangDropdown()">
-            <img [src]="lang.flag" [alt]="lang.code" class="lang-option-flag">
-            <span class="lang-option-label">{{ lang.label }}</span>
-            @if ((currentLanguage$ | async) === lang.code) {
-              <svg class="lang-option-check" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            }
-          </li>
-        }
-      </ul>
-    }
-  </div>
 </div>
 
 <!-- ── Mobile header ────────────────────────────────────────── -->
@@ -128,41 +96,6 @@
     }
   </nav>
 
-<!-- Bottom part - lang dropdown -->
-<div class="m-drawer-bottom">
-  <div class="m-drawer-lang-dropdown" [class.m-drawer-lang-dropdown--open]="isDrawerLangOpen">
-    <button class="m-drawer-lang-trigger" (click)="toggleDrawerLangDropdown()" [attr.aria-expanded]="isDrawerLangOpen">
-      @if (getActiveLang(); as activeLang) {
-        <img [src]="activeLang.flag" [alt]="activeLang.code" class="m-drawer-lang-flag">
-      }
-      <span class="m-drawer-lang-code">{{ (getActiveLang()?.code ?? 'cz') | uppercase }}</span>
-      <svg class="m-drawer-lang-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
-        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
-
-    @if (isDrawerLangOpen) {
-      <ul class="m-drawer-lang-menu" role="listbox">
-        @for (lang of availableLanguages; track lang.code) {
-          <li
-            class="m-drawer-lang-option"
-            [class.m-drawer-lang-option--active]="(currentLanguage$ | async) === lang.code"
-            role="option"
-            [attr.aria-selected]="(currentLanguage$ | async) === lang.code"
-            (click)="selectLanguage(lang.code); closeDrawerLangDropdown()">
-            <img [src]="lang.flag" [alt]="lang.code" class="m-drawer-lang-option-flag">
-            <span>{{ lang.label }}</span>
-            @if ((currentLanguage$ | async) === lang.code) {
-              <svg class="m-drawer-lang-check" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            }
-          </li>
-        }
-      </ul>
-    }
-  </div>
-</div>
   <!-- Contact - pill buttons -->
   @if (siteSettings) {
     <div class="m-drawer-contact">

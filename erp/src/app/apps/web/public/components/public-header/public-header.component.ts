@@ -4,10 +4,12 @@
  * @project JS web-platform
  * @author JS
  * @created 2025
- * @description Manages the site-wide public header, including dynamic navigation, language switching, and scroll-responsive UI animations.
+ * @description Manages the site-wide public header, including dynamic navigation and scroll-responsive UI
+ *   animations. The language switcher is in the footer (FooterLanguageSwitcherComponent) - used rarely,
+ *   it does not need a place in the header (2026-11).
  * @dependencies
  * - Router: Handles route state detection for active link highlighting.
- * - LocalizationService: Manages multi-language state and translation keys.
+ * - LocalizationService: Translations of the `web` module.
  * - PublicDataService: Fetches global site configuration.
  * - Angular Signals/RxJS: Manages reactive state updates for the UI.
  * @note siteSettings is read from PublicDataService.siteSettingsValue$ (populated once by
@@ -23,15 +25,14 @@ import {
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter, takeUntil } from 'rxjs/operators';
-import { LocalizationService, LangMeta } from '../../../../../shared/services/localization.service';
+import { LocalizationService } from '../../../../../shared/services/localization.service';
 import { PublicDataService } from '../../../../../shared/services/public-data.service';
-import { Observable } from 'rxjs';
 import * as Web from '../../web-providers';
 import { hasApp } from '../../../../apps.registry';
 
 /**
  * @description Component for the main navigation header.
- * @usage Provides a persistent navigation interface, language selector, and mobile-responsive menu.
+ * @usage Provides a persistent navigation interface and a mobile-responsive menu.
  * @note Implements advanced DOM manipulation and ResizeObservers to ensure navigation indicators remain synchronized during transitions and scroll events.
  */
 @Component({
@@ -44,7 +45,6 @@ import { hasApp } from '../../../../apps.registry';
 export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChildren('homeLink, servicesLink, shopLink, academyLink')
   navLinks!: QueryList<ElementRef<HTMLAnchorElement>>;
-isDrawerLangOpen: boolean = false;
   t: any = null;
   /** Link to the e-shop only when it is part of this build (apps.registry). */
   readonly showShopLink = hasApp('shop');
@@ -67,13 +67,9 @@ isDrawerLangOpen: boolean = false;
   private readonly INDICATOR_ANIMATION_DURATION = 400;
 
   private currentActiveRoute: string | null = null;
-  currentLanguage$: Observable<string>;
 
   isMobileView: boolean = false;
   isMenuOpen: boolean = false;
-  isLangOpen: boolean = false;
-
-  availableLanguages: LangMeta[] = [];
 
   private destroy$ = new Web.Subject<void>();
 
@@ -85,18 +81,12 @@ isDrawerLangOpen: boolean = false;
     private publicDataService: PublicDataService
   ) {
     this.localizationService.setModule('web');
-    this.currentLanguage$ = this.localizationService.currentLanguage$;
   }
 
   /**
-   * @description Initializes language fetching, translation streams, and route observation.
+   * @description Initializes translation streams and route observation.
    */
   ngOnInit(): void {
-    this.localizationService.fetchLanguages().subscribe(res => {
-      this.availableLanguages = res.languages;
-      this.cdr.markForCheck();
-    });
-
     this.localizationService.currentTranslations$
       .pipe(takeUntil(this.destroy$))
       .subscribe(t => {
@@ -143,15 +133,6 @@ isDrawerLangOpen: boolean = false;
     if (!this.isMobileView && this.isMenuOpen) this.closeMenu();
   }
 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    const target = event.target as HTMLElement;
-    if (!target.closest('.lang-dropdown')) {
-      this.isLangOpen = false;
-      this.cdr.markForCheck();
-    }
-  }
-
   /**
    * @description Toggles state based on viewport width.
    */
@@ -166,24 +147,6 @@ isDrawerLangOpen: boolean = false;
 
   toggleMenu(): void { this.isMenuOpen = !this.isMenuOpen; this.toggleScroll(this.isMenuOpen); }
   closeMenu(): void  { this.isMenuOpen = false; this.toggleScroll(false); }
-
-  toggleLangDropdown(): void {
-    this.isLangOpen = !this.isLangOpen;
-    this.cdr.markForCheck();
-  }
-
-    closeLangDropdown(): void {
-    this.isLangOpen = false;
-    this.cdr.markForCheck();
-  }
-
-  /**
-   * @description Retrieves the currently selected language metadata.
-   */
-  getActiveLang(): LangMeta | undefined {
-    const current = this.localizationService.getCurrentLanguage();
-    return this.availableLanguages.find(l => l.code === current);
-  }
 
   private toggleScroll(blockScroll: boolean): void {
     const html = document.documentElement;
@@ -314,18 +277,4 @@ isDrawerLangOpen: boolean = false;
       };
     }
   }
-
-  selectLanguage(code: string): void {
-    this.localizationService.setLanguage(code);
-  }
-
-  toggleDrawerLangDropdown(): void {
-  this.isDrawerLangOpen = !this.isDrawerLangOpen;
-  this.cdr.markForCheck();
-}
-
-closeDrawerLangDropdown(): void {
-  this.isDrawerLangOpen = false;
-  this.cdr.markForCheck();
-}
 }

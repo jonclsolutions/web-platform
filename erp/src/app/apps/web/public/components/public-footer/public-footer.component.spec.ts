@@ -7,7 +7,8 @@
  * @description Unit tests of PublicFooterComponent: link groups (translated titles, no Czech
  *   fallback any more - finding #44), legal and login links, the copyright / tagline per language (localized
  *   setting → plain setting, no translation fallback since 2026-10-31) and rendering without a
- *   contact phone (bugfix 2026-10-23 - the footer is on every web page).
+ *   contact phone (bugfix 2026-10-23 - the footer is on every web page) and the language switcher
+ *   in the bottom bar (moved from the header 2026-11).
  * @dependencies
  * - createPublicPageContext (getText resolves the navigation keys).
  */
@@ -23,7 +24,7 @@ describe('PublicFooterComponent', () => {
   let fixture: ComponentFixture<PublicFooterComponent>;
   let footer: PublicFooterComponent;
   const translations = {
-    footer: { group_offer: 'Offer', contact_header: 'Contact', ico_label: 'ID', dic_label: 'VAT' },
+    footer: { group_offer: 'Offer', contact_header: 'Contact', ico_label: 'ID', dic_label: 'VAT', language_label: 'Language' },
     navigation: { services: 'Services', jobs: 'Jobs', login_btn: 'Login' },
     legal: { privacy_policy: 'Privacy' }
   };
@@ -93,6 +94,22 @@ describe('PublicFooterComponent', () => {
     expect(el.querySelector('.footer-contact-address')).toBeNull();
     expect(el.querySelector('.footer-brand-tagline')).toBeNull();
     expect(el.querySelector('.footer-copy')).toBeNull();
+  });
+
+  /**
+   * @description The language switcher sits in the bottom bar, named by the translation.
+   * @input translations footer.language_label 'Language'; languages cz / en.
+   * @output .footer-bottom contains the switcher button with aria-label 'Language'; opened, two
+   *   languages.
+   */
+  it('shows the language switcher in the bottom bar', () => {
+    const root = fixture.nativeElement as HTMLElement;
+    const trigger = root.querySelector('.footer-bottom app-footer-language-switcher .fls-trigger') as HTMLButtonElement;
+    expect(trigger).not.toBeNull();
+    expect(trigger.getAttribute('aria-label')).toBe('Language');
+    trigger.click();
+    fixture.detectChanges();
+    expect(root.querySelectorAll('.footer-bottom .fls-option').length).toBe(2);
   });
 
   /**

@@ -10,6 +10,7 @@
  * - PublicDataService: Fetches global configuration, social media links, and payment method assets.
  * - RouterModule: Facilitates navigation to internal support/legal pages.
  * - RxJS: Manages subscription lifecycles to prevent memory leaks.
+ * - FooterLanguageSwitcherComponent: Language switcher of the bottom bar (moved from the header).
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
@@ -19,6 +20,7 @@ import { PublicDataService } from '../../../../../shared/services/public-data.se
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { hasApp } from '../../../../apps.registry';
+import { FooterLanguageSwitcherComponent } from '../../../../../shared/components/footer-language-switcher/footer-language-switcher.component';
 
 /** Data structure for internal/external navigation links */
 interface FooterNavLink { route: string; text: string; external: boolean; }
@@ -39,7 +41,7 @@ interface SocialLink { name: string; url: string; icon_path: string; }
   standalone: true,
   templateUrl: './shop-footer.component.html',
   styleUrls: ['../../shared-styles/theme.css', './shop-footer.component.css'],
-  imports: [RouterModule],
+  imports: [RouterModule, FooterLanguageSwitcherComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ShopFooterComponent implements OnInit, OnDestroy {

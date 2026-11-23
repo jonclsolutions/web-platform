@@ -4,7 +4,8 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Template of the public footer component.
+    @description: Template of the public footer component (brand, link groups, contact; bottom
+      bar with the language switcher, copyright, legal links and login).
 -->
 
 @if (t && settings) {
@@ -140,12 +141,16 @@
     </div>
   </div>
 
-  <!-- Bottom bar: copyright | legal links · login -->
+  <!-- Bottom bar: language · copyright | legal links · login -->
   <div class="footer-bottom">
     <div class="footer-inner footer-bottom-inner">
-      @if (copyrightText) {
-        <p class="footer-copy">{{ copyrightText }}</p>
-      }
+      <div class="footer-bottom-start">
+        <!-- Language switcher lives here, not in the header (used rarely - GitHub-style) -->
+        <app-footer-language-switcher [label]="t.language_label" />
+        @if (copyrightText) {
+          <p class="footer-copy">{{ copyrightText }}</p>
+        }
+      </div>
       <div class="footer-bottom-links">
         @for (link of footerLegalLinks; track link.route) {
           <a [routerLink]="link.route" class="footer-bottom-link">{{ link.text }}</a>

@@ -4,10 +4,10 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Unit tests of PublicHeaderComponent: texts, languages and settings, the active
- *   link highlight + sliding indicator after navigation (desktop only), the scrolled state,
- *   mobile menu / scroll lock, language dropdowns and that a destroyed header no longer reacts
- *   to navigation (bugfix 2026-10-23).
+ * @description Unit tests of PublicHeaderComponent: texts and settings, no language switcher
+ *   (it is in the footer since 2026-11), the active link highlight + sliding indicator after
+ *   navigation (desktop only), the scrolled state, mobile menu / scroll lock and that a destroyed
+ *   header no longer reacts to navigation (bugfix 2026-10-23).
  * @dependencies
  * - createPublicPageContext with real routes (dummy page); window.innerWidth / scrollY spied;
  *   fakeAsync for the requestAnimationFrame / indicator timers.
@@ -18,7 +18,7 @@ import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick
 import { Router } from '@angular/router';
 
 import { PublicHeaderComponent } from './public-header.component';
-import { PublicPageContext, STUB_LANGUAGES, createPublicPageContext } from '../../../../../../testing/public-test-helpers';
+import { PublicPageContext, createPublicPageContext } from '../../../../../../testing/public-test-helpers';
 
 /** Routed dummy page. */
 @Component({ standalone: true, template: '' })
@@ -54,17 +54,20 @@ describe('PublicHeaderComponent', () => {
   afterEach(() => document.documentElement.classList.remove('no-scroll'));
 
   /**
-   * @description Start: web module, languages, texts and settings; active language meta.
+   * @description Start: web module, texts and settings; the header has no language switcher
+   *   (desktop nor drawer) and does not load the languages.
    * @input Default context.
-   * @output setModule('web'); availableLanguages = stub list; 'Home' rendered; siteSettings; getActiveLang cz.
+   * @output setModule('web'); 'Services' rendered; siteSettings; no select / .lang-dropdown /
+   *   .m-drawer-lang-dropdown; fetchLanguages not called.
    */
-  it('loads texts, languages and settings', fakeAsync(() => {
+  it('loads texts and settings without a language switcher', fakeAsync(() => {
     create();
     expect(ctx.localization.setModule).toHaveBeenCalledWith('web');
-    expect(header.availableLanguages).toEqual(STUB_LANGUAGES);
     expect(fixture.nativeElement.textContent).toContain('Services');
     expect(header.siteSettings.contact_email).toBe('a@b.cz');
-    expect(header.getActiveLang()!.code).toBe('cz');
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('select, .lang-dropdown, .m-drawer-lang-dropdown')).toBeNull();
+    expect(ctx.localization.fetchLanguages).not.toHaveBeenCalled();
     ctx.publicData.siteSettingsValue$.next(null);
     expect(header.siteSettings).toBeNull();
     fixture.destroy();
@@ -151,36 +154,6 @@ describe('PublicHeaderComponent', () => {
     header.toggleMenu();
     header.closeMenu();
     expect(header.isMenuOpen).toBeFalse();
-    fixture.destroy();
-    flush();
-  }));
-
-  /**
-   * @description Language dropdowns: toggle / close, outside click closes, inside click keeps,
-   *   selection switches the language.
-   * @input toggleLangDropdown(); click on body; toggle + click inside .lang-dropdown; selectLanguage('en'); drawer toggles.
-   * @output open → closed; stays open; setLanguage('en'); drawer open → closed.
-   */
-  it('switches languages from the dropdowns', fakeAsync(() => {
-    create();
-    header.toggleLangDropdown();
-    expect(header.isLangOpen).toBeTrue();
-    document.body.click();
-    expect(header.isLangOpen).toBeFalse();
-
-    header.toggleLangDropdown();
-    fixture.detectChanges();
-    (fixture.nativeElement.querySelector('.lang-dropdown') as HTMLElement).click();
-    expect(header.isLangOpen).toBeTrue();
-    header.closeLangDropdown();
-    expect(header.isLangOpen).toBeFalse();
-
-    header.selectLanguage('en');
-    expect(ctx.localization.setLanguage).toHaveBeenCalledWith('en');
-    header.toggleDrawerLangDropdown();
-    expect(header.isDrawerLangOpen).toBeTrue();
-    header.closeDrawerLangDropdown();
-    expect(header.isDrawerLangOpen).toBeFalse();
     fixture.destroy();
     flush();
   }));
