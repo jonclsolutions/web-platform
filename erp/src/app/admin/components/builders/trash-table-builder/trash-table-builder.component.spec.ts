@@ -185,7 +185,8 @@ describe('TrashTableBuilderComponent', () => {
     expect(cell(12.5, { type: 'currency' })).toContain('€');
     expect(cell('', { type: 'currency' })).toBe('');
     expect(cell('abc', { type: 'currency' })).toBe('abc EUR');
-    expect(cell('2026-03-04', { type: 'date', format: 'd.M.yyyy' })).toBe('4.3.2026');
+    expect(cell('2026-03-04', { type: 'date', format: 'd.M.yyyy' })).toBe('4. 3. 2026');
+    expect(cell('2026-03-04T05:06:00', { type: 'date', format: 'short' })).toBe('4. 3. 2026 05:06');
     expect(cell('2026-03-04', { type: 'date' })).toBeTruthy();
     expect(cell(null, { type: 'date' })).toBe('');
     expect(cell(0, { type: 'boolean' })).toBe('shared.no');

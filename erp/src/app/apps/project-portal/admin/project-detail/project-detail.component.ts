@@ -54,6 +54,7 @@ import { IconComponent } from '../../../../shared/components/icon/icon.component
 import * as Config from '../projects/projects.config';
 import { ProjectApprovalsSectionComponent } from './project-approvals-section.component';
 import { ProjectUpdatesSectionComponent } from './project-updates-section.component';
+import { AdminDatePipe } from '../../../../admin/shared-date/admin-date.pipe';
 
 /** @description Checkpoint of a project. */
 export interface ProjectCheckpoint {
@@ -244,7 +245,7 @@ const PROJECTS_ENDPOINT = 'project-portal/projects';
 @Component({
   selector: 'app-project-detail',
   standalone: true,
-  imports: [
+  imports: [AdminDatePipe, 
     CommonModule, FormsModule, RouterLink, StickyBarDirective, PageHeaderComponent, IconComponent, RowButtonBuilderComponent,
     ProjectApprovalsSectionComponent, ProjectUpdatesSectionComponent,
   ],

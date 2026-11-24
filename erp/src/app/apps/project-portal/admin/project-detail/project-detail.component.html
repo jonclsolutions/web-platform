@@ -29,7 +29,7 @@
       </span>
     }
     @if (project) {
-      <span phSub>#{{ project.id }} · {{ t('detail_created') }} {{ project.created_at | date:'d. M. yyyy' }}
+      <span phSub>#{{ project.id }} · {{ t('detail_created') }} {{ project.created_at | adminDate }}
         · {{ t('detail_assignee') }}: <strong>{{ project.assignee_name || t('detail_no_assignee') }}</strong></span>
     }
     @if (unreadTotal > 0) {
@@ -197,7 +197,7 @@
                     <div class="pd-msg" [class.pd-msg--admin]="msg.author_type === 'admin'" [class.pd-msg--internal]="msg.is_internal">
                       <div class="pd-msg-meta">
                         @if (msg.is_internal) { <span class="pd-internal-tag">{{ t('message_internal_tag') }}</span> }
-                        {{ msg.author_label || threadAuthorLabel(msg.author_type) }} · {{ msg.created_at | date:'d. M. yyyy HH:mm' }}
+                        {{ msg.author_label || threadAuthorLabel(msg.author_type) }} · {{ msg.created_at | adminDate:'datetime' }}
                       </div>
                       <div class="pd-msg-body">{{ msg.body }}</div>
                       @if (msg.attachments?.length) {
@@ -364,7 +364,7 @@
                     <div class="pd-cp-label">{{ cp.label }}</div>
                     @if (cp.due_date) {
                       <span class="pd-cp-due" [class.pd-cp-due--overdue]="isOverdue(cp)">
-                        {{ t('checkpoint_due_prefix') }} {{ cp.due_date | date:'d. M. yyyy' }}@if (isOverdue(cp)) { · {{ t('checkpoint_overdue') }} }
+                        {{ t('checkpoint_due_prefix') }} {{ cp.due_date | adminDate }}@if (isOverdue(cp)) { · {{ t('checkpoint_overdue') }} }
                       </span>
                     }
                     @if (cp.description) {
@@ -500,12 +500,12 @@
                     } @else {
                       <span class="pd-tag" [title]="t('account_notify_hint')">{{ t('account_notify_off') }}</span>
                     }
-                    · {{ account.last_login_at ? (t('account_last_login') + ' ' + (account.last_login_at | date:'d. M. yyyy HH:mm')) : t('account_never_logged_in') }}
+                    · {{ account.last_login_at ? (t('account_last_login') + ' ' + (account.last_login_at | adminDate:'datetime')) : t('account_never_logged_in') }}
                     @if ((account.active_sessions ?? 0) > 0) { · {{ t('account_devices').replace('{count}', '' + account.active_sessions) }} }
                   </div>
                   <div class="pd-account-meta pd-account-access">
                     @for (chip of accountAccess(account); track chip) { <span class="pd-tag">{{ chip }}</span> }
-                    @if (account.invited_at) { <span>{{ t('account_invited_at') }} {{ account.invited_at | date:'d. M. yyyy' }}</span> }
+                    @if (account.invited_at) { <span>{{ t('account_invited_at') }} {{ account.invited_at | adminDate }}</span> }
                   </div>
                 </div>
                 @if (canEdit) {
@@ -623,7 +623,7 @@
                 <a [href]="file.download_url" class="pd-files-name" target="_blank" rel="noopener">{{ file.original_filename }}</a>
                 <span class="pd-files-meta">
                   @if (file.is_internal) { <span class="pd-internal-tag">{{ t('message_internal_tag') }}</span> }
-                  {{ formatFileSize(file.size_bytes) }} · {{ file.created_at | date:'d. M. yyyy' }} ·
+                  {{ formatFileSize(file.size_bytes) }} · {{ file.created_at | adminDate }} ·
                   {{ file.author_label || threadAuthorLabel(file.author_type) }} ·
                   <button type="button" class="pd-link" (click)="openFileThread(file)">{{ fileSourceLabel(file) }}</button>
                 </span>

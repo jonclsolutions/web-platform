@@ -51,6 +51,7 @@ import { ExportPopupBuilderComponent, ExportColumnOption, ExportSelection } from
 import { ImportPopupBuilderComponent } from '../import-popup-builder/import-popup-builder.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { spreadsheetSafe } from '../../../../shared/utils/spreadsheet-safe';
+import { adminDateFormat, adminDateKind } from '../../../shared-date/admin-date-format';
 const DEFAULT_EXPORT_EXCLUDED_KEYS = [
   'user_password_hash',
   'user_password_salt',
@@ -240,6 +241,17 @@ get importEnumHints(): ImportEnumHint[] {
     }
   }
 
+  /**
+   * @description Pattern of a date cell (and of a date in the export): the ONE admin format -
+   *   the day, or the day with time for a column with a time; a table never shows seconds
+   *   (admin-date-format.ts; was 'short' = "20.11.26 22:51" next to "24. 11. 2026").
+   * @param format Format of the column.
+   */
+  tableDateFormat(format?: string | null): string {
+    const kind = adminDateKind(format, 'date');
+    return adminDateFormat(this.i18n, kind === 'datetime_seconds' ? 'datetime' : kind);
+  }
+
   getCellValue(item: any, column: ColumnDefinition): any {
     const keys = column.key.split('.');
     const value = keys.reduce((obj, key) => obj?.[key], item);
@@ -256,7 +268,7 @@ get importEnumHints(): ImportEnumHint[] {
         }
       }
       case 'date':
-        return value ? (new DatePipe(this.i18n.getDateLocale())).transform(value, column.format || 'd.M.yyyy') : '';
+        return value ? (new DatePipe(this.i18n.getDateLocale())).transform(value, this.tableDateFormat(column.format)) : '';
       case 'boolean':
         return (value == true || value === 'true' || value == 1)
           ? this.i18n.getValue('shared.yes')
@@ -789,7 +801,7 @@ get importEnumHints(): ImportEnumHint[] {
 
     if (detailCol.type === 'date') {
       try {
-        return (new DatePipe(this.i18n.getDateLocale())).transform(value, detailCol.format || 'd.M.yyyy') ?? String(value);
+        return (new DatePipe(this.i18n.getDateLocale())).transform(value, this.tableDateFormat(detailCol.format)) ?? String(value);
       } catch {
         return String(value);
       }

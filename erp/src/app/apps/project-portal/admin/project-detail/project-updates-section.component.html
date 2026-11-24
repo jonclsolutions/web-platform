@@ -84,7 +84,7 @@
             }
           </div>
           <div class="ps-meta">
-            {{ update.is_published ? (t('update_published_at') + ' ' + (update.published_at | date:'d. M. yyyy HH:mm')) : (t('update_created_at') + ' ' + (update.created_at | date:'d. M. yyyy HH:mm')) }}
+            {{ update.is_published ? (t('update_published_at') + ' ' + (update.published_at | adminDate:'datetime')) : (t('update_created_at') + ' ' + (update.created_at | adminDate:'datetime')) }}
             @if (update.author_label) { · {{ update.author_label }} }
           </div>
           <p class="ps-body">{{ update.body }}</p>

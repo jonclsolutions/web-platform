@@ -203,7 +203,7 @@ describe('SalesLeadsComponent', () => {
   /**
    * @description The message says until when the link is valid (VT-10 link expiry).
    * @input  API { url, expires_at '2026-12-04T10:00:00+00:00' }; link_valid_until 'until {date}'
-   * @output alert message 'ACME until 4.12.2026'
+   * @output alert message 'ACME until 4. 12. 2026' (the ONE admin date format)
    */
   it('tells until when the link is valid', async () => {
     ctx.i18n.getValue.and.callFake((p: string) => ({ 'sales-leads.link_copied_message': '{subject}', 'sales-leads.link_valid_until': 'until {date}' } as any)[p] ?? p);
@@ -212,7 +212,7 @@ describe('SalesLeadsComponent', () => {
     component.handleGenerateFormLink({ id: 3, subject_name: 'ACME' });
     await write.calls.mostRecent().returnValue;
     await Promise.resolve();
-    expect(ctx.alert.open).toHaveBeenCalledWith('sales-leads.link_copied_title', 'ACME until 4.12.2026', 'success');
+    expect(ctx.alert.open).toHaveBeenCalledWith('sales-leads.link_copied_title', 'ACME until 4. 12. 2026', 'success');
   });
 
   /**

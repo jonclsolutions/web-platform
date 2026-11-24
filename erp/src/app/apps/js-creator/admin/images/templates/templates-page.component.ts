@@ -53,6 +53,7 @@ import { uiIcon } from '../../shared/ui-icons';
 import { BulkList, MAX_SELECTION, TransferApiService, exportErrorKey, exportFileName } from '../../shared/transfer-api.service';
 import { CardSelection } from '../../shared/card-selection';
 import { ImportDialogComponent } from '../../shared/import-dialog/import-dialog.component';
+import { AdminDatePipe } from '../../../../../admin/shared-date/admin-date.pipe';
 
 /** Open popup: new template, copy, copy to another size. */
 interface TemplateDialog {
@@ -69,7 +70,7 @@ type SortKey = 'updated' | 'created' | 'name';
 @Component({
   selector: 'app-js-creator-templates-page',
   standalone: true,
-  imports: [
+  imports: [AdminDatePipe, 
     DatePipe, FormsModule, PageHeaderComponent, AdminModalComponent, RowButtonBuilderComponent, IconComponent, QuotaBarComponent, SizePickerComponent,
     CreatorIconComponent, ImportDialogComponent,
   ],

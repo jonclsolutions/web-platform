@@ -90,7 +90,7 @@
             <div class="ws-card-body">
               <span class="ws-card-name" [title]="set.name">{{ set.name }}</span>
               <span class="ws-card-meta">{{ tf('formats', { count: active(set).length }) }}@if (set.templates.length > active(set).length) { · {{ tf('in_trash', { count: set.templates.length - active(set).length }) }} }</span>
-              <span class="ws-card-meta">{{ t(view === 'trash' ? 'deleted' : 'updated') }} {{ (view === 'trash' ? set.deleted_at : set.updated_at) | date: 'd. M. y H:mm' : undefined : locale }}</span>
+              <span class="ws-card-meta">{{ t(view === 'trash' ? 'deleted' : 'updated') }} {{ (view === 'trash' ? set.deleted_at : set.updated_at) | adminDate:'datetime' }}</span>
             </div>
             <div class="ws-card-actions">
               @if (view === 'active') {

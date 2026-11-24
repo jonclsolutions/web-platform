@@ -35,6 +35,7 @@ import { TableButtons } from '../../../../shared/interfaces/table-buttons';
 import * as Core from '../../../../shared/imports/core-providers';
 import { ButtonBuilderComponent } from '../button-builder/button-builder.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
+import { adminDateFormat, adminDateKind } from '../../../shared-date/admin-date-format';
 
 /**
  * @description A dedicated table view for displaying soft-deleted records with utility actions
@@ -176,7 +177,8 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
       }
 
       case 'date':
-        return value ? (new DatePipe(this.i18n.getDateLocale())).transform(value, column.format || 'shortDate') : '';
+        // The ONE admin format (admin-date-format.ts); a table never shows seconds.
+        return value ? (new DatePipe(this.i18n.getDateLocale())).transform(value, adminDateFormat(this.i18n, adminDateKind(column.format, 'date') === 'date' ? 'date' : 'datetime')) : '';
       case 'boolean':
         return (value == true || value === 'true' || value == 1)
           ? this.i18n.getValue('shared.yes')

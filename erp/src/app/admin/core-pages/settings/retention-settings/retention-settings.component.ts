@@ -30,6 +30,7 @@ import { AdminLocalizationService } from '../../../../core/services/admin-locali
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
 import { PermissionService } from '../../../../core/auth/services/permission.service';
+import { AdminDatePipe } from '../../../shared-date/admin-date.pipe';
 
 /** @description One retention setting of the API (core_retention_settings). */
 export interface RetentionSetting {
@@ -57,7 +58,7 @@ export const RETENTION_CACHE_KEY = 'core:retention_settings';
 @Component({
   selector: 'app-retention-settings',
   standalone: true,
-  imports: [FormsModule, DatePipe, StickyBarDirective],
+  imports: [AdminDatePipe, FormsModule, DatePipe, StickyBarDirective],
   templateUrl: './retention-settings.component.html',
   styleUrl: './retention-settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

@@ -47,6 +47,7 @@ import { QuotaBarComponent } from '../shared/quota-bar/quota-bar.component';
 import { CreatorIconComponent } from '../shared/creator-icon/creator-icon.component';
 import { UiIconName, uiIcon } from '../shared/ui-icons';
 import { formatBytes } from '../shared/workspace-format';
+import { AdminDatePipe } from '../../../../admin/shared-date/admin-date.pipe';
 
 /** Open popup of a folder. */
 interface FolderDialog {
@@ -90,7 +91,7 @@ const MAX_SELECTION = 200;
 @Component({
   selector: 'app-js-creator-outputs-page',
   standalone: true,
-  imports: [
+  imports: [AdminDatePipe, 
     DatePipe, FormsModule, PageHeaderComponent, AdminModalComponent, RowButtonBuilderComponent, IconComponent, FolderTreeComponent,
     QuotaBarComponent, CreatorIconComponent,
   ],

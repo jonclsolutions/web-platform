@@ -43,7 +43,7 @@
               <span class="rs-row-hint">{{ t('hint_' + setting.data_key) }}</span>
               @if (setting.last_run_at) {
                 <span class="rs-row-last">
-                  {{ t('last_run') }} {{ setting.last_run_at | date:'d.M.yyyy HH:mm' }} · {{ t('last_deleted').replace('{count}', '' + (setting.last_deleted_count ?? 0)) }}
+                  {{ t('last_run') }} {{ setting.last_run_at | adminDate:'datetime' }} · {{ t('last_deleted').replace('{count}', '' + (setting.last_deleted_count ?? 0)) }}
                 </span>
               }
             </div>

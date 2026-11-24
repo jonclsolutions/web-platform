@@ -212,19 +212,19 @@
                 @if (selectedOrderForDetail.paid_at) {
                   <div class="detail-info-row">
                     <span class="dir-label">{{ t('label_paid_at') }}</span>
-                    <span class="dir-value dir-value-success">{{ selectedOrderForDetail.paid_at | date: 'short' }}</span>
+                    <span class="dir-value dir-value-success">{{ selectedOrderForDetail.paid_at | adminDate:'datetime' }}</span>
                   </div>
                 }
                 @if (selectedOrderForDetail.shipped_at) {
                   <div class="detail-info-row">
                     <span class="dir-label">{{ t('label_shipped_at') }}</span>
-                    <span class="dir-value">{{ selectedOrderForDetail.shipped_at | date: 'short' }}</span>
+                    <span class="dir-value">{{ selectedOrderForDetail.shipped_at | adminDate:'datetime' }}</span>
                   </div>
                 }
                 @if (selectedOrderForDetail.delivered_at) {
                   <div class="detail-info-row">
                     <span class="dir-label">{{ t('label_delivered_at') }}</span>
-                    <span class="dir-value dir-value-success">{{ selectedOrderForDetail.delivered_at | date: 'short' }}</span>
+                    <span class="dir-value dir-value-success">{{ selectedOrderForDetail.delivered_at | adminDate:'datetime' }}</span>
                   </div>
                 }
               </div>
@@ -261,20 +261,20 @@
                 </div>
                 <div class="detail-info-row">
                   <span class="dir-label">{{ t('label_created_at') }}</span>
-                  <span class="dir-value">{{ selectedOrderForDetail.created_at | date: 'medium' }}</span>
+                  <span class="dir-value">{{ selectedOrderForDetail.created_at | adminDate:'datetime_seconds' }}</span>
                 </div>
                 <div class="detail-info-row">
                   <span class="dir-label">{{ t('label_updated_at') }}</span>
-                  <span class="dir-value">{{ selectedOrderForDetail.updated_at | date: 'medium' }}</span>
+                  <span class="dir-value">{{ selectedOrderForDetail.updated_at | adminDate:'datetime_seconds' }}</span>
                 </div>
                 <!-- Consent with the terms and conditions (U-04): time + the accepted wording (fingerprint in the tooltip). -->
                 <div class="detail-info-row">
                   <span class="dir-label">{{ t('label_terms_consent') }}</span>
                   @if (selectedOrderForDetail.terms_accepted_at) {
                     <span class="dir-value" [title]="selectedOrderForDetail.terms_hash ? 'SHA-256: ' + selectedOrderForDetail.terms_hash : ''">
-                      {{ selectedOrderForDetail.terms_accepted_at | date: 'medium' }}
+                      {{ selectedOrderForDetail.terms_accepted_at | adminDate:'datetime_seconds' }}
                       @if (selectedOrderForDetail.terms_version) {
-                        ({{ t('terms_consent_wording') }} {{ selectedOrderForDetail.terms_version | date: 'medium' }})
+                        ({{ t('terms_consent_wording') }} {{ selectedOrderForDetail.terms_version | adminDate:'datetime_seconds' }})
                       }
                     </span>
                   } @else {
@@ -284,7 +284,7 @@
                 @if (selectedOrderForDetail.payment_reminder_sent_at) {
                   <div class="detail-info-row">
                     <span class="dir-label">{{ t('label_payment_reminder_sent') }}</span>
-                    <span class="dir-value">{{ selectedOrderForDetail.payment_reminder_sent_at | date: 'medium' }}</span>
+                    <span class="dir-value">{{ selectedOrderForDetail.payment_reminder_sent_at | adminDate:'datetime_seconds' }}</span>
                   </div>
                 }
                 @if (selectedOrderForDetail.coupon) {

@@ -1,6 +1,12 @@
 {
     "unreleased": [
         {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Dates look the same everywhere in the administration: tables, details and the header show 24. 11. 2026 and 24. 11. 2026 22:51 (seconds only in details); English uses 24 Nov 2026. Tables no longer show a two-digit year."
+        },
+        {
             "type": "changed",
             "area": "core",
             "part": "admin",

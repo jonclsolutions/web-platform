@@ -23,6 +23,7 @@ import { ActionMenuBuilderComponent } from '../../../../admin/components/builder
 import { GraphBuilderComponent } from '../../../../admin/components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
+import { adminDateFormat } from '../../../../admin/shared-date/admin-date-format';
 
 /**
  * @description Manages the Sales Leads module.
@@ -148,7 +149,7 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
         next: (res) => {
           navigator.clipboard.writeText(res.url).then(() => {
             const validity = res.expires_at
-              ? ' ' + this.t('link_valid_until').replace('{date}', formatDate(res.expires_at, 'd.M.yyyy', 'en-US'))
+              ? ' ' + this.t('link_valid_until').replace('{date}', formatDate(res.expires_at, adminDateFormat(this.i18n, 'date'), this.i18n.getDateLocale()))
               : '';
             this.alertDialogService.open(
               this.t('link_copied_title'),

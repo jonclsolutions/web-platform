@@ -123,7 +123,7 @@
               @if (kind === 'block' && template.used_by?.length) {
                 <span class="ws-card-meta">{{ t('used_in') }}: {{ template.used_by!.length }}</span>
               }
-              <span class="ws-card-meta">{{ t(view === 'trash' ? 'deleted' : 'updated') }} {{ (view === 'trash' ? template.deleted_at : template.updated_at) | date: 'd. M. y H:mm' : undefined : locale }}</span>
+              <span class="ws-card-meta">{{ t(view === 'trash' ? 'deleted' : 'updated') }} {{ (view === 'trash' ? template.deleted_at : template.updated_at) | adminDate:'datetime' }}</span>
             </div>
             <div class="ws-card-actions">
               @if (view === 'active') {

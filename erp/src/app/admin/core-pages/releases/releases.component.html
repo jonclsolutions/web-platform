@@ -34,7 +34,7 @@
             @if (release.version === notes.current()) {
               <span class="rl-badge">{{ strings['running'] }}</span>
             }
-            <span class="rl-date">{{ release.date | date:'d. M. yyyy' }}</span>
+            <span class="rl-date">{{ release.date | adminDate }}</span>
             <span class="rl-count">{{ release.changes.length }} {{ strings['changes'] }}</span>
             <span class="rl-chevron" aria-hidden="true">▾</span>
           </button>

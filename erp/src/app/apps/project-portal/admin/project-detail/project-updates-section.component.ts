@@ -25,6 +25,7 @@ import { UploadRulesService } from '../../../../shared/services/upload-rules.ser
 import { UploadRule } from '../../../../shared/utils/upload-rules';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { formatProjectFileSize, pickProjectFiles } from './project-files.util';
+import { AdminDatePipe } from '../../../../admin/shared-date/admin-date.pipe';
 
 /** @description Update (API WebProjectUpdateResource). */
 export interface ProjectUpdate {
@@ -42,7 +43,7 @@ export interface ProjectUpdate {
 @Component({
   selector: 'app-project-updates-section',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent],
+  imports: [AdminDatePipe, CommonModule, FormsModule, IconComponent],
   templateUrl: './project-updates-section.component.html',
   styleUrls: ['./project-detail.component.css', './project-sections.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

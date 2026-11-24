@@ -28,6 +28,7 @@ import { IconComponent } from '../../../../shared/components/icon/icon.component
 import { RowButtonBuilderComponent } from '../../../../admin/components/builders/row-button-builder/row-button-builder.component';
 import { RowButton, RowButtonItems } from '../../../../admin/components/builders/row-button-builder/row-button';
 import { formatProjectFileSize, pickProjectFiles } from './project-files.util';
+import { AdminDatePipe } from '../../../../admin/shared-date/admin-date.pipe';
 
 /** @description Approval request (API WebProjectApprovalResource). */
 export interface ProjectApproval {
@@ -56,7 +57,7 @@ export interface ApprovalDraft {
 @Component({
   selector: 'app-project-approvals-section',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent, RowButtonBuilderComponent],
+  imports: [AdminDatePipe, CommonModule, FormsModule, IconComponent, RowButtonBuilderComponent],
   templateUrl: './project-approvals-section.component.html',
   styleUrls: ['./project-detail.component.css', './project-sections.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

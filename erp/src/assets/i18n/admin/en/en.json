@@ -8,7 +8,10 @@
     "no": "No",
     "loading": "Loading…",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "date_format": "d MMM yyyy",
+    "datetime_format": "d MMM yyyy HH:mm",
+    "datetime_seconds_format": "d MMM yyyy HH:mm:ss"
   },
     "personal-info": {
 
@@ -179,8 +182,6 @@
     "not_logged_in": "Not logged in",
     "menu_toggle_expand": "Expand menu",
     "menu_toggle_collapse": "Collapse menu",
-
-    "date_time_format": "M/d/yyyy hh:mm:ss a",
 
     "module_core": "Core",
     "apps_switcher_label": "Applications",

@@ -104,9 +104,9 @@
             }
           </div>
           <div class="ps-meta">
-            {{ t('approval_requested') }} {{ approval.requested_at | date:'d. M. yyyy HH:mm' }}@if (approval.requested_by_label) { · {{ approval.requested_by_label }} }
+            {{ t('approval_requested') }} {{ approval.requested_at | adminDate:'datetime' }}@if (approval.requested_by_label) { · {{ approval.requested_by_label }} }
             @if (approval.checkpoint_label) { · {{ t('approval_checkpoint_label') }}: {{ approval.checkpoint_label }} }
-            @if (approval.due_date) { · {{ t('approval_due_prefix') }} {{ approval.due_date | date:'d. M. yyyy' }} }
+            @if (approval.due_date) { · {{ t('approval_due_prefix') }} {{ approval.due_date | adminDate }} }
           </div>
           @if (approval.description) { <p class="ps-body">{{ approval.description }}</p> }
           @if (approval.attachments?.length) {
@@ -120,7 +120,7 @@
             <ol class="ps-decisions" [attr.aria-label]="t('approval_history')">
               @for (decision of approval.decisions!; track decision.id) {
                 <li class="ps-decision" [attr.data-decision]="decision.decision">
-                  <strong>{{ decisionLabel(decision.decision) }}</strong> · {{ decision.author_label }} · {{ decision.created_at | date:'d. M. yyyy HH:mm' }}
+                  <strong>{{ decisionLabel(decision.decision) }}</strong> · {{ decision.author_label }} · {{ decision.created_at | adminDate:'datetime' }}
                   @if (decision.comment) { <p class="ps-body">{{ decision.comment }}</p> }
                 </li>
               }

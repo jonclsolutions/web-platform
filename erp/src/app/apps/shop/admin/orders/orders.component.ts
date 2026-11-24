@@ -39,6 +39,7 @@ import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../../../admi
 import { AdminModalComponent } from '../../../../admin/components/admin-modal/admin-modal.component';
 import { RecordActionsComponent } from '../../../../admin/components/record-actions/record-actions.component';
 import { DELIVERY_COUNTRIES, countryName, countryOptions } from '../../shared/delivery-countries';
+import { AdminDatePipe } from '../../../../admin/shared-date/admin-date.pipe';
 
 /** Deadlines of the unpaid bank transfers in days after the order (0 = off), API shop/settings/unpaid-orders. */
 export interface UnpaidDeadlines {
@@ -66,7 +67,7 @@ type TableMode = 'all' | 'pending_tasks' | 'trash';
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHeaderComponent, EmailTemplateEditorComponent, AdminModalComponent, RecordActionsComponent],
+  imports: [AdminDatePipe, CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHeaderComponent, EmailTemplateEditorComponent, AdminModalComponent, RecordActionsComponent],
   templateUrl: './orders.component.html',
   styleUrls: ['../../../../admin/shared-styles/page.css', '../shared-styles/list-page.css', '../../../../admin/shared-styles/modal.css', './orders.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

@@ -24,6 +24,7 @@ import { UserAvatarComponent } from '../../user-avatar/user-avatar.component';
 import { AdminModalComponent } from '../../admin-modal/admin-modal.component';
 import { RecordActionsComponent } from '../../record-actions/record-actions.component';
 import { TableButtons } from '../../../../shared/interfaces/table-buttons';
+import { adminDateFormat, adminDateKind } from '../../../shared-date/admin-date-format';
 
 /**
  * @description Provides a reusable way to display object details in a modal overlay with automatic formatting based on column metadata.
@@ -150,7 +151,8 @@ case 'currency':
 return this.currencyPipe.transform(value, 'CZK', 'symbol-narrow', '1.0-0', 'cs-CZ');
 case 'date':
 const date = new Date(value);
-return isNaN(date.getTime()) ? value : this.datePipe.transform(date, columnDef.format || 'dd.MM.yyyy HH:mm', 'cs-CZ');
+// The ONE admin format in the admin language (admin-date-format.ts; was a fixed cs-CZ pattern).
+return isNaN(date.getTime()) ? value : this.datePipe.transform(date, adminDateFormat(this.i18n, adminDateKind(columnDef.format, 'datetime')), undefined, this.i18n.getDateLocale());
 case 'boolean':
 return (value == true || value == 1) ? this.i18n.getValue('shared.yes') : this.i18n.getValue('shared.no');
 default:

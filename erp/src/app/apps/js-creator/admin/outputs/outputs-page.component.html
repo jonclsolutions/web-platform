@@ -148,7 +148,7 @@
                 </button>
                 <div class="ws-card-body">
                   <span class="ws-card-name" [title]="output.name">{{ output.name }}</span>
-                  <span class="ws-card-meta">{{ output.created_at | date: 'd. M. y H:mm' }}</span>
+                  <span class="ws-card-meta">{{ output.created_at | adminDate:'datetime' }}</span>
                   <span class="ws-card-meta">{{ output.width }} × {{ output.height }} · {{ output.format === 'jpg' ? 'JPG' : 'PNG' }} · {{ bytes(output.size_bytes) }}</span>
                   @if (acrossFolders) {
                     <span class="ws-card-meta op-card-folder" [title]="folderPath(output)">{{ folderPath(output) }}</span>
@@ -217,7 +217,7 @@
             <li class="op-trash-row">
               <app-icon name="folder" [size]="16"></app-icon>
               <span class="op-trash-name">{{ folder.name }}</span>
-              <span class="op-trash-date">{{ t('deleted_at') }} {{ folder.deleted_at | date:'d. M. y HH:mm' }}</span>
+              <span class="op-trash-date">{{ t('deleted_at') }} {{ folder.deleted_at | adminDate:'datetime' }}</span>
               @if (canDelete) {
                 <span class="op-trash-actions">
                   <button type="button" class="ws-btn ws-btn--sm" [disabled]="busy" (click)="restore(folder)">{{ t('restore') }}</button>
@@ -245,7 +245,7 @@
               </span>
               <div class="ws-card-body">
                 <span class="ws-card-name" [title]="output.name">{{ output.name }}</span>
-                <span class="ws-card-meta">{{ t('deleted_at') }} {{ output.deleted_at | date: 'd. M. y H:mm' }}</span>
+                <span class="ws-card-meta">{{ t('deleted_at') }} {{ output.deleted_at | adminDate:'datetime' }}</span>
                 <span class="ws-card-meta">{{ output.width }} × {{ output.height }} · {{ bytes(output.size_bytes) }}</span>
               </div>
               @if (canDelete) {
@@ -296,7 +296,7 @@
           <dt>{{ t('fact_template') }}</dt><dd>{{ d.template_name }}@if (!d.template_id) { <span class="op-muted">({{ t('template_deleted') }})</span> }</dd>
           <dt>{{ t('fact_size') }}</dt><dd>{{ d.width }} × {{ d.height }} px · {{ d.format === 'jpg' ? 'JPG' : 'PNG' }}@if (d.page_count > 1) { · {{ slideCount(d.page_count) }} }</dd>
           <dt>{{ t('fact_file') }}</dt><dd>{{ bytes(d.size_bytes) }}</dd>
-          <dt>{{ t('fact_created') }}</dt><dd>{{ d.created_at | date: 'd. M. y H:mm' }}</dd>
+          <dt>{{ t('fact_created') }}</dt><dd>{{ d.created_at | adminDate:'datetime' }}</dd>
         </dl>
         <div class="op-caption">
           <div class="op-caption-head">

@@ -53,23 +53,30 @@ describe('TableBuilderComponent', () => {
     });
 
     /**
-     * @description Dates use d.M.yyyy by default; empty dates are ''.
-     * @input  '2026-03-04' and null with type 'date'
-     * @output '4.3.2026', ''
+     * @description Dates use the ONE admin format (admin-date-format.ts): the day by default, the
+     *   day with time for a column with a time ('short', an own pattern with hours); a table
+     *   never shows seconds ('medium'); empty dates are ''.
+     * @input  '2026-03-04T05:06:07' with no format, 'short', 'd.M.yyyy H:mm', 'medium'; null
+     * @output '4. 3. 2026', '4. 3. 2026 05:06' (3×), ''
      */
     it('formats dates', () => {
-      expect(component.getCellValue({ d: '2026-03-04' }, { key: 'd', type: 'date' } as any)).toBe('4.3.2026');
+      const cell = (format?: string) => component.getCellValue({ d: '2026-03-04T05:06:07' }, { key: 'd', type: 'date', format } as any);
+      expect(cell()).toBe('4. 3. 2026');
+      expect(cell('short')).toBe('4. 3. 2026 05:06');
+      expect(cell('d.M.yyyy H:mm')).toBe('4. 3. 2026 05:06');
+      expect(cell('medium')).toBe('4. 3. 2026 05:06');
       expect(component.getCellValue({ d: null }, { key: 'd', type: 'date' } as any)).toBe('');
     });
 
     /**
      * @description Dates and currency follow the admin language (finding #50 - were always cs-CZ).
-     * @input  getDateLocale() → 'en-US'; date '2026-03-04' with format 'MMM d, y'; 1234.5 EUR
-     * @output 'Mar 4, 2026'; '€1,234.50'
+     * @input  getDateLocale() → 'en-US', English date pattern of the texts; date '2026-03-04'; 1234.5 EUR
+     * @output '4 Mar 2026'; '€1,234.50'
      */
     it('formats dates and currency in the admin locale', () => {
       ctx.i18n.getDateLocale.and.returnValue('en-US');
-      expect(component.getCellValue({ d: '2026-03-04' }, { key: 'd', type: 'date', format: 'MMM d, y' } as any)).toBe('Mar 4, 2026');
+      ctx.i18n.getValue.and.callFake((p: string) => ({ 'shared.date_format': 'd MMM yyyy' } as any)[p] ?? p);
+      expect(component.getCellValue({ d: '2026-03-04' }, { key: 'd', type: 'date' } as any)).toBe('4 Mar 2026');
       expect(component.getCellValue({ p: 1234.5 }, { key: 'p', type: 'currency' } as any)).toBe('€1,234.50');
     });
 
@@ -628,7 +635,7 @@ describe('TableBuilderComponent', () => {
       ]));
       await component.handleExportFormatSelected({ format: 'json', columnKeys: null, rawFormat: false });
       expect(JSON.parse(await downloads[0].blob.text())).toEqual([
-        { Flag: 'true', Role: 'Admin', Day: '4.3.2026', List: '[{"password":"••••••••","a":1}]' },
+        { Flag: 'true', Role: 'Admin', Day: '4. 3. 2026', List: '[{"password":"••••••••","a":1}]' },
         { Flag: 'false', Role: 9, Day: 'bad-date', List: '' }
       ]);
       await component.handleExportFormatSelected({ format: 'json', columnKeys: null, rawFormat: true });

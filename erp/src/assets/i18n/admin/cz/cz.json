@@ -8,7 +8,10 @@
     "no": "Ne",
     "loading": "Načítání…",
     "error": "Chyba",
-    "success": "Úspěch"
+    "success": "Úspěch",
+    "date_format": "d. M. yyyy",
+    "datetime_format": "d. M. yyyy HH:mm",
+    "datetime_seconds_format": "d. M. yyyy HH:mm:ss"
   },
   "personal-info": {
 
@@ -179,8 +182,6 @@
     "not_logged_in": "Nepřihlášený",
     "menu_toggle_expand": "Rozbalit menu",
     "menu_toggle_collapse": "Sbalit menu",
-
-    "date_time_format": "d. M. yyyy HH:mm:ss",
 
     "module_core": "Core",
     "apps_switcher_label": "Aplikace",

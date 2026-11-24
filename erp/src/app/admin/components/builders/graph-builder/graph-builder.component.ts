@@ -44,6 +44,7 @@ import { AlertDialogService } from '../../../../core/services/alert-dialog.servi
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { AdminModalComponent } from '../../admin-modal/admin-modal.component';
+import { adminDateFormat } from '../../../shared-date/admin-date-format';
 import {
   GraphColumnOption, ColumnChartMode, MetricChartMode, DistributionChartType,
   ChartModeOption, createColumnChartModeOptions, createMetricChartModeOptions
@@ -1028,7 +1029,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
 
   get reportMetaLines(): string[] {
     const lines = [
-      this.t('meta_generated_at').replace('{date}', new DatePipe(this.i18n.getDateLocale()).transform(this.reportGeneratedAt, 'd.M.yyyy HH:mm') ?? ''),
+      this.t('meta_generated_at').replace('{date}', new DatePipe(this.i18n.getDateLocale()).transform(this.reportGeneratedAt, adminDateFormat(this.i18n, 'datetime')) ?? ''),
       this.t('meta_period').replace('{period}', this.periodLabel),
       this.t('meta_record_count').replace('{count}', String(this.lastRowCount)),
       this.t('meta_included_columns').replace('{summary}', this.selectedColumnSummary),

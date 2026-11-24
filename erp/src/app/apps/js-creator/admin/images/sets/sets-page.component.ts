@@ -48,6 +48,7 @@ import { CardSelection } from '../../shared/card-selection';
 import { ImportDialogComponent } from '../../shared/import-dialog/import-dialog.component';
 import { CreatorIconComponent } from '../../shared/creator-icon/creator-icon.component';
 import { uiIcon } from '../../shared/ui-icons';
+import { AdminDatePipe } from '../../../../../admin/shared-date/admin-date.pipe';
 
 /** Most templates of a set (API limit). */
 export const MAX_SET_TEMPLATES = 10;
@@ -75,7 +76,7 @@ type SortKey = 'updated' | 'created' | 'name';
 @Component({
   selector: 'app-js-creator-sets-page',
   standalone: true,
-  imports: [
+  imports: [AdminDatePipe, 
     DatePipe, FormsModule, PageHeaderComponent, AdminModalComponent, RowButtonBuilderComponent, IconComponent, QuotaBarComponent, ImportDialogComponent,
     CreatorIconComponent,
   ],

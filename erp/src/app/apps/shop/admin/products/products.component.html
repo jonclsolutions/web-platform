@@ -218,11 +218,11 @@
           </div>
           <div class="info-row">
             <label>{{ t('label_created') }}</label>
-            <span>{{ selectedProductForDetail.created_at | date: 'short' }}</span>
+            <span>{{ selectedProductForDetail.created_at | adminDate:'datetime' }}</span>
           </div>
           <div class="info-row">
             <label>{{ t('label_updated') }}</label>
-            <span>{{ selectedProductForDetail.updated_at | date: 'short' }}</span>
+            <span>{{ selectedProductForDetail.updated_at | adminDate:'datetime' }}</span>
           </div>
         </div>
       </div>

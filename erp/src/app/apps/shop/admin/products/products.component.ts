@@ -36,6 +36,7 @@ import * as Config from './products.config';
 import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 import { AdminModalComponent } from '../../../../admin/components/admin-modal/admin-modal.component';
 import { RecordActionsComponent } from '../../../../admin/components/record-actions/record-actions.component';
+import { AdminDatePipe } from '../../../../admin/shared-date/admin-date.pipe';
 
 /** Image types the API takes for product and variant images (`mimes:jpeg,png,jpg,webp`). */
 export const PRODUCT_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -46,7 +47,7 @@ export const PRODUCT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHeaderComponent, AdminModalComponent, RecordActionsComponent],
+  imports: [AdminDatePipe, CommonModule, FormsModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHeaderComponent, AdminModalComponent, RecordActionsComponent],
   templateUrl: './products.component.html',
   styleUrls: ['../../../../admin/shared-styles/page.css', '../shared-styles/list-page.css', '../../../../admin/shared-styles/modal.css', './products.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

@@ -70,24 +70,32 @@ describe('DetailsBuilderComponent', () => {
   });
 
   /**
-   * @description Dates use dd.MM.yyyy HH:mm by default, invalid dates are returned unchanged.
+   * @description Dates use the ONE admin format with time by default (admin-date-format.ts),
+   *   invalid dates are returned unchanged.
    * @input  '2026-03-04T05:06:00' and 'not a date' with type 'date'
-   * @output '04.03.2026 05:06', 'not a date'
+   * @output '4. 3. 2026 05:06', 'not a date'
    */
   it('formats dates and keeps invalid dates as they are', () => {
     const col = { key: 'd', displayName: 'D', type: 'date' } as any;
-    expect(component.getFormattedValue({ d: '2026-03-04T05:06:00' }, 'd', col)).toBe('04.03.2026 05:06');
+    expect(component.getFormattedValue({ d: '2026-03-04T05:06:00' }, 'd', col)).toBe('4. 3. 2026 05:06');
     expect(component.getFormattedValue({ d: 'not a date' }, 'd', col)).toBe('not a date');
   });
 
   /**
-   * @description A custom date format from the column definition is used.
-   * @input  '2026-03-04T05:06:00' with format 'yyyy'
-   * @output '2026'
+   * @description The format of a column says only the kind of the date (admin-date-format.ts):
+   *   a pattern without time = the day, 'short' = with time, 'medium' = with seconds; the
+   *   pattern itself is the ONE admin format of the admin language.
+   * @input  '2026-03-04T05:06:07' with formats 'yyyy', 'short', 'medium'; English patterns + en-US.
+   * @output '4. 3. 2026', '4. 3. 2026 05:06', '4. 3. 2026 05:06:07'; '4 Mar 2026 05:06'.
    */
-  it('uses the column date format', () => {
-    const col = { key: 'd', displayName: 'D', type: 'date', format: 'yyyy' } as any;
-    expect(component.getFormattedValue({ d: '2026-03-04T05:06:00' }, 'd', col)).toBe('2026');
+  it('shows the kind of date of the column in the admin format', () => {
+    const at = (format: string) => component.getFormattedValue({ d: '2026-03-04T05:06:07' }, 'd', { key: 'd', displayName: 'D', type: 'date', format } as any);
+    expect(at('yyyy')).toBe('4. 3. 2026');
+    expect(at('short')).toBe('4. 3. 2026 05:06');
+    expect(at('medium')).toBe('4. 3. 2026 05:06:07');
+    ctx.i18n.getValue.and.callFake((p: string) => ({ 'shared.datetime_format': 'd MMM yyyy HH:mm' } as any)[p] ?? p);
+    ctx.i18n.getDateLocale.and.returnValue('en-US');
+    expect(at('short')).toBe('4 Mar 2026 05:06');
   });
 
   /**

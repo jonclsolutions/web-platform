@@ -25,6 +25,7 @@ import { RowButton, RowButtonItems } from '../../components/builders/row-button-
 import { AdminIconName } from '../../components/admin-icon/admin-icon.component';
 import { appById } from '../../../apps/apps.registry';
 import { Release, ReleaseChange, ReleaseNotesService } from '../../components/releases/release-notes.service';
+import { AdminDatePipe } from '../../shared-date/admin-date.pipe';
 
 /** One filter button. */
 export interface ReleaseArea {
@@ -38,7 +39,7 @@ export interface ReleaseArea {
 @Component({
   selector: 'app-releases',
   standalone: true,
-  imports: [DatePipe, PageHeaderComponent, RowButtonBuilderComponent],
+  imports: [AdminDatePipe, DatePipe, PageHeaderComponent, RowButtonBuilderComponent],
   templateUrl: './releases.component.html',
   styleUrls: ['./releases.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
