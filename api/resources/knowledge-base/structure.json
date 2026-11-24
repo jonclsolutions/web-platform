@@ -117,7 +117,7 @@
       "group": "core",
       "order": 25,
       "permission": "core-security-view",
-      "devNote": "SecurityEventsComponent, route 'core/security-events', permission 'core-security-view'. Triage podezřelých eventů, retenční politika (GDPR), ruční purge.",
+      "devNote": "SecurityEventsComponent, route 'core/security-events', permission 'core-security-view'. Záložky Události (tabulka, triage) a Přehled (graf 14 dní, retenční politika GDPR, ruční purge) - ?tab=overview, přehled se načte až při otevření.",
       "sections": {
         "triage": "core-security-update",
         "purge": "core-security-update|core-security-delete"

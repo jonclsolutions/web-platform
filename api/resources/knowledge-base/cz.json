@@ -13,7 +13,7 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "Každá stránka administrace má vpravo nahoře v záhlaví tlačítko s otazníkem. Otevře přesně tu kapitolu manuálu, která danou stránku popisuje. Tlačítko Help v hlavičce administrace otevře úvod manuálu - tuto stránku."
+              "content": "Každá stránka administrace má vpravo nahoře v záhlaví tlačítko s otazníkem. Otevře přesně tu kapitolu manuálu, která danou stránku popisuje. Položka Nápověda dole v levém menu (nad Odhlásit se) otevře úvod manuálu - tuto stránku."
             }
           ]
         },
@@ -118,20 +118,12 @@
                   "text": "Aktuální datum a čas. Hodí se při práci s časy v logech a v kalendáři."
                 },
                 {
-                  "title": "Záložka Core",
-                  "text": "Přepne do systémové části. Vidíte ji, jen pokud máte oprávnění k sekci Core."
-                },
-                {
-                  "title": "Tlačítko Aplikace",
-                  "text": "Rozbalí seznam aplikací, ke kterým máte přístup. Na tlačítku je vždy název aplikace, ve které právě jste. Položka Všechny aplikace otevře přehled aplikací se stavem každé z nich."
+                  "title": "Přepínač modulů",
+                  "text": "Tlačítko s názvem modulu, ve kterém právě jste (Core nebo název aplikace). Rozbalí seznam: nahoře Core (jen s oprávněním k sekci Core), pod čarou aplikace, ke kterým máte přístup, a dole Všechny aplikace - přehled aplikací se stavem každé z nich. Seznam se ovládá i klávesnicí (šipky, Escape)."
                 },
                 {
                   "title": "Kalendář",
                   "text": "Ikona kalendáře otevře společný kalendář termínů a nevyřízené práce."
-                },
-                {
-                  "title": "Help",
-                  "text": "Otevře úvod tohoto manuálu."
                 },
                 {
                   "title": "Jazyk",
@@ -141,16 +133,16 @@
             },
             {
               "type": "text",
-              "content": "Levé menu je rozdělené do sekcí (například Přehled, Obsah, Uživatelé, Systém). Kliknutím na název sekce ji sbalíte nebo rozbalíte - systém si to zapamatuje. Šířku menu změníte tažením jeho pravého okraje myší. Úplně dole v menu je tlačítko Odhlásit se."
+              "content": "Levé menu je rozdělené do sekcí (například Přehled, Obsah, Uživatelé, Systém). Kliknutím na název sekce ji sbalíte nebo rozbalíte - systém si to zapamatuje. Šířku menu změníte tažením jeho pravého okraje myší. Úplně dole v menu je položka Nápověda (úvod tohoto manuálu) a tlačítko Odhlásit se."
             },
             {
               "type": "text",
-              "content": "Červené číslo u položky menu říká, kolik je na stránce nových záznamů, které jste ještě neviděli - například nové poptávky, přihlášky uchazečů, objednávky, produkty pod skladovým limitem, leady po termínu kontaktu nebo bezpečnostní události. Číslo je osobní: počítá se od vaší poslední návštěvy stránky a zmizí, jakmile ji otevřete. Nad 99 záznamů se ukazuje „99+“. Součty nepřečtených má i záložka Core, tlačítko Aplikace a sbalená sekce menu; na mobilu upozorní červená tečka na tlačítku menu nebo panelu. Systém se na novinky ptá jednou za minutu, a jen když je karta s administrací otevřená v popředí. Když nějaké číslo vzroste, vpravo nahoře se ukáže upozornění - kliknutím otevřete příslušnou stránku. Čísla vidíte jen u stránek, ke kterým máte oprávnění. Oranžové číslo znamená práci, která čeká na vás - například texty webu nebo e-shopu a obsah webu (FAQ, kariéra, reference, znalostní báze), kterým v některém zapnutém jazyce chybí překlad (typicky po aktualizaci aplikace). Otevřením stránky nezmizí, zmizí až po doplnění; červené číslo nepřečtených má ve společném součtu přednost."
+              "content": "Červené číslo u položky menu říká, kolik je na stránce nových záznamů, které jste ještě neviděli - například nové poptávky, přihlášky uchazečů, objednávky, produkty pod skladovým limitem, leady po termínu kontaktu nebo bezpečnostní události. Číslo je osobní: počítá se od vaší poslední návštěvy stránky a zmizí, jakmile ji otevřete. Nad 99 záznamů se ukazuje „99+“. Součet nepřečtených ze všech modulů má i přepínač modulů (v jeho seznamu má každý modul svůj počet) a sbalená sekce menu svůj součet; na mobilu upozorní červená tečka na tlačítku menu nebo panelu. Systém se na novinky ptá jednou za minutu, a jen když je karta s administrací otevřená v popředí. Když nějaké číslo vzroste, vpravo nahoře se ukáže upozornění - kliknutím otevřete příslušnou stránku. Čísla vidíte jen u stránek, ke kterým máte oprávnění. Oranžové číslo znamená práci, která čeká na vás - například texty webu nebo e-shopu a obsah webu (FAQ, kariéra, reference, znalostní báze), kterým v některém zapnutém jazyce chybí překlad (typicky po aktualizaci aplikace). Otevřením stránky nezmizí, zmizí až po doplnění; červené číslo nepřečtených má ve společném součtu přednost."
             },
             {
               "type": "note",
               "highlight": "Na mobilu a tabletu",
-              "content": "Menu se otevírá tlačítkem vlevo nahoře a zavře se klepnutím mimo něj. Údaje o účtu, hodiny, přepínání modulů, jazyk, kalendář a nápověda jsou schované v panelu, který otevřete ikonou vpravo nahoře."
+              "content": "Menu se otevírá tlačítkem vlevo nahoře a zavře se klepnutím mimo něj. Údaje o účtu, hodiny, přepínání modulů, jazyk a kalendář jsou schované v panelu, který otevřete ikonou vpravo nahoře. Nápověda je dole v menu."
             }
           ]
         },
@@ -180,7 +172,7 @@
               "ordered": false,
               "items": [
                 "Otazník v záhlaví každé stránky otevře kapitolu manuálu k této stránce.",
-                "Help v hlavičce otevře úvod manuálu.",
+                "Nápověda dole v levém menu otevře úvod manuálu.",
                 "V manuálu vlevo vyberete kapitolu. Kapitoly jsou seřazené do skupin: obecné kapitoly, Core a jednotlivé aplikace.",
                 "Vpravo nahoře v manuálu přepnete jazyk manuálu; vlevo nahoře se tlačítkem Administrace vrátíte zpět do administrace.",
                 "Na mobilu se seznam kapitol otevírá tlačítkem menu manuálu."
@@ -220,7 +212,7 @@
                 },
                 {
                   "title": "Stránkování",
-                  "text": "Pod tabulkou je informace „Zobrazuji 1 - 10 z celkem 57 záznamů“, tlačítka stránek a volba počtu položek na stránku."
+                  "text": "Pod tabulkou je informace „Zobrazuji 1 - 10 z celkem 57 záznamů“, tlačítka stránek a volba počtu položek na stránku. U prázdné tabulky se stránkování nezobrazuje - že nemá žádné záznamy, oznámí tabulka sama."
                 },
                 {
                   "title": "Aktuálnost dat",
@@ -1301,9 +1293,9 @@
               "ordered": false,
               "items": [
                 "Levé menu - stránky modulu Core.",
-                "Tlačítko Aplikace v hlavičce - web, e-shop, projektový portál.",
+                "Přepínač modulů v hlavičce - web, e-shop, projektový portál.",
                 "Kalendář v hlavičce - termíny a nevyřízená práce.",
-                "Help v hlavičce - tento manuál."
+                "Nápověda dole v levém menu - tento manuál."
               ]
             }
           ]
@@ -3362,6 +3354,10 @@
               "content": "Bezpečnostní monitoring zaznamenává podezřelou aktivitu: neúspěšná přihlášení, pokusy o hádání hesel, chybné ověřovací kódy, roboty na formulářích, překročení limitů, automatizované skenování a zablokovaný obsah na stránkách. U každého záznamu systém srozumitelně vysvětlí, co se stalo a co doporučuje udělat."
             },
             {
+              "type": "text",
+              "content": "Stránka má dvě záložky: Události (tabulka záznamů, otevře se jako první) a Přehled (graf aktivity a nastavení retence). Vybraná záložka je v adrese stránky, takže vydrží obnovení stránky i tlačítko Zpět."
+            },
+            {
               "type": "alert",
               "variant": "info",
               "content": "Většina záznamů je neškodná - internet je plný robotů, kteří zkoušejí běžné adresy. Podstatné je sledovat kritické záznamy a záznamy, jejichž počet rychle roste."
@@ -3373,12 +3369,12 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Nahoře je sloupcový graf za posledních 14 dní. Každý sloupec je jeden den rozdělený podle závažnosti (Kritické, Varování, Informativní). Po najetí myší uvidíte počty, kliknutím na sloupec vyfiltrujete tabulku na záznamy z tohoto dne."
+              "content": "Na záložce Přehled je sloupcový graf za posledních 14 dní. Každý sloupec je jeden den rozdělený podle závažnosti (Kritické, Varování, Informativní). Po najetí myší uvidíte počty, kliknutím na sloupec se otevře záložka Události s tabulkou vyfiltrovanou na záznamy z tohoto dne."
             }
           ]
         },
         {
-          "heading": "02. Tabulka záznamů",
+          "heading": "02. Tabulka záznamů (záložka Události)",
           "blocks": [
             {
               "type": "grid",
@@ -3530,7 +3526,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Záznamy obsahují IP adresy, proto se automaticky mažou. V kartě Retenční doba (GDPR) nastavíte, po kolika dnech se záznamy mažou (7, 14, 30, 60, 90, 180 nebo 365 dní), a uložíte tlačítkem Uložit retenci. Úklid běží každou noc."
+              "content": "Záznamy obsahují IP adresy, proto se automaticky mažou. Na záložce Přehled v kartě Retenční doba (GDPR) nastavíte, po kolika dnech se záznamy mažou (7, 14, 30, 60, 90, 180 nebo 365 dní), a uložíte tlačítkem Uložit retenci. Úklid běží každou noc."
             },
             {
               "type": "list",

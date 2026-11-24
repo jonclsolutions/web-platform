@@ -4,15 +4,34 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description Security monitoring page - volume chart of the last N days, retention
-    settings card (+ manual purge), event table (TableBuilderComponent) and the triage modal
-    for changing the state / note of one record.
+    @description Security monitoring page - the page header on top (like every admin page), then
+    two tabs (2026-11): "Události" = the event table (TableBuilderComponent) with its actions, and
+    "Přehled" = the volume chart of the last N days + the retention settings card (+ manual
+    purge), loaded on its first opening. The tab is in the address (?tab=overview). The triage
+    modal changes the state / note of one record.
 -->
-<div class="sec-container container mx-auto p-4">
+<div class="sec-container">
+
+  <app-page-header [title]="t('table_header')">
+    @if (activeTab === 'events' && !errorMessage) {
+      <app-action-menu-builder
+        [configs]="toolbarButtons"
+        [triggerLabel]="t('toolbar_action_trigger')"
+        (actionTriggered)="handleToolbarAction($event)">
+      </app-action-menu-builder>
+    }
+  </app-page-header>
+
+  <app-row-button-builder class="sec-tabs" kind="tabs" [stretch]="true" [items]="tabItems" [active]="activeTab"
+                          [ariaLabel]="t('tabs_label')" (selected)="switchTab($any($event))" />
 
   @if (errorMessage) {
     <div class="error-banner">⚠️ {{ errorMessage }}</div>
   }
+
+  <!-- ── Tab "Přehled": chart + retention (created on the first opening) ─────── -->
+  @if (activeTab === 'overview') {
+  <div class="sec-panel">
 
   <!-- ── Volume chart of the last N days ─────────────────────────────────── -->
   <div class="sec-card">
@@ -148,16 +167,12 @@
     }
   </div>
 
-  <!-- ── Event table ───────────────────────────────────────────────────── -->
+  </div>
+  }
+
+  <!-- ── Tab "Události": event table (kept while hidden - its state survives a tab switch) ── -->
   @if (!errorMessage) {
-    <div>
-      <app-page-header [title]="t('table_header')">
-        <app-action-menu-builder
-          [configs]="toolbarButtons"
-          [triggerLabel]="t('toolbar_action_trigger')"
-          (actionTriggered)="handleToolbarAction($event)">
-        </app-action-menu-builder>
-      </app-page-header>
+    <div [hidden]="activeTab !== 'events'">
       <div class="main-content-layout">
         <div class="filter-side-panel" [class.active]="isFilterVisible">
           <app-filter-form-builder

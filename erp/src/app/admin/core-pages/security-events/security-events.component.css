@@ -10,12 +10,24 @@
     not repeated here.
 */
 
+/* The page: header, tabs, then the panel of the open tab (header and tabs keep their own spacing). */
 .sec-container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: block;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   color: var(--color-zinc-900);
+}
+
+/* Page tabs (Události / Přehled) - the look is RowButtonBuilder's, this only places them. */
+.sec-tabs {
+  display: block;
+  margin-bottom: 12px;
+}
+
+/* Tab "Přehled": the chart card and the retention card under each other. */
+.sec-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .sec-card {

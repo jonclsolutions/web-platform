@@ -179,13 +179,12 @@
 
     "module_core": "Core",
     "apps_switcher_label": "Applications",
-    "apps_switcher_title": "Switch application",
+    "apps_switcher_title": "Switch module (Core or an application)",
     "apps_switcher_all": "All applications",
 
 
     "wiki_label": "Help",
-    "wiki_title": "Help – knowledge base home",
-    "wiki_mobile_label": "Help",
+    "wiki_title": "Help – manual of the administration",
 
 
     "mobile_menu_title": "Menu",
@@ -251,7 +250,6 @@
     "close_aria": "Close filter"
   },
     "pagination": {
-    "no_records": "No records found.",
     "showing_range": "Showing {start} - {end} of {total} records.",
     "items_per_page_label": "Items per page:",
     "nav_aria": "Pagination Navigation"
@@ -1089,6 +1087,9 @@
   },
   "security-events": {
     "table_header": "Security monitoring",
+    "tab_events": "Events",
+    "tab_overview": "Overview",
+    "tabs_label": "Parts of the security monitoring",
     "toolbar_action_trigger": "Actions",
     "toolbar_filters": "Open filters",
     "toolbar_hide_filters": "Hide",

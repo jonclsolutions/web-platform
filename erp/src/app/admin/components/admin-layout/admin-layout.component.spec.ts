@@ -142,40 +142,44 @@ describe('AdminLayoutComponent', () => {
   });
 
   /**
-   * @description The header shows the core tab and the application switcher; its dropdown lists
-   *   only the applications the user may open and links the page of all applications.
+   * @description The header has ONE module switcher: its button names the module the user is in,
+   *   its menu lists the core, a separator, only the applications the user may open and the link
+   *   to the page of all applications.
    * @input  granted view-web, view-core, view-eshop, core-view-welcome-page, shop-orders-view; render;
    *         open the switcher; pick the e-shop.
-   * @output Core tab + switcher button 'apps_switcher_label' (in the core); dropdown: the e-shop
-   *         only (no web - no web page) + link /admin/core/apps; the pick navigates to
-   *         /admin/shop/orders and closes the dropdown.
+   * @output one button 'module_core' (no separate core tab); menu: core (active) + separator + the
+   *         e-shop only (no web - no web page) + link /admin/core/apps; the pick navigates to
+   *         /admin/shop/orders and closes the menu.
    */
-  it('renders the core tab and the application switcher', () => {
+  it('renders one module switcher with the core and the applications', () => {
     requiresApps('web', 'shop');
     ctx.permissions.granted = new Set(['view-web', 'view-core', 'view-eshop', 'core-view-welcome-page', 'shop-orders-view']);
     component.currentModule = 'core';
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
-    const tabs = Array.from(el.querySelectorAll('.module-switcher > button, .module-switcher .apps-switcher-btn')).map(b => b.textContent!.trim());
-    expect(tabs).toEqual(['admin-layout.module_core', 'admin-layout.apps_switcher_label']);
+    const buttons = Array.from(el.querySelectorAll('.module-switcher button')).map(b => b.textContent!.trim());
+    expect(buttons).toEqual(['admin-layout.module_core']);
     expect(component.availableApps.map(app => app.id)).toEqual(['shop']);
 
     (el.querySelector('.apps-switcher-btn') as HTMLButtonElement).click();
     fixture.detectChanges();
     const items = Array.from(el.querySelectorAll('.apps-menu-item')) as HTMLButtonElement[];
-    expect(items.map(i => i.textContent!.trim())).toEqual(['admin-layout.module_shop']);
+    expect(items.map(i => i.textContent!.trim())).toEqual(['admin-layout.module_core', 'admin-layout.module_shop']);
+    expect(items[0].classList).toContain('active');
+    expect(el.querySelector('.apps-menu-separator')).not.toBeNull();
+    const shop = items[1];
     expect(el.querySelector('.apps-menu-all')?.getAttribute('href')).toBe('/admin/core/apps');
-    items[0].click();
+    shop.click();
     expect(router.navigate).toHaveBeenCalledWith(['/admin/shop/orders']);
     expect(component.isAppsMenuOpen).toBeFalse();
   });
 
   /**
-   * @description The header always names the module the user is in: in an application the
-   *   switcher shows its name (active), in the core "Applications"; the mobile label the same.
+   * @description The header always names the module the user is in: the switcher shows its name
+   *   and icon (in the core "Core"); the mobile label the same.
    * @input  sysadmin; currentModule 'project-portal', then 'core'.
    * @output currentApp project-portal, name 'admin-layout.module_project-portal' on the switcher and
-   *   the mobile label, switcher active; core: 'admin-layout.module_core', switcher not active.
+   *   the mobile label, icon of the application; core: 'admin-layout.module_core', icon 'layout'.
    */
   it('names the current module in the header', () => {
     requiresApps('project-portal');
@@ -185,13 +189,14 @@ describe('AdminLayoutComponent', () => {
     const el: HTMLElement = fixture.nativeElement;
     expect(component.currentApp?.id).toBe('project-portal');
     expect(el.querySelector('.apps-switcher-btn')!.textContent!.trim()).toBe('admin-layout.module_project-portal');
-    expect(el.querySelector('.apps-switcher-btn')!.classList).toContain('active');
     expect(el.querySelector('.header-current-module')!.textContent!.trim()).toBe('admin-layout.module_project-portal');
+    expect(component.currentModuleIcon).toBe(component.currentApp!.icon);
 
     component.currentModule = 'core';
     fixture.detectChanges();
     expect(component.currentModuleName).toBe('admin-layout.module_core');
-    expect(el.querySelector('.apps-switcher-btn')!.classList).not.toContain('active');
+    expect(el.querySelector('.apps-switcher-btn')!.textContent!.trim()).toBe('admin-layout.module_core');
+    expect(component.currentModuleIcon).toBe('layout');
   });
 
   /**
@@ -336,7 +341,7 @@ describe('AdminLayoutComponent', () => {
    * @input  granted ['web-edit-website-view', 'shop-orders-view', 'core-legal-config-view',
    *         'project-portal-projects-view']; render the project portal.
    * @output web content, shop transactions, core legal groups visible; web business, shop catalog
-   *   hidden; sidebar link /admin/project-portal/projects only (no log page).
+   *   hidden; sidebar links /admin/project-portal/projects (no log page) + the manual at the bottom.
    */
   it('shows menu groups by permission', () => {
     requiresApps('web', 'shop', 'project-portal');
@@ -351,7 +356,7 @@ describe('AdminLayoutComponent', () => {
     component.currentModule = 'project-portal';
     fixture.detectChanges();
     const links = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.admin-nav a[href^="/admin/"]')).map(a => a.getAttribute('href'));
-    expect(links).toEqual(['/admin/project-portal/projects']);
+    expect(links).toEqual(['/admin/project-portal/projects', '/admin/intranet/knowledge-base']);
   });
 
   /**
@@ -639,22 +644,63 @@ describe('AdminLayoutComponent', () => {
     fixture.destroy();
   });
   /**
-   * @description "Help" of the header (and of the mobile menu) opens the home of the knowledge
-   *   base on every page - the help of one page is the "?" in its own header (PageHelpComponent).
+   * @description The manual ("Nápověda") is an item at the bottom of the sidebar, above sign-out -
+   *   not in the header and not in the mobile panel (the sidebar is on mobile too); the help of
+   *   one page is the "?" in its own header (PageHelpComponent).
    * @input Rendered layout; mobile actions open.
-   * @output header link text 'admin-layout.wiki_label', href /admin/intranet/knowledge-base; the
-   *   mobile menu has the same link.
+   * @output bottom items: help (text 'admin-layout.wiki_label', href /admin/intranet/knowledge-base)
+   *   then logout; no help link in the header or the mobile panel.
    */
-  it('opens the knowledge base home from the header', () => {
+  it('opens the manual from the bottom of the sidebar', () => {
     component.isMobileActionsOpen = true;
     fixture.detectChanges();
-    const header = fixture.nativeElement.querySelector('a.header-action-btn--wiki') as HTMLAnchorElement;
-    expect(header.textContent?.trim()).toBe('admin-layout.wiki_label');
-    expect(header.getAttribute('href')).toBe('/admin/intranet/knowledge-base');
-    const mobile = Array.from(fixture.nativeElement.querySelectorAll('.map-links a')) as HTMLAnchorElement[];
-    expect(mobile.some(a => a.getAttribute('href') === '/admin/intranet/knowledge-base')).toBeTrue();
+    const el: HTMLElement = fixture.nativeElement;
+    const bottom = Array.from(el.querySelectorAll('.nav-group--bottom a')) as HTMLAnchorElement[];
+    expect(bottom.map(a => a.classList.contains('help-nav-item') ? 'help' : a.classList.contains('logout-nav-item') ? 'logout' : '?')).toEqual(['help', 'logout']);
+    expect(bottom[0].textContent?.trim()).toBe('admin-layout.wiki_label');
+    expect(bottom[0].getAttribute('href')).toBe('/admin/intranet/knowledge-base');
+    const kb = '/admin/intranet/knowledge-base';
+    expect(Array.from(el.querySelectorAll('.admin-header a, .mobile-actions-panel a')).some(a => a.getAttribute('href') === kb)).toBeFalse();
     fixture.destroy();
   });
+
+  /**
+   * @description Keyboard of the module switcher: arrow down opens the menu and focuses the
+   *   current module, arrows move round, End goes to the last item (the link to all
+   *   applications), Escape closes and returns the focus to the button.
+   * @input sysadmin with web; module 'web'; ArrowDown on the button; ArrowDown, End, Escape in the menu.
+   * @output menu open, focus on the web item; next item (round); the 'all applications' link;
+   *   menu closed, focus on the button.
+   */
+  it('lets the keyboard use the module switcher', fakeAsync(() => {
+    requiresApps('web');
+    ctx.auth.session.role = 'sysadmin';
+    component.currentModule = 'web';
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    document.body.appendChild(el);
+    const button = el.querySelector('.apps-switcher-btn') as HTMLButtonElement;
+    button.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    fixture.detectChanges();
+    tick();
+    expect(component.isAppsMenuOpen).toBeTrue();
+    const items = Array.from(el.querySelectorAll<HTMLElement>('.apps-menu [role="menuitem"]'));
+    const webIndex = items.findIndex(i => i.classList.contains('active'));
+    expect(document.activeElement).toBe(items[webIndex]);
+
+    const menu = el.querySelector('.apps-menu') as HTMLElement;
+    menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(document.activeElement).toBe(items[(webIndex + 1) % items.length]);
+    menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    expect(document.activeElement).toBe(items[items.length - 1]);
+    expect(items[items.length - 1].classList).toContain('apps-menu-all');
+    menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    expect(component.isAppsMenuOpen).toBeFalse();
+    expect(document.activeElement).toBe(button);
+    el.remove();
+    fixture.destroy();
+  }));
 
   /**
    * @description Unread badges: the layout starts the notifications for a signed-in user and stops
@@ -664,7 +710,8 @@ describe('AdminLayoutComponent', () => {
    *   closed, the mobile panel button while another module has unread records.
    * @input  web inquiries 3, core security events 120; module web; collapse the section of the
    *   inquiries; close the menu; logout.
-   * @output start(); item badge '3' with aria label; core '99+'; switcher '3'; section badge '3';
+   * @output start(); item badge '3' with aria label; switcher button '99+' (all modules); its menu:
+   *   core '99+', web '3'; section badge '3';
    *   markSeenLink('/admin/web/user-request'); dots on both buttons; stop().
    */
   it('shows unread badges in the menu and the module switcher', () => {
@@ -690,8 +737,12 @@ describe('AdminLayoutComponent', () => {
     expect(badge.textContent!.trim()).toBe('3');
     expect(badge.getAttribute('aria-label')).toBe('notifications.badge_aria');
     expect(el.querySelectorAll('.admin-nav .nav-badge').length).toBe(1);
-    expect(el.querySelector('.module-switcher > button .nav-badge')!.textContent!.trim()).toBe('99+');
-    expect(el.querySelector('.apps-switcher-btn .nav-badge')!.textContent!.trim()).toBe('3');
+    expect(el.querySelector('.apps-switcher-btn .nav-badge')!.textContent!.trim()).toBe('99+');
+    component.toggleAppsMenu();
+    fixture.detectChanges();
+    expect(Array.from(el.querySelectorAll('.apps-menu-item .nav-badge')).map(b => b.textContent!.trim())).toEqual(['99+', '3']);
+    component.closeAppsMenu();
+    fixture.detectChanges();
     expect(el.querySelector('.mobile-actions-toggle .unread-dot')).not.toBeNull();
     expect(el.querySelector('.menu-toggle-btn .unread-dot')).toBeNull();
 
@@ -722,7 +773,7 @@ describe('AdminLayoutComponent', () => {
    */
   it('shows things needing attention in orange', () => {
     requiresApps('web');
-    ctx.permissions.granted = new Set(['view-web', 'web-edit-website-view', 'web-user-requests-view']);
+    ctx.permissions.granted = new Set(['view-web', 'web-edit-website-view', 'web-user-requests-view', 'view-core', 'core-view-welcome-page']);
     const notifications = TestBed.inject(AdminNotificationsService);
     spyOn(notifications, 'start');
     fixture.detectChanges();

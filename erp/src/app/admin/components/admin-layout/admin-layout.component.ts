@@ -4,10 +4,10 @@
  * @project JS web-platform
  * @author JS
  * @created 2025
- * @description Main shell component for the administrative panel: the header with the core tab and
- *   the application switcher (always showing the module the user is in), the sidebar built from
- *   the navigation data of the module (CORE_NAV / the manifest of the application), and global UI
- *   state.
+ * @description Main shell component for the administrative panel: the header with ONE module
+ *   switcher (core + applications in one menu, the button always names the module the user is
+ *   in), the sidebar built from the navigation data of the module (CORE_NAV / the manifest of the
+ *   application) with the manual ("Nápověda") and sign-out at its bottom, and global UI state.
  * @dependencies
  * - AuthService: Manages user authentication and session status.
  * - PermissionService: Validates access to specific administrative modules.
@@ -41,7 +41,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 import { AdminModule, AdminNavGroup, AdminNavItem, CORE_MODULE, adminModules, navOf } from '../../admin-navigation.config';
 import { AdminModulesService } from '../../admin-modules.service';
 import { AppManifest, appById } from '../../../apps/apps.registry';
-import { AdminIconComponent } from '../admin-icon/admin-icon.component';
+import { AdminIconComponent, AdminIconName } from '../admin-icon/admin-icon.component';
 import { UserAvatarComponent } from '../user-avatar/user-avatar.component';
 import { KNOWLEDGE_BASE_URL } from '../page-help/page-help.component';
 import { ReleaseNoticeComponent } from '../releases/release-notice.component';
@@ -102,6 +102,10 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   /** Scrolling page area - scrolled back to the top on a navigation. */
   @ViewChild('content') private contentRef?: ElementRef<HTMLElement>;
+  /** Button of the module switcher - gets the focus back when its menu closes by keyboard. */
+  @ViewChild('switcherBtn') private switcherBtnRef?: ElementRef<HTMLButtonElement>;
+  /** Open menu of the module switcher (keyboard navigation of its items). */
+  @ViewChild('appsMenu') private appsMenuRef?: ElementRef<HTMLElement>;
 
   /** Path of the last navigation (without query / fragment) - only a new page scrolls to the top. */
   private lastPath: string | null = null;
@@ -421,14 +425,89 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     return app ? this.strings[app.nameKey] : this.strings.module_core;
   }
 
-  /** @description Opens / closes the dropdown of the application switcher. */
-  toggleAppsMenu(): void {
-    this.isAppsMenuOpen = !this.isAppsMenuOpen;
+  /**
+   * @description Modules of the switcher: the core (when the user may open a page of it) and the
+   *   applications - more than one = a menu, one = only its name.
+   */
+  get switcherModules(): AdminModule[] {
+    return [...(this.isModuleAvailable('core') ? ['core' as AdminModule] : []), ...this.availableApps.map(app => app.id as AdminModule)];
   }
 
-  /** @description Closes the dropdown of the application switcher. */
-  closeAppsMenu(): void {
+  /** @description Icon of the module the user is in (the core: `layout`). */
+  get currentModuleIcon(): AdminIconName {
+    return this.currentApp?.icon ?? 'layout';
+  }
+
+  /** @description Badge of the switcher button - the numbers of all modules (each in its menu item). */
+  get switcherBadge(): NavBadge | null {
+    return this.notifications.navBadge(this.notifications.kinds());
+  }
+
+  /**
+   * @description Opens / closes the menu of the module switcher; an opened menu moves the focus
+   *   to the module the user is in (keyboard and screen readers continue in the menu).
+   */
+  toggleAppsMenu(): void {
+    this.isAppsMenuOpen = !this.isAppsMenuOpen;
+    if (this.isAppsMenuOpen) {
+      setTimeout(() => this.focusMenuItem(items => Math.max(0, items.findIndex(item => item.classList.contains('active')))));
+    }
+  }
+
+  /**
+   * @description Closes the menu of the module switcher.
+   * @param restoreFocus Return the focus to the switcher button (closed by keyboard).
+   */
+  closeAppsMenu(restoreFocus = false): void {
     this.isAppsMenuOpen = false;
+    if (restoreFocus) {
+      this.switcherBtnRef?.nativeElement.focus();
+    }
+  }
+
+  /**
+   * @description Keyboard on the closed switcher button: arrow down / up opens the menu.
+   * @param event Key event.
+   */
+  onSwitcherKeydown(event: KeyboardEvent): void {
+    if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && !this.isAppsMenuOpen) {
+      event.preventDefault();
+      this.toggleAppsMenu();
+    }
+  }
+
+  /**
+   * @description Keyboard in the open menu (WAI-ARIA menu button): arrows move between the items
+   *   (round), Home / End to the first / last, Escape closes and returns to the button, Tab closes.
+   * @param event Key event.
+   */
+  onAppsMenuKeydown(event: KeyboardEvent): void {
+    const moves: Record<string, (index: number, count: number) => number> = {
+      ArrowDown: (i, n) => (i + 1) % n,
+      ArrowUp: (i, n) => (i - 1 + n) % n,
+      Home: () => 0,
+      End: (_, n) => n - 1,
+    };
+    if (moves[event.key]) {
+      event.preventDefault();
+      this.focusMenuItem(items => moves[event.key](items.indexOf(document.activeElement as HTMLElement), items.length));
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeAppsMenu(true);
+    } else if (event.key === 'Tab') {
+      this.closeAppsMenu();
+    }
+  }
+
+  /**
+   * @description Focuses an item of the open switcher menu.
+   * @param pick Index of the item to focus from the list of the items.
+   */
+  private focusMenuItem(pick: (items: HTMLElement[]) => number): void {
+    const items = Array.from(this.appsMenuRef?.nativeElement.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
+    if (items.length) {
+      items[pick(items)]?.focus();
+    }
   }
 
   /** @description Sections of the sidebar of the current module. */
@@ -511,11 +590,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
    */
   moduleBadge(module: AdminModule): NavBadge | null {
     return this.notifications.moduleBadge(module);
-  }
-
-  /** @description Badge of the application switcher - all applications. */
-  get appsBadge(): NavBadge | null {
-    return this.notifications.appsBadge();
   }
 
   /**

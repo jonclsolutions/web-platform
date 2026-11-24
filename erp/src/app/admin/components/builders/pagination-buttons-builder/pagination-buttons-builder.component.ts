@@ -4,7 +4,8 @@
  * @project JS web-platform
  * @author JS
  * @created 2025
- * @description A dynamic pagination controller that provides page navigation and items-per-page selection.
+ * @description A dynamic pagination controller that provides page navigation and items-per-page
+ *   selection; hidden for an empty table (totalItems 0 - the table shows its own empty message).
  * @dependencies
  * - FormsModule: Enables template-driven bindings for the select element.
  * - AdminLocalizationService: texts of the section `pagination`; a language switch re-renders
@@ -53,8 +54,7 @@ export class PaginationButtonsBuilderComponent {
 
   /**
    * @description The built sentence "Showing X - Y of Z records." with three interpolated
-   * values. For `totalItems === 0` (no records) the template uses `strings.no_records`
-   * directly, this getter is not called in that state.
+   * values. For `totalItems === 0` the whole builder is hidden, this getter is not called.
    */
   get rangeText(): string {
     return this.strings.showing_range

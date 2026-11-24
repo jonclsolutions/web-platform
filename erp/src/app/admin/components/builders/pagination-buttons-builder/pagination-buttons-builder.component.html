@@ -4,16 +4,15 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Template of the pagination buttons builder component.
+    @description: Template of the pagination buttons builder component: the row range, the page
+      size and the page buttons. Nothing at all for an empty table (2026-11) - the table itself
+      says it has no rows, nothing to page through.
 -->
+@if (totalItems > 0) {
 
 <div class="pagination-controls-wrapper">
   <div class="pagination-info text-sm text-gray-700 p-b-10">
-    @if (totalItems === 0) {
-      {{ strings.no_records }}
-    } @else {
-      {{ rangeText }}
-    }
+    {{ rangeText }}
   </div>
 
   <div class="pagination-actions">
@@ -56,3 +55,4 @@
     </nav>
   </div>
 </div>
+}

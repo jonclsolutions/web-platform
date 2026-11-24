@@ -4,6 +4,30 @@
             "type": "changed",
             "area": "core",
             "part": "admin",
+            "text": "One module switcher in the header: the button names the module you are in and its list holds Core and every application (also usable with the keyboard)."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Help moved from the header to the bottom of the left menu, above Log out; the question mark at a page title still opens the help of that page."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Tables without records no longer show the pagination and a second empty message under the table."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Security monitoring has two tabs: Events (the table) and Overview (the activity chart and the retention); a click on a chart day opens the events of that day."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
             "text": "Every administration page has the same space around its content: titles and tables line up at the same distance from the menu on all pages of the core and the applications."
         },
         {

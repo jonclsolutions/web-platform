@@ -13,7 +13,7 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "Every admin page has a question-mark button at the top right of its header. It opens exactly the chapter of this manual that describes that page. The Help button in the admin header opens the start of the manual - this page."
+              "content": "Every admin page has a question-mark button at the top right of its header. It opens exactly the chapter of this manual that describes that page. The item Help at the bottom of the left menu (above Log out) opens the start of the manual - this page."
             }
           ]
         },
@@ -118,20 +118,12 @@
                   "text": "Current date and time. Handy when working with times in the logs and the calendar."
                 },
                 {
-                  "title": "Core tab",
-                  "text": "Switches to the system part. You only see it with the permission for the Core section."
-                },
-                {
-                  "title": "Applications button",
-                  "text": "Opens the list of applications you have access to. The button always shows the name of the application you are in. The item All applications opens the overview of the applications with the state of each."
+                  "title": "Module switcher",
+                  "text": "A button with the name of the module you are in (Core or the name of an application). It opens a list: Core at the top (only with the permission for the Core section), the applications you have access to below a line, and All applications at the bottom - the overview of the applications with the state of each. The list works with the keyboard too (arrows, Escape)."
                 },
                 {
                   "title": "Calendar",
                   "text": "The calendar icon opens the common calendar of dates and open work."
-                },
-                {
-                  "title": "Help",
-                  "text": "Opens the start of this manual."
                 },
                 {
                   "title": "Language",
@@ -141,16 +133,16 @@
             },
             {
               "type": "text",
-              "content": "The left menu is divided into sections (for example Overview, Content, Users, System). Click the name of a section to collapse or expand it - the system remembers it. Change the width of the menu by dragging its right edge with the mouse. At the very bottom of the menu is the Log out button."
+              "content": "The left menu is divided into sections (for example Overview, Content, Users, System). Click the name of a section to collapse or expand it - the system remembers it. Change the width of the menu by dragging its right edge with the mouse. At the very bottom of the menu are the item Help (the start of this manual) and the Log out button."
             },
             {
               "type": "text",
-              "content": "A red number at a menu item tells how many new records you have not seen yet are on the page - for example new inquiries, job applications, orders, products below the stock limit, leads overdue for contact or security events. The number is personal: it counts from your last visit of the page and disappears once you open it. Above 99 records it shows “99+”. The Core tab, the Applications button and a collapsed menu section show the sums of unread records too; on a phone a red dot on the menu or panel button tells you. The system asks for news once a minute, and only while the admin tab is open in the foreground. When a number grows, a notice appears at the top right - click it to open the page. You see numbers only at pages you have permission for. An orange number means work waiting for you - for example website or e-shop texts and website content (FAQ, jobs, references, knowledge base) missing a translation in an active language (typically after an update of the application). Opening the page does not clear it, filling the texts does; a red number of unread records wins in a shared sum."
+              "content": "A red number at a menu item tells how many new records you have not seen yet are on the page - for example new inquiries, job applications, orders, products below the stock limit, leads overdue for contact or security events. The number is personal: it counts from your last visit of the page and disappears once you open it. Above 99 records it shows “99+”. The module switcher shows the sum of unread records of all modules (in its list every module has its own number) and a collapsed menu section its sum too; on a phone a red dot on the menu or panel button tells you. The system asks for news once a minute, and only while the admin tab is open in the foreground. When a number grows, a notice appears at the top right - click it to open the page. You see numbers only at pages you have permission for. An orange number means work waiting for you - for example website or e-shop texts and website content (FAQ, jobs, references, knowledge base) missing a translation in an active language (typically after an update of the application). Opening the page does not clear it, filling the texts does; a red number of unread records wins in a shared sum."
             },
             {
               "type": "note",
               "highlight": "On a phone or tablet",
-              "content": "The menu opens with the button at the top left and closes with a tap outside it. Account details, the clock, module switching, language, calendar and help are in a panel opened with the icon at the top right."
+              "content": "The menu opens with the button at the top left and closes with a tap outside it. Account details, the clock, module switching, language and calendar are in a panel opened with the icon at the top right. Help is at the bottom of the menu."
             }
           ]
         },
@@ -180,7 +172,7 @@
               "ordered": false,
               "items": [
                 "The question mark in the header of every page opens the chapter of the manual about that page.",
-                "Help in the header opens the start of the manual.",
+                "Help at the bottom of the left menu opens the start of the manual.",
                 "In the manual, choose a chapter on the left. Chapters are grouped: general chapters, Core and the individual applications.",
                 "At the top right of the manual you switch its language; at the top left the Administration button takes you back to the administration.",
                 "On a phone the list of chapters opens with the menu button of the manual."
@@ -220,7 +212,7 @@
                 },
                 {
                   "title": "Pagination",
-                  "text": "Below the table: the information “Showing 1 - 10 of 57 records”, page buttons and the number of items per page."
+                  "text": "Below the table: the information “Showing 1 - 10 of 57 records”, page buttons and the number of items per page. An empty table shows no pagination - the table itself tells that it has no records."
                 },
                 {
                   "title": "Freshness of the data",
@@ -1301,9 +1293,9 @@
               "ordered": false,
               "items": [
                 "The left menu - pages of the Core module.",
-                "The Applications button in the header - website, e-shop, project portal.",
+                "The module switcher in the header - website, e-shop, project portal.",
                 "The calendar in the header - dates and open work.",
-                "Help in the header - this manual."
+                "Help at the bottom of the left menu - this manual."
               ]
             }
           ]
@@ -3362,6 +3354,10 @@
               "content": "Security monitoring records suspicious activity: failed sign-ins, password guessing, wrong verification codes, robots on forms, exceeded limits, automated scans and blocked content on the pages. For every entry the system explains in plain words what happened and what it recommends doing."
             },
             {
+              "type": "text",
+              "content": "The page has two tabs: Events (the table of entries, opens first) and Overview (the activity chart and the retention setting). The chosen tab is in the page address, so it survives a reload and the Back button."
+            },
+            {
               "type": "alert",
               "variant": "info",
               "content": "Most entries are harmless - the internet is full of robots trying common addresses. What matters is watching critical entries and entries whose count grows quickly."
@@ -3373,12 +3369,12 @@
           "blocks": [
             {
               "type": "text",
-              "content": "At the top is a bar chart of the last 14 days. Each bar is one day split by severity (Critical, Warning, Info). Hover to see the counts, click a bar to filter the table to the entries of that day."
+              "content": "The Overview tab shows a bar chart of the last 14 days. Each bar is one day split by severity (Critical, Warning, Info). Hover to see the counts, click a bar to open the Events tab with the table filtered to the entries of that day."
             }
           ]
         },
         {
-          "heading": "02. The table of entries",
+          "heading": "02. The table of entries (Events tab)",
           "blocks": [
             {
               "type": "grid",
@@ -3530,7 +3526,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "The entries contain IP addresses, so they are deleted automatically. In the retention card set after how many days entries are deleted (7, 14, 30, 60, 90, 180 or 365 days) and save with Save retention. The clean-up runs every night."
+              "content": "The entries contain IP addresses, so they are deleted automatically. In the retention card of the Overview tab set after how many days entries are deleted (7, 14, 30, 60, 90, 180 or 365 days) and save with Save retention. The clean-up runs every night."
             },
             {
               "type": "list",

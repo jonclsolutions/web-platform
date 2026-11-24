@@ -4,9 +4,11 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Admin page of the security monitoring (core_security_events) - table of
- * suspicious events with triage (state change + note), volume chart of the last N days, and the
- * retention setting (GDPR clean-up) with an immediate manual purge.
+ * @description Admin page of the security monitoring (core_security_events) in two tabs
+ * (2026-11): "Události" - table of suspicious events with triage (state change + note); "Přehled"
+ * - volume chart of the last N days and the retention setting (GDPR clean-up) with an immediate
+ * manual purge, loaded on its first opening. The tab is in the address (`?tab=overview`), so a
+ * reload and Back keep it; a click on a chart day opens the events of that day.
  * @dependencies
  * - BaseDataComponent: Standard CRUD / pagination for `core/security_events`.
  * - ConfirmDialogService: Confirmation BEFORE the destructive purge and before 'false_positive' triage.
@@ -14,9 +16,11 @@
  *   and the chart are always loaded fresh.
  * - Config.create* factory functions: i18n-aware definitions.
  * - AdminModalComponent: the frame of the triage popup.
+ * - RowButtonBuilderComponent (SHARED_UI_BUILDERS): the page tabs; ActivatedRoute: the tab in the address.
  */
 
-import { Component, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, DestroyRef, OnInit, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -33,6 +37,10 @@ import { GraphBuilderComponent } from '../../components/builders/graph-builder/g
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { AdminModalComponent } from '../../components/admin-modal/admin-modal.component';
+import { RowButton, RowButtonItems } from '../../components/builders/row-button-builder/row-button';
+
+/** Tab of the page: the event table or the overview (chart + retention). */
+export type SecurityEventsTab = 'events' | 'overview';
 
 interface SecuritySetting {
   id: number;
@@ -77,6 +85,15 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
 
   private confirmDialog = inject(ConfirmDialogService);
   private resourceCache = inject(ResourceCacheService);
+  private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
+
+  // ── Page tabs ──────────────────────────────────────────────────────────────
+  /** Open tab - from the address (`?tab=overview`), the events without it. */
+  activeTab: SecurityEventsTab = 'events';
+  /** The overview loads its chart and retention only once, on its first opening. */
+  private overviewLoaded = false;
+  private readonly tabButtons = new RowButtonItems();
 
   override filters: Core.FilterParams = {
     sort_by: 'last_seen_at',
@@ -171,8 +188,45 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
   override ngOnInit(): void {
     super.ngOnInit();
     this.initWithAuthCheck(this.router);
-    this.loadStats();
-    this.loadSettings();
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params =>
+      this.applyTab(params.get('tab') === 'overview' ? 'overview' : 'events'));
+  }
+
+  /** @description Page tabs: Události (the table), Přehled (chart + retention). */
+  get tabItems(): RowButton[] {
+    return this.tabButtons.update([
+      { value: 'events', label: this.t('tab_events'), icon: 'list' },
+      { value: 'overview', label: this.t('tab_overview'), icon: 'bar-chart' },
+    ]);
+  }
+
+  /**
+   * @description Opens a tab through the address (a new history entry - Back returns to the
+   *   previous tab); the events tab has no parameter.
+   * @param tab Tab to open.
+   */
+  switchTab(tab: SecurityEventsTab): void {
+    if (tab === this.activeTab) return;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: tab === 'overview' ? 'overview' : null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /**
+   * @description Shows a tab; the first opening of the overview loads the chart and the
+   *   retention setting (the events tab never needs them).
+   * @param tab Tab from the address.
+   */
+  private applyTab(tab: SecurityEventsTab): void {
+    this.activeTab = tab;
+    if (tab === 'overview' && !this.overviewLoaded) {
+      this.overviewLoaded = true;
+      this.loadStats();
+      this.loadSettings();
+    }
+    this.cd.markForCheck();
   }
 
   override refreshData(): void {
@@ -327,6 +381,10 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
     this.cd.markForCheck();
   }
 
+  /**
+   * @description A click on a chart day: filters the events to that day and opens the events tab.
+   * @param day Day 'YYYY-MM-DD'.
+   */
   filterByChartDay(day: string): void {
     this.filters = {
       ...this.filters,
@@ -336,6 +394,7 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
     this.isFilterVisible = true;
     this.currentPage = 1;
     this.refreshData();
+    this.switchTab('events');
     this.cd.markForCheck();
   }
 

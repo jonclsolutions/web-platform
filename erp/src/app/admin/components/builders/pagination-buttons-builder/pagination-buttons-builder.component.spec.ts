@@ -27,7 +27,7 @@ describe('PaginationButtonsBuilderComponent', () => {
   beforeEach(async () => {
     ctx = createAdminTestContext();
     ctx.i18n.getMergedSection.and.returnValue({
-      showing_range: 'Showing {start}–{end} of {total}', no_records: 'No records',
+      showing_range: 'Showing {start}–{end} of {total}',
       items_per_page_label: 'Rows', nav_aria: 'Pages'
     });
     await TestBed.configureTestingModule({ imports: [PaginationButtonsBuilderComponent], providers: ctx.providers }).compileComponents();
@@ -58,15 +58,20 @@ describe('PaginationButtonsBuilderComponent', () => {
   });
 
   /**
-   * @description With no rows the range is 0–0 and the "no records" text is shown.
-   * @input  totalItems 0
-   * @output rangeStart 0, rangeEnd 0, info text 'No records'
+   * @description An empty table has nothing to page through: the builder renders nothing (no
+   *   text, no page size, no arrows); with a row it is back.
+   * @input  totalItems 0; then totalItems 1
+   * @output rangeStart / rangeEnd 0, no element; then the info line 'Showing 1–1 of 1'
    */
-  it('shows "no records" for an empty table', () => {
+  it('renders nothing for an empty table', () => {
     set({ totalItems: 0, totalPages: 1 });
     expect(component.rangeStart).toBe(0);
     expect(component.rangeEnd).toBe(0);
-    expect(fixture.nativeElement.querySelector('.pagination-info').textContent.trim()).toBe('No records');
+    expect(fixture.nativeElement.children.length).toBe(0);
+    expect(fixture.nativeElement.textContent.trim()).toBe('');
+
+    set({ totalItems: 1, totalPages: 1 });
+    expect(fixture.nativeElement.querySelector('.pagination-info').textContent.trim()).toBe('Showing 1–1 of 1');
   });
 
   /**
@@ -108,11 +113,11 @@ describe('PaginationButtonsBuilderComponent', () => {
 
   /**
    * @description Previous / next arrows are disabled on the first / last page.
-   * @input  totalPages 3, currentPage 1, then 3
+   * @input  totalItems 40, totalPages 3, currentPage 1, then 3
    * @output first: prev disabled, next enabled; last: next disabled
    */
   it('disables the arrows at the edges', () => {
-    set({ totalPages: 3, currentPage: 1 });
+    set({ totalItems: 40, totalPages: 3, currentPage: 1 });
     let arrows = fixture.nativeElement.querySelectorAll('.nav-arrow');
     expect(arrows[0].disabled).toBeTrue();
     expect(arrows[1].disabled).toBeFalse();
@@ -127,7 +132,7 @@ describe('PaginationButtonsBuilderComponent', () => {
    * @output itemsPerPageChange emits 50 (number)
    */
   it('emits the chosen page size as a number', () => {
-    set({ totalPages: 1 });
+    set({ totalItems: 5, totalPages: 1 });
     const sizes: number[] = [];
     component.itemsPerPageChange.subscribe(v => sizes.push(v));
     const select: HTMLSelectElement = fixture.nativeElement.querySelector('select');
@@ -138,14 +143,14 @@ describe('PaginationButtonsBuilderComponent', () => {
 
   /**
    * @description A language switch re-renders the texts at once (OnPush), without new inputs.
-   * @input  empty table; section texts changed; translations$.next({})
-   * @output 'Žádné záznamy' shown
+   * @input  a table with rows; section texts changed; translations$.next({})
+   * @output 'Řádky' shown
    */
   it('re-renders after a language switch', () => {
-    set({ totalItems: 0 });
-    ctx.i18n.getMergedSection.and.returnValue({ no_records: 'Žádné záznamy', items_per_page_label: 'Řádky', nav_aria: 'Stránky' });
+    set({ totalItems: 3, totalPages: 1 });
+    ctx.i18n.getMergedSection.and.returnValue({ showing_range: '{start}–{end} z {total}', items_per_page_label: 'Řádky', nav_aria: 'Stránky' });
     ctx.i18n.translations$.next({});
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Žádné záznamy');
+    expect(fixture.nativeElement.textContent).toContain('Řádky');
   });
 });

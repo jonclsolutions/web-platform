@@ -199,40 +199,12 @@
   gap: 4px;
 }
 
-.module-switcher > button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 16px;
-  background: none;
-  border: none;
-  border-radius: 999px;
-  font-size: 0.83rem;
-  font-weight: 600;
-  font-family: var(--ff);
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: color var(--ease), background var(--ease);
-  white-space: nowrap;
-}
-
-.module-switcher > button:hover {
-  color: var(--text);
-  background: var(--surface-2);
-}
-
-.module-switcher > button.active {
-  color: var(--color-white);
-  background: var(--accent);
-}
-
 /*
-    @module: Application switcher
-    @description: Button of the header that names the application the user is in ("Aplikace" in the
-        core) and its dropdown with the applications the user may open + a link to the page of all
-        applications.
-    @usage: .apps-switcher, .apps-switcher-btn(.active), .apps-menu-backdrop, .apps-menu, .apps-menu-item(.active), .apps-menu-all
+    @module: Module switcher
+    @description: ONE button of the header that names the module the user is in (Core or an
+        application) and its menu: the core, a separator, the applications the user may open and
+        a link to the page of all applications. With a single module only its name (pill).
+    @usage: .apps-switcher, .apps-switcher-btn(.active), .apps-menu-backdrop, .apps-menu, .apps-menu-item(.active), .apps-menu-separator, .apps-menu-all, .module-current-pill
 */
 .apps-switcher {
   position: relative;
@@ -307,7 +279,30 @@
   cursor: pointer;
 }
 
-.apps-menu-item:hover { background: var(--surface-2); }
+.apps-menu-item:hover,
+.apps-menu-item:focus-visible { background: var(--surface-2); outline: none; }
+
+/* Between the core and the applications. */
+.apps-menu-separator {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border);
+}
+
+/* Only one module to open - its name without a menu (same look as the button). */
+.module-current-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--color-white);
+  background: var(--accent);
+  white-space: nowrap;
+}
 
 .apps-menu-item.active {
   background: var(--accent);
@@ -323,7 +318,8 @@
   text-decoration: none;
 }
 
-.apps-menu-all:hover { color: var(--text); }
+.apps-menu-all:hover,
+.apps-menu-all:focus-visible { color: var(--text); outline: none; text-decoration: underline; }
 
 /*
     @module: Current module (mobile)
@@ -377,15 +373,11 @@
   border-color: var(--border-mid);
 }
 
-.header-action-btn--wiki,
 .header-action-btn--calendar {
   color: var(--text-muted);
   border-color: var(--border);
   background: var(--surface);
 }
-
-/* "Help" is a text button (the "?" of the current page is in the page header). */
-.header-action-btn--wiki { padding: 6px 12px; }
 
 /* Hamburger of the mobile panel - hidden on desktop, shown by the media query below. */
 .mobile-actions-toggle {
@@ -932,7 +924,7 @@
   .header-lang-switcher{display: none;}
 
   /* On mobile only menu-toggle + logo + hamburger fit into the header row.
-     The rest (user, clock, module switcher, maintenance, wiki / bug) moves into the
+     The rest (user, clock, module switcher, maintenance) moves into the
      slide-out panel (see .mobile-actions-panel above). */
   .header-user { display: none; }
   .module-switcher { display: none; }
@@ -944,7 +936,6 @@
     transform: translateX(-50%);
     max-width: calc(100% - 150px);
   }
-  .header-action-btn--wiki,
   .header-action-btn--calendar { display: none; }
 
   .mobile-actions-toggle { display: flex; }
@@ -991,5 +982,4 @@
 
 @media (max-width: 480px) {
   .header-brand { display: none; }
-  .module-switcher > button span:not(:first-child) { display: none; }
 }

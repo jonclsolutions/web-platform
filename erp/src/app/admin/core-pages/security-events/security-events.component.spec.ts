@@ -5,14 +5,16 @@
  * @author JS
  * @created 2026
  * @description Unit tests of SecurityEventsComponent – the security events page: 14-day severity
- *   chart (data, bar segments, day filter, tooltip side), retention setting and purge, and the
- *   triage modal (status + notes, false-positive confirmation).
+ *   chart (data, bar segments, day filter, tooltip side), retention setting and purge, the
+ *   triage modal (status + notes, false-positive confirmation) and the page tabs (Události /
+ *   Přehled in the address, overview loaded on its first opening).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (all admin doubles)
  */
 
 import { ComponentFixture, TestBed, fakeAsync, discardPeriodicTasks } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
+import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
 
 import { SecurityEventsComponent } from './security-events.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
@@ -29,9 +31,16 @@ describe('SecurityEventsComponent', () => {
       url.startsWith('core/security_events/stats') ? of(stats) : of(retention));  // get() returns the payload (finding #6)
   };
 
+  /** Query parameters of the page address (`?tab=overview`). */
+  let query$: BehaviorSubject<ParamMap>;
+
   beforeEach(async () => {
     ctx = createAdminTestContext();
-    await TestBed.configureTestingModule({ imports: [SecurityEventsComponent], providers: ctx.providers }).compileComponents();
+    query$ = new BehaviorSubject<ParamMap>(convertToParamMap({ tab: 'overview' }));
+    await TestBed.configureTestingModule({
+      imports: [SecurityEventsComponent],
+      providers: [...ctx.providers, { provide: ActivatedRoute, useValue: { queryParamMap: query$.asObservable() } }],
+    }).compileComponents();
     fixture = TestBed.createComponent(SecurityEventsComponent);
     component = fixture.componentInstance;
   });
@@ -51,8 +60,9 @@ describe('SecurityEventsComponent', () => {
   });
 
   /**
-   * @description Init loads the table, the 14-day stats and the retention setting.
-   * @input  ngOnInit(); stats [{ today, critical, 3 }, { today, info, 2 }]; retention 30
+   * @description Opening the overview tab (address ?tab=overview) loads the 14-day stats and the
+   *   retention setting.
+   * @input  ngOnInit() with ?tab=overview; stats [{ today, critical, 3 }, { today, info, 2 }]; retention 30
    * @output get('core/security_events/stats?days=14'); 14 chart days; today total 5 (critical 3, info 2); chartMaxTotal 5; retentionDays 30
    */
   it('loads stats and settings on init', fakeAsync(() => {
@@ -95,6 +105,40 @@ describe('SecurityEventsComponent', () => {
     const seg = component.chartSegments[13];
     expect(seg.critical).toBeCloseTo(14, 5);
     expect(seg.info + seg.warning + seg.critical).toBeCloseTo(100, 5);
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description Page tabs: without a parameter the events tab opens and nothing of the overview
+   *   loads; switching goes through the address (events = no parameter); the overview loads once
+   *   (a second opening and Back do not reload); a chart day opens the events tab.
+   * @input  ?tab absent; switchTab('overview'); address ?tab=overview twice; switchTab('events');
+   *   filterByChartDay('2026-03-04') while in the overview.
+   * @output activeTab 'events', no get(); navigate queryParams {tab:'overview'}; activeTab
+   *   'overview', stats requested once; navigate {tab:null}; navigate {tab:null} again.
+   */
+  it('switches between the events and the overview tab', fakeAsync(() => {
+    answer();
+    query$.next(convertToParamMap({}));
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    component.ngOnInit();
+    expect(component.activeTab).toBe('events');
+    expect((ctx.dataHandler as any).get).not.toHaveBeenCalledWith('core/security_events/stats?days=14');
+    expect(component.tabItems.map(t => t.value)).toEqual(['events', 'overview']);
+
+    component.switchTab('overview');
+    expect(navigate.calls.mostRecent().args[1]).toEqual(jasmine.objectContaining({ queryParams: { tab: 'overview' }, queryParamsHandling: 'merge' }));
+    query$.next(convertToParamMap({ tab: 'overview' }));
+    query$.next(convertToParamMap({ tab: 'overview' }));
+    expect(component.activeTab).toBe('overview');
+    const statsCalls = (ctx.dataHandler as any).get.calls.allArgs().filter((a: any[]) => a[0] === 'core/security_events/stats?days=14');
+    expect(statsCalls.length).toBe(1);
+
+    component.switchTab('events');
+    expect(navigate.calls.mostRecent().args[1]).toEqual(jasmine.objectContaining({ queryParams: { tab: null } }));
+    navigate.calls.reset();
+    component.filterByChartDay('2026-03-04');
+    expect(navigate).toHaveBeenCalledWith([], jasmine.objectContaining({ queryParams: { tab: null } }));
     discardPeriodicTasks();
   }));
 

@@ -179,13 +179,12 @@
 
     "module_core": "Core",
     "apps_switcher_label": "Aplikace",
-    "apps_switcher_title": "Přepnout aplikaci",
+    "apps_switcher_title": "Přepnout modul (Core nebo aplikace)",
     "apps_switcher_all": "Všechny aplikace",
 
 
-    "wiki_label": "Help",
-    "wiki_title": "Nápověda – úvod knowledge base",
-    "wiki_mobile_label": "Help",
+    "wiki_label": "Nápověda",
+    "wiki_title": "Nápověda – příručka administrace",
 
 
     "mobile_menu_title": "Menu",
@@ -251,7 +250,6 @@
     "close_aria": "Zavřít filtr"
   },
     "pagination": {
-    "no_records": "Nebyly nalezeny žádné záznamy.",
     "showing_range": "Zobrazuji {start} - {end} z celkem {total} záznamů.",
     "items_per_page_label": "Položek na stránku:",
     "nav_aria": "Navigace stránkování"
@@ -1089,6 +1087,9 @@
   },
   "security-events": {
     "table_header": "Bezpečnostní monitoring",
+    "tab_events": "Události",
+    "tab_overview": "Přehled",
+    "tabs_label": "Části bezpečnostního monitoringu",
     "toolbar_action_trigger": "Akce",
     "toolbar_filters": "Otevřít filtry",
     "toolbar_hide_filters": "Skrýt",

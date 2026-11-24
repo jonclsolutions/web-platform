@@ -4,7 +4,9 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Template of the admin layout component.
+    @description: Template of the admin layout component: header (sidebar toggle, user, clock,
+      ONE module switcher, calendar, language), mobile panel, sidebar of the module with the
+      manual and sign-out at its bottom, page area.
 -->
 
 <header class="admin-header">
@@ -55,32 +57,37 @@
     </div>
   </div>
 
-  <!-- Core tab + application switcher: the button of the switcher always names the application
-       the user is in ("Aplikace" in the core); the dropdown lists the applications they may open. -->
+  <!-- Module switcher (2026-11): ONE button naming the module the user is in (Core or an
+       application); its menu lists the core first, then the applications the user may open and a
+       link to the page of all applications. Keyboard: arrows / Home / End move, Escape closes. -->
   <div class="module-switcher">
-    @if (isModuleAvailable('core')) {
-      <button type="button" [class.active]="currentModule === 'core'" (click)="switchModule('core')">
-        <app-admin-icon name="layout" [size]="14" />
-        {{ strings.module_core }}
-        @if (moduleBadge('core'); as badge) {
-          <span class="nav-badge" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
-        }
-      </button>
-    }
-    @if (availableApps.length) {
+    @if (switcherModules.length > 1) {
       <div class="apps-switcher">
-        <button type="button" class="apps-switcher-btn" [class.active]="!!currentApp" aria-haspopup="menu"
-                [attr.aria-expanded]="isAppsMenuOpen" [title]="strings.apps_switcher_title" (click)="toggleAppsMenu()">
-          <app-admin-icon [name]="currentApp?.icon ?? 'layers'" [size]="14" />
-          <span>{{ currentApp ? currentModuleName : strings.apps_switcher_label }}</span>
-          @if (appsBadge; as badge) {
+        <button #switcherBtn type="button" class="apps-switcher-btn active" aria-haspopup="menu"
+                [attr.aria-expanded]="isAppsMenuOpen" [title]="strings.apps_switcher_title" (click)="toggleAppsMenu()"
+                (keydown)="onSwitcherKeydown($event)">
+          <app-admin-icon [name]="currentModuleIcon" [size]="14" />
+          <span>{{ currentModuleName }}</span>
+          @if (switcherBadge; as badge) {
             <span class="nav-badge" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
           }
           <app-admin-icon name="chevron-down" [size]="11" />
         </button>
         @if (isAppsMenuOpen) {
           <div class="apps-menu-backdrop" (click)="closeAppsMenu()"></div>
-          <div class="apps-menu" role="menu">
+          <div #appsMenu class="apps-menu" role="menu" [attr.aria-label]="strings.apps_switcher_title" (keydown)="onAppsMenuKeydown($event)">
+            @if (isModuleAvailable('core')) {
+              <button type="button" role="menuitem" class="apps-menu-item" [class.active]="currentModule === 'core'" (click)="switchModule('core')">
+                <app-admin-icon name="layout" [size]="15" />
+                <span>{{ strings.module_core }}</span>
+                @if (moduleBadge('core'); as badge) {
+                  <span class="nav-badge nav-badge--end" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
+                }
+              </button>
+              @if (availableApps.length) {
+                <div class="apps-menu-separator" role="separator"></div>
+              }
+            }
             @for (app of availableApps; track app.id) {
               <button type="button" role="menuitem" class="apps-menu-item" [class.active]="app.id === currentModule" (click)="switchModule(app.id)">
                 <app-admin-icon [name]="app.icon" [size]="15" />
@@ -90,10 +97,18 @@
                 }
               </button>
             }
-            <a class="apps-menu-all" routerLink="/admin/core/apps" (click)="closeAppsMenu()">{{ strings.apps_switcher_all }}</a>
+            @if (availableApps.length) {
+              <a class="apps-menu-all" role="menuitem" routerLink="/admin/core/apps" (click)="closeAppsMenu()">{{ strings.apps_switcher_all }}</a>
+            }
           </div>
         }
       </div>
+    } @else if (switcherModules.length === 1) {
+      <!-- A single module: nothing to switch - only its name. -->
+      <span class="module-current-pill">
+        <app-admin-icon [name]="currentModuleIcon" [size]="14" />
+        <span>{{ currentModuleName }}</span>
+      </span>
     }
   </div>
 
@@ -104,7 +119,6 @@
         <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
       </svg>
     </a>
-    <a [routerLink]="knowledgeBaseUrl" class="header-action-btn header-action-btn--wiki" [title]="strings.wiki_title">{{ strings.wiki_label }}</a>
 
 <!-- ── Language switcher ── -->
 <div class="header-lang-switcher" style="">
@@ -236,13 +250,6 @@
         </svg>
         {{ strings.nav_calendar }}
       </a>
-      <a [routerLink]="knowledgeBaseUrl" (click)="closeMobileActions()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-        </svg>
-        {{ strings.wiki_mobile_label }}
-      </a>
     </div>
 
   </div>
@@ -292,8 +299,16 @@
         }
       }
 
+      <!-- Bottom of the sidebar: the manual of the administration (the "?" in a page header opens
+           the help of that page) and sign-out. -->
       <div class="nav-group nav-group--bottom">
         <ul>
+          <li>
+            <a [routerLink]="knowledgeBaseUrl" class="help-nav-item" [title]="strings.wiki_title">
+              <span class="nav-icon"><app-admin-icon name="book" [size]="16" /></span>
+              <span class="nav-text">{{ strings.wiki_label }}</span>
+            </a>
+          </li>
           <li>
             <a href="javascript:void(0)" (click)="logout()" [title]="strings.logout" class="logout-nav-item">
               <span class="nav-icon">
