@@ -9,7 +9,7 @@
  * names an application or its classes - it asks the registered manifests (config/apps.php via
  * AppRegistry) for what it needs: base data, retention, calendar entries, upload rules and
  * folders, the audit log, morph aliases, Artisan commands and scheduled jobs, what to do when a
- * language is deleted - and the files
+ * language is deleted, the public pages for search engines and the root of the site - and the files
  * of the application found by convention in its folder (app/Apps/<App>/): `routes.php`,
  * `Database/Migrations`, `Resources/views` (view namespace = id), `Resources/knowledge-base`.
  * @usage One final class per application in the root of its folder (e.g.
@@ -218,6 +218,30 @@ abstract class AppManifest
     public function availability(): ?AppAvailability
     {
         return null;
+    }
+
+    /**
+     * @description Whether the public home page of the application is the root of the site (`/`
+     *   → `/<language>`): the server sends a visitor of the bare domain to the language of the
+     *   browser among the languages of this application (PublicSeoController::root()).
+     * @return bool Off by default; one application of a build has it (the website).
+     */
+    public function servesSiteRoot(): bool
+    {
+        return false;
+    }
+
+    /**
+     * @description Public pages of the application for search engines (sitemap.xml): paths without
+     *   the language (`/`, `/services`, `/jobs/<slug>`); the core lists each in every active
+     *   language of the application (translation module = id()) with hreflang alternates. Called
+     *   only while the application is available (availability()).
+     * @return array<int, string> Paths, e.g. ['/', '/faq']; none by default (private pages,
+     *   portals with tokens and forms do not belong here).
+     */
+    public function sitemapPaths(): array
+    {
+        return [];
     }
 
     /**

@@ -64,8 +64,9 @@ class ProjectMailsTest extends TestCase
      * @description Client notification in the account's language: reply / checkpoint subject and
      *   texts, the portal link with the project token, the item title - never a message text.
      * @input Project 'Eshop'; account cz: reply 'Logo colours'; account en: checkpoint 'Launch' → done.
-     * @output 'Nová odpověď v projektu Eshop' + "Dodavatel odpověděl" + /projects/{token};
-     *   'Progress update in the project Eshop' + 'changed its status to "Done"' + 'Launch', lang en.
+     * @output 'Nová odpověď v projektu Eshop' + "Dodavatel odpověděl" + /cs/projects/{token};
+     *   'Progress update in the project Eshop' + 'changed its status to "Done"' + 'Launch', lang en,
+     *   /en/projects/{token} (the portal opens in the language of the e-mail).
      */
     public function test_project_client_update(): void
     {
@@ -79,7 +80,7 @@ class ProjectMailsTest extends TestCase
         $html = $reply->render();
         $this->assertStringContainsString('Dodavatel odpověděl ve vlákně:', $html);
         $this->assertStringContainsString('Logo colours', $html);
-        $this->assertStringContainsString("https://www.example.com/projects/{$project->access_token}", $html);
+        $this->assertStringContainsString("https://www.example.com/cs/projects/{$project->access_token}", $html);
 
         $step = new ProjectClientUpdateMail($project, $en, ProjectClientUpdateMail::KIND_CHECKPOINT, 'Launch', 'done');
         $step->assertHasSubject('Progress update in the project Eshop');
@@ -87,6 +88,7 @@ class ProjectMailsTest extends TestCase
         $this->assertStringContainsString('A project step changed its status to &quot;Done&quot;:', $html);
         $this->assertStringContainsString('Launch', $html);
         $this->assertStringContainsString('lang="en"', $html);
+        $this->assertStringContainsString("https://www.example.com/en/projects/{$project->access_token}", $html);
         $this->assertStringNotContainsString('Dodavatel', $html);
     }
 
@@ -96,7 +98,8 @@ class ProjectMailsTest extends TestCase
      * @input Project 'Eshop' (token t0k); account klient (cz) invite link L1; account anna (en)
      *   code 123456, link L2.
      * @output Subjects 'Pozvánka do portálu projektu Eshop' / 'Sign-in code for the portal of the
-     *   project Eshop'; links /projects/t0k?access=L1|L2; '7 dní', 'klient'; '123456', '15 minutes'.
+     *   project Eshop'; links /cs/projects/t0k?access=L1 and /en/projects/t0k?access=L2 (language of
+     *   the e-mail); '7 dní', 'klient'; '123456', '15 minutes'.
      */
     public function test_project_access_mail(): void
     {
@@ -108,7 +111,7 @@ class ProjectMailsTest extends TestCase
         $invite = new ProjectAccessMail($project, $klient, ProjectAccessMail::KIND_INVITE, 'L1', null, 7 * 24 * 60);
         $invite->assertHasSubject('Pozvánka do portálu projektu Eshop');
         $html = $invite->render();
-        $this->assertStringContainsString('https://www.example.com/projects/t0k?access=L1', $html);
+        $this->assertStringContainsString('https://www.example.com/cs/projects/t0k?access=L1', $html);
         $this->assertStringContainsString('7 dní', $html);
         $this->assertStringContainsString('klient', $html);
         $this->assertStringContainsString('e-mail ignorujte', $html);
@@ -117,7 +120,7 @@ class ProjectMailsTest extends TestCase
         $login->assertHasSubject('Sign-in code for the portal of the project Eshop');
         $html = $login->render();
         $this->assertStringContainsString('123456', $html);
-        $this->assertStringContainsString('?access=L2', $html);
+        $this->assertStringContainsString('https://www.example.com/en/projects/t0k?access=L2', $html);
         $this->assertStringContainsString('15 minutes', $html);
         $this->assertStringContainsString('lang="en"', $html);
     }

@@ -5,7 +5,8 @@
  * @author JS
  * @created 2026
  * @description Unit tests of the public LocalizationService: stored language, first-visit language
- *   from the browser (not stored; English / first active language as fallbacks), initial load,
+ *   from the browser (not stored; English / first active language as fallbacks), the language of
+ *   the URL (first URL and later links, not stored, unknown refused), initial load,
  *   fallback to Czech (not cached under the failed language - bugfix 2026-10-23), translation
  *   cache, module switching (stale responses dropped), out-of-order language responses (bugfix
  *   2026-10-23), key lookup and the active-language list.
@@ -114,6 +115,65 @@ describe('LocalizationService', () => {
     await Promise.resolve();
     http.expectOne(`${API}/translations/web/cz`).flush({ data: { t: 'CZ' } });
     expect(await done).toEqual({ t: 'CZ' });
+  });
+
+  /**
+   * @description A language in the first URL wins over the stored choice when the module has it
+   *   (not stored); an unknown URL language falls back to the stored choice.
+   * @input stored 'en'; initTranslations('web', 'cz') with cz + en; new service with URL 'fr'.
+   * @output translations/web/cz, stored stays 'en'; then translations/web/en.
+   */
+  it('uses the language of the first URL when the module has it', async () => {
+    localStorage.setItem('selectedLanguage', 'en');
+    let service = create();
+    let done = service.initTranslations('web', 'cz');
+    http.expectOne(`${API}/languages/web`).flush({ data: [{ code: 'cz', name: 'Čeština', active: true }, { code: 'en', name: 'English', active: true }] });
+    await Promise.resolve();
+    http.expectOne(`${API}/translations/web/cz`).flush({ data: { t: 'CZ' } });
+    expect(await done).toEqual({ t: 'CZ' });
+    expect(localStorage.getItem('selectedLanguage')).toBe('en');
+    expect(service.isChosenByVisitor()).toBeTrue();
+
+    TestBed.resetTestingModule();
+    service = create();
+    done = service.initTranslations('web', 'fr');
+    http.expectOne(`${API}/languages/web`).flush({ data: [{ code: 'cz', name: 'Čeština', active: true }, { code: 'en', name: 'English', active: true }] });
+    await Promise.resolve();
+    http.expectOne(`${API}/translations/web/en`).flush({ data: { t: 'EN' } });
+    expect(await done).toEqual({ t: 'EN' });
+  });
+
+  /**
+   * @description Later URL languages (links, Back): a known one becomes current without being
+   *   stored and loads its texts; an unknown one is refused; the same one does nothing. Texts of
+   *   another language can be fetched without switching.
+   * @input languages cz + en loaded; useUrlLanguage('cz'), ('fr'), ('cz'); fetchTexts('en').
+   * @output true + translations/web/cz, nothing stored; false; true without a request; EN texts,
+   *   current still 'cz'.
+   */
+  it('follows URL languages without storing them', () => {
+    const service = create();
+    enterModule(service, 'web');
+    service.fetchLanguages().subscribe();
+    http.expectOne(`${API}/languages/web`).flush({ data: [{ code: 'cz', name: 'Čeština', active: true }, { code: 'en', name: 'English', active: true }] });
+    expect(service.getLanguages().map(l => l.code)).toEqual(['cz', 'en']);
+
+    expect(service.useUrlLanguage('cz')).toBeTrue();
+    http.expectOne(`${API}/translations/web/cz`).flush({ data: { t: 'CZ' } });
+    expect(service.getCurrentLanguage()).toBe('cz');
+    expect(localStorage.getItem('selectedLanguage')).toBeNull();
+    expect(service.isChosenByVisitor()).toBeFalse();
+
+    expect(service.useUrlLanguage('fr')).toBeFalse();
+    expect(service.getCurrentLanguage()).toBe('cz');
+    expect(service.useUrlLanguage('cz')).toBeTrue();
+    http.expectNone(() => true);
+
+    let other: any;
+    service.fetchTexts('en').subscribe(t => (other = t));
+    http.expectOne(`${API}/translations/web/en`).flush({ data: { t: 'EN' } });
+    expect(other).toEqual({ t: 'EN' });
+    expect(service.getCurrentLanguage()).toBe('cz');
   });
 
   /**

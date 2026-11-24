@@ -71,8 +71,9 @@ describe('Project portal maintenance', () => {
   /**
    * @description A 503 of a portal request opens the maintenance page (error still delivered);
    *   other errors do nothing.
-   * @input error 503 at /projects/abc; error 404.
-   * @output navigate(['/projects/maintenance'], {return: current url}) once; caller got both errors.
+   * @input error 503 at /projects/abc; error 404; 503 on '/cs/projects/maintenance?return=…'.
+   * @output navigate(['/projects/maintenance'], {return: current url}) once; caller got both errors;
+   *   no navigation on the maintenance page itself.
    */
   it('leaves for the maintenance page on a 503', () => {
     setup(of({}));
@@ -83,6 +84,12 @@ describe('Project portal maintenance', () => {
     throwError(() => ({ status: 404 })).pipe(leaveOnMaintenance(router)).subscribe({ error: e => errors.push(e.status) });
     expect(navigate).toHaveBeenCalledOnceWith(['/projects/maintenance'], { queryParams: { return: router.url } });
     expect(errors).toEqual([503, 404]);
+
+    // Already on the maintenance page (URL with the language): no second redirect.
+    navigate.calls.reset();
+    spyOnProperty(router, 'url', 'get').and.returnValue('/cs/projects/maintenance?return=%2Fcs%2Fprojects%2Fabc');
+    throwError(() => ({ status: 503 })).pipe(leaveOnMaintenance(router)).subscribe({ error: () => {} });
+    expect(navigate).not.toHaveBeenCalled();
   });
 
   /**

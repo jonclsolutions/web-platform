@@ -19,6 +19,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { MonoTypeOperatorFunction, catchError, map, of, tap } from 'rxjs';
 import { PublicDataService } from '../../../../shared/services/public-data.service';
+import { stripLanguagePrefix } from '../../../../shared/utils/language-url';
 
 /** Address of the maintenance page of the portal. */
 export const PORTAL_MAINTENANCE_URL = '/projects/maintenance';
@@ -54,7 +55,8 @@ export const projectPortalMaintenanceGuard: CanActivateFn = (_route, state) => {
 export function leaveOnMaintenance<T>(router: Router): MonoTypeOperatorFunction<T> {
   return tap<T>({
     error: (err: any) => {
-      if (err?.status === 503 && !router.url.startsWith(PORTAL_MAINTENANCE_URL)) {
+      // Router.url carries the language (`/cs/projects/…`); the return address keeps it.
+      if (err?.status === 503 && !stripLanguagePrefix(router.url).startsWith(PORTAL_MAINTENANCE_URL)) {
         router.navigate([PORTAL_MAINTENANCE_URL], { queryParams: { return: router.url } });
       }
     },

@@ -11,6 +11,8 @@
  *   (/projects/maintenance). The portal route has a session resolver: without a valid session it
  *   redirects to the sign-in. Browser titles: area `project-portal`.
  * @note Literal paths (maintenance, order/:token, login/:token) must stay BEFORE projects/:token.
+ * @note The maintenance page carries SEO_NOINDEX_DATA; the private portal pages are disallowed in
+ *   robots.txt (PublicSeoController).
  * @usage `publicRoutes` of PROJECT_PORTAL_APP (project-portal.app.ts), composed by app.routes.ts.
  */
 
@@ -18,12 +20,14 @@ import { Routes } from '@angular/router';
 import { projectPortalMaintenanceGuard } from './maintenance/portal-maintenance';
 import { projectPortalSessionResolver } from './project-portal-session.resolver';
 import { PORTAL_SECTION_ROUTES } from './portal-sections.routes';
+import { SEO_NOINDEX_DATA } from '../../../shared/utils/seo-route-data';
 
 export const PROJECT_PORTAL_PUBLIC_ROUTES: Routes = [
   // Shown while the portal is switched off (guard below, 503 of a portal request).
   {
     path: 'projects/maintenance',
     title: 'project-portal.maintenance',
+    data: { [SEO_NOINDEX_DATA]: true },
     loadComponent: () =>
       import('./maintenance/portal-maintenance.component')
         .then(m => m.PortalMaintenanceComponent)

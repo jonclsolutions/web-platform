@@ -1,0 +1,143 @@
+/*
+    @file: language-suggestion.component.css
+    @path: src/app/shared/components/language-suggestion/language-suggestion.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: The language offer - a small fixed bar centred under the header (the cookie bar
+      is at the bottom, so they never overlap). Dark look of the web by default, light / square
+      look of the e-shop with the host class lsb-host--light.
+*/
+
+/*
+  @module: language-suggestion
+  @description: Fixed, centred, max. 560 px; on phones full width minus 16 px margins. Slides in
+    once (transform / opacity), no movement with reduced motion.
+  @usage: <app-language-suggestion theme="dark|light">
+*/
+.lsb {
+  position: fixed;
+  top: 88px;
+  left: 50%;
+  z-index: 9000; /* above the page, under the cookie bar (9999) and the header menus */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: min(560px, calc(100vw - 32px));
+  margin: 0;
+  padding: 10px 10px 10px 16px;
+  background: #111128;
+  border: 1px solid rgba(166, 125, 255, 0.22);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  color: #e0e0f0;
+  transform: translateX(-50%);
+  animation: lsbIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes lsbIn {
+  from { opacity: 0; transform: translate(-50%, -12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.lsb-icon {
+  color: #a67dff;
+  flex-shrink: 0;
+}
+
+.lsb-text {
+  margin: 0;
+  font: 400 0.9rem/1.4 'Source Sans Pro', sans-serif;
+}
+
+.lsb-action {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border: 1px solid #a67dff;
+  border-radius: 999px;
+  background: #6b2e91;
+  color: #ffffff;
+  font: 600 0.82rem/1 'Inter', sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.lsb-action:hover {
+  background: #7d35ae;
+}
+
+.lsb-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #888899;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.lsb-close:hover {
+  color: #e0e0f0;
+  background: rgba(166, 125, 255, 0.1);
+}
+
+.lsb-action:focus-visible,
+.lsb-close:focus-visible {
+  outline: 2px solid #a67dff;
+  outline-offset: 2px;
+}
+
+/* E-shop: light and square like its other controls */
+:host(.lsb-host--light) .lsb {
+  top: 76px;
+  background: #ffffff;
+  border-color: #000000;
+  border-radius: 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  color: #000000;
+}
+
+:host(.lsb-host--light) .lsb-icon { color: #000000; }
+
+:host(.lsb-host--light) .lsb-action {
+  border-color: #000000;
+  border-radius: 0;
+  background: #000000;
+}
+
+:host(.lsb-host--light) .lsb-action:hover { background: #333333; }
+
+:host(.lsb-host--light) .lsb-close { border-radius: 0; color: #707070; }
+:host(.lsb-host--light) .lsb-close:hover { color: #000000; background: #f5f5f5; }
+
+:host(.lsb-host--light) .lsb-action:focus-visible,
+:host(.lsb-host--light) .lsb-close:focus-visible { outline-color: #000000; }
+
+/* Phones: full width - icon, text and close on the first row, the button below on the right */
+@media (max-width: 600px) {
+  .lsb {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    width: calc(100vw - 32px);
+    gap: 8px 10px;
+  }
+  .lsb-icon { grid-area: 1 / 1; }
+  .lsb-text { grid-area: 1 / 2; }
+  .lsb-close { grid-area: 1 / 3; }
+  .lsb-action {
+    grid-area: 2 / 2 / 3 / 4;
+    justify-self: end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lsb { animation: none; }
+}

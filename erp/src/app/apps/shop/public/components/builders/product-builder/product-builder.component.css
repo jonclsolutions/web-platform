@@ -111,6 +111,17 @@
   color: var(--text-dim);    /* Clean transition to a lighter color */
 }
 
+/* Title link (crawlable <a href>) - looks like the title itself */
+.product-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.product-title-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
 /* --- STOCK STATUS --- */
 .product-stock {
   margin-top: 0.25rem;

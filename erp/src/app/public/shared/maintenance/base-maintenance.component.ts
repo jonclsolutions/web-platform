@@ -30,11 +30,14 @@ import { BasePublicComponent } from '../../base-public.component';
 import { LangMeta } from '../../../shared/services/localization.service';
 import { AuthLanguage } from '../../../shared/components/auth-language-switcher/auth-language-switcher.component';
 import { MaintenanceSocialLink } from '../../../shared/components/maintenance-shell/maintenance-shell.component';
+import { LanguageRoutingService } from '../../../shared/services/language-routing.service';
 
 @Directive()
 export abstract class BaseMaintenanceComponent extends BasePublicComponent {
   protected override readonly loadSiteSettings = true;
   protected router = inject(Router);
+  /** Switching the language together with the URL. */
+  protected languageRouting = inject(LanguageRoutingService);
 
   /** Where the visitor is sent once the section is active again. */
   protected abstract readonly activeUrl: string;
@@ -103,10 +106,11 @@ export abstract class BaseMaintenanceComponent extends BasePublicComponent {
 
   /**
    * @description Switches the page language - stored in the browser by LocalizationService, so
-   * the next visit (and the main pages) start in it.
+   * the next visit (and the main pages) start in it; the URL moves to the language
+   * (`/cs/maintenance` → `/en/maintenance`).
    * @param code Language code.
    */
   selectLanguage(code: string): void {
-    this.localizationService.setLanguage(code);
+    this.languageRouting.switchTo(code);
   }
 }

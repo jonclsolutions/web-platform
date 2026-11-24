@@ -20,6 +20,7 @@ import { NotFoundComponent } from './not-found.component';
 import { publicNotFoundRoute } from './public-not-found.config';
 import { PUBLIC_AREA_DATA, PublicArea } from '../public-area';
 import { PublicPageContext, createPublicPageContext } from '../../../testing/public-test-helpers';
+import { SEO_NOINDEX_DATA } from '../../shared/utils/seo-route-data';
 
 describe('NotFoundComponent', () => {
   let ctx: PublicPageContext;
@@ -144,15 +145,17 @@ describe('NotFoundComponent', () => {
   /**
    * @description The route helper builds the catch-all route of an area and lazy-loads this page.
    * @input publicNotFoundRoute('shop', {canActivate: [guard]}).
-   * @output path '**', title 'shop.not-found', no data (the area is the layout's), the guard;
-   *   loadComponent resolves NotFoundComponent.
+   * @output path '**', title 'shop.not-found', data only SEO_NOINDEX_DATA (the area is the
+   *   layout's; SeoService leaves out hreflang), the guard; loadComponent resolves NotFoundComponent;
+   *   data given by the caller are kept next to it.
    */
   it('builds the catch-all route', async () => {
     const guard = () => true;
     const route = publicNotFoundRoute('shop', { canActivate: [guard] });
     expect(route.path).toBe('**');
     expect(route.title).toBe('shop.not-found');
-    expect(route.data).toBeUndefined();
+    expect(route.data).toEqual({ [SEO_NOINDEX_DATA]: true });
+    expect(publicNotFoundRoute('web', { data: { x: 1 } }).data).toEqual({ [SEO_NOINDEX_DATA]: true, x: 1 });
     expect(route.canActivate).toEqual([guard]);
     expect(await (route.loadComponent as () => Promise<unknown>)()).toBe(NotFoundComponent);
     expect(publicNotFoundRoute('web').canActivate).toBeUndefined();

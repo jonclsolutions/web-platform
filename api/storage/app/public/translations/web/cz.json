@@ -671,5 +671,10 @@
             "text": "Pokud vám něco není jasné nebo chcete probrat detaily konkrétně pro váš projekt, rádi se s vámi spojíme.",
             "btn": "Kontaktujte nás"
         }
+    },
+    "language_suggestion": {
+        "text": "Tato stránka je dostupná i v češtině.",
+        "action": "Přepnout do češtiny",
+        "dismiss": "Zavřít"
     }
 }

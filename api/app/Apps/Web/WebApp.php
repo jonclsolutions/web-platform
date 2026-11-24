@@ -8,7 +8,7 @@
  * @description Manifest of the web application (public website, inquiries, job applications) -
  * everything the core needs to know about it. Registered in config/apps.php.
  * @dependencies AppManifest; WebBaseDataSeeder, WebRetentionSource, WebAgendaSource, WebLog,
- *   WebContentLanguages, CheckWebActive and the Web models with attachments.
+ *   WebContentLanguages, CheckWebActive, the Web models with attachments and WebJob (sitemap).
  */
 
 namespace App\Apps\Web;
@@ -17,6 +17,7 @@ use App\Apps\Web\Http\Middleware\CheckWebActive;
 use App\Apps\Web\Services\WebAgendaSource;
 use App\Apps\Web\Services\WebNotificationSource;
 use App\Apps\Web\Services\WebRetentionSource;
+use App\Apps\Web\Models\WebJob;
 use App\Apps\Web\Models\WebJobApplication;
 use App\Apps\Web\Models\WebLog;
 use App\Apps\Web\Models\WebRawRequestCommission;
@@ -134,6 +135,28 @@ final class WebApp extends AppManifest
     public function languageDeleted(string $code): void
     {
         WebContentLanguages::forget($code);
+    }
+
+    /** @description See AppManifest::servesSiteRoot() - the website is the home page of the domain. */
+    public function servesSiteRoot(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @description See AppManifest::sitemapPaths() - the pages of the website (routes of
+     *   erp/src/app/apps/web/public/web-public.routes.ts) and every position shown on it.
+     * @return array<int, string>
+     */
+    public function sitemapPaths(): array
+    {
+        $pages = ['/', '/services', '/about-us', '/references', '/jobs', '/faq', '/knowledge-base', '/contact',
+            '/privacy-policy', '/tos', '/cookies-policy'];
+        $jobs = WebJob::query()->where('is_active', true)->orderBy('sort_order')->pluck('slug')
+            ->filter(fn ($slug) => is_string($slug) && $slug !== '')
+            ->map(fn (string $slug) => '/jobs/' . rawurlencode($slug));
+
+        return array_values(array_merge($pages, $jobs->all()));
     }
 
     /** @description See AppManifest::availability() - the switch of the public web (web/settings). */

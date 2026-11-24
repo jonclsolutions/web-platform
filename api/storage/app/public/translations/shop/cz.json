@@ -227,5 +227,10 @@
         "header_main": "Zásady Ochrany Osobních Údajů",
         "last_update_text": "Poslední aktualizace:",
         "effective_from_text": "Tyto zásady jsou účinné od {date}."
+    },
+    "language_suggestion": {
+        "text": "Tato stránka je dostupná i v češtině.",
+        "action": "Přepnout do češtiny",
+        "dismiss": "Zavřít"
     }
 }

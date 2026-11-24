@@ -102,7 +102,7 @@ class OrderConfirmationEmailTest extends TestCase
      * @output 201; order lang 'en'; one ShopOrderConfirmation to jan@example.com; subject
      *   "Order confirmation <number>"; html lang en; number, "Mug", 2, 121.00 €, 242.00 €,
      *   −24.20 € (SAVE10), PPL 5.00 €, Bank transfer, total 222.80 €, address, contact, the note,
-     *   withdrawal text, terms link https://shop.example.com/tos.
+     *   withdrawal text, terms link in the language of the order https://shop.example.com/en/tos.
      */
     public function test_checkout_sends_the_confirmation_in_the_storefront_language(): void
     {
@@ -118,7 +118,7 @@ class OrderConfirmationEmailTest extends TestCase
             $mail->assertHasSubject("Order confirmation {$number}");
             foreach (['<html lang="en">', $number, 'Mug', '121.00', '242.00', '−24.20', 'SAVE10', 'PPL', '5.00', 'Bank transfer',
                 '222.80', 'Hlavní 1', '11000 Praha', 'jan@example.com', '777111222', 'Jan Novák', 'Ring twice', 'within 14 days',
-                'href="https://shop.example.com/tos"', 'Terms and conditions', 'Total incl. VAT'] as $expected) {
+                'href="https://shop.example.com/en/tos"', 'Terms and conditions', 'Total incl. VAT'] as $expected) {
                 $this->assertStringContainsString($expected, $html, $expected);
             }
 

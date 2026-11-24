@@ -8,7 +8,7 @@
  * @description Manifest of the e-shop application (catalogue, cart, checkout, orders, customers)
  * - everything the core needs to know about it. Registered in config/apps.php.
  * @dependencies AppManifest; ShopBaseDataSeeder, ShopRetentionSource, ShopAgendaSource, ShopLog,
- *   ShopOrderEmailTemplate.
+ *   ShopOrderEmailTemplate, ShopProduct (sitemap).
  */
 
 namespace App\Apps\Shop;
@@ -18,6 +18,7 @@ use App\Apps\Shop\Services\ShopNotificationSource;
 use App\Apps\Shop\Services\ShopRetentionSource;
 use App\Apps\Shop\Http\Middleware\CheckShopActive;
 use App\Apps\Shop\Models\ShopLog;
+use App\Apps\Shop\Models\ShopProduct;
 use App\Apps\Shop\Models\ShopSiteSetting;
 use App\Support\Apps\AppAvailability;
 use App\Support\Apps\AppManifest;
@@ -107,6 +108,20 @@ final class ShopApp extends AppManifest
     public function languageDeleted(string $code): void
     {
         ShopOrderEmailTemplate::forget(strtolower($code));
+    }
+
+    /**
+     * @description See AppManifest::sitemapPaths() - the catalogue, every product on sale and the
+     *   legal pages of the storefront (routes of erp/src/app/apps/shop/public/shop-public.routes.ts).
+     *   The cart and the checkout are no content for search engines.
+     * @return array<int, string>
+     */
+    public function sitemapPaths(): array
+    {
+        $products = ShopProduct::active()->orderBy('id')->get(['id', 'slug'])
+            ->map(fn (ShopProduct $product) => '/shop/products/' . rawurlencode((string) ($product->slug ?: $product->id)));
+
+        return array_values(array_merge(['/shop/catalog', '/shop/privacy-policy', '/shop/tos'], $products->all()));
     }
 
     /** @description See AppManifest::availability() - the switch of the storefront (shop/settings). */

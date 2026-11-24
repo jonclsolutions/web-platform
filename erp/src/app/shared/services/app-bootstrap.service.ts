@@ -27,9 +27,7 @@ import { PublicDataService } from './public-data.service';
 import { LegalDocsService } from './legal-docs.service';
 import { APPS } from '../../apps/apps.registry';
 import { PublicArea, publicAreaOfUrl } from '../../public/public-area';
-
-/** First URL segments of the core pages that are no public area (admin, sign-in). */
-const NON_PUBLIC_SEGMENTS = ['admin', 'auth'];
+import { isLocalizedPath, splitLanguagePrefix } from '../utils/language-url';
 
 /**
  * @description Viewport width (in px) at or below which ':hover' rules are
@@ -62,9 +60,11 @@ export class AppBootstrapService {
    */
   async init(): Promise<void> {
     const area = this.initialPublicArea();
+    // Language of the first URL (`/cs/…`) - wins over the stored / browser language when the area has it.
+    const { language } = splitLanguagePrefix(this.currentPath());
 
     await Promise.all([
-      area ? this.localizationService.initTranslations(area.translationModule) : Promise.resolve(null),
+      area ? this.localizationService.initTranslations(area.translationModule, language) : Promise.resolve(null),
       this.preloadSiteSettings(),
     ]);
 
@@ -81,12 +81,13 @@ export class AppBootstrapService {
   }
 
   /**
-   * @description Public area of the first URL (none for the admin and the sign-in pages).
+   * @description Public area of the first URL (none for the admin and the sign-in pages); the
+   *   language prefix (`/cs/shop/…`) is not part of the area path.
    * @returns The area of an installed application, or null.
    */
   private initialPublicArea(): PublicArea | null {
-    const path = this.currentPath();
-    if (NON_PUBLIC_SEGMENTS.includes(path.replace(/^\/+/, '').split('/')[0])) {
+    const path = splitLanguagePrefix(this.currentPath()).path;
+    if (!isLocalizedPath(path)) {
       return null;
     }
     return publicAreaOfUrl(path, APPS.flatMap(app => app.publicArea ? [app.publicArea] : []));

@@ -7,7 +7,9 @@
  * @description Presentational component responsible for rendering individual product cards within the catalog, handling thumbnail resolution and price formatting.
  * @dependencies
  * - CommonModule: Standard Angular utilities for structural directives.
- * - RouterModule: Enables navigation to specific product detail pages via templates.
+ * - RouterModule: Enables navigation to specific product detail pages via templates (productLink).
+ * @note 2026-11: the card linked to the non-existent /eshop/produkt/<slug> (404) - now
+ *   /shop/products/<slug or id> like the cart, with the title as a crawlable <a href>.
  */
 
 import { Component, Input } from '@angular/core';
@@ -32,6 +34,15 @@ export class ProductBuilderComponent extends BasePublicComponent {
 
   /** The product data object containing metadata, prices, and image arrays */
   @Input() product: any;
+
+  /**
+   * @description Address of the product detail (route `shop/products/:slugOrId`; the language
+   *   prefix is added by the URL serializer).
+   * @returns `['/shop/products', slug]`, the id when the product has no slug.
+   */
+  get productLink(): (string | number)[] {
+    return ['/shop/products', this.product?.slug || this.product?.id];
+  }
 
   /**
    * @description Resolves the primary thumbnail URL for the product.

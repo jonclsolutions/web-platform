@@ -29,13 +29,12 @@ export function languageCodeOfBrowserTag(tag: string): string {
 }
 
 /**
- * @description Picks the language of a first visit.
- * @param available Codes of the active languages of the public area (in admin order).
- * @param preferred Browser languages in order of preference (`navigator.languages`).
- * @returns The first preferred language offered; else `en` when offered; else the first
- *   language offered; with nothing offered (languages not loaded) `en`.
+ * @description The first browser language the area offers.
+ * @param available Codes of the active languages of the public area.
+ * @param preferred Browser languages in order of preference.
+ * @returns The offered code (spelling of `available`), null when the browser prefers none of them.
  */
-export function pickInitialLanguage(available: readonly string[], preferred: readonly string[]): string {
+export function preferredBrowserLanguage(available: readonly string[], preferred: readonly string[]): string | null {
   const offered = available.map(code => code.toLowerCase());
   for (const tag of preferred) {
     const code = languageCodeOfBrowserTag(tag);
@@ -44,6 +43,22 @@ export function pickInitialLanguage(available: readonly string[], preferred: rea
       return available[index];
     }
   }
+  return null;
+}
+
+/**
+ * @description Picks the language of a first visit.
+ * @param available Codes of the active languages of the public area (in admin order).
+ * @param preferred Browser languages in order of preference (`navigator.languages`).
+ * @returns The first preferred language offered; else `en` when offered; else the first
+ *   language offered; with nothing offered (languages not loaded) `en`.
+ */
+export function pickInitialLanguage(available: readonly string[], preferred: readonly string[]): string {
+  const browser = preferredBrowserLanguage(available, preferred);
+  if (browser) {
+    return browser;
+  }
+  const offered = available.map(code => code.toLowerCase());
   const english = offered.indexOf(DEFAULT_PUBLIC_LANGUAGE);
   if (english !== -1) {
     return available[english];

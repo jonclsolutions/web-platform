@@ -20,6 +20,7 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { map, catchError, of } from 'rxjs';
 import { PublicDataService } from '../../../../../shared/services/public-data.service';
+import { stripLanguagePrefix } from '../../../../../shared/utils/language-url';
 
 /** Address of the maintenance page of the public web (the web lives at the domain root). */
 export const WEB_MAINTENANCE_URL = '/maintenance';
@@ -35,8 +36,9 @@ export const webMaintenanceGuard = () => {
   const dataService = inject(PublicDataService);
   const router = inject(Router);
 
-  // Avoid infinite redirection loops by bypassing the guard if already on the maintenance page.
-  if (router.url.split(/[?#]/)[0] === WEB_MAINTENANCE_URL) {
+  // Avoid infinite redirection loops by bypassing the guard if already on the maintenance page
+  // (Router.url carries the language - `/cs/maintenance`).
+  if (stripLanguagePrefix(router.url).split(/[?#]/)[0] === WEB_MAINTENANCE_URL) {
     return true;
   }
 

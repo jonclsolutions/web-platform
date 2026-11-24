@@ -13,13 +13,15 @@
  * 2011/83/EU, Art. 8(7)) - and, for a bank transfer, the payment details (account, IBAN, variable
  * symbol). Texts from ShopOrderEmailTemplate.
  * @dependencies
- * - ShopOrderEmailTemplate: texts of the language and the amount format; CompanyContactInfo: footer.
+ * - ShopOrderEmailTemplate: texts of the language and the amount format; CompanyContactInfo: footer;
+ *   PublicUrl: link to the terms in the language of the order.
  */
 
 namespace App\Apps\Shop\Mail;
 
 use App\Apps\Shop\Models\ShopOrder;
 use App\Support\Mail\CompanyContactInfo;
+use App\Support\Seo\PublicUrl;
 use App\Apps\Shop\Support\ShopOrderEmailTemplate;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -62,7 +64,8 @@ class ShopOrderConfirmation extends Mailable
         $lang = $order->lang;
         $money = fn ($amount) => ShopOrderEmailTemplate::money($amount, $lang);
         $contact = $order->contact();
-        $tosUrl = rtrim((string) config('app.frontend_url'), '/') . '/tos';
+        // Terms in the language of the order (`/cs/tos`, `/en/tos`).
+        $tosUrl = PublicUrl::to('/tos', $lang ?: null);
 
         return new Content(
             view: 'shop::emails.order-confirmation',

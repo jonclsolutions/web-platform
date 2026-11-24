@@ -312,7 +312,8 @@ restore_storage_from() {
 # -----------------------------------------------------------------------------
 # @description Smoke test of the whole chain (Caddy → PHP-FPM → Laravel → MariaDB) through the
 # internal door of the Caddyfile (http://127.0.0.1:8080 inside the proxy container - works before
-# the DNS points here): /api/version answers the release, the page contains the app, /.env is
+# the DNS points here): /api/version answers the release, the page contains the app (the root
+# redirects to the language), /robots.txt is answered by Laravel (Sitemap line), /.env is
 # 404. Then the public HTTPS address on this server: a missing certificate is only a warning
 # (DNS not switched yet - Caddy obtains it as soon as the domain points here).
 # @param $1 Expected release tag.
@@ -333,6 +334,9 @@ smoke_test() {
     dc exec -T proxy wget -q -O - http://127.0.0.1:8080/ | grep 'runtime-config.js' >/dev/null \
         || { warn "the home page does not contain the app"; return 1; }
     info "home page OK"
+    dc exec -T proxy wget -q -O - http://127.0.0.1:8080/robots.txt | grep 'Sitemap:' >/dev/null \
+        || { warn "/robots.txt is not answered by the API (Caddyfile route of / /robots.txt /sitemap.xml)"; return 1; }
+    info "robots.txt OK"
     if dc exec -T proxy wget -q --spider http://127.0.0.1:8080/.env >/dev/null 2>&1; then
         warn "/.env is served - it must be 404"
         return 1

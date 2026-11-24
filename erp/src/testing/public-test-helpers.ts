@@ -35,6 +35,14 @@ export interface LocalizationStub {
   getCurrentLanguage: jasmine.Spy;
   fetchLanguages: jasmine.Spy;
   initTranslations: jasmine.Spy;
+  /** Whether the visitor chose the language (false by default). */
+  isChosenByVisitor: jasmine.Spy;
+  /** Texts of another language (null by default - no language offer). */
+  fetchTexts: jasmine.Spy;
+  /** Last loaded languages (STUB_LANGUAGES). */
+  getLanguages: jasmine.Spy;
+  /** Follows a URL language (switches the stub language, true). */
+  useUrlLanguage: jasmine.Spy;
 }
 
 /** PublicDataService stub. */
@@ -95,7 +103,11 @@ export function createPublicPageContext(options: { translations?: any; settings?
     setLanguage: jasmine.createSpy('setLanguage').and.callFake((code: string) => language$.next(code)),
     getCurrentLanguage: jasmine.createSpy('getCurrentLanguage').and.callFake(() => language$.value),
     fetchLanguages: jasmine.createSpy('fetchLanguages').and.returnValue(of({ languages: STUB_LANGUAGES })),
-    initTranslations: jasmine.createSpy('initTranslations').and.resolveTo(options.translations ?? null)
+    initTranslations: jasmine.createSpy('initTranslations').and.resolveTo(options.translations ?? null),
+    isChosenByVisitor: jasmine.createSpy('isChosenByVisitor').and.returnValue(false),
+    fetchTexts: jasmine.createSpy('fetchTexts').and.returnValue(of(null)),
+    getLanguages: jasmine.createSpy('getLanguages').and.returnValue(STUB_LANGUAGES),
+    useUrlLanguage: jasmine.createSpy('useUrlLanguage').and.callFake((code: string) => { language$.next(code); return true; })
   };
 
   const publicData: PublicDataStub = {

@@ -5,7 +5,7 @@
  * @author JS
  * @created 2026
  * @description Unit tests of ProductBuilderComponent (catalog product card): thumbnail fallbacks, EUR price
- *   format and the stock badge rendering.
+ *   format, the stock badge rendering and the product detail links.
  * @dependencies
  * - createPublicPageContext (module shop).
  */
@@ -60,5 +60,22 @@ describe('ProductBuilderComponent', () => {
     }
     card.product = {};
     expect(card.getFormattedPrice().replace(/\s/g, ' ')).toBe('0,00 €');
+  });
+
+  /**
+   * @description The card opens the product detail of the e-shop route (not the former
+   *   /eshop/produkt address); the title is a real link; without a slug the id is used.
+   * @input product {slug 'mug', id 7}; then {slug null, id 7}.
+   * @output title <a href> '/shop/products/mug'; productLink ['/shop/products', 7].
+   */
+  it('links the card to the product detail', () => {
+    fixture.componentRef.setInput('product', { name: 'Mug', slug: 'mug', id: 7, stock_quantity: 3 });
+    fixture.detectChanges();
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector('a.product-title-link');
+    expect(link.getAttribute('href')).toBe('/shop/products/mug');
+    expect(fixture.nativeElement.innerHTML).not.toContain('eshop/produkt');
+
+    card.product = { slug: null, id: 7 };
+    expect(card.productLink).toEqual(['/shop/products', 7]);
   });
 });

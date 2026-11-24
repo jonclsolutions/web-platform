@@ -6,7 +6,9 @@
 # @created 2026
 # @description Web server of the production stack (container `proxy`, web.Dockerfile): HTTPS with
 #   automatic Let's Encrypt certificates, the Angular app (SPA), /api → php-fpm of the container
-#   `app`, the public uploads (/storage) and the security headers.
+#   `app`, the public uploads (/storage) and the security headers; for search engines (2026-11):
+#   `/`, `/robots.txt`, `/sitemap.xml` → Laravel (routes/seo.php) and the permanent redirect of
+#   the old public addresses without a language to /cs/….
 # @note Environment of the container (deploy/compose.prod.yaml, from /srv/app/.env):
 #   SITE_DOMAIN  the domain without www (jonclsolutions.com); www.<domain> redirects to it
 #   ACME_EMAIL   address Let's Encrypt writes to about the certificates (sysadmin@<domain>)
@@ -66,6 +68,33 @@ www.{$SITE_DOMAIN} {
 		}
 		respond @hidden 404
 
+		# Old public addresses without a language (before 2026-11: /services, /shop/catalog …) → the
+		# same page in Czech, the language they were indexed in: a permanent redirect, so search
+		# engines move their ranking to the new address. Not: the root (language of the visitor,
+		# below), the API, uploads, files, admin / sign-in (no language), the portal and its order
+		# form (private links - the frontend adds the visitor's language) and addresses that
+		# already start with a language (/cs/…, /en/…, /pt-br/…).
+		@legacy {
+			not path / /api /api/* /storage/* /admin /admin/* /auth/* /projects/* /order_form/* /.well-known/* /up
+			not path_regexp ^/[A-Za-z]{2}(-[A-Za-z]{2,4})?(/|$)
+			not path_regexp \.[A-Za-z0-9]+$
+		}
+		redir @legacy /cs{uri} permanent
+
+		# The bare domain (→ /<language of the visitor>), robots.txt and sitemap.xml are answered by
+		# Laravel (routes/seo.php): it knows the active languages and the public pages. No session
+		# middleware there, so no cookie.
+		@seo path / /robots.txt /sitemap.xml
+		handle @seo {
+			rewrite * /index.php
+			reverse_proxy app:9000 {
+				transport fastcgi {
+					root /var/www/html/public
+					split .php
+				}
+			}
+		}
+
 		# Laravel API → php-fpm of the container `app`. Every /api request runs public/index.php of
 		# the app image (the proxy has no PHP files); REQUEST_URI keeps the original path.
 		# REMOTE_ADDR is the real client IP (no proxy header to trust).
@@ -122,6 +151,24 @@ www.{$SITE_DOMAIN} {
 			file_server
 		}
 	}
+
+	# The bare domain must open even while php-fpm is down (deploy, restart): index.html is sent
+	# (keeping the error status, so search engines retry later) and the SPA itself then sends the
+	# visitor to /<language> (stored choice / browser / English). Every other error keeps the
+	# default answer (status without a body).
+	handle_errors {
+		@root_unavailable {
+			path /
+			expression `{err.status_code} >= 502 && {err.status_code} <= 504`
+		}
+		handle @root_unavailable {
+			import security_headers
+			header Cache-Control "no-cache"
+			root * /srv/www
+			rewrite * /index.html
+			file_server
+		}
+	}
 }
 
 {$SITE_DOMAIN} {
@@ -131,6 +178,8 @@ www.{$SITE_DOMAIN} {
 # Internal plain-HTTP door: the same application for the smoke test of deploy/vps/deploy.sh and
 # the healthcheck (`wget http://127.0.0.1:8080/…` inside this container) - works before the DNS
 # points here and a certificate exists. Bound to 127.0.0.1 of the container, never published.
+# Note: `/` is answered by Laravel (redirect to the language) - a check of the proxy alone uses a
+# client-side route such as /admin (index.html, no php-fpm).
 http://127.0.0.1:8080 {
 	bind 127.0.0.1
 	import app

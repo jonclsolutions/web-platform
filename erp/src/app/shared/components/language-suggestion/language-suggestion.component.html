@@ -1,0 +1,25 @@
+<!--
+    @file: language-suggestion.component.html
+    @path: src/app/shared/components/language-suggestion/language-suggestion.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Small bar under the header offering the visitor's own language - text, switch
+      button and close button, all in the offered language.
+-->
+@if (suggestion; as offer) {
+  <aside class="lsb" [attr.lang]="htmlLang(offer.code)" [attr.aria-label]="offer.texts.text" aria-live="polite">
+    <svg class="lsb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+    <p class="lsb-text">{{ offer.texts.text }}</p>
+    <button type="button" class="lsb-action" (click)="accept()">{{ offer.texts.action }}</button>
+    <button type="button" class="lsb-close" (click)="dismiss()" [attr.aria-label]="offer.texts.dismiss || null" [attr.title]="offer.texts.dismiss || null">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </aside>
+}

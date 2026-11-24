@@ -11,17 +11,21 @@
  *   other route knows. A new public application = the area in the data of its layout + one
  *   `publicNotFoundRoute('<area>')` + a `not_found` section in its translations + a
  *   `<area>.not-found` row in `legal_page_titles`.
+ * @note Search engines: the 404 route carries SEO_NOINDEX_DATA (`noindex`, no hreflang).
  * @note The admin has its own 404 / 403 pages (admin/error-pages) - a URL below `/admin` never
  *   reaches these routes.
  */
 
 import { Route } from '@angular/router';
 
+import { SEO_NOINDEX_DATA } from '../../shared/utils/seo-route-data';
+
 /**
  * @description Builds the catch-all 404 route of a public area.
  * @param area Page title area of the application (`<area>.not-found`).
  * @param extra More route options (e.g. the maintenance guard of the area).
- * @returns `{ path: '**', title: '<area>.not-found', loadComponent }`.
+ * @returns `{ path: '**', title: '<area>.not-found', loadComponent, data: noindex }` - search
+ *   engines should not list a 404 page (SEO_NOINDEX_DATA).
  * @note Must be the LAST route of its children list - the router takes the first match.
  */
 export function publicNotFoundRoute(area: string, extra: Partial<Route> = {}): Route {
@@ -30,5 +34,6 @@ export function publicNotFoundRoute(area: string, extra: Partial<Route> = {}): R
     title: `${area}.not-found`,
     loadComponent: () => import('./not-found.component').then(m => m.NotFoundComponent),
     ...extra,
+    data: { [SEO_NOINDEX_DATA]: true, ...extra.data },
   };
 }

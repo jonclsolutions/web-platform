@@ -11,7 +11,8 @@
  *   (ProjectAccount::NOTIFICATIONS). In the account's language (cz / en, built-in texts).
  * @note Contains only the project name, the title of the item (thread, checkpoint, update,
  *   approval) and a link to its section of the portal - never the text of a message / update (a sensitive message is not copied into a mailbox).
- * @dependencies project-portal::emails.project-client-update, CompanyContactInfo (footer)
+ * @dependencies project-portal::emails.project-client-update, CompanyContactInfo (footer),
+ *   PublicUrl (link with the language)
  */
 
 namespace App\Apps\ProjectPortal\Mail;
@@ -19,6 +20,7 @@ namespace App\Apps\ProjectPortal\Mail;
 use App\Apps\ProjectPortal\Models\Project;
 use App\Apps\ProjectPortal\Models\ProjectAccount;
 use App\Support\Mail\CompanyContactInfo;
+use App\Support\Seo\PublicUrl;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -160,7 +162,8 @@ class ProjectClientUpdateMail extends Mailable
                 'itemTitle'     => $this->itemTitle,
                 'buttonText'    => $this->localized('button'),
                 'outro'         => $this->localized('outro'),
-                'portalUrl'     => rtrim((string) config('app.frontend_url', ''), '/') . '/projects/' . $this->project->access_token
+                // The portal opens in the language of the e-mail (`/cs/projects/…`, `/en/projects/…`).
+                'portalUrl'     => PublicUrl::to('/projects/' . $this->project->access_token, $this->account->language === 'en' ? 'en' : 'cz')
                     . '?section=' . (self::SECTIONS[$this->kind] ?? 'overview'),
             ]),
         );

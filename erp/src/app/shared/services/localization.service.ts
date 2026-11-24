@@ -11,11 +11,13 @@
  * @note Nothing is loaded in the constructor: AppBootstrapService calls initTranslations()
  *   with the module of the first URL during APP_INITIALIZER (no render before the texts are
  *   ready); a public page then switches the module with setModule().
- * @note Language: the visitor's own choice (localStorage `selectedLanguage`, written only by
- *   setLanguage() - the switcher in the footer) wins. Without one, initTranslations() picks the
- *   first language of the browser the area offers, otherwise English, otherwise the first active
- *   language (pickInitialLanguage) - that guess is not stored, so a later visit guesses again.
- *   Storing the explicit choice is a functional preference the visitor asked for (no consent).
+ * @note Language (2026-11): the language in the URL (`/cs/…`, `/en/…` - LanguageUrlSerializer
+ *   calls useUrlLanguage()) wins when the area has it. A URL without one uses the visitor's own
+ *   choice (localStorage `selectedLanguage`, written only by setLanguage() - the language
+ *   switchers); without that, the first language of the browser the area offers, otherwise
+ *   English, otherwise the first active language (pickInitialLanguage) - that guess is not
+ *   stored. Storing the explicit choice is a functional preference the visitor asked for (no
+ *   consent needed).
  */
 
 import { Injectable } from '@angular/core';
@@ -72,6 +74,8 @@ export class LocalizationService {
    *   a module switch or the header of a public application).
    */
   private languagesSource = new BehaviorSubject<LangMeta[]>([]);
+  /** Active languages of the current module whenever they are (re)loaded (hreflang of SeoService). */
+  public languages$ = this.languagesSource.asObservable();
 
   /** The visitor chose the language in the switcher (stored); false = guessed from the browser. */
   private chosenByVisitor = false;
@@ -84,17 +88,24 @@ export class LocalizationService {
 
   /**
    * @description Loads the texts of a module before the first render (AppBootstrapService) -
-   *   the module of the public area of the first URL. Without a language chosen by the visitor
-   *   the languages of the module are loaded first and the language is picked from the browser
-   *   preferences (one extra small request on such visits only).
+   *   the module of the public area of the first URL. With a language in the URL, or without a
+   *   language chosen by the visitor, the languages of the module are loaded first (one extra
+   *   small request on such visits only): the URL language is used when the module has it,
+   *   otherwise the stored choice, otherwise the browser preferences (pickInitialLanguage).
    * @param module Translation module.
+   * @param urlLanguage Translation code of the language in the first URL (null without a prefix).
    * @returns The translations (null when they could not be loaded).
    */
-  public async initTranslations(module: string): Promise<any> {
+  public async initTranslations(module: string, urlLanguage: string | null = null): Promise<any> {
     this.currentModule = module;
-    if (!this.chosenByVisitor) {
+    if (urlLanguage || !this.chosenByVisitor) {
       const { languages } = await firstValueFrom(this.fetchLanguages());
-      this.currentLanguageSource.next(pickInitialLanguage(languages.map(l => l.code), browserLanguages()));
+      const codes = languages.map(l => l.code);
+      if (urlLanguage && codes.includes(urlLanguage)) {
+        this.currentLanguageSource.next(urlLanguage);
+      } else if (!this.chosenByVisitor || (codes.length && !codes.includes(this.currentLanguageSource.getValue()))) {
+        this.currentLanguageSource.next(pickInitialLanguage(codes, browserLanguages()));
+      }
     }
     const lang = this.currentLanguageSource.getValue();
     return firstValueFrom(this.loadTranslations$(lang)).then(data => {
@@ -202,5 +213,56 @@ export class LocalizationService {
 
   public getCurrentLanguage(): string {
     return this.currentLanguageSource.getValue();
+  }
+
+  /**
+   * @description Follows the language of a URL (a link, the Back button) without remembering it
+   *   as the visitor's choice. A language the area does not have is ignored - the URL is then
+   *   written back with the current language.
+   * @param code Translation code from the URL.
+   * @returns true when the URL language is (now) the current one.
+   */
+  public useUrlLanguage(code: string): boolean {
+    if (code === this.currentLanguageSource.getValue()) {
+      return true;
+    }
+    // Before the languages are known (no list loaded yet) the URL is trusted.
+    if (this.languagesCache.length && !this.languagesCache.some(l => l.code === code)) {
+      return false;
+    }
+    this.currentLanguageSource.next(code);
+    this.loadTranslations(code);
+    return true;
+  }
+
+  /**
+   * @description Whether the visitor chose the language in a switcher (stored), i.e. it is not
+   *   only taken from a URL or guessed from the browser.
+   * @returns true after setLanguage() or with a stored choice.
+   */
+  public isChosenByVisitor(): boolean {
+    return this.chosenByVisitor;
+  }
+
+  /**
+   * @description Active languages of the current module as last loaded (empty before the first
+   *   fetchLanguages()).
+   * @returns The language list.
+   */
+  public getLanguages(): LangMeta[] {
+    return this.languagesCache;
+  }
+
+  /**
+   * @description Texts of the current module in another language than the current one (e.g. the
+   *   offer of that language in the language-suggestion bar) - not cached, not published.
+   * @param lang Translation code.
+   * @returns The translations, null when they cannot be loaded.
+   */
+  public fetchTexts(lang: string): Observable<any> {
+    return this.http.get<ApiEnvelope<any>>(`${this.API_URL}/translations/${this.currentModule}/${lang}`).pipe(
+      map(res => res.data ?? null),
+      catchError(() => of(null))
+    );
   }
 }

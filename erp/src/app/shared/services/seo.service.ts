@@ -7,24 +7,33 @@
  * @description Search engine and link preview data of the public pages built from the site
  * settings of THIS installation (company name, tagline, logo, contacts) instead of values
  * hard-coded in index.html: meta description / author, the canonical URL and og:* of the current
- * page, and the schema.org Organization JSON-LD block. Updated on every navigation, language
- * change and settings load.
+ * page, the schema.org Organization JSON-LD block, the language versions of the page (hreflang +
+ * x-default, 2026-11) and `robots: noindex` for pages search engines should not list (route data
+ * SEO_NOINDEX_DATA: 404, maintenance). Updated on every navigation, language change, language
+ * list and settings load.
  * @dependencies
  * - PublicDataService: site settings cached at bootstrap (`siteSettingsValue$`).
- * - LocalizationService: current public language (tagline translation, og:locale).
+ * - LocalizationService: current public language (tagline translation, og:locale) and the active
+ *   languages of the area (hreflang).
+ * - language-url / language-preference helpers: URL codes (`cz` → `cs`) and the x-default language.
+ * - seo-route-data: SEO_NOINDEX_DATA route data key.
  * - Meta / DOCUMENT / Router: head tags, canonical link, current path.
  * @note The data are set in the browser - search engines that render JavaScript read them;
- * link preview bots that do not run JavaScript see only the neutral defaults of index.html.
+ * link preview bots that do not run JavaScript see only the neutral defaults of index.html. The
+ * same language versions are listed server-side in /sitemap.xml (PublicSeoController).
  */
 
 import { Injectable, inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { Meta } from '@angular/platform-browser';
-import { NavigationEnd, Router } from '@angular/router';
-import { combineLatest, filter, map, startWith } from 'rxjs';
+import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
+import { combineLatest, filter, map, of, startWith } from 'rxjs';
 
 import { PublicDataService } from './public-data.service';
-import { LocalizationService } from './localization.service';
+import { LangMeta, LocalizationService } from './localization.service';
+import { isLocalizedPath, stripLanguagePrefix, urlCodeOfLanguage, withLanguagePrefix } from '../utils/language-url';
+import { pickInitialLanguage } from '../utils/language-preference';
+import { SEO_NOINDEX_DATA } from '../utils/seo-route-data';
 
 /** @description id of the JSON-LD script element in <head>. */
 const JSON_LD_ID = 'organization-jsonld';
@@ -57,8 +66,12 @@ export class SeoService {
       startWith(this.router.url),
     );
 
-    combineLatest([this.publicDataService.siteSettingsValue$, this.localizationService.currentLanguage$, navigation$])
-      .subscribe(([data, lang, url]) => this.apply(data?.settings ?? null, lang, url));
+    combineLatest([
+      this.publicDataService.siteSettingsValue$,
+      this.localizationService.currentLanguage$,
+      navigation$,
+      this.localizationService.languages$ ?? of([] as LangMeta[]),
+    ]).subscribe(([data, lang, url, languages]) => this.apply(data?.settings ?? null, lang, url, languages));
   }
 
   /**
@@ -66,12 +79,18 @@ export class SeoService {
    * @param settings Site settings (null until loaded - only the URL tags are set).
    * @param lang Current public language code.
    * @param url Router URL of the page (query and fragment are dropped from the canonical URL).
+   * @param languages Active languages of the area (hreflang alternates).
    */
-  private apply(settings: any, lang: string, url: string): void {
+  private apply(settings: any, lang: string, url: string, languages: LangMeta[] = []): void {
     const origin = this.document.location.origin;
-    const pageUrl = origin + (url || '/').split(/[?#]/)[0];
+    const path = (url || '/').split(/[?#]/)[0];
+    const pageUrl = origin + path;
+    const noindex = this.currentRouteNoindex();
 
     this.setCanonical(pageUrl);
+    // Same default as index.html; the 404 page also sets noindex itself (NotFoundComponent).
+    this.meta.updateTag({ name: 'robots', content: noindex ? 'noindex' : 'index, follow' });
+    this.setAlternates(noindex ? [] : this.alternates(origin, stripLanguagePrefix(path), languages));
     this.meta.updateTag({ property: 'og:url', content: pageUrl });
     this.meta.updateTag({ property: 'og:locale', content: OG_LOCALES[lang] ?? lang });
 
@@ -121,6 +140,54 @@ export class SeoService {
     } else {
       this.meta.removeTag(selector);
     }
+  }
+
+  /**
+   * @description Language versions of a public page: one per active language and the x-default
+   *   (English, else the first language) - none for admin / sign-in pages or a single language.
+   * @param origin Origin of the site.
+   * @param path Path of the page without the language (`/services`).
+   * @param languages Active languages of the area.
+   * @returns `[hreflang, href]` pairs, e.g. `['cs', 'https://…/cs/services']`.
+   */
+  private alternates(origin: string, path: string, languages: LangMeta[]): [string, string][] {
+    if (languages.length < 2 || !isLocalizedPath(path)) {
+      return [];
+    }
+    const codes = languages.map(l => l.code);
+    const pairs: [string, string][] = codes.map(code => [urlCodeOfLanguage(code), origin + withLanguagePrefix(path, code)]);
+    pairs.push(['x-default', origin + withLanguagePrefix(path, pickInitialLanguage(codes, []))]);
+    return pairs;
+  }
+
+  /**
+   * @description Replaces the `<link rel="alternate" hreflang>` elements of the head.
+   * @param pairs `[hreflang, href]` pairs (empty = remove them all).
+   */
+  private setAlternates(pairs: [string, string][]): void {
+    this.document.head.querySelectorAll('link[rel="alternate"][hreflang]').forEach(link => link.remove());
+    for (const [hreflang, href] of pairs) {
+      const link = this.document.createElement('link');
+      link.setAttribute('rel', 'alternate');
+      link.setAttribute('hreflang', hreflang);
+      link.setAttribute('href', href);
+      this.document.head.appendChild(link);
+    }
+  }
+
+  /**
+   * @description Whether the current route (or one of its parents) asks not to be listed.
+   * @returns true with route data SEO_NOINDEX_DATA.
+   */
+  private currentRouteNoindex(): boolean {
+    let snapshot: ActivatedRouteSnapshot | null | undefined = this.router.routerState?.snapshot?.root;
+    while (snapshot) {
+      if (snapshot.data?.[SEO_NOINDEX_DATA]) {
+        return true;
+      }
+      snapshot = snapshot.firstChild;
+    }
+    return false;
   }
 
   /** @description Creates or updates <link rel="canonical">. */

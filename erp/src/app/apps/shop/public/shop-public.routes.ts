@@ -9,6 +9,7 @@
  *   (/shop/maintenance - outside the e-shop layout and its maintenance guard).
  * @note The maintenance route MUST stay BEFORE the 'shop' route: otherwise /shop/maintenance would
  *   end in the 404 of the e-shop (guarded, so a redirect loop while the e-shop is off).
+ * @note The maintenance page and the 404 carry SEO_NOINDEX_DATA (search engines do not list them).
  * @usage `publicRoutes` of SHOP_APP (shop.app.ts), composed by app.routes.ts.
  */
 
@@ -17,6 +18,7 @@ import { shopMaintenanceGuard } from './components/guards/shop-maintenance.guard
 import { publicNotFoundRoute } from '../../../public/not-found/public-not-found.config';
 import { PUBLIC_AREA_DATA, PublicArea } from '../../../public/public-area';
 import { legalPageRoute } from '../../../public/legal/legal-page/legal-page.config';
+import { SEO_NOINDEX_DATA } from '../../../shared/utils/seo-route-data';
 
 /** Public area of the e-shop: its translations, home page and the light look of the shared pages. */
 export const SHOP_PUBLIC_AREA: PublicArea = { translationModule: 'shop', path: 'shop', theme: 'light' };
@@ -25,6 +27,7 @@ export const SHOP_PUBLIC_ROUTES: Routes = [
   {
     path: 'shop/maintenance',
     title: 'shop.shop-maintenance',
+    data: { [SEO_NOINDEX_DATA]: true },
     loadComponent: () => import('./shop-maintenance/shop-maintenance.component').then(m => m.ShopMaintenanceComponent)
   },
   {

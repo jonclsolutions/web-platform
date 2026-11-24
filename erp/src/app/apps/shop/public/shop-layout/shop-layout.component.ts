@@ -10,6 +10,7 @@
  * - ShopHeaderComponent: Persistent navigation bar for the shop module.
  * - ShopFooterComponent: Persistent footer for the shop module.
  * - SeoService: meta description, canonical, og:* and JSON-LD from the site settings.
+ * - LanguageSuggestionComponent: one-time offer of the visitor's own language (light look).
  */
 
 import { Component, OnInit, inject } from '@angular/core';
@@ -17,6 +18,7 @@ import { RouterOutlet } from '@angular/router';
 import { ShopFooterComponent } from '../components/shop-footer/shop-footer.component';
 import { ShopHeaderComponent } from '../components/shop-header/shop-header.component';
 import { SeoService } from '../../../../shared/services/seo.service';
+import { LanguageSuggestionComponent } from '../../../../shared/components/language-suggestion/language-suggestion.component';
 /**
  * @description Master layout component for the shop module.
  * @usage Acts as the main container for all shop-related views, ensuring header and footer are consistent across navigation.
@@ -28,7 +30,8 @@ import { SeoService } from '../../../../shared/services/seo.service';
   imports: [
     RouterOutlet,
     ShopHeaderComponent,
-    ShopFooterComponent
+    ShopFooterComponent,
+    LanguageSuggestionComponent,
 ],
   templateUrl: './shop-layout.component.html',
   styleUrls: ['./shop-layout.component.css']

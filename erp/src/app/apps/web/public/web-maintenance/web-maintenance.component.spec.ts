@@ -99,13 +99,15 @@ describe('WebMaintenanceComponent', () => {
   /**
    * @description Guard: maintenance URL passes immediately; web off → UrlTree '/maintenance';
    *   web on → true; status error → true (a broken status endpoint must not lock the site).
-   * @input router.url '/maintenance'; '/' with off / on / error.
-   * @output true (no request); UrlTree; true; true.
+   * @input router.url '/maintenance' and '/en/maintenance?x=1'; '/' with off / on / error.
+   * @output true twice (no request); UrlTree; true; true.
    */
   it('guards the web by its maintenance status', () => {
     const run = () => TestBed.runInInjectionContext(() => webMaintenanceGuard());
     const value = (result: any) => { let v: any; (result as Observable<any>).subscribe(r => (v = r)); return v; };
     const url = spyOnProperty(router, 'url', 'get').and.returnValue('/maintenance');
+    expect(run()).toBeTrue();
+    url.and.returnValue('/en/maintenance?x=1'); // the URL carries the language
     expect(run()).toBeTrue();
     expect(ctx.publicData.getFresh).not.toHaveBeenCalled();
 

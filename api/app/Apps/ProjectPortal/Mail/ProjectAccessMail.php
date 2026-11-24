@@ -13,7 +13,8 @@
  *     15 minutes.
  * @security The code / link are one-time (ProjectLoginCode) and never stored in plaintext;
  *   the e-mail says what to do when the client did not ask for it.
- * @dependencies project-portal::emails.project-access, CompanyContactInfo (footer)
+ * @dependencies project-portal::emails.project-access, CompanyContactInfo (footer), PublicUrl (link
+ *   with the language)
  */
 
 namespace App\Apps\ProjectPortal\Mail;
@@ -21,6 +22,7 @@ namespace App\Apps\ProjectPortal\Mail;
 use App\Apps\ProjectPortal\Models\Project;
 use App\Apps\ProjectPortal\Models\ProjectAccount;
 use App\Support\Mail\CompanyContactInfo;
+use App\Support\Seo\PublicUrl;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -112,7 +114,8 @@ class ProjectAccessMail extends Mailable
                 'buttonText'    => $this->localized('button_' . $this->kind),
                 'note'          => $this->localized('note_' . $this->kind),
                 'outro'         => $this->localized('outro'),
-                'accessUrl'     => rtrim((string) config('app.frontend_url', ''), '/') . '/projects/' . $this->project->access_token
+                // The portal opens in the language of the e-mail (`/cs/projects/…`, `/en/projects/…`).
+                'accessUrl'     => PublicUrl::to('/projects/' . $this->project->access_token, $this->account->language === 'en' ? 'en' : 'cz')
                     . '?access=' . $this->link,
             ]),
         );

@@ -12,6 +12,7 @@
  * - AnalyticsService: Google Analytics 4 + Consent Mode v2 - started here, because this layout
  *   wraps the whole public web regardless of the current subpage.
  * - SeoService: meta description, canonical, og:* and JSON-LD from the site settings.
+ * - LanguageSuggestionComponent: one-time offer of the visitor's own language (dark look).
  */
 
 import { Component, OnInit, inject } from '@angular/core';
@@ -21,6 +22,7 @@ import { PublicFooterComponent } from '../components/public-footer/public-footer
 import { AnalyticsService } from '../../../../shared/services/analytics.service';
 import { SeoService } from '../../../../shared/services/seo.service';
 import { CookieConsentComponent } from '../../../../public/legal/cookie-consent/cookie-consent.component';
+import { LanguageSuggestionComponent } from '../../../../shared/components/language-suggestion/language-suggestion.component';
 /**
  * @description Main layout wrapper for the web application's public pages.
  * @usage Used in app.routes.ts to define the structure for all children routes under the root path.
@@ -34,6 +36,7 @@ import { CookieConsentComponent } from '../../../../public/legal/cookie-consent/
     PublicHeaderComponent,
     PublicFooterComponent,
     CookieConsentComponent,
+    LanguageSuggestionComponent,
   ],
   templateUrl: './web-layout.component.html',
 })

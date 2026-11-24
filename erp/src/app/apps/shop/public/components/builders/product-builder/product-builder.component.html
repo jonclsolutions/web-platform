@@ -4,11 +4,12 @@
     @project: JS web-platform
     @author: JS
     @created: 2026 
-    @description: Template of the product builder component.
+    @description: Template of the product builder component (catalogue product card); the image,
+      the title link and the detail button open /shop/products/<slug or id>.
 -->
 
 <div class="product-card">
-  <div class="product-image-container" [routerLink]="['/eshop/produkt', product?.slug]">
+  <div class="product-image-container" [routerLink]="productLink">
     <img [src]="getThumbnailUrl()" [alt]="product?.name" class="product-img">
 
     @if (product?.is_featured) {
@@ -21,8 +22,9 @@
 
   <div class="product-info">
     <div class="info-top">
-      <h3 class="product-title" [routerLink]="['/eshop/produkt', product?.slug]">
-        {{ product?.name }}
+      <!-- The title is a real link (<a href>), so search engines follow it to the product. -->
+      <h3 class="product-title">
+        <a class="product-title-link" [routerLink]="productLink">{{ product?.name }}</a>
       </h3>
 
       <div class="product-stock">
@@ -50,7 +52,7 @@
       </div>
 
       <button class="btn-detail"
-        [routerLink]="['/eshop/produkt', product?.slug]">
+        [routerLink]="productLink">
         <span>{{ t?.detail_button }}</span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3">
           <polyline points="9 18 15 12 9 6"></polyline>

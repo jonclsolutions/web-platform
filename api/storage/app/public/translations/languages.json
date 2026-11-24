@@ -22,6 +22,33 @@
         "name": "English",
         "active": true,
         "isBuiltIn": false,
+        "module": "web",
+        "iconUrl": null,
+        "icon_path": null
+    },
+    {
+        "code": "pl",
+        "name": "Polish",
+        "active": true,
+        "isBuiltIn": false,
+        "module": "web",
+        "iconUrl": null,
+        "icon_path": null
+    },
+    {
+        "code": "fr",
+        "name": "Frankish",
+        "active": true,
+        "isBuiltIn": false,
+        "module": "web",
+        "iconUrl": null,
+        "icon_path": null
+    },
+    {
+        "code": "de",
+        "name": "Deutsch",
+        "active": true,
+        "isBuiltIn": false,
         "icon_path": null,
         "module": "web"
     }

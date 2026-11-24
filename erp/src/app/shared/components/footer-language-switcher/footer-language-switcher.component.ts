@@ -7,15 +7,16 @@
  * @description Language switcher in the footer of the public areas (web, e-shop): a pill with the
  *   flag (a globe without one) and the name of the current language; its menu (flag, name in its own language, check of
  *   the active one - the look of the former header dropdown) opens upwards. Shown only when the
- *   area has more than one language. A choice switches the language and is remembered
- *   (LocalizationService.setLanguage).
+ *   area has more than one language. A choice switches the language, is remembered and moves the
+ *   page to the URL of the language (LanguageRoutingService.switchTo, `/cs/…` → `/en/…`).
  * @usage `<app-footer-language-switcher [label]="t.language_label" />` in a footer; colours via
  *   CSS custom properties on an ancestor: trigger `--fls-color`, `--fls-color-hover`,
  *   `--fls-bg`, `--fls-bg-hover`, `--fls-border`, `--fls-border-hover`, `--fls-radius`; menu
  *   `--fls-menu-bg`, `--fls-menu-border`, `--fls-menu-radius`, `--fls-option-color`,
  *   `--fls-option-color-active`, `--fls-option-bg-hover`, `--fls-option-bg-active`,
  *   `--fls-check`, `--fls-focus` (fallbacks = dark web footer).
- * @dependencies LocalizationService (languages and active language of the current module).
+ * @dependencies LocalizationService (languages and active language of the current module),
+ *   LanguageRoutingService (switching with the URL).
  * @note Accessible listbox: the button names the current language (aria-expanded); in the menu
  *   ArrowUp / ArrowDown / Home / End move, Enter / Space choose, Escape closes and returns focus
  *   to the button; a click outside or Tab closes it. Each name carries its `lang` (screen readers
@@ -28,6 +29,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LangMeta, LocalizationService } from '../../services/localization.service';
+import { LanguageRoutingService } from '../../services/language-routing.service';
 import { languageCodeOfBrowserTag } from '../../utils/language-preference';
 
 /** Placeholder flag path LocalizationService uses for a language without an icon (no such file). */
@@ -61,6 +63,7 @@ export class FooterLanguageSwitcherComponent implements OnInit {
   @ViewChildren('option') private options?: QueryList<ElementRef<HTMLElement>>;
 
   private readonly localization = inject(LocalizationService);
+  private readonly languageRouting = inject(LanguageRoutingService);
   private readonly cd = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly host = inject(ElementRef<HTMLElement>);
@@ -120,7 +123,7 @@ export class FooterLanguageSwitcherComponent implements OnInit {
    */
   select(code: string): void {
     if (code !== this.current) {
-      this.localization.setLanguage(code);
+      this.languageRouting.switchTo(code);
     }
     this.close(true);
   }

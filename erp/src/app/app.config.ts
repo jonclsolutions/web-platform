@@ -12,10 +12,12 @@
  *   so the first paint never shows an empty/blank state.
  * - PageTitleStrategy: Resolves route `title` keys ("web.home") to the client-editable
  *   browser tab titles from `legal_page_titles`.
+ * - LanguageUrlSerializer + LanguageRoutingService: The language in the public URLs (`/cs/…`,
+ *   `/en/…`) - read from and written into the URLs, `<html lang>`.
  */
 
-import { ApplicationConfig, APP_INITIALIZER } from '@angular/core';
-import { provideRouter, withInMemoryScrolling, TitleStrategy } from '@angular/router';
+import { ApplicationConfig, APP_INITIALIZER, inject, provideAppInitializer } from '@angular/core';
+import { provideRouter, withInMemoryScrolling, TitleStrategy, UrlSerializer } from '@angular/router';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { routes } from './app.routes';
@@ -27,6 +29,8 @@ import localeCs from '@angular/common/locales/cs';
 import localeEn from '@angular/common/locales/en';
 import { AppBootstrapService } from './shared/services/app-bootstrap.service';
 import { PageTitleStrategy } from './shared/services/page-title.strategy.service';
+import { LanguageUrlSerializer } from './shared/services/language-url-serializer';
+import { LanguageRoutingService } from './shared/services/language-routing.service';
 
 registerLocaleData(localeCs, 'cs-CZ');
 registerLocaleData(localeEn, 'en-US');
@@ -70,6 +74,15 @@ export const appConfig: ApplicationConfig = {
      *   the default strategy shows the raw key.
      */
     { provide: TitleStrategy, useClass: PageTitleStrategy },
+
+    /**
+     * @description Language prefix of the public URLs (2026-11): routes and links stay without a
+     *   language, the serializer removes the prefix when reading a URL (and switches to its
+     *   language) and adds the current language when writing one. Admin / sign-in URLs unchanged.
+     */
+    { provide: UrlSerializer, useClass: LanguageUrlSerializer },
+    // Follows the language of every navigated URL - started before the first navigation.
+    provideAppInitializer(() => inject(LanguageRoutingService).init()),
 
     provideHttpClient(withInterceptorsFromDi()),
 

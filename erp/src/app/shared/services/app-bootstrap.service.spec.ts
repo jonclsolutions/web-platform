@@ -5,7 +5,8 @@
  * @author JS
  * @created 2026
  * @description Unit tests of AppBootstrapService (APP_INITIALIZER): texts of the public area of
- *   the first URL + site settings (logo preloaded) in parallel, legal docs prefetched only on a
+ *   the first URL (its language prefix passed on and not part of the area) + site settings (logo
+ *   preloaded) in parallel, legal docs prefetched only on a
  *   public page (not in the admin / sign-in), and the hover disabling on narrow screens (restored on resize,
  *   applied to lazily injected styles, unreadable cross-origin sheets skipped).
  * @dependencies
@@ -66,9 +67,9 @@ describe('AppBootstrapService', () => {
    * @description A public page: the texts of its area (the application whose public path the URL
    *   starts with, the root area otherwise), settings cached, GDPR + TOS prefetched in the current
    *   language; a logo is preloaded (resolves even when the image fails).
-   * @input URLs '/shop/cart' and '/contact'; settings with logo_path 'logo.png'.
-   * @output initTranslations('shop') / ('web'); setCachedSettings(data); getStorageUrl('logo.png');
-   *   preload('gdpr','en') + preload('tos','en').
+   * @input URLs '/shop/cart', '/contact' and '/cs/shop/cart'; settings with logo_path 'logo.png'.
+   * @output initTranslations('shop', null) / ('web', null) / ('shop', 'cz'); setCachedSettings(data);
+   *   getStorageUrl('logo.png'); preload('gdpr','en') + preload('tos','en').
    */
   it('initializes the texts of the public area, settings and legal docs', async () => {
     requiresApps('web', 'shop');
@@ -77,14 +78,18 @@ describe('AppBootstrapService', () => {
     publicData.getStorageUrl.and.returnValue('/missing-test-logo.png');
 
     await service.init();
-    expect(localization.initTranslations).toHaveBeenCalledWith('shop');
+    expect(localization.initTranslations).toHaveBeenCalledWith('shop', null);
     expect(publicData.setCachedSettings).toHaveBeenCalledWith(data);
     expect(publicData.getStorageUrl).toHaveBeenCalledWith('logo.png');
     expect(legal.preload.calls.allArgs()).toEqual([['gdpr', 'en'], ['tos', 'en']]);
 
     path.and.returnValue('/contact');
     await service.init();
-    expect(localization.initTranslations).toHaveBeenCalledWith('web');
+    expect(localization.initTranslations).toHaveBeenCalledWith('web', null);
+
+    path.and.returnValue('/cs/shop/cart');
+    await service.init();
+    expect(localization.initTranslations).toHaveBeenCalledWith('shop', 'cz');
   });
 
   /**

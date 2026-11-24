@@ -29,22 +29,27 @@
  * the portal is a single page, there is no cross-section reuse to justify the extra
  * merge complexity.
  *
+ * @note Language (2026-11): the portal has no language of its own any more - it follows the
+ * language of the public pages (LocalizationService), which is the language in the URL
+ * (`/cs/projects/…`, `/en/projects/…`), else the visitor's choice, else the browser / English. A
+ * language the portal texts do not have shows English (or the first portal language).
+ * setLanguage() switches through LanguageRoutingService, so the URL follows. The former key
+ * `jsw_project_portal_language` is no longer read.
  * @note Missing key / not-yet-loaded language returns the literal string
  * `'Cannot load text'` (English, always the same) - same rationale as
  * `AdminLocalizationService`: one obvious failure mode, immediately greppable, never a
  * silent Czech-looking fallback masquerading as a real translation.
  */
 
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { migrateLegacyKey } from '../../../shared/utils/legacy-storage';
+import { LocalizationService } from '../../../shared/services/localization.service';
+import { LanguageRoutingService } from '../../../shared/services/language-routing.service';
 
-const STORAGE_KEY = 'jsw_project_portal_language';
-/** Former key of the language choice - moved to STORAGE_KEY on the first read. */
-const LEGACY_STORAGE_KEY = 'rpsw_project_portal_language';
-const DEFAULT_LANGUAGE = 'cz';
+/** Portal language shown when the public language has no portal texts. */
+const FALLBACK_LANGUAGE = 'en';
 const FALLBACK_TEXT = 'Cannot load text';
 
 /** One entry in the portal's language toggle (CZ/EN chips in the sidebar). */
@@ -66,13 +71,11 @@ export const PROJECT_PORTAL_AVAILABLE_LANGUAGES: ProjectPortalLanguageMeta[] = [
 ];
 
 /**
- * @description Loads and serves the currently selected project-portal language.
- * Selection is persisted in `localStorage` under its OWN key (`jsw_project_portal_language`)
- * - deliberately independent from `jsw_admin_language`, since a customer using the
- * portal has no relationship to (and likely no access to) the admin panel, and an
- * admin previewing the portal shouldn't have their admin-language choice silently
- * bleed into what a customer would see.
- * @usage Injected directly by `ProjectPortalComponent` - the only consumer today.
+ * @description Loads and serves the project-portal texts in the language of the public pages
+ * (see the note in the file header) - independent from the admin language
+ * (`jsw_admin_language`): a customer using the portal has no relationship to the admin panel.
+ * @usage Injected by the portal pages (layout, sign-in, order form, maintenance) and the portal
+ * language switcher.
  */
 @Injectable({
   providedIn: 'root'
@@ -81,19 +84,37 @@ export class ProjectPortalLocalizationService {
   private translationsSource = new BehaviorSubject<Record<string, any> | null>(null);
   public translations$ = this.translationsSource.asObservable();
 
-  private currentLanguageSource = new BehaviorSubject<string>(this.getStoredLanguage());
-  public currentLanguage$ = this.currentLanguageSource.asObservable();
+  private readonly http = inject(HttpClient);
+  private readonly localization = inject(LocalizationService);
+  private readonly languageRouting = inject(LanguageRoutingService);
 
   public readonly availableLanguages = PROJECT_PORTAL_AVAILABLE_LANGUAGES;
 
-  constructor(private http: HttpClient) {
+  private currentLanguageSource = new BehaviorSubject<string>(this.portalLanguageOf(this.localization.getCurrentLanguage()));
+  public currentLanguage$ = this.currentLanguageSource.asObservable();
+
+  constructor() {
     this.loadLanguage(this.currentLanguageSource.getValue());
+    // Follow the language of the public pages (URL / choice / browser).
+    this.localization.currentLanguage$.subscribe(code => {
+      const portalCode = this.portalLanguageOf(code);
+      if (portalCode !== this.currentLanguageSource.getValue()) {
+        this.currentLanguageSource.next(portalCode);
+        this.loadLanguage(portalCode);
+      }
+    });
   }
 
-  private getStoredLanguage(): string {
-    if (typeof localStorage === 'undefined') return DEFAULT_LANGUAGE;
-    migrateLegacyKey(localStorage, STORAGE_KEY, LEGACY_STORAGE_KEY);
-    return localStorage.getItem(STORAGE_KEY) || DEFAULT_LANGUAGE;
+  /**
+   * @description Portal language for a public language: the same when the portal has its texts,
+   *   otherwise English, otherwise the first portal language.
+   * @param code Public language code.
+   * @returns Portal language code.
+   */
+  private portalLanguageOf(code: string): string {
+    const codes = this.availableLanguages.map(l => l.code);
+    if (codes.includes(code)) return code;
+    return codes.includes(FALLBACK_LANGUAGE) ? FALLBACK_LANGUAGE : codes[0];
   }
 
   /**
@@ -115,15 +136,13 @@ export class ProjectPortalLocalizationService {
   }
 
   /**
-   * @description Switches the active portal language, persists the choice, and
-   * (re)loads its JSON.
+   * @description The visitor switches the language in the portal: it becomes the language of the
+   *   public pages (remembered) and the URL moves to it (`/cs/projects/…` → `/en/projects/…`);
+   *   the portal texts follow.
+   * @param code Language code.
    */
   public setLanguage(code: string): void {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, code);
-    }
-    this.currentLanguageSource.next(code);
-    this.loadLanguage(code);
+    this.languageRouting.switchTo(code);
   }
 
   public getCurrentLanguage(): string {

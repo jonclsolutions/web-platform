@@ -1,6 +1,54 @@
 {
     "unreleased": [
         {
+            "type": "added",
+            "area": "web",
+            "part": "public",
+            "text": "Search engines: sitemap.xml lists every public page in each active language, robots.txt keeps private pages (administration, sign-in, project portal) out of search results and every page names its other language versions. Old addresses without a language permanently lead to the Czech page."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "public",
+            "text": "The bare domain opens the home page in the visitor's language already on the server (browser language, otherwise English)."
+        },
+        {
+            "type": "added",
+            "area": "shop",
+            "part": "public",
+            "text": "The catalogue and every active product are listed in sitemap.xml in each e-shop language; cart and checkout stay out of search results."
+        },
+        {
+            "type": "changed",
+            "area": "project-portal",
+            "part": "public",
+            "text": "Links in portal e-mails (access link, project updates) open the portal directly in the recipient's language."
+        },
+        {
+            "type": "fixed",
+            "area": "shop",
+            "part": "public",
+            "text": "Product cards in the catalogue opened a missing page instead of the product detail; the e-shop terms link in the order confirmation e-mail opens in the customer's language."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "public",
+            "text": "Page addresses start with the language (/cs/services, /en/services). Old addresses and links in e-mails open in the visitor's language; a shared link opens in its language, with a one-time offer to switch to the visitor's own language."
+        },
+        {
+            "type": "changed",
+            "area": "shop",
+            "part": "public",
+            "text": "E-shop addresses start with the language (/cs/shop/…, /en/shop/…); old addresses keep working. A shared link opens in its language, with a one-time offer to switch to the visitor's own language."
+        },
+        {
+            "type": "changed",
+            "area": "project-portal",
+            "part": "public",
+            "text": "Portal and order-form addresses start with the language (/cs/projects/…); the portal follows the language of the website and its switcher changes the address. Links already sent to clients keep working."
+        },
+        {
             "type": "changed",
             "area": "web",
             "part": "public",

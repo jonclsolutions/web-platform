@@ -16,6 +16,7 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { PublicDataService } from '../../../../../shared/services/public-data.service';
 import { map, catchError, of } from 'rxjs';
+import { stripLanguagePrefix } from '../../../../../shared/utils/language-url';
 
 /** Address of the maintenance page of the e-shop - inside the e-shop address space (/shop/...). */
 export const SHOP_MAINTENANCE_URL = '/shop/maintenance';
@@ -30,7 +31,7 @@ export const shopMaintenanceGuard = () => {
   const router = inject(Router);
 
   // 1. Avoid infinite redirection loops by bypassing the guard if the user is already on the maintenance page
-  if (router.url.split(/[?#]/)[0] === SHOP_MAINTENANCE_URL) {
+  if (stripLanguagePrefix(router.url).split(/[?#]/)[0] === SHOP_MAINTENANCE_URL) { // Router.url has the language
     return true; 
   }
 

@@ -12,6 +12,7 @@
  * @note The root path ('') and '/home' both resolve directly to HomeComponent (no redirectTo) so the
  *   browser address bar keeps showing the clean domain root. `title` values are page keys for
  *   PageTitleStrategy, not display texts.
+ * @note The maintenance page and the 404 carry SEO_NOINDEX_DATA (search engines do not list them).
  */
 
 import { Routes } from '@angular/router';
@@ -19,6 +20,7 @@ import { webMaintenanceGuard } from './components/guards/web-maintenance.guard';
 import { publicNotFoundRoute } from '../../../public/not-found/public-not-found.config';
 import { PUBLIC_AREA_DATA, PublicArea } from '../../../public/public-area';
 import { legalPageRoute } from '../../../public/legal/legal-page/legal-page.config';
+import { SEO_NOINDEX_DATA } from '../../../shared/utils/seo-route-data';
 
 /** Public area of the web: its translations, home page and the dark look of the shared pages. */
 export const WEB_PUBLIC_AREA: PublicArea = { translationModule: 'web', path: '', theme: 'dark' };
@@ -27,6 +29,7 @@ export const WEB_PUBLIC_ROUTES: Routes = [
   {
     path: 'maintenance',
     title: 'web.web-maintenance',
+    data: { [SEO_NOINDEX_DATA]: true },
     loadComponent: () => import('./web-maintenance/web-maintenance.component').then(m => m.WebMaintenanceComponent)
   },
   {

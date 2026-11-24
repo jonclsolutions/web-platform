@@ -6,11 +6,12 @@
  * @created 2026
  * @description Unit tests of the first-visit language: browser tag → translation code (Czech
  *   `cs` → `cz`, regions ignored), the first preferred language offered, the English default,
- *   the first offered language when English is missing, and the browser language list.
+ *   the first offered language when English is missing, the browser's own choice alone (language
+ *   offer) and the browser language list.
  * @dependencies none
  */
 
-import { browserLanguages, languageCodeOfBrowserTag, pickInitialLanguage } from './language-preference';
+import { browserLanguages, languageCodeOfBrowserTag, pickInitialLanguage, preferredBrowserLanguage } from './language-preference';
 
 describe('language preference', () => {
   /**
@@ -35,6 +36,18 @@ describe('language preference', () => {
   it('picks the first preferred language that is offered', () => {
     expect(pickInitialLanguage(['cz', 'en'], ['de-DE', 'cs-CZ', 'en'])).toBe('cz');
     expect(pickInitialLanguage(['cz', 'en'], ['en-US', 'cs'])).toBe('en');
+  });
+
+  /**
+   * @description The browser's own choice only (for the language offer): the first offered one,
+   *   null when the browser prefers none of them (no English fallback).
+   * @input [cz, en] + [de, cs-CZ]; [cz, en] + [fr]; [] + [cs].
+   * @output 'cz'; null; null.
+   */
+  it('finds the first browser language the area offers', () => {
+    expect(preferredBrowserLanguage(['cz', 'en'], ['de', 'cs-CZ'])).toBe('cz');
+    expect(preferredBrowserLanguage(['cz', 'en'], ['fr'])).toBeNull();
+    expect(preferredBrowserLanguage([], ['cs'])).toBeNull();
   });
 
   /**

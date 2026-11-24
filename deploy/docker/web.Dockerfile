@@ -54,9 +54,10 @@ COPY --from=build /src/dist/rp_website/browser /srv/www
 EXPOSE 80 443 443/udp
 
 # The app is served (internal door of the Caddyfile, only inside the container) - independent of
-# the DNS and the certificate.
+# the DNS and the certificate. /admin = a client-side route (index.html): the root `/` is a
+# redirect answered by Laravel (2026-11), so the proxy would be unhealthy whenever php-fpm is.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1
+    CMD wget -q -O /dev/null http://127.0.0.1:8080/admin || exit 1
 
 ENTRYPOINT ["web-entrypoint"]
 CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

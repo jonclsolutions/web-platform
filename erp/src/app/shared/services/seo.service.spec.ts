@@ -6,10 +6,11 @@
  * @created 2026
  * @description Unit tests of SeoService: the head tags (description, author, og:*, canonical) and
  *   the Organization JSON-LD follow the site settings, the public language and the navigation;
- *   empty values remove their tag; a second init() is ignored.
+ *   empty values remove their tag; a second init() is ignored; the language versions (hreflang +
+ *   x-default) follow the active languages and the page; noindex pages get `robots` and no hreflang.
  * @dependencies
- * - PublicDataService / LocalizationService stubs (BehaviorSubjects), Router events Subject,
- *   real Meta and document head (tags cleaned after each test).
+ * - PublicDataService / LocalizationService stubs (BehaviorSubjects), Router stub (events Subject,
+ *   url, routerState snapshot), real Meta and document head (tags cleaned after each test).
  */
 
 import { TestBed } from '@angular/core/testing';
@@ -18,21 +19,28 @@ import { NavigationEnd, Router } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
 
 import { SeoService } from './seo.service';
+import { SEO_NOINDEX_DATA } from '../utils/seo-route-data';
 import { PublicDataService } from './public-data.service';
 import { LocalizationService } from './localization.service';
 
 describe('SeoService', () => {
   let settings$: BehaviorSubject<any>;
   let lang$: BehaviorSubject<string>;
+  let languages$: BehaviorSubject<any[]>;
   let events$: Subject<any>;
+  let router: any;
   let service: SeoService;
   let meta: Meta;
 
   const content = (selector: string) => meta.getTag(selector)?.content ?? null;
   const jsonLd = () => JSON.parse(document.getElementById('organization-jsonld')!.textContent!);
+  const alternates = () => Array.from(document.head.querySelectorAll('link[rel="alternate"][hreflang]'))
+    .map(l => [l.getAttribute('hreflang'), l.getAttribute('href')]);
+  const lang = (code: string) => ({ code, label: code, flag: '', active: true });
   const cleanHead = () => {
     ['name="description"', 'name="author"', 'property="og:site_name"', 'property="og:title"', 'property="og:description"',
-      'property="og:image"', 'property="og:url"', 'property="og:locale"'].forEach(s => meta.removeTag(s));
+      'property="og:image"', 'property="og:url"', 'property="og:locale"', 'name="robots"'].forEach(s => meta.removeTag(s));
+    document.head.querySelectorAll('link[rel="alternate"][hreflang]').forEach(l => l.remove());
     document.head.querySelector('link[rel="canonical"]')?.remove();
     document.getElementById('organization-jsonld')?.remove();
   };
@@ -40,12 +48,14 @@ describe('SeoService', () => {
   beforeEach(() => {
     settings$ = new BehaviorSubject<any>(null);
     lang$ = new BehaviorSubject<string>('cz');
+    languages$ = new BehaviorSubject<any[]>([]);
     events$ = new Subject<any>();
+    router = { url: '/home?x=1', events: events$, routerState: { snapshot: { root: { data: {}, firstChild: null } } } };
     TestBed.configureTestingModule({
       providers: [
         { provide: PublicDataService, useValue: { siteSettingsValue$: settings$, getStorageUrl: (p: string) => `/storage/${p}` } },
-        { provide: LocalizationService, useValue: { currentLanguage$: lang$ } },
-        { provide: Router, useValue: { url: '/home?x=1', events: events$ } },
+        { provide: LocalizationService, useValue: { currentLanguage$: lang$, languages$ } },
+        { provide: Router, useValue: router },
       ]
     });
     service = TestBed.inject(SeoService);
@@ -114,5 +124,63 @@ describe('SeoService', () => {
     expect(content('property="og:locale"')).toBe('pl');
     expect(Object.keys(jsonLd())).toEqual(['@context', '@type', 'name', 'url']);
     expect(document.querySelectorAll('#organization-jsonld').length).toBe(1);
+  });
+
+  /**
+   * @description Language versions: one alternate per active language (URL codes, cz → cs) and the
+   *   x-default (English); replaced on navigation (no duplicates); none for one language or an
+   *   admin / sign-in page; without English the first language is the x-default.
+   * @input languages cz, en, de; NavigationEnd '/cs/services?x=1'; '/en/faq'; languages [cz];
+   *   languages cz, en + '/admin/x'; languages cz, de + '/de/faq'.
+   * @output cs / en / de / x-default → origin/{cs,en,de,en}/services; …/faq ×4; none; none;
+   *   x-default origin/cs/faq.
+   */
+  it('lists the language versions of a public page', () => {
+    const origin = document.location.origin;
+    service.init();
+    languages$.next([lang('cz'), lang('en'), lang('de')]);
+    events$.next(new NavigationEnd(1, '/cs/services?x=1', '/cs/services?x=1'));
+    expect(alternates()).toEqual([
+      ['cs', `${origin}/cs/services`], ['en', `${origin}/en/services`], ['de', `${origin}/de/services`],
+      ['x-default', `${origin}/en/services`],
+    ]);
+    expect(content('name="robots"')).toBe('index, follow');
+
+    events$.next(new NavigationEnd(2, '/en/faq', '/en/faq'));
+    expect(alternates().length).toBe(4);
+    expect(alternates()[1]).toEqual(['en', `${origin}/en/faq`]);
+
+    languages$.next([lang('cz')]);
+    expect(alternates()).toEqual([]);
+
+    languages$.next([lang('cz'), lang('en')]);
+    events$.next(new NavigationEnd(3, '/admin/x', '/admin/x'));
+    expect(alternates()).toEqual([]);
+
+    languages$.next([lang('cz'), lang('de')]);
+    events$.next(new NavigationEnd(4, '/de/faq', '/de/faq'));
+    expect(alternates()[2]).toEqual(['x-default', `${origin}/cs/faq`]);
+  });
+
+  /**
+   * @description A route with SEO_NOINDEX_DATA (here a child route, like the 404 in its layout)
+   *   gets robots noindex and no language versions; leaving it restores 'index, follow' (the
+   *   default of index.html).
+   * @input languages cz, en; child route data seoNoindex; NavigationEnd '/cs/xyz'; then data {} +
+   *   NavigationEnd '/cs/faq'.
+   * @output robots 'noindex', no alternates; then robots 'index, follow', 3 alternates.
+   */
+  it('marks noindex pages and leaves out their language versions', () => {
+    service.init();
+    languages$.next([lang('cz'), lang('en')]);
+    router.routerState.snapshot.root.firstChild = { data: { [SEO_NOINDEX_DATA]: true }, firstChild: null };
+    events$.next(new NavigationEnd(1, '/cs/xyz', '/cs/xyz'));
+    expect(content('name="robots"')).toBe('noindex');
+    expect(alternates()).toEqual([]);
+
+    router.routerState.snapshot.root.firstChild = { data: {}, firstChild: null };
+    events$.next(new NavigationEnd(2, '/cs/faq', '/cs/faq'));
+    expect(content('name="robots"')).toBe('index, follow');
+    expect(alternates().length).toBe(3);
   });
 });

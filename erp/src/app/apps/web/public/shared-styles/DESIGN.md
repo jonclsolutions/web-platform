@@ -86,6 +86,21 @@ s okrajem 24 px nahoře a dole. Při scrollu se vykreslí od středu.
   přes `--fls-*` z footeru (e-shop: světlé, hranaté).
 - Jazyk první návštěvy: první jazyk prohlížeče, který web má, jinak **angličtina**, jinak první
   aktivní jazyk. Uloží se jen ruční volba ve footeru (funkční nastavení, bez souhlasu).
+- **Jazyk je v adrese** (`/cs/services`, `/en/shop/cart`, `/cs/projects/…`; admin a `/auth`
+  bez něj). Odkazy, routy a stráže se píšou **bez jazyka** (`routerLink="/faq"`) – prefix doplní
+  `LanguageUrlSerializer`. Kód, který porovnává `Router.url` / `urlAfterRedirects` s cestou,
+  použije `stripLanguagePrefix()`. Přepínač jazyka volá `LanguageRoutingService.switchTo()`
+  (uloží volbu a přejde na stejnou stránku v jiném jazyce). V URL je čeština `cs`, v překladech
+  `cz`. Odkaz v jiném jazyce, než má prohlížeč, ukáže jednorázovou nabídku jazyka pod headerem
+  (`app-language-suggestion`, texty `language_suggestion.*` v nabízeném jazyce).
+- **Vyhledávače (server, 2026-11):** holá doména `/` přesměruje (302, `Vary: Accept-Language`)
+  na jazyk prohlížeče → angličtinu → první jazyk; staré adresy bez jazyka vedou trvale (301) na
+  `/cs/…`. `/sitemap.xml` a `/robots.txt` generuje API (`PublicSeoController`) – **nová veřejná
+  stránka** = cesta v `sitemapPaths()` manifestu aplikace (`WebApp`, `ShopApp`). Jazykové verze
+  stránky (`hreflang` + `x-default`) a canonical doplňuje `SeoService` sám. Stránka, která do
+  výsledků hledání nepatří (404, údržba), má v routě `data: { [SEO_NOINDEX_DATA]: true }`.
+  Odkaz na stránku musí být skutečné `<a routerLink>` (ne `div` / `button`), aby ho vyhledávač
+  prošel.
 - Fixní header zabírá nahoře ~92 px (top 20 + výška 52 + rezerva). První obsah stránky
   musí začínat níž – na homepage má hero `padding-top: 196px`, obsahové stránky
   mají rezervu aspoň 140 px.
@@ -364,6 +379,8 @@ rozložení, routy, formuláře a texty ostatních stránek zůstávají).
 - [ ] Nic se nenačítá z cizích domén.
 - [ ] Texty z překladů (`t.*`), komentáře podle šablon v `docs/code_documentation`.
 - [ ] Nadpis přes `[appRevealText]`, ne `{{ }}` – host direktivy nesmí mít jiný obsah.
+- [ ] Odkazy bez jazyka (`routerLink="/…"`); porovnání adres přes `stripLanguagePrefix()`.
+- [ ] Nová veřejná stránka je v `sitemapPaths()` manifestu; 404 / údržba mají `SEO_NOINDEX_DATA`.
 
 ---
 

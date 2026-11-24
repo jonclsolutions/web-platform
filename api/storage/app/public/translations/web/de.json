@@ -1,0 +1,680 @@
+{
+    "web_maintenance": {
+        "heading": "Wir verbessern unser System",
+        "text": "Derzeit finden geplante Wartungsarbeiten statt, damit wir Ihnen ein noch besseres Erlebnis bieten können.",
+        "sub_text": "Bitte versuchen Sie es in Kürze erneut.",
+        "admin_login": "Administrator-Anmeldung",
+        "language": "Sprache"
+    },
+    "faq": {
+        "header_1": "Häufig gestellte Fragen",
+        "write_us_prompt": "Nicht alles beantwortet? Schreiben Sie uns",
+        "question_1": "Welche Arten von Software können Sie entwickeln?",
+        "answer_1": "Unser Schwerpunkt ist die komplette Softwareentwicklung – vom Entwurf bis zur Inbetriebnahme. Wir realisieren Websites und Webanwendungen, Onlineshops, mobile Apps für iOS und Android sowie Desktop-Programme für den geschäftlichen und privaten Einsatz. Zu unseren Leistungen gehören auch fortschrittliche Lösungen auf Basis künstlicher Intelligenz und Prozessautomatisierung. Darüber hinaus sind wir auf die Integration verschiedener Systeme spezialisiert (z. B. Zahlungsgateways, ERP, CRM oder Cloud-Dienste) sowie auf die Anpassung und Verbesserung bestehender Projekte. Wir suchen immer einen Weg, eine maßgeschneiderte Lösung zu entwickeln oder zu optimieren, die Ihrem Unternehmen wirklich hilft.",
+        "question_2": "Wie lange dauert die Umsetzung eines Projekts?",
+        "answer_2": "Die Entwicklungsdauer hängt immer vom Umfang und der Komplexität des Projekts ab. Einfachere Lösungen wie eine Präsentationswebsite oder eine kleinere Unternehmensseite können bereits innerhalb weniger Tage bis zwei Wochen fertig sein. Anspruchsvollere Projekte wie Onlineshops, Portale oder komplexe Web- und Mobile-Anwendungen können je nach Funktionsumfang, Designanforderungen oder Integrationen mit anderen Systemen mehrere Wochen bis Monate dauern. Nach der ersten Beratung erstellen wir Ihnen einen realistischen Zeitplan mit Meilensteinen, damit Sie genau wissen, wie die Entwicklung voranschreitet und wann Sie mit dem Start rechnen können.",
+        "question_3": "Was kostet die Entwicklung einer Website oder App?",
+        "answer_3": "Der Preis hängt immer vom Umfang und der Komplexität des Projekts ab. Eine einfache Präsentationswebsite kostet anders als ein vollwertiger Onlineshop oder eine komplexe Anwendung mit Integrationen und erweiterten Funktionen. In den Endbetrag fließen außerdem die Wahl der Technologien, der Designaufwand, Sicherheitsanforderungen oder Anbindungen an weitere Systeme ein. Deshalb bewerten wir jedes Projekt individuell und erstellen Ihnen nach der ersten Beratung ein genaues Angebot samt Zeitrahmen. Transparenz ist selbstverständlich – Sie wissen immer, wofür Sie bezahlen, und wir bieten verschiedene Lösungsvarianten je nach Budget und Prioritäten an. So können Sie den Weg wählen, der am besten zu Ihren Bedürfnissen und finanziellen Möglichkeiten passt.",
+        "question_4": "Wie läuft die Zusammenarbeit üblicherweise ab?",
+        "answer_4": "Wir beginnen die Zusammenarbeit mit einer ersten Beratung, in der wir uns Ihre Bedürfnisse, Ziele und Anmerkungen anhören. Auf dieser Grundlage erarbeiten wir einen Lösungsvorschlag – er umfasst die Wahl geeigneter Technologien, technische Spezifikationen, einen Entwurf von Design und Funktionen, den Zeitrahmen bis zur Fertigstellung sowie ein Preisangebot. Diesen Plan legen wir Ihnen zur Freigabe vor. Sobald alles abgestimmt ist, gehen wir zur eigentlichen Entwicklung, zum Testen und anschließend zum Start des Projekts über. Während des gesamten Prozesses informieren wir Sie laufend über den Fortschritt, beziehen Sie in wichtige Entscheidungen ein und sorgen dafür, dass Sie die volle Kontrolle über das Ergebnis haben.",
+        "question_5": "Bieten Sie auch langfristigen Support und Wartung an?",
+        "answer_5": "Ja, wir bieten langfristigen Support und Wartung, denn wir wissen, dass die Arbeit mit dem Start eines Projekts nicht endet. Zu unseren Leistungen gehören regelmäßige Aktualisierungen von Systemen und Bibliotheken, die Überwachung von Leistung und Sicherheit, Betriebsmonitoring, Datensicherungen sowie Optimierungen nach aktuellem Bedarf. Bei Problemen oder neuen Anforderungen reagieren wir schnell und flexibel, damit Sie sicher sein können, dass Ihre Lösung auch in Zukunft stabil, sicher und voll funktionsfähig bleibt. Zudem unterstützen wir Sie bei der Erweiterung von Funktionen oder der Integration neuer Technologien, sodass sich Ihr Projekt kontinuierlich mit Ihrem Unternehmen weiterentwickeln kann.",
+        "question_6": "Passen Sie auch bestehende Anwendungen an?",
+        "answer_6": "Ja, wir müssen nicht immer bei null anfangen. Oft arbeiten wir auch an Anpassungen und Verbesserungen bestehender Anwendungen oder Websites. Dabei kann es um die Erweiterung von Funktionen, die Modernisierung eines veralteten Designs, die Steigerung von Geschwindigkeit und Leistung, die Verbesserung der Sicherheit oder die Integration weiterer Systeme gehen. Wenn Sie ein Projekt haben, das bereits funktioniert, aber auf die nächste Stufe gebracht werden muss, können wir es übernehmen, seinen Zustand analysieren und den besten Weg zu seiner Verbesserung vorschlagen.",
+        "hero_eyebrow": "Alles, was Sie wissen müssen",
+        "hero_sub": "Keine Antwort gefunden? Schreiben Sie uns — wir antworten in der Regel innerhalb von 48 Stunden.",
+        "sidebar_eyebrow": "Direkter Kontakt",
+        "sidebar_title": "Keine Antwort gefunden?",
+        "sidebar_text": "Unsere Spezialisten beantworten gerne jede Frage.",
+        "sidebar_cta": "Nachricht schreiben",
+        "stat_answers_label": "Antworten",
+        "stat_response_label": "max. Reaktionszeit",
+        "stat_response_value": "48h",
+        "section_label": "Häufige Fragen",
+        "cta_projects_prompt": "Möchten Sie unsere Projekte sehen?",
+        "cta_projects_btn": "Referenzen",
+        "empty_state_text": "Für diese Kategorie haben wir noch keine Fragen. Versuchen Sie eine andere Kategorie oder kontaktieren Sie uns direkt."
+    },
+    "navigation": {
+        "home": "Startseite",
+        "services": "Leistungen",
+        "shop": "E-Shop",
+        "contact": "Kontakt",
+        "references": "Projekte",
+        "references_full": "Realisierte Projekte",
+        "faq": "FAQ",
+        "faq_full": "Häufig gestellte Fragen",
+        "about-us": "Über uns",
+        "login": "Anmelden",
+        "jobs": "Karriere",
+        "login_btn": "Anmelden"
+    },
+    "projects": {
+        "header_1": "Zuletzt abgeschlossene Projekte",
+        "table_header_title": "Projektname",
+        "table_header_duration": "Laufzeit",
+        "table_header_client": "Auftraggeber",
+        "more_button_prompt": "Möchten Sie mehr sehen?",
+        "more_button_link_text": "Vollständige Liste hier",
+        "hero_eyebrow": "Portfolio & Referenzen",
+        "hero_sub": "Ein Überblick über Projekte, an denen wir gearbeitet haben. Jedes Projekt ist für uns Herausforderung und Geschichte zugleich.",
+        "stat_1_num": "10+",
+        "stat_1_label": "abgeschlossene Projekte",
+        "stat_2_num": "4",
+        "stat_2_label": "Jahre Entwicklung",
+        "stat_3_num": "4",
+        "stat_3_label": "Plattformen",
+        "sidebar_about_eyebrow": "Über das Portfolio",
+        "sidebar_about_title": "Ausgewählte realisierte Arbeiten",
+        "sidebar_about_text": "Eine Auswahl von Projekten aus verschiedenen Bereichen — Web-, Desktop-, Mobile- und KI-Entwicklung. Klicken Sie auf ein Projekt, um Details anzuzeigen.",
+        "sidebar_legend_eyebrow": "Projektkategorien",
+        "legend_web": "Webentwicklung",
+        "legend_desktop": "Desktop-Entwicklung",
+        "legend_mobile": "Mobile Entwicklung",
+        "legend_ai": "KI & Automatisierung",
+        "sidebar_archive_text": "Diese Seite zeigt eine Auswahl. Das vollständige Projektarchiv finden Sie auf einem externen Portal.",
+        "sidebar_archive_btn": "Gesamtes Projektarchiv",
+        "cta_1_eyebrow": "Gefällt Ihnen unser Ansatz?",
+        "cta_1_text": "Sehen Sie sich unsere Leistungen an und erfahren Sie, wie wir Ihnen helfen können.",
+        "cta_1_btn": "Unsere Leistungen",
+        "cta_2_eyebrow": "Bereit loszulegen?",
+        "cta_2_text": "Kontaktieren Sie uns und wir besprechen Ihr Projekt.",
+        "cta_2_btn": "Kontakt aufnehmen",
+        "label_features": "Hauptfunktionen",
+        "label_facts": "Über das Projekt",
+        "label_category": "Bereich",
+        "label_scope": "Umfang",
+        "label_role": "Unsere Rolle",
+        "label_duration": "Umsetzung",
+        "label_client": "Kunde",
+        "label_stack": "Technologie-Stack",
+        "label_result": "Ergebnis"
+    },
+    "footer": {
+        "group_offer": "Angebot",
+        "group_company": "Unternehmen",
+        "group_support": "Support",
+        "ico_label": "Firmen-ID (IČO)",
+        "dic_label": "USt-IdNr.",
+        "contact_header": "Kontakt",
+        "language_label": "Sprache"
+    },
+    "legal": {
+        "privacy_policy": "Datenschutzerklärung",
+        "terms_of_service": "Allgemeine Geschäftsbedingungen",
+        "cookies_policy": "Cookie-Richtlinie"
+    },
+    "services": {
+        "header_1_text": "Individuelle Softwareentwicklung",
+        "hero_sub": "Wir entwickeln Web-, Desktop- und Mobile-Anwendungen genau nach Ihren Bedürfnissen.",
+        "info_header": "Software, die zu Ihrem Geschäft passt",
+        "info_header_2": "welche Schritte die Softwareentwicklung umfasst",
+        "show_projects_header": "Werfen Sie einen Blick auf abgeschlossene Projekte.",
+        "show_contact_header": "Oder kontaktieren Sie uns",
+        "projects_button_text": "Realisierte Projekte",
+        "contact_button_text": "Kontakt",
+        "service_main_text": "<p>Wir entwickeln individuelle Software für Unternehmen, die mehr brauchen als eine Lösung von der Stange. Webanwendungen und -systeme, Desktop-Tools für Windows, macOS oder Linux, mobile Apps für iOS und Android — immer auf eigenem Code aufgebaut, an Ihre Prozesse angepasst und so konzipiert, dass sie mit Ihrem Unternehmen wachsen.<\/p><p>Egal, ob es sich um ein internes Unternehmenssystem, ein Kundenportal, einen Onlineshop oder ein komplexes CRM handelt. Jedes Projekt beginnt mit einer Analyse Ihrer tatsächlichen Bedürfnisse, nicht mit einer Vorlage. Das Ergebnis ist eine Lösung, die genau dort funktioniert, wo Sie sie brauchen — im Browser, auf dem Desktop oder in der Hosentasche.<\/p>",
+        "cards": {
+            "custom_title": "Individuelle Entwicklung",
+            "custom_text": "Wir arbeiten nicht mit Vorlagen. Jede Lösung bauen wir von Grund auf genau nach Ihren Prozessen — ob Webanwendung, Desktop-Tool oder mobile App.",
+            "auth_title": "Anmeldung und Benutzerverwaltung",
+            "auth_text": "Jedes Mehrbenutzersystem erhält eine sichere Anmeldung sowie eine Verwaltung von Rollen und Berechtigungen. Wer was sehen und bearbeiten darf, legen Sie selbst fest.",
+            "seo_title": "SEO-Optimierung",
+            "seo_text": "Weblösungen liefern wir technisch für Suchmaschinen optimiert — mit korrekter Struktur, schnellen Ladezeiten, Meta-Tags und Sitemap. Die Grundlage für organischen Traffic.",
+            "hosting_title": "Deployment und Hosting",
+            "hosting_text": "Wir kümmern uns um das Deployment auf den Server, die Einrichtung des SSL-Zertifikats, eine CI\/CD-Pipeline und ein grundlegendes Monitoring. Der Start ist keine Zusatzarbeit — er ist Teil des Projekts.",
+            "integrations_title": "Anbindung an externe Systeme",
+            "integrations_text": "Wir verbinden Ihre neue Software mit dem, was Sie bereits haben — ERP, Buchhaltung, Zahlungsgateways, E-Mailing oder jede beliebige API. Keine manuelle Datenübertragung.",
+            "security_title": "Sicherheit und DSGVO",
+            "security_text": "Datenverschlüsselung, Schutz vor gängigen Angriffen, korrekter Umgang mit personenbezogenen Daten. Sicherheit berücksichtigen wir von Anfang an, nicht als Flicken am Ende.",
+            "admin_title": "Administration und Inhaltsverwaltung",
+            "admin_text": "Web- und Systemlösungen verfügen über eine eigene Administrationsoberfläche. Texte, Produkte, Bestellungen oder Benutzer verwalten Sie selbst — ohne Programmierer.",
+            "support_title": "Support und Wartung",
+            "support_text": "Nach dem Start verschwinden wir nicht. Wir bieten laufenden technischen Support, Sicherheitsupdates und Monitoring. Wenn etwas schiefgeht, wissen Sie, an wen Sie sich wenden können.",
+            "custom_tags": [
+                "Web",
+                "Desktop",
+                "Mobil"
+            ],
+            "auth_tags": [
+                "Anmeldung",
+                "Rollen",
+                "Berechtigungen"
+            ],
+            "seo_tags": [
+                "Meta-Tags",
+                "Sitemap",
+                "Core Web Vitals"
+            ],
+            "hosting_tags": [
+                "Server",
+                "CI\/CD",
+                "SSL"
+            ],
+            "integrations_tags": [
+                "API",
+                "Zahlungsgateway",
+                "ERP"
+            ],
+            "security_tags": [
+                "HTTPS",
+                "Verschlüsselung",
+                "DSGVO"
+            ],
+            "admin_tags": [
+                "CMS",
+                "Dashboard",
+                "Inhaltsverwaltung"
+            ],
+            "support_tags": [
+                "Wartung",
+                "Updates",
+                "Monitoring"
+            ]
+        },
+        "pricing": {
+            "eyebrow": "Was ein Projekt umfasst",
+            "header": "Umfang der Zusammenarbeit",
+            "subheader": "Jedes Projekt ist individuell — die folgende Tabelle zeigt, was verschiedene Projekttypen typischerweise umfassen und worin sie sich unterscheiden. Den konkreten Umfang und Preis klären wir immer individuell nach einer Beratung.",
+            "note": "Die Tabelle dient nur zur Orientierung. Der tatsächliche Umfang jedes Projekts wird individuell auf Grundlage Ihrer Anforderungen festgelegt.",
+            "packages": [
+                {
+                    "id": "web-presentation",
+                    "name": "Webpräsentation",
+                    "description": "Unternehmenswebsite, Landingpage, Portfolio"
+                },
+                {
+                    "id": "web-app",
+                    "name": "Webanwendung",
+                    "description": "Onlineshop, Portal, CRM, internes System",
+                    "highlight": true
+                },
+                {
+                    "id": "desktop",
+                    "name": "Desktop-Anwendung",
+                    "description": "Tool für Windows, macOS oder Linux"
+                },
+                {
+                    "id": "mobile",
+                    "name": "Mobile App",
+                    "description": "iOS, Android oder plattformübergreifend"
+                }
+            ],
+            "features": [
+                {
+                    "key": "custom_code",
+                    "label": "Eigener Code (ohne Vorlagen)",
+                    "values": {
+                        "web-presentation": true,
+                        "web-app": true,
+                        "desktop": true,
+                        "mobile": true
+                    }
+                },
+                {
+                    "key": "responsive",
+                    "label": "Responsives Design",
+                    "values": {
+                        "web-presentation": true,
+                        "web-app": true,
+                        "desktop": "je nach Plattform",
+                        "mobile": true
+                    }
+                },
+                {
+                    "key": "cms",
+                    "label": "Inhaltsverwaltung",
+                    "tooltip": "Eigene Oberfläche zur Verwaltung von Texten, Bildern und weiteren Inhalten ohne Programmierkenntnisse.",
+                    "values": {
+                        "web-presentation": true,
+                        "web-app": true,
+                        "desktop": "je nach Projekt",
+                        "mobile": "je nach Projekt"
+                    }
+                },
+                {
+                    "key": "roles",
+                    "label": "Benutzerrollen und Berechtigungen",
+                    "tooltip": "Verschiedene Benutzer haben unterschiedliche Rechte — wer was sehen oder bearbeiten darf.",
+                    "values": {
+                        "web-presentation": false,
+                        "web-app": true,
+                        "desktop": true,
+                        "mobile": "je nach Projekt"
+                    }
+                },
+                {
+                    "key": "api",
+                    "label": "Anbindung an externe Systeme",
+                    "tooltip": "Verbindung mit ERP, Buchhaltung, Zahlungsgateway oder einer beliebigen API.",
+                    "values": {
+                        "web-presentation": false,
+                        "web-app": true,
+                        "desktop": "je nach Projekt",
+                        "mobile": true
+                    }
+                },
+                {
+                    "key": "offline",
+                    "label": "Offline-Modus",
+                    "tooltip": "Die Anwendung funktioniert auch ohne Internetverbindung, die Daten werden nach Wiederherstellung der Verbindung synchronisiert.",
+                    "values": {
+                        "web-presentation": false,
+                        "web-app": false,
+                        "desktop": "je nach Projekt",
+                        "mobile": "je nach Projekt"
+                    }
+                },
+                {
+                    "key": "store_publish",
+                    "label": "Veröffentlichung im App Store \/ Google Play",
+                    "values": {
+                        "web-presentation": false,
+                        "web-app": false,
+                        "desktop": false,
+                        "mobile": true
+                    }
+                },
+                {
+                    "key": "reporting",
+                    "label": "Reporting und Statistiken",
+                    "tooltip": "Übersichten und Diagramme auf Basis der Systemdaten zur Leistungsauswertung.",
+                    "values": {
+                        "web-presentation": false,
+                        "web-app": true,
+                        "desktop": "je nach Projekt",
+                        "mobile": false
+                    }
+                },
+                {
+                    "key": "seo",
+                    "label": "SEO-Optimierung",
+                    "tooltip": "Technische Optimierung für Suchmaschinen wie Google.",
+                    "values": {
+                        "web-presentation": true,
+                        "web-app": "je nach Projekt",
+                        "desktop": false,
+                        "mobile": false
+                    }
+                },
+                {
+                    "key": "documentation",
+                    "label": "Technische Dokumentation + Handbuch",
+                    "values": {
+                        "web-presentation": true,
+                        "web-app": true,
+                        "desktop": true,
+                        "mobile": true
+                    }
+                },
+                {
+                    "key": "support",
+                    "label": "Support und Wartung nach dem Start",
+                    "values": {
+                        "web-presentation": true,
+                        "web-app": true,
+                        "desktop": true,
+                        "mobile": true
+                    }
+                }
+            ]
+        },
+        "consultation": {
+            "eyebrow": "Unverbindlich",
+            "header": "Lassen Sie sich beraten",
+            "free_header": "Kostenlose Beratung",
+            "free_text": "Sie überlegen, in welche Richtung Sie Ihr Unternehmen online weiterentwickeln sollen? Wir besprechen gemeinsam Ihre Situation und finden eine sinnvolle Lösung — unverbindlich und ohne Kaufdruck.",
+            "free_button": "Termin vorschlagen",
+            "audit_header": "System-Audit",
+            "audit_text": "Sie haben eine Website, einen Onlineshop oder eine Anwendung, die Ihren Anforderungen nicht mehr entspricht, sind sich aber nicht sicher, warum? Wir analysieren das System gründlich und erstellen einen übersichtlichen Bericht mit Risiken, Schwachstellen und konkreten Verbesserungsschritten.",
+            "audit_button": "Anfrage ab 4.999 CZK"
+        },
+        "colab": {
+            "colab_procces_header": "Ablauf der Zusammenarbeit",
+            "item_1": {
+                "header": "Erstkontakt",
+                "text": "Sie schreiben uns oder rufen an. Wir erfassen Ihre grundlegende Projektidee und vereinbaren das weitere Vorgehen."
+            },
+            "item_2": {
+                "header": "Ausfüllen der Anfrage",
+                "text": "Wir senden Ihnen einen strukturierten Fragebogen. Er hilft uns, Umfang, Ziele und Besonderheiten des Projekts bereits vor dem Treffen zu verstehen."
+            },
+            "item_3": {
+                "header": "Treffen und Strategie",
+                "text": "Wir treffen uns persönlich oder online. Wir besprechen das Projekt ausführlich — Technologien, Umfang, Zeitrahmen und Preis."
+            },
+            "item_4": {
+                "header": "Vertragsunterzeichnung",
+                "text": "Wir einigen uns auf die Bedingungen der Zusammenarbeit und unterzeichnen den Vertrag. Damit startet das Projekt offiziell."
+            },
+            "item_5": {
+                "header": "Zugang zum Projektportal",
+                "text": "Sie erhalten Zugang zu Ihrem Projektbereich, in dem Sie den Entwicklungsstand, Meilensteine und die Kommunikation mit dem Team laufend verfolgen."
+            },
+            "item_6": {
+                "header": "Entwicklung und Fertigstellung",
+                "text": "Wir setzen das Projekt Schritt für Schritt um. Wir informieren Sie regelmäßig über den Fortschritt, sodass Sie immer wissen, was passiert."
+            },
+            "item_7": {
+                "header": "Übergabe und Schulung",
+                "text": "Wir übergeben die fertige Lösung samt technischer Dokumentation und Benutzerhandbuch. Wir führen Sie durch die Bedienung, damit Sie vom ersten Tag an selbstständig arbeiten können."
+            },
+            "item_8": {
+                "header": "Support und Wartung",
+                "text": "Auch nach dem Start sind wir für Sie da. Wir kümmern uns um Fehlerbehebungen, Sicherheitsupdates und die Weiterentwicklung — damit Ihr System auch in einem Jahr noch zuverlässig läuft."
+            }
+        }
+    },
+    "home": {
+        "knowlegde_base_btn": "Wissensdatenbank",
+        "sys_features": {
+            "header": "Was unsere Systeme beinhalten",
+            "lead": "Jedes System bauen wir mit Fokus auf Sicherheit, Leistung und langfristige Nachhaltigkeit. Das erhalten Sie standardmäßig.",
+            "demo_video_label": "Demo der Administrationsoberfläche",
+            "demo_video_placeholder": "Video in Kürze verfügbar",
+            "seo": {
+                "label": "Protokollierung",
+                "desc": "Jede Aktion in allen Teilen des Systems wird für ein mögliches Audit oder eine Analyse aufgezeichnet."
+            },
+            "auth": {
+                "label": "Authentifizierung und Rollen",
+                "desc": "Bei jeder Anmeldung erfolgt eine Reihe von Sicherheitsprüfungen. Die Verwaltung von Benutzern und Zugriffsrechten ist Teil jedes Systems."
+            },
+            "middleware": {
+                "label": "Administrationsoberfläche",
+                "desc": "Ein eigenes Admin-Panel zur Verwaltung von Inhalten, Benutzern und Einstellungen ohne Programmierkenntnisse."
+            },
+            "attack_protection": {
+                "label": "Schutz vor Angriffen",
+                "desc": "Die Abwehr von SQL-Injection, XSS, CSRF und anderen gängigen Sicherheitsbedrohungen ist Teil jedes Projekts."
+            },
+            "documentation": {
+                "label": "Technische Dokumentation",
+                "desc": "Jedes Projekt übergeben wir standardmäßig mit technischer Dokumentation und Benutzerhandbuch."
+            },
+            "integrations": {
+                "label": "API-Integration",
+                "desc": "Anbindung an ERP, Buchhaltung, Zahlungsgateways oder beliebige externe Systeme und Dienste."
+            },
+            "responsive": {
+                "label": "Responsives Design",
+                "desc": "Volle Funktionalität auf Computer, Tablet und Smartphone. Keine Kompromisse auf kleineren Bildschirmen."
+            },
+            "support": {
+                "label": "Support nach dem Start",
+                "desc": "Technischer Support und Wartung auch nach der Projektübergabe. Wir sind keine Firma, die nach der Abgabe verschwindet."
+            }
+        },
+        "hero": {
+            "heading": "Wir sind ein IT-Unternehmen,<br>das digitale Produkte baut",
+            "lead": "Wir konzipieren, entwickeln und betreiben Web-, Desktop- und Mobile-Anwendungen – von der ersten Idee bis zum Live-Betrieb.",
+            "cta_primary": "Kontakt",
+            "cta_secondary": "Unsere Leistungen",
+            "stat_1_num": "4 Jahre",
+            "stat_1_label": "am Markt",
+            "stat_2_num": "10+",
+            "stat_2_label": "abgeschlossene Projekte"
+        },
+        "faq": {
+            "heading": "Bevor Sie schreiben – vielleicht steht die Antwort schon hier",
+            "q1": "Wie lange dauert die Entwicklung eines typischen Projekts?",
+            "a1": "Das hängt vom Umfang ab — einfachere Websites schaffen wir in wenigen Wochen, komplexere Anwendungen dauern in der Regel 2–4 Monate. Eine genaue Schätzung erhalten Sie nach einer unverbindlichen Beratung.",
+            "q2": "Was kostet die Entwicklung einer Web- oder Mobile-Anwendung?",
+            "a2": "Der Preis richtet sich nach dem Umfang und den eingesetzten Technologien. Eine Orientierungspreisliste finden Sie auf der Seite Leistungen, ein konkretes Angebot erstellen wir Ihnen nach einer kostenlosen Beratung.",
+            "q3": "Bieten Sie auch nach Projektabschluss Support an?",
+            "a3": "Ja, nach dem Deployment bieten wir Service-Support und Weiterentwicklung nach Absprache — von kleinen Anpassungen bis zur langfristigen Zusammenarbeit.",
+            "q4": "Können Sie auch mit unserem bestehenden System arbeiten?",
+            "a4": "Ja, wir knüpfen regelmäßig an bestehende Lösungen an, verbinden Systeme über APIs und modernisieren sie schrittweise, ohne dass der Betrieb stillstehen muss.",
+            "more_link": "Alle Fragen anzeigen"
+        },
+        "stats_projects_text": "Team",
+        "stats_projects_count": "1",
+        "stats_years_text": "Jahre Entwicklung",
+        "stats_years_count": "4",
+        "stats_solutions_text": "Lösungen",
+        "stats_solutions_count": "∞",
+        "about": {
+            "story_heading": "Wir bauen Software, die Ihrem Unternehmen wirklich beim Wachsen hilft",
+            "story_text": "Wir sind keine Agentur, die Ihnen nur eine Website baut und dann verschwindet. Wir widmen uns der individuellen Entwicklung von Websites, Desktop- und Mobile-Anwendungen sowie Lösungen auf Basis künstlicher Intelligenz - immer mit dem Ziel, dass das Ergebnis Ihr konkretes Problem tatsächlich löst und nicht nur in einer Präsentation gut aussieht. Vom ersten Gespräch über den Architekturentwurf bis zum Deployment und langfristigen Support sind wir die ganze Zeit als ein Team an Ihrer Seite.",
+            "heading": "Individuelle Entwicklung,<br>von der Idee bis zum Deployment",
+            "lead": "Wir sind keine Vorlagen-Agentur. Jedes Projekt bauen wir von Grund auf — genau so, wie Ihr Geschäft es braucht."
+        },
+        "tech_stack": {
+            "heading": "Technologien, auf denen wir aufbauen",
+            "lead": "Moderne und bewährte Werkzeuge mit langfristigem Support – Ihr Projekt hängt nicht von einer Technologie ab, die in zwei Jahren verschwindet.",
+            "sr_list_label": "Verwendete Technologien"
+        },
+        "cta": {
+            "references": {
+                "text": "Sehen Sie sich unsere realisierten Projekte an und lassen Sie sich inspirieren.",
+                "btn": "Unsere Referenzen"
+            },
+            "contact": {
+                "text": "Kontaktieren Sie uns und wir besprechen Ihr Projekt kostenlos.",
+                "btn": "Kontakt aufnehmen"
+            }
+        }
+    },
+    "about_us": {
+        "header": "Über uns",
+        "hero_sub": "Ein Digitalstudio, das sich auf die Entwicklung moderner Produkte konzentriert — vom Web bis zur KI.",
+        "paragraph_1": "Die Gesellschaft RegioPartner s.r.o. ist seit mehr als 20 Jahren im Bereich Evaluierung und Regionalentwicklungsplanung tätig. Wir konzentrieren uns auf die Bewertung von Programmen und Projekten, die aus öffentlichen Mitteln finanziert werden, sowie auf die strategische Planung der Gebietsentwicklung. Dank dieser Erfahrung haben wir eine stabile Basis und fundiertes Fachwissen aufgebaut, auf dem wir schrittweise auch neue Aktivitäten aufbauen.",
+        "paragraph_2": "Im Jahr 2023 haben wir daher die neue Sparte RPsoftware gegründet, die die Tätigkeit des Unternehmens in Richtung moderner Technologien erweitert. RPsoftware knüpft an die bisherige IT-Unterstützung für das Stammunternehmen in den Bereichen Fragebogenerhebungen, statistische Datenverarbeitung und weitere IT-Produkte an. Neu konzentriert sie sich auf Softwareentwicklung und digitale Lösungen, insbesondere für kleine und mittlere Unternehmen sowie für Einzelpersonen, die einen zuverlässigen Partner für ihre IT-Projekte benötigen.",
+        "paragraph_3": "Unser Ziel ist es, Software zu liefern, die nicht nur technisch hochwertig, sondern auch an die konkreten Bedürfnisse der Nutzer angepasst ist. Wir bieten Komplettleistungen – von der Analyse und dem Lösungsentwurf über die eigentliche Entwicklung bis hin zu Tests, Implementierung und langfristigem Support.",
+        "paragraph_4": "RPsoftware agiert unter dem Dach der RegioPartner s.r.o. – sie stützt sich also auf denselben professionellen Hintergrund und dieselben Werte, ist aber zugleich eine spezialisierte Sparte, die sich ausschließlich auf den IT-Bereich konzentriert. Die Verbindung beider Unternehmensteile ermöglicht es uns, Erfahrungen aus Evaluierung und Entwicklungsplanung im öffentlichen Raum mit technologischen Möglichkeiten zu kombinieren und so Leistungen mit breiterem Kontext und Mehrwert anzubieten.",
+        "milestones": {
+            "heading": "Von der Gründung der Sparte bis heute",
+            "m1": {
+                "year": "2022",
+                "title": "Gründung der IT-Sparte",
+                "text": "RPSW entsteht als Software-Sparte der Gruppe RegioPartner, s.r.o. und knüpft an die fünfzehnjährige Geschichte des Mutterunternehmens an."
+            },
+            "m2": {
+                "year": "2022–2023",
+                "title": "Aufbau der Infrastruktur",
+                "text": "Wir bauen interne Prozesse, technologische Basis und Team auf — das Fundament, auf dem heute jedes gelieferte Projekt steht."
+            },
+            "m3": {
+                "year": "2024",
+                "title": "Erste externe Aufträge",
+                "text": "Wir öffnen uns für Kunden außerhalb des Mutterunternehmens und liefern die ersten maßgeschneiderten Websites, Anwendungen und KI-Lösungen."
+            },
+            "m4": {
+                "year": "Heute",
+                "title": "Stabiles Team, wachsendes Portfolio",
+                "text": "Wir verbinden den Rückhalt eines etablierten Unternehmens mit der Flexibilität eines kleineren Teams und erweitern unser Portfolio abgeschlossener Projekte stetig."
+            }
+        },
+        "cta": {
+            "ref_text": "Sehen Sie sich unsere realisierten Projekte an.",
+            "ref_btn": "Referenzen",
+            "contact_text": "Bereit für eine Zusammenarbeit?",
+            "contact_btn": "Kontaktieren Sie uns"
+        }
+    },
+    "jobs": {
+        "list_hero_eyebrow": "Karriere",
+        "list_header_1": "Karriere",
+        "list_hero_sub": "Wir suchen begeisterte Menschen, die Produkte schaffen wollen, auf die sie stolz sein können.",
+        "list_section_label": "Offene Stellen",
+        "list_cta_eyebrow": "Nichts Passendes gefunden?",
+        "list_write_us_prompt": "Schreiben Sie uns",
+        "list_cta_sub": "Senden Sie uns eine Initiativbewerbung — wir lernen gerne außergewöhnliche Menschen kennen.",
+        "list_cta_email_btn": "E-Mail schreiben",
+        "back_link": "Zurück zur Stellenübersicht",
+        "not_found": "Stelle nicht gefunden",
+        "error_eyebrow": "Fehler",
+        "item_hero_eyebrow": "Offene Stelle",
+        "item_desc_label": "Über die Stelle",
+        "item_contact_label": "Haben Sie eine Frage?",
+        "form_eyebrow": "Bewerbung",
+        "form_title": "Ich interessiere mich für diese Stelle",
+        "form_first_name_label": "Vorname",
+        "form_first_name_placeholder": "Max",
+        "form_first_name_error": "Der Vorname ist erforderlich.",
+        "form_last_name_label": "Nachname",
+        "form_last_name_placeholder": "Mustermann",
+        "form_last_name_error": "Der Nachname ist erforderlich.",
+        "form_email_label": "E-Mail",
+        "form_email_placeholder": "max@beispiel.de",
+        "form_email_required_error": "Die E-Mail ist erforderlich.",
+        "form_email_invalid_error": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+        "form_phone_label": "Telefon",
+        "form_phone_placeholder": "+420 123 456 789",
+        "form_message_label": "Nachricht \/ Anschreiben",
+        "form_message_placeholder": "Was hat Sie an der Stelle angesprochen?",
+        "form_cv_label": "Lebenslauf",
+        "form_cv_placeholder": "Klicken oder Datei hierher ziehen",
+        "form_cv_error": "Bitte fügen Sie Ihren Lebenslauf bei.",
+        "form_gdpr_text": "Ich stimme der",
+        "form_gdpr_link_text": "Verarbeitung personenbezogener Daten zu",
+        "form_submit_btn": "Bewerbung absenden",
+        "form_submitting": "Wird gesendet…",
+        "form_error_generic": "Leider konnte die Bewerbung nicht gesendet werden. Bitte versuchen Sie es später erneut.",
+        "success_title": "Vielen Dank!",
+        "success_text_before": "Ihre Bewerbung für die Stelle",
+        "success_text_after": "wurde gesendet. Wir melden uns so bald wie möglich bei Ihnen.",
+        "success_back_btn": "Zurück zur Stellenübersicht",
+        "form_first_name_pattern_error": "Der Vorname darf keine Zahlen oder Sonderzeichen enthalten.",
+        "form_last_name_pattern_error": "Der Nachname darf keine Zahlen oder Sonderzeichen enthalten.",
+        "form_phone_pattern_error": "Die Telefonnummer darf nur Ziffern und übliche Trennzeichen enthalten (+, Leerzeichen, Klammern, Bindestrich).",
+        "form_cv_size_error": "Die Datei ist zu groß. Die maximale Größe beträgt 20 MB.",
+        "form_cv_type_error": "Dieser Dateityp kann nicht hochgeladen werden. Erlaubte Typen: {types}",
+        "form_too_many_requests": "Zu viele Versuche. Bitte versuchen Sie es in Kürze erneut.",
+        "form_captcha_failed": "Die Überprüfung, dass Sie kein Roboter sind, ist fehlgeschlagen oder abgelaufen. Bitte bestätigen Sie sie erneut und senden Sie das Formular ab.",
+        "form_captcha_load": "Die Überprüfung, dass Sie kein Roboter sind, konnte nicht geladen werden. Bitte laden Sie die Seite neu oder erlauben Sie Inhalte von challenges.cloudflare.com.",
+        "form_email_limit": "Von dieser E-Mail-Adresse haben wir in letzter Zeit bereits mehrere Bewerbungen erhalten. Sie können später eine weitere senden oder uns per E-Mail kontaktieren."
+    },
+    "contact": {
+        "attachment_uploader": {
+            "limits_hint": "(max. {max} Dateien, {maxMb} MB\/Datei, {totalMb} MB insgesamt)",
+            "existing_section_title": "Bereits hochgeladene Anhänge ({count})",
+            "remove_existing_title": "Anhang entfernen",
+            "dropzone_label": "↑ Dateien auswählen oder hierher ziehen",
+            "error_max_files_with_existing": "Sie können maximal {max} Dateien hochgeladen haben (einschließlich {existing} bereits vorhandener).",
+            "error_max_files": "Sie können maximal {max} Dateien hochladen.",
+            "error_file_too_large": "Die Datei \"{filename}\" überschreitet das Limit von {maxMb} MB.",
+            "error_total_size_exceeded": "Die Gesamtgröße der Anhänge darf {maxMb} MB nicht überschreiten.",
+            "total_label": "Gesamt: {count} \/ {max} Dateien",
+            "total_new_suffix": "({size} neu)",
+            "error_file_type": "Die Datei \"{filename}\" kann nicht hochgeladen werden – der Typ {ext} ist nicht erlaubt.",
+            "allowed_types_hint": "Erlaubte Typen: {types}"
+        },
+        "side_label": "KONTAKT",
+        "brand_headline": "Lassen Sie uns<br>zusammenarbeiten.",
+        "brand_sub": "Wir hören uns gerne Ihre Idee an — vom ersten Gespräch bis zum Produktstart.",
+        "form_title": "Anfrageformular",
+        "labels": {
+            "subject": "Thema",
+            "email": "E-Mail",
+            "phone": "Telefon",
+            "message": "Nachricht",
+            "attachment": "Anhang",
+            "gdpr_consent": "Ich stimme der",
+            "gdpr_link": "Verarbeitung personenbezogener Daten zu"
+        },
+        "options": {
+            "placeholder": "Thema auswählen…",
+            "new_project": "Neues Projekt \/ Anfrage",
+            "support": "Support für ein bestehendes Projekt",
+            "careers": "Zusammenarbeit \/ Karriere",
+            "other": "Sonstige Frage"
+        },
+        "placeholders": {
+            "email": "ihre@email.de",
+            "phone": "+420 123 456 789",
+            "message": "Beschreiben Sie Ihr Projekt — je mehr Details, desto genauer können wir unser Angebot erstellen."
+        },
+        "errors": {
+            "subject_required": "Bitte wählen Sie das Thema Ihrer Nachricht aus.",
+            "email_invalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+            "phone_pattern": "Bitte geben Sie ein gültiges Nummernformat ein (z. B. +420123456789, nur Ziffern und optional + am Anfang).",
+            "phone_max": "Die Telefonnummer ist zu lang (max. 20 Zeichen).",
+            "message_required": "Die Nachricht ist erforderlich.",
+            "message_minlength": "Die Nachricht muss mindestens 10 Zeichen lang sein.",
+            "message_maxlength": "Die Nachricht darf nicht mehr als 10.000 Zeichen enthalten.",
+            "submit_error": "Senden fehlgeschlagen. Bitte versuchen Sie es erneut.",
+            "submit_error_title": "Senden fehlgeschlagen",
+            "too_many_requests": "Zu viele Versuche. Bitte versuchen Sie es in Kürze erneut.",
+            "attachment_rejected": "Der Server hat einen der Anhänge abgelehnt (unzulässiger Typ oder Größe). Bitte prüfen Sie die Anhänge und senden Sie das Formular erneut.",
+            "captcha_failed": "Die Überprüfung, dass Sie kein Roboter sind, ist fehlgeschlagen oder abgelaufen. Bitte bestätigen Sie sie erneut und senden Sie das Formular ab.",
+            "captcha_load": "Die Überprüfung, dass Sie kein Roboter sind, konnte nicht geladen werden. Bitte laden Sie die Seite neu oder erlauben Sie Inhalte von challenges.cloudflare.com.",
+            "email_limit": "Von dieser E-Mail-Adresse haben wir in letzter Zeit bereits mehrere Nachrichten erhalten. Sie können später eine weitere senden oder uns telefonisch kontaktieren."
+        },
+        "buttons": {
+            "send": "Anfrage senden",
+            "sending": "Wird gesendet…",
+            "go_home": "← Zurück zur Startseite"
+        },
+        "thank_you": {
+            "title": "Vielen Dank!",
+            "text": "Wir haben Ihre Nachricht erhalten. Wir antworten in der Regel innerhalb von 48 Stunden — spätestens am nächsten Werktag."
+        }
+    },
+    "not_found": {
+        "header": "Seite nicht gefunden",
+        "text": "Hier gibt es nichts, aber unsere Startseite hat einiges zu bieten.",
+        "button": "Zurück zur Startseite"
+    },
+    "privacy_policy": {
+        "header_main": "Datenschutzerklärung",
+        "last_update_text": "Letzte Aktualisierung:",
+        "effective_from_text": "Diese Erklärung gilt ab dem {date}."
+    },
+    "tos": {
+        "header_main": "Allgemeine Geschäftsbedingungen",
+        "last_update_text": "Letzte Aktualisierung:",
+        "more_info_text": "Weitere Informationen finden Sie in der",
+        "more_info_link_text": "Datenschutzerklärung",
+        "effective_from_text": "Diese Bedingungen gelten ab dem {date}."
+    },
+    "cookie_consent": {
+        "aria_label": "Cookie-Einwilligungseinstellungen",
+        "title": "Wir verwenden Cookies",
+        "description": "Wir verwenden Cookies, um die Funktionalität der Website sicherzustellen, und mit Ihrer Einwilligung auch für Analyse- und Marketingzwecke. Einzelheiten finden Sie in unserer Cookie-Richtlinie.",
+        "btn_settings": "Einstellungen",
+        "btn_necessary_only": "Nur notwendige",
+        "btn_accept_all": "Alle akzeptieren",
+        "btn_back": "Zurück",
+        "btn_save_settings": "Einstellungen speichern",
+        "settings_title": "Cookie-Einwilligungseinstellungen",
+        "settings_desc": "Wählen Sie, welche Cookie-Kategorien Sie zulassen möchten. Notwendige Cookies können nicht deaktiviert werden, da die Website ohne sie nicht richtig funktionieren würde.",
+        "cat_necessary": {
+            "label": "Notwendig",
+            "desc": "Erforderlich für die grundlegende Funktion der Website (z. B. Speichern Ihrer Präferenzen). Ohne diese Cookies kann die Website nicht richtig funktionieren."
+        },
+        "cat_functional": {
+            "label": "Funktional",
+            "desc": "Ermöglichen es der Website, sich Ihre Einstellungen zu merken (z. B. die gewählte Sprache) und Ihnen ein komfortableres Surfen zu bieten."
+        },
+        "cat_analytics": {
+            "label": "Analyse",
+            "desc": "Helfen uns zu verstehen, wie Besucher die Website nutzen, damit wir sie schrittweise verbessern können (z. B. Google Analytics)."
+        },
+        "cat_marketing": {
+            "label": "Marketing",
+            "desc": "Werden verwendet, um relevantere Werbung basierend auf Ihren Interessen anzuzeigen, auch auf anderen Websites."
+        }
+    },
+    "cookies_policy": {
+        "header_main": "Cookie-Richtlinie",
+        "last_update_text": "Letzte Aktualisierung:",
+        "change_settings_text": "Ihre Einwilligung zu den einzelnen Cookie-Kategorien können Sie jederzeit ändern über die",
+        "change_settings_link_text": "Cookie-Einstellungen",
+        "more_info_text": "Einzelheiten zur Verarbeitung personenbezogener Daten finden Sie in unserer",
+        "more_info_link_text": "Datenschutzerklärung",
+        "effective_from_text": "Diese Richtlinie gilt ab dem {date}."
+    },
+    "knowledge-base": {
+        "knowledge-base_footer": "Hilfecenter",
+        "cta": {
+            "text": "Wenn Ihnen etwas unklar ist oder Sie Details speziell zu Ihrem Projekt besprechen möchten, melden wir uns gerne bei Ihnen.",
+            "btn": "Kontaktieren Sie uns"
+        }
+    },
+    "language_suggestion": {
+        "text": "Diese Seite ist auch auf Deutsch verfügbar.",
+        "action": "Auf Deutsch wechseln",
+        "dismiss": "Schließen"
+    }
+}

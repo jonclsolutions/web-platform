@@ -62,13 +62,15 @@ describe('ShopMaintenanceComponent', () => {
   /**
    * @description Guard: maintenance URL passes; shop off → UrlTree '/shop/maintenance'; on →
    *   true; status error → true.
-   * @input router.url '/shop/maintenance'; '/shop' with off / on / error.
-   * @output true (no request); UrlTree; true; true.
+   * @input router.url '/shop/maintenance' and '/cs/shop/maintenance'; '/shop' with off / on / error.
+   * @output true twice (no request); UrlTree; true; true.
    */
   it('guards the shop by its maintenance status', () => {
     const run = () => TestBed.runInInjectionContext(() => shopMaintenanceGuard());
     const value = (result: any) => { let v: any; (result as Observable<any>).subscribe(r => (v = r)); return v; };
     const url = spyOnProperty(router, 'url', 'get').and.returnValue('/shop/maintenance');
+    expect(run()).toBeTrue();
+    url.and.returnValue('/cs/shop/maintenance'); // the URL carries the language
     expect(run()).toBeTrue();
     expect(ctx.publicData.getFresh).not.toHaveBeenCalled();
 

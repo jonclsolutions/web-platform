@@ -6,7 +6,7 @@
  * @created 2026
  * @description Unit tests of PublicHeaderComponent: texts and settings, no language switcher
  *   (it is in the footer since 2026-11), the active link highlight + sliding indicator after
- *   navigation (desktop only), the scrolled state, mobile menu / scroll lock and that a destroyed
+ *   navigation (desktop only; also for URLs with a language), the scrolled state, mobile menu / scroll lock and that a destroyed
  *   header no longer reacts to navigation (bugfix 2026-10-23).
  * @dependencies
  * - createPublicPageContext with real routes (dummy page); window.innerWidth / scrollY spied;
@@ -15,7 +15,8 @@
 
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { Event as RouterEvent, NavigationEnd, Router } from '@angular/router';
+import { Subject } from 'rxjs';
 
 import { PublicHeaderComponent } from './public-header.component';
 import { PublicPageContext, createPublicPageContext } from '../../../../../../testing/public-test-helpers';
@@ -94,6 +95,26 @@ describe('PublicHeaderComponent', () => {
 
     tick(400);
     expect(header.showIndicator).toBeFalse();
+    expect(link('/services').classList.contains('active')).toBeTrue();
+    expect(link('/home').classList.contains('active')).toBeFalse();
+    fixture.destroy();
+    flush();
+  }));
+
+  /**
+   * @description URLs carry the language (`/cs/services`, 2026-11): the link `/services` is still
+   *   recognized as the active one.
+   * @input NavigationEnd with urlAfterRedirects '/cs/services' (router.url the same); tick 400.
+   * @output /services highlighted, then active; /home not active.
+   */
+  it('highlights the active link of a URL with a language', fakeAsync(() => {
+    create();
+    tick(50);
+    spyOnProperty(router, 'url', 'get').and.returnValue('/cs/services');
+    (router.events as Subject<RouterEvent>).next(new NavigationEnd(1, '/cs/services', '/cs/services'));
+    tick();
+    expect(link('/services').classList.contains('highlight-text')).toBeTrue();
+    tick(440);
     expect(link('/services').classList.contains('active')).toBeTrue();
     expect(link('/home').classList.contains('active')).toBeFalse();
     fixture.destroy();

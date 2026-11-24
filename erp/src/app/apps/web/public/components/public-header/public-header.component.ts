@@ -29,6 +29,7 @@ import { LocalizationService } from '../../../../../shared/services/localization
 import { PublicDataService } from '../../../../../shared/services/public-data.service';
 import * as Web from '../../web-providers';
 import { hasApp } from '../../../../apps.registry';
+import { stripLanguagePrefix } from '../../../../../shared/utils/language-url';
 
 /**
  * @description Component for the main navigation header.
@@ -111,13 +112,14 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     this.router.events.pipe(filter(event => event instanceof NavigationEnd), takeUntil(this.destroy$))
       .subscribe((event: NavigationEnd) => {
         window.scrollTo(0, 0);
-        this.currentActiveRoute = (event as NavigationEnd).urlAfterRedirects;
+        // Links are compared without the language of the URL (`/cs/services` → `/services`).
+        this.currentActiveRoute = stripLanguagePrefix((event as NavigationEnd).urlAfterRedirects);
         this.handleRouteChange();
       });
 
     // Initial check for current route
     this.initialRouteTimeout = setTimeout(() => {
-      this.currentActiveRoute = this.router.url;
+      this.currentActiveRoute = stripLanguagePrefix(this.router.url);
       this.handleRouteChange();
     }, 0);
 
@@ -252,7 +254,7 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (!targetLinkElement) {
       targetLinkElement = allLinks.find(link =>
-        link.getAttribute('routerLink') && this.router.url.startsWith(link.getAttribute('routerLink')!)
+        link.getAttribute('routerLink') && stripLanguagePrefix(this.router.url).startsWith(link.getAttribute('routerLink')!)
       );
     }
 
