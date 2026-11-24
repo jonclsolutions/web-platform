@@ -67,3 +67,30 @@
   margin: 0;
   color: var(--text-dim);
 }
+
+/*
+    @module: Missing texts banner
+    @description: Orange banner of the texts tab when an active language lacks texts (the
+        attention kind of the notifications): the total and one button per language that opens it
+        with only its missing texts. Wraps under the text on a narrow screen.
+    @usage: .ew-missing-banner > .ew-missing-banner-icon + .ew-missing-banner-text + .ew-missing-banner-actions > .ew-btn
+*/
+.ew-missing-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-amber-200);
+  border-radius: 10px;
+  background: var(--color-amber-50);
+  color: var(--color-amber-800);
+  font-size: 0.85rem;
+}
+
+.ew-missing-banner-icon { flex-shrink: 0; }
+
+.ew-missing-banner-text { flex: 1 1 220px; }
+
+.ew-missing-banner-actions { display: flex; flex-wrap: wrap; gap: 6px; }

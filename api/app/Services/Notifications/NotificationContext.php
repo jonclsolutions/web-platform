@@ -112,11 +112,18 @@ final class NotificationContext
      * @param string $kind Kind key (KIND_PATTERN, unique over all sources).
      * @param string $link Admin page where the work is done.
      * @param int $count Things needing attention now.
-     * @return array{kind: string, module: string, link: string, count: int, attention: true}
+     * @param array<string, int> $languages Optional split of the count per language (texts missing
+     *   in a language - the badge tells which one); left out of the answer when empty.
+     * @return array{kind: string, module: string, link: string, count: int, attention: true, languages?: array<string, int>}
      */
-    public function attention(string $kind, string $link, int $count): array
+    public function attention(string $kind, string $link, int $count, array $languages = []): array
     {
-        return ['kind' => $kind, 'module' => $this->module, 'link' => $link, 'count' => max(0, $count), 'attention' => true];
+        $entry = ['kind' => $kind, 'module' => $this->module, 'link' => $link, 'count' => max(0, $count), 'attention' => true];
+        if ($languages !== []) {
+            $entry['languages'] = $languages;
+        }
+
+        return $entry;
     }
 
     /**

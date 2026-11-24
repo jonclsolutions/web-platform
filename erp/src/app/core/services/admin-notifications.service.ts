@@ -14,12 +14,16 @@
  *   item) marks the kind as seen. When a number grows, a notice pops up top right (toast; a click
  *   opens the page) - the admin can switch the notices off in this browser (personal info page).
  * @note Attention kinds (`attention: true`, e.g. texts missing in a language) are a current state
- *   that needs work, not unread records: their number is orange, opening the page does not clear
- *   it (it drops when the work is done) and their notice is a warning. A badge shared by both
- *   kinds (section, module) shows the red unread number first, the orange one only without it.
+ *   that needs work, not unread records: opening the page does not clear them (they drop when
+ *   the work is done) and their notice is a warning. A badge (2026-11) shows the red NUMBER of
+ *   unread records only; attention is an orange DOT next to it - at the page, the section, the
+ *   module and the module switcher, so it never gets lost. Its label (tooltip + screen reader)
+ *   names every kind behind it with its count, texts missing per language ("Chybějící texty
+ *   webu: 123 (angličtina 120, čeština 3)").
  * @usage AdminLayoutComponent calls start() while a user is signed in and stop() otherwise.
  * @dependencies DataHandler (getQuietly / postQuietly), Router, AlertDialogService,
- *   AdminLocalizationService (section `notifications`).
+ *   AdminLocalizationService (section `notifications`, the admin locale for language names),
+ *   language-url (`cz` -> `cs` for Intl language names).
  */
 
 import { Injectable, inject, signal } from '@angular/core';
@@ -28,6 +32,7 @@ import { EMPTY, Subscription, distinctUntilChanged, filter, fromEvent, map, star
 import { DataHandler } from './data-handler.service';
 import { AlertDialogService } from './alert-dialog.service';
 import { AdminLocalizationService } from './admin-localization.service';
+import { urlCodeOfLanguage } from '../../shared/utils/language-url';
 
 /** One kind of records with the number of unread ones (`core/notifications`). */
 export interface NotificationKind {
@@ -41,14 +46,21 @@ export interface NotificationKind {
   count: number;
   /** A current state needing work (orange, never marked as seen) - absent for unread kinds. */
   attention?: boolean;
+  /** Split of an attention count per language (texts missing), e.g. { en: 120, cz: 3 }. */
+  languages?: Record<string, number>;
 }
 
-/** Badge of a menu item / section / module: its text and whether it is the orange attention one. */
+/**
+ * Badge of a menu item / section / module: the red number of unread records and / or the orange
+ * dot of things needing attention, with the label naming what is behind them.
+ */
 export interface NavBadge {
-  /** Number ("99+" above NOTIFICATIONS_BADGE_MAX). */
-  text: string;
-  /** Orange attention badge (no unread records behind it, only work to do). */
+  /** Red number of unread records ("99+" above NOTIFICATIONS_BADGE_MAX); null without any. */
+  text: string | null;
+  /** Orange dot: something needs attention (texts missing in a language …). */
   attention: boolean;
+  /** Tooltip and screen-reader text, e.g. "Nové poptávky: 3 · Chybějící texty webu: 123 (angličtina 120)". */
+  label: string;
 }
 
 /** Answer of `core/notifications` and `core/notifications/seen`. */
@@ -151,21 +163,57 @@ export class AdminNotificationsService {
     return this.navBadge(this.kinds().filter(k => k.module === module));
   }
 
-  /** @description Badge of all applications (every module but the core). */
-  appsBadge(): NavBadge | null {
-    return this.navBadge(this.kinds().filter(k => k.module !== 'core'));
-  }
-
   /**
-   * @description Badge of a set of kinds: the red number of unread records, or - without any -
-   *   the orange number of the attention kinds, null when there is nothing.
+   * @description Badge of a set of kinds: the red number of unread records and the orange dot
+   *   when something needs attention (both can show); null when there is nothing.
    * @param kinds Kinds behind the badge.
    */
   navBadge(kinds: NotificationKind[]): NavBadge | null {
-    const unread = kinds.filter(k => !k.attention).reduce((sum, k) => sum + k.count, 0);
-    if (unread > 0) return { text: this.badge(unread)!, attention: false };
-    const attention = kinds.filter(k => k.attention).reduce((sum, k) => sum + k.count, 0);
-    return attention > 0 ? { text: this.badge(attention)!, attention: true } : null;
+    const active = kinds.filter(k => k.count > 0);
+    if (!active.length) return null;
+    const unread = active.filter(k => !k.attention).reduce((sum, k) => sum + k.count, 0);
+    return {
+      text: this.badge(unread),
+      attention: active.some(k => k.attention),
+      label: active.map(k => this.kindLabel(k)).join(' · '),
+    };
+  }
+
+  /**
+   * @description One kind in a badge label: its name and count, texts missing per language.
+   * @param kind Kind with a count.
+   * @returns e.g. "Nové poptávky: 3", "Chybějící texty webu: 123 (angličtina 120, čeština 3)".
+   */
+  kindLabel(kind: NotificationKind): string {
+    const languages = Object.entries(kind.languages ?? {})
+      .filter(([, count]) => count > 0)
+      .sort(([, a], [, b]) => b - a)
+      .map(([code, count]) => `${this.languageName(code)} ${count}`);
+    return `${this.kindTitle(kind)}: ${kind.count}` + (languages.length ? ` (${languages.join(', ')})` : '');
+  }
+
+  /**
+   * @description Name of a kind (`notifications.kind_<kind>`), the generic one without a text.
+   * @param kind Kind.
+   */
+  private kindTitle(kind: NotificationKind): string {
+    const key = `notifications.kind_${kind.kind}`;
+    const title = this.i18n.getValue(key);
+    return title && title !== key ? title : this.i18n.getValue('notifications.kind_generic');
+  }
+
+  /**
+   * @description Name of a language in the admin language ("angličtina"), the code when the
+   *   browser does not know it.
+   * @param code Language code of the translations (`cz` = Czech).
+   */
+  private languageName(code: string): string {
+    try {
+      const names = new Intl.DisplayNames([this.i18n.getDateLocale()], { type: 'language' });
+      return names.of(urlCodeOfLanguage(code)) ?? code.toUpperCase();
+    } catch {
+      return code.toUpperCase();
+    }
   }
 
   /**
@@ -252,12 +300,9 @@ export class AdminNotificationsService {
    * @param kind Kind whose number grew.
    */
   private notify(kind: NotificationKind): void {
-    const titleKey = `notifications.kind_${kind.kind}`;
-    const title = this.i18n.getValue(titleKey);
     const messageKey = kind.attention ? 'notifications.attention_toast_message' : 'notifications.toast_message';
     const message = this.i18n.getValue(messageKey).replace('{count}', String(kind.count));
-    this.alert.open(title && title !== titleKey ? title : this.i18n.getValue('notifications.kind_generic'), message,
-      kind.attention ? 'warning' : 'info', () => this.router.navigateByUrl(kind.link));
+    this.alert.open(this.kindTitle(kind), message, kind.attention ? 'warning' : 'info', () => this.router.navigateByUrl(kind.link));
   }
 
   /** @description The "pop-up notices" choice of this browser (on unless switched off). */

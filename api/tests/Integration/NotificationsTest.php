@@ -144,8 +144,9 @@ class NotificationsTest extends TestCase
      *   mark, it drops when the texts are filled; only admins who may edit the texts get it.
      * @input Temporary storage: web cz {a, g.b, g.c: ''}, de (active) {a, g.b: ''}, sk inactive;
      *   shop cz complete. Editor (view + update) and viewer (view only).
-     * @output web_texts_missing 3 with attention, shop_texts_missing 0; after seen still 3, no
-     *   mark; after de filled 1; viewer has no texts kind.
+     * @output web_texts_missing 3 with attention and the split per language (cz 1, de 2),
+     *   shop_texts_missing 0 without a split; after seen still 3, no mark; after de filled 1 (cz 1);
+     *   viewer has no texts kind.
      */
     public function test_missing_texts_are_an_attention_kind(): void
     {
@@ -167,14 +168,17 @@ class NotificationsTest extends TestCase
         try {
             $editor = $this->signIn($this->userWith(['view-web', 'web-edit-website-view', 'web-edit-website-update', 'view-eshop', 'shop-edit-eshop-view', 'shop-edit-eshop-update']));
             $kinds = collect($this->getJson('/api/core/notifications')->assertOk()->json('data.kinds'))->keyBy('kind');
-            $this->assertSame(['kind' => 'web_texts_missing', 'module' => 'web', 'link' => '/admin/web/edit-website', 'count' => 3, 'attention' => true], $kinds['web_texts_missing']);
+            $this->assertSame(['kind' => 'web_texts_missing', 'module' => 'web', 'link' => '/admin/web/edit-website', 'count' => 3, 'attention' => true,
+                'languages' => ['cz' => 1, 'de' => 2]], $kinds['web_texts_missing']);
             $this->assertSame(0, $kinds['shop_texts_missing']['count']);
+            $this->assertArrayNotHasKey('languages', $kinds['shop_texts_missing']);
 
             $this->assertSame(3, $this->counts('/api/core/notifications/seen', ['kinds' => ['web_texts_missing']])['web_texts_missing']);
             $this->assertFalse(CoreNotificationMark::where('user_id', $editor->id)->where('kind', 'web_texts_missing')->exists());
 
             File::put($dir . '/web/de.json', json_encode(['a' => 'A de', 'g' => ['b' => 'B de', 'c' => 'C de']]));
             $this->assertSame(1, $this->counts()['web_texts_missing']);
+            $this->assertSame(['cz' => 1], collect($this->getJson('/api/core/notifications')->json('data.kinds'))->keyBy('kind')['web_texts_missing']['languages']);
 
             $this->signIn($this->userWith(['view-web', 'web-edit-website-view']));
             $this->assertArrayNotHasKey('web_texts_missing', $this->counts());

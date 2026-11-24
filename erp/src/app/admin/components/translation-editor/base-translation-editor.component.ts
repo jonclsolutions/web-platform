@@ -388,6 +388,10 @@ export abstract class BaseTranslationEditorComponent
           this.translations = structuredClone(data ?? {});
           this.buildFlatList();
           this.applyFilter();
+          if (this.missingAfterLoad) {
+            this.missingAfterLoad = false;
+            this.filterMissing();
+          }
         },
         error: () => {
           this.translations = this.buildEmptyFromCz(this.czTranslations);
@@ -482,6 +486,41 @@ export abstract class BaseTranslationEditorComponent
     this.searchQuery = '';
     this.filteredKeys = this.flattenedKeys.filter(k => k.missing);
     this.cd.markForCheck();
+  }
+
+  /** A language opened from the "texts missing" banner shows only its missing texts once loaded. */
+  private missingAfterLoad = false;
+
+  /**
+   * @description Active languages missing texts - the split of the attention kind
+   *   `<module>_texts_missing` (the same numbers as the orange dot in the menu), most missing first.
+   * @returns Code, name (from the language list, else the code) and count of every such language.
+   */
+  get missingLanguages(): { code: string; name: string; count: number }[] {
+    const kind = this.notifications.kinds().find(k => k.kind === `${this.MODULE}_texts_missing`);
+    return Object.entries(kind?.languages ?? {})
+      .filter(([, count]) => count > 0)
+      .sort(([, a], [, b]) => b - a)
+      .map(([code, count]) => ({ code, count, name: this.languages.find(l => l.code === code)?.name ?? code.toUpperCase() }));
+  }
+
+  /** @returns All texts missing in the active languages (sum of missingLanguages). */
+  get missingTotal(): number {
+    return this.missingLanguages.reduce((sum, item) => sum + item.count, 0);
+  }
+
+  /**
+   * @description Banner button: opens a language with only its missing texts (the current
+   *   language is filtered at once, another one after it loads).
+   * @param code Language code.
+   */
+  showMissingIn(code: string): void {
+    if (this.currentLang === code && this.flattenedKeys.length) {
+      this.filterMissing();
+      return;
+    }
+    this.missingAfterLoad = true;
+    this.loadLang(code);
   }
 
   resetFilter(): void {

@@ -56,6 +56,23 @@
     </div>
   </div>
 
+  <!-- Texts missing in the active languages (the orange dot of the menu): which languages lack
+       them and a button per language that opens it with only its missing texts. -->
+  @if (e.missingLanguages.length) {
+    <div class="ew-missing-banner" role="status">
+      <svg class="ew-missing-banner-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span class="ew-missing-banner-text">{{ e.t('missing_banner_text').replace('{count}', '' + e.missingTotal) }}</span>
+      <span class="ew-missing-banner-actions">
+        @for (item of e.missingLanguages; track item.code) {
+          <button type="button" class="ew-btn ew-btn--warn-outline ew-btn--sm" (click)="e.showMissingIn(item.code)"
+                  [title]="e.t('missing_banner_button_title').replace('{lang}', item.name)">
+            {{ item.name }}: {{ item.count }}
+          </button>
+        }
+      </span>
+    </div>
+  }
+
   <div class="ew-lang-panel">
     <div class="ew-lang-tabs">
       @for (lang of e.languages; track e.trackByCode($index, lang)) {

@@ -137,12 +137,12 @@
             },
             {
               "type": "text",
-              "content": "Červené číslo u položky menu říká, kolik je na stránce nových záznamů, které jste ještě neviděli - například nové poptávky, přihlášky uchazečů, objednávky, produkty pod skladovým limitem, leady po termínu kontaktu nebo bezpečnostní události. Číslo je osobní: počítá se od vaší poslední návštěvy stránky a zmizí, jakmile ji otevřete. Nad 99 záznamů se ukazuje „99+“. Součet nepřečtených ze všech modulů má i přepínač modulů (v jeho seznamu má každý modul svůj počet) a sbalená sekce menu svůj součet; na mobilu upozorní červená tečka na tlačítku menu nebo panelu. Systém se na novinky ptá jednou za minutu, a jen když je karta s administrací otevřená v popředí. Když nějaké číslo vzroste, vpravo nahoře se ukáže upozornění - kliknutím otevřete příslušnou stránku. Čísla vidíte jen u stránek, ke kterým máte oprávnění. Oranžové číslo znamená práci, která čeká na vás - například texty webu nebo e-shopu a obsah webu (FAQ, kariéra, reference, znalostní báze), kterým v některém zapnutém jazyce chybí překlad (typicky po aktualizaci aplikace). Otevřením stránky nezmizí, zmizí až po doplnění; červené číslo nepřečtených má ve společném součtu přednost."
+              "content": "Červené číslo u položky menu říká, kolik je na stránce nových záznamů, které jste ještě neviděli - například nové poptávky, přihlášky uchazečů, objednávky, produkty pod skladovým limitem, leady po termínu kontaktu nebo bezpečnostní události. Číslo je osobní: počítá se od vaší poslední návštěvy stránky a zmizí, jakmile ji otevřete. Nad 99 záznamů se ukazuje „99+“. Součet nepřečtených ze všech modulů má i přepínač modulů (v jeho seznamu má každý modul svůj počet) a sbalená sekce menu svůj součet; na mobilu upozorní tečka na tlačítku menu. Systém se na novinky ptá jednou za minutu, a jen když je karta s administrací otevřená v popředí. Když nějaké číslo vzroste, vpravo nahoře se ukáže upozornění - kliknutím otevřete příslušnou stránku. Čísla vidíte jen u stránek, ke kterým máte oprávnění. Oranžová tečka znamená práci, která čeká na vás - například texty webu nebo e-shopu a obsah webu (FAQ, kariéra, reference, znalostní báze), kterým v některém zapnutém jazyce chybí překlad (typicky po aktualizaci aplikace). Tečka je u stránky, u sekce menu, u modulu v přepínači i na přepínači samotném - i vedle červeného čísla, aby nezapadla. Otevřením stránky nezmizí, zmizí až po doplnění. Po najetí myší na číslo nebo tečku uvidíte, co přesně počítá - například „Chybějící texty webu: 123 (angličtina 120, čeština 3)“."
             },
             {
               "type": "note",
               "highlight": "Na mobilu a tabletu",
-              "content": "Menu se otevírá tlačítkem vlevo nahoře a zavře se klepnutím mimo něj. Údaje o účtu, hodiny, přepínání modulů, jazyk a kalendář jsou schované v panelu, který otevřete ikonou vpravo nahoře. Nápověda je dole v menu."
+              "content": "Menu se otevírá tlačítkem vlevo nahoře a zavře se klepnutím mimo něj. Uprostřed hlavičky je přepínač modulů. Vaše profilová fotka vpravo nahoře otevře panel účtu: e-mail a role, Osobní informace, kalendář, jazyk a Odhlásit se. Nápověda je dole v menu."
             }
           ]
         },
@@ -1060,7 +1060,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "ikonou kalendáře v hlavičce administrace (na mobilu v panelu vpravo nahoře),",
+                "ikonou kalendáře v hlavičce administrace (na mobilu v panelu účtu - profilová fotka vpravo nahoře),",
                 "položkou Kalendář v menu Core, sekce Přehled."
               ]
             }
@@ -1677,7 +1677,7 @@
               "ordered": false,
               "items": [
                 "Volba platí jen v tomto prohlížeči - v jiném prohlížeči nebo na jiném zařízení ji nastavíte zvlášť.",
-                "Červená čísla nepřečtených záznamů a oranžová čísla práce, která na vás čeká, se v menu zobrazují vždy, i když upozornění vypnete.",
+                "Červená čísla nepřečtených záznamů a oranžové tečky práce, která na vás čeká, se v menu zobrazují vždy, i když upozornění vypnete.",
                 "Upozornění obsahuje jen počet a druh záznamů, nikdy jména ani e-maily."
               ]
             }

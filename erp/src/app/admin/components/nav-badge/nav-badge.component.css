@@ -1,0 +1,47 @@
+/*
+    @file: nav-badge.component.css
+    @path: /src/app/admin/components/nav-badge/nav-badge.component.css
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Look of the navigation badge: red pill with the number of unread records,
+        orange dot of things needing attention, side by side. --nb-size (default 18px) sets the
+        height of the number; the dot is about half of it.
+    @dependencies: colour tokens (--color-rose-600, --color-amber-600, --color-white)
+*/
+
+/*
+    @module: Navigation badge
+    @usage: <app-nav-badge> > .nb-count + .nb-dot
+*/
+:host {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+:host(.nb-empty) { display: none; }
+
+.nb-count {
+  min-width: var(--nb-size, 18px);
+  height: var(--nb-size, 18px);
+  padding: 0 calc(var(--nb-size, 18px) * 0.28);
+  border-radius: 999px;
+  background: var(--color-rose-600);
+  color: var(--color-white);
+  font-family: var(--ff, inherit);
+  font-size: calc(var(--nb-size, 18px) * 0.6);
+  font-weight: 700;
+  line-height: var(--nb-size, 18px);
+  text-align: center;
+  letter-spacing: 0;
+}
+
+.nb-dot {
+  width: calc(var(--nb-size, 18px) * 0.5);
+  height: calc(var(--nb-size, 18px) * 0.5);
+  border-radius: 50%;
+  background: var(--color-amber-600);
+}

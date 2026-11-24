@@ -42,7 +42,8 @@ final class WebNotificationSource implements NotificationSource
         }
 
         if ($context->can('web-edit-website-update')) {
-            $kinds[] = $context->attention('web_texts_missing', '/admin/web/edit-website', MissingTranslations::count('web'));
+            $missing = MissingTranslations::byLanguage('web');
+            $kinds[] = $context->attention('web_texts_missing', '/admin/web/edit-website', array_sum($missing), $missing);
             foreach (WebContentMissing::counts() as $tab => $count) {
                 $kinds[] = $context->attention(self::CONTENT_KINDS[$tab], '/admin/web/edit-website', $count);
             }

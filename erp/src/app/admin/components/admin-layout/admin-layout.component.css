@@ -204,7 +204,7 @@
     @description: ONE button of the header that names the module the user is in (Core or an
         application) and its menu: the core, a separator, the applications the user may open and
         a link to the page of all applications. With a single module only its name (pill).
-    @usage: .apps-switcher, .apps-switcher-btn(.active), .apps-menu-backdrop, .apps-menu, .apps-menu-item(.active), .apps-menu-separator, .apps-menu-all, .module-current-pill
+    @usage: .apps-switcher, .apps-switcher-btn(.active) > .apps-switcher-name, .apps-menu-backdrop, .apps-menu, .apps-menu-item(.active), .apps-menu-separator, .apps-menu-all, .module-current-pill
 */
 .apps-switcher {
   position: relative;
@@ -321,24 +321,6 @@
 .apps-menu-all:hover,
 .apps-menu-all:focus-visible { color: var(--text); outline: none; text-decoration: underline; }
 
-/*
-    @module: Current module (mobile)
-    @description: Name of the module the user is in, centred in the header - only on mobile,
-        where the tabs and the switcher move into the slide-out panel. Centred on the whole header
-        (not between the buttons), so it stays in the middle whatever is left and right of it; a
-        long name ends with an ellipsis before it reaches the buttons.
-    @usage: .header-current-module
-*/
-.header-current-module {
-  display: none;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* ── Header right group ─────────────────────────────────────── */
 .header-right {
   margin-left: auto;
@@ -379,26 +361,24 @@
   background: var(--surface);
 }
 
-/* Hamburger of the mobile panel - hidden on desktop, shown by the media query below. */
+/* Own avatar opening the account panel - hidden on desktop, shown by the media query below. */
 .mobile-actions-toggle {
   display: none;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
+  padding: 0;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--surface);
-  color: var(--text-muted);
   cursor: pointer;
-  transition: background var(--ease), color var(--ease);
+  transition: border-color var(--ease);
   flex-shrink: 0;
 }
 
-.mobile-actions-toggle:hover {
-  background: var(--surface-2);
-  color: var(--text);
-}
+.mobile-actions-toggle:hover,
+.mobile-actions-toggle[aria-expanded="true"] { border-color: var(--text-muted); }
 
 /* ── Mobile slide-out panel ─────────────────────────────────── */
 .mobile-actions-overlay {
@@ -466,61 +446,10 @@
   border: 1px solid var(--accent-dim-2);
 }
 
-.map-clock {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 0.8rem;
-  color: var(--text-dim);
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border);
-}
-
-.map-module-switcher {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.map-module-switcher button {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  font-weight: 600;
-  font-family: var(--ff);
-  cursor: pointer;
-  transition: background var(--ease), color var(--ease);
-}
-
-.map-apps-label {
-  margin-top: 4px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.map-module-switcher button.active {
-  background: var(--accent);
-  color: var(--color-white);
-  border-color: var(--accent);
-}
-
 .map-links {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding-top: 4px;
-  border-top: 1px solid var(--border);
 }
 
 .map-links a {
@@ -537,6 +466,37 @@
 }
 
 .map-links a:hover { background: var(--surface-2); color: var(--text); }
+
+/* Title above the languages of the account panel. */
+.map-lang-switcher-label {
+  padding: 4px 6px 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Sign-out at the end of the account panel (also at the bottom of the menu). */
+.map-logout {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 6px;
+  border: none;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  background: none;
+  color: var(--error);
+  font-family: var(--ff);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.map-logout:hover { background: var(--error-dim); }
 
 /* ═══════════════════════════════════════════════════════════════
    WRAPPER
@@ -759,38 +719,18 @@
 
 /*
     @module: Unread badges
-    @description: Red number of unread records (AdminNotificationsService), orange
-      (--attention) number of things needing attention (texts missing in a language …) - at a page of the
+    @description: Placement of the navigation badges (NavBadgeComponent: red number of unread
+      records, orange dot of things needing attention, the label as tooltip) - at a page of the
       sidebar (right edge; in the collapsed desktop sidebar on the corner of the icon), at the
-      title of a collapsed menu section, at the modules of the switcher and of the mobile panel.
-      The dot tells that the closed mobile menu / the mobile panel hides some numbers (the menu
-      button shows it only on mobile - the collapsed desktop sidebar shows the numbers itself).
-    @usage: <span class="nav-badge [nav-badge--item | nav-badge--end] [nav-badge--attention]" role="img" [attr.aria-label]>3</span>,
-      <span class="unread-dot [unread-dot--attention]" aria-hidden="true"></span> inside .menu-toggle-btn / .mobile-actions-toggle
+      title of a collapsed menu section, at the modules of the switcher and on its button. The
+      dot of the menu button tells on mobile that the closed menu hides some (red when unread,
+      orange when only something needs attention).
+    @usage: <app-nav-badge class="nav-badge--item | nav-badge--end | nav-badge--group" [badge]>,
+      <span class="unread-dot [unread-dot--attention]" aria-hidden="true"></span> inside .menu-toggle-btn
 */
-.nav-badge {
-  flex-shrink: 0;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 999px;
-  background: var(--error);
-  color: var(--color-white);
-  font-family: var(--ff);
-  font-size: 0.68rem;
-  font-weight: 700;
-  line-height: 18px;
-  letter-spacing: 0;
-  text-align: center;
-  text-transform: none;
-}
-
 .nav-badge--item,
 .nav-badge--end,
-.nav-group-label .nav-badge { margin-left: auto; }
-
-.nav-badge--attention,
-.unread-dot--attention { background: var(--warning); }
+.nav-badge--group { margin-left: auto; }
 
 .unread-dot {
   position: absolute;
@@ -803,8 +743,10 @@
   box-shadow: 0 0 0 2px var(--surface);
 }
 
-.menu-toggle-btn,
-.mobile-actions-toggle { position: relative; }
+/* Only things needing attention (no unread records): orange - after the base colour above. */
+.unread-dot.unread-dot--attention { background: var(--warning); }
+
+.menu-toggle-btn { position: relative; }
 
 .menu-toggle-btn .unread-dot { display: none; }
 
@@ -814,11 +756,7 @@
     position: absolute;
     top: 1px;
     right: 1px;
-    min-width: 15px;
-    height: 15px;
-    padding: 0 3px;
-    font-size: 0.6rem;
-    line-height: 15px;
+    --nb-size: 15px;
   }
 }
 
@@ -923,19 +861,27 @@
   .time-hide-mobile { display: none !important; }
   .header-lang-switcher{display: none;}
 
-  /* On mobile only menu-toggle + logo + hamburger fit into the header row.
-     The rest (user, clock, module switcher, maintenance) moves into the
-     slide-out panel (see .mobile-actions-panel above). */
+  /* Mobile header row: menu button (left) - module switcher (centred on the whole header, a
+     long name ends with an ellipsis before the buttons) - own avatar (right, account panel).
+     The user and the clock are not in the row (the account panel / the phone has them). */
   .header-user { display: none; }
-  .module-switcher { display: none; }
   .admin-header { position: relative; }
-  .header-current-module {
-    display: block;
+  .module-switcher {
     position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    max-width: calc(100% - 150px);
+    left: 0;
+    right: 0;
+    width: max-content;
+    max-width: calc(100% - 132px);
+    margin: 0 auto;
+    justify-content: center;
   }
+  .apps-switcher,
+  .module-switcher .apps-switcher-btn,
+  .module-current-pill { min-width: 0; max-width: 100%; }
+  .apps-switcher-name,
+  .module-current-pill > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  /* The menu opens centred under the button (no transform on an ancestor of its backdrop). */
+  .apps-menu { left: 50%; transform: translateX(-50%); }
   .header-action-btn--calendar { display: none; }
 
   .mobile-actions-toggle { display: flex; }

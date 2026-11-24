@@ -10,7 +10,8 @@
  * shop, …) - the same rule as the "Missing" counter of the text editor
  * (base-translation-editor.component.ts): every key of the Czech (primary) texts must have a
  * non-empty value in every active language; Czech itself counts its empty values. Feeds the
- * orange attention notification of the editor page (WebNotificationSource, ShopNotificationSource).
+ * orange attention notification of the editor page (WebNotificationSource, ShopNotificationSource),
+ * also per language (byLanguage() - the admin sees which language lacks the texts).
  * @note Inactive languages are not counted - visitors cannot switch to them (a language being
  * translated stays quiet until it is switched on). Lists count per item, as in the editor.
  * @note A missing or broken Czech file counts 0 (nothing to compare with); a missing or broken
@@ -35,19 +36,34 @@ final class MissingTranslations
      */
     public static function count(string $module): int
     {
+        return array_sum(self::byLanguage($module));
+    }
+
+    /**
+     * @description Texts missing per active language of a module - only the languages that miss
+     *   something (a complete language is left out).
+     * @param string $module Translation module (application id).
+     * @return array<string, int> Language code => missing texts, e.g. ['en' => 120, 'cz' => 3].
+     */
+    public static function byLanguage(string $module): array
+    {
         $primary = self::read($module, self::PRIMARY);
         if ($primary === null) {
-            return 0;
+            return [];
         }
         $keys = array_keys(self::flatten($primary));
-        $missing = 0;
+        $missing = [];
 
         foreach (TranslationController::activeLanguageCodes($module) as $code) {
             $texts = strtolower($code) === self::PRIMARY ? self::flatten($primary) : self::flatten(self::read($module, $code) ?? []);
+            $count = 0;
             foreach ($keys as $key) {
                 if (trim($texts[$key] ?? '') === '') {
-                    $missing++;
+                    $count++;
                 }
+            }
+            if ($count > 0) {
+                $missing[$code] = $count;
             }
         }
 

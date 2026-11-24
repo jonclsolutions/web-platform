@@ -189,7 +189,7 @@ describe('AdminLayoutComponent', () => {
     const el: HTMLElement = fixture.nativeElement;
     expect(component.currentApp?.id).toBe('project-portal');
     expect(el.querySelector('.apps-switcher-btn')!.textContent!.trim()).toBe('admin-layout.module_project-portal');
-    expect(el.querySelector('.header-current-module')!.textContent!.trim()).toBe('admin-layout.module_project-portal');
+    expect(el.querySelector('.apps-switcher-name')!.textContent!.trim()).toBe('admin-layout.module_project-portal');
     expect(component.currentModuleIcon).toBe(component.currentApp!.icon);
 
     component.currentModule = 'core';
@@ -707,12 +707,12 @@ describe('AdminLayoutComponent', () => {
    *   them on logout; a page of the sidebar shows its number (link of the page), the core tab and
    *   the application switcher their totals ("99+" above 99), a collapsed section the sum of its
    *   pages; a click on the page marks it seen; the menu button shows a dot while the menu is
-   *   closed, the mobile panel button while another module has unread records.
+   *   closed; the label (tooltip + screen reader) names the kind and its count.
    * @input  web inquiries 3, core security events 120; module web; collapse the section of the
    *   inquiries; close the menu; logout.
    * @output start(); item badge '3' with aria label; switcher button '99+' (all modules); its menu:
    *   core '99+', web '3'; section badge '3';
-   *   markSeenLink('/admin/web/user-request'); dots on both buttons; stop().
+   *   markSeenLink('/admin/web/user-request'); dot on the menu button; stop().
    */
   it('shows unread badges in the menu and the module switcher', () => {
     requiresApps('web');
@@ -733,17 +733,18 @@ describe('AdminLayoutComponent', () => {
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const link = el.querySelector('.admin-nav a[href="/admin/web/user-request"]') as HTMLAnchorElement;
-    const badge = link.querySelector('.nav-badge') as HTMLElement;
-    expect(badge.textContent!.trim()).toBe('3');
-    expect(badge.getAttribute('aria-label')).toBe('notifications.badge_aria');
-    expect(el.querySelectorAll('.admin-nav .nav-badge').length).toBe(1);
-    expect(el.querySelector('.apps-switcher-btn .nav-badge')!.textContent!.trim()).toBe('99+');
+    const badge = link.querySelector('app-nav-badge') as HTMLElement;
+    expect(badge.querySelector('.nb-count')!.textContent!.trim()).toBe('3');
+    expect(badge.querySelector('.nb-dot')).toBeNull();
+    expect(badge.getAttribute('aria-label')).toBe('notifications.kind_generic: 3');
+    expect(badge.getAttribute('title')).toBe('notifications.kind_generic: 3');
+    expect(el.querySelectorAll('.admin-nav .nb-count').length).toBe(1);
+    expect(el.querySelector('.apps-switcher-btn .nb-count')!.textContent!.trim()).toBe('99+');
     component.toggleAppsMenu();
     fixture.detectChanges();
-    expect(Array.from(el.querySelectorAll('.apps-menu-item .nav-badge')).map(b => b.textContent!.trim())).toEqual(['99+', '3']);
+    expect(Array.from(el.querySelectorAll('.apps-menu-item .nb-count')).map(b => b.textContent!.trim())).toEqual(['99+', '3']);
     component.closeAppsMenu();
     fixture.detectChanges();
-    expect(el.querySelector('.mobile-actions-toggle .unread-dot')).not.toBeNull();
     expect(el.querySelector('.menu-toggle-btn .unread-dot')).toBeNull();
 
     link.click();
@@ -752,7 +753,7 @@ describe('AdminLayoutComponent', () => {
     const group = navOf('web').find(g => g.items.some(i => i.path === 'user-request'))!;
     component.toggleGroup(group.key);
     fixture.detectChanges();
-    expect(el.querySelector(`button[aria-controls="nav-group-${group.key}"] .nav-badge`)!.textContent!.trim()).toBe('3');
+    expect(el.querySelector(`button[aria-controls="nav-group-${group.key}"] .nb-count`)!.textContent!.trim()).toBe('3');
 
     component.isMenuOpen = false;
     fixture.detectChanges();
@@ -764,12 +765,13 @@ describe('AdminLayoutComponent', () => {
   });
 
   /**
-   * @description Attention badges: texts missing in a language show an orange number at the
-   *   text editor page and the module (no unread records there), with their own aria label; the
-   *   dot of the closed menu is orange too. Red unread records of the module win in its badge.
+   * @description Attention badges: texts missing in a language are an orange DOT (no number) at
+   *   the text editor page, the module in the switcher menu and the switcher button; the dot of
+   *   the closed menu is orange too. With unread records the red number shows and the orange dot
+   *   stays next to it (the attention never gets lost); the menu dot turns red.
    * @input web texts missing 4 (attention); module web; close the menu; then inquiries 1.
-   * @output page badge '4' orange (aria attention); switcher orange '4'; orange dot; with the
-   *   inquiry the switcher shows red '1'.
+   * @output page: dot, no number, label 'notifications.kind_generic: 4'; switcher dot; orange
+   *   menu dot; with the inquiry the switcher shows red '1' + the dot, the menu dot red.
    */
   it('shows things needing attention in orange', () => {
     requiresApps('web');
@@ -786,12 +788,18 @@ describe('AdminLayoutComponent', () => {
     component.isMenuOpen = true;
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
-    const badge = el.querySelector('.admin-nav a[href="/admin/web/edit-website"] .nav-badge') as HTMLElement;
-    expect(badge.textContent!.trim()).toBe('4');
-    expect(badge.classList).toContain('nav-badge--attention');
-    expect(badge.getAttribute('aria-label')).toBe('notifications.attention_badge_aria');
-    const switcher = el.querySelector('.apps-switcher-btn .nav-badge') as HTMLElement;
-    expect(switcher.classList).toContain('nav-badge--attention');
+    const badge = el.querySelector('.admin-nav a[href="/admin/web/edit-website"] app-nav-badge') as HTMLElement;
+    expect(badge.querySelector('.nb-count')).toBeNull();
+    expect(badge.querySelector('.nb-dot')).not.toBeNull();
+    expect(badge.getAttribute('aria-label')).toBe('notifications.kind_generic: 4');
+    const switcher = el.querySelector('.apps-switcher-btn app-nav-badge') as HTMLElement;
+    expect(switcher.querySelector('.nb-dot')).not.toBeNull();
+    expect(switcher.querySelector('.nb-count')).toBeNull();
+    component.toggleAppsMenu();
+    fixture.detectChanges();
+    const webItem = Array.from(el.querySelectorAll('.apps-menu-item')).find(i => i.classList.contains('active'))!;
+    expect(webItem.querySelector('.nb-dot')).not.toBeNull();
+    component.closeAppsMenu();
 
     component.isMenuOpen = false;
     fixture.detectChanges();
@@ -799,9 +807,39 @@ describe('AdminLayoutComponent', () => {
 
     notifications.kinds.update(kinds => kinds.map(k => (k.kind === 'web_inquiries' ? { ...k, count: 1 } : k)));
     fixture.detectChanges();
-    const red = el.querySelector('.apps-switcher-btn .nav-badge') as HTMLElement;
-    expect(red.textContent!.trim()).toBe('1');
-    expect(red.classList).not.toContain('nav-badge--attention');
+    const both = el.querySelector('.apps-switcher-btn app-nav-badge') as HTMLElement;
+    expect(both.querySelector('.nb-count')!.textContent!.trim()).toBe('1');
+    expect(both.querySelector('.nb-dot')).not.toBeNull();
+    expect(el.querySelector('.menu-toggle-btn .unread-dot')!.classList).not.toContain('unread-dot--attention');
+    fixture.destroy();
+  });
+
+  /**
+   * @description Mobile header: the right button is the own avatar (not a second ☰) and opens the
+   *   account panel - account, personal info, calendar, language, sign-out; no clock and no
+   *   module switching in it (the switcher is in the middle of the header).
+   * @input signed-in sysadmin; open the account panel; click its sign-out.
+   * @output avatar in .mobile-actions-toggle, aria-expanded true; links personal info + calendar;
+   *   no .map-clock / .map-module-switcher; sign-out closes the panel and logs out.
+   */
+  it('opens the account panel from the avatar on mobile', () => {
+    ctx.auth.session.role = 'sysadmin';
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    const toggle = el.querySelector('.mobile-actions-toggle') as HTMLButtonElement;
+    expect(toggle.querySelector('app-user-avatar')).not.toBeNull();
+    expect(toggle.querySelector('svg line')).toBeNull();
+    toggle.click();
+    fixture.detectChanges();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    const links = Array.from(el.querySelectorAll('.mobile-actions-panel .map-links a')).map(a => a.getAttribute('href'));
+    expect(links).toEqual(['/admin/core/personal-info', '/admin/core/calendar']);
+    expect(el.querySelector('.map-clock')).toBeNull();
+    expect(el.querySelector('.map-module-switcher')).toBeNull();
+    spyOn(component, 'logout');
+    (el.querySelector('.map-logout') as HTMLButtonElement).click();
+    expect(component.logout).toHaveBeenCalled();
+    expect(component.isMobileActionsOpen).toBeFalse();
     fixture.destroy();
   });
 });

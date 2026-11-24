@@ -20,7 +20,7 @@
       </svg>
       <!-- Mobile: the closed menu hides the numbers of the module - a dot tells there are some. -->
       @if (!isMenuOpen && moduleDot; as dot) {
-        <span class="unread-dot" [class.unread-dot--attention]="dot.attention" aria-hidden="true"></span>
+        <span class="unread-dot" [class.unread-dot--attention]="!dot.text" aria-hidden="true"></span>
       }
     </button>
     
@@ -31,9 +31,6 @@
     </div> -->
 
     <div class="header-sep" aria-hidden="true"></div>
-
-    <!-- Mobile only: the module the user is in (the tabs move into the mobile panel). -->
-    <span class="header-current-module">{{ currentModuleName }}</span>
 
     <div class="header-user">
       <app-user-avatar class="header-user-avatar" [src]="isLoggedIn ? avatarUrl : null" [size]="30"></app-user-avatar>
@@ -67,10 +64,8 @@
                 [attr.aria-expanded]="isAppsMenuOpen" [title]="strings.apps_switcher_title" (click)="toggleAppsMenu()"
                 (keydown)="onSwitcherKeydown($event)">
           <app-admin-icon [name]="currentModuleIcon" [size]="14" />
-          <span>{{ currentModuleName }}</span>
-          @if (switcherBadge; as badge) {
-            <span class="nav-badge" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
-          }
+          <span class="apps-switcher-name">{{ currentModuleName }}</span>
+          <app-nav-badge [badge]="switcherBadge" />
           <app-admin-icon name="chevron-down" [size]="11" />
         </button>
         @if (isAppsMenuOpen) {
@@ -80,9 +75,7 @@
               <button type="button" role="menuitem" class="apps-menu-item" [class.active]="currentModule === 'core'" (click)="switchModule('core')">
                 <app-admin-icon name="layout" [size]="15" />
                 <span>{{ strings.module_core }}</span>
-                @if (moduleBadge('core'); as badge) {
-                  <span class="nav-badge nav-badge--end" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
-                }
+                <app-nav-badge class="nav-badge--end" [badge]="moduleBadge('core')" />
               </button>
               @if (availableApps.length) {
                 <div class="apps-menu-separator" role="separator"></div>
@@ -92,9 +85,7 @@
               <button type="button" role="menuitem" class="apps-menu-item" [class.active]="app.id === currentModule" (click)="switchModule(app.id)">
                 <app-admin-icon [name]="app.icon" [size]="15" />
                 <span>{{ label(app.nameKey) }}</span>
-                @if (moduleBadge(app.id); as badge) {
-                  <span class="nav-badge nav-badge--end" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
-                }
+                <app-nav-badge class="nav-badge--end" [badge]="moduleBadge(app.id)" />
               </button>
             }
             @if (availableApps.length) {
@@ -156,26 +147,19 @@
   }
 </div>
 
-    <!-- Mobile hamburger - visible only on narrow screens (see the CSS media query).
-         Opens a panel with everything that does not fit into the header row on mobile. -->
-    <button class="mobile-actions-toggle" (click)="toggleMobileActions()" [title]="strings.mobile_menu_title" [attr.aria-label]="strings.mobile_menu_aria">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="4" y1="7" x2="20" y2="7"/>
-        <line x1="4" y1="12" x2="20" y2="12"/>
-        <line x1="4" y1="17" x2="20" y2="17"/>
-      </svg>
-      <!-- The other modules (they are in this panel) have numbers (orange dot: only things needing attention). -->
-      @if (elsewhereDot; as dot) {
-        <span class="unread-dot" [class.unread-dot--attention]="dot.attention" aria-hidden="true"></span>
-      }
+    <!-- Mobile only (see the CSS media query): the own avatar opens the account panel - account,
+         personal info, calendar, language, sign-out. The module switcher sits in the middle of
+         the header and the menu button on the left, so every control of the row is different. -->
+    <button type="button" class="mobile-actions-toggle" (click)="toggleMobileActions()" [title]="strings.mobile_menu_title"
+            [attr.aria-label]="strings.mobile_menu_aria" [attr.aria-expanded]="isMobileActionsOpen">
+      <app-user-avatar [src]="isLoggedIn ? avatarUrl : null" [size]="30"></app-user-avatar>
     </button>
   </div>
 
 </header>
 
-<!-- ── Mobile slide-out panel (user, role, clock, modules, links, language) ───
-     Duplicates the content hidden from the main header row on mobile (see CSS), so nothing
-     disappears - it only moves into a separate panel on demand. -->
+<!-- ── Mobile account panel (opened by the avatar): user and role, personal info, calendar,
+     language, sign-out. The modules are switched in the middle of the header (2026-11). -->
 @if (isMobileActionsOpen) {
   <div class="mobile-actions-overlay" (click)="closeMobileActions()"></div>
   <div class="mobile-actions-panel">
@@ -194,36 +178,17 @@
       </div>
     </div>
 
-    <div class="map-clock">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="10"/>
-        <polyline points="12 6 12 12 16 14"/>
-      </svg>
-      {{ currentDate$ | async | date:strings.date_time_format:undefined:dateLocale }}
-    </div>
-
-    <div class="map-module-switcher">
-      @if (isModuleAvailable('core')) {
-        <button type="button" [class.active]="currentModule === 'core'" (click)="switchModule('core'); closeMobileActions()">
-          <app-admin-icon name="layout" [size]="14" />
-          {{ strings.module_core }}
-          @if (moduleBadge('core'); as badge) {
-            <span class="nav-badge" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
-          }
-        </button>
-      }
-      @if (availableApps.length) {
-        <div class="map-apps-label">{{ strings.apps_switcher_label }}</div>
-        @for (app of availableApps; track app.id) {
-          <button type="button" [class.active]="app.id === currentModule" (click)="switchModule(app.id); closeMobileActions()">
-            <app-admin-icon [name]="app.icon" [size]="14" />
-            {{ label(app.nameKey) }}
-            @if (moduleBadge(app.id); as badge) {
-              <span class="nav-badge" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
-            }
-          </button>
-        }
-      }
+    <div class="map-links">
+      <a routerLink="/admin/core/personal-info" (click)="closeMobileActions()">
+        <app-admin-icon name="user" [size]="15" />
+        {{ strings.nav_personal_info }}
+      </a>
+      <a routerLink="/admin/core/calendar" (click)="closeMobileActions()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        {{ strings.nav_calendar }}
+      </a>
     </div>
 
     <!-- ── Language switcher (mobile variant) ── -->
@@ -243,14 +208,12 @@
       }
     </div>
 
-    <div class="map-links">
-      <a routerLink="/admin/core/calendar" (click)="closeMobileActions()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
-        {{ strings.nav_calendar }}
-      </a>
-    </div>
+    <button type="button" class="map-logout" (click)="closeMobileActions(); logout()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      {{ strings.logout }}
+    </button>
 
   </div>
 }
@@ -273,8 +236,8 @@
                     [attr.aria-controls]="'nav-group-' + group.key" [title]="strings.nav_group_toggle" (click)="toggleGroup(group.key)">
               <span class="nav-group-title">{{ label(group.labelKey) }}</span>
               <!-- A collapsed section hides the numbers of its pages - their sum is at its title. -->
-              @if (!isGroupExpanded(group.key) && groupBadge(group); as badge) {
-                <span class="nav-badge" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
+              @if (!isGroupExpanded(group.key)) {
+                <app-nav-badge class="nav-badge--group" [badge]="groupBadge(group)" />
               }
               <app-admin-icon class="nav-group-chevron" name="chevron-down" [size]="12" [strokeWidth]="2.5" />
             </button>
@@ -286,9 +249,7 @@
                       <a [routerLink]="itemLink(item)" routerLinkActive="active" (click)="onNavClick(item)" [title]="label(item.titleKey ?? item.labelKey)">
                         <span class="nav-icon"><app-admin-icon [name]="item.icon" [size]="16" /></span>
                         <span class="nav-text">{{ label(item.labelKey) }}</span>
-                        @if (itemBadge(item); as badge) {
-                          <span class="nav-badge nav-badge--item" role="img" [class.nav-badge--attention]="badge.attention" [attr.aria-label]="badgeLabel(badge)">{{ badge.text }}</span>
-                        }
+                        <app-nav-badge class="nav-badge--item" [badge]="itemBadge(item)" />
                       </a>
                     </li>
                   }

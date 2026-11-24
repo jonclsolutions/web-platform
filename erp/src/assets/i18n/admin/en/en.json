@@ -187,8 +187,9 @@
     "wiki_title": "Help – manual of the administration",
 
 
-    "mobile_menu_title": "Menu",
-    "mobile_menu_aria": "Open menu",
+    "mobile_menu_title": "Account",
+    "language_switcher_title": "Administration language",
+    "mobile_menu_aria": "Open account and settings",
 
     "loading_data": "Loading data…",
 
@@ -1450,6 +1451,8 @@
     "stat_filled_label": "filled",
     "stat_missing_label": "missing",
     "show_missing_only_title": "Show missing only",
+    "missing_banner_text": "{count} texts are missing in the active languages. Show the missing ones:",
+    "missing_banner_button_title": "Show only the missing texts of {lang}",
     "search_placeholder": "Search key or text…",
     "missing_count_suffix": "missing",
     "col_key": "Key (JSON path)",
@@ -1555,8 +1558,6 @@
     "kind_generic": "New records",
     "kind_core_security_events": "New security events",
     "toast_message": "Unread: {count}. Click to open the page.",
-    "badge_aria": "Unread: {count}",
-    "attention_toast_message": "Needs your attention: {count}. Click to open the page.",
-    "attention_badge_aria": "Needs attention: {count}"
+    "attention_toast_message": "Needs your attention: {count}. Click to open the page."
   }
 }

@@ -359,4 +359,29 @@ describe('BaseTranslationEditorComponent', () => {
     expect(notifications.refresh).toHaveBeenCalled();
     flush();
   }));
+
+  /**
+   * @description Banner of missing texts: the languages of the attention kind
+   *   `<module>_texts_missing` (names from the language list, most missing first) with the total;
+   *   a language button opens that language with only its missing texts.
+   * @input kinds test_texts_missing 5 split { cz: 1, en: 4 }; en without 'home.title'; ngOnInit()
+   *   (cz loaded); showMissingIn('en').
+   * @output missingLanguages English 4, Čeština 1; missingTotal 5; currentLang 'en', the filtered
+   *   keys only the missing 'home.title'.
+   */
+  it('lists the languages with missing texts and opens one filtered', fakeAsync(() => {
+    shared.en = { home: { title: '' } } as any;
+    TestBed.inject(AdminNotificationsService).kinds.set([
+      { kind: 'test_texts_missing', module: 'test', link: '/admin/test', count: 5, attention: true, languages: { cz: 1, en: 4 } },
+    ]);
+    component.ngOnInit();
+    expect(component.missingLanguages).toEqual([{ code: 'en', count: 4, name: 'English' }, { code: 'cz', count: 1, name: 'Čeština' }]);
+    expect(component.missingTotal).toBe(5);
+
+    component.showMissingIn('en');
+    expect(component.currentLang).toBe('en');
+    expect(component.filteredKeys.map(k => k.path)).toEqual(['home.title']);
+    expect(component.filteredKeys.every(k => k.missing)).toBeTrue();
+    flush();
+  }));
 });

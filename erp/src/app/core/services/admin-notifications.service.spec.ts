@@ -33,6 +33,7 @@ describe('AdminNotificationsService', () => {
 
   const TEXTS: Record<string, string> = {
     'notifications.kind_web_inquiries': 'Nové poptávky',
+    'notifications.kind_web_texts_missing': 'Chybějící texty webu',
     'notifications.kind_generic': 'Nové záznamy',
     'notifications.toast_message': 'Nepřečtené: {count}.',
     'notifications.attention_toast_message': 'Vyžaduje vaši pozornost: {count}. Kliknutím otevřete stránku.',
@@ -70,7 +71,7 @@ describe('AdminNotificationsService', () => {
         { provide: DataHandler, useValue: dataHandler },
         { provide: AlertDialogService, useValue: alert },
         { provide: Router, useValue: router },
-        { provide: AdminLocalizationService, useValue: { getValue: (path: string) => TEXTS[path] ?? path } },
+        { provide: AdminLocalizationService, useValue: { getValue: (path: string) => TEXTS[path] ?? path, getDateLocale: () => 'cs-CZ' } },
       ],
     });
     service = TestBed.inject(AdminNotificationsService);
@@ -93,7 +94,7 @@ describe('AdminNotificationsService', () => {
     tick();
     expect(dataHandler.getQuietly).toHaveBeenCalledOnceWith('core/notifications');
     respond(kind('user-request', 2));
-    expect(service.badgeFor('/admin/web/user-request')).toEqual({ text: '2', attention: false });
+    expect(service.badgeFor('/admin/web/user-request')).toEqual({ text: '2', attention: false, label: 'Nové záznamy: 2' });
     expect(alert.open).not.toHaveBeenCalled();
     tick(NOTIFICATIONS_POLL_MS);
     expect(dataHandler.getQuietly).toHaveBeenCalledTimes(2);
@@ -164,35 +165,37 @@ describe('AdminNotificationsService', () => {
 
     service.markSeenLink('/admin/shop/orders');
     expect(dataHandler.postQuietly).toHaveBeenCalledWith('core/notifications/seen', { kinds: ['shop_orders'] });
-    expect(service.appsBadge()).toBeNull();
+    expect(service.navBadge(service.kinds().filter(k => k.module !== 'core'))).toBeNull();
     expect(dataHandler.postQuietly).toHaveBeenCalledTimes(3);
     discardPeriodicTasks();
   }));
 
   /**
-   * @description Attention kinds (texts missing in a language): orange badge unless red unread
-   *   records share it, never marked as seen by opening the page, a grown number pops up a
-   *   warning notice.
-   * @input url = text editor page; answer web_texts_missing 3 (attention) + inquiries 0; then
-   *   inquiries 2; then texts 5 and inquiries 0.
-   * @output orange '3' at the page and the module, no seen request; module red '2' while the
-   *   inquiries are unread; notice type 'warning' with the attention message.
+   * @description Attention kinds (texts missing in a language): an orange dot without a number
+   *   (also next to the red number of unread records - it never gets lost), the label names the
+   *   kinds with counts and the languages; never marked as seen by opening the page; a grown
+   *   number pops up a warning notice.
+   * @input url = text editor page; answer web_texts_missing 3 (en 2, cz 1, attention) + inquiries
+   *   0; then inquiries 2; then texts 5 and inquiries 0.
+   * @output page and module: no number, dot, label 'Chybějící texty webu: 3 (angličtina 2,
+   *   čeština 1)', no seen request; module red '2' + dot, label of both; notice type 'warning'.
    */
   it('shows attention kinds in orange and never marks them as seen', fakeAsync(() => {
     router.url = '/admin/web/edit-website';
     service.start();
     tick();
-    const texts = (count: number) => ({ ...kind('web_texts_missing', count, '/admin/web/edit-website'), attention: true });
+    const texts = (count: number) => ({ ...kind('web_texts_missing', count, '/admin/web/edit-website'), attention: true, languages: { cz: 1, en: count - 1 } });
     respond(texts(3), kind('web_inquiries', 0, '/admin/web/user-request'));
-    expect(service.badgeFor('/admin/web/edit-website')).toEqual({ text: '3', attention: true });
-    expect(service.moduleBadge('web')).toEqual({ text: '3', attention: true });
+    const missingLabel = 'Chybějící texty webu: 3 (angličtina 2, čeština 1)';
+    expect(service.badgeFor('/admin/web/edit-website')).toEqual({ text: null, attention: true, label: missingLabel });
+    expect(service.moduleBadge('web')).toEqual({ text: null, attention: true, label: missingLabel });
     service.markSeenLink('/admin/web/edit-website');
     expect(dataHandler.postQuietly).not.toHaveBeenCalled();
 
     tick(NOTIFICATIONS_POLL_MS);
     respond(texts(3), kind('web_inquiries', 2, '/admin/web/user-request'));
-    expect(service.moduleBadge('web')).toEqual({ text: '2', attention: false });
-    expect(service.badgeForLinks(['/admin/web/edit-website', '/admin/web/user-request'])?.attention).toBeFalse();
+    expect(service.moduleBadge('web')).toEqual({ text: '2', attention: true, label: `${missingLabel} · Nové poptávky: 2` });
+    expect(service.badgeForLinks(['/admin/web/user-request'])).toEqual({ text: '2', attention: false, label: 'Nové poptávky: 2' });
 
     tick(NOTIFICATIONS_POLL_MS);
     alert.open.calls.reset();

@@ -19,9 +19,12 @@
  *   apps.registry: the sidebars and the applications; AdminIconComponent: icons of the menus.
  * - ReleaseNoticeComponent: the notice after an update of the current module (the running
  *   version and the release notes are on the page Core → Releases).
- * - AdminNotificationsService: unread records - red numbers at the menu items, the module
- *   switcher and the menu buttons; things needing attention (texts missing in a language …) -
- *   orange numbers (started while a user is signed in).
+ * - AdminNotificationsService + NavBadgeComponent: unread records - red numbers at the menu
+ *   items, the sections and the module switcher; things needing attention (texts missing in a
+ *   language …) - an orange dot at the same places; the label names what is behind them
+ *   (started while a user is signed in).
+ * @note Mobile header (2026-11): menu button (pages of the module) - module switcher in the
+ *   middle - own avatar (account panel: account, personal info, calendar, language, sign-out).
  * @note Layout: the header and the sidebar stay in place, only the page content (`<main>`) and,
  * independently, a long sidebar menu scroll. A navigation therefore scrolls `<main>` back to the
  * top itself - the router's scroll restoration only moves the window.
@@ -46,6 +49,7 @@ import { UserAvatarComponent } from '../user-avatar/user-avatar.component';
 import { KNOWLEDGE_BASE_URL } from '../page-help/page-help.component';
 import { ReleaseNoticeComponent } from '../releases/release-notice.component';
 import { AdminNotificationsService, NavBadge } from '../../../core/services/admin-notifications.service';
+import { NavBadgeComponent } from '../nav-badge/nav-badge.component';
 
 /**
  * @description localStorage key of the menu sections the user collapsed (JSON array of section
@@ -63,7 +67,7 @@ export const NAV_COLLAPSED_STORAGE_KEY = 'jsw_admin_nav_collapsed';
   templateUrl: './admin-layout.component.html',
   styleUrls: ['../../shared-styles/theme.css', '../../../shared/styles/base.css', './admin-layout.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule, DatePipe, UserAvatarComponent, AdminIconComponent, ReleaseNoticeComponent],
+  imports: [CommonModule, RouterModule, DatePipe, UserAvatarComponent, AdminIconComponent, ReleaseNoticeComponent, NavBadgeComponent],
   providers: [
     { provide: LOCALE_ID, useValue: 'cs-CZ' }
   ]
@@ -418,7 +422,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   /**
    * @description Name of the module the user is in - shown in the header at all times (the
-   *   active tab / the switcher, on mobile a label next to the menu button).
+   *   switcher button, on mobile in the middle of the header).
    */
   get currentModuleName(): string {
     const app = this.currentApp;
@@ -594,24 +598,11 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   /**
    * @description Dot on the menu button while it is closed (mobile): the current module has
-   *   numbers - null without any, `attention` when they are only orange ones.
+   *   numbers - null without any; red with unread records, orange when only something needs
+   *   attention. (The other modules show theirs on the module switcher in the header.)
    */
   get moduleDot(): NavBadge | null {
     return this.notifications.moduleBadge(this.currentModule);
-  }
-
-  /** @description Dot on the mobile panel button: the other modules have numbers (as moduleDot). */
-  get elsewhereDot(): NavBadge | null {
-    return this.notifications.navBadge(this.notifications.kinds().filter(k => k.module !== this.currentModule));
-  }
-
-  /**
-   * @description Screen-reader text of a badge, e.g. "Nepřečtené: 3" / "Vyžaduje pozornost: 3".
-   * @param badge The badge.
-   */
-  badgeLabel(badge: NavBadge): string {
-    const key = badge.attention ? 'notifications.attention_badge_aria' : 'notifications.badge_aria';
-    return this.i18n.getValue(key).replace('{count}', badge.text);
   }
 
   onLinkClick(): void {
@@ -622,8 +613,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Opens / closes the mobile panel with the user information and actions
-   *              (hamburger top right, visible only on mobile through the CSS media query).
+   * @description Opens / closes the mobile account panel (the own avatar top right, visible
+   *              only on mobile through the CSS media query).
    */
   toggleMobileActions(): void {
     this.isMobileActionsOpen = !this.isMobileActionsOpen;

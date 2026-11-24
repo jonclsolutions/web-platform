@@ -137,12 +137,12 @@
             },
             {
               "type": "text",
-              "content": "A red number at a menu item tells how many new records you have not seen yet are on the page - for example new inquiries, job applications, orders, products below the stock limit, leads overdue for contact or security events. The number is personal: it counts from your last visit of the page and disappears once you open it. Above 99 records it shows “99+”. The module switcher shows the sum of unread records of all modules (in its list every module has its own number) and a collapsed menu section its sum too; on a phone a red dot on the menu or panel button tells you. The system asks for news once a minute, and only while the admin tab is open in the foreground. When a number grows, a notice appears at the top right - click it to open the page. You see numbers only at pages you have permission for. An orange number means work waiting for you - for example website or e-shop texts and website content (FAQ, jobs, references, knowledge base) missing a translation in an active language (typically after an update of the application). Opening the page does not clear it, filling the texts does; a red number of unread records wins in a shared sum."
+              "content": "A red number at a menu item tells how many new records you have not seen yet are on the page - for example new inquiries, job applications, orders, products below the stock limit, leads overdue for contact or security events. The number is personal: it counts from your last visit of the page and disappears once you open it. Above 99 records it shows “99+”. The module switcher shows the sum of unread records of all modules (in its list every module has its own number) and a collapsed menu section its sum too; on a phone a dot on the menu button tells you. The system asks for news once a minute, and only while the admin tab is open in the foreground. When a number grows, a notice appears at the top right - click it to open the page. You see numbers only at pages you have permission for. An orange dot means work waiting for you - for example website or e-shop texts and website content (FAQ, jobs, references, knowledge base) missing a translation in an active language (typically after an update of the application). The dot is at the page, the menu section, the module in the switcher and on the switcher itself - also next to a red number, so it does not get lost. Opening the page does not clear it, filling the texts does. Hover over a number or a dot to see what exactly it counts - for example “Missing website texts: 123 (English 120, Czech 3)”."
             },
             {
               "type": "note",
               "highlight": "On a phone or tablet",
-              "content": "The menu opens with the button at the top left and closes with a tap outside it. Account details, the clock, module switching, language and calendar are in a panel opened with the icon at the top right. Help is at the bottom of the menu."
+              "content": "The menu opens with the button at the top left and closes with a tap outside it. The module switcher is in the middle of the header. Your profile photo at the top right opens the account panel: e-mail and role, Personal information, calendar, language and Log out. Help is at the bottom of the menu."
             }
           ]
         },
@@ -1060,7 +1060,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "with the calendar icon in the admin header (on a phone in the panel at the top right),",
+                "with the calendar icon in the admin header (on a phone in the account panel - the profile photo at the top right),",
                 "with the Calendar item in the Core menu, section Overview."
               ]
             }
@@ -1677,7 +1677,7 @@
               "ordered": false,
               "items": [
                 "The choice applies only in this browser - set it separately in another browser or on another device.",
-                "The red numbers of unread records and the orange numbers of work waiting for you are always shown in the menu, even when the notices are off.",
+                "The red numbers of unread records and the orange dots of work waiting for you are always shown in the menu, even when the notices are off.",
                 "A notice holds only the number and the kind of records, never names or e-mails."
               ]
             }

@@ -27,7 +27,7 @@ interface NotificationSource
      * @description Kinds the user may see, each with its count of unread records (also 0 - the
      *   menu needs to know which numbers to clear).
      * @param NotificationContext $context Permission check, last looks and kind builder.
-     * @return array<int, array{kind: string, module: string, link: string, count: int, attention?: true}>
+     * @return array<int, array{kind: string, module: string, link: string, count: int, attention?: true, languages?: array<string, int>}>
      *   Built by NotificationContext::created() / counted() / attention().
      */
     public function kinds(NotificationContext $context): array;

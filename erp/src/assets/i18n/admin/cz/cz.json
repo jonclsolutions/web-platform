@@ -187,8 +187,9 @@
     "wiki_title": "Nápověda – příručka administrace",
 
 
-    "mobile_menu_title": "Menu",
-    "mobile_menu_aria": "Otevřít menu",
+    "mobile_menu_title": "Účet",
+    "language_switcher_title": "Jazyk administrace",
+    "mobile_menu_aria": "Otevřít účet a nastavení",
 
     "loading_data": "Načítám data…",
 
@@ -1450,6 +1451,8 @@
     "stat_filled_label": "vyplněno",
     "stat_missing_label": "chybí",
     "show_missing_only_title": "Zobrazit pouze chybějící",
+    "missing_banner_text": "V zapnutých jazycích chybí {count} textů. Zobrazit chybějící:",
+    "missing_banner_button_title": "Zobrazit jen chybějící texty jazyka {lang}",
     "search_placeholder": "Vyhledat klíč nebo text…",
     "missing_count_suffix": "chybějících",
     "col_key": "Klíč (JSON cesta)",
@@ -1555,8 +1558,6 @@
     "kind_generic": "Nové záznamy",
     "kind_core_security_events": "Nové bezpečnostní události",
     "toast_message": "Nepřečtené: {count}. Kliknutím otevřete stránku.",
-    "badge_aria": "Nepřečtené: {count}",
-    "attention_toast_message": "Vyžaduje vaši pozornost: {count}. Kliknutím otevřete stránku.",
-    "attention_badge_aria": "Vyžaduje pozornost: {count}"
+    "attention_toast_message": "Vyžaduje vaši pozornost: {count}. Kliknutím otevřete stránku."
   }
 }

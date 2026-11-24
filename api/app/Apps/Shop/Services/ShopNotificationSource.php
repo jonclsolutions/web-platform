@@ -36,7 +36,8 @@ final class ShopNotificationSource implements NotificationSource
         }
 
         if ($context->can('shop-edit-eshop-update')) {
-            $kinds[] = $context->attention('shop_texts_missing', '/admin/shop/edit-eshop', MissingTranslations::count('shop'));
+            $missing = MissingTranslations::byLanguage('shop');
+            $kinds[] = $context->attention('shop_texts_missing', '/admin/shop/edit-eshop', array_sum($missing), $missing);
         }
 
         return $kinds;

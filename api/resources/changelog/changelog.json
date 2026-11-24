@@ -4,6 +4,24 @@
             "type": "changed",
             "area": "core",
             "part": "admin",
+            "text": "Badges: a red number now counts only new records; work waiting for you (missing translations) is an orange dot at the page, the section, the module and the module switcher. Hover over a badge to see what it counts."
+        },
+        {
+            "type": "added",
+            "area": "core",
+            "part": "admin",
+            "text": "Text editors of the website and the e-shop show which language lacks how many texts, with a button that opens the language with only its missing texts."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "On a phone the header has the menu on the left, the module switcher in the middle and your photo on the right; the photo opens your account, calendar, language and Log out."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
             "text": "One module switcher in the header: the button names the module you are in and its list holds Core and every application (also usable with the keyboard)."
         },
         {
