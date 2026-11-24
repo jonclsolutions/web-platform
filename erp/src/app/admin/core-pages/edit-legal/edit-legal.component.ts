@@ -10,7 +10,10 @@
  * - ConfirmDialogService: Facilitates secure deletion of content sections.
  * - AlertDialogService: Provides feedback to users after operations.
  * - ResourceCacheService: TTL cache of the document-types / languages / section fetches.
- * - RowButtonBuilderComponent: tabs of the document types and of the languages.
+ * - RowButtonBuilderComponent: tabs of the document types (+ Data retention) and of the languages.
+ * - RetentionSettingsComponent: the "Data retention" tab (GDPR retention periods, VT-10) - moved
+ *   here from the company profile (2026-11); shown with `core-legal-config-view`, opened by
+ *   `?tab=retention` and right away for a user without `core-legal-documents-view`.
  * - RxJS: Used for reactive data fetching and cross-language consistency checks.
  */
 
@@ -27,6 +30,11 @@ import { ResourceCacheService } from '../../../core/services/resource-cache.serv
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { RowButtonBuilderComponent } from '../../components/builders/row-button-builder/row-button-builder.component';
 import { RowButton, RowButtonItems, languageRowButtons } from '../../components/builders/row-button-builder/row-button';
+import { RetentionSettingsComponent } from '../settings/retention-settings/retention-settings.component';
+import { ActivatedRoute } from '@angular/router';
+
+/** Value of the Data retention tab in the row of the document types (the others are ids). */
+export const RETENTION_TAB = 'retention';
 
 interface DocumentSection {
   id: number;
@@ -51,7 +59,7 @@ interface DocumentTypeItem {
 @Component({
   selector: 'app-edit-legal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, PageHeaderComponent, RowButtonBuilderComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, PageHeaderComponent, RowButtonBuilderComponent, RetentionSettingsComponent],
   templateUrl: './edit-legal.component.html',
   styleUrl: './edit-legal.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -101,10 +109,39 @@ protected override translationSection: string = 'edit-legal';
     this.data = [];
   }
 
+  /** Current route - `?tab=retention` opens the Data retention tab. */
+  private readonly route = inject(ActivatedRoute);
+
+  /** The Data retention tab is open instead of a document type. */
+  showRetention = false;
+
+  /** Whether the user may see the retention periods (the Data retention tab). */
+  get canViewRetention(): boolean {
+    return this.hasAnyPermission('core-legal-config-view');
+  }
+
   override ngOnInit(): void {
     this.initWithAuthCheck(this.router);
+    // `?tab=retention` (links of the manual) or no permission for the documents: retention first.
+    const wanted = this.route.snapshot.queryParamMap.get('tab') === RETENTION_TAB;
+    this.showRetention = this.canViewRetention && (wanted || !this.hasAnyPermission('core-legal-documents-view'));
     this.loadDocumentTypes();
     this.loadLanguages();
+  }
+
+  /**
+   * @description Click on a tab of the top row: a document type (its id) or Data retention.
+   * @param value Value of the tab.
+   */
+  selectTopTab(value: string): void {
+    if (value === RETENTION_TAB) {
+      if (!this.showRetention) { this.showRetention = true; this.cd.markForCheck(); }
+      return;
+    }
+    const wasRetention = this.showRetention;
+    this.showRetention = false;
+    if (+value === this.activeTabId && wasRetention) { this.cd.markForCheck(); return; }
+    this.switchTab(+value);
   }
 
   /**
@@ -292,9 +329,22 @@ protected override translationSection: string = 'edit-legal';
   private readonly documentTypeButtons = new RowButtonItems();
   private readonly langButtons = new RowButtonItems();
 
-  /** @description Tabs of the document types (value = id as text). */
+  /** @description Tabs of the document types (value = id as text) and Data retention last. */
   get documentTypeItems(): RowButton[] {
-    return this.documentTypeButtons.update(this.documentTypes.map(type => ({ value: String(type.id), label: type.title, icon: 'file-text' as const })));
+    const items: RowButton[] = this.documentTypes.map(type => ({ value: String(type.id), label: type.title, icon: 'file-text' as const }));
+    if (this.canViewRetention) items.push({ value: RETENTION_TAB, label: this.strings.tab_retention, icon: 'clock' });
+    return this.documentTypeButtons.update(items);
+  }
+
+  /** @description Active tab of the top row (Data retention or the id of the document type). */
+  get activeTopTab(): string | null {
+    if (this.showRetention) return RETENTION_TAB;
+    return this.activeTabId === null ? null : String(this.activeTabId);
+  }
+
+  /** @description Subtitle of the page: the open document type, or the retention text. */
+  get pageSubtitle(): string {
+    return this.showRetention ? this.strings.retention_subtitle : `${this.strings.subtitle_prefix} ${this.tabLabel}`;
   }
 
   /** @description Language tabs: flag, name, amber dot when a section is missing in the language. */

@@ -4,6 +4,12 @@
             "type": "changed",
             "area": "core",
             "part": "admin",
+            "text": "Settings is now called Company profile (logo, company details, social networks, page titles). Data retention moved to Legal documents as its last tab, next to the privacy documents it belongs to."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
             "text": "The header is calmer: no language flag and no calendar button. Click your e-mail (on a phone your photo) to open the account panel with My account, the calendar, the administration language and Log out."
         },
         {

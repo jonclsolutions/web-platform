@@ -220,7 +220,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Leady mažete po jednom nebo hromadně (zaškrtávací políčka → Smazat vybrané) do koše; v koši je obnovíte nebo trvale smažete. Staré leady maže automaticky retence (Nastavení → Retence dat, řádek Leady)."
+              "content": "Leady mažete po jednom nebo hromadně (zaškrtávací políčka → Smazat vybrané) do koše; v koši je obnovíte nebo trvale smažete. Staré leady maže automaticky retence (Právní dokumenty → Retence dat, řádek Leady)."
             },
             {
               "type": "alert",
@@ -352,7 +352,7 @@
               "items": [
                 "Edit otevře formulář: Název klienta / Jméno (povinné), IČO, E-mail klienta, Telefon, Adresa klienta, Popis objednávky (povinný) a Přílohy / Smlouva - můžete přidat další soubory (až 10 souborů, 20 MB na soubor, 50 MB celkem).",
                 "Smazat přesune objednávku do koše (i hromadně); v koši ji obnovíte nebo trvale smažete.",
-                "Retence objednávek se nastavuje v Nastavení → Retence dat (řádek Objednávky) - účetní předpisy mohou vyžadovat uchování až 10 let."
+                "Retence objednávek se nastavuje v Právní dokumenty → Retence dat (řádek Objednávky) - účetní předpisy mohou vyžadovat uchování až 10 let."
               ]
             }
           ]

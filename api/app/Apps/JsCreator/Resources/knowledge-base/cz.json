@@ -86,7 +86,7 @@
             },
             {
               "type": "alert",
-              "content": "Šablony v koši se automaticky smažou natrvalo po uplynutí lhůty retence (výchozí 30 dní, Core → Nastavení → Retence, „JS Creator – koš“).",
+              "content": "Šablony v koši se automaticky smažou natrvalo po uplynutí lhůty retence (výchozí 30 dní, Core → Právní dokumenty → Retence dat, „JS Creator – koš“).",
               "variant": "warning"
             }
           ]
@@ -565,7 +565,7 @@
             {
               "type": "alert",
               "variant": "warning",
-              "content": "Položky v koši se automaticky smažou natrvalo po uplynutí lhůty retence (výchozí 30 dní, Core → Nastavení → Retence, „JS Creator – koš“). Koš se počítá do místa v prostoru."
+              "content": "Položky v koši se automaticky smažou natrvalo po uplynutí lhůty retence (výchozí 30 dní, Core → Právní dokumenty → Retence dat, „JS Creator – koš“). Koš se počítá do místa v prostoru."
             }
           ]
         },

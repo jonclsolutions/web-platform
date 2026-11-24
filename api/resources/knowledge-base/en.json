@@ -362,7 +362,7 @@
             },
             {
               "type": "text",
-              "content": "You only see the trash with the permission to show deleted records in the trash (view-deleted). Restoring and permanent deletion also need the delete permission of the page. Old records in the trash may also be deleted automatically by the nightly clean-up according to the retention settings (Settings → Data retention)."
+              "content": "You only see the trash with the permission to show deleted records in the trash (view-deleted). Restoring and permanent deletion also need the delete permission of the page. Old records in the trash may also be deleted automatically by the nightly clean-up according to the retention settings (Legal documents → Data retention)."
             }
           ]
         },
@@ -934,7 +934,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "The contact e-mail, phone, address and social media that visitors of the website, the e-shop and the client portal see are set in Core on the Settings page (tab Company details)."
+              "content": "The contact e-mail, phone, address and social media that visitors of the website, the e-shop and the client portal see are set in Core on the Company profile page (tab Company details)."
             }
           ]
         }
@@ -1008,7 +1008,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Cards with the name and description of a page - Accounts, Roles & permissions, Legal documents, External links, System logs and Settings. Click a card to open it. Cards of pages you have no permission for are not shown."
+              "content": "Cards with the name and description of a page - Accounts, Roles & permissions, Legal documents, External links, System logs and Company profile. Click a card to open it. Cards of pages you have no permission for are not shown."
             }
           ]
         },
@@ -1296,7 +1296,7 @@
     },
     "edit-legal": {
       "navLabel": "Legal documents",
-      "header": "Legal documents - privacy policy, terms of service, cookies",
+      "header": "Legal documents - privacy policy, terms of service, cookies, data retention",
       "sections": [
         {
           "blocks": [
@@ -1345,7 +1345,7 @@
               "cards": [
                 {
                   "title": "Document tabs",
-                  "text": "At the top you choose the document: GDPR, TOS, Cookies."
+                  "text": "At the top you choose the document: GDPR, TOS, Cookies. The last tab Data retention sets how long personal data are kept (chapter 08)."
                 },
                 {
                   "title": "Language tabs",
@@ -1477,12 +1477,84 @@
                 {
                   "title": "Deleting a section",
                   "text": "Delete a section of a legal document (core-legal-documents-delete)."
+                },
+                {
+                  "title": "Data retention",
+                  "text": "View company details (core-legal-config-view); saving the periods and the clean-up need edit company details (core-legal-config-update)."
                 }
               ]
             },
             {
               "type": "text",
               "content": "Buttons you have no permission for are not shown. Every change is written to the system log."
+            }
+          ]
+        },
+        {
+          "heading": "08. The Data retention tab (GDPR)",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The Data retention tab is the last one in the row of documents. Accounts with the permission to view company details (core-legal-config-view) see it; only the permission to edit company details (core-legal-config-update) saves the periods and runs the clean-up. An account allowed only the retention and not the documents sees it right after opening the page."
+            },
+            {
+              "type": "text",
+              "content": "The GDPR requires that personal data is not kept longer than necessary. On this tab you set for every kind of data after how long it is deleted automatically. The clean-up runs every night and permanently deletes records that have not changed for longer than the set period - including their attachments, files and items in the trash. Records being worked on (changed recently) are therefore not deleted."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Cookie consent records",
+                  "text": "An anonymous proof of the visitor's consent (without the IP address). Usually 3 years."
+                },
+                {
+                  "title": "Audit logs (core, web, e-shop)",
+                  "text": "History of changes with the e-mail and IP address of who made them, and the history of imports. Usually 1-2 years."
+                },
+                {
+                  "title": "Web inquiries",
+                  "text": "Pre-contract communication. Usually 1-2 years."
+                },
+                {
+                  "title": "Job applications (CV)",
+                  "text": "Without the applicant's consent to a longer record usually 6 months."
+                },
+                {
+                  "title": "Leads",
+                  "text": "Business opportunities and their contacts. Usually 1-2 years."
+                },
+                {
+                  "title": "Orders (project portal)",
+                  "text": "A contractual relationship - accounting and tax rules may require up to 10 years."
+                },
+                {
+                  "title": "Projects (client portal)",
+                  "text": "Including threads, messages and attachments; the last message in the portal counts as well."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Rows of applications are shown only for installed applications. For every row choose a period (30 days to 10 years) or Do not delete automatically. Below the card you see when the last clean-up ran and how many records it deleted."
+            },
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Set the periods and press Save periods.",
+                "The clean-up runs at night by itself. To run it at once, press Run clean-up now and confirm - records older than the SAVED periods are deleted."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "danger",
+              "content": "The clean-up deletes permanently and cannot be undone. Before shortening a period make sure you really do not need the older data (for example for complaints, accounting or disputes)."
+            },
+            {
+              "type": "note",
+              "highlight": "What is not deleted",
+              "content": "E-shop orders and customers are not deleted automatically - they are subject to accounting periods. Expired sign-ins to the client portal are always deleted. Security monitoring has its own retention on its page."
             }
           ]
         }
@@ -1695,14 +1767,14 @@
       ]
     },
     "settings": {
-      "navLabel": "Settings",
-      "header": "Settings - company details, page titles, data retention",
+      "navLabel": "Company profile",
+      "header": "Company profile - company details and page titles",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "The Settings page has three tabs: Company details (logo, company details and social media shown to visitors and in e-mails), Page titles (the name of the administration in the browser tab) and Data retention (how long personal data is kept)."
+              "content": "The Company profile page has two tabs: Company details (logo, company details and social media shown to visitors and in e-mails) and Page titles (the name of the administration in the browser tab). How long personal data are kept is set on the Legal documents page, tab Data retention."
             },
             {
               "type": "alert",
@@ -1853,70 +1925,6 @@
             {
               "type": "text",
               "content": "Empty field = the Czech title is used. The recommended length is up to 60 characters. Page titles of the website and the e-shop are set in their applications (Edit website, Edit e-shop)."
-            }
-          ]
-        },
-        {
-          "heading": "05. Tab Data retention (GDPR)",
-          "blocks": [
-            {
-              "type": "text",
-              "content": "The GDPR requires that personal data is not kept longer than necessary. On this tab you set for every kind of data after how long it is deleted automatically. The clean-up runs every night and permanently deletes records that have not changed for longer than the set period - including their attachments, files and items in the trash. Records being worked on (changed recently) are therefore not deleted."
-            },
-            {
-              "type": "grid",
-              "cards": [
-                {
-                  "title": "Cookie consent records",
-                  "text": "An anonymous proof of the visitor's consent (without the IP address). Usually 3 years."
-                },
-                {
-                  "title": "Audit logs (core, web, e-shop)",
-                  "text": "History of changes with the e-mail and IP address of who made them, and the history of imports. Usually 1-2 years."
-                },
-                {
-                  "title": "Web inquiries",
-                  "text": "Pre-contract communication. Usually 1-2 years."
-                },
-                {
-                  "title": "Job applications (CV)",
-                  "text": "Without the applicant's consent to a longer record usually 6 months."
-                },
-                {
-                  "title": "Leads",
-                  "text": "Business opportunities and their contacts. Usually 1-2 years."
-                },
-                {
-                  "title": "Orders (project portal)",
-                  "text": "A contractual relationship - accounting and tax rules may require up to 10 years."
-                },
-                {
-                  "title": "Projects (client portal)",
-                  "text": "Including threads, messages and attachments; the last message in the portal counts as well."
-                }
-              ]
-            },
-            {
-              "type": "text",
-              "content": "Rows of applications are shown only for installed applications. For every row choose a period (30 days to 10 years) or Do not delete automatically. Below the card you see when the last clean-up ran and how many records it deleted."
-            },
-            {
-              "type": "list",
-              "ordered": true,
-              "items": [
-                "Set the periods and press Save periods.",
-                "The clean-up runs at night by itself. To run it at once, press Run clean-up now and confirm - records older than the SAVED periods are deleted."
-              ]
-            },
-            {
-              "type": "alert",
-              "variant": "danger",
-              "content": "The clean-up deletes permanently and cannot be undone. Before shortening a period make sure you really do not need the older data (for example for complaints, accounting or disputes)."
-            },
-            {
-              "type": "note",
-              "highlight": "What is not deleted",
-              "content": "E-shop orders and customers are not deleted automatically - they are subject to accounting periods. Expired sign-ins to the client portal are always deleted. Security monitoring has its own retention on its page."
             }
           ]
         }
@@ -3253,7 +3261,7 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "Log entries cannot be edited or deleted by hand. Old entries are deleted only by the nightly clean-up according to the retention set in Settings → Data retention."
+              "content": "Log entries cannot be edited or deleted by hand. Old entries are deleted only by the nightly clean-up according to the retention set in Legal documents → Data retention."
             }
           ]
         },

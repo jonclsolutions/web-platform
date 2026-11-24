@@ -4,20 +4,15 @@
     @project: JS web-platform
     @author: JS
     @created: 2026 
-    @description: Template of the core settings page: company details (logo, contacts, social links), browser page titles of the administration and data retention.
+    @description: Template of the company profile (route core/settings): company details (logo, contacts, social links) and browser page titles of the administration.
 -->
 
 <div class="ws-container">
   <app-page-header [title]="strings.page_title" [subtitle]="strings.page_subtitle"></app-page-header>
 
-  <!-- Page tabs: Company details / Page titles / Data retention -->
+  <!-- Page tabs: Company details / Page titles (data retention: legal documents page) -->
   <app-row-button-builder kind="tabs" [stretch]="true" [items]="tabItems" [active]="activeTab"
                           [ariaLabel]="strings.tabs_label" (selected)="switchTab($any($event))" />
-
-  <!-- Data retention tab (GDPR retention periods) - own component, loads when opened -->
-  @if (activeTab === 'retention') {
-    <app-retention-settings />
-  }
 
   @if (activeTab === 'company') {
 

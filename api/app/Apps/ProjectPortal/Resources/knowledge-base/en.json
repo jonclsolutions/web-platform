@@ -220,7 +220,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Delete leads one by one or in bulk (checkboxes → Delete selected) to the trash; in the trash you restore them or delete them permanently. Old leads are deleted automatically by retention (Settings → Data retention, row Leads)."
+              "content": "Delete leads one by one or in bulk (checkboxes → Delete selected) to the trash; in the trash you restore them or delete them permanently. Old leads are deleted automatically by retention (Legal documents → Data retention, row Leads)."
             },
             {
               "type": "alert",
@@ -352,7 +352,7 @@
               "items": [
                 "Edit opens the form: Client name / Company (required), Company ID, Client e-mail, Phone, Client address, Order description (required) and Attachments / Contract - you can add more files (up to 10 files, 20 MB per file, 50 MB in total).",
                 "Delete moves an order to the trash (also in bulk); in the trash you restore it or delete it permanently.",
-                "The retention of orders is set in Settings → Data retention (row Orders) - accounting rules may require keeping them up to 10 years."
+                "The retention of orders is set in Legal documents → Data retention (row Orders) - accounting rules may require keeping them up to 10 years."
               ]
             }
           ]

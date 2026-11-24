@@ -340,7 +340,7 @@
                 "Ikona Smazat přesune poptávku do koše; v koši ji obnovíte nebo trvale smažete (i s přílohami).",
                 "Poptávky lze mazat i hromadně - vyberte je zaškrtávacími políčky a v liště zvolte Smazat vybrané.",
                 "Export poptávek (Akce → Exportovat data) obsahuje osobní údaje - zacházejte s ním opatrně.",
-                "Staré poptávky se automaticky mažou podle retence nastavené v Nastavení → Retence dat (řádek Poptávky z webu)."
+                "Staré poptávky se automaticky mažou podle retence nastavené v Právní dokumenty → Retence dat (řádek Poptávky z webu)."
               ]
             }
           ]
@@ -386,7 +386,7 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "Záznamy nejde upravit ani smazat. Staré záznamy maže noční úklid podle retence auditních logů (Nastavení → Retence dat)."
+              "content": "Záznamy nejde upravit ani smazat. Staré záznamy maže noční úklid podle retence auditních logů (Právní dokumenty → Retence dat)."
             }
           ]
         },
@@ -899,7 +899,7 @@
             {
               "type": "alert",
               "variant": "warning",
-              "content": "Žádosti obsahují osobní údaje a životopisy. Pracujte s nimi jen v rámci náboru, nesdílejte je mimo firmu a nepotřebné žádosti mažte. Bez souhlasu uchazeče s delší evidencí se žádosti obvykle uchovávají 6 měsíců (Nastavení → Retence dat)."
+              "content": "Žádosti obsahují osobní údaje a životopisy. Pracujte s nimi jen v rámci náboru, nesdílejte je mimo firmu a nepotřebné žádosti mažte. Bez souhlasu uchazeče s delší evidencí se žádosti obvykle uchovávají 6 měsíců (Právní dokumenty → Retence dat)."
             }
           ]
         },

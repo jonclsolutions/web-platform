@@ -340,7 +340,7 @@
                 "Delete moves an inquiry to the trash; in the trash you restore it or delete it permanently (with its attachments).",
                 "Inquiries can also be deleted in bulk - select them with the checkboxes and choose Delete selected in the bar.",
                 "The export of inquiries (Actions → export data) contains personal data - handle it with care.",
-                "Old inquiries are deleted automatically according to the retention in Settings → Data retention (row Web inquiries)."
+                "Old inquiries are deleted automatically according to the retention in Legal documents → Data retention (row Web inquiries)."
               ]
             }
           ]
@@ -386,7 +386,7 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "Entries cannot be edited or deleted. Old entries are deleted by the nightly clean-up according to the retention of audit logs (Settings → Data retention)."
+              "content": "Entries cannot be edited or deleted. Old entries are deleted by the nightly clean-up according to the retention of audit logs (Legal documents → Data retention)."
             }
           ]
         },
@@ -899,7 +899,7 @@
             {
               "type": "alert",
               "variant": "warning",
-              "content": "Applications contain personal data and CVs. Work with them only for hiring, do not share them outside the company and delete applications you no longer need. Without the applicant's consent to a longer record, applications are usually kept 6 months (Settings → Data retention)."
+              "content": "Applications contain personal data and CVs. Work with them only for hiring, do not share them outside the company and delete applications you no longer need. Without the applicant's consent to a longer record, applications are usually kept 6 months (Legal documents → Data retention)."
             }
           ]
         },

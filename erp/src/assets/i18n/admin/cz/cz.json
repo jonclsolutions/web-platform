@@ -210,7 +210,7 @@
     "nav_welcome": "Vítejte",
     "nav_core_dashboard": "Dashboard",
     "nav_gdpr": "Právní dokumenty",
-    "nav_company_info": "Nastavení",
+    "nav_company_info": "Firemní profil",
     "nav_external_links": "Externí odkazy",
     "nav_administrators": "Účty",
     "nav_edit_roles_title": "Role a oprávnění",
@@ -297,6 +297,8 @@
 },
 "edit-legal": {
   "page_title": "Právní dokumenty",
+  "tab_retention": "Retence dat",
+  "retention_subtitle": "Jak dlouho se uchovávají osobní údaje (GDPR)",
   "subtitle_prefix": "Správa sekcí dokumentů",
   "warning_badge_title": "Počet chybějících překladů napříč všemi jazyky",
   "warning_count_singular": "chybějící překlad",
@@ -444,8 +446,8 @@
 },
 "settings": {
   "pt_page_admin_panel": "Celá administrace a přihlášení",
-  "page_title": "Nastavení",
-  "page_subtitle": "Logo, firemní údaje a sociální sítě",
+  "page_title": "Firemní profil",
+  "page_subtitle": "Logo, firemní údaje, sociální sítě a názvy stránek administrace",
 
   "logo_card_title": "Logo",
   "logo_alt": "Logo webu",
@@ -513,10 +515,9 @@
   "social_delete_confirm_message": "Opravdu chcete smazat odkaz „{name}\"? Bude smazána i ikonka.",
   "social_deleted_title": "Smazáno",
   "social_deleted_message": "Odkaz „{name}\" byl smazán.",
-  "tabs_label": "Sekce nastavení webu",
+  "tabs_label": "Sekce firemního profilu",
     "tab_company": "Firemní údaje",
-    "tab_page_titles": "Názvy stránek",
-    "tab_retention": "Retence dat"
+    "tab_page_titles": "Názvy stránek"
 },
 "permission-descriptions": {
   "view-deleted": "Zobrazit smazané záznamy v koši napříč moduly",
@@ -799,8 +800,8 @@
     "nav_external_links_desc": "Odkazy na analytiku a externí nástroje",
     "nav_logs_title": "Logy systému",
     "nav_logs_desc": "Auditní záznamy autentizace a systému",
-    "nav_settings_title": "Nastavení",
-    "nav_settings_desc": "Firemní údaje, názvy stránek administrace a retence dat",
+    "nav_settings_title": "Firemní profil",
+    "nav_settings_desc": "Logo, firemní údaje, sociální sítě a názvy stránek administrace",
 
     "section_recent_activity": "Poslední systémové události",
     "activity_card_title": "Systémové logy",

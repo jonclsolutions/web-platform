@@ -73,7 +73,7 @@ export const CORE_NAV: AdminNavGroup[] = [
     key: 'core-legal', labelKey: 'nav_group_legal',
     items: [
       { path: 'edit-legal', permission: 'core-legal-documents-view|core-legal-config-view', labelKey: 'nav_gdpr', icon: 'shield' },
-      { path: 'settings', permission: 'core-legal-config-view', labelKey: 'nav_company_info', icon: 'globe-settings' },
+      { path: 'settings', permission: 'core-legal-config-view', labelKey: 'nav_company_info', icon: 'building' },
       { path: 'external-links', permission: 'core-external-links-view', labelKey: 'nav_external_links', icon: 'external-link' },
     ],
   },

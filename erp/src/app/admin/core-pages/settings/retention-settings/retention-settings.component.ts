@@ -4,8 +4,8 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description "Data retention" tab of the core settings (GDPR Art. 5(1)(e) storage limitation,
- * VT-10): the retention period of every kind of personal data (job applications, inquiries,
+ * @description "Data retention" tab of the legal documents page (core/edit-legal; until 2026-11 a
+ * tab of the core settings; GDPR Art. 5(1)(e) storage limitation, VT-10): the retention period of every kind of personal data (job applications, inquiries,
  * leads, web orders, projects, cookie consents), the result of the last clean-up and an
  * immediate run of the clean-up that otherwise runs every night (`retention:purge`).
  * @note The period runs from the last change of a record; "off" keeps the records until they are

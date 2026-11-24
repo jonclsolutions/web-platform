@@ -4,10 +4,12 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Manages global web configuration including company details, localized brand assets, site branding, and social media links;
- * the "Page titles" tab hosts PageTitlesEditorComponent with the browser title of the administration
- * (the web / e-shop titles: web/edit-website, shop/edit-eshop), the "Data retention" tab
- * RetentionSettingsComponent (GDPR retention periods, VT-10).
+ * @description Company profile (route core/settings, label "Firemní profil"): company details,
+ * localized brand assets, site branding and social media links; the "Page titles" tab hosts
+ * PageTitlesEditorComponent with the browser title of the administration (the web / e-shop
+ * titles: web/edit-website, shop/edit-eshop).
+ * @note Data retention (RetentionSettingsComponent, GDPR) moved to the legal documents page
+ * (core/edit-legal, tab "Retence dat") in 2026-11; the route and the permission stay.
  * @dependencies
  * - BaseDataComponent: Provides base CRUD and state management.
  * - ConfirmDialogService: Orchestrates user confirmation for destructive actions (e.g., deleting social links).
@@ -27,7 +29,6 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { environment } from '../../../../environments/environment';
 import { CompanyOptionalField, LangMeta, SiteSetting, SocialLink } from './'
-import { RetentionSettingsComponent } from './retention-settings/retention-settings.component';
 import { PageTitlesEditorComponent } from '../../components/page-titles-editor/page-titles-editor.component';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { RowButtonBuilderComponent } from '../../components/builders/row-button-builder/row-button-builder.component';
@@ -39,7 +40,7 @@ export const SOCIAL_ICON_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'imag
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RetentionSettingsComponent, PageTitlesEditorComponent, PageHeaderComponent, RowButtonBuilderComponent, StickyBarDirective],
+  imports: [CommonModule, FormsModule, PageTitlesEditorComponent, PageHeaderComponent, RowButtonBuilderComponent, StickyBarDirective],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -65,8 +66,8 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit 
   languages: LangMeta[] = [];
   currentLang: string = 'cz';
 
-  /** Active page tab: company details (default), browser tab titles per page or data retention. */
-  activeTab: 'company' | 'page_titles' | 'retention' = 'company';
+  /** Active page tab: company details (default) or browser tab titles per page. */
+  activeTab: 'company' | 'page_titles' = 'company';
 
   /**
    * Unsaved edits in the page titles tab (PageTitlesEditorComponent, area 'admin' - the web /
@@ -150,7 +151,7 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit 
    * @description Switches the page tab. The page titles editor is created (and loads) on the
    * first open and only hidden afterwards - unsaved edits are kept.
    */
-  switchTab(tab: 'company' | 'page_titles' | 'retention'): void {
+  switchTab(tab: 'company' | 'page_titles'): void {
     if (this.activeTab === tab) return;
     this.activeTab = tab;
     if (tab === 'page_titles') this.ptOpened = true;
@@ -161,12 +162,11 @@ export class SettingsComponent extends BaseDataComponent<any> implements OnInit 
   private readonly tabButtons = new RowButtonItems();
   private readonly langButtons = new RowButtonItems();
 
-  /** @description Page tabs: Company details, Page titles (dot = unsaved), Data retention. */
+  /** @description Page tabs: Company details, Page titles (dot = unsaved). */
   get tabItems(): RowButton[] {
     return this.tabButtons.update([
       { value: 'company', label: this.strings.tab_company, icon: 'building' },
       { value: 'page_titles', label: this.strings.tab_page_titles, icon: 'window', dot: this.ptIsDirty },
-      { value: 'retention', label: this.strings.tab_retention, icon: 'clock' },
     ]);
   }
 

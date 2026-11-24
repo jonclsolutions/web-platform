@@ -362,7 +362,7 @@
             },
             {
               "type": "text",
-              "content": "Koš vidíte jen s oprávněním Zobrazit smazané záznamy v koši (view-deleted). Obnovit a trvale mazat smíte jen s oprávněním mazat záznamy dané stránky. Staré záznamy v koši může také automaticky mazat noční úklid podle nastavené retence (Nastavení → Retence dat)."
+              "content": "Koš vidíte jen s oprávněním Zobrazit smazané záznamy v koši (view-deleted). Obnovit a trvale mazat smíte jen s oprávněním mazat záznamy dané stránky. Staré záznamy v koši může také automaticky mazat noční úklid podle nastavené retence (Právní dokumenty → Retence dat)."
             }
           ]
         },
@@ -934,7 +934,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Kontaktní e-mail, telefon, adresa a sociální sítě, které vidí návštěvníci webu, e-shopu a klientského portálu, se nastavují v Core na stránce Nastavení (záložka Firemní údaje)."
+              "content": "Kontaktní e-mail, telefon, adresa a sociální sítě, které vidí návštěvníci webu, e-shopu a klientského portálu, se nastavují v Core na stránce Firemní profil (záložka Firemní údaje)."
             }
           ]
         }
@@ -1008,7 +1008,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Karty s názvem a popisem stránky - Účty, Role a oprávnění, Právní dokumenty, Externí odkazy, Logy systému a Nastavení. Kliknutím kartu otevřete. Karty stránek, ke kterým nemáte oprávnění, se nezobrazí."
+              "content": "Karty s názvem a popisem stránky - Účty, Role a oprávnění, Právní dokumenty, Externí odkazy, Logy systému a Firemní profil. Kliknutím kartu otevřete. Karty stránek, ke kterým nemáte oprávnění, se nezobrazí."
             }
           ]
         },
@@ -1296,7 +1296,7 @@
     },
     "edit-legal": {
       "navLabel": "Právní dokumenty",
-      "header": "Právní dokumenty - zásady ochrany osobních údajů, obchodní podmínky, cookies",
+      "header": "Právní dokumenty - zásady ochrany osobních údajů, obchodní podmínky, cookies, retence dat",
       "sections": [
         {
           "blocks": [
@@ -1345,7 +1345,7 @@
               "cards": [
                 {
                   "title": "Záložky dokumentů",
-                  "text": "Nahoře volíte dokument: GDPR, TOS, Cookies."
+                  "text": "Nahoře volíte dokument: GDPR, TOS, Cookies. Poslední záložka Retence dat nastavuje, jak dlouho se uchovávají osobní údaje (kapitola 08)."
                 },
                 {
                   "title": "Záložky jazyků",
@@ -1477,12 +1477,84 @@
                 {
                   "title": "Smazání sekce",
                   "text": "Smazat sekci právního dokumentu (core-legal-documents-delete)."
+                },
+                {
+                  "title": "Retence dat",
+                  "text": "Zobrazit firemní údaje (core-legal-config-view), uložení lhůt a úklid upravovat firemní údaje (core-legal-config-update)."
                 }
               ]
             },
             {
               "type": "text",
               "content": "Tlačítka, ke kterým nemáte oprávnění, se nezobrazí. Každá změna se zapisuje do logu systému."
+            }
+          ]
+        },
+        {
+          "heading": "08. Záložka Retence dat (GDPR)",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Záložka Retence dat je poslední v řadě dokumentů. Vidí ji účty s oprávněním Zobrazit firemní údaje (core-legal-config-view); lhůty ukládá a úklid spouští jen oprávnění upravovat firemní údaje (core-legal-config-update). Kdo smí jen retenci a ne dokumenty, uvidí ji hned po otevření stránky."
+            },
+            {
+              "type": "text",
+              "content": "GDPR vyžaduje, aby se osobní údaje neuchovávaly déle, než je potřeba. Na této záložce pro každý druh údajů nastavíte, za jak dlouho se mají automaticky smazat. Úklid běží každou noc a trvale maže záznamy, které se déle než nastavenou dobu nezměnily - včetně jejich příloh, souborů a položek v koši. Rozpracované (nedávno změněné) záznamy se tedy nemažou."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "Záznamy souhlasu s cookies",
+                  "text": "Anonymní doklad souhlasu návštěvníka (bez IP adresy). Obvykle 3 roky."
+                },
+                {
+                  "title": "Auditní logy (core, web, e-shop)",
+                  "text": "Historie změn s e-mailem a IP adresou toho, kdo je provedl, a historie importů. Obvykle 1-2 roky."
+                },
+                {
+                  "title": "Poptávky z webu",
+                  "text": "Předsmluvní komunikace. Obvykle 1-2 roky."
+                },
+                {
+                  "title": "Žádosti o práci (CV)",
+                  "text": "Bez souhlasu uchazeče s delší evidencí obvykle 6 měsíců."
+                },
+                {
+                  "title": "Leady",
+                  "text": "Obchodní příležitosti a jejich kontakty. Obvykle 1-2 roky."
+                },
+                {
+                  "title": "Objednávky (projektový portál)",
+                  "text": "Smluvní vztah - účetní a daňové předpisy mohou vyžadovat až 10 let."
+                },
+                {
+                  "title": "Projekty (klientský portál)",
+                  "text": "Včetně vláken, zpráv a příloh; počítá se i poslední zpráva v portálu."
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "content": "Řádky aplikací se zobrazí jen u nainstalovaných aplikací. U každého řádku zvolíte dobu (30 dní až 10 let) nebo Nemazat automaticky. Pod kartou vidíte, kdy proběhl poslední úklid a kolik záznamů smazal."
+            },
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Nastavte lhůty a stiskněte Uložit lhůty.",
+                "Úklid proběhne v noci sám. Chcete-li ho spustit hned, stiskněte Spustit úklid nyní a potvrďte - smažou se záznamy starší než ULOŽENÉ lhůty."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "danger",
+              "content": "Úklid maže trvale a nejde vrátit. Před zkrácením lhůty si ověřte, že starší data opravdu nepotřebujete (například kvůli reklamacím, účetnictví nebo sporům)."
+            },
+            {
+              "type": "note",
+              "highlight": "Co se nemaže",
+              "content": "Objednávky a zákazníci e-shopu se automaticky nemažou - podléhají účetním lhůtám. Prošlá přihlášení do klientského portálu se mažou vždy. Bezpečnostní monitoring má vlastní retenci na své stránce."
             }
           ]
         }
@@ -1695,14 +1767,14 @@
       ]
     },
     "settings": {
-      "navLabel": "Nastavení",
-      "header": "Nastavení - firemní údaje, názvy stránek, retence dat",
+      "navLabel": "Firemní profil",
+      "header": "Firemní profil - firemní údaje a názvy stránek",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Stránka Nastavení má tři záložky: Firemní údaje (logo, údaje o firmě a sociální sítě, které se ukazují návštěvníkům a v e-mailech), Názvy stránek (název administrace v záložce prohlížeče) a Retence dat (jak dlouho se uchovávají osobní údaje)."
+              "content": "Stránka Firemní profil má dvě záložky: Firemní údaje (logo, údaje o firmě a sociální sítě, které se ukazují návštěvníkům a v e-mailech) a Názvy stránek (název administrace v záložce prohlížeče). Jak dlouho se uchovávají osobní údaje, nastavíte na stránce Právní dokumenty, záložka Retence dat."
             },
             {
               "type": "alert",
@@ -1853,70 +1925,6 @@
             {
               "type": "text",
               "content": "Prázdné pole = použije se název v češtině. Doporučená délka je do 60 znaků. Názvy stránek webu a e-shopu se nastavují v jejich aplikacích (Upravit web, Upravit e-shop)."
-            }
-          ]
-        },
-        {
-          "heading": "05. Záložka Retence dat (GDPR)",
-          "blocks": [
-            {
-              "type": "text",
-              "content": "GDPR vyžaduje, aby se osobní údaje neuchovávaly déle, než je potřeba. Na této záložce pro každý druh údajů nastavíte, za jak dlouho se mají automaticky smazat. Úklid běží každou noc a trvale maže záznamy, které se déle než nastavenou dobu nezměnily - včetně jejich příloh, souborů a položek v koši. Rozpracované (nedávno změněné) záznamy se tedy nemažou."
-            },
-            {
-              "type": "grid",
-              "cards": [
-                {
-                  "title": "Záznamy souhlasu s cookies",
-                  "text": "Anonymní doklad souhlasu návštěvníka (bez IP adresy). Obvykle 3 roky."
-                },
-                {
-                  "title": "Auditní logy (core, web, e-shop)",
-                  "text": "Historie změn s e-mailem a IP adresou toho, kdo je provedl, a historie importů. Obvykle 1-2 roky."
-                },
-                {
-                  "title": "Poptávky z webu",
-                  "text": "Předsmluvní komunikace. Obvykle 1-2 roky."
-                },
-                {
-                  "title": "Žádosti o práci (CV)",
-                  "text": "Bez souhlasu uchazeče s delší evidencí obvykle 6 měsíců."
-                },
-                {
-                  "title": "Leady",
-                  "text": "Obchodní příležitosti a jejich kontakty. Obvykle 1-2 roky."
-                },
-                {
-                  "title": "Objednávky (projektový portál)",
-                  "text": "Smluvní vztah - účetní a daňové předpisy mohou vyžadovat až 10 let."
-                },
-                {
-                  "title": "Projekty (klientský portál)",
-                  "text": "Včetně vláken, zpráv a příloh; počítá se i poslední zpráva v portálu."
-                }
-              ]
-            },
-            {
-              "type": "text",
-              "content": "Řádky aplikací se zobrazí jen u nainstalovaných aplikací. U každého řádku zvolíte dobu (30 dní až 10 let) nebo Nemazat automaticky. Pod kartou vidíte, kdy proběhl poslední úklid a kolik záznamů smazal."
-            },
-            {
-              "type": "list",
-              "ordered": true,
-              "items": [
-                "Nastavte lhůty a stiskněte Uložit lhůty.",
-                "Úklid proběhne v noci sám. Chcete-li ho spustit hned, stiskněte Spustit úklid nyní a potvrďte - smažou se záznamy starší než ULOŽENÉ lhůty."
-              ]
-            },
-            {
-              "type": "alert",
-              "variant": "danger",
-              "content": "Úklid maže trvale a nejde vrátit. Před zkrácením lhůty si ověřte, že starší data opravdu nepotřebujete (například kvůli reklamacím, účetnictví nebo sporům)."
-            },
-            {
-              "type": "note",
-              "highlight": "Co se nemaže",
-              "content": "Objednávky a zákazníci e-shopu se automaticky nemažou - podléhají účetním lhůtám. Prošlá přihlášení do klientského portálu se mažou vždy. Bezpečnostní monitoring má vlastní retenci na své stránce."
             }
           ]
         }
@@ -3253,7 +3261,7 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "Záznamy logu nejde upravit ani smazat ručně. Staré záznamy maže jen noční úklid podle retence nastavené v Nastavení → Retence dat."
+              "content": "Záznamy logu nejde upravit ani smazat ručně. Staré záznamy maže jen noční úklid podle retence nastavené v Právní dokumenty → Retence dat."
             }
           ]
         },

@@ -6,7 +6,7 @@
  * @created 2026
  * @description Unit tests of SettingsComponent – company settings (incl. logo upload and
  *   per-language texts), social links (add / save / delete with icon upload), the page-titles
- *   tab hosting PageTitlesEditorComponent of the administration and the data retention tab.
+ *   tab hosting PageTitlesEditorComponent of the administration (data retention: legal documents).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, confirm/alert spies, permission stub),
  *   ResourceCacheService (real)
@@ -356,24 +356,18 @@ describe('SettingsComponent', () => {
      * @output currentLang 'en', ['en']; fallback [cz]; switches applied once; 'English' / 'XX'.
      */
     /**
-     * @description The "Data retention" tab shows RetentionSettingsComponent (VT-10), which loads
-     *   its own settings; the company tab hides it again.
-     * @input switchTab('retention'); switchTab('company').
-     * @output activeTab 'retention', app-retention-settings rendered (no page titles card), get('core/retention_settings'); then gone.
+     * @description The company profile has only its own tabs - data retention moved to the legal
+     *   documents page (2026-11) and is never loaded here.
+     * @input render.
+     * @output tabs company, page_titles; no app-retention-settings; no get('core/retention_settings').
      */
-    it('shows the data retention tab', fakeAsync(() => {
-      (ctx.dataHandler as any).get.and.callFake((url: string) => url === 'core/retention_settings' ? of([])
-        : url === 'languages' ? of([{ code: 'cz', name: 'Čeština', active: true }]) : of(JSON.parse(JSON.stringify(config))));
+    it('has no data retention tab', fakeAsync(() => {
+      (ctx.dataHandler as any).get.and.callFake((url: string) =>
+        url === 'languages' ? of([{ code: 'cz', name: 'Čeština', active: true }]) : of(JSON.parse(JSON.stringify(config))));
       fixture.detectChanges();
-      component.switchTab('retention');
-      fixture.detectChanges();
-      expect(component.activeTab).toBe('retention');
-      expect(fixture.nativeElement.querySelector('app-retention-settings')).not.toBeNull();
-      expect(fixture.nativeElement.querySelector('.pt-card')).toBeNull();
-      expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('core/retention_settings');
-      component.switchTab('company');
-      fixture.detectChanges();
+      expect(component.tabItems.map(t => t.value)).toEqual(['company', 'page_titles']);
       expect(fixture.nativeElement.querySelector('app-retention-settings')).toBeNull();
+      expect((ctx.dataHandler as any).get).not.toHaveBeenCalledWith('core/retention_settings');
       discardPeriodicTasks();
     }));
 

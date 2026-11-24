@@ -6,7 +6,8 @@
  * @created 2026
  * @description Unit tests of EditLegalComponent – editing the legal documents (terms, privacy …)
  *   section by section per language: tabs, languages, missing translations per position,
- *   inline edit, add and delete of sections.
+ *   inline edit, add and delete of sections; the Data retention tab (moved from the company
+ *   profile, 2026-11).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, confirm/alert spies, i18n stub),
  *   ResourceCacheService (real)
@@ -16,6 +17,7 @@ import { ComponentFixture, TestBed, fakeAsync, flush, discardPeriodicTasks } fro
 import { of, throwError } from 'rxjs';
 
 import { EditLegalComponent } from './edit-legal.component';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 
 describe('EditLegalComponent', () => {
@@ -40,7 +42,8 @@ describe('EditLegalComponent', () => {
     ctx.i18n.getMergedSection.and.returnValue({
       warning_count_singular: 'warning', warning_count_plural: 'warnings', empty_no_sections: 'No sections in {lang}',
       missing_tag_title: 'Missing in {langs}', missing_tag_text: '{count} missing', new_section_title: 'New in {tab} ({lang})',
-      position_fill_tag: 'Position {pos}', add_section_to: 'Add to {tab} ({lang})', add_position_button: 'Add {pos}'
+      position_fill_tag: 'Position {pos}', add_section_to: 'Add to {tab} ({lang})', add_position_button: 'Add {pos}',
+      subtitle_prefix: 'Sections of', tab_retention: 'Retention', retention_subtitle: 'How long data are kept'
     });
     (ctx.dataHandler as any).getCollection.and.callFake((url: string) => {
       if (url === 'legal/document-types') return of(types);
@@ -235,6 +238,67 @@ describe('EditLegalComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Terms');
     expect(fixture.nativeElement.textContent).toContain('Privacy');
+    flush();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description Data retention is the last tab of the top row (core-legal-config-view): it shows
+   *   RetentionSettingsComponent instead of the languages and sections; a document tab returns
+   *   (the same type without a new load).
+   * @input  render; selectTopTab('retention'); selectTopTab('1'); selectTopTab('2').
+   * @output tabs 1, 2, retention; retention: activeTopTab 'retention', subtitle 'How long data are
+   *   kept', app-retention-settings rendered, no language row, get('core/retention_settings');
+   *   '1': showRetention false, type 1 without reloading its sections, subtitle 'Sections of Terms';
+   *   '2': activeTabId 2.
+   */
+  it('shows the data retention tab', fakeAsync(() => {
+    (ctx.dataHandler as any).get.and.returnValue(of([]));
+    fixture.detectChanges();
+    flush();
+    expect(component.documentTypeItems.map(i => i.value)).toEqual(['1', '2', 'retention']);
+    component.selectTopTab('retention');
+    fixture.detectChanges();
+    expect(component.activeTopTab).toBe('retention');
+    expect(component.pageSubtitle).toBe('How long data are kept');
+    expect(fixture.nativeElement.querySelector('app-retention-settings')).not.toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('app-row-button-builder').length).toBe(1);
+    expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('core/retention_settings');
+
+    const loads = (ctx.dataHandler as any).getCollection.calls.count();
+    component.selectTopTab('1');
+    fixture.detectChanges();
+    expect(component.showRetention).toBeFalse();
+    expect(component.activeTopTab).toBe('1');
+    expect(component.pageSubtitle).toBe('Sections of Terms');
+    expect((ctx.dataHandler as any).getCollection.calls.count()).toBe(loads);
+    expect(fixture.nativeElement.querySelector('app-retention-settings')).toBeNull();
+    component.selectTopTab('2');
+    expect(component.activeTabId).toBe(2);
+    flush();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description Who sees retention and when it opens first: without core-legal-config-view no
+   *   tab; `?tab=retention` opens it; without core-legal-documents-view it opens right away.
+   * @input  permissions [documents-view]; then [config-view]; then all + query tab=retention.
+   * @output tabs 1, 2 and showRetention false; showRetention true; showRetention true.
+   */
+  it('decides who sees retention first', fakeAsync(() => {
+    ctx.permissions.granted = new Set(['core-legal-documents-view']);
+    init();
+    expect(component.documentTypeItems.map(i => i.value)).toEqual(['1', '2']);
+    expect(component.showRetention).toBeFalse();
+
+    ctx.permissions.granted = new Set(['core-legal-config-view']);
+    init();
+    expect(component.showRetention).toBeTrue();
+
+    ctx.permissions.granted = 'all';
+    (component as any).route = { snapshot: { queryParamMap: convertToParamMap({ tab: 'retention' }) } } as ActivatedRoute;
+    init();
+    expect(component.showRetention).toBeTrue();
     flush();
     discardPeriodicTasks();
   }));

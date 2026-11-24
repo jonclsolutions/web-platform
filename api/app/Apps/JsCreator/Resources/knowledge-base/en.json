@@ -86,7 +86,7 @@
             },
             {
               "type": "alert",
-              "content": "Templates in the trash are deleted for good after the retention period (30 days by default, Core → Settings → Retention, \"JS Creator - trash\").",
+              "content": "Templates in the trash are deleted for good after the retention period (30 days by default, Core → Legal documents → Data retention, \"JS Creator - trash\").",
               "variant": "warning"
             }
           ]
@@ -565,7 +565,7 @@
             {
               "type": "alert",
               "variant": "warning",
-              "content": "Items of the trash are deleted for good automatically after the retention period (default 30 days, Core → Settings → Retention, “JS Creator – trash”). The trash counts towards the space of the workspace."
+              "content": "Items of the trash are deleted for good automatically after the retention period (default 30 days, Core → Legal documents → Data retention, “JS Creator – trash”). The trash counts towards the space of the workspace."
             }
           ]
         },

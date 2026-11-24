@@ -45,7 +45,7 @@
       "group": "core",
       "order": 18,
       "permission": "core-legal-documents-view|core-legal-config-view",
-      "devNote": "EditLegalComponent, route 'core/edit-legal', permission 'core-legal-documents-view|core-legal-config-view'. Vícejazyčný obsah, typy dokumentů se načítají dynamicky z legal/document-types. Jazyky = jazyky všech aplikací dohromady (GET languages); stránky obchodních podmínek a ochrany OÚ (public/legal) ukazuje web i e-shop (/shop/tos, /shop/privacy-policy).",
+      "devNote": "EditLegalComponent, route 'core/edit-legal', permission 'core-legal-documents-view|core-legal-config-view'. Vícejazyčný obsah, typy dokumentů se načítají dynamicky z legal/document-types. Jazyky = jazyky všech aplikací dohromady (GET languages); stránky obchodních podmínek a ochrany OÚ (public/legal) ukazuje web i e-shop (/shop/tos, /shop/privacy-policy). Poslední záložka Retence dat (RetentionSettingsComponent, core-legal-config-view / -update; ?tab=retention).",
       "sections": {
         "edit": "core-legal-documents-update",
         "create": "core-legal-documents-create",
@@ -67,7 +67,7 @@
       "group": "core",
       "order": 20,
       "permission": "core-legal-config-view",
-      "devNote": "SettingsComponent, route 'core/settings', permission 'core-legal-config-view'. Firemní údaje, logo, sociální sítě. Jazyky = jazyky všech aplikací dohromady (GET languages)."
+      "devNote": "SettingsComponent, route 'core/settings' (label Firemní profil), permission 'core-legal-config-view'. Firemní údaje, logo, sociální sítě, názvy stránek administrace. Jazyky = jazyky všech aplikací dohromady (GET languages). Retence dat je od 2026-11 záložka stránky edit-legal."
     },
     {
       "id": "external-links",
