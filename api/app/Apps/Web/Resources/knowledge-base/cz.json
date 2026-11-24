@@ -207,7 +207,11 @@
             },
             {
               "type": "text",
-              "content": "Filtrovat můžete podle ID, tématu, e-mailu, stavu a priority. Detail poptávky (ikona Detaily) ukáže všechny údaje včetně telefonu, celého popisu, interní poznámky, příloh (Zobrazit / Stáhnout) a data poslední změny."
+              "content": "Filtrovat můžete podle ID, tématu, e-mailu, stavu a priority. Poptávku otevřete kliknutím na její řádek (při najetí myší se podtrhne téma; klávesnicí Tab a Enter). Otevře se jedno okno s celou poptávkou - nahoře údaje, které se nemění (ID, kdy přišla, poslední změna), pod nimi formulář s telefonem, celým popisem, interní poznámkou a přílohami (Zobrazit / Stáhnout)."
+            },
+            {
+              "type": "text",
+              "content": "Otevřená poptávka má vlastní adresu (například …/user-request?record=12) - můžete ji poslat kolegovi nebo si ji uložit, po obnovení stránky zůstane otevřená. Tlačítko Zpět v prohlížeči okno zavře."
             }
           ]
         },
@@ -220,12 +224,12 @@
               "steps": [
                 {
                   "label": "Otevřete poptávku",
-                  "text": "Ikonou Detaily si přečtěte celý popis a přílohy.",
+                  "text": "Klikněte na její řádek v tabulce. Okno je zároveň detail i formulář úprav.",
                   "active": true
                 },
                 {
-                  "label": "Upravit",
-                  "text": "Ikonou úpravy (Upravit) otevřete formulář.",
+                  "label": "Bez oprávnění k úpravám",
+                  "text": "Kdo poptávky jen prohlíží, vidí v okně pouze údaje bez možnosti změny.",
                   "active": false
                 },
                 {
@@ -244,8 +248,8 @@
                   "active": false
                 },
                 {
-                  "label": "Potvrdit",
-                  "text": "Změny se uloží a zapíšou do logu webu.",
+                  "label": "Uložit změny",
+                  "text": "Tlačítko vpravo dole uloží změny a zapíše je do logu webu. Když okno zavřete s neuloženými změnami, systém se nejdřív zeptá, jestli je chcete zahodit.",
                   "active": false
                 }
               ]
@@ -337,7 +341,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "Ikona Smazat přesune poptávku do koše; v koši ji obnovíte nebo trvale smažete (i s přílohami).",
+                "Tlačítko Smazat vlevo dole v okně otevřené poptávky ji přesune do koše; v koši ji obnovíte nebo trvale smažete (i s přílohami).",
                 "Poptávky lze mazat i hromadně - vyberte je zaškrtávacími políčky a v liště zvolte Smazat vybrané.",
                 "Export poptávek (Akce → Exportovat data) obsahuje osobní údaje - zacházejte s ním opatrně.",
                 "Staré poptávky se automaticky mažou podle retence nastavené v Právní dokumenty → Retence dat (řádek Poptávky z webu)."

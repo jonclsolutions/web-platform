@@ -5,6 +5,9 @@
  * @author JS
  * @created 2025
  * @description Administrative component for managing user-submitted requests (raw commissions), handling data lifecycle, filtering, and detail views.
+ * @note Pilot of the clickable rows (2026-11): a click on a row opens the record popup (edit and
+ *   detail in one, `?record=ID` in the address, Delete on the left of its footer) - BaseDataComponent
+ *   `watchRecordParam()` / `openRecord()`; the table has no row button columns any more.
  * @dependencies
  * - BaseDataComponent: Core logic for API interactions and state management.
  * - TableBuilderComponent: UI component for rendering the request data tables and handling CSV exports and imports.
@@ -156,6 +159,8 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
   override ngOnInit(): void {
     super.ngOnInit();
     this.initWithAuthCheck(this.router);
+    // Record popup of the clickable rows - also opens `?record=ID` of a link or a reload.
+    this.watchRecordParam();
   }
 
   override refreshData(): void {

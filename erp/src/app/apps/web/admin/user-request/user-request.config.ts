@@ -156,7 +156,8 @@ export function createUserRequestFormFields(i18n: AdminLocalizationService): Cor
 export function createUserRequestColumns(i18n: AdminLocalizationService): Core.ColumnDefinition[] {
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
-    { key: 'thema', header: i18n.getValue(`${SECTION}.col_thema`), type: 'text' },
+    // Main column of the clickable rows - underlined while the row is hovered.
+    { key: 'thema', header: i18n.getValue(`${SECTION}.col_thema`), type: 'text', primary: true },
     { key: 'contact_email', header: i18n.getValue(`${SECTION}.col_email`), type: 'text' },
     { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'text' },
     { key: 'priority', header: i18n.getValue(`${SECTION}.col_priority`), type: 'text' },

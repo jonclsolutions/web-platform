@@ -40,6 +40,10 @@ export class DetailsBuilderComponent {
   @Input() itemDetailColumns: ItemDetailsColumns[] = [];
   @Input() inputDefinitions: InputDefinition[] = [];
   @Output() closeDetails = new EventEmitter<void>();
+  /** Only the values, without the popup frame - inside another popup (the record popup). */
+  @Input() embedded = false;
+  /** Embedded as a short block of read-only values (several per row) above a form. */
+  @Input() compact = false;
 
   public readonly i18n = inject(AdminLocalizationService);
 

@@ -7,6 +7,9 @@
  * @description A generic, highly configurable table component for displaying datasets with
  * built-in CRUD actions, multi-format export (CSV/XLSX/JSON/TXT), append-only import, and
  * localized formatting.
+ * @note `openOnRowClick` (2026-11): the rows open the record popup of the page (`rowOpened`) -
+ *   no row button columns; the popup takes its actions from `recordActions()` /
+ *   `canEditRecord()`, so the rules of the row buttons stay in one place.
  *
  * @dependencies
  * - EntityCrudService: CRUD calls (row delete). Exports are audited by the server: the export
@@ -121,6 +124,12 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
    * leave it off. Single deletion (row button) is NOT affected.
    */
   @Input() bulkDeleteEnabled: boolean = false;
+  /**
+   * Rows open the record popup (2026-11): a click on a row (or Enter on a focused row) emits
+   * `rowOpened`; the row button columns are not shown - their actions are in the footer of the
+   * popup (`recordActions()`), with the same permission / `visibleWhen` rules. Off by default.
+   */
+  @Input() openOnRowClick: boolean = false;
 
   @Output() itemDeleted = new EventEmitter<any>();
   @Output() createFormOpened = new EventEmitter<void>();
@@ -142,6 +151,8 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   @Output() anonymizeRequested = new EventEmitter<any>();
 
   @Output() refreshRequested = new EventEmitter<void>();
+  /** A row was opened (`openOnRowClick`) - the page opens the record popup. */
+  @Output() rowOpened = new EventEmitter<any>();
 
   /**
    * @description Emitted after a successful import (synchronous or queued). The parent page
@@ -301,7 +312,72 @@ get importEnumHints(): ImportEnumHint[] {
    * cells of the template instead of isButtonVisible() alone.
    */
   isButtonColumnVisible(button: TableButtons): boolean {
+    if (this.openOnRowClick) return false;
     return this.isButtonVisible(button) && this.hasAnyRowForButton(button);
+  }
+
+  /**
+   * @description Key of the main column of a clickable row: the column marked `primary`, else
+   *   the first shown column after `id` (else the first shown one).
+   */
+  get primaryColumnKey(): string | null {
+    const shown = (this.columnDefinitions || []).filter(col => !col.hidden);
+    return (shown.find(col => col.primary) ?? shown.find(col => col.key !== 'id') ?? shown[0])?.key ?? null;
+  }
+
+  /**
+   * @description Click on a row (`openOnRowClick`): opens the record unless the click belongs to
+   *   a control of the row (checkbox, link, button, field) or ends a text selection inside it
+   *   (copying an e-mail must not open the popup).
+   * @param event Click event.
+   * @param item Row record.
+   */
+  onRowClick(event: MouseEvent, item: any): void {
+    if (!this.openOnRowClick) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('a, button, input, select, textarea, label, .checkbox-cell')) return;
+    const selection = typeof window !== 'undefined' ? window.getSelection() : null;
+    const row = event.currentTarget as HTMLElement | null;
+    if (selection && !selection.isCollapsed && selection.toString().trim() && row && selection.anchorNode && row.contains(selection.anchorNode)) return;
+    this.rowOpened.emit(item);
+  }
+
+  /**
+   * @description Enter on a focused row opens it (keyboard access of `openOnRowClick`); Enter
+   *   on a control inside the row keeps its own meaning.
+   * @param event Keyboard event.
+   * @param item Row record.
+   */
+  onRowKeydown(event: KeyboardEvent, item: any): void {
+    if (!this.openOnRowClick || event.key !== 'Enter' || event.target !== event.currentTarget) return;
+    event.preventDefault();
+    this.rowOpened.emit(item);
+  }
+
+  /**
+   * @description Whether the record popup of a row opens for editing: the edit row button exists
+   *   and the user may use it on this record (permission + `visibleWhen`); otherwise the popup
+   *   only shows the values.
+   * @param item Record.
+   */
+  canEditRecord(item: any): boolean {
+    const edit = (this.buttons || []).find(button => button.action === 'edit' && button.isActive);
+    return !!edit && this.isButtonVisibleForItem(edit, item);
+  }
+
+  /**
+   * @description Actions of the record popup of a row (`openOnRowClick`): the row buttons except
+   *   details and edit (the popup itself is both), only those the user may use on this record -
+   *   the same permission and `visibleWhen` rules as the row buttons; deleting the own account
+   *   of an admin table is not offered (as the disabled row button).
+   * @param item Record.
+   * @param buttons Buttons (default: the buttons of this table).
+   */
+  recordActions(item: any, buttons: TableButtons[] = this.buttons): TableButtons[] {
+    return (buttons || []).filter(button => button.isActive
+      && button.action !== 'details' && button.action !== 'edit'
+      && this.isButtonVisibleForItem(button, item)
+      && !(button.type === 'delete_button' && this.isAdminTable && item?.id == this.authService.getUserId()));
   }
 
   /**

@@ -5,10 +5,13 @@
     @author: JS
     @created: 2025
     @description: Template of the details builder component: the values of a record in the shared
-        popup frame (AdminModalComponent, size lg) with a close button in the footer.
+        popup frame (AdminModalComponent, size lg) with a close button in the footer, or - with
+        `embedded` - only the values, inside another popup (the record popup).
 -->
 
-<app-admin-modal size="lg" [heading]="strings.title" (dismissed)="onClose()">
+<!-- The values of the record; `embedded` - inside another popup (the record popup of a clickable
+     table row), `compact` - a short block of read-only values above a form. -->
+<ng-template #valuesGrid>
 @if (itemData) {
 <div class="details-grid">
 @for (column of itemDetailColumns; track column) {
@@ -88,8 +91,17 @@
           }
 </div>
       }
+</ng-template>
 
+@if (embedded) {
+  <div class="details-embedded" [class.details-embedded--compact]="compact">
+    <ng-container *ngTemplateOutlet="valuesGrid" />
+  </div>
+} @else {
+<app-admin-modal size="lg" [heading]="strings.title" (dismissed)="onClose()">
+  <ng-container *ngTemplateOutlet="valuesGrid" />
 <ng-container modal-footer>
 <button type="button" class="am-btn am-btn--secondary" (click)="onClose()">{{ strings.close }}</button>
 </ng-container>
 </app-admin-modal>
+}

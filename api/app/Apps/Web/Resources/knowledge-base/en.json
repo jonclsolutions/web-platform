@@ -207,7 +207,11 @@
             },
             {
               "type": "text",
-              "content": "Filter by ID, topic, e-mail, status and priority. The details of an inquiry (Details icon) show all data including the phone, the full description, the internal note, attachments (View / Download) and the date of the last change."
+              "content": "Filter by ID, topic, e-mail, status and priority. Open an inquiry by clicking its row (the topic is underlined on hover; with the keyboard Tab and Enter). One window opens with the whole inquiry - at the top the data that do not change (ID, when it arrived, the last change), below them the form with the phone, the full description, the internal note and the attachments (View / Download)."
+            },
+            {
+              "type": "text",
+              "content": "An open inquiry has its own address (for example …/user-request?record=12) - send it to a colleague or bookmark it; it stays open after a reload. The browser Back button closes the window."
             }
           ]
         },
@@ -220,12 +224,12 @@
               "steps": [
                 {
                   "label": "Open the inquiry",
-                  "text": "Read the full description and the attachments with the Details icon.",
+                  "text": "Click its row in the table. The window is both the detail and the edit form.",
                   "active": true
                 },
                 {
-                  "label": "Edit",
-                  "text": "The edit icon (Edit) opens the form.",
+                  "label": "Without the edit permission",
+                  "text": "Who only views inquiries sees just the data in the window, without changing them.",
                   "active": false
                 },
                 {
@@ -244,8 +248,8 @@
                   "active": false
                 },
                 {
-                  "label": "Confirm",
-                  "text": "The changes are saved and written to the web log.",
+                  "label": "Save changes",
+                  "text": "The button at the bottom right saves the changes and writes them to the web log. When you close the window with unsaved changes, the system first asks whether to discard them.",
                   "active": false
                 }
               ]
@@ -337,7 +341,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "Delete moves an inquiry to the trash; in the trash you restore it or delete it permanently (with its attachments).",
+                "The Delete button at the bottom left of the window of an open inquiry moves it to the trash; in the trash you restore it or delete it permanently (with its attachments).",
                 "Inquiries can also be deleted in bulk - select them with the checkboxes and choose Delete selected in the bar.",
                 "The export of inquiries (Actions → export data) contains personal data - handle it with care.",
                 "Old inquiries are deleted automatically according to the retention in Legal documents → Data retention (row Web inquiries)."

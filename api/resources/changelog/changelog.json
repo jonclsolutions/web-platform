@@ -2,6 +2,12 @@
     "unreleased": [
         {
             "type": "changed",
+            "area": "web",
+            "part": "admin",
+            "text": "Inquiries: click a row to open it. One window is both the detail and the edit form, with Delete at its bottom left; the table has no icon columns. An open inquiry has its own link and the Back button closes it."
+        },
+        {
+            "type": "changed",
             "area": "core",
             "part": "admin",
             "text": "Czech texts cleaned up: Dashboard is now Nástěnka, Edit is Upravit, Status is Stav, priority Neutrální is Normální, E-Shop is E-shop, and number ranges use a dash (1–12). The manuals follow the new names."

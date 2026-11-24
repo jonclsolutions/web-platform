@@ -543,4 +543,135 @@ describe('FormBuilderComponent', () => {
       expect(ctx.alert.open).toHaveBeenCalledTimes(4);
     });
   });
+
+  describe('record popup (recordMode)', () => {
+    const record = { id: 12, name: 'Anna', role: '1', created_at: '2026-11-20T10:00:00Z', note: 'n' };
+    const details: any[] = [
+      { key: 'id', displayName: 'ID', type: 'text' },
+      { key: 'name', displayName: 'Name', type: 'text' },
+      { key: 'created_at', displayName: 'Created', type: 'date' },
+    ];
+    const open = (readOnly = false, actions: any[] = []) => {
+      fixture.componentRef.setInput('inputDefinitions', [defs[0], defs[1]]);
+      fixture.componentRef.setInput('formDataToEdit', record);
+      fixture.componentRef.setInput('recordMode', true);
+      fixture.componentRef.setInput('readOnly', readOnly);
+      fixture.componentRef.setInput('detailColumns', details);
+      fixture.componentRef.setInput('recordActions', actions);
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    };
+
+    /**
+     * @description The record popup is the form and the detail: title "Record <id>", the values
+     *   that are no editable field (ID, created) as compact read-only text above the form, the
+     *   actions of the record on the left of the footer (Delete red; nothing in the header next
+     *   to the close button) emitting their action, Save changes in the footer.
+     * @input record 12; detail columns id, name, created_at; fields name, role; actions delete.
+     * @output heading 'form-builder.record_header_with_id' with 12; infoColumns id + created_at;
+     *   one compact embedded details block; no button in .am-header-actions; footer action with
+     *   the danger class emits 'delete';
+     *   submit label 'form-builder.save_button'.
+     */
+    it('shows the form with read-only values and the record actions', () => {
+      const el = open(false, [{ type: 'delete_button', action: 'delete', isActive: true, display_name: 'Delete', icon: 'delete' }]);
+      expect(component.displayHeader).toBe('form-builder.record_header_with_id');
+      expect(component.infoColumns.map(c => c.key)).toEqual(['id', 'created_at']);
+      expect(el.querySelectorAll('app-details-builder').length).toBe(1);
+      expect(el.querySelector('.details-embedded--compact')).not.toBeNull();
+      expect(el.querySelectorAll('.form-grid-layout input, .form-grid-layout select').length).toBe(2);
+      expect(el.querySelector('.am-header-actions button')).toBeNull();
+      const action = el.querySelector('.am-footer .fb-record-actions .fb-record-action') as HTMLButtonElement;
+      expect(action.classList).toContain('fb-record-action--danger');
+      expect(action.getAttribute('aria-label')).toBe('Delete');
+      const emitted = spyOn(component.recordAction, 'emit');
+      action.click();
+      expect(emitted).toHaveBeenCalledWith('delete');
+      expect(el.querySelector('.am-btn--primary')!.textContent!.trim()).toBe('form-builder.save_button');
+    });
+
+    /**
+     * @description Up to two other actions are buttons next to Delete; more go under "⋯ More"
+     *   (a menu) while Delete stays visible; an item of the menu emits its action and closes it.
+     * @input actions variants, images + delete; then variants, images, orders + delete.
+     * @output 3 buttons (variants, images, delete last); then More + delete, menu with 3 items,
+     *   click on 'orders' emits it and closes the menu.
+     */
+    it('puts more than two other actions under More', () => {
+      const act = (action: string, type = 'neutral_button') => ({ type, action, isActive: true, display_name: action });
+      let el = open(false, [act('variants'), act('images'), act('delete', 'delete_button')]);
+      expect(Array.from(el.querySelectorAll('.fb-record-actions > .fb-record-action')).map(b => b.textContent!.trim())).toEqual(['variants', 'images', 'delete']);
+      expect(component.moreActionsMenu).toBeFalse();
+
+      fixture.componentRef.setInput('recordActions', [act('variants'), act('images'), act('orders'), act('delete', 'delete_button')]);
+      fixture.detectChanges();
+      el = fixture.nativeElement;
+      expect(component.moreActionsMenu).toBeTrue();
+      expect(el.querySelectorAll('.fb-record-actions > .fb-record-action--danger').length).toBe(1);
+      const more = el.querySelector('.fb-more > .fb-record-action') as HTMLButtonElement;
+      expect(more.textContent).toContain('form-builder.more_actions_button');
+      more.click();
+      fixture.detectChanges();
+      const items = Array.from(el.querySelectorAll('.fb-more-item')) as HTMLButtonElement[];
+      expect(items.map(b => b.textContent!.trim())).toEqual(['variants', 'images', 'orders']);
+      const emitted = spyOn(component.recordAction, 'emit');
+      items[2].click();
+      expect(emitted).toHaveBeenCalledWith('orders');
+      expect(component.isMoreActionsOpen).toBeFalse();
+    });
+
+    /**
+     * @description Without the edit permission the popup shows only the values: all detail
+     *   columns, no fields, Close instead of Cancel / Save; closing never asks.
+     * @input readOnly true; onCancel().
+     * @output embedded details (not compact), no inputs, one footer button 'form-builder.close_button';
+     *   formCanceled at once, no confirmation.
+     */
+    it('only shows the values without the edit permission', () => {
+      const el = open(true);
+      expect(component.infoColumns).toEqual([]);
+      expect(el.querySelector('.details-embedded')).not.toBeNull();
+      expect(el.querySelector('.details-embedded--compact')).toBeNull();
+      expect(el.querySelectorAll('.form-grid-layout').length).toBe(0);
+      const footer = Array.from(el.querySelectorAll('.am-btn')) as HTMLButtonElement[];
+      expect(footer.map(b => b.textContent!.trim())).toEqual(['form-builder.close_button']);
+      const canceled = spyOn(component.formCanceled, 'emit');
+      component.onCancel();
+      expect(canceled).toHaveBeenCalled();
+      expect(ctx.confirm.open).not.toHaveBeenCalled();
+    });
+
+    /**
+     * @description Closing the record popup with unsaved changes asks first: "keep editing" keeps
+     *   it open, "discard" closes; chosen files count as a change; a clean popup closes at once;
+     *   resetSubmitting allows another save after a failure.
+     * @input clean onCancel; files chosen + confirm false; confirm true; isSubmitting + resetSubmitting.
+     * @output clean: formCanceled without a question; dirty: question with the discard texts,
+     *   no close, then close; isSubmitting false.
+     */
+    it('asks before closing with unsaved changes', async () => {
+      open();
+      const canceled = spyOn(component.formCanceled, 'emit');
+      component.onCancel();
+      expect(canceled).toHaveBeenCalledTimes(1);
+      expect(ctx.confirm.open).not.toHaveBeenCalled();
+
+      component.onFilesChange([new File(['x'], 'a.pdf')], 'files');
+      expect(component.isDirty).toBeTrue();
+      ctx.confirm.open.and.returnValue(Promise.resolve(false));
+      component.onCancel();
+      await fixture.whenStable();
+      expect(ctx.confirm.open).toHaveBeenCalledWith('form-builder.discard_confirm_title', 'form-builder.discard_confirm_message',
+        { confirm: 'form-builder.discard_confirm_button', cancel: 'form-builder.discard_keep_button' });
+      expect(canceled).toHaveBeenCalledTimes(1);
+      ctx.confirm.open.and.returnValue(Promise.resolve(true));
+      component.onCancel();
+      await fixture.whenStable();
+      expect(canceled).toHaveBeenCalledTimes(2);
+
+      component.isSubmitting = true;
+      component.resetSubmitting();
+      expect(component.isSubmitting).toBeFalse();
+    });
+  });
 });

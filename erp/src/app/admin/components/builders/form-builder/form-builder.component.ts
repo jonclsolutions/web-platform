@@ -15,6 +15,16 @@
  * - AdminModalComponent: the shared popup frame (page scroll lock, Escape / backdrop / close = cancel).
  * - AdminLocalizationService: Static i18n of the admin UI.
  * - AvatarEditorComponent: `avatar` fields (profile photo, saved by its own endpoint).
+ * - DetailsBuilderComponent (embedded): the read-only values of the record popup.
+ * - ConfirmDialogService: "discard the unsaved changes?" of the record popup.
+ * - IconComponent: icons of the actions of the record popup.
+ * @note Record popup (`recordMode`, 2026-11): one popup opened by a click on a table row is
+ *   both the edit form and the detail - read-only values (`detailColumns` that are not editable
+ *   fields: ID, created, updated) as plain text above the form, the actions of the record
+ *   (`recordActions`, e.g. Delete) on the left of the footer - away from Cancel / Save on the
+ *   right; the top right corner is only for the close button; more than two other actions go
+ *   under "⋯ More", Delete always stays visible. Save in the footer; `readOnly` (no edit
+ *   permission) shows only the values. Closing with unsaved changes asks first.
  */
 
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef, ViewChild, OnInit, OnDestroy, OnChanges, SimpleChanges, inject } from '@angular/core';
@@ -31,6 +41,11 @@ import { UploadProfile, UploadRule, extensionsLabel, fileExtension, isExtensionA
 import { Subject, takeUntil } from 'rxjs';
 import { AvatarEditorComponent } from '../../avatar-editor/avatar-editor.component';
 import { AdminModalComponent } from '../../admin-modal/admin-modal.component';
+import { DetailsBuilderComponent } from '../details-builder/details-builder.component';
+import { ItemDetailsColumns } from '../../../../shared/interfaces/item-details-columns';
+import { TableButtons } from '../../../../shared/interfaces/table-buttons';
+import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
+import { IconComponent } from '../../../../shared/components/icon/icon.component';
 
 /** Counter of the form ids (the save button in the frame's footer submits the form by its id). */
 let nextFormId = 0;
@@ -43,7 +58,7 @@ let nextFormId = 0;
 @Component({
   selector: 'app-form-builder',
   standalone: true,
-  imports: [FormsModule, PasswordRequirementsChecklistComponent, MultiFileUploadComponent, PasswordPolicyDirective, AvatarEditorComponent, AdminModalComponent],
+  imports: [FormsModule, PasswordRequirementsChecklistComponent, MultiFileUploadComponent, PasswordPolicyDirective, AvatarEditorComponent, AdminModalComponent, DetailsBuilderComponent, IconComponent],
   templateUrl: './form-builder.component.html',
   styleUrls: ['../../../shared-styles/modal.css', './form-builder.component.css'],
 })
@@ -63,6 +78,15 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
    */
   @Input() fieldOverrides: Record<string, any> | null = null;
 
+  /** Record popup of a table row: title "Record <id>", read-only values, record actions, unsaved guard. */
+  @Input() recordMode = false;
+  /** Values of the record (detail columns) - the not editable ones are shown read-only above the form. */
+  @Input() detailColumns: ItemDetailsColumns[] = [];
+  /** Record popup without the edit permission: only the values (all `detailColumns`), no save. */
+  @Input() readOnly = false;
+  /** Actions of the record - left in the footer (the row buttons the user may use, e.g. Delete). */
+  @Input() recordActions: TableButtons[] = [];
+
   @Output() formSubmitted = new EventEmitter<any>();
   @Output() formCanceled = new EventEmitter<void>();
   /**
@@ -77,6 +101,11 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
    * refresh its list even when the form is then cancelled.
    */
   @Output() avatarChanged = new EventEmitter<{ columnName: string; value: string | null }>();
+  /** An action of the record popup was clicked - carries its `action` (e.g. 'delete'). */
+  @Output() recordAction = new EventEmitter<string>();
+
+  /** The "⋯ More" menu of the record actions is open. */
+  isMoreActionsOpen = false;
 
   @ViewChild('genericForm') genericForm!: NgForm;
   /** Id of the form - the save button in the footer of the frame submits it (`form` attribute). */
@@ -86,6 +115,8 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
   confirmPasswordData: { [key: string]: string } = {};
   isSubmitting = false;
   visibleInputDefinitions: InputDefinition[] = [];
+  /** Changes outside the template-driven controls (chosen / removed files, multiselect). */
+  private extraDirty = false;
 
   private initialized = false;
 
@@ -101,6 +132,8 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
 
   /** Loaded attachment rules per upload profile of the fields (see `InputDefinition.uploadProfile`). */
   uploadRules: Partial<Record<UploadProfile, UploadRule | null>> = {};
+
+  private confirmDialog = inject(ConfirmDialogService);
 
   constructor(
     private cd: ChangeDetectorRef,
@@ -142,6 +175,10 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
   get displayHeader(): string {
     if (this.headerText) {
       return this.headerText;
+    }
+    const recordId = this.formDataToEdit?.['id'];
+    if (this.recordMode && recordId !== undefined && recordId !== null && recordId !== '') {
+      return this.t('record_header_with_id').replace('{id}', String(recordId));
     }
     if (!this.formDataToEdit) {
       return this.t('create_header');
@@ -291,6 +328,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     this.formData[columnName] = current;
+    this.extraDirty = true;
   }
 
   /**
@@ -367,14 +405,17 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
       return;
     }
     this.formData[columnName] = file;
+    this.extraDirty = true;
   }
 
   onFilesChange(files: File[], columnName: string): void {
     this.formData[columnName] = files;
+    if (files?.length) this.extraDirty = true;
   }
 
   onExistingFilesRemoved(removedIds: number[], columnName: string): void {
     this.formData[`${columnName}_removed_ids`] = removedIds;
+    if (removedIds?.length) this.extraDirty = true;
   }
 
   private isFileArray(value: any): value is File[] {
@@ -399,8 +440,76 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
     return null;
   }
 
+  /**
+   * @description Read-only values above the form of the record popup: the detail columns that
+   *   are not an editable field of the form (e.g. ID, created, updated).
+   */
+  get infoColumns(): ItemDetailsColumns[] {
+    if (!this.recordMode || this.readOnly) return [];
+    const editable = new Set(this.visibleInputDefinitions.filter(input => input.editable !== false).map(input => input.column_name));
+    return this.detailColumns.filter(column => !editable.has(column.key));
+  }
+
+  /** @description Whether the form has changes that are not saved yet. */
+  get isDirty(): boolean {
+    return !this.readOnly && (!!this.genericForm?.dirty || this.extraDirty);
+  }
+
+  /**
+   * @description Asks whether to discard the unsaved changes of the record popup (true at once
+   *   when there are none) - also used by the page when the browser Back closes the popup.
+   * @returns Whether the popup may close.
+   */
+  confirmDiscard(): Promise<boolean> {
+    if (!this.recordMode || !this.isDirty) return Promise.resolve(true);
+    return this.confirmDialog.open(this.t('discard_confirm_title'), this.t('discard_confirm_message'), {
+      confirm: this.t('discard_confirm_button'),
+      cancel: this.t('discard_keep_button'),
+    });
+  }
+
+  /** @description Cancel / close / Escape / backdrop: the record popup asks first when there are unsaved changes. */
   onCancel(): void {
-    this.formCanceled.emit();
+    if (!this.recordMode || !this.isDirty) {
+      this.formCanceled.emit();
+      return;
+    }
+    this.confirmDiscard().then(close => { if (close) this.formCanceled.emit(); });
+  }
+
+  /** @description Delete actions of the record - always visible, last and red. */
+  get dangerActions(): TableButtons[] {
+    return this.recordActions.filter(action => action.type === 'delete_button');
+  }
+
+  /** @description Other actions of the record (e.g. Variants, Images, Reset password). */
+  get otherActions(): TableButtons[] {
+    return this.recordActions.filter(action => action.type !== 'delete_button');
+  }
+
+  /** @description More than two other actions go under "⋯ More" (the footer stays one row). */
+  get moreActionsMenu(): boolean {
+    return this.otherActions.length > 2;
+  }
+
+  /** @description Opens / closes the "⋯ More" menu. */
+  toggleMoreActions(): void {
+    this.isMoreActionsOpen = !this.isMoreActionsOpen;
+  }
+
+  /**
+   * @description Click on an action of the record popup (also an item of "⋯ More").
+   * @param action `action` of the button.
+   */
+  onRecordAction(action: string): void {
+    this.isMoreActionsOpen = false;
+    this.recordAction.emit(action);
+  }
+
+  /** @description Allows another submit after a failed save (the page keeps the popup open). */
+  resetSubmitting(): void {
+    this.isSubmitting = false;
+    this.cd.markForCheck();
   }
 
   /**

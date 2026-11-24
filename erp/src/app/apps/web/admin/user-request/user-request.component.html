@@ -4,7 +4,9 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Template of the user request component.
+    @description: Template of the inquiries page: filters, the table whose rows open the record
+        popup (edit + detail in one, `?record=ID`), trash, pagination, create form, e-mail
+        template editor and reports.
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -47,10 +49,10 @@
 [tableCaption]="tableCaption"
 [apiEndpoint]="apiEndpoint"
 [bulkDeleteEnabled]="true"
-(itemDeleted)="handleItemDeleted()"
-(createFormOpened)="handleCreateFormOpened()"
-(editFormOpened)="handleEditFormOpened($event)"
-(viewDetailsOpened)="handleViewDetails($event)">
+[openOnRowClick]="true"
+(rowOpened)="openRecord($event)"
+(itemDeleted)="handleItemDeleted($event)"
+(createFormOpened)="handleCreateFormOpened()">
 </app-table-builder>
           }
 @if (showTrashTable) {
@@ -86,13 +88,20 @@
 (formCanceled)="onCancelForm()">
 </app-form-builder>
 }
-@if (showDetails) {
-<app-details-builder
-[itemDetailColumns]="detailsColumns"
+<!-- Record popup (click on a row, ?record=ID): edit form and detail in one; without the edit
+     permission only the values; Delete on the left of the footer with the rules of the row button. -->
+@if (recordItem) {
+<app-form-builder #recordForm
+[recordMode]="true"
+[readOnly]="!recordEditable"
 [inputDefinitions]="formFields"
-[itemData]="selectedItemForDetails"
-(closeDetails)="handleCloseDetails()">
-</app-details-builder>
+[formDataToEdit]="recordItem"
+[detailColumns]="detailsColumns"
+[recordActions]="recordActions"
+(recordAction)="onRecordAction($event)"
+(formSubmitted)="handleRecordSubmitted($event)"
+(formCanceled)="closeRecord()">
+</app-form-builder>
 }
 
 @if (showEmailTemplateModal) {

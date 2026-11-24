@@ -22,4 +22,10 @@ export interface ColumnDefinition {
   currencyCode?: 'CZK' | 'EUR' | 'USD' | 'GBP' | string;
   exportable?: boolean;
   importable?: boolean;
+  /**
+   * Main column of a table whose rows open the record popup (`openOnRowClick`): its text is
+   * underlined while the row is hovered, as the "title" of the record. Without one, the first
+   * shown column after `id` is the main one.
+   */
+  primary?: boolean;
 }

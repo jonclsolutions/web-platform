@@ -7,14 +7,17 @@
  * @description Unit tests of UserRequestComponent and user-request.config.ts – requests sent
  *   from the public contact form: translated configuration, theme / status / priority options,
  *   form validation, chartable columns, toolbar by permission and view, toolbar actions, create /
- *   update, and the e-mail template editor (languages, loading, per-language texts with
- *   translated defaults in the preview, saving).
+ *   update, the e-mail template editor (languages, loading, per-language texts with
+ *   translated defaults in the preview, saving) and the record popup of the clickable rows
+ *   (?record=ID, edit + detail in one, actions, Back, save, delete).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (all admin doubles)
  */
 
-import { ComponentFixture, TestBed, fakeAsync, discardPeriodicTasks } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { ComponentFixture, TestBed, fakeAsync, discardPeriodicTasks, flush } from '@angular/core/testing';
+import { BehaviorSubject, of, throwError } from 'rxjs';
+import { ActivatedRoute, Router, convertToParamMap, ParamMap } from '@angular/router';
+import { Location } from '@angular/common';
 
 import { UserRequestComponent } from './user-request.component';
 import { USER_REQUEST_PRIORITY_VALUES, USER_REQUEST_STATUS_VALUES, USER_REQUEST_THEMA_VALUES } from './user-request.config';
@@ -226,4 +229,173 @@ describe('UserRequestComponent', () => {
     expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('web/settings/raw-request-email-template');
     discardPeriodicTasks();
   }));
+
+  describe('record popup (clickable rows)', () => {
+    let query: BehaviorSubject<ParamMap>;
+    let navigate: jasmine.Spy;
+    let location: jasmine.SpyObj<Location>;
+    const record = { id: 12, thema: 'support', contact_email: 'a@b.cz', status: 'new', priority: 'neutral', order_description: 'x', created_at: '2026-11-20T10:00:00Z' };
+
+    /** Page with a controllable address (?record) and the API answering the record. */
+    const setup = (permissions: string[] | 'all' = 'all') => {
+      TestBed.resetTestingModule();
+      ctx = createAdminTestContext();
+      query = new BehaviorSubject(convertToParamMap({}));
+      location = jasmine.createSpyObj<Location>('Location', ['back', 'path', 'subscribe']);
+      TestBed.configureTestingModule({
+        imports: [UserRequestComponent],
+        providers: [...ctx.providers,
+          { provide: ActivatedRoute, useValue: { queryParamMap: query, snapshot: { queryParamMap: convertToParamMap({}) } } },
+          { provide: Location, useValue: location }],
+      });
+      ctx.permissions.granted = permissions === 'all' ? 'all' : new Set(permissions);
+      (ctx.dataHandler as any).getOne.and.callFake((url: string) => url.endsWith('/404') ? throwError(() => new Error('404')) : of({ ...record, id: Number(url.split('/').pop()) }));
+      fixture = TestBed.createComponent(UserRequestComponent);
+      component = fixture.componentInstance;
+      navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      fixture.detectChanges();
+    };
+    const openFromAddress = (id: string) => {
+      query.next(convertToParamMap({ record: id }));
+      fixture.componentRef.changeDetectorRef.markForCheck();
+      fixture.detectChanges();
+    };
+
+    /**
+     * @description The table rows open the record: a row click puts ?record=ID into the address
+     *   (a new history entry); the address loads the record from the API (also a link / reload)
+     *   and opens ONE popup - the edit form with the read-only values and Delete on the left of the footer.
+     * @input openRecord({ id: 12 }); query record=12.
+     * @output navigate([], { queryParams: { record: 12 }, merge }); getOne('web/raw_request_commissions/12');
+     *   recordEditable true, actions [delete]; app-form-builder in record mode, not read-only; the
+     *   table has openOnRowClick and the thema column is the main one; rebuilt buttons (texts
+     *   loaded later) give new labels in the header, otherwise the same array.
+     */
+    it('opens a row as the record popup through the address', fakeAsync(() => {
+      setup();
+      component.openRecord({ id: 12 });
+      expect(navigate).toHaveBeenCalledWith([], jasmine.objectContaining({ queryParams: { record: 12 }, queryParamsHandling: 'merge' }));
+      openFromAddress('12');
+      expect((ctx.dataHandler as any).getOne).toHaveBeenCalledWith('web/raw_request_commissions/12');
+      expect(component.recordItem.id).toBe(12);
+      expect(component.recordEditable).toBeTrue();
+      expect(component.recordActions.map(b => b.action)).toEqual(['delete']);
+      const form = fixture.nativeElement.querySelector('app-form-builder');
+      expect(form).not.toBeNull();
+      expect(component.recordForm!.recordMode).toBeTrue();
+      expect(component.recordForm!.readOnly).toBeFalse();
+      expect(component.activeTable.openOnRowClick).toBeTrue();
+      expect(component.activeTable.primaryColumnKey).toBe('thema');
+      component.openRecord({});
+      expect(navigate).toHaveBeenCalledTimes(1);
+
+      // Opened by a link before the texts loaded: the actions follow the rebuilt buttons (same
+      // array while nothing changes - stable for change detection).
+      const first = component.recordActions;
+      expect(component.recordActions).toBe(first);
+      component.buttons = component.buttons.map(b => ({ ...b, display_name: b.display_name + '!' }));
+      (component as any).cd.markForCheck();
+      fixture.detectChanges();
+      expect(component.recordActions).not.toBe(first);
+      expect(component.recordActions[0].display_name).toBe('user-request.btn_delete!');
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Without the edit permission the popup only shows the values and has no Delete
+     *   without the delete permission; a missing record only leaves the address.
+     * @input permissions web-user-requests-view; record=12; then record=404.
+     * @output recordEditable false, actions [], form readOnly; for 404 navigate with record null + replaceUrl.
+     */
+    it('shows only the values without the edit permission', fakeAsync(() => {
+      setup(['web-user-requests-view']);
+      openFromAddress('12');
+      expect(component.recordEditable).toBeFalse();
+      expect(component.recordActions).toEqual([]);
+      expect(component.recordForm!.readOnly).toBeTrue();
+      openFromAddress('404');
+      expect(navigate).toHaveBeenCalledWith([], jasmine.objectContaining({ queryParams: { record: null }, replaceUrl: true }));
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Closing: a popup opened by a row click goes Back; one opened by a link only
+     *   removes the parameter; Back (parameter gone) closes the popup; with unsaved changes Back
+     *   asks and "keep editing" puts the parameter back.
+     * @input row click + closeRecord; link + closeRecord; Back with a clean form; Back with a dirty
+     *   form answered keep / discard.
+     * @output location.back(); navigate record null replaceUrl; popup closed; confirm, navigate
+     *   record 12 again and still open; then closed.
+     */
+    it('closes by Cancel or Back and guards unsaved changes', fakeAsync(() => {
+      setup();
+      component.openRecord({ id: 12 });
+      openFromAddress('12');
+      component.closeRecord();
+      expect(location.back).toHaveBeenCalledTimes(1);
+      expect(component.recordItem).toBeNull();
+
+      openFromAddress('13');
+      component.closeRecord();
+      expect(location.back).toHaveBeenCalledTimes(1);
+      expect(navigate).toHaveBeenCalledWith([], jasmine.objectContaining({ queryParams: { record: null }, replaceUrl: true }));
+
+      openFromAddress('14');
+      query.next(convertToParamMap({}));
+      expect(component.recordItem).toBeNull();
+
+      openFromAddress('15');
+      spyOnProperty(component.recordForm!, 'isDirty').and.returnValue(true);
+      ctx.confirm.open.and.returnValue(Promise.resolve(false));
+      query.next(convertToParamMap({}));
+      flush();
+      expect(ctx.confirm.open).toHaveBeenCalled();
+      expect(component.recordItem.id).toBe(15);
+      expect(navigate).toHaveBeenCalledWith([], jasmine.objectContaining({ queryParams: { record: 15 } }));
+      ctx.confirm.open.and.returnValue(Promise.resolve(true));
+      query.next(convertToParamMap({}));
+      flush();
+      expect(component.recordItem).toBeNull();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Save and actions: a save PUTs the record, closes the popup and reloads; a failed
+     *   save keeps it open and allows another save; a header action runs the table action of the
+     *   record; a deleted open record closes the popup.
+     * @input handleRecordSubmitted ok / failing; onRecordAction('delete'); handleItemDeleted(record).
+     * @output put('web/raw_request_commissions/12', data), success alert, closed; resetSubmitting();
+     *   table.handleAction(record, 'delete'); closed after the delete.
+     */
+    it('saves, runs the actions and closes after a delete', fakeAsync(() => {
+      setup();
+      openFromAddress('12');
+      (ctx.dataHandler as any).put.and.returnValue(of({}));
+      component.handleRecordSubmitted({ id: 12, status: 'done' });
+      expect((ctx.dataHandler as any).put).toHaveBeenCalledWith('web/raw_request_commissions/12', { id: 12, status: 'done' });
+      expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'user-request.crud_updated_message', 'success');
+      expect(component.recordItem).toBeNull();
+
+      openFromAddress('12');
+      const reset = spyOn(component.recordForm!, 'resetSubmitting');
+      (ctx.dataHandler as any).put.and.returnValue(throwError(() => new Error('x')));
+      component.handleRecordSubmitted({ status: 'done' });
+      expect(reset).toHaveBeenCalled();
+      expect(component.recordItem.id).toBe(12);
+
+      const action = spyOn(component.activeTable, 'handleAction');
+      component.onRecordAction('delete');
+      expect(action).toHaveBeenCalledWith(component.recordItem, 'delete');
+      component.handleItemDeleted({ id: 99 });
+      expect(component.recordItem).not.toBeNull();
+      component.handleItemDeleted({ id: 12 });
+      expect(component.recordItem).toBeNull();
+      component.onRecordAction('delete');
+      expect(action).toHaveBeenCalledTimes(1);
+      flush();
+      discardPeriodicTasks();
+    }));
+  });
 });

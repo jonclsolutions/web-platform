@@ -664,4 +664,117 @@ describe('TableBuilderComponent', () => {
       expect(component.showImportPopup).toBeFalse();
     });
   });
+
+  describe('clickable rows (record popup)', () => {
+    const columns: any[] = [
+      { key: 'id', header: 'ID', type: 'text' },
+      { key: 'name', header: 'Name', type: 'text' },
+      { key: 'mail', header: 'Mail', type: 'link' },
+    ];
+    const buttons: any[] = [
+      { type: 'info_button', action: 'details', isActive: true, display_name: 'Detail' },
+      { type: 'neutral_button', action: 'edit', isActive: true, display_name: 'Edit', permission: 'x-update', visibleWhen: (i: any) => i.id !== 3 },
+      deleteButton,
+      { type: 'neutral_button', action: 'resend_activation', isActive: true, display_name: 'Resend', visibleWhen: (i: any) => i.id === 2 },
+    ];
+    const render = (open = true) => {
+      fixture.componentRef.setInput('columns', columns);
+      fixture.componentRef.setInput('buttons', buttons);
+      fixture.componentRef.setInput('openOnRowClick', open);
+      fixture.componentRef.setInput('data', [{ id: 1, name: 'A', mail: 'https://a.test' }, { id: 2, name: 'B' }]);
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    };
+
+    /**
+     * @description With `openOnRowClick` the row button columns are gone, the rows are focusable
+     *   and the main column is the first after id (or the one marked primary); without it the
+     *   table is unchanged.
+     * @input render with / without openOnRowClick; a column marked primary.
+     * @output no .button-header / .action-button-cell, tr.row-clickable tabindex 0, td.table-cell-primary
+     *   on 'name'; primary 'mail' when marked; without the flag the 4 button columns are back.
+     */
+    it('hides the row buttons and marks the main column', () => {
+      const el = render();
+      expect(el.querySelectorAll('.button-header, .action-button-cell').length).toBe(0);
+      const row = el.querySelector('tbody tr') as HTMLElement;
+      expect(row.classList).toContain('row-clickable');
+      expect(row.getAttribute('tabindex')).toBe('0');
+      expect(component.primaryColumnKey).toBe('name');
+      expect(row.querySelector('td.table-cell-primary')!.textContent!.trim()).toBe('A');
+      expect(component.colspanValue).toBe(1 + columns.length);
+      fixture.componentRef.setInput('columns', [columns[0], columns[1], { ...columns[2], primary: true }]);
+      expect(component.primaryColumnKey).toBe('mail');
+
+      fixture.componentRef.setInput('columns', columns);
+      const plain = render(false);
+      expect(plain.querySelectorAll('thead .button-header').length).toBe(4);
+      expect(plain.querySelector('tbody tr')!.getAttribute('tabindex')).toBeNull();
+    });
+
+    /**
+     * @description A click on a row opens it; a click on its checkbox or link, or the end of a text
+     *   selection inside the row does not; Enter on the focused row opens it, Enter on a control
+     *   inside does not; without the flag nothing is emitted.
+     * @input clicks on the main cell, the checkbox, the link; a selection; Enter on the row / input.
+     * @output rowOpened once for the cell click and once for Enter; nothing else.
+     */
+    it('opens a row by click or Enter but not from its controls', () => {
+      const el = render();
+      const opened = spyOn(component.rowOpened, 'emit');
+      const row = el.querySelector('tbody tr') as HTMLElement;
+      (row.querySelector('td.table-cell-primary') as HTMLElement).click();
+      expect(opened).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 1 }));
+      (row.querySelector('.checkbox-cell input') as HTMLElement).click();
+      (row.querySelector('a') as HTMLElement).addEventListener('click', e => e.preventDefault());
+      (row.querySelector('a') as HTMLElement).click();
+      expect(opened).toHaveBeenCalledTimes(1);
+
+      const cell = row.querySelector('td.table-cell-primary') as HTMLElement;
+      const range = document.createRange();
+      range.selectNodeContents(cell);
+      window.getSelection()!.removeAllRanges();
+      window.getSelection()!.addRange(range);
+      cell.click();
+      expect(opened).toHaveBeenCalledTimes(1);
+      window.getSelection()!.removeAllRanges();
+
+      row.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      expect(opened).toHaveBeenCalledTimes(2);
+      (row.querySelector('.checkbox-cell input') as HTMLElement).dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      row.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      expect(opened).toHaveBeenCalledTimes(2);
+
+      fixture.componentRef.setInput('openOnRowClick', false);
+      component.onRowClick(new MouseEvent('click'), { id: 1 });
+      expect(opened).toHaveBeenCalledTimes(2);
+    });
+
+    /**
+     * @description The record popup gets the same rules as the row buttons: edit = the edit button
+     *   with its permission and visibleWhen; actions = the other buttons the user may use on the
+     *   record (not details / edit); the own account of an admin table cannot be deleted.
+     * @input permissions x-update + x-delete, then none; records 1, 2, 3; admin table with own id 1.
+     * @output canEditRecord 1 true, 3 false (visibleWhen), without permission false; actions of 1
+     *   [delete], of 2 [delete, resend_activation], without permission [] / [resend]; admin own [].
+     */
+    it('gives the record popup the rules of the row buttons', () => {
+      render();
+      ctx.permissions.granted = new Set(['x-update', 'x-delete']);
+      expect(component.canEditRecord({ id: 1 })).toBeTrue();
+      expect(component.canEditRecord({ id: 3 })).toBeFalse();
+      expect(component.recordActions({ id: 1 }).map(b => b.action)).toEqual(['delete']);
+      expect(component.recordActions({ id: 2 }).map(b => b.action)).toEqual(['delete', 'resend_activation']);
+      ctx.permissions.granted = new Set();
+      expect(component.canEditRecord({ id: 1 })).toBeFalse();
+      expect(component.recordActions({ id: 1 })).toEqual([]);
+      expect(component.recordActions({ id: 2 }).map(b => b.action)).toEqual(['resend_activation']);
+      ctx.permissions.granted = 'all';
+      fixture.componentRef.setInput('isAdminTable', true);
+      expect(component.recordActions({ id: 1 }).map(b => b.action)).toEqual([]);
+      expect(component.recordActions({ id: 5 }).map(b => b.action)).toEqual(['delete']);
+      fixture.componentRef.setInput('buttons', []);
+      expect(component.canEditRecord({ id: 1 })).toBeFalse();
+    });
+  });
 });

@@ -5,7 +5,8 @@
     @author: JS
     @created: 2025
     @description Template of the generic admin table (toolbar, active / trash table, row
-    actions, bulk actions, pagination, export / import / graph popups).
+    actions, bulk actions, pagination, export / import / graph popups); with `openOnRowClick`
+    the rows open the record popup (no row button columns, main column underlined on hover).
 -->
 
 @if (selectedIds.size > 0) {
@@ -90,7 +91,8 @@
 <tbody>
 @if (data && data.length > 0) {
 @for (item of data; track item) {
-<tr [class.row-selected]="isSelected(item.id)">
+<tr [class.row-selected]="isSelected(item.id)" [class.row-clickable]="openOnRowClick"
+    [attr.tabindex]="openOnRowClick ? 0 : null" (click)="onRowClick($event, item)" (keydown)="onRowKeydown($event, item)">
 @if (canBulkSelect) {
 <td class="checkbox-cell">
 <input type="checkbox"
@@ -102,7 +104,7 @@
               }
 @for (col of columnDefinitions; track col.key) {
 @if (!col.hidden) {
-<td [class.table-cell-avatar]="col.type === 'avatar'">
+<td [class.table-cell-avatar]="col.type === 'avatar'" [class.table-cell-primary]="openOnRowClick && col.key === primaryColumnKey">
 @switch (col.type) {
 @case ('image') {
 @if (getCellValue(item, col)) {

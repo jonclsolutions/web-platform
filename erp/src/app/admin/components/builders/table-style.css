@@ -305,6 +305,24 @@ cursor: not-allowed;
 opacity: 0.35;
 }
 
+/*
+ * @module Clickable rows
+ * @description Rows that open the record popup (TableBuilderComponent `openOnRowClick`): hand
+ *   cursor, the main column underlined while the row is hovered (the "title" of the record),
+ *   a visible focus ring for the keyboard (Tab + Enter). No extra element in the row.
+ * @usage <tr class="row-clickable" tabindex="0"> ... <td class="table-cell-primary">
+ */
+tr.row-clickable { cursor: pointer; }
+tr.row-clickable:hover td.table-cell-primary {
+text-decoration: underline;
+text-decoration-thickness: 1px;
+text-underline-offset: 3px;
+}
+tr.row-clickable:focus-visible {
+outline: 2px solid var(--color-zinc-900);
+outline-offset: -2px;
+}
+
 tr.row-selected {
 background-color: var(--color-zinc-100);
 }

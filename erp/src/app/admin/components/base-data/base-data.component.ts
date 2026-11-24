@@ -15,9 +15,19 @@
  * - LoadingService, AlertDialogService, AuthService, PermissionService: Core infrastructure
  *   services for UI state and access control (truly cross-cutting, so they stay here).
  * - AdminLocalizationService: Static (bundled) localization of the admin UI.
+ * - Router, ActivatedRoute, Location: the record popup in the address (`?record=ID`).
+ * @note Record popup (2026-11, pages with `openOnRowClick` tables): a click on a row opens ONE
+ *   popup that is the edit form and the detail (FormBuilderComponent `recordMode`); the record is
+ *   loaded from the API by its id and kept in the address (`?record=12`), so it survives a reload
+ *   and can be linked; Back closes it (asking first about unsaved changes). Its actions and the
+ *   edit permission come from the table (`recordActions()` / `canEditRecord()`), i.e. the same
+ *   rules as the row buttons. A page turns it on with `watchRecordParam()` in `ngOnInit`.
  */
 
 import { Directive, ViewChild, inject } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
+import type { FormBuilderComponent } from '../builders/form-builder/form-builder.component';
 import { timer } from 'rxjs';
 import { filter as rxFilter } from 'rxjs/operators';
 import * as Core from '../../../shared/imports/core-providers';
@@ -455,9 +465,181 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   }
 
   /**
-   * @description Reloads the table after a row was moved to the trash.
+   * @description Reloads the table after a row was moved to the trash; a deleted record that is
+   *   open in the record popup closes it.
+   * @param item Deleted row (optional - older templates pass nothing).
    */
-  handleItemDeleted(): void { this.refreshData(); }
+  handleItemDeleted(item?: any): void {
+    if (item && this.recordItem && item.id == this.recordItem.id) this.closeRecord();
+    this.refreshData();
+  }
+
+  // ── Record popup (clickable rows, `?record=ID`) ────────────────────────────
+
+  /** Name of the query parameter of the open record. */
+  static readonly RECORD_PARAM = 'record';
+
+  /** Record of the open record popup (loaded from the API); null = closed. */
+  recordItem: any | null = null;
+  /** No record actions (one shared empty array - stable for change detection). */
+  private static readonly NO_RECORD_ACTIONS: Core.TableButtons[] = [];
+  /** Last computed record actions - the same array while the record and the buttons stay. */
+  private recordActionsCache: { item: any; buttons: Core.TableButtons[]; value: Core.TableButtons[] } | null = null;
+
+  /**
+   * @description The record popup edits the record (edit permission of the table); otherwise it
+   *   only shows the values.
+   */
+  get recordEditable(): boolean {
+    return !!this.recordItem && !!this.activeTable?.canEditRecord(this.recordItem);
+  }
+
+  /**
+   * @description Actions of the record popup (left in its footer) (the row buttons the user may use,
+   *   e.g. Delete). Derived from the CURRENT buttons of the table - a popup opened by a link
+   *   before the texts loaded gets the translated labels as soon as the buttons are rebuilt; the
+   *   same array is returned while nothing changed (stable for change detection).
+   */
+  get recordActions(): Core.TableButtons[] {
+    const table = this.activeTable;
+    if (!this.recordItem || !table) return BaseDataComponent.NO_RECORD_ACTIONS;
+    const cache = this.recordActionsCache;
+    if (cache && cache.item === this.recordItem && cache.buttons === table.buttons) return cache.value;
+    const value = table.recordActions(this.recordItem);
+    this.recordActionsCache = { item: this.recordItem, buttons: table.buttons, value };
+    return value;
+  }
+  /** The open record was put into the history by a row click - closing goes Back. */
+  private recordPushed = false;
+
+  private readonly recordRouter = inject(Router);
+  private readonly recordRoute = inject(ActivatedRoute);
+  private readonly recordLocation = inject(Location);
+
+  /** The form of the open record popup (`#recordForm` in the template) - unsaved changes, failed save. */
+  @ViewChild('recordForm') recordForm?: FormBuilderComponent;
+
+  /**
+   * @description Turns the record popup on: follows `?record=ID` - opens the record of a link or
+   *   a reload, closes the popup when Back removes the parameter (asking first about unsaved
+   *   changes). Called by the page in `ngOnInit`.
+   */
+  protected watchRecordParam(): void {
+    this.recordRoute.queryParamMap.pipe(Core.takeUntil(this.destroy$)).subscribe(params => {
+      const id = params.get(BaseDataComponent.RECORD_PARAM);
+      if (id && String(this.recordItem?.id ?? '') !== id) {
+        this.loadRecord(id);
+      } else if (!id && this.recordItem) {
+        this.onRecordParamRemoved();
+      }
+    });
+  }
+
+  /**
+   * @description Row click: opens the record popup through the address (a new history entry, so
+   *   Back closes the popup instead of leaving the page).
+   * @param item Table row.
+   */
+  openRecord(item: any): void {
+    if (item?.id === undefined || item?.id === null) return;
+    this.recordPushed = true;
+    this.recordRouter.navigate([], {
+      relativeTo: this.recordRoute,
+      queryParams: { [BaseDataComponent.RECORD_PARAM]: item.id },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /**
+   * @description Loads the record of the popup from the API (also records outside the current
+   *   page of the table); a missing / forbidden record leaves the address (the API error is shown
+   *   by the data handler).
+   * @param id Id from the address.
+   */
+  private loadRecord(id: string): void {
+    this.getItemDetails(Number(id)).subscribe({
+      next: record => {
+        if (!record) { this.clearRecordParam(); return; }
+        this.recordItem = record;
+        this.cd.markForCheck();
+      },
+      error: () => this.clearRecordParam(),
+    });
+  }
+
+  /**
+   * @description Closes the record popup (cancel after the unsaved-changes question, after a save
+   *   or a delete): goes Back when the row click added the history entry, otherwise only removes
+   *   the parameter (a link or a reload).
+   */
+  closeRecord(): void {
+    const pushed = this.recordPushed;
+    this.recordItem = null;
+    this.recordPushed = false;
+    this.cd.markForCheck();
+    if (pushed) {
+      this.recordLocation.back();
+    } else {
+      this.clearRecordParam();
+    }
+  }
+
+  /** @description Removes `?record` from the address without a new history entry. */
+  private clearRecordParam(): void {
+    this.recordRouter.navigate([], {
+      relativeTo: this.recordRoute,
+      queryParams: { [BaseDataComponent.RECORD_PARAM]: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  /**
+   * @description Back removed `?record` while the popup is open: closes it - with unsaved changes
+   *   only after the question; "keep editing" puts the parameter back.
+   */
+  private onRecordParamRemoved(): void {
+    const id = this.recordItem?.id;
+    const form = this.recordForm;
+    const close = () => { this.recordItem = null; this.recordPushed = false; this.cd.markForCheck(); };
+    if (!form?.isDirty) { close(); return; }
+    form.confirmDiscard().then(discard => {
+      if (discard) { close(); return; }
+      this.recordPushed = true;
+      this.recordRouter.navigate([], {
+        relativeTo: this.recordRoute,
+        queryParams: { [BaseDataComponent.RECORD_PARAM]: id },
+        queryParamsHandling: 'merge',
+      });
+    });
+  }
+
+  /**
+   * @description Saves the record popup (PUT); success closes it and reloads the table, a failed
+   *   save keeps it open with the edits (the data handler shows the error).
+   * @param formData Values of the form (an object, or FormData with files).
+   */
+  handleRecordSubmitted(formData: any): void {
+    const id = this.recordItem?.id ?? formData?.id;
+    this.updateData(id, formData).subscribe({
+      next: () => {
+        this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('crud_updated_message'), 'success');
+        this.closeRecord();
+        this.refreshData();
+      },
+      error: () => this.recordForm?.resetSubmitting(),
+    });
+  }
+
+  /**
+   * @description An action of the record popup: runs the same action as the row button of
+   *   the table (Delete asks and deletes there; then `handleItemDeleted` closes the popup).
+   * @param action `action` of the button.
+   */
+  onRecordAction(action: string): void {
+    if (!this.recordItem || !this.activeTable) return;
+    this.activeTable.handleAction(this.recordItem, action);
+  }
 
   /**
    * @description Reloads the table after a row was restored from the trash.

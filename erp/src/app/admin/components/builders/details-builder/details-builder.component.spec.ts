@@ -264,4 +264,24 @@ describe('DetailsBuilderComponent', () => {
     expect(component.getViewUrl('')).toBe('');
     expect(component.getViewUrl('https://x')).toBe('https://x');
   });
+
+  /**
+   * @description Embedded (inside the record popup): only the values, no popup frame of its own;
+   *   compact adds the small block style.
+   * @input embedded true (then compact true) with itemData and one column.
+   * @output no app-admin-modal, .details-embedded with the value; compact class only when set.
+   */
+  it('renders only the values when embedded', () => {
+    fixture.componentRef.setInput('embedded', true);
+    fixture.componentRef.setInput('itemData', { id: 7 });
+    fixture.componentRef.setInput('itemDetailColumns', [{ key: 'id', displayName: 'ID', type: 'text' }]);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('app-admin-modal')).toBeNull();
+    expect(el.querySelector('.details-embedded .value-cell')!.textContent).toContain('7');
+    expect(el.querySelector('.details-embedded--compact')).toBeNull();
+    fixture.componentRef.setInput('compact', true);
+    fixture.detectChanges();
+    expect(el.querySelector('.details-embedded--compact')).not.toBeNull();
+  });
 });
