@@ -54,14 +54,14 @@
       ]
     },
     "web-dashboard": {
-      "navLabel": "Dashboard webu",
-      "header": "Dashboard webu",
+      "navLabel": "Nástěnka webu",
+      "header": "Nástěnka webu",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Dashboard webu je přehled provozu veřejné webové prezentace: počty poptávek a uchazečů, aktivita v logu, rychlé odkazy a stav webu. S oprávněním odsud web také vypnete do režimu údržby."
+              "content": "Nástěnka webu je přehled provozu veřejné webové prezentace: počty poptávek a uchazečů, aktivita v logu, rychlé odkazy a stav webu. S oprávněním odsud web také vypnete do režimu údržby."
             }
           ]
         },
@@ -101,7 +101,7 @@
             },
             {
               "type": "text",
-              "content": "Hlavní dlaždici vyberete kliknutím na její název; ostatní čísla jsou v přehledu podle modulů a v barevném pruhu distribuce. Ovládání je stejné jako na dashboardu systému. Čísla vidíte jen u stránek, ke kterým máte oprávnění."
+              "content": "Hlavní dlaždici vyberete kliknutím na její název; ostatní čísla jsou v přehledu podle modulů a v barevném pruhu distribuce. Ovládání je stejné jako na nástěnce systému. Čísla vidíte jen u stránek, ke kterým máte oprávnění."
             }
           ]
         },
@@ -197,7 +197,7 @@
                 },
                 {
                   "title": "Priorita",
-                  "text": "Nízká, Neutrální, Vysoká."
+                  "text": "Nízká, Normální, Vysoká."
                 },
                 {
                   "title": "Vytvořeno",
@@ -225,7 +225,7 @@
                 },
                 {
                   "label": "Upravit",
-                  "text": "Ikonou úpravy (Edit) otevřete formulář.",
+                  "text": "Ikonou úpravy (Upravit) otevřete formulář.",
                   "active": false
                 },
                 {

@@ -33,7 +33,7 @@
                 },
                 {
                   "title": "Aplikace",
-                  "text": "Samostatné části systému, například Web, E-shop nebo Projektový portál. Každá má vlastní menu, vlastní dashboard, vlastní logy a vlastní stránky. Mezi aplikacemi přepínáte tlačítkem Aplikace v hlavičce."
+                  "text": "Samostatné části systému, například Web, E-shop nebo Projektový portál. Každá má vlastní menu, vlastní nástěnku, vlastní logy a vlastní stránky. Mezi aplikacemi přepínáte tlačítkem Aplikace v hlavičce."
                 },
                 {
                   "title": "Veřejná část",
@@ -147,7 +147,7 @@
               "items": [
                 "Klikněte v hlavičce na záložku Core, pokud chcete pracovat se systémovými stránkami (účty, nastavení, právní dokumenty, logy).",
                 "Klikněte na tlačítko Aplikace a vyberte aplikaci, pokud chcete pracovat s webem, e-shopem nebo projektovým portálem.",
-                "Levé menu se přepne na stránky zvoleného modulu a otevře se jeho první stránka, kterou smíte otevřít (obvykle uvítací stránka nebo dashboard)."
+                "Levé menu se přepne na stránky zvoleného modulu a otevře se jeho první stránka, kterou smíte otevřít (obvykle uvítací stránka nebo nástěnka)."
               ]
             },
             {
@@ -941,19 +941,19 @@
       ]
     },
     "core-dashboard": {
-      "navLabel": "Dashboard systému",
-      "header": "Dashboard systému (Core)",
+      "navLabel": "Nástěnka systému",
+      "header": "Nástěnka systému (Core)",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Dashboard systému je rychlý přehled sdílených zdrojů, které Core spravuje pro všechny aplikace: uživatelských účtů, rolí, právních dokumentů, externích odkazů a systémových logů. Odsud se jedním kliknutím dostanete na každou správní stránku Core."
+              "content": "Nástěnka systému je rychlý přehled sdílených zdrojů, které Core spravuje pro všechny aplikace: uživatelských účtů, rolí, právních dokumentů, externích odkazů a systémových logů. Odsud se jedním kliknutím dostanete na každou správní stránku Core."
             },
             {
               "type": "alert",
               "variant": "info",
-              "content": "Dashboard vidí jen účty s oprávněním k sekci Core (view-core). Jednotlivé dlaždice a karty se zobrazí jen tehdy, když máte oprávnění k příslušné stránce - každý tedy může vidět jiný dashboard."
+              "content": "Nástěnku vidí jen účty s oprávněním k sekci Core (view-core). Jednotlivé dlaždice a karty se zobrazí jen tehdy, když máte oprávnění k příslušné stránce - každý tedy může vidět jinou nástěnku."
             }
           ]
         },
@@ -1238,7 +1238,7 @@
           "blocks": [
             {
               "type": "lead",
-              "content": "Uvítací stránka se otevře hned po přihlášení. Pozdraví vás jménem a ukáže základní údaje vašeho účtu. Neobsahuje žádné citlivé přehledy - ty jsou na dashboardech."
+              "content": "Uvítací stránka se otevře hned po přihlášení. Pozdraví vás jménem a ukáže základní údaje vašeho účtu. Neobsahuje žádné citlivé přehledy - ty jsou na nástěnkách."
             }
           ]
         },
@@ -3673,7 +3673,7 @@
               "steps": [
                 {
                   "label": "Vypnout aplikaci",
-                  "text": "U aplikace stiskněte Vypnout aplikaci (tlačítko je i v záhlaví dashboardu aplikace).",
+                  "text": "U aplikace stiskněte Vypnout aplikaci (tlačítko je i v záhlaví nástěnky aplikace).",
                   "active": true
                 },
                 {

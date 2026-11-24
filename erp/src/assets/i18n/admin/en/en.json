@@ -149,7 +149,7 @@
     "loading": "Loading…",
     "empty": "No release with changes here yet.",
     "failed": "The release notes could not be loaded.",
-    "notice_text": "Updated to {version} - {count} change(s) here.",
+    "notice_text": "Updated to {version} – {count} change(s) here.",
     "notice_open": "What's new",
     "notice_close": "Close"
   },
@@ -256,7 +256,7 @@
     "close_aria": "Close filter"
   },
     "pagination": {
-    "showing_range": "Showing {start} - {end} of {total} records.",
+    "showing_range": "Showing {start}–{end} of {total} records.",
     "items_per_page_label": "Items per page:",
     "nav_aria": "Pagination Navigation"
   },

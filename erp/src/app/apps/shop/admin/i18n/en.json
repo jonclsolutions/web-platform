@@ -971,7 +971,7 @@
     "module_shop": "E-shop (general)"
   },
   "admin-layout": {
-    "module_shop": "E-Shop",
+    "module_shop": "E-shop",
     "app_description_shop": "E-shop: catalogue, orders, customers, coupons, shipping and payment.",
     "nav_group_catalog": "Catalog",
     "nav_group_transactions": "Transactions",

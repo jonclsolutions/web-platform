@@ -149,7 +149,7 @@
     "loading": "Načítám…",
     "empty": "Zatím tu není žádné vydání se změnami.",
     "failed": "Poznámky k vydáním se nepodařilo načíst.",
-    "notice_text": "Aktualizováno na {version} - {count} změn(y) zde.",
+    "notice_text": "Aktualizováno na {version} – {count} změn(y) zde.",
     "notice_open": "Co je nového",
     "notice_close": "Zavřít"
   },
@@ -205,9 +205,9 @@
     "nav_group_users": "Uživatelé",
     "nav_group_toggle": "Zobrazit / skrýt sekci",
 
-    "nav_dashboard": "Dashboard",
+    "nav_dashboard": "Nástěnka",
     "nav_welcome": "Vítejte",
-    "nav_core_dashboard": "Dashboard",
+    "nav_core_dashboard": "Nástěnka",
     "nav_gdpr": "Právní dokumenty",
     "nav_company_info": "Firemní profil",
     "nav_external_links": "Externí odkazy",
@@ -256,7 +256,7 @@
     "close_aria": "Zavřít filtr"
   },
     "pagination": {
-    "showing_range": "Zobrazuji {start} - {end} z celkem {total} záznamů.",
+    "showing_range": "Zobrazuji {start}–{end} z celkem {total} záznamů.",
     "items_per_page_label": "Položek na stránku:",
     "nav_aria": "Navigace stránkování"
   },
@@ -761,7 +761,7 @@
 "knowledge-base": {
   "breadcrumb_root": "Interní manuál",
   "nav_group_general": "General",
-  "nav_group_roles": "Roles",
+  "nav_group_roles": "Role",
   "nav_group_core": "Core",
   "brand_text": "Wiki",
   "home_label": "Administrace",
@@ -863,7 +863,7 @@
     "toolbar_show_active": "Zobrazit aktivní",
 
     "btn_details": "Detaily",
-    "btn_edit": "Edit",
+    "btn_edit": "Upravit",
     "btn_delete": "Smazat",
 
     "field_name_label": "Název odkazu",
@@ -919,7 +919,7 @@
     "toolbar_show_active": "Zobrazit aktivní",
 
     "btn_details": "Detaily",
-    "btn_edit": "Edit",
+    "btn_edit": "Upravit",
     "btn_password": "Heslo",
     "btn_activate": "Aktivace",
     "btn_delete": "Smazat",
@@ -947,7 +947,7 @@
     "col_id": "ID",
     "col_avatar": "Fotka",
     "col_name": "Jméno",
-    "col_email": "E-mail (Login)",
+    "col_email": "Přihlašovací e-mail",
     "col_role": "Role",
     "col_blocked": "Blokován",
     "col_last_login": "Poslední log",

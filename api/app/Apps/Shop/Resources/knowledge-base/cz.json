@@ -92,14 +92,14 @@
       ]
     },
     "shop-dashboard": {
-      "navLabel": "Dashboard e-shopu",
-      "header": "Dashboard e-shopu",
+      "navLabel": "Nástěnka e-shopu",
+      "header": "Nástěnka e-shopu",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Dashboard e-shopu ukazuje aktuální stav obchodu: tržby, objednávky, co čeká na vyřízení, zásoby, zákazníky a kupóny. S oprávněním odsud e-shop také vypnete do režimu údržby."
+              "content": "Nástěnka e-shopu ukazuje aktuální stav obchodu: tržby, objednávky, co čeká na vyřízení, zásoby, zákazníky a kupóny. S oprávněním odsud e-shop také vypnete do režimu údržby."
             }
           ]
         },
@@ -181,7 +181,7 @@
             },
             {
               "type": "text",
-              "content": "Pokud se data nenačtou, dashboard zobrazí hlášku o chybě spojení - obnovte stránku nebo se přihlaste znovu."
+              "content": "Pokud se data nenačtou, nástěnka zobrazí hlášku o chybě spojení - obnovte stránku nebo se přihlaste znovu."
             }
           ]
         }
@@ -224,7 +224,7 @@
                 },
                 {
                   "title": "Akce v řádku",
-                  "text": "Detaily, Edit, Varianty, Obrázky a Smazat."
+                  "text": "Detaily, Upravit, Varianty, Obrázky a Smazat."
                 }
               ]
             },
@@ -242,8 +242,8 @@
               "type": "flow",
               "steps": [
                 {
-                  "label": "Přidat záznam / Edit",
-                  "text": "Nový produkt přidáte v nabídce Akce, existující upravíte tlačítkem Edit.",
+                  "label": "Přidat záznam / Upravit",
+                  "text": "Nový produkt přidáte v nabídce Akce, existující upravíte tlačítkem Upravit.",
                   "active": true
                 },
                 {
@@ -530,7 +530,7 @@
             {
               "type": "alert",
               "variant": "info",
-              "content": "Objednávky k vyřízení se ukazují v kalendáři v panelu Čeká na vyřízení a na dashboardu e-shopu."
+              "content": "Objednávky k vyřízení se ukazují v kalendáři v panelu Čeká na vyřízení a na nástěnce e-shopu."
             }
           ]
         },
@@ -699,8 +699,8 @@
               "type": "flow",
               "steps": [
                 {
-                  "label": "Edit",
-                  "text": "Tlačítkem Edit otevřete formulář Editace objednávky.",
+                  "label": "Upravit",
+                  "text": "Tlačítkem Upravit otevřete formulář Editace objednávky.",
                   "active": true
                 },
                 {

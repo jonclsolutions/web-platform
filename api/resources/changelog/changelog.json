@@ -1,6 +1,12 @@
 {
     "unreleased": [
         {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Czech texts cleaned up: Dashboard is now Nástěnka, Edit is Upravit, Status is Stav, priority Neutrální is Normální, E-Shop is E-shop, and number ranges use a dash (1–12). The manuals follow the new names."
+        },
+        {
             "type": "fixed",
             "area": "core",
             "part": "admin",

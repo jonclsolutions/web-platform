@@ -1,14 +1,14 @@
 {
   "pages": {
     "project-portal-dashboard": {
-      "navLabel": "Dashboard",
-      "header": "Projektový portál - Dashboard",
+      "navLabel": "Nástěnka",
+      "header": "Projektový portál - Nástěnka",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Dashboard projektového portálu je přehled obchodu a projektů: počty obchodních leadů, objednávek, projektů a záznamů v logu, rychlé odkazy, poslední aktivita a stav veřejné části portálu."
+              "content": "Nástěnka projektového portálu je přehled obchodu a projektů: počty obchodních leadů, objednávek, projektů a záznamů v logu, rychlé odkazy, poslední aktivita a stav veřejné části portálu."
             },
             {
               "type": "text",
@@ -60,7 +60,7 @@
             },
             {
               "type": "text",
-              "content": "Každá dlaždice, karta i aktivita se zobrazí jen s oprávněním k příslušné stránce. Ovládání hlavní dlaždice a přehledů je stejné jako na dashboardu systému."
+              "content": "Každá dlaždice, karta i aktivita se zobrazí jen s oprávněním k příslušné stránce. Ovládání hlavní dlaždice a přehledů je stejné jako na nástěnce systému."
             }
           ]
         }
@@ -146,7 +146,7 @@
                 },
                 {
                   "title": "Priorita",
-                  "text": "Nízká, Podprůměrná, Neutrální, Vysoká, Kritická."
+                  "text": "Nízká, Podprůměrná, Normální, Vysoká, Kritická."
                 },
                 {
                   "title": "První kontakt / Naposledy kontaktováno",
@@ -350,7 +350,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "Edit otevře formulář: Název klienta / Jméno (povinné), IČO, E-mail klienta, Telefon, Adresa klienta, Popis objednávky (povinný) a Přílohy / Smlouva - můžete přidat další soubory (až 10 souborů, 20 MB na soubor, 50 MB celkem).",
+                "Upravit otevře formulář: Název klienta / Jméno (povinné), IČO, E-mail klienta, Telefon, Adresa klienta, Popis objednávky (povinný) a Přílohy / Smlouva - můžete přidat další soubory (až 10 souborů, 20 MB na soubor, 50 MB celkem).",
                 "Smazat přesune objednávku do koše (i hromadně); v koši ji obnovíte nebo trvale smažete.",
                 "Retence objednávek se nastavuje v Právní dokumenty → Retence dat (řádek Objednávky) - účetní předpisy mohou vyžadovat uchování až 10 let."
               ]
