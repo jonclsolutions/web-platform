@@ -14,12 +14,6 @@
   color: var(--color-zinc-900);
 }
 
-.pagination-container {
-  display: flex;
-  justify-content: center;
-  padding: 20px;
-}
-
 .btn {
   padding: 10px 18px;
   border: none;

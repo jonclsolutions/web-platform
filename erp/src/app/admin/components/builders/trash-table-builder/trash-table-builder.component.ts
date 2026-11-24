@@ -17,10 +17,9 @@
 
 import {
   Component, Input, ChangeDetectionStrategy, Output, EventEmitter,
-  ChangeDetectorRef, OnDestroy, OnChanges, SimpleChanges, inject
-} from '@angular/core';
+  ChangeDetectorRef, OnDestroy, OnChanges, SimpleChanges, inject, TemplateRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 
@@ -50,6 +49,7 @@ import { BadgeTone, badgeToneOf } from '../badge-tones';
   standalone: true,
   imports: [
     FormsModule,
+    NgTemplateOutlet,
     ButtonBuilderComponent,
     IconComponent
   ],
@@ -79,6 +79,8 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
   buttons: TableButtons[] = [];
 
   public isFullWidth: boolean = true;
+  /** Footer content of the page (its paging), on the right of the one-row footer - as in the table builder. */
+  @Input() footer: TemplateRef<unknown> | null = null;
 
   @Output() itemRestored = new EventEmitter<void>();
   @Output() itemDeletedPermanently = new EventEmitter<void>();

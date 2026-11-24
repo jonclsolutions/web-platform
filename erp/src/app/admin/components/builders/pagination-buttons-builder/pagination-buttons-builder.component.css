@@ -97,3 +97,53 @@
   box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
 }
 
+
+/* One row in the footer of an admin table: the count, the page size and the pages side by side. */
+.pagination-controls-wrapper.is-inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 18px;
+  width: auto;
+}
+
+.is-inline .pagination-info {
+  padding-bottom: 0;
+  font-size: 0.82rem;
+  color: var(--color-zinc-500);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.is-inline .pagination-actions {
+  gap: 14px;
+}
+
+.is-inline .pagination-button,
+.is-inline .items-per-page-select {
+  height: 32px;
+}
+
+.is-inline .pagination-button {
+  min-width: 32px;
+}
+
+@media (max-width: 640px) {
+  /*
+   * Phone: one row - the count on the left, the pages on the right. The page size is a desktop
+   * preference (it does not fit next to the pages on a phone) - the default size stays.
+   */
+  :host {
+    flex: 1 1 auto;
+  }
+
+  .pagination-controls-wrapper.is-inline {
+    width: 100%;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+  }
+
+  .is-inline .items-per-page-container {
+    display: none;
+  }
+}

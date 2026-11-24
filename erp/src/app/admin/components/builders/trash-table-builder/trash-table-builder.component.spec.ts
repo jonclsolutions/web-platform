@@ -11,6 +11,7 @@
  */
 
 import { of } from 'rxjs';
+import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
 import { TrashTableBuilderComponent } from './trash-table-builder.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
@@ -199,5 +200,28 @@ describe('TrashTableBuilderComponent', () => {
     expect(component.getCellValue({ n: { x: 'deep' } }, { key: 'n.x' } as any)).toBe('deep');
     expect(component.strings.title).toBe('trash-table-builder.title');
     expect(component.t('a')).toBe('trash-table-builder.a');
+  });
+
+  /**
+   * @description The trash footer is one row too: Delete all and the width toggle on the left,
+   *   the page's paging template on the right; the toggle switches the width (aria-pressed).
+   * @input  footer template with a marker; click on the width toggle
+   * @output marker inside .table-footer-pager; no checkbox; isFullWidth false, aria-pressed 'false'
+   */
+  it('shows the paging in the one-row footer and toggles the width', () => {
+    @Component({ standalone: true, template: '<ng-template #pager><span class="pager-marker">P</span></ng-template>' })
+    class HostPagerComponent { @ViewChild('pager', { static: true }) pager!: TemplateRef<unknown>; }
+    const host = TestBed.createComponent(HostPagerComponent);
+    host.detectChanges();
+    component.footer = host.componentInstance.pager;
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.table-footer .table-footer-pager .pager-marker')).not.toBeNull();
+    expect(el.querySelector('.checkbox-container')).toBeNull();
+    const toggle = el.querySelector('.table-width-toggle') as HTMLButtonElement;
+    toggle.click();
+    fixture.detectChanges();
+    expect(component.isFullWidth).toBeFalse();
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
   });
 });

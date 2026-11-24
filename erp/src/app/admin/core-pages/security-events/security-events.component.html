@@ -183,7 +183,7 @@
           </app-filter-form-builder>
         </div>
         <div class="table-and-pagination-container">
-          <app-table-builder #activeTable
+          <app-table-builder [footer]="tablePager" #activeTable
             [openOnRowClick]="true"
             (rowOpened)="openRecord($event)"
             [buttons]="buttons"
@@ -201,8 +201,9 @@
             (editFormOpened)="handleEditFormOpened($event)"
             (itemDeleted)="handleItemDeleted()">
           </app-table-builder>
-          <div class="flex justify-between items-center mt-4">
-            <app-pagination-buttons-builder
+          <!-- Paging in the one-row footer of the table (and of the trash). -->
+          <ng-template #tablePager>
+            <app-pagination-buttons-builder layout="inline"
               [currentPage]="currentPage"
               [totalPages]="totalPages"
               [totalItems]="totalItems"
@@ -210,7 +211,7 @@
               (pageChange)="handlePageChange($event)"
               (itemsPerPageChange)="handleItemsPerPageChange($event)">
             </app-pagination-buttons-builder>
-          </div>
+          </ng-template>
         </div>
       </div>
     </div>

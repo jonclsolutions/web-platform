@@ -259,7 +259,12 @@
     "pagination": {
     "showing_range": "Showing {start}–{end} of {total} records.",
     "items_per_page_label": "Items per page:",
-    "nav_aria": "Pagination Navigation"
+    "nav_aria": "Pagination Navigation",
+    "range_short": "{start}–{end} of {total}",
+    "total_short": "Records: {total}",
+    "per_page_short": "Per page",
+    "prev_aria": "Previous page",
+    "next_aria": "Next page"
   },
   "table-builder": {
   "no_data": "No data found.",

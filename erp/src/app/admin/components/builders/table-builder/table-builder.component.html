@@ -174,7 +174,10 @@
 </table>
 </div>
 
-<div class="toolbar">
+<!-- Footer in one row: data freshness and the width of the view on the left, the count of the
+     records and the paging (the page's `footer` template) on the right. -->
+<div class="table-footer">
+<div class="table-footer-meta">
   <button type="button" class="table-refresh-icon-btn" (click)="onRefreshClick()"
           [attr.title]="strings.refresh_title" [attr.aria-label]="strings.refresh_aria">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -191,10 +194,23 @@
 </span>
   }
 
-<label class="checkbox-container">
-<input type="checkbox" [(ngModel)]="isFullWidth">
-    {{ strings.fullwidth_toggle_label }}
-</label>
+  <!-- Full page width: an icon toggle (a desktop matter - hidden on a phone). -->
+  <button type="button" class="table-width-toggle" [class.is-on]="isFullWidth" (click)="isFullWidth = !isFullWidth"
+          [attr.aria-pressed]="isFullWidth" [attr.title]="strings.fullwidth_toggle_label" [attr.aria-label]="strings.fullwidth_toggle_label">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="7 8 3 12 7 16"/>
+      <polyline points="17 8 21 12 17 16"/>
+      <line x1="3" y1="12" x2="21" y2="12"/>
+    </svg>
+  </button>
+</div>
+
+@if (footer) {
+<div class="table-footer-pager">
+  <ng-container [ngTemplateOutlet]="footer"></ng-container>
+</div>
+  }
 </div>
 
 @if (showExportPopup) {

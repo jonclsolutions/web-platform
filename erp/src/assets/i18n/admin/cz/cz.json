@@ -259,7 +259,12 @@
     "pagination": {
     "showing_range": "Zobrazuji {start}–{end} z celkem {total} záznamů.",
     "items_per_page_label": "Položek na stránku:",
-    "nav_aria": "Navigace stránkování"
+    "nav_aria": "Navigace stránkování",
+    "range_short": "{start}–{end} z {total}",
+    "total_short": "Záznamů: {total}",
+    "per_page_short": "Na stránku",
+    "prev_aria": "Předchozí stránka",
+    "next_aria": "Další stránka"
   },
   "table-builder": {
   "no_data": "Nebyla nalezena žádná data.",

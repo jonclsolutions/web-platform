@@ -157,25 +157,62 @@ opacity: 0.4;
 cursor: not-allowed;
 }
 
-.toolbar-trash {
-display: flex;
-justify-content: space-between; 
-align-items: center;
-padding-top: 8px;
-}
-
-.toolbar {
+/*
+ * @module Table footer
+ * @description One row under the table (2026-11): on the left the freshness of the data (refresh,
+ *   "Aktualizováno v …") or Delete all in the trash, and the full-width toggle; on the right the
+ *   count of the records and the paging (the page's `footer` template). It wraps on a narrow
+ *   screen: the left part above, the paging below across the whole width.
+ */
+.table-footer {
 display: flex;
 flex-wrap: wrap;
-justify-content: flex-start;
 align-items: center;
-gap: 10px 14px;
-padding-top: 8px;
+justify-content: space-between;
+gap: 10px 24px;
+padding-top: 10px;
 }
 
-.toolbar .checkbox-container {
-margin-left: auto;
+.table-footer-meta {
+display: flex;
+align-items: center;
+gap: 10px;
+min-width: 0;
+}
+
+.table-footer-pager {
+display: flex;
 justify-content: flex-end;
+margin-left: auto;
+}
+
+/* Full page width - a quiet icon toggle; dark when on. */
+.table-width-toggle {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+width: 30px;
+height: 30px;
+padding: 0;
+border-radius: 999px;
+border: 1px solid transparent;
+background: transparent;
+color: var(--text-dim, var(--color-zinc-400));
+cursor: pointer;
+transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.table-width-toggle:hover {
+background: var(--surface-2, var(--color-zinc-50));
+color: var(--text, var(--color-zinc-900));
+}
+.table-width-toggle.is-on {
+border-color: var(--border-mid, var(--color-sand-300));
+color: var(--text, var(--color-zinc-900));
+}
+.table-width-toggle:focus-visible,
+.table-refresh-icon-btn:focus-visible {
+outline: 2px solid var(--color-zinc-900);
+outline-offset: 2px;
 }
 
 .small-btn {
@@ -199,33 +236,6 @@ color: var(--color-rose-700);
 border-color: var(--color-rose-200);
 }
 .btn-trash:hover { background-color: #ffe4e6; }
-
-/* Container of the checkbox and the text */
-.checkbox-container {
-display: flex;
-align-items: center;
-gap: 8px;
-font-size: 13px;
-color: var(--color-zinc-500);
-cursor: pointer;
-user-select: none;
-font-weight: 500;
-transition: color 0.15s ease;
-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-}
-
-.checkbox-container:hover {
-color: var(--color-zinc-900);
-}
-
-.checkbox-container input[type="checkbox"] {
-cursor: pointer;
-width: 15px;
-height: 15px;
-accent-color: var(--color-zinc-900);
-margin: 0;
-border-radius: 4px;
-}
 
 .table-refresh-icon-btn {
 display: inline-flex;
@@ -261,15 +271,14 @@ white-space: nowrap;
 }
 
 @media (max-width: 640px) {
-  .toolbar {
-    justify-content: center;
+  /* Phone: the paging takes its own full row; the width toggle has no use here. */
+  .table-footer-pager {
+    width: 100%;
+    margin-left: 0;
   }
 
-  .toolbar .checkbox-container {
-    margin-left: 0;
-    justify-content: center;
-    text-align: center;
-    white-space: normal;
+  .table-width-toggle {
+    display: none;
   }
 
   .table-last-updated {

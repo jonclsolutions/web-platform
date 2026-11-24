@@ -12,7 +12,7 @@
  */
 
 import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
-import { SimpleChange } from '@angular/core';
+import { SimpleChange, Component, ViewChild, TemplateRef } from '@angular/core';
 import { of, throwError } from 'rxjs';
 
 import { TableBuilderComponent } from './table-builder.component';
@@ -810,6 +810,32 @@ describe('TableBuilderComponent', () => {
       expect(rows[1].querySelectorAll('.table-badge').length).toBe(0);
       expect(component.badgeTone({ name: 'A' }, { key: 'name' } as any)).toBeNull();
       expect(component.getCellValue({ priority: 'high' }, { key: 'priority', tones } as any)).toBe('High');
+    });
+  });
+
+  describe('one-row footer', () => {
+    /**
+     * @description The footer is one row: the freshness on the left, the page's footer template
+     *   (paging) on the right; the full-width checkbox became an icon toggle with aria-pressed.
+     * @input  footer template with a marker; click on the width toggle
+     * @output marker inside .table-footer-pager; aria-pressed true → false, isFullWidth false
+     */
+    it('renders the paging template on the right and toggles the width', () => {
+      @Component({ standalone: true, template: '<ng-template #pager><span class="pager-marker">P</span></ng-template>' })
+      class HostPagerComponent { @ViewChild('pager', { static: true }) pager!: TemplateRef<unknown>; }
+      const host = TestBed.createComponent(HostPagerComponent);
+      host.detectChanges();
+      fixture.componentRef.setInput('footer', host.componentInstance.pager);
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector('.table-footer .table-footer-pager .pager-marker')).not.toBeNull();
+      expect(el.querySelector('.checkbox-container')).toBeNull();
+      const toggle = el.querySelector('.table-width-toggle') as HTMLButtonElement;
+      expect(toggle.getAttribute('aria-pressed')).toBe('true');
+      toggle.click();
+      fixture.detectChanges();
+      expect(component.isFullWidth).toBeFalse();
+      expect(toggle.getAttribute('aria-pressed')).toBe('false');
     });
   });
 });

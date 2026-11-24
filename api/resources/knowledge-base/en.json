@@ -208,7 +208,7 @@
                 },
                 {
                   "title": "Pagination",
-                  "text": "Below the table: the information “Showing 1 - 10 of 57 records”, page buttons and the number of items per page. An empty table shows no pagination - the table itself tells that it has no records."
+                  "text": "Below the table is one row: the time of the update on the left, on the right the number of records (“1–15 of 57”, on one page “Records: 5”), the number of items per page and the page buttons. The page buttons are shown only with more pages, the number of items only when it can change something (not offered on a phone). An empty table shows no pagination - the table itself tells that it has no records."
                 },
                 {
                   "title": "Freshness of the data",
@@ -216,7 +216,7 @@
                 },
                 {
                   "title": "Table width",
-                  "text": "The option Show table at full page width stretches the table over the whole width - useful for tables with many columns."
+                  "text": "The icon with the arrows ↔ next to the time of the update stretches the table over the whole page width, another click returns it - useful for tables with many columns. A phone has no icon, the table always uses the whole width there."
                 },
                 {
                   "title": "Empty table",

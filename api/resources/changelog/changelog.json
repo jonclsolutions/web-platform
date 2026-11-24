@@ -4,6 +4,12 @@
             "type": "changed",
             "area": "core",
             "part": "admin",
+            "text": "Table footer in one row: update time on the left, record count and paging on the right. Page buttons only with more pages, page size only when useful; full width is an icon toggle (hidden on phones, like the page size)."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
             "text": "Tables show status, priority and severity as soft coloured labels: new is blue, waiting or in progress amber, done green, critical or failed red, normal and closed grey. The text stays; details and yes/no columns are unchanged."
         },
         {

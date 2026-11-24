@@ -19,7 +19,7 @@ describe('PaginationButtonsBuilderComponent', () => {
   let fixture: ComponentFixture<PaginationButtonsBuilderComponent>;
   let component: PaginationButtonsBuilderComponent;
 
-  const set = (inputs: Record<string, number>) => {
+  const set = (inputs: Record<string, number | string>) => {
     Object.entries(inputs).forEach(([k, v]) => fixture.componentRef.setInput(k, v));
     fixture.detectChanges();
   };
@@ -28,7 +28,8 @@ describe('PaginationButtonsBuilderComponent', () => {
     ctx = createAdminTestContext();
     ctx.i18n.getMergedSection.and.returnValue({
       showing_range: 'Showing {start}–{end} of {total}',
-      items_per_page_label: 'Rows', nav_aria: 'Pages'
+      items_per_page_label: 'Rows', nav_aria: 'Pages',
+      range_short: '{start}–{end} of {total}', total_short: 'Records: {total}', per_page_short: 'Per page'
     });
     await TestBed.configureTestingModule({ imports: [PaginationButtonsBuilderComponent], providers: ctx.providers }).compileComponents();
     fixture = TestBed.createComponent(PaginationButtonsBuilderComponent);
@@ -128,11 +129,11 @@ describe('PaginationButtonsBuilderComponent', () => {
 
   /**
    * @description Choosing a page size emits it as a number.
-   * @input  select change to '50'
+   * @input  12 records on one page (the page size is offered); select change to '50'
    * @output itemsPerPageChange emits 50 (number)
    */
   it('emits the chosen page size as a number', () => {
-    set({ totalItems: 5, totalPages: 1 });
+    set({ totalItems: 12, totalPages: 1 });
     const sizes: number[] = [];
     component.itemsPerPageChange.subscribe(v => sizes.push(v));
     const select: HTMLSelectElement = fixture.nativeElement.querySelector('select');
@@ -143,14 +144,49 @@ describe('PaginationButtonsBuilderComponent', () => {
 
   /**
    * @description A language switch re-renders the texts at once (OnPush), without new inputs.
-   * @input  a table with rows; section texts changed; translations$.next({})
+   * @input  a table with 12 rows (the page size is offered); section texts changed; translations$.next({})
    * @output 'Řádky' shown
    */
   it('re-renders after a language switch', () => {
-    set({ totalItems: 3, totalPages: 1 });
+    set({ totalItems: 12, totalPages: 1 });
     ctx.i18n.getMergedSection.and.returnValue({ showing_range: '{start}–{end} z {total}', items_per_page_label: 'Řádky', nav_aria: 'Stránky' });
     ctx.i18n.translations$.next({});
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Řádky');
+  });
+
+  /**
+   * @description Only what can be used is shown: one page = no page buttons; records not more
+   *   than the smallest page size = no page size either; more pages = both.
+   * @input  totalItems 4 / 12 / 40 with totalPages 1 / 1 / 3
+   * @output nav and select absent; select only; nav and select
+   */
+  it('hides page buttons and page size that would do nothing', () => {
+    const el = () => fixture.nativeElement as HTMLElement;
+    set({ currentPage: 1, itemsPerPage: 15, totalItems: 4, totalPages: 1 });
+    expect(el().querySelector('nav')).toBeNull();
+    expect(el().querySelector('select')).toBeNull();
+    set({ totalItems: 12 });
+    expect(el().querySelector('nav')).toBeNull();
+    expect(el().querySelector('select')).not.toBeNull();
+    set({ totalItems: 40, totalPages: 3 });
+    expect(el().querySelector('nav')).not.toBeNull();
+    expect(el().querySelector('[aria-current="page"]')!.textContent!.trim()).toBe('1');
+  });
+
+  /**
+   * @description The inline layout (table footer) is one short row: the count alone for one
+   *   page, the short range for more pages, the short page-size label.
+   * @input  layout 'inline'; totalItems 5 / 1 page, then 40 / 3 pages on page 2
+   * @output 'Records: 5'; '16–30 of 40', label 'Per page', class is-inline
+   */
+  it('shows a short one-row text in the inline layout', () => {
+    set({ layout: 'inline', currentPage: 1, itemsPerPage: 15, totalItems: 5, totalPages: 1 });
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.pagination-controls-wrapper')!.classList).toContain('is-inline');
+    expect(el.querySelector('.pagination-info')!.textContent!.trim()).toBe('Records: 5');
+    set({ currentPage: 2, totalItems: 40, totalPages: 3 });
+    expect(el.querySelector('.pagination-info')!.textContent!.trim()).toBe('16–30 of 40');
+    expect(el.querySelector('label')!.textContent!.trim()).toBe('Per page');
   });
 });

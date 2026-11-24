@@ -28,8 +28,7 @@
 
 import {
   Component, Input, Output, EventEmitter, ChangeDetectionStrategy,
-  ChangeDetectorRef, OnDestroy, OnChanges, SimpleChanges, HostListener, inject
-} from '@angular/core';
+  ChangeDetectorRef, OnDestroy, OnChanges, SimpleChanges, HostListener, inject, TemplateRef } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -115,6 +114,11 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   @Input() detailsColumns: { key: string; displayName: string; type?: string; format?: string; importable?: boolean }[] = [];
 
   @Input() lastUpdatedAt: Date | null = null;
+  /**
+   * Footer content of the page (its paging), shown on the right of the one-row table footer:
+   * `<ng-template #tablePager><app-pagination-buttons-builder layout="inline" …>` + `[footer]="tablePager"`.
+   */
+  @Input() footer: TemplateRef<unknown> | null = null;
 
   /**
    * @description Offers "Delete selected" in the bulk-actions dropdown (still only with an active

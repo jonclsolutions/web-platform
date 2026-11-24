@@ -6,6 +6,10 @@
  * @created 2025
  * @description A dynamic pagination controller that provides page navigation and items-per-page
  *   selection; hidden for an empty table (totalItems 0 - the table shows its own empty message).
+ *   Shows only what can be used (2026-11): the page buttons with more than one page, the page
+ *   size when a smaller size would split the records. `layout="inline"` = one short row for the
+ *   footer of an admin table ("1–15 z 57", "Záznamů: 5"); the default stacked layout keeps the
+ *   full sentence (the public catalogue).
  * @dependencies
  * - FormsModule: Enables template-driven bindings for the select element.
  * - AdminLocalizationService: texts of the section `pagination`; a language switch re-renders
@@ -34,6 +38,11 @@ export class PaginationButtonsBuilderComponent {
   @Input() totalPages: number = 1;
   @Input() totalItems: number = 0;
   @Input() itemsPerPage: number = 15;
+  /** 'stacked' = centred block with the full sentence; 'inline' = one short row (table footer). */
+  @Input() layout: 'stacked' | 'inline' = 'stacked';
+
+  /** Offered page sizes. */
+  public readonly pageSizes: readonly number[] = [5, 10, 15, 20, 50];
 
   @Output() pageChange = new EventEmitter<number>();
   @Output() itemsPerPageChange = new EventEmitter<number>();
@@ -57,6 +66,14 @@ export class PaginationButtonsBuilderComponent {
    * values. For `totalItems === 0` the whole builder is hidden, this getter is not called.
    */
   get rangeText(): string {
+    if (this.isInline) {
+      // One page: the count alone ("Záznamů: 5"); more pages: the short range ("1–15 z 57").
+      const key = this.totalPages > 1 ? 'range_short' : 'total_short';
+      return String(this.strings[key] ?? '')
+        .replace('{start}', String(this.rangeStart))
+        .replace('{end}', String(this.rangeEnd))
+        .replace('{total}', String(this.totalItems));
+    }
     return this.strings.showing_range
       .replace('{start}', String(this.rangeStart))
       .replace('{end}', String(this.rangeEnd))
@@ -83,6 +100,27 @@ export class PaginationButtonsBuilderComponent {
     if (this.totalItems === 0) return 0;
     const page = Math.max(1, this.currentPage);
     return Math.min(page * this.itemsPerPage, this.totalItems);
+  }
+
+  /** @description True for the one-row layout of the table footer. */
+  get isInline(): boolean {
+    return this.layout === 'inline';
+  }
+
+  /**
+   * @description The page buttons only when there is more than one page - a lone "1" with two
+   *   disabled arrows does nothing.
+   */
+  get showPageButtons(): boolean {
+    return this.totalPages > 1;
+  }
+
+  /**
+   * @description The page size only when it can change something: more records than the
+   *   smallest size (or the table is already split into pages).
+   */
+  get showPageSize(): boolean {
+    return this.totalPages > 1 || this.totalItems > this.pageSizes[0];
   }
 
   /**

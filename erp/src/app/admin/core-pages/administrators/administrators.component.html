@@ -33,7 +33,7 @@
 </div>
 <div class="table-and-pagination-container">
 @if (!showTrashTable) {
-<app-table-builder #activeTable
+<app-table-builder [footer]="tablePager" #activeTable
   [openOnRowClick]="true"
   (rowOpened)="openRecord($event)"
   [buttons]="buttons"
@@ -55,7 +55,7 @@
 </app-table-builder>
           }
 @if (showTrashTable) {
-<app-trash-table-builder
+<app-trash-table-builder [footer]="tablePager"
 [data]="trashData"
 [columns]="trashTableColumns"
 [apiEndpoint]="apiEndpoint"
@@ -63,8 +63,9 @@
 (itemRestored)="handleItemRestored()">
 </app-trash-table-builder>
           }
-<div class="footer-controls flex justify-between items-center mt-4">
-<app-pagination-buttons-builder
+<!-- Paging in the one-row footer of the table (and of the trash). -->
+<ng-template #tablePager>
+<app-pagination-buttons-builder layout="inline"
 [currentPage]="showTrashTable ? trashCurrentPage : currentPage"
 [totalPages]="showTrashTable ? trashTotalPages : totalPages"
 [totalItems]="showTrashTable ? trashTotalItems : totalItems"
@@ -72,7 +73,7 @@
 (pageChange)="handlePageChange($event)"
 (itemsPerPageChange)="handleItemsPerPageChange($event)">
 </app-pagination-buttons-builder>
-</div>
+</ng-template>
 </div>
 </div>
 </div>

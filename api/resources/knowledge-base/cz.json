@@ -208,7 +208,7 @@
                 },
                 {
                   "title": "Stránkování",
-                  "text": "Pod tabulkou je informace „Zobrazuji 1 - 10 z celkem 57 záznamů“, tlačítka stránek a volba počtu položek na stránku. U prázdné tabulky se stránkování nezobrazuje - že nemá žádné záznamy, oznámí tabulka sama."
+                  "text": "Pod tabulkou je jeden řádek: vlevo čas aktualizace, vpravo počet záznamů („1–15 z 57“, na jedné stránce „Záznamů: 5“), počet položek na stránku a tlačítka stránek. Tlačítka stránek jsou vidět jen při více stránkách, počet položek jen když může něco změnit (na telefonu se nenabízí). U prázdné tabulky stránkování není - že nemá žádné záznamy, oznámí tabulka sama."
                 },
                 {
                   "title": "Aktuálnost dat",
@@ -216,7 +216,7 @@
                 },
                 {
                   "title": "Šířka tabulky",
-                  "text": "Zaškrtnutím volby Zobrazit tabulku na šířce stránky se tabulka roztáhne přes celou šířku - hodí se u tabulek s mnoha sloupci."
+                  "text": "Ikona se šipkami ↔ vedle času aktualizace roztáhne tabulku přes celou šířku stránky, dalším kliknutím ji vrátíte - hodí se u tabulek s mnoha sloupci. Na telefonu ikona není, tabulka tam vždy využije celou šířku."
                 },
                 {
                   "title": "Prázdná tabulka",

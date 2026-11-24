@@ -6,53 +6,62 @@
     @created: 2025
     @description: Template of the pagination buttons builder component: the row range, the page
       size and the page buttons. Nothing at all for an empty table (2026-11) - the table itself
-      says it has no rows, nothing to page through.
+      says it has no rows, nothing to page through. Only what can be used is shown (2026-11):
+      the page buttons only with more than one page, the page size only when a smaller size
+      would split the records. `layout="inline"` = one short row in the footer of an admin table.
 -->
 @if (totalItems > 0) {
 
-<div class="pagination-controls-wrapper">
-  <div class="pagination-info text-sm text-gray-700 p-b-10">
+<div class="pagination-controls-wrapper" [class.is-inline]="isInline">
+  <div class="pagination-info text-sm text-gray-700" [class.p-b-10]="!isInline" aria-live="polite">
     {{ rangeText }}
   </div>
 
+  @if (showPageSize || showPageButtons) {
   <div class="pagination-actions">
-    <div class="items-per-page-container flex items-center space-x-2 pg-m p-b-10">
-      <label for="itemsPerPage" class="text-sm text-gray-700">{{ strings.items_per_page_label }}</label>
+    @if (showPageSize) {
+    <div class="items-per-page-container flex items-center space-x-2" [class.pg-m]="!isInline" [class.p-b-10]="!isInline">
+      <label for="itemsPerPage" class="items-per-page-label text-sm text-gray-700">{{ isInline ? strings.per_page_short : strings.items_per_page_label }}</label>
       <select id="itemsPerPage" (change)="onItemsPerPageSelect($event)"
         class="items-per-page-select" [ngModel]="itemsPerPage">
-        <option [value]="5">5</option>
-        <option [value]="10">10</option>
-        <option [value]="15">15</option>
-        <option [value]="20">20</option>
-        <option [value]="50">50</option>
+        @for (size of pageSizes; track size) {
+        <option [value]="size">{{ size }}</option>
+        }
       </select>
     </div>
+    }
 
+    @if (showPageButtons) {
     <nav class="pagination-nav" [attr.aria-label]="strings.nav_aria">
-      <button (click)="onPageClick(currentPage - 1)"
+      <button type="button" (click)="onPageClick(currentPage - 1)"
         [disabled]="currentPage === 1"
+        [attr.aria-label]="strings.prev_aria"
         class="pagination-button nav-arrow">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
           <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
         </svg>
       </button>
 
       @for (page of pagesArray; track page) {
-        <button (click)="onPageClick(page)"
+        <button type="button" (click)="onPageClick(page)"
           [class.active-page]="page === currentPage"
+          [attr.aria-current]="page === currentPage ? 'page' : null"
           class="pagination-button">
           {{ page }}
         </button>
       }
 
-      <button (click)="onPageClick(currentPage + 1)"
+      <button type="button" (click)="onPageClick(currentPage + 1)"
         [disabled]="currentPage === totalPages"
+        [attr.aria-label]="strings.next_aria"
         class="pagination-button nav-arrow">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
           <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
         </svg>
       </button>
     </nav>
+    }
   </div>
+  }
 </div>
 }
