@@ -224,7 +224,7 @@
                 },
                 {
                   "title": "Row actions",
-                  "text": "Details, Edit, Variants, Images and Delete."
+                  "text": "Click a row to open the product; Variants, Images and Delete are at the bottom left of the window."
                 }
               ]
             },
@@ -243,7 +243,7 @@
               "steps": [
                 {
                   "label": "Add record / Edit",
-                  "text": "Add a new product in the Actions menu, edit an existing one with Edit.",
+                  "text": "Add a new product in the Actions menu, edit an existing one by clicking its row.",
                   "active": true
                 },
                 {
@@ -306,7 +306,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Variants are versions of one product, for example “Black - M”. The Variants button in a row opens their editor."
+              "content": "Variants are versions of one product, for example “Black - M”. The Variants button at the bottom left of the product window opens their editor."
             },
             {
               "type": "flow",
@@ -362,7 +362,7 @@
               "type": "list",
               "ordered": true,
               "items": [
-                "The Images button in a row opens the image editor.",
+                "The Images button at the bottom left of the product window opens the image editor.",
                 "Add product image adds a row: choose the File (JPG, PNG or WebP up to 5 MB; any other file is refused and a stored image gets the extension of its real content), fill in the Alt text (a description of the image for blind users and search engines) and the Sort order.",
                 "Mark the primary image - it is the main preview of the product in the catalogue.",
                 "Save images saves the changes. Delete an image with the bin icon."
@@ -908,7 +908,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "The Orders button in a row opens the overview of the customer's orders: the number of orders and the total spent, and for every order its items, delivery (address, shipping, payment, when paid and shipped), note and price summary."
+              "content": "The Orders button at the bottom left of the customer window (click its row) opens the overview of the customer's orders: the number of orders and the total spent, and for every order its items, delivery (address, shipping, payment, when paid and shipped), note and price summary."
             }
           ]
         },
@@ -936,7 +936,7 @@
                 },
                 {
                   "label": "Anonymise",
-                  "text": "The button in the customer's row and a confirmation in the dialog.",
+                  "text": "The button at the bottom left of the customer window and a confirmation in the dialog.",
                   "active": false
                 },
                 {

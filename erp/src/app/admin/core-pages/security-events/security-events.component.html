@@ -184,6 +184,8 @@
         </div>
         <div class="table-and-pagination-container">
           <app-table-builder #activeTable
+            [openOnRowClick]="true"
+            (rowOpened)="openRecord($event)"
             [buttons]="buttons"
             [data]="data"
             [currentFilters]="filters"
@@ -217,6 +219,8 @@
 
 @if (showDetails) {
   <app-details-builder
+    [recordActions]="recordActions"
+    (recordAction)="onRecordAction($event)"
     [itemDetailColumns]="detailsColumns"
     [inputDefinitions]="formFields"
     [itemData]="selectedItemForDetails"

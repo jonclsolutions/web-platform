@@ -5,6 +5,9 @@
  * @author JS
  * @created 2026
  * @description Manages the lifecycle of customer orders, including creation, editing, status tracking, and inventory validation.
+ * @note Clickable rows (2026-11): a row opens the own edit form of the order (edit permission) or
+ *   its detail, with the actions of the order (Delete) left in the footer; `?record=ID` in the
+ *   address (BaseDataComponent record popup, `isRecordViewOpen` / `closeRecordView` here).
  * @dependencies
  * - BaseDataComponent: Inherits standard CRUD operations for order management.
  * - ConfirmDialogService: Facilitates user confirmation for sensitive deletions.
@@ -34,6 +37,7 @@ import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 import { EmailTemplateEditorComponent, EmailTemplateRow } from '../../../../admin/components/email-template-editor/email-template-editor.component';
 import { AdminModalComponent } from '../../../../admin/components/admin-modal/admin-modal.component';
+import { RecordActionsComponent } from '../../../../admin/components/record-actions/record-actions.component';
 import { DELIVERY_COUNTRIES, countryName, countryOptions } from '../../shared/delivery-countries';
 
 /** Deadlines of the unpaid bank transfers in days after the order (0 = off), API shop/settings/unpaid-orders. */
@@ -62,7 +66,7 @@ type TableMode = 'all' | 'pending_tasks' | 'trash';
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHeaderComponent, EmailTemplateEditorComponent, AdminModalComponent],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent, PageHeaderComponent, EmailTemplateEditorComponent, AdminModalComponent, RecordActionsComponent],
   templateUrl: './orders.component.html',
   styleUrls: ['../../../../admin/shared-styles/page.css', '../shared-styles/list-page.css', '../../../../admin/shared-styles/modal.css', './orders.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -165,6 +169,8 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     super.ngOnInit();
     this.initWithAuthCheck(this.router);
     this.loadDependencies();
+    // Clickable rows: the record popup, also `?record=ID` of a link or a reload.
+    this.watchRecordParam();
   }
 
   /**
@@ -479,6 +485,20 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     this.showDetailsModal = false;
     this.selectedOrderForDetail = null;
     this.cd.markForCheck();
+  }
+
+  /**
+   * @description The order opened by a click on its row is shown while its detail or its edit
+   *   form is open, also while the full order is loading (record popup of BaseDataComponent).
+   */
+  protected override isRecordViewOpen(): boolean {
+    return this.showDetailsModal || this.showOrderForm || this.isProcessing;
+  }
+
+  /** @description Closes the detail / edit form of the order (Back, a deleted order). */
+  protected override closeRecordView(): void {
+    if (this.showOrderForm) this.closeOrderForm();
+    if (this.showDetailsModal) this.closeDetailsModal();
   }
 
   /**

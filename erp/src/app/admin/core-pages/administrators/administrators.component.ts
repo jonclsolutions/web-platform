@@ -238,6 +238,8 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     // Needed up front for the live e-mail check in the create form. The endpoint is sysadmin-only,
     // so nobody else may even request it (it would only produce a 403 dialog).
     if (this.isSysadmin) this.loadEmailAccessPolicy();
+    // Clickable rows: the record popup, also `?record=ID` of a link or a reload.
+    this.watchRecordParam();
   }
 
   /**

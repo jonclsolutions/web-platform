@@ -12,6 +12,7 @@
  * - AdminModalComponent: the shared popup frame (page scroll lock, Escape / backdrop / close).
  * - AdminLocalizationService: Static (bundled) localization of the admin UI.
  * - UserAvatarComponent: `avatar` columns (profile photo).
+ * - RecordActionsComponent: actions of the record in the footer (detail opened by a table row).
  */
 
 import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
@@ -21,6 +22,8 @@ import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { UserAvatarComponent } from '../../user-avatar/user-avatar.component';
 import { AdminModalComponent } from '../../admin-modal/admin-modal.component';
+import { RecordActionsComponent } from '../../record-actions/record-actions.component';
+import { TableButtons } from '../../../../shared/interfaces/table-buttons';
 
 /**
  * @description Provides a reusable way to display object details in a modal overlay with automatic formatting based on column metadata.
@@ -30,7 +33,7 @@ import { AdminModalComponent } from '../../admin-modal/admin-modal.component';
 @Component({
 selector: 'app-details-builder',
 standalone: true,
-imports: [CommonModule, UserAvatarComponent, AdminModalComponent],
+imports: [CommonModule, UserAvatarComponent, AdminModalComponent, RecordActionsComponent],
 templateUrl: './details-builder.component.html',
 styleUrls: ['../../../shared-styles/modal.css', './details-builder.component.css'],
 providers: [DatePipe, CurrencyPipe]
@@ -44,6 +47,13 @@ export class DetailsBuilderComponent {
   @Input() embedded = false;
   /** Embedded as a short block of read-only values (several per row) above a form. */
   @Input() compact = false;
+  /**
+   * Actions of the record on the left of the footer (the detail opened by a click on a table row
+   * when the user may not edit it - e.g. Delete with the delete permission).
+   */
+  @Input() recordActions: TableButtons[] = [];
+  /** An action of the record was clicked - carries its `action`. */
+  @Output() recordAction = new EventEmitter<string>();
 
   public readonly i18n = inject(AdminLocalizationService);
 

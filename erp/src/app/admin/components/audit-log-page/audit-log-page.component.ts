@@ -131,6 +131,8 @@ export class AuditLogPageComponent extends BaseDataComponent<Record<string, unkn
   override ngOnInit(): void {
     super.ngOnInit();
     this.initWithAuthCheck(this.router);
+    // Clickable rows: the record popup, also `?record=ID` of a link or a reload.
+    this.watchRecordParam();
   }
 
   override refreshData(): void {

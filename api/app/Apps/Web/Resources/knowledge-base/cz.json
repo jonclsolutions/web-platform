@@ -946,7 +946,7 @@
             },
             {
               "type": "text",
-              "content": "Filtrovat můžete podle ID, příjmení, názvu pozice a stavu. Detail (ikona Detaily) ukáže celé jméno, pozici, e-mail, telefon, stav, průvodní dopis, interní poznámku HR, životopis (Zobrazit / Stáhnout) a datum doručení."
+              "content": "Filtrovat můžete podle ID, příjmení, názvu pozice a stavu. Kliknutím na řádek otevřete přihlášku: celé jméno, pozici, e-mail, telefon, stav, průvodní dopis, interní poznámku HR, životopis (Zobrazit / Stáhnout) a datum doručení."
             }
           ]
         },
@@ -959,12 +959,12 @@
               "steps": [
                 {
                   "label": "Přečtěte žádost",
-                  "text": "Ikonou Detaily otevřete průvodní dopis a životopis.",
+                  "text": "Klikněte na řádek přihlášky - nahoře uvidíte průvodní dopis a životopis.",
                   "active": true
                 },
                 {
                   "label": "Stav / Poznámka",
-                  "text": "Tlačítko v řádku otevře formulář se dvěma poli: Stav uchazeče a Interní poznámka.",
+                  "text": "Pod nimi jsou dvě pole k úpravě: Stav uchazeče a Interní poznámka.",
                   "active": false
                 },
                 {

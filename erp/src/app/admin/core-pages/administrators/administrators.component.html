@@ -34,6 +34,8 @@
 <div class="table-and-pagination-container">
 @if (!showTrashTable) {
 <app-table-builder #activeTable
+  [openOnRowClick]="true"
+  (rowOpened)="openRecord($event)"
   [buttons]="buttons"
   [data]="data"
   [tableCaption]="tableCaption"
@@ -83,7 +85,11 @@
     ℹ️ {{ strings.info_banner_prefix }}<strong>{{ strings.info_banner_bold }}</strong>{{ strings.info_banner_suffix }}
 </div>
   }
-<app-form-builder
+<app-form-builder #recordForm
+[recordMode]="!!recordItem"
+[detailColumns]="detailsColumns"
+[recordActions]="recordActions"
+(recordAction)="onRecordAction($event)"
 [inputDefinitions]="visibleFormFields"
 [formDataToEdit]="selectedItemForEdit"
 [fieldOverrides]="formFieldOverrides"
@@ -106,6 +112,8 @@
 
 @if (showDetails) {
 <app-details-builder
+[recordActions]="recordActions"
+(recordAction)="onRecordAction($event)"
 [itemDetailColumns]="detailsColumns"
 [itemData]="selectedItemForDetails"
 (closeDetails)="showDetails = false">

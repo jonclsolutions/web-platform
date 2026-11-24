@@ -340,6 +340,9 @@
   "add_success": "The section was added.",
   "add_error": "The section could not be added."
 },
+"record-actions": {
+  "more_actions_button": "More"
+},
 "form-builder": {
   "create_header": "Create new record",
   "edit_header": "Edit record",
@@ -347,7 +350,6 @@
   "record_header_with_id": "Record {id}",
   "close_button": "Close",
   "save_button": "Save changes",
-  "more_actions_button": "More",
   "discard_confirm_title": "Discard changes?",
   "discard_confirm_message": "You have unsaved changes. Closing the window loses them.",
   "discard_confirm_button": "Discard changes",

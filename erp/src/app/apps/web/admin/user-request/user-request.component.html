@@ -5,8 +5,9 @@
     @author: JS
     @created: 2025
     @description: Template of the inquiries page: filters, the table whose rows open the record
-        popup (edit + detail in one, `?record=ID`), trash, pagination, create form, e-mail
-        template editor and reports.
+        popup of the record (`?record=ID`: the edit form with the read-only values, or the detail
+        without the edit permission; actions of the record left in the footer), trash,
+        pagination, create form, e-mail template editor and reports.
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -51,8 +52,10 @@
 [bulkDeleteEnabled]="true"
 [openOnRowClick]="true"
 (rowOpened)="openRecord($event)"
-(itemDeleted)="handleItemDeleted($event)"
-(createFormOpened)="handleCreateFormOpened()">
+(itemDeleted)="handleItemDeleted()"
+(createFormOpened)="handleCreateFormOpened()"
+(editFormOpened)="handleEditFormOpened($event)"
+(viewDetailsOpened)="handleViewDetails($event)">
 </app-table-builder>
           }
 @if (showTrashTable) {
@@ -81,27 +84,26 @@
   }
 </div>
 @if (showCreateForm) {
-<app-form-builder
+<app-form-builder #recordForm
+[recordMode]="!!recordItem"
+[detailColumns]="detailsColumns"
+[recordActions]="recordActions"
+(recordAction)="onRecordAction($event)"
 [inputDefinitions]="formFields"
 [formDataToEdit]="selectedItemForEdit"
 (formSubmitted)="handleFormSubmitted($event)"
 (formCanceled)="onCancelForm()">
 </app-form-builder>
 }
-<!-- Record popup (click on a row, ?record=ID): edit form and detail in one; without the edit
-     permission only the values; Delete on the left of the footer with the rules of the row button. -->
-@if (recordItem) {
-<app-form-builder #recordForm
-[recordMode]="true"
-[readOnly]="!recordEditable"
-[inputDefinitions]="formFields"
-[formDataToEdit]="recordItem"
-[detailColumns]="detailsColumns"
+@if (showDetails) {
+<app-details-builder
 [recordActions]="recordActions"
 (recordAction)="onRecordAction($event)"
-(formSubmitted)="handleRecordSubmitted($event)"
-(formCanceled)="closeRecord()">
-</app-form-builder>
+[itemDetailColumns]="detailsColumns"
+[inputDefinitions]="formFields"
+[itemData]="selectedItemForDetails"
+(closeDetails)="handleCloseDetails()">
+</app-details-builder>
 }
 
 @if (showEmailTemplateModal) {

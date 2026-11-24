@@ -112,6 +112,8 @@ export class ShippingMethodsComponent extends BaseDataComponent<any> implements 
   override ngOnInit(): void {
     super.ngOnInit();
     this.initWithAuthCheck(this.router);
+    // Clickable rows: the record popup, also `?record=ID` of a link or a reload.
+    this.watchRecordParam();
   }
 
   override refreshData(): void { this.forceFullRefresh(this.filters); }

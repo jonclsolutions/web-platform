@@ -177,7 +177,7 @@
               "steps": [
                 {
                   "label": "Link",
-                  "text": "Tlačítko Link v řádku leadu vytvoří odkaz a zkopíruje ho do schránky (hláška „Odkaz zkopírován“ s datem platnosti).",
+                  "text": "Tlačítko Link vlevo dole v okně leadu (klik na řádek) vytvoří odkaz a zkopíruje ho do schránky (hláška „Odkaz zkopírován“ s datem platnosti).",
                   "active": true
                 },
                 {
@@ -329,7 +329,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Tlačítko Projekt (ikona složky) v řádku otevře projekt objednávky. Když ho objednávka ještě nemá, otevře se formulář nového projektu s vybranou objednávkou a předvyplněným názvem a kontaktem klienta. Postup založení projektu a zpřístupnění portálu klientovi je v kapitole Projekty."
+              "content": "Tlačítko Projekt vlevo dole v okně objednávky (klik na řádek) otevře projekt objednávky. Když ho objednávka ještě nemá, otevře se formulář nového projektu s vybranou objednávkou a předvyplněným názvem a kontaktem klienta. Postup založení projektu a zpřístupnění portálu klientovi je v kapitole Projekty."
             }
           ]
         },
@@ -477,7 +477,7 @@
               "cards": [
                 {
                   "title": "Otevřít projekt",
-                  "text": "Ikona složky v řádku otevře stránku projektu na podstránce Přehled (adresa project-portal/projects/ID/overview). Rychlou úpravu v okně nabízí ikona tužky."
+                  "text": "Kliknutím na řádek otevřete rychlou úpravu projektu v okně; tlačítko vlevo dole v něm otevře stránku projektu na podstránce Přehled (adresa project-portal/projects/ID/overview)."
                 },
                 {
                   "title": "Řešitel",

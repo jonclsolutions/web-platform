@@ -196,7 +196,7 @@
                 },
                 {
                   "title": "Icons at the end of a row",
-                  "text": "Actions with one record: magnifier or Details (show all data), pencil or Edit (edit) and bin or Delete (move to the trash). Some pages have more actions, described in their chapter. You do not see icons you have no permission for."
+                  "text": "Open a record by clicking its row (its main value is underlined on hover; with the keyboard Tab and Enter). One window opens: with the edit permission the form, with the data that do not change (ID, when it was created, the last change) at the top; without it only the overview of the data. The actions of the record - for example Delete or the other actions of the page - are at the bottom left of the window. You do not see actions you have no permission for."
                 },
                 {
                   "title": "Checkboxes",
@@ -294,7 +294,7 @@
               "type": "list",
               "ordered": true,
               "items": [
-                "Add a new record with the create item in the Actions menu, edit an existing one with the edit icon in its row.",
+                "Add a new record with the create item in the Actions menu, edit an existing one by clicking its row. When you close the window with unsaved changes, the system first asks whether to discard them.",
                 "A form opens. Fields marked with an asterisk (*) are required.",
                 "A wrongly filled field is highlighted when you leave it and the reason is shown below it (for example “This field is required.” or “Invalid email format.”).",
                 "Choice fields offer only allowed values. Fields with several options are ticked; options taken over from a role are marked and cannot be unticked.",
@@ -314,7 +314,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "The details icon (magnifier, Details) opens a window with all data of the record, including what does not fit into the table, and the dates of creation and last change. The details only show - nothing can be changed there. Attachments have the buttons View (opens the file in the browser) and Download."
+              "content": "The window of an open record shows all its data, including what does not fit into the table, and the dates of creation and last change. Without the edit permission it only shows. Attachments have the buttons View (opens the file in the browser) and Download. An open record has its own address (…?record=12) - send it to a colleague, it stays open after a reload; the browser Back button closes the window."
             }
           ]
         },
@@ -330,7 +330,7 @@
               "steps": [
                 {
                   "label": "Delete",
-                  "text": "The bin icon in a row (after confirmation) moves the record to the trash. It disappears from the table, but nothing is lost.",
+                  "text": "The Delete button at the bottom left of the record window (after confirmation) moves the record to the trash. It disappears from the table, but nothing is lost.",
                   "active": true
                 },
                 {
@@ -1952,7 +1952,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "The table has the columns ID, Name and URL. It works like the other tables of the administration (Actions menu, filters, pagination, export, charts and the trash - see the introductory chapter). Copy the address of a link from the table or from the details (magnifier icon) and open it in a new browser tab."
+              "content": "The table has the columns ID, Name and URL. It works like the other tables of the administration (Actions menu, filters, pagination, export, charts and the trash - see the introductory chapter). Copy the address of a link from the table or from the window of the link (click its row) and open it in a new browser tab."
             }
           ]
         },
@@ -1995,7 +1995,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "The edit icon in a row opens the form with the data of the link; Confirm saves the changes.",
+                "Click a row to open the form with the data of the link; Save changes saves them.",
                 "The bin icon moves the link to the trash. In the trash you restore it or delete it permanently."
               ]
             }
@@ -2325,7 +2325,7 @@
                 },
                 {
                   "title": "Row actions",
-                  "text": "Icons at the end of the row: magnifier (details), edit, key (password change), envelope (resend activation - only for accounts not yet activated), and delete."
+                  "text": "Click a row to open the account. Its actions are at the bottom left of the window: password change, resend activation (only for accounts not yet activated) and delete."
                 },
                 {
                   "title": "Filter panel",
@@ -2528,7 +2528,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "The action with the envelope icon in the account row. It is visible only for accounts that have not been activated yet, and only if you have the permission to edit accounts."
+              "content": "An action at the bottom left of the account window. It is visible only for accounts that have not been activated yet, and only if you have the permission to edit accounts."
             },
             {
               "type": "grid",
@@ -2927,7 +2927,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "The action with the magnifier icon in the row opens an overview of all data of the account. The details are read-only - nothing can be changed there - and you close them with the close button."
+              "content": "Click a row to open the account. Without the edit permission the window only shows all data of the account - nothing can be changed there - and you close it with the close button."
             },
             {
               "type": "grid",
@@ -3331,7 +3331,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "The Details icon shows all data of the entry: time, IP address, event type, module, the detailed description, the table and ID of the affected record, the ID and e-mail of the user and the technical data (JSON) - for example which values changed."
+              "content": "Click a row to open all data of the entry: time, IP address, event type, module, the detailed description, the table and ID of the affected record, the ID and e-mail of the user and the technical data (JSON) - for example which values changed."
             }
           ]
         },
@@ -3550,7 +3550,7 @@
               "ordered": false,
               "items": [
                 "Clean up old records now - after a confirmation it permanently deletes entries older than the set period at once. When there are none, nothing is deleted - that is fine.",
-                "Delete in a row - permanently deletes one entry."
+                "Delete at the bottom left of the event window (click its row) - permanently deletes one entry. Triage is there too."
               ]
             },
             {

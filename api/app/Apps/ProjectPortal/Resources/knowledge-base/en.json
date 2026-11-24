@@ -177,7 +177,7 @@
               "steps": [
                 {
                   "label": "Link",
-                  "text": "The Link button in the row of a lead creates the link and copies it to the clipboard (message “Link copied” with the validity date).",
+                  "text": "The Link button at the bottom left of the lead window (click its row) creates the link and copies it to the clipboard (message “Link copied” with the validity date).",
                   "active": true
                 },
                 {
@@ -329,7 +329,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "The Project button (folder icon) in a row opens the project of the order. When the order has none yet, the form of a new project opens with the order selected and the name and contact of the client prefilled. Creating a project and giving the client access to the portal are described in the chapter Projects."
+              "content": "The Project button at the bottom left of the order window (click its row) opens the project of the order. When the order has none yet, the form of a new project opens with the order selected and the name and contact of the client prefilled. Creating a project and giving the client access to the portal are described in the chapter Projects."
             }
           ]
         },
@@ -477,7 +477,7 @@
               "cards": [
                 {
                   "title": "Open a project",
-                  "text": "The folder icon of a row opens the project page on the Overview sub-page (address project-portal/projects/ID/overview). The pencil icon offers a quick edit in a dialog."
+                  "text": "Click a row to open the quick edit of the project in a window; the button at its bottom left opens the project page on the Overview sub-page (address project-portal/projects/ID/overview)."
                 },
                 {
                   "title": "Assignee",

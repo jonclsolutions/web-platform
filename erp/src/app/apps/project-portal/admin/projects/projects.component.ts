@@ -130,6 +130,8 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.initWithAuthCheck(this.router);
     this.checkQueryParamsForPrefill();
     this.loadAssignees();
+    // Clickable rows: the record popup, also `?record=ID` of a link or a reload.
+    this.watchRecordParam();
   }
 
   /** @description Loads the possible assignees once for the create / edit form. */

@@ -24,8 +24,10 @@
           <app-details-builder [embedded]="true" [itemData]="formDataToEdit" [itemDetailColumns]="detailColumns" [inputDefinitions]="inputDefinitions" />
         } @else {
         @if (infoColumns.length) {
-          <!-- Values that cannot be edited (ID, created, updated) - plain text, readable and copyable. -->
-          <app-details-builder [embedded]="true" [compact]="true" [itemData]="formDataToEdit" [itemDetailColumns]="infoColumns" [inputDefinitions]="inputDefinitions" />
+          <!-- Values that cannot be edited (ID, created, updated) - plain text, readable and copyable;
+               from the form's own copy of the record, so another popup of the page reusing the
+               edited record (e.g. Reset password) does not empty them. -->
+          <app-details-builder [embedded]="true" [compact]="true" [itemData]="formData" [itemDetailColumns]="infoColumns" [inputDefinitions]="inputDefinitions" />
         }
         <div class="form-grid-layout">
           @for (input of visibleInputDefinitions; track input) {
@@ -160,48 +162,9 @@
 
       </form>
   <ng-container modal-footer>
-    <!-- Actions of the record (record popup) on the left, away from Cancel / Save on the right:
-         the row buttons the user may use; more than two others under "⋯ More"; Delete last in red. -->
+    <!-- Actions of the record (record popup) on the left, away from Cancel / Save on the right. -->
     @if (recordActions.length) {
-      <div class="fb-record-actions">
-        @if (moreActionsMenu) {
-          <div class="fb-more">
-            <button type="button" class="fb-record-action" aria-haspopup="menu" [attr.aria-expanded]="isMoreActionsOpen"
-                    (click)="toggleMoreActions()">⋯ {{ strings.more_actions_button }}</button>
-            @if (isMoreActionsOpen) {
-              <div class="fb-more-backdrop" (click)="isMoreActionsOpen = false"></div>
-              <div class="fb-more-menu" role="menu">
-                @for (action of otherActions; track action.action) {
-                  <button type="button" role="menuitem" class="fb-more-item" (click)="onRecordAction(action.action)">
-                    @if (action.icon) {
-                      <app-icon [name]="action.icon" [size]="15"></app-icon>
-                    }
-                    <span>{{ action.display_name }}</span>
-                  </button>
-                }
-              </div>
-            }
-          </div>
-        } @else {
-          @for (action of otherActions; track action.action) {
-            <button type="button" class="fb-record-action" [title]="action.display_name" (click)="onRecordAction(action.action)">
-              @if (action.icon) {
-                <app-icon [name]="action.icon" [size]="15"></app-icon>
-              }
-              <span>{{ action.display_name }}</span>
-            </button>
-          }
-        }
-        @for (action of dangerActions; track action.action) {
-          <button type="button" class="fb-record-action fb-record-action--danger" [title]="action.display_name"
-                  [attr.aria-label]="action.display_name" (click)="onRecordAction(action.action)">
-            @if (action.icon) {
-              <app-icon [name]="action.icon" [size]="15"></app-icon>
-            }
-            <span class="fb-record-action-label">{{ action.display_name }}</span>
-          </button>
-        }
-      </div>
+      <app-record-actions [actions]="recordActions" (action)="onRecordAction($event)" />
     }
     @if (readOnly) {
       <button type="button" class="am-btn am-btn--secondary" (click)="onCancel()">{{ strings.close_button }}</button>

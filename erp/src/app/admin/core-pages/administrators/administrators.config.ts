@@ -130,7 +130,7 @@ export function createTableColumns(i18n: AdminLocalizationService): Core.ColumnD
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
     { key: 'avatar_url', header: i18n.getValue(`${SECTION}.col_avatar`), type: 'avatar' },
-    { key: 'full_name', header: i18n.getValue(`${SECTION}.col_name`), type: 'text' },
+    { key: 'full_name', header: i18n.getValue(`${SECTION}.col_name`), type: 'text', primary: true },
     { key: 'user_email', header: i18n.getValue(`${SECTION}.col_email`), type: 'text' },
     { key: 'roles.0.role_name', header: i18n.getValue(`${SECTION}.col_role`), type: 'text' },
     { key: 'is_blocked', header: i18n.getValue(`${SECTION}.col_blocked`), type: 'boolean' },

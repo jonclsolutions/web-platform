@@ -37,6 +37,8 @@
 </div>
 @if (!showTrashTable) {
 <app-table-builder #activeTable
+[openOnRowClick]="true"
+(rowOpened)="openRecord($event)"
 [buttons]="buttons"
 [data]="data"
 [currentFilters]="filters"
@@ -79,7 +81,11 @@
   }
 </div>
 @if (showCreateForm) {
-<app-form-builder
+<app-form-builder #recordForm
+[recordMode]="!!recordItem"
+[detailColumns]="detailsColumns"
+[recordActions]="recordActions"
+(recordAction)="onRecordAction($event)"
 [inputDefinitions]="formFields"
 [formDataToEdit]="selectedItemForEdit"
 (formSubmitted)="handleFormSubmitted($event)"
@@ -88,6 +94,8 @@
 }
 @if (showDetails) {
 <app-details-builder
+[recordActions]="recordActions"
+(recordAction)="onRecordAction($event)"
 [itemDetailColumns]="detailsColumns"
 [itemData]="selectedItemForDetails"
 [inputDefinitions]="formFields"

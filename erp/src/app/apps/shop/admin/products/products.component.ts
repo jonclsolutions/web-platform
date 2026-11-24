@@ -5,6 +5,9 @@
  * @author JS
  * @created 2026
  * @description Central management component for store inventory, handling CRUD operations for products, variants, and product imagery.
+ * @note Clickable rows (2026-11): a row opens the own form of the product (edit permission) or its
+ *   detail, with the actions of the product (Variants, Images, Delete) left in the footer;
+ *   `?record=ID` in the address (BaseDataComponent record popup).
  * @dependencies
  * - BaseDataComponent: Provides base CRUD functionality.
  * - ConfirmDialogService: Facilitates user confirmation for deletion actions.
@@ -32,6 +35,7 @@ import { GraphColumnOption } from '../../../../shared/interfaces/graph-format';
 import * as Config from './products.config';
 import { PageHeaderComponent } from '../../../../admin/components/page-header/page-header.component';
 import { AdminModalComponent } from '../../../../admin/components/admin-modal/admin-modal.component';
+import { RecordActionsComponent } from '../../../../admin/components/record-actions/record-actions.component';
 
 /** Image types the API takes for product and variant images (`mimes:jpeg,png,jpg,webp`). */
 export const PRODUCT_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -42,7 +46,7 @@ export const PRODUCT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHeaderComponent, AdminModalComponent],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent, PageHeaderComponent, AdminModalComponent, RecordActionsComponent],
   templateUrl: './products.component.html',
   styleUrls: ['../../../../admin/shared-styles/page.css', '../shared-styles/list-page.css', '../../../../admin/shared-styles/modal.css', './products.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -130,6 +134,8 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     this.initWithAuthCheck(this.router);
     this.loadCategories();
     this.loadSuppliers();
+    // Clickable rows: the record popup, also `?record=ID` of a link or a reload.
+    this.watchRecordParam();
   }
 
   /**
@@ -741,6 +747,42 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     this.editingProduct         = null;
     this.selectedFormCategories = [];
     this.cd.markForCheck();
+  }
+
+  /**
+   * @description The product opened by a click on its row is shown while its detail, its form or
+   *   its Variants / Images editor is open, also while it is loading (record popup of
+   *   BaseDataComponent).
+   */
+  protected override isRecordViewOpen(): boolean {
+    return this.showDetailsModal || this.showProductForm || this.showVariantsModal || this.showImagesModal || this.isProcessing;
+  }
+
+  /** @description Closes every popup of the product (Back, a deleted product). */
+  protected override closeRecordView(): void {
+    if (this.showVariantsModal) this.closeVariantsModal();
+    if (this.showImagesModal) this.closeImagesModal();
+    if (this.showProductForm) this.closeProductForm();
+    if (this.showDetailsModal) this.closeDetailsModal();
+  }
+
+  /**
+   * @description An action of the product popup. Variants and Images edit the same product data
+   *   as the product form, so they replace the form / detail (as before from the table) instead
+   *   of opening over it; Delete is the shared action.
+   * @param action `action` of the button.
+   */
+  override onRecordAction(action: string): void {
+    const product = this.recordItem;
+    if (product && (action === 'custom_prod_var' || action === 'custom_prod_img')) {
+      if (this.showProductForm) this.closeProductForm();
+      if (this.showDetailsModal) this.closeDetailsModal();
+      // Opened at once (not through the table) - the record stays shown while it loads.
+      if (action === 'custom_prod_var') this.openVariantsModal(product);
+      else this.openImagesModal(product);
+      return;
+    }
+    super.onRecordAction(action);
   }
 
   public generateSlug(text: string): string {

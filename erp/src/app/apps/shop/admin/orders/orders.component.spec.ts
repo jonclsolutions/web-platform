@@ -669,4 +669,23 @@ describe('OrdersComponent', () => {
     component.closeUnpaidSettings();
     expect(component.showUnpaidModal).toBeFalse();
   });
+
+  /**
+   * @description The order opened by a click on its row stays open while its own detail or edit
+   *   form is shown; closing the record closes both.
+   * @input nothing open; edit form; detail + edit form + closeRecordView().
+   * @output false; true; both closed.
+   */
+  it('keeps the order record open while its popups are shown', () => {
+    const page = component as any;
+    expect(page.isRecordViewOpen()).toBeFalse();
+    page.showOrderForm = true;
+    page.editingOrder = { id: 1 };
+    expect(page.isRecordViewOpen()).toBeTrue();
+    page.showDetailsModal = true;
+    page.selectedOrderForDetail = { id: 1 };
+    page.closeRecordView();
+    expect(page.showOrderForm).toBeFalse();
+    expect(page.showDetailsModal).toBeFalse();
+  });
 });

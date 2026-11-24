@@ -37,6 +37,8 @@
         <div class="table-and-pagination-container">
           @if (currentMode !== 'trash') {
             <app-table-builder #activeTable
+              [openOnRowClick]="true"
+              (rowOpened)="openRecord($event)"
               [buttons]="buttons"
               [data]="data"
               [columns]="orderColumns"
@@ -378,6 +380,10 @@
     </div>
 
     <ng-container modal-footer>
+      <!-- Actions of the order opened by a click on its row (e.g. Delete) - left in the footer. -->
+      @if (recordItem) {
+        <app-record-actions [actions]="recordActions" (action)="onRecordAction($event)" />
+      }
       <button type="button" class="am-btn am-btn--secondary" (click)="closeDetailsModal()">{{ i18n.getValue('shared.close') }}</button>
       <button type="button" class="am-btn am-btn--primary" (click)="openEditOrderForm(selectedOrderForDetail)">✏️ {{ t('btn_edit_label') }}</button>
     </ng-container>
@@ -655,6 +661,9 @@
       </fieldset>
     </form>
     <ng-container modal-footer>
+      @if (recordItem && editingOrder.id) {
+        <app-record-actions [actions]="recordActions" (action)="onRecordAction($event)" />
+      }
       <button type="button" class="am-btn am-btn--secondary" (click)="closeOrderForm()">{{ i18n.getValue('shared.cancel') }}</button>
       <button type="button" class="am-btn am-btn--primary" (click)="saveOrder()" [class.btn-warning]="editingOrder.coupon_id && !couponValidation.valid">
         💾 {{ t('btn_save_order') }}

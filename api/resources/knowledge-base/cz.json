@@ -196,7 +196,7 @@
                 },
                 {
                   "title": "Ikony na konci řádku",
-                  "text": "Akce s jedním záznamem: lupa nebo Detaily (zobrazení všech údajů), tužka nebo Upravit (úprava) a koš nebo Smazat (přesun do koše). Některé stránky mají další akce, které popisuje jejich kapitola. Ikonu bez oprávnění neuvidíte."
+                  "text": "Záznam otevřete kliknutím na jeho řádek (při najetí myší se podtrhne jeho hlavní údaj; klávesnicí Tab a Enter). Otevře se jedno okno: s oprávněním k úpravám formulář s údaji, které se nemění (ID, kdy vznikl, poslední změna), nahoře; bez něj jen přehled údajů. Akce záznamu - například Smazat nebo další akce stránky - jsou vlevo dole v okně. Akci bez oprávnění neuvidíte."
                 },
                 {
                   "title": "Zaškrtávací políčka",
@@ -294,7 +294,7 @@
               "type": "list",
               "ordered": true,
               "items": [
-                "Nový záznam přidáte v nabídce Akce položkou pro vytvoření záznamu, existující upravíte ikonou úpravy v řádku.",
+                "Nový záznam přidáte v nabídce Akce položkou pro vytvoření záznamu, existující upravíte kliknutím na jeho řádek. Když okno zavřete s neuloženými změnami, systém se nejdřív zeptá, jestli je chcete zahodit.",
                 "Otevře se formulář. Pole označená hvězdičkou (*) jsou povinná.",
                 "Chybně vyplněné pole se po opuštění zbarví a pod ním se zobrazí důvod (například „Toto pole je povinné.“ nebo „Neplatný formát e-mailu.“).",
                 "Výběrová pole nabízejí jen povolené hodnoty. Pole s více možnostmi zaškrtáváte; možnosti převzaté z role jsou označené a nedají se odškrtnout.",
@@ -314,7 +314,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Ikona detailu (lupa, Detaily) otevře okno se všemi údaji záznamu, včetně těch, které se do tabulky nevejdou, a s datem vytvoření a poslední změny. Detail jen zobrazuje - nic v něm nezměníte. U příloh jsou tlačítka Zobrazit (otevře soubor v prohlížeči) a Stáhnout."
+              "content": "Okno otevřeného záznamu ukáže všechny jeho údaje, včetně těch, které se do tabulky nevejdou, a datum vytvoření a poslední změny. Bez oprávnění k úpravám jen zobrazuje. U příloh jsou tlačítka Zobrazit (otevře soubor v prohlížeči) a Stáhnout. Otevřený záznam má vlastní adresu (…?record=12) - můžete ji poslat kolegovi a po obnovení stránky zůstane otevřený; tlačítko Zpět v prohlížeči okno zavře."
             }
           ]
         },
@@ -330,7 +330,7 @@
               "steps": [
                 {
                   "label": "Smazat",
-                  "text": "Ikona koše v řádku (po potvrzení) přesune záznam do koše. Z tabulky zmizí, ale nic se neztratí.",
+                  "text": "Tlačítko Smazat vlevo dole v okně záznamu (po potvrzení) přesune záznam do koše. Z tabulky zmizí, ale nic se neztratí.",
                   "active": true
                 },
                 {
@@ -1952,7 +1952,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Tabulka má sloupce ID, Název a URL. Ovládá se jako ostatní tabulky administrace (nabídka Akce, filtry, stránkování, export, grafy a koš - viz úvodní kapitola). Adresu odkazu zkopírujte z tabulky nebo z detailu (ikona lupy) a otevřete ji v nové kartě prohlížeče."
+              "content": "Tabulka má sloupce ID, Název a URL. Ovládá se jako ostatní tabulky administrace (nabídka Akce, filtry, stránkování, export, grafy a koš - viz úvodní kapitola). Adresu odkazu zkopírujte z tabulky nebo z okna odkazu (klik na řádek) a otevřete ji v nové kartě prohlížeče."
             }
           ]
         },
@@ -1995,7 +1995,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "Ikona úpravy v řádku otevře formulář s údaji odkazu; změny uložíte tlačítkem Potvrdit.",
+                "Kliknutím na řádek otevřete formulář s údaji odkazu; změny uložíte tlačítkem Uložit změny.",
                 "Ikona koše přesune odkaz do koše. V koši ho obnovíte nebo trvale smažete."
               ]
             }
@@ -2325,7 +2325,7 @@
                 },
                 {
                   "title": "Akce v řádku",
-                  "text": "Ikony na konci řádku: lupa (detail), úprava, klíč (změna hesla), obálka (opětovné odeslání aktivace - jen u neaktivovaných účtů) a smazání."
+                  "text": "Kliknutím na řádek otevřete účet. Vlevo dole v okně jsou jeho akce: změna hesla, opětovné odeslání aktivace (jen u neaktivovaných účtů) a smazání."
                 },
                 {
                   "title": "Panel filtrů",
@@ -2528,7 +2528,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Akce s ikonou obálky v řádku účtu. Je vidět jen u účtů, které ještě nebyly aktivovány, a jen pokud máte oprávnění upravovat účty."
+              "content": "Akce vlevo dole v okně účtu. Je vidět jen u účtů, které ještě nebyly aktivovány, a jen pokud máte oprávnění upravovat účty."
             },
             {
               "type": "grid",
@@ -2927,7 +2927,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Akce s ikonou lupy v řádku otevře přehled všech údajů účtu. Detail je pouze ke čtení - nic v něm nelze změnit - a zavřete ho tlačítkem pro zavření."
+              "content": "Kliknutím na řádek otevřete účet. Bez oprávnění k úpravám okno jen ukáže všechny údaje účtu - nic v něm nelze změnit - a zavřete ho tlačítkem pro zavření."
             },
             {
               "type": "grid",
@@ -3331,7 +3331,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Ikona Detaily ukáže všechny údaje záznamu: čas, IP adresu, typ události, modul, podrobný popis, tabulku a ID dotčeného záznamu, ID a e-mail uživatele a technická data (JSON) - například které hodnoty se změnily."
+              "content": "Kliknutím na řádek otevřete všechny údaje záznamu: čas, IP adresu, typ události, modul, podrobný popis, tabulku a ID dotčeného záznamu, ID a e-mail uživatele a technická data (JSON) - například které hodnoty se změnily."
             }
           ]
         },
@@ -3550,7 +3550,7 @@
               "ordered": false,
               "items": [
                 "Vyčistit staré záznamy nyní - po potvrzení hned trvale smaže záznamy starší než nastavená doba. Když žádné takové nejsou, nic se nesmaže - to je v pořádku.",
-                "Smazat v řádku - trvale smaže jeden záznam."
+                "Smazat vlevo dole v okně události (klik na řádek) - trvale smaže jeden záznam. Tam je i Vyhodnocení."
               ]
             },
             {

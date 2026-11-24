@@ -94,7 +94,7 @@ export function createTableColumns(i18n: AdminLocalizationService): Core.ColumnD
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
     { key: 'last_seen_at', header: i18n.getValue(`${SECTION}.col_last_seen`), type: 'date', format: 'short' },
-    { key: 'event_type', header: i18n.getValue(`${SECTION}.col_event_type`), type: 'text' },
+    { key: 'event_type', header: i18n.getValue(`${SECTION}.col_event_type`), type: 'text', primary: true },
     { key: 'severity', header: i18n.getValue(`${SECTION}.col_severity`), type: 'text' },
     { key: 'ip_address', header: i18n.getValue(`${SECTION}.col_ip`), type: 'text' },
     { key: 'occurrences', header: i18n.getValue(`${SECTION}.col_occurrences`), type: 'number' },

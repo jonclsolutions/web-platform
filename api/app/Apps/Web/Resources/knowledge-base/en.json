@@ -946,7 +946,7 @@
             },
             {
               "type": "text",
-              "content": "Filter by ID, last name, position name and status. The details (Details icon) show the full name, position, e-mail, phone, status, cover letter, internal HR note, the CV (View / Download) and the date received."
+              "content": "Filter by ID, last name, position name and status. Click a row to open the application: the full name, position, e-mail, phone, status, cover letter, internal HR note, the CV (View / Download) and the date received."
             }
           ]
         },
@@ -959,12 +959,12 @@
               "steps": [
                 {
                   "label": "Read the application",
-                  "text": "The Details icon opens the cover letter and the CV.",
+                  "text": "Click the row of the application - the cover letter and the CV are at the top.",
                   "active": true
                 },
                 {
                   "label": "Status / Note",
-                  "text": "The button in the row opens a form with two fields: Applicant status and Internal note.",
+                  "text": "Below them are two fields to edit: Applicant status and Internal note.",
                   "active": false
                 },
                 {

@@ -398,4 +398,29 @@ describe('SecurityEventsComponent', () => {
     await component.purgeOldEvents();
     expect(ctx.alert.open).toHaveBeenCalledWith('security-events.purge_done_title', 'security-events.purge_done_default_message', 'success');
   });
+
+  /**
+   * @description A row of an event always opens its detail (analysts read it first); the triage
+   *   stays an action of the record next to Delete; the record stays open while the triage is
+   *   shown and closing it closes both.
+   * @input rendered page; openRecordView(event 3); record 3 open; triage open; closeRecordView().
+   * @output handleViewDetails(event 3); actions edit (triage) + delete; open with the triage;
+   *   triage and detail closed.
+   */
+  it('opens an event as its detail with the triage as an action', () => {
+    fixture.detectChanges();
+    const view = spyOn(component, 'handleViewDetails');
+    (component as any).openRecordView({ id: 3 });
+    expect(view).toHaveBeenCalledWith({ id: 3 });
+    component.recordItem = { id: 3, status: 'new' };
+    expect(component.recordActions.map(b => b.action)).toEqual(['edit', 'delete']);
+    component.triageItem = { id: 3 };
+    expect((component as any).isRecordViewOpen()).toBeTrue();
+    const closeTriage = spyOn(component, 'closeTriageModal').and.callThrough();
+    component.showDetails = true;
+    (component as any).closeRecordView();
+    expect(closeTriage).toHaveBeenCalled();
+    expect(component.showDetails).toBeFalse();
+    expect(component.triageItem).toBeNull();
+  });
 });

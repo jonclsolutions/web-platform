@@ -35,6 +35,8 @@
         <div class="table-and-pagination-container">
           @if (!showTrashTable) {
             <app-table-builder #activeTable
+  [openOnRowClick]="true"
+  (rowOpened)="openRecord($event)"
   [buttons]="buttons"
   [data]="data"
   [columns]="productColumns"
@@ -226,6 +228,10 @@
       </div>
     </div>
     <ng-container modal-footer>
+      <!-- Actions of the product opened by a click on its row (Variants, Images, Delete) - left. -->
+      @if (recordItem) {
+        <app-record-actions [actions]="recordActions" (action)="onRecordAction($event)" />
+      }
       <button type="button" class="am-btn am-btn--secondary" (click)="closeDetailsModal()">{{ i18n.getValue('shared.close') }}</button>
       <button type="button" class="am-btn am-btn--primary" (click)="openEditProductForm(selectedProductForDetail)">✏️ {{ t('btn_edit_label') }}</button>
     </ng-container>
@@ -340,6 +346,9 @@
 
     </form>
     <ng-container modal-footer>
+      @if (recordItem && editingProduct.id) {
+        <app-record-actions [actions]="recordActions" (action)="onRecordAction($event)" />
+      }
       <button type="button" class="am-btn am-btn--secondary" (click)="closeProductForm()">{{ i18n.getValue('shared.cancel') }}</button>
       <button type="button" class="am-btn am-btn--primary" (click)="saveProduct()">💾 {{ i18n.getValue('shared.save') }}</button>
     </ng-container>

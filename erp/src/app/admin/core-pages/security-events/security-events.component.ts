@@ -190,6 +190,8 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
     this.initWithAuthCheck(this.router);
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params =>
       this.applyTab(params.get('tab') === 'overview' ? 'overview' : 'events'));
+    // Clickable rows: the record popup, also `?record=ID` of a link or a reload.
+    this.watchRecordParam();
   }
 
   /** @description Page tabs: Události (the table), Přehled (chart + retention). */
@@ -523,6 +525,28 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
 
   override handleEditFormOpened(item: any): void {
     this.handleEditTriage(item);
+  }
+
+  /**
+   * Clickable rows: the popup of an event is always its detail (analysts read it first); the
+   * triage (edit) stays an action of the record next to Delete.
+   */
+  protected override recordPopupActions: readonly string[] = ['details'];
+
+  /** @description A row always opens the detail of the event (triage is its action). */
+  protected override openRecordView(record: any): void {
+    this.handleViewDetails(record);
+  }
+
+  /** @description The event stays open while its detail or its triage is shown. */
+  protected override isRecordViewOpen(): boolean {
+    return this.showDetails || !!this.triageItem;
+  }
+
+  /** @description Closes the triage and the detail of the event (Back, a deleted event). */
+  protected override closeRecordView(): void {
+    if (this.triageItem) this.closeTriageModal();
+    if (this.showDetails) this.handleCloseDetails();
   }
 
   override handleItemDeleted(): void {

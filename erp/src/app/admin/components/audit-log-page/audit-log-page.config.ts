@@ -109,7 +109,7 @@ export function createAuditLogTableColumns(i18n: AdminLocalizationService): Core
     { key: 'user_plain', header: shared(i18n, 'col_user'), type: 'text' },
     { key: 'event_type', header: shared(i18n, 'col_action'), type: 'text' },
     { key: 'module', header: shared(i18n, 'col_module'), type: 'text' },
-    { key: 'description', header: shared(i18n, 'col_description'), type: 'text' },
+    { key: 'description', header: shared(i18n, 'col_description'), type: 'text', primary: true },
     { key: 'origin', header: shared(i18n, 'col_ip'), type: 'text' },
   ];
 }

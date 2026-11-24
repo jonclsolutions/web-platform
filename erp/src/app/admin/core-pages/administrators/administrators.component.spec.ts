@@ -13,7 +13,7 @@
  *   PermissionOptionsService (stubs), ScrollLockService (spy)
  */
 
-import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks, discardPeriodicTasks } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks, discardPeriodicTasks, flush } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
 import { createResetPasswordFormFields } from './administrators.config';
@@ -338,6 +338,25 @@ describe('AdministratorsComponent', () => {
     it('shows the e-mail policy button to sysadmin', () => {
       expect(component.toolbarButtons.find(b => b.action === 'openEmailAccessPolicy')!.showIf).toBeTrue();
     });
+
+    /**
+     * @description A row of a sysadmin account opens the edit form only after the own password;
+     *   cancelling the password closes the record (no dead ?record in the address).
+     * @input  rendered page; record 9 (sysadmin) loaded from the address; confirm → false.
+     * @output confirm('user:9'); closeRecord() called; no form open.
+     */
+    it('closes the record when the password before editing a sysadmin is cancelled', fakeAsync(() => {
+      fixture.detectChanges();
+      (ctx.dataHandler as any).getOne.and.returnValue(of({ id: 9, roles: [{ id: 1, role_name: 'sysadmin' }] }));
+      passwordConfirmation.confirm.and.resolveTo(false);
+      const close = spyOn(component, 'closeRecord');
+      (component as any).loadRecord('9');
+      flush();
+      expect(passwordConfirmation.confirm).toHaveBeenCalledWith('user:9');
+      expect(component.showCreateForm).toBeFalse();
+      expect(close).toHaveBeenCalled();
+      discardPeriodicTasks();
+    }));
   });
 
   describe('as a regular administrator', () => {

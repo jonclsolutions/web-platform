@@ -318,11 +318,14 @@ get importEnumHints(): ImportEnumHint[] {
 
   /**
    * @description Key of the main column of a clickable row: the column marked `primary`, else
-   *   the first shown column after `id` (else the first shown one).
+   *   the first shown text column after `id` (a photo / picture column is skipped), else the
+   *   first shown one.
    */
   get primaryColumnKey(): string | null {
     const shown = (this.columnDefinitions || []).filter(col => !col.hidden);
-    return (shown.find(col => col.primary) ?? shown.find(col => col.key !== 'id') ?? shown[0])?.key ?? null;
+    return (shown.find(col => col.primary)
+      ?? shown.find(col => col.key !== 'id' && col.type !== 'avatar' && col.type !== 'image')
+      ?? shown[0])?.key ?? null;
   }
 
   /**
@@ -372,10 +375,12 @@ get importEnumHints(): ImportEnumHint[] {
    *   of an admin table is not offered (as the disabled row button).
    * @param item Record.
    * @param buttons Buttons (default: the buttons of this table).
+   * @param excluded Actions the popup itself is (default details and edit; a page whose popup is
+   *   only the detail - e.g. the security events with a separate triage - keeps 'edit' as an action).
    */
-  recordActions(item: any, buttons: TableButtons[] = this.buttons): TableButtons[] {
+  recordActions(item: any, buttons: TableButtons[] = this.buttons, excluded: readonly string[] = ['details', 'edit']): TableButtons[] {
     return (buttons || []).filter(button => button.isActive
-      && button.action !== 'details' && button.action !== 'edit'
+      && !excluded.includes(button.action)
       && this.isButtonVisibleForItem(button, item)
       && !(button.type === 'delete_button' && this.isAdminTable && item?.id == this.authService.getUserId()));
   }

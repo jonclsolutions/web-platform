@@ -257,21 +257,23 @@ describe('UserRequestComponent', () => {
     };
     const openFromAddress = (id: string) => {
       query.next(convertToParamMap({ record: id }));
-      fixture.componentRef.changeDetectorRef.markForCheck();
+      (component as any).cd.markForCheck();
       fixture.detectChanges();
     };
+    const detect = () => { (component as any).cd.markForCheck(); fixture.detectChanges(); };
 
     /**
      * @description The table rows open the record: a row click puts ?record=ID into the address
      *   (a new history entry); the address loads the record from the API (also a link / reload)
-     *   and opens ONE popup - the edit form with the read-only values and Delete on the left of the footer.
-     * @input openRecord({ id: 12 }); query record=12.
+     *   and opens the edit form of the page in record mode - the read-only values above the
+     *   form, Delete on the left of the footer; rebuilt buttons (texts loaded later) give new
+     *   labels, otherwise the same array.
+     * @input openRecord({ id: 12 }); query record=12; rebuilt buttons.
      * @output navigate([], { queryParams: { record: 12 }, merge }); getOne('web/raw_request_commissions/12');
-     *   recordEditable true, actions [delete]; app-form-builder in record mode, not read-only; the
-     *   table has openOnRowClick and the thema column is the main one; rebuilt buttons (texts
-     *   loaded later) give new labels in the header, otherwise the same array.
+     *   recordEditable; edit form open with the record, recordMode, actions [delete]; table with
+     *   openOnRowClick and the main column thema; new action labels after the rebuild.
      */
-    it('opens a row as the record popup through the address', fakeAsync(() => {
+    it('opens a row as the edit form of the record through the address', fakeAsync(() => {
       setup();
       component.openRecord({ id: 12 });
       expect(navigate).toHaveBeenCalledWith([], jasmine.objectContaining({ queryParams: { record: 12 }, queryParamsHandling: 'merge' }));
@@ -279,23 +281,20 @@ describe('UserRequestComponent', () => {
       expect((ctx.dataHandler as any).getOne).toHaveBeenCalledWith('web/raw_request_commissions/12');
       expect(component.recordItem.id).toBe(12);
       expect(component.recordEditable).toBeTrue();
-      expect(component.recordActions.map(b => b.action)).toEqual(['delete']);
-      const form = fixture.nativeElement.querySelector('app-form-builder');
-      expect(form).not.toBeNull();
+      expect(component.showCreateForm).toBeTrue();
+      expect(component.selectedItemForEdit.id).toBe(12);
       expect(component.recordForm!.recordMode).toBeTrue();
-      expect(component.recordForm!.readOnly).toBeFalse();
+      expect(component.recordActions.map(b => b.action)).toEqual(['delete']);
+      expect(fixture.nativeElement.querySelector('app-form-builder app-record-actions')).not.toBeNull();
       expect(component.activeTable.openOnRowClick).toBeTrue();
       expect(component.activeTable.primaryColumnKey).toBe('thema');
       component.openRecord({});
       expect(navigate).toHaveBeenCalledTimes(1);
 
-      // Opened by a link before the texts loaded: the actions follow the rebuilt buttons (same
-      // array while nothing changes - stable for change detection).
       const first = component.recordActions;
       expect(component.recordActions).toBe(first);
       component.buttons = component.buttons.map(b => ({ ...b, display_name: b.display_name + '!' }));
-      (component as any).cd.markForCheck();
-      fixture.detectChanges();
+      detect();
       expect(component.recordActions).not.toBe(first);
       expect(component.recordActions[0].display_name).toBe('user-request.btn_delete!');
       flush();
@@ -303,17 +302,19 @@ describe('UserRequestComponent', () => {
     }));
 
     /**
-     * @description Without the edit permission the popup only shows the values and has no Delete
-     *   without the delete permission; a missing record only leaves the address.
+     * @description Without the edit permission the record opens as the detail (with Delete only
+     *   with the delete permission); a missing record only leaves the address.
      * @input permissions web-user-requests-view; record=12; then record=404.
-     * @output recordEditable false, actions [], form readOnly; for 404 navigate with record null + replaceUrl.
+     * @output recordEditable false, detail shown, no edit form, actions []; for 404 navigate with
+     *   record null + replaceUrl.
      */
-    it('shows only the values without the edit permission', fakeAsync(() => {
+    it('opens the detail without the edit permission', fakeAsync(() => {
       setup(['web-user-requests-view']);
       openFromAddress('12');
       expect(component.recordEditable).toBeFalse();
+      expect(component.showDetails).toBeTrue();
+      expect(component.showCreateForm).toBeFalse();
       expect(component.recordActions).toEqual([]);
-      expect(component.recordForm!.readOnly).toBeTrue();
       openFromAddress('404');
       expect(navigate).toHaveBeenCalledWith([], jasmine.objectContaining({ queryParams: { record: null }, replaceUrl: true }));
       flush();
@@ -321,30 +322,34 @@ describe('UserRequestComponent', () => {
     }));
 
     /**
-     * @description Closing: a popup opened by a row click goes Back; one opened by a link only
-     *   removes the parameter; Back (parameter gone) closes the popup; with unsaved changes Back
-     *   asks and "keep editing" puts the parameter back.
-     * @input row click + closeRecord; link + closeRecord; Back with a clean form; Back with a dirty
-     *   form answered keep / discard.
+     * @description Closing: any closing of the popup (cancel, save) closes the record - a row click
+     *   goes Back, a link only removes the parameter; Back (parameter gone) closes the popup; with
+     *   unsaved changes Back asks and "keep editing" puts the parameter back.
+     * @input row click + cancel; link + cancel; Back with a clean form; Back with a dirty form
+     *   answered keep / discard.
      * @output location.back(); navigate record null replaceUrl; popup closed; confirm, navigate
-     *   record 12 again and still open; then closed.
+     *   record 15 again and still open; then closed.
      */
     it('closes by Cancel or Back and guards unsaved changes', fakeAsync(() => {
       setup();
       component.openRecord({ id: 12 });
       openFromAddress('12');
-      component.closeRecord();
+      component.onCancelForm();
+      detect();
       expect(location.back).toHaveBeenCalledTimes(1);
       expect(component.recordItem).toBeNull();
 
       openFromAddress('13');
-      component.closeRecord();
+      component.onCancelForm();
+      detect();
       expect(location.back).toHaveBeenCalledTimes(1);
       expect(navigate).toHaveBeenCalledWith([], jasmine.objectContaining({ queryParams: { record: null }, replaceUrl: true }));
 
       openFromAddress('14');
       query.next(convertToParamMap({}));
+      detect();
       expect(component.recordItem).toBeNull();
+      expect(component.showCreateForm).toBeFalse();
 
       openFromAddress('15');
       spyOnProperty(component.recordForm!, 'isDirty').and.returnValue(true);
@@ -357,40 +362,38 @@ describe('UserRequestComponent', () => {
       ctx.confirm.open.and.returnValue(Promise.resolve(true));
       query.next(convertToParamMap({}));
       flush();
+      detect();
       expect(component.recordItem).toBeNull();
+      expect(component.showCreateForm).toBeFalse();
       discardPeriodicTasks();
     }));
 
     /**
-     * @description Save and actions: a save PUTs the record, closes the popup and reloads; a failed
-     *   save keeps it open and allows another save; a header action runs the table action of the
-     *   record; a deleted open record closes the popup.
-     * @input handleRecordSubmitted ok / failing; onRecordAction('delete'); handleItemDeleted(record).
-     * @output put('web/raw_request_commissions/12', data), success alert, closed; resetSubmitting();
-     *   table.handleAction(record, 'delete'); closed after the delete.
+     * @description Saving and actions: the save of the page closes the form and so the record; an
+     *   action of the record runs the table action; a deleted record closes its popup (another
+     *   deleted row does not).
+     * @input handleFormSubmitted ok; onRecordAction('delete'); itemDeleted of row 99, then of 12.
+     * @output put + closed record; table.handleAction(record, 'delete'); open after 99, closed after 12.
      */
     it('saves, runs the actions and closes after a delete', fakeAsync(() => {
       setup();
       openFromAddress('12');
       (ctx.dataHandler as any).put.and.returnValue(of({}));
-      component.handleRecordSubmitted({ id: 12, status: 'done' });
+      component.handleFormSubmitted({ id: 12, status: 'done' });
+      detect();
       expect((ctx.dataHandler as any).put).toHaveBeenCalledWith('web/raw_request_commissions/12', { id: 12, status: 'done' });
-      expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'user-request.crud_updated_message', 'success');
       expect(component.recordItem).toBeNull();
 
       openFromAddress('12');
-      const reset = spyOn(component.recordForm!, 'resetSubmitting');
-      (ctx.dataHandler as any).put.and.returnValue(throwError(() => new Error('x')));
-      component.handleRecordSubmitted({ status: 'done' });
-      expect(reset).toHaveBeenCalled();
-      expect(component.recordItem.id).toBe(12);
-
       const action = spyOn(component.activeTable, 'handleAction');
       component.onRecordAction('delete');
       expect(action).toHaveBeenCalledWith(component.recordItem, 'delete');
-      component.handleItemDeleted({ id: 99 });
+      component.activeTable.itemDeleted.emit({ id: 99 });
+      detect();
       expect(component.recordItem).not.toBeNull();
-      component.handleItemDeleted({ id: 12 });
+      component.activeTable.itemDeleted.emit({ id: 12 });
+      detect();
+      expect(component.showCreateForm).toBeFalse();
       expect(component.recordItem).toBeNull();
       component.onRecordAction('delete');
       expect(action).toHaveBeenCalledTimes(1);

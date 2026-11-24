@@ -1,0 +1,48 @@
+<!--
+    @file: record-actions.component.html
+    @path: /src/app/admin/components/record-actions/record-actions.component.html
+    @project: JS web-platform
+    @author: JS
+    @created: 2026
+    @description: Actions of a record on the left of the footer of a record popup: up to two other
+        actions as buttons (more under "⋯ More", a menu opening upwards), Delete last in red.
+-->
+<div class="ra-record-actions">
+  @if (moreActionsMenu) {
+    <div class="ra-more">
+      <button type="button" class="ra-record-action" aria-haspopup="menu" [attr.aria-expanded]="isMoreActionsOpen"
+              (click)="toggleMoreActions()">⋯ {{ label('more_actions_button') }}</button>
+      @if (isMoreActionsOpen) {
+        <div class="ra-more-backdrop" (click)="isMoreActionsOpen = false"></div>
+        <div class="ra-more-menu" role="menu">
+          @for (action of otherActions; track action.action) {
+            <button type="button" role="menuitem" class="ra-more-item" (click)="run(action.action)">
+              @if (action.icon) {
+                <app-icon [name]="action.icon" [size]="15"></app-icon>
+              }
+              <span>{{ nameOf(action) }}</span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    @for (action of otherActions; track action.action) {
+      <button type="button" class="ra-record-action" [title]="nameOf(action)" (click)="run(action.action)">
+        @if (action.icon) {
+          <app-icon [name]="action.icon" [size]="15"></app-icon>
+        }
+        <span>{{ nameOf(action) }}</span>
+      </button>
+    }
+  }
+  @for (action of dangerActions; track action.action) {
+    <button type="button" class="ra-record-action ra-record-action--danger" [title]="nameOf(action)"
+            [attr.aria-label]="nameOf(action)" (click)="run(action.action)">
+      @if (action.icon) {
+        <app-icon [name]="action.icon" [size]="15"></app-icon>
+      }
+      <span class="ra-record-action-label">{{ nameOf(action) }}</span>
+    </button>
+  }
+</div>

@@ -2,9 +2,9 @@
     "unreleased": [
         {
             "type": "changed",
-            "area": "web",
+            "area": "core",
             "part": "admin",
-            "text": "Inquiries: click a row to open it. One window is both the detail and the edit form, with Delete at its bottom left; the table has no icon columns. An open inquiry has its own link and the Back button closes it."
+            "text": "All tables: click a row to open the record. One window is both the detail and the edit form, its actions (Delete and others) are at the bottom left; no icon columns. An open record has its own link and Back closes it."
         },
         {
             "type": "changed",

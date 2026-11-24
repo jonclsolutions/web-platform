@@ -568,7 +568,8 @@ describe('FormBuilderComponent', () => {
      *   actions of the record on the left of the footer (Delete red; nothing in the header next
      *   to the close button) emitting their action, Save changes in the footer.
      * @input record 12; detail columns id, name, created_at; fields name, role; actions delete.
-     * @output heading 'form-builder.record_header_with_id' with 12; infoColumns id + created_at;
+     * @output heading 'form-builder.record_header_with_id' with 12; infoColumns id + created_at
+     *   (lists / JSON values left out);
      *   one compact embedded details block; no button in .am-header-actions; footer action with
      *   the danger class emits 'delete';
      *   submit label 'form-builder.save_button'.
@@ -577,47 +578,24 @@ describe('FormBuilderComponent', () => {
       const el = open(false, [{ type: 'delete_button', action: 'delete', isActive: true, display_name: 'Delete', icon: 'delete' }]);
       expect(component.displayHeader).toBe('form-builder.record_header_with_id');
       expect(component.infoColumns.map(c => c.key)).toEqual(['id', 'created_at']);
+      // Lists / technical data stay in the detail only (no raw JSON in the short block); attachments stay.
+      component.formData['perms'] = ['a'];
+      component.formData['meta'] = '{"x":1}';
+      fixture.componentRef.setInput('detailColumns', [...details, { key: 'perms', displayName: 'P', type: 'text' }, { key: 'meta', displayName: 'M', type: 'text' }, { key: 'files', displayName: 'F', type: 'files' }]);
+      component.formData['files'] = [];
+      expect(component.infoColumns.map(c => c.key)).toEqual(['id', 'created_at', 'files']);
+      fixture.componentRef.setInput('detailColumns', details);
       expect(el.querySelectorAll('app-details-builder').length).toBe(1);
       expect(el.querySelector('.details-embedded--compact')).not.toBeNull();
       expect(el.querySelectorAll('.form-grid-layout input, .form-grid-layout select').length).toBe(2);
       expect(el.querySelector('.am-header-actions button')).toBeNull();
-      const action = el.querySelector('.am-footer .fb-record-actions .fb-record-action') as HTMLButtonElement;
-      expect(action.classList).toContain('fb-record-action--danger');
+      const action = el.querySelector('.am-footer app-record-actions .ra-record-action') as HTMLButtonElement;
+      expect(action.classList).toContain('ra-record-action--danger');
       expect(action.getAttribute('aria-label')).toBe('Delete');
       const emitted = spyOn(component.recordAction, 'emit');
       action.click();
       expect(emitted).toHaveBeenCalledWith('delete');
       expect(el.querySelector('.am-btn--primary')!.textContent!.trim()).toBe('form-builder.save_button');
-    });
-
-    /**
-     * @description Up to two other actions are buttons next to Delete; more go under "⋯ More"
-     *   (a menu) while Delete stays visible; an item of the menu emits its action and closes it.
-     * @input actions variants, images + delete; then variants, images, orders + delete.
-     * @output 3 buttons (variants, images, delete last); then More + delete, menu with 3 items,
-     *   click on 'orders' emits it and closes the menu.
-     */
-    it('puts more than two other actions under More', () => {
-      const act = (action: string, type = 'neutral_button') => ({ type, action, isActive: true, display_name: action });
-      let el = open(false, [act('variants'), act('images'), act('delete', 'delete_button')]);
-      expect(Array.from(el.querySelectorAll('.fb-record-actions > .fb-record-action')).map(b => b.textContent!.trim())).toEqual(['variants', 'images', 'delete']);
-      expect(component.moreActionsMenu).toBeFalse();
-
-      fixture.componentRef.setInput('recordActions', [act('variants'), act('images'), act('orders'), act('delete', 'delete_button')]);
-      fixture.detectChanges();
-      el = fixture.nativeElement;
-      expect(component.moreActionsMenu).toBeTrue();
-      expect(el.querySelectorAll('.fb-record-actions > .fb-record-action--danger').length).toBe(1);
-      const more = el.querySelector('.fb-more > .fb-record-action') as HTMLButtonElement;
-      expect(more.textContent).toContain('form-builder.more_actions_button');
-      more.click();
-      fixture.detectChanges();
-      const items = Array.from(el.querySelectorAll('.fb-more-item')) as HTMLButtonElement[];
-      expect(items.map(b => b.textContent!.trim())).toEqual(['variants', 'images', 'orders']);
-      const emitted = spyOn(component.recordAction, 'emit');
-      items[2].click();
-      expect(emitted).toHaveBeenCalledWith('orders');
-      expect(component.isMoreActionsOpen).toBeFalse();
     });
 
     /**

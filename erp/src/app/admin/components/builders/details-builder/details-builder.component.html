@@ -101,6 +101,10 @@
 <app-admin-modal size="lg" [heading]="strings.title" (dismissed)="onClose()">
   <ng-container *ngTemplateOutlet="valuesGrid" />
 <ng-container modal-footer>
+  <!-- Actions of the record (opened by a click on a table row): left, away from Close. -->
+  @if (recordActions.length) {
+    <app-record-actions [actions]="recordActions" (action)="recordAction.emit($event)" />
+  }
 <button type="button" class="am-btn am-btn--secondary" (click)="onClose()">{{ strings.close }}</button>
 </ng-container>
 </app-admin-modal>

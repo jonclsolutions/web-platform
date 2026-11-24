@@ -765,4 +765,29 @@ describe('ProductsComponent', () => {
     expect(component.showVariantsModal).toBeTrue();
     discardPeriodicTasks();
   }));
+
+  /**
+   * @description Variants and Images of the open product replace its form (they edit the same
+   *   product data) and open at once; the record stays open while they are shown; closing the
+   *   record closes them.
+   * @input record 5 with the form open; actions custom_prod_var, custom_prod_img; variants shown + closeRecordView().
+   * @output form closed, openVariantsModal / openImagesModal with the record; open; variants closed.
+   */
+  it('opens variants and images of the open product instead of its form', () => {
+    const page = component as any;
+    page.recordItem = { id: 5 };
+    page.showProductForm = true;
+    page.editingProduct = { id: 5 };
+    const variants = spyOn(component, 'openVariantsModal');
+    const images = spyOn(component, 'openImagesModal');
+    component.onRecordAction('custom_prod_var');
+    expect(page.showProductForm).toBeFalse();
+    expect(variants).toHaveBeenCalledWith({ id: 5 } as any);
+    component.onRecordAction('custom_prod_img');
+    expect(images).toHaveBeenCalledWith({ id: 5 } as any);
+    page.showVariantsModal = true;
+    expect(page.isRecordViewOpen()).toBeTrue();
+    page.closeRecordView();
+    expect(page.showVariantsModal).toBeFalse();
+  });
 });

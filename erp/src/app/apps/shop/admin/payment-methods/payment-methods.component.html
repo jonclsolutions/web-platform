@@ -35,6 +35,8 @@
         </div>
         <div class="table-and-pagination-container">
           <app-table-builder #activeTable
+            [openOnRowClick]="true"
+            (rowOpened)="openRecord($event)"
             [buttons]="buttons"
             [data]="data"
             [detailsColumns]="detailsColumns"
@@ -66,7 +68,11 @@
 </div>
 
 @if (showCreateForm) {
-  <app-form-builder
+  <app-form-builder #recordForm
+    [recordMode]="!!recordItem"
+    [detailColumns]="detailsColumns"
+    [recordActions]="recordActions"
+    (recordAction)="onRecordAction($event)"
     [inputDefinitions]="formFields"
     [formDataToEdit]="selectedItemForEdit"
     (formSubmitted)="handleFormSubmitted($event)"
@@ -76,6 +82,8 @@
 
 @if (showDetails) {
   <app-details-builder
+    [recordActions]="recordActions"
+    (recordAction)="onRecordAction($event)"
     [inputDefinitions]="formFields"
     [itemDetailColumns]="detailsColumns"
     [itemData]="selectedItemForDetails"

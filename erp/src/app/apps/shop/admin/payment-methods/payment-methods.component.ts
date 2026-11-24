@@ -123,6 +123,8 @@ export class PaymentMethodsComponent extends BaseDataComponent<any> implements C
   override ngOnInit(): void {
     super.ngOnInit();
     this.initWithAuthCheck(this.router);
+    // Clickable rows: the record popup, also `?record=ID` of a link or a reload.
+    this.watchRecordParam();
   }
 
   override refreshData(): void { this.forceFullRefresh(this.filters); }

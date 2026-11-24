@@ -224,7 +224,7 @@
                 },
                 {
                   "title": "Akce v řádku",
-                  "text": "Detaily, Upravit, Varianty, Obrázky a Smazat."
+                  "text": "Kliknutím na řádek otevřete produkt; vlevo dole v okně jsou Varianty, Obrázky a Smazat."
                 }
               ]
             },
@@ -243,7 +243,7 @@
               "steps": [
                 {
                   "label": "Přidat záznam / Upravit",
-                  "text": "Nový produkt přidáte v nabídce Akce, existující upravíte tlačítkem Upravit.",
+                  "text": "Nový produkt přidáte v nabídce Akce, existující upravíte kliknutím na jeho řádek.",
                   "active": true
                 },
                 {
@@ -306,7 +306,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Varianty jsou provedení jednoho produktu, například „Černá - M“. Tlačítko Varianty v řádku otevře jejich editor."
+              "content": "Varianty jsou provedení jednoho produktu, například „Černá - M“. Tlačítko Varianty vlevo dole v okně produktu otevře jejich editor."
             },
             {
               "type": "flow",
@@ -362,7 +362,7 @@
               "type": "list",
               "ordered": true,
               "items": [
-                "Tlačítkem Obrázky v řádku otevřete editor obrázků.",
+                "Tlačítkem Obrázky vlevo dole v okně produktu otevřete editor obrázků.",
                 "Přidat obrázek produktu přidá řádek: vyberte Soubor (JPG, PNG nebo WebP do 5 MB; jiný soubor se odmítne a uložený obrázek dostane příponu podle svého skutečného obsahu), vyplňte Alt text (popis obrázku pro nevidomé a vyhledávače) a Pořadí.",
                 "Označte primární obrázek - je to hlavní náhled produktu v katalogu.",
                 "Uložit obrázky uloží změny. Obrázek smažete ikonou koše."
@@ -908,7 +908,7 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Tlačítko Objednávky v řádku otevře přehled objednávek zákazníka: počet objednávek a celková útrata, u každé objednávky položky, doručení (adresa, doprava, platba, kdy zaplaceno a odesláno), poznámka a souhrn cen."
+              "content": "Tlačítko Objednávky vlevo dole v okně zákazníka (klik na řádek) otevře přehled jeho objednávek: počet objednávek a celková útrata, u každé objednávky položky, doručení (adresa, doprava, platba, kdy zaplaceno a odesláno), poznámka a souhrn cen."
             }
           ]
         },
@@ -936,7 +936,7 @@
                 },
                 {
                   "label": "Anonymizovat",
-                  "text": "Tlačítko v řádku zákazníka a potvrzení v dialogu.",
+                  "text": "Tlačítko vlevo dole v okně zákazníka a potvrzení v dialogu.",
                   "active": false
                 },
                 {

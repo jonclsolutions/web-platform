@@ -17,7 +17,7 @@
  * - AvatarEditorComponent: `avatar` fields (profile photo, saved by its own endpoint).
  * - DetailsBuilderComponent (embedded): the read-only values of the record popup.
  * - ConfirmDialogService: "discard the unsaved changes?" of the record popup.
- * - IconComponent: icons of the actions of the record popup.
+ * - RecordActionsComponent: the actions of the record popup (left in the footer).
  * @note Record popup (`recordMode`, 2026-11): one popup opened by a click on a table row is
  *   both the edit form and the detail - read-only values (`detailColumns` that are not editable
  *   fields: ID, created, updated) as plain text above the form, the actions of the record
@@ -45,7 +45,7 @@ import { DetailsBuilderComponent } from '../details-builder/details-builder.comp
 import { ItemDetailsColumns } from '../../../../shared/interfaces/item-details-columns';
 import { TableButtons } from '../../../../shared/interfaces/table-buttons';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
-import { IconComponent } from '../../../../shared/components/icon/icon.component';
+import { RecordActionsComponent } from '../../record-actions/record-actions.component';
 
 /** Counter of the form ids (the save button in the frame's footer submits the form by its id). */
 let nextFormId = 0;
@@ -58,7 +58,7 @@ let nextFormId = 0;
 @Component({
   selector: 'app-form-builder',
   standalone: true,
-  imports: [FormsModule, PasswordRequirementsChecklistComponent, MultiFileUploadComponent, PasswordPolicyDirective, AvatarEditorComponent, AdminModalComponent, DetailsBuilderComponent, IconComponent],
+  imports: [FormsModule, PasswordRequirementsChecklistComponent, MultiFileUploadComponent, PasswordPolicyDirective, AvatarEditorComponent, AdminModalComponent, DetailsBuilderComponent, RecordActionsComponent],
   templateUrl: './form-builder.component.html',
   styleUrls: ['../../../shared-styles/modal.css', './form-builder.component.css'],
 })
@@ -104,8 +104,6 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
   /** An action of the record popup was clicked - carries its `action` (e.g. 'delete'). */
   @Output() recordAction = new EventEmitter<string>();
 
-  /** The "⋯ More" menu of the record actions is open. */
-  isMoreActionsOpen = false;
 
   @ViewChild('genericForm') genericForm!: NgForm;
   /** Id of the form - the save button in the footer of the frame submits it (`form` attribute). */
@@ -447,7 +445,22 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
   get infoColumns(): ItemDetailsColumns[] {
     if (!this.recordMode || this.readOnly) return [];
     const editable = new Set(this.visibleInputDefinitions.filter(input => input.editable !== false).map(input => input.column_name));
-    return this.detailColumns.filter(column => !editable.has(column.key));
+    return this.detailColumns.filter(column => !editable.has(column.key) && !this.isStructuredValue(column));
+  }
+
+  /**
+   * @description Whether a value is a list / technical data (an object, an array or JSON text) -
+   *   it would show as raw JSON in the short read-only block, so it stays in the detail only
+   *   (e.g. the extra permissions of an account, edited in the form under another field).
+   *   Attachments (`file` / `files`) are shown.
+   * @param column Detail column.
+   */
+  private isStructuredValue(column: ItemDetailsColumns): boolean {
+    if (column.type === 'files' || column.type === 'file') return false;
+    const value = column.key.split('.').reduce((obj: any, key) => obj?.[key], this.formData);
+    if (value === null || value === undefined) return false;
+    if (typeof value === 'object') return true;
+    return typeof value === 'string' && /^\s*[\[{]/.test(value);
   }
 
   /** @description Whether the form has changes that are not saved yet. */
@@ -477,32 +490,11 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
     this.confirmDiscard().then(close => { if (close) this.formCanceled.emit(); });
   }
 
-  /** @description Delete actions of the record - always visible, last and red. */
-  get dangerActions(): TableButtons[] {
-    return this.recordActions.filter(action => action.type === 'delete_button');
-  }
-
-  /** @description Other actions of the record (e.g. Variants, Images, Reset password). */
-  get otherActions(): TableButtons[] {
-    return this.recordActions.filter(action => action.type !== 'delete_button');
-  }
-
-  /** @description More than two other actions go under "⋯ More" (the footer stays one row). */
-  get moreActionsMenu(): boolean {
-    return this.otherActions.length > 2;
-  }
-
-  /** @description Opens / closes the "⋯ More" menu. */
-  toggleMoreActions(): void {
-    this.isMoreActionsOpen = !this.isMoreActionsOpen;
-  }
-
   /**
-   * @description Click on an action of the record popup (also an item of "⋯ More").
+   * @description Click on an action of the record popup (RecordActionsComponent).
    * @param action `action` of the button.
    */
   onRecordAction(action: string): void {
-    this.isMoreActionsOpen = false;
     this.recordAction.emit(action);
   }
 

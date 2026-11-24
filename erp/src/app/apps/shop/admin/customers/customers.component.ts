@@ -138,6 +138,8 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
   override ngOnInit(): void {
     super.ngOnInit();
     this.initWithAuthCheck(this.router);
+    // Clickable rows: the record popup, also `?record=ID` of a link or a reload.
+    this.watchRecordParam();
   }
 
   override refreshData(): void {
