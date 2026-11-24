@@ -4,6 +4,12 @@
             "type": "changed",
             "area": "core",
             "part": "admin",
+            "text": "Tables page faster: after changing the number of rows per page (and in the trash) the next page is loaded in advance, so it opens at once. Old cached pages are released from memory."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
             "text": "Table footer in one row: update time on the left, record count and paging on the right. Page buttons only with more pages, page size only when useful; full width is an icon toggle (hidden on phones, like the page size)."
         },
         {

@@ -172,6 +172,33 @@ describe('PaginatedListStore', () => {
   });
 
   /**
+   * @description After a new page size the next page (of the new size) is preloaded too - for
+   *   the trash with only_trashed, so the cache key matches the later click.
+   * @input  3 pages; onHandleItemsPerPageChange(30, { q: 'a' }); then trash shown, (50, {})
+   * @output preloadAdjacentPages('core/items', 1, 3, 30, 1, { q: 'a' }); then (…, 1, 3, 50, 1, { only_trashed: 'true' })
+   */
+  it('onHandleItemsPerPageChange() preloads the next page of the new size', () => {
+    table.getPaginatedData.and.returnValue(of(paginated<Row>([{ id: 1 }], 1, 3)));
+    store.onHandleItemsPerPageChange(30, { q: 'a' });
+    expect(table.preloadAdjacentPages).toHaveBeenCalledWith('core/items', 1, 3, 30, 1, { q: 'a' });
+    store.showTrashTable = true;
+    store.onHandleItemsPerPageChange(50, {});
+    expect(table.preloadAdjacentPages).toHaveBeenCalledWith('core/items', 1, 3, 50, 1, { only_trashed: 'true' });
+  });
+
+  /**
+   * @description When the trash is the table on screen, the soft load preloads ITS neighbours.
+   * @input  trash shown, 2 trash pages; loadInitial({})
+   * @output preloadAdjacentPages('core/items', 1, 2, 15, 1, { only_trashed: 'true' })
+   */
+  it('loadInitial() preloads the neighbours of the shown trash', () => {
+    table.getPaginatedData.and.returnValue(of(paginated<Row>([{ id: 1 }], 1, 2)));
+    store.showTrashTable = true;
+    store.loadInitial({});
+    expect(table.preloadAdjacentPages).toHaveBeenCalledWith('core/items', 1, 2, 15, 1, { only_trashed: 'true' });
+  });
+
+  /**
    * @description toggleTable switches the visible table and reloads with that table's filters.
    * @input  currentTrashFilters = { q: 't' }; toggleTable()
    * @output showTrashTable = true; reload with filters { q: 't' }

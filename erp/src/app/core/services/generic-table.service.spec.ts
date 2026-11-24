@@ -150,4 +150,21 @@ describe('GenericTableService', () => {
     service.getPaginatedData('ab').subscribe();
     expect(urls().length).toBe(4);
   });
+
+  /**
+   * @description Pages older than the TTL are dropped on the next real fetch - they would be
+   *   downloaded again anyway; fresh pages stay.
+   * @input  pages 1 and 2 cached; TTL passes; page 3 fetched; then page 3 again
+   * @output cache holds only page 3 (the old ones were dropped); page 3 served from the cache
+   */
+  it('drops expired pages on the next fetch', () => {
+    service.getPaginatedData('core/users', 1).subscribe();
+    service.getPaginatedData('core/users', 2).subscribe();
+    expect((service as any).pageCache.size).toBe(2);
+    jasmine.clock().tick(service.CACHE_TTL_MS);
+    service.getPaginatedData('core/users', 3).subscribe();
+    expect((service as any).pageCache.size).toBe(1);
+    service.getPaginatedData('core/users', 3).subscribe();
+    expect(urls().length).toBe(3);
+  });
 });

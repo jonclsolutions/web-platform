@@ -37,7 +37,8 @@ interface CacheEntry {
  * @usage Injected into admin list components to handle server-side pagination, search filtering, and performance optimizations.
  * @note The cache is safe even for large (tens of thousands of rows) tables - only the REQUESTED
  * page (15-50 rows) is cached, never "everything". The memory footprint grows only with the
- * pages / filters the user really visited, not with the table size.
+ * pages / filters the user really visited, not with the table size; pages older than the TTL
+ * are dropped on the next fetch (2026-11).
  * @note The cache key is per user - switching the logged-in user means new (empty) cache keys,
  * never shared with the previous user.
  */
@@ -106,8 +107,21 @@ export class GenericTableService {
         shareReplay(1)
       );
 
+    this.pruneExpired();
     this.pageCache.set(cacheKey, { observable: dataObservable, timestamp: Date.now() });
     return dataObservable;
+  }
+
+  /**
+   * @description Drops the pages older than the TTL - they would be downloaded again anyway, so
+   *   keeping them only holds old rows in the memory. Runs on each real fetch (the cache holds
+   *   only the visited pages and their neighbours - a few dozen entries, a cheap pass).
+   */
+  private pruneExpired(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.pageCache) {
+      if (now - entry.timestamp >= this.CACHE_TTL_MS) this.pageCache.delete(key);
+    }
   }
 
   /**

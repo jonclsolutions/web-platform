@@ -114,9 +114,8 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
     ]).pipe(
       finalize(() => this.cd.markForCheck())
     ).subscribe(() => {
-      this.genericTableService.preloadAdjacentPages(
-        this.endpoint, this.currentPage, this.totalPages, this.itemsPerPage, 1, filters
-      );
+      // The neighbours of the table on screen (the trash too, when it is the one shown).
+      this.preloadAround(this.showTrashTable, filters);
     });
   }
 
@@ -141,21 +140,12 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
     if (this.showTrashTable) {
       if (page >= 1 && page <= this.trashTotalPages && page !== this.trashCurrentPage) {
         this.trashCurrentPage = page;
-        this.fetchPaginatedData(true, page, this.trashItemsPerPage, filters).subscribe(() => {
-          this.genericTableService.preloadAdjacentPages(
-            this.endpoint, page, this.trashTotalPages, this.trashItemsPerPage, 1,
-            { ...filters, only_trashed: 'true' }
-          );
-        });
+        this.fetchPaginatedData(true, page, this.trashItemsPerPage, filters).subscribe(() => this.preloadAround(true, filters));
       }
     } else {
       if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
         this.currentPage = page;
-        this.fetchPaginatedData(false, page, this.itemsPerPage, filters).subscribe(() => {
-          this.genericTableService.preloadAdjacentPages(
-            this.endpoint, page, this.totalPages, this.itemsPerPage, 1, filters
-          );
-        });
+        this.fetchPaginatedData(false, page, this.itemsPerPage, filters).subscribe(() => this.preloadAround(false, filters));
       }
     }
   }
@@ -164,12 +154,33 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
     if (this.showTrashTable) {
       this.trashItemsPerPage = value;
       this.trashCurrentPage = 1;
-      this.fetchPaginatedData(true, 1, value, filters).subscribe();
+      // A new page size = new pages: preload the next one, like after a page change.
+      this.fetchPaginatedData(true, 1, value, filters).subscribe(() => this.preloadAround(true, filters));
     } else {
       this.itemsPerPage = value;
       this.currentPage = 1;
-      this.fetchPaginatedData(false, 1, value, filters).subscribe();
+      this.fetchPaginatedData(false, 1, value, filters).subscribe(() => this.preloadAround(false, filters));
     }
+  }
+
+  /**
+   * @description Preloads the neighbour pages (±1) of the current page of the active or the
+   *   trash table in the background, with the same parameters as `fetchPaginatedData()` (the
+   *   trash adds `only_trashed`) - so the cache key matches and the next click is instant.
+   *   Pages already fresh in the cache are not downloaded again (GenericTableService).
+   * @param isTrash The trash table (true) or the active one.
+   * @param filters Filters of the table.
+   */
+  private preloadAround(isTrash: boolean, filters: FilterParams): void {
+    const params: FilterParams = isTrash ? { ...filters, only_trashed: 'true' } : filters;
+    this.genericTableService.preloadAdjacentPages(
+      this.endpoint,
+      isTrash ? this.trashCurrentPage : this.currentPage,
+      isTrash ? this.trashTotalPages : this.totalPages,
+      isTrash ? this.trashItemsPerPage : this.itemsPerPage,
+      1,
+      params
+    );
   }
 
   toggleTable(): void {
