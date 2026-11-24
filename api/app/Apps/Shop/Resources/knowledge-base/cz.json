@@ -1464,6 +1464,7 @@
               "ordered": false,
               "items": [
                 "Řada jazyků e-shopu - přidání jazyka (vlajka, kód, název, aktivní), aktivace a deaktivace, smazání. Čeština je výchozí jazyk.",
+                "Jazyk je i v adrese e-shopu, například /cs/shop/catalog česky a /en/shop/catalog anglicky - stejně jako u webu (nápověda Texty webu, kapitola 03). Aktivní jazyk má e-shop v adrese sám, nic dalšího se nenastavuje.",
                 "Tabulka Klíč (JSON cesta) / Hodnota, hledání, statistika klíčů a chybějících textů, filtr chybějících.",
                 "Stažení a nahrání JSON pro překladatele.",
                 "Tlačítko Uložit změny uloží texty aktuálního jazyka.",

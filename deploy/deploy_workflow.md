@@ -190,7 +190,9 @@ Konec logu v Actions: `Release v2026.11.1 is live`.
 
 Smoke test zkouší aplikaci uvnitř serveru, takže první vydání projde i **před přepnutím DNS**.
 Na chybějící certifikát jen upozorní – Caddy ho získá sám, jakmile doména ukazuje na VPS
-([setup_hosting.md, krok 12](setup_hosting.md#12-dns-webu--doména-na-vps)).
+([setup_hosting.md, krok 12](setup_hosting.md#12-dns-webu--doména-na-vps)). Až web běží na
+doméně, zaregistruj sitemap v Google Search Console
+([setup_hosting.md, krok 13](setup_hosting.md#13-vyhledávače--sitemap-do-google-search-console)).
 
 > Balíčky na ghcr.io: repozitář → *Packages* → `<repo>-api`, `<repo>-web` – musí zůstat
 > **Private**.
@@ -275,7 +277,8 @@ přihlášeni jen tehdy, když zůstane stejný **`APP_KEY`**.
    Import: potvrzení doménou → záloha `pre-import` → databáze nahrazena → `storage/app`
    doplněno → migrace + seed aktuální verze → start → smoke test.
 8. **Přepni DNS** (setup_hosting.md, krok 12). Do pár minut Caddy vydá certifikát; ověř web,
-   e-shop, admin, přihlášení s 2FA, odeslání formuláře, staré nahrané soubory.
+   e-shop, admin, přihlášení s 2FA, odeslání formuláře, staré nahrané soubory. Pak
+   **zaregistruj sitemap v Google Search Console** (setup_hosting.md, krok 13).
 9. **Smaž kopie dat** (osobní údaje): `ssh klient-vps 'rm -rf ~/import'` a lokální `db.sql.gz`,
    `storage.tar.gz`, stažená složka. Lokální `deploy/production.env` smaž, až jsou hodnoty
    v Bitwardenu.

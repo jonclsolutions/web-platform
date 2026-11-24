@@ -539,13 +539,60 @@
               "items": [
                 "Ikonou u jazyka jazyk deaktivujete nebo aktivujete - neaktivní jazyk návštěvníci nevidí, texty zůstanou.",
                 "Ikonou koše jazyk smažete ze seznamu (po potvrzení). Soubor s jeho texty na serveru zůstane.",
-                "Ikonou nahrání nahrajete texty jazyka ze souboru JSON (viz kapitola 04)."
+                "Ikonou nahrání nahrajete texty jazyka ze souboru JSON (viz kapitola 05)."
               ]
             }
           ]
         },
         {
-          "heading": "03. Překlady - úprava textů",
+          "heading": "03. Jazyk v adrese webu",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Každý jazyk webu má v adrese stránky svou zkratku. Podle ní návštěvník i vyhledávač (Google, Seznam) poznají, v jakém jazyce stránka je. Názvy stránek v adrese jsou pro všechny jazyky stejné, mění se jen zkratka jazyka."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "jonclsolutions.com/cs/services",
+                  "text": "Stránka Služby česky. Čeština má v adrese zkratku cs (mezinárodní kód češtiny), i když se v administraci jmenuje cz."
+                },
+                {
+                  "title": "jonclsolutions.com/en/services",
+                  "text": "Stejná stránka anglicky."
+                },
+                {
+                  "title": "jonclsolutions.com/fr/services",
+                  "text": "Stejná stránka francouzsky - jakmile přidáte jazyk s kódem fr a aktivujete ho."
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Nový jazyk nic dalšího nepotřebuje: po aktivaci má web jeho adresy sám a vyhledávače se o nich dozvědí automaticky.",
+                "Kdo otevře jen jonclsolutions.com, dostane web v jazyce svého prohlížeče. Když ho web nemá, v angličtině.",
+                "Návštěvník si jazyk změní přepínačem v patičce webu a web si jeho volbu zapamatuje.",
+                "Adresa jazyka, který web nemá nebo je vypnutý, otevře stránku v jazyce, který návštěvník používá.",
+                "Stejně funguje e-shop (/cs/shop/...) a projektový portál (/cs/projects/...). Administrace zkratku jazyka v adrese nemá."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Chcete někomu poslat stránku v jeho jazyce? Pošlete odkaz se zkratkou jeho jazyka, například jonclsolutions.com/en/contact."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Jazyk aktivujte až s přeloženými texty - po aktivaci ho vyhledávače začnou zobrazovat ve výsledcích hledání."
+            }
+          ]
+        },
+        {
+          "heading": "04. Překlady - úprava textů",
           "blocks": [
             {
               "type": "flow",
@@ -597,7 +644,7 @@
           ]
         },
         {
-          "heading": "04. Překlady - stažení a nahrání JSON",
+          "heading": "05. Překlady - stažení a nahrání JSON",
           "blocks": [
             {
               "type": "list",
@@ -617,7 +664,7 @@
           ]
         },
         {
-          "heading": "05. Názvy stránek",
+          "heading": "06. Názvy stránek",
           "blocks": [
             {
               "type": "text",
@@ -639,7 +686,7 @@
           ]
         },
         {
-          "heading": "06. FAQ - časté dotazy",
+          "heading": "07. FAQ - časté dotazy",
           "blocks": [
             {
               "type": "text",
@@ -659,7 +706,7 @@
           ]
         },
         {
-          "heading": "07. Pracovní pozice",
+          "heading": "08. Pracovní pozice",
           "blocks": [
             {
               "type": "text",
@@ -707,7 +754,7 @@
           ]
         },
         {
-          "heading": "08. Reference",
+          "heading": "09. Reference",
           "blocks": [
             {
               "type": "text",
@@ -754,7 +801,7 @@
           ]
         },
         {
-          "heading": "09. Znalostní báze (veřejná nápověda)",
+          "heading": "10. Znalostní báze (veřejná nápověda)",
           "blocks": [
             {
               "type": "text",
@@ -807,7 +854,7 @@
           ]
         },
         {
-          "heading": "10. Jazyky a chybějící texty v obsahových záložkách",
+          "heading": "11. Jazyky a chybějící texty v obsahových záložkách",
           "blocks": [
             {
               "type": "text",
@@ -816,7 +863,7 @@
           ]
         },
         {
-          "heading": "11. Kdo smí co",
+          "heading": "12. Kdo smí co",
           "blocks": [
             {
               "type": "grid",

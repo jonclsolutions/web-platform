@@ -9,9 +9,10 @@ k doméně). Každý krok říká **co udělat**, **co se stane** a **jak to ov�
 ## Rychlá cesta: `provision.sh`
 
 Ručně se dělá jen to, co skript udělat nemůže: **kroky 1–7** (účet, doména, e-maily, DNS pošty,
-objednávka VPS), **widget Turnstile** (krok 11) a **záznamy DNS webu** (krok 12). Všechno ostatní
-– kroky 8–10 tohoto návodu i kroky 3–9 `deploy_workflow.md` – udělá jeden příkaz z tvého počítače
-(z kořene repozitáře instalace):
+objednávka VPS), **widget Turnstile** (krok 11), **záznamy DNS webu** (krok 12) a po spuštění
+webu **sitemap v Google Search Console** (krok 13). Všechno ostatní – kroky 8–10 tohoto návodu
+i kroky 3–9 `deploy_workflow.md` – udělá jeden příkaz z tvého počítače (z kořene repozitáře
+instalace):
 
 ```bash
 gh auth login                                      # jednou: GitHub CLI (https://cli.github.com)
@@ -43,8 +44,9 @@ Obsah:
 10. [Nastavení instalace – /srv/app/.env](#10-nastavení-instalace--srvappenv)
 11. [Cloudflare Turnstile](#11-cloudflare-turnstile)
 12. [DNS webu – doména na VPS](#12-dns-webu--doména-na-vps)
-13. [Kontrolní seznam](#13-kontrolní-seznam)
-14. [Když něco nejde](#14-když-něco-nejde)
+13. [Vyhledávače – sitemap do Google Search Console](#13-vyhledávače--sitemap-do-google-search-console)
+14. [Kontrolní seznam](#14-kontrolní-seznam)
+15. [Když něco nejde](#15-když-něco-nejde)
 
 ---
 
@@ -354,7 +356,40 @@ curl -sI http://<domena> | head -3             # 308 → https://
 
 ---
 
-## 13. Kontrolní seznam
+## 13. Vyhledávače – sitemap do Google Search Console
+
+Udělej, až web běží na doméně s certifikátem (krok 12). **Nezapomeň** – bez toho Google web
+najde jen pomalu a nevidíš, co z něj zaindexoval.
+
+Web si **sitemap generuje sám**: `https://<domena>/sitemap.xml` (všechny veřejné stránky webu
+a e-shopu ve všech aktivních jazycích) a odkazuje na ni z `/robots.txt`. Na web se nic
+nepřidává (žádný skript, žádné cookies) – GDPR beze změny.
+
+1. **search.google.com/search-console** → přihlas se Google účtem **firmy klienta** (ne
+   osobním) → **Přidat službu** → typ **Doména** → `<domena>` (pokryje https, www i všechny
+   jazyky).
+2. Google ukáže TXT záznam `google-site-verification=…` → FORPSI → Editace DNS záznamů →
+   nový **TXT**, Hostname prázdný, hodnota celý řetězec → v Search Console **Ověřit** (DNS se
+   projeví za 5–60 min). Záznam pak **nemaž**, ověření by propadlo.
+3. Search Console → **Sitemapy** → `sitemap.xml` → **Odeslat**. Stav má být *Úspěch*
+   a počet adres odpovídá stránkám × jazykům.
+4. Volitelně **Bing Webmaster Tools** (bing.com/webmasters) → *Import ze Search Console* –
+   pokryje Bing a DuckDuckGo. Seznam.cz sitemap najde sám přes `robots.txt`.
+
+✔ Ověření:
+```bash
+curl -s https://<domena>/robots.txt | tail -1    # Sitemap: https://<domena>/sitemap.xml
+curl -s https://<domena>/sitemap.xml | head -6   # <loc>https://<domena>/cs</loc> …
+curl -sI https://<domena>/ | grep -iE '^(location|vary)'   # location: /<jazyk>, vary: Accept-Language
+```
+Adresy v sitemap musí začínat skutečnou doménou – jinak oprav `FRONTEND_URL` v
+`/srv/app/.env` (krok 10) a `docker compose up -d`.
+
+Přístup do Search Console (účet) zapiš do Bitwardenu ke klientovi.
+
+---
+
+## 14. Kontrolní seznam
 
 **FORPSI**
 - [ ] účet s dvoufázovým přihlášením, fakturace na firmu
@@ -373,14 +408,17 @@ curl -sI http://<domena> | head -3             # 308 → https://
 **DNS webu** (podle kroku 12)
 - [ ] A / AAAA → VPS, www, CAA
 
+**Vyhledávače** (podle kroku 13, až web běží)
+- [ ] Search Console: doména ověřená TXT záznamem, `sitemap.xml` odeslaná, stav *Úspěch*
+
 **Dál**: `deploy/deploy_workflow.md` – GitHub Actions, první nasazení, zálohy.
 
 Do Bitwardenu k záznamu klienta: přihlášení FORPSI, IP VPS, heslo roota, `postmaster@`,
-`noreply@`, `info@`, `sysadmin@`, `.env`, Turnstile secret.
+`noreply@`, `info@`, `sysadmin@`, `.env`, Turnstile secret, účet Search Console.
 
 ---
 
-## 14. Když něco nejde
+## 15. Když něco nejde
 
 | Problém | Řešení |
 |---|---|
@@ -394,3 +432,4 @@ Do Bitwardenu k záznamu klienta: přihlášení FORPSI, IP VPS, heslo roota, `p
 | `bootstrap.sh`: `ERROR: Invalid syntax` u ufw | starší verze skriptu (apostrof v poznámce pravidla) – aktuální z repozitáře nahraj a spusť znovu |
 | Do nano nejde vložit text | Ctrl+Shift+V (Ctrl+V v nano jen posune stránku) nebo pravé tlačítko → Vložit |
 | Webmail postmastera hlásí chybu hned po objednání | služba se ještě nastavuje – zkus za 15–30 min |
+| Search Console: sitemap „Nelze načíst“ / ověření selže | `curl` z kroku 13 vrací sitemap? TXT záznam je u domény (`dig +short TXT <domena>`)? DNS se ještě šíří – zkus za hodinu |

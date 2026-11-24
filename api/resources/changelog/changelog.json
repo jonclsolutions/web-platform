@@ -3,6 +3,12 @@
         {
             "type": "added",
             "area": "web",
+            "part": "admin",
+            "text": "The manual page Website texts explains the language in the page address (/cs/, /en/, /fr/ …): how a new language gets its addresses, what visitors on the bare domain see and how to send someone a page in their language."
+        },
+        {
+            "type": "added",
+            "area": "web",
             "part": "public",
             "text": "Search engines: sitemap.xml lists every public page in each active language, robots.txt keeps private pages (administration, sign-in, project portal) out of search results and every page names its other language versions. Old addresses without a language permanently lead to the Czech page."
         },

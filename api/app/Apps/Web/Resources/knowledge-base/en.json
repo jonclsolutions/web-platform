@@ -539,13 +539,60 @@
               "items": [
                 "The icon at a language deactivates or activates it - visitors do not see an inactive language, its texts stay.",
                 "The bin icon deletes the language from the list (after a confirmation). The file with its texts stays on the server.",
-                "The upload icon uploads the texts of the language from a JSON file (see chapter 04)."
+                "The upload icon uploads the texts of the language from a JSON file (see chapter 05)."
               ]
             }
           ]
         },
         {
-          "heading": "03. Translations - editing texts",
+          "heading": "03. Language in the website address",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Every website language has its short code in the page address. From it visitors and search engines (Google, Seznam) know the language of the page. The page names in the address are the same in all languages, only the language code changes."
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "title": "jonclsolutions.com/cs/services",
+                  "text": "The Services page in Czech. Czech has the code cs in the address (the international code of Czech), although it is called cz in the administration."
+                },
+                {
+                  "title": "jonclsolutions.com/en/services",
+                  "text": "The same page in English."
+                },
+                {
+                  "title": "jonclsolutions.com/fr/services",
+                  "text": "The same page in French - once you add a language with the code fr and activate it."
+                }
+              ]
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "A new language needs nothing more: once active, the website has its addresses by itself and search engines learn about them automatically.",
+                "Whoever opens just jonclsolutions.com gets the website in the language of their browser. If the website does not have it, in English.",
+                "Visitors change the language with the switch in the website footer and the website remembers their choice.",
+                "The address of a language the website does not have or has switched off opens the page in the language the visitor uses.",
+                "The e-shop (/en/shop/...) and the project portal (/en/projects/...) work the same. The administration has no language code in its address."
+              ]
+            },
+            {
+              "type": "alert",
+              "variant": "info",
+              "content": "Want to send someone a page in their language? Send a link with the code of their language, for example jonclsolutions.com/en/contact."
+            },
+            {
+              "type": "alert",
+              "variant": "warning",
+              "content": "Activate a language only with translated texts - once active, search engines start showing it in search results."
+            }
+          ]
+        },
+        {
+          "heading": "04. Translations - editing texts",
           "blocks": [
             {
               "type": "flow",
@@ -597,7 +644,7 @@
           ]
         },
         {
-          "heading": "04. Translations - downloading and uploading JSON",
+          "heading": "05. Translations - downloading and uploading JSON",
           "blocks": [
             {
               "type": "list",
@@ -617,7 +664,7 @@
           ]
         },
         {
-          "heading": "05. Page titles",
+          "heading": "06. Page titles",
           "blocks": [
             {
               "type": "text",
@@ -639,7 +686,7 @@
           ]
         },
         {
-          "heading": "06. FAQ - frequently asked questions",
+          "heading": "07. FAQ - frequently asked questions",
           "blocks": [
             {
               "type": "text",
@@ -659,7 +706,7 @@
           ]
         },
         {
-          "heading": "07. Jobs",
+          "heading": "08. Jobs",
           "blocks": [
             {
               "type": "text",
@@ -707,7 +754,7 @@
           ]
         },
         {
-          "heading": "08. References",
+          "heading": "09. References",
           "blocks": [
             {
               "type": "text",
@@ -754,7 +801,7 @@
           ]
         },
         {
-          "heading": "09. Knowledge base (public help)",
+          "heading": "10. Knowledge base (public help)",
           "blocks": [
             {
               "type": "text",
@@ -807,7 +854,7 @@
           ]
         },
         {
-          "heading": "10. Languages and missing texts in the content tabs",
+          "heading": "11. Languages and missing texts in the content tabs",
           "blocks": [
             {
               "type": "text",
@@ -816,7 +863,7 @@
           ]
         },
         {
-          "heading": "11. Who may do what",
+          "heading": "12. Who may do what",
           "blocks": [
             {
               "type": "grid",
