@@ -364,7 +364,7 @@ describe('PersonalInfoComponent', () => {
    *   the languages with their names, the current one active.
    * @input  activeTab 'preferences'; languageItems; selectLanguage('en').
    * @output items cz + en with names; currentLanguageCode 'cz' then 'en'; i18n.setLanguage('en');
-   *   the hint is rendered.
+   *   no hint under the languages (it only took space).
    */
   it('switches the language of the administration', () => {
     (ctx.dataHandler as any).get.and.returnValue(of({ roles: [] }));
@@ -377,7 +377,7 @@ describe('PersonalInfoComponent', () => {
     component.selectLanguage('en');
     expect(ctx.i18n.setLanguage).toHaveBeenCalledWith('en');
     expect(component.currentLanguageCode).toBe('en');
-    expect(fixture.nativeElement.textContent).toContain('personal-info.language_hint');
+    expect(fixture.nativeElement.textContent).not.toContain('personal-info.language_hint');
   });
 
   /**

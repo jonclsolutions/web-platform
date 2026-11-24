@@ -357,15 +357,19 @@ describe('SettingsComponent', () => {
      */
     /**
      * @description The company profile has only its own tabs - data retention moved to the legal
-     *   documents page (2026-11) and is never loaded here.
+     *   documents page (2026-11) and is never loaded here; saving is at the top of the card.
      * @input render.
-     * @output tabs company, page_titles; no app-retention-settings; no get('core/retention_settings').
+     * @output tabs company, page_titles; the save button in the sticky header of the company card
+     *   (no bottom bar); no app-retention-settings; no get('core/retention_settings').
      */
     it('has no data retention tab', fakeAsync(() => {
       (ctx.dataHandler as any).get.and.callFake((url: string) =>
         url === 'languages' ? of([{ code: 'cz', name: 'Čeština', active: true }]) : of(JSON.parse(JSON.stringify(config))));
       fixture.detectChanges();
       expect(component.tabItems.map(t => t.value)).toEqual(['company', 'page_titles']);
+      // The save button is in the sticky header of the company card - no floating bar at the bottom.
+      expect(fixture.nativeElement.querySelector('.ws-card-header--actions .ws-btn-primary')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('.ws-form-footer')).toBeNull();
       expect(fixture.nativeElement.querySelector('app-retention-settings')).toBeNull();
       expect((ctx.dataHandler as any).get).not.toHaveBeenCalledWith('core/retention_settings');
       discardPeriodicTasks();

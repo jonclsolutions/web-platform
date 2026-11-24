@@ -4,8 +4,9 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Styles of the "Data retention" tab - same card / field / button look as the other
- *   cards of the settings page (settings.component.css), stacked rows on narrow screens.
+ * @description Styles of the "Data retention" tab (legal documents page) - same card / field /
+ *   button look as the company profile (settings.component.css), the actions in the sticky card
+ *   header, stacked rows on narrow screens.
  * @usage .rs-card > .rs-card-header + .rs-card-body > .rs-rows > .rs-row
  */
 
@@ -17,10 +18,17 @@
   box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
 }
 .rs-card-header {
-  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px 10px 18px;
+  min-height: 52px;
   background: var(--color-zinc-50);
   border-bottom: 1px solid var(--color-zinc-100);
 }
+.rs-card-header .rs-card-title { flex: 1; }
+.rs-card-header .rs-btn { padding: 6px 14px; font-size: 0.8rem; }
 .rs-card-title {
   font-size: 0.8rem;
   font-weight: 700;
@@ -63,25 +71,27 @@
 .rs-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 
 /*
-    @module: Floating save bar
-    @description: The save actions stick to the bottom of the admin content while the card is
-        scrolled; `.is-stuck` (StickyBarDirective) shows them as a floating bar - the white ring
-        is a box-shadow, so the layout never moves.
-    @usage: .rs-actions[appStickyBar="bottom"], .rs-actions.is-stuck
-    @note: The card uses `overflow: clip` (not hidden) - hidden would stop the bar sticking.
+    @module: Sticky save header
+    @description: The card header with the save / run-now actions sticks to the top of the admin
+        content while the card is scrolled (as in the text editors); `.is-stuck`
+        (StickyBarDirective) shows it as a floating bar. Nothing floats over the rows when the
+        tab opens.
+    @usage: .rs-card-header[appStickyBar], .rs-card-header.is-stuck
+    @note: The card uses `overflow: clip` (not hidden) - hidden would stop the header sticking.
 */
-.rs-actions {
+.rs-card-header {
   position: sticky;
-  bottom: 18px;
+  top: 8px;
   z-index: 5;
-  transition: box-shadow 0.18s ease;
+  transition: border-radius 0.18s ease, box-shadow 0.18s ease;
 }
 
-.rs-actions.is-stuck {
-  background: var(--color-white);
-  border-radius: 10px;
-  border-top-color: transparent;
-  box-shadow: 0 0 0 10px var(--color-white), 0 0 0 11px var(--color-zinc-200), 0 10px 28px 8px rgba(24, 24, 27, 0.12);
+.rs-card-header.is-stuck {
+  border-radius: 14px;
+  border-bottom-color: transparent;
+  /* The first shadow paints the page background over the strip above the stuck header, so no
+     scrolled text shows between it and the top of the content. */
+  box-shadow: 0 -9px 0 1px var(--bg, var(--color-sand-50)), 0 0 0 1px var(--color-zinc-200), 0 8px 20px rgba(24, 24, 27, 0.1);
 }
 
 .rs-btn {

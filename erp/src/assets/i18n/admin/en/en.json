@@ -58,7 +58,6 @@
     "password_change_success_message": "Password has been changed successfully. The other sessions of this account were signed out.",
     "password_change_error": "Error changing password. Please check your current password.",
     "language_heading": "Administration language",
-    "language_hint": "Applies only in this browser. You can also change it in the account panel – click your e-mail in the header.",
     "notifications_heading": "Notifications",
     "notifications_toasts_label": "Show pop-up notices of new records",
     "notifications_toasts_hint": "Applies only in this browser. The red numbers of unread records in the menu are always shown."

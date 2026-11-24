@@ -1542,7 +1542,7 @@
               "type": "list",
               "ordered": true,
               "items": [
-                "Nastavte lhůty a stiskněte Uložit lhůty.",
+                "Nastavte lhůty a stiskněte Uložit lhůty v záhlaví karty (při posouvání zůstává nahoře).",
                 "Úklid proběhne v noci sám. Chcete-li ho spustit hned, stiskněte Spustit úklid nyní a potvrďte - smažou se záznamy starší než ULOŽENÉ lhůty."
               ]
             },
@@ -1801,7 +1801,7 @@
                 },
                 {
                   "label": "Uložení",
-                  "text": "Logo se uloží až tlačítkem Uložit firemní údaje dole (na tlačítku přibude „+ logo“).",
+                  "text": "Logo se uloží až tlačítkem Uložit firemní údaje v záhlaví karty Firemní údaje (na tlačítku přibude „+ logo“).",
                   "active": false
                 }
               ]
@@ -1863,7 +1863,7 @@
             },
             {
               "type": "text",
-              "content": "Vše uložíte tlačítkem Uložit firemní údaje. Úspěšné uložení potvrdí hláška Uloženo a značka u karty."
+              "content": "Vše uložíte tlačítkem Uložit firemní údaje v záhlaví karty - při posouvání stránky zůstává záhlaví nahoře, takže tlačítko máte vždy po ruce. Úspěšné uložení potvrdí hláška Uloženo a značka u karty."
             }
           ]
         },

@@ -485,8 +485,7 @@
 .ap-lang-flag {
   width: 18px;
   height: 18px;
-  object-fit: cover;
-  border-radius: 2px;
+  object-fit: contain;
   flex-shrink: 0;
 }
 

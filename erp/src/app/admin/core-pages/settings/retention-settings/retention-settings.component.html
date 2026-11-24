@@ -4,12 +4,24 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: "Data retention" tab - period per kind of personal data, last clean-up, save / run now.
+    @description: "Data retention" tab (legal documents page) - period per kind of personal data,
+        last clean-up; the save / run-now actions are in the card header, which sticks to the top
+        while the card is scrolled.
 -->
 
 <div class="rs-card">
-  <div class="rs-card-header">
+  <div class="rs-card-header" appStickyBar>
     <span class="rs-card-title">{{ t('card_title') }}</span>
+    @if (canEdit && !loading && !loadError) {
+      <div class="rs-actions">
+        <button type="button" class="rs-btn rs-btn-secondary" [disabled]="purging || saving" (click)="purgeNow()">
+          {{ purging ? t('purging') : t('purge_button') }}
+        </button>
+        <button type="button" class="rs-btn rs-btn-primary" [disabled]="saving || purging" (click)="save()">
+          {{ saving ? t('saving') : t('save_button') }}
+        </button>
+      </div>
+    }
   </div>
 
   <div class="rs-card-body">
@@ -51,17 +63,6 @@
       </div>
 
       <p class="rs-note">{{ t('note') }}</p>
-
-      @if (canEdit) {
-        <div class="rs-actions" appStickyBar="bottom">
-          <button type="button" class="rs-btn rs-btn-secondary" [disabled]="purging || saving" (click)="purgeNow()">
-            {{ purging ? t('purging') : t('purge_button') }}
-          </button>
-          <button type="button" class="rs-btn rs-btn-primary" [disabled]="saving || purging" (click)="save()">
-            {{ saving ? t('saving') : t('save_button') }}
-          </button>
-        </div>
-      }
     }
   </div>
 </div>

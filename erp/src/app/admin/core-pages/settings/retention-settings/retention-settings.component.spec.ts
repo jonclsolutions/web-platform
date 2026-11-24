@@ -43,7 +43,8 @@ describe('RetentionSettingsComponent', () => {
    *   kind with its last run, a select with the standard periods (plus a custom API value) and
    *   translated labels.
    * @input GET rows (180, off, custom 400).
-   * @output get('core/retention_settings'); 3 rows, 3 selects; last run text; options: standard
+   * @output get('core/retention_settings'); 3 rows, 3 selects; last run text; actions in the
+   *   sticky card header; options: standard
    *   list, 400 added in order; labels 'option_off' / 'option_180' / '{n}' days.
    */
   it('loads and renders the settings', () => {
@@ -55,7 +56,9 @@ describe('RetentionSettingsComponent', () => {
     expect(el.querySelectorAll('.rs-row').length).toBe(3);
     expect(el.querySelectorAll('select.rs-select').length).toBe(3);
     expect(el.querySelector('.rs-row-last')!.textContent).toContain('retention-settings.last_run');
-    expect(el.querySelector('.rs-actions')).not.toBeNull();
+    // The actions are in the card header that sticks to the top (no floating bar at the bottom).
+    expect(el.querySelector('.rs-card-header .rs-actions')).not.toBeNull();
+    expect(el.querySelector('.rs-card-header')!.hasAttribute('appStickyBar')).toBeTrue();
 
     expect(component.optionsFor(rows[0])).toBe(RETENTION_OPTIONS);
     expect(component.optionsFor(rows[2])).toEqual([null, 30, 90, 180, 365, 400, 730, 1095, 1825, 3650]);

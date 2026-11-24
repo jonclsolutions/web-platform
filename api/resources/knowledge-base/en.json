@@ -1542,7 +1542,7 @@
               "type": "list",
               "ordered": true,
               "items": [
-                "Set the periods and press Save periods.",
+                "Set the periods and press Save periods in the header of the card (it stays at the top while you scroll).",
                 "The clean-up runs at night by itself. To run it at once, press Run clean-up now and confirm - records older than the SAVED periods are deleted."
               ]
             },
@@ -1801,7 +1801,7 @@
                 },
                 {
                   "label": "Saving",
-                  "text": "The logo is saved only with the Save company details button at the bottom (the button shows “+ logo”).",
+                  "text": "The logo is saved only with the Save company details button in the header of the Company details card (the button shows “+ logo”).",
                   "active": false
                 }
               ]
@@ -1863,7 +1863,7 @@
             },
             {
               "type": "text",
-              "content": "Save everything with Save company details. A successful save is confirmed by the message and the Saved mark at the card."
+              "content": "Save everything with Save company details in the header of the card - the header stays at the top while you scroll, so the button is always at hand. A successful save is confirmed by the message and the Saved mark at the card."
             }
           ]
         },

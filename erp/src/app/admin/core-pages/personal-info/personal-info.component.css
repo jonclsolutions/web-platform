@@ -333,6 +333,3 @@
   opacity: 0.5;
   cursor: default;
 }
-
-/* Hint under the languages of the Preferences tab. */
-.info-group app-row-button-builder + .setting-hint { margin-top: 8px; }

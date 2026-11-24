@@ -72,11 +72,13 @@
   cursor: not-allowed;
 }
 
+/* Flag / picture of a button: the whole picture in a square - the language icons are square
+   pictures (often a round flag), so a cropping fit would cut them; a rectangular flag shows whole
+   with a small margin. */
 .rbb-image {
-  width: 18px;
-  height: 13px;
-  object-fit: cover;
-  border-radius: 2px;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
   flex-shrink: 0;
 }
 

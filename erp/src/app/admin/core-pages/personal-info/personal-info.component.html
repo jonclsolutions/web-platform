@@ -79,12 +79,11 @@
 
     @if (activeTab === 'preferences') {
       <!-- Language of the administration: kept in this browser (also in the account panel of the
-           header). -->
+           header); no hint under it - the choice explains itself. -->
       <div class="info-group">
         <h3 class="group-title">{{ strings.language_heading }}</h3>
         <app-row-button-builder size="sm" [items]="languageItems" [active]="currentLanguageCode"
                                 [ariaLabel]="strings.language_heading" (selected)="selectLanguage($event)" />
-        <p class="setting-hint">{{ strings.language_hint }}</p>
       </div>
 
       <!-- Notifications: the pop-up notices of new records are a choice of this browser; the red

@@ -58,7 +58,6 @@
     "password_change_success_message": "Heslo bylo úspěšně změněno. Ostatní přihlášení tohoto účtu byla ukončena.",
     "password_change_error": "Chyba při změně hesla. Zkontrolujte prosím původní heslo.",
     "language_heading": "Jazyk administrace",
-    "language_hint": "Platí jen v tomto prohlížeči. Změníte ho i v panelu účtu – klikněte na svůj e-mail v hlavičce.",
     "notifications_heading": "Notifikace",
     "notifications_toasts_label": "Zobrazovat vyskakovací upozornění na nové záznamy",
     "notifications_toasts_hint": "Platí jen v tomto prohlížeči. Červená čísla nepřečtených záznamů v menu se zobrazují vždy."

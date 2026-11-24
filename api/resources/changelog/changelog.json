@@ -1,6 +1,12 @@
 {
     "unreleased": [
         {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Language flags are shown whole (no longer cut off). The save buttons of Company profile and Data retention are at the top of the card and follow you while scrolling, instead of a bar covering the form."
+        },
+        {
             "type": "changed",
             "area": "core",
             "part": "admin",
