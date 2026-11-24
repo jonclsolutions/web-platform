@@ -263,28 +263,28 @@ describe('AdminLayoutComponent', () => {
   });
 
   /**
-   * @description On mobile an open menu or action panel locks the page scroll; closing unlocks.
-   * @input  mobile viewport; toggleMobileActions(); closeMobileActions()
+   * @description On mobile an open menu or account panel locks the page scroll; closing unlocks.
+   * @input  mobile viewport; toggleAccountPanel(); closeAccountPanel()
    * @output scrollLock.lock() once, then unlock() once
    */
   it('locks scrolling for the mobile menu', () => {
     (component as any).isMobileViewport = true;
     component.isMenuOpen = false;
-    component.toggleMobileActions();
+    component.toggleAccountPanel();
     expect(scrollLock.lock).toHaveBeenCalledTimes(1);
-    component.closeMobileActions();
+    component.closeAccountPanel();
     expect(scrollLock.unlock).toHaveBeenCalledTimes(1);
   });
 
   /**
    * @description A still-held scroll lock is released when the layout is destroyed.
-   * @input  mobile actions open (locked); ngOnDestroy()
+   * @input  account panel open (locked); ngOnDestroy()
    * @output scrollLock.unlock() called
    */
   it('releases the scroll lock on destroy', () => {
     (component as any).isMobileViewport = true;
     component.isMenuOpen = false;
-    component.toggleMobileActions();
+    component.toggleAccountPanel();
     component.ngOnDestroy();
     expect(scrollLock.unlock).toHaveBeenCalled();
   });
@@ -306,19 +306,31 @@ describe('AdminLayoutComponent', () => {
   });
 
   /**
-   * @description The language menu switches the admin language and closes.
-   * @input  toggleLangMenu(); selectLanguage('en')
-   * @output i18n.setLanguage('en'); isLangMenuOpen false; currentLanguageCode 'en'; currentLanguageMeta.code 'en'
+   * @description The header has no language switcher and no calendar button; the account panel
+   *   switches the admin language (the panel stays open, the current language highlighted) and
+   *   Escape closes it.
+   * @input  render; open the account panel; click the English item; Escape.
+   * @output no .header-lang-switcher / calendar link in the header; i18n.setLanguage('en'); panel
+   *   open with English active (aria-pressed); dateLocale 'en-US'; after Escape closed.
    */
-  it('switches the admin language', () => {
-    component.toggleLangMenu();
-    expect(component.isLangMenuOpen).toBeTrue();
-    component.selectLanguage('en');
+  it('switches the admin language in the account panel', () => {
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.header-lang-switcher')).toBeNull();
+    expect(el.querySelector('.admin-header a[href="/admin/core/calendar"]')).toBeNull();
+    component.toggleAccountPanel();
+    fixture.detectChanges();
+    const items = Array.from(el.querySelectorAll('.account-panel .ap-lang-item')) as HTMLButtonElement[];
+    const english = items.find(b => b.textContent!.includes('English'))!;
+    english.click();
+    fixture.detectChanges();
     expect(ctx.i18n.setLanguage).toHaveBeenCalledWith('en');
-    expect(component.isLangMenuOpen).toBeFalse();
+    expect(component.isAccountPanelOpen).toBeTrue();
     expect(component.currentLanguageCode).toBe('en');
-    expect(component.currentLanguageMeta?.code).toBe('en');
+    expect(english.getAttribute('aria-pressed')).toBe('true');
     expect(component.dateLocale).toBe('en-US');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(component.isAccountPanelOpen).toBeFalse();
   });
 
   /**
@@ -341,7 +353,8 @@ describe('AdminLayoutComponent', () => {
    * @input  granted ['web-edit-website-view', 'shop-orders-view', 'core-legal-config-view',
    *         'project-portal-projects-view']; render the project portal.
    * @output web content, shop transactions, core legal groups visible; web business, shop catalog
-   *   hidden; sidebar links /admin/project-portal/projects (no log page) + the manual at the bottom.
+   *   hidden; sidebar links /admin/project-portal/projects (no log page) + My account and the
+   *   manual at the bottom.
    */
   it('shows menu groups by permission', () => {
     requiresApps('web', 'shop', 'project-portal');
@@ -356,40 +369,46 @@ describe('AdminLayoutComponent', () => {
     component.currentModule = 'project-portal';
     fixture.detectChanges();
     const links = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.admin-nav a[href^="/admin/"]')).map(a => a.getAttribute('href'));
-    expect(links).toEqual(['/admin/project-portal/projects', '/admin/intranet/knowledge-base']);
+    expect(links).toEqual(['/admin/project-portal/projects', '/admin/core/personal-info', '/admin/intranet/knowledge-base']);
   });
 
   /**
-   * @description The own personal info page (password, 2FA) is open to every signed-in user
-   *   (VT-13): the header e-mail links to it (desktop and mobile panel), the sidebar item needs no
-   *   permission, and as a page without a permission it counts as accessible for every role.
-   * @input  logged in as admin without any permission; render with the mobile panel open; click the mobile link.
-   * @output header + mobile links to /admin/core/personal-info with the e-mail; sidebar link
-   *   present; firstAccessiblePage('core') = calendar (no permission, before personal info) with
-   *   its sidebar and header links; the mobile panel closes.
+   * @description My account (password, 2FA, language) is open to every signed-in user (VT-13):
+   *   the own account in the header opens the account panel with the link, the bottom of the
+   *   sidebar has the link in every module (no permission, not in the Users section), and the
+   *   calendar stays the first core page for a user without permissions.
+   * @input  logged in as admin without any permission; module shop then core; click the own
+   *   account in the header; click My account in the panel.
+   * @output the header button shows the e-mail (aria-expanded true after the click); panel links
+   *   My account + calendar; bottom sidebar link to /admin/core/personal-info in the shop and the
+   *   core, none inside a section; firstPage('core') = calendar; the panel closes on the link.
    */
-  it('opens the own personal info page for every user', () => {
+  it('opens My account for every user', () => {
+    requiresApps('shop');
     ctx.permissions.granted = new Set([]);
     component.ngOnInit();
-    component.currentModule = 'core';
-    component.isMobileActionsOpen = true;
+    component.currentModule = 'shop';
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
-    const links = Array.from(el.querySelectorAll('a.header-user-link')) as HTMLAnchorElement[];
-    expect(links.length).toBe(2);
-    links.forEach(a => {
-      expect(a.getAttribute('href')).toBe('/admin/core/personal-info');
-      expect(a.textContent!.trim()).toBe('admin@example.test');
-    });
-    expect(el.querySelector('.admin-nav a[href="/admin/core/personal-info"]')).not.toBeNull();
+    const bottom = () => el.querySelector('.nav-group--bottom a.account-nav-item');
+    expect(bottom()?.getAttribute('href')).toBe('/admin/core/personal-info');
+    expect(bottom()?.textContent).toContain('admin-layout.nav_my_account');
+    component.currentModule = 'core';
+    fixture.detectChanges();
+    expect(bottom()?.getAttribute('href')).toBe('/admin/core/personal-info');
+    expect(el.querySelectorAll('.admin-nav a[href="/admin/core/personal-info"]').length).toBe(1);
     // Without permissions the first core page is the calendar (no permission either).
     expect(TestBed.inject(AdminModulesService).firstPage('core')!.path).toBe('calendar');
-    expect(el.querySelector('.admin-nav a[href="/admin/core/calendar"]')).not.toBeNull();
-    expect(el.querySelector('a.header-action-btn--calendar')?.getAttribute('href')).toBe('/admin/core/calendar');
 
-    const close = spyOn(component, 'closeMobileActions');
-    links[1].click();
-    expect(close).toHaveBeenCalled();
+    const account = el.querySelector('button.header-user') as HTMLButtonElement;
+    expect(account.textContent).toContain('admin@example.test');
+    account.click();
+    fixture.detectChanges();
+    expect(account.getAttribute('aria-expanded')).toBe('true');
+    const links = Array.from(el.querySelectorAll('.account-panel .ap-links a')) as HTMLAnchorElement[];
+    expect(links.map(a => a.getAttribute('href'))).toEqual(['/admin/core/personal-info', '/admin/core/calendar']);
+    links[0].click();
+    expect(component.isAccountPanelOpen).toBeFalse();
   });
 
   /**
@@ -427,10 +446,10 @@ describe('AdminLayoutComponent', () => {
     component.ngOnInit();
     expect([component.isMenuOpen, (component as any).isMobileViewport]).toEqual([false, true]);
 
-    component.toggleMobileActions();
-    expect(component.isMobileActionsOpen).toBeTrue();
+    component.toggleAccountPanel();
+    expect(component.isAccountPanelOpen).toBeTrue();
     expect(scrollLock.lock).toHaveBeenCalledTimes(1);
-    component.closeMobileActions();
+    component.closeAccountPanel();
     expect(scrollLock.unlock).toHaveBeenCalledTimes(1);
 
     localStorage.setItem('admin_menu_open', 'false');
@@ -442,9 +461,9 @@ describe('AdminLayoutComponent', () => {
     expect(component.isMenuOpen).toBeFalse();
 
     width.and.returnValue(500);
-    component.toggleMobileActions();
+    component.toggleAccountPanel();
     component.onWindowResize();
-    expect([(component as any).isMobileViewport, component.isMenuOpen, component.isMobileActionsOpen]).toEqual([true, false, false]);
+    expect([(component as any).isMobileViewport, component.isMenuOpen, component.isAccountPanelOpen]).toEqual([true, false, false]);
     width.and.returnValue(1200);
     component.onWindowResize();
     expect(component.isMenuOpen).toBeTrue();
@@ -477,12 +496,12 @@ describe('AdminLayoutComponent', () => {
   });
 
   /**
-   * @description Navigation events switch the module; language menu toggles; metadata of the
-   *   current language; failed logout still goes to the login page.
-   * @input NavigationEnd to /admin/shop/orders; toggle / close lang menu; logout() error.
-   * @output module 'shop' stored; open → closed; meta code cz, dateLocale cs-CZ; navigate login, permissions kept.
+   * @description Navigation events switch the module; the current language; failed logout still
+   *   goes to the login page.
+   * @input NavigationEnd to /admin/shop/orders; logout() error.
+   * @output module 'shop' stored; language cz, dateLocale cs-CZ; navigate login, permissions kept.
    */
-  it('follows navigation, the language menu and a failed logout', async () => {
+  it('follows navigation, the language and a failed logout', async () => {
     requiresApps('shop');
     component.ngOnInit();
     router.resetConfig([{ path: '**', component: AdminLayoutComponent }]);
@@ -490,11 +509,7 @@ describe('AdminLayoutComponent', () => {
     expect(component.currentModule).toBe('shop');
     expect(localStorage.getItem('admin_current_module')).toBe('shop');
 
-    component.toggleLangMenu();
-    expect(component.isLangMenuOpen).toBeTrue();
-    component.closeLangMenu();
-    expect(component.isLangMenuOpen).toBeFalse();
-    expect(component.currentLanguageMeta?.code).toBe('cz');
+    expect(component.currentLanguageCode).toBe('cz');
     expect(component.dateLocale).toBe('cs-CZ');
 
     ctx.auth.logout.and.returnValue(throwError(() => new Error('x')));
@@ -505,8 +520,8 @@ describe('AdminLayoutComponent', () => {
 
   /**
    * @description Every menu group appears exactly with the permissions of its pages; the core
-   *   overview and users groups always (calendar, applications and personal info need no
-   *   permission); the role-only edit roles page only for the sysadmin.
+   *   overview group always (calendar and applications need no permission; My account is at the
+   *   bottom, not in a group); the role-only edit roles page only for the sysadmin.
    * @input Each permission of a page granted alone (admin role); no permission; sysadmin.
    * @output The groups holding a page with that permission (+ the always-visible ones) shown, all
    *   others hidden; edit roles only for the sysadmin.
@@ -516,7 +531,7 @@ describe('AdminLayoutComponent', () => {
     const modules = ['core', 'web', 'shop', 'project-portal'];
     const groups = modules.flatMap(module => navOf(module));
     const always = groups.filter(g => g.items.some(i => i.permission === null && !i.sysadminOnly)).map(g => g.key);
-    expect(always).toEqual(['core-overview', 'core-users']);
+    expect(always).toEqual(['core-overview']);
     const permissions = [...new Set(groups.flatMap(g => g.items.flatMap(i => i.permission?.split('|') ?? [])))];
     for (const permission of permissions) {
       ctx.permissions.granted = new Set([permission]);
@@ -605,11 +620,11 @@ describe('AdminLayoutComponent', () => {
    * @description The header shows the own profile photo, the default image without one or when
    *   logged out.
    * @input  no photo; avatarUrl$ emits a URL; logged out.
-   * @output default svg; img with the URL in the header and the mobile panel; default svg.
+   * @output default svg; img with the URL in the header and the account panel; default svg.
    */
   it('shows the own profile photo in the header', () => {
     component.ngOnInit();
-    component.isMobileActionsOpen = true;
+    component.isAccountPanelOpen = true;
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('.header-user-avatar svg.user-avatar--default')).not.toBeNull();
@@ -618,7 +633,7 @@ describe('AdminLayoutComponent', () => {
     fixture.detectChanges();
     expect(component.avatarUrl).toContain('data:image/gif');
     expect((el.querySelector('.header-user-avatar img') as HTMLImageElement).src).toContain('data:image/gif');
-    expect(el.querySelector('.map-user-icon img')).not.toBeNull();
+    expect(el.querySelector('.ap-user-icon img')).not.toBeNull();
 
     ctx.auth.isLoggedIn$.next(false);
     fixture.detectChanges();
@@ -644,23 +659,25 @@ describe('AdminLayoutComponent', () => {
     fixture.destroy();
   });
   /**
-   * @description The manual ("Nápověda") is an item at the bottom of the sidebar, above sign-out -
-   *   not in the header and not in the mobile panel (the sidebar is on mobile too); the help of
-   *   one page is the "?" in its own header (PageHelpComponent).
-   * @input Rendered layout; mobile actions open.
-   * @output bottom items: help (text 'admin-layout.wiki_label', href /admin/intranet/knowledge-base)
-   *   then logout; no help link in the header or the mobile panel.
+   * @description The bottom of the sidebar holds My account, the manual ("Nápověda") and sign-out -
+   *   the manual is not in the header and not in the account panel (the sidebar is on mobile
+   *   too); the help of one page is the "?" in its own header (PageHelpComponent).
+   * @input Rendered layout; account panel open.
+   * @output bottom items: account, help (text 'admin-layout.wiki_label', href
+   *   /admin/intranet/knowledge-base), logout; no help link in the header or the account panel.
    */
   it('opens the manual from the bottom of the sidebar', () => {
-    component.isMobileActionsOpen = true;
+    component.isAccountPanelOpen = true;
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     const bottom = Array.from(el.querySelectorAll('.nav-group--bottom a')) as HTMLAnchorElement[];
-    expect(bottom.map(a => a.classList.contains('help-nav-item') ? 'help' : a.classList.contains('logout-nav-item') ? 'logout' : '?')).toEqual(['help', 'logout']);
-    expect(bottom[0].textContent?.trim()).toBe('admin-layout.wiki_label');
-    expect(bottom[0].getAttribute('href')).toBe('/admin/intranet/knowledge-base');
+    const kind = (a: HTMLAnchorElement) => a.classList.contains('account-nav-item') ? 'account'
+      : a.classList.contains('help-nav-item') ? 'help' : a.classList.contains('logout-nav-item') ? 'logout' : '?';
+    expect(bottom.map(kind)).toEqual(['account', 'help', 'logout']);
+    expect(bottom[1].textContent?.trim()).toBe('admin-layout.wiki_label');
+    expect(bottom[1].getAttribute('href')).toBe('/admin/intranet/knowledge-base');
     const kb = '/admin/intranet/knowledge-base';
-    expect(Array.from(el.querySelectorAll('.admin-header a, .mobile-actions-panel a')).some(a => a.getAttribute('href') === kb)).toBeFalse();
+    expect(Array.from(el.querySelectorAll('.admin-header a, .account-panel a')).some(a => a.getAttribute('href') === kb)).toBeFalse();
     fixture.destroy();
   });
 
@@ -816,30 +833,30 @@ describe('AdminLayoutComponent', () => {
 
   /**
    * @description Mobile header: the right button is the own avatar (not a second ☰) and opens the
-   *   account panel - account, personal info, calendar, language, sign-out; no clock and no
+   *   account panel - account, My account, calendar, language, sign-out; no clock and no
    *   module switching in it (the switcher is in the middle of the header).
    * @input signed-in sysadmin; open the account panel; click its sign-out.
-   * @output avatar in .mobile-actions-toggle, aria-expanded true; links personal info + calendar;
-   *   no .map-clock / .map-module-switcher; sign-out closes the panel and logs out.
+   * @output avatar in .account-toggle, aria-expanded true; links My account + calendar; languages
+   *   listed; no module switcher in the panel; sign-out closes the panel and logs out.
    */
   it('opens the account panel from the avatar on mobile', () => {
     ctx.auth.session.role = 'sysadmin';
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
-    const toggle = el.querySelector('.mobile-actions-toggle') as HTMLButtonElement;
+    const toggle = el.querySelector('.account-toggle') as HTMLButtonElement;
     expect(toggle.querySelector('app-user-avatar')).not.toBeNull();
     expect(toggle.querySelector('svg line')).toBeNull();
     toggle.click();
     fixture.detectChanges();
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    const links = Array.from(el.querySelectorAll('.mobile-actions-panel .map-links a')).map(a => a.getAttribute('href'));
+    const links = Array.from(el.querySelectorAll('.account-panel .ap-links a')).map(a => a.getAttribute('href'));
     expect(links).toEqual(['/admin/core/personal-info', '/admin/core/calendar']);
-    expect(el.querySelector('.map-clock')).toBeNull();
-    expect(el.querySelector('.map-module-switcher')).toBeNull();
+    expect(el.querySelectorAll('.account-panel .ap-lang-item').length).toBeGreaterThan(1);
+    expect(el.querySelector('.account-panel .apps-menu-item')).toBeNull();
     spyOn(component, 'logout');
-    (el.querySelector('.map-logout') as HTMLButtonElement).click();
+    (el.querySelector('.ap-logout') as HTMLButtonElement).click();
     expect(component.logout).toHaveBeenCalled();
-    expect(component.isMobileActionsOpen).toBeFalse();
+    expect(component.isAccountPanelOpen).toBeFalse();
     fixture.destroy();
   });
 });

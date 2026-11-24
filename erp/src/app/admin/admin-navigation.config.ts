@@ -82,7 +82,6 @@ export const CORE_NAV: AdminNavGroup[] = [
     items: [
       { path: 'administrators', permission: 'core-administrators-view', labelKey: 'nav_administrators', icon: 'lock' },
       { path: 'edit-roles', permission: null, sysadminOnly: true, labelKey: 'nav_edit_roles_text', titleKey: 'nav_edit_roles_title', icon: 'shield-check' },
-      { path: 'personal-info', permission: null, labelKey: 'nav_personal_info', icon: 'user' },
     ],
   },
   {
@@ -92,6 +91,15 @@ export const CORE_NAV: AdminNavGroup[] = [
       { path: 'security-events', permission: 'core-security-view', labelKey: 'nav_security_events', icon: 'shield' },
     ],
   },
+];
+
+/**
+ * @description Pages of the own account - core routes shown at the bottom of the sidebar of EVERY
+ *   module (above the manual and sign-out) and in the account panel of the header, not in a
+ *   section; every signed-in user may open them (no permission).
+ */
+export const ACCOUNT_PAGES: readonly AdminNavItem[] = [
+  { path: 'personal-info', permission: null, labelKey: 'nav_my_account', icon: 'user' },
 ];
 
 /**

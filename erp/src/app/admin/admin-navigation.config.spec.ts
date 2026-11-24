@@ -19,7 +19,7 @@
 import { Route } from '@angular/router';
 
 import { ADMIN_ROUTES } from './admin-routing.module';
-import { CORE_MODULE, adminModules, navOf, pagesOf, tabPermissionOf } from './admin-navigation.config';
+import { ACCOUNT_PAGES, CORE_MODULE, adminModules, navOf, pagesOf, tabPermissionOf } from './admin-navigation.config';
 import { APPS, hasApp } from '../apps/apps.registry';
 import { sysadminGuard } from '../core/auth/guards/sysadmin.guard';
 
@@ -77,15 +77,23 @@ describe('admin navigation config', () => {
    * @description Every page route of a table is in the sidebar exactly once; the section keys are
    *   unique over all modules; the core and every application with a welcome page start with it.
    * @input The route tables and sidebars of every module.
-   * @output Sorted route paths = sorted sidebar paths (no duplicates); unique section keys; first
+   * @output Sorted route paths = sorted sidebar paths + the account pages in the core (no
+   *   duplicates); the account pages need no permission and have help; unique section keys; first
    *   page 'welcome-page' for the core and the applications that have one.
    */
   it('lists every page route once, welcome page first', () => {
     for (const module of adminModules()) {
       const routePaths = routesOf(module).map(r => r.path!).filter(path => !path.includes('/')).sort();
-      const pagePaths = pagesOf(module).map(p => p.path).sort();
+      // The core also holds the pages of the own account (bottom of every sidebar).
+      const accountPaths = module === CORE_MODULE ? ACCOUNT_PAGES.map(p => p.path) : [];
+      const pagePaths = [...pagesOf(module).map(p => p.path), ...accountPaths].sort();
       expect(pagePaths).withContext(module).toEqual(routePaths);
       expect(new Set(routePaths).size).withContext(`${module} duplicates`).toBe(routePaths.length);
+    }
+    for (const page of ACCOUNT_PAGES) {
+      const route = routesOf(CORE_MODULE).find(r => r.path === page.path);
+      expect(route?.data?.['permission'] ?? null).withContext(page.path).toBeNull();
+      expect(route?.data?.['help']).withContext(`${page.path} help`).toBeTruthy();
     }
     const keys = adminModules().flatMap(module => navOf(module).map(group => group.key));
     expect(new Set(keys).size).toBe(keys.length);

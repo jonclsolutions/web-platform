@@ -80,7 +80,7 @@
                 },
                 {
                   "label": "Doporučené první kroky",
-                  "text": "Na stránce Osobní informace si zkontrolujte jméno a e-mail, nahrajte profilovou fotku a zvažte zapnutí dvoufázového ověření.",
+                  "text": "Na stránce Můj účet si zkontrolujte jméno a e-mail, nahrajte profilovou fotku a zvažte zapnutí dvoufázového ověření.",
                   "active": false
                 }
               ]
@@ -111,7 +111,7 @@
                 },
                 {
                   "title": "Váš účet",
-                  "text": "Profilová fotka, e-mail a role. Kliknutím na e-mail otevřete stránku Osobní informace."
+                  "text": "Profilová fotka, e-mail a role. Kliknutím otevřete panel účtu: Můj účet, kalendář, jazyk administrace a Odhlásit se."
                 },
                 {
                   "title": "Hodiny",
@@ -120,20 +120,12 @@
                 {
                   "title": "Přepínač modulů",
                   "text": "Tlačítko s názvem modulu, ve kterém právě jste (Core nebo název aplikace). Rozbalí seznam: nahoře Core (jen s oprávněním k sekci Core), pod čarou aplikace, ke kterým máte přístup, a dole Všechny aplikace - přehled aplikací se stavem každé z nich. Seznam se ovládá i klávesnicí (šipky, Escape)."
-                },
-                {
-                  "title": "Kalendář",
-                  "text": "Ikona kalendáře otevře společný kalendář termínů a nevyřízené práce."
-                },
-                {
-                  "title": "Jazyk",
-                  "text": "Vlajka vpravo přepne jazyk administrace (čeština / angličtina). Volba platí v tomto prohlížeči a použije se i na přihlašovací stránce."
                 }
               ]
             },
             {
               "type": "text",
-              "content": "Levé menu je rozdělené do sekcí (například Přehled, Obsah, Uživatelé, Systém). Kliknutím na název sekce ji sbalíte nebo rozbalíte - systém si to zapamatuje. Šířku menu změníte tažením jeho pravého okraje myší. Úplně dole v menu je položka Nápověda (úvod tohoto manuálu) a tlačítko Odhlásit se."
+              "content": "Levé menu je rozdělené do sekcí (například Přehled, Obsah, Uživatelé, Systém). Kliknutím na název sekce ji sbalíte nebo rozbalíte - systém si to zapamatuje. Šířku menu změníte tažením jeho pravého okraje myší. Úplně dole v menu jsou v každém modulu položky Můj účet, Nápověda (úvod tohoto manuálu) a Odhlásit se."
             },
             {
               "type": "text",
@@ -142,7 +134,7 @@
             {
               "type": "note",
               "highlight": "Na mobilu a tabletu",
-              "content": "Menu se otevírá tlačítkem vlevo nahoře a zavře se klepnutím mimo něj. Uprostřed hlavičky je přepínač modulů. Vaše profilová fotka vpravo nahoře otevře panel účtu: e-mail a role, Osobní informace, kalendář, jazyk a Odhlásit se. Nápověda je dole v menu."
+              "content": "Menu se otevírá tlačítkem vlevo nahoře a zavře se klepnutím mimo něj. Uprostřed hlavičky je přepínač modulů. Vaše profilová fotka vpravo nahoře otevře panel účtu: e-mail a role, Můj účet, kalendář, jazyk administrace a Odhlásit se. Můj účet a Nápověda jsou i dole v menu."
             }
           ]
         },
@@ -660,7 +652,7 @@
               "cards": [
                 {
                   "title": "Zapnutí a vypnutí",
-                  "text": "Na stránce Osobní informace si 2FA zapnete nebo vypnete sami zaškrtávacím políčkem Dvoufaktorové ověření (2FA)."
+                  "text": "Na stránce Můj účet (záložka Zabezpečení) si 2FA zapnete nebo vypnete sami zaškrtávacím políčkem Dvoufaktorové ověření (2FA)."
                 },
                 {
                   "title": "Povinné pro roli",
@@ -754,7 +746,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "Heslo si změníte na stránce Osobní informace tlačítkem Změnit heslo: zadáte staré heslo, nové heslo a jeho potvrzení.",
+                "Heslo si změníte na stránce Můj účet (záložka Zabezpečení) tlačítkem Změnit heslo: zadáte staré heslo, nové heslo a jeho potvrzení.",
                 "Po změně hesla se ukončí všechna ostatní přihlášení vašeho účtu (jiné prohlížeče, jiná zařízení, ostatní karty) - aktuální karta zůstane přihlášená.",
                 "Přihlašovací e-mail mění administrátor účtů. Pokud ho měníte sami (jen s oprávněním), systém nejdřív ověří vaše heslo, ukončí ostatní přihlášení a pošle upozornění na starou i novou adresu.",
                 "Pokud vám přijde upozornění na změnu, kterou jste nedělali, okamžitě kontaktujte administrátora."
@@ -1060,7 +1052,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "ikonou kalendáře v hlavičce administrace (na mobilu v panelu účtu - profilová fotka vpravo nahoře),",
+                "v panelu účtu - klikněte na svůj e-mail v hlavičce (na mobilu na profilovou fotku vpravo nahoře),",
                 "položkou Kalendář v menu Core, sekce Přehled."
               ]
             }
@@ -1272,7 +1264,7 @@
             },
             {
               "type": "text",
-              "content": "Pokud se profil nepodaří načíst, zobrazí se hláška „Nepodařilo se načíst váš profil.“ - obnovte stránku. Údaje upravíte na stránce Osobní informace (kliknutím na svůj e-mail v hlavičce)."
+              "content": "Pokud se profil nepodaří načíst, zobrazí se hláška „Nepodařilo se načíst váš profil.“ - obnovte stránku. Údaje upravíte na stránce Můj účet (dole v menu nebo v panelu účtu po kliknutí na svůj e-mail v hlavičce)."
             }
           ]
         },
@@ -1294,7 +1286,7 @@
               "items": [
                 "Levé menu - stránky modulu Core.",
                 "Přepínač modulů v hlavičce - web, e-shop, projektový portál.",
-                "Kalendář v hlavičce - termíny a nevyřízená práce.",
+                "Kalendář v panelu účtu (klikněte na svůj e-mail v hlavičce) - termíny a nevyřízená práce.",
                 "Nápověda dole v levém menu - tento manuál."
               ]
             }
@@ -1497,23 +1489,23 @@
       ]
     },
     "personal-info": {
-      "navLabel": "Osobní informace",
-      "header": "Osobní informace - váš účet",
+      "navLabel": "Můj účet",
+      "header": "Můj účet",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "Stránka vašeho vlastního účtu. Vidíte zde své údaje, nastavíte profilovou fotku, zapnete nebo vypnete dvoufázové ověření, změníte heslo a zvolíte, jestli chcete vyskakovací upozornění na nové záznamy. Stránku má k dispozici každý přihlášený uživatel."
+              "content": "Stránka vašeho vlastního účtu. Má tři záložky: Profil (profilová fotka a vaše údaje), Zabezpečení (dvoufázové ověření a změna hesla) a Předvolby (jazyk administrace a vyskakovací upozornění). Stránku má k dispozici každý přihlášený uživatel."
             },
             {
               "type": "text",
-              "content": "Otevřete ji kliknutím na svůj e-mail v hlavičce administrace nebo položkou Osobní informace v menu Core."
+              "content": "Otevřete ji položkou Můj účet dole v menu (v každém modulu) nebo v panelu účtu - klikněte na svůj e-mail v hlavičce (na mobilu na profilovou fotku vpravo nahoře). Otevřená záložka je v adrese stránky, takže ji můžete uložit do záložek prohlížeče."
             }
           ]
         },
         {
-          "heading": "01. Profilová fotka",
+          "heading": "01. Profil - profilová fotka",
           "blocks": [
             {
               "type": "list",
@@ -1531,7 +1523,7 @@
           ]
         },
         {
-          "heading": "02. Základní údaje",
+          "heading": "02. Profil - základní údaje",
           "blocks": [
             {
               "type": "grid",
@@ -1593,11 +1585,11 @@
           ]
         },
         {
-          "heading": "04. Dvoufázové ověření",
+          "heading": "04. Zabezpečení - dvoufázové ověření",
           "blocks": [
             {
               "type": "text",
-              "content": "V části Zabezpečení je zaškrtávací políčko Dvoufaktorové ověření (2FA). Změna se uloží hned po kliknutí a platí od dalšího přihlášení. Text pod políčkem vždy říká, v jakém stavu ověření je:"
+              "content": "Na záložce Zabezpečení je zaškrtávací políčko Dvoufaktorové ověření (2FA). Změna se uloží hned po kliknutí a platí od dalšího přihlášení. Text pod políčkem vždy říká, v jakém stavu ověření je:"
             },
             {
               "type": "grid",
@@ -1627,14 +1619,14 @@
           ]
         },
         {
-          "heading": "05. Změna hesla",
+          "heading": "05. Zabezpečení - změna hesla",
           "blocks": [
             {
               "type": "flow",
               "steps": [
                 {
                   "label": "Změnit heslo",
-                  "text": "V části Zabezpečení stiskněte Změnit heslo. Otevře se okno Změna hesla.",
+                  "text": "Na záložce Zabezpečení stiskněte Změnit heslo. Otevře se okno Změna hesla.",
                   "active": true
                 },
                 {
@@ -1666,11 +1658,28 @@
           ]
         },
         {
-          "heading": "06. Notifikace",
+          "heading": "06. Předvolby - jazyk administrace",
           "blocks": [
             {
               "type": "text",
-              "content": "V části Notifikace je zaškrtávací políčko Zobrazovat vyskakovací upozornění na nové záznamy. Když je zapnuté, vpravo nahoře se ukáže upozornění pokaždé, když přibude nový záznam (například poptávka nebo objednávka); kliknutím na upozornění otevřete příslušnou stránku."
+              "content": "Na záložce Předvolby vyberte jazyk administrace (čeština nebo angličtina). Změna platí hned, bez ukládání. Stejnou volbu najdete i v panelu účtu."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Volba platí jen v tomto prohlížeči - v jiném prohlížeči nebo na jiném zařízení ji nastavíte zvlášť.",
+                "Jazyk se použije i na přihlašovací stránce."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "07. Předvolby - notifikace",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "Na záložce Předvolby je zaškrtávací políčko Zobrazovat vyskakovací upozornění na nové záznamy. Když je zapnuté, vpravo nahoře se ukáže upozornění pokaždé, když přibude nový záznam (například poptávka nebo objednávka); kliknutím na upozornění otevřete příslušnou stránku."
             },
             {
               "type": "list",

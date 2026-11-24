@@ -4,11 +4,13 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Styles of the personal info component.
+    @description: Styles of My account (route core/personal-info): tabs, cards, profile, security
+        and preferences.
 */
 
-/* The page header takes the whole first row of the wrapping card layout. */
-.personal-info-container > app-page-header { flex: 1 1 100%; }
+/* The page header and the tabs take whole rows of the wrapping card layout. */
+.personal-info-container > app-page-header,
+.personal-info-container > .pi-tabs { flex: 1 1 100%; }
 
 .personal-info-container {
   display: flex;
@@ -175,10 +177,14 @@
 }
 
 @media (max-width: 900px) {
+  /* One column: the header (with its "?"), the tabs and the card take the full width. */
   .personal-info-container { 
     flex-direction: column; 
+    align-items: stretch;
     gap: 16px;
   }
+  .personal-info-container > app-page-header,
+  .personal-info-container > .pi-tabs { flex: 0 0 auto; }
   .info-card {
     min-width: 100%; 
     width: 100%; 
@@ -327,3 +333,6 @@
   opacity: 0.5;
   cursor: default;
 }
+
+/* Hint under the languages of the Preferences tab. */
+.info-group app-row-button-builder + .setting-hint { margin-top: 8px; }

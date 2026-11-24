@@ -7,12 +7,16 @@
  * @description Main shell component for the administrative panel: the header with ONE module
  *   switcher (core + applications in one menu, the button always names the module the user is
  *   in), the sidebar built from the navigation data of the module (CORE_NAV / the manifest of the
- *   application) with the manual ("Nápověda") and sign-out at its bottom, and global UI state.
+ *   application) with My account, the manual ("Nápověda") and sign-out at its bottom, the
+ *   account panel (opened by the own account in the header, on a phone by the avatar) and global
+ *   UI state. The header has no language switcher and no calendar button (2026-11): the language
+ *   is set once in the account panel or My account > Preferences.
  * @dependencies
  * - AuthService: Manages user authentication and session status.
  * - PermissionService: Validates access to specific administrative modules.
  * - LoadingService: Observes global loading states for the UI.
- * - AdminLocalizationService: Static i18n of the admin UI + the language switcher in the header.
+ * - AdminLocalizationService: Static i18n of the admin UI + the language of the administration
+ *   (the account panel; kept in this browser).
  * - ScrollLockService: Shared background scroll lock (mobile overlay panels).
  * - UserAvatarComponent: own profile photo in the header.
  * - AdminModulesService: which modules and pages the user may open; admin-navigation.config +
@@ -41,7 +45,7 @@ import { LoadingService } from '../../../core/services/loading.service';
 import { AdminLocalizationService, AdminLanguageMeta } from '../../../core/services/admin-localization.service';
 import { ScrollLockService } from '../../../core/services/scroll-lock.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
-import { AdminModule, AdminNavGroup, AdminNavItem, CORE_MODULE, adminModules, navOf } from '../../admin-navigation.config';
+import { ACCOUNT_PAGES, AdminModule, AdminNavGroup, AdminNavItem, CORE_MODULE, adminModules, navOf } from '../../admin-navigation.config';
 import { AdminModulesService } from '../../admin-modules.service';
 import { AppManifest, appById } from '../../../apps/apps.registry';
 import { AdminIconComponent, AdminIconName } from '../admin-icon/admin-icon.component';
@@ -114,8 +118,11 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   /** Path of the last navigation (without query / fragment) - only a new page scrolls to the top. */
   private lastPath: string | null = null;
 
-  /** Mobile slide-out panel (hamburger top right) - user, role, clock, modules, links. */
-  isMobileActionsOpen: boolean = false;
+  /**
+   * Account panel - opened by the own account in the header (desktop) or the avatar on the right
+   * (mobile): my account, calendar, language of the administration, sign-out.
+   */
+  isAccountPanelOpen: boolean = false;
   /**
    * @description Manually injected i18n service - this component does not extend
    * `BaseDataComponent` (it is the layout shell, not a data page).
@@ -148,34 +155,30 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     return this.i18n.getMergedSection('admin-layout');
   }
 
-  // ── Language switcher ──────────────
+  // ── Language of the administration (the account panel; kept in this browser) ──────────────
   readonly languages: AdminLanguageMeta[] = this.i18n.availableLanguages;
-  isLangMenuOpen = false;
 
+  /** Code of the language the administration is shown in. */
   get currentLanguageCode(): string {
     return this.i18n.getCurrentLanguage();
   }
 
-  get currentLanguageMeta(): AdminLanguageMeta | undefined {
-    return this.languages.find(l => l.code === this.currentLanguageCode);
-  }
-
-  toggleLangMenu(): void {
-    this.isLangMenuOpen = !this.isLangMenuOpen;
-  }
-
-  closeLangMenu(): void {
-    this.isLangMenuOpen = false;
-  }
-
+  /**
+   * @description Switches the language of the administration (stored in this browser); the
+   *   account panel stays open, so the choice is visible at once.
+   * @param code Language code.
+   */
   selectLanguage(code: string): void {
     this.i18n.setLanguage(code);
-    this.isLangMenuOpen = false;
   }
 
   public get dateLocale(): string {
     return this.i18n.getDateLocale();
   }
+
+  /** Pages of the own account at the bottom of the sidebar (My account) - in the core. */
+  readonly accountPages = ACCOUNT_PAGES;
+  readonly coreModule = CORE_MODULE;
 
   /** "Help" of the header: home of the knowledge base (the help of one page is in its header). */
   readonly knowledgeBaseUrl = KNOWLEDGE_BASE_URL;
@@ -378,7 +381,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     if (nowMobile) {
       // Switching TO mobile - ALWAYS close the panel, whatever the previous desktop state.
       this.isMenuOpen = false;
-      this.isMobileActionsOpen = false;
+      this.isAccountPanelOpen = false;
     } else {
       // Back TO desktop - restore the stored desktop preference, not the transient
       // value of the mobile mode.
@@ -616,27 +619,35 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
    * @description Opens / closes the mobile account panel (the own avatar top right, visible
    *              only on mobile through the CSS media query).
    */
-  toggleMobileActions(): void {
-    this.isMobileActionsOpen = !this.isMobileActionsOpen;
+  /** @description Opens / closes the account panel. */
+  toggleAccountPanel(): void {
+    this.isAccountPanelOpen = !this.isAccountPanelOpen;
     this.updateScrollLock();
     this.cdr.markForCheck();
   }
 
-  closeMobileActions(): void {
-    this.isMobileActionsOpen = false;
+  /** @description Closes the account panel. */
+  closeAccountPanel(): void {
+    this.isAccountPanelOpen = false;
     this.updateScrollLock();
     this.cdr.markForCheck();
+  }
+
+  /** @description Escape closes the open account panel. */
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.isAccountPanelOpen) this.closeAccountPanel();
   }
 
   /**
    * @description Single place that decides whether the page behind the layout may
-   * scroll. Locks only on mobile (<= 768px) while the sidebar or the mobile actions
+   * scroll. Locks only on mobile (<= 768px) while the sidebar or the account
    * panel is open (both are modal overlays there); on desktop the sidebar is part of
    * the layout, so the page scrolls normally. The `scrollLocked` flag makes every
    * call idempotent - lock()/unlock() on ScrollLockService are always paired.
    */
   private updateScrollLock(): void {
-    const shouldLock = this.isMobileViewport && (this.isMenuOpen || this.isMobileActionsOpen);
+    const shouldLock = this.isMobileViewport && (this.isMenuOpen || this.isAccountPanelOpen);
 
     if (shouldLock && !this.scrollLocked) {
       this.scrollLock.lock();

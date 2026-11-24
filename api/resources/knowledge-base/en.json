@@ -80,7 +80,7 @@
                 },
                 {
                   "label": "Recommended first steps",
-                  "text": "On the Personal information page check your name and e-mail, upload a profile photo and consider turning on two-factor authentication.",
+                  "text": "On the My account page check your name and e-mail, upload a profile photo and consider turning on two-factor authentication.",
                   "active": false
                 }
               ]
@@ -111,7 +111,7 @@
                 },
                 {
                   "title": "Your account",
-                  "text": "Profile photo, e-mail and role. Click the e-mail to open the Personal information page."
+                  "text": "Profile photo, e-mail and role. Click it to open the account panel: My account, calendar, administration language and Log out."
                 },
                 {
                   "title": "Clock",
@@ -120,20 +120,12 @@
                 {
                   "title": "Module switcher",
                   "text": "A button with the name of the module you are in (Core or the name of an application). It opens a list: Core at the top (only with the permission for the Core section), the applications you have access to below a line, and All applications at the bottom - the overview of the applications with the state of each. The list works with the keyboard too (arrows, Escape)."
-                },
-                {
-                  "title": "Calendar",
-                  "text": "The calendar icon opens the common calendar of dates and open work."
-                },
-                {
-                  "title": "Language",
-                  "text": "The flag on the right switches the language of the administration (Czech / English). The choice applies in this browser and is also used on the sign-in page."
                 }
               ]
             },
             {
               "type": "text",
-              "content": "The left menu is divided into sections (for example Overview, Content, Users, System). Click the name of a section to collapse or expand it - the system remembers it. Change the width of the menu by dragging its right edge with the mouse. At the very bottom of the menu are the item Help (the start of this manual) and the Log out button."
+              "content": "The left menu is divided into sections (for example Overview, Content, Users, System). Click the name of a section to collapse or expand it - the system remembers it. Change the width of the menu by dragging its right edge with the mouse. At the very bottom of the menu of every module are My account, Help (the start of this manual) and Log out."
             },
             {
               "type": "text",
@@ -142,7 +134,7 @@
             {
               "type": "note",
               "highlight": "On a phone or tablet",
-              "content": "The menu opens with the button at the top left and closes with a tap outside it. The module switcher is in the middle of the header. Your profile photo at the top right opens the account panel: e-mail and role, Personal information, calendar, language and Log out. Help is at the bottom of the menu."
+              "content": "The menu opens with the button at the top left and closes with a tap outside it. The module switcher is in the middle of the header. Your profile photo at the top right opens the account panel: e-mail and role, My account, calendar, administration language and Log out. My account and Help are also at the bottom of the menu."
             }
           ]
         },
@@ -660,7 +652,7 @@
               "cards": [
                 {
                   "title": "Turning on and off",
-                  "text": "On the Personal information page you turn 2FA on or off yourself with the checkbox Two-factor authentication (2FA)."
+                  "text": "On the My account page (Security tab) you turn 2FA on or off yourself with the checkbox Two-factor authentication (2FA)."
                 },
                 {
                   "title": "Mandatory for a role",
@@ -754,7 +746,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "Change your password on the Personal information page with Change password: enter the current password, the new password and its confirmation.",
+                "Change your password on the My account page (Security tab) with Change password: enter the current password, the new password and its confirmation.",
                 "After a password change all other sign-ins of your account end (other browsers, other devices, other tabs) - the current tab stays signed in.",
                 "The login e-mail is changed by the accounts administrator. If you change it yourself (only with the permission), the system first checks your password, ends the other sign-ins and sends a notice to the old and the new address.",
                 "If you receive a notice of a change you did not make, contact the administrator immediately."
@@ -1060,7 +1052,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "with the calendar icon in the admin header (on a phone in the account panel - the profile photo at the top right),",
+                "in the account panel - click your e-mail in the header (on a phone the profile photo at the top right),",
                 "with the Calendar item in the Core menu, section Overview."
               ]
             }
@@ -1272,7 +1264,7 @@
             },
             {
               "type": "text",
-              "content": "If the profile cannot be loaded, the message “Failed to load your profile.” is shown - reload the page. Change your details on the Personal information page (click your e-mail in the header)."
+              "content": "If the profile cannot be loaded, the message “Failed to load your profile.” is shown - reload the page. Change your details on the My account page (at the bottom of the menu or in the account panel - click your e-mail in the header)."
             }
           ]
         },
@@ -1294,7 +1286,7 @@
               "items": [
                 "The left menu - pages of the Core module.",
                 "The module switcher in the header - website, e-shop, project portal.",
-                "The calendar in the header - dates and open work.",
+                "The calendar in the account panel (click your e-mail in the header) - dates and open work.",
                 "Help at the bottom of the left menu - this manual."
               ]
             }
@@ -1497,23 +1489,23 @@
       ]
     },
     "personal-info": {
-      "navLabel": "Personal information",
-      "header": "Personal information - your account",
+      "navLabel": "My account",
+      "header": "My account",
       "sections": [
         {
           "blocks": [
             {
               "type": "lead",
-              "content": "The page of your own account. You see your details, set your profile photo, turn two-factor authentication on or off, change your password and choose whether you want pop-up notices of new records. Every signed-in user has this page."
+              "content": "The page of your own account. It has three tabs: Profile (profile photo and your details), Security (two-factor authentication and the password change) and Preferences (administration language and pop-up notices). Every signed-in user can open it."
             },
             {
               "type": "text",
-              "content": "Open it by clicking your e-mail in the admin header or with the Personal information item in the Core menu."
+              "content": "Open it with the My account item at the bottom of the menu (in every module) or in the account panel - click your e-mail in the header (on a phone the profile photo at the top right). The open tab is in the address of the page, so you can bookmark it."
             }
           ]
         },
         {
-          "heading": "01. Profile photo",
+          "heading": "01. Profile - profile photo",
           "blocks": [
             {
               "type": "list",
@@ -1531,7 +1523,7 @@
           ]
         },
         {
-          "heading": "02. Basic information",
+          "heading": "02. Profile - basic information",
           "blocks": [
             {
               "type": "grid",
@@ -1593,11 +1585,11 @@
           ]
         },
         {
-          "heading": "04. Two-factor authentication",
+          "heading": "04. Security - two-factor authentication",
           "blocks": [
             {
               "type": "text",
-              "content": "The Security part has the checkbox Two-factor authentication (2FA). The change is saved right after the click and applies from the next sign-in. The text below the checkbox always says the state of the authentication:"
+              "content": "The Security tab has the checkbox Two-factor authentication (2FA). The change is saved right after the click and applies from the next sign-in. The text below the checkbox always says the state of the authentication:"
             },
             {
               "type": "grid",
@@ -1627,14 +1619,14 @@
           ]
         },
         {
-          "heading": "05. Changing the password",
+          "heading": "05. Security - changing the password",
           "blocks": [
             {
               "type": "flow",
               "steps": [
                 {
                   "label": "Change password",
-                  "text": "In the Security part press Change password. The Change password window opens.",
+                  "text": "On the Security tab press Change password. The Change password window opens.",
                   "active": true
                 },
                 {
@@ -1666,11 +1658,28 @@
           ]
         },
         {
-          "heading": "06. Notifications",
+          "heading": "06. Preferences - administration language",
           "blocks": [
             {
               "type": "text",
-              "content": "The Notifications part has the checkbox Show pop-up notices of new records. When it is on, a notice appears at the top right every time a new record arrives (for example an inquiry or an order); click the notice to open its page."
+              "content": "On the Preferences tab choose the language of the administration (Czech or English). The change applies at once, without saving. The same choice is in the account panel."
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "The choice applies only in this browser - set it separately in another browser or on another device.",
+                "The language is also used on the sign-in page."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "07. Preferences - notifications",
+          "blocks": [
+            {
+              "type": "text",
+              "content": "The Preferences tab has the checkbox Show pop-up notices of new records. When it is on, a notice appears at the top right every time a new record arrives (for example an inquiry or an order); click the notice to open its page."
             },
             {
               "type": "list",

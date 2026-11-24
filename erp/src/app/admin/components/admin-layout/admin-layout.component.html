@@ -4,9 +4,10 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Template of the admin layout component: header (sidebar toggle, user, clock,
-      ONE module switcher, calendar, language), mobile panel, sidebar of the module with the
-      manual and sign-out at its bottom, page area.
+    @description: Template of the admin layout component: header (sidebar toggle, own account
+      button, clock, ONE module switcher), the account panel (my account, calendar, language of
+      the administration, sign-out), sidebar of the module with my account, the manual and
+      sign-out at its bottom, page area.
 -->
 
 <header class="admin-header">
@@ -32,18 +33,17 @@
 
     <div class="header-sep" aria-hidden="true"></div>
 
-    <div class="header-user">
+    <!-- Desktop: the own account (photo, e-mail, role) opens the account panel - my account,
+         calendar, language of the administration, sign-out (on a phone the avatar on the right). -->
+    <button type="button" class="header-user" (click)="toggleAccountPanel()" aria-haspopup="dialog"
+            [attr.aria-expanded]="isAccountPanelOpen" [title]="strings.account_panel_aria">
       <app-user-avatar class="header-user-avatar" [src]="isLoggedIn ? avatarUrl : null" [size]="30"></app-user-avatar>
-      <!-- The own e-mail opens the personal info page (password, 2FA) - reachable for every role (VT-13) -->
-      @if (isLoggedIn) {
-        <a class="header-user-email header-user-link user-text-truncate" routerLink="/admin/core/personal-info" [title]="strings.nav_personal_info">{{ userEmail }}</a>
-      } @else {
-        <span class="header-user-email user-text-truncate">{{ strings.not_logged_in }}</span>
-      }
+      <span class="header-user-email user-text-truncate">{{ isLoggedIn ? userEmail : strings.not_logged_in }}</span>
       @if (isLoggedIn && userRole) {
         <span class="header-role-badge">{{ userRole }}</span>
       }
-    </div>
+      <app-admin-icon class="header-user-chevron" name="chevron-down" [size]="11" />
+    </button>
 
     <div class="header-clock time-hide-mobile">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -105,110 +105,60 @@
 
   <div class="header-right">
 
-    <a routerLink="/admin/core/calendar" class="header-action-btn header-action-btn--calendar" [title]="strings.nav_calendar" [attr.aria-label]="strings.nav_calendar">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-      </svg>
-    </a>
-
-<!-- ── Language switcher ── -->
-<div class="header-lang-switcher" style="">
-  <button
-    type="button"
-    class="header-action-btn header-action-btn--lang"
-    [title]="strings.language_switcher_title"
-    (click)="toggleLangMenu()">
-    @if (currentLanguageMeta?.icon) {
-      <img [src]="currentLanguageMeta!.icon" [alt]="currentLanguageMeta!.code" style="width: 16px; height: 16px; object-fit: cover; border-radius: 2px;">
-    }
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <polyline points="6 9 12 15 18 9"/>
-    </svg>
-  </button>
-
-  @if (isLangMenuOpen) {
-    <div
-      style="position: fixed; inset: 0; z-index: 40;"
-      (click)="closeLangMenu()"></div>
-
-    <div
-      style="position: absolute; top: calc(100% + 4px); right: 0; z-index: 41; min-width: 160px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); overflow: hidden;">
-      @for (lang of languages; track lang.code) {
-        <button
-          type="button"
-          style="display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 12px; border: none; background: none; cursor: pointer; text-align: left;"
-          [style.background]="lang.code === currentLanguageCode ? '#f2f2f2' : 'transparent'"
-          (click)="selectLanguage(lang.code)">
-          <img [src]="lang.icon" [alt]="lang.code" style="width: 18px; height: 18px; object-fit: cover; border-radius: 2px;">
-          <span>{{ lang.name }}</span>
-        </button>
-      }
-    </div>
-  }
-</div>
-
-    <!-- Mobile only (see the CSS media query): the own avatar opens the account panel - account,
-         personal info, calendar, language, sign-out. The module switcher sits in the middle of
-         the header and the menu button on the left, so every control of the row is different. -->
-    <button type="button" class="mobile-actions-toggle" (click)="toggleMobileActions()" [title]="strings.mobile_menu_title"
-            [attr.aria-label]="strings.mobile_menu_aria" [attr.aria-expanded]="isMobileActionsOpen">
+    <!-- Mobile only (see the CSS media query): the own avatar opens the account panel. The module
+         switcher sits in the middle of the header and the menu button on the left, so every
+         control of the row is different. The language and the calendar are not in the header -
+         the language is set once (the account panel, My account > Preferences). -->
+    <button type="button" class="account-toggle" (click)="toggleAccountPanel()" [title]="strings.account_panel_title"
+            aria-haspopup="dialog" [attr.aria-label]="strings.account_panel_aria" [attr.aria-expanded]="isAccountPanelOpen">
       <app-user-avatar [src]="isLoggedIn ? avatarUrl : null" [size]="30"></app-user-avatar>
     </button>
   </div>
 
 </header>
 
-<!-- ── Mobile account panel (opened by the avatar): user and role, personal info, calendar,
-     language, sign-out. The modules are switched in the middle of the header (2026-11). -->
-@if (isMobileActionsOpen) {
-  <div class="mobile-actions-overlay" (click)="closeMobileActions()"></div>
-  <div class="mobile-actions-panel">
+<!-- ── Account panel (desktop: the own account in the header, under it; mobile: the avatar on the
+     right): user and role, my account, calendar, language of the administration, sign-out. -->
+@if (isAccountPanelOpen) {
+  <div class="account-panel-backdrop" (click)="closeAccountPanel()"></div>
+  <div class="account-panel" role="dialog" [attr.aria-label]="strings.account_panel_title">
 
-    <div class="map-user">
-      <app-user-avatar class="map-user-icon" [src]="isLoggedIn ? avatarUrl : null" [size]="36"></app-user-avatar>
-      <div class="map-user-info">
-        @if (isLoggedIn) {
-          <a class="map-user-email header-user-link" routerLink="/admin/core/personal-info" [title]="strings.nav_personal_info" (click)="closeMobileActions()">{{ userEmail }}</a>
-        } @else {
-          <span class="map-user-email">{{ strings.not_logged_in }}</span>
-        }
+    <div class="ap-user">
+      <app-user-avatar class="ap-user-icon" [src]="isLoggedIn ? avatarUrl : null" [size]="36"></app-user-avatar>
+      <div class="ap-user-info">
+        <span class="ap-user-email">{{ isLoggedIn ? userEmail : strings.not_logged_in }}</span>
         @if (isLoggedIn && userRole) {
-          <span class="map-role-badge">{{ userRole }}</span>
+          <span class="ap-role-badge">{{ userRole }}</span>
         }
       </div>
     </div>
 
-    <div class="map-links">
-      <a routerLink="/admin/core/personal-info" (click)="closeMobileActions()">
-        <app-admin-icon name="user" [size]="15" />
-        {{ strings.nav_personal_info }}
-      </a>
-      <a routerLink="/admin/core/calendar" (click)="closeMobileActions()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
+    <div class="ap-links">
+      @for (item of accountPages; track item.path) {
+        <a [routerLink]="'/admin/' + coreModule + '/' + item.path" (click)="closeAccountPanel()">
+          <app-admin-icon [name]="item.icon" [size]="15" />
+          {{ label(item.labelKey) }}
+        </a>
+      }
+      <a routerLink="/admin/core/calendar" (click)="closeAccountPanel()">
+        <app-admin-icon name="calendar" [size]="15" />
         {{ strings.nav_calendar }}
       </a>
     </div>
 
-    <!-- ── Language switcher (mobile variant) ── -->
-    <div class="map-lang-switcher-label">
-      {{ strings.language_switcher_title }}
-    </div>
-    <div class="map-lang-switcher">
+    <!-- Language of the administration (kept in this browser). -->
+    <div class="ap-lang-label">{{ strings.language_switcher_title }}</div>
+    <div class="ap-lang">
       @for (lang of languages; track lang.code) {
-        <button
-          type="button"
-          style="display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border: none; border-radius: 6px; cursor: pointer; text-align: left;"
-          [style.background]="lang.code === currentLanguageCode ? '#f2f2f2' : 'transparent'"
-          (click)="selectLanguage(lang.code)">
-          <img [src]="lang.icon" [alt]="lang.code" style="width: 18px; height: 18px; object-fit: cover; border-radius: 2px;">
+        <button type="button" class="ap-lang-item" [class.active]="lang.code === currentLanguageCode"
+                [attr.aria-pressed]="lang.code === currentLanguageCode" (click)="selectLanguage(lang.code)">
+          <img [src]="lang.icon" alt="" class="ap-lang-flag">
           <span>{{ lang.name }}</span>
         </button>
       }
     </div>
 
-    <button type="button" class="map-logout" (click)="closeMobileActions(); logout()">
+    <button type="button" class="ap-logout" (click)="closeAccountPanel(); logout()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
       </svg>
@@ -260,10 +210,18 @@
         }
       }
 
-      <!-- Bottom of the sidebar: the manual of the administration (the "?" in a page header opens
-           the help of that page) and sign-out. -->
+      <!-- Bottom of the sidebar (every module): my account, the manual of the administration (the
+           "?" in a page header opens the help of that page) and sign-out. -->
       <div class="nav-group nav-group--bottom">
         <ul>
+          @for (item of accountPages; track item.path) {
+            <li>
+              <a [routerLink]="'/admin/' + coreModule + '/' + item.path" routerLinkActive="active" class="account-nav-item" [title]="label(item.labelKey)">
+                <span class="nav-icon"><app-admin-icon [name]="item.icon" [size]="16" /></span>
+                <span class="nav-text">{{ label(item.labelKey) }}</span>
+              </a>
+            </li>
+          }
           <li>
             <a [routerLink]="knowledgeBaseUrl" class="help-nav-item" [title]="strings.wiki_title">
               <span class="nav-icon"><app-admin-icon name="book" [size]="16" /></span>

@@ -57,7 +57,7 @@
       "group": "core",
       "order": 19,
       "permission": null,
-      "devNote": "PersonalInfoComponent, route 'core/personal-info', no permission (every signed-in user; also via the own e-mail in the header). Self-service 2FA toggle a změna hesla.",
+      "devNote": "PersonalInfoComponent, route 'core/personal-info' (label Můj účet), no permission (every signed-in user; ACCOUNT_PAGES at the bottom of every sidebar + the account panel of the header). Tabs Profil / Zabezpečení / Předvolby (?tab=security|preferences): photo + own name/e-mail, self-service 2FA + změna hesla, jazyk administrace (prohlížeč) + vyskakovací upozornění.",
       "sections": {
         "edit-profile": "core-administrators-update"
       }

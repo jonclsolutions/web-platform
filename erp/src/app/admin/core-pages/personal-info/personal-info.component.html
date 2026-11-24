@@ -4,17 +4,23 @@
     @project: JS web-platform
     @author: JS
     @created: 2025
-    @description: Template of the personal info component (photo, basic information with the
-        own name and login e-mail editable for administrators, 2FA and password).
+    @description: Template of My account (route core/personal-info) in three tabs: Profile (photo,
+        basic information with the own name and login e-mail editable for administrators),
+        Security (2FA and password), Preferences (language of the administration, pop-up notices).
 -->
     
 <div class="personal-info-container">
 
-  <app-page-header [title]="strings.title" [subtitle]="canEditProfile ? null : strings.title_note"></app-page-header>
+  <app-page-header [title]="strings.title" [subtitle]="activeTab === 'profile' && !canEditProfile ? strings.title_note : null"></app-page-header>
+
+  <!-- Page tabs: Profile / Security / Preferences (the tab is in the address, ?tab=...). -->
+  <app-row-button-builder class="pi-tabs" kind="tabs" [stretch]="true" [items]="tabItems" [active]="activeTab"
+                          [ariaLabel]="strings.tabs_label" (selected)="switchTab($any($event))" />
 
   <div class="cd-card info-card">
     <div class="card-content-minimal">
 
+    @if (activeTab === 'profile') {
       @if (userData && ownUserId) {
         <div class="info-group">
           <h3 class="group-title">{{ strings.photo_heading }}</h3>
@@ -42,7 +48,9 @@
           </div>
         </div>
       }
+    }
 
+    @if (activeTab === 'security') {
       <div class="info-group">
         <h3 class="group-title">{{ strings.security_heading }}</h3>
 
@@ -67,6 +75,18 @@
         </div>
       </div>
 
+    }
+
+    @if (activeTab === 'preferences') {
+      <!-- Language of the administration: kept in this browser (also in the account panel of the
+           header). -->
+      <div class="info-group">
+        <h3 class="group-title">{{ strings.language_heading }}</h3>
+        <app-row-button-builder size="sm" [items]="languageItems" [active]="currentLanguageCode"
+                                [ariaLabel]="strings.language_heading" (selected)="selectLanguage($event)" />
+        <p class="setting-hint">{{ strings.language_hint }}</p>
+      </div>
+
       <!-- Notifications: the pop-up notices of new records are a choice of this browser; the red
            numbers in the menu are always shown. -->
       <div class="info-group">
@@ -82,6 +102,7 @@
           <p class="setting-hint">{{ strings.notifications_toasts_hint }}</p>
         </div>
       </div>
+    }
 
     </div>
   </div>

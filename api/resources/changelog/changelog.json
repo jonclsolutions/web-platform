@@ -1,6 +1,18 @@
 {
     "unreleased": [
         {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "The header is calmer: no language flag and no calendar button. Click your e-mail (on a phone your photo) to open the account panel with My account, the calendar, the administration language and Log out."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Personal information is now My account with the tabs Profile, Security and Preferences (administration language, pop-up notices). It is at the bottom of the menu in every module."
+        },
+        {
             "type": "added",
             "area": "core",
             "part": "admin",

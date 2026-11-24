@@ -4,7 +4,8 @@
  * @project JS web-platform
  * @author JS
  * @created 2026
- * @description Unit tests of PersonalInfoComponent – the logged-in admin's profile: 2FA switch
+ * @description Unit tests of PersonalInfoComponent (My account) – the tabs Profile / Security /
+ *   Preferences (in the address), the language of the administration, 2FA switch
  *   (incl. 2FA forced by role or by an administrator), the change-password popup and the own
  *   name / login e-mail (only for sysadmin / core-administrators-update), the switch of the
  *   pop-up notices of new records (this browser only).
@@ -20,6 +21,8 @@ import { PersonalInfoComponent } from './personal-info.component';
 import { CurrentUserProfileService } from '../../../core/services/current-user-profile.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 import { AdminNotificationsService, NOTIFICATION_TOASTS_STORAGE_KEY } from '../../../core/services/admin-notifications.service';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { BehaviorSubject } from 'rxjs';
 
 describe('PersonalInfoComponent', () => {
   let ctx: AdminTestContext;
@@ -307,21 +310,80 @@ describe('PersonalInfoComponent', () => {
   });
 
   /**
-   * @description The page renders the profile.
-   * @input  detectChanges() with profile full_name 'Alena Bílá'
-   * @output text contains 'Alena Bílá' and the 2FA status text
+   * @description The page opens on the Profile tab; the Security tab shows the 2FA status.
+   * @input  detectChanges() with profile full_name 'Alena Bílá'; activeTab 'security'.
+   * @output tabs profile / security / preferences; profile text 'Alena Bílá' without the 2FA
+   *   status; then the 2FA status text without the name.
    */
-  it('renders the profile', () => {
+  it('renders the profile and the security tab', () => {
     (ctx.dataHandler as any).get.and.returnValue(of({ full_name: 'Alena Bílá', roles: [] }));
     fixture.detectChanges();
+    expect(component.tabItems.map(t => t.value)).toEqual(['profile', 'security', 'preferences']);
+    expect(component.activeTab).toBe('profile');
     expect(fixture.nativeElement.textContent).toContain('Alena Bílá');
+    expect(fixture.nativeElement.textContent).not.toContain('personal-info.security_2fa_disabled');
+    component.activeTab = 'security';
+    fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('personal-info.security_2fa_disabled');
+    expect(fixture.nativeElement.textContent).not.toContain('Alena Bílá');
   });
 
   /**
-   * @description The notifications part switches the pop-up notices of this browser; the
-   *   checkbox follows the stored choice.
-   * @input  render (notices on); uncheck the checkbox; check it again.
+   * @description The tab is in the address: ?tab=security / ?tab=preferences open them, an unknown
+   *   value the profile; switching navigates with the parameter (none for the profile).
+   * @input  query tab=preferences, then tab=x; switchTab('security'), switchTab('profile') from security.
+   * @output activeTab preferences, then profile; navigate([], { queryParams: { tab: 'security' } })
+   *   then { tab: null }; switching to the open tab does nothing.
+   */
+  it('keeps the tab in the address', () => {
+    const query = new BehaviorSubject(convertToParamMap({ tab: 'preferences' }));
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [PersonalInfoComponent],
+      providers: [...ctx.providers, { provide: ActivatedRoute, useValue: { queryParamMap: query } }],
+    });
+    fixture = TestBed.createComponent(PersonalInfoComponent);
+    component = fixture.componentInstance;
+    (ctx.dataHandler as any).get.and.returnValue(of({ roles: [] }));
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    component.ngOnInit();
+    expect(component.activeTab).toBe('preferences');
+    query.next(convertToParamMap({ tab: 'x' }));
+    expect(component.activeTab).toBe('profile');
+    component.switchTab('profile');
+    expect(navigate).not.toHaveBeenCalled();
+    component.switchTab('security');
+    expect(navigate.calls.mostRecent().args[1]).toEqual(jasmine.objectContaining({ queryParams: { tab: 'security' } }));
+    query.next(convertToParamMap({ tab: 'security' }));
+    component.switchTab('profile');
+    expect(navigate.calls.mostRecent().args[1]).toEqual(jasmine.objectContaining({ queryParams: { tab: null } }));
+  });
+
+  /**
+   * @description The Preferences tab switches the language of the administration (this browser):
+   *   the languages with their names, the current one active.
+   * @input  activeTab 'preferences'; languageItems; selectLanguage('en').
+   * @output items cz + en with names; currentLanguageCode 'cz' then 'en'; i18n.setLanguage('en');
+   *   the hint is rendered.
+   */
+  it('switches the language of the administration', () => {
+    (ctx.dataHandler as any).get.and.returnValue(of({ roles: [] }));
+    fixture.detectChanges();
+    component.activeTab = 'preferences';
+    fixture.detectChanges();
+    expect(component.languageItems.map(i => i.value)).toEqual(jasmine.arrayContaining(['cz', 'en']));
+    expect(component.languageItems.every(i => !!i.label)).toBeTrue();
+    expect(component.currentLanguageCode).toBe('cz');
+    component.selectLanguage('en');
+    expect(ctx.i18n.setLanguage).toHaveBeenCalledWith('en');
+    expect(component.currentLanguageCode).toBe('en');
+    expect(fixture.nativeElement.textContent).toContain('personal-info.language_hint');
+  });
+
+  /**
+   * @description The notifications part (Preferences tab) switches the pop-up notices of this
+   *   browser; the checkbox follows the stored choice.
+   * @input  render the Preferences tab (notices on); uncheck the checkbox; check it again.
    * @output checked; then toastsEnabled false + storage 'off'; then true + 'on'.
    */
   it('switches the pop-up notices of new records', () => {
@@ -329,6 +391,8 @@ describe('PersonalInfoComponent', () => {
     const notifications = TestBed.inject(AdminNotificationsService);
     notifications.setToastsEnabled(true);
     load({ email: 'a@b.cz', enable_2fa: 0 });
+    fixture.detectChanges();
+    component.activeTab = 'preferences';
     fixture.detectChanges();
     const box = Array.from(fixture.nativeElement.querySelectorAll('.security-toggle-label'))
       .find((label: any) => label.textContent.includes('personal-info.notifications_toasts_label')) as HTMLElement;

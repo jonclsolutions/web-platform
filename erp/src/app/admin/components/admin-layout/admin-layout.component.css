@@ -135,20 +135,23 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 0 16px;
+  padding: 0 14px 0 16px;
   height: 100%;
+  border: none;
   border-left: 1px solid var(--border);
+  background: none;
+  font-family: var(--ff);
+  color: inherit;
+  cursor: pointer;
+  transition: background var(--ease);
 }
 
-/* Own e-mail as the link to the personal info page - looks like the text, underlined on hover. */
-.header-user-link {
-  color: inherit;
-  text-decoration: none;
-}
-.header-user-link:hover,
-.header-user-link:focus-visible {
-  text-decoration: underline;
-}
+/* Own account as the button of the account panel. */
+.header-user:hover,
+.header-user[aria-expanded="true"] { background: var(--surface-2); }
+.header-user:focus-visible { outline: 2px solid var(--text-muted); outline-offset: -2px; }
+
+.header-user-chevron { color: var(--text-dim); flex-shrink: 0; }
 
 .header-user-avatar {
   display: flex;
@@ -332,37 +335,8 @@
   flex-shrink: 0;
 }
 
-.header-action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  font-family: var(--ff);
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  text-decoration: none;
-  transition: background var(--ease), border-color var(--ease), color var(--ease);
-  white-space: nowrap;
-  color: var(--text-muted);
-  background: var(--surface);
-}
-
-.header-action-btn:hover {
-  background: var(--surface-2);
-  color: var(--text);
-  border-color: var(--border-mid);
-}
-
-.header-action-btn--calendar {
-  color: var(--text-muted);
-  border-color: var(--border);
-  background: var(--surface);
-}
-
 /* Own avatar opening the account panel - hidden on desktop, shown by the media query below. */
-.mobile-actions-toggle {
+.account-toggle {
   display: none;
   align-items: center;
   justify-content: center;
@@ -377,21 +351,23 @@
   flex-shrink: 0;
 }
 
-.mobile-actions-toggle:hover,
-.mobile-actions-toggle[aria-expanded="true"] { border-color: var(--text-muted); }
+.account-toggle:hover,
+.account-toggle[aria-expanded="true"] { border-color: var(--text-muted); }
 
-/* ── Mobile slide-out panel ─────────────────────────────────── */
-.mobile-actions-overlay {
+/* ── Account panel ──────────────────────────────────────────────
+   Desktop: a dropdown under the own account in the header (no dimming). Mobile (media query
+   below): under the avatar on the right with a dimmed page behind it. */
+.account-panel-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(24, 24, 27, 0.35);
+  background: transparent;
   z-index: 1250;
 }
 
-.mobile-actions-panel {
+.account-panel {
   position: fixed;
-  top: 90px;
-  right: 12px;
+  top: calc(var(--header-h) + 6px);
+  left: 60px;
   width: 264px;
   max-width: calc(100vw - 24px);
   background: var(--surface);
@@ -407,7 +383,7 @@
   font-family: var(--ff);
 }
 
-.map-user {
+.ap-user {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -415,16 +391,16 @@
   border-bottom: 1px solid var(--border);
 }
 
-.map-user-icon { flex-shrink: 0; }
+.ap-user-icon { flex-shrink: 0; }
 
-.map-user-info {
+.ap-user-info {
   display: flex;
   flex-direction: column;
   gap: 5px;
   min-width: 0;
 }
 
-.map-user-email {
+.ap-user-email {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text);
@@ -433,7 +409,7 @@
   white-space: nowrap;
 }
 
-.map-role-badge {
+.ap-role-badge {
   align-self: flex-start;
   font-size: 0.65rem;
   font-weight: 700;
@@ -446,13 +422,13 @@
   border: 1px solid var(--accent-dim-2);
 }
 
-.map-links {
+.ap-links {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.map-links a {
+.ap-links a {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -465,10 +441,10 @@
   transition: background var(--ease), color var(--ease);
 }
 
-.map-links a:hover { background: var(--surface-2); color: var(--text); }
+.ap-links a:hover { background: var(--surface-2); color: var(--text); }
 
 /* Title above the languages of the account panel. */
-.map-lang-switcher-label {
+.ap-lang-label {
   padding: 4px 6px 0;
   font-size: 0.7rem;
   font-weight: 700;
@@ -477,8 +453,45 @@
   letter-spacing: 0.04em;
 }
 
+/* Languages of the administration - flag + name, the current one highlighted. */
+.ap-lang {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: -6px;
+}
+
+.ap-lang-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 6px;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-muted);
+  font-family: var(--ff);
+  font-size: 0.84rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--ease), color var(--ease);
+}
+
+.ap-lang-item:hover { background: var(--surface-2); color: var(--text); }
+.ap-lang-item.active { background: var(--surface-2); color: var(--text); font-weight: 600; }
+
+.ap-lang-flag {
+  width: 18px;
+  height: 18px;
+  object-fit: cover;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
 /* Sign-out at the end of the account panel (also at the bottom of the menu). */
-.map-logout {
+.ap-logout {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -496,7 +509,7 @@
   cursor: pointer;
 }
 
-.map-logout:hover { background: var(--error-dim); }
+.ap-logout:hover { background: var(--error-dim); }
 
 /* ═══════════════════════════════════════════════════════════════
    WRAPPER
@@ -851,15 +864,11 @@
   70%  { box-shadow: 0 0 0 5px rgba(244, 63, 94, 0); }
   100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
 }
-.header-lang-switcher{
-  position: relative; display: inline-block;
-}
 /* ═══════════════════════════════════════════════════════════════
    RESPONZIVITA
    ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
   .time-hide-mobile { display: none !important; }
-  .header-lang-switcher{display: none;}
 
   /* Mobile header row: menu button (left) - module switcher (centred on the whole header, a
      long name ends with an ellipsis before the buttons) - own avatar (right, account panel).
@@ -882,9 +891,11 @@
   .module-current-pill > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   /* The menu opens centred under the button (no transform on an ancestor of its backdrop). */
   .apps-menu { left: 50%; transform: translateX(-50%); }
-  .header-action-btn--calendar { display: none; }
+  .account-toggle { display: flex; }
 
-  .mobile-actions-toggle { display: flex; }
+  /* The account panel opens under the avatar on the right, the page behind it is dimmed. */
+  .account-panel-backdrop { background: rgba(24, 24, 27, 0.35); }
+  .account-panel { left: auto; right: 12px; }
 
   .admin-dashboard-wrapper { display: block; }
 

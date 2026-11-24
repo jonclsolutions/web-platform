@@ -4,10 +4,12 @@
  * @project JS web-platform
  * @author JS
  * @created 2025
- * @description Manages user profile information and security settings, specifically handling
- * password updates, the self-service 2FA toggle, the own profile photo (AvatarEditorComponent)
- * and - for a sysadmin or an account with `core-administrators-update` - the own name and login
- * e-mail (inline fields).
+ * @description My account (route core/personal-info, label "Můj účet") in three tabs - Profile:
+ * the own profile photo (AvatarEditorComponent) and - for a sysadmin or an account with
+ * `core-administrators-update` - the own name and login e-mail (inline fields); Security: the
+ * self-service 2FA toggle and the password change; Preferences: the language of the
+ * administration and the pop-up notices. The tab is in the address (`?tab=security`,
+ * `?tab=preferences`; the profile without it).
  * @note Login e-mail: the API asks for the password first (step-up, handled by the
  * password-confirmation interceptor), ends the other sessions of the account and tells the old
  * and the new address; the header shows the new e-mail at once (AuthService.setUserEmail). Other
@@ -20,9 +22,14 @@
  * @note The password change is a popup in the shared frame (AdminModalComponent).
  * @note Notifications: the pop-up notices of new records can be switched off here - only in this
  * browser (AdminNotificationsService.setToastsEnabled); the red numbers in the menu stay.
+ * @note Language of the administration: kept in this browser (AdminLocalizationService), the
+ * same choice as in the account panel of the header - not stored on the server on purpose.
+ * @dependencies
+ * - RowButtonBuilderComponent: the page tabs and the languages; ActivatedRoute / Router: the tab
+ *   in the address.
  */
 
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, DestroyRef, inject } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
@@ -44,6 +51,16 @@ import { SYSADMIN_ROLE_NAME } from '../../../core/auth/guards/auth.guard';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { AdminModalComponent } from '../../components/admin-modal/admin-modal.component';
 import { AdminNotificationsService } from '../../../core/services/admin-notifications.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RowButtonBuilderComponent } from '../../components/builders/row-button-builder/row-button-builder.component';
+import { RowButton, RowButtonItems, languageRowButtons } from '../../components/builders/row-button-builder/row-button';
+
+/** Tab of My account. */
+export type PersonalInfoTab = 'profile' | 'security' | 'preferences';
+
+/** Tabs that have a parameter in the address (the profile has none). */
+const ADDRESS_TABS: readonly PersonalInfoTab[] = ['security', 'preferences'];
 
 /** Permission that lets an account change its own name and login e-mail (and edit accounts). */
 const PROFILE_EDIT_PERMISSION = 'core-administrators-update';
@@ -63,7 +80,8 @@ const FORCED_2FA_ROLES = ['sysadmin'];
     AvatarEditorComponent,
     IconComponent,
     PageHeaderComponent,
-    AdminModalComponent
+    AdminModalComponent,
+    RowButtonBuilderComponent
   ],
   templateUrl: './personal-info.component.html',
   styleUrls: ['../../shared-styles/modal.css', './personal-info.component.css']
@@ -95,6 +113,17 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** Open tab - from the address (`?tab=security` / `?tab=preferences`), the profile without it. */
+  activeTab: PersonalInfoTab = 'profile';
+
+  /** Stable buttons of the page tabs and of the languages. */
+  private readonly tabButtons = new RowButtonItems();
+  private readonly languageButtons = new RowButtonItems();
+
   private crud: EntityCrudService<UserLogin>;
 
   /** Maxlength of the new password fields (the password policy). */
@@ -124,6 +153,56 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadCurrentUserData();
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      const tab = params.get('tab') as PersonalInfoTab | null;
+      this.activeTab = tab && ADDRESS_TABS.includes(tab) ? tab : 'profile';
+      this.cd.markForCheck();
+    });
+  }
+
+  /** @description Page tabs: Profile, Security, Preferences. */
+  get tabItems(): RowButton[] {
+    return this.tabButtons.update([
+      { value: 'profile', label: this.strings.tab_profile, icon: 'user' },
+      { value: 'security', label: this.strings.tab_security, icon: 'lock' },
+      { value: 'preferences', label: this.strings.tab_preferences, icon: 'settings' },
+    ]);
+  }
+
+  /**
+   * @description Opens a tab through the address (a new history entry - Back returns to the
+   *   previous tab); the profile has no parameter.
+   * @param tab Tab to open.
+   */
+  switchTab(tab: PersonalInfoTab): void {
+    if (tab === this.activeTab) return;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: tab === 'profile' ? null : tab },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /** @description Languages of the administration (flag + name). */
+  get languageItems(): RowButton[] {
+    return this.languageButtons.update(languageRowButtons(
+      this.i18n.availableLanguages.map(lang => ({ code: lang.code, name: lang.name, iconUrl: lang.icon })),
+      { showName: true },
+    ));
+  }
+
+  /** Code of the language the administration is shown in. */
+  get currentLanguageCode(): string {
+    return this.i18n.getCurrentLanguage();
+  }
+
+  /**
+   * @description Switches the language of the administration (kept in this browser).
+   * @param code Language code.
+   */
+  selectLanguage(code: string): void {
+    this.i18n.setLanguage(code);
+    this.cd.markForCheck();
   }
 
   ngOnDestroy(): void {

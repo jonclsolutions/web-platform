@@ -12,7 +12,11 @@
   },
     "personal-info": {
 
-    "title": "Personal information",
+    "title": "My account",
+    "tabs_label": "Parts of the account",
+    "tab_profile": "Profile",
+    "tab_security": "Security",
+    "tab_preferences": "Preferences",
     "title_note": "Contact an administrator to change your name/e-mail",
     "email_edit_button": "Change login e-mail",
     "name_edit_button": "Change name",
@@ -53,6 +57,8 @@
     "password_change_success_title": "Password change",
     "password_change_success_message": "Password has been changed successfully. The other sessions of this account were signed out.",
     "password_change_error": "Error changing password. Please check your current password.",
+    "language_heading": "Administration language",
+    "language_hint": "Applies only in this browser. You can also change it in the account panel – click your e-mail in the header.",
     "notifications_heading": "Notifications",
     "notifications_toasts_label": "Show pop-up notices of new records",
     "notifications_toasts_hint": "Applies only in this browser. The red numbers of unread records in the menu are always shown."
@@ -187,9 +193,9 @@
     "wiki_title": "Help – manual of the administration",
 
 
-    "mobile_menu_title": "Account",
+    "account_panel_title": "Account",
     "language_switcher_title": "Administration language",
-    "mobile_menu_aria": "Open account and settings",
+    "account_panel_aria": "Open account, calendar and administration language",
 
     "loading_data": "Loading data…",
 
@@ -212,7 +218,7 @@
     "nav_calendar": "Calendar",
     "nav_apps": "Applications",
     "nav_releases": "Releases",
-    "nav_personal_info": "Personal information",
+    "nav_my_account": "My account",
     "nav_core_logs": "System logs",
     "nav_security_events": "Security monitoring",
 
