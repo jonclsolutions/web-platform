@@ -17,7 +17,6 @@
 
 .core-dashboard {
   width: 100%;
-  padding: 0 0 28px;
   font-family: var(--ff, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif);
   color: var(--text, var(--color-zinc-900));
   display: flex;

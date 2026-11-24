@@ -24,7 +24,8 @@
 .te {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - var(--jc-editor-top, 96px));
+  /* Window height minus the admin header and the page area padding (admin-layout .admin-content). */
+  height: calc(100dvh - var(--jc-editor-top, 90px) - var(--content-pad-top, 3px) - var(--content-pad-bottom, 3px));
   min-height: 560px;
   border: 1px solid var(--color-zinc-200);
   border-radius: 12px;

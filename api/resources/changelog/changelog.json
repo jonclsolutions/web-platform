@@ -1,6 +1,12 @@
 {
     "unreleased": [
         {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Every administration page has the same space around its content: titles and tables line up at the same distance from the menu on all pages of the core and the applications."
+        },
+        {
             "type": "added",
             "area": "web",
             "part": "admin",

@@ -20,7 +20,6 @@
   gap: 16px;
   width: 100%;
   max-width: 860px;
-  padding-bottom: 28px;
   font-family: var(--ff, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif);
   color: var(--color-zinc-900);
 }

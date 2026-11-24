@@ -14,7 +14,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
-  padding: 0 0 28px;
   background-color: transparent;
   align-items: flex-start;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;

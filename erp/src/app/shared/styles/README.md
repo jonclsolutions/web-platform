@@ -206,6 +206,13 @@ styleUrls: ['../../../../admin/shared-styles/page.css', './my-page.component.css
 ```
 Leave out `./my-page.component.css` if the page has no rules of its own – do not keep empty CSS files.
 
+**Space around an admin page** – set only by the page area (`main.admin-content` in
+`admin-layout.component.css`: 12 px top, 16 px left / right, 16 px bottom; phone 8 / 8 / 12 px;
+the page header keeps 12 px to the content, phone 10 px).
+The root element of a page has **no outer padding or margin** (a `max-width` for narrow forms is
+fine), so every title and table starts at the same place. A full-height page subtracts
+`var(--content-pad-top)` and `var(--content-pad-bottom)` from its height.
+
 **New public content page** (like about or FAQ)
 ```html
 <section class="my-page content-page">
@@ -294,6 +301,8 @@ header) is added to the frame as a new slot – never copied into a popup.
 - Don't build an own overlay / card / header for a popup – use `<app-admin-modal>` (§6).
 - Don't copy a block from another page – move it to the right `shared-styles/` file and include it.
 - Don't leave unused classes behind when you remove markup from a template.
+- Don't give an admin page its own outer padding / margin (and don't use the old Tailwind-like
+  classes `container mx-auto p-4` – there is no Tailwind, they do nothing).
 
 ---
 

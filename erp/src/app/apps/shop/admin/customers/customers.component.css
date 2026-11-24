@@ -10,7 +10,7 @@
 
 .main-content-layout {
   display: flex;
-  gap: 12px;
+  gap: 0; /* a closed filter panel takes no space - the table lines up with the page title */
   align-items: flex-start;
 }
 
@@ -24,6 +24,7 @@
 
 .filter-side-panel.active {
   width: 260px;
+  margin-right: 16px;
   opacity: 1;
 }
 

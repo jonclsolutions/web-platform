@@ -21,8 +21,8 @@
   align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px 16px;
-  margin: 0 0 20px;
+  gap: 8px 16px;
+  margin: 0 0 12px; /* small on purpose - the admin saves room (same on every page) */
 }
 
 .ph-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 320px; }
@@ -57,7 +57,7 @@
 }
 
 @media (max-width: 768px) {
-  .ph { margin-bottom: 16px; }
+  .ph { margin-bottom: 10px; }
   .ph-title { font-size: 1.3rem; }
   .ph-actions { min-height: 0; }
 }
