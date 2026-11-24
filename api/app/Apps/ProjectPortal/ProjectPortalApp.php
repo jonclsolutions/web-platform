@@ -11,7 +11,10 @@
  *   config/apps.php. A project may come from an order (`order_id`) or a lead (`lead_id`).
  * @dependencies AppManifest; ProjectPortalBaseDataSeeder, ProjectPortalRetentionSource,
  *   ProjectPortalAgendaSource, ProjectPortalLog, CheckProjectSession and the portal models with
- *   attachments.
+ *   attachments; I18nText (texts of a deleted language).
+ * @note Languages: the portal has no texts module of its own - its order e-mail texts are stored
+ *   in the languages of the website (languageModule() 'web'), so a deleted web language removes
+ *   them too (languageDeleted()).
  */
 
 namespace App\Apps\ProjectPortal;
@@ -28,6 +31,7 @@ use App\Apps\ProjectPortal\Services\ProjectPortalAgendaSource;
 use App\Apps\ProjectPortal\Services\ProjectPortalNotificationSource;
 use App\Apps\ProjectPortal\Services\ProjectPortalRetentionSource;
 use App\Apps\ProjectPortal\Models\ProjectPortalSetting;
+use App\Support\I18n\I18nText;
 use App\Support\Apps\AppAvailability;
 use App\Support\Apps\AppManifest;
 use App\Support\Uploads\AttachmentPolicy;
@@ -144,5 +148,21 @@ final class ProjectPortalApp extends AppManifest
         $settings = ProjectPortalSetting::query()->first();
 
         return new AppAvailability((bool) ($settings->is_portal_active ?? true), $settings?->portal_maintenance_message);
+    }
+
+    /** @description See AppManifest::languageModule() - the order e-mail texts use the website languages. */
+    public function languageModule(): string
+    {
+        return 'web';
+    }
+
+    /** @description See AppManifest::languageDeleted() - the texts of the order confirmation e-mail. */
+    public function languageDeleted(string $code): void
+    {
+        $settings = ProjectPortalSetting::query()->first();
+        if ($settings) {
+            I18nText::forget($settings, ['sales_order_email_subject_i18n', 'sales_order_email_title_i18n',
+                'sales_order_email_intro_i18n', 'sales_order_email_outro_i18n', 'sales_order_email_labels_i18n'], $code);
+        }
     }
 }

@@ -8,7 +8,8 @@
  * @description Manifest of the web application (public website, inquiries, job applications) -
  * everything the core needs to know about it. Registered in config/apps.php.
  * @dependencies AppManifest; WebBaseDataSeeder, WebRetentionSource, WebAgendaSource, WebLog,
- *   WebContentLanguages, CheckWebActive, the Web models with attachments and WebJob (sitemap).
+ *   WebContentLanguages + I18nText (texts of a deleted language), CheckWebActive, the Web models
+ *   with attachments and WebJob (sitemap).
  */
 
 namespace App\Apps\Web;
@@ -26,6 +27,7 @@ use App\Support\Apps\AppAvailability;
 use App\Support\Apps\AppManifest;
 use App\Support\Uploads\AttachmentPolicy;
 use App\Apps\Web\Support\WebContentLanguages;
+use App\Support\I18n\I18nText;
 use App\Apps\Web\Database\Seeders\WebBaseDataSeeder;
 
 final class WebApp extends AppManifest
@@ -131,11 +133,22 @@ final class WebApp extends AppManifest
         return 'web-edit-website-update';
     }
 
-    /** @description See AppManifest::languageDeleted() - FAQ, jobs, references and knowledge base texts. */
+    /**
+     * @description See AppManifest::languageDeleted() - FAQ, jobs, references and knowledge base
+     *   texts and the texts of the inquiry confirmation e-mail (the page titles are removed by the core).
+     */
     public function languageDeleted(string $code): void
     {
         WebContentLanguages::forget($code);
+        $settings = WebSiteSetting::query()->first();
+        if ($settings) {
+            I18nText::forget($settings, self::EMAIL_TEXT_COLUMNS, $code);
+        }
     }
+
+    /** @description Texts of the inquiry confirmation e-mail stored per language (web settings). */
+    private const EMAIL_TEXT_COLUMNS = ['raw_request_email_subject_i18n', 'raw_request_email_title_i18n',
+        'raw_request_email_intro_i18n', 'raw_request_email_outro_i18n', 'raw_request_email_labels_i18n'];
 
     /** @description See AppManifest::servesSiteRoot() - the website is the home page of the domain. */
     public function servesSiteRoot(): bool

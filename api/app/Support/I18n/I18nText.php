@@ -12,10 +12,14 @@
  * keep their line breaks (the public page shows them as they are - never as HTML).
  * @note Empty values are left out: "no text in this language" is the absence of the key, so the
  * admin can count the missing translations and the public page can show its placeholder.
- * @dependencies none
+ * @note forget() removes a deleted language from such columns (nothing of a language that no
+ * longer exists stays on the server).
+ * @dependencies Illuminate\Database\Eloquent\Model (forget)
  */
 
 namespace App\Support\I18n;
+
+use Illuminate\Database\Eloquent\Model;
 
 final class I18nText
 {
@@ -79,5 +83,32 @@ final class I18nText
             $field        => ['present', 'array', 'max:' . self::MAX_LANGUAGES],
             "{$field}.*"  => ['nullable', 'string', 'max:' . $maxLength],
         ];
+    }
+
+    /**
+     * @description Removes the texts of a deleted language from the per-language columns of one
+     *   record and saves it when something changed.
+     * @param Model $record Record with `*_i18n` array columns (cast to array).
+     * @param string[] $columns Its columns stored per language.
+     * @param string $code Language code of the deleted language.
+     * @return bool Whether the record changed.
+     */
+    public static function forget(Model $record, array $columns, string $code): bool
+    {
+        $code = strtolower($code);
+        $dirty = false;
+        foreach ($columns as $column) {
+            $texts = $record->{$column};
+            if (is_array($texts) && array_key_exists($code, $texts)) {
+                unset($texts[$code]);
+                $record->{$column} = $texts;
+                $dirty = true;
+            }
+        }
+        if ($dirty) {
+            $record->save();
+        }
+
+        return $dirty;
     }
 }

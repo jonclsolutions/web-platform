@@ -18,6 +18,7 @@ import { of, throwError } from 'rxjs';
 import { PageTitlesEditorComponent } from './page-titles-editor.component';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
+import { AdminNotificationsService } from '../../../core/services/admin-notifications.service';
 
 describe('PageTitlesEditorComponent', () => {
   let ctx: AdminTestContext;
@@ -207,5 +208,39 @@ describe('PageTitlesEditorComponent', () => {
     const markForCheck = spyOn((component as any).cd, 'markForCheck');
     ctx.i18n.translations$.next({});
     expect(markForCheck).toHaveBeenCalled();
+  });
+
+  /**
+   * @description Missing titles: each language tab shows how many pages have no title in it, the
+   *   banner of the edited language counts them, empty fields are orange; typing a title updates
+   *   it at once; a save asks the notifications again (the orange dot of the menu).
+   * @input rows home {cz}, about {cz, en}; languages cz, en; lang en; type 'Home' into row 1;
+   *   save answered by the API.
+   * @output tabs cz none, en 1 (with title); banner 'pt_missing_banner'; row 1 field orange, row 2
+   *   not; after typing en none and no banner; notifications.refresh() after the save.
+   */
+  it('shows the titles missing in a language', () => {
+    create();
+    const notifications = TestBed.inject(AdminNotificationsService);
+    spyOn(notifications, 'refresh');
+    expect(component.langItems.map(i => [i.value, i.count])).toEqual([['cz', null], ['en', 1]]);
+    expect(component.langItems[1].title).toBeTruthy();
+
+    component.switchLang('en');
+    fixture.detectChanges();
+    expect(component.missingBanner).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.pt-missing-banner')).not.toBeNull();
+    const inputs = fixture.nativeElement.querySelectorAll('.pt-input');
+    expect([inputs[0].classList.contains('pt-input--missing'), inputs[1].classList.contains('pt-input--missing')]).toEqual([true, false]);
+
+    component.rows[0].title_i18n['en'] = 'Home';
+    component.onInput(component.rows[0]);
+    fixture.detectChanges();
+    expect(component.missingCount('en')).toBe(0);
+    expect(fixture.nativeElement.querySelector('.pt-missing-banner')).toBeNull();
+
+    (ctx.dataHandler as any).put.and.returnValue(of(component.rows));
+    component.save();
+    expect(notifications.refresh).toHaveBeenCalled();
   });
 });

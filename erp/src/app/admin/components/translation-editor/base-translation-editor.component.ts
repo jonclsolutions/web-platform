@@ -159,17 +159,23 @@ export abstract class BaseTranslationEditorComponent
 
   /**
    * @description Page tabs as row buttons: icon, label, dot for unsaved edits and the orange
-   *   number of texts missing in an active language (the attention kind of the tab - the texts:
-   *   `<module>_texts_missing`; the same number as in the menu).
+   *   number of what is missing in an active language (the attention kind of the tab - the
+   *   texts: `<module>_texts_missing`, the page titles: `<module>_page_titles_missing`; the same
+   *   numbers as behind the orange dot in the menu).
    */
   get tabItems(): RowButton[] {
+    const kinds: Record<string, string> = {
+      translations: `${this.MODULE}_texts_missing`,
+      page_titles: `${this.MODULE}_page_titles_missing`,
+    };
     return this.tabButtons.update(this.tabs.map(tab => {
-      const kind = tab.key === 'translations' ? `${this.MODULE}_texts_missing` : tab.attentionKind;
+      const kind = kinds[tab.key] ?? tab.attentionKind;
       const missing = kind ? this.notifications.kinds().find(k => k.kind === kind)?.count ?? 0 : 0;
+      const titleKey = tab.key === 'page_titles' ? 'tab_missing_titles_title' : 'tab_missing_texts_title';
       return {
         value: tab.key, label: this.t(tab.labelKey), icon: tab.icon, dot: this.isTabDirty(tab.key),
         count: missing > 0 ? missing : null, countTone: 'attention' as const,
-        title: missing > 0 ? this.t('tab_missing_texts_title').replace('{count}', String(missing)) : undefined,
+        title: missing > 0 ? this.t(titleKey).replace('{count}', String(missing)) : undefined,
       };
     }));
   }

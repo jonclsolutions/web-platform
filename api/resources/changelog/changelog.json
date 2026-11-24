@@ -1,6 +1,18 @@
 {
     "unreleased": [
         {
+            "type": "added",
+            "area": "core",
+            "part": "admin",
+            "text": "Page titles missing in a language are now flagged like missing texts: orange empty fields, a number at each language and on the Page titles tab, a warning above the list and the orange dot in the menu."
+        },
+        {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Deleting a language now removes all its texts everywhere (page titles, e-mail texts, slogan and copyright), and page titles are kept only for existing languages. The delete dialog says so."
+        },
+        {
             "type": "changed",
             "area": "core",
             "part": "admin",

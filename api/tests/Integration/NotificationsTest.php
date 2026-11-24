@@ -45,7 +45,7 @@ class NotificationsTest extends TestCase
     use ShopFixtures;
 
     /** @description Every kind of the sysadmin, in menu order (applications, then the core). */
-    private const ALL_KINDS = ['web_inquiries', 'web_job_applications', 'web_texts_missing', 'web_faq_missing', 'web_jobs_missing', 'web_references_missing', 'web_kb_missing', 'shop_orders', 'shop_low_stock', 'shop_texts_missing', 'portal_orders', 'portal_leads_overdue', 'core_security_events'];
+    private const ALL_KINDS = ['web_inquiries', 'web_job_applications', 'web_texts_missing', 'web_page_titles_missing', 'web_faq_missing', 'web_jobs_missing', 'web_references_missing', 'web_kb_missing', 'shop_orders', 'shop_low_stock', 'shop_texts_missing', 'shop_page_titles_missing', 'portal_orders', 'portal_leads_overdue', 'core_security_events'];
 
     /**
      * @description Freezes the clock.
@@ -128,12 +128,12 @@ class NotificationsTest extends TestCase
         Carbon::setTestNow('2026-11-13 09:00:00');
         $response = $this->getJson('/api/core/notifications')->assertOk();
         $this->assertSame([
-            'web_inquiries' => 1, 'web_job_applications' => 2, 'web_texts_missing' => 0, 'web_faq_missing' => 0,
+            'web_inquiries' => 1, 'web_job_applications' => 2, 'web_texts_missing' => 0, 'web_page_titles_missing' => 0, 'web_faq_missing' => 0,
             'web_jobs_missing' => 0, 'web_references_missing' => 0, 'web_kb_missing' => 0, 'shop_orders' => 1,
-            'shop_low_stock' => 1, 'shop_texts_missing' => 0, 'portal_orders' => 1, 'portal_leads_overdue' => 1, 'core_security_events' => 1,
+            'shop_low_stock' => 1, 'shop_texts_missing' => 0, 'shop_page_titles_missing' => 0, 'portal_orders' => 1, 'portal_leads_overdue' => 1, 'core_security_events' => 1,
         ], collect($response->json('data.kinds'))->pluck('count', 'kind')->all());
         $this->assertSame(['kind' => 'web_inquiries', 'module' => 'web', 'link' => '/admin/web/user-request', 'count' => 1], $response->json('data.kinds.0'));
-        $this->assertSame('/admin/project-portal/sales-leads', $response->json('data.kinds.11.link'));
+        $this->assertSame('/admin/project-portal/sales-leads', $response->json('data.kinds.13.link'));
         $this->assertStringNotContainsString('@x.cz', $response->getContent());
     }
 
@@ -146,7 +146,8 @@ class NotificationsTest extends TestCase
      *   shop cz complete. Editor (view + update) and viewer (view only).
      * @output web_texts_missing 3 with attention and the split per language (cz 1, de 2),
      *   shop_texts_missing 0 without a split; after seen still 3, no mark; after de filled 1 (cz 1);
-     *   viewer has no texts kind.
+     *   viewer has no texts kind. Page titles (web home {cz, de ''}, about {cz}; inactive sk not
+     *   counted): web_page_titles_missing 2 split de 2 (attention); shop 0.
      */
     public function test_missing_texts_are_an_attention_kind(): void
     {
@@ -164,6 +165,9 @@ class NotificationsTest extends TestCase
         File::put($dir . '/web/de.json', json_encode(['a' => 'A de', 'g' => ['b' => ' ']]));
         File::put($dir . '/shop/cz.json', json_encode(['checkout' => ['title' => 'Pokladna']]));
         $this->app->useStoragePath($storage);
+        foreach (['home' => ['cz' => 'Domů', 'de' => ' ', 'sk' => ''], 'about' => ['cz' => 'O nás']] as $key => $titles) {
+            (new \App\Models\Legal\PageTitle())->forceFill(['area' => 'web', 'page_key' => $key, 'route_path' => '/', 'sort_order' => 1, 'title_i18n' => $titles])->save();
+        }
 
         try {
             $editor = $this->signIn($this->userWith(['view-web', 'web-edit-website-view', 'web-edit-website-update', 'view-eshop', 'shop-edit-eshop-view', 'shop-edit-eshop-update']));
@@ -172,6 +176,9 @@ class NotificationsTest extends TestCase
                 'languages' => ['cz' => 1, 'de' => 2]], $kinds['web_texts_missing']);
             $this->assertSame(0, $kinds['shop_texts_missing']['count']);
             $this->assertArrayNotHasKey('languages', $kinds['shop_texts_missing']);
+            $this->assertSame(['kind' => 'web_page_titles_missing', 'module' => 'web', 'link' => '/admin/web/edit-website', 'count' => 2,
+                'attention' => true, 'languages' => ['de' => 2]], $kinds['web_page_titles_missing']);
+            $this->assertSame(0, $kinds['shop_page_titles_missing']['count']);
 
             $this->assertSame(3, $this->counts('/api/core/notifications/seen', ['kinds' => ['web_texts_missing']])['web_texts_missing']);
             $this->assertFalse(CoreNotificationMark::where('user_id', $editor->id)->where('kind', 'web_texts_missing')->exists());

@@ -425,6 +425,7 @@
     "kind_web_inquiries": "Nové poptávky",
     "kind_web_job_applications": "Nové přihlášky uchazečů",
     "kind_web_texts_missing": "Chybějící texty webu",
+    "kind_web_page_titles_missing": "Chybějící názvy stránek webu",
     "kind_web_faq_missing": "Chybějící překlady FAQ",
     "kind_web_jobs_missing": "Chybějící překlady kariéry",
     "kind_web_references_missing": "Chybějící překlady referencí",

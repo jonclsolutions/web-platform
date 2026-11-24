@@ -538,7 +538,7 @@
               "ordered": false,
               "items": [
                 "Ikonou u jazyka jazyk deaktivujete nebo aktivujete - neaktivní jazyk návštěvníci nevidí, texty zůstanou.",
-                "Ikonou koše jazyk smažete ze seznamu (po potvrzení). Soubor s jeho texty na serveru zůstane.",
+                "Ikonou koše jazyk smažete (po potvrzení). Smažou se i všechny jeho texty - překlady, obsah stránek, názvy stránek a texty e-mailů. Pokud jazyk chcete jen dočasně skrýt, deaktivujte ho.",
                 "Ikonou nahrání nahrajete texty jazyka ze souboru JSON (viz kapitola 05)."
               ]
             }
@@ -681,7 +681,7 @@
             },
             {
               "type": "text",
-              "content": "Prázdné pole = použije se český název. Dobrý název stránky obsahuje, o čem stránka je, a název firmy, například „Služby | Firma s.r.o.“."
+              "content": "Prázdné pole = návštěvník uvidí český název. Proto jsou prázdná pole oranžová, u jazyka svítí oranžové číslo (kolik názvů chybí) a nad seznamem je upozornění. Stejné číslo je na záložce Názvy stránek a oranžová tečka v menu. Dobrý název stránky obsahuje, o čem stránka je, a název firmy, například „Služby | Firma s.r.o.“."
             }
           ]
         },

@@ -432,6 +432,8 @@
   "pt_saved_message": "Page titles have been saved.",
   "pt_load_error": "Page titles could not be loaded. Please reload the page.",
   "pt_language_label": "Language of the titles:",
+  "pt_missing_lang_title": "Pages without a title in this language: {count}",
+  "pt_missing_banner": "Page titles missing in {lang}: {count}. Visitors see the title of another language instead.",
   "pt_saved_title": "Saved"
 },
 "settings": {
@@ -1431,6 +1433,7 @@
   "translation-editor": {
     "tab_translations": "Translations",
     "tab_missing_texts_title": "Texts missing in active languages: {count}",
+    "tab_missing_titles_title": "Page titles missing in active languages: {count}",
     "tab_page_titles": "Page titles",
     "tabs_label": "Page sections",
     "upload_json_title_topbar": "Upload JSON for the current language",
@@ -1477,7 +1480,7 @@
     "json_drop_zone_text": "Click or drag a",
     "json_drop_zone_text_suffix": "file here",
     "delete_confirm_prefix": "Are you sure you want to delete the language",
-    "delete_confirm_suffix": "This action removes the language from the list. The JSON file on the server will be preserved.",
+    "delete_confirm_suffix": "All texts in this language are deleted too – translations, page content, page titles and e-mail texts. This cannot be undone.",
     "info_title": "Info",
     "admin_title": "Admin",
     "translations_not_found_message": "Translations for \"{lang}\" do not exist yet. Defaulting to empty keys.",

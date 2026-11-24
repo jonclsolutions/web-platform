@@ -237,14 +237,27 @@ class SiteConfigurationTest extends TestCase
      * @input admin.users (0), shop.cart (1), web.home (2) {cz, en Home}, web.about (1); accounts
      *   without permission, web editor, shop editor, core config editor.
      * @output 403 without permission and for other modules; web [about, home], shop [cart], admin
-     *   [users]; home cz '<b>…</b>  x' → '… x', en kept, de without <i>; 1 web_logs row; cart id
+     *   [users]; home cz '<b>…</b>  x' → '… x', en kept, de without <i>, fr (not a web language)
+     *   and a stored title of a deleted language (sk) dropped; 1 web_logs row; cart id
      *   on the web endpoint / id 999 → 422; shop_logs / core_logs rows; public map.
      */
     public function test_page_titles(): void
     {
+        // Languages of the modules: web cz, en, de; shop cz (titles are stored only in them).
+        $storage = sys_get_temp_dir() . '/jsw-page-titles-' . uniqid();
+        \Illuminate\Support\Facades\File::makeDirectory($storage . '/app/public/translations', 0755, true);
+        \Illuminate\Support\Facades\File::put($storage . '/app/public/translations/languages.json', json_encode([
+            ['code' => 'cz', 'module' => 'web', 'active' => true, 'isBuiltIn' => true],
+            ['code' => 'en', 'module' => 'web', 'active' => true],
+            ['code' => 'de', 'module' => 'web', 'active' => false],
+            ['code' => 'cz', 'module' => 'shop', 'active' => true, 'isBuiltIn' => true],
+        ]));
+        $this->app->useStoragePath($storage);
+        $this->beforeApplicationDestroyed(fn () => \Illuminate\Support\Facades\File::deleteDirectory($storage));
+
         $users = $this->pageTitle('admin', 'users', 0);
         $cart = $this->pageTitle('shop', 'cart', 1, ['cz' => '', 'en' => null]);
-        $home = $this->pageTitle('web', 'home', 2, ['cz' => 'Domů', 'en' => 'Home']);
+        $home = $this->pageTitle('web', 'home', 2, ['cz' => 'Domů', 'en' => 'Home', 'sk' => 'Domov']);
         $about = $this->pageTitle('web', 'about', 1);
 
         $this->signIn($this->user());
@@ -259,13 +272,14 @@ class SiteConfigurationTest extends TestCase
         $this->getJson('/api/legal/config/page-titles')->assertStatus(403);
 
         $this->putJson('/api/web/page-titles', ['titles' => [
-            ['id' => $home->id, 'title_i18n' => ['CZ' => "<b>Úvod</b>\n  x", 'de' => '<i>' . str_repeat('d', 110) . '</i>', 'bad key!' => 'x']],
+            ['id' => $home->id, 'title_i18n' => ['CZ' => "<b>Úvod</b>\n  x", 'de' => '<i>' . str_repeat('d', 110) . '</i>', 'bad key!' => 'x', 'fr' => 'Accueil']],
             ['id' => $about->id, 'title_i18n' => []],
         ]])->assertOk()->assertJsonPath('data.*.id', [$about->id, $home->id]);
 
         $titles = $home->fresh()->title_i18n;
         $this->assertSame(['Úvod x', 'Home', str_repeat('d', 110)], [$titles['cz'], $titles['en'], $titles['de']]);
         $this->assertArrayNotHasKey('bad key!', $titles);
+        $this->assertSame(['cz', 'en', 'de'], array_keys($titles));
         $this->assertSame(1, \App\Apps\Web\Models\WebLog::where('event_type', 'update')->where('description', 'Updated page title: web.home')->count());
 
         $this->putJson('/api/web/page-titles', ['titles' => [['id' => $cart->id, 'title_i18n' => ['cz' => 'Hack']]]])->assertStatus(422)

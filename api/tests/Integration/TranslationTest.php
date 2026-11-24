@@ -464,4 +464,59 @@ class TranslationTest extends TestCase
         $this->assertSame(['Translation:web'], WebLog::pluck('module')->all());
         $this->assertSame(0, CoreLog::count());
     }
+
+    /**
+     * @description Deleting a language removes everything stored in it, so nothing of a language
+     *   that no longer exists stays in the database: web content (FAQ), the inquiry e-mail texts
+     *   of the web, the order e-mail texts of the project portal (it uses the web languages), the
+     *   page titles of the module (not of another module), and - only once no module has the
+     *   language - the slogan / copyright of the site settings. Leaving a language out of the
+     *   saved list does the same.
+     * @input web cz + de + fr, shop cz + de; FAQ category, web settings, portal settings, page
+     *   titles web + shop, site settings - all with cz + de (+ fr); DELETE web/de; DELETE shop/de;
+     *   save of the web list without fr.
+     * @output after web/de: no de in the web content, e-mails, web titles; shop title and site
+     *   texts keep de (the shop still has it); after shop/de: shop title and site texts without
+     *   de; after the list save: no fr anywhere; cz everywhere untouched.
+     */
+    public function test_deleting_a_language_removes_all_its_texts(): void
+    {
+        $this->signIn($this->userWith(self::EDITOR));
+        $this->languages([
+            ['code' => 'cz', 'name' => 'Čeština', 'module' => 'web', 'isBuiltIn' => true, 'active' => true],
+            ['code' => 'de', 'name' => 'Deutsch', 'module' => 'web', 'active' => true],
+            ['code' => 'fr', 'name' => 'Français', 'module' => 'web', 'active' => true],
+            ['code' => 'cz', 'name' => 'Čeština', 'module' => 'shop', 'isBuiltIn' => true, 'active' => true],
+            ['code' => 'de', 'name' => 'Deutsch', 'module' => 'shop', 'active' => true],
+        ]);
+        $texts = ['cz' => 'CZ', 'de' => 'DE', 'fr' => 'FR'];
+        $faq = \App\Apps\Web\Models\WebFaqCategory::forceCreate(['name_i18n' => $texts, 'sort_order' => 1]);
+        $web = \App\Apps\Web\Models\WebSiteSetting::forceCreate(['raw_request_email_title_i18n' => $texts, 'raw_request_email_labels_i18n' => ['cz' => ['a' => 'A'], 'de' => ['a' => 'B']]]);
+        $portal = \App\Apps\ProjectPortal\Models\ProjectPortalSetting::forceCreate(['sales_order_email_subject_i18n' => $texts]);
+        $title = fn (string $area, string $key) => tap(new \App\Models\Legal\PageTitle())->forceFill(['area' => $area, 'page_key' => $key, 'route_path' => '/', 'sort_order' => 1, 'title_i18n' => $texts])->save();
+        $title('web', 'home');
+        $title('shop', 'cart');
+        $site = \App\Models\Legal\SiteSetting::forceCreate(['company_name' => 'Acme', 'contact_email' => 'info@acme.cz', 'brand_tagline_i18n' => $texts, 'copyright_text_i18n' => $texts]);
+        $pageTitle = fn (string $area) => \App\Models\Legal\PageTitle::where('area', $area)->first()->title_i18n;
+
+        $this->deleteJson('/api/languages/web/de')->assertNoContent();
+        $this->assertSame(['cz' => 'CZ', 'fr' => 'FR'], $faq->fresh()->name_i18n);
+        $this->assertSame(['cz' => 'CZ', 'fr' => 'FR'], $web->fresh()->raw_request_email_title_i18n);
+        $this->assertSame(['cz' => ['a' => 'A']], $web->fresh()->raw_request_email_labels_i18n);
+        $this->assertSame(['cz' => 'CZ', 'fr' => 'FR'], $portal->fresh()->sales_order_email_subject_i18n);
+        $this->assertSame(['cz' => 'CZ', 'fr' => 'FR'], $pageTitle('web'));
+        $this->assertSame($texts, $pageTitle('shop'));
+        $this->assertSame($texts, $site->fresh()->brand_tagline_i18n);
+
+        $this->deleteJson('/api/languages/shop/de')->assertNoContent();
+        $this->assertSame(['cz' => 'CZ', 'fr' => 'FR'], $pageTitle('shop'));
+        $this->assertSame(['cz' => 'CZ', 'fr' => 'FR'], $site->fresh()->brand_tagline_i18n);
+        $this->assertSame(['cz' => 'CZ', 'fr' => 'FR'], $site->fresh()->copyright_text_i18n);
+
+        $this->postJson('/api/languages/web', ['languages' => json_encode([['code' => 'cz', 'name' => 'Čeština', 'isBuiltIn' => true, 'active' => true]])])->assertNoContent();
+        $this->assertSame(['cz' => 'CZ'], $faq->fresh()->name_i18n);
+        $this->assertSame(['cz' => 'CZ'], $portal->fresh()->sales_order_email_subject_i18n);
+        $this->assertSame(['cz' => 'CZ'], $pageTitle('web'));
+        $this->assertSame(['cz' => 'CZ'], $site->fresh()->brand_tagline_i18n);
+    }
 }

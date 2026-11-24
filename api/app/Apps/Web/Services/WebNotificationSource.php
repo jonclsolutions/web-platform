@@ -6,10 +6,10 @@
  * @author JS
  * @created 2026
  * @description Notifications of the website: new inquiries from the contact form and new job
- * applications (unread, red); texts missing in the active languages of the website texts and of
- * the content in the database - FAQ, positions, references, knowledge base (attention, orange - for
+ * applications (unread, red); texts missing in the active languages of the website texts, of the
+ * page titles (web_page_titles_missing) and of the content in the database - FAQ, positions, references, knowledge base (attention, orange - for
  * the admins who may edit them; the page tabs show them too). Registered in WebApp::notificationSources().
- * @dependencies WebRawRequestCommission, WebJobApplication, MissingTranslations, WebContentMissing, NotificationContext
+ * @dependencies WebRawRequestCommission, WebJobApplication, MissingTranslations, MissingPageTitles, WebContentMissing, NotificationContext
  */
 
 namespace App\Apps\Web\Services;
@@ -19,6 +19,7 @@ use App\Apps\Web\Models\WebRawRequestCommission;
 use App\Services\Notifications\NotificationContext;
 use App\Services\Notifications\NotificationSource;
 use App\Support\I18n\MissingTranslations;
+use App\Support\I18n\MissingPageTitles;
 
 final class WebNotificationSource implements NotificationSource
 {
@@ -44,6 +45,8 @@ final class WebNotificationSource implements NotificationSource
         if ($context->can('web-edit-website-update')) {
             $missing = MissingTranslations::byLanguage('web');
             $kinds[] = $context->attention('web_texts_missing', '/admin/web/edit-website', array_sum($missing), $missing);
+            $titles = MissingPageTitles::byLanguage('web');
+            $kinds[] = $context->attention('web_page_titles_missing', '/admin/web/edit-website', array_sum($titles), $titles);
             foreach (WebContentMissing::counts() as $tab => $count) {
                 $kinds[] = $context->attention(self::CONTENT_KINDS[$tab], '/admin/web/edit-website', $count);
             }

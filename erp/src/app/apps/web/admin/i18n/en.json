@@ -425,6 +425,7 @@
     "kind_web_inquiries": "New inquiries",
     "kind_web_job_applications": "New job applications",
     "kind_web_texts_missing": "Missing website texts",
+    "kind_web_page_titles_missing": "Missing website page titles",
     "kind_web_faq_missing": "Missing FAQ translations",
     "kind_web_jobs_missing": "Missing job translations",
     "kind_web_references_missing": "Missing reference translations",

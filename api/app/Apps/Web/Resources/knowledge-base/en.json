@@ -538,7 +538,7 @@
               "ordered": false,
               "items": [
                 "The icon at a language deactivates or activates it - visitors do not see an inactive language, its texts stay.",
-                "The bin icon deletes the language from the list (after a confirmation). The file with its texts stays on the server.",
+                "The bin icon deletes the language (after a confirmation). All its texts are deleted too - translations, page content, page titles and e-mail texts. To hide a language only for a while, deactivate it.",
                 "The upload icon uploads the texts of the language from a JSON file (see chapter 05)."
               ]
             }
@@ -681,7 +681,7 @@
             },
             {
               "type": "text",
-              "content": "Empty field = the Czech title is used. A good page title says what the page is about and the company name, for example “Services | Company Ltd.”."
+              "content": "Empty field = the visitor sees the Czech title. That is why empty fields are orange, the language shows an orange number (how many titles are missing) and a warning is above the list. The same number is on the Page titles tab and as the orange dot in the menu. A good page title says what the page is about and the company name, for example “Services | Company Ltd.”."
             }
           ]
         },

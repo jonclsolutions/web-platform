@@ -6,6 +6,10 @@
  * @author JS
  * @created 2025
  * @description Manages internationalization (i18n) data, including JSON translation file management, language metadata administration, and associated icon assets.
+ * @note A deleted language (destroyLanguage, or left out of the saved list) takes everything stored
+ *   in it with it: its translation file and icon, the content of the applications using the
+ *   module's languages, the page titles of the module and the shared site texts (forgetContent()).
+ * @dependencies AppRegistry, MissingTranslations, I18nText, PageTitle, SiteSetting.
  */
 
 namespace App\Http\Controllers\Api;
@@ -20,6 +24,10 @@ use Illuminate\Support\Facades\Storage;
 use App\Support\Apps\AppRegistry;
 use Illuminate\Http\JsonResponse;
 use App\Support\I18n\MissingTranslations;
+use App\Support\I18n\I18nText;
+use App\Models\Legal\PageTitle;
+use App\Models\Legal\SiteSetting;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @description Controller handling the full lifecycle of language configurations and translation strings.
@@ -343,16 +351,50 @@ class TranslationController extends Controller
     }
 
     /**
-     * @description Removes the content of the application stored per language of a deleted
-     *   language (AppManifest::languageDeleted(), e.g. the FAQ of the web, the order e-mail texts
-     *   of the e-shop).
+     * @description Removes everything stored in a deleted language, so nothing of a language that
+     *   no longer exists stays in the database: the content of every application using the
+     *   languages of the module (AppManifest::languageModule() / languageDeleted() - e.g. the FAQ
+     *   and the inquiry e-mail of the web, the order e-mail of the e-shop and of the project
+     *   portal), the page titles of the module and - once no module has the language any more -
+     *   the slogan and the copyright of the site settings (they offer the languages of all modules).
+     * @note Called after languages.json is written (the language is already gone from the list).
      * @param string $module Translation module (= application id).
      * @param string $code Deleted language code.
      * @return void
      */
     private function forgetContent(string $module, string $code): void
     {
-        AppRegistry::app($module)?->languageDeleted($code);
+        $code = strtolower($code);
+        DB::transaction(function () use ($module, $code) {
+            foreach (AppRegistry::apps() as $app) {
+                if ($app->languageModule() === $module) {
+                    $app->languageDeleted($code);
+                }
+            }
+            foreach (PageTitle::query()->where('area', $module)->get() as $row) {
+                I18nText::forget($row, ['title_i18n'], $code);
+            }
+            if (!in_array($code, self::allLanguageCodes(), true) && ($settings = SiteSetting::query()->first())) {
+                I18nText::forget($settings, ['brand_tagline_i18n', 'copyright_text_i18n'], $code);
+            }
+        });
+    }
+
+    /**
+     * @description Codes of the languages of every module (lower case) - the languages the texts
+     *   shared by all modules (site settings, page titles of the administration) may be stored in.
+     * @return string[]
+     */
+    public static function allLanguageCodes(): array
+    {
+        $codes = [];
+        foreach (self::readLanguagesMeta() ?: self::DEFAULT_LANGUAGES as $lang) {
+            if (is_array($lang) && is_string($lang['code'] ?? null)) {
+                $codes[] = strtolower($lang['code']);
+            }
+        }
+
+        return array_values(array_unique($codes));
     }
 
     /**

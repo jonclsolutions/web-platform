@@ -267,6 +267,18 @@ abstract class AppManifest
     }
 
     /**
+     * @description Translation module whose languages the content of the application uses -
+     *   its own id by default; an application without own texts names the module it follows
+     *   (the project portal: the languages of the website). A deleted language of that module
+     *   calls languageDeleted() of the application too.
+     * @return string Module id (`languages/{module}`).
+     */
+    public function languageModule(): string
+    {
+        return $this->id();
+    }
+
+    /**
      * @description Absolute path of a file / folder of the application when it exists.
      * @param string $relative Path below the application folder.
      * @return string|null

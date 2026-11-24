@@ -1048,6 +1048,7 @@
   "notifications": {
     "kind_shop_orders": "Nové objednávky e-shopu",
     "kind_shop_low_stock": "Produkty pod skladovým limitem",
-    "kind_shop_texts_missing": "Chybějící texty e-shopu"
+    "kind_shop_texts_missing": "Chybějící texty e-shopu",
+    "kind_shop_page_titles_missing": "Chybějící názvy stránek e-shopu"
   }
 }

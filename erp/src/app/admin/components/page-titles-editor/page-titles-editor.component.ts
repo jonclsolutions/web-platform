@@ -23,6 +23,7 @@
  * - RowButtonBuilderComponent: the language tabs.
  * - PermissionService: the update permission.
  * - AdminLocalizationService (redrawn on a switch of the admin language), AlertDialogService.
+ * - AdminNotificationsService: asked again after a save (the orange dot of the missing titles).
  */
 
 import {
@@ -39,6 +40,7 @@ import { ResourceCacheService } from '../../../core/services/resource-cache.serv
 import { PermissionService } from '../../../core/auth/services/permission.service';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
+import { AdminNotificationsService } from '../../../core/services/admin-notifications.service';
 import { RowButtonBuilderComponent } from '../builders/row-button-builder/row-button-builder.component';
 import { RowButton, RowButtonItems, languageRowButtons } from '../builders/row-button-builder/row-button';
 import { environment } from '../../../../environments/environment';
@@ -98,6 +100,7 @@ export class PageTitlesEditorComponent implements OnInit {
   private readonly cd = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   public readonly i18n = inject(AdminLocalizationService);
+  private readonly notifications = inject(AdminNotificationsService);
 
   /** @description Generic texts (section `page-titles` + shared). */
   get strings(): any {
@@ -242,9 +245,41 @@ export class PageTitlesEditorComponent implements OnInit {
   /** Stable buttons of the language tabs. */
   private readonly langButtons = new RowButtonItems();
 
-  /** @description Language tabs (flag + upper-case code). */
+  /**
+   * @description Language tabs (flag + upper-case code) with the orange number of pages without
+   *   a title in that language - counted from the edited rows, so it follows the typing.
+   */
   get langItems(): RowButton[] {
-    return this.langButtons.update(languageRowButtons(this.languages));
+    return this.langButtons.update(languageRowButtons(this.languages, {
+      count: code => this.missingCount(code) || null,
+      title: code => this.missingCount(code) ? (this.strings?.pt_missing_lang_title ?? '').replace('{count}', String(this.missingCount(code))) : '',
+    }));
+  }
+
+  /**
+   * @description Pages without a title in a language (empty or only spaces) - the visitor then
+   *   sees the title of another language (Czech).
+   * @param code Language code.
+   */
+  missingCount(code: string): number {
+    return this.rows.filter(row => this.isMissing(row, code)).length;
+  }
+
+  /**
+   * @description Whether a page has no title in a language.
+   * @param row Page.
+   * @param code Language code (the edited one by default).
+   */
+  isMissing(row: PageTitleRow, code: string = this.lang): boolean {
+    return !(row.title_i18n?.[code] ?? '').trim();
+  }
+
+  /** @description Banner of the edited language: how many titles are missing ('' when none). */
+  get missingBanner(): string {
+    const count = this.missingCount(this.lang);
+    if (!count) return '';
+    const name = this.languages.find(l => l.code === this.lang)?.name ?? this.lang.toUpperCase();
+    return (this.strings?.pt_missing_banner ?? '').replace('{count}', String(count)).replace('{lang}', name);
   }
 
   /**
@@ -289,6 +324,8 @@ export class PageTitlesEditorComponent implements OnInit {
       next: (res: any) => {
         this.setRows(Array.isArray(res) ? res : this.rows);
         this.saving = false;
+        // The orange dot of the menu / the count of the page tab follow at once.
+        this.notifications.refresh();
         this.alertDialog.open(this.strings.pt_saved_title, this.strings.pt_saved_message, 'success');
         this.cd.markForCheck();
       },

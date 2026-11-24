@@ -432,6 +432,8 @@
   "pt_saved_message": "Názvy stránek byly uloženy.",
   "pt_load_error": "Názvy stránek se nepodařilo načíst. Zkuste stránku obnovit.",
   "pt_language_label": "Jazyk názvů:",
+  "pt_missing_lang_title": "Stránky bez názvu v tomto jazyce: {count}",
+  "pt_missing_banner": "Chybějící názvy stránek v jazyce {lang}: {count}. Návštěvníci místo nich uvidí název v jiném jazyce.",
   "pt_saved_title": "Uloženo"
 },
 "settings": {
@@ -1431,6 +1433,7 @@
   "translation-editor": {
     "tab_translations": "Překlady",
     "tab_missing_texts_title": "Chybějící texty v zapnutých jazycích: {count}",
+    "tab_missing_titles_title": "Chybějící názvy stránek v zapnutých jazycích: {count}",
     "tab_page_titles": "Názvy stránek",
     "tabs_label": "Části stránky",
     "upload_json_title_topbar": "Nahrát JSON pro aktuální jazyk",
@@ -1477,7 +1480,7 @@
     "json_drop_zone_text": "Klikněte nebo přetáhněte",
     "json_drop_zone_text_suffix": "soubor sem",
     "delete_confirm_prefix": "Opravdu chcete smazat jazyk",
-    "delete_confirm_suffix": "Tato akce odstraní jazyk ze seznamu. JSON soubor na serveru zůstane zachován.",
+    "delete_confirm_suffix": "Smažou se i všechny texty v tomto jazyce – překlady, obsah stránek, názvy stránek a texty e-mailů. Akci nelze vrátit.",
     "info_title": "Info",
     "admin_title": "Admin",
     "translations_not_found_message": "Překlady pro „{lang}\" ještě neexistují. Použity prázdné klíče.",

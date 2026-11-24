@@ -15,7 +15,8 @@
  *              titles with it. Public: map "area.page_key" => { lang: title } for the
  *              Angular PageTitleStrategy.
  * @dependencies PageTitle; AppRegistry::logModel() (audit log of the area's application,
- *   CoreLog for the admin area).
+ *   CoreLog for the admin area); TranslationController::languageCodes() / allLanguageCodes()
+ *   (titles are stored only in the languages of the area).
  */
 
 namespace App\Http\Controllers\Api\Legal;
@@ -24,6 +25,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Core\CoreLog;
 use App\Models\Legal\PageTitle;
 use App\Support\Apps\AppRegistry;
+use App\Http\Controllers\Api\TranslationController;
 use App\Traits\LogsActivity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -82,12 +84,15 @@ class PageTitleController extends Controller
         }
 
         $changed = [];
+        // Only the languages of the area are stored (an admin page opened before a language was
+        // deleted cannot bring it back; a title of a deleted language left behind is dropped).
+        $languages = array_flip($area === 'admin' ? TranslationController::allLanguageCodes() : TranslationController::languageCodes($area));
 
-        DB::transaction(function () use ($rows, $items, &$changed) {
+        DB::transaction(function () use ($rows, $items, $languages, &$changed) {
             foreach ($rows as $id => $row) {
                 $sanitized = $this->sanitizeTitles($items[$id]['title_i18n'] ?? []);
                 $current   = $row->title_i18n ?? [];
-                $merged    = array_merge($current, $sanitized);
+                $merged    = array_intersect_key(array_merge($current, $sanitized), $languages);
 
                 if ($merged !== $current) {
                     $row->title_i18n = $merged;

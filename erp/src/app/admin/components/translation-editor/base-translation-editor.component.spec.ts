@@ -337,9 +337,10 @@ describe('BaseTranslationEditorComponent', () => {
    * @description The page tabs show the orange number of texts missing in an active language:
    *   the texts tab the kind `<module>_texts_missing`, an extra tab its own attention kind; a
    *   save asks the notifications again, so the number follows at once.
-   * @input kinds test_texts_missing 4, test_faq_missing 0; extra tab with attentionKind
-   *   test_faq_missing; save of the texts.
-   * @output translations tab count 4 (attention, title), extra tab no count; refresh() called.
+   * @input kinds test_texts_missing 4, test_page_titles_missing 2, test_faq_missing 0; extra tab
+   *   with attentionKind test_faq_missing; save of the texts.
+   * @output translations tab count 4 (attention, title), page titles tab 2 (its own title), extra
+   *   tab no count; refresh() called.
    */
   it('shows missing texts on the page tabs', fakeAsync(() => {
     const notifications = TestBed.inject(AdminNotificationsService);
@@ -348,9 +349,11 @@ describe('BaseTranslationEditorComponent', () => {
     notifications.kinds.set([
       { kind: 'test_texts_missing', module: 'test', link: '/admin/test', count: 4, attention: true },
       { kind: 'test_faq_missing', module: 'test', link: '/admin/test', count: 0, attention: true },
+      { kind: 'test_page_titles_missing', module: 'test', link: '/admin/test', count: 2, attention: true },
     ]);
-    const [texts, , faq] = component.tabItems;
+    const [texts, titles, faq] = component.tabItems;
     expect([texts.count, texts.countTone, texts.title]).toEqual([4, 'attention', 'test-editor.tab_missing_texts_title']);
+    expect([titles.count, titles.title]).toEqual([2, 'test-editor.tab_missing_titles_title']);
     expect(faq.count).toBeNull();
 
     component.ngOnInit();

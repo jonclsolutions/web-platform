@@ -381,3 +381,30 @@
 @media (prefers-reduced-motion: reduce) {
   .pt-skeleton-row, .pt-spin { animation: none; }
 }
+
+/*
+    @module: Missing titles
+    @description: A page without a title in the edited language (the visitor sees the title of
+        another language): orange field; the banner above the list counts them (the language
+        tabs show the count per language).
+    @usage: .pt-missing-banner, .pt-input.pt-input--missing
+*/
+.pt-missing-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 9px 12px;
+  border: 1px solid var(--color-amber-200);
+  border-radius: 10px;
+  background: var(--color-amber-50);
+  color: var(--color-amber-800);
+  font-size: 0.84rem;
+}
+
+.pt-missing-banner svg { flex-shrink: 0; }
+
+.pt-input.pt-input--missing {
+  border-color: var(--color-amber-200);
+  background: var(--color-amber-50);
+}
