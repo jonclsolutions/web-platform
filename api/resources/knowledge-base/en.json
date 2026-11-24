@@ -195,7 +195,11 @@
                   "text": "One row = one record. Long texts are shortened; the full content is in the record details."
                 },
                 {
-                  "title": "Icons at the end of a row",
+                  "title": "Coloured labels",
+                  "text": "Status, priority and severity have a soft coloured label: blue = new, amber = waiting or in progress, green = done, red = critical or failed, grey = normal or closed. The text of the label stays, the colour is only a hint; the record window shows the data without colours."
+                },
+                {
+                  "title": "Opening a record",
                   "text": "Open a record by clicking its row (its main value is underlined on hover; with the keyboard Tab and Enter). One window opens: with the edit permission the form, with the data that do not change (ID, when it was created, the last change) at the top; without it only the overview of the data. The actions of the record - for example Delete or the other actions of the page - are at the bottom left of the window. You do not see actions you have no permission for."
                 },
                 {

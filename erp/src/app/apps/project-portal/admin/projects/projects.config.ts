@@ -11,12 +11,20 @@
 import * as Core from '../../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { mapLabeledOptions } from '../../../../admin/components/builders/labeled-options';
+import { BadgeTones } from '../../../../admin/components/builders/badge-tones';
 
 const SECTION = 'projects';
 
 export const PROJECT_PLATFORM_VALUES: string[] = ['web', 'mobile', 'desktop', 'ai', 'other'];
 export const PROJECT_STATUS_VALUES: string[] = ['new', 'development', 'finished'];
 export const PROJECT_VISIBILITY_VALUES: string[] = ['private', 'public'];
+
+/** Tones of the project statuses (coloured labels of the table, badge-tones.ts). */
+export const PROJECT_STATUS_TONES: BadgeTones = {
+  new: 'info',
+  development: 'warning',
+  finished: 'success',
+};
 export const CHECKPOINT_STATUS_VALUES: string[] = ['new', 'active', 'done'];
 
 const PLATFORM_LABEL_KEYS: Record<string, string> = {
@@ -141,7 +149,7 @@ export function createProjectColumns(i18n: AdminLocalizationService): Core.Colum
     { key: 'name', header: i18n.getValue(`${SECTION}.col_name`), type: 'text' },
     { key: 'platform', header: i18n.getValue(`${SECTION}.col_platform`), type: 'text' },
     { key: 'visibility', header: i18n.getValue(`${SECTION}.col_visibility`), type: 'text' },
-    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'text' },
+    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'text', tones: PROJECT_STATUS_TONES },
     { key: 'project_lead', header: i18n.getValue(`${SECTION}.col_lead`), type: 'text' },
     { key: 'assignee_name', header: i18n.getValue(`${SECTION}.col_assignee`), type: 'text' },
     { key: 'unread_messages_count', header: i18n.getValue(`${SECTION}.col_unread`), type: 'count' },

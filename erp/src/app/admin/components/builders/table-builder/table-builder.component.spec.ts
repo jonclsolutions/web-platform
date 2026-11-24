@@ -784,4 +784,32 @@ describe('TableBuilderComponent', () => {
       expect(component.canEditRecord({ id: 1 })).toBeFalse();
     });
   });
+
+  describe('coloured labels', () => {
+    /**
+     * @description A column with tones shows its (translated) text in a coloured label with the
+     *   tone of the raw value - also when the cell shows a label of another field (toneKey);
+     *   an empty value and a column without tones have no label.
+     * @input columns priority (tones), status_label (toneKey status), name; rows high / empty.
+     * @output label 'warning' with 'High'; label 'success' with 'Paid'; empty priority without a
+     *   label; plain text for name; export value stays the text.
+     */
+    it('shows status and priority values as coloured labels', () => {
+      const tones = { high: 'warning', paid: 'success' } as any;
+      fixture.componentRef.setInput('columns', [
+        { key: 'priority', header: 'P', type: 'text', tones },
+        { key: 'status_label', header: 'S', type: 'text', tones, toneKey: 'status' },
+        { key: 'name', header: 'N', type: 'text' },
+      ]);
+      fixture.componentRef.setInput('inputDefinitions', [{ column_name: 'priority', type: 'select', options: [{ value: 'high', label: 'High' }] }]);
+      fixture.componentRef.setInput('data', [{ id: 1, priority: 'high', status: 'paid', status_label: 'Paid', name: 'A' }, { id: 2, priority: '', status: null, status_label: '', name: 'B' }]);
+      fixture.detectChanges();
+      const rows = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr'));
+      const badges = Array.from(rows[0].querySelectorAll('.table-badge')) as HTMLElement[];
+      expect(badges.map(b => [b.dataset['tone'], b.textContent!.trim()])).toEqual([['warning', 'High'], ['success', 'Paid']]);
+      expect(rows[1].querySelectorAll('.table-badge').length).toBe(0);
+      expect(component.badgeTone({ name: 'A' }, { key: 'name' } as any)).toBeNull();
+      expect(component.getCellValue({ priority: 'high' }, { key: 'priority', tones } as any)).toBe('High');
+    });
+  });
 });

@@ -306,6 +306,47 @@ opacity: 0.35;
 }
 
 /*
+ * @module Coloured labels (badges)
+ * @description Status / priority / severity cells (column `tones`, badge-tones.ts): the text in a
+ *   soft pastel label - calm colours, dark text on a light tint (contrast above 4.5:1). Meaning:
+ *   danger = act now, warning = waiting / in progress, success = done, info = new, neutral =
+ *   closed / nothing to do. The text stays - the colour is only an extra hint.
+ * @usage <span class="table-badge" data-tone="warning">Vysoká</span>
+ */
+.table-badge {
+--badge-bg: #f2f2f0;
+--badge-fg: #57575e;
+--badge-dot: #b4b4ae;
+display: inline-flex;
+align-items: center;
+gap: 6px;
+max-width: 100%;
+padding: 2px 10px 2px 8px;
+border-radius: 999px;
+background: var(--badge-bg);
+color: var(--badge-fg);
+font-size: 0.78rem;
+font-weight: 600;
+line-height: 1.5;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+vertical-align: middle;
+}
+.table-badge::before {
+content: '';
+flex-shrink: 0;
+width: 6px;
+height: 6px;
+border-radius: 50%;
+background: var(--badge-dot);
+}
+.table-badge[data-tone="info"]    { --badge-bg: #edf3fa; --badge-fg: #3d5f85; --badge-dot: #8aaed4; }
+.table-badge[data-tone="success"] { --badge-bg: #edf6ef; --badge-fg: #3d6a4a; --badge-dot: #8cc29b; }
+.table-badge[data-tone="warning"] { --badge-bg: #fbf3e4; --badge-fg: #85581d; --badge-dot: #e0b56e; }
+.table-badge[data-tone="danger"]  { --badge-bg: #fbeeec; --badge-fg: #96413a; --badge-dot: #e29a91; }
+
+/*
  * @module Clickable rows
  * @description Rows that open the record popup (TableBuilderComponent `openOnRowClick`): hand
  *   cursor, the main column underlined while the row is hovered (the "title" of the record),

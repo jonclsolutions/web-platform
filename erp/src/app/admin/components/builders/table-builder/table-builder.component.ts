@@ -52,6 +52,7 @@ import { ImportPopupBuilderComponent } from '../import-popup-builder/import-popu
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { spreadsheetSafe } from '../../../../shared/utils/spreadsheet-safe';
 import { adminDateFormat, adminDateKind } from '../../../shared-date/admin-date-format';
+import { BadgeTone, badgeToneOf } from '../badge-tones';
 const DEFAULT_EXPORT_EXCLUDED_KEYS = [
   'user_password_hash',
   'user_password_salt',
@@ -239,6 +240,18 @@ get importEnumHints(): ImportEnumHint[] {
       this.showBulkMenu = false;
       this.cd.markForCheck();
     }
+  }
+
+  /**
+   * @description Tone of the coloured label of a cell (a column with `tones`), null without one
+   *   (or an empty value). The value is the field `toneKey` when the cell shows its label.
+   * @param item Row.
+   * @param column Column.
+   */
+  badgeTone(item: any, column: ColumnDefinition): BadgeTone | null {
+    if (!column.tones) return null;
+    const value = (column.toneKey ?? column.key).split('.').reduce((obj: any, key) => obj?.[key], item);
+    return badgeToneOf(column.tones, value);
   }
 
   /**

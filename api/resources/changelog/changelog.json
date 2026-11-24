@@ -1,6 +1,12 @@
 {
     "unreleased": [
         {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Tables show status, priority and severity as soft coloured labels: new is blue, waiting or in progress amber, done green, critical or failed red, normal and closed grey. The text stays; details and yes/no columns are unchanged."
+        },
+        {
             "type": "fixed",
             "area": "core",
             "part": "admin",

@@ -10,12 +10,34 @@ import * as Core from '../../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { mapLabeledOptions } from '../../../../admin/components/builders/labeled-options';
 import { RowButton } from '../../../../admin/components/builders/row-button-builder/row-button';
+import { BadgeTones } from '../../../../admin/components/builders/badge-tones';
 
 const SECTION = 'shop-orders';
 
 export const STATUS_VALUES: string[] = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'canceled', 'returned'];
 
 export const PAYMENT_STATUS_VALUES: string[] = ['pending', 'paid', 'failed', 'refunded', 'cod', 'unpaid'];
+
+/** Tones of the order statuses (coloured labels of the table, badge-tones.ts). */
+export const ORDER_STATUS_TONES: BadgeTones = {
+  pending: 'warning',
+  confirmed: 'info',
+  processing: 'info',
+  shipped: 'info',
+  delivered: 'success',
+  canceled: 'neutral',
+  returned: 'neutral',
+};
+
+/** Tones of the payment statuses: waiting = warning, paid = success, failed / unpaid = danger. */
+export const PAYMENT_STATUS_TONES: BadgeTones = {
+  pending: 'warning',
+  paid: 'success',
+  failed: 'danger',
+  refunded: 'neutral',
+  cod: 'info',
+  unpaid: 'danger',
+};
 
 const STATUS_LABEL_KEYS: Record<string, string> = {
   pending: 'status_pending',
@@ -68,8 +90,8 @@ export function createOrderColumns(i18n: AdminLocalizationService): Core.ColumnD
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
     { key: 'order_number', header: i18n.getValue(`${SECTION}.col_order_number`), type: 'text' },
     { key: 'contact.full_name', header: i18n.getValue(`${SECTION}.col_customer`), type: 'text' },
-    { key: 'status_label', header: i18n.getValue(`${SECTION}.col_status`), type: 'text' },
-    { key: 'payment_status_label', header: i18n.getValue(`${SECTION}.col_payment`), type: 'text' },
+    { key: 'status_label', header: i18n.getValue(`${SECTION}.col_status`), type: 'text', tones: ORDER_STATUS_TONES, toneKey: 'status' },
+    { key: 'payment_status_label', header: i18n.getValue(`${SECTION}.col_payment`), type: 'text', tones: PAYMENT_STATUS_TONES, toneKey: 'payment_status' },
     { key: 'final_amount', header: i18n.getValue(`${SECTION}.col_total`), type: 'currency' },
     { key: 'created_at', header: i18n.getValue(`${SECTION}.col_created`), type: 'date', format: 'short' },
   ];

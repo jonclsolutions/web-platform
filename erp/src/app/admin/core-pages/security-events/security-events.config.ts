@@ -14,6 +14,7 @@
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { mapLabeledOptions } from '../../components/builders/labeled-options';
+import { BadgeTones, IMPORTANCE_TONES } from '../../components/builders/badge-tones';
 
 const SECTION = 'security-events';
 
@@ -29,6 +30,14 @@ export const SEVERITY_VALUES: string[] = ['info', 'warning', 'critical'];
 
 /** @description Shared by FORM_FIELDS / FILTER_COLUMNS and the triage modal select of `SecurityEventsComponent`. */
 export const STATUS_VALUES: string[] = ['new', 'reviewed', 'false_positive', 'confirmed_attack'];
+
+/** Tones of the triage states (coloured labels): new waits for a review, a confirmed attack is red. */
+export const STATUS_TONES: BadgeTones = {
+  new: 'warning',
+  reviewed: 'neutral',
+  false_positive: 'neutral',
+  confirmed_attack: 'danger',
+};
 
 const EVENT_TYPE_LABEL_KEYS: Record<string, string> = {
   login_captcha_failed: 'event_login_captcha_failed',
@@ -95,10 +104,10 @@ export function createTableColumns(i18n: AdminLocalizationService): Core.ColumnD
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
     { key: 'last_seen_at', header: i18n.getValue(`${SECTION}.col_last_seen`), type: 'date', format: 'short' },
     { key: 'event_type', header: i18n.getValue(`${SECTION}.col_event_type`), type: 'text', primary: true },
-    { key: 'severity', header: i18n.getValue(`${SECTION}.col_severity`), type: 'text' },
+    { key: 'severity', header: i18n.getValue(`${SECTION}.col_severity`), type: 'text', tones: IMPORTANCE_TONES },
     { key: 'ip_address', header: i18n.getValue(`${SECTION}.col_ip`), type: 'text' },
     { key: 'occurrences', header: i18n.getValue(`${SECTION}.col_occurrences`), type: 'number' },
-    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'text' },
+    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'text', tones: STATUS_TONES },
   ];
 }
 

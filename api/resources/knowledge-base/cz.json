@@ -195,7 +195,11 @@
                   "text": "Jeden řádek = jeden záznam. Dlouhé texty jsou zkrácené, celý obsah uvidíte v detailu záznamu."
                 },
                 {
-                  "title": "Ikony na konci řádku",
+                  "title": "Barevné štítky",
+                  "text": "Stav, priorita a závažnost mají jemný barevný štítek: modrá = nové, oranžová = čeká nebo běží, zelená = hotovo, červená = kritické nebo selhalo, šedá = běžné nebo uzavřené. Text štítku zůstává, barva je jen nápověda; v okně záznamu jsou údaje bez barev."
+                },
+                {
+                  "title": "Otevření záznamu",
                   "text": "Záznam otevřete kliknutím na jeho řádek (při najetí myší se podtrhne jeho hlavní údaj; klávesnicí Tab a Enter). Otevře se jedno okno: s oprávněním k úpravám formulář s údaji, které se nemění (ID, kdy vznikl, poslední změna), nahoře; bez něj jen přehled údajů. Akce záznamu - například Smazat nebo další akce stránky - jsou vlevo dole v okně. Akci bez oprávnění neuvidíte."
                 },
                 {

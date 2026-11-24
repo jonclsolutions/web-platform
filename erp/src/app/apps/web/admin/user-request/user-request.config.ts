@@ -29,6 +29,7 @@
 import * as Core from '../../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { mapLabeledOptions } from '../../../../admin/components/builders/labeled-options';
+import { BadgeTones, IMPORTANCE_TONES } from '../../../../admin/components/builders/badge-tones';
 
 const SECTION = 'user-request';
 
@@ -51,6 +52,14 @@ const PRIORITY_LABEL_KEYS: Record<string, string> = {
   neutral: 'priority_neutral',
   high: 'priority_high',
 };
+/** Tones of the statuses (coloured labels of the table, badge-tones.ts). */
+export const USER_REQUEST_STATUS_TONES: BadgeTones = {
+  new: 'info',
+  in_progress: 'warning',
+  done: 'success',
+  cancelled: 'neutral',
+};
+
 const THEMA_LABEL_KEYS: Record<string, string> = {
   new_project: 'thema_new_project',
   support: 'thema_support',
@@ -159,8 +168,8 @@ export function createUserRequestColumns(i18n: AdminLocalizationService): Core.C
     // Main column of the clickable rows - underlined while the row is hovered.
     { key: 'thema', header: i18n.getValue(`${SECTION}.col_thema`), type: 'text', primary: true },
     { key: 'contact_email', header: i18n.getValue(`${SECTION}.col_email`), type: 'text' },
-    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'text' },
-    { key: 'priority', header: i18n.getValue(`${SECTION}.col_priority`), type: 'text' },
+    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'text', tones: USER_REQUEST_STATUS_TONES },
+    { key: 'priority', header: i18n.getValue(`${SECTION}.col_priority`), type: 'text', tones: IMPORTANCE_TONES },
     { key: 'created_at', header: i18n.getValue(`${SECTION}.col_created`), type: 'date', format: 'short' }
   ];
 }

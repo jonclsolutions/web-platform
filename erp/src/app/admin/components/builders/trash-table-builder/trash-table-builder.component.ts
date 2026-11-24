@@ -36,6 +36,7 @@ import * as Core from '../../../../shared/imports/core-providers';
 import { ButtonBuilderComponent } from '../button-builder/button-builder.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { adminDateFormat, adminDateKind } from '../../../shared-date/admin-date-format';
+import { BadgeTone, badgeToneOf } from '../badge-tones';
 
 /**
  * @description A dedicated table view for displaying soft-deleted records with utility actions
@@ -154,6 +155,18 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * @description Tone of the coloured label of a cell (a column with `tones`, badge-tones.ts),
+   *   null without one or for an empty value - the same labels as in the main table.
+   * @param item Row.
+   * @param column Column.
+   */
+  badgeTone(item: any, column: ColumnDefinition): BadgeTone | null {
+    if (!column.tones) return null;
+    const value = (column.toneKey ?? column.key).split('.').reduce((obj: any, key) => obj?.[key], item);
+    return badgeToneOf(column.tones, value);
   }
 
   /**

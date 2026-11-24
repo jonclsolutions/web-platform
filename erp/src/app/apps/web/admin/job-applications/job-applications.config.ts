@@ -12,10 +12,20 @@
 import * as Core from '../../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { mapLabeledOptions } from '../../../../admin/components/builders/labeled-options';
+import { BadgeTones } from '../../../../admin/components/builders/badge-tones';
 
 const SECTION = 'job-applications';
 
 export const JOB_APPLICATION_STATE_VALUES: string[] = ['new', 'interview', 'selected', 'rejected', 'pool'];
+
+/** Tones of the applicant states (coloured labels of the table, badge-tones.ts). */
+export const JOB_APPLICATION_STATE_TONES: BadgeTones = {
+  new: 'info',
+  interview: 'warning',
+  selected: 'success',
+  rejected: 'neutral',
+  pool: 'neutral',
+};
 
 const STATE_LABEL_KEYS: Record<string, string> = {
   new: 'state_new',
@@ -86,7 +96,7 @@ export function createJobApplicationColumns(i18n: AdminLocalizationService): Cor
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
     { key: 'full_name', header: i18n.getValue(`${SECTION}.col_applicant`), type: 'text' },
     { key: 'position_name', header: i18n.getValue(`${SECTION}.col_position`), type: 'text' },
-    { key: 'state', header: i18n.getValue(`${SECTION}.col_state`), type: 'text' },
+    { key: 'state', header: i18n.getValue(`${SECTION}.col_state`), type: 'text', tones: JOB_APPLICATION_STATE_TONES },
     { key: 'created_at', header: i18n.getValue(`${SECTION}.col_received`), type: 'date', format: 'short' },
   ];
 }

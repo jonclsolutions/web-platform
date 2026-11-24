@@ -14,6 +14,7 @@
 import * as Core from '../../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { mapLabeledOptions } from '../../../../admin/components/builders/labeled-options';
+import { BadgeTones, IMPORTANCE_TONES } from '../../../../admin/components/builders/badge-tones';
 
 const SECTION = 'sales-leads';
 
@@ -24,6 +25,27 @@ export const SALES_LEAD_STATUS_VALUES: string[] = [
 ];
 
 export const SALES_LEAD_PRIORITY_VALUES: string[] = ['low', 'below_average', 'neutral', 'high', 'critical'];
+
+/**
+ * Tones of the lead statuses (coloured labels of the table, badge-tones.ts): new = info, the
+ * running steps of the deal = warning, won / paid = success, on hold / lost / other = neutral.
+ */
+export const SALES_LEAD_STATUS_TONES: BadgeTones = {
+  new: 'info',
+  in_communication: 'warning',
+  preparing_offer: 'warning',
+  offer_sent: 'warning',
+  inquiry_form_sent: 'warning',
+  negotiating: 'warning',
+  on_hold: 'neutral',
+  handed_to_dev_team: 'success',
+  closed_won: 'success',
+  awaiting_invoicing: 'warning',
+  awaiting_payment: 'warning',
+  paid_project_started: 'success',
+  closed_lost: 'neutral',
+  other: 'neutral',
+};
 
 export const SALES_LEAD_SOURCE_CHANNEL_VALUES: string[] = [
   'linkedin_dm', 'linkedin_post', 'facebook_group', 'facebook_dm', 'instagram_dm',
@@ -233,8 +255,8 @@ export function createSalesLeadColumns(i18n: AdminLocalizationService): Core.Col
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
     { key: 'subject_name', header: i18n.getValue(`${SECTION}.col_subject`), type: 'text' },
-    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'text' },
-    { key: 'priority', header: i18n.getValue(`${SECTION}.col_priority`), type: 'text' },
+    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'text', tones: SALES_LEAD_STATUS_TONES },
+    { key: 'priority', header: i18n.getValue(`${SECTION}.col_priority`), type: 'text', tones: IMPORTANCE_TONES },
     { key: 'salesman_name', header: i18n.getValue(`${SECTION}.col_salesman`), type: 'text' },
     { key: 'last_contact_date', header: i18n.getValue(`${SECTION}.col_last_contact`), type: 'date', format: 'd.M.yyyy' },
     { key: 'created_at', header: i18n.getValue(`${SECTION}.col_created`), type: 'date', format: 'd.M.yyyy H:mm' },

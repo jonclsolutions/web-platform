@@ -1,3 +1,4 @@
+import type { BadgeTones } from '../../admin/components/builders/badge-tones';
 /**
  * @file generic-form-column-definiton.ts
  * @path src/app/shared/interfaces/generic-form-column-definiton.ts
@@ -28,4 +29,11 @@ export interface ColumnDefinition {
    * shown column after `id` is the main one.
    */
   primary?: boolean;
+  /**
+   * Coloured label of a status / priority / severity column: value → tone (badge-tones.ts).
+   * The cell shows its text in a soft coloured label; tables only (not the detail).
+   */
+  tones?: BadgeTones;
+  /** Field with the raw value of the tone when the cell shows a label of it (e.g. 'status'). */
+  toneKey?: string;
 }

@@ -58,7 +58,12 @@
 <a [href]="getCellValue(item, col)" target="_blank">{{ getCellValue(item, col) }}</a>
                     }
 @default {
-                      {{ getCellValue(item, col) }}
+                      <!-- A status / priority / severity column: its text in a soft coloured label. -->
+                      @if (badgeTone(item, col); as tone) {
+                        <span class="table-badge" [attr.data-tone]="tone">{{ getCellValue(item, col) }}</span>
+                      } @else {
+                        {{ getCellValue(item, col) }}
+                      }
                     }
                   }
 </td>
