@@ -16,7 +16,7 @@
     <div class="cd-header-side">
       <div class="cd-header-actions">
         @if (d.lastUpdatedAt) {
-          <span class="cd-last-updated">{{ d.t('last_updated_label') }} {{ d.lastUpdatedAt | date:'HH:mm:ss' }}</span>
+          <span class="cd-last-updated">{{ d.t('last_updated_label') }} {{ d.lastUpdatedAt | date:'HH:mm' }}</span>
         }
         <button type="button" class="cd-refresh-btn" (click)="d.refresh()" [disabled]="d.isRefreshing" [title]="d.t('refresh_button_title')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

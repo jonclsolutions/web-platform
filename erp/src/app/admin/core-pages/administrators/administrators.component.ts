@@ -691,6 +691,10 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
             this.authService.setUserEmail(res?.data?.user_email ?? res?.user_email ?? payload.user_email);
             this.authService.endOtherTabs();
           }
+          // Own name edited here: the header shows it at once.
+          if (payload.id && 'full_name' in payload && this.isOwnAccount(payload)) {
+            this.authService.setUserName(res?.data?.full_name ?? payload.full_name);
+          }
           if (!payload.id && res?.meta?.activation_email_sent === false) {
             this.alertDialogService.open(this.t('activation_email_failed_title'), this.t('activation_email_failed'), 'warning');
           } else {

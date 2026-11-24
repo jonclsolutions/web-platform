@@ -111,11 +111,11 @@
                 },
                 {
                   "title": "Your account",
-                  "text": "Profile photo, e-mail and role. Click it to open the account panel: My account, calendar, administration language and Log out."
+                  "text": "Profile photo and your name (the e-mail when no name is filled in). Click it to open the account panel: name, e-mail and role, My account, calendar, administration language and Log out."
                 },
                 {
                   "title": "Clock",
-                  "text": "Current date and time. Handy when working with times in the logs and the calendar."
+                  "text": "Current date and time (hours and minutes). Handy when working with times in the logs and the calendar."
                 },
                 {
                   "title": "Module switcher",
@@ -134,7 +134,7 @@
             {
               "type": "note",
               "highlight": "On a phone or tablet",
-              "content": "The menu opens with the button at the top left and closes with a tap outside it. The module switcher is in the middle of the header. Your profile photo at the top right opens the account panel: e-mail and role, My account, calendar, administration language and Log out. My account and Help are also at the bottom of the menu."
+              "content": "The menu opens with the button at the top left and closes with a tap outside it. The module switcher is in the middle of the header. Your profile photo at the top right opens the account panel: name, e-mail and role, My account, calendar, administration language and Log out. My account and Help are also at the bottom of the menu."
             }
           ]
         },
@@ -1056,7 +1056,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "in the account panel - click your e-mail in the header (on a phone the profile photo at the top right),",
+                "in the account panel - click your name in the header (on a phone the profile photo at the top right),",
                 "with the Calendar item in the Core menu, section Overview."
               ]
             }
@@ -1268,7 +1268,7 @@
             },
             {
               "type": "text",
-              "content": "If the profile cannot be loaded, the message “Failed to load your profile.” is shown - reload the page. Change your details on the My account page (at the bottom of the menu or in the account panel - click your e-mail in the header)."
+              "content": "If the profile cannot be loaded, the message “Failed to load your profile.” is shown - reload the page. Change your details on the My account page (at the bottom of the menu or in the account panel - click your name in the header)."
             }
           ]
         },
@@ -1290,7 +1290,7 @@
               "items": [
                 "The left menu - pages of the Core module.",
                 "The module switcher in the header - website, e-shop, project portal.",
-                "The calendar in the account panel (click your e-mail in the header) - dates and open work.",
+                "The calendar in the account panel (click your name in the header) - dates and open work.",
                 "Help at the bottom of the left menu - this manual."
               ]
             }
@@ -1576,7 +1576,7 @@
             },
             {
               "type": "text",
-              "content": "Open it with the My account item at the bottom of the menu (in every module) or in the account panel - click your e-mail in the header (on a phone the profile photo at the top right). The open tab is in the address of the page, so you can bookmark it."
+              "content": "Open it with the My account item at the bottom of the menu (in every module) or in the account panel - click your name in the header (on a phone the profile photo at the top right). The open tab is in the address of the page, so you can bookmark it."
             }
           ]
         },
@@ -1653,7 +1653,7 @@
                 },
                 {
                   "label": "After changing the e-mail",
-                  "text": "The other sign-ins of your account end and the old and the new address receive a notice. The new e-mail shows in the header at once; next time you sign in with the new e-mail.",
+                  "text": "The other sign-ins of your account end and the old and the new address receive a notice. The new e-mail shows in the account panel at once (in the header when no name is filled in); next time you sign in with the new e-mail.",
                   "active": false
                 }
               ]

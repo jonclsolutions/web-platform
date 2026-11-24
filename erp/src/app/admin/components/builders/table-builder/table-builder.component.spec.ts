@@ -815,6 +815,20 @@ describe('TableBuilderComponent', () => {
 
   describe('one-row footer', () => {
     /**
+     * @description The time of the last update shows hours and minutes only (no seconds), like
+     *   the clock of the header.
+     * @input  lastUpdatedAt 2026-11-25 09:05:42
+     * @output '09:05' in .table-last-updated, no ':42'
+     */
+    it('shows the update time without seconds', () => {
+      fixture.componentRef.setInput('lastUpdatedAt', new Date(2026, 10, 25, 9, 5, 42));
+      fixture.detectChanges();
+      const text = (fixture.nativeElement as HTMLElement).querySelector('.table-last-updated')!.textContent!;
+      expect(text).toContain('09:05');
+      expect(text).not.toContain(':42');
+    });
+
+    /**
      * @description The footer is one row: the freshness on the left, the page's footer template
      *   (paging) on the right; the full-width checkbox became an icon toggle with aria-pressed.
      * @input  footer template with a marker; click on the width toggle

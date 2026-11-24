@@ -634,6 +634,28 @@ describe('AuthService', () => {
     });
 
     /**
+     * @description The header name: from the session answer (trimmed; empty = none), changed at
+     *   once by setUserName, cleared by the logout.
+     * @input Session with full_name ' Jan Novák '; setUserName('Petr'); setUserName('  '); logIn
+     *   without a name; clearAuthData.
+     * @output 'Jan Novák'; 'Petr'; null; null; null after the logout.
+     */
+    it('keeps the display name of the session', () => {
+      const names: (string | null)[] = [];
+      service.userName$.subscribe(n => names.push(n));
+      (service as any).startSession(session({ user: { id: 42, user_email: 'a@b.cz', full_name: ' Jan Novák ' } }));
+      expect(service.getUserName()).toBe('Jan Novák');
+      service.setUserName('Petr');
+      expect(names[names.length - 1]).toBe('Petr');
+      service.setUserName('  ');
+      expect(service.getUserName()).toBeNull();
+      (service as any).startSession(session());
+      expect(service.getUserName()).toBeNull();
+      service.clearAuthData();
+      expect(names[names.length - 1]).toBeNull();
+    });
+
+    /**
      * @description A failed refresh ends the session of the tab and passes the error on.
      * @input Logged in; refresh answers 401.
      * @output Error to the subscriber; no token; permissions cleared; tab marked ended (slot ''); the

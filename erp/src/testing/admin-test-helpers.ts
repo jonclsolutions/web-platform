@@ -101,6 +101,7 @@ export function createPermissionStub(granted: string[] | 'all' = 'all'): Permiss
 export interface AuthStub {
   isLoggedIn$: BehaviorSubject<boolean>;
   userEmail$: BehaviorSubject<string | null>;
+  userName$: BehaviorSubject<string | null>;
   avatarUrl$: BehaviorSubject<string | null>;
   session: { userId: string | null; email: string | null; role: string | null; permissions: string[] };
   getUserId: jasmine.Spy; getUserEmail: jasmine.Spy; getUserRole: jasmine.Spy; getUserPermissions: jasmine.Spy;
@@ -108,6 +109,7 @@ export interface AuthStub {
   resendTwoFactor: jasmine.Spy; requestPasswordReset: jasmine.Spy; resetPassword: jasmine.Spy;
   checkAuth: jasmine.Spy; clearAuthData: jasmine.Spy; setAvatarUrl: jasmine.Spy;
   rememberedAccounts: jasmine.Spy; resumeAccount: jasmine.Spy; getAvatarUrl: jasmine.Spy; setUserEmail: jasmine.Spy; endOtherTabs: jasmine.Spy;
+  setUserName: jasmine.Spy;
 }
 
 /**
@@ -121,6 +123,7 @@ export function createAuthStub(loggedIn = true): AuthStub {
   return {
     isLoggedIn$: new BehaviorSubject<boolean>(loggedIn),
     userEmail$: new BehaviorSubject<string | null>(session.email),
+    userName$: new BehaviorSubject<string | null>(null),
     avatarUrl$,
     session,
     getUserId: jasmine.createSpy('getUserId').and.callFake(() => session.userId),
@@ -142,6 +145,7 @@ export function createAuthStub(loggedIn = true): AuthStub {
     getAvatarUrl: jasmine.createSpy('getAvatarUrl').and.callFake(() => avatarUrl$.value),
     setUserEmail: jasmine.createSpy('setUserEmail'),
     endOtherTabs: jasmine.createSpy('endOtherTabs'),
+    setUserName: jasmine.createSpy('setUserName'),
   };
 }
 

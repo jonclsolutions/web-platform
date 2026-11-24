@@ -111,11 +111,11 @@
                 },
                 {
                   "title": "Váš účet",
-                  "text": "Profilová fotka, e-mail a role. Kliknutím otevřete panel účtu: Můj účet, kalendář, jazyk administrace a Odhlásit se."
+                  "text": "Profilová fotka a vaše jméno (bez vyplněného jména e-mail). Kliknutím otevřete panel účtu: jméno, e-mail a role, Můj účet, kalendář, jazyk administrace a Odhlásit se."
                 },
                 {
                   "title": "Hodiny",
-                  "text": "Aktuální datum a čas. Hodí se při práci s časy v logech a v kalendáři."
+                  "text": "Aktuální datum a čas (hodiny a minuty). Hodí se při práci s časy v logech a v kalendáři."
                 },
                 {
                   "title": "Přepínač modulů",
@@ -134,7 +134,7 @@
             {
               "type": "note",
               "highlight": "Na mobilu a tabletu",
-              "content": "Menu se otevírá tlačítkem vlevo nahoře a zavře se klepnutím mimo něj. Uprostřed hlavičky je přepínač modulů. Vaše profilová fotka vpravo nahoře otevře panel účtu: e-mail a role, Můj účet, kalendář, jazyk administrace a Odhlásit se. Můj účet a Nápověda jsou i dole v menu."
+              "content": "Menu se otevírá tlačítkem vlevo nahoře a zavře se klepnutím mimo něj. Uprostřed hlavičky je přepínač modulů. Vaše profilová fotka vpravo nahoře otevře panel účtu: jméno, e-mail a role, Můj účet, kalendář, jazyk administrace a Odhlásit se. Můj účet a Nápověda jsou i dole v menu."
             }
           ]
         },
@@ -1056,7 +1056,7 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "v panelu účtu - klikněte na svůj e-mail v hlavičce (na mobilu na profilovou fotku vpravo nahoře),",
+                "v panelu účtu - klikněte na své jméno v hlavičce (na mobilu na profilovou fotku vpravo nahoře),",
                 "položkou Kalendář v menu Core, sekce Přehled."
               ]
             }
@@ -1268,7 +1268,7 @@
             },
             {
               "type": "text",
-              "content": "Pokud se profil nepodaří načíst, zobrazí se hláška „Nepodařilo se načíst váš profil.“ - obnovte stránku. Údaje upravíte na stránce Můj účet (dole v menu nebo v panelu účtu po kliknutí na svůj e-mail v hlavičce)."
+              "content": "Pokud se profil nepodaří načíst, zobrazí se hláška „Nepodařilo se načíst váš profil.“ - obnovte stránku. Údaje upravíte na stránce Můj účet (dole v menu nebo v panelu účtu po kliknutí na své jméno v hlavičce)."
             }
           ]
         },
@@ -1290,7 +1290,7 @@
               "items": [
                 "Levé menu - stránky modulu Core.",
                 "Přepínač modulů v hlavičce - web, e-shop, projektový portál.",
-                "Kalendář v panelu účtu (klikněte na svůj e-mail v hlavičce) - termíny a nevyřízená práce.",
+                "Kalendář v panelu účtu (klikněte na své jméno v hlavičce) - termíny a nevyřízená práce.",
                 "Nápověda dole v levém menu - tento manuál."
               ]
             }
@@ -1576,7 +1576,7 @@
             },
             {
               "type": "text",
-              "content": "Otevřete ji položkou Můj účet dole v menu (v každém modulu) nebo v panelu účtu - klikněte na svůj e-mail v hlavičce (na mobilu na profilovou fotku vpravo nahoře). Otevřená záložka je v adrese stránky, takže ji můžete uložit do záložek prohlížeče."
+              "content": "Otevřete ji položkou Můj účet dole v menu (v každém modulu) nebo v panelu účtu - klikněte na své jméno v hlavičce (na mobilu na profilovou fotku vpravo nahoře). Otevřená záložka je v adrese stránky, takže ji můžete uložit do záložek prohlížeče."
             }
           ]
         },
@@ -1653,7 +1653,7 @@
                 },
                 {
                   "label": "Po změně e-mailu",
-                  "text": "Ostatní přihlášení vašeho účtu se ukončí a na starou i novou adresu přijde upozornění. Nový e-mail se ihned zobrazí v hlavičce; příště se přihlašujete novým e-mailem.",
+                  "text": "Ostatní přihlášení vašeho účtu se ukončí a na starou i novou adresu přijde upozornění. Nový e-mail se ihned zobrazí v panelu účtu (v hlavičce, pokud nemáte vyplněné jméno); příště se přihlašujete novým e-mailem.",
                   "active": false
                 }
               ]

@@ -1,6 +1,18 @@
 {
     "unreleased": [
         {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Update times (“Updated at” under tables, dashboards, application checks) show hours and minutes without seconds, like the header clock. Log out in the account panel has rounded corners like the other items."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Header: your name instead of the e-mail (the e-mail when no name is set), no role badge and a clock without seconds. Name, e-mail and role are in the account panel; a changed own name shows at once."
+        },
+        {
             "type": "changed",
             "area": "core",
             "part": "admin",

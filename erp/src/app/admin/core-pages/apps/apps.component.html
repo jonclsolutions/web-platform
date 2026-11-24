@@ -65,7 +65,7 @@
       }
     </div>
     @if (status.statuses()?.length) {
-      <p class="apps-checked">{{ strings.checked_at }} {{ status.statuses()![0].checked_at | date:'HH:mm:ss' }}</p>
+      <p class="apps-checked">{{ strings.checked_at }} {{ status.statuses()![0].checked_at | date:'HH:mm' }}</p>
     }
   } @else {
     <div class="apps-empty">{{ strings.empty }}</div>

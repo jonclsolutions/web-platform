@@ -38,7 +38,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef, ElementRef, HostListen
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Subscription, interval, Observable, filter } from 'rxjs';
-import { map, startWith } from 'rxjs/operators';
+import { distinctUntilChanged, map, startWith } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PermissionService } from '../../../core/auth/services/permission.service';
 import { LoadingService } from '../../../core/services/loading.service';
@@ -78,6 +78,8 @@ export const NAV_COLLAPSED_STORAGE_KEY = 'jsw_admin_nav_collapsed';
 })
 export class AdminLayoutComponent implements OnInit, OnDestroy {
   userEmail: string | null = null;
+  /** Display name of the own account (null = none set). */
+  userName: string | null = null;
   /** Signed URL of the own profile photo (null = the default image). */
   avatarUrl: string | null = null;
   userRole: string | null = null;
@@ -91,10 +93,20 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   isLoadingGlobal$: Observable<boolean>;
 
+  /**
+   * Clock of the header: hours and minutes (no seconds, 2026-11) - checked every second, but
+   * emitted only when the minute changes, so the header re-renders once a minute.
+   */
   currentDate$: Observable<Date> = interval(1000).pipe(
     startWith(0),
-    map(() => new Date())
+    map(() => new Date()),
+    distinctUntilChanged((a, b) => Math.floor(a.getTime() / 60000) === Math.floor(b.getTime() / 60000))
   );
+
+  /** Name shown on the own account button: the name, the e-mail when the account has none. */
+  get displayName(): string | null {
+    return this.userName || this.userEmail;
+  }
 
   isMenuOpen: boolean = true;
   sidebarWidth: number = 200;
@@ -188,6 +200,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   private authSubscription: Subscription | undefined;
   private userEmailSubscription: Subscription | undefined;
   private avatarSubscription: Subscription | undefined;
+  private userNameSubscription: Subscription | undefined;
   private routerSubscription: Subscription | undefined;
   /** Re-render on admin language change. */
   private i18nSubscription: Subscription | undefined;
@@ -261,6 +274,11 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
     this.userEmailSubscription = this.authService.userEmail$.subscribe(email => {
       this.userEmail = email;
+      this.cdr.markForCheck();
+    });
+
+    this.userNameSubscription = this.authService.userName$.subscribe(name => {
+      this.userName = name;
       this.cdr.markForCheck();
     });
 
@@ -706,6 +724,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.authSubscription?.unsubscribe();
     this.userEmailSubscription?.unsubscribe();
     this.avatarSubscription?.unsubscribe();
+    this.userNameSubscription?.unsubscribe();
     this.routerSubscription?.unsubscribe();
     this.i18nSubscription?.unsubscribe();
     this.confirmDialog.setDefaultLabels(null);  // leaving the admin: no admin labels on the public web

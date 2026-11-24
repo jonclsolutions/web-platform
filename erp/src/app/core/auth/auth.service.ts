@@ -91,7 +91,7 @@ export interface AuthSessionResponse {
   /** Slot of the account's refresh cookie - this tab sends it with every refresh. */
   session_slot?: string;
   token: string;
-  user: { id?: number | string; user_login_id?: number | string; user_email: string; avatar_url?: string | null };
+  user: { id?: number | string; user_login_id?: number | string; user_email: string; full_name?: string | null; avatar_url?: string | null };
   user_roles?: string[];
   user_permissions?: string[];
   /** "Remember me" of the login (also on every refresh) - where the session hint is kept. */
@@ -103,6 +103,8 @@ interface SessionState {
   accessToken: string;
   userId: string;
   email: string;
+  /** Display name (null when the account has none - the header then shows the e-mail). */
+  fullName: string | null;
   role: string | null;
   permissions: string[];
 }
@@ -167,6 +169,10 @@ export class AuthService implements OnDestroy {
 
   private _userEmailSubject = new BehaviorSubject<string | null>(null);
   public userEmail$ = this._userEmailSubject.asObservable();
+
+  /** Display name of the signed-in user (null = none set) - shown in the admin header. */
+  private _userNameSubject = new BehaviorSubject<string | null>(null);
+  public userName$ = this._userNameSubject.pipe(distinctUntilChanged());
 
   /** Signed URL of the own profile photo (null = the default image) - shown in the admin header. */
   private _avatarUrlSubject = new BehaviorSubject<string | null>(null);
@@ -439,12 +445,14 @@ export class AuthService implements OnDestroy {
     this.resourceCache.clear();
     this._isLoggedIn.next(false);
     this._userEmailSubject.next(null);
+    this._userNameSubject.next(null);
     this._avatarUrlSubject.next(null);
     this.stopTokenRefreshTimer();
   }
 
   public getUserId(): string | null { return this.session?.userId ?? null; }
   public getUserEmail(): string | null { return this.session?.email ?? null; }
+  public getUserName(): string | null { return this.session?.fullName ?? null; }
   public getUserRole(): string | null { return this.session?.role ?? null; }
   public getAccessToken(): string | null { return this.session?.accessToken ?? null; }
   /** Signed URL of the own profile photo (null = the default image). */
@@ -467,6 +475,18 @@ export class AuthService implements OnDestroy {
     if (!this.session) return;
     this.session = { ...this.session, email };
     this._userEmailSubject.next(email);
+  }
+
+  /**
+   * @description Shows a changed own display name at once (header) - the next refresh brings
+   *   the same value.
+   * @param name New name (empty = none, the header falls back to the e-mail).
+   */
+  public setUserName(name: string | null): void {
+    if (!this.session) return;
+    const fullName = name?.trim() || null;
+    this.session = { ...this.session, fullName };
+    this._userNameSubject.next(fullName);
   }
 
   public getUserPermissions(): string[] {
@@ -510,6 +530,7 @@ export class AuthService implements OnDestroy {
       accessToken: response.token,
       userId,
       email: response.user.user_email,
+      fullName: response.user.full_name?.trim() || null,
       role: response.user_roles?.length ? response.user_roles[0] : null,
       permissions,
     };
@@ -527,6 +548,7 @@ export class AuthService implements OnDestroy {
     this.genericTableService.setCurrentUser(userId);
 
     this._userEmailSubject.next(this.session.email);
+    this._userNameSubject.next(this.session.fullName);
     this._avatarUrlSubject.next(response.user.avatar_url ?? null);
     this._isLoggedIn.next(true);
     this.startTokenRefreshTimer();

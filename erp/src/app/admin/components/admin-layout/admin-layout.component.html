@@ -5,7 +5,8 @@
     @author: JS
     @created: 2025
     @description: Template of the admin layout component: header (sidebar toggle, own account
-      button, clock, ONE module switcher), the account panel (my account, calendar, language of
+      button - photo and name, the e-mail when there is no name; clock without seconds; ONE module
+      switcher), the account panel (my account, calendar, language of
       the administration, sign-out), sidebar of the module with my account, the manual and
       sign-out at its bottom, page area.
 -->
@@ -33,15 +34,13 @@
 
     <div class="header-sep" aria-hidden="true"></div>
 
-    <!-- Desktop: the own account (photo, e-mail, role) opens the account panel - my account,
-         calendar, language of the administration, sign-out (on a phone the avatar on the right). -->
+    <!-- Desktop: the own account (photo and name - the e-mail when the account has no name)
+         opens the account panel with the e-mail and the role - my account, calendar, language of
+         the administration, sign-out (on a phone the avatar on the right). -->
     <button type="button" class="header-user" (click)="toggleAccountPanel()" aria-haspopup="dialog"
             [attr.aria-expanded]="isAccountPanelOpen" [title]="strings.account_panel_aria">
       <app-user-avatar class="header-user-avatar" [src]="isLoggedIn ? avatarUrl : null" [size]="30"></app-user-avatar>
-      <span class="header-user-email user-text-truncate">{{ isLoggedIn ? userEmail : strings.not_logged_in }}</span>
-      @if (isLoggedIn && userRole) {
-        <span class="header-role-badge">{{ userRole }}</span>
-      }
+      <span class="header-user-name user-text-truncate">{{ isLoggedIn ? displayName : strings.not_logged_in }}</span>
       <app-admin-icon class="header-user-chevron" name="chevron-down" [size]="11" />
     </button>
 
@@ -50,7 +49,7 @@
         <circle cx="12" cy="12" r="10"/>
         <polyline points="12 6 12 12 16 14"/>
       </svg>
-      {{ currentDate$ | async | date:strings.datetime_seconds_format:undefined:dateLocale }}
+      {{ currentDate$ | async | date:strings.datetime_format:undefined:dateLocale }}
     </div>
   </div>
 
@@ -126,7 +125,10 @@
     <div class="ap-user">
       <app-user-avatar class="ap-user-icon" [src]="isLoggedIn ? avatarUrl : null" [size]="36"></app-user-avatar>
       <div class="ap-user-info">
-        <span class="ap-user-email">{{ isLoggedIn ? userEmail : strings.not_logged_in }}</span>
+        @if (isLoggedIn && userName) {
+          <span class="ap-user-name">{{ userName }}</span>
+        }
+        <span class="ap-user-email" [class.is-primary]="!(isLoggedIn && userName)">{{ isLoggedIn ? userEmail : strings.not_logged_in }}</span>
         @if (isLoggedIn && userRole) {
           <span class="ap-role-badge">{{ userRole }}</span>
         }

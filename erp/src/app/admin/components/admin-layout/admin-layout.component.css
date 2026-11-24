@@ -158,28 +158,14 @@
   flex-shrink: 0;
 }
 
-.header-user-email {
+.header-user-name {
   font-size: 0.86rem;
   color: var(--text);
   font-weight: 500;
-  max-width: 160px;
+  max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.header-role-badge {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  background: var(--accent-dim);
-  color: var(--text);
-  padding: 3px 9px;
-  border-radius: 999px;
-  border: 1px solid var(--accent-dim-2);
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .header-clock {
@@ -400,13 +386,28 @@
   min-width: 0;
 }
 
-.ap-user-email {
-  font-size: 0.85rem;
+.ap-user-name {
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Under the name: the e-mail smaller and muted; without a name it is the main line. */
+.ap-user-email {
+  font-size: 0.8rem;
+  color: var(--text-muted, var(--color-zinc-500));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ap-user-email.is-primary {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .ap-role-badge {
@@ -489,16 +490,21 @@
   flex-shrink: 0;
 }
 
-/* Sign-out at the end of the account panel (also at the bottom of the menu). */
+/*
+ * Sign-out at the end of the account panel (also at the bottom of the menu). Rounded like the
+ * other items of the panel; the separating line above it is a pseudo-element, so the rounded
+ * hover background does not bend it.
+ */
 .ap-logout {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 9px;
   width: 100%;
+  margin-top: 9px;
   padding: 9px 6px;
   border: none;
-  border-top: 1px solid var(--border);
-  border-radius: 0;
+  border-radius: var(--radius);
   background: none;
   color: var(--error);
   font-family: var(--ff);
@@ -506,6 +512,16 @@
   font-weight: 600;
   text-align: left;
   cursor: pointer;
+}
+
+.ap-logout::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -6px;
+  height: 1px;
+  background: var(--border);
 }
 
 .ap-logout:hover { background: var(--error-dim); }

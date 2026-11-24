@@ -14,7 +14,7 @@
  * - src/testing/admin-test-helpers.ts (auth, permission, i18n stubs), ScrollLockService (spy)
  */
 
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { throwError } from 'rxjs';
 
@@ -61,6 +61,42 @@ describe('AdminLayoutComponent', () => {
     expect(component.userRole).toBe('admin');
     expect(component.userEmail).toBe('admin@example.test');
   });
+
+  /**
+   * @description The account button shows the name (the e-mail without one), never the role;
+   *   the account panel shows the name, the e-mail and the role. The clock has no seconds and
+   *   emits once a minute.
+   * @input  no name; then name 'Jan Novák'; open the account panel; clock over 2 min
+   * @output button 'admin@example.test', no role badge; button 'Jan Novák'; panel name + e-mail +
+   *   role 'admin'; clock format shared.datetime_format; 3 clock values (start + 2 minutes)
+   */
+  it('shows the name instead of the e-mail and no role in the header', fakeAsync(() => {
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const button = () => el.querySelector('button.header-user') as HTMLButtonElement;
+    expect(button().textContent).toContain('admin@example.test');
+    expect(button().textContent).not.toContain('admin ');
+    expect(el.querySelector('.header-role-badge')).toBeNull();
+
+    ctx.auth.userName$.next('Jan Novák');
+    fixture.detectChanges();
+    expect(button().querySelector('.header-user-name')!.textContent!.trim()).toBe('Jan Novák');
+    expect(button().textContent).not.toContain('admin@example.test');
+
+    button().click();
+    fixture.detectChanges();
+    expect(el.querySelector('.account-panel .ap-user-name')!.textContent!.trim()).toBe('Jan Novák');
+    expect(el.querySelector('.account-panel .ap-user-email')!.textContent!.trim()).toBe('admin@example.test');
+    expect(el.querySelector('.account-panel .ap-role-badge')!.textContent!.trim()).toBe('admin');
+
+    const ticks: Date[] = [];
+    const sub = component.currentDate$.subscribe(d => ticks.push(d));
+    tick(120_000);
+    sub.unsubscribe();
+    expect(ticks.length).toBeGreaterThanOrEqual(2);
+    expect(ticks.length).toBeLessThanOrEqual(3);
+    discardPeriodicTasks();
+  }));
 
   /**
    * @description Sidebar width, open state and module are restored from localStorage (desktop).

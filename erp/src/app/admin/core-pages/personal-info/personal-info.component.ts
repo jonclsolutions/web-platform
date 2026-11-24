@@ -306,6 +306,8 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
             this.authService.endOtherTabs();
             this.alertDialogService.open(this.t('email_change_success_title'), this.t('email_change_success_message'), 'success');
           } else {
+            // The header shows the new name at once.
+            this.authService.setUserName(saved);
             this.alertDialogService.open(this.t('name_change_success_title'), this.t('name_change_success_message'), 'success');
           }
           this.cd.markForCheck();
