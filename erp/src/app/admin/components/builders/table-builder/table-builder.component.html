@@ -9,10 +9,9 @@
     the rows open the record popup (no row button columns, main column underlined on hover).
 -->
 
-@if (selectedIds.size > 0) {
-  <div class="bulk-actions-bar">
-    <span class="bulk-actions-count">{{ bulkCountLabel }}</span>
-
+<!-- The dropdown of the bulk actions - in the bar above the table and, on a phone, in the one
+     row of the selection mode of the cards. -->
+<ng-template #bulkDropdown>
     <div class="bulk-actions-dropdown" (click)="$event.stopPropagation()">
       <button type="button" class="bulk-actions-btn" [disabled]="bulkDeleting" (click)="toggleBulkMenu()">
         {{ bulkDeleting ? strings.bulk_deleting_label : strings.bulk_actions_label }}
@@ -43,11 +42,96 @@
         </div>
       }
     </div>
+</ng-template>
+
+@if (selectedIds.size > 0 && !showCards) {
+  <div class="bulk-actions-bar">
+    <span class="bulk-actions-count">{{ bulkCountLabel }}</span>
+
+    <ng-container [ngTemplateOutlet]="bulkDropdown"></ng-container>
 
     <button type="button" class="bulk-actions-clear" (click)="clearSelection()">{{ strings.clear_selection }}</button>
   </div>
 }
 
+<!-- Phone (`mobileCards`, ≤ 640px): compact cards instead of the table - title and date, the
+     coloured labels and up to 2 short values; a tap opens the record. "Vybrat" above the cards
+     switches the selection mode (a tap then selects for the bulk actions). -->
+@if (showCards) {
+  @if (canBulkSelect && data && data.length > 0) {
+    <div class="table-cards-bar">
+      <!-- Selection mode in ONE row: all on the page + the count, the bulk actions, Hotovo. -->
+      @if (selectMode) {
+        <label class="table-cards-all">
+          <input type="checkbox" [checked]="isAllOnPageSelected" [indeterminate]="isSomeOnPageSelected"
+                 (change)="toggleSelectAllOnPage($event)" [attr.aria-label]="strings.cards_select_all">
+          <span aria-live="polite">{{ selectedIds.size > 0 ? bulkCountLabel : strings.cards_select_all }}</span>
+        </label>
+        @if (selectedIds.size > 0) {
+          <ng-container [ngTemplateOutlet]="bulkDropdown"></ng-container>
+        }
+      }
+      <button type="button" class="table-cards-select-btn" [class.is-on]="selectMode" [attr.aria-pressed]="selectMode"
+              [attr.title]="selectMode ? null : strings.cards_select_hint" (click)="toggleSelectMode()">
+        {{ selectMode ? strings.cards_select_done : strings.cards_select }}
+      </button>
+    </div>
+  }
+  @if (data && data.length > 0) {
+    <ul class="table-cards" [attr.aria-label]="tableCaption || null">
+      @for (item of data; track item) {
+        <li>
+          <div class="table-card" tabindex="0"
+               [attr.role]="selectMode ? 'checkbox' : 'button'"
+               [attr.aria-checked]="selectMode ? isSelected(item.id) : null"
+               [attr.aria-disabled]="selectMode && isSelectionDisabled(item) ? true : null"
+               [class.is-selecting]="selectMode" [class.is-selected]="isSelected(item.id)"
+               (click)="onCardClick(item)" (keydown)="onCardKeydown($event, item)">
+            @if (selectMode) {
+              <span class="table-card-check" aria-hidden="true"></span>
+            }
+            @if (cardLayout.thumb; as thumb) {
+              <span class="table-card-thumb">
+                @if (thumb.type === 'avatar') {
+                  <app-user-avatar [src]="getCellValue(item, thumb)" [size]="32"></app-user-avatar>
+                } @else if (getCellValue(item, thumb)) {
+                  <img [src]="getCellValue(item, thumb)" alt="" loading="lazy">
+                }
+              </span>
+            }
+            <span class="table-card-body">
+              <span class="table-card-head">
+                <span class="table-card-title">{{ cardTitle(item) }}</span>
+                @if (cardLayout.date; as dateCol) {
+                  <span class="table-card-date">{{ getCellValue(item, dateCol) }}</span>
+                }
+              </span>
+              <span class="table-card-line">
+                @for (col of cardLayout.badges; track col.key) {
+                  @if (badgeTone(item, col); as tone) {
+                    <span class="table-badge" [attr.data-tone]="tone">{{ getCellValue(item, col) }}</span>
+                  }
+                }
+                @for (col of cardLayout.meta; track col.key) {
+                  @if (getCellValue(item, col) !== '' && getCellValue(item, col) !== null && getCellValue(item, col) !== undefined) {
+                    <span class="table-card-meta">
+                      @if (cardMetaNeedsLabel(col)) {
+                        <span class="table-card-meta-label">{{ col.header }}:</span>
+                      }
+                      {{ getCellValue(item, col) }}
+                    </span>
+                  }
+                }
+              </span>
+            </span>
+          </div>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="table-cards-empty">{{ strings.no_data }}</p>
+  }
+} @else {
 <div class="table-responsive">
 <table [class.fit-content-table]="!isFullWidth">
 @if (tableCaption) {
@@ -173,6 +257,7 @@
 </tbody>
 </table>
 </div>
+}
 
 <!-- Footer in one row: data freshness and the width of the view on the left, the count of the
      records and the paging (the page's `footer` template) on the right. -->

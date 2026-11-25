@@ -297,7 +297,11 @@
 
   "export_no_data_title": "Export",
   "export_no_data_message": "K exportu nejsou dostupná žádná data.",
-  "export_error_message": "Při exportu došlo k chybě."
+  "export_error_message": "Při exportu došlo k chybě.",
+  "cards_select": "Vybrat",
+  "cards_select_done": "Hotovo",
+  "cards_select_all": "Vše na stránce",
+  "cards_select_hint": "Klepnutím vyberete záznamy pro hromadné akce"
 
 },
 "edit-legal": {

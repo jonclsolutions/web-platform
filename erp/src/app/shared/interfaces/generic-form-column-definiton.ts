@@ -36,4 +36,10 @@ export interface ColumnDefinition {
   tones?: BadgeTones;
   /** Field with the raw value of the tone when the cell shows a label of it (e.g. 'status'). */
   toneKey?: string;
+  /**
+   * Place on the phone card (`mobileCards` of the table builder): 'title' = the heading of the
+   * card, 'meta' = always one of its short values, false = never on the card. Unset = chosen
+   * automatically (the main column is the title, coloured labels, the first date, up to 2 values).
+   */
+  mobile?: 'title' | 'meta' | false;
 }

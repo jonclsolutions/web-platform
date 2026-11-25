@@ -158,6 +158,209 @@ cursor: not-allowed;
 }
 
 /*
+ * @module Phone cards (`mobileCards`)
+ * @description On a phone the rows are compact cards (2 lines): the title and the date, below
+ *   the coloured labels and up to 2 short values. A tap opens the record; in the selection mode
+ *   ("Vybrat") a tap selects - a round check on the left shows it.
+ */
+.table-cards-bar {
+/* The font of the card texts - the buttons and the label of the bar must not fall back to the
+   browser's default font. */
+font-family: 'Source Sans Pro', sans-serif;
+}
+
+.table-cards-bar {
+display: flex;
+align-items: center;
+justify-content: flex-end;
+gap: 8px;
+min-height: 28px;
+margin-bottom: 6px;
+}
+
+/* The bulk actions of the selection mode sit next to Hotovo. */
+.table-cards-bar .bulk-actions-dropdown { margin-left: 0; }
+
+.table-cards-all {
+display: inline-flex;
+align-items: center;
+gap: 8px;
+margin-right: auto;
+min-width: 0;
+white-space: nowrap;
+font-size: 0.82rem;
+font-weight: 500;
+color: var(--text, var(--color-zinc-900));
+}
+
+.table-cards-all input {
+width: 16px;
+height: 16px;
+margin: 0;
+accent-color: var(--color-zinc-900);
+}
+
+.table-cards-select-btn {
+flex-shrink: 0;
+height: 28px;
+padding: 0 13px;
+border: 1px solid var(--border-mid, var(--color-sand-300));
+border-radius: 999px;
+background: var(--surface, var(--color-white));
+color: var(--text, var(--color-zinc-900));
+font: inherit;
+font-size: 0.8rem;
+font-weight: 600;
+cursor: pointer;
+}
+
+.table-cards-select-btn.is-on {
+background: var(--color-zinc-900);
+border-color: var(--color-zinc-900);
+color: var(--color-white);
+}
+
+.table-cards {
+list-style: none;
+margin: 0;
+padding: 0;
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+
+.table-card {
+display: flex;
+align-items: center;
+gap: 10px;
+padding: 9px 12px;
+border: 1px solid var(--border, var(--color-sand-200));
+border-radius: 12px;
+background: var(--surface, var(--color-white));
+cursor: pointer;
+-webkit-tap-highlight-color: transparent;
+transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.table-card:active { background: var(--surface-2, var(--color-zinc-50)); }
+
+.table-card:focus-visible {
+outline: 2px solid var(--color-zinc-900);
+outline-offset: 2px;
+}
+
+.table-card.is-selected {
+border-color: var(--color-zinc-900);
+background: var(--surface-2, var(--color-zinc-50));
+}
+
+.table-card[aria-disabled="true"] {
+opacity: 0.5;
+cursor: not-allowed;
+}
+
+/* Round check of the selection mode. */
+.table-card-check {
+flex-shrink: 0;
+width: 18px;
+height: 18px;
+border: 1.5px solid var(--border-mid, var(--color-sand-300));
+border-radius: 50%;
+}
+
+.table-card.is-selected .table-card-check {
+border-color: var(--color-zinc-900);
+background: var(--color-zinc-900) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center / 11px no-repeat;
+}
+
+.table-card-thumb {
+flex-shrink: 0;
+display: flex;
+width: 36px;
+height: 36px;
+align-items: center;
+justify-content: center;
+border-radius: 8px;
+overflow: hidden;
+background: var(--surface-2, var(--color-zinc-50));
+}
+
+.table-card-thumb img {
+width: 100%;
+height: 100%;
+object-fit: cover;
+}
+
+.table-card-body {
+flex: 1 1 auto;
+min-width: 0;
+display: flex;
+flex-direction: column;
+gap: 4px;
+}
+
+.table-card-head {
+display: flex;
+align-items: baseline;
+gap: 10px;
+min-width: 0;
+}
+
+.table-card-title {
+flex: 1 1 auto;
+min-width: 0;
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+font-size: 0.9rem;
+font-weight: 600;
+color: var(--text, var(--color-zinc-900));
+}
+
+.table-card-date {
+flex-shrink: 0;
+font-size: 0.74rem;
+color: var(--text-dim, var(--color-zinc-400));
+font-variant-numeric: tabular-nums;
+white-space: nowrap;
+}
+
+.table-card-line {
+display: flex;
+flex-wrap: wrap;
+align-items: center;
+gap: 4px 8px;
+min-width: 0;
+}
+
+.table-card-line:empty { display: none; }
+
+.table-card-line .table-badge {
+font-size: 0.72rem;
+padding: 1px 8px 1px 7px;
+}
+
+.table-card-meta {
+min-width: 0;
+max-width: 100%;
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+font-size: 0.8rem;
+color: var(--text-muted, var(--color-zinc-500));
+}
+
+.table-card-meta-label { color: var(--text-dim, var(--color-zinc-400)); }
+
+.table-cards-empty {
+margin: 0;
+padding: 24px 12px;
+text-align: center;
+font-size: 0.85rem;
+color: var(--text-dim, var(--color-zinc-400));
+}
+
+/*
  * @module Table footer
  * @description One row under the table (2026-11): on the left the freshness of the data (refresh,
  *   "Aktualizováno v …") or Delete all in the trash, and the full-width toggle; on the right the

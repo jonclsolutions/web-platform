@@ -1,6 +1,18 @@
 {
     "unreleased": [
         {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Phone: the page title and its buttons share one row, and selecting cards is one row (count, bulk actions, Done) - more records fit on the screen."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "admin",
+            "text": "Inquiries on a phone: compact cards instead of the table (title, date, coloured labels, e-mail); a tap opens the inquiry. Select switches on selecting for bulk actions."
+        },
+        {
             "type": "fixed",
             "area": "core",
             "part": "admin",

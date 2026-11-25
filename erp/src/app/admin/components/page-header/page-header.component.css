@@ -61,3 +61,10 @@
   .ph-title { font-size: 1.3rem; }
   .ph-actions { min-height: 0; }
 }
+
+/* Phone: the title and the actions in ONE row when they fit (the 320px basis of the text would
+   always push the actions to a row of their own); a long title or subtitle still wraps. */
+@media (max-width: 640px) {
+  .ph { align-items: center; }
+  .ph-text { flex-basis: auto; }
+}

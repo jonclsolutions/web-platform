@@ -297,7 +297,11 @@
 
   "export_no_data_title": "Export",
   "export_no_data_message": "No data available for export.",
-  "export_error_message": "An error occurred during export."
+  "export_error_message": "An error occurred during export.",
+  "cards_select": "Select",
+  "cards_select_done": "Done",
+  "cards_select_all": "All on this page",
+  "cards_select_hint": "Tap records to select them for bulk actions"
 
 },
 "edit-legal": {

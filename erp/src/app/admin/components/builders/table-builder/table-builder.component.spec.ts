@@ -852,4 +852,112 @@ describe('TableBuilderComponent', () => {
       expect(toggle.getAttribute('aria-pressed')).toBe('false');
     });
   });
+
+  describe('phone cards', () => {
+    const columns = [
+      { key: 'id', header: 'ID', type: 'text' },
+      { key: 'thema', header: 'Topic', type: 'text', primary: true },
+      { key: 'contact_email', header: 'E-mail', type: 'text' },
+      { key: 'note', header: 'Note', type: 'text' },
+      { key: 'status', header: 'Status', type: 'text', tones: { new: 'info' } },
+      { key: 'created_at', header: 'Created', type: 'date' },
+    ] as any[];
+    const rows = [
+      { id: 7, thema: 'Support', contact_email: 'a@b.cz', note: 'Call back', status: 'new', created_at: '2026-11-20T10:05:00Z' },
+      { id: 8, thema: '', contact_email: 'c@d.cz', note: '', status: 'new', created_at: null },
+    ];
+    const phone = () => {
+      fixture.componentRef.setInput('columns', columns);
+      fixture.componentRef.setInput('data', rows);
+      fixture.componentRef.setInput('mobileCards', true);
+      fixture.componentRef.setInput('openOnRowClick', true);
+      component.isPhone = true;
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    };
+
+    /**
+     * @description The layout of a card: the main column is the title, the coloured column a
+     *   label, the first date the date, the rest (not the ID) up to 2 values; `mobile` overrides
+     *   it (false = never, 'title' = the heading).
+     * @input  columns id, thema (primary), contact_email, note, status (tones), created_at; then
+     *   note mobile 'title' and contact_email mobile false
+     * @output title thema, badges [status], date created_at, meta [contact_email, note]; then
+     *   title note, meta [thema]
+     */
+    it('picks the title, labels, date and values of a card', () => {
+      fixture.componentRef.setInput('columns', columns);
+      fixture.detectChanges();
+      const layout = component.cardLayout;
+      expect([layout.title?.key, layout.badges.map(c => c.key), layout.date?.key, layout.meta.map(c => c.key)])
+        .toEqual(['thema', ['status'], 'created_at', ['contact_email', 'note']]);
+      fixture.componentRef.setInput('columns', columns.map(c => c.key === 'note' ? { ...c, mobile: 'title' } : c.key === 'contact_email' ? { ...c, mobile: false } : c));
+      fixture.detectChanges();
+      expect([component.cardLayout.title?.key, component.cardLayout.meta.map(c => c.key)]).toEqual(['note', ['thema']]);
+    });
+
+    /**
+     * @description On a phone with `mobileCards` the rows are cards instead of the table: title,
+     *   date, label and values - the e-mail without its header, other values with it; an empty
+     *   title falls back to the ID. Without a phone or without `mobileCards` the table stays.
+     * @input  2 rows on a phone; then isPhone false
+     * @output 2 cards, no table; card 1 'Support', label 'info', 'a@b.cz' unlabelled, 'Note:'
+     *   labelled; card 2 title '#8'; then the table again
+     */
+    it('shows the rows as compact cards on a phone', () => {
+      const el = phone();
+      expect(el.querySelector('table')).toBeNull();
+      const cards = Array.from(el.querySelectorAll('.table-card')) as HTMLElement[];
+      expect(cards.length).toBe(2);
+      expect(cards[0].querySelector('.table-card-title')!.textContent!.trim()).toBe('Support');
+      expect(cards[0].querySelector('.table-card-date')!.textContent!.trim()).not.toBe('');
+      expect((cards[0].querySelector('.table-badge') as HTMLElement).dataset['tone']).toBe('info');
+      const metas = Array.from(cards[0].querySelectorAll('.table-card-meta')).map(m => m.textContent!.replace(/\s+/g, ' ').trim());
+      expect(metas).toEqual(['a@b.cz', 'Note: Call back']);
+      expect(cards[1].querySelector('.table-card-title')!.textContent!.trim()).toBe('#8');
+
+      component.isPhone = false;
+      (component as any).cd.markForCheck();
+      fixture.detectChanges();
+      expect(el.querySelector('table')).not.toBeNull();
+      expect(el.querySelector('.table-card')).toBeNull();
+    });
+
+    /**
+     * @description A tap (or Enter) opens the record; in the selection mode a tap selects and
+     *   unselects instead, "Hotovo" leaves the mode and clears the selection.
+     * @input  click card 1; Enter on card 2; Vybrat; click card 1 twice + card 2; Hotovo
+     * @output rowOpened 7 and 8; selection [7] → [] → [8]; aria-checked; the bulk actions in the
+     *   one row of the cards (no big bulk bar); after Hotovo no selection
+     */
+    it('opens a record on tap and selects in the selection mode', () => {
+      const el = phone();
+      const opened: any[] = [];
+      component.rowOpened.subscribe((item: any) => opened.push(item.id));
+      const cards = () => Array.from(el.querySelectorAll('.table-card')) as HTMLElement[];
+      cards()[0].click();
+      cards()[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+      expect(opened).toEqual([7, 8]);
+
+      (el.querySelector('.table-cards-select-btn') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(cards()[0].getAttribute('role')).toBe('checkbox');
+      cards()[0].click();
+      fixture.detectChanges();
+      expect(cards()[0].getAttribute('aria-checked')).toBe('true');
+      cards()[0].click();
+      cards()[1].click();
+      fixture.detectChanges();
+      expect([...component.selectedIds]).toEqual([8]);
+      expect(opened).toEqual([7, 8]);
+      // One row: the count and the bulk actions are in the bar of the cards, no big bulk bar.
+      expect(el.querySelector('.bulk-actions-bar')).toBeNull();
+      expect(el.querySelector('.table-cards-bar .bulk-actions-dropdown')).not.toBeNull();
+
+      (el.querySelector('.table-cards-select-btn') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(component.selectMode).toBeFalse();
+      expect(component.selectedIds.size).toBe(0);
+    });
+  });
 });
