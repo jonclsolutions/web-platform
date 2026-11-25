@@ -177,13 +177,16 @@
   <div class="sidebar-overlay" (click)="toggleMenu()"></div>
 
   <aside class="admin-sidebar" [style.width.px]="isMenuOpen ? sidebarWidth : 52">
-    <nav class="admin-nav">
+    <nav class="admin-nav" [class.admin-nav--flat]="isFlatNav">
 
       <!-- Sidebar of the current module, built from its navigation data (CORE_NAV / `nav` of the
-           manifest of the application); a section shows only when one of its pages may be opened. -->
+           manifest of the application); a section shows only when one of its pages may be opened.
+           A small module (at most FLAT_NAV_MAX_ITEMS pages the user may open) is one flat list:
+           no section titles, nothing collapsed - the order of the sections stays. -->
       @for (group of navGroups; track group.key) {
         @if (isGroupVisible(group)) {
           <div class="nav-group">
+            @if (!isFlatNav) {
             <button type="button" class="nav-group-label" [class.hidden]="!isMenuOpen" [attr.aria-expanded]="isGroupExpanded(group.key)"
                     [attr.aria-controls]="'nav-group-' + group.key" [title]="strings.nav_group_toggle" (click)="toggleGroup(group.key)">
               <span class="nav-group-title">{{ label(group.labelKey) }}</span>
@@ -193,7 +196,8 @@
               }
               <app-admin-icon class="nav-group-chevron" name="chevron-down" [size]="12" [strokeWidth]="2.5" />
             </button>
-            <div [id]="'nav-group-' + group.key" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isGroupExpanded(group.key)">
+            }
+            <div [id]="'nav-group-' + group.key" class="nav-group-items" [class.nav-group-items--collapsed]="isMenuOpen && !isFlatNav && !isGroupExpanded(group.key)">
               <ul routerLinkActive="" (isActiveChange)="onGroupActive(group.key, $event)">
                 @for (item of group.items; track item.path) {
                   @if (canOpen(item)) {

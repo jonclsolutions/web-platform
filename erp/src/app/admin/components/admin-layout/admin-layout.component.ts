@@ -195,7 +195,11 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   /** "Help" of the header: home of the knowledge base (the help of one page is in its header). */
   readonly knowledgeBaseUrl = KNOWLEDGE_BASE_URL;
 
-  private minWidth: number = 150;
+  /**
+   * Narrowest width of the opened sidebar: the longest word of a page name ("Bezpečnostní")
+   * still fits whole next to its icon - names wrap between words, never inside one (2026-11).
+   */
+  private minWidth: number = 180;
   private maxWidth: number = 500;
   private authSubscription: Subscription | undefined;
   private userEmailSubscription: Subscription | undefined;
@@ -241,7 +245,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     if (typeof window !== 'undefined') {
       const savedWidth = localStorage.getItem('admin_sidebar_width');
-      if (savedWidth) this.sidebarWidth = parseInt(savedWidth, 10);
+      // A width saved before the limits (or edited by hand) is clamped into them.
+      const parsedWidth = savedWidth ? parseInt(savedWidth, 10) : NaN;
+      if (Number.isFinite(parsedWidth)) this.sidebarWidth = Math.min(this.maxWidth, Math.max(this.minWidth, parsedWidth));
 
       // Default value from localStorage until the router confirms the real current URL for
       // the first time (see syncModuleFromUrl() below) - prevents a short flash of a wrongly
@@ -538,6 +544,24 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   /** @description Sections of the sidebar of the current module. */
   get navGroups(): AdminNavGroup[] {
     return navOf(this.currentModule);
+  }
+
+  /** Up to this many pages (the user may open) the sidebar of a module is one flat list. */
+  static readonly FLAT_NAV_MAX_ITEMS = 8;
+
+  /**
+   * @description A small module (for this user - counted by the permissions) has no section
+   *   titles: one flat list of its pages in the order of the sections. Titles over one or two
+   *   links only cost room; large modules keep their sections.
+   */
+  get isFlatNav(): boolean {
+    let count = 0;
+    for (const group of this.navGroups) {
+      for (const item of group.items) {
+        if (this.canOpen(item) && ++count > AdminLayoutComponent.FLAT_NAV_MAX_ITEMS) return false;
+      }
+    }
+    return true;
   }
 
   /**

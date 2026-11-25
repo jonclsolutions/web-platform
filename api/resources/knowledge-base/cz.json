@@ -125,7 +125,7 @@
             },
             {
               "type": "text",
-              "content": "Levé menu je rozdělené do sekcí (například Přehled, Obsah, Uživatelé, Systém). Kliknutím na název sekce ji sbalíte nebo rozbalíte - systém si to zapamatuje. Šířku menu změníte tažením jeho pravého okraje myší. Úplně dole v menu jsou v každém modulu položky Můj účet, Nápověda (úvod tohoto manuálu) a Odhlásit se."
+              "content": "Levé menu je rozdělené do sekcí (například Přehled, Obsah, Uživatelé, Systém). Kliknutím na název sekce ji sbalíte nebo rozbalíte - systém si to zapamatuje. Modul s nejvýše 8 stránkami (počítají se ty, ke kterým máte oprávnění) má menu jako jeden jednoduchý seznam bez názvů sekcí. Dlouhý název stránky se zalomí na dva řádky. Šířku menu změníte tažením jeho pravého okraje myší (nejméně 180 px, aby se názvy vešly celé). Úplně dole v menu jsou v každém modulu položky Můj účet, Nápověda (úvod tohoto manuálu) a Odhlásit se."
             },
             {
               "type": "text",

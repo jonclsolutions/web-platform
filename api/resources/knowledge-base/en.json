@@ -125,7 +125,7 @@
             },
             {
               "type": "text",
-              "content": "The left menu is divided into sections (for example Overview, Content, Users, System). Click the name of a section to collapse or expand it - the system remembers it. Change the width of the menu by dragging its right edge with the mouse. At the very bottom of the menu of every module are My account, Help (the start of this manual) and Log out."
+              "content": "The left menu is divided into sections (for example Overview, Content, Users, System). Click the name of a section to collapse or expand it - the system remembers it. A module with at most 8 pages (counting those you have permission for) has its menu as one simple list without section names. A long page name wraps to two lines. Change the width of the menu by dragging its right edge with the mouse (at least 180 px, so the names fit whole). At the very bottom of the menu of every module are My account, Help (the start of this manual) and Log out."
             },
             {
               "type": "text",

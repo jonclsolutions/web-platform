@@ -551,11 +551,14 @@
   z-index: 1050;
   overflow: hidden;
   min-height: 0;
-  padding: 8px 10px 0;
+  /* The side margins are in the scrolling menu (.admin-nav), so its scrollbar sits at the very
+     edge of the panel - not between the items and an empty margin. */
+  padding: 8px 0 0;
 }
 
 @media (min-width: 769px) {
-  .collapsed .admin-sidebar { width: 56px !important; padding: 8px 6px 0; }
+  .collapsed .admin-sidebar { width: 56px !important; padding: 8px 0 0; }
+  .collapsed .admin-nav     { padding: 4px 6px 0; scrollbar-gutter: auto; }
   .collapsed .nav-text      { display: none; }
   .collapsed .nav-group-label { display: none; }
   .collapsed .nav-group     { padding-top: 4px; }
@@ -581,9 +584,40 @@
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  padding: 4px 0 0;
+  /*
+   * Balanced sides: the strip of the scrollbar (8px) is reserved on BOTH sides, so the items have
+   * the same 12px (8px strip + 4px) left and right - with the scrollbar or without it; when it
+   * shows, its thin thumb sits in the right strip, 6px off the items.
+   */
+  scrollbar-gutter: stable both-edges;
+  padding: 4px 4px 0;
   min-height: 0;
 }
+
+/*
+ * A thin, quiet scrollbar (only when the menu is taller than the window) instead of the default
+ * one of the system with its arrows. Chromium / Safari: the ::-webkit-scrollbar parts (they draw
+ * no arrows - the standard `scrollbar-width` would override them and keep the arrows there);
+ * Firefox: the standard properties.
+ */
+@supports not selector(::-webkit-scrollbar) {
+  .admin-nav {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-mid, var(--color-sand-300)) transparent;
+  }
+}
+
+.admin-nav::-webkit-scrollbar { width: 8px; }
+.admin-nav::-webkit-scrollbar-track { background: transparent; }
+/* A 4px thumb in the middle of the 8px strip: off the items and off the edge of the panel. */
+.admin-nav::-webkit-scrollbar-thumb {
+  background: var(--border-mid, var(--color-sand-300));
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+.admin-nav::-webkit-scrollbar-thumb:hover { background-color: var(--text-dim, var(--color-zinc-400)); }
+.admin-nav::-webkit-scrollbar-button { display: none; }
 
 /* Skupiny */
 .nav-group {
@@ -593,6 +627,20 @@
 .nav-group + .nav-group {
   border-top: none;
   padding-top: 12px;
+}
+
+/* Flat list of a small module (no section titles): the sections follow without gaps. */
+.admin-nav--flat .nav-group:not(.nav-group--bottom) {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.admin-nav--flat .nav-group:not(.nav-group--bottom) + .nav-group:not(.nav-group--bottom) {
+  margin-top: 1px;
+}
+
+.admin-nav--flat .nav-group--bottom {
+  margin-top: auto;
 }
 
 /*
@@ -732,9 +780,22 @@
 .admin-nav li a:hover .nav-icon,
 .admin-nav li a.active .nav-icon { opacity: 1; }
 
+/*
+ * Name of a page: wraps to at most 2 lines instead of being cut ("Bezpečnostní monitoring");
+ * only a name too long even for 2 lines ends with "…". The size of the text and the icon stays
+ * the same at every width of the panel - a narrower panel only wraps sooner.
+ */
 .nav-text {
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: break-word;
+  /* The line height of the item as before - a one-line item keeps exactly its former height. */
+  line-height: normal;
 }
 
 /* Bottom group (logout) */
@@ -759,6 +820,8 @@
 .nav-badge--item,
 .nav-badge--end,
 .nav-badge--group { margin-left: auto; }
+/* Room between a wrapped name and its badge. */
+.nav-badge--item { padding-left: 6px; }
 
 .unread-dot {
   position: absolute;
@@ -937,7 +1000,7 @@
 
   .mobile-open .sidebar-overlay  { opacity: 1; pointer-events: auto; }
   .mobile-open .admin-sidebar    { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,0.12); }
-  .mobile-open .nav-text         { display: inline-block !important; }
+  .mobile-open .nav-text         { display: -webkit-box !important; }
   .mobile-open .nav-icon         { margin-right: 8px !important; }
   .mobile-open .nav-group-label  { display: flex !important; opacity: 1 !important; height: auto !important; padding: 4px 10px 8px !important; }
 

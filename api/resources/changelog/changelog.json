@@ -4,6 +4,24 @@
             "type": "fixed",
             "area": "core",
             "part": "admin",
+            "text": "Menu: the same margin left and right of the items (also of the highlighted one), with the scrollbar or without it; the thinner scrollbar sits at the edge of the panel, off the items."
+        },
+        {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Menu: no scrollbar when the menu fits the window again (items have their former height), and a thin, quiet scrollbar without arrows when it does not fit."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "Menu: a module with up to 8 pages (by your permissions) is one simple list without section names; long page names wrap to two lines instead of being cut. The menu is at least 180 px wide, so names fit."
+        },
+        {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
             "text": "Update times (“Updated at” under tables, dashboards, application checks) show hours and minutes without seconds, like the header clock. Log out in the account panel has rounded corners like the other items."
         },
         {

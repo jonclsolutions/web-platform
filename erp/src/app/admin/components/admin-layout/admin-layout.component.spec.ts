@@ -115,6 +115,43 @@ describe('AdminLayoutComponent', () => {
   });
 
   /**
+   * @description A saved width outside the limits (saved before them or edited by hand) is
+   *   clamped; a broken value keeps the default.
+   * @input  saved '150'; '9999'; 'abc'
+   * @output 180; 500; 200 (default)
+   */
+  it('clamps a saved sidebar width into the limits', () => {
+    for (const [saved, expected] of [['150', 180], ['9999', 500], ['abc', 200]] as const) {
+      component.sidebarWidth = 200;
+      localStorage.setItem('admin_sidebar_width', saved);
+      component.ngOnInit();
+      expect(component.sidebarWidth).withContext(saved).toBe(expected);
+    }
+  });
+
+  /**
+   * @description A small module (at most 8 pages the user may open) is one flat list - no section
+   *   titles, a remembered collapsed section does not hide anything; a large one keeps them.
+   * @input  core with no permissions (few pages), its first section collapsed; then all permissions
+   * @output .admin-nav--flat, no .nav-group-label, no collapsed items; then sections with titles
+   */
+  it('shows a small module as one flat list', () => {
+    component.currentModule = 'core';
+    (component as any).collapsedGroups = new Set([navOf('core')[0].key]);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(component.isFlatNav).toBeTrue();
+    expect(el.querySelector('.admin-nav--flat')).not.toBeNull();
+    expect(el.querySelectorAll('.nav-group-label').length).toBe(0);
+    expect(el.querySelector('.nav-group-items--collapsed')).toBeNull();
+
+    ctx.permissions.granted = 'all';
+    fixture.detectChanges();
+    expect(component.isFlatNav).toBeFalse();
+    expect(el.querySelectorAll('.nav-group-label').length).toBeGreaterThan(1);
+  });
+
+  /**
    * @description A module tab opens the first page of the module the user may open (welcome page
    *   first); the active tab is NOT changed by the click - only by the URL the router really
    *   reaches (bugfix 2026-10-27: a refused navigation left the wrong tab active).
@@ -267,14 +304,16 @@ describe('AdminLayoutComponent', () => {
   });
 
   /**
-   * @description Sidebar resizing works only inside 150–500 px and is saved on mouse up.
-   * @input  startResizing; mousemove x=100, x=300, x=900; mouseup
-   * @output sidebarWidth 300 (100 and 900 ignored); localStorage width '300'
+   * @description Sidebar resizing works only inside 180–500 px (the longest word of a page name
+   *   fits whole) and is saved on mouse up.
+   * @input  startResizing; mousemove x=100, x=170, x=300, x=900; mouseup
+   * @output sidebarWidth 300 (100, 170 and 900 ignored); localStorage width '300'
    */
   it('resizes the sidebar within limits', () => {
     if (window.innerWidth <= 768) { pending('needs a desktop-sized window'); }
     component.startResizing({ preventDefault: () => {} } as any);
     component.onMouseMove({ clientX: 100 } as any);
+    component.onMouseMove({ clientX: 170 } as any);
     component.onMouseMove({ clientX: 300 } as any);
     component.onMouseMove({ clientX: 900 } as any);
     component.onMouseUp();
@@ -762,7 +801,7 @@ describe('AdminLayoutComponent', () => {
    *   pages; a click on the page marks it seen; the menu button shows a dot while the menu is
    *   closed; the label (tooltip + screen reader) names the kind and its count.
    * @input  web inquiries 3, core security events 120; module web; collapse the section of the
-   *   inquiries; close the menu; logout.
+   *   inquiries (as a large module with sections); close the menu; logout.
    * @output start(); item badge '3' with aria label; switcher button '99+' (all modules); its menu:
    *   core '99+', web '3'; section badge '3';
    *   markSeenLink('/admin/web/user-request'); dot on the menu button; stop().
@@ -803,6 +842,8 @@ describe('AdminLayoutComponent', () => {
     link.click();
     expect(notifications.markSeenLink).toHaveBeenCalledWith('/admin/web/user-request');
 
+    // Section titles exist only in a large module (a small one is a flat list) - simulate one.
+    spyOnProperty(component, 'isFlatNav').and.returnValue(false);
     const group = navOf('web').find(g => g.items.some(i => i.path === 'user-request'))!;
     component.toggleGroup(group.key);
     fixture.detectChanges();
