@@ -12,7 +12,9 @@
 
 .action-menu {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
 
@@ -32,6 +34,48 @@
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .action-menu-trigger:hover { background: var(--color-zinc-200); }
+
+/* The main action of the page ("+ Přidat") - the one dark button of the header. */
+.action-menu-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px 8px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--color-zinc-900);
+  background: var(--color-zinc-900);
+  color: var(--color-white);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.action-menu-primary:hover { background: var(--color-zinc-700); border-color: var(--color-zinc-700); }
+.action-menu-primary:focus-visible,
+.action-menu-trigger:focus-visible { outline: 2px solid var(--color-zinc-900); outline-offset: 2px; }
+
+/* Phone: a round green "+" - recognisable at once and short next to the title. */
+@media (max-width: 640px) {
+  .action-menu-primary {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-color: #3d8a5a;
+    background: #3d8a5a;
+  }
+  .action-menu-primary:hover { background: #33744b; border-color: #33744b; }
+  .action-menu-primary svg { width: 18px; height: 18px; }
+  .action-menu-primary-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
 
 .action-menu-trigger.active {
   background: var(--color-zinc-900);

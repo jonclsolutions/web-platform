@@ -2,6 +2,12 @@
     "unreleased": [
         {
             "type": "changed",
+            "area": "web",
+            "part": "admin",
+            "text": "Inquiries: a visible Add button next to Actions (on a phone a round green +); adding a record is no longer hidden in the Actions menu."
+        },
+        {
+            "type": "changed",
             "area": "core",
             "part": "admin",
             "text": "Phone: the page title and its buttons share one row, and selecting cards is one row (count, bulk actions, Done) - more records fit on the screen."

@@ -7,18 +7,23 @@
  * @description Unit tests of ActionMenuBuilderComponent – the "⋯ Actions" dropdown of the admin
  *   toolbars (open/close, outside click, action emit, position inside the viewport).
  * @dependencies
- * - none (standalone component)
+ * - AdminLocalizationService (stub: the label of the main button)
  */
 
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActionMenuBuilderComponent } from './action-menu-builder.component';
+import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
+import { createI18nStub } from '../../../../../testing/admin-test-helpers';
 
 describe('ActionMenuBuilderComponent', () => {
   let fixture: ComponentFixture<ActionMenuBuilderComponent>;
   let component: ActionMenuBuilderComponent;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [ActionMenuBuilderComponent] }).compileComponents();
+    await TestBed.configureTestingModule({
+      imports: [ActionMenuBuilderComponent],
+      providers: [{ provide: AdminLocalizationService, useValue: createI18nStub() }]
+    }).compileComponents();
     fixture = TestBed.createComponent(ActionMenuBuilderComponent);
     component = fixture.componentInstance;
     fixture.componentRef.setInput('configs', [
@@ -144,4 +149,49 @@ describe('ActionMenuBuilderComponent', () => {
     expect(position).toHaveBeenCalledTimes(2);
     scroller.remove();
   }));
+
+  /**
+   * @description The main action (`primaryAction`) is a button of its own next to the menu
+   *   (label shared.add) and is not in the menu; a click emits its action. When its config may
+   *   not be shown (showIf false - no permission, trash) there is no button and still nothing
+   *   in the menu. Without `primaryAction` everything stays in the menu.
+   * @input  primaryAction 'export'; click the button; then export showIf false; then primaryAction null
+   * @output button 'shared.add', menu [Import] (Hidden not shown); emits 'export'; no button,
+   *   menu [Import]; no button, menu [Export, Import]
+   */
+  it('shows the main action as its own button, not in the menu', () => {
+    const emitted: string[] = [];
+    component.actionTriggered.subscribe((a: string) => emitted.push(a));
+    const el = fixture.nativeElement as HTMLElement;
+    const openMenuLabels = () => {
+      component.isOpen = true;
+      (component as any).cd.markForCheck();
+      fixture.detectChanges();
+      const labels = items().map(i => i.textContent!.trim());
+      component.isOpen = false;
+      (component as any).cd.markForCheck();
+      fixture.detectChanges();
+      return labels;
+    };
+
+    fixture.componentRef.setInput('primaryAction', 'export');
+    fixture.detectChanges();
+    const button = el.querySelector('.action-menu-primary') as HTMLButtonElement;
+    expect(button.getAttribute('aria-label')).toBe('shared.add');
+    expect(button.querySelector('.action-menu-primary-label')!.textContent!.trim()).toBe('shared.add');
+    expect(openMenuLabels()).toEqual(['⬆Import']);
+    button.click();
+    expect(emitted).toEqual(['export']);
+
+    fixture.componentRef.setInput('configs', [{ action: 'export', label: 'Export', showIf: false }, { action: 'import', label: 'Import' }]);
+    fixture.detectChanges();
+    expect(el.querySelector('.action-menu-primary')).toBeNull();
+    expect(openMenuLabels()).toEqual(['Import']);
+
+    fixture.componentRef.setInput('primaryAction', null);
+    fixture.componentRef.setInput('configs', [{ action: 'export', label: 'Export' }, { action: 'import', label: 'Import' }]);
+    fixture.detectChanges();
+    expect(el.querySelector('.action-menu-primary')).toBeNull();
+    expect(openMenuLabels()).toEqual(['Export', 'Import']);
+  });
 });

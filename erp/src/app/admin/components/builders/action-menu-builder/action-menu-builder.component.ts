@@ -6,13 +6,17 @@
  * @created 2026
  * @description Reusable dropdown ("Actions") replacing a row of single pill buttons on list
  * pages with one trigger + a slide-out list. Takes the SAME `Button[]` config as
- * `ButtonBuilderComponent` - no new configuration layer.
+ * `ButtonBuilderComponent` - no new configuration layer. The main action of the page
+ * (`primaryAction`, 2026-11) is a button of its own next to the menu ("+ Přidat"; on a phone a
+ * round green "+") and is not repeated in the menu.
  */
 import {
   Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef,
   HostListener, ElementRef, ViewChild, DestroyRef, inject
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Button } from '../../../../shared/interfaces/button';
+import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 
 export interface ActionMenuPosition {
   top: number;
@@ -38,7 +42,31 @@ export class ActionMenuBuilderComponent {
   @Input() triggerLabel = 'Akce';
   @Input() triggerIcon = '⋯';
 
+  /**
+   * Action of the config shown as the visible main button next to the menu (e.g.
+   * 'handleCreateFormOpened' → "+ Přidat") - it follows the rules of its config (`showIf`:
+   * permission, hidden in the trash) and is left out of the menu. null = everything in the menu.
+   */
+  @Input() primaryAction: string | null = null;
   @Output() actionTriggered = new EventEmitter<string>();
+
+  private readonly i18n = inject(AdminLocalizationService);
+
+  /** Label of the main button ("Přidat" / "Add"). */
+  get primaryLabel(): string {
+    return this.i18n.getValue('shared.add');
+  }
+
+  /** @description The main button: the `primaryAction` config when it may be shown now, else null. */
+  get primaryButton(): Button | null {
+    if (!this.primaryAction) return null;
+    return this.configs.find(btn => btn.action === this.primaryAction && btn.showIf !== false && !btn.disabled) ?? null;
+  }
+
+  /** @description Items of the menu - every config except the main action (never twice). */
+  get menuConfigs(): Button[] {
+    return this.primaryAction ? this.configs.filter(btn => btn.action !== this.primaryAction) : this.configs;
+  }
 
   isOpen = false;
 
@@ -61,6 +89,7 @@ export class ActionMenuBuilderComponent {
   };
 
   constructor() {
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
     if (typeof document === 'undefined') return;
     document.addEventListener('scroll', this.onAnyScroll, { capture: true, passive: true });
     inject(DestroyRef).onDestroy(() => document.removeEventListener('scroll', this.onAnyScroll, { capture: true }));
