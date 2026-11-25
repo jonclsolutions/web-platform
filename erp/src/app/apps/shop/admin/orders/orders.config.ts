@@ -88,7 +88,7 @@ export function createOrderButtons(i18n: AdminLocalizationService): Core.TableBu
 export function createOrderColumns(i18n: AdminLocalizationService): Core.ColumnDefinition[] {
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
-    { key: 'order_number', header: i18n.getValue(`${SECTION}.col_order_number`), type: 'text' },
+    { key: 'order_number', header: i18n.getValue(`${SECTION}.col_order_number`), type: 'text', width: 'fit' },
     { key: 'contact.full_name', header: i18n.getValue(`${SECTION}.col_customer`), type: 'text' },
     { key: 'status_label', header: i18n.getValue(`${SECTION}.col_status`), type: 'text', tones: ORDER_STATUS_TONES, toneKey: 'status' },
     { key: 'payment_status_label', header: i18n.getValue(`${SECTION}.col_payment`), type: 'text', tones: PAYMENT_STATUS_TONES, toneKey: 'payment_status' },
@@ -100,7 +100,7 @@ export function createOrderColumns(i18n: AdminLocalizationService): Core.ColumnD
 export function createTrashOrderColumns(i18n: AdminLocalizationService): Core.ColumnDefinition[] {
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
-    { key: 'order_number', header: i18n.getValue(`${SECTION}.col_order_number`), type: 'text' },
+    { key: 'order_number', header: i18n.getValue(`${SECTION}.col_order_number`), type: 'text', width: 'fit' },
     { key: 'contact.full_name', header: i18n.getValue(`${SECTION}.col_customer`), type: 'text' },
     { key: 'deleted_at', header: i18n.getValue(`${SECTION}.col_deleted`), type: 'date', format: 'short' },
   ];

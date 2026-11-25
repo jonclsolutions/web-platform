@@ -37,7 +37,7 @@ import { ButtonBuilderComponent } from '../button-builder/button-builder.compone
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { adminDateFormat, adminDateKind } from '../../../shared-date/admin-date-format';
 import { BadgeTone, badgeToneOf } from '../badge-tones';
-import { TableCardLayout, cardLayoutOf, cardMetaNeedsLabel, phoneQuery as phoneMediaQuery } from '../table-cards';
+import { TableCardLayout, cardLayoutOf, cardMetaNeedsLabel, columnFits, phoneQuery as phoneMediaQuery } from '../table-cards';
 import { AdminModalComponent } from '../../admin-modal/admin-modal.component';
 import { RecordActionsComponent } from '../../record-actions/record-actions.component';
 
@@ -98,6 +98,11 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
    * permanently (without the trash permission only the values). false keeps the table.
    */
   @Input() mobileCards: boolean = true;
+  /**
+   * Column widths by their content - the same as the active table (table-cards.ts
+   * `columnFits`): short columns fit their content, texts share the rest. false = equal columns.
+   */
+  @Input() autoColumnWidths: boolean = true;
 
   /** The window is phone-sized (matchMedia, updated on a change). */
   isPhone = false;
@@ -204,6 +209,19 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
     const columns = this.columnDefinitions || [];
     if (this.cardLayoutCache?.columns !== columns) this.cardLayoutCache = { columns, layout: cardLayoutOf(columns) };
     return this.cardLayoutCache.layout;
+  }
+
+  /** @description The column is fitted to its content (`autoColumnWidths`, table-cards.ts). */
+  columnFits(column: ColumnDefinition): boolean {
+    return columnFits(column);
+  }
+
+  /**
+   * @description The table has a text column sharing the spare width; without one (all columns
+   *   short) the short columns share it themselves (`auto-widths--all-fit`).
+   */
+  get hasFlexColumn(): boolean {
+    return (this.columnDefinitions || []).some(col => !col.hidden && !columnFits(col));
   }
 
   /** @description A short value of a card needs its header (not an e-mail, a phone, a price …). */

@@ -194,10 +194,10 @@ export function createShippingColumns(i18n: AdminLocalizationService): Core.Colu
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
     { key: 'name', header: i18n.getValue(`${SECTION}.col_name`), type: 'text' },
     { key: 'shipping_type', header: i18n.getValue(`${SECTION}.col_type`), type: 'text' },
-    { key: 'base_price', header: i18n.getValue(`${SECTION}.col_price`), type: 'text' },
+    { key: 'base_price', header: i18n.getValue(`${SECTION}.col_price`), type: 'text', width: 'fit' },
     { key: 'countries_label', header: i18n.getValue(`${SECTION}.field_countries_label`), type: 'text' },
     { key: 'is_active', header: i18n.getValue(`${SECTION}.field_is_active_label`), type: 'boolean' },
-    { key: 'sort_order', header: i18n.getValue(`${SECTION}.field_sort_order_label`), type: 'text' },
+    { key: 'sort_order', header: i18n.getValue(`${SECTION}.field_sort_order_label`), type: 'text', width: 'fit' },
   ];
 }
 

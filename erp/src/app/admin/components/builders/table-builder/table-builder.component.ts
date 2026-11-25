@@ -148,9 +148,10 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
    * Column widths by their content (2026-11, review point 8): short columns (ID, date, label,
    * number, price, yes / no, picture) are exactly as wide as their content and never wrap; text
    * columns share the rest (by the length of their content, at least a readable minimum) and a
-   * long text ends with "…" (the whole text in the record window). Off = equal columns.
+   * long text ends with "…" (the whole text in the record window). On for every table; false =
+   * equal columns.
    */
-  @Input() autoColumnWidths: boolean = false;
+  @Input() autoColumnWidths: boolean = true;
 
   @Output() itemDeleted = new EventEmitter<any>();
   @Output() createFormOpened = new EventEmitter<void>();
@@ -310,6 +311,14 @@ get importEnumHints(): ImportEnumHint[] {
   /** @description The column is fitted to its content (`autoColumnWidths`, table-cards.ts). */
   columnFits(column: ColumnDefinition): boolean {
     return columnFits(column);
+  }
+
+  /**
+   * @description The table has a text column sharing the spare width; without one (all columns
+   *   short) the short columns share it themselves (`auto-widths--all-fit`).
+   */
+  get hasFlexColumn(): boolean {
+    return (this.columnDefinitions || []).some(col => !col.hidden && !columnFits(col));
   }
 
   /** @description Switches the selection mode of the cards; leaving it clears the selection. */

@@ -49,6 +49,12 @@ width: 1%;
 white-space: nowrap;
 }
 
+/* A table without any text column (e.g. the coupons): the short columns share the spare width
+   (else it would all go to the fixed checkbox column). */
+table.auto-widths.auto-widths--all-fit .col-fit {
+width: auto;
+}
+
 table.auto-widths td.col-fit {
 font-variant-numeric: tabular-nums;
 }

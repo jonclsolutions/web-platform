@@ -134,11 +134,11 @@ export function createPaymentColumns(i18n: AdminLocalizationService): Core.Colum
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
     { key: 'name', header: i18n.getValue(`${SECTION}.col_name`), type: 'text' },
-    { key: 'code', header: i18n.getValue(`${SECTION}.col_code`), type: 'text' },
+    { key: 'code', header: i18n.getValue(`${SECTION}.col_code`), type: 'text', width: 'fit' },
     { key: 'provider', header: i18n.getValue(`${SECTION}.col_provider`), type: 'text' },
     // Phone card (`mobile`): the price first, then the code.
     { key: 'price', header: i18n.getValue(`${SECTION}.col_price`), type: 'currency', mobile: 'meta' },
-    { key: 'sort_order', header: i18n.getValue(`${SECTION}.field_sort_order_label`), type: 'text' },
+    { key: 'sort_order', header: i18n.getValue(`${SECTION}.field_sort_order_label`), type: 'text', width: 'fit' },
     { key: 'is_active', header: i18n.getValue(`${SECTION}.field_is_active_label`), type: 'boolean' },
   ];
 }

@@ -219,6 +219,10 @@
                   "text": "The table shows the time of the last update and a button to load the current data at once. The data also refreshes by itself about every 15 minutes while the browser tab is open and active."
                 },
                 {
+                  "title": "Column widths",
+                  "text": "Short values (ID, date, status, priority, code, price, yes/no) have a column exactly as wide as they need and are never cut. Text columns (name, e-mail, description) share the remaining width; a text too long ends with “…” and you see all of it in the record window."
+                },
+                {
                   "title": "Table width",
                   "text": "The icon with the arrows ↔ next to the time of the update stretches the table over the whole page width, another click returns it - useful for tables with many columns. A phone has no icon, the table always uses the whole width there."
                 },

@@ -219,6 +219,10 @@
                   "text": "U tabulky vidíte čas poslední aktualizace a tlačítko pro okamžité načtení aktuálních dat. Data se navíc sama obnovují přibližně každých 15 minut, pokud je karta prohlížeče otevřená a aktivní."
                 },
                 {
+                  "title": "Šířka sloupců",
+                  "text": "Krátké údaje (ID, datum, stav, priorita, kód, cena, ano/ne) mají sloupec přesně tak široký, jak potřebují, a nikdy se neořízne. Textové sloupce (název, e-mail, popis) se dělí o zbývající místo; příliš dlouhý text končí „…“ a celý ho uvidíte v okně záznamu."
+                },
+                {
                   "title": "Šířka tabulky",
                   "text": "Ikona se šipkami ↔ vedle času aktualizace roztáhne tabulku přes celou šířku stránky, dalším kliknutím ji vrátíte - hodí se u tabulek s mnoha sloupci. Na telefonu ikona není, tabulka tam vždy využije celou šířku."
                 },

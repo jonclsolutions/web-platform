@@ -134,7 +134,7 @@
 } @else {
 <div class="table-responsive">
 <!-- `auto-widths`: short columns fitted to their content (.col-fit), texts share the rest (.col-flex). -->
-<table [class.fit-content-table]="!isFullWidth" [class.auto-widths]="autoColumnWidths">
+<table [class.fit-content-table]="!isFullWidth" [class.auto-widths]="autoColumnWidths" [class.auto-widths--all-fit]="autoColumnWidths && !hasFlexColumn">
 @if (tableCaption) {
 <caption>
 <div class="caption-content-wrapper">

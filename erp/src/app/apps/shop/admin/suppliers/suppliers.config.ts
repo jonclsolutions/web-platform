@@ -143,7 +143,7 @@ export function createSupplierColumns(i18n: AdminLocalizationService): Core.Colu
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
     { key: 'name', header: i18n.getValue(`${SECTION}.col_company_name`), type: 'text' },
-    { key: 'ico', header: i18n.getValue(`${SECTION}.col_ico`), type: 'text' },
+    { key: 'ico', header: i18n.getValue(`${SECTION}.col_ico`), type: 'text', width: 'fit' },
     { key: 'email', header: i18n.getValue(`${SECTION}.col_email`), type: 'text' },
     { key: 'is_active', header: i18n.getValue(`${SECTION}.field_is_active_label`), type: 'boolean' },
     { key: 'created_at', header: i18n.getValue(`${SECTION}.col_created`), type: 'date', format: 'short' },

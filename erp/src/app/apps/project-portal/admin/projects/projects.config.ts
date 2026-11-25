@@ -147,8 +147,8 @@ export function createProjectColumns(i18n: AdminLocalizationService): Core.Colum
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
     { key: 'name', header: i18n.getValue(`${SECTION}.col_name`), type: 'text' },
-    { key: 'platform', header: i18n.getValue(`${SECTION}.col_platform`), type: 'text' },
-    { key: 'visibility', header: i18n.getValue(`${SECTION}.col_visibility`), type: 'text' },
+    { key: 'platform', header: i18n.getValue(`${SECTION}.col_platform`), type: 'text', width: 'fit' },
+    { key: 'visibility', header: i18n.getValue(`${SECTION}.col_visibility`), type: 'text', width: 'fit' },
     { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'text', tones: PROJECT_STATUS_TONES },
     { key: 'project_lead', header: i18n.getValue(`${SECTION}.col_lead`), type: 'text' },
     { key: 'assignee_name', header: i18n.getValue(`${SECTION}.col_assignee`), type: 'text' },

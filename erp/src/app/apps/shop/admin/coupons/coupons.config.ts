@@ -121,10 +121,10 @@ export function createCouponFormFields(i18n: AdminLocalizationService): Core.Inp
 export function createCouponColumns(i18n: AdminLocalizationService): Core.ColumnDefinition[] {
   return [
     { key: 'id', header: tr(i18n, 'col_id'), type: 'text' },
-    { key: 'code', header: tr(i18n, 'col_code'), type: 'text' },
-    { key: 'discount_type', header: tr(i18n, 'col_type'), type: 'text' },
-    { key: 'discount_value', header: tr(i18n, 'col_discount'), type: 'text' },
-    { key: 'usage_count', header: tr(i18n, 'col_usage_count'), type: 'text' },
+    { key: 'code', header: tr(i18n, 'col_code'), type: 'text', width: 'fit' },
+    { key: 'discount_type', header: tr(i18n, 'col_type'), type: 'text', width: 'fit' },
+    { key: 'discount_value', header: tr(i18n, 'col_discount'), type: 'text', width: 'fit' },
+    { key: 'usage_count', header: tr(i18n, 'col_usage_count'), type: 'text', width: 'fit' },
     { key: 'is_active', header: tr(i18n, 'col_is_active'), type: 'boolean' },
     { key: 'valid_until', header: tr(i18n, 'col_valid_until'), type: 'date', format: 'short' },
   ];
@@ -138,7 +138,7 @@ export function createCouponColumns(i18n: AdminLocalizationService): Core.Column
 export function createCouponTrashColumns(i18n: AdminLocalizationService): Core.ColumnDefinition[] {
   return [
     { key: 'id', header: tr(i18n, 'col_id'), type: 'text' },
-    { key: 'code', header: tr(i18n, 'col_code'), type: 'text' },
+    { key: 'code', header: tr(i18n, 'col_code'), type: 'text', width: 'fit' },
     { key: 'deleted_at', header: tr(i18n, 'col_deleted_at'), type: 'date', format: 'short' },
   ];
 }

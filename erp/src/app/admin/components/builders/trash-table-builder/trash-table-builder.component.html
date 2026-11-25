@@ -56,7 +56,8 @@
   }
 } @else {
 <div class="table-responsive">
-<table [class.fit-content-table]="!isFullWidth">
+<!-- `auto-widths`: short columns fitted to their content (.col-fit), texts share the rest (.col-flex). -->
+<table [class.fit-content-table]="!isFullWidth" [class.auto-widths]="autoColumnWidths" [class.auto-widths--all-fit]="autoColumnWidths && !hasFlexColumn">
 @if (tableCaption) {
 <caption>
 <div class="caption-content-wrapper">
@@ -69,7 +70,7 @@
 <thead>
 <tr>
 @for (col of columnDefinitions; track col) {
-<th>
+<th [class.col-fit]="columnFits(col)" [class.col-flex]="!columnFits(col)">
 <ng-container>
 <span class="header-content">
                 {{ col.header }}
@@ -92,7 +93,7 @@
 <tr>
 @for (col of columnDefinitions; track col) {
 @if (!col.hidden) {
-<td>
+<td [class.col-fit]="columnFits(col)" [class.col-flex]="!columnFits(col)">
 @switch (col.type) {
 @case ('image') {
 @if (getCellValue(item, col)) {

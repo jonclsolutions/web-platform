@@ -107,7 +107,7 @@ export function createSalesOrderColumns(i18n: AdminLocalizationService): Core.Co
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
     { key: 'client_name', header: i18n.getValue(`${SECTION}.col_client`), type: 'text' },
     { key: 'salesman_name', header: i18n.getValue(`${SECTION}.col_salesman`), type: 'text' },
-    { key: 'ico', header: i18n.getValue(`${SECTION}.col_ico`), type: 'text' },
+    { key: 'ico', header: i18n.getValue(`${SECTION}.col_ico`), type: 'text', width: 'fit' },
     { key: 'created_at', header: i18n.getValue(`${SECTION}.col_created`), type: 'date', format: 'short' },
   ];
 }

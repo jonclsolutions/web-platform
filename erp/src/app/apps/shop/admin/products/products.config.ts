@@ -57,7 +57,7 @@ export function createTrashProductColumns(i18n: AdminLocalizationService): Core.
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
     { key: 'name', header: i18n.getValue(`${SECTION}.col_product`), type: 'text' },
-    { key: 'sku', header: i18n.getValue(`${SECTION}.col_sku`), type: 'text' },
+    { key: 'sku', header: i18n.getValue(`${SECTION}.col_sku`), type: 'text', width: 'fit' },
     { key: 'deleted_at', header: i18n.getValue(`${SECTION}.col_deleted`), type: 'date', format: 'short' },
   ];
 }
@@ -119,11 +119,11 @@ export function createProductColumns(i18n: AdminLocalizationService): Core.Colum
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
     { key: 'name', header: i18n.getValue(`${SECTION}.col_product`), type: 'text' },
-    { key: 'sku', header: i18n.getValue(`${SECTION}.col_sku`), type: 'text' },
+    { key: 'sku', header: i18n.getValue(`${SECTION}.col_sku`), type: 'text', width: 'fit' },
     { key: 'category_name', header: i18n.getValue(`${SECTION}.field_category_label`), type: 'text' },
     // Phone card (`mobile`): the price and the stock are what matters at a glance.
     { key: 'price_eur', header: i18n.getValue(`${SECTION}.col_price`), type: 'currency', currencyCode: 'EUR', mobile: 'meta' },
-    { key: 'stock_quantity', header: i18n.getValue(`${SECTION}.col_stock`), type: 'text', mobile: 'meta' },
+    { key: 'stock_quantity', header: i18n.getValue(`${SECTION}.col_stock`), type: 'text', mobile: 'meta', width: 'fit' },
     { key: 'is_active', header: i18n.getValue(`${SECTION}.field_is_active_label`), type: 'boolean' },
   ];
 }

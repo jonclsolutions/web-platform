@@ -982,6 +982,12 @@ describe('TableBuilderComponent', () => {
     expect(el.querySelector('table')!.classList).toContain('auto-widths');
     expect(kind(el.querySelectorAll('thead th'))).toEqual(['fit', 'flex', 'fit', 'fit']);
     expect(kind(el.querySelectorAll('tbody td'))).toEqual(['fit', 'flex', 'fit', 'fit']);
+    expect(el.querySelector('table')!.classList).not.toContain('auto-widths--all-fit');
+    // A table without any text column: the short columns share the spare width themselves.
+    fixture.componentRef.setInput('columns', [{ key: 'id', header: 'ID', type: 'text' }, { key: 'created_at', header: 'Created', type: 'date' }]);
+    fixture.detectChanges();
+    expect(component.hasFlexColumn).toBeFalse();
+    expect(el.querySelector('table')!.classList).toContain('auto-widths--all-fit');
     fixture.componentRef.setInput('autoColumnWidths', false);
     fixture.detectChanges();
     expect(el.querySelector('table')!.classList).not.toContain('auto-widths');

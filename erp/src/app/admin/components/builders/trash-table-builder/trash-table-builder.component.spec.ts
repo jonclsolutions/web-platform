@@ -281,4 +281,27 @@ describe('TrashTableBuilderComponent', () => {
     expect(component.getCellValue({ thema: 'support' }, col)).toBe('Support of a project');
     expect(component.getCellValue({ thema: 'x' }, col)).toBe('x');
   });
+
+  /**
+   * @description The trash table has the same column widths by content as the active table (on
+   *   by default): ID and dates fit their content, texts share the rest.
+   * @input  columns id, name, deleted_at (date); 1 row on a desktop
+   * @output table.auto-widths; headers and cells fit, flex, fit
+   */
+  it('fits short columns to their content like the active table', () => {
+    component.columnDefinitions = [
+      { key: 'id', header: 'ID', type: 'text' },
+      { key: 'name', header: 'Name', type: 'text' },
+      { key: 'deleted_at', header: 'Deleted', type: 'date' },
+    ] as any;
+    component.data = [{ id: 1, name: 'Link A', deleted_at: '2026-11-20T10:00:00Z' }];
+    component.isPhone = false;
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const kind = (cells: NodeListOf<Element>) => Array.from(cells).filter(c => c.matches('.col-fit, .col-flex')).map(c => c.classList.contains('col-fit') ? 'fit' : 'flex');
+    expect(component.autoColumnWidths).toBeTrue();
+    expect(el.querySelector('table')!.classList).toContain('auto-widths');
+    expect(kind(el.querySelectorAll('thead th'))).toEqual(['fit', 'flex', 'fit']);
+    expect(kind(el.querySelectorAll('tbody td'))).toEqual(['fit', 'flex', 'fit']);
+  });
 });

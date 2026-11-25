@@ -2,6 +2,12 @@
     "unreleased": [
         {
             "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "All tables (and the trash): short columns (ID, dates, labels, codes, prices, yes/no) are as wide as their content and never cut; text columns share the rest of the width."
+        },
+        {
+            "type": "changed",
             "area": "web",
             "part": "admin",
             "text": "Inquiries table: short columns (ID, status, priority, date) are as wide as their content and never cut; topic and e-mail share the rest of the width."
