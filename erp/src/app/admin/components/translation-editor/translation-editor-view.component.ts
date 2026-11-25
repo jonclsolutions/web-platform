@@ -41,7 +41,7 @@ export class TranslationEditorViewComponent {
    * Calmer actions (2026-11, pilot on the texts of the website): everything about the languages -
    * on / off, JSON download / upload per language, delete, a new language - is in one window
    * behind the "Jazyky" button of the page header; the language tabs only switch the language
-   * (no small action icons); the sticky bar keeps only
+   * (no small action icons, no "+ Přidat jazyk" - that is in the window); the sticky bar keeps only
    * "Uložit změny (n)" and shows the edited language only while it floats; on a phone the save
    * button is a bar at the bottom, shown only with unsaved changes.
    */

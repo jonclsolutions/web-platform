@@ -505,14 +505,14 @@
           "blocks": [
             {
               "type": "text",
-              "content": "Nahoře záložky Překlady je řada jazyků webu s vlajkou. Kliknutím na jazyk zobrazíte jeho texty. Čeština je výchozí jazyk - slouží jako vzor všech textů a nejde vypnout ani smazat."
+              "content": "Pod záložkou Překlady je řada jazyků webu (vlajka, nebo jen kód). Kliknutím na jazyk zobrazíte jeho texty; na telefonu řadu posunete prstem. Čeština je výchozí jazyk - slouží jako vzor všech textů a nejde vypnout ani smazat. Vše ostatní kolem jazyků najdete v okně Jazyky (tlačítko vpravo nahoře, na telefonu ikona glóbu)."
             },
             {
               "type": "flow",
               "steps": [
                 {
                   "label": "Přidat jazyk",
-                  "text": "Tlačítkem Přidat jazyk otevřete formulář.",
+                  "text": "V okně Jazyky tlačítkem + Přidat jazyk otevřete formulář.",
                   "active": true
                 },
                 {
@@ -541,9 +541,9 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "Ikonou u jazyka jazyk deaktivujete nebo aktivujete - neaktivní jazyk návštěvníci nevidí, texty zůstanou.",
-                "Ikonou koše jazyk smažete (po potvrzení). Smažou se i všechny jeho texty - překlady, obsah stránek, názvy stránek a texty e-mailů. Pokud jazyk chcete jen dočasně skrýt, deaktivujte ho.",
-                "Ikonou nahrání nahrajete texty jazyka ze souboru JSON (viz kapitola 05)."
+                "V okně Jazyky jazyk tlačítkem Deaktivovat nebo Aktivovat vypnete či zapnete - neaktivní jazyk návštěvníci nevidí, texty zůstanou.",
+                "Tlačítkem Smazat jazyk smažete (po potvrzení). Smažou se i všechny jeho texty - překlady, obsah stránek, názvy stránek a texty e-mailů. Pokud jazyk chcete jen dočasně skrýt, deaktivujte ho.",
+                "Stáhnout JSON a Nahrát JSON jsou u každého jazyka v okně Jazyky (viz kapitola 05)."
               ]
             }
           ]
@@ -618,7 +618,7 @@
                 },
                 {
                   "label": "Uložit změny",
-                  "text": "Tlačítko Uložit změny uloží texty aktuálního jazyka. Tečka na tlačítku upozorňuje na neuložené změny.",
+                  "text": "Tlačítko Uložit změny uloží texty aktuálního jazyka; v závorce ukazuje počet upravených textů. Při posouvání zůstává přilepené nahoře, na telefonu se objeví dole, jakmile něco upravíte.",
                   "active": false
                 }
               ]
@@ -654,8 +654,8 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "Stáhnout JSON stáhne všechny texty aktuálního jazyka do souboru - se všemi klíči hlavního jazyka (CZ), chybějící texty jako prázdné. Hodí se jako záloha nebo pro překladatele.",
-                "Nahrát JSON nahraje soubor, který musí mít přesně stejné klíče jako hlavní jazyk (CZ). Když nějaké klíče chybějí nebo přebývají, soubor se nenahraje, nic se nezmění a okno vypíše, které klíče nesedí. Prázdný text v souboru je v pořádku - označí se jako chybějící.",
+                "Stáhnout JSON (v okně Jazyky u daného jazyka) stáhne uložené texty jazyka do souboru - se všemi klíči hlavního jazyka (CZ), chybějící texty jako prázdné. Hodí se jako záloha nebo pro překladatele. Neuložené úpravy v souboru nejsou - okno na ně u otevřeného jazyka upozorní.",
+                "Nahrát JSON (v okně Jazyky u daného jazyka) nahraje soubor, který musí mít přesně stejné klíče jako hlavní jazyk (CZ). Když nějaké klíče chybějí nebo přebývají, soubor se nenahraje, nic se nezmění a okno vypíše, které klíče nesedí. Prázdný text v souboru je v pořádku - označí se jako chybějící.",
                 "Postup s překladatelem: stáhněte český JSON, nechte přeložit jen hodnoty (ne klíče), nahrajte soubor k novému jazyku, zkontrolujte chybějící texty a uložte.",
                 "Po aktualizaci aplikace se nové texty české verze doplní samy a texty, které jste neupravovali, se aktualizují. Texty upravené zde zůstanou beze změny. V ostatních jazycích se nové texty ukážou jako chybějící (filtr chybějících) a texty, které aplikace už nepoužívá, se odeberou. Že v zapnutých jazycích chybí texty, ukazuje oranžová tečka u položky Texty webu v menu a pruh nad jazyky na záložce Překlady (kolik textů chybí v kterém jazyce a tlačítko, které jazyk otevře jen s chybějícími texty); počty ukazují záložky stránky - Překlady, FAQ, Kariéra, Reference a Znalostní báze (u nich počet položek, kterým v některém zapnutém jazyce chybí text; počítají se jen položky zobrazené na webu). Tečka, pruh i čísla zmizí po doplnění textů."
               ]

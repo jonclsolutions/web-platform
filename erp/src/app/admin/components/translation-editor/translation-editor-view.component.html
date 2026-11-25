@@ -101,7 +101,7 @@
     </div>
   }
 
-  <div class="ew-lang-panel">
+  <div class="ew-lang-panel" [class.ew-lang-panel--compact]="compactActions">
     <div class="ew-lang-tabs">
       @for (lang of e.languages; track e.trackByCode($index, lang)) {
         <button
@@ -110,9 +110,11 @@
           [class.ew-lang-tab--inactive]="!lang.active"
           (click)="e.loadLang(lang.code)"
           [title]="lang.name + (lang.active ? '' : ' (' + e.t('inactive_suffix') + ')')">
+          <!-- `compactActions`: the flag when there is one, else only the code (no letter stand-in
+               next to the same code). -->
           @if (lang.iconUrl) {
             <img [src]="lang.iconUrl" class="ew-lang-icon-sm" [alt]="lang.name">
-          } @else {
+          } @else if (!compactActions) {
             <span class="ew-lang-icon-placeholder">{{ lang.code[0] | uppercase }}</span>
           }
           <span class="ew-lang-tab-code">{{ lang.code | uppercase }}</span>
@@ -153,7 +155,9 @@
         </button>
       }
 
-      @if (e.canUpdate) {
+      <!-- `compactActions`: the row only switches the language - a new language is added in the
+           window "Spravovat jazyky" (a one-off action of managing the languages). -->
+      @if (e.canUpdate && !compactActions) {
         <button class="ew-lang-tab ew-lang-tab--add" (click)="e.openAddForm()" [title]="e.t('add_language_title')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           {{ e.t('add_language_button') }}
@@ -426,8 +430,6 @@
           <span class="ew-manage-lang">
             @if (lang.iconUrl) {
               <img [src]="lang.iconUrl" class="ew-lang-icon-sm" alt="">
-            } @else {
-              <span class="ew-lang-icon-placeholder" aria-hidden="true">{{ lang.code[0] | uppercase }}</span>
             }
             <span class="ew-lang-badge">{{ lang.code | uppercase }}</span>
             <span class="ew-manage-name">{{ lang.name }}</span>

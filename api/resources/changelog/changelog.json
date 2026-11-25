@@ -4,6 +4,18 @@
             "type": "changed",
             "area": "web",
             "part": "admin",
+            "text": "Website texts: the language row only switches the language; adding a language is in the Languages window. The help of the page describes the new controls."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "admin",
+            "text": "Website texts: language tabs show the flag or just the code (no letter stand-ins); on a phone they are one scrolling row with the statistics below, so nothing is cut off."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "admin",
             "text": "Website texts: a Languages button opens one window with every language - turn on/off, download and upload its JSON, delete. Download always gives the saved version; the open language warns about unsaved changes."
         },
         {

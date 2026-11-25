@@ -197,6 +197,42 @@
 }
 
 @media (max-width: 640px) {
+  /*
+   * Phone (`compactActions`): the language tabs get the whole width as one scrolling row of
+   * chips (flag / code, nothing cut off; the edge fades where more chips follow) and the
+   * statistics go below them.
+   */
+  .ew-lang-panel--compact {
+    flex-wrap: wrap;
+    row-gap: 10px;
+    overflow-x: visible;
+  }
+
+  .ew-lang-panel--compact .ew-lang-tabs {
+    flex: 1 1 100%;
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-right: 24px;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+  }
+
+  .ew-lang-panel--compact .ew-lang-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ew-lang-panel--compact .ew-lang-tab {
+    flex-shrink: 0;
+  }
+
+  .ew-lang-panel--compact .ew-stats {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+  }
+
   /* Phone: nothing at the top - the save button is the bar at the bottom. */
   .ew-root--compact .ew-topbar {
     display: none;

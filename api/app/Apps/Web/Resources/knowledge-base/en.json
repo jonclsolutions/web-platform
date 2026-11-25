@@ -505,14 +505,14 @@
           "blocks": [
             {
               "type": "text",
-              "content": "At the top of the Translations tab is the row of the website languages with flags. Click a language to show its texts. Czech is the default language - it is the template of all texts and cannot be switched off or deleted."
+              "content": "Under the Translations tab is the row of the website languages (a flag, or just the code). Click a language to show its texts; on a phone swipe the row. Czech is the default language - it is the template of all texts and cannot be switched off or deleted. Everything else about the languages is in the Languages window (the button at the top right, on a phone the globe icon)."
             },
             {
               "type": "flow",
               "steps": [
                 {
                   "label": "Add language",
-                  "text": "Add language opens the form.",
+                  "text": "In the Languages window + Add language opens the form.",
                   "active": true
                 },
                 {
@@ -541,9 +541,9 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "The icon at a language deactivates or activates it - visitors do not see an inactive language, its texts stay.",
-                "The bin icon deletes the language (after a confirmation). All its texts are deleted too - translations, page content, page titles and e-mail texts. To hide a language only for a while, deactivate it.",
-                "The upload icon uploads the texts of the language from a JSON file (see chapter 05)."
+                "In the Languages window Deactivate or Activate switches a language off or on - visitors do not see an inactive language, its texts stay.",
+                "Delete deletes the language (after a confirmation). All its texts are deleted too - translations, page content, page titles and e-mail texts. To hide a language only for a while, deactivate it.",
+                "Download JSON and Upload JSON are at every language in the Languages window (see chapter 05)."
               ]
             }
           ]
@@ -618,7 +618,7 @@
                 },
                 {
                   "label": "Save changes",
-                  "text": "Save changes stores the texts of the current language. A dot on the button warns of unsaved changes.",
+                  "text": "Save changes stores the texts of the current language; the number in brackets is the count of edited texts. While scrolling it stays stuck at the top; on a phone it appears at the bottom as soon as you edit something.",
                   "active": false
                 }
               ]
@@ -654,8 +654,8 @@
               "type": "list",
               "ordered": false,
               "items": [
-                "Download JSON downloads all texts of the current language into a file - with every key of the primary language (CZ), missing texts as empty ones. Useful as a backup or for a translator.",
-                "Upload JSON uploads a file that must have exactly the keys of the primary language (CZ). When keys are missing or extra, the file is not uploaded, nothing changes and the window lists the keys that do not match. An empty text in the file is fine - it is marked as missing.",
+                "Download JSON (in the Languages window at the language) downloads the saved texts of the language into a file - with every key of the primary language (CZ), missing texts as empty ones. Useful as a backup or for a translator. Unsaved edits are not in the file - the window warns about them at the open language.",
+                "Upload JSON (in the Languages window at the language) uploads a file that must have exactly the keys of the primary language (CZ). When keys are missing or extra, the file is not uploaded, nothing changes and the window lists the keys that do not match. An empty text in the file is fine - it is marked as missing.",
                 "Working with a translator: download the Czech JSON, have only the values (not the keys) translated, upload the file to the new language, check the missing texts and save.",
                 "After an update of the application new texts of the Czech version are added by themselves and texts you have not edited are updated. Texts edited here stay as they are. In other languages the new texts show as missing (filter of missing ones) and texts the application no longer uses are removed. An orange dot at this page in the menu and a banner above the languages of the Translations tab (how many texts are missing in which language and a button that opens the language with only its missing texts) show that texts are missing; numbers at the tabs of the page - Translations, FAQ, Jobs, References and Knowledge base (there the number of items missing a text in an active language; only items shown on the website count) - shows what is missing. The dot, the banner and the numbers disappear once the texts are filled."
               ]

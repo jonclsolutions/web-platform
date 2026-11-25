@@ -322,7 +322,9 @@ describe('EditWebsiteComponent', () => {
    *   stays in the window; upload / delete / a new language close it and open their own window.
    * @input  render; openManage(); edit a text; download CZ and EN; toggle EN; upload EN; reopen,
    *   delete EN; reopen, add
-   * @output no .ew-lang-tab-actions; 2 rows - CZ main with [download, upload], EN with 4 actions;
+   * @output no .ew-lang-tab-actions, no letter stand-ins (codes CZ, EN), no "+ Přidat jazyk" tab;
+   *   2 rows - CZ main with
+   *   [download, upload], EN with 4 actions;
    *   note only in the CZ row after the edit; get('translations/web/cz') + ('translations/web/en')
    *   and 2 files; toggleLangActive(EN) with the window open; openUploadModal('en') and closed;
    *   askDeleteLang(EN); openAddForm()
@@ -335,6 +337,12 @@ describe('EditWebsiteComponent', () => {
     const view = fixture.debugElement.query(By.css('app-translation-editor-view')).componentInstance;
     expect(el.querySelectorAll('.ew-lang-tab').length).toBeGreaterThan(1);
     expect(el.querySelector('.ew-lang-tab-actions')).toBeNull();
+    // A language without a flag shows only its code - no letter stand-in next to it.
+    expect(el.querySelector('.ew-lang-tab .ew-lang-icon-placeholder')).toBeNull();
+    expect(Array.from(el.querySelectorAll('.ew-lang-tab .ew-lang-tab-code')).map(c => c.textContent!.trim()).slice(0, 2)).toEqual(['CZ', 'EN']);
+    expect(el.querySelector('.ew-lang-panel')!.classList).toContain('ew-lang-panel--compact');
+    // The row only switches the language - adding one is in the window.
+    expect(el.querySelector('.ew-lang-tab--add')).toBeNull();
 
     (el.querySelector('.ew-langs-btn') as HTMLButtonElement).click();
     fixture.detectChanges();
@@ -345,6 +353,7 @@ describe('EditWebsiteComponent', () => {
     expect(rows()[0].querySelectorAll('.ew-manage-actions button').length).toBe(2);
     expect(rows()[1].querySelectorAll('.ew-manage-actions button').length).toBe(4);
     expect(document.querySelector('.ew-manage-note')).toBeNull();
+    expect(document.querySelector('.ew-manage-row .ew-lang-icon-placeholder')).toBeNull();
 
     component.updateValue('footer', 'Nová');
     (component as any).cd.markForCheck();
