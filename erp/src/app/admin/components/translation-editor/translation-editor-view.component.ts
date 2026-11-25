@@ -43,7 +43,9 @@ export class TranslationEditorViewComponent {
    * behind the "Jazyky" button of the page header; the language tabs only switch the language
    * (no small action icons, no "+ Přidat jazyk" - that is in the window); the sticky bar keeps only
    * "Uložit změny (n)" and shows the edited language only while it floats; on a phone the save
-   * button is a bar at the bottom, shown only with unsaved changes.
+   * button is a bar at the bottom, shown only with unsaved changes; next to the save button
+   * "Zrušit změny" (after a confirmation back to the saved texts); the statistics of the language
+   * are one line and the search row has the "Chybí" toggle (only the missing texts).
    */
   @Input() compactActions = false;
 
@@ -106,6 +108,33 @@ export class TranslationEditorViewComponent {
   manageAdd(): void {
     this.manageOpen = false;
     this.e.openAddForm();
+  }
+
+  /** The confirmation of throwing away the unsaved edits is open. */
+  discardOpen = false;
+
+  /** @description "Zrušit změny" (sticky bar / bottom bar) asks first - the edits cannot be brought back. */
+  askDiscard(): void {
+    this.discardOpen = true;
+  }
+
+  /** @description Closes the confirmation, the edits stay. */
+  closeDiscard(): void {
+    this.discardOpen = false;
+  }
+
+  /** @description Throws the edits away - the open language is loaded again in the saved version. */
+  confirmDiscard(): void {
+    this.discardOpen = false;
+    this.e.discardChanges();
+  }
+
+  /** @description Text of the confirmation - how many edits of which language are thrown away. */
+  get discardMessage(): string {
+    const lang = this.e.getCurrentLangMeta()?.name ?? this.e.currentLang.toUpperCase();
+    return this.e.t('discard_confirm_message')
+      .replace('{count}', String(this.e.changedPaths.size))
+      .replace('{lang}', lang);
   }
 
   /** @description Label of the save button - with the count of the changed texts when there are any. */

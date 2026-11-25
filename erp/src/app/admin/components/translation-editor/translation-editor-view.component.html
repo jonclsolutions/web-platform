@@ -6,7 +6,7 @@
     @created: 2026
     @description: Page of a translation editor (`e` = the editor, BaseTranslationEditorComponent):
         the page header, tabs, the texts of the module against the CZ reference (languages, search, missing
-        texts, JSON upload / download, saving), the browser page titles of the module, the panels
+        texts, the "Chybí" filter, JSON upload / download, saving / discarding), the browser page titles of the module, the panels
         of the extra tabs (projected) and the language / upload / delete modals.
 -->
 
@@ -61,6 +61,13 @@
           {{ e.t('upload_json_button') }}
         </button>
         }
+        <!-- `compactActions`: back to the saved texts - only with unsaved changes, after a confirmation. -->
+        @if (compactActions && e.isDirty) {
+          <button type="button" class="ew-btn ew-btn--ghost ew-discard-btn" (click)="askDiscard()"
+                  [disabled]="e.loadingService.isLoading$ | async" [title]="e.t('discard_changes_title')">
+            {{ e.t('discard_changes_button') }}
+          </button>
+        }
         <button
           class="ew-btn ew-btn--primary"
           (click)="e.onSubmit()"
@@ -78,6 +85,10 @@
   <!-- Phone (`compactActions`): the save button as a bar at the bottom, only with unsaved changes. -->
   @if (compactActions && e.canUpdate && e.isDirty) {
     <div class="ew-savebar" role="region" [attr.aria-label]="e.t('unsaved_changes_title')">
+      <button type="button" class="ew-btn ew-btn--ghost ew-savebar-discard" (click)="askDiscard()"
+              [disabled]="e.loadingService.isLoading$ | async" [title]="e.t('discard_changes_title')">
+        {{ e.t('discard_changes_button') }}
+      </button>
       <button type="button" class="ew-btn ew-btn--primary ew-savebar-btn" (click)="e.onSubmit()"
               [disabled]="e.loadingService.isLoading$ | async">
         {{ (e.loadingService.isLoading$ | async) ? e.t('saving_label') : saveLabel }}
@@ -165,6 +176,17 @@
       }
     </div>
 
+    <!-- `compactActions`: the statistics of the whole language as one quiet line (the missing filter
+         is the "Chybí" toggle of the search row). -->
+    @if (compactActions) {
+    <p class="ew-stats-line" aria-live="polite">
+      <span><strong>{{ e.langTotal }}</strong> {{ e.t('stat_keys_label') }}</span>
+      <span class="ew-stats-line-sep" aria-hidden="true">·</span>
+      <span class="ew-stats-line-ok"><strong>{{ e.langFilled }}</strong> {{ e.t('stat_filled_label') }}</span>
+      <span class="ew-stats-line-sep" aria-hidden="true">·</span>
+      <span [class.ew-stats-line-warn]="e.langMissing > 0"><strong>{{ e.langMissing }}</strong> {{ e.t('stat_missing_label') }}</span>
+    </p>
+    } @else {
     <div class="ew-stats">
       <span class="ew-stat">
         <span class="ew-stat-num">{{ e.totalCount }}</span>
@@ -181,9 +203,10 @@
         <span class="ew-stat-label">{{ e.t('stat_missing_label') }}</span>
       </span>
     </div>
+    }
   </div>
 
-  <div class="ew-controls">
+  <div class="ew-controls" [class.ew-controls--compact]="compactActions">
     <div class="ew-search-group">
       <div class="ew-input-wrap">
         <svg class="ew-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -200,10 +223,24 @@
           </button>
         }
       </div>
-      @if (e.missingCount > 0) {
-        <button class="ew-btn ew-btn--warn-outline" (click)="e.filterMissing()">
+      <!-- Only the missing texts on / off (shown while some are missing or while the filter is on -
+           a filter whose texts were all filled can still be turned off). -->
+      @if (compactActions) {
+        @if (e.langMissing > 0 || e.onlyMissing) {
+          <button type="button" class="ew-missing-toggle" [class.is-on]="e.onlyMissing"
+                  [attr.aria-pressed]="e.onlyMissing" (click)="e.toggleMissing()"
+                  [title]="e.onlyMissing ? e.t('show_all_texts_title') : e.t('show_missing_only_title')">
+            @if (e.onlyMissing) {
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            }
+            {{ e.t('missing_toggle_label') }}
+            <span class="ew-missing-toggle-count">{{ e.langMissing }}</span>
+          </button>
+        }
+      } @else if (e.langMissing > 0 || e.onlyMissing) {
+        <button class="ew-btn ew-btn--warn-outline" [attr.aria-pressed]="e.onlyMissing" (click)="e.toggleMissing()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          {{ e.missingCount }} {{ e.t('missing_count_suffix') }}
+          {{ e.langMissing }} {{ e.t('missing_count_suffix') }}
         </button>
       }
     </div>
@@ -244,7 +281,7 @@
           <tr>
             <td colspan="2" class="ew-empty">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <span>{{ e.t('no_results') }}</span>
+              <span>{{ e.onlyMissing && !e.searchQuery ? e.t('no_missing_results') : e.t('no_results') }}</span>
             </td>
           </tr>
         }
@@ -471,6 +508,19 @@
         <button type="button" class="am-btn am-btn--secondary" (click)="manageAdd()">+ {{ e.t('add_language_button') }}</button>
       }
       <button type="button" class="am-btn am-btn--secondary" (click)="closeManage()">{{ e.i18n.getValue('shared.close') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}
+
+<!-- `compactActions`: confirmation of throwing away the unsaved edits of the open language. -->
+@if (compactActions && discardOpen) {
+  <app-admin-modal size="sm" [heading]="e.t('discard_confirm_heading')" (dismissed)="closeDiscard()">
+    <div class="ew-modal-content">
+      <p class="ew-modal-desc">{{ discardMessage }}</p>
+    </div>
+    <ng-container modal-footer>
+      <button type="button" class="am-btn am-btn--secondary" (click)="closeDiscard()">{{ e.t('discard_keep_button') }}</button>
+      <button type="button" class="am-btn am-btn--danger" (click)="confirmDiscard()">{{ e.t('discard_changes_button') }}</button>
     </ng-container>
   </app-admin-modal>
 }

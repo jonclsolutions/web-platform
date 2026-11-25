@@ -620,6 +620,11 @@
                   "label": "Save changes",
                   "text": "Save changes stores the texts of the current language; the number in brackets is the count of edited texts. While scrolling it stays stuck at the top; on a phone it appears at the bottom as soon as you edit something.",
                   "active": false
+                },
+                {
+                  "label": "Discard changes",
+                  "text": "Next to Save changes is Discard changes (only when something is unsaved). After a confirmation it throws away all unsaved edits of the language and brings back the last saved texts. This cannot be undone.",
+                  "active": false
                 }
               ]
             },
@@ -627,12 +632,12 @@
               "type": "grid",
               "cards": [
                 {
-                  "title": "keys / filled / missing",
-                  "text": "Statistics of the language: how many texts the website has, how many are filled and how many are missing."
+                  "title": "keys · filled · missing",
+                  "text": "One line next to the languages (on a phone under them): how many texts the whole language has, how many are filled and how many are missing. The search does not change the numbers."
                 },
                 {
                   "title": "Missing translations",
-                  "text": "A text missing in the language has an exclamation mark. The button “N missing” (or a click on the missing statistic) shows only the missing texts."
+                  "text": "A text missing in the language has an exclamation mark. The orange Missing button with the count next to the search shows only the missing texts; it works together with the search. Another click shows all texts again. A text you fill in stays in the list until you change the filter."
                 },
                 {
                   "title": "What the visitor sees",

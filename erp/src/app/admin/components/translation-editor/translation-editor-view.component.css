@@ -4,7 +4,8 @@
     @project: JS web-platform
     @author: JS
     @created: 2026
-    @description: Language tabs of the translation editor page; the rest of the page is
+    @description: Language tabs, the statistics line, the "Chybí" toggle, the "Jazyky" window and
+        the phone save bar of the translation editor page; the rest of the page is
         admin/shared-styles/settings-page.css (.ew-*).
     @dependencies: admin/shared-styles/theme.css, shared/styles/base.css, admin/shared-styles/settings-page.css
 */
@@ -196,6 +197,91 @@
   color: var(--error, #b42318);
 }
 
+/*
+ * @module Statistics line and the "Chybí" toggle (`compactActions`, 2026-11)
+ * @description The statistics of the whole language as one quiet line next to the language tabs
+ *   (on a phone under them); the search and the missing filter share one row - the toggle is a
+ *   pill with the count, orange while texts are missing, filled while the filter is on.
+ * @usage .ew-stats-line > span (> strong) + .ew-stats-line-sep; .ew-controls--compact .ew-missing-toggle(.is-on) > .ew-missing-toggle-count
+ */
+.ew-stats-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0 0 0 auto;
+  padding-left: 16px;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.ew-stats-line strong {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ew-stats-line-ok strong { color: var(--success); }
+
+.ew-stats-line-warn,
+.ew-stats-line-warn strong { color: var(--warn); }
+
+.ew-controls--compact .ew-search-group {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.ew-controls--compact .ew-input-wrap {
+  min-width: 0;
+}
+
+.ew-missing-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 34px; /* the height of the search field next to it */
+  padding: 0 8px 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--warn-mid);
+  background: var(--warn-dim);
+  color: var(--color-amber-800);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--ease), color var(--ease), border-color var(--ease);
+}
+
+.ew-missing-toggle:hover { background: var(--warn-mid); }
+
+.ew-missing-toggle:focus-visible {
+  outline: 2px solid var(--color-amber-800);
+  outline-offset: 2px;
+}
+
+.ew-missing-toggle-count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.ew-missing-toggle.is-on {
+  background: var(--color-amber-800);
+  border-color: var(--color-amber-800);
+  color: var(--color-white);
+}
+
+.ew-missing-toggle.is-on .ew-missing-toggle-count {
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--color-white);
+}
+
 @media (max-width: 640px) {
   /*
    * Phone (`compactActions`): the language tabs get the whole width as one scrolling row of
@@ -227,10 +313,10 @@
     flex-shrink: 0;
   }
 
-  .ew-lang-panel--compact .ew-stats {
+  .ew-lang-panel--compact .ew-stats-line {
+    flex-basis: 100%;
     margin-left: 0;
-    padding-left: 0;
-    border-left: none;
+    padding-left: 2px;
   }
 
   /* Phone: nothing at the top - the save button is the bar at the bottom. */
@@ -270,9 +356,22 @@
     box-shadow: 0 0 0 1px var(--border-mid), 0 10px 28px rgba(24, 24, 27, 0.18);
   }
 
+  .ew-savebar {
+    gap: 8px;
+  }
+
   .ew-savebar-btn {
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
     height: 44px;
+    justify-content: center;
+  }
+
+  /* "Zrušit změny" next to the save button - lighter and only as wide as its text. */
+  .ew-savebar-discard {
+    flex: 0 0 auto;
+    height: 44px;
+    padding: 0 16px;
     justify-content: center;
   }
 

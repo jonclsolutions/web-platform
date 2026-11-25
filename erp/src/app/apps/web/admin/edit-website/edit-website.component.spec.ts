@@ -393,6 +393,113 @@ describe('EditWebsiteComponent', () => {
   }));
 
   /**
+   * @description The statistics of the whole language are one line (not narrowed by the search)
+   *   and the search row has the "Chybí" toggle: only the missing texts, combined with the search;
+   *   a text filled meanwhile stays in the list until the next filtering; the toggle stays while
+   *   the filter is on even when nothing is missing any more; the empty list says nothing is missing.
+   * @input  render; loadLang('en'); click the toggle; search 'foot'; fill footer; clear the search;
+   *   fill home.cta; click the toggle; click the toggle again (nothing missing)
+   * @output .ew-stats-line (no .ew-stats) 4 / 2 / 2; toggle count 2, aria-pressed false → true,
+   *   ['home.cta', 'footer']; search → ['footer']; footer filled stays; reset → ['home.cta'];
+   *   langMissing 0, toggle still shown, off → 4 texts; on again → empty list with no_missing_results
+   */
+  it('filters the missing texts with the toggle of the search row', fakeAsync(() => {
+    fixture.detectChanges();
+    flush();
+    component.loadLang('en');
+    flush();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const toggle = () => el.querySelector('.ew-controls .ew-missing-toggle') as HTMLButtonElement | null;
+    const paths = () => component.filteredKeys.map(k => k.path);
+
+    expect(el.querySelector('.ew-lang-panel .ew-stats')).toBeNull();
+    expect(el.querySelectorAll('.ew-stats-line strong').length).toBe(3);
+    expect(Array.from(el.querySelectorAll('.ew-stats-line strong')).map(n => n.textContent!.trim())).toEqual(['4', '2', '2']);
+    expect(toggle()!.querySelector('.ew-missing-toggle-count')!.textContent!.trim()).toBe('2');
+    expect(toggle()!.getAttribute('aria-pressed')).toBe('false');
+
+    toggle()!.click();
+    fixture.detectChanges();
+    expect(component.onlyMissing).toBeTrue();
+    expect(toggle()!.getAttribute('aria-pressed')).toBe('true');
+    expect(paths()).toEqual(['home.cta', 'footer']);
+
+    component.searchQuery = 'foot';
+    component.applyFilter();
+    expect(paths()).toEqual(['footer']);
+    // the statistics follow the whole language, not the narrowed list
+    expect(component.langTotal).toBe(4);
+
+    component.updateValue('footer', 'Footer');
+    expect(paths()).toEqual(['footer']);
+    component.resetFilter();
+    expect(paths()).toEqual(['home.cta']);
+
+    component.updateValue('home.cta', 'Contact');
+    fixture.detectChanges();
+    expect(component.langMissing).toBe(0);
+    expect(toggle()).not.toBeNull();
+    toggle()!.click();
+    fixture.detectChanges();
+    expect(component.onlyMissing).toBeFalse();
+    expect(paths().length).toBe(4);
+    expect(toggle()).toBeNull();
+
+    component.toggleMissing();
+    fixture.detectChanges();
+    expect(paths().length).toBe(0);
+    expect(el.querySelector('.ew-empty')!.textContent).toContain('edit-website.no_missing_results');
+    flush();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description "Zrušit změny" next to the save button (the sticky bar and the phone bar) - only
+   *   with unsaved changes; it asks first; keeping the changes leaves them; confirming loads the
+   *   saved texts again (no changes, no bottom bar).
+   * @input  render; updateValue('footer', 'Nová'); click the discard of the bottom bar; keep;
+   *   ask again; confirm
+   * @output no discard buttons at first; .ew-discard-btn and .ew-savebar-discard after the edit;
+   *   the confirmation open; kept → isDirty; confirmed → isDirty false, 0 changes, footer 'Patička',
+   *   no .ew-savebar
+   */
+  it('discards the unsaved changes after a confirmation', fakeAsync(() => {
+    fixture.detectChanges();
+    flush();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const view = fixture.debugElement.query(By.css('app-translation-editor-view')).componentInstance;
+    expect(el.querySelector('.ew-discard-btn')).toBeNull();
+    expect(el.querySelector('.ew-savebar-discard')).toBeNull();
+
+    component.updateValue('footer', 'Nová');
+    fixture.detectChanges();
+    expect(el.querySelector('.ew-topbar .ew-discard-btn')).not.toBeNull();
+    (el.querySelector('.ew-savebar-discard') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(view.discardOpen).toBeTrue();
+    expect(document.querySelector('.am-btn--danger')).not.toBeNull();
+
+    view.closeDiscard();
+    fixture.detectChanges();
+    expect(component.isDirty).toBeTrue();
+    expect(component.translations.footer).toBe('Nová');
+
+    view.askDiscard();
+    view.confirmDiscard();
+    flush();
+    fixture.detectChanges();
+    expect(view.discardOpen).toBeFalse();
+    expect(component.isDirty).toBeFalse();
+    expect(component.changedPaths.size).toBe(0);
+    expect(component.translations.footer).toBe('Patička');
+    expect(component.flattenedKeys.find(k => k.path === 'footer')!.value).toBe('Patička');
+    expect(el.querySelector('.ew-savebar')).toBeNull();
+    discardPeriodicTasks();
+  }));
+
+  /**
    * @description The page also manages the browser titles of its own pages: the "Page titles" tab
    *   creates PageTitlesEditorComponent for the 'web' area on the first open; the translations
    *   are hidden, not destroyed; the editor stays created when switching back; its unsaved state

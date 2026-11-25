@@ -4,6 +4,12 @@
             "type": "changed",
             "area": "web",
             "part": "admin",
+            "text": "Website texts: the statistics of the language are one line, the search row has a Missing toggle (only the missing texts, together with the search) and next to Save changes is Discard changes with a confirmation."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "admin",
             "text": "Website texts: the language row only switches the language; adding a language is in the Languages window. The help of the page describes the new controls."
         },
         {

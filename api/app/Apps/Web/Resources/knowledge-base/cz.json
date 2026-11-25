@@ -620,6 +620,11 @@
                   "label": "Uložit změny",
                   "text": "Tlačítko Uložit změny uloží texty aktuálního jazyka; v závorce ukazuje počet upravených textů. Při posouvání zůstává přilepené nahoře, na telefonu se objeví dole, jakmile něco upravíte.",
                   "active": false
+                },
+                {
+                  "label": "Zrušit změny",
+                  "text": "Vedle tlačítka Uložit změny je Zrušit změny (jen když máte něco neuloženého). Po potvrzení zahodí všechny neuložené úpravy jazyka a vrátí texty na poslední uloženou verzi. Krok nejde vrátit.",
+                  "active": false
                 }
               ]
             },
@@ -627,12 +632,12 @@
               "type": "grid",
               "cards": [
                 {
-                  "title": "klíčů / vyplněno / chybí",
-                  "text": "Statistiky jazyka: kolik textů web má, kolik je vyplněných a kolik chybí."
+                  "title": "klíčů · vyplněno · chybí",
+                  "text": "Jeden řádek vedle jazyků (na telefonu pod nimi): kolik textů má celý jazyk, kolik je vyplněných a kolik chybí. Čísla se vyhledáváním nemění."
                 },
                 {
                   "title": "Chybějící překlady",
-                  "text": "Text, který v jazyce chybí, má vykřičník. Tlačítko „N chybějících“ (nebo kliknutí na statistiku chybí) zobrazí jen chybějící texty."
+                  "text": "Text, který v jazyce chybí, má vykřičník. Oranžové tlačítko Chybí s počtem vedle vyhledávání zobrazí jen chybějící texty; jde kombinovat s vyhledáváním. Dalším kliknutím se zobrazí zase všechny texty. Doplněný text zůstane v seznamu, dokud filtr nezměníte."
                 },
                 {
                   "title": "Co uvidí návštěvník",

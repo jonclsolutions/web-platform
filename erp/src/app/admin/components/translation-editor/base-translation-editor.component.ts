@@ -254,8 +254,20 @@ export abstract class BaseTranslationEditorComponent
 
   langToDelete: LangMeta | null = null;
 
+  /**
+   * The list shows only the missing texts ("Chybí" toggle of the search row) - combined with the
+   * search, kept on a language switch, turned off by the toggle again.
+   */
+  onlyMissing: boolean = false;
+
   /** @returns Count of keys currently marked as missing in the active language. */
   get missingCount(): number { return this.filteredKeys.filter(k => k.missing).length; }
+  /** @returns All texts of the active language (not narrowed by the search / the missing filter). */
+  get langTotal(): number    { return this.flattenedKeys.length; }
+  /** @returns Filled texts of the active language (not narrowed by the search / the missing filter). */
+  get langFilled(): number   { return this.flattenedKeys.filter(k => !k.missing && k.value?.trim()).length; }
+  /** @returns Missing texts of the active language (not narrowed by the search / the missing filter). */
+  get langMissing(): number  { return this.flattenedKeys.filter(k => k.missing).length; }
   /** @returns Total number of keys currently filtered. */
   get totalCount(): number   { return this.filteredKeys.length; }
   /** @returns Count of translated keys currently filtered. */
@@ -483,21 +495,40 @@ export abstract class BaseTranslationEditorComponent
     return result;
   }
 
+  /**
+   * @description Narrows the list by the search (key or text) and, with `onlyMissing`, to the
+   *   missing texts. A text filled meanwhile stays in the list until the next filtering - the row
+   *   being typed into never disappears.
+   */
   applyFilter(): void {
     const q = this.searchQuery.toLowerCase().trim();
-    this.filteredKeys = q
-      ? this.flattenedKeys.filter(k =>
-          k.path.toLowerCase().includes(q) ||
-          String(k.value || '').toLowerCase().includes(q)
-        )
-      : [...this.flattenedKeys];
+    this.filteredKeys = this.flattenedKeys.filter(k =>
+      (!this.onlyMissing || k.missing) &&
+      (!q || k.path.toLowerCase().includes(q) || String(k.value || '').toLowerCase().includes(q))
+    );
     this.cd.markForCheck();
   }
 
+  /** @description Shows only the missing texts (clears the search) - the banner, the statistics. */
   filterMissing(): void {
     this.searchQuery = '';
-    this.filteredKeys = this.flattenedKeys.filter(k => k.missing);
-    this.cd.markForCheck();
+    this.onlyMissing = true;
+    this.applyFilter();
+  }
+
+  /** @description The "Chybí" toggle of the search row: only the missing texts on / off (the search stays). */
+  toggleMissing(): void {
+    this.onlyMissing = !this.onlyMissing;
+    this.applyFilter();
+    setTimeout(() => this.resizeAllTextareas(), 10);
+  }
+
+  /**
+   * @description Throws away the unsaved edits of the open language - its texts are loaded again
+   *   in the saved version (the search and the missing filter stay).
+   */
+  discardChanges(): void {
+    this.refreshTranslations();
   }
 
   /** A language opened from the "texts missing" banner shows only its missing texts once loaded. */
