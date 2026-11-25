@@ -889,11 +889,11 @@ describe('TableBuilderComponent', () => {
       fixture.componentRef.setInput('columns', columns);
       fixture.detectChanges();
       const layout = component.cardLayout;
-      expect([layout.title?.key, layout.badges.map(c => c.key), layout.date?.key, layout.meta.map(c => c.key)])
-        .toEqual(['thema', ['status'], 'created_at', ['contact_email', 'note']]);
+      expect([layout.titles.map(c => c.key), layout.badges.map(c => c.key), layout.date?.key, layout.meta.map(c => c.key)])
+        .toEqual([['thema'], ['status'], 'created_at', ['contact_email', 'note']]);
       fixture.componentRef.setInput('columns', columns.map(c => c.key === 'note' ? { ...c, mobile: 'title' } : c.key === 'contact_email' ? { ...c, mobile: false } : c));
       fixture.detectChanges();
-      expect([component.cardLayout.title?.key, component.cardLayout.meta.map(c => c.key)]).toEqual(['note', ['thema']]);
+      expect([component.cardLayout.titles.map(c => c.key), component.cardLayout.meta.map(c => c.key)]).toEqual([['note'], ['thema']]);
     });
 
     /**

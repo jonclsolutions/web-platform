@@ -155,7 +155,8 @@ describe('ActionMenuBuilderComponent', () => {
    *   (label shared.add) and is not in the menu; a click emits its action. When its config may
    *   not be shown (showIf false - no permission, trash) there is no button and still nothing
    *   in the menu. Without `primaryAction` everything stays in the menu.
-   * @input  primaryAction 'export'; click the button; then export showIf false; then primaryAction null
+   * @input  default primaryAction (adding a record); then 'export'; click the button; then export
+   *   showIf false; then primaryAction null
    * @output button 'shared.add', menu [Import] (Hidden not shown); emits 'export'; no button,
    *   menu [Import]; no button, menu [Export, Import]
    */
@@ -174,6 +175,7 @@ describe('ActionMenuBuilderComponent', () => {
       return labels;
     };
 
+    expect(component.primaryAction).toBe('handleCreateFormOpened');
     fixture.componentRef.setInput('primaryAction', 'export');
     fixture.detectChanges();
     const button = el.querySelector('.action-menu-primary') as HTMLButtonElement;

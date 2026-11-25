@@ -55,7 +55,7 @@
 </app-table-builder>
           }
 @if (showTrashTable) {
-<app-trash-table-builder [footer]="tablePager"
+<app-trash-table-builder [footer]="tablePager" [inputDefinitions]="visibleFormFields"
 [data]="trashData"
 [columns]="trashTableColumns"
 [apiEndpoint]="apiEndpoint"

@@ -52,6 +52,7 @@ import { IconComponent } from '../../../../shared/components/icon/icon.component
 import { spreadsheetSafe } from '../../../../shared/utils/spreadsheet-safe';
 import { adminDateFormat, adminDateKind } from '../../../shared-date/admin-date-format';
 import { BadgeTone, badgeToneOf } from '../badge-tones';
+import { TableCardLayout, cardLayoutOf, cardMetaNeedsLabel, phoneQuery as phoneMediaQuery, primaryColumnOf } from '../table-cards';
 const DEFAULT_EXPORT_EXCLUDED_KEYS = [
   'user_password_hash',
   'user_password_salt',
@@ -87,15 +88,6 @@ export interface ImportEnumHint {
   key: string;
   label: string;
   options: { value: string; label: string }[];
-}
-
-/** Columns of a phone card (see `TableBuilderComponent.cardLayout`). */
-export interface TableCardLayout {
-  title: ColumnDefinition | null;
-  thumb: ColumnDefinition | null;
-  badges: ColumnDefinition[];
-  date: ColumnDefinition | null;
-  meta: ColumnDefinition[];
 }
 
 @Component({
@@ -147,11 +139,11 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   @Input() openOnRowClick: boolean = false;
   /**
    * Phone (≤ 640px, 2026-11): the rows are compact cards instead of the table - title, coloured
-   * labels, date and up to 2 short values; a tap opens the record (`openOnRowClick`). Bulk
-   * selection has its own mode ("Vybrat" above the cards). Off by default (tables of pages with
-   * several tables keep the table).
+   * labels, date and up to 2 short values (table-cards.ts); a tap opens the record
+   * (`openOnRowClick`). Bulk selection has its own mode ("Vybrat" above the cards). On for every
+   * table; false keeps the table on a phone too.
    */
-  @Input() mobileCards: boolean = false;
+  @Input() mobileCards: boolean = true;
 
   @Output() itemDeleted = new EventEmitter<any>();
   @Output() createFormOpened = new EventEmitter<void>();
@@ -261,20 +253,13 @@ get importEnumHints(): ImportEnumHint[] {
   // PHONE CARDS (`mobileCards`)
   // ══════════════════════════════════════════════════════════════════════
 
-  /** Width up to which the rows are cards - the same phone limit as the footer of the table. */
-  static readonly PHONE_QUERY = '(max-width: 640px)';
-
-  /** At most this many short values on a card (besides the title, labels and the date). */
-  static readonly CARD_META_MAX = 2;
-
   /** The window is phone-sized (matchMedia, updated on a change). */
   isPhone = false;
 
   /** Selection mode of the cards: a tap selects instead of opening the record. */
   selectMode = false;
 
-  private phoneQuery: MediaQueryList | null =
-    typeof window !== 'undefined' && typeof window.matchMedia === 'function' ? window.matchMedia(TableBuilderComponent.PHONE_QUERY) : null;
+  private phoneQuery: MediaQueryList | null = phoneMediaQuery();
 
   private readonly onPhoneQueryChange = (event: MediaQueryListEvent): void => {
     this.isPhone = event.matches;
@@ -290,47 +275,29 @@ get importEnumHints(): ImportEnumHint[] {
     return this.mobileCards && this.isPhone;
   }
 
-  /**
-   * @description Which columns go where on the card. `mobile` of a column decides when set;
-   *   otherwise: the title is the main column (`primaryColumnKey`), the picture the first image /
-   *   avatar column, the labels the columns with `tones`, the date the first date column and the
-   *   values up to CARD_META_MAX other columns (the ID and yes / no / count columns are left out -
-   *   they need their header to mean anything).
-   */
+  /** @description Which columns go where on the card (table-cards.ts), cached per column set. */
   get cardLayout(): TableCardLayout {
     const columns = this.columnDefinitions || [];
-    if (this.cardLayoutCache?.columns === columns) return this.cardLayoutCache.layout;
-    const shown = columns.filter(col => !col.hidden && col.mobile !== false);
-    const title = shown.find(col => col.mobile === 'title') ?? shown.find(col => col.key === this.primaryColumnKey) ?? null;
-    const rest = shown.filter(col => col !== title);
-    const thumb = rest.find(col => col.type === 'image' || col.type === 'avatar') ?? null;
-    const badges = rest.filter(col => !!col.tones);
-    const date = rest.find(col => col.type === 'date' && col.mobile !== 'meta') ?? null;
-    const used = new Set<ColumnDefinition | null>([thumb, date, ...badges]);
-    const candidates = rest.filter(col => !used.has(col) && col.key !== 'id' && col.type !== 'boolean' && col.type !== 'count'
-      && col.type !== 'image' && col.type !== 'avatar');
-    const meta = [...candidates.filter(col => col.mobile === 'meta'), ...candidates.filter(col => col.mobile !== 'meta')]
-      .slice(0, TableBuilderComponent.CARD_META_MAX);
-    const layout: TableCardLayout = { title, thumb, badges, date, meta };
-    this.cardLayoutCache = { columns, layout };
-    return layout;
+    if (this.cardLayoutCache?.columns !== columns) this.cardLayoutCache = { columns, layout: cardLayoutOf(columns) };
+    return this.cardLayoutCache.layout;
+  }
+
+  /** @description A short value of a card needs its header (not an e-mail, a phone, a price …). */
+  cardMetaNeedsLabel(column: ColumnDefinition): boolean {
+    return cardMetaNeedsLabel(column);
   }
 
   /**
-   * @description A short value of a card needs its header ("Téma: Podpora") unless the value
-   *   tells what it is by itself - an e-mail, a phone, an address, a price, a date.
-   * @param column Column of the value.
+   * @description Title of a card - the values of the title columns joined by a space, the ID
+   *   when they are empty.
+   * @param item Record of the card.
    */
-  cardMetaNeedsLabel(column: ColumnDefinition): boolean {
-    if (['date', 'currency', 'link', 'image', 'avatar'].includes(column.type)) return false;
-    return !/e-?mail|phone|tel|url|web|www/i.test(column.key);
-  }
-
-  /** @description Title of a card - the value of the title column, the ID when it is empty. */
   cardTitle(item: any): string {
-    const column = this.cardLayout.title;
-    const value = column ? this.getCellValue(item, column) : '';
-    return value !== null && value !== undefined && String(value).trim() !== '' ? String(value) : `#${item?.id ?? ''}`;
+    const text = this.cardLayout.titles
+      .map(column => this.getCellValue(item, column))
+      .filter(value => value !== null && value !== undefined && String(value).trim() !== '')
+      .join(' ');
+    return text || `#${item?.id ?? ''}`;
   }
 
   /** @description Switches the selection mode of the cards; leaving it clears the selection. */
@@ -480,10 +447,7 @@ get importEnumHints(): ImportEnumHint[] {
    *   first shown one.
    */
   get primaryColumnKey(): string | null {
-    const shown = (this.columnDefinitions || []).filter(col => !col.hidden);
-    return (shown.find(col => col.primary)
-      ?? shown.find(col => col.key !== 'id' && col.type !== 'avatar' && col.type !== 'image')
-      ?? shown[0])?.key ?? null;
+    return primaryColumnOf(this.columnDefinitions)?.key ?? null;
   }
 
   /**

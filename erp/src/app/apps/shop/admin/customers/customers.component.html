@@ -59,7 +59,7 @@
           }
 
           @if (showTrashTable) {
-            <app-trash-table-builder [footer]="tablePager"
+            <app-trash-table-builder [footer]="tablePager" [inputDefinitions]="formFields"
               [data]="trashData"
               [columns]="trashCustomerColumns"
               [tableCaption]="t('trash_table_caption')"

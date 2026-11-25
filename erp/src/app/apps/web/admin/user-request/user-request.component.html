@@ -20,7 +20,6 @@
 <app-page-header [title]="showTrashTable ? t('trash_header') : t('table_header')">
   <app-action-menu-builder
     [configs]="toolbarButtons"
-    primaryAction="handleCreateFormOpened"
     [triggerLabel]="t('toolbar_action_trigger')"
     (actionTriggered)="handleToolbarAction($event)">
   </app-action-menu-builder>
@@ -52,7 +51,6 @@
 [apiEndpoint]="apiEndpoint"
 [bulkDeleteEnabled]="true"
 [openOnRowClick]="true"
-[mobileCards]="true"
 (rowOpened)="openRecord($event)"
 (itemDeleted)="handleItemDeleted()"
 (createFormOpened)="handleCreateFormOpened()"
@@ -61,7 +59,7 @@
 </app-table-builder>
           }
 @if (showTrashTable) {
-<app-trash-table-builder [footer]="tablePager"
+<app-trash-table-builder [footer]="tablePager" [inputDefinitions]="formFields"
 [data]="trashData"
 [columns]="trashUserRequestColumns"
 [tableCaption]="t('trash_table_caption')"

@@ -2,6 +2,18 @@
     "unreleased": [
         {
             "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "All tables on a phone: compact cards instead of the table (as in the inquiries); a tap opens the record, Select switches on bulk selection. In the trash a tap opens a window with Restore and Delete permanently. The trash shows translated values."
+        },
+        {
+            "type": "changed",
+            "area": "core",
+            "part": "admin",
+            "text": "All list pages: a visible Add button next to Actions (on a phone a round green +) where records can be added, with the permission; it hides in the trash. Adding is no longer in the Actions menu."
+        },
+        {
+            "type": "changed",
             "area": "web",
             "part": "admin",
             "text": "Inquiries: a visible Add button next to Actions (on a phone a round green +); adding a record is no longer hidden in the Actions menu."

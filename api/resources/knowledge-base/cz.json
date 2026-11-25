@@ -188,7 +188,11 @@
               "cards": [
                 {
                   "title": "Nabídka Akce",
-                  "text": "Rozbalovací tlačítko nad tabulkou. Obsahuje podle stránky a vašich oprávnění: otevření a skrytí filtrů, přidání záznamu, export dat, import dat, grafy a reporty a přepnutí mezi aktivními záznamy a košem."
+                  "text": "Rozbalovací tlačítko nad tabulkou. Obsahuje podle stránky a vašich oprávnění: otevření a skrytí filtrů, export dat, import dat, grafy a reporty a přepnutí mezi aktivními záznamy a košem."
+                },
+                {
+                  "title": "Tlačítko Přidat",
+                  "text": "Nový záznam přidáte tmavým tlačítkem + Přidat vlevo od nabídky Akce (na telefonu kulaté zelené +). Je jen na stránkách, kde lze záznamy přidávat, a jen s oprávněním; v koši se skryje."
                 },
                 {
                   "title": "Řádek tabulky",
@@ -217,6 +221,10 @@
                 {
                   "title": "Šířka tabulky",
                   "text": "Ikona se šipkami ↔ vedle času aktualizace roztáhne tabulku přes celou šířku stránky, dalším kliknutím ji vrátíte - hodí se u tabulek s mnoha sloupci. Na telefonu ikona není, tabulka tam vždy využije celou šířku."
+                },
+                {
+                  "title": "Na telefonu",
+                  "text": "Na telefonu je místo tabulky seznam kompaktních karet: nahoře hlavní údaj a datum, pod ním barevné štítky a jeden až dva další údaje (e-mail nebo cena bez popisku, ostatní s popiskem). Klepnutím na kartu otevřete záznam. Pro hromadné akce klepněte nad kartami na Vybrat, označte karty a v témže řádku zvolte Akce; Hotovo výběr ukončí."
                 },
                 {
                   "title": "Prázdná tabulka",
@@ -367,6 +375,11 @@
             {
               "type": "text",
               "content": "Koš vidíte jen s oprávněním Zobrazit smazané záznamy v koši (view-deleted). Obnovit a trvale mazat smíte jen s oprávněním mazat záznamy dané stránky. Staré záznamy v koši může také automaticky mazat noční úklid podle nastavené retence (Právní dokumenty → Retence dat)."
+            },
+            {
+              "type": "note",
+              "highlight": "Na telefonu",
+              "content": "V koši klepněte na kartu smazaného záznamu: otevře se okno se všemi jeho údaji a tlačítky Obnovit a Smazat trvale (jen s oprávněním ke koši)."
             }
           ]
         },
@@ -1968,8 +1981,8 @@
               "type": "flow",
               "steps": [
                 {
-                  "label": "Přidat záznam",
-                  "text": "V nabídce Akce zvolte Přidat záznam.",
+                  "label": "Přidat",
+                  "text": "Klikněte na tlačítko + Přidat vedle nabídky Akce (na telefonu zelené +).",
                   "active": true
                 },
                 {

@@ -188,7 +188,11 @@
               "cards": [
                 {
                   "title": "Actions menu",
-                  "text": "Drop-down button above the table. Depending on the page and your permissions it offers: open and hide filters, add a record, export data, import data, charts and reports, and switching between active records and the trash."
+                  "text": "Drop-down button above the table. Depending on the page and your permissions it offers: open and hide filters, export data, import data, charts and reports, and switching between active records and the trash."
+                },
+                {
+                  "title": "Add button",
+                  "text": "Add a new record with the dark + Add button to the left of the Actions menu (on a phone a round green +). It is only on pages where records can be added and only with the permission; in the trash it hides."
                 },
                 {
                   "title": "Table row",
@@ -217,6 +221,10 @@
                 {
                   "title": "Table width",
                   "text": "The icon with the arrows ↔ next to the time of the update stretches the table over the whole page width, another click returns it - useful for tables with many columns. A phone has no icon, the table always uses the whole width there."
+                },
+                {
+                  "title": "On a phone",
+                  "text": "A phone shows a list of compact cards instead of the table: the main value and the date at the top, the coloured labels and one or two other values below (an e-mail or a price without a label, the others with one). Tap a card to open the record. For bulk actions tap Select above the cards, mark the cards and choose Actions in the same row; Done ends the selection."
                 },
                 {
                   "title": "Empty table",
@@ -367,6 +375,11 @@
             {
               "type": "text",
               "content": "You only see the trash with the permission to show deleted records in the trash (view-deleted). Restoring and permanent deletion also need the delete permission of the page. Old records in the trash may also be deleted automatically by the nightly clean-up according to the retention settings (Legal documents → Data retention)."
+            },
+            {
+              "type": "note",
+              "highlight": "On a phone",
+              "content": "In the trash tap the card of a deleted record: a window opens with all its values and the buttons Restore and Delete permanently (only with the permission for the trash)."
             }
           ]
         },
@@ -1968,8 +1981,8 @@
               "type": "flow",
               "steps": [
                 {
-                  "label": "Add record",
-                  "text": "In the Actions menu choose Add record.",
+                  "label": "Add",
+                  "text": "Click the + Add button next to the Actions menu (on a phone the green +).",
                   "active": true
                 },
                 {

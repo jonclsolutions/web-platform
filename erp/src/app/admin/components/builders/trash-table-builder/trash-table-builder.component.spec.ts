@@ -224,4 +224,61 @@ describe('TrashTableBuilderComponent', () => {
     expect(component.isFullWidth).toBeFalse();
     expect(toggle.getAttribute('aria-pressed')).toBe('false');
   });
+
+  /**
+   * @description On a phone the deleted records are cards; a tap opens a window with all the
+   *   values and the actions Restore / Delete permanently; an action closes the window and runs
+   *   as from the row button (its confirmation first). Without the trash permission the window
+   *   only shows the values.
+   * @input  2 rows (name, deleted_at), phone; tap card 1; Restore (confirm → true); then no permission
+   * @output 2 cards, no table; window titled 'Link A' with the values; restore POSTed and the
+   *   window closed; without the permission no actions in the window
+   */
+  it('shows deleted records as cards with a window of actions on a phone', fakeAsync(() => {
+    component.columnDefinitions = [
+      { key: 'id', header: 'ID', type: 'text' },
+      { key: 'name', header: 'Name', type: 'text' },
+      { key: 'deleted_at', header: 'Deleted', type: 'date' },
+    ] as any;
+    component.data = [{ id: 1, name: 'Link A', deleted_at: '2026-11-20T10:00:00Z' }, { id: 2, name: 'Link B', deleted_at: null }];
+    component.isPhone = true;
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('table')).toBeNull();
+    const cards = Array.from(el.querySelectorAll('.table-card')) as HTMLElement[];
+    expect(cards.map(c => c.querySelector('.table-card-title')!.textContent!.trim())).toEqual(['Link A', 'Link B']);
+
+    cards[0].click();
+    fixture.detectChanges();
+    expect(el.querySelector('app-admin-modal .am-title')!.textContent!.trim()).toBe('Link A');
+    expect(Array.from(el.querySelectorAll('.trash-record-row dt')).map(d => d.textContent!.trim())).toEqual(['ID', 'Name', 'Deleted']);
+    expect(el.querySelectorAll('app-record-actions button').length).toBe(2);
+
+    ctx.confirm.open.and.returnValue(Promise.resolve(true));
+    ctx.dataHandler.post.and.returnValue(of({}) as any);
+    component.onCardAction('restore');
+    flush();
+    fixture.detectChanges();
+    expect(component.openedItem).toBeNull();
+    expect(ctx.dataHandler.post).toHaveBeenCalledWith('core/links/1/restore', {});
+
+    spyOnProperty(component, 'canManageTrash').and.returnValue(false);
+    component.openCard(component.data[0]);
+    fixture.detectChanges();
+    expect(el.querySelector('app-record-actions')).toBeNull();
+    expect(el.querySelector('app-admin-modal')).not.toBeNull();
+  }));
+
+  /**
+   * @description A value of a select field shows its translated option (as in the active
+   *   table), not its stored code; a value without an option stays as it is.
+   * @input  inputDefinitions thema with option support → 'Support of a project'; values 'support', 'x'
+   * @output 'Support of a project'; 'x'
+   */
+  it('shows the translated option of a select value', () => {
+    component.inputDefinitions = [{ column_name: 'thema', type: 'select', options: [{ value: 'support', label: 'Support of a project' }] }] as any;
+    const col = { key: 'thema', header: 'Topic', type: 'text' } as any;
+    expect(component.getCellValue({ thema: 'support' }, col)).toBe('Support of a project');
+    expect(component.getCellValue({ thema: 'x' }, col)).toBe('x');
+  });
 });

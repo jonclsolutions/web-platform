@@ -16,7 +16,7 @@
     <div>
       <app-page-header [title]="showTrashTable ? t('trash_header') : t('table_header')">
         <app-action-menu-builder
-          [configs]="toolbarButtons"
+          [configs]="visibleToolbarButtons"
           [triggerLabel]="t('toolbar_action_trigger')"
           (actionTriggered)="handleToolbarAction($event)">
         </app-action-menu-builder>

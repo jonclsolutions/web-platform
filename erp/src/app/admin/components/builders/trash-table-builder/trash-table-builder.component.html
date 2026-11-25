@@ -7,6 +7,54 @@
     @description: Template of the trash table builder component.
 -->
 
+<!-- Phone (`mobileCards`, ≤ 640px): the same compact cards as the active table; a tap opens the
+     window of the deleted record with its values and the actions Restore / Delete permanently. -->
+@if (showCards) {
+  @if (data && data.length > 0) {
+    <ul class="table-cards" [attr.aria-label]="tableCaption || null">
+      @for (item of data; track item) {
+        <li>
+          <div class="table-card" tabindex="0" role="button" (click)="openCard(item)" (keydown)="onCardKeydown($event, item)">
+            @if (cardLayout.thumb; as thumb) {
+              <span class="table-card-thumb">
+                @if (getCellValue(item, thumb)) {
+                  <img [src]="getCellValue(item, thumb)" alt="" loading="lazy">
+                }
+              </span>
+            }
+            <span class="table-card-body">
+              <span class="table-card-head">
+                <span class="table-card-title">{{ cardTitle(item) }}</span>
+                @if (cardLayout.date; as dateCol) {
+                  <span class="table-card-date">{{ getCellValue(item, dateCol) }}</span>
+                }
+              </span>
+              <span class="table-card-line">
+                @for (col of cardLayout.badges; track col.key) {
+                  @if (badgeTone(item, col); as tone) {
+                    <span class="table-badge" [attr.data-tone]="tone">{{ getCellValue(item, col) }}</span>
+                  }
+                }
+                @for (col of cardLayout.meta; track col.key) {
+                  @if (getCellValue(item, col) !== '' && getCellValue(item, col) !== null && getCellValue(item, col) !== undefined) {
+                    <span class="table-card-meta">
+                      @if (cardMetaNeedsLabel(col)) {
+                        <span class="table-card-meta-label">{{ col.header }}:</span>
+                      }
+                      {{ getCellValue(item, col) }}
+                    </span>
+                  }
+                }
+              </span>
+            </span>
+          </div>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="table-cards-empty">{{ t('no_data') }}</p>
+  }
+} @else {
 <div class="table-responsive">
 <table [class.fit-content-table]="!isFullWidth">
 @if (tableCaption) {
@@ -98,6 +146,7 @@
 </tbody>
 </table>
 </div>
+}
 
 <!-- Footer in one row: Delete all and the width of the view on the left, the count of the
      records and the paging (the page's `footer` template) on the right. -->
@@ -126,3 +175,36 @@
 </div>
   }
 </div>
+
+<!-- Window of a deleted record opened from its card: all its values; Restore / Delete
+     permanently on the left of the footer (only with the trash permission), Close on the right. -->
+@if (openedItem; as record) {
+  <app-admin-modal size="sm" [heading]="cardTitle(record)" (dismissed)="closeCard()">
+    <dl class="trash-record">
+      @for (col of recordColumns; track col.key) {
+        <div class="trash-record-row">
+          <dt>{{ col.header }}</dt>
+          <dd>
+            @if (col.type === 'image') {
+              @if (getCellValue(record, col)) {
+                <img [src]="getCellValue(record, col)" [alt]="t('image_alt')" class="table-cell-image">
+              } @else {
+                {{ t('no_image') }}
+              }
+            } @else if (badgeTone(record, col); as tone) {
+              <span class="table-badge" [attr.data-tone]="tone">{{ getCellValue(record, col) }}</span>
+            } @else {
+              {{ getCellValue(record, col) || '–' }}
+            }
+          </dd>
+        </div>
+      }
+    </dl>
+    <ng-container modal-footer>
+      @if (cardActions.length) {
+        <app-record-actions [actions]="cardActions" (action)="onCardAction($event)" />
+      }
+      <button type="button" class="am-btn am-btn--secondary" (click)="closeCard()">{{ i18n.getValue('shared.close') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}

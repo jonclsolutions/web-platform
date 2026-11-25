@@ -43,11 +43,12 @@ export class ActionMenuBuilderComponent {
   @Input() triggerIcon = '⋯';
 
   /**
-   * Action of the config shown as the visible main button next to the menu (e.g.
-   * 'handleCreateFormOpened' → "+ Přidat") - it follows the rules of its config (`showIf`:
-   * permission, hidden in the trash) and is left out of the menu. null = everything in the menu.
+   * Action of the config shown as the visible main button next to the menu - by default adding a
+   * record ('handleCreateFormOpened' → "+ Přidat") on every list page that has it. It follows
+   * the rules of its config (`showIf`: permission, hidden in the trash) and is left out of the
+   * menu. A page without the action has no button; null = everything in the menu.
    */
-  @Input() primaryAction: string | null = null;
+  @Input() primaryAction: string | null = 'handleCreateFormOpened';
   @Output() actionTriggered = new EventEmitter<string>();
 
   private readonly i18n = inject(AdminLocalizationService);

@@ -91,6 +91,22 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
   productColumns: Core.ColumnDefinition[]  = [];
   trashProductColumns: Core.ColumnDefinition[] = [];
   toolbarButtons: Core.Button[]           = [];
+
+  /** Cache of `visibleToolbarButtons` (stable array for the OnPush action menu). */
+  private visibleToolbarCache: { source: Core.Button[]; trash: boolean; buttons: Core.Button[] } | null = null;
+
+  /**
+   * @description Toolbar of the page as shown: adding a record is hidden while the trash is
+   *   shown (like on the other list pages) - the visible "+ Přidat" button follows it.
+   */
+  get visibleToolbarButtons(): Core.Button[] {
+    const cache = this.visibleToolbarCache;
+    if (cache?.source === this.toolbarButtons && cache.trash === this.showTrashTable) return cache.buttons;
+    const buttons = this.toolbarButtons.map(btn =>
+      btn.action === 'handleCreateFormOpened' && this.showTrashTable ? { ...btn, showIf: false } : btn);
+    this.visibleToolbarCache = { source: this.toolbarButtons, trash: this.showTrashTable, buttons };
+    return buttons;
+  }
   override formFields: any[]      = [];
   selectedFormCategories: Category[] = [];
 

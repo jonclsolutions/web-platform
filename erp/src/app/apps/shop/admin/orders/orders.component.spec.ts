@@ -103,6 +103,23 @@ describe('OrdersComponent', () => {
     });
 
     /**
+     * @description The visible "+ Přidat" (adding a record) hides while the trash is shown - like
+     *   on the other list pages; the array stays the same while nothing changes (OnPush).
+     * @input  all permissions; showTrashTable false, then true
+     * @output create showIf true; then false; the same array on a repeated read
+     */
+    it('hides adding a record in the trash', () => {
+      ctx.permissions.granted = 'all';
+      ctx.i18n.translations$.next({});
+      const create = () => component.visibleToolbarButtons.find(b => b.action === 'handleCreateFormOpened')!;
+      component.showTrashTable = false;
+      expect(create().showIf).toBeTrue();
+      component.showTrashTable = true;
+      expect(create().showIf).toBeFalse();
+      expect(component.visibleToolbarButtons).toBe(component.visibleToolbarButtons);
+    });
+
+    /**
      * @description Tabs with icons; the trash tab (danger) needs 'view-deleted'.
      * @input  currentMode 'pending_tasks'; granted []
      * @output icons box / clock / trash (danger); trash hidden, the others shown

@@ -29,6 +29,7 @@ import { AlertDialogService } from '../../../../core/services/alert-dialog.servi
 import { PermissionService } from '../../../../core/auth/services/permission.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { ColumnDefinition } from '../../../../shared/interfaces/generic-form-column-definiton';
+import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
 import { TableButtons } from '../../../../shared/interfaces/table-buttons';
 import * as Core from '../../../../shared/imports/core-providers';
@@ -36,6 +37,9 @@ import { ButtonBuilderComponent } from '../button-builder/button-builder.compone
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { adminDateFormat, adminDateKind } from '../../../shared-date/admin-date-format';
 import { BadgeTone, badgeToneOf } from '../badge-tones';
+import { TableCardLayout, cardLayoutOf, cardMetaNeedsLabel, phoneQuery as phoneMediaQuery } from '../table-cards';
+import { AdminModalComponent } from '../../admin-modal/admin-modal.component';
+import { RecordActionsComponent } from '../../record-actions/record-actions.component';
 
 /**
  * @description A dedicated table view for displaying soft-deleted records with utility actions
@@ -51,10 +55,12 @@ import { BadgeTone, badgeToneOf } from '../badge-tones';
     FormsModule,
     NgTemplateOutlet,
     ButtonBuilderComponent,
-    IconComponent
+    IconComponent,
+    AdminModalComponent,
+    RecordActionsComponent
   ],
   templateUrl: './trash-table-builder.component.html',
-  styleUrls: ['../table-style.css'],
+  styleUrls: ['../../../shared-styles/modal.css', '../table-style.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
@@ -81,6 +87,34 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
   public isFullWidth: boolean = true;
   /** Footer content of the page (its paging), on the right of the one-row footer - as in the table builder. */
   @Input() footer: TemplateRef<unknown> | null = null;
+  /**
+   * Fields of the form of the page (as for the active table): a value of a select field shows
+   * its translated option ("Podpora stávajícího projektu"), not its stored code ("support").
+   */
+  @Input() inputDefinitions: InputDefinition[] = [];
+  /**
+   * Phone (≤ 640px, 2026-11): the deleted records are the same compact cards as the active table
+   * (table-cards.ts); a tap opens a window with all the values and the actions Restore / Delete
+   * permanently (without the trash permission only the values). false keeps the table.
+   */
+  @Input() mobileCards: boolean = true;
+
+  /** The window is phone-sized (matchMedia, updated on a change). */
+  isPhone = false;
+
+  /** Record opened from its card (the window with its values and actions), null = closed. */
+  openedItem: any | null = null;
+
+  private phoneQuery: MediaQueryList | null = phoneMediaQuery();
+
+  private readonly onPhoneQueryChange = (event: MediaQueryListEvent): void => {
+    this.isPhone = event.matches;
+    if (!this.isPhone) this.openedItem = null;
+    this.cd.markForCheck();
+  };
+
+  /** Columns of the card, cached for the current column definitions. */
+  private cardLayoutCache: { columns: ColumnDefinition[]; layout: TableCardLayout } | null = null;
 
   @Output() itemRestored = new EventEmitter<void>();
   @Output() itemDeletedPermanently = new EventEmitter<void>();
@@ -106,6 +140,8 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
     private cd: ChangeDetectorRef,
     private confirmDialogService: ConfirmDialogService,
   ) {
+    this.isPhone = !!this.phoneQuery?.matches;
+    this.phoneQuery?.addEventListener('change', this.onPhoneQueryChange);
     this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => {
       this.buttons = [
         { display_name: this.t('btn_restore'), header_name: this.t('btn_restore'), isActive: true, type: 'confirm_button', action: 'restore', icon: 'restore' },
@@ -154,7 +190,89 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {}
 
+  // ══════════════════════════════════════════════════════════════════════
+  // PHONE CARDS (`mobileCards`) + the window of a deleted record
+  // ══════════════════════════════════════════════════════════════════════
+
+  /** @description The rows are shown as cards: `mobileCards` on and a phone-sized window. */
+  get showCards(): boolean {
+    return this.mobileCards && this.isPhone;
+  }
+
+  /** @description Which columns go where on the card (table-cards.ts), cached per column set. */
+  get cardLayout(): TableCardLayout {
+    const columns = this.columnDefinitions || [];
+    if (this.cardLayoutCache?.columns !== columns) this.cardLayoutCache = { columns, layout: cardLayoutOf(columns) };
+    return this.cardLayoutCache.layout;
+  }
+
+  /** @description A short value of a card needs its header (not an e-mail, a phone, a price …). */
+  cardMetaNeedsLabel(column: ColumnDefinition): boolean {
+    return cardMetaNeedsLabel(column);
+  }
+
+  /**
+   * @description Title of a card (and of its window) - the values of the title columns joined
+   *   by a space, the ID when they are empty.
+   * @param item Deleted record.
+   */
+  cardTitle(item: any): string {
+    const text = this.cardLayout.titles
+      .map(column => this.getCellValue(item, column))
+      .filter(value => value !== null && value !== undefined && String(value).trim() !== '')
+      .join(' ');
+    return text || `#${item?.id ?? ''}`;
+  }
+
+  /** @description Columns shown in the window of a deleted record - every shown column. */
+  get recordColumns(): ColumnDefinition[] {
+    return (this.columnDefinitions || []).filter(col => !col.hidden);
+  }
+
+  /**
+   * @description Actions of the window: Restore and Delete permanently - only with the trash
+   *   permission (without it the window only shows the values).
+   */
+  get cardActions(): TableButtons[] {
+    return this.canManageTrash ? this.buttons.filter(button => button.isActive) : [];
+  }
+
+  /** @description A tap on a card opens the window of the record. */
+  openCard(item: any): void {
+    this.openedItem = item;
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Enter / Space on a focused card opens its window.
+   * @param event Keyboard event.
+   * @param item Deleted record.
+   */
+  onCardKeydown(event: KeyboardEvent, item: any): void {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    this.openCard(item);
+  }
+
+  /** @description Closes the window of the record. */
+  closeCard(): void {
+    this.openedItem = null;
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description An action of the window: the window closes and the action runs as from its row
+   *   button (with its own confirmation).
+   * @param action 'restore' or 'delete'.
+   */
+  onCardAction(action: string): void {
+    const item = this.openedItem;
+    this.closeCard();
+    if (item) this.handleAction(item, action);
+  }
+
   ngOnDestroy(): void {
+    this.phoneQuery?.removeEventListener('change', this.onPhoneQueryChange);
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -204,8 +322,15 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
         return Array.isArray(value) ? value.join(', ') : value;
       case 'object':
         return this.isObject(value) ? JSON.stringify(value) : value;
-      default:
+      default: {
+        // A select field: its translated option, like in the active table.
+        const fieldDef = this.inputDefinitions.find(field => field.column_name === column.key);
+        if (fieldDef?.options) {
+          const option = fieldDef.options.find(opt => String(opt.value) === String(value));
+          return option ? option.label : value;
+        }
         return value;
+      }
     }
   }
 

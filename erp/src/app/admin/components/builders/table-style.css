@@ -352,6 +352,34 @@ color: var(--text-muted, var(--color-zinc-500));
 
 .table-card-meta-label { color: var(--text-dim, var(--color-zinc-400)); }
 
+/* Window of a deleted record (trash on a phone): its values as label / value rows. */
+.trash-record {
+margin: 0;
+display: flex;
+flex-direction: column;
+gap: 10px;
+}
+
+.trash-record-row {
+display: grid;
+grid-template-columns: minmax(90px, 38%) 1fr;
+gap: 10px;
+align-items: baseline;
+}
+
+.trash-record-row dt {
+font-size: 0.78rem;
+color: var(--text-dim, var(--color-zinc-400));
+}
+
+.trash-record-row dd {
+margin: 0;
+min-width: 0;
+overflow-wrap: anywhere;
+font-size: 0.88rem;
+color: var(--text, var(--color-zinc-900));
+}
+
 .table-cards-empty {
 margin: 0;
 padding: 24px 12px;

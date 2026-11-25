@@ -180,10 +180,11 @@ export function createCustomerFormFields(i18n: AdminLocalizationService): Core.I
 }
 
 export function createCustomerColumns(i18n: AdminLocalizationService): Core.ColumnDefinition[] {
+  // Phone card (`mobile`): the whole name as its title ("Novák Jan"), the e-mail and the phone under it.
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
-    { key: 'last_name', header: i18n.getValue(`${SECTION}.col_last_name`), type: 'text' },
-    { key: 'first_name', header: i18n.getValue(`${SECTION}.col_first_name`), type: 'text' },
+    { key: 'last_name', header: i18n.getValue(`${SECTION}.col_last_name`), type: 'text', mobile: 'title' },
+    { key: 'first_name', header: i18n.getValue(`${SECTION}.col_first_name`), type: 'text', mobile: 'title' },
     { key: 'email', header: i18n.getValue(`${SECTION}.col_email`), type: 'text' },
     { key: 'phone', header: i18n.getValue(`${SECTION}.col_phone`), type: 'text' },
     { key: 'total_spent', header: i18n.getValue(`${SECTION}.col_total_spent`), type: 'text' },
