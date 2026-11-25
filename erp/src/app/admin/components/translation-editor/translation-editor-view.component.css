@@ -94,3 +94,46 @@
 .ew-missing-banner-text { flex: 1 1 220px; }
 
 .ew-missing-banner-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/*
+ * @module Calmer actions (`compactActions`, 2026-11)
+ * @description The bottom save bar of a phone (only with unsaved changes). On a phone nothing
+ *   sticks at the top - the top bar scrolls away, the save button is the bar at the bottom.
+ */
+.ew-savebar {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .ew-root--compact .ew-topbar {
+    position: static;
+  }
+
+  .ew-root--compact .ew-topbar-right {
+    display: none;
+  }
+
+  .ew-savebar {
+    display: flex;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 30;
+    padding: 8px;
+    border-radius: 18px;
+    background: var(--surface);
+    box-shadow: 0 0 0 1px var(--border-mid), 0 10px 28px rgba(24, 24, 27, 0.18);
+  }
+
+  .ew-savebar-btn {
+    width: 100%;
+    height: 44px;
+    justify-content: center;
+  }
+
+  /* Room for the bar - the last text is never hidden under it. */
+  .ew-root--has-savebar {
+    padding-bottom: 76px;
+  }
+}

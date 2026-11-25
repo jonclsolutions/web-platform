@@ -1465,6 +1465,8 @@
     "tabs_label": "Page sections",
     "upload_json_title_topbar": "Upload JSON for the current language",
     "save_changes_button": "Save changes",
+    "actions_menu_label": "Actions",
+    "save_changes_count": "Save changes ({count})",
     "saving_label": "Saving…",
     "unsaved_changes_title": "Unsaved changes",
     "download_json_title": "Download current JSON",

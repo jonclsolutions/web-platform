@@ -1465,6 +1465,8 @@
     "tabs_label": "Části stránky",
     "upload_json_title_topbar": "Nahrát JSON pro aktuální jazyk",
     "save_changes_button": "Uložit změny",
+    "actions_menu_label": "Akce",
+    "save_changes_count": "Uložit změny ({count})",
     "saving_label": "Ukládám…",
     "unsaved_changes_title": "Neuložené změny",
     "download_json_title": "Stáhnout aktuální JSON",

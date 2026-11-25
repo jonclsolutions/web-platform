@@ -277,6 +277,51 @@ describe('EditWebsiteComponent', () => {
   }));
 
   /**
+   * @description Calmer actions (`compactActions`, pilot on this page): the JSON download /
+   *   upload are in the "⋯ Akce" menu of the page header, not in the sticky bar - it keeps only
+   *   the save button, labelled with the count of the changed texts; the menu items run the
+   *   download / upload; saving clears the count; the phone save bar exists only with changes.
+   * @input  render; updateValue ×2 (two texts, one twice); menu actions; onSubmit()
+   * @output menu items [download, upload], no JSON buttons in .ew-topbar; no .ew-savebar; label
+   *   'edit-website.save_changes_count' (the page section first) with 2 changes; .ew-savebar present; download /
+   *   upload called; after save 0 changes and no .ew-savebar
+   */
+  it('keeps the rare JSON actions in the menu and only the save button in the bar', fakeAsync(() => {
+    fixture.detectChanges();
+    flush();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const view = fixture.debugElement.query(By.css('app-translation-editor-view')).componentInstance;
+    expect(view.compactActions).toBeTrue();
+    expect(view.menuActions.map((b: any) => b.action)).toEqual(['downloadJson', 'uploadJson']);
+    expect(el.querySelector('app-page-header app-action-menu-builder')).not.toBeNull();
+    expect(el.querySelectorAll('.ew-topbar-right .ew-btn--ghost').length).toBe(0);
+    expect(el.querySelector('.ew-savebar')).toBeNull();
+
+    component.updateValue('footer', 'Nová');
+    component.updateValue('home.title', 'Úvod');
+    component.updateValue('footer', 'Novější');
+    fixture.detectChanges();
+    expect(component.changedPaths.size).toBe(2);
+    expect(view.saveLabel).toBe('edit-website.save_changes_count');
+    expect(el.querySelector('.ew-savebar')).not.toBeNull();
+
+    spyOn(component, 'downloadJson');
+    spyOn(component, 'openUploadModal');
+    view.onMenuAction('downloadJson');
+    view.onMenuAction('uploadJson');
+    expect(component.downloadJson).toHaveBeenCalled();
+    expect(component.openUploadModal).toHaveBeenCalledWith('cz');
+
+    component.onSubmit();
+    flush();
+    fixture.detectChanges();
+    expect(component.changedPaths.size).toBe(0);
+    expect(el.querySelector('.ew-savebar')).toBeNull();
+    discardPeriodicTasks();
+  }));
+
+  /**
    * @description The page also manages the browser titles of its own pages: the "Page titles" tab
    *   creates PageTitlesEditorComponent for the 'web' area on the first open; the translations
    *   are hidden, not destroyed; the editor stays created when switching back; its unsaved state

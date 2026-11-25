@@ -1,6 +1,18 @@
 {
     "unreleased": [
         {
+            "type": "fixed",
+            "area": "core",
+            "part": "admin",
+            "text": "Sticky save bars (texts editors, settings) reliably get their floating look (white, rounded, shadow) while stuck, in every browser and zoom level."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "admin",
+            "text": "Website texts: JSON download and upload moved to the Actions menu; the sticky bar keeps only Save with the number of changes; on a phone Save is a bar at the bottom shown only with changes."
+        },
+        {
             "type": "changed",
             "area": "core",
             "part": "admin",

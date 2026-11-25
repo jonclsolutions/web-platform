@@ -5,7 +5,8 @@
  * @author JS
  * @created 2026
  * @description Unit tests of StickyBarDirective: the stuck state (top / bottom edge, hidden bar,
- *   bar fully visible), the scroll area it observes and the `is-stuck` class in a real scroll area.
+ *   bar fully visible), the scroll area it observes and the `is-stuck` class in a real scroll area
+ *   (with the observer and from the scroll geometry alone).
  * @dependencies Angular TestBed (a host component with a scrolling container).
  */
 
@@ -84,5 +85,35 @@ describe('StickyBarDirective', () => {
     await frames();
     expect(bar.classList).not.toContain('is-stuck');
     fixture.destroy();
+  });
+
+  /**
+   * @description Without the observer (a browser where it misses the change) the scroll
+   *   measurement alone gives the floating look: stuck at its edge after a scroll, not in its
+   *   normal place at the top.
+   * @input IntersectionObserver removed; scroll 300 px; back to 0.
+   * @output class is-stuck; no class.
+   */
+  it('marks the bar from the scroll geometry without the observer', async () => {
+    const original = (window as any).IntersectionObserver;
+    (window as any).IntersectionObserver = undefined;
+    try {
+      const fixture = TestBed.createComponent(HostComponent);
+      document.body.appendChild(fixture.nativeElement);
+      fixture.detectChanges();
+      const scroller = fixture.nativeElement.querySelector('.scroller') as HTMLElement;
+      const bar = fixture.nativeElement.querySelector('.bar') as HTMLElement;
+      const frames = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 50))));
+
+      scroller.scrollTop = 300;
+      await frames();
+      expect(bar.classList).toContain('is-stuck');
+      scroller.scrollTop = 0;
+      await frames();
+      expect(bar.classList).not.toContain('is-stuck');
+      fixture.destroy();
+    } finally {
+      (window as any).IntersectionObserver = original;
+    }
   });
 });

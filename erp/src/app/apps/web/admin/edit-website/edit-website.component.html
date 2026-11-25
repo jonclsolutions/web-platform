@@ -9,7 +9,8 @@
         on their first open).
 -->
 
-<app-translation-editor-view [e]="this">
+<!-- `compactActions`: JSON download / upload in the "⋯ Akce" menu, the save bar alone (pilot). -->
+<app-translation-editor-view [e]="this" [compactActions]="true">
   @if (isTabOpened('faq')) {
     <div class="ew-titles-wrap" [style.display]="activeTab === 'faq' ? null : 'none'">
       <app-faq-editor [hostLanguages]="languages" (dirtyChange)="setTabDirty('faq', $event)"></app-faq-editor>

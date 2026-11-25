@@ -231,6 +231,11 @@ export abstract class BaseTranslationEditorComponent
 
   /** Unsaved changes of the currently edited language (drives the state of the "Save changes" button). */
   isDirty: boolean = false;
+  /**
+   * Paths of the texts changed since the last load / save - their count is shown on the save
+   * button ("Uložit změny (3)"); cleared together with `isDirty`.
+   */
+  changedPaths = new Set<string>();
 
   showAddForm: boolean = false;
   newLangCode: string = '';
@@ -377,6 +382,7 @@ export abstract class BaseTranslationEditorComponent
 
   public refreshTranslations(): void {
     this.isDirty = false;
+    this.changedPaths.clear();
     this.errorMessage = null;
     this.cd.markForCheck();
 
@@ -557,6 +563,7 @@ export abstract class BaseTranslationEditorComponent
     }
 
     this.isDirty = true;
+    this.changedPaths.add(path);
     this.cd.markForCheck();
   }
 
@@ -598,6 +605,7 @@ export abstract class BaseTranslationEditorComponent
     }).pipe(Core.takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.isDirty = false;
+        this.changedPaths.clear();
         this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${this.currentLang}`);
         this.notifications.refresh(); // the orange numbers follow the saved texts at once
         this.alertDialogService.open(
@@ -721,6 +729,7 @@ export abstract class BaseTranslationEditorComponent
           this.currentLang = code;
           this.translations = this.buildEmptyFromCz(this.czTranslations);
           this.isDirty = false;
+          this.changedPaths.clear();
           this.buildFlatList();
           this.applyFilter();
 
@@ -766,6 +775,7 @@ export abstract class BaseTranslationEditorComponent
             this.currentLang  = 'cz';
             this.translations = {};
             this.isDirty      = false;
+            this.changedPaths.clear();
           }
 
           this.loadLanguages(true);

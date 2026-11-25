@@ -547,7 +547,7 @@
     },
     "contact": {
         "attachment_uploader": {
-            "limits_hint": "(max. {max} souborů, {maxMb} MB/soubor, {totalMb} MB celkem)",
+            "limits_hint": "(max. {max} souborů, {maxMb} MB\/soubor, {totalMb} MB celkem)",
             "existing_section_title": "Již nahrané přílohy ({count})",
             "remove_existing_title": "Odebrat přílohu",
             "dropzone_label": "↑ Vyberte soubory nebo je přetáhněte sem",

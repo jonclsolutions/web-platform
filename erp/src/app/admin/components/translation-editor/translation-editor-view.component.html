@@ -10,7 +10,13 @@
         of the extra tabs (projected) and the language / upload / delete modals.
 -->
 
-<app-page-header [title]="e.t('page_title')"></app-page-header>
+<app-page-header [title]="e.t('page_title')">
+  <!-- `compactActions`: the rare JSON download / upload live in the "⋯ Akce" menu, not in the sticky bar. -->
+  @if (compactActions) {
+    <app-action-menu-builder [configs]="menuActions" [primaryAction]="null" [triggerLabel]="e.t('actions_menu_label')"
+                             (actionTriggered)="onMenuAction($event)"></app-action-menu-builder>
+  }
+</app-page-header>
 
 <!-- Page tabs: the texts, the browser page titles and the extra tabs of the application -->
 <div class="ew-page-head">
@@ -19,7 +25,8 @@
 </div>
 
 <!-- Every tab stays created once opened and is only hidden - unsaved edits survive a tab switch. -->
-<div class="ew-root" [style.display]="e.activeTab === 'translations' ? null : 'none'">
+<div class="ew-root" [style.display]="e.activeTab === 'translations' ? null : 'none'"
+     [class.ew-root--compact]="compactActions" [class.ew-root--has-savebar]="compactActions && e.isDirty">
   <div class="ew-topbar" appStickyBar>
     <div class="ew-topbar-left">
       @if (e.getCurrentLangMeta(); as meta) {
@@ -33,21 +40,25 @@
       }
     </div>
     <div class="ew-topbar-right">
+      @if (!compactActions) {
       <button class="ew-btn ew-btn--ghost" (click)="e.downloadJson()" [title]="e.t('download_json_title')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         {{ e.t('download_json_button') }}
       </button>
+      }
       @if (e.canUpdate) {
+        @if (!compactActions) {
         <button class="ew-btn ew-btn--ghost" (click)="e.openUploadModal(e.currentLang)" [title]="e.t('upload_json_title_topbar')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           {{ e.t('upload_json_button') }}
         </button>
+        }
         <button
           class="ew-btn ew-btn--primary"
           (click)="e.onSubmit()"
           [disabled]="!e.isDirty || (e.loadingService.isLoading$ | async)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          {{ (e.loadingService.isLoading$ | async) ? e.t('saving_label') : e.t('save_changes_button') }}
+          {{ (e.loadingService.isLoading$ | async) ? e.t('saving_label') : (compactActions ? saveLabel : e.t('save_changes_button')) }}
           @if (e.isDirty) {
             <span class="ew-dirty-dot" [title]="e.t('unsaved_changes_title')"></span>
           }
@@ -56,6 +67,15 @@
     </div>
   </div>
 
+  <!-- Phone (`compactActions`): the save button as a bar at the bottom, only with unsaved changes. -->
+  @if (compactActions && e.canUpdate && e.isDirty) {
+    <div class="ew-savebar" role="region" [attr.aria-label]="e.t('unsaved_changes_title')">
+      <button type="button" class="ew-btn ew-btn--primary ew-savebar-btn" (click)="e.onSubmit()"
+              [disabled]="e.loadingService.isLoading$ | async">
+        {{ (e.loadingService.isLoading$ | async) ? e.t('saving_label') : saveLabel }}
+      </button>
+    </div>
+  }
   <!-- Texts missing in the active languages (the orange dot of the menu): which languages lack
        them and a button per language that opens it with only its missing texts. -->
   @if (e.missingLanguages.length) {
