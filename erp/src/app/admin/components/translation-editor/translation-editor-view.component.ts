@@ -23,13 +23,12 @@ import { PageHeaderComponent } from '../page-header/page-header.component';
 import { RowButtonBuilderComponent } from '../builders/row-button-builder/row-button-builder.component';
 import { StickyBarDirective } from '../../../shared/directives/sticky-bar.directive';
 import { AdminModalComponent } from '../admin-modal/admin-modal.component';
-import { ActionMenuBuilderComponent } from '../builders/action-menu-builder/action-menu-builder.component';
-import { Button } from '../../../shared/interfaces/button';
+import { LangMeta } from './base-translation-editor.component';
 
 @Component({
   selector: 'app-translation-editor-view',
   standalone: true,
-  imports: [AsyncPipe, UpperCasePipe, FormsModule, PageTitlesEditorComponent, PageHeaderComponent, RowButtonBuilderComponent, StickyBarDirective, AdminModalComponent, ActionMenuBuilderComponent],
+  imports: [AsyncPipe, UpperCasePipe, FormsModule, PageTitlesEditorComponent, PageHeaderComponent, RowButtonBuilderComponent, StickyBarDirective, AdminModalComponent],
   templateUrl: './translation-editor-view.component.html',
   styleUrls: ['../../shared-styles/theme.css', '../../../shared/styles/base.css', '../../shared-styles/settings-page.css', '../../shared-styles/modal.css', './translation-editor-view.component.css'],
   changeDetection: ChangeDetectionStrategy.Default,
@@ -39,38 +38,74 @@ export class TranslationEditorViewComponent {
   @Input({ required: true }) e!: BaseTranslationEditorComponent;
 
   /**
-   * Calmer actions (2026-11, pilot on the texts of the website): the rare JSON download / upload
-   * move to the "⋯ Akce" menu of the page header, the sticky bar keeps only "Uložit změny (n)";
-   * on a phone the save button is a bar at the bottom, shown only with unsaved changes.
+   * Calmer actions (2026-11, pilot on the texts of the website): everything about the languages -
+   * on / off, JSON download / upload per language, delete, a new language - is in one window
+   * behind the "Jazyky" button of the page header; the language tabs only switch the language
+   * (no small action icons); the sticky bar keeps only
+   * "Uložit změny (n)" and shows the edited language only while it floats; on a phone the save
+   * button is a bar at the bottom, shown only with unsaved changes.
    */
   @Input() compactActions = false;
 
-  /** Cache of `menuActions` (stable array for the OnPush action menu). */
-  private menuCache: { key: string; buttons: Button[] } | null = null;
+  /** The window "Spravovat jazyky" is open. */
+  manageOpen = false;
 
-  /** @description Items of the "⋯ Akce" menu: download JSON; upload JSON with the edit permission. */
-  get menuActions(): Button[] {
-    const key = `${this.e.t('download_json_button')}|${this.e.t('upload_json_button')}|${this.e.canUpdate}`;
-    if (this.menuCache?.key !== key) {
-      this.menuCache = {
-        key,
-        buttons: [
-          { action: 'downloadJson', label: this.e.t('download_json_button'), class: 'btn-neutral' },
-          { action: 'uploadJson', label: this.e.t('upload_json_button'), class: 'btn-neutral', showIf: this.e.canUpdate },
-        ],
-      };
-    }
-    return this.menuCache.buttons;
+  /** @description The "Jazyky" button of the page header opens the window "Spravovat jazyky". */
+  openManage(): void {
+    this.manageOpen = true;
   }
 
   /**
-   * @description An item of the "⋯ Akce" menu: download the JSON of the active language, or
-   *   open the upload of a JSON for it.
-   * @param action 'downloadJson' or 'uploadJson'.
+   * @description Downloads the saved JSON of a language from its row.
+   * @param lang The language.
    */
-  onMenuAction(action: string): void {
-    if (action === 'downloadJson') this.e.downloadJson();
-    else if (action === 'uploadJson') this.e.openUploadModal(this.e.currentLang);
+  manageDownload(lang: LangMeta): void {
+    this.e.downloadSavedJson(lang.code);
+  }
+
+  /**
+   * @description The row of the open language warns that its unsaved edits are not in the download.
+   * @param lang The language.
+   */
+  hasUnsavedEdits(lang: LangMeta): boolean {
+    return this.e.isDirty && lang.code === this.e.currentLang;
+  }
+
+  /** @description Closes the window "Spravovat jazyky". */
+  closeManage(): void {
+    this.manageOpen = false;
+  }
+
+  /**
+   * @description Turns a language on / off - the window stays open (its state changes in place).
+   * @param lang The language.
+   */
+  manageToggle(lang: LangMeta): void {
+    this.e.toggleLangActive(lang);
+  }
+
+  /**
+   * @description Opens the upload of a JSON for a language (its own window - this one closes).
+   * @param lang The language.
+   */
+  manageUpload(lang: LangMeta): void {
+    this.manageOpen = false;
+    this.e.openUploadModal(lang.code);
+  }
+
+  /**
+   * @description Asks to delete a language (its own confirmation window - this one closes).
+   * @param lang The language.
+   */
+  manageDelete(lang: LangMeta): void {
+    this.manageOpen = false;
+    this.e.askDeleteLang(lang);
+  }
+
+  /** @description Opens the form of a new language (its own window - this one closes). */
+  manageAdd(): void {
+    this.manageOpen = false;
+    this.e.openAddForm();
   }
 
   /** @description Label of the save button - with the count of the changed texts when there are any. */

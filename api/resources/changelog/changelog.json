@@ -1,6 +1,18 @@
 {
     "unreleased": [
         {
+            "type": "changed",
+            "area": "web",
+            "part": "admin",
+            "text": "Website texts: a Languages button opens one window with every language - turn on/off, download and upload its JSON, delete. Download always gives the saved version; the open language warns about unsaved changes."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "admin",
+            "text": "Website texts: language tabs only switch the language; turning languages on and off, uploading their JSON and deleting them is in Actions › Manage languages. The edited language shows in the save bar only while it floats."
+        },
+        {
             "type": "fixed",
             "area": "core",
             "part": "admin",

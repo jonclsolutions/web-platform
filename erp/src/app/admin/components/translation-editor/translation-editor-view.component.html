@@ -11,10 +11,18 @@
 -->
 
 <app-page-header [title]="e.t('page_title')">
-  <!-- `compactActions`: the rare JSON download / upload live in the "⋯ Akce" menu, not in the sticky bar. -->
+  <!-- `compactActions`: everything about the languages (JSON per language included) in one window. -->
   @if (compactActions) {
-    <app-action-menu-builder [configs]="menuActions" [primaryAction]="null" [triggerLabel]="e.t('actions_menu_label')"
-                             (actionTriggered)="onMenuAction($event)"></app-action-menu-builder>
+    <button type="button" class="ew-langs-btn" (click)="openManage()"
+            [attr.aria-label]="e.t('manage_languages_button')" [title]="e.t('manage_languages_button')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="2" y1="12" x2="22" y2="12"/>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      </svg>
+      <span class="ew-langs-btn-label">{{ e.t('languages_button') }}</span>
+    </button>
   }
 </app-page-header>
 
@@ -113,7 +121,8 @@
             <span class="ew-lang-tab-inactive-dot" [title]="e.t('inactive_label')"></span>
           }
 
-          @if (!lang.isBuiltIn) {
+          <!-- `compactActions`: the tab only switches the language - managing it is in "Spravovat jazyky". -->
+          @if (!lang.isBuiltIn && !compactActions) {
             <span class="ew-lang-tab-actions" (click)="$event.stopPropagation()">
               @if (e.canUpdate) {
                 <button
@@ -400,6 +409,66 @@
     <ng-container modal-footer>
       <button type="button" class="am-btn am-btn--secondary" (click)="e.cancelDelete()">{{ e.i18n.getValue('shared.cancel') }}</button>
       <button type="button" class="am-btn am-btn--danger" (click)="e.confirmDeleteLang()">{{ e.t('delete_language_title') }}</button>
+    </ng-container>
+  </app-admin-modal>
+}
+
+<!-- `compactActions`: managing the languages in one window (the "Jazyky" button) - turn on / off
+     in place; download the saved JSON of the language; upload, delete and a new language open
+     their own windows. The main language cannot be turned off or deleted. Without the edit
+     permission only the download. -->
+@if (compactActions && manageOpen) {
+  <app-admin-modal size="md" [heading]="e.t('manage_languages_button')" [subheading]="e.t('manage_languages_subtitle')"
+                   (dismissed)="closeManage()">
+    <ul class="ew-manage-list">
+      @for (lang of e.languages; track e.trackByCode($index, lang)) {
+        <li class="ew-manage-row">
+          <span class="ew-manage-lang">
+            @if (lang.iconUrl) {
+              <img [src]="lang.iconUrl" class="ew-lang-icon-sm" alt="">
+            } @else {
+              <span class="ew-lang-icon-placeholder" aria-hidden="true">{{ lang.code[0] | uppercase }}</span>
+            }
+            <span class="ew-lang-badge">{{ lang.code | uppercase }}</span>
+            <span class="ew-manage-name">{{ lang.name }}</span>
+          </span>
+          <span class="ew-manage-state" [class.is-off]="!lang.active">
+            {{ lang.isBuiltIn ? e.t('built_in_label') : (lang.active ? e.t('active_label') : e.t('inactive_label')) }}
+          </span>
+          <span class="ew-manage-actions">
+            @if (!lang.isBuiltIn && e.canUpdate) {
+              <button type="button" class="ew-btn ew-btn--ghost ew-btn--sm" (click)="manageToggle(lang)">
+                {{ lang.active ? e.t('deactivate_title') : e.t('activate_title') }}
+              </button>
+            }
+            <button type="button" class="ew-btn ew-btn--ghost ew-btn--sm ew-manage-download" (click)="manageDownload(lang)"
+                    [title]="e.t('download_json_title')">
+              {{ e.t('download_json_button') }}
+            </button>
+            @if (e.canUpdate) {
+              <button type="button" class="ew-btn ew-btn--ghost ew-btn--sm ew-manage-upload" (click)="manageUpload(lang)"
+                      [title]="e.t('upload_json_title')">
+                {{ e.t('upload_json_button') }}
+              </button>
+            }
+            @if (!lang.isBuiltIn && e.canUpdate) {
+              <button type="button" class="ew-btn ew-btn--ghost ew-btn--sm ew-manage-delete" (click)="manageDelete(lang)"
+                      [title]="e.t('delete_language_title')">
+                {{ e.t('delete_button') }}
+              </button>
+            }
+          </span>
+          @if (hasUnsavedEdits(lang)) {
+            <span class="ew-manage-note" role="note">{{ e.t('unsaved_download_note') }}</span>
+          }
+        </li>
+      }
+    </ul>
+    <ng-container modal-footer>
+      @if (e.canUpdate) {
+        <button type="button" class="am-btn am-btn--secondary" (click)="manageAdd()">+ {{ e.t('add_language_button') }}</button>
+      }
+      <button type="button" class="am-btn am-btn--secondary" (click)="closeManage()">{{ e.i18n.getValue('shared.close') }}</button>
     </ng-container>
   </app-admin-modal>
 }

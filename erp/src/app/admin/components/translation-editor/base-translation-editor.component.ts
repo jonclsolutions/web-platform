@@ -906,14 +906,35 @@ export abstract class BaseTranslationEditorComponent
    * and uploaded back (an upload must have the keys of Czech).
    */
   downloadJson(): void {
-    const complete = this.withMissingKeys(this.buildEmptyFromCz(this.czTranslations), this.translations);
-    const blob = new Blob(
-      [JSON.stringify(complete, null, 2)],
-      { type: 'application/json' }
-    );
-    const a  = document.createElement('a');
-    a.href   = URL.createObjectURL(blob);
-    a.download = `${this.currentLang}.json`;
+    this.saveJsonFile(this.currentLang, this.withMissingKeys(this.buildEmptyFromCz(this.czTranslations), this.translations));
+  }
+
+  /**
+   * @description Downloads the SAVED JSON of a language (window "Spravovat jazyky", 2026-11) -
+   *   any language, not only the open one; fresh from the server, completed with the keys of the
+   *   Czech reference (missing texts empty). Unsaved edits of the open language are not in it
+   *   (the window says so). A language without a saved file gives the empty structure.
+   * @param code Language code.
+   */
+  downloadSavedJson(code: string): void {
+    this.fetchTranslations(code, true)
+      .pipe(Core.takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => this.saveJsonFile(code, this.withMissingKeys(this.buildEmptyFromCz(this.czTranslations), data ?? {})),
+        error: () => this.saveJsonFile(code, this.buildEmptyFromCz(this.czTranslations)),
+      });
+  }
+
+  /**
+   * @description Saves a JSON object as the file `<code>.json` (a download of the browser).
+   * @param code Language code (the file name).
+   * @param content The texts.
+   */
+  private saveJsonFile(code: string, content: unknown): void {
+    const blob = new Blob([JSON.stringify(content, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${code}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
   }

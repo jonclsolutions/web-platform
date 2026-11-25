@@ -104,13 +104,121 @@
   display: none;
 }
 
+/* The edited language in the sticky bar only while it floats - at its place it repeats the
+   active language tab right under it. */
+.ew-root--compact .ew-topbar:not(.is-stuck) .ew-current-lang {
+  display: none;
+}
+
+/* "Jazyky" button of the page header (light, like the "Akce" trigger of the list pages). */
+.ew-langs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-zinc-200);
+  background: var(--color-zinc-100);
+  color: var(--color-zinc-700);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.ew-langs-btn:hover { background: var(--color-zinc-200); }
+.ew-langs-btn:focus-visible { outline: 2px solid var(--color-zinc-900); outline-offset: 2px; }
+
+/* The row of the open language with unsaved edits: the download has the saved version. */
+.ew-manage-note {
+  flex-basis: 100%;
+  font-size: 0.78rem;
+  color: #85581d;
+}
+
+/* Window "Spravovat jazyky": one row per language - flag / code / name, its state, its actions. */
+.ew-manage-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ew-manage-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.ew-manage-row:last-child {
+  border-bottom: none;
+}
+
+.ew-manage-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 160px;
+}
+
+.ew-manage-name {
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ew-manage-state {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #3d6a4a;
+}
+
+.ew-manage-state.is-off {
+  color: var(--text-dim);
+}
+
+.ew-manage-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.ew-manage-delete {
+  color: var(--error, #b42318);
+}
+
 @media (max-width: 640px) {
+  /* Phone: nothing at the top - the save button is the bar at the bottom. */
   .ew-root--compact .ew-topbar {
-    position: static;
+    display: none;
   }
 
-  .ew-root--compact .ew-topbar-right {
-    display: none;
+  .ew-manage-actions {
+    margin-left: 0;
+  }
+
+  /* Phone: the "Jazyky" button as a round icon next to the help. */
+  .ew-langs-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+  }
+  .ew-langs-btn-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .ew-savebar {

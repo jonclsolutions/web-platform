@@ -281,10 +281,10 @@ describe('EditWebsiteComponent', () => {
    *   upload are in the "⋯ Akce" menu of the page header, not in the sticky bar - it keeps only
    *   the save button, labelled with the count of the changed texts; the menu items run the
    *   download / upload; saving clears the count; the phone save bar exists only with changes.
-   * @input  render; updateValue ×2 (two texts, one twice); menu actions; onSubmit()
-   * @output menu items [download, upload], no JSON buttons in .ew-topbar; no .ew-savebar; label
-   *   'edit-website.save_changes_count' (the page section first) with 2 changes; .ew-savebar present; download /
-   *   upload called; after save 0 changes and no .ew-savebar
+   * @input  render; updateValue ×2 (two texts, one twice); onSubmit()
+   * @output the "Jazyky" button in the header (no Akce menu), no JSON buttons in .ew-topbar; no .ew-savebar; label
+   *   'edit-website.save_changes_count' (the page section first) with 2 changes; .ew-savebar present;
+   *   after save 0 changes and no .ew-savebar
    */
   it('keeps the rare JSON actions in the menu and only the save button in the bar', fakeAsync(() => {
     fixture.detectChanges();
@@ -293,8 +293,8 @@ describe('EditWebsiteComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     const view = fixture.debugElement.query(By.css('app-translation-editor-view')).componentInstance;
     expect(view.compactActions).toBeTrue();
-    expect(view.menuActions.map((b: any) => b.action)).toEqual(['downloadJson', 'uploadJson']);
-    expect(el.querySelector('app-page-header app-action-menu-builder')).not.toBeNull();
+    expect(el.querySelector('app-page-header .ew-langs-btn')).not.toBeNull();
+    expect(el.querySelector('app-page-header app-action-menu-builder')).toBeNull();
     expect(el.querySelectorAll('.ew-topbar-right .ew-btn--ghost').length).toBe(0);
     expect(el.querySelector('.ew-savebar')).toBeNull();
 
@@ -306,18 +306,80 @@ describe('EditWebsiteComponent', () => {
     expect(view.saveLabel).toBe('edit-website.save_changes_count');
     expect(el.querySelector('.ew-savebar')).not.toBeNull();
 
-    spyOn(component, 'downloadJson');
-    spyOn(component, 'openUploadModal');
-    view.onMenuAction('downloadJson');
-    view.onMenuAction('uploadJson');
-    expect(component.downloadJson).toHaveBeenCalled();
-    expect(component.openUploadModal).toHaveBeenCalledWith('cz');
-
     component.onSubmit();
     flush();
     fixture.detectChanges();
     expect(component.changedPaths.size).toBe(0);
     expect(el.querySelector('.ew-savebar')).toBeNull();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description Everything about the languages in one window behind the "Jazyky" button: the
+   *   tabs only switch the language (no small action icons); a row per language with its state;
+   *   the main language can only download / upload its JSON; download fetches the SAVED JSON of
+   *   any language and the row of the open language with unsaved edits says so; turning on / off
+   *   stays in the window; upload / delete / a new language close it and open their own window.
+   * @input  render; openManage(); edit a text; download CZ and EN; toggle EN; upload EN; reopen,
+   *   delete EN; reopen, add
+   * @output no .ew-lang-tab-actions; 2 rows - CZ main with [download, upload], EN with 4 actions;
+   *   note only in the CZ row after the edit; get('translations/web/cz') + ('translations/web/en')
+   *   and 2 files; toggleLangActive(EN) with the window open; openUploadModal('en') and closed;
+   *   askDeleteLang(EN); openAddForm()
+   */
+  it('manages the languages and their JSON in one window', fakeAsync(() => {
+    fixture.detectChanges();
+    flush();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const view = fixture.debugElement.query(By.css('app-translation-editor-view')).componentInstance;
+    expect(el.querySelectorAll('.ew-lang-tab').length).toBeGreaterThan(1);
+    expect(el.querySelector('.ew-lang-tab-actions')).toBeNull();
+
+    (el.querySelector('.ew-langs-btn') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    // The window lives in the document body (AdminModalComponent moves itself there).
+    const rows = () => Array.from(document.querySelectorAll('.ew-manage-row')) as HTMLElement[];
+    expect(rows().length).toBe(2);
+    expect(rows()[0].querySelector('.ew-manage-state')!.textContent!.trim()).toBe('edit-website.built_in_label');
+    expect(rows()[0].querySelectorAll('.ew-manage-actions button').length).toBe(2);
+    expect(rows()[1].querySelectorAll('.ew-manage-actions button').length).toBe(4);
+    expect(document.querySelector('.ew-manage-note')).toBeNull();
+
+    component.updateValue('footer', 'Nová');
+    (component as any).cd.markForCheck();
+    fixture.detectChanges();
+    expect(rows()[0].querySelector('.ew-manage-note')).not.toBeNull();
+    expect(rows()[1].querySelector('.ew-manage-note')).toBeNull();
+
+    const files: string[] = [];
+    spyOn(HTMLAnchorElement.prototype, 'click').and.callFake(function (this: HTMLAnchorElement) { files.push(this.download); });
+    (ctx.dataHandler as any).get.calls.reset();
+    view.manageDownload(component.languages[0]);
+    view.manageDownload(component.languages[1]);
+    flush();
+    expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('translations/web/cz');
+    expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('translations/web/en');
+    expect(files).toEqual(['cz.json', 'en.json']);
+
+    const en = component.languages.find(l => l.code === 'en')!;
+    spyOn(component, 'toggleLangActive');
+    spyOn(component, 'openUploadModal');
+    spyOn(component, 'askDeleteLang');
+    spyOn(component, 'openAddForm');
+    view.manageToggle(en);
+    expect(component.toggleLangActive).toHaveBeenCalledWith(en);
+    expect(view.manageOpen).toBeTrue();
+    view.manageUpload(en);
+    expect(component.openUploadModal).toHaveBeenCalledWith('en');
+    expect(view.manageOpen).toBeFalse();
+    view.openManage();
+    view.manageDelete(en);
+    expect(component.askDeleteLang).toHaveBeenCalledWith(en);
+    view.openManage();
+    view.manageAdd();
+    expect(component.openAddForm).toHaveBeenCalled();
+    expect(view.manageOpen).toBeFalse();
     discardPeriodicTasks();
   }));
 
