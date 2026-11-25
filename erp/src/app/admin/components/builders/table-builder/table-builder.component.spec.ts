@@ -960,4 +960,30 @@ describe('TableBuilderComponent', () => {
       expect(component.selectedIds.size).toBe(0);
     });
   });
+
+  /**
+   * @description `autoColumnWidths` marks the table and every header / cell: short columns
+   *   .col-fit, texts .col-flex; without it the table has no auto-widths class.
+   * @input  columns id, thema, status (tones), created_at (date); autoColumnWidths true / false
+   * @output table.auto-widths; headers fit, flex, fit, fit; cells the same; then no class
+   */
+  it('fits short columns to their content with autoColumnWidths', () => {
+    fixture.componentRef.setInput('columns', [
+      { key: 'id', header: 'ID', type: 'text' },
+      { key: 'thema', header: 'Topic', type: 'text' },
+      { key: 'status', header: 'Status', type: 'text', tones: { new: 'info' } },
+      { key: 'created_at', header: 'Created', type: 'date' },
+    ]);
+    fixture.componentRef.setInput('data', [{ id: 1, thema: 'A', status: 'new', created_at: '2026-11-20T10:00:00Z' }]);
+    fixture.componentRef.setInput('autoColumnWidths', true);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const kind = (cells: NodeListOf<Element>) => Array.from(cells).filter(c => c.matches('.col-fit, .col-flex')).map(c => c.classList.contains('col-fit') ? 'fit' : 'flex');
+    expect(el.querySelector('table')!.classList).toContain('auto-widths');
+    expect(kind(el.querySelectorAll('thead th'))).toEqual(['fit', 'flex', 'fit', 'fit']);
+    expect(kind(el.querySelectorAll('tbody td'))).toEqual(['fit', 'flex', 'fit', 'fit']);
+    fixture.componentRef.setInput('autoColumnWidths', false);
+    fixture.detectChanges();
+    expect(el.querySelector('table')!.classList).not.toContain('auto-widths');
+  });
 });

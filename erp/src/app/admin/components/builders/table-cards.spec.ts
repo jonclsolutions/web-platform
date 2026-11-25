@@ -10,7 +10,7 @@
  * @dependencies none
  */
 
-import { CARD_META_MAX, cardLayoutOf, cardMetaNeedsLabel, primaryColumnOf } from './table-cards';
+import { CARD_META_MAX, cardLayoutOf, cardMetaNeedsLabel, columnFits, primaryColumnOf } from './table-cards';
 
 describe('table cards', () => {
   const keys = (cols: { key: string }[]) => cols.map(col => col.key);
@@ -75,5 +75,26 @@ describe('table cards', () => {
       cardMetaNeedsLabel({ key: 'url', type: 'link' } as any),
       cardMetaNeedsLabel({ key: 'note', type: 'text' } as any),
     ]).toEqual([false, false, false, false, true]);
+  });
+
+  /**
+   * @description Column widths by content: the ID, labels (tones), dates, numbers, prices,
+   *   yes / no and pictures fit their content; texts share the rest; `width` overrides it.
+   * @input  id, status+tones, created_at date, price currency, is_active boolean, thema text,
+   *   email text, a text with width 'fit', a date with width 'flex'
+   * @output true ×5, false ×2, true, false
+   */
+  it('fits short columns to their content', () => {
+    expect([
+      columnFits({ key: 'id', type: 'text' } as any),
+      columnFits({ key: 'status', type: 'text', tones: {} } as any),
+      columnFits({ key: 'created_at', type: 'date' } as any),
+      columnFits({ key: 'price', type: 'currency' } as any),
+      columnFits({ key: 'is_active', type: 'boolean' } as any),
+      columnFits({ key: 'thema', type: 'text' } as any),
+      columnFits({ key: 'email', type: 'text' } as any),
+      columnFits({ key: 'code', type: 'text', width: 'fit' } as any),
+      columnFits({ key: 'created_at', type: 'date', width: 'flex' } as any),
+    ]).toEqual([true, true, true, true, true, false, false, true, false]);
   });
 });

@@ -85,6 +85,21 @@ export function cardMetaNeedsLabel(column: ColumnDefinition): boolean {
   return !/e-?mail|phone|tel|url|web|www/i.test(column.key);
 }
 
+/** Column types that are short by nature - their column is exactly as wide as the content. */
+const FIT_TYPES = ['date', 'number', 'currency', 'boolean', 'count', 'avatar', 'image'];
+
+/**
+ * @description The column of a table is exactly as wide as its content (`autoColumnWidths`):
+ *   the ID, dates, coloured labels, numbers, prices, yes / no and pictures; texts share the rest.
+ *   `width` of the column decides when set.
+ * @param column Column of the table.
+ * @returns True for a narrow column fitted to its content.
+ */
+export function columnFits(column: ColumnDefinition): boolean {
+  if (column.width) return column.width === 'fit';
+  return column.key === 'id' || !!column.tones || FIT_TYPES.includes(column.type);
+}
+
 /**
  * @description Media query of the phone limit (null without a browser window - SSR, tests
  *   without matchMedia).

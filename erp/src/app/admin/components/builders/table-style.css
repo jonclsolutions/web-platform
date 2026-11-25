@@ -32,6 +32,39 @@ caption {
 display: none;
 }
 
+/*
+ * @module Column widths by content (`autoColumnWidths`, review point 8)
+ * @description Short columns (.col-fit: ID, date, label, number, price, yes / no, picture) take
+ *   exactly the width of their content and never wrap; text columns (.col-flex) share the rest by
+ *   the length of their content, keep a readable minimum and end a long text with "…". On a full
+ *   width table the texts may shrink below their content (max-width: 0 lets the ellipsis work);
+ *   on a narrow ("fit content") table they stop at a readable maximum.
+ */
+table.auto-widths {
+table-layout: auto;
+}
+
+table.auto-widths .col-fit {
+width: 1%;
+white-space: nowrap;
+}
+
+table.auto-widths td.col-fit {
+font-variant-numeric: tabular-nums;
+}
+
+table.auto-widths .col-flex {
+min-width: 6rem;
+}
+
+table.auto-widths:not(.fit-content-table) td.col-flex {
+max-width: 0;
+}
+
+table.auto-widths.fit-content-table td.col-flex {
+max-width: 18rem;
+}
+
 th, td {
 padding: 10px 14px;
 text-align: left;

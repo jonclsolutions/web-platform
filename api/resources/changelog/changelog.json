@@ -2,6 +2,12 @@
     "unreleased": [
         {
             "type": "changed",
+            "area": "web",
+            "part": "admin",
+            "text": "Inquiries table: short columns (ID, status, priority, date) are as wide as their content and never cut; topic and e-mail share the rest of the width."
+        },
+        {
+            "type": "changed",
             "area": "core",
             "part": "admin",
             "text": "All tables on a phone: compact cards instead of the table (as in the inquiries); a tap opens the record, Select switches on bulk selection. In the trash a tap opens a window with Restore and Delete permanently. The trash shows translated values."

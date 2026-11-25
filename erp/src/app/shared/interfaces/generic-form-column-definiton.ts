@@ -42,4 +42,11 @@ export interface ColumnDefinition {
    * automatically (the main column is the title, coloured labels, the first date, up to 2 values).
    */
   mobile?: 'title' | 'meta' | false;
+  /**
+   * Width of the column in the table (`autoColumnWidths` of the table builder): 'fit' = exactly
+   * as wide as its content, never wraps; 'flex' = shares the rest of the width, a long text ends
+   * with "…". Unset = by the type (ID, dates, labels, numbers, prices, yes / no, pictures fit;
+   * texts flex) - table-cards.ts `columnFits`.
+   */
+  width?: 'fit' | 'flex';
 }

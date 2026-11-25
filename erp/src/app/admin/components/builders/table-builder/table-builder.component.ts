@@ -52,7 +52,7 @@ import { IconComponent } from '../../../../shared/components/icon/icon.component
 import { spreadsheetSafe } from '../../../../shared/utils/spreadsheet-safe';
 import { adminDateFormat, adminDateKind } from '../../../shared-date/admin-date-format';
 import { BadgeTone, badgeToneOf } from '../badge-tones';
-import { TableCardLayout, cardLayoutOf, cardMetaNeedsLabel, phoneQuery as phoneMediaQuery, primaryColumnOf } from '../table-cards';
+import { TableCardLayout, cardLayoutOf, cardMetaNeedsLabel, columnFits, phoneQuery as phoneMediaQuery, primaryColumnOf } from '../table-cards';
 const DEFAULT_EXPORT_EXCLUDED_KEYS = [
   'user_password_hash',
   'user_password_salt',
@@ -144,6 +144,13 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
    * table; false keeps the table on a phone too.
    */
   @Input() mobileCards: boolean = true;
+  /**
+   * Column widths by their content (2026-11, review point 8): short columns (ID, date, label,
+   * number, price, yes / no, picture) are exactly as wide as their content and never wrap; text
+   * columns share the rest (by the length of their content, at least a readable minimum) and a
+   * long text ends with "…" (the whole text in the record window). Off = equal columns.
+   */
+  @Input() autoColumnWidths: boolean = false;
 
   @Output() itemDeleted = new EventEmitter<any>();
   @Output() createFormOpened = new EventEmitter<void>();
@@ -298,6 +305,11 @@ get importEnumHints(): ImportEnumHint[] {
       .filter(value => value !== null && value !== undefined && String(value).trim() !== '')
       .join(' ');
     return text || `#${item?.id ?? ''}`;
+  }
+
+  /** @description The column is fitted to its content (`autoColumnWidths`, table-cards.ts). */
+  columnFits(column: ColumnDefinition): boolean {
+    return columnFits(column);
   }
 
   /** @description Switches the selection mode of the cards; leaving it clears the selection. */
