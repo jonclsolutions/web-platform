@@ -500,6 +500,33 @@ describe('EditWebsiteComponent', () => {
   }));
 
   /**
+   * @description The list of texts (`compactActions`): every row is a .ew-row (on a phone a
+   *   compact row - key above the text); a key gets a break chance (<wbr>) only after its dots,
+   *   its text stays the same (copying a key copies it whole) and the whole key is its title.
+   * @input  render; loadLang('en'); keySegments('a.b.c')
+   * @output 4 rows .ew-row; ['a.', 'b.', 'c']; key home.title → 2 <wbr> and text 'home.title',
+   *   title 'home.title'
+   */
+  it('lays out the keys of the list for wrapping at their dots', fakeAsync(() => {
+    fixture.detectChanges();
+    flush();
+    component.loadLang('en');
+    flush();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const view = fixture.debugElement.query(By.css('app-translation-editor-view')).componentInstance;
+    expect(el.querySelectorAll('.ew-table tbody tr.ew-row').length).toBe(4);
+    expect(view.keySegments('a.b.c')).toEqual(['a.', 'b.', 'c']);
+    expect(view.keySegments('a.b.c')).toBe(view.keySegments('a.b.c'));
+    const key = el.querySelector('.ew-table tbody tr.ew-row .ew-key-text') as HTMLElement;
+    expect(key.querySelectorAll('wbr').length).toBe(2);
+    expect(key.textContent!.trim()).toBe('home.title');
+    expect(key.getAttribute('title')).toBe('home.title');
+    flush();
+    discardPeriodicTasks();
+  }));
+
+  /**
    * @description The page also manages the browser titles of its own pages: the "Page titles" tab
    *   creates PageTitlesEditorComponent for the 'web' area on the first open; the translations
    *   are hidden, not destroyed; the editor stays created when switching back; its unsaved state

@@ -256,9 +256,15 @@
       </thead>
       <tbody>
         @for (item of e.filteredKeys; track e.trackByPath($index, item)) {
-          <tr [class.ew-row--missing]="item.missing">
+          <tr class="ew-row" [class.ew-row--missing]="item.missing">
             <td class="ew-td-key">
-              <span class="ew-key-text">{{ item.path }}</span>
+              <!-- `compactActions`: the key breaks only after its dots (<wbr> - not copied with the
+                   key); on a phone it is one line cut at its start, whole while its text is edited. -->
+              @if (compactActions) {
+                <span class="ew-key-text" [title]="item.path"><span class="ew-key-inner">@for (part of keySegments(item.path); track $index) {<ng-container>{{ part }}</ng-container><wbr>}</span></span>
+              } @else {
+                <span class="ew-key-text">{{ item.path }}</span>
+              }
               @if (item.missing) {
                 <span class="ew-missing-badge" [title]="e.t('missing_translation_title')">!</span>
               }

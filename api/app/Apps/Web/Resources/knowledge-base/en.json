@@ -608,7 +608,7 @@
                 },
                 {
                   "label": "Find the text",
-                  "text": "The table has the columns Key (JSON path) - where the text is used on the website, for example navigation.home - and Value in the language. The field Search key or text… searches keys and texts.",
+                  "text": "On a computer the table has the columns Key (JSON path) - where the text is used on the website, for example navigation.home - and Value in the language; a long key wraps at a dot. On a phone every text is one row: a small key above the text field over the whole width. A long key is shortened from the left (…); the whole key shows while you edit the text. The field Search key or text… searches keys and texts.",
                   "active": false
                 },
                 {

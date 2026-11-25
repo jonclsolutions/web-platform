@@ -608,7 +608,7 @@
                 },
                 {
                   "label": "Najděte text",
-                  "text": "Tabulka má sloupce Klíč (JSON cesta) - kde se text na webu používá, například navigation.home - a Hodnota v daném jazyce. Pole Vyhledat klíč nebo text… hledá v klíčích i textech.",
+                  "text": "Na počítači má tabulka sloupce Klíč (JSON cesta) - kde se text na webu používá, například navigation.home - a Hodnota v daném jazyce; dlouhý klíč se zalomí u tečky. Na telefonu je každý text jeden řádek: malý klíč nad polem s textem přes celou šířku. Dlouhý klíč je zleva zkrácený (…), celý se ukáže, když text upravujete. Pole Vyhledat klíč nebo text… hledá v klíčích i textech.",
                   "active": false
                 },
                 {

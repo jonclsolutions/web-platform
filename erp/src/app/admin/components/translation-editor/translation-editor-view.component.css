@@ -380,3 +380,133 @@
     padding-bottom: 76px;
   }
 }
+
+/*
+ * @module List of texts (`compactActions`, 2026-11)
+ * @description Desktop: a narrower key column (the text gets the room), the key wraps only at its
+ *   dots. Phone: every text is a compact row - the key as one small line above the text field over
+ *   the whole width (cut at its start, the end of a key tells most; whole while its text is
+ *   edited), no column header (the language is the active tab), the field keeps a light frame
+ *   so it reads as editable.
+ * @usage .ew-root--compact .ew-table > tbody > tr.ew-row(.ew-row--missing) > td.ew-td-key > .ew-key-text > .ew-key-inner
+ */
+/* A fixed table takes a plain share (a clamp() width is ignored there): about 270 px of a
+   1000 px list, the text gets the rest. */
+.ew-root--compact .ew-th-key {
+  width: 26%;
+}
+
+.ew-root--compact .ew-key-text {
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+/* The parts of the key keep its monospace font (a global span font would win otherwise). */
+.ew-root--compact .ew-key-inner {
+  font: inherit;
+}
+
+@media (max-width: 640px) {
+  .ew-root--compact .ew-table,
+  .ew-root--compact .ew-table tbody {
+    display: block;
+  }
+
+  .ew-root--compact .ew-table thead {
+    display: none;
+  }
+
+  .ew-root--compact .ew-row {
+    display: block;
+    padding: 7px 10px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ew-root--compact .ew-row:last-child {
+    border-bottom: none;
+  }
+
+  .ew-root--compact .ew-row--missing {
+    background: var(--warn-dim);
+  }
+
+  .ew-root--compact .ew-row .ew-td-key,
+  .ew-root--compact .ew-row .ew-td-val {
+    display: block;
+    padding: 0;
+    border: none;
+    background: transparent;
+  }
+
+  .ew-root--compact .ew-row .ew-td-key {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    margin: 0 2px 3px;
+  }
+
+  /* One line cut at its start: the right-to-left box puts the ellipsis on the left, the
+     isolated inner span keeps the key in its own order. */
+  .ew-root--compact .ew-row .ew-key-text {
+    display: block;
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    direction: rtl;
+    text-align: left;
+    font-size: 0.7rem;
+    line-height: 1.4;
+  }
+
+  .ew-root--compact .ew-key-inner {
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  /* One line really: the break chances after the dots count only while the text is edited
+     (a browser may break at <wbr> even without wrapping). */
+  .ew-root--compact .ew-row:not(:focus-within) .ew-key-text wbr {
+    display: none;
+  }
+
+  /* Editing a text shows its whole key (it wraps at the dots). */
+  .ew-root--compact .ew-row:focus-within .ew-key-text {
+    white-space: normal;
+    direction: ltr;
+  }
+
+  .ew-root--compact .ew-row .ew-missing-badge {
+    margin-left: 0;
+    width: 14px;
+    height: 14px;
+    font-size: 0.6rem;
+  }
+
+  .ew-root--compact .ew-row .ew-edit-input {
+    min-height: 34px;
+    padding: 6px 10px;
+    border-color: var(--border);
+    background: var(--surface);
+    font-size: 0.88rem;
+  }
+
+  .ew-root--compact .ew-row .ew-edit-input--missing {
+    border-color: var(--warn-mid);
+  }
+
+  .ew-root--compact .ew-row .ew-edit-input:focus {
+    border-color: var(--accent);
+  }
+
+  .ew-root--compact .ew-row--missing .ew-edit-input:focus {
+    border-color: var(--warn);
+  }
+
+  /* The "no results" row: one block, its cell keeps its own centred layout. */
+  .ew-root--compact .ew-table tbody > tr:not(.ew-row) {
+    display: block;
+  }
+}

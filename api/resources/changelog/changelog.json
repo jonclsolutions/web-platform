@@ -4,6 +4,12 @@
             "type": "changed",
             "area": "web",
             "part": "admin",
+            "text": "Website texts: the key column is narrower and long keys wrap at a dot; on a phone every text is a compact row - a small key above the text field over the whole width, a long key shortened from the left and shown whole while editing."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "admin",
             "text": "Website texts: the statistics of the language are one line, the search row has a Missing toggle (only the missing texts, together with the search) and next to Save changes is Discard changes with a confirmation."
         },
         {

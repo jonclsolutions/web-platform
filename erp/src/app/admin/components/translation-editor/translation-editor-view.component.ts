@@ -45,7 +45,9 @@ export class TranslationEditorViewComponent {
    * "Uložit změny (n)" and shows the edited language only while it floats; on a phone the save
    * button is a bar at the bottom, shown only with unsaved changes; next to the save button
    * "Zrušit změny" (after a confirmation back to the saved texts); the statistics of the language
-   * are one line and the search row has the "Chybí" toggle (only the missing texts).
+   * are one line and the search row has the "Chybí" toggle (only the missing texts); the key
+   * column is narrower and keys wrap at their dots; on a phone every text is a compact row - the
+   * key as one small line above the text field over the whole width.
    */
   @Input() compactActions = false;
 
@@ -135,6 +137,25 @@ export class TranslationEditorViewComponent {
     return this.e.t('discard_confirm_message')
       .replace('{count}', String(this.e.changedPaths.size))
       .replace('{lang}', lang);
+  }
+
+  /** Split keys - the list asks on every check, a key is split once. */
+  private readonly segmentCache = new Map<string, string[]>();
+
+  /**
+   * @description A key split after its dots (`hero.cta.label` → `hero.`, `cta.`, `label`) - the
+   *   list puts a line break opportunity (<wbr>) after each part, so a long key wraps at a dot,
+   *   never inside a word.
+   * @param path Dot path of the key.
+   * @returns The parts, the dots kept.
+   */
+  keySegments(path: string): string[] {
+    let parts = this.segmentCache.get(path);
+    if (!parts) {
+      parts = path.split(/(?<=\.)/);
+      this.segmentCache.set(path, parts);
+    }
+    return parts;
   }
 
   /** @description Label of the save button - with the count of the changed texts when there are any. */
