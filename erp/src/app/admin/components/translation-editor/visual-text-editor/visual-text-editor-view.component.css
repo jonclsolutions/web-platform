@@ -194,6 +194,54 @@
   border: 0;
 }
 
+/* Phone preview: the page in a phone-wide frame in the middle of the stage (its own scroll). */
+.te-stage--mobile {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  overflow: auto;
+}
+.te-stage--mobile .te-frame {
+  flex-shrink: 0;
+  box-sizing: content-box; /* the page gets the full phone width inside the bezel */
+  width: var(--te-mobile-width, 390px);
+  height: min(844px, calc(100% - 12px));
+  border: 6px solid var(--color-zinc-700);
+  border-radius: 28px;
+  background: var(--color-white, #fff);
+}
+
+/* Switch of the preview: desktop / phone. */
+.te-device {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--color-zinc-100);
+}
+.te-device-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.te-device-btn--on {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 0 0 1px var(--border-mid);
+}
+.te-device-btn:focus-visible { outline: 2px solid var(--color-zinc-900); outline-offset: 2px; }
+
 .te-loading {
   position: absolute;
   inset: 0;
@@ -402,6 +450,8 @@
 @media (max-width: 1100px) {
   .te-main { grid-template-columns: minmax(0, 1fr) 280px; }
   .te-page-select { max-width: 180px; }
+  .te-device-text { display: none; }
+  .te-device-btn { padding: 0 9px; }
 }
 
 /* ── Phone notice ───────────────────────────────────────────── */

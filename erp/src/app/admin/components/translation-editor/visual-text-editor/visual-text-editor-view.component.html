@@ -53,6 +53,20 @@
       </div>
       <button type="button" class="te-btn te-btn--ghost te-langs-btn" (click)="openLanguages()">{{ e.t('manage_languages_button') }}</button>
 
+      <!-- Preview: desktop / phone (the same page and texts, the mobile layout of the website). -->
+      <div class="te-device" role="group" [attr.aria-label]="e.t('editor_device_label')">
+        <button type="button" class="te-device-btn" [class.te-device-btn--on]="device === 'desktop'" [attr.aria-pressed]="device === 'desktop'"
+                [title]="e.t('editor_device_desktop')" (click)="setDevice('desktop')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <span class="te-device-text">{{ e.t('editor_device_desktop') }}</span>
+        </button>
+        <button type="button" class="te-device-btn" [class.te-device-btn--on]="device === 'mobile'" [attr.aria-pressed]="device === 'mobile'"
+                [title]="e.t('editor_device_mobile')" (click)="setDevice('mobile')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg>
+          <span class="te-device-text">{{ e.t('editor_device_mobile') }}</span>
+        </button>
+      </div>
+
       <span class="te-spacer"></span>
 
       @if (e.canUpdate) {
@@ -78,7 +92,7 @@
     }
 
     <div class="te-main">
-      <div class="te-stage">
+      <div class="te-stage" [class.te-stage--mobile]="device === 'mobile'" [style.--te-mobile-width.px]="mobileWidth">
         <!-- The own website in editor mode: no forms, pop-ups or navigation of the admin (sandbox). -->
         <iframe #frame class="te-frame" name="jsw-text-editor-frame" sandbox="allow-scripts allow-same-origin"
                 [title]="e.t('editor_frame_title')"></iframe>

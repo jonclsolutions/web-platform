@@ -664,7 +664,7 @@
               "steps": [
                 {
                   "label": "Vyberte stránku a jazyk",
-                  "text": "V horní liště vyberte stránku webu a jazyk. Stránka vypadá přesně tak, jak ji uvidí návštěvník.",
+                  "text": "V horní liště vyberte stránku webu a jazyk. Stránka vypadá přesně tak, jak ji uvidí návštěvník. Přepínač Počítač / Mobil ukáže stránku v šířce telefonu (mobilní menu, uspořádání) - texty upravíte stejně; volba se pamatuje.",
                   "active": true
                 },
                 {

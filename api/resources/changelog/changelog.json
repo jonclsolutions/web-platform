@@ -4,6 +4,12 @@
             "type": "added",
             "area": "web",
             "part": "admin",
+            "text": "Editor textů přímo na stránkách: přepínač náhledu Počítač / Mobil ukáže stránku v šířce telefonu (mobilní menu, uspořádání) a texty jde upravovat stejně; volba se pamatuje. Texty pod otevřeným mobilním menu se už neorámují přes něj."
+        },
+        {
+            "type": "added",
+            "area": "web",
+            "part": "admin",
             "text": "Texty webu: jeden upravený text jde vrátit na uloženou verzi bez potvrzení (odkaz v editoru, ikona ↺ v seznamu) a editor vypisuje Upravené texty – naposledy upravený nahoře, text z jiné stránky označený. Text přepsaný zpět na uložený se už nepočítá jako změna."
         },
         {

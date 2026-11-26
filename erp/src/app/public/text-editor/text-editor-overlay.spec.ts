@@ -162,6 +162,31 @@ describe('TextEditorOverlay', () => {
   });
 
   /**
+   * @description A fixed layer over a text (an open mobile menu) hides its outline and its hit -
+   *   the texts of the layer itself stay outlined; closing the layer brings the outline back.
+   * @input a fixed panel over the heading with its own text (key navigation.contact); redraw;
+   *   then the panel removed
+   * @output the heading not hit, no box over its middle; the panel text hit; after removal the
+   *   heading hit again
+   */
+  it('does not outline texts under a fixed layer of the page', async () => {
+    const heading = document.querySelectorAll('#heading span')[1];
+    const middle = center(heading);
+    expect(overlay.hit(middle.clientX, middle.clientY)).not.toBeNull();
+    const menu = document.createElement('nav');
+    menu.style.cssText = 'position:fixed;left:0;top:0;width:700px;height:400px;z-index:5;background:#111;';
+    menu.innerHTML = `<a id="menu-link" href="/cs/contact" style="display:inline-block;margin:300px 0 0 20px;font:16px sans-serif;color:#fff">${markText('Kontakt', 0, 'text')}</a>`;
+    document.body.appendChild(menu);
+    await new Promise(resolve => setTimeout(resolve, 250));
+    expect(overlay.hit(middle.clientX, middle.clientY)).toBeNull();
+    const link = center(document.getElementById('menu-link')!);
+    expect(overlay.hit(link.clientX, link.clientY)).not.toBeNull();
+    menu.remove();
+    await new Promise(resolve => setTimeout(resolve, 250));
+    expect(overlay.hit(middle.clientX, middle.clientY)).not.toBeNull();
+  });
+
+  /**
    * @description The browser title arrives after the page (page titles): its change is reported.
    * @input document.title changed after the start
    * @output a new onScan with the title

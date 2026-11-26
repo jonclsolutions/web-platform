@@ -11,7 +11,8 @@
  *   page at once and reach the website after Uložit; content of the admin (FAQ, references…)
  *   points to its part. A text missing in the language shows its Czech reference (orange) and is
  *   listed in the panel; every language is offered (a switched off one with a notice and its
- *   switch-on) and the window "Jazyky" manages them as on the list of the texts. The translation state, saving and discarding are those of the
+ *   switch-on) and the window "Jazyky" manages them as on the list of the texts. The preview
+ *   switches between the desktop and a phone (390 px - the mobile layout of the website). The translation state, saving and discarding are those of the
  *   translation editor of the module (`e`, BaseTranslationEditorComponent).
  * @usage `<app-visual-text-editor-view [e]="this" [pages]="pages" backRoute="/admin/web/edit-website" />`
  *   in a page component that extends BaseTranslationEditorComponent.
@@ -49,6 +50,15 @@ export interface VisualEditorPage {
   /** Key of its name (`e.t()`). */
   labelKey: string;
 }
+
+/** Preview of the page: the full width of the stage, or the width of a phone. */
+export type VisualEditorDevice = 'desktop' | 'mobile';
+
+/** Width of the phone preview (CSS px - a common phone, the mobile layout of the website). */
+export const MOBILE_PREVIEW_WIDTH = 390;
+
+/** localStorage key of the chosen preview (a preference of the admin user, no personal data). */
+export const DEVICE_STORAGE_KEY = 'jsw_text_editor_device';
 
 /** Changed texts listed before "zobrazit všechny". */
 export const CHANGED_LIST_LIMIT = 6;
@@ -106,6 +116,10 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   missingKeys: string[] = [];
   /** The window "Jazyky" is open. */
   languagesOpen = false;
+  /** Preview of the page (the last choice is remembered). */
+  device: VisualEditorDevice = readDevice();
+  /** Width of the phone preview (template). */
+  readonly mobileWidth = MOBILE_PREVIEW_WIDTH;
   /** Selected text (key), null = none. */
   selectedKey: string | null = null;
   /** Clicked content of the admin, null = none. */
@@ -205,6 +219,21 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
     const lang = this.inactiveLang;
     if (lang && this.e.canUpdate) {
       this.e.toggleLangActive(lang);
+    }
+  }
+
+  /**
+   * @description Switches the preview between the desktop and a phone - the same page and texts,
+   *   the website lays itself out for the width of the frame (its mobile menu, columns…).
+   * @param device Preview.
+   */
+  setDevice(device: VisualEditorDevice): void {
+    if (device === this.device) return;
+    this.device = device;
+    try {
+      localStorage.setItem(DEVICE_STORAGE_KEY, device);
+    } catch {
+      // storage blocked - the choice holds for this visit only
     }
   }
 
@@ -538,5 +567,17 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
     } else {
       action();
     }
+  }
+}
+
+/**
+ * @description The remembered preview of the editor.
+ * @returns 'mobile' when chosen before, else 'desktop'.
+ */
+function readDevice(): VisualEditorDevice {
+  try {
+    return localStorage.getItem(DEVICE_STORAGE_KEY) === 'mobile' ? 'mobile' : 'desktop';
+  } catch {
+    return 'desktop';
   }
 }

@@ -664,7 +664,7 @@
               "steps": [
                 {
                   "label": "Choose the page and language",
-                  "text": "Choose a page of the website and a language in the top bar. The page looks exactly as a visitor sees it.",
+                  "text": "Choose a page of the website and a language in the top bar. The page looks exactly as a visitor sees it. The Desktop / Mobile switch shows the page at the width of a phone (the mobile menu, the layout) - texts are edited the same way; the choice is remembered.",
                   "active": true
                 },
                 {

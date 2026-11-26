@@ -54,6 +54,8 @@ interface OverlayItem {
   clippers: Element[];
   /** Last measured box (viewport coordinates). */
   rect: DOMRect | null;
+  /** Covered by a fixed layer of the page (an open mobile menu, a bar) - not outlined, not hit. */
+  covered?: boolean;
 }
 
 /** Attributes whose texts are listed as "not visible". */
@@ -211,7 +213,7 @@ export class TextEditorOverlay {
     let bestArea = Infinity;
     for (const item of this.items) {
       const r = item.rect;
-      if (!this.isShown(r)) continue;
+      if (!this.isShown(r) || item.covered) continue;
       if (x < r!.left - OUTLINE_GAP || x > r!.right + OUTLINE_GAP || y < r!.top - OUTLINE_GAP || y > r!.bottom + OUTLINE_GAP) continue;
       const area = r!.width * r!.height;
       if (area < bestArea) {
@@ -341,7 +343,9 @@ export class TextEditorOverlay {
    *   ancestors; a text hidden by `visibility` or clipped away entirely has no size.
    */
   private measure(): void {
+    const fixedOf = new Map<Element, Element | null>();
     for (const item of this.items) {
+      item.covered = false;
       const element = item.element as Element & { checkVisibility?: (options?: object) => boolean };
       if (element.checkVisibility && !element.checkVisibility({ visibilityProperty: true })) {
         item.rect = new DOMRect(0, 0, 0, 0);
@@ -356,7 +360,47 @@ export class TextEditorOverlay {
         bottom = Math.min(bottom, c.bottom);
       }
       item.rect = right > left && bottom > top ? new DOMRect(left, top, right - left, bottom - top) : new DOMRect(0, 0, 0, 0);
+      if (this.isShown(item.rect)) {
+        item.covered = this.isCovered(item, fixedOf);
+      }
     }
+  }
+
+  /**
+   * @description Whether a fixed layer of the page lies over the middle of a text (an open mobile
+   *   menu, a fixed header or bar) - the text is still on the page (scan), only not outlined and
+   *   not clickable. Only fixed layers count: an absolutely placed link over a card is part of it.
+   * @param item Measured text.
+   * @param fixedOf Cache of this pass: element → its fixed ancestor (or itself), null = none.
+   * @returns true when covered.
+   */
+  private isCovered(item: OverlayItem, fixedOf: Map<Element, Element | null>): boolean {
+    const r = item.rect!;
+    const hit = this.doc.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    if (!hit || hit === item.element || item.element.contains(hit) || hit.contains(item.element)) {
+      return false;
+    }
+    const layer = this.fixedLayer(hit, fixedOf);
+    return !!layer && !layer.contains(item.element);
+  }
+
+  /**
+   * @param element Element of the page.
+   * @param cache Cache of this pass.
+   * @returns The element itself or its nearest ancestor placed `position: fixed`, null when none.
+   */
+  private fixedLayer(element: Element, cache: Map<Element, Element | null>): Element | null {
+    if (cache.has(element)) return cache.get(element)!;
+    const view = this.doc.defaultView!;
+    let layer: Element | null = null;
+    for (let node: Element | null = element; node && node !== this.doc.body && node !== this.doc.documentElement; node = node.parentElement) {
+      if (view.getComputedStyle(node).position === 'fixed') {
+        layer = node;
+        break;
+      }
+    }
+    cache.set(element, layer);
+    return layer;
   }
 
   /** @returns Whether a measured box can be seen (has a size). */
@@ -389,7 +433,7 @@ export class TextEditorOverlay {
     const parts: HTMLElement[] = [];
     for (const item of this.items) {
       const r = item.rect;
-      if (!this.isShown(r) || r!.bottom < -OUTLINE_GAP || r!.top > view.innerHeight + OUTLINE_GAP) continue;
+      if (!this.isShown(r) || item.covered || r!.bottom < -OUTLINE_GAP || r!.top > view.innerHeight + OUTLINE_GAP) continue;
       const selected = item.entry.kind === 'text' && item.entry.key === this.selectedKey;
       const hovered = item === this.hovered;
       const box = this.doc.createElement('div');

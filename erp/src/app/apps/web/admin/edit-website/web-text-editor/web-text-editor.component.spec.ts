@@ -18,7 +18,7 @@ import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { WEB_EDITOR_PAGES, WebTextEditorComponent } from './web-text-editor.component';
-import { VisualTextEditorViewComponent } from '../../../../../admin/components/translation-editor/visual-text-editor/visual-text-editor-view.component';
+import { DEVICE_STORAGE_KEY, VisualTextEditorViewComponent } from '../../../../../admin/components/translation-editor/visual-text-editor/visual-text-editor-view.component';
 import { TEXT_EDITOR_CHANNEL, TEXT_EDITOR_FRAME_NAME } from '../../../../../public/text-editor/text-editor-protocol';
 import { AdminTestContext, createAdminTestContext } from '../../../../../../testing/admin-test-helpers';
 
@@ -71,6 +71,7 @@ describe('WebTextEditorComponent', () => {
   afterEach(() => {
     fixture.destroy();
     localStorage.removeItem('jsw_languages');
+    localStorage.removeItem(DEVICE_STORAGE_KEY);
   });
 
   /**
@@ -347,6 +348,42 @@ describe('WebTextEditorComponent', () => {
     fixture.detectChanges();
     expect(view.knownPage).toBeTrue();
     expect(el.querySelectorAll('.te-page-select option').length).toBe(WEB_EDITOR_PAGES.length);
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description The preview switches between the desktop and a phone: the same frame (no reload,
+   *   the edits stay) in a phone-wide box; the choice is remembered for the next opening.
+   * @input desktop at first; click Mobil; edit; click Počítač; a new editor with 'mobile' stored
+   * @output desktop pressed; then the stage --mobile, the frame 390 px wide, the same src, stored
+   *   'mobile'; back to the full width with the edits kept; a new editor opens in the phone preview
+   */
+  it('switches the preview between the desktop and a phone', fakeAsync(() => {
+    setup();
+    const el = fixture.nativeElement as HTMLElement;
+    const buttons = () => el.querySelectorAll<HTMLButtonElement>('.te-device-btn');
+    expect(buttons()[0].getAttribute('aria-pressed')).toBe('true');
+    const src = frame().src;
+    buttons()[1].click();
+    fixture.detectChanges();
+    expect(el.querySelector('.te-stage')!.classList).toContain('te-stage--mobile');
+    expect(frame().clientWidth).toBe(390); // the page inside the bezel
+    expect(frame().src).toBe(src);
+    expect(localStorage.getItem(DEVICE_STORAGE_KEY)).toBe('mobile');
+    view.edit('faq.title', 'Dotazy');
+    buttons()[0].click();
+    fixture.detectChanges();
+    expect(el.querySelector('.te-stage')!.classList).not.toContain('te-stage--mobile');
+    expect(component.changedPaths.has('faq.title')).toBeTrue();
+    discardPeriodicTasks();
+
+    localStorage.setItem(DEVICE_STORAGE_KEY, 'mobile');
+    const again = TestBed.createComponent(WebTextEditorComponent);
+    again.detectChanges();
+    flush();
+    again.detectChanges();
+    expect(again.debugElement.query(By.directive(VisualTextEditorViewComponent)).componentInstance.device).toBe('mobile');
+    again.destroy();
     discardPeriodicTasks();
   }));
 
