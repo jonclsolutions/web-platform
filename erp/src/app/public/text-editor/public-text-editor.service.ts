@@ -21,7 +21,8 @@
  * @note GDPR: no cookie bar, no analytics - a look of the administrator into the editor is not a visit.
  */
 
-import { Injectable, NgZone, inject } from '@angular/core';
+import { Injectable, Injector, NgZone, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { Observable, Subject } from 'rxjs';
 import { markText } from './text-editor-markers';
 import { TextEditorEntry, TextEditorOverlay } from './text-editor-overlay';
@@ -90,6 +91,8 @@ export function setAtPath(target: any, path: string, value: string): void {
 @Injectable({ providedIn: 'root' })
 export class PublicTextEditorService {
   private readonly zone = inject(NgZone);
+  /** The router is taken when the admin asks for another page (not at the start - no cycle). */
+  private readonly injector = inject(Injector);
 
   /** The website runs in the frame of the visual text editor. */
   readonly active: boolean = typeof window !== 'undefined' && isTextEditorFrame(window);
@@ -324,6 +327,9 @@ export class PublicTextEditorService {
         case 'select':
           this.overlay?.select(message.key, message.reveal);
           break;
+        case 'navigate':
+          this.navigate(message.url);
+          break;
         case 'commit':
           if (this.draftLang) {
             this.commitsSource.next({ lang: this.draftLang, values: { ...this.drafts } });
@@ -333,6 +339,19 @@ export class PublicTextEditorService {
           break;
       }
     });
+  }
+
+  /**
+   * @description Another page of the website inside the running app (the admin chose it in its
+   *   page list): the translations, the drafts and the overlay stay, the page only changes. The
+   *   history of the frame is not extended (Back in the admin leaves the editor as before).
+   * @param url Own path with the language (`/cs/faq`) - anything else is ignored.
+   */
+  private navigate(url: string): void {
+    if (typeof url !== 'string' || !/^\/(?![/\\])[^\s:]*$/.test(url)) {
+      return;
+    }
+    void this.injector.get(Router).navigateByUrl(url, { replaceUrl: true });
   }
 
   /**

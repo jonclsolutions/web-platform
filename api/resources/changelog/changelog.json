@@ -1,6 +1,18 @@
 {
     "unreleased": [
         {
+            "type": "fixed",
+            "area": "web",
+            "part": "admin",
+            "text": "Texty webu a editor textů: druhé stisknutí Zpět při otevřeném dotazu „Odejít bez uložení?“ už neopustí administraci – adresa zůstane na stránce, dotaz trvá a odejde se až po potvrzení (Zpět i zavření editoru)."
+        },
+        {
+            "type": "changed",
+            "area": "web",
+            "part": "admin",
+            "text": "Editor textů přímo na stránkách: přepnutí stránky v seznamu už nenačítá celý web znovu – stránka se změní uvnitř běžícího náhledu (rychleji, bez probliknutí, neuložené úpravy zůstávají). Znovu se načítá jen při změně jazyka nebo jazyků."
+        },
+        {
             "type": "added",
             "area": "web",
             "part": "admin",

@@ -40,7 +40,7 @@ import { phoneQuery } from '../../builders/table-cards';
 import { withLanguagePrefix } from '../../../../shared/utils/language-url';
 import {
   TEXT_EDITOR_CHANNEL, TEXT_EDITOR_FRAME_NAME, TextEditorContentSection, TextEditorFromFrame,
-  TextEditorHiddenText, TextEditorShortcut, TextEditorToFrame, isTextEditorMessage,
+  TextEditorHiddenText, TextEditorShortcut, TextEditorToFrame, isBannersQuery, isTextEditorMessage,
 } from '../../../../public/text-editor/text-editor-protocol';
 
 /** A page of the website offered in the editor. */
@@ -414,7 +414,7 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   goToPage(path: string): void {
     this.selectedKey = null;
     this.contentSection = null;
-    this.navigateFrame(path);
+    this.navigateFrame(path, false);
   }
 
   /**
@@ -612,21 +612,42 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
   // ── Frame ───────────────────────────────────────────────────
 
   /**
-   * @description Shows a page of the own website in the current language.
+   * @description Shows a page of the own website in the current language: inside the running
+   *   website when it can (another page, same language - fast, no new load), else by loading
+   *   the frame again.
    * @param path Path without the language.
+   * @param reload Load the frame again (a new language, changed languages, an uploaded JSON);
+   *   false = another page of the page list.
    */
-  private navigateFrame(path: string): void {
+  private navigateFrame(path: string, reload = true): void {
     const frame = this.frameRef?.nativeElement;
     if (!frame) return;
-    this.framePath = safeFramePath(path);
+    const target = safeFramePath(path);
+    // another page of the same language: inside the running website (no new load); a new
+    // language, the page of the banners (read at the start of the website) or a frame that is not
+    // ready load it again
+    const inside = !reload && this.frameReady && this.frameLang === this.e.currentLang
+      && !isBannersQuery(target.split('?')[1] ?? '') && !isBannersQuery(this.framePath.split('?')[1] ?? '');
+    this.framePath = target;
     this.frameLang = this.e.currentLang;
     this.pageTitle = '';
     this.hiddenExpanded = false;
     this.watchTitle();
-    this.frameLoading = true;
-    frame.src = withLanguagePrefix(this.framePath, this.e.currentLang);
+    const url = withLanguagePrefix(this.framePath, this.e.currentLang);
+    if (inside) {
+      // the selection of the old page ends there too (a menu text could stay outlined)
+      this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'select', key: null, reveal: false });
+      this.post({ channel: TEXT_EDITOR_CHANNEL, type: 'navigate', url });
+    } else {
+      this.frameReady = false;
+      this.frameLoading = true;
+      frame.src = url;
+    }
     this.cd.markForCheck();
   }
+
+  /** The website in the frame said `ready` since its last load (it can change pages itself). */
+  private frameReady = false;
 
   /** @returns The edited texts of the language by key (the live preview). */
   private drafts(): Record<string, string> {
@@ -678,6 +699,7 @@ export class VisualTextEditorViewComponent implements OnInit, AfterViewInit, DoC
       switch (message.type) {
         case 'ready':
           this.frameLoading = false;
+          this.frameReady = true;
           this.post({
             channel: TEXT_EDITOR_CHANNEL, type: 'init', lang: this.e.currentLang, drafts: this.drafts(),
             missing: this.missingTexts(), selected: this.selectedKey, contentLabels: this.contentLabels(),

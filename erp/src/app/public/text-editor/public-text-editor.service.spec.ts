@@ -11,6 +11,7 @@
  * @dependencies PublicTextEditorService, text-editor-markers, text-editor-protocol
  */
 
+import { Router } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { PublicTextEditorService, isTextEditorFrame, setAtPath } from './public-text-editor.service';
 import { hasMarks, scanMarks, stripMarks } from './text-editor-markers';
@@ -59,6 +60,22 @@ describe('PublicTextEditorService', () => {
     top.parent = top;
     expect(isTextEditorFrame(top)).toBeFalse();
     expect(service.active).toBeFalse();
+  });
+
+  /**
+   * @description The admin asks for another page: the running website shows it by its router
+   *   (no new load, no new history entry); anything but an own path is ignored.
+   * @input navigate '/cs/faq'; navigate '//evil.example', 'https://x.cz/', 'javascript:alert(1)'
+   * @output navigateByUrl('/cs/faq', {replaceUrl: true}) once
+   */
+  it('changes the page inside the website when the admin asks', () => {
+    const router = TestBed.inject(Router);
+    const navigate = spyOn(router, 'navigateByUrl').and.resolveTo(true);
+    fromAdmin({ channel: TEXT_EDITOR_CHANNEL, type: 'navigate', url: '/cs/faq' });
+    for (const url of ['//evil.example', 'https://x.cz/', 'javascript:alert(1)']) {
+      fromAdmin({ channel: TEXT_EDITOR_CHANNEL, type: 'navigate', url });
+    }
+    expect(navigate.calls.allArgs()).toEqual([['/cs/faq', { replaceUrl: true }]]);
   });
 
   /**

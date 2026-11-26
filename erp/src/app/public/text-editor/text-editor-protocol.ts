@@ -63,6 +63,11 @@ export type TextEditorToFrame =
    * in the language (key → Czech reference, shown in their place) and the selected key.
    */
   | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'init'; lang: string; drafts: Record<string, string>; missing: Record<string, string>; selected: string | null; contentLabels: Partial<Record<TextEditorContentSection, string>>; missingLabel: string }
+  /**
+   * Shows another page inside the running website (no new load - faster): its URL with the
+   * language (`/cs/faq`). A new language or the page of the banners loads the frame again.
+   */
+  | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'navigate'; url: string }
   /** Unsaved texts of a language (whole set - replaces the previous one; empty = none); with the
    *  texts missing in it when they changed. */
   | { channel: typeof TEXT_EDITOR_CHANNEL; type: 'drafts'; lang: string; values: Record<string, string>; missing?: Record<string, string> }

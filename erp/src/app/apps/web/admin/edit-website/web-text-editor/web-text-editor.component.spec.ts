@@ -554,6 +554,42 @@ describe('WebTextEditorComponent', () => {
   }));
 
   /**
+   * @description Another page of the list is shown inside the running website (no new load) once
+   *   it said `ready`; before that, for a new language and for the page of the banners the frame
+   *   is loaded again.
+   * @input goToPage('/faq') before ready; ready; goToPage('/contact'); the banners page;
+   *   goToPage('/jobs'); switchLang('en')
+   * @output src /cs/faq; then select null + navigate '/cs/contact' with the src kept and no
+   *   loading; src of the banners; src /cs/jobs (leaving the banners); src /en/jobs
+   */
+  it('changes pages inside the website without a new load', fakeAsync(() => {
+    setup();
+    view.goToPage('/faq');
+    expect(new URL(frame().src).pathname).toBe('/cs/faq');
+    fromPage({ type: 'ready' });
+    const src = frame().src;
+    sent.length = 0;
+    view.goToPage('/contact');
+    expect(frame().src).toBe(src);
+    expect(view.frameLoading).toBeFalse();
+    expect(sent).toEqual([
+      { channel: TEXT_EDITOR_CHANNEL, type: 'select', key: null, reveal: false },
+      { channel: TEXT_EDITOR_CHANNEL, type: 'navigate', url: '/cs/contact' },
+    ]);
+    const banners = WEB_EDITOR_PAGES[WEB_EDITOR_PAGES.length - 1].path;
+    view.goToPage(banners);
+    expect(new URL(frame().src).search).toBe('?jsw-editor=banners');
+    fromPage({ type: 'ready' });
+    view.goToPage('/jobs');
+    expect(new URL(frame().src).pathname).toBe('/cs/jobs');
+    fromPage({ type: 'ready' });
+    view.switchLang('en');
+    flush();
+    expect(new URL(frame().src).pathname).toBe('/en/jobs');
+    discardPeriodicTasks();
+  }));
+
+  /**
    * @description On a phone there is no editor - a notice with the way back.
    * @input phone
    * @output no frame; the notice
